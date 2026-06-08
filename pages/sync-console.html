@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Sync Console</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=sync-console-4">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a class="active" href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Offline → Online Simulator</p>
+        <h2>Sync Console</h2>
+        <p class="subtitle">Simulasi HP/laptop membuat booking saat offline, lalu sync ke server saat online.</p>
+        <p class="subtitle" id="syncStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Offline-first Prototype</div>
+    </header>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Create Offline Booking</h3>
+            <p>Data disimpan dulu di browser localStorage.</p>
+          </div>
+        </div>
+
+        <form class="rn-form" id="offlineForm">
+          <div class="form-grid">
+            <label>Disaster Event ID
+              <input name="disaster_event_id" value="event-aceh-2025" required>
+            </label>
+            <label>Device ID
+              <input name="source_device_id" value="device-harley-phone-01" required>
+            </label>
+            <label>Resource ID
+              <input name="resource_id" value="res-tni-transport-air-01" required>
+            </label>
+            <label>Requested By Type
+              <input name="requested_by_type" value="community_group" required>
+            </label>
+            <label>Requested By ID
+              <input name="requested_by_id" value="group-harley-rescue" required>
+            </label>
+            <label>Quantity
+              <input name="requested_quantity" type="number" value="1">
+            </label>
+            <label>Requested Time
+              <input name="requested_time" value="Besok pagi">
+            </label>
+            <label>Reason
+              <input name="request_reason" value="Offline booking transport dari HP/laptop, lalu sync saat online.">
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Offline Draft</button>
+            <button class="btn" type="button" id="clearLocal">Clear Local Drafts</button>
+            <button class="btn primary" type="button" id="syncPush">Sync Push</button>
+            <button class="btn primary" type="button" id="syncPull">Sync Pull</button>
+          </div>
+        </form>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Sync Flow</h3>
+        <div class="summary-list">
+          <div><span>Local DB</span><b>localStorage demo</b></div>
+          <div><span>Push</span><b>/sync/push</b></div>
+          <div><span>Pull</span><b>/sync/pull</b></div>
+          <div><span>Apply</span><b>resource_request</b></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Local Offline Drafts</h3><p>Booking yang dibuat saat offline.</p></div></div>
+        <div class="event-list" id="localDrafts"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Server Resource Requests</h3>
+        <div class="event-list" id="serverRequests"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Server Assignments</h3><p>Data approved/assigned dari server.</p></div></div>
+        <div class="event-list" id="serverAssignments"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Recent Sync Events</h3>
+        <div class="event-list" id="syncEvents"></div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/sync-console.js?v=4"></script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Disaster Ecosystem</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=ecosystem-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a class="active" href="disaster-ecosystem.html">Disaster Ecosystem</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Cross-Organization Coordination</p>
+        <h2>Disaster Ecosystem</h2>
+        <p class="subtitle">
+          Satu bencana dapat berisi banyak organisasi, posko, komunitas, donor, dan resource bersama.
+          Data tetap punya owner, tapi dapat dikonsolidasikan untuk keputusan bersama.
+        </p>
+        <p class="subtitle" data-eco-status>Loading...</p>
+      </div>
+      <button class="btn primary" type="button" data-refresh-ecosystem>Refresh</button>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Command</span><strong>BPBD</strong><small>official member</small></div>
+      <div class="kpi-card"><span>Transport</span><strong>TNI</strong><small>shared resource</small></div>
+      <div class="kpi-card warning"><span>Last Mile</span><strong>Harley</strong><small>community group</small></div>
+      <div class="kpi-card"><span>Decision Layer</span><strong>AI</strong><small>ecosystem context</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Ecosystem Members</h3>
+            <p>Semua aktor yang terkait dalam satu disaster event.</p>
+          </div>
+        </div>
+        <div class="event-list" data-eco-members></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Resource Shares</h3>
+        <p class="subtitle">Resource yang dibagikan ke ecosystem.</p>
+        <div class="event-list" data-eco-shares></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Shared Resources</h3>
+            <p>Transport, gudang, tim relawan, dapur, shelter, alat kerja, komunikasi.</p>
+          </div>
+        </div>
+        <div class="event-list" data-eco-resources></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Request Resource</h3>
+        <p class="subtitle">Contoh: komunitas Harley request transport TNI.</p>
+
+        <form class="rn-form" data-resource-request-form>
+          <label>Resource ID
+            <input name="resource_id" value="res-tni-transport-air-01" required>
+          </label>
+
+          <label>Requested By Type
+            <input name="requested_by_type" value="community_group" required>
+          </label>
+
+          <label>Requested By ID
+            <input name="requested_by_id" value="group-harley-rescue" required>
+          </label>
+
+          <label>Reason
+            <input name="request_reason" value="Butuh last-mile delivery dari titik drop udara ke posko terpencil.">
+          </label>
+
+          <label>Quantity
+            <input name="requested_quantity" type="number" value="1">
+          </label>
+
+          <label>Requested Time
+            <input name="requested_time" value="Besok pagi">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Kirim Request</button>
+          </div>
+          <span class="form-message" data-resource-request-message></span>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Resource Requests</h3>
+          <p>Permintaan penggunaan resource lintas organisasi/komunitas.</p>
+        </div>
+      </div>
+      <div class="event-list" data-eco-requests></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/ecosystem.js?v=1"></script>
+</body>
+</html>

@@ -2207,3 +2207,219 @@ def create_kitchen_meal_production(payload: KitchenMealProductionCreate):
             "meal_production": meal_row,
             "ingredient_stock_movements": ingredient_movements
         }
+
+class MedicalCaseCreate(BaseModel):
+    disaster_event_id: str
+    posko_id: str
+    patient_code: str
+    age_group: Optional[str] = None
+    gender: Optional[str] = None
+    complaint: str
+    severity: Optional[str] = "minor"
+    triage_status: Optional[str] = "green"
+    treatment_notes: Optional[str] = None
+    referral_needed: Optional[bool] = False
+    referral_destination: Optional[str] = None
+    status: Optional[str] = "treated"
+    created_by_user_id: Optional[str] = "medical-operator"
+
+class MedicalSupplyUseCreate(BaseModel):
+    disaster_event_id: str
+    posko_id: str
+    medical_case_id: Optional[str] = None
+    item_name: str
+    quantity: float
+    unit: str
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = "medical-operator"
+
+@app.get("/medical-context/{posko_id}")
+def get_medical_context(posko_id: str):
+    result = {
+        "posko": None,
+        "stock_summary": [],
+        "stock_movements": [],
+        "medical_cases": [],
+        "medical_supply_uses": [],
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM posko_nodes WHERE id = %s;", (posko_id,))
+        posko_rows = rows_to_dicts(cur)
+        if not posko_rows:
+            raise HTTPException(status_code=404, detail="Medical posko not found")
+
+        result["posko"] = posko_rows[0]
+
+        cur.execute("""
+        SELECT
+          item_name,
+          unit,
+          SUM(
+            CASE
+              WHEN movement_direction = 'in' THEN quantity
+              WHEN movement_direction = 'out' THEN -quantity
+              ELSE 0
+            END
+          ) AS current_quantity
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        GROUP BY item_name, unit
+        ORDER BY item_name;
+        """, (posko_id,))
+        result["stock_summary"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 100;
+        """, (posko_id,))
+        result["stock_movements"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM medical_cases
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (posko_id,))
+        result["medical_cases"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM medical_supply_uses
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (posko_id,))
+        result["medical_supply_uses"] = rows_to_dicts(cur)
+
+    return result
+
+@app.post("/medical-cases")
+def create_medical_case(payload: MedicalCaseCreate):
+    case_id = "medcase-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO medical_cases
+        (id, disaster_event_id, posko_id, patient_code, age_group, gender,
+         complaint, severity, triage_status, treatment_notes,
+         referral_needed, referral_destination, status,
+         owner_type, owner_id, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'posko',%s,%s)
+        RETURNING *;
+        """, (
+            case_id,
+            payload.disaster_event_id,
+            payload.posko_id,
+            payload.patient_code,
+            payload.age_group,
+            payload.gender,
+            payload.complaint,
+            payload.severity,
+            payload.triage_status,
+            payload.treatment_notes,
+            payload.referral_needed,
+            payload.referral_destination,
+            payload.status,
+            payload.posko_id,
+            payload.created_by_user_id,
+        ))
+
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.post("/medical-supply-use")
+def create_medical_supply_use(payload: MedicalSupplyUseCreate):
+    use_id = "meduse-" + uuid.uuid4().hex[:12]
+    stock_id = "stock-" + uuid.uuid4().hex[:12]
+
+    if payload.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Quantity must be positive")
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT COALESCE(SUM(
+            CASE
+              WHEN movement_direction = 'in' THEN quantity
+              WHEN movement_direction = 'out' THEN -quantity
+              ELSE 0
+            END
+        ), 0) AS current_quantity
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND item_name = %s
+          AND unit = %s
+          AND deleted_at IS NULL;
+        """, (payload.posko_id, payload.item_name, payload.unit))
+        current_qty = rows_to_dicts(cur)[0]["current_quantity"] or 0
+
+        if float(current_qty) < payload.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient medical stock for {payload.item_name}. Current stock is {current_qty} {payload.unit}"
+            )
+
+        cur.execute("""
+        INSERT INTO medical_supply_uses
+        (id, disaster_event_id, posko_id, medical_case_id,
+         item_name, quantity, unit, notes,
+         owner_type, owner_id, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,'posko',%s,%s)
+        RETURNING *;
+        """, (
+            use_id,
+            payload.disaster_event_id,
+            payload.posko_id,
+            payload.medical_case_id,
+            payload.item_name,
+            payload.quantity,
+            payload.unit,
+            payload.notes,
+            payload.posko_id,
+            payload.created_by_user_id,
+        ))
+        use_row = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        INSERT INTO stock_movements
+        (id, disaster_event_id, posko_id, item_name, quantity, unit,
+         movement_type, movement_direction, source_type, source_id,
+         destination_type, destination_id, notes,
+         owner_type, owner_id, verification_status, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,
+         'medical_use','out','stock',%s,
+         'medical_case',%s,%s,
+         'posko',%s,'self_reported',%s)
+        RETURNING *;
+        """, (
+            stock_id,
+            payload.disaster_event_id,
+            payload.posko_id,
+            payload.item_name,
+            payload.quantity,
+            payload.unit,
+            payload.posko_id,
+            payload.medical_case_id,
+            payload.notes or f"Medical supply used: {payload.item_name}",
+            payload.posko_id,
+            payload.created_by_user_id,
+        ))
+        stock_row = rows_to_dicts(cur)[0]
+
+        conn.commit()
+
+        return {
+            "medical_supply_use": use_row,
+            "stock_movement": stock_row
+        }

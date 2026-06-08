@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Posko Medis Detail</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=medis-detail-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
+      <a class="active" href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="edit-bantuan.html">Edit Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="search-found.html">Search & Found</a>
+      <a href="verification-approval.html">Verification</a>
+      <a href="alat-kerja.html">Alat Kerja</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Medical Post</p>
+        <h2 id="medicalTitle">Posko Medis</h2>
+        <p class="subtitle" id="medicalSubtitle">Loading...</p>
+        <p class="subtitle" id="medicalStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Medical · Restricted Data</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Posko</span><strong id="kpiPosko">-</strong><small>medical node</small></div>
+      <div class="kpi-card"><span>Stock Items</span><strong id="kpiStock">0</strong><small>medical supplies</small></div>
+      <div class="kpi-card warning"><span>Cases</span><strong id="kpiCases">0</strong><small>patient records</small></div>
+      <div class="kpi-card"><span>Supply Uses</span><strong id="kpiUses">0</strong><small>medicine usage</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Medical Stock</h3>
+            <p>Stok obat dan alat medis di posko.</p>
+          </div>
+        </div>
+        <div class="event-list" id="medicalStock"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Add Medical Case</h3>
+        <p class="subtitle">Catat pasien dengan kode anonim, bukan nama asli.</p>
+
+        <form class="rn-form" id="caseForm">
+          <label>Medical Posko ID
+            <input name="posko_id" value="posko-medis-aceh" required>
+          </label>
+          <label>Patient Code
+            <input name="patient_code" value="PAT-002" required>
+          </label>
+          <label>Age Group
+            <input name="age_group" value="adult">
+          </label>
+          <label>Gender
+            <input name="gender" value="unknown">
+          </label>
+          <label>Complaint
+            <input name="complaint" value="Demam dan pusing setelah evakuasi." required>
+          </label>
+          <label>Severity
+            <select name="severity">
+              <option value="minor">minor</option>
+              <option value="moderate">moderate</option>
+              <option value="severe">severe</option>
+              <option value="critical">critical</option>
+            </select>
+          </label>
+          <label>Triage Status
+            <select name="triage_status">
+              <option value="green">green</option>
+              <option value="yellow">yellow</option>
+              <option value="red">red</option>
+              <option value="black">black</option>
+            </select>
+          </label>
+          <label>Treatment Notes
+            <input name="treatment_notes" value="Diberi pemeriksaan awal dan istirahat.">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Medical Case</button>
+            <button class="btn" type="button" id="refreshMedical">Refresh</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Medical Cases</h3>
+            <p>Daftar kasus medis yang tercatat di posko.</p>
+          </div>
+        </div>
+        <div class="event-list" id="medicalCases"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Use Medical Supply</h3>
+        <p class="subtitle">Catat pemakaian obat/alat dan otomatis kurangi stok.</p>
+
+        <form class="rn-form" id="supplyUseForm">
+          <label>Medical Case ID
+            <input name="medical_case_id" placeholder="boleh kosong / isi dari case id">
+          </label>
+          <label>Item Name
+            <input name="item_name" value="Paracetamol" required>
+          </label>
+          <label>Quantity
+            <input name="quantity" type="number" value="1" required>
+          </label>
+          <label>Unit
+            <input name="unit" value="strip" required>
+          </label>
+          <label>Notes
+            <input name="notes" value="Diberikan untuk pasien demam.">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Supply Use</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Medical Supply Uses</h3>
+            <p>Riwayat pemakaian obat dan alat medis.</p>
+          </div>
+        </div>
+        <div class="event-list" id="medicalUses"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Stock Movements</h3>
+        <p class="subtitle">Pergerakan stok medis, termasuk medical_use.</p>
+        <div class="event-list" id="medicalMovements"></div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/posko-medis-detail.js?v=1"></script>
+</body>
+</html>

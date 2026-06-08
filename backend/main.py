@@ -1,4 +1,5 @@
 import os
+import json
 import hashlib
 import secrets
 import uuid
@@ -1168,3 +1169,320 @@ def create_resource_request(payload: ResourceRequestCreate):
         row = rows_to_dicts(cur)[0]
         conn.commit()
         return row
+
+class ResourceRequestApprove(BaseModel):
+    approved_by: str = "command-center"
+    assignment_notes: Optional[str] = None
+    assigned_quantity: Optional[float] = None
+
+
+@app.post("/resource-requests/{request_id}/approve")
+def approve_resource_request(request_id: str, payload: ResourceRequestApprove):
+    assignment_id = "assign-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT rr.*, r.disaster_event_id
+        FROM resource_requests rr
+        JOIN resources r ON r.id = rr.resource_id
+        WHERE rr.id = %s;
+        """, (request_id,))
+        rows = rows_to_dicts(cur)
+
+        if not rows:
+            raise HTTPException(status_code=404, detail="Resource request not found")
+
+        req = rows[0]
+
+        if req.get("status") not in ("requested", "approved"):
+            raise HTTPException(status_code=400, detail=f"Request status is {req.get('status')}")
+
+        cur.execute("""
+        UPDATE resource_requests
+        SET status = 'approved',
+            approved_by = %s,
+            approved_at = NOW(),
+            updated_at = NOW()
+        WHERE id = %s
+        RETURNING *;
+        """, (payload.approved_by, request_id))
+        updated_request = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        INSERT INTO resource_assignments
+        (id, resource_id, assigned_to_type, assigned_to_id, assigned_by,
+         related_need_id, related_distribution_flow_id, assigned_quantity,
+         assignment_notes, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'assigned')
+        RETURNING *;
+        """, (
+            assignment_id,
+            req["resource_id"],
+            req["requested_by_type"],
+            req["requested_by_id"],
+            payload.approved_by,
+            req.get("related_need_id"),
+            req.get("related_distribution_flow_id"),
+            payload.assigned_quantity if payload.assigned_quantity is not None else req.get("requested_quantity"),
+            payload.assignment_notes,
+        ))
+        assignment = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        INSERT INTO audit_logs
+        (id, actor_type, actor_id, action, object_type, object_id,
+         after_json, disaster_event_id)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
+        """, (
+            "audit-" + uuid.uuid4().hex[:12],
+            "user_or_org",
+            payload.approved_by,
+            "approve_resource_request",
+            "resource_request",
+            request_id,
+            json.dumps({"request": updated_request, "assignment": assignment}, default=str),
+            req.get("disaster_event_id"),
+        ))
+
+        conn.commit()
+
+        return {
+            "request": updated_request,
+            "assignment": assignment
+        }
+
+
+@app.get("/resource-assignments")
+def get_resource_assignments():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT ra.*, r.disaster_event_id, r.name AS resource_name, r.resource_type, r.owner_id
+        FROM resource_assignments ra
+        LEFT JOIN resources r ON r.id = ra.resource_id
+        ORDER BY ra.created_at DESC;
+        """)
+        return rows_to_dicts(cur)
+
+class SyncEventIn(BaseModel):
+    event_id: Optional[str] = None
+    object_type: str
+    object_id: str
+    operation: str
+    payload_json: dict = {}
+    source_server_id: Optional[str] = None
+    source_device_id: Optional[str] = None
+    source_user_id: Optional[str] = None
+    source_organization_id: Optional[str] = None
+
+class SyncPushRequest(BaseModel):
+    source_device_id: Optional[str] = None
+    source_server_id: Optional[str] = None
+    events: list[SyncEventIn]
+
+
+
+def apply_sync_event(cur, ev, event_id: str):
+    """
+    Apply selected sync events into operational tables.
+    Current prototype supports:
+    - resource_request create
+    """
+    if ev.object_type == "resource_request" and ev.operation == "create":
+        payload = ev.payload_json or {}
+
+        resource_id = payload.get("resource_id")
+        requested_by_type = payload.get("requested_by_type")
+        requested_by_id = payload.get("requested_by_id")
+
+        if not resource_id or not requested_by_type or not requested_by_id:
+            return {
+                "apply_status": "rejected",
+                "reason": "resource_id, requested_by_type, and requested_by_id are required"
+            }
+
+        server_request_id = "req-" + uuid.uuid4().hex[:12]
+
+        cur.execute("""
+        INSERT INTO resource_requests
+        (id, resource_id, requested_by_type, requested_by_id, request_reason,
+         related_need_id, related_distribution_flow_id, requested_quantity,
+         requested_time, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'requested')
+        RETURNING *;
+        """, (
+            server_request_id,
+            resource_id,
+            requested_by_type,
+            requested_by_id,
+            payload.get("request_reason"),
+            payload.get("related_need_id"),
+            payload.get("related_distribution_flow_id"),
+            payload.get("requested_quantity"),
+            payload.get("requested_time"),
+        ))
+
+        row = rows_to_dicts(cur)[0]
+
+        return {
+            "apply_status": "applied",
+            "object_type": "resource_request",
+            "local_object_id": ev.object_id,
+            "server_object_id": row["id"]
+        }
+
+    return {
+        "apply_status": "stored_only",
+        "reason": "No apply rule for this object_type/operation yet"
+    }
+
+@app.post("/sync/push")
+def sync_push(payload: SyncPushRequest):
+    accepted = []
+    rejected = []
+
+    with get_conn() as conn, conn.cursor() as cur:
+        for ev in payload.events:
+            event_id = ev.event_id or ("sync-" + uuid.uuid4().hex[:16])
+            sync_row_id = "syncev-" + uuid.uuid4().hex[:12]
+
+            try:
+                cur.execute("""
+                INSERT INTO sync_events
+                (id, event_id, object_type, object_id, operation, payload_json,
+                 source_server_id, source_device_id, source_user_id, source_organization_id,
+                 verification_status, apply_status)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'unverified','accepted')
+                ON CONFLICT (event_id) DO NOTHING
+                RETURNING *;
+                """, (
+                    sync_row_id,
+                    event_id,
+                    ev.object_type,
+                    ev.object_id,
+                    ev.operation,
+                    json.dumps(ev.payload_json, default=str),
+                    ev.source_server_id or payload.source_server_id,
+                    ev.source_device_id or payload.source_device_id,
+                    ev.source_user_id,
+                    ev.source_organization_id,
+                ))
+
+                rows = rows_to_dicts(cur)
+
+                if rows:
+                    apply_result = apply_sync_event(cur, ev, event_id)
+                    cur.execute(
+                        "UPDATE sync_events SET apply_status = %s WHERE event_id = %s;",
+                        (apply_result.get("apply_status", "accepted"), event_id)
+                    )
+
+                    accepted.append({
+                        "event_id": event_id,
+                        "object_type": ev.object_type,
+                        "object_id": ev.object_id,
+                        "operation": ev.operation,
+                        "apply_status": apply_result.get("apply_status", "accepted"),
+                        "apply_result": apply_result
+                    })
+                else:
+                    accepted.append({
+                        "event_id": event_id,
+                        "object_type": ev.object_type,
+                        "object_id": ev.object_id,
+                        "operation": ev.operation,
+                        "apply_status": "duplicate_ignored"
+                    })
+
+            except Exception as ex:
+                rejected.append({
+                    "event_id": event_id,
+                    "object_type": ev.object_type,
+                    "object_id": ev.object_id,
+                    "operation": ev.operation,
+                    "error": str(ex)
+                })
+
+        conn.commit()
+
+    return {
+        "status": "ok",
+        "accepted_count": len(accepted),
+        "rejected_count": len(rejected),
+        "accepted": accepted,
+        "rejected": rejected
+    }
+
+
+@app.get("/sync/pull/{disaster_event_id}")
+def sync_pull(disaster_event_id: str, since: Optional[str] = None):
+    result = {
+        "disaster_event_id": disaster_event_id,
+        "generated_at": datetime.utcnow().isoformat(),
+        "disasters": [],
+        "ecosystem_members": [],
+        "resources": [],
+        "resource_shares": [],
+        "resource_requests": [],
+        "resource_assignments": [],
+        "aid_offers": [],
+        "transport_spaces": [],
+        "distribution_flows": [],
+        "sync_events": [],
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM disaster_events WHERE id = %s;", (disaster_event_id,))
+        result["disasters"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM disaster_ecosystem_members WHERE disaster_event_id = %s ORDER BY updated_at DESC;", (disaster_event_id,))
+        result["ecosystem_members"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM resources WHERE disaster_event_id = %s ORDER BY updated_at DESC;", (disaster_event_id,))
+        result["resources"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM resource_shares WHERE disaster_event_id = %s ORDER BY updated_at DESC;", (disaster_event_id,))
+        result["resource_shares"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT rr.*, r.disaster_event_id, r.name AS resource_name, r.resource_type, r.owner_id
+        FROM resource_requests rr
+        JOIN resources r ON r.id = rr.resource_id
+        WHERE r.disaster_event_id = %s
+        ORDER BY rr.updated_at DESC;
+        """, (disaster_event_id,))
+        result["resource_requests"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT ra.*, r.disaster_event_id, r.name AS resource_name, r.resource_type, r.owner_id
+        FROM resource_assignments ra
+        JOIN resources r ON r.id = ra.resource_id
+        WHERE r.disaster_event_id = %s
+        ORDER BY ra.updated_at DESC;
+        """, (disaster_event_id,))
+        result["resource_assignments"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM aid_offers WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        result["aid_offers"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM transport_spaces WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        result["transport_spaces"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM distribution_flows WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        result["distribution_flows"] = rows_to_dicts(cur)
+
+        if since:
+            cur.execute("""
+            SELECT * FROM sync_events
+            WHERE created_at >= %s
+            ORDER BY created_at DESC
+            LIMIT 200;
+            """, (since,))
+        else:
+            cur.execute("""
+            SELECT * FROM sync_events
+            ORDER BY created_at DESC
+            LIMIT 200;
+            """)
+        result["sync_events"] = rows_to_dicts(cur)
+
+    return result

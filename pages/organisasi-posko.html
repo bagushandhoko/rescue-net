@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Organisasi & Posko</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=org-posko-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a class="active" href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="posko-medis.html">Medis</a>
+      <a href="verification-approval.html">Verification</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Registry & Operational Nodes</p>
+        <h2>Organisasi & Posko</h2>
+        <p class="subtitle">
+          Daftarkan organisasi, komunitas, posko resmi, posko warga, dapur umum, gudang, posko medis,
+          atau titik distribusi. Data tersimpan langsung ke Rescue-Net API dan PostgreSQL.
+        </p>
+      </div>
+      <div class="status-pill">API Connected · PostgreSQL</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Organisasi Terdaftar</span><strong>API</strong><small>live data</small></div>
+      <div class="kpi-card"><span>Posko Aktif</span><strong>API</strong><small>live data</small></div>
+      <div class="kpi-card warning"><span>Pending Verification</span><strong>Live</strong><small>prototype</small></div>
+      <div class="kpi-card"><span>Database</span><strong>ON</strong><small>rescuenet_db</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Tambah Organisasi</h3>
+            <p>Untuk pemerintah, NGO, komunitas, perusahaan, kampus, atau kelompok warga.</p>
+          </div>
+        </div>
+
+        <form class="rn-form" data-rn-create-org>
+          <div class="form-grid">
+            <label>
+              Nama Organisasi
+              <input name="name" placeholder="Contoh: Komunitas Rescue Lokal" required>
+            </label>
+
+            <label>
+              Jenis Organisasi
+              <input name="organization_type" placeholder="government / ngo / community" required>
+            </label>
+
+            <label>
+              Trust Level
+              <select name="trust_level">
+                <option value="unverified">unverified</option>
+                <option value="trusted">trusted</option>
+                <option value="official">official</option>
+              </select>
+            </label>
+
+            <label>
+              Status
+              <select name="status">
+                <option value="pending">pending</option>
+                <option value="verified">verified</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan Organisasi</button>
+            <span class="form-message" data-rn-org-message></span>
+          </div>
+        </form>
+
+        <hr class="rn-separator">
+
+        <div class="panel-header">
+          <div>
+            <h3>Daftar Organisasi</h3>
+            <p>Live dari endpoint /organizations.</p>
+          </div>
+        </div>
+
+        <div class="event-list" data-rn-organizations></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Tambah Posko / Node</h3>
+        <p class="subtitle">Posko bisa official, komunitas, atau mandiri.</p>
+
+        <form class="rn-form" data-rn-create-posko>
+          <label>
+            Disaster Event ID
+            <input name="disaster_event_id" value="event-aceh-2025" required>
+          </label>
+
+          <label>
+            Organisasi
+            <select name="organization_id" data-rn-org-select>
+              <option value="">Mandiri / tanpa organisasi</option>
+            </select>
+          </label>
+
+          <label>
+            Nama Posko
+            <input name="name" placeholder="Contoh: Posko Logistik RW 05" required>
+          </label>
+
+          <label>
+            Jenis Posko
+            <input name="node_type" placeholder="logistics / kitchen / medical / shelter" required>
+          </label>
+
+          <label>
+            Lokasi
+            <input name="location" placeholder="Alamat / area posko" required>
+          </label>
+
+          <label>
+            Verification
+            <select name="verification_status">
+              <option value="self_reported">self_reported</option>
+              <option value="community_verified">community_verified</option>
+              <option value="official_verified">official_verified</option>
+            </select>
+          </label>
+
+          <label>
+            Operational Status
+            <select name="operational_status">
+              <option value="active">active</option>
+              <option value="standby">standby</option>
+              <option value="offline">offline</option>
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan Posko</button>
+          </div>
+          <span class="form-message" data-rn-posko-message></span>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Daftar Posko / Operational Node</h3>
+          <p>Live dari endpoint /poskos.</p>
+        </div>
+      </div>
+
+      <div class="event-list" data-rn-poskos></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/org-posko.js?v=1"></script>
+</body>
+</html>

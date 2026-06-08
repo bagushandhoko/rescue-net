@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Edit Bantuan Saya</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=public-aid-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a class="active" href="edit-bantuan.html">Edit Bantuan Saya</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Public Aid Edit</p>
+        <h2>Edit Bantuan Saya</h2>
+        <p class="subtitle">
+          Donatur personal bisa mengubah data bantuan memakai Aid ID, nomor HP, dan kode edit.
+        </p>
+      </div>
+      <div class="status-pill">HP + Kode Edit</div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Verifikasi dan Update Bantuan</h3>
+          <p>Gunakan kode yang muncul saat pertama submit bantuan.</p>
+        </div>
+      </div>
+
+      <form class="rn-form" data-edit-aid-form>
+        <div class="form-grid">
+          <label>
+            Aid Offer ID
+            <input name="aid_offer_id" placeholder="aid-xxxxxxxxxxxx" required>
+          </label>
+
+          <label>
+            HP / WhatsApp
+            <input name="donor_contact" placeholder="0812xxxx" required>
+          </label>
+
+          <label>
+            Kode Edit
+            <input name="edit_code" placeholder="6 digit" required>
+          </label>
+
+          <label>
+            Cara Pengiriman
+            <select name="delivery_mode">
+              <option value="need_pickup">Saya butuh dijemput</option>
+              <option value="self_deliver_to_posko">Saya antar sendiri ke posko</option>
+              <option value="drop_to_collection_point">Saya drop ke titik pengumpulan</option>
+            </select>
+          </label>
+
+          <label>
+            Item Bantuan
+            <input name="item_name" placeholder="Kosongkan jika tidak berubah">
+          </label>
+
+          <label>
+            Jumlah
+            <input name="quantity" type="number" step="0.01" placeholder="Kosongkan jika tidak berubah">
+          </label>
+
+          <label>
+            Satuan
+            <input name="unit" placeholder="dus / kg / pcs">
+          </label>
+
+          <label>
+            Lokasi Pickup
+            <input name="pickup_location" placeholder="Lokasi baru jika berubah">
+          </label>
+
+          <label>
+            Kapan Siap
+            <input name="ready_at" placeholder="Hari ini 15:00">
+          </label>
+        </div>
+
+        <div class="form-grid" data-self-deliver-fields style="display:none; margin-top:12px;">
+          <label>
+            Posko Tujuan ID
+            <input name="target_node_id" value="posko-logistik-aceh">
+          </label>
+
+          <label>
+            Nama Posko Tujuan
+            <input name="target_node_name" value="Posko Logistik Aceh Barat Utama">
+          </label>
+
+          <label>
+            Perkiraan Sampai Posko
+            <input name="expected_arrival_at" placeholder="Besok 18:00">
+          </label>
+        </div>
+
+        <label style="display:grid;gap:7px;margin-top:12px;">
+          Catatan
+          <input name="notes" placeholder="Catatan update">
+        </label>
+
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Update Bantuan</button>
+        </div>
+      </form>
+    </section>
+
+    <section data-edit-aid-result></section>
+  </main>
+</div>
+
+<script src="../assets/js/public-aid.js?v=1"></script>
+</body>
+</html>

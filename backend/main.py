@@ -1,0 +1,711 @@
+import os
+import hashlib
+import secrets
+import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+import psycopg
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://rescuenet_user:CHANGE_ME@localhost:5432/rescuenet_db",
+)
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "/data/uploads"))
+
+app = FastAPI(
+    title="Rescue-Net API",
+    description="Open Disaster Coordination & Relief Management System",
+    version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+def get_conn():
+    return psycopg.connect(DATABASE_URL)
+
+def rows_to_dicts(cur):
+    cols = [d.name for d in cur.description]
+    return [dict(zip(cols, row)) for row in cur.fetchall()]
+
+
+def make_edit_code():
+    return str(secrets.randbelow(900000) + 100000)
+
+def hash_edit_code(donor_contact: str, edit_code: str):
+    raw = f"{donor_contact}|{edit_code}|rescue-net-v1"
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+def normalize_public_aid_status(delivery_mode: str, status: str = "available"):
+    if delivery_mode == "need_pickup":
+        return "need_pickup"
+    if delivery_mode == "self_deliver_to_posko":
+        return "self_delivery_planned"
+    if delivery_mode == "drop_to_collection_point":
+        return "drop_to_collection_point"
+    return status
+
+def init_db():
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS disaster_events (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                disaster_type TEXT NOT NULL,
+                location TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'active',
+                severity TEXT NOT NULL DEFAULT 'normal',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS organizations (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                organization_type TEXT NOT NULL,
+                trust_level TEXT NOT NULL DEFAULT 'unverified',
+                status TEXT NOT NULL DEFAULT 'pending',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS posko_nodes (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                organization_id TEXT REFERENCES organizations(id) ON DELETE SET NULL,
+                name TEXT NOT NULL,
+                node_type TEXT NOT NULL,
+                location TEXT NOT NULL,
+                verification_status TEXT NOT NULL DEFAULT 'self_reported',
+                operational_status TEXT NOT NULL DEFAULT 'active',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS volunteers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                phone TEXT,
+                email TEXT,
+                main_skill TEXT NOT NULL,
+                location TEXT NOT NULL,
+                availability TEXT NOT NULL DEFAULT 'available',
+                duration_available TEXT,
+                verification_status TEXT NOT NULL DEFAULT 'self_reported',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS logistic_needs (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                node_id TEXT REFERENCES posko_nodes(id) ON DELETE SET NULL,
+                item_name TEXT NOT NULL,
+                quantity_needed NUMERIC NOT NULL,
+                unit TEXT NOT NULL,
+                priority TEXT NOT NULL DEFAULT 'normal',
+                needed_before TEXT,
+                status TEXT NOT NULL DEFAULT 'open',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS aid_offers (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                donor_name TEXT NOT NULL,
+                item_name TEXT NOT NULL,
+                quantity NUMERIC NOT NULL,
+                unit TEXT NOT NULL,
+                pickup_location TEXT NOT NULL,
+                ready_at TEXT,
+                status TEXT NOT NULL DEFAULT 'available',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS transport_spaces (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                provider_name TEXT NOT NULL,
+                transport_type TEXT NOT NULL,
+                route_origin TEXT NOT NULL,
+                route_destination TEXT NOT NULL,
+                capacity_weight_kg NUMERIC DEFAULT 0,
+                capacity_volume_m3 NUMERIC DEFAULT 0,
+                departure_time TEXT,
+                eta TEXT,
+                status TEXT NOT NULL DEFAULT 'available',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS distribution_flows (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                need_id TEXT REFERENCES logistic_needs(id) ON DELETE SET NULL,
+                aid_offer_id TEXT REFERENCES aid_offers(id) ON DELETE SET NULL,
+                transport_space_id TEXT REFERENCES transport_spaces(id) ON DELETE SET NULL,
+                destination_node_id TEXT REFERENCES posko_nodes(id) ON DELETE SET NULL,
+                eta_final TEXT,
+                status TEXT NOT NULL DEFAULT 'planned',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS evidence_files (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT,
+                node_id TEXT,
+                linked_object_type TEXT NOT NULL,
+                linked_object_id TEXT,
+                evidence_type TEXT NOT NULL,
+                filename TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                mime_type TEXT,
+                size_bytes BIGINT DEFAULT 0,
+                uploaded_by TEXT,
+                verification_status TEXT NOT NULL DEFAULT 'pending',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+        conn.commit()
+
+def seed_db():
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM disaster_events;")
+            if cur.fetchone()[0] == 0:
+                cur.execute("""
+                INSERT INTO disaster_events (id, name, disaster_type, location, status, severity)
+                VALUES
+                ('event-aceh-2025', 'Gempa Aceh Barat 2025', 'earthquake', 'Aceh Barat, Aceh', 'active', 'critical'),
+                ('event-luwu-2025', 'Banjir Luwu 2025', 'flood', 'Luwu Utara', 'active', 'urgent');
+                """)
+                cur.execute("""
+                INSERT INTO organizations (id, name, organization_type, trust_level, status)
+                VALUES
+                ('org-bpbd-aceh', 'BPBD Aceh Barat', 'government', 'official', 'verified'),
+                ('org-landrover', 'Land Rover Rescue Community', 'community', 'trusted', 'verified');
+                """)
+                cur.execute("""
+                INSERT INTO posko_nodes
+                (id, disaster_event_id, organization_id, name, node_type, location, verification_status, operational_status)
+                VALUES
+                ('posko-logistik-aceh', 'event-aceh-2025', 'org-bpbd-aceh', 'Posko Logistik Aceh Barat Utama', 'logistics', 'Aceh Barat', 'official_verified', 'active'),
+                ('posko-dapur-melati', 'event-aceh-2025', NULL, 'Dapur Ibu-Ibu Gang Melati', 'kitchen', 'Gang Melati', 'community_verified', 'active');
+                """)
+                cur.execute("""
+                INSERT INTO volunteers
+                (id, name, phone, email, main_skill, location, availability, duration_available, verification_status)
+                VALUES
+                ('vol-rudi', 'Rudi', '0800000001', 'rudi@example.local', 'Driver MPV / Pickup', 'Depok', 'available today 12:00-18:00', '6 jam', 'phone_verified'),
+                ('vol-rina', 'dr. Rina', '0800000002', 'rina@example.local', 'Dokter umum', 'Jakarta', 'available 7 days', '7 hari', 'medical_verified');
+                """)
+                cur.execute("""
+                INSERT INTO logistic_needs
+                (id, disaster_event_id, node_id, item_name, quantity_needed, unit, priority, needed_before, status)
+                VALUES
+                ('need-water-aceh', 'event-aceh-2025', 'posko-logistik-aceh', 'Air Minum', 18240, 'liter', 'critical', 'Hari ini 18:00', 'open'),
+                ('need-baby-food', 'event-aceh-2025', 'posko-logistik-aceh', 'Makanan Bayi', 442, 'kaleng', 'critical', 'Hari ini 16:00', 'open');
+                """)
+                cur.execute("""
+                INSERT INTO aid_offers
+                (id, disaster_event_id, donor_name, item_name, quantity, unit, pickup_location, ready_at, status)
+                VALUES
+                ('aid-water-andi', 'event-aceh-2025', 'Donasi Bpk. Andi', 'Air Mineral', 500, 'dus', 'Jakarta Selatan', 'Hari ini 13:00', 'need_pickup');
+                """)
+                cur.execute("""
+                INSERT INTO transport_spaces
+                (id, disaster_event_id, provider_name, transport_type, route_origin, route_destination, capacity_weight_kg, capacity_volume_m3, departure_time, eta, status)
+                VALUES
+                ('transport-landrover-01', 'event-aceh-2025', 'Land Rover Rescue', 'darat', 'Jakarta Selatan', 'Bandara Halim', 2000, 8, 'Hari ini 13:30', 'Hari ini 14:30', 'available');
+                """)
+        conn.commit()
+
+@app.on_event("startup")
+def startup():
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    init_db()
+    seed_db()
+
+class DisasterCreate(BaseModel):
+    name: str
+    disaster_type: str
+    location: str
+    status: str = "active"
+    severity: str = "normal"
+
+class OrganizationCreate(BaseModel):
+    name: str
+    organization_type: str
+    trust_level: str = "unverified"
+    status: str = "pending"
+
+class PoskoCreate(BaseModel):
+    disaster_event_id: str
+    name: str
+    node_type: str
+    location: str
+    organization_id: Optional[str] = None
+    verification_status: str = "self_reported"
+    operational_status: str = "active"
+
+class VolunteerCreate(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    main_skill: str
+    location: str
+    availability: str = "available"
+    duration_available: Optional[str] = None
+    verification_status: str = "self_reported"
+
+
+class PublicAidOfferCreate(BaseModel):
+    disaster_event_id: str
+    donor_name: str
+    donor_contact: str
+    item_name: str
+    quantity: float
+    unit: str
+    pickup_location: str
+    ready_at: Optional[str] = None
+    delivery_mode: str = "need_pickup"
+    target_node_id: Optional[str] = None
+    target_node_name: Optional[str] = None
+    expected_arrival_at: Optional[str] = None
+    notes: Optional[str] = None
+
+class PublicAidOfferVerifyEdit(BaseModel):
+    aid_offer_id: str
+    donor_contact: str
+    edit_code: str
+
+class PublicAidOfferUpdate(BaseModel):
+    donor_contact: str
+    edit_code: str
+    donor_name: Optional[str] = None
+    item_name: Optional[str] = None
+    quantity: Optional[float] = None
+    unit: Optional[str] = None
+    pickup_location: Optional[str] = None
+    ready_at: Optional[str] = None
+    delivery_mode: Optional[str] = None
+    target_node_id: Optional[str] = None
+    target_node_name: Optional[str] = None
+    expected_arrival_at: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None
+
+
+class LogisticNeedCreate(BaseModel):
+    disaster_event_id: str
+    node_id: Optional[str] = None
+    item_name: str
+    quantity_needed: float
+    unit: str
+    priority: str = "normal"
+    needed_before: Optional[str] = None
+    status: str = "open"
+
+
+class AidOfferCreate(BaseModel):
+    disaster_event_id: str
+    donor_name: str
+    donor_contact: Optional[str] = None
+    item_name: str
+    quantity: float
+    unit: str
+    pickup_location: str
+    ready_at: Optional[str] = None
+    delivery_mode: str = "need_pickup"
+    target_node_id: Optional[str] = None
+    target_node_name: Optional[str] = None
+    expected_arrival_at: Optional[str] = None
+    notes: Optional[str] = None
+    status: str = "available"
+
+@app.get("/")
+def root():
+    return {"system": "Rescue-Net", "version": "0.1.0", "status": "running"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "time": datetime.utcnow().isoformat()}
+
+@app.get("/disasters")
+def get_disasters():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM disaster_events ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+@app.post("/disasters")
+def create_disaster(payload: DisasterCreate):
+    item_id = "event-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO disaster_events (id, name, disaster_type, location, status, severity)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING *;
+        """, (item_id, payload.name, payload.disaster_type, payload.location, payload.status, payload.severity))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.get("/organizations")
+def get_organizations():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM organizations ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+@app.post("/organizations")
+def create_organization(payload: OrganizationCreate):
+    item_id = "org-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO organizations (id, name, organization_type, trust_level, status)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING *;
+        """, (item_id, payload.name, payload.organization_type, payload.trust_level, payload.status))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.get("/poskos")
+def get_poskos():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM posko_nodes ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+@app.post("/poskos")
+def create_posko(payload: PoskoCreate):
+    item_id = "posko-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO posko_nodes
+        (id, disaster_event_id, organization_id, name, node_type, location, verification_status, operational_status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            item_id,
+            payload.disaster_event_id,
+            payload.organization_id,
+            payload.name,
+            payload.node_type,
+            payload.location,
+            payload.verification_status,
+            payload.operational_status,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.get("/volunteers")
+def get_volunteers():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM volunteers ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+@app.post("/volunteers")
+def create_volunteer(payload: VolunteerCreate):
+    item_id = "vol-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO volunteers
+        (id, name, phone, email, main_skill, location, availability, duration_available, verification_status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            item_id,
+            payload.name,
+            payload.phone,
+            payload.email,
+            payload.main_skill,
+            payload.location,
+            payload.availability,
+            payload.duration_available,
+            payload.verification_status,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.get("/logistic-needs")
+def get_logistic_needs():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM logistic_needs ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+
+@app.post("/logistic-needs")
+def create_logistic_need(payload: LogisticNeedCreate):
+    item_id = "need-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO logistic_needs
+        (id, disaster_event_id, node_id, item_name, quantity_needed, unit, priority, needed_before, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            item_id,
+            payload.disaster_event_id,
+            payload.node_id,
+            payload.item_name,
+            payload.quantity_needed,
+            payload.unit,
+            payload.priority,
+            payload.needed_before,
+            payload.status,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.get("/aid-offers")
+def get_aid_offers():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM aid_offers ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+
+@app.post("/aid-offers")
+def create_aid_offer(payload: AidOfferCreate):
+    item_id = "aid-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO aid_offers
+        (id, disaster_event_id, donor_name, item_name, quantity, unit, pickup_location, ready_at, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            item_id,
+            payload.disaster_event_id,
+            payload.donor_name,
+            payload.item_name,
+            payload.quantity,
+            payload.unit,
+            payload.pickup_location,
+            payload.ready_at,
+            payload.status,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.get("/transport-spaces")
+def get_transport_spaces():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM transport_spaces ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+@app.get("/distribution-flows")
+def get_distribution_flows():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM distribution_flows ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+@app.get("/evidence")
+def get_evidence():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM evidence_files ORDER BY created_at DESC;")
+        return rows_to_dicts(cur)
+
+@app.post("/evidence/upload")
+async def upload_evidence(
+    file: UploadFile = File(...),
+    linked_object_type: str = Form(...),
+    disaster_event_id: Optional[str] = Form(None),
+    node_id: Optional[str] = Form(None),
+    linked_object_id: Optional[str] = Form(None),
+    evidence_type: str = Form("photo"),
+    uploaded_by: Optional[str] = Form(None),
+):
+    max_size = 100 * 1024 * 1024
+    content = await file.read()
+
+    if len(content) > max_size:
+        raise HTTPException(status_code=413, detail="File too large. Max 100MB.")
+
+    evidence_id = "ev-" + uuid.uuid4().hex[:16]
+    safe_name = file.filename.replace("/", "_").replace("\\", "_")
+    stored_name = f"{evidence_id}-{safe_name}"
+    target = UPLOAD_DIR / stored_name
+    target.write_bytes(content)
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO evidence_files
+        (id, disaster_event_id, node_id, linked_object_type, linked_object_id, evidence_type,
+         filename, file_path, mime_type, size_bytes, uploaded_by, verification_status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending')
+        RETURNING *;
+        """, (
+            evidence_id,
+            disaster_event_id,
+            node_id,
+            linked_object_type,
+            linked_object_id,
+            evidence_type,
+            safe_name,
+            str(target),
+            file.content_type,
+            len(content),
+            uploaded_by,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+
+@app.post("/public/aid-offers")
+def public_create_aid_offer(payload: PublicAidOfferCreate):
+    item_id = "aid-" + uuid.uuid4().hex[:12]
+    edit_code = make_edit_code()
+    edit_code_hash = hash_edit_code(payload.donor_contact, edit_code)
+    status = normalize_public_aid_status(payload.delivery_mode)
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO aid_offers
+        (id, disaster_event_id, donor_name, donor_contact, donor_type, item_name, quantity, unit,
+         pickup_location, ready_at, delivery_mode, target_node_id, target_node_name,
+         expected_arrival_at, notes, edit_code_hash, edit_code_created_at, edit_count, status)
+        VALUES (%s,%s,%s,%s,'personal_guest',%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,NOW(),0,%s)
+        RETURNING *;
+        """, (
+            item_id,
+            payload.disaster_event_id,
+            payload.donor_name,
+            payload.donor_contact,
+            payload.item_name,
+            payload.quantity,
+            payload.unit,
+            payload.pickup_location,
+            payload.ready_at,
+            payload.delivery_mode,
+            payload.target_node_id,
+            payload.target_node_name,
+            payload.expected_arrival_at,
+            payload.notes,
+            edit_code_hash,
+            status,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+
+    return {
+        "id": row["id"],
+        "donor_type": "personal_guest",
+        "status": row["status"],
+        "delivery_mode": row["delivery_mode"],
+        "edit_code": edit_code,
+        "message": "Simpan kode edit ini. Kode diperlukan untuk mengubah data bantuan."
+    }
+
+
+@app.post("/public/aid-offers/verify-edit")
+def public_verify_aid_offer_edit(payload: PublicAidOfferVerifyEdit):
+    expected_hash = hash_edit_code(payload.donor_contact, payload.edit_code)
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT * FROM aid_offers
+        WHERE id = %s
+          AND donor_contact = %s
+          AND edit_code_hash = %s
+          AND donor_type = 'personal_guest';
+        """, (payload.aid_offer_id, payload.donor_contact, expected_hash))
+        rows = rows_to_dicts(cur)
+
+    if not rows:
+        raise HTTPException(status_code=403, detail="Kode edit atau nomor HP tidak cocok.")
+
+    return {
+        "verified": True,
+        "aid_offer": rows[0]
+    }
+
+
+@app.put("/public/aid-offers/{aid_offer_id}")
+def public_update_aid_offer(aid_offer_id: str, payload: PublicAidOfferUpdate):
+    expected_hash = hash_edit_code(payload.donor_contact, payload.edit_code)
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT * FROM aid_offers
+        WHERE id = %s
+          AND donor_contact = %s
+          AND edit_code_hash = %s
+          AND donor_type = 'personal_guest';
+        """, (aid_offer_id, payload.donor_contact, expected_hash))
+        rows = rows_to_dicts(cur)
+
+        if not rows:
+            raise HTTPException(status_code=403, detail="Kode edit atau nomor HP tidak cocok.")
+
+        current = rows[0]
+
+        donor_name = payload.donor_name if payload.donor_name is not None else current["donor_name"]
+        item_name = payload.item_name if payload.item_name is not None else current["item_name"]
+        quantity = payload.quantity if payload.quantity is not None else current["quantity"]
+        unit = payload.unit if payload.unit is not None else current["unit"]
+        pickup_location = payload.pickup_location if payload.pickup_location is not None else current["pickup_location"]
+        ready_at = payload.ready_at if payload.ready_at is not None else current["ready_at"]
+        delivery_mode = payload.delivery_mode if payload.delivery_mode is not None else current["delivery_mode"]
+        target_node_id = payload.target_node_id if payload.target_node_id is not None else current["target_node_id"]
+        target_node_name = payload.target_node_name if payload.target_node_name is not None else current["target_node_name"]
+        expected_arrival_at = payload.expected_arrival_at if payload.expected_arrival_at is not None else current["expected_arrival_at"]
+        notes = payload.notes if payload.notes is not None else current["notes"]
+
+        status = payload.status if payload.status is not None else normalize_public_aid_status(delivery_mode, current["status"])
+
+        cur.execute("""
+        UPDATE aid_offers
+        SET donor_name = %s,
+            item_name = %s,
+            quantity = %s,
+            unit = %s,
+            pickup_location = %s,
+            ready_at = %s,
+            delivery_mode = %s,
+            target_node_id = %s,
+            target_node_name = %s,
+            expected_arrival_at = %s,
+            notes = %s,
+            status = %s,
+            last_edited_at = NOW(),
+            edit_count = COALESCE(edit_count, 0) + 1
+        WHERE id = %s
+        RETURNING *;
+        """, (
+            donor_name,
+            item_name,
+            quantity,
+            unit,
+            pickup_location,
+            ready_at,
+            delivery_mode,
+            target_node_id,
+            target_node_name,
+            expected_arrival_at,
+            notes,
+            status,
+            aid_offer_id,
+        ))
+
+        updated = rows_to_dicts(cur)[0]
+        conn.commit()
+
+    return updated

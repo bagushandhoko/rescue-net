@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | AI Situation Analyst</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=ai-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a class="active" href="ai-analyst.html">AI Situation Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Decision Intelligence Layer</p>
+        <h2>AI Situation Analyst</h2>
+        <p class="subtitle">
+          AI membaca data Rescue-Net sesuai hak akses user/organisasi untuk membantu analisa situasi,
+          prioritas logistik, distribusi, relawan, posko, evidence, dan briefing pengambil keputusan.
+        </p>
+      </div>
+      <div class="status-pill">BYOK · User/Org AI Key</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Critical Needs</span><strong>Analyze</strong><small>logistik & posko</small></div>
+      <div class="kpi-card warning"><span>Distribution Risk</span><strong>Detect</strong><small>bantuan tersumbat</small></div>
+      <div class="kpi-card"><span>Decision Briefing</span><strong>Generate</strong><small>war room summary</small></div>
+      <div class="kpi-card"><span>Data Sources</span><strong>Cited</strong><small>traceable answer</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Ask Rescue-Net AI</h3>
+            <p>Prototype UI. Backend AI chat akan memakai key milik user/organisasi.</p>
+          </div>
+        </div>
+
+        <form class="rn-form">
+          <div class="form-grid">
+            <label>
+              Disaster Event
+              <select>
+                <option>Gempa Aceh Barat 2025</option>
+                <option>Banjir Luwu 2025</option>
+              </select>
+            </label>
+
+            <label>
+              AI Account
+              <select>
+                <option>My Personal AI Key</option>
+                <option>Organization AI Key</option>
+                <option>Local AI Gateway</option>
+              </select>
+            </label>
+          </div>
+
+          <label style="display:grid;gap:7px;margin-top:12px;">
+            Pertanyaan
+            <input placeholder="Contoh: Apa prioritas distribusi 24 jam ke depan?">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="button">Analyze Situation</button>
+          </div>
+        </form>
+
+        <div class="success-box">
+          <h3>Contoh Output AI</h3>
+          <p><b>Fakta:</b> Ada kebutuhan air minum critical dan beberapa bantuan masih need pickup.</p>
+          <p><b>Estimasi:</b> Jika pickup tersedia hari ini, bantuan dapat masuk ke rantai distribusi lebih cepat.</p>
+          <p><b>Rekomendasi:</b> Prioritaskan matching antara aid-offers air mineral, relawan pickup, dan transport space.</p>
+          <p><b>Sources:</b> logistic_needs, aid_offers, transport_spaces, posko_nodes.</p>
+        </div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>AI Guardrails</h3>
+        <div class="summary-list">
+          <div><span>Permission</span><b>berdasarkan role</b></div>
+          <div><span>Secret Key</span><b>user/org owned</b></div>
+          <div><span>Privacy</span><b>no public phone leak</b></div>
+          <div><span>Medical</span><b>restricted data</b></div>
+          <div><span>Answer</span><b>must cite sources</b></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+</div>
+</body>
+</html>

@@ -3,35 +3,148 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | Distribusi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=viewer-menu-1">
+  <title>Rescue-Net | Management Distribusi</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=distribusi-1">
 </head>
-<body class="viewer-page">
-<div class="viewer-shell">
-  <header class="viewer-nav">
-    <div class="viewer-brand">
-      <div class="viewer-logo">RN</div>
-      <div><strong>Rescue-Net</strong><span>Disaster Management System</span></div>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
     </div>
-    <nav class="viewer-links">
+
+    <nav>
       <a href="../index.html">Active Disasters</a>
       <a href="war-room.html">War Room</a>
-      <a href="posko-logistik.html">Logistik</a>
-      <a href="posko-medis.html">Medis</a>
-      <a class="active" href="management-distribusi.html">Distribusi</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
       <a href="management-relawan.html">Relawan</a>
-      <a href="alat-kerja.html">Alat Kerja</a>
-      <a href="search-found.html">Search & Found</a>
-      <a href="organisasi-posko.html">Organisasi</a>
-      <a href="verification-approval.html">Verification</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a class="active" href="management-distribusi.html">Distribusi</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="ai-analyst.html">AI Analyst</a>
     </nav>
-  </header>
+  </aside>
 
-  <main class="viewer-stage">
-    <section class="viewer-card">
-      <img class="viewer-img" src="../assets/img/a_widescreen_ui_dashboard_mockup_screenshot_of_an.png" alt="Distribusi Mockup">
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Aid Flow & Transport Matching</p>
+        <h2>Management Distribusi</h2>
+        <p class="subtitle">
+          Menghubungkan bantuan dari donatur, kebutuhan posko, relawan pickup, dan penyedia transport
+          menjadi aliran distribusi yang bisa dipantau.
+        </p>
+      </div>
+      <div class="status-pill">Live API · PostgreSQL</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card warning"><span>Need Pickup</span><strong>Live</strong><small>aid offers</small></div>
+      <div class="kpi-card"><span>Self Delivery</span><strong>Live</strong><small>incoming posko</small></div>
+      <div class="kpi-card"><span>Transport Space</span><strong>Live</strong><small>available capacity</small></div>
+      <div class="kpi-card danger"><span>Distribution Flow</span><strong>Track</strong><small>end-to-end</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Bantuan Perlu Pickup</h3>
+            <p>Donatur sudah input bantuan, tapi butuh dijemput relawan/transport.</p>
+          </div>
+        </div>
+        <div class="event-list" data-need-pickup></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Donatur Antar Sendiri</h3>
+        <p class="subtitle">Bantuan yang direncanakan masuk langsung ke posko.</p>
+        <div class="event-list" data-self-delivery></div>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Tambah Transport Space</h3>
+          <p>Penyedia transport seperti komunitas mobil, kapal, pelni, maskapai, truk, pickup, atau relawan driver.</p>
+        </div>
+      </div>
+
+      <form class="rn-form" data-create-transport>
+        <div class="form-grid">
+          <label>Disaster Event ID <input name="disaster_event_id" value="event-aceh-2025" required></label>
+          <label>Provider <input name="provider_name" placeholder="Komunitas Pickup Jakarta" required></label>
+          <label>Jenis <input name="transport_type" placeholder="darat / laut / udara" required></label>
+          <label>Asal <input name="route_origin" placeholder="Depok" required></label>
+          <label>Tujuan <input name="route_destination" placeholder="Bandara Halim / Pelabuhan" required></label>
+          <label>Kapasitas KG <input name="capacity_weight_kg" type="number" step="0.01" placeholder="1200"></label>
+          <label>Kapasitas M3 <input name="capacity_volume_m3" type="number" step="0.01" placeholder="6"></label>
+          <label>Berangkat <input name="departure_time" placeholder="Hari ini 16:00"></label>
+          <label>ETA <input name="eta" placeholder="Hari ini 18:00"></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Transport</button>
+          <span class="form-message" data-transport-message></span>
+        </div>
+      </form>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Transport Space Tersedia</h3>
+            <p>Live dari /transport-spaces.</p>
+          </div>
+        </div>
+        <div class="event-list" data-transport-spaces></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Buat Distribution Flow</h3>
+        <p class="subtitle">Manual matching awal antara bantuan dan transport.</p>
+
+        <form class="rn-form" data-create-flow>
+          <label>Disaster Event ID <input name="disaster_event_id" value="event-aceh-2025" required></label>
+          <label>Need ID <input name="need_id" placeholder="optional"></label>
+          <label>Aid Offer ID <input name="aid_offer_id" placeholder="aid-..." required></label>
+          <label>Transport ID <input name="transport_space_id" placeholder="transport-..." required></label>
+          <label>Destination Node ID <input name="destination_node_id" value="posko-logistik-aceh"></label>
+          <label>ETA Final <input name="eta_final" placeholder="Besok 18:00"></label>
+          <label>Status
+            <select name="status">
+              <option value="planned">planned</option>
+              <option value="assigned_pickup">assigned_pickup</option>
+              <option value="in_transit">in_transit</option>
+              <option value="arrived_at_posko">arrived_at_posko</option>
+            </select>
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan Flow</button>
+          </div>
+          <span class="form-message" data-flow-message></span>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Distribution Flow</h3>
+          <p>Live dari /distribution-flows.</p>
+        </div>
+      </div>
+      <div class="event-list" data-distribution-flows></div>
     </section>
   </main>
 </div>
+
+<script src="../assets/js/distribusi.js?v=1"></script>
 </body>
 </html>

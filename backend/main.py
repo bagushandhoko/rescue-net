@@ -1802,3 +1802,230 @@ def verify_aid_received(payload: AidReceiveVerify):
             "distribution_flow": flow_row
         }
 
+
+class StockTransferCreate(BaseModel):
+    disaster_event_id: str
+    source_posko_id: str
+    destination_posko_id: str
+    item_name: str
+    quantity: float
+    unit: str
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = "posko-operator"
+
+
+@app.post("/stock-transfer")
+def create_stock_transfer(payload: StockTransferCreate):
+    out_id = "stock-" + uuid.uuid4().hex[:12]
+    in_id = "stock-" + uuid.uuid4().hex[:12]
+    flow_id = "flow-" + uuid.uuid4().hex[:12]
+
+    if payload.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Quantity must be positive")
+
+    with get_conn() as conn, conn.cursor() as cur:
+        # Check current source stock
+        cur.execute("""
+        SELECT
+          COALESCE(SUM(
+            CASE
+              WHEN movement_direction = 'in' THEN quantity
+              WHEN movement_direction = 'out' THEN -quantity
+              ELSE 0
+            END
+          ), 0) AS current_quantity
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND item_name = %s
+          AND unit = %s
+          AND deleted_at IS NULL;
+        """, (payload.source_posko_id, payload.item_name, payload.unit))
+        current_qty = rows_to_dicts(cur)[0]["current_quantity"] or 0
+
+        if float(current_qty) < payload.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient stock. Current stock is {current_qty} {payload.unit}"
+            )
+
+        # Out from source posko
+        cur.execute("""
+        INSERT INTO stock_movements
+        (id, disaster_event_id, posko_id, item_name, quantity, unit,
+         movement_type, movement_direction, source_type, source_id,
+         destination_type, destination_id, notes,
+         owner_type, owner_id, verification_status, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,
+         'transfer_out','out','posko',%s,
+         'posko',%s,%s,
+         'posko',%s,'self_reported',%s)
+        RETURNING *;
+        """, (
+            out_id,
+            payload.disaster_event_id,
+            payload.source_posko_id,
+            payload.item_name,
+            payload.quantity,
+            payload.unit,
+            payload.source_posko_id,
+            payload.destination_posko_id,
+            payload.notes,
+            payload.source_posko_id,
+            payload.created_by_user_id,
+        ))
+        out_row = rows_to_dicts(cur)[0]
+
+        # In to destination posko
+        cur.execute("""
+        INSERT INTO stock_movements
+        (id, disaster_event_id, posko_id, item_name, quantity, unit,
+         movement_type, movement_direction, source_type, source_id,
+         destination_type, destination_id, notes,
+         owner_type, owner_id, verification_status, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,
+         'transfer_in','in','posko',%s,
+         'posko',%s,%s,
+         'posko',%s,'self_reported',%s)
+        RETURNING *;
+        """, (
+            in_id,
+            payload.disaster_event_id,
+            payload.destination_posko_id,
+            payload.item_name,
+            payload.quantity,
+            payload.unit,
+            payload.source_posko_id,
+            payload.destination_posko_id,
+            payload.notes,
+            payload.destination_posko_id,
+            payload.created_by_user_id,
+        ))
+        in_row = rows_to_dicts(cur)[0]
+
+        # Create distribution flow for traceability
+        cur.execute("""
+        INSERT INTO distribution_flows
+        (id, disaster_event_id, destination_node_id, eta_final, status)
+        VALUES (%s,%s,%s,%s,'stock_transferred')
+        RETURNING *;
+        """, (
+            flow_id,
+            payload.disaster_event_id,
+            payload.destination_posko_id,
+            "internal transfer",
+        ))
+        flow_row = rows_to_dicts(cur)[0]
+
+        conn.commit()
+
+        return {
+            "status": "stock_transferred",
+            "source_stock_out": out_row,
+            "destination_stock_in": in_row,
+            "distribution_flow": flow_row
+        }
+
+
+class StockTransferCreate(BaseModel):
+    disaster_event_id: str
+    source_posko_id: str
+    destination_posko_id: str
+    item_name: str
+    quantity: float
+    unit: str
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = "posko-operator"
+
+@app.post("/stock-transfer")
+def create_stock_transfer(payload: StockTransferCreate):
+    out_id = "stock-" + uuid.uuid4().hex[:12]
+    in_id = "stock-" + uuid.uuid4().hex[:12]
+    flow_id = "flow-" + uuid.uuid4().hex[:12]
+
+    if payload.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Quantity must be positive")
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT COALESCE(SUM(
+            CASE
+              WHEN movement_direction = 'in' THEN quantity
+              WHEN movement_direction = 'out' THEN -quantity
+              ELSE 0
+            END
+        ), 0) AS current_quantity
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND item_name = %s
+          AND unit = %s
+          AND deleted_at IS NULL;
+        """, (payload.source_posko_id, payload.item_name, payload.unit))
+        current_qty = rows_to_dicts(cur)[0]["current_quantity"] or 0
+
+        if float(current_qty) < payload.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Insufficient stock. Current stock is {current_qty} {payload.unit}"
+            )
+
+        cur.execute("""
+        INSERT INTO stock_movements
+        (id, disaster_event_id, posko_id, item_name, quantity, unit,
+         movement_type, movement_direction, source_type, source_id,
+         destination_type, destination_id, notes,
+         owner_type, owner_id, verification_status, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,
+         'transfer_out','out','posko',%s,
+         'posko',%s,%s,
+         'posko',%s,'self_reported',%s)
+        RETURNING *;
+        """, (
+            out_id, payload.disaster_event_id, payload.source_posko_id,
+            payload.item_name, payload.quantity, payload.unit,
+            payload.source_posko_id, payload.destination_posko_id,
+            payload.notes, payload.source_posko_id, payload.created_by_user_id
+        ))
+        out_row = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        INSERT INTO stock_movements
+        (id, disaster_event_id, posko_id, item_name, quantity, unit,
+         movement_type, movement_direction, source_type, source_id,
+         destination_type, destination_id, notes,
+         owner_type, owner_id, verification_status, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,
+         'transfer_in','in','posko',%s,
+         'posko',%s,%s,
+         'posko',%s,'self_reported',%s)
+        RETURNING *;
+        """, (
+            in_id, payload.disaster_event_id, payload.destination_posko_id,
+            payload.item_name, payload.quantity, payload.unit,
+            payload.source_posko_id, payload.destination_posko_id,
+            payload.notes, payload.destination_posko_id, payload.created_by_user_id
+        ))
+        in_row = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        INSERT INTO distribution_flows
+        (id, disaster_event_id, destination_node_id, eta_final, status)
+        VALUES (%s,%s,%s,%s,'stock_transferred')
+        RETURNING *;
+        """, (
+            flow_id, payload.disaster_event_id,
+            payload.destination_posko_id, "internal transfer"
+        ))
+        flow_row = rows_to_dicts(cur)[0]
+
+        conn.commit()
+
+        return {
+            "status": "stock_transferred",
+            "source_stock_out": out_row,
+            "destination_stock_in": in_row,
+            "distribution_flow": flow_row
+        }

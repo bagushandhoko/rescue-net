@@ -93,6 +93,7 @@ function renderNeeds(items) {
 }
 
 
+
 function renderIncomingAid(items) {
   const el = document.getElementById("incomingAid");
 
@@ -216,7 +217,44 @@ function setupStockForm() {
   });
 }
 
+
+function setupTransferForm() {
+  const form = document.getElementById("transferForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    if (!POSKO_CONTEXT_CACHE) {
+      await loadPosko();
+    }
+
+    const ctx = POSKO_CONTEXT_CACHE;
+    const payload = {
+      disaster_event_id: ctx.posko.disaster_event_id,
+      source_posko_id: getPoskoId(),
+      destination_posko_id: form.destination_posko_id.value.trim(),
+      item_name: form.item_name.value.trim(),
+      quantity: Number(form.quantity.value || 0),
+      unit: form.unit.value.trim(),
+      notes: form.notes.value.trim(),
+      created_by_user_id: "operator-posko"
+    };
+
+    setStatus("Transferring stock...");
+    await api("/stock-transfer", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+
+    setStatus("Stock transferred.");
+    await loadPosko();
+  });
+}
+
+
 document.addEventListener("DOMContentLoaded", () => {
   setupStockForm();
+  setupTransferForm();
   loadPosko().catch(err => setStatus(err.message));
 });

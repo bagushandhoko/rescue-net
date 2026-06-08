@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Detail</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=posko-detail-2">
+  <link rel="stylesheet" href="../assets/css/style.css?v=posko-detail-4">
 </head>
 <body>
 <div class="app-shell">
@@ -119,6 +119,39 @@
       </aside>
     </section>
 
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Transfer Stock to Another Posko</h3>
+          <p>Kirim stok dari posko ini ke Dapur Umum, Posko Medis, Shelter, atau posko lain.</p>
+        </div>
+      </div>
+
+      <form class="rn-form" id="transferForm">
+        <div class="form-grid">
+          <label>Destination Posko ID
+            <input name="destination_posko_id" value="posko-dapur-melati" required>
+          </label>
+          <label>Item Name
+            <input name="item_name" value="Air Mineral" required>
+          </label>
+          <label>Quantity
+            <input name="quantity" type="number" value="5" required>
+          </label>
+          <label>Unit
+            <input name="unit" value="dus" required>
+          </label>
+          <label>Notes
+            <input name="notes" value="Transfer stok dari posko logistik.">
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Transfer Stock</button>
+        </div>
+      </form>
+    </section>
+
     <section class="content-grid">
       <div class="panel">
         <div class="panel-header">
@@ -148,6 +181,6 @@
   </main>
 </div>
 
-<script src="../assets/js/posko-detail.js?v=2"></script>
+<script src="../assets/js/posko-detail.js?v=4"></script>
 </body>
 </html>

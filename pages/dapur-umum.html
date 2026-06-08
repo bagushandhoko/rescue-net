@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Dapur Umum</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=dapur-umum-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a class="active" href="dapur-umum.html">Dapur Umum</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Kitchen / Meal Production</p>
+        <h2 id="kitchenTitle">Dapur Umum</h2>
+        <p class="subtitle" id="kitchenSubtitle">Loading...</p>
+        <p class="subtitle" id="kitchenStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Kitchen · Live Stock</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Posko</span><strong id="kpiPosko">-</strong><small>kitchen node</small></div>
+      <div class="kpi-card"><span>Stock Items</span><strong id="kpiStock">0</strong><small>available items</small></div>
+      <div class="kpi-card warning"><span>Meals</span><strong id="kpiMeals">0</strong><small>productions</small></div>
+      <div class="kpi-card"><span>Last Update</span><strong id="kpiUpdate">-</strong><small>server time</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Kitchen Stock</h3>
+            <p>Saldo bahan dan barang yang tersedia di dapur umum.</p>
+          </div>
+        </div>
+        <div class="event-list" id="kitchenStock"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Record Meal Production</h3>
+        <p class="subtitle">Catat produksi makanan dan otomatis kurangi stok bahan.</p>
+
+        <form class="rn-form" id="mealForm">
+          <label>Kitchen Posko ID
+            <input name="posko_id" value="posko-dapur-melati" required>
+          </label>
+          <label>Meal Name
+            <input name="meal_name" value="Nasi Bungkus Darurat" required>
+          </label>
+          <label>Portions
+            <input name="portions" type="number" value="100" required>
+          </label>
+          <label>Production Time
+            <input name="production_time" value="Hari ini">
+          </label>
+          <label>Target Distribution Location
+            <input name="target_distribution_location" value="Shelter warga Gang Melati">
+          </label>
+
+          <hr>
+
+          <label>Ingredient Item
+            <input name="ingredient_item_name" value="Air Mineral" required>
+          </label>
+          <label>Ingredient Quantity
+            <input name="ingredient_quantity" type="number" value="1" required>
+          </label>
+          <label>Ingredient Unit
+            <input name="ingredient_unit" value="dus" required>
+          </label>
+          <label>Notes
+            <input name="notes" value="Produksi makanan dari dapur umum.">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Meal Production</button>
+            <button class="btn" type="button" id="refreshKitchen">Refresh</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Meal Productions</h3>
+            <p>Riwayat produksi makanan dapur umum.</p>
+          </div>
+        </div>
+        <div class="event-list" id="mealProductions"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Stock Movements</h3>
+        <p class="subtitle">Pergerakan stok dapur, termasuk penggunaan bahan.</p>
+        <div class="event-list" id="kitchenMovements"></div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/dapur-umum.js?v=1"></script>
+</body>
+</html>

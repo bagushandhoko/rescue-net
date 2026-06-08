@@ -2029,3 +2029,181 @@ def create_stock_transfer(payload: StockTransferCreate):
             "destination_stock_in": in_row,
             "distribution_flow": flow_row
         }
+
+class KitchenMealProductionCreate(BaseModel):
+    disaster_event_id: str
+    posko_id: str
+    meal_name: str
+    portions: int
+    production_time: Optional[str] = None
+    target_distribution_location: Optional[str] = None
+    ingredients: list[dict] = []
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = "kitchen-operator"
+
+@app.get("/kitchen-context/{posko_id}")
+def get_kitchen_context(posko_id: str):
+    result = {
+        "posko_context": None,
+        "meal_productions": [],
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        # reuse posko context logic by reading same data directly
+        cur.execute("SELECT * FROM posko_nodes WHERE id = %s;", (posko_id,))
+        posko_rows = rows_to_dicts(cur)
+        if not posko_rows:
+            raise HTTPException(status_code=404, detail="Kitchen posko not found")
+
+        posko = posko_rows[0]
+
+        cur.execute("""
+        SELECT
+          item_name,
+          unit,
+          SUM(
+            CASE
+              WHEN movement_direction = 'in' THEN quantity
+              WHEN movement_direction = 'out' THEN -quantity
+              ELSE 0
+            END
+          ) AS current_quantity
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        GROUP BY item_name, unit
+        ORDER BY item_name;
+        """, (posko_id,))
+        stock_summary = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 100;
+        """, (posko_id,))
+        stock_movements = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM kitchen_meal_productions
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (posko_id,))
+        meals = rows_to_dicts(cur)
+
+        result["posko_context"] = {
+            "posko": posko,
+            "stock_summary": stock_summary,
+            "stock_movements": stock_movements,
+        }
+        result["meal_productions"] = meals
+
+    return result
+
+@app.post("/kitchen-meal-production")
+def create_kitchen_meal_production(payload: KitchenMealProductionCreate):
+    meal_id = "meal-" + uuid.uuid4().hex[:12]
+
+    if payload.portions <= 0:
+        raise HTTPException(status_code=400, detail="Portions must be positive")
+
+    with get_conn() as conn, conn.cursor() as cur:
+        # Check stock for each ingredient before deducting
+        for ing in payload.ingredients:
+            item_name = ing.get("item_name")
+            quantity = float(ing.get("quantity", 0))
+            unit = ing.get("unit")
+
+            if not item_name or quantity <= 0 or not unit:
+                raise HTTPException(status_code=400, detail="Each ingredient needs item_name, quantity, and unit")
+
+            cur.execute("""
+            SELECT COALESCE(SUM(
+                CASE
+                  WHEN movement_direction = 'in' THEN quantity
+                  WHEN movement_direction = 'out' THEN -quantity
+                  ELSE 0
+                END
+            ), 0) AS current_quantity
+            FROM stock_movements
+            WHERE posko_id = %s
+              AND item_name = %s
+              AND unit = %s
+              AND deleted_at IS NULL;
+            """, (payload.posko_id, item_name, unit))
+            current_qty = rows_to_dicts(cur)[0]["current_quantity"] or 0
+
+            if float(current_qty) < quantity:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient stock for {item_name}. Current stock is {current_qty} {unit}"
+                )
+
+        # Create meal production row
+        cur.execute("""
+        INSERT INTO kitchen_meal_productions
+        (id, disaster_event_id, posko_id, meal_name, portions,
+         production_time, target_distribution_location, status,
+         ingredients_json, notes, owner_type, owner_id,
+         verification_status, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,'prepared',%s,%s,'posko',%s,'self_reported',%s)
+        RETURNING *;
+        """, (
+            meal_id,
+            payload.disaster_event_id,
+            payload.posko_id,
+            payload.meal_name,
+            payload.portions,
+            payload.production_time,
+            payload.target_distribution_location,
+            json.dumps(payload.ingredients, default=str),
+            payload.notes,
+            payload.posko_id,
+            payload.created_by_user_id,
+        ))
+        meal_row = rows_to_dicts(cur)[0]
+
+        # Deduct ingredients as stock_out
+        ingredient_movements = []
+        for ing in payload.ingredients:
+            stock_id = "stock-" + uuid.uuid4().hex[:12]
+            cur.execute("""
+            INSERT INTO stock_movements
+            (id, disaster_event_id, posko_id, item_name, quantity, unit,
+             movement_type, movement_direction, source_type, source_id,
+             destination_type, destination_id, notes,
+             owner_type, owner_id, verification_status, created_by_user_id)
+            VALUES
+            (%s,%s,%s,%s,%s,%s,
+             'kitchen_use','out','stock',%s,
+             'kitchen_meal',%s,%s,
+             'posko',%s,'self_reported',%s)
+            RETURNING *;
+            """, (
+                stock_id,
+                payload.disaster_event_id,
+                payload.posko_id,
+                ing.get("item_name"),
+                float(ing.get("quantity", 0)),
+                ing.get("unit"),
+                payload.posko_id,
+                meal_id,
+                f"Used for meal production: {payload.meal_name}",
+                payload.posko_id,
+                payload.created_by_user_id,
+            ))
+            ingredient_movements.append(rows_to_dicts(cur)[0])
+
+        conn.commit()
+
+        return {
+            "status": "prepared",
+            "meal_production": meal_row,
+            "ingredient_stock_movements": ingredient_movements
+        }

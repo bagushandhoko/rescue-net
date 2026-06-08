@@ -273,6 +273,28 @@ class VolunteerCreate(BaseModel):
     verification_status: str = "self_reported"
 
 
+class TransportSpaceCreate(BaseModel):
+    disaster_event_id: str
+    provider_name: str
+    transport_type: str
+    route_origin: str
+    route_destination: str
+    capacity_weight_kg: float = 0
+    capacity_volume_m3: float = 0
+    departure_time: Optional[str] = None
+    eta: Optional[str] = None
+    status: str = "available"
+
+class DistributionFlowCreate(BaseModel):
+    disaster_event_id: str
+    need_id: Optional[str] = None
+    aid_offer_id: Optional[str] = None
+    transport_space_id: Optional[str] = None
+    destination_node_id: Optional[str] = None
+    eta_final: Optional[str] = None
+    status: str = "planned"
+
+
 class PublicAidOfferCreate(BaseModel):
     disaster_event_id: str
     donor_name: str
@@ -510,11 +532,64 @@ def get_transport_spaces():
         cur.execute("SELECT * FROM transport_spaces ORDER BY created_at DESC;")
         return rows_to_dicts(cur)
 
+
+@app.post("/transport-spaces")
+def create_transport_space(payload: TransportSpaceCreate):
+    item_id = "transport-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO transport_spaces
+        (id, disaster_event_id, provider_name, transport_type, route_origin, route_destination,
+         capacity_weight_kg, capacity_volume_m3, departure_time, eta, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            item_id,
+            payload.disaster_event_id,
+            payload.provider_name,
+            payload.transport_type,
+            payload.route_origin,
+            payload.route_destination,
+            payload.capacity_weight_kg,
+            payload.capacity_volume_m3,
+            payload.departure_time,
+            payload.eta,
+            payload.status,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
 @app.get("/distribution-flows")
 def get_distribution_flows():
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("SELECT * FROM distribution_flows ORDER BY created_at DESC;")
         return rows_to_dicts(cur)
+
+
+@app.post("/distribution-flows")
+def create_distribution_flow(payload: DistributionFlowCreate):
+    item_id = "flow-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO distribution_flows
+        (id, disaster_event_id, need_id, aid_offer_id, transport_space_id,
+         destination_node_id, eta_final, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            item_id,
+            payload.disaster_event_id,
+            payload.need_id,
+            payload.aid_offer_id,
+            payload.transport_space_id,
+            payload.destination_node_id,
+            payload.eta_final,
+            payload.status,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
 
 @app.get("/evidence")
 def get_evidence():
@@ -709,3 +784,248 @@ def public_update_aid_offer(aid_offer_id: str, payload: PublicAidOfferUpdate):
         conn.commit()
 
     return updated
+
+
+@app.get("/ai/context/{disaster_event_id}")
+def get_ai_context(disaster_event_id: str):
+    context = {
+        "disaster_event_id": disaster_event_id,
+        "generated_at": datetime.utcnow().isoformat(),
+        "disaster": None,
+        "poskos": [],
+        "logistic_needs": [],
+        "aid_offers": [],
+        "transport_spaces": [],
+        "distribution_flows": [],
+        "volunteers": [],
+        "summary": {},
+        "alerts": [],
+        "recommendations": [],
+        "sources": [],
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM disaster_events WHERE id = %s;", (disaster_event_id,))
+        rows = rows_to_dicts(cur)
+        context["disaster"] = rows[0] if rows else None
+
+        cur.execute("SELECT * FROM posko_nodes WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["poskos"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM logistic_needs WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["logistic_needs"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM aid_offers WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["aid_offers"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM transport_spaces WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["transport_spaces"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM distribution_flows WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["distribution_flows"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM volunteers ORDER BY created_at DESC LIMIT 50;")
+        context["volunteers"] = rows_to_dicts(cur)
+
+    needs = context["logistic_needs"]
+    offers = context["aid_offers"]
+    transports = context["transport_spaces"]
+    flows = context["distribution_flows"]
+    poskos = context["poskos"]
+    volunteers = context["volunteers"]
+
+    critical_needs = [n for n in needs if n.get("priority") == "critical" and n.get("status") == "open"]
+    urgent_needs = [n for n in needs if n.get("priority") == "urgent" and n.get("status") == "open"]
+    need_pickup = [a for a in offers if a.get("status") == "need_pickup" or a.get("delivery_mode") == "need_pickup"]
+    self_delivery = [a for a in offers if a.get("status") == "self_delivery_planned" or a.get("delivery_mode") == "self_deliver_to_posko"]
+    available_transports = [t for t in transports if t.get("status") == "available"]
+    planned_flows = [f for f in flows if f.get("status") == "planned"]
+
+    context["summary"] = {
+        "total_poskos": len(poskos),
+        "total_logistic_needs": len(needs),
+        "critical_needs": len(critical_needs),
+        "urgent_needs": len(urgent_needs),
+        "total_aid_offers": len(offers),
+        "aid_need_pickup": len(need_pickup),
+        "aid_self_delivery_planned": len(self_delivery),
+        "available_transport_spaces": len(available_transports),
+        "distribution_flows": len(flows),
+        "planned_distribution_flows": len(planned_flows),
+        "volunteers_listed": len(volunteers),
+    }
+
+    for n in critical_needs:
+        context["alerts"].append({
+            "level": "critical",
+            "type": "logistic_need",
+            "message": f"{n.get('item_name')} masih critical: {n.get('quantity_needed')} {n.get('unit')}, dibutuhkan sebelum {n.get('needed_before') or 'belum ditentukan'}.",
+            "source_table": "logistic_needs",
+            "source_id": n.get("id"),
+        })
+
+    for a in need_pickup:
+        context["alerts"].append({
+            "level": "warning",
+            "type": "aid_need_pickup",
+            "message": f"Bantuan {a.get('item_name')} dari {a.get('donor_name')} perlu pickup di {a.get('pickup_location')}.",
+            "source_table": "aid_offers",
+            "source_id": a.get("id"),
+        })
+
+    if critical_needs and need_pickup and available_transports:
+        context["recommendations"].append({
+            "priority": "high",
+            "message": "Ada kebutuhan critical, bantuan perlu pickup, dan transport tersedia. Prioritaskan matching bantuan dengan transport.",
+            "related_sources": {
+                "critical_needs": [n.get("id") for n in critical_needs[:5]],
+                "aid_offers": [a.get("id") for a in need_pickup[:5]],
+                "transport_spaces": [t.get("id") for t in available_transports[:5]],
+            }
+        })
+
+    if self_delivery:
+        context["recommendations"].append({
+            "priority": "medium",
+            "message": "Ada bantuan yang akan diantar sendiri ke posko. Posko tujuan perlu menyiapkan penerimaan dan verifikasi barang.",
+            "related_sources": {
+                "aid_offers": [a.get("id") for a in self_delivery[:5]]
+            }
+        })
+
+    for collection_name, table_name in [
+        ("poskos", "posko_nodes"),
+        ("logistic_needs", "logistic_needs"),
+        ("aid_offers", "aid_offers"),
+        ("transport_spaces", "transport_spaces"),
+        ("distribution_flows", "distribution_flows"),
+        ("volunteers", "volunteers"),
+    ]:
+        for item in context[collection_name]:
+            context["sources"].append({
+                "source_table": table_name,
+                "source_id": item.get("id"),
+            })
+
+    return context
+
+@app.get("/ai/context/{disaster_event_id}")
+def get_ai_context(disaster_event_id: str):
+    context = {
+        "disaster_event_id": disaster_event_id,
+        "generated_at": datetime.utcnow().isoformat(),
+        "disaster": None,
+        "poskos": [],
+        "logistic_needs": [],
+        "aid_offers": [],
+        "transport_spaces": [],
+        "distribution_flows": [],
+        "volunteers": [],
+        "summary": {},
+        "alerts": [],
+        "recommendations": [],
+        "sources": [],
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM disaster_events WHERE id = %s;", (disaster_event_id,))
+        rows = rows_to_dicts(cur)
+        context["disaster"] = rows[0] if rows else None
+
+        cur.execute("SELECT * FROM posko_nodes WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["poskos"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM logistic_needs WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["logistic_needs"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM aid_offers WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["aid_offers"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM transport_spaces WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["transport_spaces"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM distribution_flows WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["distribution_flows"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM volunteers ORDER BY created_at DESC LIMIT 50;")
+        context["volunteers"] = rows_to_dicts(cur)
+
+    needs = context["logistic_needs"]
+    offers = context["aid_offers"]
+    transports = context["transport_spaces"]
+    flows = context["distribution_flows"]
+
+    critical_needs = [n for n in needs if n.get("priority") == "critical" and n.get("status") == "open"]
+    urgent_needs = [n for n in needs if n.get("priority") == "urgent" and n.get("status") == "open"]
+    need_pickup = [a for a in offers if a.get("status") == "need_pickup" or a.get("delivery_mode") == "need_pickup"]
+    self_delivery = [a for a in offers if a.get("status") == "self_delivery_planned" or a.get("delivery_mode") == "self_deliver_to_posko"]
+    available_transports = [t for t in transports if t.get("status") == "available"]
+    planned_flows = [f for f in flows if f.get("status") == "planned"]
+
+    context["summary"] = {
+        "total_poskos": len(context["poskos"]),
+        "total_logistic_needs": len(needs),
+        "critical_needs": len(critical_needs),
+        "urgent_needs": len(urgent_needs),
+        "total_aid_offers": len(offers),
+        "aid_need_pickup": len(need_pickup),
+        "aid_self_delivery_planned": len(self_delivery),
+        "available_transport_spaces": len(available_transports),
+        "distribution_flows": len(flows),
+        "planned_distribution_flows": len(planned_flows),
+        "volunteers_listed": len(context["volunteers"]),
+    }
+
+    for n in critical_needs:
+        context["alerts"].append({
+            "level": "critical",
+            "type": "logistic_need",
+            "message": f"{n.get('item_name')} masih critical: {n.get('quantity_needed')} {n.get('unit')}, dibutuhkan sebelum {n.get('needed_before') or 'belum ditentukan'}.",
+            "source_table": "logistic_needs",
+            "source_id": n.get("id"),
+        })
+
+    for a in need_pickup:
+        context["alerts"].append({
+            "level": "warning",
+            "type": "aid_need_pickup",
+            "message": f"Bantuan {a.get('item_name')} dari {a.get('donor_name')} perlu pickup di {a.get('pickup_location')}.",
+            "source_table": "aid_offers",
+            "source_id": a.get("id"),
+        })
+
+    if critical_needs and need_pickup and available_transports:
+        context["recommendations"].append({
+            "priority": "high",
+            "message": "Ada kebutuhan critical, bantuan perlu pickup, dan transport tersedia. Prioritaskan matching bantuan dengan transport.",
+            "related_sources": {
+                "critical_needs": [n.get("id") for n in critical_needs[:5]],
+                "aid_offers": [a.get("id") for a in need_pickup[:5]],
+                "transport_spaces": [t.get("id") for t in available_transports[:5]],
+            }
+        })
+
+    if self_delivery:
+        context["recommendations"].append({
+            "priority": "medium",
+            "message": "Ada bantuan yang akan diantar sendiri ke posko. Posko tujuan perlu menyiapkan penerimaan dan verifikasi barang.",
+            "related_sources": {
+                "aid_offers": [a.get("id") for a in self_delivery[:5]]
+            }
+        })
+
+    for collection_name, table_name in [
+        ("poskos", "posko_nodes"),
+        ("logistic_needs", "logistic_needs"),
+        ("aid_offers", "aid_offers"),
+        ("transport_spaces", "transport_spaces"),
+        ("distribution_flows", "distribution_flows"),
+        ("volunteers", "volunteers"),
+    ]:
+        for item in context[collection_name]:
+            context["sources"].append({
+                "source_table": table_name,
+                "source_id": item.get("id"),
+            })
+
+    return context

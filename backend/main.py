@@ -1486,3 +1486,215 @@ def sync_pull(disaster_event_id: str, since: Optional[str] = None):
         result["sync_events"] = rows_to_dicts(cur)
 
     return result
+
+
+class StockMovementCreate(BaseModel):
+    disaster_event_id: str
+    posko_id: str
+    item_name: str
+    quantity: float
+    unit: str
+    movement_type: str = "stock_in"
+    movement_direction: str = "in"
+    source_type: Optional[str] = None
+    source_id: Optional[str] = None
+    destination_type: Optional[str] = None
+    destination_id: Optional[str] = None
+    related_aid_offer_id: Optional[str] = None
+    related_distribution_flow_id: Optional[str] = None
+    related_logistic_need_id: Optional[str] = None
+    notes: Optional[str] = None
+    evidence_file_id: Optional[str] = None
+    owner_type: Optional[str] = "posko"
+    owner_id: Optional[str] = None
+    visibility_scope: Optional[str] = "disaster_ecosystem"
+    access_policy: Optional[str] = "request_required"
+    verification_status: Optional[str] = "self_reported"
+
+
+@app.get("/stock-movements/{posko_id}")
+def get_stock_movements(posko_id: str):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT *
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (posko_id,))
+        return rows_to_dicts(cur)
+
+
+@app.post("/stock-movements")
+def create_stock_movement(payload: StockMovementCreate):
+    item_id = "stock-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO stock_movements
+        (id, disaster_event_id, posko_id, item_name, quantity, unit,
+         movement_type, movement_direction, source_type, source_id,
+         destination_type, destination_id, related_aid_offer_id,
+         related_distribution_flow_id, related_logistic_need_id,
+         notes, evidence_file_id, owner_type, owner_id,
+         visibility_scope, access_policy, verification_status)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            item_id,
+            payload.disaster_event_id,
+            payload.posko_id,
+            payload.item_name,
+            payload.quantity,
+            payload.unit,
+            payload.movement_type,
+            payload.movement_direction,
+            payload.source_type,
+            payload.source_id,
+            payload.destination_type,
+            payload.destination_id,
+            payload.related_aid_offer_id,
+            payload.related_distribution_flow_id,
+            payload.related_logistic_need_id,
+            payload.notes,
+            payload.evidence_file_id,
+            payload.owner_type,
+            payload.owner_id or payload.posko_id,
+            payload.visibility_scope,
+            payload.access_policy,
+            payload.verification_status,
+        ))
+
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+
+
+@app.get("/posko-context/{posko_id}")
+def get_posko_context(posko_id: str):
+    result = {
+        "posko": None,
+        "organization": None,
+        "disaster": None,
+        "logistic_needs": [],
+        "incoming_aid": [],
+        "stock_movements": [],
+        "stock_summary": [],
+        "distribution_flows": [],
+        "volunteers": [],
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM posko_nodes WHERE id = %s;", (posko_id,))
+        rows = rows_to_dicts(cur)
+        if not rows:
+            raise HTTPException(status_code=404, detail="Posko not found")
+
+        result["posko"] = rows[0]
+        disaster_event_id = result["posko"].get("disaster_event_id")
+        organization_id = result["posko"].get("organization_id")
+        posko_name = result["posko"].get("name") or posko_id
+
+        if organization_id:
+            cur.execute("SELECT * FROM organizations WHERE id = %s;", (organization_id,))
+            org_rows = rows_to_dicts(cur)
+            result["organization"] = org_rows[0] if org_rows else None
+
+        if disaster_event_id:
+            cur.execute("SELECT * FROM disaster_events WHERE id = %s;", (disaster_event_id,))
+            dis_rows = rows_to_dicts(cur)
+            result["disaster"] = dis_rows[0] if dis_rows else None
+
+        # logistic_needs schema-safe
+        cur.execute("""
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'logistic_needs';
+        """)
+        need_cols = {r["column_name"] for r in rows_to_dicts(cur)}
+
+        if "posko_id" in need_cols:
+            cur.execute("SELECT * FROM logistic_needs WHERE posko_id = %s ORDER BY created_at DESC;", (posko_id,))
+        elif "node_id" in need_cols:
+            cur.execute("SELECT * FROM logistic_needs WHERE node_id = %s ORDER BY created_at DESC;", (posko_id,))
+        elif "posko_node_id" in need_cols:
+            cur.execute("SELECT * FROM logistic_needs WHERE posko_node_id = %s ORDER BY created_at DESC;", (posko_id,))
+        elif "disaster_event_id" in need_cols:
+            cur.execute("SELECT * FROM logistic_needs WHERE disaster_event_id = %s ORDER BY created_at DESC LIMIT 50;", (disaster_event_id,))
+        else:
+            cur.execute("SELECT * FROM logistic_needs ORDER BY created_at DESC LIMIT 50;")
+        result["logistic_needs"] = rows_to_dicts(cur)
+
+        # incoming aid to this posko
+        cur.execute("""
+        SELECT *
+        FROM aid_offers
+        WHERE target_node_id = %s
+           OR target_node_name = %s
+           OR target_node_name = %s
+        ORDER BY created_at DESC;
+        """, (posko_id, posko_id, posko_name))
+        result["incoming_aid"] = rows_to_dicts(cur)
+
+        # stock movements, only if table exists
+        cur.execute("""
+        SELECT EXISTS (
+          SELECT 1 FROM information_schema.tables
+          WHERE table_schema = 'public'
+            AND table_name = 'stock_movements'
+        ) AS exists;
+        """)
+        stock_exists = rows_to_dicts(cur)[0]["exists"]
+
+        if stock_exists:
+            cur.execute("""
+            SELECT *
+            FROM stock_movements
+            WHERE posko_id = %s
+              AND deleted_at IS NULL
+            ORDER BY created_at DESC;
+            """, (posko_id,))
+            result["stock_movements"] = rows_to_dicts(cur)
+
+            cur.execute("""
+            SELECT
+              item_name,
+              unit,
+              SUM(
+                CASE
+                  WHEN movement_direction = 'in' THEN quantity
+                  WHEN movement_direction = 'out' THEN -quantity
+                  ELSE 0
+                END
+              ) AS current_quantity
+            FROM stock_movements
+            WHERE posko_id = %s
+              AND deleted_at IS NULL
+            GROUP BY item_name, unit
+            ORDER BY item_name;
+            """, (posko_id,))
+            result["stock_summary"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM distribution_flows
+        WHERE destination_node_id = %s
+        ORDER BY created_at DESC;
+        """, (posko_id,))
+        result["distribution_flows"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM volunteers
+        WHERE location ILIKE %s
+        ORDER BY created_at DESC
+        LIMIT 50;
+        """, (f"%{posko_name}%",))
+        result["volunteers"] = rows_to_dicts(cur)
+
+    return result
+

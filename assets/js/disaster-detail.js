@@ -106,6 +106,7 @@ function renderRequests(items) {
         <div class="chips">
           <span class="chip ${chipClass(r.status)}">${r.status}</span>
           <span class="chip neutral">${r.id}</span>
+          ${r.status === "requested" ? `<button class="btn primary" type="button" onclick="approveResourceRequest('${r.id}')">Approve</button>` : ""}
         </div>
       </div>
     </article>
@@ -135,11 +136,12 @@ async function loadDisasterDetail() {
   try {
     if (status) status.textContent = "Loading disaster ecosystem...";
 
-    const [disasters, members, resources, requests, aiContext] = await Promise.all([
+    const [disasters, members, resources, requests, assignments, aiContext] = await Promise.all([
       rnFetch("/disasters"),
       rnFetch(`/ecosystem-members/${disasterId}`),
       rnFetch(`/resources/${disasterId}`),
       rnFetch("/resource-requests"),
+      rnFetch("/resource-assignments"),
       rnFetch(`/ai/context/${disasterId}`)
     ]);
 
@@ -163,6 +165,7 @@ async function loadDisasterDetail() {
     renderMembers(members);
     renderResources(resources);
     renderRequests(requests);
+    renderAssignments(assignments);
     renderAISummary(aiContext.summary || {});
 
     if (status) status.textContent = `Loaded ecosystem for ${disasterId}.`;
@@ -170,6 +173,45 @@ async function loadDisasterDetail() {
   } catch (err) {
     if (status) status.textContent = err.message;
   }
+}
+
+
+function renderAssignments(items) {
+  const target = document.querySelector("[data-eco-assignments]");
+  if (!target) return;
+
+  target.innerHTML = items.length ? items.map(a => `
+    <article class="event-card">
+      <div class="event-main">
+        <div>
+          <h4>${a.resource_name || a.resource_id}</h4>
+          <p>assigned to: ${a.assigned_to_type}/${a.assigned_to_id}</p>
+          <p>assigned by: ${safe(a.assigned_by)} · quantity: ${safe(a.assigned_quantity)}</p>
+          <p>${a.assignment_notes || ""}</p>
+        </div>
+        <div class="chips">
+          <span class="chip warning">${a.status}</span>
+          <span class="chip neutral">${a.id}</span>
+        </div>
+      </div>
+    </article>
+  `).join("") : `<article class="event-card"><h4>Belum ada resource assignment</h4></article>`;
+}
+
+async function approveResourceRequest(requestId) {
+  const ok = confirm(`Approve resource request ${requestId}?`);
+  if (!ok) return;
+
+  await rnFetch(`/resource-requests/${requestId}/approve`, {
+    method: "POST",
+    body: JSON.stringify({
+      approved_by: "command-center",
+      assignment_notes: "Disetujui melalui Disaster Detail dashboard.",
+      assigned_quantity: 1
+    })
+  });
+
+  await loadDisasterDetail();
 }
 
 function setupRequestForm() {

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | AI Situation Analyst</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=ai-1">
+  <link rel="stylesheet" href="../assets/css/style.css?v=ai-live-1">
 </head>
 <body>
 <div class="app-shell">
@@ -35,80 +35,107 @@
         <p class="eyebrow">Decision Intelligence Layer</p>
         <h2>AI Situation Analyst</h2>
         <p class="subtitle">
-          AI membaca data Rescue-Net sesuai hak akses user/organisasi untuk membantu analisa situasi,
-          prioritas logistik, distribusi, relawan, posko, evidence, dan briefing pengambil keputusan.
+          AI-ready context dari data Rescue-Net: posko, kebutuhan, bantuan, transport, distribusi, dan relawan.
         </p>
       </div>
-      <div class="status-pill">BYOK · User/Org AI Key</div>
+      <div class="status-pill">Live Context · PostgreSQL</div>
     </header>
 
-    <section class="kpi-grid">
-      <div class="kpi-card danger"><span>Critical Needs</span><strong>Analyze</strong><small>logistik & posko</small></div>
-      <div class="kpi-card warning"><span>Distribution Risk</span><strong>Detect</strong><small>bantuan tersumbat</small></div>
-      <div class="kpi-card"><span>Decision Briefing</span><strong>Generate</strong><small>war room summary</small></div>
-      <div class="kpi-card"><span>Data Sources</span><strong>Cited</strong><small>traceable answer</small></div>
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3 data-ai-disaster-title>AI Context</h3>
+          <p data-ai-status>Loading...</p>
+        </div>
+        <button class="btn primary" type="button" data-refresh-ai-context>Refresh Context</button>
+      </div>
+
+      <form class="rn-form">
+        <div class="form-grid">
+          <label>
+            Disaster Event
+            <select data-ai-disaster>
+              <option value="event-aceh-2025">Gempa Aceh Barat 2025</option>
+              <option value="event-luwu-2025">Banjir Luwu 2025</option>
+            </select>
+          </label>
+
+          <label>
+            AI Account
+            <select>
+              <option>My Personal AI Key</option>
+              <option>Organization AI Key</option>
+              <option>Local AI Gateway</option>
+            </select>
+          </label>
+
+          <label>
+            Mode
+            <select>
+              <option>Situation Summary</option>
+              <option>Critical Needs Analysis</option>
+              <option>Distribution Matching</option>
+              <option>Decision Briefing</option>
+            </select>
+          </label>
+        </div>
+      </form>
     </section>
 
     <section class="content-grid">
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>Ask Rescue-Net AI</h3>
-            <p>Prototype UI. Backend AI chat akan memakai key milik user/organisasi.</p>
+            <h3>Live Summary</h3>
+            <p>Ringkasan angka dari endpoint /ai/context.</p>
           </div>
         </div>
-
-        <form class="rn-form">
-          <div class="form-grid">
-            <label>
-              Disaster Event
-              <select>
-                <option>Gempa Aceh Barat 2025</option>
-                <option>Banjir Luwu 2025</option>
-              </select>
-            </label>
-
-            <label>
-              AI Account
-              <select>
-                <option>My Personal AI Key</option>
-                <option>Organization AI Key</option>
-                <option>Local AI Gateway</option>
-              </select>
-            </label>
-          </div>
-
-          <label style="display:grid;gap:7px;margin-top:12px;">
-            Pertanyaan
-            <input placeholder="Contoh: Apa prioritas distribusi 24 jam ke depan?">
-          </label>
-
-          <div class="form-actions">
-            <button class="btn primary" type="button">Analyze Situation</button>
-          </div>
-        </form>
-
-        <div class="success-box">
-          <h3>Contoh Output AI</h3>
-          <p><b>Fakta:</b> Ada kebutuhan air minum critical dan beberapa bantuan masih need pickup.</p>
-          <p><b>Estimasi:</b> Jika pickup tersedia hari ini, bantuan dapat masuk ke rantai distribusi lebih cepat.</p>
-          <p><b>Rekomendasi:</b> Prioritaskan matching antara aid-offers air mineral, relawan pickup, dan transport space.</p>
-          <p><b>Sources:</b> logistic_needs, aid_offers, transport_spaces, posko_nodes.</p>
-        </div>
+        <div data-ai-summary></div>
       </div>
 
       <aside class="panel summary">
         <h3>AI Guardrails</h3>
         <div class="summary-list">
-          <div><span>Permission</span><b>berdasarkan role</b></div>
-          <div><span>Secret Key</span><b>user/org owned</b></div>
-          <div><span>Privacy</span><b>no public phone leak</b></div>
-          <div><span>Medical</span><b>restricted data</b></div>
-          <div><span>Answer</span><b>must cite sources</b></div>
+          <div><span>Permission</span><b>role-based</b></div>
+          <div><span>AI Key</span><b>user/org owned</b></div>
+          <div><span>Sources</span><b>traceable</b></div>
+          <div><span>Privacy</span><b>restricted</b></div>
+          <div><span>Decision</span><b>human final</b></div>
         </div>
       </aside>
     </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Alerts</h3>
+            <p>Peringatan otomatis dari kebutuhan critical dan bantuan yang perlu pickup.</p>
+          </div>
+        </div>
+        <div class="event-list" data-ai-alerts></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Recommendations</h3>
+        <p class="subtitle">Rekomendasi awal berbasis rule dari data Rescue-Net.</p>
+        <div class="event-list" data-ai-recommendations></div>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Answer Sources</h3>
+          <p>Sumber data yang dipakai untuk context AI. Nanti jawaban LLM wajib cite data ini.</p>
+        </div>
+      </div>
+
+      <div class="source-list" data-ai-sources></div>
+    </section>
   </main>
 </div>
+
+<script src="../assets/js/ai-analyst.js?v=1"></script>
 </body>
 </html>

@@ -803,3 +803,28 @@ body.viewer-page {
   margin-top: 5px;
   font-size: 18px;
 }
+
+.source-list {
+  display: grid;
+  gap: 8px;
+}
+
+.source-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255,255,255,.72);
+}
+
+.source-row span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.source-row b {
+  font-size: 13px;
+  word-break: break-all;
+}

@@ -58,7 +58,7 @@ async function loadPoskos() {
     const poskos = await rnFetch("/poskos");
 
     target.innerHTML = poskos.map(posko => `
-      <article class="event-card">
+      <article class="event-card" onclick="window.location.href='posko-detail.html?id=${posko.id}'" style="cursor:pointer">
         <div class="event-main">
           <div>
             <h4>${posko.name}</h4>

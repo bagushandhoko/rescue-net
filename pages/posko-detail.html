@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Posko Detail</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=posko-detail-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Operational Node</p>
+        <h2 id="poskoTitle">Loading posko...</h2>
+        <p class="subtitle" id="poskoSubtitle">Loading...</p>
+        <p class="subtitle" id="poskoStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Posko Detail · Live Stock</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Role</span><strong id="kpiRole">-</strong><small>node type</small></div>
+      <div class="kpi-card"><span>Needs</span><strong id="kpiNeeds">0</strong><small>open needs</small></div>
+      <div class="kpi-card warning"><span>Stock Items</span><strong id="kpiStock">0</strong><small>summary rows</small></div>
+      <div class="kpi-card"><span>Flows</span><strong id="kpiFlows">0</strong><small>distribution</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Posko Overview</h3>
+            <p>Identitas posko, organisasi, dan status operasional.</p>
+          </div>
+        </div>
+        <div class="summary-list" id="poskoOverview"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Add Stock Movement</h3>
+        <p class="subtitle">Catat barang masuk/keluar posko.</p>
+
+        <form class="rn-form" id="stockForm">
+          <label>Item Name
+            <input name="item_name" value="Air Mineral" required>
+          </label>
+          <label>Quantity
+            <input name="quantity" type="number" value="10" required>
+          </label>
+          <label>Unit
+            <input name="unit" value="dus" required>
+          </label>
+          <label>Movement Type
+            <select name="movement_type">
+              <option value="stock_in">stock_in</option>
+              <option value="stock_out">stock_out</option>
+              <option value="transfer_in">transfer_in</option>
+              <option value="transfer_out">transfer_out</option>
+              <option value="adjustment">adjustment</option>
+              <option value="reserved">reserved</option>
+              <option value="damaged">damaged</option>
+              <option value="expired">expired</option>
+            </select>
+          </label>
+          <label>Direction
+            <select name="movement_direction">
+              <option value="in">in</option>
+              <option value="out">out</option>
+            </select>
+          </label>
+          <label>Notes
+            <input name="notes" value="Catatan stok dari posko.">
+          </label>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Movement</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Stock Summary</h3>
+            <p>Saldo stok berdasarkan semua movement masuk/keluar.</p>
+          </div>
+        </div>
+        <div class="event-list" id="stockSummary"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Stock Movements</h3>
+        <div class="event-list" id="stockMovements"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Logistic Needs</h3>
+            <p>Kebutuhan aktif yang terkait dengan posko ini.</p>
+          </div>
+        </div>
+        <div class="event-list" id="logisticNeeds"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Incoming Aid</h3>
+        <div class="event-list" id="incomingAid"></div>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Distribution Flows</h3>
+          <p>Distribusi yang menuju posko ini.</p>
+        </div>
+      </div>
+      <div class="event-list" id="distributionFlows"></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/posko-detail.js?v=1"></script>
+</body>
+</html>

@@ -326,3 +326,280 @@ Phase 6 — Apps: APK, EXE, offline-first mode, QR/barcode logistics, mobile evi
 ## 11. Final Vision
 
 Rescue-Net adalah sistem koordinasi bencana terbuka yang dapat dipakai dari level warga sampai negara. Sistem ini menghubungkan kebutuhan, bantuan, relawan, posko, transport, evidence, program, donasi, dan AI decision support agar penanganan bencana lebih cepat, transparan, dan kolaboratif.
+
+---
+
+# Disaster Ecosystem Consolidation & Offline Sync
+
+## 1. Core Concept
+
+Rescue-Net tidak membatasi bencana berdasarkan area atau organisasi. Satu disaster event menjadi satu **disaster ecosystem** bersama.
+
+Dalam satu disaster event, banyak pihak dapat bergabung:
+
+- pemerintah
+- TNI/Polri
+- BPBD
+- PMI
+- NGO
+- komunitas relawan
+- komunitas transport
+- perusahaan donor
+- posko warga
+- dapur umum
+- posko medis
+- shelter
+- organisasi internasional
+
+Semua pihak tetap memiliki data masing-masing, tetapi data operasional yang relevan dapat dikonsolidasikan untuk koordinasi bersama.
+
+Contoh:
+
+- Transport milik TNI dapat dibagikan sebagai resource dalam disaster ecosystem.
+- Komunitas Harley dapat melihat atau meminta akses transport tersebut sesuai permission.
+- Command center dapat melihat seluruh kebutuhan, bantuan, transport, bottleneck, dan rekomendasi.
+- Data yang aman dapat dikonsolidasikan ke level nasional atau global/federated.
+
+## 2. Ownership vs Access
+
+Setiap data tetap memiliki owner, tetapi bisa dibagikan sesuai scope dan policy.
+
+Contoh data transport TNI:
+
+- `transport_spaces.owner_type = organization`
+- `transport_spaces.owner_id = org-tni`
+- `visibility_scope = disaster_ecosystem`
+- `access_policy = owner_approval_required`
+
+Artinya:
+
+- TNI tetap pemilik transport.
+- Transport dapat terlihat dalam ekosistem bencana.
+- Organisasi lain dapat request.
+- Approval tetap mengikuti policy.
+- Semua aktivitas tercatat di audit log.
+
+## 3. Visibility Scope
+
+Level visibility:
+
+- `private`
+- `organization`
+- `partner`
+- `disaster_ecosystem`
+- `public`
+- `national`
+- `federated_global`
+- `restricted`
+- `medical_restricted`
+
+Contoh:
+
+- Kapasitas transport TNI: `disaster_ecosystem`
+- Nomor HP driver: `restricted`
+- Ringkasan kebutuhan air: `public` atau `national`
+- Data pasien: `medical_restricted`
+- Summary kebutuhan internasional: `federated_global`
+
+## 4. Access Policy
+
+Access policy menentukan bagaimana resource dapat digunakan.
+
+- `view_only`
+- `request_required`
+- `owner_approval_required`
+- `command_center_assign`
+- `auto_assign`
+
+## 5. Disaster Ecosystem Members
+
+Tabel `disaster_ecosystem_members` menghubungkan banyak aktor dalam satu disaster event.
+
+Member type:
+
+- `organization`
+- `posko`
+- `community_group`
+- `government_unit`
+- `international_partner`
+- `personal_volunteer_group`
+- `donor_organization`
+
+Role in disaster:
+
+- `command`
+- `logistics`
+- `transport`
+- `medical`
+- `shelter`
+- `kitchen`
+- `search_rescue`
+- `donor`
+- `last_mile_delivery`
+- `communication`
+- `observer`
+- `international_support`
+
+## 6. Shared Resource Model
+
+Resource yang dapat dibagikan:
+
+- `transport`
+- `warehouse`
+- `volunteer_team`
+- `medical_team`
+- `kitchen`
+- `shelter`
+- `equipment`
+- `communication`
+- `funding`
+- `logistics_stock`
+
+Resource tetap memiliki owner, tetapi bisa dishare ke disaster ecosystem.
+
+Flow:
+
+1. Resource owner membuat resource.
+2. `resource_shares` menentukan visibility/access.
+3. Pihak lain membuat `resource_request`.
+4. Owner atau command center approve.
+5. `resource_assignment` dibuat.
+6. `distribution_flow` dapat dibuat.
+
+## 7. Offline-First Sync
+
+Rescue-Net mendukung HP/laptop/posko yang bekerja offline.
+
+Alur:
+
+1. Device offline.
+2. Simpan perubahan di local database.
+3. Catat `sync_event`.
+4. Saat online, push `sync_event` ke server.
+5. Server validasi.
+6. Apply ke object.
+7. Catat audit log.
+8. Jika ada benturan data, masuk `sync_conflicts`.
+
+Local database:
+
+- Android APK: SQLite
+- Laptop EXE: SQLite
+- PWA Web: IndexedDB
+- Server posko/organisasi: PostgreSQL
+
+## 8. Sync Event, Not Raw Table Merge
+
+Rescue-Net tidak merge tabel mentah langsung. Semua perubahan dikirim sebagai event.
+
+Operation:
+
+- `create`
+- `update`
+- `delete`
+- `status_change`
+- `verify`
+- `attach_evidence`
+- `assign`
+- `receive`
+- `cancel`
+- `merge`
+
+Keuntungan:
+
+- bisa audit
+- bisa replay
+- bisa detect conflict
+- bisa konsolidasi bertingkat
+- aman untuk offline
+
+## 9. Conflict Resolution
+
+Jika dua pihak mengubah data yang sama secara offline, sistem tidak boleh overwrite sembarangan.
+
+Rule awal:
+
+- verified data menang atas self_reported
+- owner data menang atas non-owner
+- command center assignment menang untuk operasi resmi
+- newer update menang hanya jika role setara
+- medical/victim data wajib manual review
+- quantity conflict masuk `sync_conflicts`
+
+## 10. National and Global Consolidation
+
+Satu disaster event dapat dikonsolidasikan ke banyak level:
+
+- Local Posko View
+- Organization View
+- Disaster Event View
+- Regional View
+- National View
+- Federated Global View
+
+Data yang dapat naik ke nasional/global:
+
+- summary kebutuhan
+- verified public needs
+- total aid available
+- distribution bottlenecks
+- transport capacity summary
+- shelter capacity summary
+- medical aggregate
+- verified evidence summary
+
+Data yang dibatasi:
+
+- nomor HP penuh
+- data pasien
+- identitas korban
+- alamat detail sensitif
+- dokumen pribadi
+- evidence restricted
+
+## 11. Required Schema Layer
+
+Tabel operasional tetap dipakai, tetapi ditambah field standar:
+
+- `owner_type`
+- `owner_id`
+- `visibility_scope`
+- `access_policy`
+- `source_server_id`
+- `source_device_id`
+- `source_organization_id`
+- `source_posko_id`
+- `created_by_user_id`
+- `updated_by_user_id`
+- `version`
+- `sync_status`
+- `deleted_at`
+
+Tabel baru:
+
+- `servers`
+- `devices`
+- `disaster_ecosystem_members`
+- `resources`
+- `resource_shares`
+- `resource_requests`
+- `resource_assignments`
+- `coordination_channels`
+- `coordination_messages`
+- `sync_events`
+- `sync_batches`
+- `sync_conflicts`
+- `audit_logs`
+
+## 12. AI Integration
+
+AI Situation Analyst harus membaca data sebagai disaster ecosystem, bukan hanya satu organisasi.
+
+Contoh endpoint:
+
+- `GET /ai/context/{disaster_event_id}?scope=disaster_ecosystem`
+- `GET /ai/context/{disaster_event_id}?scope=public_verified`
+- `GET /ai/context/{disaster_event_id}?scope=national`
+- `GET /ai/context/{disaster_event_id}?scope=federated_global`
+
+AI harus menghormati owner, visibility, access policy, verification status, trust level, role permission, dan privacy restriction.

@@ -1698,3 +1698,107 @@ def get_posko_context(posko_id: str):
 
     return result
 
+
+class AidReceiveVerify(BaseModel):
+    posko_id: str
+    disaster_event_id: str
+    aid_offer_id: str
+    item_name: str
+    quantity_received: float
+    unit: str
+    received_by: Optional[str] = "posko-operator"
+    notes: Optional[str] = None
+    distribution_flow_id: Optional[str] = None
+
+
+@app.post("/posko/verify-aid-received")
+def verify_aid_received(payload: AidReceiveVerify):
+    stock_id = "stock-" + uuid.uuid4().hex[:12]
+    audit_id = "audit-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT status FROM aid_offers WHERE id = %s;", (payload.aid_offer_id,))
+        aid_status_rows = rows_to_dicts(cur)
+        if not aid_status_rows:
+            raise HTTPException(status_code=404, detail="Aid offer not found")
+
+        if aid_status_rows[0].get("status") == "received_verified":
+            raise HTTPException(status_code=400, detail="Aid offer already received_verified. Duplicate stock movement blocked.")
+
+        cur.execute("""
+        INSERT INTO stock_movements
+        (id, disaster_event_id, posko_id, item_name, quantity, unit,
+         movement_type, movement_direction, source_type, source_id,
+         related_aid_offer_id, related_distribution_flow_id,
+         notes, owner_type, owner_id, verification_status)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,
+         'stock_in','in','aid_offer',%s,
+         %s,%s,
+         %s,'posko',%s,'received_verified')
+        RETURNING *;
+        """, (
+            stock_id,
+            payload.disaster_event_id,
+            payload.posko_id,
+            payload.item_name,
+            payload.quantity_received,
+            payload.unit,
+            payload.aid_offer_id,
+            payload.aid_offer_id,
+            payload.distribution_flow_id,
+            payload.notes,
+            payload.posko_id,
+        ))
+        stock_row = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        UPDATE aid_offers
+        SET status = 'received_verified',
+            updated_by_user_id = %s,
+            last_edited_at = NOW()
+        WHERE id = %s
+        RETURNING *;
+        """, (payload.received_by, payload.aid_offer_id))
+        aid_rows = rows_to_dicts(cur)
+
+        flow_row = None
+        if payload.distribution_flow_id:
+            cur.execute("""
+            UPDATE distribution_flows
+            SET status = 'received_verified'
+            WHERE id = %s
+            RETURNING *;
+            """, (payload.distribution_flow_id,))
+            flow_rows = rows_to_dicts(cur)
+            flow_row = flow_rows[0] if flow_rows else None
+
+        cur.execute("""
+        INSERT INTO audit_logs
+        (id, actor_type, actor_id, action, object_type, object_id,
+         after_json, disaster_event_id)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
+        """, (
+            audit_id,
+            "posko_operator",
+            payload.received_by,
+            "verify_aid_received",
+            "aid_offer",
+            payload.aid_offer_id,
+            json.dumps({
+                "stock_movement": stock_row,
+                "aid_offer": aid_rows[0] if aid_rows else None,
+                "distribution_flow": flow_row
+            }, default=str),
+            payload.disaster_event_id,
+        ))
+
+        conn.commit()
+
+        return {
+            "status": "received_verified",
+            "stock_movement": stock_row,
+            "aid_offer": aid_rows[0] if aid_rows else None,
+            "distribution_flow": flow_row
+        }
+

@@ -1,4 +1,5 @@
 const RN_API_BASE = "http://192.168.100.32:8092";
+let POSKO_CONTEXT_CACHE = null;
 
 function getPoskoId() {
   const params = new URLSearchParams(window.location.search);
@@ -91,13 +92,70 @@ function renderNeeds(items) {
   )).join("") : card("Belum ada kebutuhan", "Tidak ada kebutuhan aktif.", "empty");
 }
 
+
 function renderIncomingAid(items) {
   const el = document.getElementById("incomingAid");
-  el.innerHTML = items.length ? items.map(a => card(
-    a.item_name,
-    `${safe(a.quantity)} ${safe(a.unit)}<br>Donor: ${safe(a.donor_name)}<br>Status: ${safe(a.status)}`,
-    a.delivery_mode || a.status
-  )).join("") : card("Belum ada incoming aid", "Belum ada bantuan menuju posko ini.", "empty");
+
+  el.innerHTML = items.length ? items.map(a => {
+    const isReceived = a.status === "received_verified";
+    return `
+      <article class="event-card">
+        <div class="event-main">
+          <div>
+            <h4>${a.item_name}</h4>
+            <p>${safe(a.quantity)} ${safe(a.unit)}<br>Donor: ${safe(a.donor_name)}<br>Status: ${safe(a.status)}</p>
+          </div>
+          <div class="chips">
+            <span class="chip warning">${a.delivery_mode || a.status}</span>
+            ${isReceived ? `<span class="chip neutral">verified</span>` : `<button class="btn primary" type="button" onclick="verifyAidReceived('${a.id}')">Verify Received</button>`}
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("") : card("Belum ada incoming aid", "Belum ada bantuan menuju posko ini.", "empty");
+}
+
+async function verifyAidReceived(aidOfferId) {
+  if (!POSKO_CONTEXT_CACHE) {
+    await loadPosko();
+  }
+
+  const ctx = POSKO_CONTEXT_CACHE;
+  const aid = (ctx.incoming_aid || []).find(x => x.id === aidOfferId);
+
+  if (!aid) {
+    setStatus("Aid offer not found in current context.");
+    return;
+  }
+
+  const flow = (ctx.distribution_flows || []).find(f => f.aid_offer_id === aidOfferId);
+
+  const qty = Number(prompt(`Jumlah diterima untuk ${aid.item_name} (${aid.unit})`, aid.quantity || 1));
+  if (!qty || qty <= 0) {
+    setStatus("Verify cancelled: invalid quantity.");
+    return;
+  }
+
+  const payload = {
+    posko_id: getPoskoId(),
+    disaster_event_id: ctx.posko.disaster_event_id,
+    aid_offer_id: aid.id,
+    item_name: aid.item_name,
+    quantity_received: qty,
+    unit: aid.unit,
+    received_by: "operator-posko",
+    notes: "Diverifikasi diterima melalui Posko Detail.",
+    distribution_flow_id: flow ? flow.id : null
+  };
+
+  setStatus("Verifying received aid...");
+  await api("/posko/verify-aid-received", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+  setStatus("Aid verified and stock updated.");
+  await loadPosko();
 }
 
 function renderFlows(items) {
@@ -114,6 +172,7 @@ async function loadPosko() {
   setStatus("Loading posko context...");
 
   const ctx = await api(`/posko-context/${poskoId}`);
+  POSKO_CONTEXT_CACHE = ctx;
 
   renderOverview(ctx);
   renderStockSummary(ctx.stock_summary || []);

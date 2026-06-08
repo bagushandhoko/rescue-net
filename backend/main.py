@@ -798,6 +798,10 @@ def get_ai_context(disaster_event_id: str):
         "transport_spaces": [],
         "distribution_flows": [],
         "volunteers": [],
+        "ecosystem_members": [],
+        "resources": [],
+        "resource_shares": [],
+        "resource_requests": [],
         "summary": {},
         "alerts": [],
         "recommendations": [],
@@ -826,6 +830,24 @@ def get_ai_context(disaster_event_id: str):
 
         cur.execute("SELECT * FROM volunteers ORDER BY created_at DESC LIMIT 50;")
         context["volunteers"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM disaster_ecosystem_members WHERE disaster_event_id = %s ORDER BY role_in_disaster, member_type;", (disaster_event_id,))
+        context["ecosystem_members"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM resources WHERE disaster_event_id = %s ORDER BY resource_type, trust_level DESC, created_at DESC;", (disaster_event_id,))
+        context["resources"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM resource_shares WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["resource_shares"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT rr.*
+        FROM resource_requests rr
+        JOIN resources r ON r.id = rr.resource_id
+        WHERE r.disaster_event_id = %s
+        ORDER BY rr.created_at DESC;
+        """, (disaster_event_id,))
+        context["resource_requests"] = rows_to_dicts(cur)
 
     needs = context["logistic_needs"]
     offers = context["aid_offers"]
@@ -900,6 +922,10 @@ def get_ai_context(disaster_event_id: str):
         ("transport_spaces", "transport_spaces"),
         ("distribution_flows", "distribution_flows"),
         ("volunteers", "volunteers"),
+        ("ecosystem_members", "disaster_ecosystem_members"),
+        ("resources", "resources"),
+        ("resource_shares", "resource_shares"),
+        ("resource_requests", "resource_requests"),
     ]:
         for item in context[collection_name]:
             context["sources"].append({
@@ -921,6 +947,10 @@ def get_ai_context(disaster_event_id: str):
         "transport_spaces": [],
         "distribution_flows": [],
         "volunteers": [],
+        "ecosystem_members": [],
+        "resources": [],
+        "resource_shares": [],
+        "resource_requests": [],
         "summary": {},
         "alerts": [],
         "recommendations": [],
@@ -950,6 +980,24 @@ def get_ai_context(disaster_event_id: str):
         cur.execute("SELECT * FROM volunteers ORDER BY created_at DESC LIMIT 50;")
         context["volunteers"] = rows_to_dicts(cur)
 
+        cur.execute("SELECT * FROM disaster_ecosystem_members WHERE disaster_event_id = %s ORDER BY role_in_disaster, member_type;", (disaster_event_id,))
+        context["ecosystem_members"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM resources WHERE disaster_event_id = %s ORDER BY resource_type, trust_level DESC, created_at DESC;", (disaster_event_id,))
+        context["resources"] = rows_to_dicts(cur)
+
+        cur.execute("SELECT * FROM resource_shares WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
+        context["resource_shares"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT rr.*
+        FROM resource_requests rr
+        JOIN resources r ON r.id = rr.resource_id
+        WHERE r.disaster_event_id = %s
+        ORDER BY rr.created_at DESC;
+        """, (disaster_event_id,))
+        context["resource_requests"] = rows_to_dicts(cur)
+
     needs = context["logistic_needs"]
     offers = context["aid_offers"]
     transports = context["transport_spaces"]
@@ -974,6 +1022,9 @@ def get_ai_context(disaster_event_id: str):
         "distribution_flows": len(flows),
         "planned_distribution_flows": len(planned_flows),
         "volunteers_listed": len(context["volunteers"]),
+        "ecosystem_members": len(context.get("ecosystem_members", [])),
+        "shared_resources": len(context.get("resources", [])),
+        "resource_requests": len(context.get("resource_requests", [])),
     }
 
     for n in critical_needs:
@@ -1021,6 +1072,10 @@ def get_ai_context(disaster_event_id: str):
         ("transport_spaces", "transport_spaces"),
         ("distribution_flows", "distribution_flows"),
         ("volunteers", "volunteers"),
+        ("ecosystem_members", "disaster_ecosystem_members"),
+        ("resources", "resources"),
+        ("resource_shares", "resource_shares"),
+        ("resource_requests", "resource_requests"),
     ]:
         for item in context[collection_name]:
             context["sources"].append({
@@ -1029,3 +1084,87 @@ def get_ai_context(disaster_event_id: str):
             })
 
     return context
+
+class ResourceRequestCreate(BaseModel):
+    resource_id: str
+    requested_by_type: str
+    requested_by_id: str
+    request_reason: Optional[str] = None
+    related_need_id: Optional[str] = None
+    related_distribution_flow_id: Optional[str] = None
+    requested_quantity: Optional[float] = None
+    requested_time: Optional[str] = None
+
+
+@app.get("/ecosystem-members/{disaster_event_id}")
+def get_ecosystem_members(disaster_event_id: str):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT * FROM disaster_ecosystem_members
+        WHERE disaster_event_id = %s
+        ORDER BY role_in_disaster, member_type, member_id;
+        """, (disaster_event_id,))
+        return rows_to_dicts(cur)
+
+
+@app.get("/resources/{disaster_event_id}")
+def get_resources(disaster_event_id: str):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT * FROM resources
+        WHERE disaster_event_id = %s
+        ORDER BY resource_type, trust_level DESC, created_at DESC;
+        """, (disaster_event_id,))
+        return rows_to_dicts(cur)
+
+
+@app.get("/resource-shares/{disaster_event_id}")
+def get_resource_shares(disaster_event_id: str):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT rs.*, r.name AS resource_name, r.resource_type, r.owner_type, r.owner_id
+        FROM resource_shares rs
+        LEFT JOIN resources r ON r.id = rs.resource_id
+        WHERE rs.disaster_event_id = %s
+        ORDER BY rs.created_at DESC;
+        """, (disaster_event_id,))
+        return rows_to_dicts(cur)
+
+
+@app.get("/resource-requests")
+def get_resource_requests():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT rr.*, r.disaster_event_id, r.name AS resource_name, r.resource_type, r.owner_id
+        FROM resource_requests rr
+        LEFT JOIN resources r ON r.id = rr.resource_id
+        ORDER BY rr.created_at DESC;
+        """)
+        return rows_to_dicts(cur)
+
+
+@app.post("/resource-requests")
+def create_resource_request(payload: ResourceRequestCreate):
+    item_id = "req-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO resource_requests
+        (id, resource_id, requested_by_type, requested_by_id, request_reason,
+         related_need_id, related_distribution_flow_id, requested_quantity,
+         requested_time, status)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'requested')
+        RETURNING *;
+        """, (
+            item_id,
+            payload.resource_id,
+            payload.requested_by_type,
+            payload.requested_by_id,
+            payload.request_reason,
+            payload.related_need_id,
+            payload.related_distribution_flow_id,
+            payload.requested_quantity,
+            payload.requested_time,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row

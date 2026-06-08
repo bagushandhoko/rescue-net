@@ -31,7 +31,7 @@ async function loadActiveDisasters() {
     const disasters = await rnFetch("/disasters");
 
     target.innerHTML = disasters.map((d, index) => `
-      <article class="event-card ${index === 0 ? "selected" : ""}">
+      <article class="event-card ${index === 0 ? "selected" : ""}" onclick="window.location.href=\`pages/disaster-detail.html?id=${d.id}\`" style="cursor:pointer">
         <div class="event-main">
           <div>
             <h4>${index === 0 ? "▾" : "▸"} ${d.name}</h4>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | Disaster Ecosystem</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=ecosystem-1">
+  <title>Rescue-Net | Disaster Detail</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=disaster-detail-1">
 </head>
 <body>
 <div class="app-shell">
@@ -18,7 +18,7 @@
     </div>
 
     <nav>
-      <a href="../index.html">Active Disasters</a>
+      <a class="active" href="../index.html">Active Disasters</a>
       <a href="war-room.html">War Room</a>
       <a href="organisasi-posko.html">Organisasi & Posko</a>
       <a href="management-relawan.html">Relawan</a>
@@ -33,22 +33,31 @@
   <main class="main">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Cross-Organization Coordination</p>
-        <h2>Disaster Ecosystem</h2>
-        <p class="subtitle">
-          Satu bencana dapat berisi banyak organisasi, posko, komunitas, donor, dan resource bersama.
-          Data tetap punya owner, tapi dapat dikonsolidasikan untuk keputusan bersama.
+        <p class="eyebrow">Active Disaster Detail</p>
+        <h2 data-disaster-title>Loading disaster...</h2>
+        <p class="subtitle" data-disaster-subtitle>
+          Satu bencana menjadi satu ecosystem bersama: organisasi, posko, relawan, donor, resource, transport, distribusi, evidence, dan AI context.
         </p>
-        <p class="subtitle" data-eco-status>Loading...</p>
+        <p class="subtitle" data-detail-status>Loading...</p>
       </div>
-      <button class="btn primary" type="button" data-refresh-ecosystem>Refresh</button>
+      <div class="status-pill">Disaster Ecosystem · Live API</div>
     </header>
 
     <section class="kpi-grid">
-      <div class="kpi-card danger"><span>Command</span><strong>BPBD</strong><small>official member</small></div>
-      <div class="kpi-card"><span>Transport</span><strong>TNI</strong><small>shared resource</small></div>
-      <div class="kpi-card warning"><span>Last Mile</span><strong>Harley</strong><small>community group</small></div>
-      <div class="kpi-card"><span>Decision Layer</span><strong>AI</strong><small>ecosystem context</small></div>
+      <div class="kpi-card danger"><span>Severity</span><strong data-kpi-severity>-</strong><small>current level</small></div>
+      <div class="kpi-card"><span>Members</span><strong data-kpi-members>-</strong><small>ecosystem actors</small></div>
+      <div class="kpi-card warning"><span>Resources</span><strong data-kpi-resources>-</strong><small>shared capacity</small></div>
+      <div class="kpi-card"><span>Requests</span><strong data-kpi-requests>-</strong><small>cross-org usage</small></div>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Disaster Overview</h3>
+          <p>Ringkasan bencana aktif dan status koordinasi.</p>
+        </div>
+      </div>
+      <div class="summary-list" data-disaster-overview></div>
     </section>
 
     <section class="content-grid">
@@ -56,16 +65,16 @@
         <div class="panel-header">
           <div>
             <h3>Ecosystem Members</h3>
-            <p>Semua aktor yang terkait dalam satu disaster event.</p>
+            <p>Semua aktor yang bergabung dalam satu disaster event.</p>
           </div>
         </div>
         <div class="event-list" data-eco-members></div>
       </div>
 
       <aside class="panel summary">
-        <h3>Resource Shares</h3>
-        <p class="subtitle">Resource yang dibagikan ke ecosystem.</p>
-        <div class="event-list" data-eco-shares></div>
+        <h3>Shared Resources</h3>
+        <p class="subtitle">Resource lintas organisasi yang bisa dilihat/request sesuai policy.</p>
+        <div class="event-list" data-eco-resources></div>
       </aside>
     </section>
 
@@ -73,15 +82,15 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>Shared Resources</h3>
-            <p>Transport, gudang, tim relawan, dapur, shelter, alat kerja, komunikasi.</p>
+            <h3>Resource Requests</h3>
+            <p>Permintaan penggunaan resource lintas organisasi/komunitas.</p>
           </div>
         </div>
-        <div class="event-list" data-eco-resources></div>
+        <div class="event-list" data-eco-requests></div>
       </div>
 
       <aside class="panel summary">
-        <h3>Request Resource</h3>
+        <h3>Request Shared Resource</h3>
         <p class="subtitle">Contoh: komunitas Harley request transport TNI.</p>
 
         <form class="rn-form" data-resource-request-form>
@@ -120,15 +129,15 @@
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
-          <h3>Resource Requests</h3>
-          <p>Permintaan penggunaan resource lintas organisasi/komunitas.</p>
+          <h3>Distribution & AI Context</h3>
+          <p>Ringkasan awal dari data distribusi dan AI context untuk bencana ini.</p>
         </div>
       </div>
-      <div class="event-list" data-eco-requests></div>
+      <div class="summary-list" data-ai-summary></div>
     </section>
   </main>
 </div>
 
-<script src="../assets/js/ecosystem.js?v=1"></script>
+<script src="../assets/js/disaster-detail.js?v=1"></script>
 </body>
 </html>

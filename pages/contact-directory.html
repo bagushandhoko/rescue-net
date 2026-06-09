@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | War Room</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=war-room-live-1">
+  <title>Rescue-Net | Contact Directory</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=contact-live-1">
 </head>
 <body>
 <div class="app-shell">
@@ -19,7 +19,7 @@
 
     <nav>
       <a href="../index.html">Active Disasters</a>
-      <a class="active" href="war-room.html">War Room</a>
+      <a href="war-room.html">War Room</a>
       <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
       <a href="organisasi-posko.html">Organisasi & Posko</a>
       <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
@@ -36,7 +36,7 @@
       <a href="donor-program.html">Donor Program</a>
       <a href="auth.html">Auth & Role</a>
       <a href="map.html">Map</a>
-      <a href="contact-directory.html">Contacts</a>
+      <a class="active" href="contact-directory.html">Contacts</a>
       <a href="kirim-bantuan.html">Kirim Bantuan</a>
       <a href="edit-bantuan.html">Edit Bantuan</a>
       <a href="sync-console.html">Sync Console</a>
@@ -48,82 +48,52 @@
   <main class="main">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Command Center Dashboard</p>
-        <h2>War Room</h2>
-        <p class="subtitle">Dashboard pusat komando yang membaca semua modul live Rescue-Net.</p>
-        <p class="subtitle" id="warRoomStatus">Ready.</p>
+        <p class="eyebrow">Operational Contacts</p>
+        <h2>Contact Directory</h2>
+        <p class="subtitle">Daftar kontak Officer in Charge, donor, relawan, dan PIC program agar mudah dihubungi.</p>
+        <p class="subtitle" id="contactStatus">Ready.</p>
       </div>
-      <button class="btn primary" id="refreshWarRoom">Refresh War Room</button>
+      <button class="btn primary" id="refreshContacts">Refresh Contacts</button>
     </header>
 
     <section class="panel">
       <div class="panel-header">
         <div>
-          <h3>Command Summary</h3>
-          <p>Ringkasan lintas modul: logistik, medis, shelter, search & found, relawan, alat kerja, dan verifikasi.</p>
+          <h3>Contact Summary</h3>
+          <p>Kontak yang bisa dihubungi lewat call atau WhatsApp.</p>
         </div>
       </div>
-      <div class="summary-list" id="warRoomSummary">
+      <div class="summary-list" id="contactSummary">
         <div><span>Status</span><b>Loading</b></div>
       </div>
     </section>
 
     <section class="content-grid">
       <div class="panel">
-        <h3>Alerts</h3>
-        <div class="event-list" id="warRoomAlerts"></div>
+        <h3>Officer in Charge</h3>
+        <div class="event-list" id="officerContacts"></div>
       </div>
+
       <div class="panel">
-        <h3>AI Recommendations</h3>
-        <div class="event-list" id="warRoomRecommendations"></div>
+        <h3>Donor / Aid Contacts</h3>
+        <div class="event-list" id="donorContacts"></div>
       </div>
     </section>
 
     <section class="content-grid">
       <div class="panel">
-        <h3>Critical Logistic Needs</h3>
-        <div class="event-list" id="warRoomNeeds"></div>
+        <h3>Volunteer Contacts</h3>
+        <div class="event-list" id="volunteerContacts"></div>
       </div>
-      <div class="panel">
-        <h3>Medical Priority</h3>
-        <div class="event-list" id="warRoomMedical"></div>
-      </div>
-    </section>
 
-    <section class="content-grid">
       <div class="panel">
-        <h3>Shelter Situation</h3>
-        <div class="event-list" id="warRoomShelter"></div>
+        <h3>Program PIC Contacts</h3>
+        <div class="event-list" id="programContacts"></div>
       </div>
-      <div class="panel">
-        <h3>Search & Found</h3>
-        <div class="event-list" id="warRoomSearchFound"></div>
-      </div>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <h3>Verification Queue</h3>
-        <div class="event-list" id="warRoomVerification"></div>
-      </div>
-      <div class="panel">
-        <h3>Work Tools / Heavy Equipment</h3>
-        <div class="event-list" id="warRoomWorkTools"></div>
-      </div>
-    </section>
-
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>Relawan Snapshot</h3>
-          <p>Relawan dan availability singkat.</p>
-        </div>
-      </div>
-      <div class="event-list" id="warRoomVolunteers"></div>
     </section>
   </main>
 </div>
 
-<script src="../assets/js/war-room.js?v=live-1"></script>
+<script src="../assets/js/contact-directory.js?v=live-1"></script>
 </body>
 </html>

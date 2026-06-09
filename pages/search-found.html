@@ -3,39 +3,201 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | search-found</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=viewer-menu-1">
+  <title>Rescue-Net | Search & Found</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=search-found-2">
 </head>
-<body class="viewer-page">
-<div class="viewer-shell">
-  <header class="viewer-nav">
-    <div class="viewer-brand">
-      <div class="viewer-logo">RN</div>
-      <div><strong>Rescue-Net</strong><span>Disaster Management System</span></div>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
     </div>
-    <nav class="viewer-links">
+
+    <nav>
       <a href="../index.html">Active Disasters</a>
       <a href="war-room.html">War Room</a>
-      <a href="posko-logistik.html">Logistik</a>
-      <a href="posko-medis.html">Medis</a>
-      <a href="management-distribusi.html">Distribusi</a>
+      <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
       <a href="management-relawan.html">Relawan</a>
-      <a href="alat-kerja.html">Alat Kerja</a>
-      <a href="search-found.html">Search & Found</a>
-      <a href="organisasi-posko.html">Organisasi</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="edit-bantuan.html">Edit Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a class="active" href="search-found.html">Search & Found</a>
       <a href="verification-approval.html">Verification</a>
+      <a href="alat-kerja.html">Alat Kerja</a>
     </nav>
-  </header>
+  </aside>
 
-  <main class="viewer-stage">
-    <section class="viewer-card">
-      <div class="viewer-placeholder">
-        <h1>search-found</h1>
-        <p>Image desain untuk halaman ini belum dipasang. Menu pindah halaman sudah aktif. Setelah image diupload ke folder <b>assets/img</b>, kita tinggal ganti bagian <b>viewer-placeholder</b> ini menjadi tag image.</p>
-        <code>/volume1/web/rescue-net/assets/img/search-found.png</code>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Restricted Search & Found</p>
+        <h2>Search & Found</h2>
+        <p class="subtitle">Laporan orang hilang, orang ditemukan, dan kandidat match.</p>
+        <p class="subtitle" id="sfStatus">Ready.</p>
       </div>
+      <div class="status-pill">Privacy Restricted</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Missing</span><strong id="kpiMissing">0</strong><small>reports</small></div>
+      <div class="kpi-card"><span>Found</span><strong id="kpiFound">0</strong><small>reports</small></div>
+      <div class="kpi-card warning"><span>Matches</span><strong id="kpiMatches">0</strong><small>candidate/reunited</small></div>
+      <div class="kpi-card"><span>Reunited</span><strong id="kpiReunited">0</strong><small>confirmed</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Missing Person Reports</h3>
+            <p>Data restricted. Gunakan kode anonim, bukan publikasi identitas sensitif.</p>
+          </div>
+        </div>
+        <div class="event-list" id="missingReports"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Add Missing Report</h3>
+        <form class="rn-form" id="missingForm">
+          <label>Disaster Event ID
+            <input name="disaster_event_id" value="event-aceh-2025" required>
+          </label>
+          <label>Reporter Name
+            <input name="reporter_name" value="Keluarga Korban">
+          </label>
+          <label>Reporter Contact
+            <input name="reporter_contact" value="0800000001">
+          </label>
+          <label>Relation
+            <input name="reporter_relation" value="keluarga">
+          </label>
+          <label>Person Code
+            <input name="person_code" value="MP-002" required>
+          </label>
+          <label>Person Name / Alias
+            <input name="person_name" value="Anonim 002">
+          </label>
+          <label>Age Group
+            <input name="age_group" value="adult">
+          </label>
+          <label>Gender
+            <input name="gender" value="unknown">
+          </label>
+          <label>Last Seen Location
+            <input name="last_seen_location" value="Dekat pasar lama">
+          </label>
+          <label>Last Seen Time
+            <input name="last_seen_time" value="Kemarin sore">
+          </label>
+          <label>Description
+            <input name="description" value="Terpisah saat evakuasi.">
+          </label>
+          <label>Clothing
+            <input name="clothing_description" value="Baju gelap">
+          </label>
+          <label>Special Notes
+            <input name="special_notes" value="Data restricted.">
+          </label>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Missing Report</button>
+            <button class="btn" type="button" id="refreshSf">Refresh</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Found Person Reports</h3>
+            <p>Laporan orang ditemukan dan lokasi saat ini.</p>
+          </div>
+        </div>
+        <div class="event-list" id="foundReports"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Add Found Report</h3>
+        <form class="rn-form" id="foundForm">
+          <label>Person Code
+            <input name="person_code" value="FP-002" required>
+          </label>
+          <label>Person Name / Alias
+            <input name="person_name" value="Anonim 002">
+          </label>
+          <label>Finder Name
+            <input name="finder_name" value="Relawan Posko">
+          </label>
+          <label>Finder Contact
+            <input name="finder_contact" value="0800000002">
+          </label>
+          <label>Age Group
+            <input name="age_group" value="adult">
+          </label>
+          <label>Gender
+            <input name="gender" value="unknown">
+          </label>
+          <label>Found Location
+            <input name="found_location" value="Shelter Gang Melati">
+          </label>
+          <label>Found Time
+            <input name="found_time" value="Hari ini pagi">
+          </label>
+          <label>Current Location
+            <input name="current_location" value="posko-shelter-melati">
+          </label>
+          <label>Condition Notes
+            <input name="condition_notes" value="Selamat, kondisi stabil.">
+          </label>
+          <label>Description
+            <input name="description" value="Cocok dengan laporan keluarga.">
+          </label>
+          <label>Clothing
+            <input name="clothing_description" value="Baju gelap">
+          </label>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Found Report</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Create Manual Match</h3>
+          <p>Pilih laporan hilang dan laporan ditemukan untuk membuat kandidat match.</p>
+        </div>
+      </div>
+      <div id="manualMatchPanel"></div>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Matches</h3>
+          <p>Kandidat kecocokan antara laporan hilang dan ditemukan.</p>
+        </div>
+      </div>
+      <div class="event-list" id="matches"></div>
     </section>
   </main>
 </div>
+
+<script src="../assets/js/search-found.js?v=2"></script>
 </body>
 </html>

@@ -2598,3 +2598,281 @@ def create_shelter_need(payload: ShelterNeedCreate):
         row = rows_to_dicts(cur)[0]
         conn.commit()
         return row
+
+class MissingPersonReportCreate(BaseModel):
+    disaster_event_id: str
+    reporter_name: Optional[str] = None
+    reporter_contact: Optional[str] = None
+    reporter_relation: Optional[str] = None
+    person_code: str
+    person_name: Optional[str] = None
+    age_group: Optional[str] = None
+    gender: Optional[str] = None
+    last_seen_location: Optional[str] = None
+    last_seen_time: Optional[str] = None
+    description: Optional[str] = None
+    clothing_description: Optional[str] = None
+    special_notes: Optional[str] = None
+    source_posko_id: Optional[str] = None
+    source_organization_id: Optional[str] = None
+    created_by_user_id: Optional[str] = "search-found-operator"
+
+class FoundPersonReportCreate(BaseModel):
+    disaster_event_id: str
+    finder_name: Optional[str] = None
+    finder_contact: Optional[str] = None
+    person_code: str
+    person_name: Optional[str] = None
+    age_group: Optional[str] = None
+    gender: Optional[str] = None
+    found_location: Optional[str] = None
+    found_time: Optional[str] = None
+    current_location: Optional[str] = None
+    condition_notes: Optional[str] = None
+    description: Optional[str] = None
+    clothing_description: Optional[str] = None
+    special_notes: Optional[str] = None
+    source_posko_id: Optional[str] = None
+    source_organization_id: Optional[str] = None
+    created_by_user_id: Optional[str] = "search-found-operator"
+
+class SearchFoundMatchCreate(BaseModel):
+    disaster_event_id: str
+    missing_report_id: str
+    found_report_id: str
+    match_score: Optional[float] = 0
+    match_reason: Optional[str] = None
+    status: Optional[str] = "candidate"
+    created_by_user_id: Optional[str] = "search-found-operator"
+
+@app.get("/search-found-context/{disaster_event_id}")
+def get_search_found_context(disaster_event_id: str):
+    result = {
+        "disaster_event_id": disaster_event_id,
+        "missing_person_reports": [],
+        "found_person_reports": [],
+        "matches": [],
+        "summary": {},
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT *
+        FROM missing_person_reports
+        WHERE disaster_event_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (disaster_event_id,))
+        result["missing_person_reports"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM found_person_reports
+        WHERE disaster_event_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (disaster_event_id,))
+        result["found_person_reports"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT
+          m.*,
+          mp.person_code AS missing_person_code,
+          mp.person_name AS missing_person_name,
+          fp.person_code AS found_person_code,
+          fp.person_name AS found_person_name
+        FROM search_found_matches m
+        LEFT JOIN missing_person_reports mp ON mp.id = m.missing_report_id
+        LEFT JOIN found_person_reports fp ON fp.id = m.found_report_id
+        WHERE m.disaster_event_id = %s
+          AND m.deleted_at IS NULL
+        ORDER BY m.created_at DESC;
+        """, (disaster_event_id,))
+        result["matches"] = rows_to_dicts(cur)
+
+        result["summary"] = {
+            "missing_count": len(result["missing_person_reports"]),
+            "found_count": len(result["found_person_reports"]),
+            "match_count": len(result["matches"]),
+            "reunited_count": len([x for x in result["matches"] if x.get("status") == "reunited"]),
+        }
+
+    return result
+
+@app.post("/missing-person-reports")
+def create_missing_person_report(payload: MissingPersonReportCreate):
+    report_id = "missing-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO missing_person_reports
+        (id, disaster_event_id, reporter_name, reporter_contact, reporter_relation,
+         person_code, person_name, age_group, gender,
+         last_seen_location, last_seen_time, description, clothing_description,
+         special_notes, status, source_posko_id, source_organization_id,
+         created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'missing',%s,%s,%s)
+        RETURNING *;
+        """, (
+            report_id,
+            payload.disaster_event_id,
+            payload.reporter_name,
+            payload.reporter_contact,
+            payload.reporter_relation,
+            payload.person_code,
+            payload.person_name,
+            payload.age_group,
+            payload.gender,
+            payload.last_seen_location,
+            payload.last_seen_time,
+            payload.description,
+            payload.clothing_description,
+            payload.special_notes,
+            payload.source_posko_id,
+            payload.source_organization_id,
+            payload.created_by_user_id,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.post("/found-person-reports")
+def create_found_person_report(payload: FoundPersonReportCreate):
+    report_id = "found-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO found_person_reports
+        (id, disaster_event_id, finder_name, finder_contact,
+         person_code, person_name, age_group, gender,
+         found_location, found_time, current_location, condition_notes,
+         description, clothing_description, special_notes, status,
+         source_posko_id, source_organization_id, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'found',%s,%s,%s)
+        RETURNING *;
+        """, (
+            report_id,
+            payload.disaster_event_id,
+            payload.finder_name,
+            payload.finder_contact,
+            payload.person_code,
+            payload.person_name,
+            payload.age_group,
+            payload.gender,
+            payload.found_location,
+            payload.found_time,
+            payload.current_location,
+            payload.condition_notes,
+            payload.description,
+            payload.clothing_description,
+            payload.special_notes,
+            payload.source_posko_id,
+            payload.source_organization_id,
+            payload.created_by_user_id,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.post("/search-found-matches")
+def create_search_found_match(payload: SearchFoundMatchCreate):
+    match_id = "match-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO search_found_matches
+        (id, disaster_event_id, missing_report_id, found_report_id,
+         match_score, match_reason, status, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            match_id,
+            payload.disaster_event_id,
+            payload.missing_report_id,
+            payload.found_report_id,
+            payload.match_score,
+            payload.match_reason,
+            payload.status,
+            payload.created_by_user_id,
+        ))
+        row = rows_to_dicts(cur)[0]
+
+        if payload.status == "reunited":
+            cur.execute("UPDATE missing_person_reports SET status = 'reunited', updated_at = NOW() WHERE id = %s;", (payload.missing_report_id,))
+            cur.execute("UPDATE found_person_reports SET status = 'reunited', updated_at = NOW() WHERE id = %s;", (payload.found_report_id,))
+
+        conn.commit()
+        return row
+
+class SearchFoundMatchStatusUpdate(BaseModel):
+    status: str
+    reviewed_by: Optional[str] = "search-found-operator"
+    reunion_notes: Optional[str] = None
+
+@app.post("/search-found-matches/{match_id}/status")
+def update_search_found_match_status(match_id: str, payload: SearchFoundMatchStatusUpdate):
+    if payload.status not in ["candidate", "investigating", "reunited", "rejected"]:
+        raise HTTPException(status_code=400, detail="Invalid status")
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        UPDATE search_found_matches
+        SET status = %s,
+            reviewed_by = %s,
+            reviewed_at = NOW(),
+            reunion_notes = %s,
+            updated_at = NOW()
+        WHERE id = %s
+          AND deleted_at IS NULL
+        RETURNING *;
+        """, (
+            payload.status,
+            payload.reviewed_by,
+            payload.reunion_notes,
+            match_id,
+        ))
+        rows = rows_to_dicts(cur)
+
+        if not rows:
+            raise HTTPException(status_code=404, detail="Match not found")
+
+        match = rows[0]
+
+        if payload.status == "reunited":
+            cur.execute("""
+            UPDATE missing_person_reports
+            SET status = 'reunited',
+                updated_at = NOW()
+            WHERE id = %s;
+            """, (match["missing_report_id"],))
+
+            cur.execute("""
+            UPDATE found_person_reports
+            SET status = 'reunited',
+                updated_at = NOW()
+            WHERE id = %s;
+            """, (match["found_report_id"],))
+
+        if payload.status == "rejected":
+            cur.execute("""
+            UPDATE missing_person_reports
+            SET status = 'missing',
+                updated_at = NOW()
+            WHERE id = %s
+              AND status <> 'reunited';
+            """, (match["missing_report_id"],))
+
+            cur.execute("""
+            UPDATE found_person_reports
+            SET status = 'found',
+                updated_at = NOW()
+            WHERE id = %s
+              AND status <> 'reunited';
+            """, (match["found_report_id"],))
+
+        conn.commit()
+        return match

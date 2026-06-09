@@ -102,3 +102,31 @@ Last checkpoint: BYOK AI Analyst workflow and API deduplication.
 6. Add AI organization-key fallback after user-key.
 7. Add audit logs for AI ask events without storing secret.
 8. Add deployment README.
+
+## Backend Refactor Started
+
+Backend route-module structure prepared:
+
+- backend/main.py
+- backend/app_shared.py
+- backend/routes/__init__.py
+- backend/routes/ai_routes.py
+
+Current status:
+- Runtime endpoints still live in main.py.
+- routes/ai_routes.py is currently a placeholder.
+- Next planned refactor is to move AI routes from main.py into routes/ai_routes.py.
+
+AI endpoints to move later:
+- GET /ai/context/{disaster_event_id}
+- POST /ai/user-key
+- GET /ai/user-key/{user_id}
+- POST /ai/user-model
+- DELETE /ai/user-key/{user_id}
+- POST /ai/ask
+
+Refactor rule:
+- Move one route group at a time.
+- Run python3 -m py_compile main.py.
+- Rebuild Docker.
+- Verify /health, /openapi.json, /ai/context, /ai/user-key, and /ai/ask.

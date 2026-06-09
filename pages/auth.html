@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Auth & Role</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=auth-role-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
+      <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
+      <a href="alat-kerja.html">Alat Kerja</a>
+      <a href="verification-approval.html">Verification</a>
+      <a href="evidence.html">Evidence</a>
+      <a href="donor-program.html">Donor Program</a>
+      <a class="active" href="auth.html">Auth & Role</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="edit-bantuan.html">Edit Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Auth & Role Foundation</p>
+        <h2>Auth & Role</h2>
+        <p class="subtitle">Prototype login/session dan role scope untuk Rescue-Net.</p>
+        <p class="subtitle" id="authStatus">Ready.</p>
+      </div>
+      <button class="btn" id="logoutBtn">Logout Local</button>
+    </header>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Current Session</h3>
+        <div class="summary-list" id="currentUser">
+          <div><span>Status</span><b>Loading</b></div>
+        </div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Demo Login</h3>
+        <p class="subtitle">Prototype only. Belum production auth.</p>
+        <div class="form-actions">
+          <button class="btn primary" data-demo-login="command">Command Center</button>
+          <button class="btn" data-demo-login="posko-logistik">Posko Logistik</button>
+          <button class="btn" data-demo-login="medical">Medical</button>
+          <button class="btn" data-demo-login="shelter">Shelter</button>
+          <button class="btn" data-demo-login="donor">Donor</button>
+          <button class="btn" data-demo-login="volunteer">Volunteer</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Role Matrix</h3>
+          <p>Daftar role dan scope awal.</p>
+        </div>
+      </div>
+      <div class="event-list" id="roleList"></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/auth.js?v=role-1"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Evidence</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=evidence-live-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
+      <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
+      <a href="alat-kerja.html">Alat Kerja</a>
+      <a href="verification-approval.html">Verification</a>
+      <a class="active" href="evidence.html">Evidence</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="edit-bantuan.html">Edit Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Evidence & Proof</p>
+        <h2>Evidence</h2>
+        <p class="subtitle">Upload dan lihat bukti foto/dokumen untuk bantuan, stok, posko, medis, shelter, search & found, dan alat kerja.</p>
+        <p class="subtitle" id="evidenceStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Live API</div>
+    </header>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Evidence List</h3>
+            <p>Daftar bukti yang sudah diupload.</p>
+          </div>
+          <button class="btn" id="refreshEvidence">Refresh</button>
+        </div>
+        <div class="event-list" id="evidenceList"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Upload Evidence</h3>
+
+        <form class="rn-form" id="evidenceForm">
+          <label>File
+            <input name="file" type="file" required>
+          </label>
+
+          <label>Disaster Event ID
+            <input name="disaster_event_id" value="event-aceh-2025" required>
+          </label>
+
+          <label>Node / Posko ID
+            <input name="node_id" value="posko-logistik-aceh">
+          </label>
+
+          <label>Linked Object Type
+            <select name="linked_object_type">
+              <option value="aid_offer">aid_offer</option>
+              <option value="stock_movement">stock_movement</option>
+              <option value="distribution_flow">distribution_flow</option>
+              <option value="posko">posko</option>
+              <option value="medical_case">medical_case</option>
+              <option value="shelter">shelter</option>
+              <option value="search_found">search_found</option>
+              <option value="work_tool_request">work_tool_request</option>
+              <option value="verification">verification</option>
+            </select>
+          </label>
+
+          <label>Linked Object ID
+            <input name="linked_object_id" value="aid-74fc9a410ab5">
+          </label>
+
+          <label>Evidence Type
+            <select name="evidence_type">
+              <option value="photo">photo</option>
+              <option value="document">document</option>
+              <option value="receipt">receipt</option>
+              <option value="handover">handover</option>
+              <option value="medical">medical</option>
+              <option value="verification">verification</option>
+            </select>
+          </label>
+
+          <label>Uploaded By
+            <input name="uploaded_by" value="operator-demo">
+          </label>
+
+          <button class="btn primary" type="submit">Upload Evidence</button>
+        </form>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/evidence.js?v=live-1"></script>
+</body>
+</html>

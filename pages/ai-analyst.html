@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | AI Situation Analyst</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=ai-live-1">
+  <title>Rescue-Net | AI Analyst</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=ai-ask-1">
 </head>
 <body>
 <div class="app-shell">
@@ -29,124 +29,94 @@
       <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
       <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
       <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
+      <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
       <a href="kirim-bantuan.html">Kirim Bantuan</a>
       <a href="edit-bantuan.html">Edit Bantuan</a>
       <a href="sync-console.html">Sync Console</a>
       <a class="active" href="ai-analyst.html">AI Analyst</a>
       <a href="ai-settings.html">AI Settings</a>
-      <a href="search-found.html">Search & Found</a>
-      <a href="verification-approval.html">Verification</a>
-      <a href="alat-kerja.html">Alat Kerja</a>
     </nav>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Decision Intelligence Layer</p>
-        <h2>AI Situation Analyst</h2>
-        <p class="subtitle">
-          AI-ready context dari data Rescue-Net: posko, kebutuhan, bantuan, transport, distribusi, dan relawan.
-        </p>
+        <p class="eyebrow">AI Situation Analyst</p>
+        <h2>AI Analyst</h2>
+        <p class="subtitle">Analisis data bencana berdasarkan AI Context dan BYOK user key.</p>
+        <p class="subtitle" id="aiStatus">Ready.</p>
       </div>
-      <div class="status-pill">Live Context · PostgreSQL</div>
+      <div class="status-pill">BYOK AI</div>
     </header>
 
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3 data-ai-disaster-title>AI Context</h3>
-          <p data-ai-status>Loading...</p>
-        </div>
-        <button class="btn primary" type="button" data-refresh-ai-context>Refresh Context</button>
-      </div>
-
-      <form class="rn-form">
-        <div class="form-grid">
-          <label>
-            Disaster Event
-            <select data-ai-disaster>
-              <option value="event-aceh-2025">Gempa Aceh Barat 2025</option>
-              <option value="event-luwu-2025">Banjir Luwu 2025</option>
-            </select>
-          </label>
-
-          <label>
-            AI Account
-            <select>
-              <option>My Personal AI Key</option>
-              <option>Organization AI Key</option>
-              <option>Local AI Gateway</option>
-            </select>
-          </label>
-
-          <label>
-            Mode
-            <select>
-              <option>Situation Summary</option>
-              <option>Critical Needs Analysis</option>
-              <option>Distribution Matching</option>
-              <option>Decision Briefing</option>
-            </select>
-          </label>
-        </div>
-      </form>
-    </section>
-
     <section class="content-grid">
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>Live Summary</h3>
-            <p>Ringkasan angka dari endpoint /ai/context.</p>
+            <h3>Ask AI Analyst</h3>
+            <p>AI membaca konteks Rescue-Net: logistik, distribusi, dapur umum, medis, shelter, search & found.</p>
           </div>
         </div>
-        <div data-ai-summary></div>
+
+        <form class="rn-form" id="aiAskForm">
+          <label>User ID
+            <input name="user_id" value="user-demo-001" required>
+          </label>
+
+          <label>Disaster Event ID
+            <input name="disaster_event_id" value="event-aceh-2025" required>
+          </label>
+
+          <label>Provider
+            <select name="provider">
+              <option value="openai">openai</option>
+            </select>
+          </label>
+
+          <label>Question
+            <textarea name="question" rows="6" required>Berikan ringkasan situasi, prioritas logistik, shelter, medis, dan search found.</textarea>
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Ask AI</button>
+            <button class="btn" type="button" id="loadContextBtn">Load Context Summary</button>
+          </div>
+        </form>
       </div>
 
       <aside class="panel summary">
-        <h3>AI Guardrails</h3>
-        <div class="summary-list">
-          <div><span>Permission</span><b>role-based</b></div>
-          <div><span>AI Key</span><b>user/org owned</b></div>
-          <div><span>Sources</span><b>traceable</b></div>
-          <div><span>Privacy</span><b>restricted</b></div>
-          <div><span>Decision</span><b>human final</b></div>
+        <h3>AI Context Summary</h3>
+        <div class="summary-list" id="contextSummary">
+          <div><span>Status</span><b>Not loaded</b></div>
         </div>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Alerts</h3>
-            <p>Peringatan otomatis dari kebutuhan critical dan bantuan yang perlu pickup.</p>
-          </div>
-        </div>
-        <div class="event-list" data-ai-alerts></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Recommendations</h3>
-        <p class="subtitle">Rekomendasi awal berbasis rule dari data Rescue-Net.</p>
-        <div class="event-list" data-ai-recommendations></div>
       </aside>
     </section>
 
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
-          <h3>Answer Sources</h3>
-          <p>Sumber data yang dipakai untuk context AI. Nanti jawaban LLM wajib cite data ini.</p>
+          <h3>AI Answer</h3>
+          <p>Jawaban dari model AI memakai key user sendiri.</p>
         </div>
       </div>
 
-      <div class="source-list" data-ai-sources></div>
+      <div class="event-list">
+        <article class="event-card">
+          <div class="event-main">
+            <div>
+              <h4 id="answerTitle">No answer yet</h4>
+              <p id="aiAnswer">Ask AI untuk mendapatkan analisis.</p>
+            </div>
+            <div class="chips">
+              <span class="chip warning" id="keyUsed">no key</span>
+            </div>
+          </div>
+        </article>
+      </div>
     </section>
   </main>
 </div>
 
-<script src="../assets/js/ai-analyst.js?v=1"></script>
+<script src="../assets/js/ai-analyst.js?v=ai-ask-1"></script>
 </body>
 </html>

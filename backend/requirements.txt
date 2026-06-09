@@ -4,3 +4,4 @@ psycopg[binary]==3.2.3
 python-multipart==0.0.20
 pydantic==2.10.4
 cryptography==43.0.3
+openai==1.58.1

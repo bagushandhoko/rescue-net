@@ -1,128 +1,89 @@
 const RN_API_BASE = "http://192.168.100.32:8092";
 
-async function rnFetch(path) {
-  const res = await fetch(`${RN_API_BASE}${path}`);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API error ${res.status}: ${text}`);
-  }
+function statusMsg(msg) {
+  const el = document.getElementById("aiStatus");
+  if (el) el.textContent = msg;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(RN_API_BASE + path, {
+    headers: { "Content-Type": "application/json" },
+    ...options
+  });
+
+  if (!res.ok) throw new Error(await res.text());
   return await res.json();
 }
 
-function renderSummary(summary) {
-  const target = document.querySelector("[data-ai-summary]");
-  if (!target) return;
-
-  target.innerHTML = `
-    <div class="summary-list">
-      <div><span>Posko</span><b>${summary.total_poskos ?? 0}</b></div>
-      <div><span>Logistic Needs</span><b>${summary.total_logistic_needs ?? 0}</b></div>
-      <div><span>Critical Needs</span><b>${summary.critical_needs ?? 0}</b></div>
-      <div><span>Urgent Needs</span><b>${summary.urgent_needs ?? 0}</b></div>
-      <div><span>Aid Offers</span><b>${summary.total_aid_offers ?? 0}</b></div>
-      <div><span>Need Pickup</span><b>${summary.aid_need_pickup ?? 0}</b></div>
-      <div><span>Self Delivery</span><b>${summary.aid_self_delivery_planned ?? 0}</b></div>
-      <div><span>Transport</span><b>${summary.available_transport_spaces ?? 0}</b></div>
-      <div><span>Distribution Flows</span><b>${summary.distribution_flows ?? 0}</b></div>
-      <div><span>Volunteers Listed</span><b>${summary.volunteers_listed ?? 0}</b></div>
-    </div>
-  `;
+function getForm() {
+  return document.getElementById("aiAskForm");
 }
 
-function renderAlerts(alerts) {
-  const target = document.querySelector("[data-ai-alerts]");
-  if (!target) return;
-
-  if (!alerts || alerts.length === 0) {
-    target.innerHTML = `<article class="event-card"><h4>Tidak ada alert</h4><p>Belum ada peringatan kritis dari data saat ini.</p></article>`;
+function renderContextSummary(summary) {
+  const el = document.getElementById("contextSummary");
+  if (!summary) {
+    el.innerHTML = `<div><span>Status</span><b>No summary</b></div>`;
     return;
   }
 
-  target.innerHTML = alerts.map(a => `
-    <article class="event-card">
-      <div class="event-main">
-        <div>
-          <h4>${a.type}</h4>
-          <p>${a.message}</p>
-        </div>
-        <div class="chips">
-          <span class="chip ${a.level === "critical" ? "danger" : "warning"}">${a.level}</span>
-          <span class="chip neutral">${a.source_table}/${a.source_id}</span>
-        </div>
-      </div>
-    </article>
+  el.innerHTML = Object.entries(summary).map(([k, v]) => `
+    <div><span>${k}</span><b>${v}</b></div>
   `).join("");
 }
 
-function renderRecommendations(recommendations) {
-  const target = document.querySelector("[data-ai-recommendations]");
-  if (!target) return;
+async function loadContextSummary() {
+  const form = getForm();
+  const disasterId = form.disaster_event_id.value.trim();
 
-  if (!recommendations || recommendations.length === 0) {
-    target.innerHTML = `<article class="event-card"><h4>Belum ada rekomendasi</h4><p>Data belum cukup untuk membuat rekomendasi otomatis.</p></article>`;
-    return;
-  }
+  statusMsg("Loading AI context summary...");
+  const ctx = await api(`/ai/context/${encodeURIComponent(disasterId)}`);
 
-  target.innerHTML = recommendations.map(r => `
-    <article class="event-card">
-      <div class="event-main">
-        <div>
-          <h4>Recommendation · ${r.priority}</h4>
-          <p>${r.message}</p>
-        </div>
-        <div class="chips">
-          <span class="chip ${r.priority === "high" ? "danger" : "neutral"}">${r.priority}</span>
-        </div>
-      </div>
-    </article>
-  `).join("");
+  renderContextSummary(ctx.summary || {});
+  statusMsg("Context summary loaded.");
 }
 
-function renderSources(sources) {
-  const target = document.querySelector("[data-ai-sources]");
-  if (!target) return;
+async function askAi(e) {
+  e.preventDefault();
 
-  const limited = (sources || []).slice(0, 20);
+  const form = getForm();
 
-  target.innerHTML = limited.map(s => `
-    <div class="source-row">
-      <span>${s.source_table}</span>
-      <b>${s.source_id}</b>
-    </div>
-  `).join("");
-}
+  const payload = {
+    user_id: form.user_id.value.trim(),
+    disaster_event_id: form.disaster_event_id.value.trim(),
+    provider: form.provider.value,
+    question: form.question.value.trim()
+  };
 
-async function loadAIContext() {
-  const status = document.querySelector("[data-ai-status]");
-  const disasterSelect = document.querySelector("[data-ai-disaster]");
-  const disasterId = disasterSelect ? disasterSelect.value : "event-aceh-2025";
+  statusMsg("Asking AI Analyst...");
+  document.getElementById("answerTitle").textContent = "Processing...";
+  document.getElementById("aiAnswer").textContent = "AI is analyzing Rescue-Net context...";
 
-  try {
-    if (status) status.textContent = "Loading AI context...";
-    const data = await rnFetch(`/ai/context/${disasterId}`);
+  const data = await api("/ai/ask", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
 
-    const title = document.querySelector("[data-ai-disaster-title]");
-    if (title && data.disaster) {
-      title.textContent = `${data.disaster.name} · ${data.disaster.location}`;
-    }
+  document.getElementById("answerTitle").textContent = "AI Analyst Response";
+  document.getElementById("aiAnswer").textContent = data.answer || "No answer.";
+  document.getElementById("keyUsed").textContent = data.key_used || "BYOK";
 
-    renderSummary(data.summary || {});
-    renderAlerts(data.alerts || []);
-    renderRecommendations(data.recommendations || []);
-    renderSources(data.sources || []);
-
-    if (status) status.textContent = `Context generated at ${data.generated_at}`;
-  } catch (err) {
-    if (status) status.textContent = err.message;
-  }
+  renderContextSummary(data.context_summary || {});
+  statusMsg("AI answer ready.");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  loadAIContext();
+  const form = getForm();
+  form.addEventListener("submit", e => {
+    askAi(e).catch(err => {
+      statusMsg(err.message);
+      document.getElementById("answerTitle").textContent = "AI request failed";
+      document.getElementById("aiAnswer").textContent = err.message;
+    });
+  });
 
-  const btn = document.querySelector("[data-refresh-ai-context]");
-  if (btn) btn.addEventListener("click", loadAIContext);
+  document.getElementById("loadContextBtn").addEventListener("click", () => {
+    loadContextSummary().catch(err => statusMsg(err.message));
+  });
 
-  const disasterSelect = document.querySelector("[data-ai-disaster]");
-  if (disasterSelect) disasterSelect.addEventListener("change", loadAIContext);
+  loadContextSummary().catch(err => statusMsg(err.message));
 });

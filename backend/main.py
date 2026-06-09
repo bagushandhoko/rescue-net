@@ -3131,3 +3131,111 @@ def delete_ai_user_key(user_id: str, provider: str = "openai"):
 
         return {"status": "deleted", "setting": rows[0]}
 
+
+from openai import OpenAI
+
+class AiAskRequest(BaseModel):
+    user_id: str
+    disaster_event_id: str
+    question: str
+    provider: Optional[str] = "openai"
+
+def get_user_ai_setting(user_id: str, provider: str = "openai"):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT *
+        FROM ai_user_settings
+        WHERE user_id = %s
+          AND provider = %s
+          AND status = 'active'
+        ORDER BY updated_at DESC
+        LIMIT 1;
+        """, (user_id, provider))
+        rows = rows_to_dicts(cur)
+        return rows[0] if rows else None
+
+@app.post("/ai/ask")
+def ai_ask(payload: AiAskRequest):
+    if not payload.question.strip():
+        raise HTTPException(status_code=400, detail="Question is required")
+
+    setting = get_user_ai_setting(payload.user_id, payload.provider)
+    if not setting:
+        raise HTTPException(
+            status_code=400,
+            detail="No active AI key configured for this user. Please add key in AI Settings."
+        )
+
+    api_key = decrypt_ai_key(setting["encrypted_api_key"])
+    model_name = setting.get("model_name") or "gpt-4o-mini"
+
+    # Build context directly from database using existing AI context route function
+    context = get_ai_context(payload.disaster_event_id)
+
+    compact_context = {
+        "disaster": context.get("disaster"),
+        "summary": context.get("summary"),
+        "alerts": context.get("alerts", [])[:30],
+        "recommendations": context.get("recommendations", [])[:30],
+        "stock_summary": context.get("stock_summary", [])[:80],
+        "logistic_needs": context.get("logistic_needs", [])[:80],
+        "aid_offers": context.get("aid_offers", [])[:80],
+        "distribution_flows": context.get("distribution_flows", [])[:80],
+        "kitchen_meal_productions": context.get("kitchen_meal_productions", [])[:50],
+        "medical_cases": context.get("medical_cases", [])[:50],
+        "shelter_occupancies": context.get("shelter_occupancies", [])[:50],
+        "shelter_needs": context.get("shelter_needs", [])[:50],
+        "missing_person_reports": context.get("missing_person_reports", [])[:50],
+        "found_person_reports": context.get("found_person_reports", [])[:50],
+        "search_found_matches": context.get("search_found_matches", [])[:50],
+    }
+
+    system_prompt = """
+You are Rescue-Net AI Situation Analyst.
+Analyze disaster response data and answer operationally.
+Be concise, practical, and safety-focused.
+Do not expose private API keys.
+For medical/search-found data, avoid exposing unnecessary personal identity.
+Prioritize urgent needs, logistics gaps, shelter capacity, medical risk, stock shortages, and search & found coordination.
+"""
+
+    client = OpenAI(api_key=api_key)
+
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": "Rescue-Net context JSON:\n" + json.dumps(compact_context, default=str)},
+                {"role": "user", "content": payload.question},
+            ],
+            temperature=0.2,
+        )
+    except Exception as e:
+        err = str(e)
+
+        if "Incorrect API key" in err or "invalid_api_key" in err or "401" in err:
+            raise HTTPException(
+                status_code=401,
+                detail="AI request failed: invalid API key. Please update your AI key in AI Settings."
+            )
+
+        raise HTTPException(
+            status_code=500,
+            detail="AI request failed. Please check AI provider, model, quota, and network settings."
+        )
+
+    answer = response.choices[0].message.content
+
+    return {
+        "user_id": payload.user_id,
+        "provider": payload.provider,
+        "model_name": model_name,
+        "disaster_event_id": payload.disaster_event_id,
+        "question": payload.question,
+        "answer": answer,
+        "context_summary": context.get("summary"),
+        "alerts_count": len(context.get("alerts", [])),
+        "recommendations_count": len(context.get("recommendations", [])),
+        "key_used": "****" + (setting.get("api_key_last4") or "")
+    }

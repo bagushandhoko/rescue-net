@@ -197,11 +197,21 @@ function renderVolunteers(ctx) {
 async function loadWarRoom() {
   statusMsg("Loading command center data...");
 
+  async function safeLoad(label, path, fallback) {
+    try {
+      return await api(path);
+    } catch (err) {
+      console.error("War Room failed:", label, err);
+      statusMsg(`Partial load: ${label} failed. Other panels still loaded.`);
+      return fallback;
+    }
+  }
+
   const [ai, verification, volunteers, worktools] = await Promise.all([
-    api(`/ai/context/${DISASTER_ID}`),
-    api(`/verification-context/${DISASTER_ID}`),
-    api(`/volunteer-context/${DISASTER_ID}`),
-    api(`/work-tools-context/${DISASTER_ID}`)
+    safeLoad("AI Context", `/ai/context/${DISASTER_ID}`, { summary: {}, alerts: [], recommendations: [], logistic_needs: [], medical_cases: [], shelter_needs: [], shelter_occupancies: [], missing_person_reports: [], found_person_reports: [], search_found_matches: [] }),
+    safeLoad("Verification", `/verification-context/${DISASTER_ID}`, { summary: {}, verification_actions: [] }),
+    safeLoad("Volunteers", `/volunteer-context/${DISASTER_ID}`, { summary: {}, volunteers: [], assignments: [] }),
+    safeLoad("Work Tools", `/work-tools-context/${DISASTER_ID}`, { summary: {}, work_tool_requests: [] })
   ]);
 
   renderSummary(ai, verification, volunteers, worktools);

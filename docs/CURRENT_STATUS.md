@@ -130,3 +130,115 @@ Refactor rule:
 - Run python3 -m py_compile main.py.
 - Rebuild Docker.
 - Verify /health, /openapi.json, /ai/context, /ai/user-key, and /ai/ask.
+
+## Latest Prototype Modules Added
+
+The following modules have been added after the previous checkpoint:
+
+### Contact Directory / Notification Foundation
+
+- New live page: `pages/contact-directory.html`
+- New JS: `assets/js/contact-directory.js`
+- Reads operational contacts from:
+  - posko officer in charge
+  - distribution officer in charge
+  - aid donor contact
+  - volunteer contact
+  - donor program PIC
+- Supports:
+  - Call button
+  - WhatsApp button
+  - phone normalization for Indonesian numbers
+
+### Frontend Role-Aware Session Controls
+
+- New shared JS: `assets/js/session-role.js`
+- Reads `RN_USER` and `RN_SESSION_TOKEN` from localStorage.
+- Displays current user and role in page header.
+- Supports frontend-only visibility rules for actions:
+  - verify
+  - upload evidence
+  - create donor program
+  - create work tool
+  - create volunteer assignment
+  - AI ask
+
+Important note:
+This is frontend role-awareness only. Backend role enforcement is still required before production.
+
+### Map / Geospatial Foundation
+
+- New live page: `pages/map.html`
+- New JS: `assets/js/map.js`
+- New migration: `013_map_geospatial_foundation.sql`
+- API:
+  - `GET /map-context/{disaster_event_id}`
+  - `POST /map-points`
+- Supports:
+  - custom map points
+  - posko location candidates
+  - work tool locations
+  - missing/found locations
+  - Google Maps and OpenStreetMap links
+
+### Auth & Role Foundation
+
+- New live page: `pages/auth.html`
+- New JS: `assets/js/auth.js`
+- New migration: `012_auth_role_foundation.sql`
+- API:
+  - `GET /auth/roles`
+  - `POST /auth/demo-login`
+  - `GET /auth/me/{session_token}`
+- Current roles:
+  - command_center
+  - posko_operator
+  - medical_operator
+  - shelter_operator
+  - donor
+  - volunteer
+  - viewer
+
+### Donor Program / Transparency
+
+- New live page: `pages/donor-program.html`
+- New JS: `assets/js/donor-program.js`
+- New migration: `011_donor_program_transparency.sql`
+- API:
+  - `GET /donor-program-context/{disaster_event_id}`
+  - `POST /donor-programs`
+  - `POST /donor-program-updates`
+
+### Evidence
+
+- New live page: `pages/evidence.html`
+- New JS: `assets/js/evidence.js`
+- Uses existing:
+  - `GET /evidence`
+  - `POST /evidence/upload`
+
+### Verification Approval
+
+- New live page: `pages/verification-approval.html`
+- New JS: `assets/js/verification-approval.js`
+- New migration: `010_verification_approval_module.sql`
+- API:
+  - `GET /verification-context/{disaster_event_id}`
+  - `POST /verification-actions`
+
+## Current Remaining Production Gaps
+
+Rescue-Net prototype is broad and working, but not production-ready yet.
+
+Remaining major gaps:
+
+1. Backend role enforcement middleware.
+2. Real login/password/OAuth/JWT.
+3. Audit logs for sensitive actions.
+4. Leaflet visual map.
+5. Shared sidebar/header template to remove repeated HTML.
+6. Backend refactor from large `main.py` into route modules.
+7. Migration runner and seed script.
+8. Production backup/restore procedure.
+9. Sensitive data permission for medical and search-found.
+10. Federation conflict resolution.

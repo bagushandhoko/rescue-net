@@ -1,9 +1,6 @@
-from datetime import datetime
-from typing import Optional
-import uuid
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+import uuid
 
 from app_shared import get_conn, rows_to_dicts
 

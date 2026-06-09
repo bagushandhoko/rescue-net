@@ -11,6 +11,7 @@ import psycopg
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from routes.auth_routes import router as auth_router
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -23,6 +24,7 @@ app = FastAPI(
     description="Open Disaster Coordination & Relief Management System",
     version="0.1.0",
 )
+app.include_router(auth_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -2759,7 +2761,6 @@ def delete_ai_user_key(user_id: str, provider: str = "openai"):
 
 from openai import OpenAI
 from app_shared import encrypt_ai_key, decrypt_ai_key
-from routes.auth_routes import router as auth_router
 
 class AiAskRequest(BaseModel):
     user_id: str

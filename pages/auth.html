@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | Auth & Role</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=auth-role-1">
+  <title>Rescue-Net | Auth, Registration & Verification</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=auth-portal-1">
 </head>
 <body>
 <div class="app-shell">
@@ -35,6 +35,8 @@
       <a href="evidence.html">Evidence</a>
       <a href="donor-program.html">Donor Program</a>
       <a class="active" href="auth.html">Auth & Role</a>
+      <a href="map.html">Map</a>
+      <a href="contact-directory.html">Contacts</a>
       <a href="kirim-bantuan.html">Kirim Bantuan</a>
       <a href="edit-bantuan.html">Edit Bantuan</a>
       <a href="sync-console.html">Sync Console</a>
@@ -46,9 +48,9 @@
   <main class="main">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Auth & Role Foundation</p>
+        <p class="eyebrow">Access, Registration & Verification Portal</p>
         <h2>Auth & Role</h2>
-        <p class="subtitle">Prototype login/session dan role scope untuk Rescue-Net.</p>
+        <p class="subtitle">Login role prototype, pendaftaran organisasi/posko, donor, dan verifikasi berada dalam satu portal akses.</p>
         <p class="subtitle" id="authStatus">Ready.</p>
       </div>
       <button class="btn" id="logoutBtn">Logout Local</button>
@@ -64,7 +66,7 @@
 
       <aside class="panel summary">
         <h3>Demo Login</h3>
-        <p class="subtitle">Prototype only. Belum production auth.</p>
+        <p class="subtitle">Prototype role session. Production nanti pakai auth beneran.</p>
         <div class="form-actions">
           <button class="btn primary" data-demo-login="command">Command Center</button>
           <button class="btn" data-demo-login="posko-logistik">Posko Logistik</button>
@@ -72,6 +74,75 @@
           <button class="btn" data-demo-login="shelter">Shelter</button>
           <button class="btn" data-demo-login="donor">Donor</button>
           <button class="btn" data-demo-login="volunteer">Volunteer</button>
+        </div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Registration & Onboarding</h3>
+        <p class="subtitle">Gunakan menu ini untuk pendaftaran/operasional yang sudah live.</p>
+
+        <div class="event-list">
+          <article class="event-card">
+            <div class="event-main">
+              <div>
+                <h4>Daftar / Kelola Organisasi & Posko</h4>
+                <p>Pendaftaran organisasi, posko, node type, lokasi, verifikasi awal, dan status operasional.</p>
+              </div>
+              <div class="chips">
+                <a class="btn primary" href="organisasi-posko.html">Open</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="event-card">
+            <div class="event-main">
+              <div>
+                <h4>Verification Approval</h4>
+                <p>Verifikasi organisasi, posko, relawan, bantuan donor, alat kerja, dan laporan sensitif.</p>
+              </div>
+              <div class="chips">
+                <a class="btn primary" href="verification-approval.html">Open</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="event-card">
+            <div class="event-main">
+              <div>
+                <h4>Kirim Bantuan Donor</h4>
+                <p>Form publik untuk donor mengirim bantuan, pickup location, target posko, dan kontak donor.</p>
+              </div>
+              <div class="chips">
+                <a class="btn primary" href="kirim-bantuan.html">Open</a>
+              </div>
+            </div>
+          </article>
+
+          <article class="event-card">
+            <div class="event-main">
+              <div>
+                <h4>Donor Program / Transparency</h4>
+                <p>Program donasi, target, realisasi, evidence, dan kontak PIC program.</p>
+              </div>
+              <div class="chips">
+                <a class="btn primary" href="donor-program.html">Open</a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Access Model</h3>
+        <div class="summary-list">
+          <div><span>Command Center</span><b>Verify & Monitor</b></div>
+          <div><span>Posko Operator</span><b>Stock & Distribution</b></div>
+          <div><span>Medical</span><b>Medical Cases</b></div>
+          <div><span>Shelter</span><b>Occupancy & Needs</b></div>
+          <div><span>Donor</span><b>Aid & Program</b></div>
+          <div><span>Volunteer</span><b>Assignment</b></div>
         </div>
       </aside>
     </section>

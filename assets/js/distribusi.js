@@ -1,3 +1,16 @@
+function safe(v) {
+  return v === null || v === undefined || v === "" ? "n/a" : v;
+}
+
+function officerLine(x) {
+  if (!x) return "";
+  const name = x.officer_in_charge_name || "";
+  const phone = x.officer_in_charge_phone || "";
+  const role = x.officer_in_charge_role || "";
+  if (!name && !phone && !role) return "";
+  return `<br><b>Officer in Charge:</b> ${safe(name)}<br>HP: ${safe(phone)}<br>Role: ${safe(role)}`;
+}
+
 const RN_API_BASE = "http://192.168.100.32:8092";
 
 async function rnFetch(path, options = {}) {
@@ -100,7 +113,7 @@ async function loadTransportSpaces() {
             <p>Kapasitas: ${t.capacity_weight_kg} kg · ${t.capacity_volume_m3} m³ · Berangkat: ${t.departure_time || "n/a"} · ETA: ${t.eta || "n/a"}</p>
           </div>
           <div class="chips">
-            <span class="chip neutral">${t.status}</span>
+            <span class="chip neutral">${t.status}${officerLine(t)}</span>
             <span class="chip neutral">${t.id}</span>
           </div>
         </div>
@@ -128,7 +141,7 @@ async function loadDistributionFlows() {
             <p>Transport: ${f.transport_space_id || "n/a"} · Destination: ${f.destination_node_id || "n/a"} · ETA final: ${f.eta_final || "n/a"}</p>
           </div>
           <div class="chips">
-            <span class="chip ${chipClass(f.status)}">${f.status}</span>
+            <span class="chip ${chipClass(f.status)}">${f.status}${officerLine(f)}</span>
           </div>
         </div>
       </article>

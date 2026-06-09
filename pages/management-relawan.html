@@ -3,39 +3,159 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | management-relawan</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=viewer-menu-1">
+  <title>Rescue-Net | Relawan</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=relawan-live-1">
 </head>
-<body class="viewer-page">
-<div class="viewer-shell">
-  <header class="viewer-nav">
-    <div class="viewer-brand">
-      <div class="viewer-logo">RN</div>
-      <div><strong>Rescue-Net</strong><span>Disaster Management System</span></div>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
     </div>
-    <nav class="viewer-links">
+
+    <nav>
       <a href="../index.html">Active Disasters</a>
       <a href="war-room.html">War Room</a>
+      <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
+      <a class="active" href="management-relawan.html">Relawan</a>
       <a href="posko-logistik.html">Logistik</a>
-      <a href="posko-medis.html">Medis</a>
       <a href="management-distribusi.html">Distribusi</a>
-      <a href="management-relawan.html">Relawan</a>
+      <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
+      <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
       <a href="alat-kerja.html">Alat Kerja</a>
-      <a href="search-found.html">Search & Found</a>
-      <a href="organisasi-posko.html">Organisasi</a>
-      <a href="verification-approval.html">Verification</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="edit-bantuan.html">Edit Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
     </nav>
-  </header>
+  </aside>
 
-  <main class="viewer-stage">
-    <section class="viewer-card">
-      <div class="viewer-placeholder">
-        <h1>management-relawan</h1>
-        <p>Image desain untuk halaman ini belum dipasang. Menu pindah halaman sudah aktif. Setelah image diupload ke folder <b>assets/img</b>, kita tinggal ganti bagian <b>viewer-placeholder</b> ini menjadi tag image.</p>
-        <code>/volume1/web/rescue-net/assets/img/management-relawan.png</code>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Volunteer Management</p>
+        <h2>Relawan</h2>
+        <p class="subtitle">Pendaftaran relawan, skill, availability, dan assignment ke posko/tugas.</p>
+        <p class="subtitle" id="relawanStatus" data-relawan-status>Ready.</p>
       </div>
+      <div class="status-pill">Live API</div>
+    </header>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Ringkasan Relawan</h3>
+            <p>Status relawan dan assignment.</p>
+          </div>
+          <button class="btn" id="refreshRelawan" data-refresh-relawan>Refresh</button>
+        </div>
+        <div class="summary-list" id="relawanSummary" data-relawan-summary>
+          <div><span>Status</span><b>Loading</b></div>
+        </div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Tambah Relawan</h3>
+        <form class="rn-form" id="relawanForm" data-create-relawan>
+          <label>Nama Relawan
+            <input name="volunteer_name" value="Relawan Motor Trail" required>
+          </label>
+          <label>No HP / Kontak
+            <input name="contact" value="081200000001">
+          </label>
+          <label>Skill Tags
+            <input name="skill_tags" value="motor trail,last mile delivery,evakuasi ringan">
+          </label>
+          <label>Status
+            <select name="availability_status">
+              <option value="available">available</option>
+              <option value="assigned">assigned</option>
+              <option value="off_duty">off_duty</option>
+            </select>
+          </label>
+          <label>Lokasi Saat Ini
+            <input name="current_location" value="Aceh Barat">
+          </label>
+          <label>Assigned Posko ID
+            <input name="assigned_posko_id" value="">
+          </label>
+          <label>Notes
+            <input name="notes" value="Siap bantu distribusi ke titik sulit.">
+          </label>
+          <button class="btn primary" type="submit">Save Relawan</button>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Daftar Relawan</h3>
+            <p>Relawan aktif untuk event bencana ini.</p>
+          </div>
+        </div>
+        <div class="event-list" id="relawanList" data-relawan-list></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Assign Relawan</h3>
+        <form class="rn-form" id="assignmentForm" data-create-relawan-assignment>
+          <label>Volunteer
+            <select name="volunteer_id" required></select>
+          </label>
+          <label>Assigned To Type
+            <select name="assigned_to_type">
+              <option value="posko">posko</option>
+              <option value="distribution_flow">distribution_flow</option>
+              <option value="search_found">search_found</option>
+              <option value="medical">medical</option>
+              <option value="shelter">shelter</option>
+            </select>
+          </label>
+          <label>Assigned To ID
+            <input name="assigned_to_id" value="posko-logistik-aceh" required>
+          </label>
+          <label>Task Name
+            <input name="task_name" value="Distribusi last-mile ke posko terpencil" required>
+          </label>
+          <label>Task Description
+            <input name="task_description" value="Bantu antar air mineral dan bahan dapur umum.">
+          </label>
+          <label>Priority
+            <select name="priority">
+              <option value="normal">normal</option>
+              <option value="urgent">urgent</option>
+              <option value="critical">critical</option>
+            </select>
+          </label>
+          <button class="btn primary" type="submit">Save Assignment</button>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Assignments</h3>
+          <p>Daftar tugas relawan.</p>
+        </div>
+      </div>
+      <div class="event-list" id="relawanAssignments" data-relawan-assignments></div>
     </section>
   </main>
 </div>
+
+<script src="../assets/js/relawan.js?v=live-1"></script>
 </body>
 </html>

@@ -2865,3 +2865,264 @@ Prioritize urgent needs, logistics gaps, shelter capacity, medical risk, stock s
         "recommendations_count": len(context.get("recommendations", [])),
         "key_used": "****" + (setting.get("api_key_last4") or "")
     }
+
+class VolunteerProfileCreate(BaseModel):
+    disaster_event_id: str
+    volunteer_name: str
+    contact: Optional[str] = None
+    skill_tags: Optional[str] = None
+    availability_status: Optional[str] = "available"
+    current_location: Optional[str] = None
+    assigned_posko_id: Optional[str] = None
+    notes: Optional[str] = None
+
+class VolunteerAssignmentCreate(BaseModel):
+    disaster_event_id: str
+    volunteer_id: str
+    assigned_to_type: Optional[str] = "posko"
+    assigned_to_id: Optional[str] = None
+    task_name: str
+    task_description: Optional[str] = None
+    priority: Optional[str] = "normal"
+    created_by_user_id: Optional[str] = "volunteer-operator"
+
+class WorkToolRequestCreate(BaseModel):
+    disaster_event_id: str
+    requested_by_type: Optional[str] = "posko"
+    requested_by_id: Optional[str] = None
+    tool_name: str
+    tool_type: Optional[str] = None
+    quantity: Optional[float] = 1
+    unit: Optional[str] = "unit"
+    location: Optional[str] = None
+    needed_for: Optional[str] = None
+    priority: Optional[str] = "normal"
+    required_operator_skill: Optional[str] = None
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = "worktool-operator"
+
+@app.get("/volunteer-context/{disaster_event_id}")
+def get_volunteer_context(disaster_event_id: str):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT * FROM volunteer_profiles
+        WHERE disaster_event_id = %s AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (disaster_event_id,))
+        volunteers = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT va.*, vp.volunteer_name
+        FROM volunteer_assignments va
+        LEFT JOIN volunteer_profiles vp ON vp.id = va.volunteer_id
+        WHERE va.disaster_event_id = %s AND va.deleted_at IS NULL
+        ORDER BY va.created_at DESC;
+        """, (disaster_event_id,))
+        assignments = rows_to_dicts(cur)
+
+        return {
+            "disaster_event_id": disaster_event_id,
+            "volunteers": volunteers,
+            "assignments": assignments,
+            "summary": {
+                "volunteer_count": len(volunteers),
+                "available_count": len([v for v in volunteers if v.get("availability_status") == "available"]),
+                "assignment_count": len(assignments),
+            },
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
+@app.post("/volunteers")
+def create_volunteer_profile(payload: VolunteerProfileCreate):
+    volunteer_id = "vol-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO volunteer_profiles
+        (id, disaster_event_id, volunteer_name, contact, skill_tags,
+         availability_status, current_location, assigned_posko_id, notes)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            volunteer_id,
+            payload.disaster_event_id,
+            payload.volunteer_name,
+            payload.contact,
+            payload.skill_tags,
+            payload.availability_status,
+            payload.current_location,
+            payload.assigned_posko_id,
+            payload.notes,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.post("/volunteer-assignments")
+def create_volunteer_assignment(payload: VolunteerAssignmentCreate):
+    assignment_id = "volassign-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO volunteer_assignments
+        (id, disaster_event_id, volunteer_id, assigned_to_type, assigned_to_id,
+         task_name, task_description, priority, status, created_by_user_id)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'assigned',%s)
+        RETURNING *;
+        """, (
+            assignment_id,
+            payload.disaster_event_id,
+            payload.volunteer_id,
+            payload.assigned_to_type,
+            payload.assigned_to_id,
+            payload.task_name,
+            payload.task_description,
+            payload.priority,
+            payload.created_by_user_id,
+        ))
+        row = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        UPDATE volunteer_profiles
+        SET availability_status = 'assigned',
+            assigned_posko_id = %s,
+            updated_at = NOW()
+        WHERE id = %s;
+        """, (payload.assigned_to_id, payload.volunteer_id))
+
+        conn.commit()
+        return row
+
+@app.get("/work-tools-context/{disaster_event_id}")
+def get_work_tools_context(disaster_event_id: str):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT *
+        FROM work_tool_requests
+        WHERE disaster_event_id = %s AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (disaster_event_id,))
+        requests = rows_to_dicts(cur)
+
+        return {
+            "disaster_event_id": disaster_event_id,
+            "work_tool_requests": requests,
+            "summary": {
+                "request_count": len(requests),
+                "open_count": len([r for r in requests if r.get("status") == "requested"]),
+                "urgent_count": len([r for r in requests if r.get("priority") in ["urgent", "critical"]]),
+            },
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
+@app.post("/work-tool-requests")
+def create_work_tool_request(payload: WorkToolRequestCreate):
+    request_id = "toolreq-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO work_tool_requests
+        (id, disaster_event_id, requested_by_type, requested_by_id,
+         tool_name, tool_type, quantity, unit, location, needed_for,
+         priority, required_operator_skill, status, notes, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'requested',%s,%s)
+        RETURNING *;
+        """, (
+            request_id,
+            payload.disaster_event_id,
+            payload.requested_by_type,
+            payload.requested_by_id,
+            payload.tool_name,
+            payload.tool_type,
+            payload.quantity,
+            payload.unit,
+            payload.location,
+            payload.needed_for,
+            payload.priority,
+            payload.required_operator_skill,
+            payload.notes,
+            payload.created_by_user_id,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+class OfficerInChargeUpdate(BaseModel):
+    officer_in_charge_name: Optional[str] = None
+    officer_in_charge_phone: Optional[str] = None
+    officer_in_charge_role: Optional[str] = None
+
+def update_officer_in_charge(table_name: str, object_id: str, payload: OfficerInChargeUpdate):
+    allowed_tables = {
+        "transport_spaces": "transport space",
+        "distribution_flows": "distribution flow",
+        "aid_offers": "aid offer",
+        "posko_nodes": "posko",
+    }
+
+    if table_name not in allowed_tables:
+        raise HTTPException(status_code=400, detail="Invalid table")
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = %s;
+        """, (table_name,))
+        cols = {r["column_name"] for r in rows_to_dicts(cur)}
+
+        required_cols = {
+            "officer_in_charge_name",
+            "officer_in_charge_phone",
+            "officer_in_charge_role",
+        }
+
+        missing = required_cols - cols
+        if missing:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Officer columns missing in {table_name}: {sorted(missing)}"
+            )
+
+        updated_at_sql = ", updated_at = NOW()" if "updated_at" in cols else ""
+
+        cur.execute(f"""
+        UPDATE {table_name}
+        SET officer_in_charge_name = %s,
+            officer_in_charge_phone = %s,
+            officer_in_charge_role = %s
+            {updated_at_sql}
+        WHERE id = %s
+        RETURNING *;
+        """, (
+            payload.officer_in_charge_name,
+            payload.officer_in_charge_phone,
+            payload.officer_in_charge_role,
+            object_id,
+        ))
+
+        rows = rows_to_dicts(cur)
+        if not rows:
+            raise HTTPException(status_code=404, detail=f"{allowed_tables[table_name]} not found")
+
+        conn.commit()
+        return rows[0]
+
+
+@app.post("/transport-spaces/{transport_id}/officer")
+def update_transport_officer(transport_id: str, payload: OfficerInChargeUpdate):
+    return update_officer_in_charge("transport_spaces", transport_id, payload)
+
+@app.post("/distribution-flows/{flow_id}/officer")
+def update_distribution_flow_officer(flow_id: str, payload: OfficerInChargeUpdate):
+    return update_officer_in_charge("distribution_flows", flow_id, payload)
+
+@app.post("/aid-offers/{aid_offer_id}/officer")
+def update_aid_offer_officer(aid_offer_id: str, payload: OfficerInChargeUpdate):
+    return update_officer_in_charge("aid_offers", aid_offer_id, payload)
+
+@app.post("/poskos/{posko_id}/officer")
+def update_posko_officer(posko_id: str, payload: OfficerInChargeUpdate):
+    return update_officer_in_charge("posko_nodes", posko_id, payload)

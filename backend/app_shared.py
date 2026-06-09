@@ -1,11 +1,3 @@
-"""
-Shared helpers for Rescue-Net API modules.
-
-Gradual refactor status:
-- main.py still owns runtime routes.
-- Future routes can import helpers from this file.
-"""
-
 import os
 import psycopg
 from cryptography.fernet import Fernet

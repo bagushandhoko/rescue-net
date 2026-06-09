@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | AI Settings</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=ai-settings-1">
+  <link rel="stylesheet" href="../assets/css/style.css?v=ai-settings-byok-1">
 </head>
 <body>
 <div class="app-shell">
@@ -29,106 +29,125 @@
       <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
       <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
       <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
+      <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
       <a href="kirim-bantuan.html">Kirim Bantuan</a>
       <a href="edit-bantuan.html">Edit Bantuan</a>
       <a href="sync-console.html">Sync Console</a>
       <a href="ai-analyst.html">AI Analyst</a>
       <a class="active" href="ai-settings.html">AI Settings</a>
-      <a href="search-found.html">Search & Found</a>
-      <a href="verification-approval.html">Verification</a>
-      <a href="alat-kerja.html">Alat Kerja</a>
     </nav>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Bring Your Own Key</p>
+        <p class="eyebrow">BYOK · Bring Your Own Key</p>
         <h2>AI Settings</h2>
-        <p class="subtitle">
-          AI key melekat ke user atau organisasi, bukan ke sistem global Rescue-Net.
-          Secret key harus disimpan terenkripsi di backend dan tidak pernah disimpan di frontend.
-        </p>
+        <p class="subtitle">Setiap user/organisasi dapat memakai API key AI sendiri. Secret key disimpan terenkripsi dan tidak ditampilkan ulang.</p>
+        <p class="subtitle" id="aiSettingsStatus">Ready.</p>
       </div>
-      <div class="status-pill">Secure AI Key Design</div>
+      <div class="status-pill">Encrypted User Key</div>
     </header>
 
     <section class="content-grid">
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>My AI Key</h3>
-            <p>Untuk user personal yang ingin memakai akun AI sendiri.</p>
+            <h3>Current AI Key Status</h3>
+            <p>Status key aktif untuk user/provider.</p>
           </div>
         </div>
 
-        <form class="rn-form">
-          <div class="form-grid">
-            <label>
-              Provider
-              <select>
-                <option>openai_compatible</option>
-                <option>azure_openai</option>
-                <option>local_gateway</option>
-              </select>
-            </label>
+        <div class="summary-list" id="keyStatus">
+          <div><span>Status</span><b>Not loaded</b></div>
+        </div>
 
-            <label>
-              Base URL
-              <input placeholder="https://api.openai.com/v1">
-            </label>
-
-            <label>
-              Default Model
-              <input placeholder="gpt-4.1-mini / qwen3-14b / etc">
-            </label>
-
-            <label>
-              API Key
-              <input type="password" placeholder="Secret key - backend encrypted only">
-            </label>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn primary" type="button">Save Encrypted Key</button>
-            <button class="btn ghost" type="button">Test Connection</button>
-          </div>
-        </form>
+        <div class="form-actions">
+          <button class="btn" type="button" id="checkKeyBtn">Check Key Status</button>
+          <button class="btn" type="button" id="deleteKeyBtn">Delete Key</button>
+        </div>
       </div>
 
       <aside class="panel summary">
-        <h3>Organization AI Key</h3>
-        <p class="subtitle">
-          Untuk BPBD, PMI, NGO, perusahaan donor, kampus, atau command center.
-        </p>
+        <h3>Save AI Key</h3>
+        <p class="subtitle">Gunakan key dummy untuk test. Jangan taruh key asli di GitHub atau chat.</p>
 
-        <div class="summary-list">
-          <div><span>Owner Type</span><b>organization</b></div>
-          <div><span>Storage</span><b>encrypted_api_key</b></div>
-          <div><span>Access</span><b>role-based</b></div>
-          <div><span>Usage Log</span><b>query + cost estimate</b></div>
-        </div>
+        <form class="rn-form" id="aiKeyForm">
+          <label>User ID
+            <input name="user_id" value="user-demo-001" required>
+          </label>
+
+          <label>Organization ID
+            <input name="organization_id" value="org-bpbd-aceh">
+          </label>
+
+          <label>Provider
+            <select name="provider">
+              <option value="openai">openai</option>
+            </select>
+          </label>
+
+          <label>Model
+            <select name="model_name">
+              <option value="gpt-4o-mini">gpt-4o-mini</option>
+              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+              <option value="gpt-4.1">gpt-4.1</option>
+            </select>
+          </label>
+
+          <label>API Key
+            <input name="api_key" type="password" placeholder="Paste API key here" required>
+          </label>
+
+          <label>Key Label
+            <input name="api_key_label" value="Demo User Key">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Encrypted Key</button>
+          </div>
+        </form>
       </aside>
     </section>
 
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
-          <h3>AI Feature Blueprint</h3>
-          <p>Fitur yang akan diimplementasikan di backend.</p>
+          <h3>AI BYOK Design</h3>
+          <p>Aturan keamanan yang dipakai Rescue-Net.</p>
         </div>
       </div>
 
-      <ol class="issue-list">
-        <li>Table ai_provider_keys: owner_type user/organization, encrypted key, provider, model.</li>
-        <li>Table ai_usage_logs: user, organization, question, answer summary, model, usage.</li>
-        <li>Endpoint POST /ai/settings/keys untuk menyimpan key terenkripsi.</li>
-        <li>Endpoint POST /ai/ask untuk analisa berbasis data Rescue-Net.</li>
-        <li>Permission guard agar AI hanya membaca data sesuai hak user.</li>
-        <li>Answer sources agar jawaban AI bisa ditelusuri ke data.</li>
-      </ol>
+      <div class="event-list">
+        <article class="event-card">
+          <div class="event-main">
+            <div>
+              <h4>Security Rules</h4>
+              <p>
+                Secret key tidak boleh masuk JavaScript, tidak boleh masuk GitHub, tidak boleh dikirim balik ke browser, dan tidak boleh disimpan plaintext.
+                Browser hanya boleh melihat status dan masked key.
+              </p>
+            </div>
+            <div class="chips"><span class="chip warning">owner_only</span></div>
+          </div>
+        </article>
+
+        <article class="event-card">
+          <div class="event-main">
+            <div>
+              <h4>Usage Priority</h4>
+              <p>
+                AI request memakai key user sendiri. Jika tidak ada, nanti bisa fallback ke key organisasi. Jika tidak ada key, AI disabled dan user diminta mengisi key.
+              </p>
+            </div>
+            <div class="chips"><span class="chip neutral">BYOK</span></div>
+          </div>
+        </article>
+      </div>
     </section>
   </main>
 </div>
+
+<script src="../assets/js/ai-settings.js?v=byok-1"></script>
 </body>
 </html>

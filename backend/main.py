@@ -1,4 +1,5 @@
 import os
+from cryptography.fernet import Fernet
 import json
 import hashlib
 import secrets
@@ -787,26 +788,44 @@ def public_update_aid_offer(aid_offer_id: str, payload: PublicAidOfferUpdate):
     return updated
 
 
+
 @app.get("/ai/context/{disaster_event_id}")
 def get_ai_context(disaster_event_id: str):
     context = {
         "disaster_event_id": disaster_event_id,
         "generated_at": datetime.utcnow().isoformat(),
         "disaster": None,
+
         "poskos": [],
+        "organizations": [],
+        "volunteers": [],
         "logistic_needs": [],
         "aid_offers": [],
         "transport_spaces": [],
         "distribution_flows": [],
-        "volunteers": [],
+
         "ecosystem_members": [],
         "resources": [],
-        "resource_shares": [],
         "resource_requests": [],
+        "resource_assignments": [],
+
+        "stock_summary": [],
+        "stock_movements": [],
+
+        "kitchen_meal_productions": [],
+        "medical_cases": [],
+        "medical_supply_uses": [],
+        "shelter_occupancies": [],
+        "shelter_needs": [],
+
+        "missing_person_reports": [],
+        "found_person_reports": [],
+        "search_found_matches": [],
+
         "summary": {},
         "alerts": [],
         "recommendations": [],
-        "sources": [],
+        "sources": []
     }
 
     with get_conn() as conn, conn.cursor() as cur:
@@ -814,127 +833,203 @@ def get_ai_context(disaster_event_id: str):
         rows = rows_to_dicts(cur)
         context["disaster"] = rows[0] if rows else None
 
-        cur.execute("SELECT * FROM posko_nodes WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["poskos"] = rows_to_dicts(cur)
+        def table_exists(table_name):
+            cur.execute("""
+            SELECT EXISTS (
+              SELECT 1
+              FROM information_schema.tables
+              WHERE table_schema = 'public'
+                AND table_name = %s
+            ) AS exists;
+            """, (table_name,))
+            return rows_to_dicts(cur)[0]["exists"]
 
-        cur.execute("SELECT * FROM logistic_needs WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["logistic_needs"] = rows_to_dicts(cur)
+        def read_table(key, table_name, where_col="disaster_event_id", limit=200):
+            if not table_exists(table_name):
+                context[key] = []
+                return
 
-        cur.execute("SELECT * FROM aid_offers WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["aid_offers"] = rows_to_dicts(cur)
+            cur.execute(f"""
+            SELECT *
+            FROM {table_name}
+            WHERE {where_col} = %s
+              AND (deleted_at IS NULL OR deleted_at IS NULL)
+            ORDER BY created_at DESC
+            LIMIT %s;
+            """, (disaster_event_id, limit))
+            context[key] = rows_to_dicts(cur)
 
-        cur.execute("SELECT * FROM transport_spaces WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["transport_spaces"] = rows_to_dicts(cur)
+        # Older/core tables, some may not have deleted_at. Use safe separate queries.
+        for key, table in [
+            ("poskos", "posko_nodes"),
+            ("organizations", "organizations"),
+            ("volunteers", "volunteers"),
+            ("logistic_needs", "logistic_needs"),
+            ("aid_offers", "aid_offers"),
+            ("transport_spaces", "transport_spaces"),
+            ("distribution_flows", "distribution_flows"),
+            ("ecosystem_members", "disaster_ecosystem_members"),
+            ("resources", "resources"),
+            ("resource_requests", "resource_requests"),
+            ("resource_assignments", "resource_assignments"),
+            ("stock_movements", "stock_movements"),
+            ("kitchen_meal_productions", "kitchen_meal_productions"),
+            ("medical_cases", "medical_cases"),
+            ("medical_supply_uses", "medical_supply_uses"),
+            ("shelter_occupancies", "shelter_occupancies"),
+            ("shelter_needs", "shelter_needs"),
+            ("missing_person_reports", "missing_person_reports"),
+            ("found_person_reports", "found_person_reports"),
+            ("search_found_matches", "search_found_matches"),
+        ]:
+            if not table_exists(table):
+                context[key] = []
+                continue
 
-        cur.execute("SELECT * FROM distribution_flows WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["distribution_flows"] = rows_to_dicts(cur)
+            cur.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = %s;
+            """, (table,))
+            cols = {r["column_name"] for r in rows_to_dicts(cur)}
 
-        cur.execute("SELECT * FROM volunteers ORDER BY created_at DESC LIMIT 50;")
-        context["volunteers"] = rows_to_dicts(cur)
+            if "disaster_event_id" not in cols:
+                context[key] = []
+                continue
 
-        cur.execute("SELECT * FROM disaster_ecosystem_members WHERE disaster_event_id = %s ORDER BY role_in_disaster, member_type;", (disaster_event_id,))
-        context["ecosystem_members"] = rows_to_dicts(cur)
+            deleted_filter = "AND deleted_at IS NULL" if "deleted_at" in cols else ""
+            order_col = "created_at" if "created_at" in cols else "id"
 
-        cur.execute("SELECT * FROM resources WHERE disaster_event_id = %s ORDER BY resource_type, trust_level DESC, created_at DESC;", (disaster_event_id,))
-        context["resources"] = rows_to_dicts(cur)
+            cur.execute(f"""
+            SELECT *
+            FROM {table}
+            WHERE disaster_event_id = %s
+            {deleted_filter}
+            ORDER BY {order_col} DESC
+            LIMIT 300;
+            """, (disaster_event_id,))
+            context[key] = rows_to_dicts(cur)
 
-        cur.execute("SELECT * FROM resource_shares WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["resource_shares"] = rows_to_dicts(cur)
+        # stock summary by disaster and posko
+        if table_exists("stock_movements"):
+            cur.execute("""
+            SELECT
+              posko_id,
+              item_name,
+              unit,
+              SUM(
+                CASE
+                  WHEN movement_direction = 'in' THEN quantity
+                  WHEN movement_direction = 'out' THEN -quantity
+                  ELSE 0
+                END
+              ) AS current_quantity
+            FROM stock_movements
+            WHERE disaster_event_id = %s
+              AND deleted_at IS NULL
+            GROUP BY posko_id, item_name, unit
+            ORDER BY posko_id, item_name;
+            """, (disaster_event_id,))
+            context["stock_summary"] = rows_to_dicts(cur)
 
-        cur.execute("""
-        SELECT rr.*
-        FROM resource_requests rr
-        JOIN resources r ON r.id = rr.resource_id
-        WHERE r.disaster_event_id = %s
-        ORDER BY rr.created_at DESC;
-        """, (disaster_event_id,))
-        context["resource_requests"] = rows_to_dicts(cur)
+        # summary
+        context["summary"] = {
+            "posko_count": len(context["poskos"]),
+            "organization_count": len(context["organizations"]),
+            "volunteer_count": len(context["volunteers"]),
+            "open_logistic_need_count": len([x for x in context["logistic_needs"] if x.get("status") == "open"]),
+            "aid_offer_count": len(context["aid_offers"]),
+            "distribution_flow_count": len(context["distribution_flows"]),
+            "resource_request_count": len(context["resource_requests"]),
+            "resource_assignment_count": len(context["resource_assignments"]),
+            "stock_item_count": len(context["stock_summary"]),
+            "meal_production_count": len(context["kitchen_meal_productions"]),
+            "medical_case_count": len(context["medical_cases"]),
+            "shelter_occupancy_count": len(context["shelter_occupancies"]),
+            "shelter_need_count": len(context["shelter_needs"]),
+            "missing_person_count": len([x for x in context["missing_person_reports"] if x.get("status") != "reunited"]),
+            "found_person_count": len(context["found_person_reports"]),
+            "reunited_count": len([x for x in context["search_found_matches"] if x.get("status") == "reunited"]),
+        }
 
-    needs = context["logistic_needs"]
-    offers = context["aid_offers"]
-    transports = context["transport_spaces"]
-    flows = context["distribution_flows"]
-    poskos = context["poskos"]
-    volunteers = context["volunteers"]
+        # alerts
+        for need in context["logistic_needs"]:
+            if need.get("priority") in ["urgent", "critical"] and need.get("status") == "open":
+                context["alerts"].append({
+                    "type": "logistic_need",
+                    "severity": need.get("priority"),
+                    "message": f"Open {need.get('priority')} need: {need.get('item_name')} {need.get('quantity_needed')} {need.get('unit')}",
+                    "source_id": need.get("id")
+                })
 
-    critical_needs = [n for n in needs if n.get("priority") == "critical" and n.get("status") == "open"]
-    urgent_needs = [n for n in needs if n.get("priority") == "urgent" and n.get("status") == "open"]
-    need_pickup = [a for a in offers if a.get("status") == "need_pickup" or a.get("delivery_mode") == "need_pickup"]
-    self_delivery = [a for a in offers if a.get("status") == "self_delivery_planned" or a.get("delivery_mode") == "self_deliver_to_posko"]
-    available_transports = [t for t in transports if t.get("status") == "available"]
-    planned_flows = [f for f in flows if f.get("status") == "planned"]
+        for need in context["shelter_needs"]:
+            if need.get("priority") in ["urgent", "critical"] and need.get("status") == "open":
+                context["alerts"].append({
+                    "type": "shelter_need",
+                    "severity": need.get("priority"),
+                    "message": f"Open shelter need: {need.get('item_name')} {need.get('quantity_needed')} {need.get('unit')}",
+                    "source_id": need.get("id")
+                })
 
-    context["summary"] = {
-        "total_poskos": len(poskos),
-        "total_logistic_needs": len(needs),
-        "critical_needs": len(critical_needs),
-        "urgent_needs": len(urgent_needs),
-        "total_aid_offers": len(offers),
-        "aid_need_pickup": len(need_pickup),
-        "aid_self_delivery_planned": len(self_delivery),
-        "available_transport_spaces": len(available_transports),
-        "distribution_flows": len(flows),
-        "planned_distribution_flows": len(planned_flows),
-        "volunteers_listed": len(volunteers),
-    }
+        for occ in context["shelter_occupancies"]:
+            cap = occ.get("capacity_total") or 0
+            cur_occ = occ.get("current_occupancy") or 0
+            try:
+                if cap and float(cur_occ) / float(cap) >= 0.9:
+                    context["alerts"].append({
+                        "type": "shelter_capacity",
+                        "severity": "urgent",
+                        "message": f"Shelter near capacity: {occ.get('shelter_name')} {cur_occ}/{cap}",
+                        "source_id": occ.get("id")
+                    })
+            except Exception:
+                pass
 
-    for n in critical_needs:
-        context["alerts"].append({
-            "level": "critical",
-            "type": "logistic_need",
-            "message": f"{n.get('item_name')} masih critical: {n.get('quantity_needed')} {n.get('unit')}, dibutuhkan sebelum {n.get('needed_before') or 'belum ditentukan'}.",
-            "source_table": "logistic_needs",
-            "source_id": n.get("id"),
-        })
+        for case in context["medical_cases"]:
+            if case.get("severity") in ["severe", "critical"] or case.get("triage_status") == "red":
+                context["alerts"].append({
+                    "type": "medical_case",
+                    "severity": case.get("severity") or case.get("triage_status"),
+                    "message": f"High priority medical case: {case.get('patient_code')} {case.get('complaint')}",
+                    "source_id": case.get("id")
+                })
 
-    for a in need_pickup:
-        context["alerts"].append({
-            "level": "warning",
-            "type": "aid_need_pickup",
-            "message": f"Bantuan {a.get('item_name')} dari {a.get('donor_name')} perlu pickup di {a.get('pickup_location')}.",
-            "source_table": "aid_offers",
-            "source_id": a.get("id"),
-        })
-
-    if critical_needs and need_pickup and available_transports:
-        context["recommendations"].append({
-            "priority": "high",
-            "message": "Ada kebutuhan critical, bantuan perlu pickup, dan transport tersedia. Prioritaskan matching bantuan dengan transport.",
-            "related_sources": {
-                "critical_needs": [n.get("id") for n in critical_needs[:5]],
-                "aid_offers": [a.get("id") for a in need_pickup[:5]],
-                "transport_spaces": [t.get("id") for t in available_transports[:5]],
-            }
-        })
-
-    if self_delivery:
-        context["recommendations"].append({
-            "priority": "medium",
-            "message": "Ada bantuan yang akan diantar sendiri ke posko. Posko tujuan perlu menyiapkan penerimaan dan verifikasi barang.",
-            "related_sources": {
-                "aid_offers": [a.get("id") for a in self_delivery[:5]]
-            }
-        })
-
-    for collection_name, table_name in [
-        ("poskos", "posko_nodes"),
-        ("logistic_needs", "logistic_needs"),
-        ("aid_offers", "aid_offers"),
-        ("transport_spaces", "transport_spaces"),
-        ("distribution_flows", "distribution_flows"),
-        ("volunteers", "volunteers"),
-        ("ecosystem_members", "disaster_ecosystem_members"),
-        ("resources", "resources"),
-        ("resource_shares", "resource_shares"),
-        ("resource_requests", "resource_requests"),
-    ]:
-        for item in context[collection_name]:
-            context["sources"].append({
-                "source_table": table_name,
-                "source_id": item.get("id"),
+        if context["summary"]["missing_person_count"] > 0:
+            context["alerts"].append({
+                "type": "search_found",
+                "severity": "urgent",
+                "message": f"{context['summary']['missing_person_count']} missing person reports still open.",
+                "source_id": "missing_person_reports"
             })
 
+        # recommendations
+        if context["summary"]["open_logistic_need_count"] > 0:
+            context["recommendations"].append("Prioritize urgent and critical open logistic needs before non-critical distribution.")
+        if context["summary"]["shelter_need_count"] > 0:
+            context["recommendations"].append("Review shelter needs and route available stock or donor aid to shelter nodes.")
+        if context["summary"]["medical_case_count"] > 0:
+            context["recommendations"].append("Monitor medical stock usage and replenish fast-moving medicines.")
+        if context["summary"]["missing_person_count"] > 0:
+            context["recommendations"].append("Coordinate Search & Found reports with shelter, medical, and volunteer teams.")
+
+        context["sources"] = [
+            "disaster_events",
+            "posko_nodes",
+            "logistic_needs",
+            "aid_offers",
+            "distribution_flows",
+            "stock_movements",
+            "kitchen_meal_productions",
+            "medical_cases",
+            "shelter_occupancies",
+            "missing_person_reports",
+            "found_person_reports",
+            "search_found_matches"
+        ]
+
     return context
+
 
 @app.get("/ai/context/{disaster_event_id}")
 def get_ai_context(disaster_event_id: str):
@@ -2876,3 +2971,163 @@ def update_search_found_match_status(match_id: str, payload: SearchFoundMatchSta
 
         conn.commit()
         return match
+
+
+class AiUserKeySave(BaseModel):
+    user_id: str
+    organization_id: Optional[str] = None
+    provider: Optional[str] = "openai"
+    model_name: Optional[str] = "gpt-4o-mini"
+    api_key: str
+    api_key_label: Optional[str] = None
+
+class AiUserModelUpdate(BaseModel):
+    user_id: str
+    provider: Optional[str] = "openai"
+    model_name: str
+
+def get_ai_key_fernet():
+    secret = os.getenv("AI_KEY_ENCRYPTION_SECRET")
+    if not secret:
+        raise HTTPException(status_code=500, detail="AI_KEY_ENCRYPTION_SECRET is not configured")
+    return Fernet(secret.encode())
+
+def encrypt_ai_key(api_key: str) -> str:
+    return get_ai_key_fernet().encrypt(api_key.encode()).decode()
+
+def decrypt_ai_key(encrypted_api_key: str) -> str:
+    return get_ai_key_fernet().decrypt(encrypted_api_key.encode()).decode()
+
+
+@app.post("/ai/user-key")
+def save_ai_user_key(payload: AiUserKeySave):
+    setting_id = "aikey-" + uuid.uuid4().hex[:12]
+
+    api_key = payload.api_key.strip()
+    if len(api_key) < 20:
+        raise HTTPException(status_code=400, detail="API key is too short")
+
+    encrypted = encrypt_ai_key(api_key)
+    last4 = api_key[-4:]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO ai_user_settings
+        (id, user_id, organization_id, provider, model_name,
+         encrypted_api_key, api_key_last4, api_key_label,
+         status, owner_type, owner_id, created_by_user_id, updated_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,
+         'active','user',%s,%s,%s)
+        ON CONFLICT (user_id, provider)
+        DO UPDATE SET
+          organization_id = EXCLUDED.organization_id,
+          model_name = EXCLUDED.model_name,
+          encrypted_api_key = EXCLUDED.encrypted_api_key,
+          api_key_last4 = EXCLUDED.api_key_last4,
+          api_key_label = EXCLUDED.api_key_label,
+          status = 'active',
+          updated_by_user_id = EXCLUDED.updated_by_user_id,
+          updated_at = NOW()
+        RETURNING id, user_id, organization_id, provider, model_name,
+                  api_key_last4, api_key_label, status, created_at, updated_at;
+        """, (
+            setting_id,
+            payload.user_id,
+            payload.organization_id,
+            payload.provider,
+            payload.model_name,
+            encrypted,
+            last4,
+            payload.api_key_label,
+            payload.user_id,
+            payload.user_id,
+            payload.user_id,
+        ))
+
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+
+        return {
+            "status": "saved",
+            "message": "AI key saved encrypted. Secret key is not returned.",
+            "setting": row
+        }
+
+@app.get("/ai/user-key/{user_id}")
+def get_ai_user_key_status(user_id: str, provider: str = "openai"):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT id, user_id, organization_id, provider, model_name,
+               api_key_last4, api_key_label, status, created_at, updated_at
+        FROM ai_user_settings
+        WHERE user_id = %s
+          AND provider = %s
+          AND status = 'active';
+        """, (user_id, provider))
+
+        rows = rows_to_dicts(cur)
+        if not rows:
+            return {
+                "user_id": user_id,
+                "provider": provider,
+                "key_exists": False,
+                "message": "No active AI key configured"
+            }
+
+        row = rows[0]
+        return {
+            "user_id": user_id,
+            "provider": provider,
+            "key_exists": True,
+            "masked_key": "****" + (row.get("api_key_last4") or ""),
+            "setting": row
+        }
+
+@app.post("/ai/user-model")
+def update_ai_user_model(payload: AiUserModelUpdate):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        UPDATE ai_user_settings
+        SET model_name = %s,
+            updated_by_user_id = %s,
+            updated_at = NOW()
+        WHERE user_id = %s
+          AND provider = %s
+          AND status = 'active'
+        RETURNING id, user_id, provider, model_name, api_key_last4, status, updated_at;
+        """, (
+            payload.model_name,
+            payload.user_id,
+            payload.user_id,
+            payload.provider,
+        ))
+
+        rows = rows_to_dicts(cur)
+        if not rows:
+            raise HTTPException(status_code=404, detail="AI user setting not found")
+
+        conn.commit()
+        return rows[0]
+
+@app.delete("/ai/user-key/{user_id}")
+def delete_ai_user_key(user_id: str, provider: str = "openai"):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        UPDATE ai_user_settings
+        SET status = 'deleted',
+            updated_at = NOW()
+        WHERE user_id = %s
+          AND provider = %s
+          AND status = 'active'
+        RETURNING id, user_id, provider, status, updated_at;
+        """, (user_id, provider))
+
+        rows = rows_to_dicts(cur)
+        conn.commit()
+
+        if not rows:
+            return {"status": "not_found", "user_id": user_id, "provider": provider}
+
+        return {"status": "deleted", "setting": rows[0]}
+

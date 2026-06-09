@@ -1,13 +1,22 @@
 """
 Shared helpers for Rescue-Net API modules.
 
-Initial refactor stage:
-- main.py still owns runtime app and routes.
-- route modules will gradually import shared helpers from here.
+Prepared for gradual backend refactor.
+Current runtime still uses main.py routes.
+Future route modules can import these helpers.
 """
 
-# This file is intentionally minimal for now.
-# Next stage will move:
-# - get_conn
-# - rows_to_dicts
-# - AI encryption helpers
+import os
+import psycopg
+
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://rescuenet_user:CHANGE_ME@localhost:5432/rescuenet_db"
+)
+
+def get_conn():
+    return psycopg.connect(DATABASE_URL)
+
+def rows_to_dicts(cur):
+    columns = [desc[0] for desc in cur.description]
+    return [dict(zip(columns, row)) for row in cur.fetchall()]

@@ -39,7 +39,7 @@ function card(title, body, chip = "", actions = "") {
 }
 
 function verifyButton(objectType, objectId, status = "verified", trust = "trusted") {
-  return `<button class="btn primary" type="button" onclick="verifyObject('${objectType}', '${objectId}', '${status}', '${trust}')">Verify</button>`;
+  return `<button class="btn primary" data-requires-role-action="verify" type="button" onclick="verifyObject('${objectType}', '${objectId}', '${status}', '${trust}')">Verify</button>`;
 }
 
 function renderSummary(summary) {

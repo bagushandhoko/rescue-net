@@ -122,7 +122,7 @@
             <input name="notes" value="Transparansi progres dan bukti penggunaan wajib diupdate.">
           </label>
 
-          <button class="btn primary" type="submit">Save Program</button>
+          <button class="btn primary" data-requires-role-action="create_donor_program" type="submit">Save Program</button>
         </form>
       </aside>
     </section>
@@ -164,7 +164,7 @@
             <input name="description" value="Dana digunakan untuk pembelian panel dan controller.">
           </label>
 
-          <button class="btn primary" type="submit">Save Update</button>
+          <button class="btn primary" data-requires-role-action="create_donor_program" type="submit">Save Update</button>
         </form>
       </div>
 
@@ -184,5 +184,6 @@
 </div>
 
 <script src="../assets/js/donor-program.js?v=live-1"></script>
+<script src="../assets/js/session-role.js?v=role-ui-1"></script>
 </body>
 </html>

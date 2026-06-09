@@ -98,7 +98,7 @@
           <label>Notes
             <input name="notes" value="Siap bantu distribusi ke titik sulit.">
           </label>
-          <button class="btn primary" type="submit">Save Relawan</button>
+          <button class="btn primary" data-requires-role-action="create_volunteer_assignment" type="submit">Save Relawan</button>
         </form>
       </aside>
     </section>
@@ -145,7 +145,7 @@
               <option value="critical">critical</option>
             </select>
           </label>
-          <button class="btn primary" type="submit">Save Assignment</button>
+          <button class="btn primary" data-requires-role-action="create_volunteer_assignment" type="submit">Save Assignment</button>
         </form>
       </aside>
     </section>
@@ -163,5 +163,6 @@
 </div>
 
 <script src="../assets/js/relawan.js?v=live-1"></script>
+<script src="../assets/js/session-role.js?v=role-ui-1"></script>
 </body>
 </html>

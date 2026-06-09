@@ -3126,3 +3126,207 @@ def update_aid_offer_officer(aid_offer_id: str, payload: OfficerInChargeUpdate):
 @app.post("/poskos/{posko_id}/officer")
 def update_posko_officer(posko_id: str, payload: OfficerInChargeUpdate):
     return update_officer_in_charge("posko_nodes", posko_id, payload)
+
+class VerificationActionCreate(BaseModel):
+    disaster_event_id: str
+    object_type: str
+    object_id: str
+    action_type: Optional[str] = "verify"
+    verification_status: Optional[str] = "verified"
+    trust_level: Optional[str] = None
+    reviewed_by: Optional[str] = "verification-officer"
+    reviewer_role: Optional[str] = "command_center"
+    review_notes: Optional[str] = None
+
+@app.get("/verification-context/{disaster_event_id}")
+def get_verification_context(disaster_event_id: str):
+    context = {
+        "disaster_event_id": disaster_event_id,
+        "organizations": [],
+        "poskos": [],
+        "volunteers": [],
+        "aid_offers": [],
+        "resources": [],
+        "work_tool_requests": [],
+        "missing_person_reports": [],
+        "found_person_reports": [],
+        "verification_actions": [],
+        "summary": {},
+        "generated_at": datetime.utcnow().isoformat()
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        def table_exists(table_name):
+            cur.execute("""
+            SELECT EXISTS (
+              SELECT 1 FROM information_schema.tables
+              WHERE table_schema = 'public'
+                AND table_name = %s
+            ) AS exists;
+            """, (table_name,))
+            return rows_to_dicts(cur)[0]["exists"]
+
+        def cols_for(table_name):
+            cur.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = %s;
+            """, (table_name,))
+            return {r["column_name"] for r in rows_to_dicts(cur)}
+
+        def read_by_disaster(key, table_name, limit=120):
+            if not table_exists(table_name):
+                context[key] = []
+                return
+
+            cols = cols_for(table_name)
+            if "disaster_event_id" not in cols:
+                context[key] = []
+                return
+
+            deleted_filter = "AND deleted_at IS NULL" if "deleted_at" in cols else ""
+            order_col = "created_at" if "created_at" in cols else "id"
+
+            cur.execute(f"""
+            SELECT *
+            FROM {table_name}
+            WHERE disaster_event_id = %s
+            {deleted_filter}
+            ORDER BY {order_col} DESC
+            LIMIT %s;
+            """, (disaster_event_id, limit))
+            context[key] = rows_to_dicts(cur)
+
+        # organizations may not have disaster_event_id, include verified/pending org list globally
+        if table_exists("organizations"):
+            cols = cols_for("organizations")
+            deleted_filter = "WHERE deleted_at IS NULL" if "deleted_at" in cols else ""
+            order_col = "created_at" if "created_at" in cols else "id"
+            cur.execute(f"""
+            SELECT *
+            FROM organizations
+            {deleted_filter}
+            ORDER BY {order_col} DESC
+            LIMIT 120;
+            """)
+            context["organizations"] = rows_to_dicts(cur)
+
+        read_by_disaster("poskos", "posko_nodes")
+        read_by_disaster("volunteers", "volunteer_profiles")
+        read_by_disaster("aid_offers", "aid_offers")
+        read_by_disaster("resources", "resources")
+        read_by_disaster("work_tool_requests", "work_tool_requests")
+        read_by_disaster("missing_person_reports", "missing_person_reports")
+        read_by_disaster("found_person_reports", "found_person_reports")
+        read_by_disaster("verification_actions", "verification_actions", limit=200)
+
+        def count_pending(items):
+            n = 0
+            for x in items:
+                status = (
+                    x.get("verification_status")
+                    or x.get("status")
+                    or x.get("trust_level")
+                    or ""
+                )
+                if status in ["pending", "unverified", "self_reported", "community_verified"]:
+                    n += 1
+            return n
+
+        context["summary"] = {
+            "organization_count": len(context["organizations"]),
+            "posko_count": len(context["poskos"]),
+            "volunteer_count": len(context["volunteers"]),
+            "aid_offer_count": len(context["aid_offers"]),
+            "resource_count": len(context["resources"]),
+            "work_tool_request_count": len(context["work_tool_requests"]),
+            "search_found_report_count": len(context["missing_person_reports"]) + len(context["found_person_reports"]),
+            "verification_action_count": len(context["verification_actions"]),
+            "pending_organization_count": count_pending(context["organizations"]),
+            "pending_posko_count": count_pending(context["poskos"]),
+            "pending_volunteer_count": count_pending(context["volunteers"]),
+            "pending_aid_offer_count": count_pending(context["aid_offers"]),
+            "pending_work_tool_count": count_pending(context["work_tool_requests"]),
+        }
+
+    return context
+
+@app.post("/verification-actions")
+def create_verification_action(payload: VerificationActionCreate):
+    action_id = "verify-" + uuid.uuid4().hex[:12]
+
+    allowed_object_tables = {
+        "organization": "organizations",
+        "posko": "posko_nodes",
+        "volunteer": "volunteer_profiles",
+        "aid_offer": "aid_offers",
+        "resource": "resources",
+        "work_tool_request": "work_tool_requests",
+        "missing_person_report": "missing_person_reports",
+        "found_person_report": "found_person_reports",
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO verification_actions
+        (id, disaster_event_id, object_type, object_id,
+         action_type, verification_status, trust_level,
+         reviewed_by, reviewer_role, review_notes)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            action_id,
+            payload.disaster_event_id,
+            payload.object_type,
+            payload.object_id,
+            payload.action_type,
+            payload.verification_status,
+            payload.trust_level,
+            payload.reviewed_by,
+            payload.reviewer_role,
+            payload.review_notes,
+        ))
+
+        action = rows_to_dicts(cur)[0]
+
+        table = allowed_object_tables.get(payload.object_type)
+        if table:
+            cur.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema='public'
+              AND table_name=%s;
+            """, (table,))
+            cols = {r["column_name"] for r in rows_to_dicts(cur)}
+
+            updates = []
+            values = []
+
+            if "verification_status" in cols:
+                updates.append("verification_status = %s")
+                values.append(payload.verification_status)
+
+            if "trust_level" in cols and payload.trust_level is not None:
+                updates.append("trust_level = %s")
+                values.append(payload.trust_level)
+
+            if "status" in cols and payload.verification_status in ["verified", "official_verified"]:
+                # organization uses status=verified, other tables may ignore this
+                updates.append("status = %s")
+                values.append("verified")
+
+            if "updated_at" in cols:
+                updates.append("updated_at = NOW()")
+
+            if updates:
+                values.append(payload.object_id)
+                cur.execute(f"""
+                UPDATE {table}
+                SET {", ".join(updates)}
+                WHERE id = %s;
+                """, tuple(values))
+
+        conn.commit()
+        return action

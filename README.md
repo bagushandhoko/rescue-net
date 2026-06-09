@@ -109,3 +109,11 @@ Do not commit:
 - real personal data
 - real patient data
 - production credentials
+
+## Continue Development
+
+For a new ChatGPT/Codex session, use:
+
+[docs/NEXT_AGENT_PROMPT.md](docs/NEXT_AGENT_PROMPT.md)
+
+This file explains the current checkpoint, live environment, implemented modules, and safe continuation rules.

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Map</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=map-live-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
+      <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
+      <a href="alat-kerja.html">Alat Kerja</a>
+      <a href="verification-approval.html">Verification</a>
+      <a href="evidence.html">Evidence</a>
+      <a href="donor-program.html">Donor Program</a>
+      <a href="auth.html">Auth & Role</a>
+      <a class="active" href="map.html">Map</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="edit-bantuan.html">Edit Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Map / Geospatial</p>
+        <h2>Map</h2>
+        <p class="subtitle">Titik lokasi posko, distribusi, alat kerja, missing/found, dan titik custom.</p>
+        <p class="subtitle" id="mapStatus">Ready.</p>
+      </div>
+      <button class="btn primary" id="refreshMap">Refresh Map</button>
+    </header>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Map Summary</h3>
+          <p>Ringkasan titik peta dan koordinat.</p>
+        </div>
+      </div>
+      <div class="summary-list" id="mapSummary">
+        <div><span>Status</span><b>Loading</b></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Map Points</h3>
+        <div class="event-list" id="mapPoints"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Tambah Map Point</h3>
+        <form class="rn-form" id="mapPointForm">
+          <label>Object Type
+            <select name="object_type">
+              <option value="posko">posko</option>
+              <option value="distribution_flow">distribution_flow</option>
+              <option value="work_tool_request">work_tool_request</option>
+              <option value="missing_person_report">missing_person_report</option>
+              <option value="found_person_report">found_person_report</option>
+              <option value="hazard">hazard</option>
+              <option value="road_block">road_block</option>
+              <option value="custom">custom</option>
+            </select>
+          </label>
+
+          <label>Object ID
+            <input name="object_id" value="posko-logistik-aceh">
+          </label>
+
+          <label>Label
+            <input name="label" value="Posko Logistik Aceh Barat" required>
+          </label>
+
+          <label>Description
+            <input name="description" value="Titik posko logistik utama.">
+          </label>
+
+          <label>Latitude
+            <input name="latitude" type="number" step="any" value="4.4543">
+          </label>
+
+          <label>Longitude
+            <input name="longitude" type="number" step="any" value="96.1527">
+          </label>
+
+          <label>Location Text
+            <input name="location_text" value="Aceh Barat">
+          </label>
+
+          <label>Status
+            <select name="point_status">
+              <option value="active">active</option>
+              <option value="blocked">blocked</option>
+              <option value="critical">critical</option>
+              <option value="resolved">resolved</option>
+            </select>
+          </label>
+
+          <label>Priority
+            <select name="priority">
+              <option value="normal">normal</option>
+              <option value="urgent">urgent</option>
+              <option value="critical">critical</option>
+            </select>
+          </label>
+
+          <button class="btn primary" type="submit">Save Map Point</button>
+        </form>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/map.js?v=live-1"></script>
+</body>
+</html>

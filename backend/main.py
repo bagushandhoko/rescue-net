@@ -2423,3 +2423,178 @@ def create_medical_supply_use(payload: MedicalSupplyUseCreate):
             "medical_supply_use": use_row,
             "stock_movement": stock_row
         }
+
+class ShelterOccupancyCreate(BaseModel):
+    disaster_event_id: str
+    posko_id: str
+    shelter_name: str
+    capacity_total: int = 0
+    current_occupancy: int = 0
+    families_count: Optional[int] = 0
+    children_count: Optional[int] = 0
+    elderly_count: Optional[int] = 0
+    disabled_count: Optional[int] = 0
+    sanitation_status: Optional[str] = "unknown"
+    water_status: Optional[str] = "unknown"
+    electricity_status: Optional[str] = "unknown"
+    safety_status: Optional[str] = "unknown"
+    notes: Optional[str] = None
+    status: Optional[str] = "active"
+    created_by_user_id: Optional[str] = "shelter-operator"
+
+class ShelterNeedCreate(BaseModel):
+    disaster_event_id: str
+    posko_id: str
+    item_name: str
+    quantity_needed: float
+    unit: str
+    priority: Optional[str] = "normal"
+    needed_before: Optional[str] = None
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = "shelter-operator"
+
+@app.get("/shelter-context/{posko_id}")
+def get_shelter_context(posko_id: str):
+    result = {
+        "posko": None,
+        "stock_summary": [],
+        "stock_movements": [],
+        "shelter_occupancies": [],
+        "shelter_needs": [],
+        "distribution_flows": [],
+        "generated_at": datetime.utcnow().isoformat(),
+    }
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM posko_nodes WHERE id = %s;", (posko_id,))
+        posko_rows = rows_to_dicts(cur)
+        if not posko_rows:
+            raise HTTPException(status_code=404, detail="Shelter posko not found")
+
+        result["posko"] = posko_rows[0]
+
+        cur.execute("""
+        SELECT
+          item_name,
+          unit,
+          SUM(
+            CASE
+              WHEN movement_direction = 'in' THEN quantity
+              WHEN movement_direction = 'out' THEN -quantity
+              ELSE 0
+            END
+          ) AS current_quantity
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        GROUP BY item_name, unit
+        ORDER BY item_name;
+        """, (posko_id,))
+        result["stock_summary"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM stock_movements
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 100;
+        """, (posko_id,))
+        result["stock_movements"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM shelter_occupancies
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (posko_id,))
+        result["shelter_occupancies"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM shelter_needs
+        WHERE posko_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (posko_id,))
+        result["shelter_needs"] = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM distribution_flows
+        WHERE destination_node_id = %s
+        ORDER BY created_at DESC;
+        """, (posko_id,))
+        result["distribution_flows"] = rows_to_dicts(cur)
+
+    return result
+
+@app.post("/shelter-occupancy")
+def create_shelter_occupancy(payload: ShelterOccupancyCreate):
+    occ_id = "shelterocc-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO shelter_occupancies
+        (id, disaster_event_id, posko_id, shelter_name,
+         capacity_total, current_occupancy, families_count,
+         children_count, elderly_count, disabled_count,
+         sanitation_status, water_status, electricity_status, safety_status,
+         notes, status, owner_type, owner_id, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'posko',%s,%s)
+        RETURNING *;
+        """, (
+            occ_id,
+            payload.disaster_event_id,
+            payload.posko_id,
+            payload.shelter_name,
+            payload.capacity_total,
+            payload.current_occupancy,
+            payload.families_count,
+            payload.children_count,
+            payload.elderly_count,
+            payload.disabled_count,
+            payload.sanitation_status,
+            payload.water_status,
+            payload.electricity_status,
+            payload.safety_status,
+            payload.notes,
+            payload.status,
+            payload.posko_id,
+            payload.created_by_user_id,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.post("/shelter-needs")
+def create_shelter_need(payload: ShelterNeedCreate):
+    need_id = "shelterneeds-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO shelter_needs
+        (id, disaster_event_id, posko_id, item_name, quantity_needed, unit,
+         priority, needed_before, status, notes,
+         owner_type, owner_id, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,'open',%s,'posko',%s,%s)
+        RETURNING *;
+        """, (
+            need_id,
+            payload.disaster_event_id,
+            payload.posko_id,
+            payload.item_name,
+            payload.quantity_needed,
+            payload.unit,
+            payload.priority,
+            payload.needed_before,
+            payload.notes,
+            payload.posko_id,
+            payload.created_by_user_id,
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row

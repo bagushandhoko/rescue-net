@@ -1,5 +1,4 @@
 import os
-from cryptography.fernet import Fernet
 import json
 import hashlib
 import secrets
@@ -788,7 +787,6 @@ def public_update_aid_offer(aid_offer_id: str, payload: PublicAidOfferUpdate):
     return updated
 
 
-
 @app.get("/ai/context/{disaster_event_id}")
 def get_ai_context(disaster_event_id: str):
     context = {
@@ -1133,7 +1131,6 @@ class SyncPushRequest(BaseModel):
     events: list[SyncEventIn]
 
 
-
 def apply_sync_event(cur, ev, event_id: str):
     """
     Apply selected sync events into operational tables.
@@ -1422,7 +1419,6 @@ def create_stock_movement(payload: StockMovementCreate):
         row = rows_to_dicts(cur)[0]
         conn.commit()
         return row
-
 
 
 @app.get("/posko-context/{posko_id}")
@@ -2620,11 +2616,6 @@ class AiUserModelUpdate(BaseModel):
     provider: Optional[str] = "openai"
     model_name: str
 
-def get_ai_key_fernet():
-    secret = os.getenv("AI_KEY_ENCRYPTION_SECRET")
-    if not secret:
-        raise HTTPException(status_code=500, detail="AI_KEY_ENCRYPTION_SECRET is not configured")
-    return Fernet(secret.encode())
 
 def encrypt_ai_key(api_key: str) -> str:
     return get_ai_key_fernet().encrypt(api_key.encode()).decode()
@@ -2767,6 +2758,7 @@ def delete_ai_user_key(user_id: str, provider: str = "openai"):
 
 
 from openai import OpenAI
+from app_shared import encrypt_ai_key, decrypt_ai_key
 
 class AiAskRequest(BaseModel):
     user_id: str

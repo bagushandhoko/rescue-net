@@ -3330,3 +3330,154 @@ def create_verification_action(payload: VerificationActionCreate):
 
         conn.commit()
         return action
+
+class DonorProgramCreate(BaseModel):
+    disaster_event_id: str
+    program_name: str
+    program_type: Optional[str] = "general_relief"
+    owner_type: Optional[str] = "organization"
+    owner_id: Optional[str] = None
+    target_description: Optional[str] = None
+    target_amount: Optional[float] = 0
+    target_unit: Optional[str] = "IDR"
+    location: Optional[str] = None
+    contact_person: Optional[str] = None
+    contact_phone: Optional[str] = None
+    notes: Optional[str] = None
+    created_by_user_id: Optional[str] = "donor-program-operator"
+
+class DonorProgramUpdateCreate(BaseModel):
+    program_id: str
+    disaster_event_id: str
+    update_title: str
+    update_type: Optional[str] = "progress"
+    amount_used: Optional[float] = 0
+    amount_unit: Optional[str] = "IDR"
+    description: Optional[str] = None
+    evidence_file_id: Optional[str] = None
+    created_by_user_id: Optional[str] = "donor-program-operator"
+
+@app.get("/donor-program-context/{disaster_event_id}")
+def get_donor_program_context(disaster_event_id: str):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT *
+        FROM donor_programs
+        WHERE disaster_event_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (disaster_event_id,))
+        programs = rows_to_dicts(cur)
+
+        cur.execute("""
+        SELECT *
+        FROM donor_program_updates
+        WHERE disaster_event_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (disaster_event_id,))
+        updates = rows_to_dicts(cur)
+
+        updates_by_program = {}
+        for u in updates:
+            updates_by_program.setdefault(u.get("program_id"), []).append(u)
+
+        enriched = []
+        for p in programs:
+            p = dict(p)
+            p["updates"] = updates_by_program.get(p.get("id"), [])
+            p["update_count"] = len(p["updates"])
+            p["spent_amount"] = sum(float(u.get("amount_used") or 0) for u in p["updates"])
+            enriched.append(p)
+
+        return {
+            "disaster_event_id": disaster_event_id,
+            "programs": enriched,
+            "updates": updates,
+            "summary": {
+                "program_count": len(programs),
+                "active_count": len([p for p in programs if p.get("status") == "active"]),
+                "update_count": len(updates),
+                "target_total": sum(float(p.get("target_amount") or 0) for p in programs),
+                "current_total": sum(float(p.get("current_amount") or 0) for p in programs),
+                "spent_total": sum(float(u.get("amount_used") or 0) for u in updates),
+            },
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
+@app.post("/donor-programs")
+def create_donor_program(payload: DonorProgramCreate):
+    program_id = "donorprog-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO donor_programs
+        (id, disaster_event_id, program_name, program_type,
+         owner_type, owner_id, target_description,
+         target_amount, target_unit, current_amount,
+         status, location, contact_person, contact_phone,
+         notes, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,0,'active',%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            program_id,
+            payload.disaster_event_id,
+            payload.program_name,
+            payload.program_type,
+            payload.owner_type,
+            payload.owner_id,
+            payload.target_description,
+            payload.target_amount,
+            payload.target_unit,
+            payload.location,
+            payload.contact_person,
+            payload.contact_phone,
+            payload.notes,
+            payload.created_by_user_id,
+        ))
+
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+@app.post("/donor-program-updates")
+def create_donor_program_update(payload: DonorProgramUpdateCreate):
+    update_id = "donorupd-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO donor_program_updates
+        (id, program_id, disaster_event_id, update_title, update_type,
+         amount_used, amount_unit, description, evidence_file_id,
+         created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            update_id,
+            payload.program_id,
+            payload.disaster_event_id,
+            payload.update_title,
+            payload.update_type,
+            payload.amount_used,
+            payload.amount_unit,
+            payload.description,
+            payload.evidence_file_id,
+            payload.created_by_user_id,
+        ))
+
+        row = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        UPDATE donor_programs
+        SET current_amount = current_amount + %s,
+            updated_at = NOW()
+        WHERE id = %s;
+        """, (
+            payload.amount_used or 0,
+            payload.program_id,
+        ))
+
+        conn.commit()
+        return row

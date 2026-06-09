@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Donor Program</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=donor-program-live-1">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">RN</div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html">War Room</a>
+      <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
+      <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
+      <a href="alat-kerja.html">Alat Kerja</a>
+      <a href="verification-approval.html">Verification</a>
+      <a href="evidence.html">Evidence</a>
+      <a class="active" href="donor-program.html">Donor Program</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="edit-bantuan.html">Edit Bantuan</a>
+      <a href="sync-console.html">Sync Console</a>
+      <a href="ai-analyst.html">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Donor Program / Transparency</p>
+        <h2>Donor Program</h2>
+        <p class="subtitle">Program donasi, target, progres, realisasi penggunaan, evidence, dan kontak PIC.</p>
+        <p class="subtitle" id="donorProgramStatus">Ready.</p>
+      </div>
+      <button class="btn primary" id="refreshDonorPrograms">Refresh</button>
+    </header>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Transparency Summary</h3>
+          <p>Ringkasan program dan realisasi.</p>
+        </div>
+      </div>
+      <div class="summary-list" id="donorProgramSummary">
+        <div><span>Status</span><b>Loading</b></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Program List</h3>
+        <div class="event-list" id="donorProgramList"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Buat Program Donasi</h3>
+        <form class="rn-form" id="donorProgramForm">
+          <label>Program Name
+            <input name="program_name" value="Program PLTS Posko Terpencil" required>
+          </label>
+
+          <label>Program Type
+            <input name="program_type" value="energy_support">
+          </label>
+
+          <label>Owner Type
+            <select name="owner_type">
+              <option value="organization">organization</option>
+              <option value="posko">posko</option>
+              <option value="community_group">community_group</option>
+            </select>
+          </label>
+
+          <label>Owner ID
+            <input name="owner_id" value="org-bpbd-aceh">
+          </label>
+
+          <label>Target Description
+            <input name="target_description" value="Pengadaan PLTS kecil untuk posko terpencil dan titik komunikasi.">
+          </label>
+
+          <label>Target Amount
+            <input name="target_amount" type="number" value="25000000">
+          </label>
+
+          <label>Target Unit
+            <input name="target_unit" value="IDR">
+          </label>
+
+          <label>Location
+            <input name="location" value="Aceh Barat">
+          </label>
+
+          <label>PIC / Officer in Charge
+            <input name="contact_person" value="PIC Program Donasi">
+          </label>
+
+          <label>HP PIC
+            <input name="contact_phone" value="081234567899">
+          </label>
+
+          <label>Notes
+            <input name="notes" value="Transparansi progres dan bukti penggunaan wajib diupdate.">
+          </label>
+
+          <button class="btn primary" type="submit">Save Program</button>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Tambah Update / Realisasi</h3>
+        <form class="rn-form" id="donorProgramUpdateForm">
+          <label>Program
+            <select name="program_id" required></select>
+          </label>
+
+          <label>Update Title
+            <input name="update_title" value="Pembelian panel surya tahap 1" required>
+          </label>
+
+          <label>Update Type
+            <select name="update_type">
+              <option value="progress">progress</option>
+              <option value="spending">spending</option>
+              <option value="handover">handover</option>
+              <option value="completion">completion</option>
+            </select>
+          </label>
+
+          <label>Amount Used
+            <input name="amount_used" type="number" value="5000000">
+          </label>
+
+          <label>Amount Unit
+            <input name="amount_unit" value="IDR">
+          </label>
+
+          <label>Evidence File ID
+            <input name="evidence_file_id" value="">
+          </label>
+
+          <label>Description
+            <input name="description" value="Dana digunakan untuk pembelian panel dan controller.">
+          </label>
+
+          <button class="btn primary" type="submit">Save Update</button>
+        </form>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Transparansi Publik</h3>
+        <p class="subtitle">
+          Donatur dapat melihat program, target, kontak PIC, dan update realisasi. Evidence dapat dihubungkan lewat Evidence module.
+        </p>
+        <div class="summary-list">
+          <div><span>Key Rule</span><b>No hidden spending</b></div>
+          <div><span>Evidence</span><b>Required for handover/spending</b></div>
+          <div><span>Contact</span><b>PIC must be reachable</b></div>
+        </div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/donor-program.js?v=live-1"></script>
+</body>
+</html>

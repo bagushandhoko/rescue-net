@@ -15,7 +15,7 @@ from routes.auth_routes import router as auth_router
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://rescuenet_user:rescuenet_dev_password@192.168.100.32:5433/rescuenet_db",
+    "postgresql://rescuenet_user@localhost:5432/rescuenet_db",
 )
 UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "/data/uploads"))
 
@@ -789,165 +789,286 @@ def public_update_aid_offer(aid_offer_id: str, payload: PublicAidOfferUpdate):
     return updated
 
 
+
+
 @app.get("/ai/context/{disaster_event_id}")
 def get_ai_context(disaster_event_id: str):
     context = {
         "disaster_event_id": disaster_event_id,
         "generated_at": datetime.utcnow().isoformat(),
         "disaster": None,
+
         "poskos": [],
+        "organizations": [],
+        "volunteers": [],
         "logistic_needs": [],
         "aid_offers": [],
         "transport_spaces": [],
         "distribution_flows": [],
-        "volunteers": [],
         "ecosystem_members": [],
         "resources": [],
-        "resource_shares": [],
         "resource_requests": [],
+        "resource_assignments": [],
+
+        "stock_summary": [],
+        "stock_movements": [],
+        "kitchen_meal_productions": [],
+        "medical_cases": [],
+        "medical_supply_uses": [],
+        "shelter_occupancies": [],
+        "shelter_needs": [],
+        "missing_person_reports": [],
+        "found_person_reports": [],
+        "search_found_matches": [],
+        "donor_programs": [],
+        "donor_program_updates": [],
+
         "summary": {},
         "alerts": [],
         "recommendations": [],
-        "sources": [],
+        "sources": []
     }
 
     with get_conn() as conn, conn.cursor() as cur:
+        def table_exists(table_name):
+            cur.execute("""
+            SELECT EXISTS (
+              SELECT 1 FROM information_schema.tables
+              WHERE table_schema = 'public'
+                AND table_name = %s
+            ) AS exists;
+            """, (table_name,))
+            return rows_to_dicts(cur)[0]["exists"]
+
+        def table_columns(table_name):
+            cur.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = %s;
+            """, (table_name,))
+            return {r["column_name"] for r in rows_to_dicts(cur)}
+
+        def read_disaster_table(key, table_name, limit=300):
+            if not table_exists(table_name):
+                return
+            cols = table_columns(table_name)
+            if "disaster_event_id" not in cols:
+                return
+
+            deleted_filter = "AND deleted_at IS NULL" if "deleted_at" in cols else ""
+            order_col = "created_at" if "created_at" in cols else "id"
+
+            cur.execute(f"""
+            SELECT *
+            FROM {table_name}
+            WHERE disaster_event_id = %s
+            {deleted_filter}
+            ORDER BY {order_col} DESC
+            LIMIT %s;
+            """, (disaster_event_id, limit))
+            context[key] = rows_to_dicts(cur)
+
         cur.execute("SELECT * FROM disaster_events WHERE id = %s;", (disaster_event_id,))
         rows = rows_to_dicts(cur)
         context["disaster"] = rows[0] if rows else None
 
-        cur.execute("SELECT * FROM posko_nodes WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["poskos"] = rows_to_dicts(cur)
+        for key, table in [
+            ("poskos", "posko_nodes"),
+            ("logistic_needs", "logistic_needs"),
+            ("aid_offers", "aid_offers"),
+            ("transport_spaces", "transport_spaces"),
+            ("distribution_flows", "distribution_flows"),
+            ("ecosystem_members", "disaster_ecosystem_members"),
+            ("resources", "resources"),
+            ("resource_requests", "resource_requests"),
+            ("resource_assignments", "resource_assignments"),
+            ("stock_movements", "stock_movements"),
+            ("kitchen_meal_productions", "kitchen_meal_productions"),
+            ("medical_cases", "medical_cases"),
+            ("medical_supply_uses", "medical_supply_uses"),
+            ("shelter_occupancies", "shelter_occupancies"),
+            ("shelter_needs", "shelter_needs"),
+            ("missing_person_reports", "missing_person_reports"),
+            ("found_person_reports", "found_person_reports"),
+            ("search_found_matches", "search_found_matches"),
+            ("donor_programs", "donor_programs"),
+            ("donor_program_updates", "donor_program_updates"),
+        ]:
+            read_disaster_table(key, table)
 
-        cur.execute("SELECT * FROM logistic_needs WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["logistic_needs"] = rows_to_dicts(cur)
+        # Organizations are currently global, but include active orgs for command context.
+        if table_exists("organizations"):
+            cols = table_columns("organizations")
+            deleted_filter = "WHERE deleted_at IS NULL" if "deleted_at" in cols else ""
+            cur.execute(f"""
+            SELECT *
+            FROM organizations
+            {deleted_filter}
+            ORDER BY name ASC
+            LIMIT 200;
+            """)
+            context["organizations"] = rows_to_dicts(cur)
 
-        cur.execute("SELECT * FROM aid_offers WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["aid_offers"] = rows_to_dicts(cur)
+        # Volunteers are currently global in this prototype.
+        if table_exists("volunteers"):
+            cols = table_columns("volunteers")
+            deleted_filter = "WHERE deleted_at IS NULL" if "deleted_at" in cols else ""
+            order_col = "created_at" if "created_at" in cols else "id"
+            cur.execute(f"""
+            SELECT *
+            FROM volunteers
+            {deleted_filter}
+            ORDER BY {order_col} DESC
+            LIMIT 200;
+            """)
+            context["volunteers"] = rows_to_dicts(cur)
 
-        cur.execute("SELECT * FROM transport_spaces WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["transport_spaces"] = rows_to_dicts(cur)
+        if table_exists("stock_movements"):
+            cols = table_columns("stock_movements")
+            deleted_filter = "AND deleted_at IS NULL" if "deleted_at" in cols else ""
+            cur.execute(f"""
+            SELECT
+              posko_id,
+              item_name,
+              unit,
+              SUM(
+                CASE
+                  WHEN movement_direction = 'in' THEN quantity
+                  WHEN movement_direction = 'out' THEN -quantity
+                  ELSE 0
+                END
+              ) AS current_quantity
+            FROM stock_movements
+            WHERE disaster_event_id = %s
+            {deleted_filter}
+            GROUP BY posko_id, item_name, unit
+            ORDER BY posko_id, item_name;
+            """, (disaster_event_id,))
+            context["stock_summary"] = rows_to_dicts(cur)
 
-        cur.execute("SELECT * FROM distribution_flows WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["distribution_flows"] = rows_to_dicts(cur)
+        context["summary"] = {
+            "posko_count": len(context["poskos"]),
+            "organization_count": len(context["organizations"]),
+            "volunteer_count": len(context["volunteers"]),
 
-        cur.execute("SELECT * FROM volunteers ORDER BY created_at DESC LIMIT 50;")
-        context["volunteers"] = rows_to_dicts(cur)
+            "open_logistic_need_count": len([x for x in context["logistic_needs"] if x.get("status") == "open"]),
+            "urgent_logistic_need_count": len([x for x in context["logistic_needs"] if x.get("priority") == "urgent" and x.get("status") == "open"]),
+            "critical_logistic_need_count": len([x for x in context["logistic_needs"] if x.get("priority") == "critical" and x.get("status") == "open"]),
 
-        cur.execute("SELECT * FROM disaster_ecosystem_members WHERE disaster_event_id = %s ORDER BY role_in_disaster, member_type;", (disaster_event_id,))
-        context["ecosystem_members"] = rows_to_dicts(cur)
+            "aid_offer_count": len(context["aid_offers"]),
+            "aid_need_pickup_count": len([x for x in context["aid_offers"] if x.get("delivery_mode") == "need_pickup" or x.get("status") == "need_pickup"]),
 
-        cur.execute("SELECT * FROM resources WHERE disaster_event_id = %s ORDER BY resource_type, trust_level DESC, created_at DESC;", (disaster_event_id,))
-        context["resources"] = rows_to_dicts(cur)
+            "distribution_flow_count": len(context["distribution_flows"]),
+            "resource_request_count": len(context["resource_requests"]),
+            "resource_assignment_count": len(context["resource_assignments"]),
 
-        cur.execute("SELECT * FROM resource_shares WHERE disaster_event_id = %s ORDER BY created_at DESC;", (disaster_event_id,))
-        context["resource_shares"] = rows_to_dicts(cur)
+            "stock_item_count": len(context["stock_summary"]),
+            "stock_movement_count": len(context["stock_movements"]),
 
-        cur.execute("""
-        SELECT rr.*
-        FROM resource_requests rr
-        JOIN resources r ON r.id = rr.resource_id
-        WHERE r.disaster_event_id = %s
-        ORDER BY rr.created_at DESC;
-        """, (disaster_event_id,))
-        context["resource_requests"] = rows_to_dicts(cur)
+            "meal_production_count": len(context["kitchen_meal_productions"]),
+            "medical_case_count": len(context["medical_cases"]),
+            "medical_supply_use_count": len(context["medical_supply_uses"]),
 
-    needs = context["logistic_needs"]
-    offers = context["aid_offers"]
-    transports = context["transport_spaces"]
-    flows = context["distribution_flows"]
+            "shelter_occupancy_count": len(context["shelter_occupancies"]),
+            "shelter_need_count": len(context["shelter_needs"]),
 
-    critical_needs = [n for n in needs if n.get("priority") == "critical" and n.get("status") == "open"]
-    urgent_needs = [n for n in needs if n.get("priority") == "urgent" and n.get("status") == "open"]
-    need_pickup = [a for a in offers if a.get("status") == "need_pickup" or a.get("delivery_mode") == "need_pickup"]
-    self_delivery = [a for a in offers if a.get("status") == "self_delivery_planned" or a.get("delivery_mode") == "self_deliver_to_posko"]
-    available_transports = [t for t in transports if t.get("status") == "available"]
-    planned_flows = [f for f in flows if f.get("status") == "planned"]
+            "missing_person_count": len([x for x in context["missing_person_reports"] if x.get("status") != "reunited"]),
+            "found_person_count": len(context["found_person_reports"]),
+            "search_found_match_count": len(context["search_found_matches"]),
+            "reunited_count": len([x for x in context["search_found_matches"] if x.get("status") == "reunited"]),
+            "donor_program_count": len(context["donor_programs"]),
+            "donor_program_update_count": len(context["donor_program_updates"]),
+        }
 
-    context["summary"] = {
-        "total_poskos": len(context["poskos"]),
-        "total_logistic_needs": len(needs),
-        "critical_needs": len(critical_needs),
-        "urgent_needs": len(urgent_needs),
-        "total_aid_offers": len(offers),
-        "aid_need_pickup": len(need_pickup),
-        "aid_self_delivery_planned": len(self_delivery),
-        "available_transport_spaces": len(available_transports),
-        "distribution_flows": len(flows),
-        "planned_distribution_flows": len(planned_flows),
-        "volunteers_listed": len(context["volunteers"]),
-        "ecosystem_members": len(context.get("ecosystem_members", [])),
-        "shared_resources": len(context.get("resources", [])),
-        "resource_requests": len(context.get("resource_requests", [])),
-    }
+        for aid in context["aid_offers"]:
+            if aid.get("delivery_mode") == "need_pickup" or aid.get("status") == "need_pickup":
+                context["alerts"].append({
+                    "level": "warning",
+                    "type": "aid_need_pickup",
+                    "message": f"Bantuan {aid.get('item_name')} dari {aid.get('donor_name')} perlu pickup di {aid.get('pickup_location')}.",
+                    "source_table": "aid_offers",
+                    "source_id": aid.get("id")
+                })
 
-    for n in critical_needs:
-        context["alerts"].append({
-            "level": "critical",
-            "type": "logistic_need",
-            "message": f"{n.get('item_name')} masih critical: {n.get('quantity_needed')} {n.get('unit')}, dibutuhkan sebelum {n.get('needed_before') or 'belum ditentukan'}.",
-            "source_table": "logistic_needs",
-            "source_id": n.get("id"),
-        })
+        for need in context["logistic_needs"]:
+            if need.get("status") == "open" and need.get("priority") in ["urgent", "critical"]:
+                context["alerts"].append({
+                    "level": need.get("priority"),
+                    "type": "logistic_need",
+                    "message": f"Kebutuhan {need.get('item_name')} masih open: {need.get('quantity_needed')} {need.get('unit')}.",
+                    "source_table": "logistic_needs",
+                    "source_id": need.get("id")
+                })
 
-    for a in need_pickup:
-        context["alerts"].append({
-            "level": "warning",
-            "type": "aid_need_pickup",
-            "message": f"Bantuan {a.get('item_name')} dari {a.get('donor_name')} perlu pickup di {a.get('pickup_location')}.",
-            "source_table": "aid_offers",
-            "source_id": a.get("id"),
-        })
+        for need in context["shelter_needs"]:
+            if need.get("status") == "open" and need.get("priority") in ["urgent", "critical"]:
+                context["alerts"].append({
+                    "level": need.get("priority"),
+                    "type": "shelter_need",
+                    "message": f"Kebutuhan shelter {need.get('item_name')} masih open: {need.get('quantity_needed')} {need.get('unit')}.",
+                    "source_table": "shelter_needs",
+                    "source_id": need.get("id")
+                })
 
-    if critical_needs and need_pickup and available_transports:
-        context["recommendations"].append({
-            "priority": "high",
-            "message": "Ada kebutuhan critical, bantuan perlu pickup, dan transport tersedia. Prioritaskan matching bantuan dengan transport.",
-            "related_sources": {
-                "critical_needs": [n.get("id") for n in critical_needs[:5]],
-                "aid_offers": [a.get("id") for a in need_pickup[:5]],
-                "transport_spaces": [t.get("id") for t in available_transports[:5]],
-            }
-        })
+        for occ in context["shelter_occupancies"]:
+            cap = occ.get("capacity_total") or 0
+            cur_occ = occ.get("current_occupancy") or 0
+            try:
+                if cap and float(cur_occ) / float(cap) >= 0.9:
+                    context["alerts"].append({
+                        "level": "urgent",
+                        "type": "shelter_capacity",
+                        "message": f"Shelter hampir penuh: {occ.get('shelter_name')} {cur_occ}/{cap}.",
+                        "source_table": "shelter_occupancies",
+                        "source_id": occ.get("id")
+                    })
+            except Exception:
+                pass
 
-    if self_delivery:
-        context["recommendations"].append({
-            "priority": "medium",
-            "message": "Ada bantuan yang akan diantar sendiri ke posko. Posko tujuan perlu menyiapkan penerimaan dan verifikasi barang.",
-            "related_sources": {
-                "aid_offers": [a.get("id") for a in self_delivery[:5]]
-            }
-        })
+        for case in context["medical_cases"]:
+            if case.get("severity") in ["severe", "critical"] or case.get("triage_status") == "red":
+                context["alerts"].append({
+                    "level": case.get("severity") or "urgent",
+                    "type": "medical_case",
+                    "message": f"Kasus medis prioritas: {case.get('patient_code')} - {case.get('complaint')}.",
+                    "source_table": "medical_cases",
+                    "source_id": case.get("id")
+                })
 
-    for collection_name, table_name in [
-        ("poskos", "posko_nodes"),
-        ("logistic_needs", "logistic_needs"),
-        ("aid_offers", "aid_offers"),
-        ("transport_spaces", "transport_spaces"),
-        ("distribution_flows", "distribution_flows"),
-        ("volunteers", "volunteers"),
-        ("ecosystem_members", "disaster_ecosystem_members"),
-        ("resources", "resources"),
-        ("resource_shares", "resource_shares"),
-        ("resource_requests", "resource_requests"),
-    ]:
-        for item in context[collection_name]:
-            context["sources"].append({
-                "source_table": table_name,
-                "source_id": item.get("id"),
+        if context["summary"]["missing_person_count"] > 0:
+            context["alerts"].append({
+                "level": "urgent",
+                "type": "search_found",
+                "message": f"{context['summary']['missing_person_count']} laporan orang hilang masih terbuka.",
+                "source_table": "missing_person_reports",
+                "source_id": "missing_person_reports"
             })
+
+        if context["summary"]["open_logistic_need_count"] > 0:
+            context["recommendations"].append("Prioritaskan kebutuhan logistik urgent/critical dan cocokkan dengan stok atau bantuan masuk.")
+        if context["summary"]["aid_need_pickup_count"] > 0:
+            context["recommendations"].append("Assign relawan/transport untuk pickup bantuan yang masih perlu dijemput.")
+        if context["summary"]["shelter_need_count"] > 0:
+            context["recommendations"].append("Cek kebutuhan shelter dan arahkan distribusi stok menuju shelter.")
+        if context["summary"]["medical_case_count"] > 0:
+            context["recommendations"].append("Monitor pemakaian stok medis dan replenishment obat cepat habis.")
+        if context["summary"]["missing_person_count"] > 0:
+            context["recommendations"].append("Koordinasikan Search & Found dengan shelter, posko medis, dan relawan lapangan.")
+        if context["summary"].get("donor_program_count", 0) > 0:
+            context["recommendations"].append("Monitor progress program khusus, dana diterima, pengeluaran, bukti, dan target penerima manfaat.")
+
+        for key, rows_ in context.items():
+            if isinstance(rows_, list):
+                for row in rows_[:80]:
+                    if isinstance(row, dict) and row.get("id"):
+                        context["sources"].append({
+                            "source_table": key,
+                            "source_id": row.get("id")
+                        })
 
     return context
 
-class ResourceRequestCreate(BaseModel):
-    resource_id: str
-    requested_by_type: str
-    requested_by_id: str
-    request_reason: Optional[str] = None
-    related_need_id: Optional[str] = None
-    related_distribution_flow_id: Optional[str] = None
-    requested_quantity: Optional[float] = None
-    requested_time: Optional[str] = None
 
 
 @app.get("/ecosystem-members/{disaster_event_id}")
@@ -997,19 +1118,49 @@ def get_resource_requests():
         return rows_to_dicts(cur)
 
 
+
+class ResourceRequestCreate(BaseModel):
+    disaster_event_id: Optional[str] = None
+    resource_id: str
+    requested_by_type: str
+    requested_by_id: str
+    request_reason: str
+    related_need_id: Optional[str] = None
+    related_distribution_flow_id: Optional[str] = None
+    requested_quantity: Optional[float] = 1
+    requested_time: Optional[str] = None
+    created_by_user_id: Optional[str] = "resource-operator"
+
+
+class ResourceRequestApprove(BaseModel):
+    approved_by: str
+    assignment_notes: Optional[str] = None
+    assigned_quantity: Optional[float] = 1
+    created_by_user_id: Optional[str] = "resource-operator"
+
+
 @app.post("/resource-requests")
 def create_resource_request(payload: ResourceRequestCreate):
-    item_id = "req-" + uuid.uuid4().hex[:12]
+    request_id = "req-" + uuid.uuid4().hex[:12]
+
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
         INSERT INTO resource_requests
-        (id, resource_id, requested_by_type, requested_by_id, request_reason,
-         related_need_id, related_distribution_flow_id, requested_quantity,
-         requested_time, status)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'requested')
+        (id, disaster_event_id, resource_id,
+         requested_by_type, requested_by_id, request_reason,
+         related_need_id, related_distribution_flow_id,
+         requested_quantity, requested_time,
+         status, created_at, updated_at)
+        VALUES
+        (%s,%s,%s,
+         %s,%s,%s,
+         %s,%s,
+         %s,%s,
+         'requested', NOW(), NOW())
         RETURNING *;
         """, (
-            item_id,
+            request_id,
+            payload.disaster_event_id,
             payload.resource_id,
             payload.requested_by_type,
             payload.requested_by_id,
@@ -1019,14 +1170,10 @@ def create_resource_request(payload: ResourceRequestCreate):
             payload.requested_quantity,
             payload.requested_time,
         ))
+
         row = rows_to_dicts(cur)[0]
         conn.commit()
         return row
-
-class ResourceRequestApprove(BaseModel):
-    approved_by: str = "command-center"
-    assignment_notes: Optional[str] = None
-    assigned_quantity: Optional[float] = None
 
 
 @app.post("/resource-requests/{request_id}/approve")
@@ -3348,16 +3495,21 @@ class DonorProgramCreate(BaseModel):
     notes: Optional[str] = None
     created_by_user_id: Optional[str] = "donor-program-operator"
 
+
 class DonorProgramUpdateCreate(BaseModel):
     program_id: str
     disaster_event_id: str
-    update_title: str
     update_type: Optional[str] = "progress"
-    amount_used: Optional[float] = 0
-    amount_unit: Optional[str] = "IDR"
-    description: Optional[str] = None
+    progress_percent: Optional[float] = 0
+    amount_spent: Optional[float] = 0
+    update_title: str
+    update_notes: Optional[str] = None
     evidence_file_id: Optional[str] = None
-    created_by_user_id: Optional[str] = "donor-program-operator"
+    officer_in_charge_name: Optional[str] = None
+    officer_in_charge_phone: Optional[str] = None
+    public_visibility: Optional[str] = "summary_public"
+    created_by_user_id: Optional[str] = "program-operator"
+
 
 @app.get("/donor-program-context/{disaster_event_id}")
 def get_donor_program_context(disaster_event_id: str):
@@ -3443,61 +3595,63 @@ def create_donor_program(payload: DonorProgramCreate):
         conn.commit()
         return row
 
+
 @app.post("/donor-program-updates")
 def create_donor_program_update(payload: DonorProgramUpdateCreate):
-    update_id = "donorupd-" + uuid.uuid4().hex[:12]
+    update_id = "programupd-" + uuid.uuid4().hex[:12]
 
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
-        INSERT INTO donor_program_updates
-        (id, program_id, disaster_event_id, update_title, update_type,
-         amount_used, amount_unit, description, evidence_file_id,
-         created_by_user_id)
-        VALUES
-        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        RETURNING *;
-        """, (
-            update_id,
-            payload.program_id,
-            payload.disaster_event_id,
-            payload.update_title,
-            payload.update_type,
-            payload.amount_used,
-            payload.amount_unit,
-            payload.description,
-            payload.evidence_file_id,
-            payload.created_by_user_id,
-        ))
+        SELECT id
+        FROM donor_programs
+        WHERE id = %s
+          AND deleted_at IS NULL;
+        """, (payload.program_id,))
+        rows = rows_to_dicts(cur)
 
-        row = rows_to_dicts(cur)[0]
+        if not rows:
+            raise HTTPException(status_code=404, detail="Program not found")
 
         cur.execute("""
+        INSERT INTO donor_program_updates
+        (id, program_id, disaster_event_id,
+         update_type, progress_percent, amount_spent,
+         update_title, update_notes, evidence_file_id,
+         officer_in_charge_name, officer_in_charge_phone,
+         public_visibility, created_by_user_id)
+        VALUES
+        (%s,%s,%s,
+         %s,%s,%s,
+         %s,%s,%s,
+         %s,%s,
+         %s,%s)
+        RETURNING *;
+        """, (
+            update_id, payload.program_id, payload.disaster_event_id,
+            payload.update_type, payload.progress_percent, payload.amount_spent,
+            payload.update_title, payload.update_notes, payload.evidence_file_id,
+            payload.officer_in_charge_name, payload.officer_in_charge_phone,
+            payload.public_visibility, payload.created_by_user_id
+        ))
+
+        update_row = rows_to_dicts(cur)[0]
+
+        # Compatible with current donor_programs schema:
+        # current_amount = total dana/progress berjalan.
+        cur.execute("""
         UPDATE donor_programs
-        SET current_amount = current_amount + %s,
+        SET current_amount = COALESCE(current_amount, 0) + %s,
             updated_at = NOW()
         WHERE id = %s;
         """, (
-            payload.amount_used or 0,
-            payload.program_id,
+            payload.amount_spent or 0,
+            payload.program_id
         ))
 
         conn.commit()
-        return row
+        return update_row
 
 
-
-class MapPointCreate(BaseModel):
-    disaster_event_id: str
-    object_type: str
-    object_id: Optional[str] = None
-    label: str
-    description: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    location_text: Optional[str] = None
-    point_status: Optional[str] = "active"
-    priority: Optional[str] = "normal"
-    created_by_user_id: Optional[str] = "map-operator"
 
 @app.get("/map-context/{disaster_event_id}")
 def get_map_context(disaster_event_id: str):
@@ -3618,6 +3772,23 @@ def get_map_context(disaster_event_id: str):
             "generated_at": datetime.utcnow().isoformat()
         }
 
+
+class MapPointCreate(BaseModel):
+    disaster_event_id: str
+    point_type: Optional[str] = "posko"
+    title: str
+    description: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    location_text: Optional[str] = None
+    related_object_type: Optional[str] = None
+    related_object_id: Optional[str] = None
+    status: Optional[str] = "active"
+    priority: Optional[str] = "normal"
+    visibility_scope: Optional[str] = "disaster_ecosystem"
+    access_policy: Optional[str] = "request_required"
+    created_by_user_id: Optional[str] = "map-operator"
+
 @app.post("/map-points")
 def create_map_point(payload: MapPointCreate):
     point_id = "map-" + uuid.uuid4().hex[:12]
@@ -3648,3 +3819,176 @@ def create_map_point(payload: MapPointCreate):
         row = rows_to_dicts(cur)[0]
         conn.commit()
         return row
+
+
+class DonorProgramCreate(BaseModel):
+    disaster_event_id: str
+    owner_type: Optional[str] = "organization"
+    owner_id: Optional[str] = None
+    program_name: str
+    program_type: Optional[str] = "special_program"
+    target_location: Optional[str] = None
+    target_node_id: Optional[str] = None
+    target_beneficiaries: Optional[str] = None
+    budget_target: Optional[float] = 0
+    budget_received: Optional[float] = 0
+    budget_spent: Optional[float] = 0
+    status: Optional[str] = "planned"
+    priority: Optional[str] = "normal"
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    description: Optional[str] = None
+    public_visibility: Optional[str] = "summary_public"
+    officer_in_charge_name: Optional[str] = None
+    officer_in_charge_phone: Optional[str] = None
+    evidence_file_id: Optional[str] = None
+    created_by_user_id: Optional[str] = "program-operator"
+
+
+class DonorProgramUpdateCreate(BaseModel):
+    program_id: str
+    disaster_event_id: str
+    update_type: Optional[str] = "progress"
+    progress_percent: Optional[float] = 0
+    amount_spent: Optional[float] = 0
+    update_title: str
+    update_notes: Optional[str] = None
+    evidence_file_id: Optional[str] = None
+    officer_in_charge_name: Optional[str] = None
+    officer_in_charge_phone: Optional[str] = None
+    public_visibility: Optional[str] = "summary_public"
+    created_by_user_id: Optional[str] = "program-operator"
+
+
+@app.get("/donor-programs")
+def list_donor_programs(disaster_event_id: Optional[str] = None):
+    with get_conn() as conn, conn.cursor() as cur:
+        if disaster_event_id:
+            cur.execute("""
+            SELECT *
+            FROM donor_programs
+            WHERE disaster_event_id = %s
+              AND deleted_at IS NULL
+            ORDER BY created_at DESC;
+            """, (disaster_event_id,))
+        else:
+            cur.execute("""
+            SELECT *
+            FROM donor_programs
+            WHERE deleted_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT 200;
+            """)
+        return rows_to_dicts(cur)
+
+
+@app.post("/donor-programs")
+def create_donor_program(payload: DonorProgramCreate):
+    program_id = "program-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO donor_programs
+        (id, disaster_event_id, owner_type, owner_id,
+         program_name, program_type, target_location, target_node_id,
+         target_beneficiaries, budget_target, budget_received, budget_spent,
+         status, priority, start_date, end_date, description,
+         public_visibility, officer_in_charge_name, officer_in_charge_phone,
+         evidence_file_id, created_by_user_id)
+        VALUES
+        (%s,%s,%s,%s,
+         %s,%s,%s,%s,
+         %s,%s,%s,%s,
+         %s,%s,%s,%s,%s,
+         %s,%s,%s,
+         %s,%s)
+        RETURNING *;
+        """, (
+            program_id, payload.disaster_event_id, payload.owner_type, payload.owner_id,
+            payload.program_name, payload.program_type, payload.target_location, payload.target_node_id,
+            payload.target_beneficiaries, payload.budget_target, payload.budget_received, payload.budget_spent,
+            payload.status, payload.priority, payload.start_date, payload.end_date, payload.description,
+            payload.public_visibility, payload.officer_in_charge_name, payload.officer_in_charge_phone,
+            payload.evidence_file_id, payload.created_by_user_id
+        ))
+
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+        return row
+
+
+@app.get("/donor-programs/{program_id}")
+def get_donor_program(program_id: str):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT *
+        FROM donor_programs
+        WHERE id = %s
+          AND deleted_at IS NULL;
+        """, (program_id,))
+        rows = rows_to_dicts(cur)
+
+        if not rows:
+            raise HTTPException(status_code=404, detail="Program not found")
+
+        program = rows[0]
+
+        cur.execute("""
+        SELECT *
+        FROM donor_program_updates
+        WHERE program_id = %s
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC;
+        """, (program_id,))
+
+        updates = rows_to_dicts(cur)
+
+        return {
+            "program": program,
+            "updates": updates
+        }
+
+
+@app.post("/donor-program-updates")
+def create_donor_program_update(payload: DonorProgramUpdateCreate):
+    update_id = "programupd-" + uuid.uuid4().hex[:12]
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO donor_program_updates
+        (id, program_id, disaster_event_id,
+         update_type, progress_percent, amount_spent,
+         update_title, update_notes, evidence_file_id,
+         officer_in_charge_name, officer_in_charge_phone,
+         public_visibility, created_by_user_id)
+        VALUES
+        (%s,%s,%s,
+         %s,%s,%s,
+         %s,%s,%s,
+         %s,%s,
+         %s,%s)
+        RETURNING *;
+        """, (
+            update_id, payload.program_id, payload.disaster_event_id,
+            payload.update_type, payload.progress_percent, payload.amount_spent,
+            payload.update_title, payload.update_notes, payload.evidence_file_id,
+            payload.officer_in_charge_name, payload.officer_in_charge_phone,
+            payload.public_visibility, payload.created_by_user_id
+        ))
+
+        update_row = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        UPDATE donor_programs
+        SET budget_spent = COALESCE(budget_spent, 0) + %s,
+            updated_at = NOW(),
+            updated_by_user_id = %s
+        WHERE id = %s;
+        """, (
+            payload.amount_spent or 0,
+            payload.created_by_user_id,
+            payload.program_id
+        ))
+
+        conn.commit()
+        return update_row

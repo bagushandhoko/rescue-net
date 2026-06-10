@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://rescuenet_user:CHANGE_ME@localhost:5432/rescuenet_db"
+    "postgresql://rescuenet_user@localhost:5432/rescuenet_db"
 )
 
 def get_conn():

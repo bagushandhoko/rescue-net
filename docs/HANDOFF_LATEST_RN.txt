@@ -1,0 +1,350 @@
+RESCUE-NET HANDOFF LATEST
+Updated: 2026-06-10
+Project path: /volume1/web/rescue-net
+Runtime API path: /volume1/docker/rescue-net-api
+Runtime API port: 8092
+Database: PostgreSQL container postgres-main, database rescuenet_db
+Public/local web path: /volume1/web/rescue-net
+
+============================================================
+1. CURRENT STATUS
+============================================================
+
+Rescue-Net prototype is active and running.
+
+Main live URLs:
+- Local welcome:
+  http://192.168.100.32/rescue-net/
+- Local War Room:
+  http://192.168.100.32/rescue-net/pages/war-room.html?event=event-sim-001
+- Domain/Tailscale welcome:
+  https://osiun.tail251e1e.ts.net/rescue-net/
+- Domain/Tailscale War Room:
+  https://osiun.tail251e1e.ts.net/rescue-net/pages/war-room.html?event=event-sim-001
+- Mock-up viewer:
+  https://osiun.tail251e1e.ts.net/rescue-net/pages/mockup.html?screen=welcome
+
+API health:
+- curl http://127.0.0.1:8092/health
+
+AI context:
+- curl -s http://127.0.0.1:8092/ai/context/event-sim-001 | python3 -m json.tool
+
+Current AI context summary confirmed:
+- posko_count: 4
+- organization_count: 6
+- volunteer_count: 3
+- open_logistic_need_count: 2
+- aid_offer_count: 2
+- distribution_flow_count: 4
+- resource_request_count: 1
+- stock_item_count: 4
+- stock_movement_count: 16
+- meal_production_count: 2
+- medical_case_count: 2
+- medical_supply_use_count: 2
+- shelter_occupancy_count: 2
+- shelter_need_count: 2
+- missing_person_count: 2
+- found_person_count: 2
+- search_found_match_count: 2
+- donor_program_count: 1
+- donor_program_update_count: 2
+
+============================================================
+2. LIVE MODULES NOW ACTIVE
+============================================================
+
+Sidebar live modules currently active:
+- Mock-up
+- Active Disasters
+- War Room
+- Map
+- Organisasi & Posko
+- Posko Detail
+- Logistik
+- Distribusi
+- Dapur Umum
+- Posko Medis
+- Shelter
+- Search & Found
+- Program Khusus
+- Donor Program
+- Recovery
+- Kirim Bantuan
+- Relawan
+- Alat Kerja
+- Profil Sumber Daya
+- Evidence
+- Verification
+- AI Analyst
+- AI Settings
+- Sync Console
+- Contact Directory
+
+Pages intentionally not in main sidebar:
+- auth.html
+- disaster-detail.html
+- edit-bantuan.html
+
+Reason:
+These are child/utility pages, not primary module pages.
+
+============================================================
+3. NEW MODULES ADDED IN THIS STAGE
+============================================================
+
+A. Mock-up Viewer
+Files:
+- pages/mockup.html
+- assets/js/mockup.js
+- assets/img/mockup/*.png
+- scripts/build-mockup-blueprint-manifest.py
+
+Behavior:
+- Mock-up viewer is separate from live prototype.
+- It has no live sidebar.
+- It uses top header menu only.
+- It shows full static mock-up images.
+- Image titles/subtitles/captions hidden because titles already exist inside images.
+- Login & Registrasi moved to the end of mock-up menu.
+
+Mock-up image folder:
+- /volume1/web/rescue-net/assets/img/mockup
+
+Uploaded mock-up images include:
+- welcome page rescue-net.png
+- bencana aktif.png
+- war room.png
+- login & registrasi.png
+- organisasi & posko.png
+- registrasi & verifikasi Posko.png
+- posko logistik.png
+- manajemen distribusi.png
+- dapur umum.png
+- shelter & akomodasi.png
+- search & found.png
+- program khusus.png
+- manajemen relawan.png
+- manajemen alat kerja.png
+- Profil Sumber Daya.png
+- evidence centre.png
+- verification & Approval.png
+- alat komunikasi.png
+- kompilasi tampilan HP.png
+
+B. Program Khusus
+Files:
+- pages/program-khusus.html
+- assets/js/program-khusus.js
+
+Backend/API:
+- /donor-programs
+- /donor-program-updates
+- /ai/context/{event_id} now includes donor_programs and donor_program_updates.
+
+Current AI context includes:
+- donor_program_count
+- donor_program_update_count
+
+C. AI Analyst
+Files:
+- pages/ai-analyst.html
+- assets/js/ai-analyst.js
+
+Purpose:
+- Displays AI context alerts, recommendations, and sources.
+- Can ask AI through /ai/ask if user BYOK key is saved.
+
+D. Event-driven Sync
+Files:
+- assets/js/rn-sync-engine.js
+- pages/sync-console.html
+
+Purpose:
+- No continuous 10-second polling.
+- Sync triggers on:
+  - page open
+  - app visible
+  - browser focus
+  - device back online
+  - manual Sync Now button
+- Designed for HP/Desktop users joining online without continuously stressing server.
+
+E. Resource Booking
+File:
+- assets/js/rn-resource-booking.js
+
+Purpose:
+- Quick booking/request workflow from War Room.
+- Adds resource_request_count into AI context.
+
+F. Profil Sumber Daya
+Files:
+- pages/resource-profile.html
+- assets/js/resource-profile.js
+
+Purpose:
+- Live page for organizations, poskos, volunteers, tools/shared resources.
+- Reads from /ai/context/{event_id}.
+
+G. Recovery / Reconstruction
+Files:
+- pages/recovery-reconstruction.html
+- assets/js/recovery-reconstruction.js
+
+Purpose:
+- Live page for recovery/reconstruction projects.
+- Uses donor_programs with program_type recovery_reconstruction.
+
+============================================================
+4. WAR ROOM LIVE FIXES
+============================================================
+
+Files:
+- pages/war-room.html
+- assets/js/war-room.js
+
+Fixes:
+- War Room live now uses event_id from URL:
+  ?event=event-sim-001
+- No longer hardcoded to event-aceh-2025.
+- War Room reads:
+  /ai/context/{eventId}
+- Program Khusus and Program Updates appear in War Room.
+- renderSpecialPrograms duplicate/unsafe function was cleaned.
+- Live War Room confirmed working after event URL fix.
+
+Important:
+If War Room loads wrong event again, check:
+- assets/js/war-room.js
+- ensure no const EVENT_ID = "event-aceh-2025"
+- ensure loadWarRoom uses:
+  const eventId = getEventId()
+  api(`/ai/context/${eventId}`)
+
+============================================================
+5. LAYOUT / RESOLUTION FIXES
+============================================================
+
+Files:
+- assets/js/rn-layout-mode.js
+- assets/css/style.css
+
+Final behavior:
+- Live local and live domain now visually matched using viewport/DPR fix.
+- Local live was:
+  LIVE | LOCAL | w=1821 | dpr=0.75
+- Domain live was:
+  LIVE | DOMAIN | w=1366 | dpr=1
+- Domain live is adjusted to match local using:
+  appShell.style.zoom = "0.75"
+  width/minWidth = "133.333vw"
+  minHeight = "133.333vh"
+- Sidebar height compensated to 133.333vh so side menu scrollbar matches full screen.
+- Debug badge was removed.
+
+Mock-up:
+- Domain mock-up was already correct.
+- Local mock-up adjusted to match domain.
+
+Important:
+Do not reintroduce debug badge:
+- rnLayoutDebugBadge should not appear.
+Check:
+grep -n "rnLayoutDebugBadge" assets/js/rn-layout-mode.js
+
+============================================================
+6. API / DATABASE NOTES
+============================================================
+
+Runtime backend:
+- /volume1/docker/rescue-net-api/main.py
+- Docker container: rescue-net-api
+- Port: 8092
+
+Repo backend copy:
+- /volume1/web/rescue-net/backend/main.py
+
+Important:
+Runtime main.py may contain local database defaults.
+Repo backend/main.py must NOT contain real password.
+
+Before commit/push always sanitize:
+- Replace rescunet_dev_password URLs with safe placeholder/no-password URL:
+  postgresql://rescuenet_user@localhost:5432/rescuenet_db
+
+Secret scan must be empty:
+grep -RInE "sk-[A-Za-z0-9_-]{20,}|rescuenet_dev_password|POSTGRES_PASSWORD=[^[:space:]]+|postgresql://[^:]+:[^@]+@" . \
+  --exclude-dir="@eaDir" \
+  --exclude-dir=".git" \
+  --exclude="*.bak*" \
+  --exclude="*.zip" \
+  --exclude=".env" \
+  --exclude="*.png" \
+  --exclude="*.jpg" \
+  --exclude="*.jpeg" \
+  --exclude="*.webp" \
+  --exclude="*.mp4" \
+  --exclude="rn-push*.sh" \
+  | head -50
+
+============================================================
+7. IMPORTANT COMMANDS
+============================================================
+
+Health:
+curl http://127.0.0.1:8092/health
+
+AI context:
+curl -s http://127.0.0.1:8092/ai/context/event-sim-001 | python3 -m json.tool
+
+Check sidebar refs:
+python3 - <<'PY'
+from pathlib import Path
+import re
+pages = sorted(Path("pages").glob("*.html"))
+page_names = {p.name for p in pages}
+nav_refs = set()
+for p in [Path("index.html")] + pages:
+    text = p.read_text(errors="ignore")
+    m = re.search(r"<nav[^>]*>(.*?)</nav>", text, re.S)
+    if not m:
+        continue
+    for href in re.findall(r'href="([^"]+)"', m.group(1)):
+        clean = href.split("?")[0].split("#")[0].replace("../", "").replace("pages/", "")
+        if clean.endswith(".html"):
+            nav_refs.add(clean)
+print("PAGES NOT IN SIDE MENU:")
+for x in sorted(page_names - nav_refs):
+    print("-", x)
+PY
+
+Check mock-up files:
+ls -lah assets/img/mockup
+
+Check layout debug removed:
+grep -n "rnLayoutDebugBadge\|LIVE | DOMAIN\|MOCK | LOCAL\|badge" assets/js/rn-layout-mode.js
+
+============================================================
+8. NEXT RECOMMENDED WORK
+============================================================
+
+Recommended next steps:
+1. Stabilize live pages after visual check on local and domain.
+2. Add backend endpoints/table support for Resource Profile if richer data needed.
+3. Add backend endpoints/table support for Recovery/Reconstruction if it should be separate from donor_programs.
+4. Add proper public API proxy if external browsers later fail API calls.
+5. Create automated smoke-test script for all primary pages.
+6. Update README with module list, runtime setup, and demo URLs.
+7. Only after visual and API checks, commit and push GitHub.
+
+============================================================
+9. DO NOT DO
+============================================================
+
+- Do not push GitHub before secret scan is empty.
+- Do not copy runtime backend/main.py to repo and commit without sanitizing DB password.
+- Do not re-add global zoom CSS blindly.
+- Do not mix mock-up viewer navigation with live sidebar navigation.
+- Do not use 10-second continuous sync polling; sync should remain event-driven.

@@ -3,20 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | Contact Directory</title>
+  <title>Rescue-Net | Profil Sumber Daya</title>
   <link rel="stylesheet" href="../assets/css/style.css?v=sidebar-height-1">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand">
-      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div class="brand-mark"><img src="../assets/img/rn-logo.png" alt="Rescue-Net"></div>
       <div>
         <h1>Rescue-Net</h1>
         <p>Disaster Management System</p>
       </div>
     </div>
-
     <nav>
       <a href="mockup.html?screen=welcome">Mock-up</a>
       <a href="../index.html">Active Disasters</a>
@@ -36,67 +35,65 @@
       <a href="kirim-bantuan.html">Kirim Bantuan</a>
       <a href="management-relawan.html">Relawan</a>
       <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
-      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a class="active" href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
       <a href="evidence.html?event=event-sim-001">Evidence</a>
       <a href="verification-approval.html?event=event-sim-001">Verification</a>
       <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
       <a href="ai-settings.html">AI Settings</a>
       <a href="sync-console.html?event=event-sim-001">Sync Console</a>
-      <a class="active" href="contact-directory.html">Contact Directory</a>
+      <a href="contact-directory.html">Contact Directory</a>
     </nav>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <div>
-        <p class="eyebrow">Operational Contacts</p>
-        <h2>Contact Directory</h2>
-        <p class="subtitle">Daftar kontak Officer in Charge, donor, relawan, dan PIC program agar mudah dihubungi.</p>
-        <p class="subtitle" id="contactStatus">Ready.</p>
+        <p class="eyebrow">RESOURCE PROFILE</p>
+        <h2>Profil Sumber Daya</h2>
+        <p class="subtitle">Ringkasan sumber daya organisasi, posko, relawan, alat, dan kapasitas operasional dalam satu bencana.</p>
+        <p class="subtitle" id="resourceStatus" data-rn-sync-status>Loading...</p>
       </div>
-      <button class="btn primary" id="refreshContacts">Refresh Contacts</button>
+      <div class="form-actions">
+        <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
+        <button class="btn primary" id="refreshResource">Refresh</button>
+      </div>
     </header>
 
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <h3>Contact Summary</h3>
-          <p>Kontak yang bisa dihubungi lewat call atau WhatsApp.</p>
-        </div>
-      </div>
-      <div class="summary-list" id="contactSummary">
-        <div><span>Status</span><b>Loading</b></div>
-      </div>
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Organizations</span><strong id="kpiOrg">0</strong><small>registered</small></div>
+      <div class="kpi-card"><span>Posko</span><strong id="kpiPosko">0</strong><small>active nodes</small></div>
+      <div class="kpi-card warning"><span>Volunteers</span><strong id="kpiVolunteer">0</strong><small>available</small></div>
+      <div class="kpi-card danger"><span>Resources</span><strong id="kpiResource">0</strong><small>tools/assets</small></div>
     </section>
 
     <section class="content-grid">
       <div class="panel">
-        <h3>Officer in Charge</h3>
-        <div class="event-list" id="officerContacts"></div>
+        <h3>Organizations</h3>
+        <div class="event-list" id="organizationList"></div>
       </div>
 
-      <div class="panel">
-        <h3>Donor / Aid Contacts</h3>
-        <div class="event-list" id="donorContacts"></div>
-      </div>
+      <aside class="panel">
+        <h3>Posko & Nodes</h3>
+        <div class="event-list" id="poskoList"></div>
+      </aside>
     </section>
 
     <section class="content-grid">
       <div class="panel">
-        <h3>Volunteer Contacts</h3>
-        <div class="event-list" id="volunteerContacts"></div>
+        <h3>Volunteers</h3>
+        <div class="event-list" id="volunteerList"></div>
       </div>
 
-      <div class="panel">
-        <h3>Program PIC Contacts</h3>
-        <div class="event-list" id="programContacts"></div>
-      </div>
+      <aside class="panel">
+        <h3>Tools / Shared Resources</h3>
+        <div class="event-list" id="resourceList"></div>
+      </aside>
     </section>
   </main>
 </div>
 
-<script src="../assets/js/contact-directory.js?v=live-1"></script>
-<script src="../assets/js/session-role.js?v=role-ui-1"></script>
+<script src="../assets/js/resource-profile.js?v=resource-profile-1"></script>
+<script src="../assets/js/rn-sync-engine.js?v=event-sync-2"></script>
 <script src="../assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
 </body>
 </html>

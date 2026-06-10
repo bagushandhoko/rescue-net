@@ -1,5 +1,28 @@
-const RN_API_BASE = "http://192.168.100.32:8092";
-const EVENT_ID = "event-aceh-2025";
+
+function rnCardSafe(title, body, chip = "") {
+  return `
+    <article class="event-card">
+      <div class="event-main">
+        <div>
+          <h4>${title || "n/a"}</h4>
+          <p>${body || ""}</p>
+        </div>
+        <div class="chips">${chip ? `<span class="chip warning">${chip}</span>` : ""}</div>
+      </div>
+    </article>
+  `;
+}
+
+function rnMoney(n) {
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Number(n || 0));
+}
+
+
+const RN_API_BASE = window.RN_API_BASE || "http://192.168.100.32:8092";
+function getEventId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("event") || params.get("id") || "event-sim-001";
+}
 
 function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;
@@ -146,13 +169,14 @@ function renderSpecialPrograms(ctx) {
 async function loadWarRoom() {
   setText("warRoomStatus", "Loading live AI context...");
 
-  const ctx = await api(`/ai/context/${EVENT_ID}`);
+  const eventId = getEventId();
+  const ctx = await api(`/ai/context/${eventId}`);
   const disaster = ctx.disaster || {};
   const s = ctx.summary || {};
 
   setText("disasterName", safe(disaster.name));
   setText("disasterMeta", `${safe(disaster.disaster_type)} · ${safe(disaster.location)} · severity ${safe(disaster.severity)} · status ${safe(disaster.status)}`);
-  setText("eventIdChip", `Event: ${EVENT_ID}`);
+  setText("eventIdChip", `Event: ${eventId}`);
   setText("severityChip", `Severity: ${safe(disaster.severity)}`);
   setText("statusChip", `Status: ${safe(disaster.status)}`);
 
@@ -173,7 +197,8 @@ async function loadWarRoom() {
   renderRecommendations(ctx.recommendations || []);
   renderStockWatch(ctx);
   renderModuleSummary(ctx);
-  renderSpecialPrograms(ctx);
+  try { renderSpecialPrograms(ctx); } catch (err) { console.error('renderSpecialPrograms failed', err); }
+  renderSpecialProgramsSafe(ctx);
 }
 
 

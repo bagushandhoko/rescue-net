@@ -1323,3 +1323,140 @@ body.viewer-page {
   font-size: 14px !important;
   padding: 11px 14px !important;
 }
+
+
+
+
+/* long sidebar support */
+.sidebar {
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar nav {
+  padding-bottom: 28px;
+}
+
+.sidebar nav a {
+  white-space: normal;
+}
+
+/* LIVE PROTOTYPE ONLY: domain/external */
+html.rn-external-access body:not(.mockup-viewer) .app-shell {
+  zoom: 1.08;
+}
+
+/* MOCK-UP ONLY: local LAN */
+html.rn-local-access body.mockup-viewer .mock-main {
+  transform: scale(1.08);
+  transform-origin: top center;
+  width: 92.6%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html.rn-local-access body.mockup-viewer .mock-header {
+  transform: scale(0.98);
+  transform-origin: top center;
+}
+
+/* keep mobile natural */
+@media (max-width: 900px) {
+  html.rn-external-access body:not(.mockup-viewer) .app-shell {
+    zoom: 1;
+  }
+
+  html.rn-local-access body.mockup-viewer .mock-main,
+  html.rn-local-access body.mockup-viewer .mock-header {
+    transform: none;
+    width: 100%;
+  }
+}
+
+
+
+/* Live prototype: no forced scaling for local or domain. */
+
+.sidebar {
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar nav {
+  padding-bottom: 32px;
+}
+
+.sidebar nav a {
+  white-space: normal;
+}
+
+/* Mock-up local only: enlarge local mock-up to match domain mock-up */
+html.rn-local-access body.mockup-viewer .mock-main {
+  transform: scale(1.08);
+  transform-origin: top center;
+  width: 92.6%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html.rn-local-access body.mockup-viewer .mock-header {
+  transform: scale(0.98);
+  transform-origin: top center;
+}
+
+
+/* RN clean layout rule
+   Live prototype: no zoom/scale for local or domain.
+   Mock-up: only local LAN mock-up is slightly enlarged.
+*/
+
+.sidebar {
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar nav {
+  padding-bottom: 32px;
+}
+
+.sidebar nav a {
+  white-space: normal;
+}
+
+/* Mock-up local only. Domain mock-up stays normal. */
+html.rn-local-access body.mockup-viewer .mock-main {
+  transform: scale(1.08);
+  transform-origin: top center;
+  width: 92.6%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html.rn-local-access body.mockup-viewer .mock-header {
+  transform: scale(0.98);
+  transform-origin: top center;
+}
+
+@media (max-width: 900px) {
+  html.rn-local-access body.mockup-viewer .mock-main,
+  html.rn-local-access body.mockup-viewer .mock-header {
+    transform: none;
+    width: 100%;
+  }
+}
+
+/* Sidebar full-height fix for zoomed external live layout */
+html.rn-external-access body:not(.mockup-viewer) .sidebar {
+  height: 133.333vh !important;
+  min-height: 133.333vh !important;
+  max-height: 133.333vh !important;
+  overflow-y: auto !important;
+}
+
+html.rn-external-access body:not(.mockup-viewer) .sidebar nav {
+  padding-bottom: 80px !important;
+}
+
+html.rn-external-access body:not(.mockup-viewer) .main {
+  min-height: 133.333vh !important;
+}

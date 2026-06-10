@@ -1,21 +1,13 @@
 const RN_API_BASE = "http://192.168.100.32:8092";
-const DISASTER_ID = "event-aceh-2025";
+const EVENT_ID = "event-aceh-2025";
 
 function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;
 }
 
-function statusMsg(msg) {
-  const el = document.getElementById("warRoomStatus");
-  if (el) el.textContent = msg;
-}
-
-async function api(path) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" }
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
 }
 
 function card(title, body, chip = "") {
@@ -34,203 +26,208 @@ function card(title, body, chip = "") {
   `;
 }
 
-function renderSummary(ai, verification, volunteers, worktools) {
-  const el = document.getElementById("warRoomSummary");
-  if (!el) return;
-
-  const s = ai.summary || {};
-  const vs = verification.summary || {};
-  const vols = volunteers.summary || {};
-  const ws = worktools.summary || {};
-
-  el.innerHTML = `
-    <div><span>Posko</span><b>${s.posko_count || 0}</b></div>
-    <div><span>Open Logistic Needs</span><b>${s.open_logistic_need_count || 0}</b></div>
-    <div><span>Stock Items</span><b>${s.stock_item_count || 0}</b></div>
-    <div><span>Medical Cases</span><b>${s.medical_case_count || 0}</b></div>
-    <div><span>Shelter Needs</span><b>${s.shelter_need_count || 0}</b></div>
-    <div><span>Missing Open</span><b>${s.missing_person_count || 0}</b></div>
-    <div><span>Verification Actions</span><b>${vs.verification_action_count || 0}</b></div>
-    <div><span>Relawan Available</span><b>${vols.available_count || 0}</b></div>
-    <div><span>Work Tool Open</span><b>${ws.open_count || 0}</b></div>
-  `;
+async function api(path) {
+  const res = await fetch(RN_API_BASE + path);
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
 }
 
-function renderAlerts(items) {
-  const el = document.getElementById("warRoomAlerts");
-  if (!el) return;
+function renderAlerts(alerts) {
+  const el = document.getElementById("alertsList");
+  const top = (alerts || []).slice(0, 8);
 
-  el.innerHTML = items && items.length ? items.map(a => card(
-    safe(a.type),
+  el.innerHTML = top.length ? top.map(a => card(
+    `Alert · ${safe(a.type)}`,
     `${safe(a.message)}<br>Source: ${safe(a.source_id)}`,
     safe(a.severity)
-  )).join("") : card("Tidak ada alert besar", "Belum ada alert urgent dari AI Context.", "ok");
+  )).join("") : card("No critical alert", "Belum ada alert kritis dari modul operasional.", "ok");
 }
 
 function renderRecommendations(items) {
-  const el = document.getElementById("warRoomRecommendations");
-  if (!el) return;
-
-  el.innerHTML = items && items.length ? items.map((r, i) => card(
+  const el = document.getElementById("recommendationsList");
+  el.innerHTML = items && items.length ? items.slice(0, 8).map((r, i) => card(
     `Recommendation ${i + 1}`,
-    safe(r),
+    r,
     "AI"
-  )).join("") : card("Belum ada rekomendasi", "AI Context belum memberi rekomendasi khusus.", "empty");
+  )).join("") : card("No recommendation", "Belum ada rekomendasi otomatis.", "empty");
 }
 
-function renderCriticalNeeds(items) {
-  const el = document.getElementById("warRoomNeeds");
-  if (!el) return;
+function renderStockWatch(ctx) {
+  const el = document.getElementById("stockWatch");
 
-  const critical = (items || []).filter(x =>
-    x.priority === "critical" || x.priority === "urgent" || x.status === "open"
-  ).slice(0, 12);
-
-  el.innerHTML = critical.length ? critical.map(n => card(
-    `${safe(n.item_name)} · ${safe(n.quantity_needed)} ${safe(n.unit)}`,
-    `Node: ${safe(n.node_id)}<br>Needed before: ${safe(n.needed_before)}<br>Status: ${safe(n.status)}`,
-    safe(n.priority)
-  )).join("") : card("Tidak ada kebutuhan kritis", "Tidak ada open urgent/critical logistic needs.", "ok");
-}
-
-function renderMedical(items) {
-  const el = document.getElementById("warRoomMedical");
-  if (!el) return;
-
-  const high = (items || []).filter(x =>
-    x.severity === "critical" || x.severity === "severe" || x.triage_status === "red"
-  ).slice(0, 10);
-
-  el.innerHTML = high.length ? high.map(m => card(
-    `${safe(m.patient_code)} · ${safe(m.complaint)}`,
-    `Posko: ${safe(m.posko_id)}<br>Triage: ${safe(m.triage_status)}<br>Severity: ${safe(m.severity)}<br>Status: ${safe(m.status)}`,
-    safe(m.triage_status || m.severity)
-  )).join("") : card("Tidak ada medical red case", "Tidak ada kasus medis critical/severe/red.", "ok");
-}
-
-function renderShelter(ai) {
-  const el = document.getElementById("warRoomShelter");
-  if (!el) return;
-
-  const needs = ai.shelter_needs || [];
-  const occs = ai.shelter_occupancies || [];
-
-  const rows = [];
-
-  for (const o of occs.slice(0, 8)) {
-    rows.push(card(
-      safe(o.shelter_name || o.posko_id),
-      `Occupancy: ${safe(o.current_occupancy)} / ${safe(o.capacity_total)}<br>Sanitation: ${safe(o.sanitation_status)}<br>Water: ${safe(o.water_status)}`,
-      "occupancy"
-    ));
-  }
-
-  for (const n of needs.slice(0, 8)) {
-    rows.push(card(
-      `${safe(n.item_name)} · ${safe(n.quantity_needed)} ${safe(n.unit)}`,
-      `Posko: ${safe(n.posko_id)}<br>Needed before: ${safe(n.needed_before)}<br>Notes: ${safe(n.notes)}`,
+  const needs = (ctx.logistic_needs || [])
+    .filter(n => n.status === "open")
+    .slice(0, 6)
+    .map(n => card(
+      `${safe(n.item_name)} masih ${safe(n.priority)}`,
+      `Butuh ${safe(n.quantity_needed)} ${safe(n.unit)}, sebelum ${safe(n.needed_before)}.<br>Source: ${safe(n.id)}`,
       safe(n.priority)
     ));
-  }
 
-  el.innerHTML = rows.length ? rows.join("") : card("Shelter aman", "Belum ada shelter occupancy/need penting.", "ok");
+  const stock = (ctx.stock_summary || [])
+    .slice(0, 6)
+    .map(s => card(
+      `${safe(s.item_name)} · ${safe(s.posko_id)}`,
+      `Saldo: ${safe(s.current_quantity)} ${safe(s.unit)}`,
+      "stock"
+    ));
+
+  el.innerHTML = [...needs, ...stock].join("") || card("No stock data", "Belum ada data stok/kebutuhan.", "empty");
 }
 
-function renderSearchFound(ai) {
-  const el = document.getElementById("warRoomSearchFound");
-  if (!el) return;
 
-  const missing = ai.missing_person_reports || [];
-  const found = ai.found_person_reports || [];
-  const matches = ai.search_found_matches || [];
+function renderModuleSummary(ctx) {
+  const s = ctx.summary || {};
+  const el = document.getElementById("moduleSummary");
 
-  const rows = [
-    card("Missing Reports", `${missing.length} laporan orang hilang`, "missing"),
-    card("Found Reports", `${found.length} laporan ditemukan`, "found"),
-    card("Matches", `${matches.length} kandidat/match`, "match")
-  ];
-
-  el.innerHTML = rows.join("");
-}
-
-function renderVerification(v) {
-  const el = document.getElementById("warRoomVerification");
-  if (!el) return;
-
-  const s = v.summary || {};
   el.innerHTML = `
-    ${card("Pending Organization", `${s.pending_organization_count || 0} perlu review`, "verification")}
-    ${card("Pending Posko", `${s.pending_posko_count || 0} perlu review`, "verification")}
-    ${card("Pending Volunteer", `${s.pending_volunteer_count || 0} perlu review`, "verification")}
-    ${card("Pending Aid Offer", `${s.pending_aid_offer_count || 0} perlu review`, "verification")}
-    ${card("Pending Work Tool", `${s.pending_work_tool_count || 0} perlu review`, "verification")}
+    <div><span>Organizations</span><b>${safe(s.organization_count)}</b></div>
+    <div><span>Volunteers</span><b>${safe(s.volunteer_count)}</b></div>
+    <div><span>Aid Offers</span><b>${safe(s.aid_offer_count)}</b></div>
+    <div><span>Need Pickup</span><b>${safe(s.aid_need_pickup_count)}</b></div>
+    <div><span>Distribution Flows</span><b>${safe(s.distribution_flow_count)}</b></div>
+    <div><span>Resource Requests</span><b>${safe(s.resource_request_count)}</b></div>
+    <div><span>Stock Movements</span><b>${safe(s.stock_movement_count)}</b></div>
+    <div><span>Meal Productions</span><b>${safe(s.meal_production_count)}</b></div>
+    <div><span>Medical Cases</span><b>${safe(s.medical_case_count)}</b></div>
+    <div><span>Medical Supply Uses</span><b>${safe(s.medical_supply_use_count)}</b></div>
+    <div><span>Shelter Occupancy</span><b>${safe(s.shelter_occupancy_count)}</b></div>
+    <div><span>Shelter Needs</span><b>${safe(s.shelter_need_count)}</b></div>
+    <div><span>Missing Reports</span><b>${safe(s.missing_person_count)}</b></div>
+    <div><span>Found Reports</span><b>${safe(s.found_person_count)}</b></div>
+    <div><span>Search Matches</span><b>${safe(s.search_found_match_count)}</b></div>
+    <div><span>Reunited</span><b>${safe(s.reunited_count)}</b></div>
+    <div><span>Special Programs</span><b>${safe(s.donor_program_count)}</b></div>
+    <div><span>Program Updates</span><b>${safe(s.donor_program_update_count)}</b></div>
   `;
 }
 
-function renderWorkTools(ctx) {
-  const el = document.getElementById("warRoomWorkTools");
-  if (!el) return;
 
-  const items = (ctx.work_tool_requests || []).filter(x =>
-    x.priority === "urgent" || x.priority === "critical" || x.status === "requested"
-  ).slice(0, 10);
 
-  el.innerHTML = items.length ? items.map(t => card(
-    `${safe(t.tool_name)} · ${safe(t.quantity)} ${safe(t.unit)}`,
-    `Location: ${safe(t.location)}<br>Needed for: ${safe(t.needed_for)}<br>Skill: ${safe(t.required_operator_skill)}`,
-    `${safe(t.priority)} · ${safe(t.status)}`
-  )).join("") : card("Tidak ada request alat urgent", "Belum ada kebutuhan alat kerja terbuka.", "ok");
+function formatMoney(n) {
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Number(n || 0));
 }
 
-function renderVolunteers(ctx) {
-  const el = document.getElementById("warRoomVolunteers");
-  if (!el) return;
+function renderSpecialPrograms(ctx) {
+  const programsEl = document.getElementById("specialProgramsList");
+  const updatesEl = document.getElementById("specialProgramUpdatesList");
 
-  const items = ctx.volunteers || [];
-  el.innerHTML = items.length ? items.slice(0, 10).map(v => card(
-    safe(v.volunteer_name),
-    `Contact: ${safe(v.contact)}<br>Skills: ${safe(v.skill_tags)}<br>Location: ${safe(v.current_location)}<br>Assigned: ${safe(v.assigned_posko_id)}`,
-    safe(v.availability_status)
-  )).join("") : card("Belum ada relawan", "Belum ada relawan tercatat.", "empty");
-}
-
-async function loadWarRoom() {
-  statusMsg("Loading command center data...");
-
-  async function safeLoad(label, path, fallback) {
-    try {
-      return await api(path);
-    } catch (err) {
-      console.error("War Room failed:", label, err);
-      statusMsg(`Partial load: ${label} failed. Other panels still loaded.`);
-      return fallback;
-    }
+  if (programsEl) {
+    const programs = ctx.donor_programs || [];
+    programsEl.innerHTML = programs.length ? programs.slice(0, 6).map(p => {
+      const target = p.budget_target || p.target_amount || 0;
+      const received = p.budget_received || p.current_amount || 0;
+      const spent = p.budget_spent || 0;
+      return card(
+        safe(p.program_name),
+        `${safe(p.program_type)} · ${safe(p.status)}<br>` +
+        `Target: Rp ${formatMoney(target)} · Received/Current: Rp ${formatMoney(received)} · Spent: Rp ${formatMoney(spent)}<br>` +
+        `Owner: ${safe(p.owner_id)} · ID: ${safe(p.id)}`,
+        safe(p.priority || p.status)
+      );
+    }).join("") : card("Belum ada Program Khusus", "Belum ada program donor/proyek khusus untuk event ini.", "empty");
   }
 
-  const [ai, verification, volunteers, worktools] = await Promise.all([
-    safeLoad("AI Context", `/ai/context/${DISASTER_ID}`, { summary: {}, alerts: [], recommendations: [], logistic_needs: [], medical_cases: [], shelter_needs: [], shelter_occupancies: [], missing_person_reports: [], found_person_reports: [], search_found_matches: [] }),
-    safeLoad("Verification", `/verification-context/${DISASTER_ID}`, { summary: {}, verification_actions: [] }),
-    safeLoad("Volunteers", `/volunteer-context/${DISASTER_ID}`, { summary: {}, volunteers: [], assignments: [] }),
-    safeLoad("Work Tools", `/work-tools-context/${DISASTER_ID}`, { summary: {}, work_tool_requests: [] })
-  ]);
-
-  renderSummary(ai, verification, volunteers, worktools);
-  renderAlerts(ai.alerts || []);
-  renderRecommendations(ai.recommendations || []);
-  renderCriticalNeeds(ai.logistic_needs || []);
-  renderMedical(ai.medical_cases || []);
-  renderShelter(ai);
-  renderSearchFound(ai);
-  renderVerification(verification);
-  renderWorkTools(worktools);
-  renderVolunteers(volunteers);
-
-  statusMsg(`Loaded: ${new Date().toISOString()}`);
+  if (updatesEl) {
+    const updates = ctx.donor_program_updates || [];
+    updatesEl.innerHTML = updates.length ? updates.slice(0, 6).map(u => {
+      return card(
+        safe(u.update_title || u.update_type),
+        `Program: ${safe(u.program_id)}<br>` +
+        `Progress: ${safe(u.progress_percent)}% · Spent: Rp ${formatMoney(u.amount_spent)}<br>` +
+        `${safe(u.update_notes)}`,
+        safe(u.update_type)
+      );
+    }).join("") : card("Belum ada update", "Belum ada progress update program.", "empty");
+  }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("refreshWarRoom");
-  if (btn) btn.addEventListener("click", () => loadWarRoom().catch(err => statusMsg(err.message)));
 
-  loadWarRoom().catch(err => statusMsg(err.message));
+async function loadWarRoom() {
+  setText("warRoomStatus", "Loading live AI context...");
+
+  const ctx = await api(`/ai/context/${EVENT_ID}`);
+  const disaster = ctx.disaster || {};
+  const s = ctx.summary || {};
+
+  setText("disasterName", safe(disaster.name));
+  setText("disasterMeta", `${safe(disaster.disaster_type)} · ${safe(disaster.location)} · severity ${safe(disaster.severity)} · status ${safe(disaster.status)}`);
+  setText("eventIdChip", `Event: ${EVENT_ID}`);
+  setText("severityChip", `Severity: ${safe(disaster.severity)}`);
+  setText("statusChip", `Status: ${safe(disaster.status)}`);
+
+  setText("kpiAlerts", (ctx.alerts || []).length);
+  setText("kpiPosko", safe(s.posko_count));
+  setText("kpiNeeds", Number(s.open_logistic_need_count || 0) + Number(s.shelter_need_count || 0));
+  setText("kpiStock", safe(s.stock_item_count));
+  setText("kpiMeals", safe(s.meal_production_count));
+  setText("kpiMedical", safe(s.medical_case_count));
+  setText("kpiShelter", safe(s.shelter_occupancy_count));
+  setText("kpiMissing", safe(s.missing_person_count));
+
+  setText("clockNow", new Date().toLocaleTimeString("id-ID", {hour: "2-digit", minute: "2-digit"}));
+  setText("generatedAt", `Last data refresh: ${safe(ctx.generated_at)}`);
+  setText("warRoomStatus", `Loaded: ${safe(ctx.generated_at)}`);
+
+  renderAlerts(ctx.alerts || []);
+  renderRecommendations(ctx.recommendations || []);
+  renderStockWatch(ctx);
+  renderModuleSummary(ctx);
+  renderSpecialPrograms(ctx);
+}
+
+
+
+function fixProgramLinks() {
+  const eventId = getEventId();
+  document.querySelectorAll('a[href^="program-khusus.html"]').forEach(a => {
+    a.href = `program-khusus.html?event=${encodeURIComponent(eventId)}`;
+  });
+}
+
+
+function setupQuickBookingForm() {
+  const form = document.getElementById("quickBookingForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    if (!window.RNResourceBooking) {
+      setText("warRoomStatus", "RNResourceBooking not loaded.");
+      return;
+    }
+
+    const payload = {
+      disaster_event_id: getEventId(),
+      resource_id: form.resource_id.value.trim(),
+      requested_by_type: form.requested_by_type.value.trim(),
+      requested_by_id: form.requested_by_id.value.trim(),
+      request_reason: form.request_reason.value.trim(),
+      requested_quantity: Number(form.requested_quantity.value || 1),
+      requested_time: form.requested_time.value.trim()
+    };
+
+    try {
+      await window.RNResourceBooking.createResourceRequest(payload);
+
+      if (window.RNSync) {
+        await window.RNSync.triggerSync("booking-form");
+      }
+
+      await loadWarRoom();
+    } catch (err) {
+      setText("warRoomStatus", err.message);
+    }
+  });
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  fixProgramLinks();
+  setupQuickBookingForm();
+  const btn = document.getElementById("refreshWarRoom");
+  if (btn) btn.addEventListener("click", () => loadWarRoom().catch(err => setText("warRoomStatus", err.message)));
+
+  loadWarRoom().catch(err => setText("warRoomStatus", err.message));
 });

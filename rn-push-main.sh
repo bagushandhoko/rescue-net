@@ -22,7 +22,7 @@ fi
 git config user.name "bagushandhoko"
 git config user.email "bagushandhoko@users.noreply.github.com"
 
-if grep -RIn "sk-\|rescuenet_dev_password\|POSTGRES_PASSWORD" . \
+if grep -RInE "sk-[A-Za-z0-9_-]{20,}|rescuenet_dev_password|POSTGRES_PASSWORD=[^[:space:]]+|postgresql://[^:]+:[^@]+@" . \
   --exclude-dir="@eaDir" \
   --exclude-dir=".git" \
   --exclude="*.bak*" \

@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | AI Analyst</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=ai-ask-1">
+  <link rel="stylesheet" href="../assets/css/style.css?v=ai-analyst-1">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark">RN</div>
+      <div class="brand-mark"><img src="../assets/img/rn-logo.png" alt="Rescue-Net"></div>
       <div>
         <h1>Rescue-Net</h1>
         <p>Disaster Management System</p>
@@ -19,112 +19,72 @@
 
     <nav>
       <a href="../index.html">Active Disasters</a>
-      <a href="war-room.html">War Room</a>
-      <a href="disaster-detail.html?id=event-aceh-2025">Disaster Detail</a>
-      <a href="organisasi-posko.html">Organisasi & Posko</a>
-      <a href="posko-detail.html?id=posko-logistik-aceh">Posko Detail</a>
-      <a href="management-relawan.html">Relawan</a>
-      <a href="posko-logistik.html">Logistik</a>
-      <a href="management-distribusi.html">Distribusi</a>
-      <a href="dapur-umum.html?id=posko-dapur-melati">Dapur Umum</a>
-      <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
-      <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
-      <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
-      <a href="alat-kerja.html">Alat Kerja</a>
-      <a href="verification-approval.html">Verification</a>
-      <a href="evidence.html">Evidence</a>
-      <a href="donor-program.html">Donor Program</a>
-      <a href="auth.html">Auth & Role</a>
-      <a href="map.html">Map</a>
-      <a href="contact-directory.html">Contacts</a>
-      <a href="kirim-bantuan.html">Kirim Bantuan</a>
-      <a href="edit-bantuan.html">Edit Bantuan</a>
-      <a href="sync-console.html">Sync Console</a>
-      <a class="active" href="ai-analyst.html">AI Analyst</a>
+      <a href="war-room.html?event=event-sim-001">War Room</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a class="active" href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
       <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html">Sync Console</a>
     </nav>
   </aside>
 
   <main class="main">
     <header class="topbar">
       <div>
-        <p class="eyebrow">AI Situation Analyst</p>
-        <h2>AI Analyst</h2>
-        <p class="subtitle">Analisis data bencana berdasarkan AI Context dan BYOK user key.</p>
-        <p class="subtitle" id="aiStatus">Ready.</p>
+        <p class="eyebrow">RESCUE-NET INTELLIGENCE LAYER</p>
+        <h2>AI Situation Analyst</h2>
+        <p class="subtitle">Analisis situasi bencana berdasarkan data RN: logistik, stok, dapur, medis, shelter, search found, program khusus, dan distribusi.</p>
+        <p class="subtitle" id="aiStatus" data-rn-sync-status>Loading...</p>
       </div>
-      <div class="status-pill">BYOK AI</div>
+      <div class="form-actions">
+        <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
+        <button class="btn primary" id="refreshAiContext">Refresh Context</button>
+      </div>
     </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Posko</span><strong id="aiKpiPosko">0</strong><small>nodes</small></div>
+      <div class="kpi-card warning"><span>Open Needs</span><strong id="aiKpiNeeds">0</strong><small>logistic + shelter</small></div>
+      <div class="kpi-card danger"><span>Alerts</span><strong id="aiKpiAlerts">0</strong><small>risks</small></div>
+      <div class="kpi-card"><span>Programs</span><strong id="aiKpiPrograms">0</strong><small>special programs</small></div>
+    </section>
 
     <section class="content-grid">
       <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Ask AI Analyst</h3>
-            <p>AI membaca konteks Rescue-Net: logistik, distribusi, dapur umum, medis, shelter, search & found.</p>
-          </div>
-        </div>
-
-        <form class="rn-form" id="aiAskForm">
-          <label>User ID
-            <input name="user_id" value="user-demo-001" required>
-          </label>
-
-          <label>Disaster Event ID
-            <input name="disaster_event_id" value="event-aceh-2025" required>
-          </label>
-
-          <label>Provider
-            <select name="provider">
-              <option value="openai">openai</option>
-            </select>
-          </label>
-
-          <label>Question
-            <textarea name="question" rows="6" required>Berikan ringkasan situasi, prioritas logistik, shelter, medis, dan search found.</textarea>
-          </label>
-
-          <div class="form-actions">
-            <button class="btn primary" data-requires-role-action="ai_ask" type="submit">Ask AI</button>
-            <button class="btn" type="button" id="loadContextBtn">Load Context Summary</button>
-          </div>
-        </form>
+        <h3>Alerts</h3>
+        <div class="event-list" id="aiAlerts"></div>
       </div>
 
-      <aside class="panel summary">
-        <h3>AI Context Summary</h3>
-        <div class="summary-list" id="contextSummary">
-          <div><span>Status</span><b>Not loaded</b></div>
-        </div>
+      <aside class="panel">
+        <h3>Recommendations</h3>
+        <div class="event-list" id="aiRecommendations"></div>
       </aside>
     </section>
 
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>AI Answer</h3>
-          <p>Jawaban dari model AI memakai key user sendiri.</p>
-        </div>
+    <section class="panel">
+      <h3>Ask AI / Briefing</h3>
+      <form class="rn-form" id="aiAskForm">
+        <label>User ID
+          <input name="user_id" value="user-demo-001">
+        </label>
+        <label>Pertanyaan
+          <textarea name="question" rows="4">Berikan ringkasan situasi, prioritas logistik, shelter, medis, search found, dan program khusus untuk 24 jam ke depan.</textarea>
+        </label>
+        <button class="btn primary" type="submit">Ask AI</button>
+      </form>
+      <div class="event-card" style="margin-top:16px;">
+        <h4>AI Answer</h4>
+        <p id="aiAnswer">Belum ada jawaban.</p>
       </div>
+    </section>
 
-      <div class="event-list">
-        <article class="event-card">
-          <div class="event-main">
-            <div>
-              <h4 id="answerTitle">No answer yet</h4>
-              <p id="aiAnswer">Ask AI untuk mendapatkan analisis.</p>
-            </div>
-            <div class="chips">
-              <span class="chip warning" id="keyUsed">no key</span>
-            </div>
-          </div>
-        </article>
-      </div>
+    <section class="panel">
+      <h3>Sources</h3>
+      <div class="event-list" id="aiSources"></div>
     </section>
   </main>
 </div>
 
-<script src="../assets/js/ai-analyst.js?v=ai-ask-1"></script>
-<script src="../assets/js/session-role.js?v=role-ui-1"></script>
+<script src="../assets/js/ai-analyst.js?v=ai-analyst-1"></script>
+<script src="../assets/js/rn-sync-engine.js?v=event-sync-2"></script>
 </body>
 </html>

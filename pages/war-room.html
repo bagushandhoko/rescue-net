@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | War Room</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=war-room-live-1">
+  <link rel="stylesheet" href="../assets/css/style.css?v=logo-compact-final-1">
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark">RN</div>
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
       <div>
         <h1>Rescue-Net</h1>
         <p>Disaster Management System</p>
@@ -30,101 +30,161 @@
       <a href="posko-medis-detail.html?id=posko-medis-aceh">Posko Medis</a>
       <a href="shelter-detail.html?id=posko-shelter-melati">Shelter</a>
       <a href="search-found.html?event=event-aceh-2025">Search & Found</a>
-      <a href="alat-kerja.html">Alat Kerja</a>
-      <a href="verification-approval.html">Verification</a>
-      <a href="evidence.html">Evidence</a>
-      <a href="donor-program.html">Donor Program</a>
-      <a href="auth.html">Auth & Role</a>
-      <a href="map.html">Map</a>
-      <a href="contact-directory.html">Contacts</a>
       <a href="kirim-bantuan.html">Kirim Bantuan</a>
-      <a href="edit-bantuan.html">Edit Bantuan</a>
       <a href="sync-console.html">Sync Console</a>
       <a href="ai-analyst.html">AI Analyst</a>
       <a href="ai-settings.html">AI Settings</a>
     </nav>
   </aside>
 
-  <main class="main">
+  <main class="main warroom-main">
     <header class="topbar">
       <div>
         <p class="eyebrow">Command Center Dashboard</p>
         <h2>War Room</h2>
         <p class="subtitle">Dashboard pusat komando yang membaca semua modul live Rescue-Net.</p>
-        <p class="subtitle" id="warRoomStatus">Ready.</p>
+        <p class="subtitle" id="warRoomStatus">Loading live context...</p>
+        <p class="subtitle" id="rnSyncStatus" data-rn-sync-status>Sync idle.</p>
       </div>
-      <button class="btn primary" id="refreshWarRoom">Refresh War Room</button>
+      <div class="form-actions">
+        <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
+        <button class="btn primary" id="refreshWarRoom">Refresh War Room</button>
+      </div>
     </header>
 
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <h3>Command Summary</h3>
-          <p>Ringkasan lintas modul: logistik, medis, shelter, search & found, relawan, alat kerja, dan verifikasi.</p>
+    <section class="hero-command panel">
+      <div>
+        <p class="eyebrow">Live Disaster</p>
+        <h3 id="disasterName">Loading...</h3>
+        <p id="disasterMeta" class="subtitle">-</p>
+        <div class="chips">
+          <span class="chip warning" id="eventIdChip">event</span>
+          <span class="chip" id="severityChip">severity</span>
+          <span class="chip" id="statusChip">status</span>
         </div>
       </div>
-      <div class="summary-list" id="warRoomSummary">
-        <div><span>Status</span><b>Loading</b></div>
+      <div class="command-clock">
+        <span>Operational Time</span>
+        <strong id="clockNow">--:--</strong>
+        <small id="generatedAt">-</small>
       </div>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Alerts</span><strong id="kpiAlerts">0</strong><small>critical risks</small></div>
+      <div class="kpi-card"><span>Posko</span><strong id="kpiPosko">0</strong><small>active nodes</small></div>
+      <div class="kpi-card warning"><span>Open Needs</span><strong id="kpiNeeds">0</strong><small>logistics + shelter</small></div>
+      <div class="kpi-card"><span>Stock Items</span><strong id="kpiStock">0</strong><small>tracked inventory</small></div>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Meal Production</span><strong id="kpiMeals">0</strong><small>dapur umum</small></div>
+      <div class="kpi-card warning"><span>Medical Cases</span><strong id="kpiMedical">0</strong><small>restricted</small></div>
+      <div class="kpi-card"><span>Shelter</span><strong id="kpiShelter">0</strong><small>occupancy rows</small></div>
+      <div class="kpi-card danger"><span>Missing</span><strong id="kpiMissing">0</strong><small>open reports</small></div>
     </section>
 
     <section class="content-grid">
       <div class="panel">
-        <h3>Alerts</h3>
-        <div class="event-list" id="warRoomAlerts"></div>
+        <div class="panel-header">
+          <div>
+            <h3>Critical Alerts</h3>
+            <p>Risiko operasional prioritas tertinggi.</p>
+          </div>
+        </div>
+        <div class="event-list" id="alertsList"></div>
       </div>
-      <div class="panel">
+
+      <aside class="panel summary">
         <h3>AI Recommendations</h3>
-        <div class="event-list" id="warRoomRecommendations"></div>
-      </div>
+        <p class="subtitle">Rekomendasi otomatis dari data operasional.</p>
+        <div class="event-list" id="recommendationsList"></div>
+      </aside>
     </section>
 
     <section class="content-grid">
       <div class="panel">
-        <h3>Critical Logistic Needs</h3>
-        <div class="event-list" id="warRoomNeeds"></div>
+        <div class="panel-header">
+          <div>
+            <h3>Stock & Logistics Watch</h3>
+            <p>Stok, kebutuhan logistik, dan titik kritis distribusi.</p>
+          </div>
+        </div>
+        <div class="event-list" id="stockWatch"></div>
       </div>
-      <div class="panel">
-        <h3>Medical Priority</h3>
-        <div class="event-list" id="warRoomMedical"></div>
-      </div>
-    </section>
 
+      <aside class="panel summary">
+        <h3>Operational Modules</h3>
+        <div class="summary-list" id="moduleSummary"></div>
+      </aside>
+    </section>
+  
+    
     <section class="content-grid">
       <div class="panel">
-        <h3>Shelter Situation</h3>
-        <div class="event-list" id="warRoomShelter"></div>
+        <div class="panel-header">
+          <div>
+            <h3>Program Khusus</h3>
+            <p>Program bantuan khusus, donor program, PLTS, air bersih, obat, dapur umum, atau dukungan infrastruktur darurat.</p>
+          </div>
+          <a class="btn" href="program-khusus.html?event=event-sim-001">Open Program</a>
+        </div>
+        <div class="event-list" id="specialProgramsList"></div>
       </div>
-      <div class="panel">
-        <h3>Search & Found</h3>
-        <div class="event-list" id="warRoomSearchFound"></div>
-      </div>
-    </section>
 
-    <section class="content-grid">
-      <div class="panel">
-        <h3>Verification Queue</h3>
-        <div class="event-list" id="warRoomVerification"></div>
-      </div>
-      <div class="panel">
-        <h3>Work Tools / Heavy Equipment</h3>
-        <div class="event-list" id="warRoomWorkTools"></div>
-      </div>
+      <aside class="panel summary">
+        <h3>Program Updates</h3>
+        <p class="subtitle">Progress dan pengeluaran terakhir.</p>
+        <div class="event-list" id="specialProgramUpdatesList"></div>
+      </aside>
     </section>
 
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
-          <h3>Relawan Snapshot</h3>
-          <p>Relawan dan availability singkat.</p>
+          <h3>Quick Transport Booking</h3>
+          <p>Test booking transport/resource. Jika offline, tersimpan lokal dan otomatis sync saat online.</p>
+          <p class="subtitle" id="rnBookingStatus" data-rn-booking-status>Booking idle.</p>
         </div>
       </div>
-      <div class="event-list" id="warRoomVolunteers"></div>
+
+      <form class="rn-form" id="quickBookingForm">
+        <div class="form-grid">
+          <label>Resource ID
+            <input name="resource_id" value="res-tni-transport-air-01">
+          </label>
+          <label>Requested By ID
+            <input name="requested_by_id" value="posko-sim-logistik">
+          </label>
+          <label>Requested By Type
+            <select name="requested_by_type">
+              <option value="posko">posko</option>
+              <option value="community_group">community_group</option>
+              <option value="organization">organization</option>
+            </select>
+          </label>
+          <label>Quantity
+            <input name="requested_quantity" type="number" value="1">
+          </label>
+          <label>Requested Time
+            <input name="requested_time" value="Besok pagi">
+          </label>
+          <label>Reason
+            <input name="request_reason" value="Booking transport untuk distribusi ke shelter.">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Book Transport</button>
+          <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
+        </div>
+      </form>
     </section>
+
   </main>
 </div>
 
-<script src="../assets/js/war-room.js?v=live-2"></script>
-<script src="../assets/js/session-role.js?v=role-ui-1"></script>
+<script src="../assets/js/war-room.js?v=warroom-pro-8"></script>
+<script src="../assets/js/rn-sync-engine.js?v=event-sync-2"></script>
+<script src="../assets/js/rn-resource-booking.js?v=booking-sync-2"></script>
 </body>
 </html>

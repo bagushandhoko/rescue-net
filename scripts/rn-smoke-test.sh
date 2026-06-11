@@ -1,6 +1,9 @@
 #!/bin/sh
 set -eu
 
+# Synology non-interactive SSH sessions can miss /usr/local/bin, where Node.js is installed.
+export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
+
 API="${RN_API_BASE:-http://127.0.0.1:8092}"
 WEB="${RN_WEB_ROOT:-/volume1/web/rescue-net}"
 EVENT="${RN_EVENT_ID:-event-sim-001}"

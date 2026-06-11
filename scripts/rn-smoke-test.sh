@@ -58,7 +58,33 @@ node -c assets/js/recovery-reconstruction.js >/dev/null || fail "recovery-recons
 node -c assets/js/mockup.js >/dev/null || fail "mockup.js syntax"
 pass "JS syntax"
 
-echo "7. Required pages"
+echo "7. Backend source compile"
+python3 -m py_compile backend/main.py backend/app_shared.py backend/routes/*.py || fail "backend source compile failed"
+pass "backend source compile"
+
+echo "8. Duplicate route check"
+python3 - <<'PY' >/tmp/rn-route-check.txt
+from pathlib import Path
+import re
+from collections import defaultdict
+text = Path("backend/main.py").read_text(errors="ignore")
+routes = []
+for m in re.finditer(r'@app\.(get|post|put|patch|delete)\("([^"]+)"', text):
+    routes.append((m.group(1).upper(), m.group(2), text[:m.start()].count("\n") + 1))
+seen = defaultdict(list)
+for method, path, line in routes:
+    seen[(method, path)].append(line)
+duplicates = {k: v for k, v in seen.items() if len(v) > 1}
+if duplicates:
+    for (method, path), lines in sorted(duplicates.items()):
+        print(f"{method} {path} {lines}")
+    raise SystemExit(1)
+print(f"route_count={len(routes)}")
+PY
+cat /tmp/rn-route-check.txt
+pass "no duplicate backend routes"
+
+echo "9. Required pages"
 test -f pages/war-room.html || fail "missing war-room.html"
 test -f pages/resource-profile.html || fail "missing resource-profile.html"
 test -f pages/recovery-reconstruction.html || fail "missing recovery-reconstruction.html"
@@ -66,4 +92,4 @@ test -f pages/mockup.html || fail "missing mockup.html"
 pass "required pages"
 
 echo ""
-echo "✅ ALL SMOKE TESTS PASSED"
+echo "OK: ALL SMOKE TESTS PASSED"

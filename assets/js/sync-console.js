@@ -53,6 +53,23 @@ function card(title, body, chip) {
   `;
 }
 
+function retryConflicts() {
+  const drafts = getDrafts();
+  const updated = drafts.map(d => {
+    if (d.sync_status !== "conflict") return d;
+    return {
+      ...d,
+      sync_status: "pending_sync",
+      local_status: "retry_pending",
+      retry_requested_at: new Date().toISOString()
+    };
+  });
+
+  saveDrafts(updated);
+  renderLocal();
+  statusMsg("Conflict drafts moved back to pending sync.");
+}
+
 function renderLocal() {
   const el = document.getElementById("localDrafts");
   if (!el) return;
@@ -226,6 +243,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearBtn = document.getElementById("clearLocal");
   const pushBtn = document.getElementById("syncPush");
   const pullBtn = document.getElementById("syncPull");
+  const retryBtn = document.getElementById("retryConflicts");
 
   if (form) {
     form.addEventListener("submit", e => {
@@ -242,6 +260,10 @@ document.addEventListener("DOMContentLoaded", () => {
       renderLocal();
       statusMsg("Local drafts cleared.");
     });
+  }
+
+  if (retryBtn) {
+    retryBtn.addEventListener("click", retryConflicts);
   }
 
   if (pushBtn) {

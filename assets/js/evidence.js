@@ -1,5 +1,6 @@
 const RN_API_BASE = "http://192.168.100.32:8092";
-const DISASTER_ID = "event-aceh-2025";
+const params = new URLSearchParams(window.location.search);
+const DISASTER_ID = params.get("event") || params.get("disaster_event_id") || "event-aceh-2025";
 
 function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;
@@ -59,9 +60,24 @@ async function loadEvidence() {
   statusMsg(`Loaded ${items.length} evidence item(s).`);
 }
 
+function applyEvidenceDeepLink(form) {
+  if (!form) return;
+
+  const objectType = params.get("object_type") || params.get("linked_object_type");
+  const objectId = params.get("object_id") || params.get("linked_object_id");
+  const nodeId = params.get("node") || params.get("node_id");
+
+  form.disaster_event_id.value = DISASTER_ID;
+  if (nodeId) form.node_id.value = nodeId;
+  if (objectType) form.linked_object_type.value = objectType;
+  if (objectId) form.linked_object_id.value = objectId;
+}
+
 function setupUploadForm() {
   const form = document.getElementById("evidenceForm");
   if (!form) return;
+
+  applyEvidenceDeepLink(form);
 
   form.addEventListener("submit", async e => {
     e.preventDefault();
@@ -82,7 +98,7 @@ function setupUploadForm() {
     });
 
     form.reset();
-    form.disaster_event_id.value = DISASTER_ID;
+    applyEvidenceDeepLink(form);
     statusMsg("Evidence uploaded.");
     await loadEvidence();
   });

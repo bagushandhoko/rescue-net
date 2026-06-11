@@ -362,6 +362,12 @@ class AidOfferCreate(BaseModel):
     notes: Optional[str] = None
     status: str = "available"
 
+
+class SyncConflictResolve(BaseModel):
+    resolution_status: str = "resolved"
+    resolved_by: Optional[str] = None
+
+
 @app.get("/")
 def root():
     return {"system": "Rescue-Net", "version": "0.1.0", "status": "running"}
@@ -369,6 +375,83 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok", "time": datetime.utcnow().isoformat()}
+
+
+@app.get("/audit-events")
+def list_audit_events(
+    disaster_event_id: Optional[str] = None,
+    object_table: Optional[str] = None,
+    object_id: Optional[str] = None,
+    actor_user_id: Optional[str] = None,
+    limit: int = 100,
+):
+    limit = max(1, min(limit, 500))
+    where = []
+    params = []
+
+    if disaster_event_id:
+        where.append("disaster_event_id = %s")
+        params.append(disaster_event_id)
+    if object_table:
+        where.append("object_table = %s")
+        params.append(object_table)
+    if object_id:
+        where.append("object_id = %s")
+        params.append(object_id)
+    if actor_user_id:
+        where.append("actor_user_id = %s")
+        params.append(actor_user_id)
+
+    sql = "SELECT * FROM audit_events"
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY created_at DESC LIMIT %s"
+    params.append(limit)
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(sql, params)
+        return rows_to_dicts(cur)
+
+
+@app.get("/sync-conflicts")
+def list_sync_conflicts(resolution_status: Optional[str] = None, limit: int = 100):
+    limit = max(1, min(limit, 500))
+    where = []
+    params = []
+
+    if resolution_status:
+        where.append("resolution_status = %s")
+        params.append(resolution_status)
+
+    sql = "SELECT * FROM sync_conflicts"
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY created_at DESC LIMIT %s"
+    params.append(limit)
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(sql, params)
+        return rows_to_dicts(cur)
+
+
+@app.post("/sync-conflicts/{conflict_id}/resolve")
+def resolve_sync_conflict(conflict_id: str, payload: SyncConflictResolve):
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        UPDATE sync_conflicts
+        SET resolution_status = %s,
+            resolved_by = %s,
+            resolved_at = NOW()
+        WHERE id = %s
+        RETURNING *;
+        """, (payload.resolution_status, payload.resolved_by, conflict_id))
+        rows = rows_to_dicts(cur)
+        conn.commit()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="Sync conflict not found")
+
+    return {"status": "updated", "sync_conflict": rows[0]}
 
 @app.get("/disasters")
 def get_disasters():

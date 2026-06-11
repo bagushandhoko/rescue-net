@@ -451,3 +451,44 @@ Before any risky backend/frontend patch:
 4. Rebuild API if needed
 5. Run scripts/rn-smoke-test.sh
 6. Only then continue
+
+============================================================
+12. UPDATE 2026-06-11 - FUNCTION HARDENING CHECKPOINT
+============================================================
+
+GitHub push is still postponed. Continue from Synology state.
+
+Backup verified:
+- /volume1/docker/backup-rescue-net-prod-20260611-143742
+- Includes web, API, and rescuenet_db.sql.
+
+Live/static and database changes completed:
+- audit_events table created.
+- audit triggers active for core tables: disaster_events, logistic_needs, aid_offers, distribution_flows, evidence_files, resource_profiles, recovery_projects, recovery_project_updates.
+- sync rejected events are now marked as conflict/needs_review in frontend local queue.
+- Sync Console has Retry Conflicts action.
+- Evidence page accepts object deep links via event, object_type, object_id, node_id.
+- Operational modules now link directly to Evidence for relevant objects.
+- Frontend requests now attach X-RN-Session-Token, X-RN-User-Id, and X-RN-Role when session exists.
+- Session UI refreshes after login/logout.
+
+Backend source/runtime files prepared:
+- Duplicate route definitions removed in backend/main.py.
+- Source route audit currently reports route_count=89 and no duplicate routes.
+- Optional RBAC middleware added behind RN_ENFORCE_RBAC=true.
+- Source endpoints added for:
+  GET /audit-events
+  GET /sync-conflicts
+  POST /sync-conflicts/{conflict_id}/resolve
+- /volume1/docker/rescue-net-api main.py/app_shared.py/routes are synced with /volume1/web/rescue-net/backend.
+- Runtime backup before sync:
+  /volume1/docker/rescue-net-api.BEFORE-source-sync-20260611-200702
+
+Important:
+- The running container has not been restarted in this checkpoint because sudo Docker access is not available in non-interactive SSH.
+- To activate backend source changes, rebuild/restart rescue-net-api with sudo from Synology terminal.
+- Keep RN_ENFORCE_RBAC=false until demo flows are verified after restart, then enable gradually.
+
+Smoke test:
+- scripts/rn-smoke-test.sh now checks API health, AI context, Resource/Recovery endpoints, JS syntax, backend source compile, duplicate backend routes, and required pages.
+- Latest smoke test passed.

@@ -18,6 +18,12 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
+function evidenceLink(objectType, objectId, label = "Add Evidence") {
+  if (!objectId || objectId === "n/a") return "";
+  const eventId = encodeURIComponent(getEventId());
+  return `<br><a href="evidence.html?event=${eventId}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">${label}</a>`;
+}
+
 async function api(path, options = {}) {
   const res = await fetch(RN_API_BASE + path, {
     headers: { "Content-Type": "application/json" },
@@ -40,7 +46,7 @@ function programCard(p) {
             ${safe(p.program_type)} · ${safe(p.status)}<br>
             Target: Rp ${rupiah(target)} · Current: Rp ${rupiah(current)}<br>
             Owner: ${safe(p.owner_id)}<br>
-            ID: ${safe(p.id)}
+            ID: ${safe(p.id)}${evidenceLink("donor_program", p.id)}
           </p>
         </div>
         <div class="chips">

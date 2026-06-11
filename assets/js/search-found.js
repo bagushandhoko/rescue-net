@@ -24,6 +24,12 @@ function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;
 }
 
+function evidenceLink(objectType, objectId, label = "Add Evidence") {
+  if (!objectId || objectId === "n/a") return "";
+  const eventId = encodeURIComponent(getDisasterId());
+  return `<br><a href="evidence.html?event=${eventId}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">${label}</a>`;
+}
+
 function card(title, body, chip = "") {
   return `
     <article class="event-card">
@@ -44,7 +50,7 @@ function renderMissing(items) {
   const el = document.getElementById("missingReports");
   el.innerHTML = items.length ? items.map(m => card(
     `${m.person_code} · ${safe(m.person_name)}`,
-    `Last seen: ${safe(m.last_seen_location)} · ${safe(m.last_seen_time)}<br>Reporter: ${safe(m.reporter_relation)} · ${safe(m.reporter_contact)}<br>${safe(m.description)}<br>Clothing: ${safe(m.clothing_description)}`,
+    `Last seen: ${safe(m.last_seen_location)} · ${safe(m.last_seen_time)}<br>Reporter: ${safe(m.reporter_relation)} · ${safe(m.reporter_contact)}<br>${safe(m.description)}<br>Clothing: ${safe(m.clothing_description)}${evidenceLink("missing_person_report", m.id)}`,
     m.status
   )).join("") : card("Belum ada laporan hilang", "Tambahkan missing report.", "empty");
 }
@@ -53,7 +59,7 @@ function renderFound(items) {
   const el = document.getElementById("foundReports");
   el.innerHTML = items.length ? items.map(f => card(
     `${f.person_code} · ${safe(f.person_name)}`,
-    `Found: ${safe(f.found_location)} · ${safe(f.found_time)}<br>Current: ${safe(f.current_location)}<br>Condition: ${safe(f.condition_notes)}<br>Clothing: ${safe(f.clothing_description)}`,
+    `Found: ${safe(f.found_location)} · ${safe(f.found_time)}<br>Current: ${safe(f.current_location)}<br>Condition: ${safe(f.condition_notes)}<br>Clothing: ${safe(f.clothing_description)}${evidenceLink("found_person_report", f.id)}`,
     f.status
   )).join("") : card("Belum ada laporan ditemukan", "Tambahkan found report.", "empty");
 }

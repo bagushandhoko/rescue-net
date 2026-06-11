@@ -42,6 +42,11 @@ function verifyButton(objectType, objectId, status = "verified", trust = "truste
   return `<button class="btn primary" data-requires-role-action="verify" type="button" onclick="verifyObject('${objectType}', '${objectId}', '${status}', '${trust}')">Verify</button>`;
 }
 
+function evidenceButton(objectType, objectId) {
+  if (!objectId) return "";
+  return `<a class="btn" href="evidence.html?event=${encodeURIComponent(DISASTER_ID)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">Evidence</a>`;
+}
+
 function renderSummary(summary) {
   const el = document.getElementById("verificationSummary");
   if (!el) return;
@@ -62,7 +67,7 @@ function renderList(id, items, objectType, titleField, bodyFn, statusFn) {
 
   el.innerHTML = items.length ? items.map(x => {
     const status = statusFn(x);
-    const action = verifyButton(objectType, x.id, objectType === "posko" ? "official_verified" : "verified", "trusted");
+    const action = verifyButton(objectType, x.id, objectType === "posko" ? "official_verified" : "verified", "trusted") + evidenceButton(objectType, x.id);
     return card(safe(x[titleField] || x.name || x.id), bodyFn(x), status, action);
   }).join("") : card("Tidak ada data", "Belum ada item untuk diverifikasi.", "empty");
 }

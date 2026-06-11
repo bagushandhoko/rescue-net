@@ -18,6 +18,12 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
+function evidenceLink(objectType, objectId, label = "Add Evidence") {
+  if (!objectId || objectId === "n/a") return "";
+  const eventId = encodeURIComponent(getEventId());
+  return `<br><a href="evidence.html?event=${eventId}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">${label}</a>`;
+}
+
 async function api(path, options = {}) {
   const res = await fetch(RN_API_BASE + path, {
     headers: { "Content-Type": "application/json" },
@@ -40,7 +46,7 @@ function card(p) {
             Location: ${safe(p.location)}<br>
             PIC: ${safe(p.pic_name)} / ${safe(p.pic_phone)}<br>
             ${safe(p.target_description || p.notes)}<br>
-            ID: ${safe(p.id)}
+            ID: ${safe(p.id)}${evidenceLink("recovery_project", p.id)}
           </p>
         </div>
         <div class="chips"><span class="chip warning">${safe(p.status)}</span></div>

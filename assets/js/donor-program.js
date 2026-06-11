@@ -18,6 +18,11 @@ function statusMsg(msg) {
   if (el) el.textContent = msg;
 }
 
+function evidenceLink(objectType, objectId, label = "Add Evidence") {
+  if (!objectId || objectId === "n/a") return "";
+  return `<br><a href="evidence.html?event=${encodeURIComponent(DISASTER_ID)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">${label}</a>`;
+}
+
 async function api(path, options = {}) {
   const res = await fetch(RN_API_BASE + path, {
     headers: { "Content-Type": "application/json" },
@@ -77,7 +82,7 @@ function renderPrograms(programs) {
        Location: ${safe(p.location)}<br>
        PIC: ${safe(p.contact_person)} · HP: ${safe(p.contact_phone)}<br>
        Target Description: ${safe(p.target_description)}<br>
-       Updates: ${p.update_count || 0}${updates}`,
+       Updates: ${p.update_count || 0}${updates}${evidenceLink("donor_program", p.id)}`,
       safe(p.status)
     );
   }).join("") : card("Belum ada donor program", "Buat program donasi/transparansi baru.", "empty");

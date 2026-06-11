@@ -240,6 +240,7 @@ async function syncPush() {
     renderLocal();
   }
   await syncPull();
+  await refreshServerReview();
 }
 
 async function syncPull() {
@@ -279,6 +280,80 @@ async function syncPull() {
   }
 
   statusMsg("Pull complete: " + data.generated_at);
+}
+
+async function loadServerConflicts() {
+  const el = document.getElementById("serverConflicts");
+  if (!el) return;
+
+  const items = await api("/sync-conflicts?limit=20");
+  if (!items.length) {
+    el.innerHTML = card("No server conflicts", "Belum ada conflict tercatat di server.", "ok");
+    return;
+  }
+
+  el.innerHTML = items.map(c => `
+    <article class="event-card">
+      <div class="event-main">
+        <div>
+          <h4>${c.conflict_id || c.id || "conflict"}</h4>
+          <p>
+            ${c.object_type || "object"} / ${c.object_id || "n/a"}<br>
+            Status: ${c.status || c.conflict_status || "needs_review"}<br>
+            Reason: ${c.reason || c.conflict_reason || c.sync_error || "n/a"}
+          </p>
+        </div>
+        <div class="chips">
+          <span class="chip warning">${c.status || c.conflict_status || "conflict"}</span>
+          <button class="btn" type="button" data-resolve-conflict="${c.conflict_id || c.id || ""}">Resolve</button>
+        </div>
+      </div>
+    </article>
+  `).join("");
+}
+
+async function loadAuditEvents() {
+  const el = document.getElementById("auditEvents");
+  if (!el) return;
+
+  const items = await api("/audit-events?limit=20");
+  if (!items.length) {
+    el.innerHTML = card("No audit event", "Belum ada audit event terbaru.", "empty");
+    return;
+  }
+
+  el.innerHTML = items.map(a => card(
+    a.action || a.event_type || "audit",
+    `${a.object_table || a.table_name || "object"} / ${a.object_id || "n/a"}<br>Actor: ${a.actor_user_id || "system"}<br>Time: ${a.created_at || a.event_time || "n/a"}`,
+    a.disaster_event_id || "audit"
+  )).join("");
+}
+
+async function refreshServerReview() {
+  await Promise.all([
+    loadServerConflicts(),
+    loadAuditEvents()
+  ]);
+}
+
+async function resolveServerConflict(conflictId) {
+  if (!conflictId) {
+    statusMsg("Conflict ID missing.");
+    return;
+  }
+
+  statusMsg("Resolving conflict " + conflictId + "...");
+  await api(`/sync-conflicts/${encodeURIComponent(conflictId)}/resolve`, {
+    method: "POST",
+    body: JSON.stringify({
+      resolution_status: "resolved",
+      resolution_note: "Resolved from Sync Console",
+      resolved_by_user_id: "sync-console"
+    })
+  });
+
+  statusMsg("Conflict resolved: " + conflictId);
+  await refreshServerReview();
 }
 
 function saveOfflineDraft() {
@@ -349,6 +424,21 @@ document.addEventListener("DOMContentLoaded", () => {
     retryBtn.addEventListener("click", retryConflicts);
   }
 
+  const refreshConflicts = document.getElementById("refreshConflicts");
+  if (refreshConflicts) {
+    refreshConflicts.addEventListener("click", () => {
+      statusMsg("Refreshing server conflicts and audit events...");
+      refreshServerReview().catch(err => statusMsg(err.message));
+    });
+  }
+
+  document.addEventListener("click", e => {
+    const btn = e.target.closest("[data-resolve-conflict]");
+    if (btn) {
+      resolveServerConflict(btn.dataset.resolveConflict).catch(err => statusMsg(err.message));
+    }
+  });
+
   if (pushBtn) {
     pushBtn.addEventListener("click", () => {
       statusMsg("Sync Push clicked.");
@@ -365,4 +455,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderLocal();
   syncPull().catch(err => statusMsg(err.message));
+  refreshServerReview().catch(err => statusMsg(err.message));
 });

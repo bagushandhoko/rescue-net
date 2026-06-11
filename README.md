@@ -1,105 +1,121 @@
 # Rescue-Net
 
-**Rescue-Net** is an open-source **Disaster Management System** for coordinating disaster response across communities, organizations, volunteers, donors, logistics posts, medical posts, shelters, transport providers, and decision makers.
+Rescue-Net is an open-source Disaster Management System for coordinating disaster response across command centers, field posts, organizations, volunteers, donors, logistics, medical posts, shelters, search/found teams, evidence reviewers, and recovery programs.
 
-## Full Blueprint
+## Live URLs
 
-The full system blueprint is available here:
-
-[docs/BLUEPRINT.md](docs/BLUEPRINT.md)
+- Local web: `http://192.168.100.32/rescue-net/`
+- Tailscale/domain web: `https://osiun.tail251e1e.ts.net/rescue-net/`
+- War Room: `https://osiun.tail251e1e.ts.net/rescue-net/pages/war-room.html?event=event-sim-001`
+- Mock-up viewer: `https://osiun.tail251e1e.ts.net/rescue-net/pages/mockup.html?screen=welcome`
+- API health: `http://127.0.0.1:8092/health`
 
 ## Purpose
 
-Rescue-Net helps connect disaster events, field needs, aid offers, donor flows, volunteers, transport capacity, medical posts, shelters, evidence, verification, programs, donations, and AI-assisted situation analysis.
+Rescue-Net connects active disaster events, verified organizations, posko/field posts, logistics needs, aid offers, distribution flows, resource profiles, work tools, volunteers, shelters, medical posts, public kitchens, search/found cases, evidence, verification, donor programs, recovery projects, and AI-assisted situation analysis.
 
-The system is designed to support fast public participation while still providing accountability for organizations, companies, NGOs, and government agencies.
+The prototype is designed for fast field operation first: small functional changes, quick smoke tests, then commits.
 
-## Core Principles
+## Current Runtime
 
-- Fast emergency participation
-- Non-bureaucratic public aid flow
-- Verified organization workflow
-- Logistics and distribution traceability
-- Evidence-based verification
-- Federated open-source deployment
-- AI-assisted decision support
-- Role-based privacy and access control
+- Project path: `/volume1/web/rescue-net`
+- Runtime API path: `/volume1/docker/rescue-net-api`
+- API port: `8092`
+- Database container: `postgres-main`
+- Database name: `rescuenet_db`
+- Branch: `main`
 
-## Main Modules
+Run quick checks on the Synology host:
+
+```sh
+curl -fsS http://127.0.0.1:8092/health
+curl -fsS http://127.0.0.1:8092/ai/context/event-sim-001 | python3 -m json.tool
+sh scripts/rn-smoke-test.sh
+```
+
+## Live Modules
 
 - Active Disasters
 - War Room
-- Organization & Posko
-- Volunteer Management
-- Logistics
-- Public Aid Submission
-- Edit Aid by Phone + Edit Code
-- Donor Organization Flow
-- Transport Space
-- Distribution Flow
-- Management Distribusi
-- Medical Post
+- Map
+- Organisasi & Posko
+- Posko Detail
+- Logistik
+- Distribusi
 - Dapur Umum
-- Shelter / Temporary Accommodation
-- Work Tools
-- Communication Equipment
+- Posko Medis
+- Shelter
 - Search & Found
-- Evidence & Verification
 - Program Khusus
-- Program Donasi
-- AI Situation Analyst
-- AI Settings / Bring Your Own Key
+- Donor Program
+- Recovery / Reconstruction
+- Kirim Bantuan
+- Relawan
+- Alat Kerja
+- Profil Sumber Daya
+- Evidence
+- Verification
+- AI Analyst
+- AI Settings
+- Sync Console
+- Contact Directory
 
-## Prototype Status
+## Backend Routes To Guard
 
-This repository currently contains the early Rescue-Net prototype:
+These route groups are expected to stay registered in OpenAPI:
 
-- Static web dashboard
-- FastAPI backend
-- PostgreSQL database design
-- Docker deployment
-- Public donor aid flow
-- Edit aid by phone + edit code
-- Volunteer management
-- Logistics module
-- Distribution management
-- Organization and posko registry
-- AI Situation Analyst concept
-- AI context endpoint
-- AI Settings with Bring Your Own Key design
+- `/health`
+- `/ai/context/{event_id}`
+- `/resource-profiles`
+- `/recovery-projects`
+- `/recovery-project-updates`
+- `/audit-events`
+- `/sync-conflicts`
+- `/sync-conflicts/{conflict_id}/resolve`
 
-## Backend
+## Mock-up Viewer
 
-The backend prototype uses:
+The mock-up viewer is separate from the live prototype.
 
-- FastAPI
-- PostgreSQL
-- Docker
-- Swagger/OpenAPI documentation
+- File: `pages/mockup.html`
+- Script: `assets/js/mockup.js`
+- Images: `assets/img/mockup/*.png`
 
-Backend source is located in `backend/`.
+Rules:
 
-## AI Design
+- Use top header menu only.
+- Do not add the live sidebar to mock-up pages.
+- Show the full bitmap mock-up image as the design reference.
+- Do not show extra title/subtitle/caption over the images.
+- Keep Login & Registrasi at the end of the mock-up menu.
 
-Rescue-Net AI uses a **Bring Your Own Key** model.
+Current mapping includes:
 
-AI keys belong to:
+- Welcome -> `welcome page rescue-net.png`
+- Active Disasters -> `bencana aktif.png`
+- War Room -> `war room.png`
+- Organisasi & Posko -> `organisasi & posko.png`
+- Registrasi & Verifikasi Posko -> `registrasi & verifikasi Posko.png`
+- Posko Logistik -> `posko logistik.png`
+- Distribusi -> `manajemen distribusi.png`
+- Dapur Umum -> `dapur umum.png`
+- Shelter -> `shelter & akomodasi.png`
+- Search & Found -> `search & found.png`
+- Program Khusus -> `program khusus.png`
+- Relawan -> `manajemen relawan.png`
+- Alat Kerja -> `manajemen alat kerja.png`
+- Profil Sumber Daya -> `Profil Sumber Daya.png`
+- Evidence Centre -> `evidence centre.png`
+- Verification & Approval -> `verification & Approval.png`
+- Alat Komunikasi -> `alat komunikasi.png`
+- Tampilan HP -> `kompilasi tampilan HP.png`
+- Login & Registrasi -> `login & registrasi.png`
 
-- individual users, or
-- verified organizations
+To add a mock-up image, upload the PNG into `assets/img/mockup/`, then update the ordered manifest in `assets/js/mockup.js` or rebuild the manifest script if that workflow is being used.
 
-Secret keys must be stored encrypted in the backend and must never be committed to GitHub or stored in frontend JavaScript.
+## Safety Rules
 
-AI answers must be permission-aware and source-traceable.
-
-## Branching
-
-- `main` = stable / production / owner updates
-- `dev` = contributor / Codex / testing
-
-## Security Notice
-
-Do not commit:
+Never commit:
 
 - `.env`
 - API keys
@@ -110,10 +126,37 @@ Do not commit:
 - real patient data
 - production credentials
 
-## Continue Development
+Before commit or push, run the secret scan helper:
 
-For a new ChatGPT/Codex session, use:
+```sh
+sh scripts/rn-secret-scan.sh
+```
 
-[docs/NEXT_AGENT_PROMPT.md](docs/NEXT_AGENT_PROMPT.md)
+The target output is empty.
 
-This file explains the current checkpoint, live environment, implemented modules, and safe continuation rules.
+## Push Checklist
+
+GitHub push may require the existing owner token/script on the Synology host. Do not push until the secret scan is clean.
+
+```sh
+git status --short
+sh scripts/rn-smoke-test.sh
+# run secret scan from the Safety Rules section
+git add <changed-files>
+git commit -m "Describe the Rescue-Net update"
+./rn-push-main.sh
+git fetch origin
+git log --oneline origin/main..HEAD
+```
+
+After a successful push, `git log --oneline origin/main..HEAD` should be empty.
+
+## Continuation Notes
+
+- Do not audit from zero unless the owner asks for a full audit.
+- Do not reintroduce global zoom/scale hacks.
+- Do not reintroduce `rnLayoutDebugBadge`.
+- Do not add 10-second polling sync; keep sync event-driven.
+- Keep layout/color changes small until core functions are stable.
+- Current handoff: `docs/HANDOFF_LATEST_RN.txt`
+- Full blueprint: `docs/BLUEPRINT.md`

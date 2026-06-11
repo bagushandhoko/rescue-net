@@ -348,3 +348,96 @@ Recommended next steps:
 - Do not re-add global zoom CSS blindly.
 - Do not mix mock-up viewer navigation with live sidebar navigation.
 - Do not use 10-second continuous sync polling; sync should remain event-driven.
+
+
+============================================================
+10. UPDATE 2026-06-11 - RESOURCE PROFILE + RECOVERY BACKEND
+============================================================
+
+Backend API recovered and confirmed healthy after rollback/rebuild.
+
+Current backend status:
+- Container: rescue-net-api
+- Port: 8092
+- /health: 200 OK
+- /ai/context/event-sim-001: normal
+- /resource-profiles: active
+- /recovery-projects: active
+- /recovery-project-updates: active
+
+Resource Profile backend:
+- Table: resource_profiles
+- Endpoint:
+  GET /resource-profiles
+  POST /resource-profiles
+  PATCH /resource-profiles/{resource_id}
+  DELETE /resource-profiles/{resource_id}
+- Test data:
+  Truk Logistik 5 Ton
+  owner_id: org-sim-bpbd
+  disaster_event_id: event-sim-001
+
+Recovery/Reconstruction backend:
+- Tables:
+  recovery_projects
+  recovery_project_updates
+- Endpoint:
+  GET /recovery-projects
+  POST /recovery-projects
+  PATCH /recovery-projects/{project_id}
+  DELETE /recovery-projects/{project_id}
+  GET /recovery-project-updates
+  POST /recovery-project-updates
+- Active project:
+  id: recovery-61507d93816b
+  project_name: Perbaikan Jembatan Darurat Simulasi
+  progress_percent: 20
+  current_amount: 10000000
+- Duplicate test project recovery-5773f39cc380 was soft-deleted.
+
+Frontend:
+- assets/js/resource-profile.js now reads /resource-profiles
+- assets/js/recovery-reconstruction.js now reads /recovery-projects
+- assets/js/war-room.js attaches Resource/Recovery directly from:
+  /resource-profiles
+  /recovery-projects
+  /recovery-project-updates
+- War Room does not require /ai/context to include resource/recovery yet.
+
+Important:
+Do not patch /ai/context with large regex insertions. Previous attempt caused IndentationError.
+If AI Context integration is needed later, do it manually inside the actual ai context function after confirming exact indentation and run node/python syntax tests before rebuild.
+
+Current module coverage:
+Prototype module coverage is complete enough for Rescue-Net demo/pilot:
+- Active Disasters
+- War Room
+- Map
+- Organization & Posko
+- Logistics
+- Distribution
+- Public Kitchen
+- Medical Posko
+- Shelter
+- Search & Found
+- Program Khusus / Donor Program
+- Recovery / Reconstruction
+- Volunteers
+- Work Tools
+- Resource Profile
+- Evidence
+- Verification
+- AI Analyst
+- AI Settings
+- Sync Console
+- Contact Directory
+- Mock-up Viewer
+
+Remaining production-grade work:
+- RBAC/session hardening
+- audit log
+- evidence upload linking to every object
+- offline sync conflict resolution
+- migrations instead of ad-hoc CREATE TABLE
+- automated endpoint/page smoke tests
+- safe AI Context integration for Resource/Recovery

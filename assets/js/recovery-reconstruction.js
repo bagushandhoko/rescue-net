@@ -32,11 +32,14 @@ function card(p) {
     <article class="event-card">
       <div class="event-main">
         <div>
-          <h4>${safe(p.program_name)}</h4>
+          <h4>${safe(p.project_name)}</h4>
           <p>
-            ${safe(p.program_type)} · ${safe(p.status)}<br>
-            Target: Rp ${money(p.target_amount || p.budget_target)} · Current: Rp ${money(p.current_amount || p.budget_received)}<br>
-            ${safe(p.target_description || p.description || p.notes)}<br>
+            ${safe(p.project_type)} · ${safe(p.status)} · ${safe(p.priority)}<br>
+            Progress: ${safe(p.progress_percent)}%<br>
+            Target: Rp ${money(p.target_amount)} · Current/Spent: Rp ${money(p.current_amount)}<br>
+            Location: ${safe(p.location)}<br>
+            PIC: ${safe(p.pic_name)} / ${safe(p.pic_phone)}<br>
+            ${safe(p.target_description || p.notes)}<br>
             ID: ${safe(p.id)}
           </p>
         </div>
@@ -50,26 +53,21 @@ async function loadRecovery() {
   const eventId = getEventId();
   setText("recoveryStatus", "Loading recovery projects...");
 
-  const programs = await api(`/donor-programs?disaster_event_id=${encodeURIComponent(eventId)}`);
-  const recovery = programs.filter(p => {
-    const t = String(p.program_type || "").toLowerCase();
-    const n = String(p.program_name || "").toLowerCase();
-    return t.includes("recovery") || t.includes("reconstruction") || n.includes("jembatan") || n.includes("pemulihan") || n.includes("recovery");
-  });
+  const projects = await api(`/recovery-projects?disaster_event_id=${encodeURIComponent(eventId)}`);
 
-  const totalTarget = recovery.reduce((s, p) => s + Number(p.target_amount || p.budget_target || 0), 0);
-  const totalCurrent = recovery.reduce((s, p) => s + Number(p.current_amount || p.budget_received || 0), 0);
+  const totalTarget = projects.reduce((s, p) => s + Number(p.target_amount || 0), 0);
+  const totalCurrent = projects.reduce((s, p) => s + Number(p.current_amount || 0), 0);
 
-  setText("kpiProjects", recovery.length);
+  setText("kpiProjects", projects.length);
   setText("kpiTarget", money(totalTarget));
   setText("kpiCurrent", money(totalCurrent));
   setText("kpiUpdates", "-");
 
-  document.getElementById("recoveryList").innerHTML = recovery.length
-    ? recovery.map(card).join("")
+  document.getElementById("recoveryList").innerHTML = projects.length
+    ? projects.map(card).join("")
     : `<article class="event-card"><h4>Belum ada recovery project</h4><p>Buat project recovery pertama untuk event ini.</p></article>`;
 
-  setText("recoveryStatus", `Loaded ${recovery.length} recovery project(s).`);
+  setText("recoveryStatus", `Loaded ${projects.length} recovery project(s).`);
 }
 
 function setupForm() {
@@ -83,20 +81,21 @@ function setupForm() {
       disaster_event_id: getEventId(),
       owner_type: "organization",
       owner_id: "org-sim-bpbd",
-      program_name: form.program_name.value.trim(),
-      program_type: "recovery_reconstruction",
+      project_name: form.program_name.value.trim(),
+      project_type: "recovery_reconstruction",
       target_description: form.target_description.value.trim(),
       target_amount: Number(form.target_amount.value || 0),
-      target_unit: "IDR",
       current_amount: 0,
-      status: "active",
+      progress_percent: 0,
+      status: "planned",
+      priority: "urgent",
       notes: form.notes.value.trim(),
       created_by_user_id: "recovery-operator"
     };
 
     try {
       setText("recoveryStatus", "Saving recovery project...");
-      await api("/donor-programs", {
+      await api("/recovery-projects", {
         method: "POST",
         body: JSON.stringify(payload)
       });

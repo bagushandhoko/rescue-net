@@ -14,8 +14,11 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
-async function api(path) {
-  const res = await fetch(RN_API_BASE + path);
+async function api(path, options = {}) {
+  const res = await fetch(RN_API_BASE + path, {
+    headers: { "Content-Type": "application/json" },
+    ...options
+  });
   if (!res.ok) throw new Error(await res.text());
   return await res.json();
 }
@@ -36,20 +39,22 @@ function card(title, body, chip = "") {
 
 async function loadResourceProfile() {
   const eventId = getEventId();
-  setText("resourceStatus", "Loading resource profile...");
+  setText("resourceStatus", "Loading resource profiles...");
 
-  const ctx = await api(`/ai/context/${eventId}`);
+  const [ctx, resources] = await Promise.all([
+    api(`/ai/context/${eventId}`),
+    api(`/resource-profiles?disaster_event_id=${encodeURIComponent(eventId)}`)
+  ]);
+
   const s = ctx.summary || {};
-
   const organizations = ctx.organizations || [];
   const poskos = ctx.poskos || [];
   const volunteers = ctx.volunteers || [];
-  const resources = ctx.resources || ctx.shared_resources || [];
 
   setText("kpiOrg", safe(s.organization_count || organizations.length));
   setText("kpiPosko", safe(s.posko_count || poskos.length));
   setText("kpiVolunteer", safe(s.volunteer_count || volunteers.length));
-  setText("kpiResource", safe(s.shared_resource_count || s.resource_count || resources.length));
+  setText("kpiResource", resources.length);
 
   document.getElementById("organizationList").innerHTML = organizations.length
     ? organizations.slice(0, 12).map(o => card(
@@ -76,14 +81,19 @@ async function loadResourceProfile() {
     : card("No volunteer data", "Belum ada data relawan.", "empty");
 
   document.getElementById("resourceList").innerHTML = resources.length
-    ? resources.slice(0, 12).map(r => card(
-        safe(r.resource_name || r.name || r.title),
-        `Type: ${safe(r.resource_type || r.type)}<br>Status: ${safe(r.status)}<br>Owner: ${safe(r.owner_id || r.organization_id)}<br>ID: ${safe(r.id)}`,
-        safe(r.status || "resource")
+    ? resources.slice(0, 20).map(r => card(
+        safe(r.resource_name),
+        `Type: ${safe(r.resource_type)} · ${safe(r.category)}<br>` +
+        `Qty: ${safe(r.quantity)} ${safe(r.unit)}<br>` +
+        `Status: ${safe(r.availability_status)}<br>` +
+        `Location: ${safe(r.current_location)}<br>` +
+        `PIC: ${safe(r.pic_name)} / ${safe(r.pic_phone)}<br>` +
+        `${safe(r.capacity_description)}`,
+        safe(r.availability_status)
       )).join("")
-    : card("No resource data", "Belum ada data resource/alat bersama.", "empty");
+    : card("No resource profile", "Belum ada profil sumber daya.", "empty");
 
-  setText("resourceStatus", `Loaded resource profile for ${eventId}.`);
+  setText("resourceStatus", `Loaded ${resources.length} resource profile(s) for ${eventId}.`);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

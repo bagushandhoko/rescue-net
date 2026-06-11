@@ -171,6 +171,7 @@ async function loadWarRoom() {
 
   const eventId = getEventId();
   const ctx = await api(`/ai/context/${eventId}`);
+  await attachResourceRecovery(ctx, eventId);
   const disaster = ctx.disaster || {};
   const s = ctx.summary || {};
 
@@ -197,8 +198,9 @@ async function loadWarRoom() {
   renderRecommendations(ctx.recommendations || []);
   renderStockWatch(ctx);
   renderModuleSummary(ctx);
-  try { renderSpecialPrograms(ctx); } catch (err) { console.error('renderSpecialPrograms failed', err); }
-  renderSpecialProgramsSafe(ctx);
+  try { renderSpecialPrograms(ctx); } catch (err) { console.error('render special programs failed', err); }
+  try { renderResourceAndRecovery(ctx); } catch (err) { console.error('render resource/recovery failed', err); }
+  try { renderSpecialProgramsSafe(ctx); } catch (err) { console.error('render special programs safe failed', err); }
 }
 
 
@@ -256,3 +258,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadWarRoom().catch(err => setText("warRoomStatus", err.message));
 });
+
+
+
+async function attachResourceRecovery(ctx, eventId) {
+  try {
+    const [resources, projects, updates] = await Promise.all([
+      api(`/resource-profiles?disaster_event_id=${encodeURIComponent(eventId)}`),
+      api(`/recovery-projects?disaster_event_id=${encodeURIComponent(eventId)}`),
+      api(`/recovery-project-updates?disaster_event_id=${encodeURIComponent(eventId)}`)
+    ]);
+
+    ctx.resource_profiles = Array.isArray(resources) ? resources : [];
+    ctx.recovery_projects = Array.isArray(projects) ? projects : [];
+    ctx.recovery_project_updates = Array.isArray(updates) ? updates : [];
+    ctx.summary = ctx.summary || {};
+    ctx.summary.resource_profile_count = ctx.resource_profiles.length;
+    ctx.summary.recovery_project_count = ctx.recovery_projects.length;
+    ctx.summary.recovery_project_update_count = ctx.recovery_project_updates.length;
+  } catch (err) {
+    console.error("attachResourceRecovery failed", err);
+    ctx.resource_profiles = ctx.resource_profiles || [];
+    ctx.recovery_projects = ctx.recovery_projects || [];
+    ctx.recovery_project_updates = ctx.recovery_project_updates || [];
+    ctx.summary = ctx.summary || {};
+    ctx.summary.resource_profile_count = ctx.summary.resource_profile_count || 0;
+    ctx.summary.recovery_project_count = ctx.summary.recovery_project_count || 0;
+    ctx.summary.recovery_project_update_count = ctx.summary.recovery_project_update_count || 0;
+  }
+
+  return ctx;
+}
+
+function renderResourceAndRecovery(ctx) {
+  const resourcesEl = document.getElementById("warRoomResourceProfiles");
+  const recoveryEl = document.getElementById("warRoomRecoveryProjects");
+
+  if (resourcesEl) {
+    const resources = ctx.resource_profiles || [];
+    resourcesEl.innerHTML = resources.length ? resources.slice(0, 6).map(r => card(
+      safe(r.resource_name),
+      `Type: ${safe(r.resource_type)} · ${safe(r.category)}<br>` +
+      `Qty: ${safe(r.quantity)} ${safe(r.unit)} · Status: ${safe(r.availability_status)}<br>` +
+      `Location: ${safe(r.current_location)}<br>` +
+      `PIC: ${safe(r.pic_name)} / ${safe(r.pic_phone)}<br>` +
+      `${safe(r.capacity_description)}`,
+      safe(r.availability_status)
+    )).join("") : card("Belum ada Profil Sumber Daya", "Belum ada aset/kapasitas operasional yang tercatat untuk event ini.", "empty");
+  }
+
+  if (recoveryEl) {
+    const projects = ctx.recovery_projects || [];
+    recoveryEl.innerHTML = projects.length ? projects.slice(0, 6).map(p => card(
+      safe(p.project_name),
+      `${safe(p.project_type)} · ${safe(p.status)} · ${safe(p.priority)}<br>` +
+      `Progress: ${safe(p.progress_percent)}%<br>` +
+      `Target: Rp ${formatMoney(p.target_amount)} · Current/Spent: Rp ${formatMoney(p.current_amount)}<br>` +
+      `Location: ${safe(p.location)}<br>` +
+      `PIC: ${safe(p.pic_name)} / ${safe(p.pic_phone)}`,
+      safe(p.status)
+    )).join("") : card("Belum ada Recovery Project", "Belum ada project pemulihan/rekonstruksi untuk event ini.", "empty");
+  }
+}

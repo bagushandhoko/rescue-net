@@ -57,6 +57,49 @@
     return (rules[role] || []).includes(action);
   }
 
+
+  function getSessionToken() {
+    return localStorage.getItem("RN_SESSION_TOKEN") || "";
+  }
+
+  function getAuthHeaders() {
+    const user = getUser();
+    const token = getSessionToken();
+    const headers = {};
+
+    if (token) headers["X-RN-Session-Token"] = token;
+    if (user && user.id) headers["X-RN-User-Id"] = user.id;
+    if (user && user.role) headers["X-RN-Role"] = user.role;
+
+    return headers;
+  }
+
+  function shouldAttachAuth(input) {
+    const url = typeof input === "string" ? input : (input && input.url) || "";
+    return url.includes(":8092") || url.startsWith("/api/") || url.startsWith("/auth/");
+  }
+
+  function installAuthenticatedFetch() {
+    if (window.__RN_AUTH_FETCH_INSTALLED__) return;
+    if (!window.fetch) return;
+
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = function rnAuthenticatedFetch(input, init = {}) {
+      if (!shouldAttachAuth(input)) {
+        return nativeFetch(input, init);
+      }
+
+      const headers = new Headers(init.headers || (input && input.headers) || {});
+      Object.entries(getAuthHeaders()).forEach(([key, value]) => {
+        if (value && !headers.has(key)) headers.set(key, value);
+      });
+
+      return nativeFetch(input, { ...init, headers });
+    };
+
+    window.__RN_AUTH_FETCH_INSTALLED__ = true;
+  }
+
   function renderSessionPill() {
     const user = getUser();
 
@@ -103,8 +146,12 @@
 
   window.RN_SESSION = {
     getUser,
+    getSessionToken,
+    getAuthHeaders,
     roleAllows
   };
+
+  installAuthenticatedFetch();
 
   document.addEventListener("DOMContentLoaded", () => {
     renderSessionPill();

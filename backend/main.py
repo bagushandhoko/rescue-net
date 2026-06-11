@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 import psycopg
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from routes.auth_routes import router as auth_router
@@ -33,6 +33,89 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+RBAC_MUTATING_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+RBAC_PUBLIC_PREFIXES = (
+    "/health",
+    "/docs",
+    "/redoc",
+    "/openapi.json",
+    "/auth/",
+    "/public/",
+)
+RBAC_ROLE_ACTIONS = {
+    "command_center": {"*"},
+    "posko_operator": {
+        "stock", "distribution", "evidence", "sync", "resource_request",
+        "resource_profile", "volunteer_assignment"
+    },
+    "medical_operator": {"medical", "evidence", "sync"},
+    "shelter_operator": {"shelter", "evidence", "sync"},
+    "donor": {"aid_offer", "donor_program", "evidence", "sync"},
+    "volunteer": {"sync"},
+    "viewer": set(),
+}
+
+
+def rbac_enabled():
+    return os.getenv("RN_ENFORCE_RBAC", "false").lower() in {"1", "true", "yes", "on"}
+
+
+def classify_path_action(path: str):
+    if "evidence" in path:
+        return "evidence"
+    if "sync" in path:
+        return "sync"
+    if "stock" in path or "posko" in path or "logistic" in path or "kitchen" in path:
+        return "stock"
+    if "distribution" in path or "transport" in path:
+        return "distribution"
+    if "medical" in path:
+        return "medical"
+    if "shelter" in path:
+        return "shelter"
+    if "donor-program" in path or "special-program" in path or "recovery" in path:
+        return "donor_program"
+    if "aid-offer" in path:
+        return "aid_offer"
+    if "resource-profile" in path or "resource-profiles" in path:
+        return "resource_profile"
+    if "resource-request" in path:
+        return "resource_request"
+    if "volunteer-assignment" in path:
+        return "volunteer_assignment"
+    if "verification" in path:
+        return "verify"
+    return "general_mutation"
+
+
+def role_allows_path(role: str, path: str):
+    allowed = RBAC_ROLE_ACTIONS.get(role, set())
+    if "*" in allowed:
+        return True
+    return classify_path_action(path) in allowed
+
+
+@app.middleware("http")
+async def optional_rbac_middleware(request: Request, call_next):
+    if not rbac_enabled() or request.method not in RBAC_MUTATING_METHODS:
+        return await call_next(request)
+
+    path = request.url.path
+    if path == "/" or any(path == p or path.startswith(p) for p in RBAC_PUBLIC_PREFIXES):
+        return await call_next(request)
+
+    session_token = request.headers.get("X-RN-Session-Token")
+    role = request.headers.get("X-RN-Role") or "viewer"
+
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Session token required")
+
+    if not role_allows_path(role, path):
+        raise HTTPException(status_code=403, detail=f"Role {role} is not allowed to mutate {path}")
+
+    return await call_next(request)
 
 def get_conn():
     return psycopg.connect(DATABASE_URL)

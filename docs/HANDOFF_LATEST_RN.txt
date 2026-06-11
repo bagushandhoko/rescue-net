@@ -492,3 +492,36 @@ Important:
 Smoke test:
 - scripts/rn-smoke-test.sh now checks API health, AI context, Resource/Recovery endpoints, JS syntax, backend source compile, duplicate backend routes, and required pages.
 - Latest smoke test passed.
+
+============================================================
+2026-06-11 FUNCTION HARDENING UPDATE
+============================================================
+
+Backup before changes:
+- Full production backup verified at /volume1/docker/backup-rescue-net-prod-20260611-143742
+- Extra per-file backup moved to /volume1/docker/backup-rescue-net-prod-20260611-143742/file-backups
+
+Live without backend rebuild:
+- Evidence page accepts deep links with event/object_type/object_id/node_id query params.
+- Core field modules now expose Add Evidence links for logistics, distribution, posko detail, public kitchen, medical post, shelter, search/found, donor program, special program, resource profile, recovery, and verification objects.
+- Sync Console now shows both its demo draft queue and the main RN offline queue stored in localStorage key rn_sync_pending_events_v1.
+- Retry Conflicts now moves conflict events from both queues back to pending_sync.
+- Sync Push now also triggers the RN sync engine when only the main app offline queue has pending events.
+- Smoke test passed after these changes: OK: ALL SMOKE TESTS PASSED.
+
+Database applied live:
+- Migration 014 audit/sync conflict foundation adjusted for existing sync tables and created audit_events.
+- Migration 015 created audit trigger function and triggers for core operational tables owned by rescuenet_user.
+- Audit trigger tested inside rollback transaction and produced audit row as expected.
+
+Prepared but requires backend rebuild/restart:
+- Backend source includes GET /audit-events.
+- Backend source includes GET /sync-conflicts.
+- Backend source includes POST /sync-conflicts/{conflict_id}/resolve.
+- Optional backend RBAC middleware is present behind RN_ENFORCE_RBAC=true and defaults off.
+- Source was synced to /volume1/docker/rescue-net-api, but running API process still needs container rebuild/restart.
+- Helper script exists: scripts/rn-rebuild-api.sh.
+
+GitHub status:
+- Local Synology git has new commits not pushed.
+- Push is intentionally postponed because GitHub token/password access is not available non-interactively.

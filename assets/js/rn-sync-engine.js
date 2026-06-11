@@ -113,16 +113,35 @@ async function rnPushPending() {
   });
 
   const accepted = new Set((result.accepted || []).map(x => x.event_id));
+  const rejected = new Map((result.rejected || []).map(x => [x.event_id, x]));
+  const now = new Date().toISOString();
 
   const updated = queue.map(x => {
     if (accepted.has(x.event_id)) {
       return {
         ...x,
         sync_status: "synced",
-        synced_at: new Date().toISOString()
+        synced_at: now,
+        sync_error: null
       };
     }
-    return x;
+
+    if (rejected.has(x.event_id)) {
+      const rejection = rejected.get(x.event_id);
+      return {
+        ...x,
+        sync_status: "conflict",
+        conflict_status: "needs_review",
+        sync_error: rejection.error || "Server rejected this sync event.",
+        last_sync_attempt_at: now,
+        server_rejection: rejection
+      };
+    }
+
+    return {
+      ...x,
+      last_sync_attempt_at: now
+    };
   });
 
   rnSaveQueue(updated);

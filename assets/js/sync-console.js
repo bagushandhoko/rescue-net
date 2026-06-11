@@ -103,6 +103,8 @@ async function syncPush() {
   });
 
   const accepted = new Set((result.accepted || []).map(x => x.event_id));
+  const rejected = new Map((result.rejected || []).map(x => [x.event_id, x]));
+  const now = new Date().toISOString();
 
   const updated = drafts.map(d => {
     if (accepted.has(d.event_id)) {
@@ -110,10 +112,27 @@ async function syncPush() {
         ...d,
         sync_status: "synced",
         local_status: "synced",
-        synced_at: new Date().toISOString()
+        synced_at: now,
+        sync_error: null
       };
     }
-    return d;
+
+    if (rejected.has(d.event_id)) {
+      const rejection = rejected.get(d.event_id);
+      return {
+        ...d,
+        sync_status: "conflict",
+        local_status: "needs_review",
+        sync_error: rejection.error || "Server rejected this sync event.",
+        last_sync_attempt_at: now,
+        server_rejection: rejection
+      };
+    }
+
+    return {
+      ...d,
+      last_sync_attempt_at: now
+    };
   });
 
   saveDrafts(updated);

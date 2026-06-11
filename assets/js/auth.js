@@ -74,6 +74,7 @@ async function login(username) {
   localStorage.setItem("RN_USER", JSON.stringify(data.user));
 
   renderUser(data);
+  window.dispatchEvent(new CustomEvent("rn:session-changed", { detail: data }));
   statusMsg("Logged in as " + data.user.display_name);
 }
 
@@ -102,6 +103,7 @@ document.addEventListener("DOMContentLoaded", () => {
     logout.addEventListener("click", () => {
       localStorage.removeItem("RN_SESSION_TOKEN");
       localStorage.removeItem("RN_USER");
+      window.dispatchEvent(new CustomEvent("rn:session-changed"));
       renderUser(null);
       statusMsg("Logged out locally.");
     });

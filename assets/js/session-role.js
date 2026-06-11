@@ -107,11 +107,13 @@
     if (!topbars.length) return;
 
     topbars.forEach(topbar => {
-      if (topbar.querySelector("[data-rn-session-pill]")) return;
-
-      const pill = document.createElement("div");
-      pill.className = "status-pill";
-      pill.setAttribute("data-rn-session-pill", "true");
+      let pill = topbar.querySelector("[data-rn-session-pill]");
+      if (!pill) {
+        pill = document.createElement("div");
+        pill.className = "status-pill";
+        pill.setAttribute("data-rn-session-pill", "true");
+        topbar.appendChild(pill);
+      }
 
       if (user) {
         pill.innerHTML = `User: ${safe(user.display_name)}<br>Role: ${safe(user.role)}`;
@@ -122,7 +124,6 @@
         }
       }
 
-      topbar.appendChild(pill);
     });
   }
 
@@ -153,8 +154,12 @@
 
   installAuthenticatedFetch();
 
-  document.addEventListener("DOMContentLoaded", () => {
+  function refreshSessionUi() {
     renderSessionPill();
     applyRoleVisibility();
-  });
+  }
+
+  document.addEventListener("DOMContentLoaded", refreshSessionUi);
+  window.addEventListener("rn:session-changed", refreshSessionUi);
+  window.addEventListener("storage", refreshSessionUi);
 })();

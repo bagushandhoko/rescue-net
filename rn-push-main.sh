@@ -13,9 +13,17 @@ if [ -z "$GITHUB_TOKEN" ]; then
 fi
 
 git checkout main
+git fetch origin main
 
-if git diff --quiet && git diff --cached --quiet; then
-  echo "No changes to push."
+HAS_CHANGES=0
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  HAS_CHANGES=1
+fi
+
+AHEAD_COUNT="$(git rev-list --count origin/main..HEAD 2>/dev/null || printf "0")"
+
+if [ "$HAS_CHANGES" -eq 0 ] && [ "$AHEAD_COUNT" -eq 0 ]; then
+  echo "No changes or local commits to push."
   exit 0
 fi
 
@@ -38,8 +46,10 @@ if grep -RInE "sk-[A-Za-z0-9_-]{20,}|rescuenet_dev_password|POSTGRES_PASSWORD=[^
   exit 1
 fi
 
-git add .
-git commit -m "Owner update Rescue-Net $(date '+%Y-%m-%d %H:%M:%S')"
+if [ "$HAS_CHANGES" -eq 1 ]; then
+  git add .
+  git commit -m "Owner update Rescue-Net $(date '+%Y-%m-%d %H:%M:%S')"
+fi
 
 git remote set-url origin "https://${GITHUB_TOKEN}@github.com/bagushandhoko/rescue-net.git"
 git push origin main

@@ -1,5 +1,6 @@
 const RN_API_BASE = "http://192.168.100.32:8092";
 const LOCAL_KEY = "rn_sync_console_drafts";
+const APP_QUEUE_KEY = "rn_sync_pending_events_v1";
 
 function statusMsg(msg) {
   const el = document.getElementById("syncStatus");
@@ -11,16 +12,60 @@ function uid(prefix) {
   return prefix + "-" + Date.now() + "-" + Math.random().toString(16).slice(2, 8);
 }
 
-function getDrafts() {
+function readJson(key) {
   try {
-    return JSON.parse(localStorage.getItem(LOCAL_KEY) || "[]");
+    return JSON.parse(localStorage.getItem(key) || "[]");
   } catch (e) {
     return [];
   }
 }
 
+function writeJson(key, items) {
+  localStorage.setItem(key, JSON.stringify(items));
+}
+
+function getDrafts() {
+  return readJson(LOCAL_KEY);
+}
+
 function saveDrafts(items) {
-  localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
+  writeJson(LOCAL_KEY, items);
+}
+
+function getAppQueue() {
+  return readJson(APP_QUEUE_KEY);
+}
+
+function saveAppQueue(items) {
+  writeJson(APP_QUEUE_KEY, items);
+}
+
+function queueCounts(items) {
+  return items.reduce((acc, item) => {
+    const status = item.sync_status || "unknown";
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function countsLine(items) {
+  const counts = queueCounts(items);
+  return ["pending_sync", "conflict", "synced", "unknown"]
+    .filter(k => counts[k])
+    .map(k => `${k}: ${counts[k]}`)
+    .join(" | ") || "empty";
+}
+
+function eventTitle(item) {
+  return item.payload_json?.resource_id || item.object_id || item.event_id || "local event";
+}
+
+function eventBody(item, sourceLabel) {
+  const payload = item.payload_json || {};
+  const actor = payload.requested_by_id || item.source_organization_id || item.source_user_id || "n/a";
+  const reason = payload.request_reason || item.sync_error || item.server_rejection?.error || "";
+  const attempt = item.last_sync_attempt_at ? `<br>last attempt: ${item.last_sync_attempt_at}` : "";
+  return `${sourceLabel}<br>${item.object_type || "object"} | ${item.operation || "operation"} | ${actor}<br>${reason}${attempt}`;
 }
 
 async function api(path, options = {}) {
@@ -65,9 +110,21 @@ function retryConflicts() {
     };
   });
 
+  const appQueue = getAppQueue();
+  const updatedQueue = appQueue.map(d => {
+    if (d.sync_status !== "conflict") return d;
+    return {
+      ...d,
+      sync_status: "pending_sync",
+      conflict_status: "retry_pending",
+      retry_requested_at: new Date().toISOString()
+    };
+  });
+
   saveDrafts(updated);
+  saveAppQueue(updatedQueue);
   renderLocal();
-  statusMsg("Conflict drafts moved back to pending sync.");
+  statusMsg("Conflict drafts and app queue events moved back to pending sync.");
 }
 
 function renderLocal() {
@@ -75,17 +132,32 @@ function renderLocal() {
   if (!el) return;
 
   const drafts = getDrafts();
+  const appQueue = getAppQueue();
 
-  if (!drafts.length) {
+  if (!drafts.length && !appQueue.length) {
     el.innerHTML = card("Belum ada local draft", "Klik Save Offline Draft untuk simulasi data offline.", "empty");
     return;
   }
 
-  el.innerHTML = drafts.map(d => card(
-    d.payload_json.resource_id,
-    `${d.object_type} · ${d.operation} · ${d.payload_json.requested_by_id}<br>${d.payload_json.request_reason}`,
+  const summary = card(
+    "Local Queue Summary",
+    `console drafts: ${countsLine(drafts)}<br>app offline queue: ${countsLine(appQueue)}`,
+    "local"
+  );
+
+  const draftCards = drafts.map(d => card(
+    eventTitle(d),
+    eventBody(d, "Sync Console draft"),
     d.sync_status
-  )).join("");
+  ));
+
+  const queueCards = appQueue.map(d => card(
+    eventTitle(d),
+    eventBody(d, "RN app offline queue"),
+    d.sync_status
+  ));
+
+  el.innerHTML = [summary, ...draftCards, ...queueCards].join("");
 }
 
 async function syncPush() {
@@ -93,6 +165,13 @@ async function syncPush() {
   const pending = drafts.filter(d => d.sync_status !== "synced");
 
   if (!pending.length) {
+    if (window.RNSync) {
+      statusMsg("No Sync Console drafts. Triggering RN app queue sync...");
+      await window.RNSync.triggerSync("sync-console");
+      renderLocal();
+      return;
+    }
+
     statusMsg("No pending drafts.");
     return;
   }
@@ -156,6 +235,10 @@ async function syncPush() {
   renderLocal();
 
   statusMsg("Push done. accepted=" + result.accepted_count + ", rejected=" + result.rejected_count);
+  if (window.RNSync) {
+    await window.RNSync.triggerSync("sync-console-after-draft-push");
+    renderLocal();
+  }
   await syncPull();
 }
 
@@ -258,7 +341,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearBtn.addEventListener("click", () => {
       localStorage.removeItem(LOCAL_KEY);
       renderLocal();
-      statusMsg("Local drafts cleared.");
+      statusMsg("Sync Console demo drafts cleared. RN app offline queue preserved.");
     });
   }
 

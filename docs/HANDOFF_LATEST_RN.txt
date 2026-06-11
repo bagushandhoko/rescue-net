@@ -274,20 +274,9 @@ Before commit/push always sanitize:
 - Replace rescunet_dev_password URLs with safe placeholder/no-password URL:
   postgresql://rescuenet_user@localhost:5432/rescuenet_db
 
-Secret scan must be empty:
-grep -RInE "sk-[A-Za-z0-9_-]{20,}|rescuenet_dev_password|POSTGRES_PASSWORD=[^[:space:]]+|postgresql://[^:]+:[^@]+@" . \
-  --exclude-dir="@eaDir" \
-  --exclude-dir=".git" \
-  --exclude="*.bak*" \
-  --exclude="*.zip" \
-  --exclude=".env" \
-  --exclude="*.png" \
-  --exclude="*.jpg" \
-  --exclude="*.jpeg" \
-  --exclude="*.webp" \
-  --exclude="*.mp4" \
-  --exclude="rn-push*.sh" \
-  | head -50
+Secret scan must be empty before push.
+Use the scanner embedded in rn-push.sh / rn-push-main.sh, or run the same check manually.
+The scanner looks for OpenAI-style keys, database passwords, POSTGRES_PASSWORD values, and PostgreSQL URLs with embedded passwords.
 
 ============================================================
 7. IMPORTANT COMMANDS
@@ -441,3 +430,24 @@ Remaining production-grade work:
 - migrations instead of ad-hoc CREATE TABLE
 - automated endpoint/page smoke tests
 - safe AI Context integration for Resource/Recovery
+
+
+============================================================
+11. PRODUCTION GRADE PHASE STARTED
+============================================================
+
+GitHub push is postponed due to credential/token issue.
+
+Local production hardening started:
+- scripts/rn-smoke-test.sh
+- scripts/rn-backup-before-change.sh
+- docs/PRODUCTION_GRADE_ROADMAP.md
+
+Rule from now:
+Before any risky backend/frontend patch:
+1. Run scripts/rn-backup-before-change.sh
+2. Apply patch
+3. Run python3 -m py_compile for backend
+4. Rebuild API if needed
+5. Run scripts/rn-smoke-test.sh
+6. Only then continue

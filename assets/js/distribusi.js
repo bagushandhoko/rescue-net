@@ -11,6 +11,11 @@ function officerLine(x) {
   return `<br><b>Officer in Charge:</b> ${safe(name)}<br>HP: ${safe(phone)}<br>Role: ${safe(role)}`;
 }
 
+function evidenceLink(objectType, objectId, eventId = "event-aceh-2025", label = "Add Evidence") {
+  if (!objectId) return "";
+  return `<br><a href="evidence.html?event=${encodeURIComponent(eventId)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">${label}</a>`;
+}
+
 const RN_API_BASE = "http://192.168.100.32:8092";
 
 async function rnFetch(path, options = {}) {
@@ -52,7 +57,7 @@ function renderOffer(a) {
           </p>
           <p>
             Tujuan: ${a.target_node_name || a.target_node_id || "belum dipilih"}
-            · ETA: ${a.expected_arrival_at || "n/a"}
+            · ETA: ${a.expected_arrival_at || "n/a"}${evidenceLink("aid_offer", a.id, a.disaster_event_id)}
           </p>
         </div>
         <div class="chips">
@@ -110,7 +115,7 @@ async function loadTransportSpaces() {
           <div>
             <h4>${t.provider_name}</h4>
             <p>${t.transport_type} · ${t.route_origin} → ${t.route_destination}</p>
-            <p>Kapasitas: ${t.capacity_weight_kg} kg · ${t.capacity_volume_m3} m³ · Berangkat: ${t.departure_time || "n/a"} · ETA: ${t.eta || "n/a"}</p>
+            <p>Kapasitas: ${t.capacity_weight_kg} kg · ${t.capacity_volume_m3} m³ · Berangkat: ${t.departure_time || "n/a"} · ETA: ${t.eta || "n/a"}${evidenceLink("transport_space", t.id, t.disaster_event_id)}</p>
           </div>
           <div class="chips">
             <span class="chip neutral">${t.status}${officerLine(t)}</span>
@@ -138,7 +143,7 @@ async function loadDistributionFlows() {
           <div>
             <h4>${f.id}</h4>
             <p>Aid: ${f.aid_offer_id || "n/a"} · Need: ${f.need_id || "n/a"}</p>
-            <p>Transport: ${f.transport_space_id || "n/a"} · Destination: ${f.destination_node_id || "n/a"} · ETA final: ${f.eta_final || "n/a"}</p>
+            <p>Transport: ${f.transport_space_id || "n/a"} · Destination: ${f.destination_node_id || "n/a"} · ETA final: ${f.eta_final || "n/a"}${evidenceLink("distribution_flow", f.id, f.disaster_event_id)}</p>
           </div>
           <div class="chips">
             <span class="chip ${chipClass(f.status)}">${f.status}${officerLine(f)}</span>

@@ -24,6 +24,12 @@ function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;
 }
 
+function evidenceLink(objectType, objectId, label = "Add Evidence") {
+  if (!objectId) return "";
+  const eventId = SHELTER_CONTEXT_CACHE?.posko?.disaster_event_id || "event-aceh-2025";
+  return `<br><a href="evidence.html?event=${encodeURIComponent(eventId)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}&node_id=${encodeURIComponent(getShelterPoskoId())}">${label}</a>`;
+}
+
 function card(title, body, chip = "") {
   return `
     <article class="event-card">
@@ -48,7 +54,7 @@ function renderOccupancies(items) {
   const el = document.getElementById("shelterOccupancies");
   el.innerHTML = items.length ? items.map(o => card(
     o.shelter_name,
-    `Occupancy: ${o.current_occupancy}/${o.capacity_total}<br>Families: ${safe(o.families_count)}<br>Children: ${safe(o.children_count)} · Elderly: ${safe(o.elderly_count)} · Disabled: ${safe(o.disabled_count)}<br>Water: ${safe(o.water_status)} · Sanitation: ${safe(o.sanitation_status)}<br>${safe(o.notes)}`,
+    `Occupancy: ${o.current_occupancy}/${o.capacity_total}<br>Families: ${safe(o.families_count)}<br>Children: ${safe(o.children_count)} · Elderly: ${safe(o.elderly_count)} · Disabled: ${safe(o.disabled_count)}<br>Water: ${safe(o.water_status)} · Sanitation: ${safe(o.sanitation_status)}<br>${safe(o.notes)}${evidenceLink("shelter_occupancy", o.id)}`,
     o.status
   )).join("") : card("Belum ada occupancy", "Catat data hunian shelter.", "empty");
 }
@@ -57,7 +63,7 @@ function renderNeeds(items) {
   const el = document.getElementById("shelterNeeds");
   el.innerHTML = items.length ? items.map(n => card(
     n.item_name,
-    `Need: ${n.quantity_needed} ${n.unit}<br>Priority: ${safe(n.priority)}<br>Before: ${safe(n.needed_before)}<br>${safe(n.notes)}`,
+    `Need: ${n.quantity_needed} ${n.unit}<br>Priority: ${safe(n.priority)}<br>Before: ${safe(n.needed_before)}<br>${safe(n.notes)}${evidenceLink("shelter_need", n.id)}`,
     n.status
   )).join("") : card("Belum ada kebutuhan shelter", "Tambahkan kebutuhan shelter.", "empty");
 }
@@ -75,7 +81,7 @@ function renderFlows(items) {
   const el = document.getElementById("shelterFlows");
   el.innerHTML = items.length ? items.map(f => card(
     f.id,
-    `Aid: ${safe(f.aid_offer_id)}<br>Transport: ${safe(f.transport_space_id)}<br>ETA: ${safe(f.eta_final)}`,
+    `Aid: ${safe(f.aid_offer_id)}<br>Transport: ${safe(f.transport_space_id)}<br>ETA: ${safe(f.eta_final)}${evidenceLink("distribution_flow", f.id)}`,
     f.status
   )).join("") : card("Belum ada distribution flow", "Belum ada distribusi menuju shelter.", "empty");
 }

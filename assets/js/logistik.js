@@ -23,6 +23,11 @@ function priorityClass(priority) {
   return "neutral";
 }
 
+function evidenceLink(objectType, objectId, eventId = "event-aceh-2025", label = "Add Evidence") {
+  if (!objectId) return "";
+  return `<br><a href="evidence.html?event=${encodeURIComponent(eventId)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">${label}</a>`;
+}
+
 async function loadLogisticNeeds() {
   const target = document.querySelector("[data-rn-logistic-needs]");
   if (!target) return;
@@ -38,7 +43,7 @@ async function loadLogisticNeeds() {
             <p>
               Kebutuhan: <b>${n.quantity_needed} ${n.unit}</b>
               · Harus tiba: ${n.needed_before || "belum ditentukan"}
-              · Status: ${n.status}
+              · Status: ${n.status}${evidenceLink("logistic_need", n.id, n.disaster_event_id)}
             </p>
           </div>
           <div class="chips">
@@ -69,7 +74,7 @@ async function loadAidOffers() {
             <p>
               Donatur: ${a.donor_name}
               · Jumlah: <b>${a.quantity} ${a.unit}</b>
-              · Pickup: ${a.pickup_location}
+              · Pickup: ${a.pickup_location}${evidenceLink("aid_offer", a.id, a.disaster_event_id)}
             </p>
           </div>
           <div class="chips">

@@ -24,6 +24,12 @@ function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;
 }
 
+function evidenceLink(objectType, objectId, label = "Add Evidence") {
+  if (!objectId) return "";
+  const eventId = KITCHEN_CONTEXT_CACHE?.posko_context?.posko?.disaster_event_id || "event-aceh-2025";
+  return `<br><a href="evidence.html?event=${encodeURIComponent(eventId)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}&node_id=${encodeURIComponent(getKitchenPoskoId())}">${label}</a>`;
+}
+
 function card(title, body, chip = "") {
   return `
     <article class="event-card">
@@ -53,7 +59,7 @@ function renderMeals(items) {
   const el = document.getElementById("mealProductions");
   el.innerHTML = items.length ? items.map(m => card(
     m.meal_name,
-    `Portions: ${safe(m.portions)}<br>Target: ${safe(m.target_distribution_location)}<br>Time: ${safe(m.production_time)}<br>${safe(m.notes)}`,
+    `Portions: ${safe(m.portions)}<br>Target: ${safe(m.target_distribution_location)}<br>Time: ${safe(m.production_time)}<br>${safe(m.notes)}${evidenceLink("meal_production", m.id)}`,
     m.status
   )).join("") : card("Belum ada produksi makanan", "Catat produksi makanan pertama.", "empty");
 }
@@ -62,7 +68,7 @@ function renderMovements(items) {
   const el = document.getElementById("kitchenMovements");
   el.innerHTML = items.length ? items.map(m => card(
     m.item_name,
-    `${m.movement_type} · ${m.movement_direction}<br>${m.quantity} ${m.unit}<br>${safe(m.notes)}`,
+    `${m.movement_type} · ${m.movement_direction}<br>${m.quantity} ${m.unit}<br>${safe(m.notes)}${evidenceLink("stock_movement", m.id)}`,
     m.created_at ? m.created_at.slice(0, 16).replace("T", " ") : m.id
   )).join("") : card("Belum ada movement", "Belum ada pergerakan stok dapur.", "empty");
 }

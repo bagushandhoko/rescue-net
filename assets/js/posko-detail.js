@@ -24,6 +24,12 @@ function setStatus(msg) {
   if (el) el.textContent = msg;
 }
 
+function evidenceLink(objectType, objectId, eventId, label = "Add Evidence") {
+  if (!objectId) return "";
+  const event = encodeURIComponent(eventId || POSKO_CONTEXT_CACHE?.posko?.disaster_event_id || "event-aceh-2025");
+  return `<br><a href="evidence.html?event=${event}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}&node_id=${encodeURIComponent(getPoskoId())}">${label}</a>`;
+}
+
 function card(title, body, chip = "") {
   return `
     <article class="event-card">
@@ -78,7 +84,7 @@ function renderStockMovements(items) {
   const el = document.getElementById("stockMovements");
   el.innerHTML = items.length ? items.map(m => card(
     m.item_name,
-    `${m.movement_type} · ${m.movement_direction}<br>${m.quantity} ${m.unit}<br>${safe(m.notes)}`,
+    `${m.movement_type} · ${m.movement_direction}<br>${m.quantity} ${m.unit}<br>${safe(m.notes)}${evidenceLink("stock_movement", m.id, m.disaster_event_id)}`,
     m.created_at ? m.created_at.slice(0, 16).replace("T", " ") : m.id
   )).join("") : card("Belum ada stock movement", "Belum ada barang masuk/keluar.", "empty");
 }
@@ -87,7 +93,7 @@ function renderNeeds(items) {
   const el = document.getElementById("logisticNeeds");
   el.innerHTML = items.length ? items.map(n => card(
     n.item_name,
-    `Need: ${safe(n.quantity_needed)} ${safe(n.unit)}<br>Priority: ${safe(n.priority)}<br>Before: ${safe(n.needed_before)}`,
+    `Need: ${safe(n.quantity_needed)} ${safe(n.unit)}<br>Priority: ${safe(n.priority)}<br>Before: ${safe(n.needed_before)}${evidenceLink("logistic_need", n.id, n.disaster_event_id)}`,
     n.status
   )).join("") : card("Belum ada kebutuhan", "Tidak ada kebutuhan aktif.", "empty");
 }
@@ -104,7 +110,7 @@ function renderIncomingAid(items) {
         <div class="event-main">
           <div>
             <h4>${a.item_name}</h4>
-            <p>${safe(a.quantity)} ${safe(a.unit)}<br>Donor: ${safe(a.donor_name)}<br>Status: ${safe(a.status)}</p>
+            <p>${safe(a.quantity)} ${safe(a.unit)}<br>Donor: ${safe(a.donor_name)}<br>Status: ${safe(a.status)}${evidenceLink("aid_offer", a.id, a.disaster_event_id)}</p>
           </div>
           <div class="chips">
             <span class="chip warning">${a.delivery_mode || a.status}</span>
@@ -163,7 +169,7 @@ function renderFlows(items) {
   const el = document.getElementById("distributionFlows");
   el.innerHTML = items.length ? items.map(f => card(
     f.id,
-    `Aid: ${safe(f.aid_offer_id)}<br>Transport: ${safe(f.transport_space_id)}<br>ETA: ${safe(f.eta_final)}`,
+    `Aid: ${safe(f.aid_offer_id)}<br>Transport: ${safe(f.transport_space_id)}<br>ETA: ${safe(f.eta_final)}${evidenceLink("distribution_flow", f.id, f.disaster_event_id)}`,
     f.status
   )).join("") : card("Belum ada distribution flow", "Belum ada distribusi menuju posko ini.", "empty");
 }

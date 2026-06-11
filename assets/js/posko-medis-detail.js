@@ -24,6 +24,12 @@ function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;
 }
 
+function evidenceLink(objectType, objectId, label = "Add Evidence") {
+  if (!objectId) return "";
+  const eventId = MEDICAL_CONTEXT_CACHE?.posko?.disaster_event_id || "event-aceh-2025";
+  return `<br><a href="evidence.html?event=${encodeURIComponent(eventId)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}&node_id=${encodeURIComponent(getMedicalPoskoId())}">${label}</a>`;
+}
+
 function card(title, body, chip = "") {
   return `
     <article class="event-card">
@@ -53,7 +59,7 @@ function renderCases(items) {
   const el = document.getElementById("medicalCases");
   el.innerHTML = items.length ? items.map(c => card(
     c.patient_code,
-    `Complaint: ${safe(c.complaint)}<br>Severity: ${safe(c.severity)} · Triage: ${safe(c.triage_status)}<br>Treatment: ${safe(c.treatment_notes)}<br>Case ID: ${c.id}`,
+    `Complaint: ${safe(c.complaint)}<br>Severity: ${safe(c.severity)} · Triage: ${safe(c.triage_status)}<br>Treatment: ${safe(c.treatment_notes)}<br>Case ID: ${c.id}${evidenceLink("medical_case", c.id)}`,
     c.status
   )).join("") : card("Belum ada kasus medis", "Catat kasus medis pertama.", "empty");
 }
@@ -62,7 +68,7 @@ function renderUses(items) {
   const el = document.getElementById("medicalUses");
   el.innerHTML = items.length ? items.map(u => card(
     u.item_name,
-    `${u.quantity} ${u.unit}<br>Case: ${safe(u.medical_case_id)}<br>${safe(u.notes)}`,
+    `${u.quantity} ${u.unit}<br>Case: ${safe(u.medical_case_id)}<br>${safe(u.notes)}${evidenceLink("medical_supply_use", u.id)}`,
     u.id
   )).join("") : card("Belum ada pemakaian medis", "Belum ada obat/alat dipakai.", "empty");
 }
@@ -71,7 +77,7 @@ function renderMovements(items) {
   const el = document.getElementById("medicalMovements");
   el.innerHTML = items.length ? items.map(m => card(
     m.item_name,
-    `${m.movement_type} · ${m.movement_direction}<br>${m.quantity} ${m.unit}<br>${safe(m.notes)}`,
+    `${m.movement_type} · ${m.movement_direction}<br>${m.quantity} ${m.unit}<br>${safe(m.notes)}${evidenceLink("stock_movement", m.id)}`,
     m.created_at ? m.created_at.slice(0, 16).replace("T", " ") : m.id
   )).join("") : card("Belum ada movement", "Belum ada pergerakan stok medis.", "empty");
 }

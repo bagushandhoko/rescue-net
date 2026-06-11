@@ -33,6 +33,14 @@ curl -fsS http://127.0.0.1:8092/ai/context/event-sim-001 | python3 -m json.tool
 sh scripts/rn-smoke-test.sh
 ```
 
+Run a short operational UAT with simulation data:
+
+```sh
+sh scripts/rn-uat-kilat.sh
+```
+
+This checks demo login, AI context summary, Resource Profile, Recovery, core pages, sync push/pull, audit endpoint, and sync conflict endpoint. It creates one simulated `resource_request` sync event each time it runs.
+
 ## Live Modules
 
 - Active Disasters

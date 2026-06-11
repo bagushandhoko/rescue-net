@@ -37,17 +37,74 @@ function card(title, body, chip = "") {
   `;
 }
 
+function buildOperationalRecommendations(ctx, resources, recoveryProjects) {
+  const s = ctx.summary || {};
+  const recommendations = [];
+
+  const unavailableResources = resources.filter(r => r.status && r.status !== "available");
+  const transportAssets = resources.filter(r => ["transport", "vehicle"].includes(String(r.resource_type || r.category || "").toLowerCase()));
+  const medicalAssets = resources.filter(r => String(r.resource_type || r.category || "").toLowerCase().includes("medical"));
+  const recoveryActive = recoveryProjects.filter(p => !["completed", "cancelled"].includes(String(p.status || "").toLowerCase()));
+
+  if (Number(s.open_logistic_need_count || 0) > 0 && transportAssets.length > 0) {
+    recommendations.push(`Gunakan ${transportAssets.length} aset transport terdaftar untuk prioritas open logistic needs. Cocokkan kapasitas dan PIC sebelum assignment.`);
+  }
+
+  if (Number(s.medical_case_count || 0) > 0 && medicalAssets.length > 0) {
+    recommendations.push(`Ada ${s.medical_case_count} kasus medis dan ${medicalAssets.length} resource medis terdata. Prioritaskan ketersediaan stok medis dan rujukan pasien berat.`);
+  }
+
+  if (unavailableResources.length > 0) {
+    recommendations.push(`${unavailableResources.length} resource tidak available. Command center perlu cek status ketersediaan sebelum membuat rencana distribusi.`);
+  }
+
+  if (recoveryActive.length > 0) {
+    recommendations.push(`${recoveryActive.length} recovery/reconstruction project aktif. Sinkronkan kebutuhan alat kerja, relawan teknis, evidence, dan verifikasi progress.`);
+  }
+
+  if (Number(s.shelter_need_count || 0) > 0 && Number(s.shelter_occupancy_count || 0) > 0) {
+    recommendations.push(`Shelter memiliki kebutuhan terbuka. Bandingkan occupancy, kapasitas, air, sanitasi, dan distribusi bantuan sebelum perpindahan pengungsi.`);
+  }
+
+  return recommendations;
+}
+
+function renderResourceRecoverySources(resources, recoveryProjects) {
+  const resourceCards = resources.slice(0, 8).map(r => card(
+    safe(r.resource_name),
+    `Type: ${safe(r.resource_type)}<br>Owner: ${safe(r.owner_type)} / ${safe(r.owner_id)}<br>Status: ${safe(r.status)}<br>Capacity: ${safe(r.capacity_description)}`,
+    "resource"
+  ));
+
+  const recoveryCards = recoveryProjects.slice(0, 8).map(p => card(
+    safe(p.project_name),
+    `Type: ${safe(p.project_type)}<br>Location: ${safe(p.location)}<br>Progress: ${safe(p.progress_percent)}%<br>Status: ${safe(p.status)}`,
+    "recovery"
+  ));
+
+  return [...resourceCards, ...recoveryCards];
+}
+
 async function loadAiContext() {
   const eventId = getEventId();
   setText("aiStatus", "Loading AI context...");
 
-  const ctx = await api(`/ai/context/${eventId}`);
+  const [ctx, resources, recoveryProjects] = await Promise.all([
+    api(`/ai/context/${eventId}`),
+    api(`/resource-profiles?disaster_event_id=${encodeURIComponent(eventId)}`),
+    api(`/recovery-projects?disaster_event_id=${encodeURIComponent(eventId)}`)
+  ]);
   const s = ctx.summary || {};
+  const operationalRecommendations = buildOperationalRecommendations(ctx, resources || [], recoveryProjects || []);
+  const combinedRecommendations = [
+    ...(ctx.recommendations || []),
+    ...operationalRecommendations
+  ];
 
   setText("aiKpiPosko", safe(s.posko_count));
   setText("aiKpiNeeds", Number(s.open_logistic_need_count || 0) + Number(s.shelter_need_count || 0));
   setText("aiKpiAlerts", (ctx.alerts || []).length);
-  setText("aiKpiPrograms", safe(s.donor_program_count));
+  setText("aiKpiPrograms", Number(s.donor_program_count || 0) + Number((recoveryProjects || []).length));
 
   document.getElementById("aiAlerts").innerHTML = (ctx.alerts || []).length
     ? ctx.alerts.slice(0, 10).map(a => card(
@@ -57,19 +114,22 @@ async function loadAiContext() {
       )).join("")
     : card("No alerts", "Belum ada alert.", "ok");
 
-  document.getElementById("aiRecommendations").innerHTML = (ctx.recommendations || []).length
-    ? ctx.recommendations.map((r, i) => card(`Recommendation ${i + 1}`, r, "AI")).join("")
+  document.getElementById("aiRecommendations").innerHTML = combinedRecommendations.length
+    ? combinedRecommendations.map((r, i) => card(`Recommendation ${i + 1}`, r, i < (ctx.recommendations || []).length ? "AI" : "Ops")).join("")
     : card("No recommendation", "Belum ada rekomendasi.", "empty");
 
-  document.getElementById("aiSources").innerHTML = (ctx.sources || []).length
-    ? ctx.sources.slice(0, 20).map(src => card(
+  const sourceCards = (ctx.sources || []).slice(0, 20).map(src => card(
         safe(src.source_table),
         `ID: ${safe(src.source_id)}`,
         "source"
-      )).join("")
+      ));
+  const resourceRecoveryCards = renderResourceRecoverySources(resources || [], recoveryProjects || []);
+
+  document.getElementById("aiSources").innerHTML = (sourceCards.length || resourceRecoveryCards.length)
+    ? [...sourceCards, ...resourceRecoveryCards].join("")
     : card("No sources", "Belum ada source.", "empty");
 
-  setText("aiStatus", `AI context loaded: ${safe(ctx.generated_at)}`);
+  setText("aiStatus", `AI context loaded: ${safe(ctx.generated_at)} | resources=${(resources || []).length} | recovery=${(recoveryProjects || []).length}`);
 }
 
 function setupAiAsk() {

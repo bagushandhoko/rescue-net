@@ -1911,3 +1911,278 @@ html.rn-external-access body:not(.mockup-viewer) .sidebar nav {
 html.rn-external-access body:not(.mockup-viewer) .main {
   min-height: 133.333vh !important;
 }
+
+/* Welcome header and mobile menu refinement */
+.welcome-nav {
+  grid-template-columns: 1fr auto auto;
+}
+
+.welcome-links {
+  justify-content: flex-start;
+}
+
+.welcome-menu-toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  padding: 9px;
+  cursor: pointer;
+}
+
+.welcome-menu-toggle span {
+  display: block;
+  height: 2px;
+  margin: 5px 0;
+  border-radius: 999px;
+  background: #40312b;
+}
+
+.welcome-kicker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.welcome-kicker img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.welcome-kicker .eyebrow {
+  margin: 0;
+}
+
+.welcome-copy h1 {
+  max-width: 680px;
+  font-size: 50px;
+  line-height: 1.02;
+}
+
+@media (max-width: 900px) {
+  .welcome-nav {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-height: 54px;
+  }
+
+  .welcome-nav::after {
+    content: none;
+  }
+
+  .welcome-menu-toggle {
+    display: block;
+  }
+
+  .welcome-links,
+  .welcome-actions {
+    display: none;
+  }
+
+  body.home-menu-open .welcome-nav {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+  }
+
+  body.home-menu-open .welcome-menu-toggle {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  body.home-menu-open .welcome-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    padding-top: 8px;
+  }
+
+  body.home-menu-open .welcome-links a {
+    display: block;
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.72);
+  }
+
+  body.home-menu-open .welcome-actions {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .welcome-kicker {
+    justify-content: center;
+    gap: 9px;
+    margin-bottom: 10px;
+  }
+
+  .welcome-kicker img {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .welcome-copy h1 {
+    max-width: 340px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 30px;
+    line-height: 1.08;
+  }
+}
+
+/* Mobile operational layout for live module pages */
+@media (max-width: 900px) {
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) {
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .app-shell {
+    display: block !important;
+    min-height: 100vh;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
+    position: relative !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 12px !important;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .brand {
+    min-height: auto !important;
+    margin-bottom: 10px !important;
+    padding: 9px 10px !important;
+    border-radius: 16px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .brand-logo,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .brand-mark,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .brand-mark img {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .brand h1 {
+    font-size: 18px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .brand p {
+    font-size: 11px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar nav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar nav a {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 9px 12px !important;
+    border-radius: 999px;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .main {
+    padding: 16px 12px 24px;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .topbar,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .panel-header,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .event-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) h2 {
+    font-size: 28px;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .kpi-card {
+    min-height: 98px;
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .content-grid,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .image-board,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .form-grid,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .event-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .panel,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .event-card {
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .panel.large {
+    min-height: auto;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .summary {
+    position: static;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .chips {
+    justify-content: flex-start;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .search,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) input,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) select,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) textarea {
+    width: 100% !important;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .rn-form,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .form-grid,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) label {
+    min-width: 0;
+    width: 100%;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .form-actions .btn,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) button.btn {
+    width: 100%;
+  }
+}

@@ -171,8 +171,26 @@ function setupQuickEventButtons() {
   });
 }
 
+function setupWelcomeMenu() {
+  const btn = document.querySelector(".welcome-menu-toggle");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    const isOpen = document.body.classList.toggle("home-menu-open");
+    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.querySelectorAll(".welcome-links a, .welcome-actions a").forEach(link => {
+    link.addEventListener("click", () => {
+      document.body.classList.remove("home-menu-open");
+      btn.setAttribute("aria-expanded", "false");
+    });
+  });
+}
+
 
 document.addEventListener("DOMContentLoaded", () => {
+  setupWelcomeMenu();
   loadActiveDisasters();
   loadWelcomeLiveMetrics();
   setupCreateDisasterForm();

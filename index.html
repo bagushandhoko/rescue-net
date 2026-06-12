@@ -3,266 +3,146 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Rescue-Net | Active Disaster Events</title>
-  <link rel="stylesheet" href="assets/css/style.css?v=sidebar-height-1" />
+  <title>Rescue-Net | Open Disaster Coordination</title>
+  <link rel="stylesheet" href="assets/css/style.css?v=welcome-live-1" />
 </head>
-<body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <img class="brand-logo" src="assets/img/rn-logo-web.png" alt="Rescue-Net logo">
-        <div>
-          <h1>Rescue-Net</h1>
-          <p>Disaster Management System</p>
-        </div>
+<body class="home-page">
+  <div class="welcome-shell">
+    <header class="welcome-nav">
+      <a class="welcome-brand" href="index.html" aria-label="Rescue-Net home">
+        <span class="welcome-logo">RN</span>
+        <strong>Rescue-Net</strong>
+      </a>
+      <nav class="welcome-links" aria-label="Welcome navigation">
+        <a href="#tentang">Tentang Kami</a>
+        <a href="#fitur">Fitur</a>
+        <a href="#bencana-aktif">Bencana Aktif</a>
+        <a href="pages/map.html?event=event-sim-001">Peta</a>
+        <a href="pages/kirim-bantuan.html">Pusat Bantuan</a>
+      </nav>
+      <div class="welcome-actions">
+        <a class="btn" href="pages/auth.html">Masuk</a>
+        <a class="btn primary" href="pages/auth.html">Daftar</a>
       </div>
+    </header>
 
-      <nav>
-      <a href="pages/mockup.html?screen=welcome">Mock-up</a>
-      <a class="active" href="index.html">Active Disasters</a>
-      <a href="pages/war-room.html?event=event-sim-001">War Room</a>
-      <a href="pages/map.html?event=event-sim-001">Map</a>
-      <a href="pages/organisasi-posko.html">Organisasi & Posko</a>
-      <a href="pages/posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
-      <a href="pages/posko-logistik.html">Logistik</a>
-      <a href="pages/management-distribusi.html">Distribusi</a>
-      <a href="pages/dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
-      <a href="pages/posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
-      <a href="pages/shelter-detail.html?id=posko-sim-shelter">Shelter</a>
-      <a href="pages/search-found.html?event=event-sim-001">Search & Found</a>
-      <a href="pages/program-khusus.html?event=event-sim-001">Program Khusus</a>
-      <a href="pages/donor-program.html?event=event-sim-001">Donor Program</a>
-      <a href="pages/recovery-reconstruction.html?event=event-sim-001">Recovery</a>
-      <a href="pages/kirim-bantuan.html">Kirim Bantuan</a>
-      <a href="pages/management-relawan.html">Relawan</a>
-      <a href="pages/alat-kerja.html?event=event-sim-001">Alat Kerja</a>
-      <a href="pages/resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
-      <a href="pages/evidence.html?event=event-sim-001">Evidence</a>
-      <a href="pages/verification-approval.html?event=event-sim-001">Verification</a>
-      <a href="pages/ai-analyst.html?event=event-sim-001">AI Analyst</a>
-      <a href="pages/ai-settings.html">AI Settings</a>
-      <a href="pages/sync-console.html?event=event-sim-001">Sync Console</a>
-      <a href="pages/contact-directory.html">Contact Directory</a>
-    </nav>
-    </aside>
-
-    <main class="main">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Multi-Disaster Overview</p>
-          <h2>Active Disaster Events</h2>
+    <main>
+      <section class="welcome-hero" id="tentang">
+        <div class="welcome-copy">
+          <p class="eyebrow">Open Disaster Coordination</p>
+          <h1>Rescue-Net</h1>
+          <p class="welcome-lead">Open Disaster Coordination & Relief Management System</p>
           <p class="subtitle">
-            Pilih satu bencana aktif untuk melihat organisasi, posko, kebutuhan, distribusi,
-            korban, relawan, alat kerja, dan kondisi lapangan secara real-time.
+            Menghubungkan kebutuhan, bantuan, relawan, transportasi, logistik, posko medis,
+            dan bukti lapangan terverifikasi dalam satu sistem terbuka untuk respons bencana
+            yang cepat, transparan, dan kolaboratif.
           </p>
-        </div>
-        <div class="status-pill online">System Online · Last Sync 10:24 WIB</div>
-      </header>
 
-      <section class="kpi-grid">
-        <div class="kpi-card">
-          <span>Active Disaster</span>
-          <strong>4</strong>
-          <small>2 critical</small>
+          <div class="welcome-cta">
+            <a class="btn primary" href="pages/auth.html">Masuk</a>
+            <a class="btn" href="pages/auth.html">Daftar</a>
+          </div>
+          <div class="welcome-cta secondary">
+            <a class="btn" href="#bencana-aktif">Lihat Bencana Aktif</a>
+            <a class="btn help" href="pages/kirim-bantuan.html">Saya Ingin Membantu</a>
+          </div>
         </div>
-        <div class="kpi-card danger">
-          <span>Jiwa Berisiko &lt;24 Jam</span>
-          <strong>38.560</strong>
-          <small>butuh keputusan cepat</small>
-        </div>
-        <div class="kpi-card warning">
-          <span>Kebutuhan Critical</span>
-          <strong>282</strong>
-          <small>logistik · medis · shelter</small>
-        </div>
-        <div class="kpi-card danger">
-          <span>Distribusi Terhambat</span>
-          <strong>62</strong>
-          <small>rute / shipment</small>
+
+        <div class="welcome-visual" aria-label="Rescue-Net disaster response visual">
+          <img src="assets/img/rn-welcome-disaster-hero.png" alt="Tim Rescue-Net melakukan respons di area banjir">
         </div>
       </section>
 
-        <div class="panel create-panel rn-create-event-card">
-          <div class="panel-header">
-            <div>
-              <h3>Tambah Bencana Aktif</h3>
-              <p>Daftarkan kejadian bencana baru. Data akan masuk ke Rescue-Net API dan PostgreSQL.</p>
-            </div>
-            <span class="status-pill mini">Live Input</span>
-          </div>
-
-          <form class="rn-form rn-event-form" data-rn-create-disaster>
-            <div class="form-grid event-form-grid">
-              <label class="wide">
-                Nama Bencana
-                <input name="name" placeholder="Contoh: Longsor Bogor 2026" required>
-              </label>
-
-              <label>
-                Jenis Bencana
-                <select name="disaster_type" required>
-                  <option value="">Pilih jenis</option>
-                  <option value="earthquake">Gempa</option>
-                  <option value="flood">Banjir</option>
-                  <option value="tsunami">Tsunami</option>
-                  <option value="landslide">Longsor</option>
-                  <option value="eruption">Erupsi</option>
-                  <option value="fire">Kebakaran</option>
-                  <option value="other">Lainnya</option>
-                </select>
-              </label>
-
-              <label class="wide">
-                Lokasi
-                <input name="location" placeholder="Contoh: Bogor, Jawa Barat" required>
-              </label>
-
-              <label>
-                Severity
-                <select name="severity">
-                  <option value="normal">Normal</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="critical">Critical</option>
-                </select>
-              </label>
-            </div>
-
-            <div class="quick-row">
-              <span>Contoh cepat:</span>
-              <button type="button" class="quick-chip" data-fill-event="earthquake">Gempa Aceh</button>
-              <button type="button" class="quick-chip" data-fill-event="flood">Banjir Luwu</button>
-              <button type="button" class="quick-chip" data-fill-event="landslide">Longsor Bogor</button>
-            </div>
-
-            <div class="form-actions">
-              <button class="btn primary" type="submit">Simpan Bencana Aktif</button>
-              <span data-rn-form-message class="form-message"></span>
-            </div>
-          </form>
+      <section class="welcome-kpis" aria-label="Live Rescue-Net metrics">
+        <div class="welcome-kpi">
+          <span>Bencana Aktif</span>
+          <strong data-rn-live-active-disasters>0</strong>
+          <small data-rn-live-active-note>Live API</small>
         </div>
+        <div class="welcome-kpi">
+          <span>Kebutuhan Kritis</span>
+          <strong data-rn-live-critical-needs>0</strong>
+          <small>logistik + shelter</small>
+        </div>
+        <div class="welcome-kpi">
+          <span>Relawan Dibutuhkan</span>
+          <strong data-rn-live-volunteers>0</strong>
+          <small>relawan terdata</small>
+        </div>
+        <div class="welcome-kpi">
+          <span>Distribusi Terhambat</span>
+          <strong data-rn-live-blocked-flows>0</strong>
+          <small>flow perlu perhatian</small>
+        </div>
+      </section>
 
+      <section class="welcome-roles" id="fitur">
+        <div class="panel-header">
+          <div>
+            <h3>Bergabung sesuai peran Anda</h3>
+            <p>Pilih jalur operasi yang paling sesuai dengan kontribusi Anda.</p>
+          </div>
+        </div>
+        <div class="role-grid">
+          <a class="role-card" href="pages/kirim-bantuan.html"><b>Donatur</b><span>Salurkan bantuan dan pantau dampaknya.</span></a>
+          <a class="role-card" href="pages/management-relawan.html"><b>Relawan</b><span>Temukan misi dan bantu sesuai keahlian.</span></a>
+          <a class="role-card" href="pages/organisasi-posko.html"><b>Organisasi</b><span>Kelola tim, distribusi, dan laporan.</span></a>
+          <a class="role-card" href="pages/posko-detail.html?id=posko-sim-logistik"><b>Posko</b><span>Kelola kebutuhan, stok, dan informasi.</span></a>
+          <a class="role-card" href="pages/posko-medis-detail.html?id=posko-sim-medis"><b>Medis</b><span>Koordinasi layanan kesehatan lapangan.</span></a>
+          <a class="role-card" href="pages/management-distribusi.html"><b>Transport</b><span>Dukung pengiriman bantuan tepat waktu.</span></a>
+        </div>
+      </section>
 
-
-      <section class="content-grid">
+      <section class="content-grid welcome-live-grid" id="bencana-aktif">
         <div class="panel large">
           <div class="panel-header">
             <div>
-              <h3>Disaster Event Tree</h3>
-              <p>Bencana → organisasi → sub-unit → posko</p>
+              <h3>Bencana Aktif</h3>
+              <p>Data kejadian aktif dari Rescue-Net API.</p>
             </div>
-            <input class="search" placeholder="Cari bencana, organisasi, posko..." />
+            <a class="btn primary" href="pages/war-room.html?event=event-sim-001">Buka War Room</a>
           </div>
 
           <div class="event-list" data-rn-disasters>
-            <article class="event-card selected">
-              <div class="event-main">
-                <div>
-                  <h4>▾ Gempa Aceh Barat 2025</h4>
-                  <p>Aceh Barat, Aceh · <b class="text-danger">Critical</b> · Last Sync 10:24</p>
-                </div>
-                <div class="chips">
-                  <span class="chip danger">126 critical needs</span>
-                  <span class="chip danger">27 blocked routes</span>
-                  <span class="chip warning">14 donation piles</span>
-                  <span class="chip warning">32 equipment gaps</span>
-                </div>
-              </div>
-
-              <div class="tree">
-                <div class="tree-row">
-                  <b>▾ BNPB / BPBD</b>
-                  <span>28 posko · 42 critical · 11 distribusi terhambat</span>
-                </div>
-                <div class="tree-child">├─ Posko Logistik Aceh Barat Utama</div>
-                <div class="tree-child">├─ Gudang BPBD Kabupaten</div>
-                <div class="tree-child">└─ Unit Alat Kerja Barat</div>
-
-                <div class="tree-row">
-                  <b>▾ Dinas Kesehatan</b>
-                  <span>12 posko medis · 4.820 pasien · 420 critical</span>
-                </div>
-                <div class="tree-child">├─ RS Lapangan Utama</div>
-                <div class="tree-child">├─ Tenda Medis Shelter A</div>
-                <div class="tree-child">└─ Mobile Medical Unit 03</div>
-
-                <div class="tree-row restricted">
-                  <b>▸ TNI / Polri</b>
-                  <span>summary terbatas · evakuasi pending 420 jiwa</span>
-                </div>
-
-                <div class="tree-row">
-                  <b>▾ Komunitas</b>
-                  <span>32 komunitas · 86 kendaraan · 94 shipment</span>
-                </div>
-                <div class="tree-child">├─ Komunitas Land Rover Rescue</div>
-                <div class="tree-child">├─ ORARI / RAPI Lokal</div>
-                <div class="tree-child">└─ Dapur Ibu-Ibu Gang Melati</div>
-              </div>
-            </article>
-
             <article class="event-card">
-              <div class="event-main">
-                <div>
-                  <h4>▸ Banjir Luwu 2025</h4>
-                  <p>Luwu Utara · <b class="text-warning">Urgent</b> · Last Sync 10:21</p>
-                </div>
-                <div class="chips">
-                  <span class="chip warning">48 critical needs</span>
-                  <span class="chip danger">12 blocked routes</span>
-                </div>
-              </div>
-            </article>
-
-            <article class="event-card">
-              <div class="event-main">
-                <div>
-                  <h4>▸ Erupsi Gunung X 2025</h4>
-                  <p>Jawa Tengah · <b class="text-muted">Waspada</b> · Last Sync 10:15</p>
-                </div>
-                <div class="chips">
-                  <span class="chip neutral">16 critical needs</span>
-                  <span class="chip neutral">4 blocked routes</span>
-                </div>
-              </div>
+              <h4>Loading bencana aktif...</h4>
+              <p>Mengambil data dari API.</p>
             </article>
           </div>
         </div>
 
         <aside class="panel summary">
-          <h3>Summary Gempa Aceh Barat</h3>
-          <div class="summary-status danger">CRITICAL</div>
-
+          <h3>Live Summary</h3>
+          <div class="summary-status danger" data-rn-live-severity>LIVE</div>
           <div class="summary-list">
-            <div><span>Jiwa terdampak</span><b>128.420</b></div>
-            <div><span>Jiwa berisiko &lt;24 jam</span><b>18.240</b></div>
-            <div><span>Posko critical</span><b>42</b></div>
-            <div><span>Kebutuhan belum terpenuhi</span><b>126</b></div>
-            <div><span>Distribusi terhambat</span><b>27</b></div>
-            <div><span>Donasi menumpuk</span><b>14 titik</b></div>
-            <div><span>Alat kerja critical</span><b>32 unit</b></div>
-            <div><span>Posko offline</span><b>15</b></div>
+            <div><span>Posko aktif</span><b data-rn-live-posko>0</b></div>
+            <div><span>Organisasi</span><b data-rn-live-organizations>0</b></div>
+            <div><span>Kebutuhan logistik</span><b data-rn-live-logistic-needs>0</b></div>
+            <div><span>Tawaran bantuan</span><b data-rn-live-aid-offers>0</b></div>
+            <div><span>Distribusi</span><b data-rn-live-distribution-flows>0</b></div>
+            <div><span>Evidence sources</span><b data-rn-live-sources>0</b></div>
           </div>
 
-          <h4>Top Critical Issues</h4>
-          <ol class="issue-list">
-            <li>Air minum Aceh Barat habis &lt; 12 jam.</li>
-            <li>Jembatan putus, 12 truk bantuan tertahan.</li>
-            <li>RS lapangan overload pasien infeksi.</li>
-            <li>42 ton donasi pakaian belum disortir.</li>
-            <li>32 ekskavator dibutuhkan untuk buka akses.</li>
-          </ol>
-
+          <h4>Quick Actions</h4>
           <div class="button-stack">
-            <a class="btn primary" href="pages/war-room.html">Buka War Room</a>
-            <a class="btn" href="#">Lihat Peta</a>
-            <a class="btn" href="#">Export Laporan</a>
+            <a class="btn primary" href="pages/war-room.html?event=event-sim-001">War Room</a>
+            <a class="btn" href="pages/evidence.html?event=event-sim-001">Evidence</a>
+            <a class="btn" href="pages/ai-analyst.html?event=event-sim-001">AI Analyst</a>
           </div>
         </aside>
       </section>
     </main>
+
+    <footer class="welcome-footer">
+      <div><b>Terbuka & Transparan</b><span>Data dan proses dapat diakses publik.</span></div>
+      <div><b>Terverifikasi</b><span>Informasi diverifikasi di lapangan.</span></div>
+      <div><b>Kolaboratif</b><span>Bekerja bersama, dampak lebih besar.</span></div>
+      <div><b>Aman & Terpercaya</b><span>Privasi dan keamanan menjadi prioritas.</span></div>
+    </footer>
   </div>
-  <script src="assets/js/api.js?v=2"></script>
-<script src="assets/js/session-role.js?v=role-ui-1"></script>
-<script src="assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
+
+  <script src="assets/js/api.js?v=welcome-live-1"></script>
+  <script src="assets/js/session-role.js?v=role-ui-1"></script>
+  <script src="assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
 </body>
 </html>

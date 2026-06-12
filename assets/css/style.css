@@ -467,6 +467,352 @@ h4 {
 .text-warning { color: var(--orange); }
 .text-muted { color: var(--yellow); }
 
+/* Welcome landing page */
+body.home-page {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.welcome-shell {
+  width: min(1480px, calc(100% - 56px));
+  margin: 32px auto;
+  border: 1px solid rgba(232,117,88,.24);
+  border-radius: 24px;
+  background: rgba(255,255,255,.64);
+  box-shadow: 0 28px 90px rgba(145,84,54,.18);
+  overflow: hidden;
+}
+
+.welcome-nav {
+  min-height: 78px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 42px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.70);
+}
+
+.welcome-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--coral);
+  text-decoration: none;
+  font-size: 20px;
+}
+
+.welcome-logo {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ff714f, #ef4f3d);
+  color: white;
+  font-weight: 900;
+}
+
+.welcome-links {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+}
+
+.welcome-links a {
+  min-height: auto;
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #40312b;
+}
+
+.welcome-actions,
+.welcome-cta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.welcome-actions .btn,
+.welcome-cta .btn {
+  min-width: 92px;
+}
+
+.welcome-hero {
+  display: grid;
+  grid-template-columns: minmax(0, .9fr) minmax(420px, 1.1fr);
+  align-items: center;
+  gap: 36px;
+  padding: 64px 56px 34px;
+}
+
+.welcome-copy h1 {
+  margin: 0;
+  font-size: 70px;
+  line-height: .95;
+  letter-spacing: -.06em;
+  color: #ef523d;
+}
+
+.welcome-lead {
+  margin: 16px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #241916;
+}
+
+.welcome-cta {
+  margin-top: 28px;
+}
+
+.welcome-cta.secondary {
+  margin-top: 14px;
+}
+
+.welcome-cta .help {
+  color: #2f7c55;
+  border-color: rgba(47,155,104,.28);
+}
+
+.welcome-visual {
+  position: relative;
+  min-height: 420px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(244,167,134,.18), transparent 62%),
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.82), transparent 48%);
+}
+
+.welcome-visual img {
+  width: min(100%, 660px);
+  display: block;
+  border-radius: 28px;
+  filter: drop-shadow(0 28px 42px rgba(145,84,54,.18));
+}
+
+.welcome-kpis {
+  margin: 0 56px 30px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 18px 42px rgba(145,84,54,.10);
+  overflow: hidden;
+}
+
+.welcome-kpi {
+  min-height: 112px;
+  padding: 20px 24px;
+  border-right: 1px solid var(--line);
+}
+
+.welcome-kpi:last-child {
+  border-right: 0;
+}
+
+.welcome-kpi span,
+.welcome-kpi small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.welcome-kpi strong {
+  display: block;
+  margin: 7px 0 4px;
+  font-size: 29px;
+  letter-spacing: -.04em;
+}
+
+.welcome-roles {
+  padding: 0 56px 34px;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.role-card {
+  min-height: 138px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.72);
+  text-decoration: none;
+  color: var(--text);
+}
+
+.role-card span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.welcome-live-grid {
+  padding: 0 56px 44px;
+}
+
+.welcome-live-grid .panel.large {
+  min-height: auto;
+}
+
+.welcome-footer {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 22px 56px;
+  background: rgba(255,235,222,.68);
+  border-top: 1px solid var(--line);
+}
+
+.welcome-footer div {
+  display: grid;
+  gap: 4px;
+  padding: 0 18px;
+  border-right: 1px solid var(--line);
+}
+
+.welcome-footer div:last-child {
+  border-right: 0;
+}
+
+.welcome-footer span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  body.home-page {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .welcome-shell {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .welcome-nav {
+    grid-template-columns: 1fr auto;
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .welcome-links {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 2px;
+  }
+
+  .welcome-actions {
+    gap: 8px;
+  }
+
+  .welcome-actions .btn {
+    min-width: 76px;
+    padding: 10px 12px;
+  }
+
+  .welcome-hero {
+    grid-template-columns: 1fr;
+    padding: 36px 18px 20px;
+    gap: 22px;
+    text-align: center;
+  }
+
+  .welcome-copy h1 {
+    font-size: 48px;
+  }
+
+  .welcome-visual {
+    min-height: auto;
+  }
+
+  .welcome-visual img {
+    width: 100%;
+    border-radius: 20px;
+  }
+
+  .welcome-cta {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .welcome-kpis {
+    margin: 0 18px 26px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .welcome-kpi {
+    min-height: 96px;
+    padding: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .welcome-kpi:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .welcome-kpi:nth-last-child(-n+2) {
+    border-bottom: 0;
+  }
+
+  .welcome-roles,
+  .welcome-live-grid {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .role-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .welcome-live-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .welcome-live-grid .summary {
+    position: static;
+  }
+
+  .event-main,
+  .panel-header {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .chips {
+    justify-content: flex-start;
+  }
+
+  .welcome-footer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 18px;
+    gap: 14px;
+  }
+
+  .welcome-footer div {
+    padding: 0;
+    border-right: 0;
+  }
+}
+
 @media (max-width: 900px) {
   body { min-width: 1180px; }
 }

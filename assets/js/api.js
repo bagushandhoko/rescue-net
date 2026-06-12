@@ -23,6 +23,15 @@ function severityClass(severity) {
   return "neutral";
 }
 
+function setText(selector, value) {
+  const el = document.querySelector(selector);
+  if (el) el.textContent = value;
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat("id-ID").format(Number(value || 0));
+}
+
 async function loadActiveDisasters() {
   const target = document.querySelector("[data-rn-disasters]");
   if (!target) return;
@@ -52,6 +61,42 @@ async function loadActiveDisasters() {
         <p>${err.message}</p>
       </article>
     `;
+  }
+}
+
+async function loadWelcomeLiveMetrics() {
+  if (!document.body.classList.contains("home-page")) return;
+
+  try {
+    const [disasters, ctx] = await Promise.all([
+      rnFetch("/disasters"),
+      rnFetch("/ai/context/event-sim-001")
+    ]);
+    const summary = ctx.summary || {};
+    const critical = disasters.filter(d => d.severity === "critical").length;
+    const needs = Number(summary.open_logistic_need_count || 0) + Number(summary.shelter_need_count || 0);
+    const blockedFlows = (ctx.distribution_flows || []).filter(f => {
+      const status = String(f.status || "").toLowerCase();
+      return status.includes("blocked") || status.includes("delayed") || status.includes("pending");
+    }).length;
+
+    setText("[data-rn-live-active-disasters]", formatNumber(disasters.length));
+    setText("[data-rn-live-active-note]", `${critical} critical`);
+    setText("[data-rn-live-critical-needs]", formatNumber(needs));
+    setText("[data-rn-live-volunteers]", formatNumber(summary.volunteer_count || 0));
+    setText("[data-rn-live-blocked-flows]", formatNumber(blockedFlows || summary.distribution_flow_count || 0));
+
+    setText("[data-rn-live-severity]", critical > 0 ? "CRITICAL" : "ACTIVE");
+    setText("[data-rn-live-posko]", formatNumber(summary.posko_count || 0));
+    setText("[data-rn-live-organizations]", formatNumber(summary.organization_count || 0));
+    setText("[data-rn-live-logistic-needs]", formatNumber(summary.open_logistic_need_count || 0));
+    setText("[data-rn-live-aid-offers]", formatNumber(summary.aid_offer_count || 0));
+    setText("[data-rn-live-distribution-flows]", formatNumber(summary.distribution_flow_count || 0));
+    setText("[data-rn-live-sources]", formatNumber((ctx.sources || []).length));
+
+  } catch (err) {
+    setText("[data-rn-live-active-note]", "API belum terbaca");
+    console.error("[Welcome Metrics]", err);
   }
 }
 
@@ -129,6 +174,7 @@ function setupQuickEventButtons() {
 
 document.addEventListener("DOMContentLoaded", () => {
   loadActiveDisasters();
+  loadWelcomeLiveMetrics();
   setupCreateDisasterForm();
   setupQuickEventButtons();
 });

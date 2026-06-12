@@ -710,21 +710,19 @@ body.home-page {
     gap: 12px;
   }
 
+  .welcome-nav::after {
+    content: "☰";
+    font-size: 22px;
+    font-weight: 800;
+    color: #40312b;
+  }
+
   .welcome-links {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-    overflow-x: auto;
-    gap: 8px;
-    padding-bottom: 2px;
+    display: none;
   }
 
   .welcome-actions {
-    gap: 8px;
-  }
-
-  .welcome-actions .btn {
-    min-width: 76px;
-    padding: 10px 12px;
+    display: none;
   }
 
   .welcome-hero {

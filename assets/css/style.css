@@ -743,7 +743,7 @@ body.home-page {
   }
 
   .welcome-nav::after {
-    content: "☰";
+    content: none;
     font-size: 22px;
     font-weight: 800;
     color: #40312b;
@@ -2331,3 +2331,185 @@ html.rn-external-access body:not(.mockup-viewer) .main {
     width: 100%;
   }
 }
+
+/* Public header final: logo + mockup menu in one colored field */
+.welcome-nav {
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  background: rgba(255,248,243,.94) !important;
+}
+
+.welcome-brand {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  text-decoration: none;
+}
+
+.welcome-brand img {
+  display: block;
+  width: 66px;
+  height: 66px;
+  object-fit: contain;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 15px 24px rgba(145,84,54,.18));
+}
+
+.welcome-links {
+  justify-content: center !important;
+  align-items: center;
+}
+
+.welcome-links a {
+  background: transparent;
+  border: 0;
+}
+
+.welcome-links a:hover,
+.welcome-links a.active,
+.welcome-login-link {
+  background: rgba(255,255,255,.52);
+  border: 1px solid rgba(232,117,88,.22);
+}
+
+.welcome-title-row img,
+.sidebar .brand-logo {
+  background: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 900px) {
+  .welcome-nav {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    align-items: center !important;
+    min-height: 66px !important;
+    padding: 9px 13px !important;
+    gap: 10px !important;
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 10px 24px rgba(145,84,54,.08);
+  }
+
+  .welcome-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .welcome-brand img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .welcome-menu-toggle {
+    grid-column: 3;
+    grid-row: 1;
+    display: grid !important;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    border: 1px solid rgba(104,64,45,.12);
+    background: rgba(255,255,255,.58);
+    border-radius: 14px;
+  }
+
+  .welcome-menu-toggle span {
+    width: 20px;
+    height: 2px;
+    margin: 3px 0;
+  }
+
+  .welcome-links,
+  .welcome-actions {
+    display: none !important;
+  }
+
+  body.home-menu-open .welcome-nav {
+    align-items: start !important;
+  }
+
+  body.home-menu-open .welcome-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    padding-top: 8px;
+  }
+
+  body.home-menu-open .welcome-links a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 40px;
+    padding: 10px;
+    border-radius: 13px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.70);
+    text-align: center;
+    font-size: 12px;
+  }
+}
+
+/* Operational pages keep the operational side menu, including on phones. */
+@media (max-width: 900px) {
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) {
+    min-width: 1180px !important;
+    overflow-x: auto !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .app-shell {
+    display: grid !important;
+    grid-template-columns: 300px minmax(0, 1fr) !important;
+    min-height: 100vh;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
+    position: sticky !important;
+    top: 0 !important;
+    width: auto !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
+    padding: 26px 18px !important;
+    border-right: 1px solid var(--line) !important;
+    border-bottom: 0 !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar nav {
+    display: grid !important;
+    gap: 8px !important;
+    overflow-x: visible !important;
+    padding-bottom: 32px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar nav a {
+    flex: initial !important;
+    min-height: 44px !important;
+    padding: 11px 14px !important;
+    border-radius: 14px !important;
+    font-size: 14px !important;
+    white-space: normal !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .brand {
+    min-height: 88px !important;
+    margin-bottom: 22px !important;
+    padding: 10px 12px !important;
+    border-radius: 20px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .main {
+    padding: 26px 30px 34px !important;
+  }
+}
+

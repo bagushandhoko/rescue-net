@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Laporan Masyarakat</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-menu-placement-1">
+</head>
+<body class="public-report-page">
+  <main class="public-report-shell">
+    <section class="public-report-hero">
+      <div>
+        <p class="eyebrow">Laporan Masyarakat</p>
+        <h1>Laporkan kondisi lapangan agar bantuan lebih cepat terkoordinasi.</h1>
+        <p>
+          Warga terdampak, saksi lokasi, RT/RW, relawan lokal, posko, organisasi, dan tenaga medis
+          dapat mengirim sinyal lapangan. Semua laporan masuk sebagai data indikasi terlebih dahulu,
+          lalu diverifikasi sebelum memengaruhi data operasional resmi.
+        </p>
+      </div>
+      <div class="public-report-card">
+        <strong>Status awal: belum terverifikasi</strong>
+        <span>Laporan masyarakat membantu War Room membaca kondisi cepat, tetapi diberi label trust score dan hanya naik ke logistik, medis, shelter, search & found, atau distribusi setelah diverifikasi.</span>
+      </div>
+    </section>
+
+    <section class="public-report-grid">
+      <article class="public-report-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Lapor Kejadian Bencana</h3>
+            <p>Data masuk sebagai kejadian aktif awal dan dapat diteruskan ke War Room untuk verifikasi.</p>
+          </div>
+        </div>
+
+        <form class="rn-form rn-event-form" data-community-report-form>
+          <div class="form-grid event-form-grid">
+            <label>Nama pelapor
+              <input name="reporter_name" placeholder="Nama lengkap / nama posko">
+            </label>
+            <label>No HP / WhatsApp
+              <input name="reporter_phone" placeholder="Opsional, menaikkan trust score">
+            </label>
+            <label>Peran pelapor
+              <select name="reporter_role">
+                <option value="warga_terdampak">Warga terdampak</option>
+                <option value="keluarga_korban">Keluarga korban</option>
+                <option value="saksi_lokasi">Saksi lokasi</option>
+                <option value="rt_rw">RT/RW</option>
+                <option value="relawan">Relawan</option>
+                <option value="posko">Posko</option>
+                <option value="organisasi">Organisasi</option>
+                <option value="tenaga_medis">Tenaga medis</option>
+              </select>
+            </label>
+            <label>Prioritas
+              <select name="priority">
+                <option value="normal">Normal</option>
+                <option value="urgent">Urgent</option>
+                <option value="critical">Critical</option>
+              </select>
+            </label>
+            <label>Jenis laporan
+              <select name="report_type">
+                <option value="affected_need_help">Saya terdampak / butuh bantuan</option>
+                <option value="location_needs_help">Saya melihat lokasi butuh bantuan</option>
+                <option value="medical_case">Ada korban sakit / medis</option>
+                <option value="missing_or_found">Ada orang hilang / ditemukan</option>
+                <option value="shelter_need">Kebutuhan shelter / pengungsian</option>
+                <option value="blocked_access">Jalan terputus / akses terganggu</option>
+                <option value="available_stock">Stok atau bantuan tersedia</option>
+                <option value="new_hazard">Risiko bahaya baru</option>
+                <option value="evidence_upload">Upload bukti / foto / video</option>
+              </select>
+            </label>
+            <label>Judul laporan
+              <input name="title" placeholder="Contoh: Shelter A kekurangan selimut">
+            </label>
+            <label>Lokasi
+              <input name="location_text" placeholder="Desa/Kecamatan/Kabupaten, titik terdekat">
+            </label>
+            <label>Jumlah terdampak
+              <input name="affected_people_count" type="number" min="0" value="0">
+            </label>
+          </div>
+          <label>Deskripsi
+            <textarea name="description" rows="4" placeholder="Jelaskan kondisi lapangan, siapa terdampak, dan urgensinya."></textarea>
+          </label>
+          <div class="form-grid event-form-grid">
+            <label>Kebutuhan mendesak
+              <input name="urgent_needs" placeholder="Contoh: selimut 150 pcs, ambulans, air bersih">
+            </label>
+            <label>Link bukti foto/video
+              <input name="evidence_url" placeholder="URL bukti jika ada">
+            </label>
+            <label>Keterangan bukti
+              <input name="evidence_caption" placeholder="Foto lokasi, video akses putus, dll.">
+            </label>
+            <label class="checkbox-label">
+              <input name="consent_to_contact" type="checkbox" checked>
+              Bersedia dihubungi verifikator
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Kirim Laporan</button>
+            <span class="form-message" data-community-report-message>Laporan masuk sebagai submitted/belum terverifikasi.</span>
+          </div>
+        </form>
+      </article>
+
+      <aside class="public-report-panel public-report-actions">
+        <h3>Pengaruh Setelah Verifikasi</h3>
+        <a href="map.html?event=event-sim-001"><b>Map</b><span>Menjadi pin community report pending/verified.</span></a>
+        <a href="war-room.html?event=event-sim-001"><b>War Room</b><span>Masuk sebagai alert masyarakat, bukan fakta final sebelum verified.</span></a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+        <a href="posko-logistik.html"><b>Logistik</b><span>Dapat dikonversi menjadi logistic need.</span></a>
+        <a href="evidence.html?event=event-sim-001"><b>Evidence</b><span>Bukti otomatis dilabeli sumber community_report.</span></a>
+      </aside>
+    </section>
+
+    <section class="public-report-panel community-operator-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Queue Operator: Laporan Masyarakat</h3>
+          <p>Verifikasi bertingkat: triage, verify, escalate, reject, atau convert ke kebutuhan logistik.</p>
+        </div>
+        <label>Status
+          <select data-community-status-filter>
+            <option value="">Semua</option>
+            <option value="submitted">Submitted</option>
+            <option value="needs_verification">Needs verification</option>
+            <option value="verified">Verified</option>
+            <option value="escalated">Escalated</option>
+            <option value="converted_to_action">Converted</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </label>
+      </div>
+      <div class="event-list" data-community-report-list></div>
+    </section>
+
+    <section class="public-report-steps">
+      <div><b>1. Terima Laporan</b><span>Warga atau relawan mengirim informasi awal.</span></div>
+      <div><b>2. Verifikasi</b><span>Posko dan tim resmi memeriksa bukti lapangan.</span></div>
+      <div><b>3. Koordinasi</b><span>War Room menghubungkan kebutuhan dengan bantuan.</span></div>
+      <div><b>4. Tindak Lanjut</b><span>Distribusi dan status dapat dipantau lebih transparan.</span></div>
+    </section>
+  </main>
+
+  <script src="../assets/js/rn-public-header.js?v=global-header-1"></script>
+  <script src="../assets/js/community-report.js?v=community-report-1"></script>
+  <script src="../assets/js/session-role.js?v=role-ui-1"></script>
+  <script src="../assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
+</body>
+</html>
+

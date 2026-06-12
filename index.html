@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rescue-Net | Open Disaster Coordination</title>
-  <link rel="stylesheet" href="assets/css/style.css?v=header-menu-logo-1" />
+  <link rel="stylesheet" href="assets/css/style.css?v=welcome-menu-toggle-fix-1" />
+
+
+
 </head>
 <body class="home-page">
   <div class="welcome-shell">
@@ -12,11 +15,18 @@
       <a class="welcome-brand" href="index.html" aria-label="Rescue-Net Home">
         <img src="assets/img/rn-logo-web.png" alt="">
       </a>
+      <div class="welcome-mobile-title" aria-label="Open Disaster Coordination and Relief Management System">
+        <span>Open Disaster</span>
+        <span>Coordination & Relief</span>
+        <span>Management System</span>
+      </div>
       <nav class="welcome-links" aria-label="Welcome navigation">
         <a href="#tentang">About Us</a>
         <a href="pages/mockup.html?screen=welcome">Fitur/Mock up</a>
         <a href="index.html">Home</a>
-        <a href="pages/kirim-bantuan.html">Laporan Masyarakat</a>
+        <a href="pages/war-room.html?event=event-sim-001">War Room</a>
+        <a href="pages/data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+        <a href="pages/laporan-masyarakat.html">Laporan Masyarakat</a>
         <a class="welcome-login-link" href="pages/auth.html">Login/registrasi</a>
       </nav>
       <button class="welcome-menu-toggle" type="button" aria-label="Buka menu" aria-expanded="false">
@@ -28,7 +38,6 @@
       <section class="welcome-hero" id="tentang">
         <div class="welcome-copy">
           <div class="welcome-title-row">
-            <img src="assets/img/rn-logo-web.png" alt="" aria-hidden="true">
             <h1>Open Disaster Coordination & Relief Management System</h1>
           </div>
           <p class="subtitle">
@@ -83,6 +92,7 @@
               <p>Data kejadian aktif dari Rescue-Net API.</p>
             </div>
             <a class="btn primary" href="pages/war-room.html?event=event-sim-001">Buka War Room</a>
+        <a href="pages/data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
           </div>
 
           <div class="event-list" data-rn-disasters>
@@ -108,6 +118,7 @@
           <h4>Quick Actions</h4>
           <div class="button-stack">
             <a class="btn primary" href="pages/war-room.html?event=event-sim-001">War Room</a>
+        <a href="pages/data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
             <a class="btn" href="pages/evidence.html?event=event-sim-001">Evidence</a>
             <a class="btn" href="pages/ai-analyst.html?event=event-sim-001">AI Analyst</a>
           </div>
@@ -140,7 +151,7 @@
     </footer>
   </div>
 
-  <script src="assets/js/api.js?v=header-menu-logo-1"></script>
+  <script src="assets/js/api.js?v=header-logo-clean-2"></script>
   <script src="assets/js/session-role.js?v=role-ui-1"></script>
   <script src="assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
 </body>

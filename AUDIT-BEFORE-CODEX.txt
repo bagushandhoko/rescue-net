@@ -1,0 +1,86 @@
+=== DATE ===
+Fri Jun 12 21:10:08 WIB 2026
+
+=== INDEX CSS VERSION ===
+7:  <link rel="stylesheet" href="assets/css/style.css?v=welcome-menu-toggle-fix-1" />
+
+=== INTERNAL CSS VERSIONS ===
+pages/ai-analyst.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/ai-settings.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/alat-kerja.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/auth.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/contact-directory.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/dapur-umum.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/data-consolidation.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/disaster-detail.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/donor-program.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/edit-bantuan.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/evidence.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/kirim-bantuan.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/laporan-masyarakat.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-menu-placement-1">
+pages/management-distribusi.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/management-relawan.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/map.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/organisasi-posko.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/posko-detail.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/posko-logistik.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/posko-medis-detail.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/program-khusus.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/recovery-reconstruction.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/resource-profile.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/search-found.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/shelter-detail.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/sync-console.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/verification-approval.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+pages/war-room.html:7:  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+
+=== MOBILE TITLES ===
+index.html:18:      <div class="welcome-mobile-title" aria-label="Open Disaster Coordination and Relief Management System">
+pages/ai-analyst.html:51:    <div class="rn-page-mobile-title">AI Analyst</div>
+pages/ai-settings.html:51:    <div class="rn-page-mobile-title">AI Settings</div>
+pages/alat-kerja.html:51:    <div class="rn-page-mobile-title">Alat Kerja</div>
+pages/auth.html:51:    <div class="rn-page-mobile-title">Login</div>
+pages/contact-directory.html:51:    <div class="rn-page-mobile-title">Contact</div>
+pages/dapur-umum.html:51:    <div class="rn-page-mobile-title">Dapur Umum</div>
+pages/data-consolidation.html:37:    <div class="rn-page-mobile-title">Data Konsolidasi</div>
+pages/disaster-detail.html:51:    <div class="rn-page-mobile-title">Disaster Detail</div>
+pages/donor-program.html:51:    <div class="rn-page-mobile-title">Donor Program</div>
+pages/edit-bantuan.html:51:    <div class="rn-page-mobile-title">Edit Bantuan</div>
+pages/evidence.html:51:    <div class="rn-page-mobile-title">Evidence</div>
+pages/kirim-bantuan.html:51:    <div class="rn-page-mobile-title">Kirim Bantuan</div>
+pages/management-distribusi.html:51:    <div class="rn-page-mobile-title">Distribusi</div>
+pages/management-relawan.html:51:    <div class="rn-page-mobile-title">Relawan</div>
+pages/map.html:51:    <div class="rn-page-mobile-title">Map</div>
+pages/organisasi-posko.html:51:    <div class="rn-page-mobile-title">Organisasi & Posko</div>
+pages/posko-detail.html:51:    <div class="rn-page-mobile-title">Posko Detail</div>
+pages/posko-logistik.html:51:    <div class="rn-page-mobile-title">Logistik</div>
+pages/posko-medis-detail.html:51:    <div class="rn-page-mobile-title">Posko Medis</div>
+pages/program-khusus.html:51:    <div class="rn-page-mobile-title">Program Khusus</div>
+pages/recovery-reconstruction.html:50:    <div class="rn-page-mobile-title">Recovery</div>
+pages/resource-profile.html:50:    <div class="rn-page-mobile-title">Resource Profile</div>
+pages/search-found.html:51:    <div class="rn-page-mobile-title">Search & Found</div>
+pages/shelter-detail.html:51:    <div class="rn-page-mobile-title">Shelter</div>
+pages/sync-console.html:50:    <div class="rn-page-mobile-title">Sync Console</div>
+pages/verification-approval.html:51:    <div class="rn-page-mobile-title">Verification</div>
+pages/war-room.html:51:    <div class="rn-page-mobile-title">War Room</div>
+
+=== MENU ORDER SAMPLE ===
+----- pages/war-room.html -----
+6:  <title>Rescue-Net | War Room</title>
+20:    <nav>
+21:      <a href="../index.html">Active Disasters</a>
+22:      <a href="war-room.html?event=event-sim-001">War Room</a>
+46:    </nav>
+51:    <div class="rn-page-mobile-title">War Room</div>
+55:        <h2>War Room</h2>
+62:        <button class="btn primary" id="refreshWarRoom">Refresh War Room</button>
+----- pages/organisasi-posko.html -----
+20:    <nav>
+21:      <a href="../index.html">Active Disasters</a>
+22:      <a href="war-room.html?event=event-sim-001">War Room</a>
+46:    </nav>
+----- pages/posko-logistik.html -----
+20:    <nav>
+21:      <a href="../index.html">Active Disasters</a>
+22:      <a href="war-room.html?event=event-sim-001">War Room</a>
+46:    </nav>

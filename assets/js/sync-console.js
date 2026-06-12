@@ -394,6 +394,95 @@ function saveOfflineDraft() {
   statusMsg("Offline draft saved: " + draft.event_id);
 }
 
+async function loadFederation() {
+  const nodesEl = document.getElementById("federationNodes");
+  const logsEl = document.getElementById("federationLogs");
+  if (!nodesEl && !logsEl) return;
+
+  try {
+    const [nodes, repos, logs] = await Promise.all([
+      api("/federation/nodes?disaster_event_id=event-sim-001"),
+      api("/federation/repositories"),
+      api("/federation/sync-logs")
+    ]);
+
+    if (nodesEl) {
+      const nodeCards = nodes.length ? nodes.map(n => card(
+        n.node_name,
+        `${n.node_type} ?? ${n.trust_level}<br>${n.base_url || "no remote url"}<br>${n.notes || ""}`,
+        n.status
+      )) : [card("Belum ada federation node", "Tambahkan node partner dulu. Auto-pull eksternal belum aktif sampai credential jelas.", "empty")];
+
+      const repoCards = repos.map(r => card(
+        `Repository ?? ${r.repository_name}`,
+        `${r.node_name || r.node_id}<br>${r.repository_type} ?? ${r.direction} ?? policy ${r.conflict_policy}`,
+        r.status
+      ));
+
+      nodesEl.innerHTML = [...nodeCards, ...repoCards].join("");
+    }
+
+    if (logsEl) {
+      logsEl.innerHTML = logs.length ? logs.map(l => card(
+        `${l.direction} ?? ${l.status}`,
+        `${l.node_id || "local"} / ${l.repository_id || "manifest"}<br>${l.notes || ""}<br>${l.created_at || ""}`,
+        "federation"
+      )).join("") : card("No federation log", "Manifest export/import akan tercatat di sini.", "empty");
+    }
+  } catch (err) {
+    if (nodesEl) nodesEl.innerHTML = card("Federation endpoint belum aktif", "Jalankan rebuild API untuk mengaktifkan /federation/*.", "pending");
+    if (logsEl) logsEl.innerHTML = card("Federation logs menunggu rebuild", err.message, "pending");
+  }
+}
+
+async function addFederationNode() {
+  const form = document.getElementById("federationNodeForm");
+  if (!form) return;
+  const node = await api("/federation/nodes", {
+    method: "POST",
+    body: JSON.stringify({
+      node_name: form.node_name.value.trim(),
+      node_type: form.node_type.value,
+      base_url: form.base_url.value.trim(),
+      trust_level: form.trust_level.value,
+      disaster_event_id: "event-sim-001",
+      notes: "Created from Sync Console"
+    })
+  });
+
+  await api("/federation/repositories", {
+    method: "POST",
+    body: JSON.stringify({
+      node_id: node.federation_node.id,
+      repository_name: "Event Sync Manifest",
+      repository_type: "federation_manifest",
+      endpoint_path: "/federation/manifest/event-sim-001",
+      direction: "bidirectional",
+      conflict_policy: "manual_review",
+      notes: "Uses consolidated needs and duplicate warnings."
+    })
+  });
+
+  statusMsg("Federation node added: " + node.federation_node.id);
+  await loadFederation();
+}
+
+async function exportFederationManifest() {
+  statusMsg("Exporting federation manifest...");
+  const manifest = await api("/federation/manifest/event-sim-001");
+  await api("/federation/sync-logs", {
+    method: "POST",
+    body: JSON.stringify({
+      direction: "export",
+      status: "manifest_created",
+      manifest_json: manifest,
+      notes: "Manifest exported from Sync Console. Raw reports are not final; use consolidated needs."
+    })
+  });
+  statusMsg(`Manifest exported: ${manifest.schema}, event ${manifest.disaster_event_id}`);
+  await loadFederation();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   statusMsg("JS loaded. Sync Console ready.");
 
@@ -402,6 +491,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const pushBtn = document.getElementById("syncPush");
   const pullBtn = document.getElementById("syncPull");
   const retryBtn = document.getElementById("retryConflicts");
+  const federationForm = document.getElementById("federationNodeForm");
+  const federationManifestBtn = document.getElementById("exportFederationManifest");
 
   if (form) {
     form.addEventListener("submit", e => {
@@ -453,7 +544,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (federationForm) {
+    federationForm.addEventListener("submit", e => {
+      e.preventDefault();
+      addFederationNode().catch(err => statusMsg(err.message));
+    });
+  }
+
+  if (federationManifestBtn) {
+    federationManifestBtn.addEventListener("click", () => {
+      exportFederationManifest().catch(err => statusMsg(err.message));
+    });
+  }
+
   renderLocal();
   syncPull().catch(err => statusMsg(err.message));
   refreshServerReview().catch(err => statusMsg(err.message));
+  loadFederation().catch(err => statusMsg(err.message));
 });
+

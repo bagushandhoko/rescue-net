@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | War Room</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=resource-recovery-direct-2">
+  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
 </head>
 <body>
 <div class="app-shell">
@@ -19,7 +19,8 @@
 
     <nav>
       <a href="../index.html">Active Disasters</a>
-      <a class="active" href="war-room.html?event=event-sim-001">War Room</a>
+      <a href="war-room.html?event=event-sim-001">War Room</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
       <a href="map.html?event=event-sim-001">Map</a>
       <a href="organisasi-posko.html">Organisasi & Posko</a>
       <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
@@ -47,7 +48,9 @@
 
   <main class="main warroom-main">
     <header class="topbar">
-      <div>
+    <div class="rn-page-mobile-title">War Room</div>
+
+<div>
         <p class="eyebrow">Command Center Dashboard</p>
         <h2>War Room</h2>
         <p class="subtitle">Dashboard pusat komando yang membaca semua modul live Rescue-Net.</p>
@@ -90,6 +93,28 @@
       <div class="kpi-card warning"><span>Medical Cases</span><strong id="kpiMedical">0</strong><small>restricted</small></div>
       <div class="kpi-card"><span>Shelter</span><strong id="kpiShelter">0</strong><small>occupancy rows</small></div>
       <div class="kpi-card danger"><span>Missing</span><strong id="kpiMissing">0</strong><small>open reports</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Laporan Masyarakat</h3>
+            <p>Community intelligence: pending, verified, dan high priority report dari warga/relawan/posko.</p>
+          </div>
+          <a class="btn" href="laporan-masyarakat.html">Open Queue</a>
+        </div>
+        <div class="event-list" id="communityReportsList"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Community Report Status</h3>
+        <div class="summary-list" id="communityReportSummary">
+          <div><span>Submitted</span><b>0</b></div>
+          <div><span>Verified</span><b>0</b></div>
+          <div><span>Escalated</span><b>0</b></div>
+        </div>
+      </aside>
     </section>
 
     <section class="content-grid">
@@ -219,6 +244,8 @@
 <script src="../assets/js/war-room.js?v=resource-recovery-direct-6"></script>
 <script src="../assets/js/rn-sync-engine.js?v=event-sync-2"></script>
 <script src="../assets/js/rn-resource-booking.js?v=booking-sync-2"></script>
+<script src="../assets/js/rn-public-header.js?v=global-header-1"></script>
 <script src="../assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
 </body>
 </html>
+

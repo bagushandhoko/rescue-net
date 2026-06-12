@@ -4361,6 +4361,150 @@ class RecoveryProjectUpdateCreate(BaseModel):
     created_by_user_id: Optional[str] = "recovery-operator"
 
 
+class CommunityReportCreate(BaseModel):
+    disaster_event_id: str = "event-sim-001"
+    reporter_name: str
+    reporter_phone: Optional[str] = None
+    reporter_role: str = "warga_terdampak"
+    reporter_verification_level: str = "anonymous"
+    report_type: str
+    title: str
+    description: str
+    location_text: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    affected_people_count: Optional[int] = 0
+    priority: str = "normal"
+    urgent_needs: Optional[str] = None
+    evidence_url: Optional[str] = None
+    evidence_caption: Optional[str] = None
+    consent_to_contact: bool = True
+
+
+class CommunityReportStatusUpdate(BaseModel):
+    status: str
+    verifier_id: Optional[str] = None
+    verifier_role: Optional[str] = None
+    notes: Optional[str] = None
+    assigned_verifier_type: Optional[str] = None
+    assigned_verifier_id: Optional[str] = None
+
+
+class CommunityReportConvert(BaseModel):
+    target_type: str
+    item_name: Optional[str] = None
+    quantity_needed: Optional[float] = 1
+    unit: Optional[str] = "paket"
+    node_id: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class GeoLocationCreate(BaseModel):
+    country_code: Optional[str] = "ID"
+    province_code: Optional[str] = None
+    province_name: Optional[str] = None
+    city_code: Optional[str] = None
+    city_name: Optional[str] = None
+    district_code: Optional[str] = None
+    district_name: Optional[str] = None
+    village_code: Optional[str] = None
+    village_name: Optional[str] = None
+    location_name: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    accuracy_meters: Optional[float] = None
+    admin_level: str = "point"
+    source: Optional[str] = "manual"
+
+
+class OperationalAreaCreate(BaseModel):
+    disaster_event_id: str = "event-sim-001"
+    owner_type: str
+    owner_id: str
+    area_level: str = "point"
+    country_code: Optional[str] = "ID"
+    province_code: Optional[str] = None
+    city_code: Optional[str] = None
+    district_code: Optional[str] = None
+    village_code: Optional[str] = None
+    center_lat: Optional[float] = None
+    center_lng: Optional[float] = None
+    radius_meters: Optional[float] = None
+    boundary_geojson: Optional[dict] = None
+    coverage_description: Optional[str] = None
+    verification_status: Optional[str] = "self_reported"
+
+
+class BeneficiaryGroupCreate(BaseModel):
+    disaster_event_id: str = "event-sim-001"
+    geo_location_id: Optional[str] = None
+    group_name: str
+    group_type: Optional[str] = "community"
+    estimated_people_count: Optional[int] = 0
+    household_count: Optional[int] = 0
+    description: Optional[str] = None
+    verified_status: Optional[str] = "self_reported"
+
+
+class DuplicateCheckRequest(BaseModel):
+    disaster_event_id: str = "event-sim-001"
+    object_type: str = "need"
+
+
+class DuplicateResolveRequest(BaseModel):
+    status: str
+    reviewed_by: Optional[str] = "operator-web"
+    review_notes: Optional[str] = None
+
+
+class ConsolidatedNeedCreate(BaseModel):
+    disaster_event_id: str = "event-sim-001"
+    canonical_area_id: Optional[str] = None
+    canonical_posko_id: Optional[str] = None
+    need_type: str = "logistic"
+    item_name: str
+    quantity_final: float
+    quantity_unit: str = "paket"
+    quantity_min: Optional[float] = None
+    quantity_max: Optional[float] = None
+    confidence_level: Optional[str] = "medium"
+    source_ids: Optional[list[str]] = None
+    merge_method: Optional[str] = "manual_review"
+    status: Optional[str] = "draft"
+
+
+class FederationNodeCreate(BaseModel):
+    node_name: str
+    node_type: str = "partner"
+    base_url: Optional[str] = None
+    organization_id: Optional[str] = None
+    trust_level: Optional[str] = "unverified"
+    sync_scope: Optional[str] = "event"
+    disaster_event_id: Optional[str] = "event-sim-001"
+    status: Optional[str] = "active"
+    notes: Optional[str] = None
+
+
+class FederationRepositoryCreate(BaseModel):
+    node_id: str
+    repository_name: str
+    repository_type: str = "sync_events"
+    endpoint_path: Optional[str] = "/sync/pull"
+    direction: Optional[str] = "bidirectional"
+    conflict_policy: Optional[str] = "manual_review"
+    status: Optional[str] = "active"
+    notes: Optional[str] = None
+
+
+class FederationSyncLogCreate(BaseModel):
+    node_id: Optional[str] = None
+    repository_id: Optional[str] = None
+    direction: str = "export"
+    status: str = "created"
+    manifest_json: Optional[dict] = None
+    notes: Optional[str] = None
+
+
 @app.post("/resource-profiles")
 def create_resource_profile(payload: ResourceProfileCreate):
     ensure_resource_recovery_tables()
@@ -4645,3 +4789,1009 @@ def list_recovery_project_updates(project_id: Optional[str] = None, disaster_eve
             rows = rn_rows_to_dicts(cur)
 
     return rows
+
+
+def ensure_community_report_tables():
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS community_reports (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                reporter_name TEXT NOT NULL,
+                reporter_phone TEXT,
+                reporter_role TEXT NOT NULL DEFAULT 'warga_terdampak',
+                reporter_verification_level TEXT NOT NULL DEFAULT 'anonymous',
+                report_type TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                location_text TEXT NOT NULL,
+                lat DOUBLE PRECISION,
+                lng DOUBLE PRECISION,
+                affected_people_count INTEGER DEFAULT 0,
+                priority TEXT NOT NULL DEFAULT 'normal',
+                urgent_needs TEXT,
+                status TEXT NOT NULL DEFAULT 'submitted',
+                trust_score INTEGER NOT NULL DEFAULT 0,
+                assigned_verifier_type TEXT,
+                assigned_verifier_id TEXT,
+                verified_by TEXT,
+                verified_at TIMESTAMP,
+                converted_object_type TEXT,
+                converted_object_id TEXT,
+                consent_to_contact BOOLEAN NOT NULL DEFAULT TRUE,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS community_report_evidence (
+                id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL REFERENCES community_reports(id) ON DELETE CASCADE,
+                file_url TEXT NOT NULL,
+                file_type TEXT DEFAULT 'url',
+                caption TEXT,
+                verification_status TEXT NOT NULL DEFAULT 'pending',
+                uploaded_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS community_report_verifications (
+                id TEXT PRIMARY KEY,
+                report_id TEXT NOT NULL REFERENCES community_reports(id) ON DELETE CASCADE,
+                verifier_id TEXT,
+                verifier_role TEXT,
+                action TEXT NOT NULL,
+                notes TEXT,
+                before_status TEXT,
+                after_status TEXT,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_community_reports_event_status ON community_reports(disaster_event_id, status);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_community_reports_type ON community_reports(report_type);")
+            conn.commit()
+
+
+def calculate_community_trust(payload: CommunityReportCreate, status: str = "submitted"):
+    score = 0
+    if payload.reporter_phone:
+        score += 10
+    if payload.location_text and len(payload.location_text.strip()) >= 8:
+        score += 20
+    if payload.evidence_url:
+        score += 20
+    if payload.reporter_role in {"rt_rw", "relawan", "posko", "organisasi", "tenaga_medis", "pemerintah"}:
+        score += 20
+    if payload.reporter_verification_level in {"phone_verified", "community_verifiable"}:
+        score += 10
+    if payload.reporter_verification_level == "trusted_reporter":
+        score += 20
+    if status == "verified":
+        score += 20
+    if status == "rejected":
+        score -= 50
+    return max(0, min(100, score))
+
+
+def community_report_with_evidence(cur, report_id: str):
+    cur.execute("SELECT * FROM community_reports WHERE id = %s AND deleted_at IS NULL;", (report_id,))
+    report = rn_dict_row(cur)
+    if not report:
+        return None
+    cur.execute("SELECT * FROM community_report_evidence WHERE report_id = %s ORDER BY uploaded_at DESC;", (report_id,))
+    report["evidence"] = rn_rows_to_dicts(cur)
+    return report
+
+
+@app.post("/public/community-reports")
+def submit_community_report(payload: CommunityReportCreate):
+    ensure_community_report_tables()
+    report_id = "cr-" + uuid.uuid4().hex[:12]
+    trust_score = calculate_community_trust(payload)
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            INSERT INTO community_reports (
+                id, disaster_event_id, reporter_name, reporter_phone, reporter_role,
+                reporter_verification_level, report_type, title, description,
+                location_text, lat, lng, affected_people_count, priority, urgent_needs,
+                status, trust_score, consent_to_contact
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'submitted',%s,%s)
+            RETURNING *;
+            """, (
+                report_id, payload.disaster_event_id, payload.reporter_name,
+                payload.reporter_phone, payload.reporter_role,
+                payload.reporter_verification_level, payload.report_type,
+                payload.title, payload.description, payload.location_text,
+                payload.lat, payload.lng, payload.affected_people_count,
+                payload.priority, payload.urgent_needs, trust_score,
+                payload.consent_to_contact
+            ))
+            report = rn_dict_row(cur)
+
+            if payload.evidence_url:
+                cur.execute("""
+                INSERT INTO community_report_evidence
+                (id, report_id, file_url, file_type, caption, verification_status)
+                VALUES (%s,%s,%s,%s,%s,'pending');
+                """, (
+                    "crev-" + uuid.uuid4().hex[:12], report_id, payload.evidence_url,
+                    "url", payload.evidence_caption
+                ))
+
+            cur.execute("""
+            INSERT INTO community_report_verifications
+            (id, report_id, action, notes, before_status, after_status)
+            VALUES (%s,%s,'submit','Community report submitted','none','submitted');
+            """, ("crlog-" + uuid.uuid4().hex[:12], report_id))
+            conn.commit()
+
+    return {"status": "submitted", "community_report": report}
+
+
+@app.get("/community-reports")
+def list_community_reports(disaster_event_id: Optional[str] = None, status: Optional[str] = None, report_type: Optional[str] = None):
+    ensure_community_report_tables()
+    where = ["deleted_at IS NULL"]
+    params = []
+
+    if disaster_event_id:
+        where.append("disaster_event_id = %s")
+        params.append(disaster_event_id)
+    if status:
+        where.append("status = %s")
+        params.append(status)
+    if report_type:
+        where.append("report_type = %s")
+        params.append(report_type)
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT * FROM community_reports WHERE " + " AND ".join(where) + " ORDER BY created_at DESC LIMIT 200;",
+                params
+            )
+            rows = rn_rows_to_dicts(cur)
+
+    return rows
+
+
+@app.get("/community-reports/{report_id}")
+def get_community_report(report_id: str):
+    ensure_community_report_tables()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            report = community_report_with_evidence(cur, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Community report not found")
+    return report
+
+
+@app.patch("/community-reports/{report_id}/status")
+def update_community_report_status(report_id: str, payload: CommunityReportStatusUpdate):
+    ensure_community_report_tables()
+    allowed = {"submitted", "triage", "needs_verification", "verified", "rejected", "duplicate", "escalated", "converted_to_action", "closed"}
+    if payload.status not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid community report status")
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT status, trust_score FROM community_reports WHERE id = %s AND deleted_at IS NULL;", (report_id,))
+            before = cur.fetchone()
+            if not before:
+                raise HTTPException(status_code=404, detail="Community report not found")
+
+            before_status = before[0]
+            trust_delta = 20 if payload.status == "verified" else -50 if payload.status == "rejected" else 0
+            verified_by = payload.verifier_id if payload.status == "verified" else None
+            verified_at_sql = "NOW()" if payload.status == "verified" else "verified_at"
+
+            cur.execute(f"""
+            UPDATE community_reports
+            SET status = %s,
+                trust_score = GREATEST(0, LEAST(100, trust_score + %s)),
+                assigned_verifier_type = COALESCE(%s, assigned_verifier_type),
+                assigned_verifier_id = COALESCE(%s, assigned_verifier_id),
+                verified_by = COALESCE(%s, verified_by),
+                verified_at = {verified_at_sql},
+                updated_at = NOW()
+            WHERE id = %s AND deleted_at IS NULL
+            RETURNING *;
+            """, (
+                payload.status, trust_delta, payload.assigned_verifier_type,
+                payload.assigned_verifier_id, verified_by, report_id
+            ))
+            row = rn_dict_row(cur)
+
+            cur.execute("""
+            INSERT INTO community_report_verifications
+            (id, report_id, verifier_id, verifier_role, action, notes, before_status, after_status)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
+            """, (
+                "crlog-" + uuid.uuid4().hex[:12], report_id, payload.verifier_id,
+                payload.verifier_role, payload.status, payload.notes,
+                before_status, payload.status
+            ))
+            conn.commit()
+
+    return {"status": "updated", "community_report": row}
+
+
+@app.post("/community-reports/{report_id}/convert")
+def convert_community_report(report_id: str, payload: CommunityReportConvert):
+    ensure_community_report_tables()
+    if payload.target_type != "logistic_need":
+        raise HTTPException(status_code=400, detail="Only logistic_need conversion is available in this first implementation")
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM community_reports WHERE id = %s AND deleted_at IS NULL;", (report_id,))
+            report = rn_dict_row(cur)
+            if not report:
+                raise HTTPException(status_code=404, detail="Community report not found")
+
+            need_id = "need-cr-" + uuid.uuid4().hex[:10]
+            cur.execute("""
+            INSERT INTO logistic_needs
+            (id, disaster_event_id, node_id, item_name, quantity_needed, unit, priority, needed_before, status)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'open')
+            RETURNING *;
+            """, (
+                need_id, report["disaster_event_id"], payload.node_id,
+                payload.item_name or report.get("urgent_needs") or report["title"],
+                payload.quantity_needed or 1, payload.unit or "paket",
+                report["priority"], payload.notes or "Converted from community report"
+            ))
+            need = rn_dict_row(cur)
+
+            cur.execute("""
+            UPDATE community_reports
+            SET status = 'converted_to_action',
+                converted_object_type = 'logistic_need',
+                converted_object_id = %s,
+                updated_at = NOW()
+            WHERE id = %s
+            RETURNING *;
+            """, (need_id, report_id))
+            updated = rn_dict_row(cur)
+
+            cur.execute("""
+            INSERT INTO community_report_verifications
+            (id, report_id, action, notes, before_status, after_status)
+            VALUES (%s,%s,'convert_to_logistic_need',%s,%s,'converted_to_action');
+            """, (
+                "crlog-" + uuid.uuid4().hex[:12], report_id,
+                payload.notes, report["status"]
+            ))
+            conn.commit()
+
+    return {"status": "converted", "community_report": updated, "logistic_need": need}
+
+
+def ensure_location_resolution_tables():
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS geo_locations (
+                id TEXT PRIMARY KEY,
+                country_code TEXT DEFAULT 'ID',
+                province_code TEXT,
+                province_name TEXT,
+                city_code TEXT,
+                city_name TEXT,
+                district_code TEXT,
+                district_name TEXT,
+                village_code TEXT,
+                village_name TEXT,
+                location_name TEXT NOT NULL,
+                lat DOUBLE PRECISION,
+                lng DOUBLE PRECISION,
+                accuracy_meters DOUBLE PRECISION,
+                admin_level TEXT NOT NULL DEFAULT 'point',
+                source TEXT DEFAULT 'manual',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS operational_areas (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                owner_type TEXT NOT NULL,
+                owner_id TEXT NOT NULL,
+                area_level TEXT NOT NULL DEFAULT 'point',
+                country_code TEXT DEFAULT 'ID',
+                province_code TEXT,
+                city_code TEXT,
+                district_code TEXT,
+                village_code TEXT,
+                center_lat DOUBLE PRECISION,
+                center_lng DOUBLE PRECISION,
+                radius_meters DOUBLE PRECISION,
+                boundary_geojson JSONB,
+                coverage_description TEXT,
+                verification_status TEXT NOT NULL DEFAULT 'self_reported',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS beneficiary_groups (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                geo_location_id TEXT REFERENCES geo_locations(id) ON DELETE SET NULL,
+                group_name TEXT NOT NULL,
+                group_type TEXT DEFAULT 'community',
+                estimated_people_count INTEGER DEFAULT 0,
+                household_count INTEGER DEFAULT 0,
+                description TEXT,
+                verified_status TEXT NOT NULL DEFAULT 'self_reported',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS duplicate_candidates (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                object_type TEXT NOT NULL,
+                object_id_a TEXT NOT NULL,
+                object_id_b TEXT NOT NULL,
+                match_score INTEGER NOT NULL DEFAULT 0,
+                match_reason TEXT,
+                location_distance_meters DOUBLE PRECISION,
+                same_admin_area BOOLEAN DEFAULT FALSE,
+                same_name_score INTEGER DEFAULT 0,
+                same_contact_score INTEGER DEFAULT 0,
+                same_owner_score INTEGER DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'candidate',
+                reviewed_by TEXT,
+                review_notes TEXT,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS canonical_entities (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                entity_type TEXT NOT NULL,
+                canonical_object_id TEXT NOT NULL,
+                merged_object_ids_json JSONB NOT NULL DEFAULT '[]',
+                merge_strategy TEXT NOT NULL DEFAULT 'manual_review',
+                merge_notes TEXT,
+                created_by TEXT,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS consolidated_needs (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                canonical_area_id TEXT,
+                canonical_posko_id TEXT,
+                need_type TEXT NOT NULL DEFAULT 'logistic',
+                item_name TEXT NOT NULL,
+                quantity_final NUMERIC NOT NULL DEFAULT 0,
+                quantity_unit TEXT NOT NULL DEFAULT 'paket',
+                quantity_min NUMERIC,
+                quantity_max NUMERIC,
+                confidence_level TEXT NOT NULL DEFAULT 'medium',
+                source_count INTEGER NOT NULL DEFAULT 0,
+                source_ids_json JSONB NOT NULL DEFAULT '[]',
+                merge_method TEXT NOT NULL DEFAULT 'manual_review',
+                status TEXT NOT NULL DEFAULT 'draft',
+                verified_by TEXT,
+                verified_at TIMESTAMP,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+
+            for table in ("posko_nodes", "logistic_needs"):
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS geo_location_id TEXT;")
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS operational_area_id TEXT;")
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION;")
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION;")
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS location_accuracy_meters DOUBLE PRECISION;")
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS admin_level TEXT;")
+                cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS duplicate_group_id TEXT;")
+
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS coverage_radius_meters DOUBLE PRECISION;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS parent_posko_id TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS canonical_posko_id TEXT;")
+
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS source_type TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS source_id TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS reporting_org_id TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS reporting_posko_id TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS affected_group_id TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS beneficiary_group_description TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS is_aggregate BOOLEAN NOT NULL DEFAULT FALSE;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS aggregation_level TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS parent_aggregate_id TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS canonical_need_id TEXT;")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS verification_status TEXT NOT NULL DEFAULT 'self_reported';")
+            cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS confidence_score INTEGER NOT NULL DEFAULT 50;")
+
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_duplicate_candidates_event_status ON duplicate_candidates(disaster_event_id, status);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_consolidated_needs_event_status ON consolidated_needs(disaster_event_id, status);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_operational_areas_event_owner ON operational_areas(disaster_event_id, owner_type, owner_id);")
+            conn.commit()
+
+
+def insert_location_resolution_seed(cur, disaster_event_id: str):
+    cur.execute("SELECT id FROM operational_areas WHERE disaster_event_id = %s LIMIT 1;", (disaster_event_id,))
+    if cur.fetchone():
+        return
+    cur.execute("""
+    INSERT INTO operational_areas
+    (id, disaster_event_id, owner_type, owner_id, area_level, province_code, coverage_description, verification_status)
+    VALUES (%s,%s,'organization','org-bpbd-demo','province','DEMO-PROV','Demo aggregate province-level operation. Needs child city/district/village breakdown before field distribution.', 'self_reported');
+    """, ("oparea-demo-province", disaster_event_id))
+
+
+@app.post("/geo/locations")
+def create_geo_location(payload: GeoLocationCreate):
+    ensure_location_resolution_tables()
+    location_id = "geo-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            INSERT INTO geo_locations (
+                id, country_code, province_code, province_name, city_code, city_name,
+                district_code, district_name, village_code, village_name, location_name,
+                lat, lng, accuracy_meters, admin_level, source
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            RETURNING *;
+            """, (
+                location_id, payload.country_code, payload.province_code, payload.province_name,
+                payload.city_code, payload.city_name, payload.district_code, payload.district_name,
+                payload.village_code, payload.village_name, payload.location_name,
+                payload.lat, payload.lng, payload.accuracy_meters, payload.admin_level, payload.source
+            ))
+            row = rn_dict_row(cur)
+            conn.commit()
+    return {"status": "created", "geo_location": row}
+
+
+@app.get("/geo/locations")
+def list_geo_locations(admin_level: Optional[str] = None, q: Optional[str] = None):
+    ensure_location_resolution_tables()
+    where = ["1=1"]
+    params = []
+    if admin_level:
+        where.append("admin_level = %s")
+        params.append(admin_level)
+    if q:
+        where.append("(location_name ILIKE %s OR village_name ILIKE %s OR district_name ILIKE %s OR city_name ILIKE %s)")
+        params.extend([f"%{q}%"] * 4)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM geo_locations WHERE " + " AND ".join(where) + " ORDER BY updated_at DESC LIMIT 200;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+
+
+@app.post("/operational-areas")
+def create_operational_area(payload: OperationalAreaCreate):
+    ensure_location_resolution_tables()
+    area_id = "oparea-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            INSERT INTO operational_areas (
+                id, disaster_event_id, owner_type, owner_id, area_level, country_code,
+                province_code, city_code, district_code, village_code, center_lat,
+                center_lng, radius_meters, boundary_geojson, coverage_description, verification_status
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            RETURNING *;
+            """, (
+                area_id, payload.disaster_event_id, payload.owner_type, payload.owner_id,
+                payload.area_level, payload.country_code, payload.province_code,
+                payload.city_code, payload.district_code, payload.village_code,
+                payload.center_lat, payload.center_lng, payload.radius_meters,
+                json.dumps(payload.boundary_geojson) if payload.boundary_geojson else None,
+                payload.coverage_description, payload.verification_status
+            ))
+            row = rn_dict_row(cur)
+            conn.commit()
+    return {"status": "created", "operational_area": row}
+
+
+@app.get("/operational-areas")
+def list_operational_areas(disaster_event_id: Optional[str] = None, owner_type: Optional[str] = None):
+    ensure_location_resolution_tables()
+    where = ["1=1"]
+    params = []
+    if disaster_event_id:
+        where.append("disaster_event_id = %s")
+        params.append(disaster_event_id)
+    if owner_type:
+        where.append("owner_type = %s")
+        params.append(owner_type)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            if disaster_event_id:
+                insert_location_resolution_seed(cur, disaster_event_id)
+                conn.commit()
+            cur.execute("SELECT * FROM operational_areas WHERE " + " AND ".join(where) + " ORDER BY updated_at DESC LIMIT 200;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+
+
+@app.post("/beneficiary-groups")
+def create_beneficiary_group(payload: BeneficiaryGroupCreate):
+    ensure_location_resolution_tables()
+    group_id = "bengrp-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            INSERT INTO beneficiary_groups (
+                id, disaster_event_id, geo_location_id, group_name, group_type,
+                estimated_people_count, household_count, description, verified_status
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            RETURNING *;
+            """, (
+                group_id, payload.disaster_event_id, payload.geo_location_id,
+                payload.group_name, payload.group_type, payload.estimated_people_count,
+                payload.household_count, payload.description, payload.verified_status
+            ))
+            row = rn_dict_row(cur)
+            conn.commit()
+    return {"status": "created", "beneficiary_group": row}
+
+
+@app.get("/beneficiary-groups")
+def list_beneficiary_groups(disaster_event_id: Optional[str] = None):
+    ensure_location_resolution_tables()
+    params = []
+    where = ["1=1"]
+    if disaster_event_id:
+        where.append("disaster_event_id = %s")
+        params.append(disaster_event_id)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM beneficiary_groups WHERE " + " AND ".join(where) + " ORDER BY updated_at DESC LIMIT 200;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+
+
+@app.post("/duplicates/check")
+def check_duplicate_candidates(payload: DuplicateCheckRequest):
+    ensure_location_resolution_tables()
+    created = 0
+    candidates = []
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            if payload.object_type == "need":
+                cur.execute("""
+                SELECT id, disaster_event_id, node_id, item_name, unit, priority, status,
+                       COALESCE(beneficiary_group_description, '') AS beneficiary_group_description,
+                       COALESCE(admin_level, '') AS admin_level,
+                       COALESCE(is_aggregate, FALSE) AS is_aggregate
+                FROM logistic_needs
+                WHERE disaster_event_id = %s AND status <> 'closed'
+                ORDER BY created_at DESC
+                LIMIT 300;
+                """, (payload.disaster_event_id,))
+                needs = rn_rows_to_dicts(cur)
+                for i, a in enumerate(needs):
+                    for b in needs[i + 1:]:
+                        if a["id"] == b["id"]:
+                            continue
+                        same_item = (a["item_name"] or "").strip().lower() == (b["item_name"] or "").strip().lower()
+                        same_node = a.get("node_id") and a.get("node_id") == b.get("node_id")
+                        same_group = a.get("beneficiary_group_description") and a.get("beneficiary_group_description") == b.get("beneficiary_group_description")
+                        aggregate_overlap = bool(a.get("is_aggregate") or b.get("is_aggregate"))
+                        if not same_item or not (same_node or same_group or aggregate_overlap):
+                            continue
+                        score = 50 + (25 if same_node else 0) + (15 if same_group else 0) + (10 if aggregate_overlap else 0)
+                        reason = "same item"
+                        if same_node:
+                            reason += " + same posko"
+                        if same_group:
+                            reason += " + same beneficiary group"
+                        if aggregate_overlap:
+                            reason += " + aggregation overlap unknown"
+                        cur.execute("""
+                        SELECT id FROM duplicate_candidates
+                        WHERE disaster_event_id = %s AND object_type = 'need'
+                          AND ((object_id_a = %s AND object_id_b = %s) OR (object_id_a = %s AND object_id_b = %s))
+                        LIMIT 1;
+                        """, (payload.disaster_event_id, a["id"], b["id"], b["id"], a["id"]))
+                        if cur.fetchone():
+                            continue
+                        cand_id = "dupcand-" + uuid.uuid4().hex[:12]
+                        cur.execute("""
+                        INSERT INTO duplicate_candidates
+                        (id, disaster_event_id, object_type, object_id_a, object_id_b, match_score, match_reason, same_admin_area, status)
+                        VALUES (%s,%s,'need',%s,%s,%s,%s,%s,'candidate')
+                        RETURNING *;
+                        """, (cand_id, payload.disaster_event_id, a["id"], b["id"], min(100, score), reason, same_node or same_group))
+                        candidates.append(rn_dict_row(cur))
+                        created += 1
+            conn.commit()
+
+    return {"status": "checked", "created": created, "candidates": candidates}
+
+
+@app.get("/duplicates/candidates")
+def list_duplicate_candidates(disaster_event_id: Optional[str] = None, status: Optional[str] = None, object_type: Optional[str] = None):
+    ensure_location_resolution_tables()
+    where = ["1=1"]
+    params = []
+    if disaster_event_id:
+        where.append("disaster_event_id = %s")
+        params.append(disaster_event_id)
+    if status:
+        where.append("status = %s")
+        params.append(status)
+    if object_type:
+        where.append("object_type = %s")
+        params.append(object_type)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM duplicate_candidates WHERE " + " AND ".join(where) + " ORDER BY match_score DESC, created_at DESC LIMIT 300;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+
+
+@app.post("/duplicates/{candidate_id}/resolve")
+def resolve_duplicate_candidate(candidate_id: str, payload: DuplicateResolveRequest):
+    ensure_location_resolution_tables()
+    allowed = {"candidate", "confirmed_duplicate", "not_duplicate", "needs_review", "merged"}
+    if payload.status not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid duplicate candidate status")
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            UPDATE duplicate_candidates
+            SET status = %s, reviewed_by = %s, review_notes = %s, updated_at = NOW()
+            WHERE id = %s
+            RETURNING *;
+            """, (payload.status, payload.reviewed_by, payload.review_notes, candidate_id))
+            row = rn_dict_row(cur)
+            conn.commit()
+    if not row:
+        raise HTTPException(status_code=404, detail="Duplicate candidate not found")
+    return {"status": "resolved", "duplicate_candidate": row}
+
+
+@app.post("/consolidated-needs")
+def create_consolidated_need(payload: ConsolidatedNeedCreate):
+    ensure_location_resolution_tables()
+    need_id = "conneed-" + uuid.uuid4().hex[:12]
+    source_ids = payload.source_ids or []
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            INSERT INTO consolidated_needs (
+                id, disaster_event_id, canonical_area_id, canonical_posko_id, need_type,
+                item_name, quantity_final, quantity_unit, quantity_min, quantity_max,
+                confidence_level, source_count, source_ids_json, merge_method, status
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            RETURNING *;
+            """, (
+                need_id, payload.disaster_event_id, payload.canonical_area_id,
+                payload.canonical_posko_id, payload.need_type, payload.item_name,
+                payload.quantity_final, payload.quantity_unit, payload.quantity_min,
+                payload.quantity_max, payload.confidence_level, len(source_ids),
+                json.dumps(source_ids), payload.merge_method, payload.status
+            ))
+            row = rn_dict_row(cur)
+            conn.commit()
+    return {"status": "created", "consolidated_need": row}
+
+
+@app.get("/consolidated-needs")
+def list_consolidated_needs(disaster_event_id: Optional[str] = None, status: Optional[str] = None):
+    ensure_location_resolution_tables()
+    where = ["1=1"]
+    params = []
+    if disaster_event_id:
+        where.append("disaster_event_id = %s")
+        params.append(disaster_event_id)
+    if status:
+        where.append("status = %s")
+        params.append(status)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM consolidated_needs WHERE " + " AND ".join(where) + " ORDER BY updated_at DESC LIMIT 300;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+
+
+@app.post("/consolidated-needs/rebuild")
+def rebuild_consolidated_needs(disaster_event_id: str = "event-sim-001"):
+    ensure_location_resolution_tables()
+    # Safe first-pass strategy:
+    # group raw needs by event + posko + item + unit; use max/latest-like quantity,
+    # not sum, because duplicate/overlap has not been reviewed yet.
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM consolidated_needs WHERE disaster_event_id = %s AND merge_method = 'auto_max_by_posko_item';", (disaster_event_id,))
+            cur.execute("""
+            SELECT disaster_event_id, node_id, item_name, unit,
+                   MAX(quantity_needed) AS quantity_final,
+                   MIN(quantity_needed) AS quantity_min,
+                   MAX(quantity_needed) AS quantity_max,
+                   COUNT(*) AS source_count,
+                   jsonb_agg(id ORDER BY created_at DESC) AS source_ids_json
+            FROM logistic_needs
+            WHERE disaster_event_id = %s AND status <> 'closed'
+            GROUP BY disaster_event_id, node_id, item_name, unit
+            ORDER BY item_name;
+            """, (disaster_event_id,))
+            groups = rn_rows_to_dicts(cur)
+            inserted = []
+            for g in groups:
+                need_id = "conneed-" + uuid.uuid4().hex[:12]
+                confidence = "low" if int(g["source_count"] or 0) > 1 else "medium"
+                cur.execute("""
+                INSERT INTO consolidated_needs (
+                    id, disaster_event_id, canonical_posko_id, need_type, item_name,
+                    quantity_final, quantity_unit, quantity_min, quantity_max,
+                    confidence_level, source_count, source_ids_json, merge_method, status
+                )
+                VALUES (%s,%s,%s,'logistic',%s,%s,%s,%s,%s,%s,%s,%s,'auto_max_by_posko_item','needs_review')
+                RETURNING *;
+                """, (
+                    need_id, g["disaster_event_id"], g["node_id"], g["item_name"],
+                    g["quantity_final"], g["unit"], g["quantity_min"], g["quantity_max"],
+                    confidence, g["source_count"], json.dumps(g["source_ids_json"])
+                ))
+                inserted.append(rn_dict_row(cur))
+            conn.commit()
+
+    return {"status": "rebuilt", "inserted": len(inserted), "consolidated_needs": inserted}
+
+
+@app.get("/data-consolidation/summary")
+def data_consolidation_summary(disaster_event_id: str = "event-sim-001"):
+    ensure_location_resolution_tables()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            insert_location_resolution_seed(cur, disaster_event_id)
+            cur.execute("SELECT COUNT(*) FROM logistic_needs WHERE disaster_event_id = %s;", (disaster_event_id,))
+            raw_needs = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM consolidated_needs WHERE disaster_event_id = %s;", (disaster_event_id,))
+            consolidated = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM duplicate_candidates WHERE disaster_event_id = %s AND status = 'candidate';", (disaster_event_id,))
+            duplicate_candidates = cur.fetchone()[0]
+            cur.execute("""
+            SELECT COUNT(*) FROM logistic_needs
+            WHERE disaster_event_id = %s AND (lat IS NULL OR lng IS NULL OR location_accuracy_meters IS NULL);
+            """, (disaster_event_id,))
+            location_review_needed = cur.fetchone()[0]
+            cur.execute("""
+            SELECT COUNT(*) FROM logistic_needs
+            WHERE disaster_event_id = %s AND is_aggregate = TRUE;
+            """, (disaster_event_id,))
+            aggregate_reports = cur.fetchone()[0]
+            conn.commit()
+    return {
+        "raw_logistic_reports": raw_needs,
+        "consolidated_needs": consolidated,
+        "duplicate_candidates": duplicate_candidates,
+        "location_review_needed": location_review_needed,
+        "aggregate_reports": aggregate_reports
+    }
+
+
+def ensure_federation_tables():
+    ensure_location_resolution_tables()
+    ensure_community_report_tables()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS federation_nodes (
+                id TEXT PRIMARY KEY,
+                node_name TEXT NOT NULL,
+                node_type TEXT NOT NULL DEFAULT 'partner',
+                base_url TEXT,
+                organization_id TEXT,
+                trust_level TEXT NOT NULL DEFAULT 'unverified',
+                sync_scope TEXT NOT NULL DEFAULT 'event',
+                disaster_event_id TEXT,
+                status TEXT NOT NULL DEFAULT 'active',
+                notes TEXT,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS federation_repositories (
+                id TEXT PRIMARY KEY,
+                node_id TEXT NOT NULL REFERENCES federation_nodes(id) ON DELETE CASCADE,
+                repository_name TEXT NOT NULL,
+                repository_type TEXT NOT NULL DEFAULT 'sync_events',
+                endpoint_path TEXT DEFAULT '/sync/pull',
+                direction TEXT NOT NULL DEFAULT 'bidirectional',
+                conflict_policy TEXT NOT NULL DEFAULT 'manual_review',
+                status TEXT NOT NULL DEFAULT 'active',
+                notes TEXT,
+                last_sync_at TIMESTAMP,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS federation_sync_logs (
+                id TEXT PRIMARY KEY,
+                node_id TEXT REFERENCES federation_nodes(id) ON DELETE SET NULL,
+                repository_id TEXT REFERENCES federation_repositories(id) ON DELETE SET NULL,
+                direction TEXT NOT NULL,
+                status TEXT NOT NULL,
+                manifest_json JSONB,
+                notes TEXT,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_federation_nodes_event ON federation_nodes(disaster_event_id, status);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_federation_repos_node ON federation_repositories(node_id, status);")
+            conn.commit()
+
+
+@app.post("/federation/nodes")
+def create_federation_node(payload: FederationNodeCreate):
+    ensure_federation_tables()
+    node_id = "fednode-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            INSERT INTO federation_nodes (
+                id, node_name, node_type, base_url, organization_id, trust_level,
+                sync_scope, disaster_event_id, status, notes
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            RETURNING *;
+            """, (
+                node_id, payload.node_name, payload.node_type, payload.base_url,
+                payload.organization_id, payload.trust_level, payload.sync_scope,
+                payload.disaster_event_id, payload.status, payload.notes
+            ))
+            row = rn_dict_row(cur)
+            conn.commit()
+    return {"status": "created", "federation_node": row}
+
+
+@app.get("/federation/nodes")
+def list_federation_nodes(disaster_event_id: Optional[str] = None, status: Optional[str] = None):
+    ensure_federation_tables()
+    where = ["1=1"]
+    params = []
+    if disaster_event_id:
+        where.append("(disaster_event_id = %s OR disaster_event_id IS NULL)")
+        params.append(disaster_event_id)
+    if status:
+        where.append("status = %s")
+        params.append(status)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM federation_nodes WHERE " + " AND ".join(where) + " ORDER BY updated_at DESC LIMIT 200;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+
+
+@app.post("/federation/repositories")
+def create_federation_repository(payload: FederationRepositoryCreate):
+    ensure_federation_tables()
+    repo_id = "fedrepo-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            INSERT INTO federation_repositories (
+                id, node_id, repository_name, repository_type, endpoint_path,
+                direction, conflict_policy, status, notes
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            RETURNING *;
+            """, (
+                repo_id, payload.node_id, payload.repository_name, payload.repository_type,
+                payload.endpoint_path, payload.direction, payload.conflict_policy,
+                payload.status, payload.notes
+            ))
+            row = rn_dict_row(cur)
+            conn.commit()
+    return {"status": "created", "federation_repository": row}
+
+
+@app.get("/federation/repositories")
+def list_federation_repositories(node_id: Optional[str] = None, status: Optional[str] = None):
+    ensure_federation_tables()
+    where = ["1=1"]
+    params = []
+    if node_id:
+        where.append("node_id = %s")
+        params.append(node_id)
+    if status:
+        where.append("status = %s")
+        params.append(status)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            SELECT r.*, n.node_name, n.base_url, n.trust_level
+            FROM federation_repositories r
+            LEFT JOIN federation_nodes n ON n.id = r.node_id
+            WHERE """ + " AND ".join(where) + " ORDER BY r.updated_at DESC LIMIT 200;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+
+
+@app.get("/federation/manifest/{disaster_event_id}")
+def federation_manifest(disaster_event_id: str):
+    ensure_federation_tables()
+    manifest = {
+        "schema": "rescue-net-federation-manifest-v1",
+        "disaster_event_id": disaster_event_id,
+        "generated_at": datetime.utcnow().isoformat(),
+        "policy": {
+            "raw_reports_are_not_final": True,
+            "use_consolidated_needs_for_operations": True,
+            "duplicate_candidates_require_review": True,
+            "aggregate_overlap_requires_warning": True
+        }
+    }
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM sync_events WHERE payload_json::text ILIKE %s ORDER BY created_at DESC LIMIT 100;", (f"%{disaster_event_id}%",))
+            manifest["sync_events"] = rn_rows_to_dicts(cur)
+            cur.execute("SELECT * FROM community_reports WHERE disaster_event_id = %s AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 100;", (disaster_event_id,))
+            manifest["community_reports"] = rn_rows_to_dicts(cur)
+            cur.execute("SELECT * FROM consolidated_needs WHERE disaster_event_id = %s ORDER BY updated_at DESC LIMIT 100;", (disaster_event_id,))
+            manifest["consolidated_needs"] = rn_rows_to_dicts(cur)
+            cur.execute("SELECT * FROM duplicate_candidates WHERE disaster_event_id = %s ORDER BY created_at DESC LIMIT 100;", (disaster_event_id,))
+            manifest["duplicate_candidates"] = rn_rows_to_dicts(cur)
+            cur.execute("SELECT * FROM operational_areas WHERE disaster_event_id = %s ORDER BY updated_at DESC LIMIT 100;", (disaster_event_id,))
+            manifest["operational_areas"] = rn_rows_to_dicts(cur)
+    return manifest
+
+
+@app.post("/federation/sync-logs")
+def create_federation_sync_log(payload: FederationSyncLogCreate):
+    ensure_federation_tables()
+    log_id = "fedlog-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            INSERT INTO federation_sync_logs
+            (id, node_id, repository_id, direction, status, manifest_json, notes)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
+            RETURNING *;
+            """, (
+                log_id, payload.node_id, payload.repository_id, payload.direction,
+                payload.status, json.dumps(payload.manifest_json or {}), payload.notes
+            ))
+            row = rn_dict_row(cur)
+            conn.commit()
+    return {"status": "created", "federation_sync_log": row}
+
+
+@app.get("/federation/sync-logs")
+def list_federation_sync_logs(node_id: Optional[str] = None, repository_id: Optional[str] = None):
+    ensure_federation_tables()
+    where = ["1=1"]
+    params = []
+    if node_id:
+        where.append("node_id = %s")
+        params.append(node_id)
+    if repository_id:
+        where.append("repository_id = %s")
+        params.append(repository_id)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM federation_sync_logs WHERE " + " AND ".join(where) + " ORDER BY created_at DESC LIMIT 100;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+

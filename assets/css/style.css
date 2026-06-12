@@ -2513,3 +2513,1210 @@ html.rn-external-access body:not(.mockup-viewer) .main {
   }
 }
 
+/* Header/logo clean pass: one floating logo, integrated menu button. */
+.home-page .welcome-shell {
+  background: rgba(255,248,243,.58);
+}
+
+.home-page .welcome-nav {
+  min-height: 68px !important;
+  padding: 8px 42px !important;
+  background:
+    linear-gradient(180deg, rgba(255,246,240,.98), rgba(255,232,219,.96)) !important;
+  border-bottom: 1px solid rgba(104,64,45,.12) !important;
+  box-shadow: 0 14px 34px rgba(145,84,54,.08) !important;
+}
+
+.home-page .welcome-brand img {
+  width: 54px !important;
+  height: 54px !important;
+  display: block;
+  object-fit: contain;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 16px 22px rgba(145,84,54,.18));
+}
+
+.home-page .welcome-menu-toggle {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.home-page .welcome-menu-toggle span {
+  background: #40312b !important;
+}
+
+.home-page .welcome-title-row {
+  display: block !important;
+  margin-bottom: 18px !important;
+}
+
+.home-page .welcome-title-row h1 {
+  max-width: 760px !important;
+}
+
+@media (max-width: 900px) {
+  .home-page .welcome-shell {
+    background: rgba(255,248,243,.60);
+  }
+
+  .home-page .welcome-nav {
+    min-height: 64px !important;
+    padding: 7px 20px !important;
+    grid-template-columns: auto 1fr auto !important;
+    background:
+      linear-gradient(180deg, rgba(255,246,240,.98), rgba(255,232,219,.96)) !important;
+  }
+
+  .home-page .welcome-brand img {
+    width: 50px !important;
+    height: 50px !important;
+  }
+
+  .home-page .welcome-menu-toggle {
+    width: 46px !important;
+    height: 46px !important;
+    padding: 8px !important;
+  }
+
+  .home-page .welcome-menu-toggle span {
+    width: 31px !important;
+    height: 3px !important;
+    margin: 4px 0 !important;
+  }
+
+  .home-page .welcome-title-row {
+    margin-bottom: 14px !important;
+  }
+
+  .home-page .welcome-title-row h1 {
+    max-width: 340px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    text-align: center !important;
+    font-size: 31px !important;
+    line-height: 1.08 !important;
+  }
+
+  body.home-menu-open .welcome-links {
+    padding: 10px 0 0 !important;
+  }
+}
+
+/* Global public header shown above operational pages. */
+.rn-public-header {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 42px;
+  background:
+    linear-gradient(180deg, rgba(255,246,240,.98), rgba(255,232,219,.96));
+  border-bottom: 1px solid rgba(104,64,45,.12);
+  box-shadow: 0 14px 34px rgba(145,84,54,.08);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.rn-public-brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.rn-public-brand img {
+  width: 54px;
+  height: 54px;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 20px rgba(145,84,54,.18));
+}
+
+.rn-public-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+
+.rn-public-links a {
+  min-height: auto;
+  padding: 9px 10px;
+  border-radius: 10px;
+  color: #40312b;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.rn-public-links a:hover,
+.rn-public-login {
+  background: rgba(255,255,255,.52);
+  border: 1px solid rgba(232,117,88,.22);
+}
+
+.rn-public-toggle {
+  display: none;
+  width: 46px;
+  height: 46px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.rn-public-toggle span {
+  display: block;
+  width: 31px;
+  height: 3px;
+  margin: 4px 0;
+  border-radius: 999px;
+  background: #40312b;
+}
+
+body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .app-shell {
+  min-height: calc(100vh - 68px);
+}
+
+body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
+  top: 68px;
+  height: calc(100vh - 68px);
+}
+
+@media (max-width: 900px) {
+  .rn-public-header {
+    min-height: 64px;
+    grid-template-columns: auto 1fr auto;
+    padding: 7px 20px;
+  }
+
+  .rn-public-brand img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .rn-public-toggle {
+    display: block;
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .rn-public-links {
+    display: none;
+  }
+
+  .rn-public-header.is-open .rn-public-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    padding-top: 8px;
+  }
+
+  .rn-public-header.is-open .rn-public-links a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 40px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,.70);
+    text-align: center;
+    font-size: 12px;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
+    top: 64px !important;
+    height: calc(100vh - 64px) !important;
+    min-height: calc(100vh - 64px) !important;
+    max-height: calc(100vh - 64px) !important;
+  }
+}
+
+/* Public community report page */
+body.public-report-page {
+  min-width: 0 !important;
+  overflow-x: hidden !important;
+}
+
+.public-report-shell {
+  width: min(1380px, calc(100% - 56px));
+  margin: 32px auto 44px;
+}
+
+.public-report-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  align-items: stretch;
+  padding: 52px 56px;
+  border: 1px solid rgba(232,117,88,.20);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 80% 15%, rgba(244,167,134,.18), transparent 34%),
+    linear-gradient(135deg, rgba(255,248,243,.94), rgba(255,232,219,.78));
+  box-shadow: 0 24px 70px rgba(145,84,54,.14);
+}
+
+.public-report-hero h1 {
+  max-width: 840px;
+  margin: 0;
+  color: #ef523d;
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1;
+  letter-spacing: -.06em;
+}
+
+.public-report-hero p {
+  max-width: 840px;
+  color: var(--muted);
+  line-height: 1.58;
+  font-size: 16px;
+}
+
+.public-report-card,
+.public-report-panel {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.82);
+  box-shadow: 0 18px 42px rgba(145,84,54,.10);
+}
+
+.public-report-card {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  border-radius: 22px;
+  padding: 26px;
+}
+
+.public-report-card strong {
+  color: #2d211b;
+  font-size: 22px;
+}
+
+.public-report-card span {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.public-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 22px;
+  margin-top: 22px;
+  align-items: start;
+}
+
+.public-report-panel {
+  border-radius: 22px;
+  padding: 22px;
+}
+
+.public-report-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.public-report-actions a {
+  display: grid;
+  gap: 5px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255,248,243,.76);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.public-report-actions span {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 13px;
+}
+
+.public-report-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.public-report-steps div {
+  display: grid;
+  gap: 6px;
+  min-height: 116px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255,255,255,.72);
+}
+
+.public-report-steps span {
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .public-report-shell {
+    width: 100%;
+    margin: 0;
+    padding: 18px;
+  }
+
+  .public-report-hero,
+  .public-report-grid,
+  .public-report-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .public-report-hero {
+    padding: 30px 20px;
+    text-align: center;
+    border-radius: 22px;
+  }
+
+  .public-report-hero h1 {
+    font-size: 34px;
+    letter-spacing: -.04em;
+  }
+
+  .public-report-hero p {
+    font-size: 13px;
+  }
+
+  .public-report-panel {
+    padding: 16px;
+  }
+
+  .public-report-card {
+    padding: 18px;
+  }
+}
+
+/* Final responsive guard for community report and global operational header */
+.public-report-shell,
+.public-report-shell * {
+  min-width: 0;
+}
+
+.public-report-hero h1 {
+  overflow-wrap: anywhere;
+}
+
+body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .rn-public-header + .app-shell .sidebar .brand {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  body.public-report-page.public-report-page,
+  body.public-report-page:not(.home-page):not(.viewer-page):not(.mockup-viewer) {
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  .public-report-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden;
+  }
+
+  .public-report-page .form-grid,
+  .public-report-page .event-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .public-report-page input,
+  .public-report-page select,
+  .public-report-page textarea,
+  .public-report-page label,
+  .public-report-page .btn {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .public-report-hero h1 {
+    font-size: 30px !important;
+  }
+}
+
+/* Final mobile-native operational layout.
+   Keep the operational menu available, but stop forcing a desktop canvas on phones. */
+@media (max-width: 900px) {
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) {
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .app-shell {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 100vh !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar {
+    position: relative !important;
+    top: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 10px 12px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+    overflow: hidden !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar nav {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 0 0 6px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar nav a {
+    flex: 0 0 auto !important;
+    min-height: 38px !important;
+    padding: 9px 12px !important;
+    border-radius: 999px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .main {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px 12px 24px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .topbar,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .panel-header,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .event-main,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .hero-command {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) h2 {
+    font-size: 28px !important;
+    letter-spacing: -.03em !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) h3 {
+    font-size: 17px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .subtitle,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) p {
+    max-width: 100% !important;
+    overflow-wrap: anywhere;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .kpi-grid,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .warroom-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .content-grid,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .image-board,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .form-grid,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .event-form-grid,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .code-grid,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .warroom-board,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .warroom-hero {
+    grid-template-columns: 1fr !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .panel,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .event-card,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .kpi-card {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .panel.large {
+    min-height: auto !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .summary {
+    position: static !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) input,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) select,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) textarea,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) label,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-form,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .search {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .form-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: stretch !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .form-actions .btn,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) button.btn {
+    width: 100% !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) table {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+  }
+}
+
+
+/* Rescue-Net mobile welcome header fix - HP only */
+@media (max-width: 768px) {
+  body.home-page header,
+  body.home-page .topbar,
+  body.home-page .site-header,
+  body.home-page .main-header,
+  body.home-page .mobile-header,
+  body.home-page .hero-header {
+    background: #fff7f1 !important;
+    background-color: #fff7f1 !important;
+    box-shadow: none !important;
+  }
+
+  body.home-page header::before,
+  body.home-page .topbar::before,
+  body.home-page .site-header::before,
+  body.home-page .main-header::before,
+  body.home-page .mobile-header::before,
+  body.home-page .hero-header::before {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+
+  body.home-page .hamburger,
+  body.home-page .menu-toggle,
+  body.home-page .mobile-menu-toggle,
+  body.home-page .nav-toggle {
+    background: transparent !important;
+    color: #27323a !important;
+    border: none !important;
+  }
+
+  body.home-page .hamburger span,
+  body.home-page .menu-toggle span,
+  body.home-page .mobile-menu-toggle span,
+  body.home-page .nav-toggle span {
+    background: #27323a !important;
+  }
+}
+
+
+/* Rescue-Net FINAL: welcome page mobile header/menu only */
+@media (max-width: 768px) {
+  .welcome-nav,
+  .welcome-nav::before,
+  .welcome-nav::after,
+  .welcome-header,
+  .welcome-header::before,
+  .welcome-header::after {
+    background: #fff7f1 !important;
+    background-color: #fff7f1 !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  .welcome-menu-toggle {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .welcome-menu-toggle span {
+    background: #263238 !important;
+    background-color: #263238 !important;
+  }
+
+  body.home-menu-open .welcome-nav,
+  body.home-menu-open .welcome-links,
+  body.home-menu-open .welcome-actions {
+    background: #fff7f1 !important;
+    background-color: #fff7f1 !important;
+    background-image: none !important;
+  }
+}
+
+
+/* Rescue-Net: move welcome title into mobile header only */
+.welcome-mobile-title {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body.home-page .welcome-nav {
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    align-items: center !important;
+    column-gap: 10px !important;
+  }
+
+  body.home-page .welcome-brand {
+    grid-column: 1 !important;
+  }
+
+  body.home-page .welcome-mobile-title {
+    grid-column: 2 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    text-align: left !important;
+    color: #ef523d !important;
+    font-weight: 900 !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.03em !important;
+    font-size: clamp(13px, 3.6vw, 17px) !important;
+  }
+
+  body.home-page .welcome-mobile-title span {
+    display: block !important;
+    white-space: nowrap !important;
+  }
+
+  body.home-page .welcome-menu-toggle {
+    grid-column: 3 !important;
+    justify-self: end !important;
+  }
+
+  body.home-page .welcome-copy h1,
+  body.home-page .welcome-title-row h1,
+  body.home-page .welcome-hero h1 {
+    display: none !important;
+  }
+}
+
+
+/* Rescue-Net mobile welcome layout polish */
+@media (max-width: 768px) {
+  body.home-page .welcome-nav {
+    grid-template-columns: 48px 1fr 48px !important;
+    column-gap: 6px !important;
+    padding: 10px 12px !important;
+    align-items: center !important;
+  }
+
+  body.home-page .welcome-brand {
+    justify-self: start !important;
+  }
+
+  body.home-page .welcome-brand img {
+    width: 44px !important;
+    height: 44px !important;
+    object-fit: contain !important;
+  }
+
+  body.home-page .welcome-mobile-title {
+    justify-self: center !important;
+    align-self: center !important;
+    text-align: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    font-size: clamp(12px, 3.25vw, 15px) !important;
+    line-height: 1.08 !important;
+    letter-spacing: -0.025em !important;
+    padding: 0 2px !important;
+  }
+
+  body.home-page .welcome-mobile-title span {
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  body.home-page .welcome-menu-toggle {
+    justify-self: end !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  body.home-page .welcome-hero {
+    padding-top: 10px !important;
+    margin-top: 0 !important;
+    gap: 14px !important;
+  }
+
+  body.home-page .welcome-copy {
+    padding-top: 0 !important;
+    margin-top: -8px !important;
+  }
+
+  body.home-page .welcome-copy .subtitle,
+  body.home-page .welcome-hero .subtitle {
+    margin-top: 6px !important;
+    margin-bottom: 8px !important;
+    line-height: 1.45 !important;
+  }
+
+  body.home-page .welcome-title-row {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+  }
+
+  body.home-page .welcome-visual {
+    margin-top: 8px !important;
+  }
+
+  body.home-page .welcome-kpis {
+    margin-top: 12px !important;
+  }
+}
+
+
+/* Rescue-Net mobile header title: slightly bigger */
+@media (max-width: 768px) {
+  body.home-page .welcome-mobile-title {
+    font-size: clamp(13.5px, 3.75vw, 17px) !important;
+    line-height: 1.08 !important;
+    font-weight: 900 !important;
+  }
+}
+
+
+/* Rescue-Net mobile header title: bigger v2 */
+@media (max-width: 768px) {
+  body.home-page .welcome-mobile-title {
+    font-size: clamp(14.5px, 4.1vw, 18px) !important;
+  }
+}
+
+
+/* Rescue-Net WELCOME ONLY final mobile header layout */
+@media (max-width: 768px) {
+  body.home-page .welcome-nav {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 64px !important;
+    padding: 10px 12px !important;
+  }
+
+  body.home-page .welcome-brand {
+    position: relative !important;
+    z-index: 30 !important;
+    flex: 0 0 48px !important;
+    width: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+  }
+
+  body.home-page .welcome-brand img {
+    width: 44px !important;
+    height: 44px !important;
+    object-fit: contain !important;
+  }
+
+  body.home-page .welcome-menu-toggle {
+    position: relative !important;
+    z-index: 30 !important;
+    flex: 0 0 48px !important;
+    width: 48px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+  }
+
+  body.home-page .welcome-mobile-title {
+    display: flex !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+
+    width: min(235px, calc(100vw - 132px)) !important;
+    z-index: 20 !important;
+    pointer-events: none !important;
+
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+
+    color: #ef523d !important;
+    font-size: clamp(14.5px, 4.1vw, 18px) !important;
+    line-height: 1.06 !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.025em !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.home-page .welcome-mobile-title span {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  body.home-page .welcome-title-row,
+  body.home-page .welcome-copy h1 {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
+  }
+
+  body.home-page .welcome-hero {
+    padding-top: 4px !important;
+    margin-top: 0 !important;
+    gap: 12px !important;
+  }
+
+  body.home-page .welcome-copy {
+    margin-top: -10px !important;
+    padding-top: 0 !important;
+  }
+
+  body.home-page .welcome-copy .subtitle,
+  body.home-page .welcome-hero .subtitle {
+    margin-top: 6px !important;
+    margin-bottom: 8px !important;
+    line-height: 1.45 !important;
+  }
+}
+
+
+/* Rescue-Net WELCOME ONLY: repair 3-line mobile menu button */
+@media (max-width: 768px) {
+  body.home-page .welcome-menu-toggle {
+    position: relative !important;
+    z-index: 80 !important;
+
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    flex: 0 0 46px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+
+    padding: 0 !important;
+    margin: 0 0 0 auto !important;
+
+    border: 0 !important;
+    border-radius: 14px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  body.home-page .welcome-menu-toggle span {
+    display: block !important;
+    width: 22px !important;
+    height: 2.5px !important;
+    min-height: 2.5px !important;
+    flex: 0 0 2.5px !important;
+
+    border-radius: 999px !important;
+    background: #263238 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  body.home-page.home-menu-open .welcome-menu-toggle span,
+  body.home-menu-open .welcome-menu-toggle span {
+    transform: none !important;
+  }
+
+  body.home-page .welcome-mobile-title {
+    pointer-events: none !important;
+    z-index: 20 !important;
+  }
+
+  body.home-page .welcome-brand {
+    z-index: 70 !important;
+  }
+
+  body.home-page.home-menu-open .welcome-links,
+  body.home-menu-open .welcome-links {
+    z-index: 60 !important;
+  }
+}
+
+
+/* Rescue-Net internal mobile page title - War Room first */
+.rn-page-mobile-title {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body:not(.home-page) .topbar {
+    position: relative !important;
+  }
+
+  body:not(.home-page) .topbar .rn-page-mobile-title {
+    display: block !important;
+    position: absolute !important;
+    top: 22px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+
+    width: min(180px, calc(100vw - 140px)) !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+
+    color: #ef523d !important;
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.02em !important;
+
+    z-index: 30 !important;
+    pointer-events: none !important;
+  }
+}
+
+
+/* Rollback: hide accidental duplicated War Room mobile title */
+@media (max-width: 768px) {
+  body:not(.home-page) .topbar .rn-page-mobile-title,
+  .rn-page-mobile-title {
+    display: none !important;
+  }
+}
+
+
+/* Rescue-Net War Room mobile: move existing H2 into empty top header space */
+@media (max-width: 768px) {
+  body:has(.topbar #refreshWarRoom) .topbar h2 {
+    position: fixed !important;
+    top: 104px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+
+    width: min(180px, calc(100vw - 140px)) !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+
+    color: #ef523d !important;
+    font-size: 20px !important;
+    line-height: 1.1 !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.02em !important;
+
+    z-index: 80 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+
+  /* rapatkan area topbar karena H2 sudah dipindahkan ke atas */
+  body:has(.topbar #refreshWarRoom) .topbar {
+    padding-top: 14px !important;
+  }
+
+  body:has(.topbar #refreshWarRoom) .topbar h2 + p,
+  body:has(.topbar #refreshWarRoom) .topbar p {
+    margin-top: 0 !important;
+  }
+}
+
+
+/* Rescue-Net War Room mobile title: move much higher */
+@media (max-width: 768px) {
+  body:has(.topbar #refreshWarRoom) .topbar h2 {
+    top: 96px !important;
+    color: #263238 !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
+  }
+}
+
+
+/* Rescue-Net War Room mobile title: higher + bigger */
+@media (max-width: 768px) {
+  body:has(.topbar #refreshWarRoom) .topbar h2 {
+    top: 74px !important;
+    color: #263238 !important;
+    font-size: 24px !important;
+    line-height: 1.05 !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em !important;
+  }
+}
+
+
+/* Rescue-Net War Room mobile title: much higher + bigger */
+@media (max-width: 768px) {
+  body:has(.topbar #refreshWarRoom) .topbar h2 {
+    top: 38px !important;
+    color: #263238 !important;
+    font-size: 30px !important;
+    line-height: 1 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.04em !important;
+  }
+}
+
+
+/* Rescue-Net War Room mobile title final nudge */
+@media (max-width: 768px) {
+  body:has(.topbar #refreshWarRoom) .topbar h2 {
+    top: 20px !important;
+    font-size: 32px !important;
+  }
+}
+
+
+/* Rescue-Net War Room mobile title: turun sedikit */
+@media (max-width: 768px) {
+  body:has(.topbar #refreshWarRoom) .topbar h2 {
+    top: 28px !important;
+    font-size: 32px !important;
+  }
+}
+
+
+/* Rescue-Net internal pages: mobile title in empty header space */
+.rn-page-mobile-title {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body:not(.home-page) .topbar {
+    position: relative !important;
+  }
+
+  body:not(.home-page) .topbar .rn-page-mobile-title {
+    display: block !important;
+    position: fixed !important;
+    top: 28px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+
+    width: min(220px, calc(100vw - 130px)) !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+
+    color: #263238 !important;
+    font-size: 22px !important;
+    line-height: 1.05 !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em !important;
+
+    z-index: 90 !important;
+    pointer-events: none !important;
+  }
+}
+
+
+/* Rescue-Net Organisasi & Posko mobile title: turun sedikit + hide original */
+@media (max-width: 768px) {
+  body:has(.topbar .rn-page-mobile-title) .topbar .rn-page-mobile-title {
+    top: 34px !important;
+  }
+
+  body:has(.topbar .rn-page-mobile-title) .topbar h1,
+  body:has(.topbar .rn-page-mobile-title) .topbar h2,
+  body:has(.topbar .rn-page-mobile-title) .topbar h3 {
+    display: none !important;
+  }
+}
+
+
+/* Rescue-Net internal mobile page title reusable */
+.rn-page-mobile-title {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  body:not(.home-page) .topbar {
+    position: relative !important;
+  }
+
+  body:not(.home-page) .topbar .rn-page-mobile-title {
+    display: block !important;
+    position: fixed !important;
+    top: 34px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+
+    width: min(230px, calc(100vw - 130px)) !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+
+    color: #263238 !important;
+    font-size: 23px !important;
+    line-height: 1.05 !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.03em !important;
+
+    z-index: 90 !important;
+    pointer-events: none !important;
+  }
+
+  body:not(.home-page) .topbar:has(.rn-page-mobile-title) h1,
+  body:not(.home-page) .topbar:has(.rn-page-mobile-title) h2,
+  body:not(.home-page) .topbar:has(.rn-page-mobile-title) h3 {
+    display: none !important;
+  }
+}
+
+
+/* Rescue-Net: hide War Room menu on internal pages only, keep welcome page */
+body:not(.home-page) nav a[href*="war-room.html"],
+body:not(.home-page) .welcome-links a[href*="war-room.html"],
+body:not(.home-page) .topbar a[href*="war-room.html"] {
+  display: none !important;
+}
+
+
+/* Rescue-Net: War Room visible in horizontal scroll nav, hidden only in mobile hamburger menu */
+body:not(.home-page) nav a[href*="war-room.html"] {
+  display: inline-flex !important;
+}
+
+/* hide War Room only when hamburger/mobile menu is opened */
+@media (max-width: 768px) {
+  body:not(.home-page).menu-open nav a[href*="war-room.html"],
+  body:not(.home-page).nav-open nav a[href*="war-room.html"],
+  body:not(.home-page).mobile-menu-open nav a[href*="war-room.html"],
+  body:not(.home-page).rn-menu-open nav a[href*="war-room.html"],
+  body:not(.home-page).rn-mobile-menu-open nav a[href*="war-room.html"],
+  body:not(.home-page) .mobile-menu nav a[href*="war-room.html"],
+  body:not(.home-page) .mobile-nav a[href*="war-room.html"],
+  body:not(.home-page) .drawer-menu a[href*="war-room.html"],
+  body:not(.home-page) .menu-panel a[href*="war-room.html"] {
+    display: none !important;
+  }
+}
+

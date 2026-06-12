@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Sync Console</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=sidebar-height-1">
+  <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
 </head>
 <body>
 <div class="app-shell">
@@ -19,6 +19,7 @@
     <nav>
       <a href="../index.html">Active Disasters</a>
       <a href="war-room.html?event=event-sim-001">War Room</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
       <a href="map.html?event=event-sim-001">Map</a>
       <a href="organisasi-posko.html">Organisasi & Posko</a>
       <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
@@ -46,8 +47,10 @@
 
   <main class="main">
     <header class="topbar">
+    <div class="rn-page-mobile-title">Sync Console</div>
+
       <div>
-        <p class="eyebrow">Offline → Online Simulator</p>
+        <p class="eyebrow">Offline ??? Online Simulator</p>
         <h2>Sync Console</h2>
         <p class="subtitle">Simulasi HP/laptop membuat booking saat offline, lalu sync ke server saat online.</p>
         <p class="subtitle" id="syncStatus">Ready.</p>
@@ -151,12 +154,63 @@
         <div class="event-list" id="auditEvents"></div>
       </aside>
     </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Federation Repository</h3>
+            <p>Daftarkan node partner dan ekspor manifest sync yang sudah membawa warning konsolidasi.</p>
+          </div>
+          <button class="btn" type="button" id="exportFederationManifest">Export Manifest</button>
+        </div>
+
+        <form class="rn-form" id="federationNodeForm">
+          <div class="form-grid">
+            <label>Node Name
+              <input name="node_name" value="BPBD Partner Node">
+            </label>
+            <label>Node Type
+              <select name="node_type">
+                <option value="government">government</option>
+                <option value="ngo">ngo</option>
+                <option value="posko">posko</option>
+                <option value="partner">partner</option>
+              </select>
+            </label>
+            <label>Base URL
+              <input name="base_url" placeholder="https://partner.example/rescue-net">
+            </label>
+            <label>Trust Level
+              <select name="trust_level">
+                <option value="unverified">unverified</option>
+                <option value="trusted">trusted</option>
+                <option value="official">official</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Add Federation Node</button>
+          </div>
+        </form>
+
+        <div class="event-list" id="federationNodes"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Federation Logs</h3>
+        <p class="subtitle">Manifest export/import dicatat tanpa menarik data eksternal otomatis.</p>
+        <div class="event-list" id="federationLogs"></div>
+      </aside>
+    </section>
   </main>
 </div>
 
 <script src="../assets/js/sync-console.js?v=conflict-review-1"></script>
 <script src="../assets/js/session-role.js?v=role-ui-1"></script>
 <script src="../assets/js/rn-sync-engine.js?v=event-sync-1"></script>
+<script src="../assets/js/rn-public-header.js?v=global-header-1"></script>
 <script src="../assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
 </body>
 </html>
+

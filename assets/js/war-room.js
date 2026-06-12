@@ -60,7 +60,7 @@ function renderAlerts(alerts) {
   const top = (alerts || []).slice(0, 8);
 
   el.innerHTML = top.length ? top.map(a => card(
-    `Alert · ${safe(a.type)}`,
+    `Alert ?? ${safe(a.type)}`,
     `${safe(a.message)}<br>Source: ${safe(a.source_id)}`,
     safe(a.severity)
   )).join("") : card("No critical alert", "Belum ada alert kritis dari modul operasional.", "ok");
@@ -90,7 +90,7 @@ function renderStockWatch(ctx) {
   const stock = (ctx.stock_summary || [])
     .slice(0, 6)
     .map(s => card(
-      `${safe(s.item_name)} · ${safe(s.posko_id)}`,
+      `${safe(s.item_name)} ?? ${safe(s.posko_id)}`,
       `Saldo: ${safe(s.current_quantity)} ${safe(s.unit)}`,
       "stock"
     ));
@@ -125,6 +125,42 @@ function renderModuleSummary(ctx) {
   `;
 }
 
+async function renderCommunityReports(eventId) {
+  const listEl = document.getElementById("communityReportsList");
+  const summaryEl = document.getElementById("communityReportSummary");
+  if (!listEl || !summaryEl) return;
+
+  try {
+    const reports = await api(`/community-reports?disaster_event_id=${encodeURIComponent(eventId)}`);
+    const submitted = reports.filter(r => ["submitted", "triage", "needs_verification"].includes(r.status)).length;
+    const verified = reports.filter(r => r.status === "verified").length;
+    const escalated = reports.filter(r => r.status === "escalated").length;
+
+    summaryEl.innerHTML = `
+      <div><span>Submitted</span><b>${submitted}</b></div>
+      <div><span>Verified</span><b>${verified}</b></div>
+      <div><span>Escalated</span><b>${escalated}</b></div>
+      <div><span>Total</span><b>${reports.length}</b></div>
+    `;
+
+    listEl.innerHTML = reports.length ? reports.slice(0, 6).map(r => card(
+      `${safe(r.title)} ?? ${safe(r.status)}`,
+      `${safe(r.location_text)}<br>${safe(r.description)}<br>Trust: ${safe(r.trust_score)} ?? Type: ${safe(r.report_type)}`,
+      safe(r.priority)
+    )).join("") : card(
+      "Belum ada laporan masyarakat",
+      "Community reports akan muncul di sini setelah warga/relawan mengirim Lapor Kondisi.",
+      "empty"
+    );
+  } catch (err) {
+    listEl.innerHTML = card(
+      "Community Reports menunggu rebuild API",
+      "Endpoint /community-reports belum aktif di container live. Jalankan rebuild API setelah upload backend.",
+      "pending"
+    );
+  }
+}
+
 
 
 function formatMoney(n) {
@@ -143,9 +179,9 @@ function renderSpecialPrograms(ctx) {
       const spent = p.budget_spent || 0;
       return card(
         safe(p.program_name),
-        `${safe(p.program_type)} · ${safe(p.status)}<br>` +
-        `Target: Rp ${formatMoney(target)} · Received/Current: Rp ${formatMoney(received)} · Spent: Rp ${formatMoney(spent)}<br>` +
-        `Owner: ${safe(p.owner_id)} · ID: ${safe(p.id)}`,
+        `${safe(p.program_type)} ?? ${safe(p.status)}<br>` +
+        `Target: Rp ${formatMoney(target)} ?? Received/Current: Rp ${formatMoney(received)} ?? Spent: Rp ${formatMoney(spent)}<br>` +
+        `Owner: ${safe(p.owner_id)} ?? ID: ${safe(p.id)}`,
         safe(p.priority || p.status)
       );
     }).join("") : card("Belum ada Program Khusus", "Belum ada program donor/proyek khusus untuk event ini.", "empty");
@@ -157,7 +193,7 @@ function renderSpecialPrograms(ctx) {
       return card(
         safe(u.update_title || u.update_type),
         `Program: ${safe(u.program_id)}<br>` +
-        `Progress: ${safe(u.progress_percent)}% · Spent: Rp ${formatMoney(u.amount_spent)}<br>` +
+        `Progress: ${safe(u.progress_percent)}% ?? Spent: Rp ${formatMoney(u.amount_spent)}<br>` +
         `${safe(u.update_notes)}`,
         safe(u.update_type)
       );
@@ -176,7 +212,7 @@ async function loadWarRoom() {
   const s = ctx.summary || {};
 
   setText("disasterName", safe(disaster.name));
-  setText("disasterMeta", `${safe(disaster.disaster_type)} · ${safe(disaster.location)} · severity ${safe(disaster.severity)} · status ${safe(disaster.status)}`);
+  setText("disasterMeta", `${safe(disaster.disaster_type)} ?? ${safe(disaster.location)} ?? severity ${safe(disaster.severity)} ?? status ${safe(disaster.status)}`);
   setText("eventIdChip", `Event: ${eventId}`);
   setText("severityChip", `Severity: ${safe(disaster.severity)}`);
   setText("statusChip", `Status: ${safe(disaster.status)}`);
@@ -198,6 +234,7 @@ async function loadWarRoom() {
   renderRecommendations(ctx.recommendations || []);
   renderStockWatch(ctx);
   renderModuleSummary(ctx);
+  try { await renderCommunityReports(eventId); } catch (err) { console.error('render community reports failed', err); }
   try { renderSpecialPrograms(ctx); } catch (err) { console.error('render special programs failed', err); }
   try { renderResourceAndRecovery(ctx); } catch (err) { console.error('render resource/recovery failed', err); }
   try { renderSpecialProgramsSafe(ctx); } catch (err) { console.error('render special programs safe failed', err); }
@@ -298,8 +335,8 @@ function renderResourceAndRecovery(ctx) {
     const resources = ctx.resource_profiles || [];
     resourcesEl.innerHTML = resources.length ? resources.slice(0, 6).map(r => card(
       safe(r.resource_name),
-      `Type: ${safe(r.resource_type)} · ${safe(r.category)}<br>` +
-      `Qty: ${safe(r.quantity)} ${safe(r.unit)} · Status: ${safe(r.availability_status)}<br>` +
+      `Type: ${safe(r.resource_type)} ?? ${safe(r.category)}<br>` +
+      `Qty: ${safe(r.quantity)} ${safe(r.unit)} ?? Status: ${safe(r.availability_status)}<br>` +
       `Location: ${safe(r.current_location)}<br>` +
       `PIC: ${safe(r.pic_name)} / ${safe(r.pic_phone)}<br>` +
       `${safe(r.capacity_description)}`,
@@ -311,12 +348,13 @@ function renderResourceAndRecovery(ctx) {
     const projects = ctx.recovery_projects || [];
     recoveryEl.innerHTML = projects.length ? projects.slice(0, 6).map(p => card(
       safe(p.project_name),
-      `${safe(p.project_type)} · ${safe(p.status)} · ${safe(p.priority)}<br>` +
+      `${safe(p.project_type)} ?? ${safe(p.status)} ?? ${safe(p.priority)}<br>` +
       `Progress: ${safe(p.progress_percent)}%<br>` +
-      `Target: Rp ${formatMoney(p.target_amount)} · Current/Spent: Rp ${formatMoney(p.current_amount)}<br>` +
+      `Target: Rp ${formatMoney(p.target_amount)} ?? Current/Spent: Rp ${formatMoney(p.current_amount)}<br>` +
       `Location: ${safe(p.location)}<br>` +
       `PIC: ${safe(p.pic_name)} / ${safe(p.pic_phone)}`,
       safe(p.status)
     )).join("") : card("Belum ada Recovery Project", "Belum ada project pemulihan/rekonstruksi untuk event ini.", "empty");
   }
 }
+

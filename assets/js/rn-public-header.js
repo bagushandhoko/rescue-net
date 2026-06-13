@@ -8,6 +8,7 @@
     { label: "Home", href: `${prefix}index.html` },
     { label: "War Room", href: `${prefix}pages/war-room.html?event=event-sim-001` },
     { label: "Data Konsolidasi", href: `${prefix}pages/data-consolidation.html?event=event-sim-001` },
+    { label: "Download", href: `${prefix}../rescue-net-app/download.html` },
     { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
     { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" }
   ];

@@ -1,4 +1,4 @@
-const RN_API_BASE = "http://192.168.100.32:8092";
+const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 let MEDICAL_CONTEXT_CACHE = null;
 
 function getMedicalPoskoId() {

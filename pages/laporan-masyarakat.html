@@ -76,13 +76,90 @@
             <label>Judul laporan
               <input name="title" placeholder="Contoh: Shelter A kekurangan selimut">
             </label>
-            <label>Lokasi
-              <input name="location_text" placeholder="Desa/Kecamatan/Kabupaten, titik terdekat">
-            </label>
             <label>Jumlah terdampak
               <input name="affected_people_count" type="number" min="0" value="0">
             </label>
           </div>
+
+          <section class="location-input-panel" aria-label="Tentukan lokasi laporan">
+            <div class="panel-header">
+              <div>
+                <h3>Tentukan Lokasi Kejadian / Kebutuhan</h3>
+                <p>Untuk mencegah data ganda atau menyesatkan, laporan tanpa titik koordinat tetap diterima sebagai laporan awal, tetapi belum dipakai untuk konsolidasi.</p>
+              </div>
+            </div>
+
+            <div class="location-methods">
+              <label class="location-method">
+                <input type="radio" name="location_input_method" value="government_area_select" checked>
+                <b>Pilih dari data wilayah pemerintah</b>
+                <span>Cadangan saat GPS/map lambat. Bisa merujuk <a href="https://data.go.id" target="_blank" rel="noopener">data.go.id</a> atau data wilayah resmi lain. Level provinsi/kabupaten dianggap agregat.</span>
+              </label>
+              <label class="location-method">
+                <input type="radio" name="location_input_method" value="gps_current_location">
+                <b>Gunakan lokasi saya sekarang</b>
+                <span>Mengambil GPS perangkat dan akurasi lokasi.</span>
+              </label>
+              <label class="location-method">
+                <input type="radio" name="location_input_method" value="manual_map_pin">
+                <b>Pilih titik di peta</b>
+                <span>Masukkan titik pin lat/lng sementara sampai map picker aktif.</span>
+              </label>
+            </div>
+
+            <div class="form-grid event-form-grid">
+              <label>Provinsi
+                <select name="province_name" data-admin-area-select="province">
+                  <option value="">Pilih provinsi</option>
+                </select>
+                <input type="hidden" name="province_code">
+              </label>
+              <label>Kabupaten/Kota
+                <select name="city_name" data-admin-area-select="city" disabled>
+                  <option value="">Pilih kabupaten/kota</option>
+                </select>
+                <input type="hidden" name="city_code">
+              </label>
+              <label>Kecamatan
+                <select name="district_name" data-admin-area-select="district" disabled>
+                  <option value="">Pilih kecamatan</option>
+                </select>
+                <input type="hidden" name="district_code">
+              </label>
+              <label>Desa/Kelurahan
+                <select name="village_name" data-admin-area-select="village" disabled>
+                  <option value="">Pilih desa/kelurahan</option>
+                </select>
+                <input type="hidden" name="village_code">
+              </label>
+              <label>Level area
+                <select name="area_level">
+                  <option value="village">Desa/Kelurahan</option>
+                  <option value="district">Kecamatan</option>
+                  <option value="city">Kabupaten/Kota</option>
+                  <option value="province">Provinsi</option>
+                  <option value="point">Titik GPS/Map</option>
+                </select>
+              </label>
+              <label>Lokasi ringkas
+                <input name="location_text" placeholder="Desa/Kecamatan/Kabupaten, titik terdekat">
+              </label>
+              <label>Latitude
+                <input name="lat" inputmode="decimal" placeholder="-6.200000">
+              </label>
+              <label>Longitude
+                <input name="lng" inputmode="decimal" placeholder="106.816666">
+              </label>
+              <label>Akurasi meter
+                <input name="location_accuracy_meters" type="number" min="0" placeholder="100">
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="button" data-use-current-location>Gunakan lokasi saya</button>
+              <span class="form-message" data-location-status>Lokasi wilayah pemerintah dipilih. Tambahkan titik GPS/peta jika memungkinkan.</span>
+            </div>
+          </section>
+
           <label>Deskripsi
             <textarea name="description" rows="4" placeholder="Jelaskan kondisi lapangan, siapa terdampak, dan urgensinya."></textarea>
           </label>

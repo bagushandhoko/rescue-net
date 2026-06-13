@@ -43,10 +43,15 @@
           Mencegah angka menyesatkan akibat posko ganda, laporan agregat provinsi,
           atau kebutuhan yang dilaporkan beberapa sumber untuk kelompok penerima yang sama.
         </p>
+        <p class="subtitle">
+          Referensi wilayah resmi dapat memakai portal <a href="https://data.go.id" target="_blank" rel="noopener">data.go.id</a>
+          bila dataset tersedia. Ini opsi, bukan syarat tunggal; GPS, titik maps, atau wilayah resmi sampai desa tetap valid.
+        </p>
         <p class="subtitle" data-consolidation-status>Loading...</p>
       </div>
       <div class="form-actions">
         <button class="btn" type="button" data-check-duplicates>Check Duplicate</button>
+        <button class="btn" type="button" data-check-community-duplicates>Check Community Reports</button>
         <button class="btn primary" type="button" data-rebuild-consolidated>Rebuild Consolidated Needs</button>
       </div>
     </header>
@@ -66,6 +71,16 @@
     </section>
 
     <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Raw Reports Queue</h3>
+            <p>Laporan mentah dari masyarakat dan posko. Level provinsi/kabupaten menjadi konteks agregat, bukan angka final.</p>
+          </div>
+        </div>
+        <div class="event-list" data-raw-report-queue></div>
+      </div>
+
       <div class="panel">
         <div class="panel-header">
           <div>
@@ -99,6 +114,16 @@
         <p class="subtitle">Kelompok penerima membantu membedakan duplikat vs saling melengkapi.</p>
         <div class="event-list" data-beneficiary-groups></div>
       </aside>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Evidence & Camera Rules</h3>
+          <p>Aturan bukti untuk menaikkan data mentah menjadi fakta operasional. Data sensitif tidak ditampilkan publik.</p>
+        </div>
+      </div>
+      <div class="event-list" data-evidence-requirements></div>
     </section>
   </main>
 </div>

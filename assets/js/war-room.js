@@ -18,7 +18,7 @@ function rnMoney(n) {
 }
 
 
-const RN_API_BASE = window.RN_API_BASE || "http://192.168.100.32:8092";
+const RN_API_BASE = window.RN_API_BASE || (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 function getEventId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("event") || params.get("id") || "event-sim-001";

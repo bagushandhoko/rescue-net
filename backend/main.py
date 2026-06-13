@@ -446,6 +446,334 @@ class AidOfferCreate(BaseModel):
     status: str = "available"
 
 
+class UnitConversionCreate(BaseModel):
+    item_name: Optional[str] = None
+    from_unit: str
+    to_unit: str
+    multiplier: float
+    confidence_level: Optional[str] = "operator_defined"
+    source: Optional[str] = "operator"
+    notes: Optional[str] = None
+
+
+class UnitNormalizeRequest(BaseModel):
+    item_name: str
+    quantity: float
+    unit: str
+
+
+def clean_unit(value: Optional[str]):
+    return (value or "").strip().lower().replace("_", " ")
+
+
+def clean_item(value: Optional[str]):
+    return (value or "").strip().lower()
+
+
+def ensure_unit_normalization_tables():
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS stock_movements (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                posko_id TEXT NOT NULL,
+                item_name TEXT NOT NULL,
+                quantity NUMERIC NOT NULL,
+                unit TEXT NOT NULL,
+                movement_type TEXT NOT NULL DEFAULT 'stock_in',
+                movement_direction TEXT NOT NULL DEFAULT 'in',
+                source_type TEXT,
+                source_id TEXT,
+                destination_type TEXT,
+                destination_id TEXT,
+                related_aid_offer_id TEXT,
+                related_distribution_flow_id TEXT,
+                related_logistic_need_id TEXT,
+                notes TEXT,
+                evidence_file_id TEXT,
+                owner_type TEXT DEFAULT 'posko',
+                owner_id TEXT,
+                visibility_scope TEXT DEFAULT 'disaster_ecosystem',
+                access_policy TEXT DEFAULT 'request_required',
+                verification_status TEXT DEFAULT 'self_reported',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                deleted_at TIMESTAMP
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS item_catalog (
+                id TEXT PRIMARY KEY,
+                item_name TEXT NOT NULL UNIQUE,
+                category TEXT,
+                base_unit TEXT,
+                aliases_json JSONB NOT NULL DEFAULT '[]',
+                notes TEXT,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS unit_conversions (
+                id TEXT PRIMARY KEY,
+                item_name TEXT,
+                from_unit TEXT NOT NULL,
+                to_unit TEXT NOT NULL,
+                multiplier NUMERIC NOT NULL,
+                confidence_level TEXT NOT NULL DEFAULT 'operator_defined',
+                source TEXT NOT NULL DEFAULT 'operator',
+                notes TEXT,
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("ALTER TABLE item_catalog ADD COLUMN IF NOT EXISTS category TEXT;")
+            cur.execute("ALTER TABLE item_catalog ADD COLUMN IF NOT EXISTS base_unit TEXT;")
+            cur.execute("ALTER TABLE item_catalog ADD COLUMN IF NOT EXISTS aliases_json JSONB NOT NULL DEFAULT '[]';")
+            cur.execute("ALTER TABLE item_catalog ADD COLUMN IF NOT EXISTS notes TEXT;")
+            cur.execute("ALTER TABLE item_catalog ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW();")
+            cur.execute("ALTER TABLE item_catalog ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW();")
+            cur.execute("ALTER TABLE unit_conversions ADD COLUMN IF NOT EXISTS item_name TEXT;")
+            cur.execute("ALTER TABLE unit_conversions ADD COLUMN IF NOT EXISTS confidence_level TEXT NOT NULL DEFAULT 'operator_defined';")
+            cur.execute("ALTER TABLE unit_conversions ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'operator';")
+            cur.execute("ALTER TABLE unit_conversions ADD COLUMN IF NOT EXISTS notes TEXT;")
+            cur.execute("ALTER TABLE unit_conversions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT NOW();")
+            cur.execute("ALTER TABLE unit_conversions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW();")
+            for table, qty_col in (("stock_movements", "quantity"), ("aid_offers", "quantity"), ("logistic_needs", "quantity_needed")):
+                savepoint = f"unit_alter_{table}"
+                cur.execute(f"SAVEPOINT {savepoint};")
+                try:
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS original_quantity NUMERIC;")
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS original_unit TEXT;")
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS normalized_quantity NUMERIC;")
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS normalized_unit TEXT;")
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS conversion_status TEXT NOT NULL DEFAULT 'not_normalized';")
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS conversion_factor NUMERIC;")
+                    cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS conversion_notes TEXT;")
+                    cur.execute(f"RELEASE SAVEPOINT {savepoint};")
+                except psycopg.errors.InsufficientPrivilege:
+                    cur.execute(f"ROLLBACK TO SAVEPOINT {savepoint};")
+                    cur.execute(f"RELEASE SAVEPOINT {savepoint};")
+                    continue
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_unit_conversions_lookup ON unit_conversions(item_name, from_unit, to_unit);")
+            seed_unit_normalization(cur)
+            conn.commit()
+
+
+def seed_unit_normalization(cur):
+    catalog_rows = [
+        ("cat-air-mineral", "air mineral", "water", "liter", ["air minum", "aqua", "air kemasan"]),
+        ("cat-beras", "beras", "food", "kg", ["rice"]),
+        ("cat-mie-instan", "mie instan", "food", "pcs", ["mi instan", "instant noodle"]),
+        ("cat-nasi-bungkus", "nasi bungkus", "food", "porsi", ["makanan siap saji", "meal box"]),
+        ("cat-selimut", "selimut", "shelter", "pcs", ["blanket"]),
+    ]
+    for item_id, item_name, category, base_unit, aliases in catalog_rows:
+        cur.execute("""
+        INSERT INTO item_catalog (id, item_name, category, base_unit, aliases_json)
+        VALUES (%s,%s,%s,%s,%s)
+        ON CONFLICT (id) DO NOTHING;
+        """, (item_id, item_name, category, base_unit, json.dumps(aliases)))
+
+    conversion_rows = [
+        ("conv-air-dus-botol", "air mineral", "dus", "botol", 24, "common_packaging", "Common bottled water carton; verify brand/size if used for liters."),
+        ("conv-air-dus-liter", "air mineral 600ml", "dus", "liter", 14.4, "brand_size_specific", "24 bottles x 600ml."),
+        ("conv-beras-karung-kg", "beras", "karung", "kg", 25, "operator_default", "Default disaster logistics estimate; adjust when sack size differs."),
+        ("conv-mie-dus-pcs", "mie instan", "dus", "pcs", 40, "common_packaging", "Common carton size; verify brand."),
+        ("conv-nasi-kantong-porsi", "nasi bungkus", "kantong plastik", "porsi", 10, "operator_estimate", "Estimate only; operator should verify actual contents."),
+    ]
+    for conv_id, item_name, from_unit, to_unit, multiplier, confidence, notes in conversion_rows:
+        cur.execute("""
+        INSERT INTO unit_conversions
+        (id, item_name, from_unit, to_unit, multiplier, confidence_level, source, notes)
+        VALUES (%s,%s,%s,%s,%s,%s,'rn_seed',%s)
+        ON CONFLICT (id) DO NOTHING;
+        """, (conv_id, item_name, from_unit, to_unit, multiplier, confidence, notes))
+
+
+def normalize_quantity(cur, item_name: str, quantity: float, unit: str):
+    clean_from = clean_unit(unit)
+    item_key = clean_item(item_name)
+    canonical_units = {"kg", "liter", "l", "pcs", "unit", "paket", "porsi", "botol", "orang", "kk"}
+    if clean_from == "l":
+        clean_from = "liter"
+    if clean_from in canonical_units:
+        return {
+            "original_quantity": quantity,
+            "original_unit": unit,
+            "normalized_quantity": quantity,
+            "normalized_unit": clean_from,
+            "conversion_status": "same_unit",
+            "conversion_factor": 1,
+            "conversion_notes": "Unit already treated as canonical."
+        }
+
+    cur.execute("""
+    SELECT *
+    FROM unit_conversions
+    WHERE from_unit = %s
+      AND (item_name IS NULL OR %s ILIKE ('%%' || item_name || '%%') OR item_name ILIKE ('%%' || %s || '%%'))
+    ORDER BY CASE WHEN item_name IS NULL THEN 1 ELSE 0 END, updated_at DESC
+    LIMIT 1;
+    """, (clean_from, item_key, item_key))
+    rows = rn_rows_to_dicts(cur)
+    if rows:
+        conv = rows[0]
+        factor = float(conv["multiplier"])
+        return {
+            "original_quantity": quantity,
+            "original_unit": unit,
+            "normalized_quantity": quantity * factor,
+            "normalized_unit": conv["to_unit"],
+            "conversion_status": "converted",
+            "conversion_factor": factor,
+            "conversion_notes": f"{conv.get('confidence_level')}: {conv.get('notes') or ''}".strip()
+        }
+    return {
+        "original_quantity": quantity,
+        "original_unit": unit,
+        "normalized_quantity": None,
+        "normalized_unit": None,
+        "conversion_status": "needs_unit_review",
+        "conversion_factor": None,
+        "conversion_notes": f"No trusted conversion for '{unit}' and item '{item_name}'. Keep original value; do not auto-sum."
+    }
+
+
+@app.get("/unit-catalog")
+def list_unit_catalog():
+    try:
+        ensure_unit_normalization_tables()
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT * FROM item_catalog ORDER BY item_name;")
+            items = rows_to_dicts(cur)
+            cur.execute("SELECT * FROM unit_conversions ORDER BY COALESCE(item_name, ''), from_unit, to_unit;")
+            conversions = rows_to_dicts(cur)
+        return {"items": items, "conversions": conversions}
+    except Exception as exc:
+        return {
+            "status": "error",
+            "error_type": exc.__class__.__name__,
+            "detail": str(exc)
+        }
+
+
+@app.post("/unit-conversions")
+def create_unit_conversion(payload: UnitConversionCreate):
+    ensure_unit_normalization_tables()
+    conv_id = "conv-" + uuid.uuid4().hex[:12]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO unit_conversions
+        (id, item_name, from_unit, to_unit, multiplier, confidence_level, source, notes)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            conv_id, clean_item(payload.item_name) or None, clean_unit(payload.from_unit),
+            clean_unit(payload.to_unit), payload.multiplier, payload.confidence_level,
+            payload.source, payload.notes
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+    return {"status": "created", "unit_conversion": row}
+
+
+@app.post("/unit-normalize")
+def unit_normalize(payload: UnitNormalizeRequest):
+    try:
+        ensure_unit_normalization_tables()
+        with get_conn() as conn, conn.cursor() as cur:
+            return normalize_quantity(cur, payload.item_name, payload.quantity, payload.unit)
+    except Exception as exc:
+        return {
+            "status": "error",
+            "error_type": exc.__class__.__name__,
+            "detail": str(exc)
+        }
+
+
+@app.get("/unit-review")
+def unit_review(disaster_event_id: str = "event-sim-001"):
+    ensure_unit_normalization_tables()
+    result = {"logistic_needs": [], "aid_offers": [], "stock_movements": []}
+    with get_conn() as conn, conn.cursor() as cur:
+        def has_columns(table, columns):
+            cur.execute("""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = %s;
+            """, (table,))
+            existing = {row["column_name"] for row in rows_to_dicts(cur)}
+            return all(col in existing for col in columns)
+
+        if has_columns("logistic_needs", {"conversion_status", "conversion_notes"}):
+            cur.execute("""
+            SELECT id, item_name, quantity_needed AS quantity, unit, conversion_status, conversion_notes, created_at
+            FROM logistic_needs
+            WHERE disaster_event_id = %s AND conversion_status = 'needs_unit_review'
+            ORDER BY created_at DESC
+            LIMIT 100;
+            """, (disaster_event_id,))
+            result["logistic_needs"] = rows_to_dicts(cur)
+        if has_columns("aid_offers", {"conversion_status", "conversion_notes"}):
+            cur.execute("""
+            SELECT id, item_name, quantity, unit, conversion_status, conversion_notes, created_at
+            FROM aid_offers
+            WHERE disaster_event_id = %s AND conversion_status = 'needs_unit_review'
+            ORDER BY created_at DESC
+            LIMIT 100;
+            """, (disaster_event_id,))
+            result["aid_offers"] = rows_to_dicts(cur)
+        if has_columns("stock_movements", {"conversion_status", "conversion_notes", "deleted_at"}):
+            cur.execute("""
+            SELECT id, posko_id, item_name, quantity, unit, conversion_status, conversion_notes, created_at
+            FROM stock_movements
+            WHERE disaster_event_id = %s AND conversion_status = 'needs_unit_review' AND deleted_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT 100;
+            """, (disaster_event_id,))
+            result["stock_movements"] = rows_to_dicts(cur)
+    result["total"] = sum(len(v) for v in result.values() if isinstance(v, list))
+    return result
+
+
+@app.get("/central-data/status")
+def central_data_status(disaster_event_id: str = "event-sim-001"):
+    try:
+        ensure_location_resolution_tables()
+        ensure_community_report_tables()
+        ensure_unit_normalization_tables()
+        summary = data_consolidation_summary(disaster_event_id)
+        unit = unit_review(disaster_event_id)
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM logistic_needs WHERE disaster_event_id = %s AND status = 'open';", (disaster_event_id,))
+            open_needs = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(*) FROM aid_offers WHERE disaster_event_id = %s;", (disaster_event_id,))
+            aid_offers = cur.fetchone()[0]
+            cur.execute("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'stock_movements');")
+            stock_exists = cur.fetchone()[0]
+            stock_movements = 0
+            if stock_exists:
+                cur.execute("SELECT COUNT(*) FROM stock_movements WHERE disaster_event_id = %s;", (disaster_event_id,))
+                stock_movements = cur.fetchone()[0]
+        return {
+            "status": "ok",
+            "disaster_event_id": disaster_event_id,
+            "central_data_ready": unit["total"] == 0,
+            "summary": summary,
+            "counts": {
+                "open_logistic_needs": open_needs,
+                "aid_offers": aid_offers,
+                "stock_movements": stock_movements
+            },
+            "unit_review_total": unit["total"],
+            "unit_policy": "Preserve original units. Convert only when a trusted conversion exists. Unknown local packaging stays in review and must not be auto-summed."
+        }
+    except Exception as exc:
+        return {"status": "error", "error_type": exc.__class__.__name__, "detail": str(exc)}
+
+
 class SyncConflictResolve(BaseModel):
     resolution_status: str = "resolved"
     resolved_by: Optional[str] = None
@@ -642,12 +970,16 @@ def get_logistic_needs():
 
 @app.post("/logistic-needs")
 def create_logistic_need(payload: LogisticNeedCreate):
+    ensure_unit_normalization_tables()
     item_id = "need-" + uuid.uuid4().hex[:12]
     with get_conn() as conn, conn.cursor() as cur:
+        norm = normalize_quantity(cur, payload.item_name, payload.quantity_needed, payload.unit)
         cur.execute("""
         INSERT INTO logistic_needs
-        (id, disaster_event_id, node_id, item_name, quantity_needed, unit, priority, needed_before, status)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        (id, disaster_event_id, node_id, item_name, quantity_needed, unit, priority, needed_before, status,
+         original_quantity, original_unit, normalized_quantity, normalized_unit,
+         conversion_status, conversion_factor, conversion_notes)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         RETURNING *;
         """, (
             item_id,
@@ -659,6 +991,13 @@ def create_logistic_need(payload: LogisticNeedCreate):
             payload.priority,
             payload.needed_before,
             payload.status,
+            norm["original_quantity"],
+            norm["original_unit"],
+            norm["normalized_quantity"],
+            norm["normalized_unit"],
+            norm["conversion_status"],
+            norm["conversion_factor"],
+            norm["conversion_notes"],
         ))
         row = rows_to_dicts(cur)[0]
         conn.commit()
@@ -673,12 +1012,16 @@ def get_aid_offers():
 
 @app.post("/aid-offers")
 def create_aid_offer(payload: AidOfferCreate):
+    ensure_unit_normalization_tables()
     item_id = "aid-" + uuid.uuid4().hex[:12]
     with get_conn() as conn, conn.cursor() as cur:
+        norm = normalize_quantity(cur, payload.item_name, payload.quantity, payload.unit)
         cur.execute("""
         INSERT INTO aid_offers
-        (id, disaster_event_id, donor_name, item_name, quantity, unit, pickup_location, ready_at, status)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        (id, disaster_event_id, donor_name, item_name, quantity, unit, pickup_location, ready_at, status,
+         original_quantity, original_unit, normalized_quantity, normalized_unit,
+         conversion_status, conversion_factor, conversion_notes)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         RETURNING *;
         """, (
             item_id,
@@ -690,6 +1033,13 @@ def create_aid_offer(payload: AidOfferCreate):
             payload.pickup_location,
             payload.ready_at,
             payload.status,
+            norm["original_quantity"],
+            norm["original_unit"],
+            norm["normalized_quantity"],
+            norm["normalized_unit"],
+            norm["conversion_status"],
+            norm["conversion_factor"],
+            norm["conversion_notes"],
         ))
         row = rows_to_dicts(cur)[0]
         conn.commit()
@@ -1692,9 +2042,11 @@ def get_stock_movements(posko_id: str):
 
 @app.post("/stock-movements")
 def create_stock_movement(payload: StockMovementCreate):
+    ensure_unit_normalization_tables()
     item_id = "stock-" + uuid.uuid4().hex[:12]
 
     with get_conn() as conn, conn.cursor() as cur:
+        norm = normalize_quantity(cur, payload.item_name, payload.quantity, payload.unit)
         cur.execute("""
         INSERT INTO stock_movements
         (id, disaster_event_id, posko_id, item_name, quantity, unit,
@@ -1702,9 +2054,11 @@ def create_stock_movement(payload: StockMovementCreate):
          destination_type, destination_id, related_aid_offer_id,
          related_distribution_flow_id, related_logistic_need_id,
          notes, evidence_file_id, owner_type, owner_id,
-         visibility_scope, access_policy, verification_status)
+         visibility_scope, access_policy, verification_status,
+         original_quantity, original_unit, normalized_quantity, normalized_unit,
+         conversion_status, conversion_factor, conversion_notes)
         VALUES
-        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         RETURNING *;
         """, (
             item_id,
@@ -1729,6 +2083,13 @@ def create_stock_movement(payload: StockMovementCreate):
             payload.visibility_scope,
             payload.access_policy,
             payload.verification_status,
+            norm["original_quantity"],
+            norm["original_unit"],
+            norm["normalized_quantity"],
+            norm["normalized_unit"],
+            norm["conversion_status"],
+            norm["conversion_factor"],
+            norm["conversion_notes"],
         ))
 
         row = rows_to_dicts(cur)[0]
@@ -4373,6 +4734,19 @@ class CommunityReportCreate(BaseModel):
     location_text: str
     lat: Optional[float] = None
     lng: Optional[float] = None
+    location_accuracy_meters: Optional[float] = None
+    location_input_method: Optional[str] = "no_location"
+    location_source: Optional[str] = None
+    location_status: Optional[str] = None
+    admin_area_id: Optional[str] = None
+    admin_level: Optional[str] = None
+    area_level: Optional[str] = None
+    province_name: Optional[str] = None
+    city_name: Optional[str] = None
+    district_name: Optional[str] = None
+    village_name: Optional[str] = None
+    is_aggregate: Optional[bool] = False
+    consolidation_status: Optional[str] = None
     affected_people_count: Optional[int] = 0
     priority: str = "normal"
     urgent_needs: Optional[str] = None
@@ -4455,6 +4829,14 @@ class DuplicateResolveRequest(BaseModel):
     status: str
     reviewed_by: Optional[str] = "operator-web"
     review_notes: Optional[str] = None
+
+
+class CommunityReportConsolidationUpdate(BaseModel):
+    consolidation_status: str
+    location_status: Optional[str] = None
+    is_aggregate: Optional[bool] = None
+    reviewer_id: Optional[str] = "operator-web"
+    notes: Optional[str] = None
 
 
 class ConsolidatedNeedCreate(BaseModel):
@@ -4851,6 +5233,23 @@ def ensure_community_report_tables():
             """)
             cur.execute("CREATE INDEX IF NOT EXISTS idx_community_reports_event_status ON community_reports(disaster_event_id, status);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_community_reports_type ON community_reports(report_type);")
+            extra_columns = {
+                "location_accuracy_meters": "DOUBLE PRECISION",
+                "location_input_method": "TEXT",
+                "location_source": "TEXT",
+                "location_status": "TEXT",
+                "admin_area_id": "TEXT",
+                "admin_level": "TEXT",
+                "area_level": "TEXT",
+                "province_name": "TEXT",
+                "city_name": "TEXT",
+                "district_name": "TEXT",
+                "village_name": "TEXT",
+                "is_aggregate": "BOOLEAN NOT NULL DEFAULT FALSE",
+                "consolidation_status": "TEXT"
+            }
+            for col, coltype in extra_columns.items():
+                cur.execute(f"ALTER TABLE community_reports ADD COLUMN IF NOT EXISTS {col} {coltype};")
             conn.commit()
 
 
@@ -4875,6 +5274,57 @@ def calculate_community_trust(payload: CommunityReportCreate, status: str = "sub
     return max(0, min(100, score))
 
 
+def derive_community_location_state(payload: CommunityReportCreate):
+    method = payload.location_input_method or "no_location"
+    has_coordinate = payload.lat is not None and payload.lng is not None
+    area_level = payload.area_level or payload.admin_level
+    is_aggregate = bool(payload.is_aggregate)
+
+    if method == "government_area_select":
+        if area_level in {"province", "city", "district"}:
+            return {
+                "location_status": payload.location_status or "admin_area_only",
+                "consolidation_status": payload.consolidation_status or "not_ready_admin_only",
+                "is_aggregate": True,
+                "area_level": area_level or "admin_area"
+            }
+        return {
+            "location_status": payload.location_status or "admin_area_only",
+            "consolidation_status": payload.consolidation_status or "ready_for_review",
+            "is_aggregate": is_aggregate,
+            "area_level": area_level or "village"
+        }
+
+    if has_coordinate:
+        if payload.location_accuracy_meters and payload.location_accuracy_meters > 500:
+            return {
+                "location_status": payload.location_status or "low_accuracy",
+                "consolidation_status": payload.consolidation_status or "needs_location_review",
+                "is_aggregate": is_aggregate,
+                "area_level": area_level or "point"
+            }
+        if payload.village_name or payload.admin_area_id:
+            return {
+                "location_status": payload.location_status or "admin_area_detected",
+                "consolidation_status": payload.consolidation_status or "ready_for_review",
+                "is_aggregate": is_aggregate,
+                "area_level": area_level or "point"
+            }
+        return {
+            "location_status": payload.location_status or "coordinate_only",
+            "consolidation_status": payload.consolidation_status or "needs_location_review",
+            "is_aggregate": is_aggregate,
+            "area_level": area_level or "point"
+        }
+
+    return {
+        "location_status": payload.location_status or "no_coordinate",
+        "consolidation_status": payload.consolidation_status or "not_ready_no_location",
+        "is_aggregate": is_aggregate,
+        "area_level": area_level or "unknown"
+    }
+
+
 def community_report_with_evidence(cur, report_id: str):
     cur.execute("SELECT * FROM community_reports WHERE id = %s AND deleted_at IS NULL;", (report_id,))
     report = rn_dict_row(cur)
@@ -4890,6 +5340,7 @@ def submit_community_report(payload: CommunityReportCreate):
     ensure_community_report_tables()
     report_id = "cr-" + uuid.uuid4().hex[:12]
     trust_score = calculate_community_trust(payload)
+    location_state = derive_community_location_state(payload)
 
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -4897,18 +5348,27 @@ def submit_community_report(payload: CommunityReportCreate):
             INSERT INTO community_reports (
                 id, disaster_event_id, reporter_name, reporter_phone, reporter_role,
                 reporter_verification_level, report_type, title, description,
-                location_text, lat, lng, affected_people_count, priority, urgent_needs,
+                location_text, lat, lng, location_accuracy_meters, location_input_method,
+                location_source, location_status, admin_area_id, admin_level, area_level,
+                province_name, city_name, district_name, village_name, is_aggregate,
+                consolidation_status, affected_people_count, priority, urgent_needs,
                 status, trust_score, consent_to_contact
             )
-            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'submitted',%s,%s)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                    %s,%s,%s,%s,%s,%s,%s,%s,'submitted',%s,%s)
             RETURNING *;
             """, (
                 report_id, payload.disaster_event_id, payload.reporter_name,
                 payload.reporter_phone, payload.reporter_role,
                 payload.reporter_verification_level, payload.report_type,
                 payload.title, payload.description, payload.location_text,
-                payload.lat, payload.lng, payload.affected_people_count,
-                payload.priority, payload.urgent_needs, trust_score,
+                payload.lat, payload.lng, payload.location_accuracy_meters,
+                payload.location_input_method, payload.location_source,
+                location_state["location_status"], payload.admin_area_id,
+                payload.admin_level, location_state["area_level"], payload.province_name,
+                payload.city_name, payload.district_name, payload.village_name,
+                location_state["is_aggregate"], location_state["consolidation_status"],
+                payload.affected_people_count, payload.priority, payload.urgent_needs, trust_score,
                 payload.consent_to_contact
             ))
             report = rn_dict_row(cur)
@@ -5072,6 +5532,61 @@ def convert_community_report(report_id: str, payload: CommunityReportConvert):
     return {"status": "converted", "community_report": updated, "logistic_need": need}
 
 
+@app.patch("/community-reports/{report_id}/consolidation")
+def update_community_report_consolidation(report_id: str, payload: CommunityReportConsolidationUpdate):
+    ensure_community_report_tables()
+    allowed_consolidation = {
+        "not_ready_no_location", "not_ready_admin_only", "ready_for_review",
+        "needs_location_review", "suspected_duplicate", "verified_unique",
+        "merged_to_canonical", "excluded_aggregate"
+    }
+    allowed_location = {
+        "no_coordinate", "coordinate_only", "admin_area_detected", "admin_area_only",
+        "verified_location", "location_conflict", "low_accuracy"
+    }
+    if payload.consolidation_status not in allowed_consolidation:
+        raise HTTPException(status_code=400, detail="Invalid consolidation status")
+    if payload.location_status and payload.location_status not in allowed_location:
+        raise HTTPException(status_code=400, detail="Invalid location status")
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            SELECT consolidation_status, location_status, is_aggregate
+            FROM community_reports
+            WHERE id = %s AND deleted_at IS NULL;
+            """, (report_id,))
+            before = rn_dict_row(cur)
+            if not before:
+                raise HTTPException(status_code=404, detail="Community report not found")
+
+            cur.execute("""
+            UPDATE community_reports
+            SET consolidation_status = %s,
+                location_status = COALESCE(%s, location_status),
+                is_aggregate = COALESCE(%s, is_aggregate),
+                updated_at = NOW()
+            WHERE id = %s
+            RETURNING *;
+            """, (
+                payload.consolidation_status, payload.location_status,
+                payload.is_aggregate, report_id
+            ))
+            report = rn_dict_row(cur)
+            cur.execute("""
+            INSERT INTO community_report_verifications
+            (id, report_id, verifier_id, verifier_role, action, notes, before_status, after_status)
+            VALUES (%s,%s,%s,'data_consolidation','consolidation_update',%s,%s,%s);
+            """, (
+                "crlog-" + uuid.uuid4().hex[:12], report_id, payload.reviewer_id,
+                payload.notes or "Consolidation status updated from Data Konsolidasi",
+                before.get("consolidation_status"), payload.consolidation_status
+            ))
+            conn.commit()
+
+    return {"status": "updated", "community_report": report}
+
+
 def ensure_location_resolution_tables():
     with get_conn() as conn:
         with conn.cursor() as cur:
@@ -5094,6 +5609,18 @@ def ensure_location_resolution_tables():
                 admin_level TEXT NOT NULL DEFAULT 'point',
                 source TEXT DEFAULT 'manual',
                 created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS official_admin_areas (
+                code TEXT PRIMARY KEY,
+                parent_code TEXT,
+                name TEXT NOT NULL,
+                level TEXT NOT NULL,
+                source_name TEXT NOT NULL DEFAULT 'manual_seed',
+                source_url TEXT,
+                is_active BOOLEAN NOT NULL DEFAULT TRUE,
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW()
             );
             """)
@@ -5222,6 +5749,7 @@ def ensure_location_resolution_tables():
             cur.execute("CREATE INDEX IF NOT EXISTS idx_duplicate_candidates_event_status ON duplicate_candidates(disaster_event_id, status);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_consolidated_needs_event_status ON consolidated_needs(disaster_event_id, status);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_operational_areas_event_owner ON operational_areas(disaster_event_id, owner_type, owner_id);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_official_admin_areas_parent ON official_admin_areas(parent_code, level);")
             conn.commit()
 
 
@@ -5234,6 +5762,35 @@ def insert_location_resolution_seed(cur, disaster_event_id: str):
     (id, disaster_event_id, owner_type, owner_id, area_level, province_code, coverage_description, verification_status)
     VALUES (%s,%s,'organization','org-bpbd-demo','province','DEMO-PROV','Demo aggregate province-level operation. Needs child city/district/village breakdown before field distribution.', 'self_reported');
     """, ("oparea-demo-province", disaster_event_id))
+
+
+def seed_official_admin_areas(cur):
+    cur.execute("SELECT code FROM official_admin_areas LIMIT 1;")
+    if cur.fetchone():
+        return
+    seed_rows = [
+        ("11", None, "Aceh", "province"),
+        ("11.06", "11", "Aceh Besar", "city"),
+        ("11.06.10", "11.06", "Lhoong", "district"),
+        ("11.06.10.2001", "11.06.10", "Desa A", "village"),
+        ("11.06.10.2002", "11.06.10", "Desa B", "village"),
+        ("11.06.10.2003", "11.06.10", "Desa C", "village"),
+        ("11.71", "11", "Kota Banda Aceh", "city"),
+        ("11.71.02", "11.71", "Baiturrahman", "district"),
+        ("11.71.02.1001", "11.71.02", "Kampung Baru", "village"),
+        ("11.71.02.1002", "11.71.02", "Peuniti", "village"),
+        ("31", None, "DKI Jakarta", "province"),
+        ("31.71", "31", "Kota Jakarta Pusat", "city"),
+        ("31.71.01", "31.71", "Gambir", "district"),
+        ("31.71.01.1001", "31.71.01", "Gambir", "village")
+    ]
+    for code, parent_code, name, level in seed_rows:
+        cur.execute("""
+        INSERT INTO official_admin_areas
+        (code, parent_code, name, level, source_name, source_url)
+        VALUES (%s,%s,%s,%s,'Rescue-Net demo cache / official admin area reference','https://data.go.id')
+        ON CONFLICT (code) DO NOTHING;
+        """, (code, parent_code, name, level))
 
 
 @app.post("/geo/locations")
@@ -5277,6 +5834,81 @@ def list_geo_locations(admin_level: Optional[str] = None, q: Optional[str] = Non
             cur.execute("SELECT * FROM geo_locations WHERE " + " AND ".join(where) + " ORDER BY updated_at DESC LIMIT 200;", params)
             rows = rn_rows_to_dicts(cur)
     return rows
+
+
+@app.get("/admin-areas/sources")
+def official_admin_area_sources():
+    return {
+        "status": "ok",
+        "mode": "local_cache_first",
+        "sources": [
+            {
+                "name": "Portal Satu Data Indonesia",
+                "url": "https://data.go.id",
+                "usage": "reference/import source when an official wilayah dataset is available"
+            },
+            {
+                "name": "Kode wilayah pemerintah/BPS/Kemendagri",
+                "url": "https://www.bps.go.id",
+                "usage": "reference for administrative code hierarchy"
+            }
+        ],
+        "tree_levels": ["province", "city", "district", "village"],
+        "note": "Rescue-Net stores the hierarchy locally so field reporting remains fast and usable during disasters."
+    }
+
+
+@app.get("/admin-areas/children")
+def list_admin_area_children(parent_code: Optional[str] = None, level: Optional[str] = None, q: Optional[str] = None):
+    ensure_location_resolution_tables()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            seed_official_admin_areas(cur)
+            where = ["is_active = TRUE"]
+            params = []
+            if parent_code:
+                where.append("parent_code = %s")
+                params.append(parent_code)
+            else:
+                where.append("parent_code IS NULL")
+            if level:
+                where.append("level = %s")
+                params.append(level)
+            if q:
+                where.append("name ILIKE %s")
+                params.append(f"%{q}%")
+            cur.execute("""
+            SELECT code, parent_code, name, level, source_name, source_url
+            FROM official_admin_areas
+            WHERE """ + " AND ".join(where) + """
+            ORDER BY name
+            LIMIT 500;
+            """, params)
+            rows = rn_rows_to_dicts(cur)
+            conn.commit()
+    return rows
+
+
+@app.get("/admin-areas/tree")
+def list_admin_area_tree():
+    ensure_location_resolution_tables()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            seed_official_admin_areas(cur)
+            cur.execute("""
+            SELECT code, parent_code, name, level, source_name, source_url
+            FROM official_admin_areas
+            WHERE is_active = TRUE
+            ORDER BY code;
+            """)
+            rows = rn_rows_to_dicts(cur)
+            conn.commit()
+    return {
+        "status": "ok",
+        "source_reference": "https://data.go.id",
+        "tree_levels": ["province", "city", "district", "village"],
+        "areas": rows
+    }
 
 
 @app.post("/operational-areas")
@@ -5368,12 +6000,13 @@ def list_beneficiary_groups(disaster_event_id: Optional[str] = None):
 @app.post("/duplicates/check")
 def check_duplicate_candidates(payload: DuplicateCheckRequest):
     ensure_location_resolution_tables()
+    ensure_community_report_tables()
     created = 0
     candidates = []
 
     with get_conn() as conn:
         with conn.cursor() as cur:
-            if payload.object_type == "need":
+            if payload.object_type in {"need", "all"}:
                 cur.execute("""
                 SELECT id, disaster_event_id, node_id, item_name, unit, priority, status,
                        COALESCE(beneficiary_group_description, '') AS beneficiary_group_description,
@@ -5420,6 +6053,72 @@ def check_duplicate_candidates(payload: DuplicateCheckRequest):
                         """, (cand_id, payload.disaster_event_id, a["id"], b["id"], min(100, score), reason, same_node or same_group))
                         candidates.append(rn_dict_row(cur))
                         created += 1
+            if payload.object_type in {"community_report", "report", "all"}:
+                cur.execute("""
+                SELECT id, disaster_event_id, report_type, title, urgent_needs, affected_people_count,
+                       location_text, reporter_phone, area_level, province_name, city_name,
+                       district_name, village_name, COALESCE(is_aggregate, FALSE) AS is_aggregate,
+                       COALESCE(consolidation_status, '') AS consolidation_status
+                FROM community_reports
+                WHERE disaster_event_id = %s
+                  AND deleted_at IS NULL
+                  AND status NOT IN ('rejected', 'closed')
+                ORDER BY created_at DESC
+                LIMIT 300;
+                """, (payload.disaster_event_id,))
+                reports = rn_rows_to_dicts(cur)
+                for i, a in enumerate(reports):
+                    for b in reports[i + 1:]:
+                        if a["id"] == b["id"]:
+                            continue
+                        same_type = (a.get("report_type") or "").strip().lower() == (b.get("report_type") or "").strip().lower()
+                        same_village = a.get("village_name") and a.get("village_name") == b.get("village_name")
+                        same_district = a.get("district_name") and a.get("district_name") == b.get("district_name")
+                        same_city = a.get("city_name") and a.get("city_name") == b.get("city_name")
+                        same_reporter = a.get("reporter_phone") and a.get("reporter_phone") == b.get("reporter_phone")
+                        aggregate_overlap = bool(a.get("is_aggregate") or b.get("is_aggregate") or a.get("area_level") in {"province", "city", "district"} or b.get("area_level") in {"province", "city", "district"})
+                        need_a = (a.get("urgent_needs") or a.get("title") or "").strip().lower()
+                        need_b = (b.get("urgent_needs") or b.get("title") or "").strip().lower()
+                        same_need_text = need_a and need_b and (need_a in need_b or need_b in need_a)
+                        if not same_type or not (same_village or same_district or same_city or same_reporter or aggregate_overlap or same_need_text):
+                            continue
+                        score = 45
+                        score += 25 if same_village else 0
+                        score += 15 if same_district and not same_village else 0
+                        score += 10 if same_city and not same_district else 0
+                        score += 10 if same_reporter else 0
+                        score += 10 if same_need_text else 0
+                        score += 10 if aggregate_overlap else 0
+                        reason = "same report type"
+                        if same_village:
+                            reason += " + same village"
+                        elif same_district:
+                            reason += " + same district"
+                        elif same_city:
+                            reason += " + same city"
+                        if same_reporter:
+                            reason += " + same reporter contact"
+                        if same_need_text:
+                            reason += " + similar need text"
+                        if aggregate_overlap:
+                            reason += " + aggregate/child area overlap"
+                        cur.execute("""
+                        SELECT id FROM duplicate_candidates
+                        WHERE disaster_event_id = %s AND object_type = 'community_report'
+                          AND ((object_id_a = %s AND object_id_b = %s) OR (object_id_a = %s AND object_id_b = %s))
+                        LIMIT 1;
+                        """, (payload.disaster_event_id, a["id"], b["id"], b["id"], a["id"]))
+                        if cur.fetchone():
+                            continue
+                        cand_id = "dupcand-" + uuid.uuid4().hex[:12]
+                        cur.execute("""
+                        INSERT INTO duplicate_candidates
+                        (id, disaster_event_id, object_type, object_id_a, object_id_b, match_score, match_reason, same_admin_area, status)
+                        VALUES (%s,%s,'community_report',%s,%s,%s,%s,%s,'candidate')
+                        RETURNING *;
+                        """, (cand_id, payload.disaster_event_id, a["id"], b["id"], min(100, score), reason, bool(same_village or same_district or same_city)))
+                        candidates.append(rn_dict_row(cur))
+                        created += 1
             conn.commit()
 
     return {"status": "checked", "created": created, "candidates": candidates}
@@ -5444,6 +6143,60 @@ def list_duplicate_candidates(disaster_event_id: Optional[str] = None, status: O
             cur.execute("SELECT * FROM duplicate_candidates WHERE " + " AND ".join(where) + " ORDER BY match_score DESC, created_at DESC LIMIT 300;", params)
             rows = rn_rows_to_dicts(cur)
     return rows
+
+
+@app.get("/data-consolidation/raw-reports")
+def list_data_consolidation_raw_reports(disaster_event_id: str = "event-sim-001"):
+    ensure_location_resolution_tables()
+    ensure_community_report_tables()
+    rows = []
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            SELECT id, 'community_report' AS source_type, report_type AS data_type,
+                   title, description, location_text, lat, lng,
+                   location_status, consolidation_status, area_level,
+                   province_name, city_name, district_name, village_name,
+                   COALESCE(is_aggregate, FALSE) AS is_aggregate,
+                   affected_people_count AS quantity_value,
+                   'orang terdampak' AS quantity_unit,
+                   urgent_needs AS need_text,
+                   status, trust_score, created_at
+            FROM community_reports
+            WHERE disaster_event_id = %s AND deleted_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT 150;
+            """, (disaster_event_id,))
+            rows.extend(rn_rows_to_dicts(cur))
+            cur.execute("""
+            SELECT id, 'logistic_need' AS source_type, 'logistic' AS data_type,
+                   item_name AS title, beneficiary_group_description AS description,
+                   COALESCE(node_id, '') AS location_text, lat, lng,
+                   CASE
+                     WHEN lat IS NOT NULL AND lng IS NOT NULL THEN 'verified_location'
+                     WHEN admin_level IN ('village', 'point') THEN 'admin_area_detected'
+                     WHEN admin_level IN ('province', 'city', 'district') THEN 'admin_area_only'
+                     ELSE 'no_coordinate'
+                   END AS location_status,
+                   CASE
+                     WHEN COALESCE(is_aggregate, FALSE) THEN 'excluded_aggregate'
+                     WHEN lat IS NOT NULL AND lng IS NOT NULL THEN 'ready_for_review'
+                     WHEN admin_level IN ('village', 'point') THEN 'ready_for_review'
+                     WHEN admin_level IN ('province', 'city', 'district') THEN 'not_ready_admin_only'
+                     ELSE 'not_ready_no_location'
+                   END AS consolidation_status,
+                   admin_level AS area_level,
+                   NULL AS province_name, NULL AS city_name, NULL AS district_name, NULL AS village_name,
+                   COALESCE(is_aggregate, FALSE) AS is_aggregate,
+                   quantity_needed AS quantity_value, unit AS quantity_unit,
+                   item_name AS need_text, status, confidence_score AS trust_score, created_at
+            FROM logistic_needs
+            WHERE disaster_event_id = %s
+            ORDER BY created_at DESC
+            LIMIT 150;
+            """, (disaster_event_id,))
+            rows.extend(rn_rows_to_dicts(cur))
+    return sorted(rows, key=lambda row: str(row.get("created_at") or ""), reverse=True)[:250]
 
 
 @app.post("/duplicates/{candidate_id}/resolve")
@@ -5512,32 +6265,102 @@ def list_consolidated_needs(disaster_event_id: Optional[str] = None, status: Opt
     return rows
 
 
+@app.get("/data-consolidation/evidence-requirements")
+def data_consolidation_evidence_requirements():
+    return {
+        "status": "ok",
+        "source": "Rescue-Net anti-misinformation rules",
+        "official_area_reference": {
+            "label": "Portal Satu Data Indonesia / data.go.id",
+            "url": "https://data.go.id",
+            "usage": "optional_reference",
+            "notes": "Use as a reference for official administrative area datasets when available. GPS, map point, or verified village/admin code remain valid alternatives."
+        },
+        "rules": [
+            {
+                "data_type": "community_report",
+                "camera_required": "recommended",
+                "evidence_required_for_status": ["verified", "converted_to_action", "verified_unique"],
+                "accepted_evidence": ["photo", "video", "GPS/map point", "official village/admin area", "verifier note"],
+                "notes": "Public report may be stored without media, but cannot become final operational fact without location and verification."
+            },
+            {
+                "data_type": "logistic_need",
+                "camera_required": "recommended",
+                "evidence_required_for_status": ["verified", "consolidated", "ready_for_distribution"],
+                "accepted_evidence": ["photo of affected site/posko list", "posko confirmation", "beneficiary group note", "GPS/map point"],
+                "notes": "Use MAX first when duplicate/overlap is possible."
+            },
+            {
+                "data_type": "posko_node",
+                "camera_required": "recommended",
+                "evidence_required_for_status": ["verified_posko", "official_node"],
+                "accepted_evidence": ["photo of posko signage/site", "PIC contact", "organization letter", "GPS/map point"],
+                "notes": "Province/city organization coverage must be broken down into child area/posko before village-level distribution."
+            },
+            {
+                "data_type": "aid_offer",
+                "camera_required": "recommended_for_goods",
+                "evidence_required_for_status": ["ready_for_pickup", "received_verified"],
+                "accepted_evidence": ["photo of goods", "donor contact", "packing list", "pickup/delivery proof"],
+                "notes": "Photo helps avoid fake/duplicate aid offers."
+            },
+            {
+                "data_type": "distribution_flow",
+                "camera_required": "required_at_handover",
+                "evidence_required_for_status": ["pickup_confirmed", "received_verified", "closed"],
+                "accepted_evidence": ["pickup photo", "delivery photo", "recipient signature", "vehicle/driver note", "timestamp/location"],
+                "notes": "Proof of delivery is required before closing a distribution flow."
+            },
+            {
+                "data_type": "medical_case_or_shelter",
+                "camera_required": "restricted_optional",
+                "evidence_required_for_status": ["verified"],
+                "accepted_evidence": ["authorized medical/shelter confirmation", "redacted document", "restricted photo if consented"],
+                "notes": "Privacy first. Do not expose sensitive victim/medical photos publicly."
+            },
+            {
+                "data_type": "search_found",
+                "camera_required": "restricted_optional",
+                "evidence_required_for_status": ["verified_match", "closed"],
+                "accepted_evidence": ["restricted photo", "identity verifier note", "family/official confirmation"],
+                "notes": "Highly sensitive. Evidence must be restricted to authorized verifiers."
+            }
+        ]
+    }
+
+
 @app.post("/consolidated-needs/rebuild")
 def rebuild_consolidated_needs(disaster_event_id: str = "event-sim-001"):
     ensure_location_resolution_tables()
+    ensure_community_report_tables()
+    ensure_unit_normalization_tables()
     # Safe first-pass strategy:
     # group raw needs by event + posko + item + unit; use max/latest-like quantity,
     # not sum, because duplicate/overlap has not been reviewed yet.
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("DELETE FROM consolidated_needs WHERE disaster_event_id = %s AND merge_method = 'auto_max_by_posko_item';", (disaster_event_id,))
+            cur.execute("DELETE FROM consolidated_needs WHERE disaster_event_id = %s AND merge_method = 'auto_max_by_community_area';", (disaster_event_id,))
             cur.execute("""
-            SELECT disaster_event_id, node_id, item_name, unit,
-                   MAX(quantity_needed) AS quantity_final,
-                   MIN(quantity_needed) AS quantity_min,
-                   MAX(quantity_needed) AS quantity_max,
+            SELECT disaster_event_id, node_id, item_name,
+                   COALESCE(normalized_unit, unit) AS unit,
+                   MAX(COALESCE(normalized_quantity, quantity_needed)) AS quantity_final,
+                   MIN(COALESCE(normalized_quantity, quantity_needed)) AS quantity_min,
+                   MAX(COALESCE(normalized_quantity, quantity_needed)) AS quantity_max,
                    COUNT(*) AS source_count,
-                   jsonb_agg(id ORDER BY created_at DESC) AS source_ids_json
+                   jsonb_agg(id ORDER BY created_at DESC) AS source_ids_json,
+                   bool_or(COALESCE(conversion_status, 'not_normalized') = 'needs_unit_review') AS needs_unit_review
             FROM logistic_needs
             WHERE disaster_event_id = %s AND status <> 'closed'
-            GROUP BY disaster_event_id, node_id, item_name, unit
+            GROUP BY disaster_event_id, node_id, item_name, COALESCE(normalized_unit, unit)
             ORDER BY item_name;
             """, (disaster_event_id,))
             groups = rn_rows_to_dicts(cur)
             inserted = []
             for g in groups:
                 need_id = "conneed-" + uuid.uuid4().hex[:12]
-                confidence = "low" if int(g["source_count"] or 0) > 1 else "medium"
+                confidence = "low" if g.get("needs_unit_review") or int(g["source_count"] or 0) > 1 else "medium"
                 cur.execute("""
                 INSERT INTO consolidated_needs (
                     id, disaster_event_id, canonical_posko_id, need_type, item_name,
@@ -5552,6 +6375,43 @@ def rebuild_consolidated_needs(disaster_event_id: str = "event-sim-001"):
                     confidence, g["source_count"], json.dumps(g["source_ids_json"])
                 ))
                 inserted.append(rn_dict_row(cur))
+            cur.execute("""
+            SELECT disaster_event_id,
+                   COALESCE(NULLIF(village_name, ''), NULLIF(district_name, ''), NULLIF(city_name, ''), NULLIF(province_name, ''), 'unknown-area') AS area_key,
+                   COALESCE(NULLIF(urgent_needs, ''), title, report_type) AS item_name,
+                   MAX(COALESCE(affected_people_count, 0)) AS quantity_final,
+                   MIN(COALESCE(affected_people_count, 0)) AS quantity_min,
+                   MAX(COALESCE(affected_people_count, 0)) AS quantity_max,
+                   COUNT(*) AS source_count,
+                   jsonb_agg(id ORDER BY created_at DESC) AS source_ids_json
+            FROM community_reports
+            WHERE disaster_event_id = %s
+              AND deleted_at IS NULL
+              AND status NOT IN ('rejected', 'closed')
+              AND COALESCE(is_aggregate, FALSE) = FALSE
+              AND COALESCE(consolidation_status, '') IN ('ready_for_review', 'verified_unique')
+              AND COALESCE(area_level, '') IN ('village', 'point')
+            GROUP BY 1, 2, 3
+            ORDER BY item_name;
+            """, (disaster_event_id,))
+            community_groups = rn_rows_to_dicts(cur)
+            for g in community_groups:
+                need_id = "conneed-" + uuid.uuid4().hex[:12]
+                confidence = "low" if int(g["source_count"] or 0) > 1 else "medium"
+                cur.execute("""
+                INSERT INTO consolidated_needs (
+                    id, disaster_event_id, canonical_area_id, need_type, item_name,
+                    quantity_final, quantity_unit, quantity_min, quantity_max,
+                    confidence_level, source_count, source_ids_json, merge_method, status
+                )
+                VALUES (%s,%s,%s,'community_signal',%s,%s,'orang terdampak',%s,%s,%s,%s,%s,'auto_max_by_community_area','needs_review')
+                RETURNING *;
+                """, (
+                    need_id, g["disaster_event_id"], g["area_key"], g["item_name"],
+                    g["quantity_final"], g["quantity_min"], g["quantity_max"],
+                    confidence, g["source_count"], json.dumps(g["source_ids_json"])
+                ))
+                inserted.append(rn_dict_row(cur))
             conn.commit()
 
     return {"status": "rebuilt", "inserted": len(inserted), "consolidated_needs": inserted}
@@ -5560,11 +6420,17 @@ def rebuild_consolidated_needs(disaster_event_id: str = "event-sim-001"):
 @app.get("/data-consolidation/summary")
 def data_consolidation_summary(disaster_event_id: str = "event-sim-001"):
     ensure_location_resolution_tables()
+    ensure_community_report_tables()
     with get_conn() as conn:
         with conn.cursor() as cur:
             insert_location_resolution_seed(cur, disaster_event_id)
             cur.execute("SELECT COUNT(*) FROM logistic_needs WHERE disaster_event_id = %s;", (disaster_event_id,))
             raw_needs = cur.fetchone()[0]
+            cur.execute("""
+            SELECT COUNT(*) FROM community_reports
+            WHERE disaster_event_id = %s AND deleted_at IS NULL;
+            """, (disaster_event_id,))
+            raw_community_reports = cur.fetchone()[0]
             cur.execute("SELECT COUNT(*) FROM consolidated_needs WHERE disaster_event_id = %s;", (disaster_event_id,))
             consolidated = cur.fetchone()[0]
             cur.execute("SELECT COUNT(*) FROM duplicate_candidates WHERE disaster_event_id = %s AND status = 'candidate';", (disaster_event_id,))
@@ -5573,19 +6439,39 @@ def data_consolidation_summary(disaster_event_id: str = "event-sim-001"):
             SELECT COUNT(*) FROM logistic_needs
             WHERE disaster_event_id = %s AND (lat IS NULL OR lng IS NULL OR location_accuracy_meters IS NULL);
             """, (disaster_event_id,))
-            location_review_needed = cur.fetchone()[0]
+            logistic_location_review_needed = cur.fetchone()[0]
+            cur.execute("""
+            SELECT COUNT(*) FROM community_reports
+            WHERE disaster_event_id = %s
+              AND deleted_at IS NULL
+              AND COALESCE(consolidation_status, '') IN ('not_ready_no_location', 'not_ready_admin_only', 'needs_location_review');
+            """, (disaster_event_id,))
+            community_location_review_needed = cur.fetchone()[0]
             cur.execute("""
             SELECT COUNT(*) FROM logistic_needs
             WHERE disaster_event_id = %s AND is_aggregate = TRUE;
             """, (disaster_event_id,))
-            aggregate_reports = cur.fetchone()[0]
+            logistic_aggregate_reports = cur.fetchone()[0]
+            cur.execute("""
+            SELECT COUNT(*) FROM community_reports
+            WHERE disaster_event_id = %s
+              AND deleted_at IS NULL
+              AND (COALESCE(is_aggregate, FALSE) = TRUE OR COALESCE(consolidation_status, '') IN ('not_ready_admin_only', 'excluded_aggregate'));
+            """, (disaster_event_id,))
+            community_aggregate_reports = cur.fetchone()[0]
             conn.commit()
     return {
         "raw_logistic_reports": raw_needs,
+        "raw_community_reports": raw_community_reports,
+        "raw_reports_total": raw_needs + raw_community_reports,
         "consolidated_needs": consolidated,
         "duplicate_candidates": duplicate_candidates,
-        "location_review_needed": location_review_needed,
-        "aggregate_reports": aggregate_reports
+        "location_review_needed": logistic_location_review_needed + community_location_review_needed,
+        "logistic_location_review_needed": logistic_location_review_needed,
+        "community_location_review_needed": community_location_review_needed,
+        "aggregate_reports": logistic_aggregate_reports + community_aggregate_reports,
+        "logistic_aggregate_reports": logistic_aggregate_reports,
+        "community_aggregate_reports": community_aggregate_reports
     }
 
 

@@ -1,0 +1,360 @@
+
+function rnCardSafe(title, body, chip = "") {
+  return `
+    <article class="event-card">
+      <div class="event-main">
+        <div>
+          <h4>${title || "n/a"}</h4>
+          <p>${body || ""}</p>
+        </div>
+        <div class="chips">${chip ? `<span class="chip warning">${chip}</span>` : ""}</div>
+      </div>
+    </article>
+  `;
+}
+
+function rnMoney(n) {
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Number(n || 0));
+}
+
+
+const RN_API_BASE = window.RN_API_BASE || "http://192.168.100.32:8092";
+function getEventId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("event") || params.get("id") || "event-sim-001";
+}
+
+function safe(v) {
+  return v === null || v === undefined || v === "" ? "n/a" : v;
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function card(title, body, chip = "") {
+  return `
+    <article class="event-card">
+      <div class="event-main">
+        <div>
+          <h4>${title}</h4>
+          <p>${body}</p>
+        </div>
+        <div class="chips">
+          ${chip ? `<span class="chip warning">${chip}</span>` : ""}
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+async function api(path) {
+  const res = await fetch(RN_API_BASE + path);
+  if (!res.ok) throw new Error(await res.text());
+  return await res.json();
+}
+
+function renderAlerts(alerts) {
+  const el = document.getElementById("alertsList");
+  const top = (alerts || []).slice(0, 8);
+
+  el.innerHTML = top.length ? top.map(a => card(
+    `Alert ?? ${safe(a.type)}`,
+    `${safe(a.message)}<br>Source: ${safe(a.source_id)}`,
+    safe(a.severity)
+  )).join("") : card("No critical alert", "Belum ada alert kritis dari modul operasional.", "ok");
+}
+
+function renderRecommendations(items) {
+  const el = document.getElementById("recommendationsList");
+  el.innerHTML = items && items.length ? items.slice(0, 8).map((r, i) => card(
+    `Recommendation ${i + 1}`,
+    r,
+    "AI"
+  )).join("") : card("No recommendation", "Belum ada rekomendasi otomatis.", "empty");
+}
+
+function renderStockWatch(ctx) {
+  const el = document.getElementById("stockWatch");
+
+  const needs = (ctx.logistic_needs || [])
+    .filter(n => n.status === "open")
+    .slice(0, 6)
+    .map(n => card(
+      `${safe(n.item_name)} masih ${safe(n.priority)}`,
+      `Butuh ${safe(n.quantity_needed)} ${safe(n.unit)}, sebelum ${safe(n.needed_before)}.<br>Source: ${safe(n.id)}`,
+      safe(n.priority)
+    ));
+
+  const stock = (ctx.stock_summary || [])
+    .slice(0, 6)
+    .map(s => card(
+      `${safe(s.item_name)} ?? ${safe(s.posko_id)}`,
+      `Saldo: ${safe(s.current_quantity)} ${safe(s.unit)}`,
+      "stock"
+    ));
+
+  el.innerHTML = [...needs, ...stock].join("") || card("No stock data", "Belum ada data stok/kebutuhan.", "empty");
+}
+
+
+function renderModuleSummary(ctx) {
+  const s = ctx.summary || {};
+  const el = document.getElementById("moduleSummary");
+
+  el.innerHTML = `
+    <div><span>Organizations</span><b>${safe(s.organization_count)}</b></div>
+    <div><span>Volunteers</span><b>${safe(s.volunteer_count)}</b></div>
+    <div><span>Aid Offers</span><b>${safe(s.aid_offer_count)}</b></div>
+    <div><span>Need Pickup</span><b>${safe(s.aid_need_pickup_count)}</b></div>
+    <div><span>Distribution Flows</span><b>${safe(s.distribution_flow_count)}</b></div>
+    <div><span>Resource Requests</span><b>${safe(s.resource_request_count)}</b></div>
+    <div><span>Stock Movements</span><b>${safe(s.stock_movement_count)}</b></div>
+    <div><span>Meal Productions</span><b>${safe(s.meal_production_count)}</b></div>
+    <div><span>Medical Cases</span><b>${safe(s.medical_case_count)}</b></div>
+    <div><span>Medical Supply Uses</span><b>${safe(s.medical_supply_use_count)}</b></div>
+    <div><span>Shelter Occupancy</span><b>${safe(s.shelter_occupancy_count)}</b></div>
+    <div><span>Shelter Needs</span><b>${safe(s.shelter_need_count)}</b></div>
+    <div><span>Missing Reports</span><b>${safe(s.missing_person_count)}</b></div>
+    <div><span>Found Reports</span><b>${safe(s.found_person_count)}</b></div>
+    <div><span>Search Matches</span><b>${safe(s.search_found_match_count)}</b></div>
+    <div><span>Reunited</span><b>${safe(s.reunited_count)}</b></div>
+    <div><span>Special Programs</span><b>${safe(s.donor_program_count)}</b></div>
+    <div><span>Program Updates</span><b>${safe(s.donor_program_update_count)}</b></div>
+  `;
+}
+
+async function renderCommunityReports(eventId) {
+  const listEl = document.getElementById("communityReportsList");
+  const summaryEl = document.getElementById("communityReportSummary");
+  if (!listEl || !summaryEl) return;
+
+  try {
+    const reports = await api(`/community-reports?disaster_event_id=${encodeURIComponent(eventId)}`);
+    const submitted = reports.filter(r => ["submitted", "triage", "needs_verification"].includes(r.status)).length;
+    const verified = reports.filter(r => r.status === "verified").length;
+    const escalated = reports.filter(r => r.status === "escalated").length;
+
+    summaryEl.innerHTML = `
+      <div><span>Submitted</span><b>${submitted}</b></div>
+      <div><span>Verified</span><b>${verified}</b></div>
+      <div><span>Escalated</span><b>${escalated}</b></div>
+      <div><span>Total</span><b>${reports.length}</b></div>
+    `;
+
+    listEl.innerHTML = reports.length ? reports.slice(0, 6).map(r => card(
+      `${safe(r.title)} ?? ${safe(r.status)}`,
+      `${safe(r.location_text)}<br>${safe(r.description)}<br>Trust: ${safe(r.trust_score)} ?? Type: ${safe(r.report_type)}`,
+      safe(r.priority)
+    )).join("") : card(
+      "Belum ada laporan masyarakat",
+      "Community reports akan muncul di sini setelah warga/relawan mengirim Lapor Kondisi.",
+      "empty"
+    );
+  } catch (err) {
+    listEl.innerHTML = card(
+      "Community Reports menunggu rebuild API",
+      "Endpoint /community-reports belum aktif di container live. Jalankan rebuild API setelah upload backend.",
+      "pending"
+    );
+  }
+}
+
+
+
+function formatMoney(n) {
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(Number(n || 0));
+}
+
+function renderSpecialPrograms(ctx) {
+  const programsEl = document.getElementById("specialProgramsList");
+  const updatesEl = document.getElementById("specialProgramUpdatesList");
+
+  if (programsEl) {
+    const programs = ctx.donor_programs || [];
+    programsEl.innerHTML = programs.length ? programs.slice(0, 6).map(p => {
+      const target = p.budget_target || p.target_amount || 0;
+      const received = p.budget_received || p.current_amount || 0;
+      const spent = p.budget_spent || 0;
+      return card(
+        safe(p.program_name),
+        `${safe(p.program_type)} ?? ${safe(p.status)}<br>` +
+        `Target: Rp ${formatMoney(target)} ?? Received/Current: Rp ${formatMoney(received)} ?? Spent: Rp ${formatMoney(spent)}<br>` +
+        `Owner: ${safe(p.owner_id)} ?? ID: ${safe(p.id)}`,
+        safe(p.priority || p.status)
+      );
+    }).join("") : card("Belum ada Program Khusus", "Belum ada program donor/proyek khusus untuk event ini.", "empty");
+  }
+
+  if (updatesEl) {
+    const updates = ctx.donor_program_updates || [];
+    updatesEl.innerHTML = updates.length ? updates.slice(0, 6).map(u => {
+      return card(
+        safe(u.update_title || u.update_type),
+        `Program: ${safe(u.program_id)}<br>` +
+        `Progress: ${safe(u.progress_percent)}% ?? Spent: Rp ${formatMoney(u.amount_spent)}<br>` +
+        `${safe(u.update_notes)}`,
+        safe(u.update_type)
+      );
+    }).join("") : card("Belum ada update", "Belum ada progress update program.", "empty");
+  }
+}
+
+
+async function loadWarRoom() {
+  setText("warRoomStatus", "Loading live AI context...");
+
+  const eventId = getEventId();
+  const ctx = await api(`/ai/context/${eventId}`);
+  await attachResourceRecovery(ctx, eventId);
+  const disaster = ctx.disaster || {};
+  const s = ctx.summary || {};
+
+  setText("disasterName", safe(disaster.name));
+  setText("disasterMeta", `${safe(disaster.disaster_type)} ?? ${safe(disaster.location)} ?? severity ${safe(disaster.severity)} ?? status ${safe(disaster.status)}`);
+  setText("eventIdChip", `Event: ${eventId}`);
+  setText("severityChip", `Severity: ${safe(disaster.severity)}`);
+  setText("statusChip", `Status: ${safe(disaster.status)}`);
+
+  setText("kpiAlerts", (ctx.alerts || []).length);
+  setText("kpiPosko", safe(s.posko_count));
+  setText("kpiNeeds", Number(s.open_logistic_need_count || 0) + Number(s.shelter_need_count || 0));
+  setText("kpiStock", safe(s.stock_item_count));
+  setText("kpiMeals", safe(s.meal_production_count));
+  setText("kpiMedical", safe(s.medical_case_count));
+  setText("kpiShelter", safe(s.shelter_occupancy_count));
+  setText("kpiMissing", safe(s.missing_person_count));
+
+  setText("clockNow", new Date().toLocaleTimeString("id-ID", {hour: "2-digit", minute: "2-digit"}));
+  setText("generatedAt", `Last data refresh: ${safe(ctx.generated_at)}`);
+  setText("warRoomStatus", `Loaded: ${safe(ctx.generated_at)}`);
+
+  renderAlerts(ctx.alerts || []);
+  renderRecommendations(ctx.recommendations || []);
+  renderStockWatch(ctx);
+  renderModuleSummary(ctx);
+  try { await renderCommunityReports(eventId); } catch (err) { console.error('render community reports failed', err); }
+  try { renderSpecialPrograms(ctx); } catch (err) { console.error('render special programs failed', err); }
+  try { renderResourceAndRecovery(ctx); } catch (err) { console.error('render resource/recovery failed', err); }
+  try { renderSpecialProgramsSafe(ctx); } catch (err) { console.error('render special programs safe failed', err); }
+}
+
+
+
+function fixProgramLinks() {
+  const eventId = getEventId();
+  document.querySelectorAll('a[href^="program-khusus.html"]').forEach(a => {
+    a.href = `program-khusus.html?event=${encodeURIComponent(eventId)}`;
+  });
+}
+
+
+function setupQuickBookingForm() {
+  const form = document.getElementById("quickBookingForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    if (!window.RNResourceBooking) {
+      setText("warRoomStatus", "RNResourceBooking not loaded.");
+      return;
+    }
+
+    const payload = {
+      disaster_event_id: getEventId(),
+      resource_id: form.resource_id.value.trim(),
+      requested_by_type: form.requested_by_type.value.trim(),
+      requested_by_id: form.requested_by_id.value.trim(),
+      request_reason: form.request_reason.value.trim(),
+      requested_quantity: Number(form.requested_quantity.value || 1),
+      requested_time: form.requested_time.value.trim()
+    };
+
+    try {
+      await window.RNResourceBooking.createResourceRequest(payload);
+
+      if (window.RNSync) {
+        await window.RNSync.triggerSync("booking-form");
+      }
+
+      await loadWarRoom();
+    } catch (err) {
+      setText("warRoomStatus", err.message);
+    }
+  });
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  fixProgramLinks();
+  setupQuickBookingForm();
+  const btn = document.getElementById("refreshWarRoom");
+  if (btn) btn.addEventListener("click", () => loadWarRoom().catch(err => setText("warRoomStatus", err.message)));
+
+  loadWarRoom().catch(err => setText("warRoomStatus", err.message));
+});
+
+
+
+async function attachResourceRecovery(ctx, eventId) {
+  try {
+    const [resources, projects, updates] = await Promise.all([
+      api(`/resource-profiles?disaster_event_id=${encodeURIComponent(eventId)}`),
+      api(`/recovery-projects?disaster_event_id=${encodeURIComponent(eventId)}`),
+      api(`/recovery-project-updates?disaster_event_id=${encodeURIComponent(eventId)}`)
+    ]);
+
+    ctx.resource_profiles = Array.isArray(resources) ? resources : [];
+    ctx.recovery_projects = Array.isArray(projects) ? projects : [];
+    ctx.recovery_project_updates = Array.isArray(updates) ? updates : [];
+    ctx.summary = ctx.summary || {};
+    ctx.summary.resource_profile_count = ctx.resource_profiles.length;
+    ctx.summary.recovery_project_count = ctx.recovery_projects.length;
+    ctx.summary.recovery_project_update_count = ctx.recovery_project_updates.length;
+  } catch (err) {
+    console.error("attachResourceRecovery failed", err);
+    ctx.resource_profiles = ctx.resource_profiles || [];
+    ctx.recovery_projects = ctx.recovery_projects || [];
+    ctx.recovery_project_updates = ctx.recovery_project_updates || [];
+    ctx.summary = ctx.summary || {};
+    ctx.summary.resource_profile_count = ctx.summary.resource_profile_count || 0;
+    ctx.summary.recovery_project_count = ctx.summary.recovery_project_count || 0;
+    ctx.summary.recovery_project_update_count = ctx.summary.recovery_project_update_count || 0;
+  }
+
+  return ctx;
+}
+
+function renderResourceAndRecovery(ctx) {
+  const resourcesEl = document.getElementById("warRoomResourceProfiles");
+  const recoveryEl = document.getElementById("warRoomRecoveryProjects");
+
+  if (resourcesEl) {
+    const resources = ctx.resource_profiles || [];
+    resourcesEl.innerHTML = resources.length ? resources.slice(0, 6).map(r => card(
+      safe(r.resource_name),
+      `Type: ${safe(r.resource_type)} ?? ${safe(r.category)}<br>` +
+      `Qty: ${safe(r.quantity)} ${safe(r.unit)} ?? Status: ${safe(r.availability_status)}<br>` +
+      `Location: ${safe(r.current_location)}<br>` +
+      `PIC: ${safe(r.pic_name)} / ${safe(r.pic_phone)}<br>` +
+      `${safe(r.capacity_description)}`,
+      safe(r.availability_status)
+    )).join("") : card("Belum ada Profil Sumber Daya", "Belum ada aset/kapasitas operasional yang tercatat untuk event ini.", "empty");
+  }
+
+  if (recoveryEl) {
+    const projects = ctx.recovery_projects || [];
+    recoveryEl.innerHTML = projects.length ? projects.slice(0, 6).map(p => card(
+      safe(p.project_name),
+      `${safe(p.project_type)} ?? ${safe(p.status)} ?? ${safe(p.priority)}<br>` +
+      `Progress: ${safe(p.progress_percent)}%<br>` +
+      `Target: Rp ${formatMoney(p.target_amount)} ?? Current/Spent: Rp ${formatMoney(p.current_amount)}<br>` +
+      `Location: ${safe(p.location)}<br>` +
+      `PIC: ${safe(p.pic_name)} / ${safe(p.pic_phone)}`,
+      safe(p.status)
+    )).join("") : card("Belum ada Recovery Project", "Belum ada project pemulihan/rekonstruksi untuk event ini.", "empty");
+  }
+}
+

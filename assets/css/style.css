@@ -2842,6 +2842,71 @@ body.public-report-page {
   font-size: 13px;
 }
 
+.location-input-panel {
+  display: grid;
+  gap: 16px;
+  margin: 18px 0;
+  padding: 18px;
+  border: 1px solid rgba(54, 143, 130, .18);
+  border-radius: 18px;
+  background: rgba(248, 253, 250, .78);
+}
+
+.location-input-panel .panel-header {
+  margin: 0;
+}
+
+.location-input-panel h3 {
+  margin: 0;
+}
+
+.location-input-panel p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.location-methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.location-method {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  align-content: start;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(54, 143, 130, .18);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .74);
+}
+
+.location-method input {
+  width: auto;
+  margin-top: 3px;
+}
+
+.location-method b,
+.location-method span {
+  grid-column: 2;
+}
+
+.location-method span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.chip.success {
+  color: #176f5f;
+  border-color: rgba(54,143,130,.26);
+  background: rgba(231,248,240,.90);
+}
+
 .public-report-steps {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2895,6 +2960,19 @@ body.public-report-page {
 
   .public-report-panel {
     padding: 16px;
+  }
+
+  .location-input-panel {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .location-methods {
+    grid-template-columns: 1fr;
+  }
+
+  .location-method {
+    width: 100%;
   }
 
   .public-report-card {

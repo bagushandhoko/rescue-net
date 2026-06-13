@@ -76,7 +76,7 @@
 
   function shouldAttachAuth(input) {
     const url = typeof input === "string" ? input : (input && input.url) || "";
-    return url.includes(":8092") || url.startsWith("/api/") || url.startsWith("/auth/");
+    return url.includes(":8092") || url.includes("/rescue-net-api") || url.startsWith("/api/") || url.startsWith("/auth/");
   }
 
   function installAuthenticatedFetch() {

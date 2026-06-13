@@ -1,4 +1,4 @@
-const RN_API_BASE = "http://192.168.100.32:8092";
+const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 
 async function rnFetch(path, options = {}) {
   const res = await fetch(RN_API_BASE + path, {
@@ -22,18 +22,137 @@ function trustLabel(score) {
   return "low confidence";
 }
 
+function safeText(value, fallback = "-") {
+  return value === null || value === undefined || value === "" ? fallback : value;
+}
+
+function numberOrNull(value) {
+  if (value === null || value === undefined || String(value).trim() === "") return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function selectedLocationMethod(form) {
+  return form.querySelector("input[name='location_input_method']:checked")?.value || "government_area_select";
+}
+
+function selectText(select) {
+  return select?.selectedOptions?.[0]?.textContent?.trim() || "";
+}
+
+function selectCode(select) {
+  return select?.selectedOptions?.[0]?.dataset?.code || "";
+}
+
+function buildLocationText(form) {
+  const manual = form.location_text.value.trim();
+  if (manual) return manual;
+  return [
+    selectText(form.village_name),
+    selectText(form.district_name),
+    selectText(form.city_name),
+    selectText(form.province_name)
+  ].filter(Boolean).join(", ");
+}
+
+async function loadAdminAreaChildren(parentCode = "", level = "") {
+  const query = new URLSearchParams();
+  if (parentCode) query.set("parent_code", parentCode);
+  if (level) query.set("level", level);
+  return rnFetch(`/admin-areas/children?${query.toString()}`);
+}
+
+function fillAdminSelect(select, rows, placeholder) {
+  if (!select) return;
+  select.innerHTML = `<option value="">${placeholder}</option>` + rows.map((row) => (
+    `<option value="${row.name}" data-code="${row.code}" data-level="${row.level}">${row.name}</option>`
+  )).join("");
+  select.disabled = false;
+}
+
+function resetAdminSelect(select, placeholder) {
+  if (!select) return;
+  select.innerHTML = `<option value="">${placeholder}</option>`;
+  select.disabled = true;
+}
+
+function setupAdminAreaTree(form, updateLocationMessage) {
+  const province = form.querySelector("[data-admin-area-select='province']");
+  const city = form.querySelector("[data-admin-area-select='city']");
+  const district = form.querySelector("[data-admin-area-select='district']");
+  const village = form.querySelector("[data-admin-area-select='village']");
+  if (!province || !city || !district || !village) return;
+
+  loadAdminAreaChildren("", "province").then((rows) => {
+    fillAdminSelect(province, rows, "Pilih provinsi");
+  }).catch(() => {
+    province.innerHTML = '<option value="">Data wilayah belum tersedia</option>';
+  });
+
+  province.addEventListener("change", async () => {
+    resetAdminSelect(city, "Pilih kabupaten/kota");
+    resetAdminSelect(district, "Pilih kecamatan");
+    resetAdminSelect(village, "Pilih desa/kelurahan");
+    form.province_code.value = selectCode(province);
+    form.city_code.value = "";
+    form.district_code.value = "";
+    form.village_code.value = "";
+    if (form.province_code.value) {
+      fillAdminSelect(city, await loadAdminAreaChildren(form.province_code.value, "city"), "Pilih kabupaten/kota");
+      form.area_level.value = "province";
+    }
+    updateLocationMessage();
+  });
+
+  city.addEventListener("change", async () => {
+    resetAdminSelect(district, "Pilih kecamatan");
+    resetAdminSelect(village, "Pilih desa/kelurahan");
+    form.city_code.value = selectCode(city);
+    form.district_code.value = "";
+    form.village_code.value = "";
+    if (form.city_code.value) {
+      fillAdminSelect(district, await loadAdminAreaChildren(form.city_code.value, "district"), "Pilih kecamatan");
+      form.area_level.value = "city";
+    }
+    updateLocationMessage();
+  });
+
+  district.addEventListener("change", async () => {
+    resetAdminSelect(village, "Pilih desa/kelurahan");
+    form.district_code.value = selectCode(district);
+    form.village_code.value = "";
+    if (form.district_code.value) {
+      fillAdminSelect(village, await loadAdminAreaChildren(form.district_code.value, "village"), "Pilih desa/kelurahan");
+      form.area_level.value = "district";
+    }
+    updateLocationMessage();
+  });
+
+  village.addEventListener("change", () => {
+    form.village_code.value = selectCode(village);
+    if (form.village_code.value) {
+      form.area_level.value = "village";
+    }
+    updateLocationMessage();
+  });
+}
+
 function reportCard(report) {
+  const locationStatus = report.location_status || "no_coordinate";
+  const consolidationStatus = report.consolidation_status || "not_ready_no_location";
   return `
     <article class="event-card community-report-item">
       <div class="event-main">
         <div>
-          <h4>${report.title}</h4>
-          <p>${report.location_text} ?? <b>${report.report_type}</b> ?? ${report.status}</p>
-          <p>${report.description}</p>
-          <small>${report.reporter_role} ?? ${trustLabel(report.trust_score)} (${report.trust_score})</small>
+          <h4>${safeText(report.title)}</h4>
+          <p>${safeText(report.location_text)} | <b>${safeText(report.report_type)}</b> | ${safeText(report.status)}</p>
+          <p>${safeText(report.description)}</p>
+          <small>${safeText(report.reporter_role)} | ${trustLabel(report.trust_score || 0)} (${report.trust_score || 0})</small>
         </div>
         <div class="chips">
           <span class="chip ${report.priority === "critical" ? "danger" : report.priority === "urgent" ? "warning" : "neutral"}">${report.priority}</span>
+          <span class="chip ${locationStatus === "verified_location" || locationStatus === "admin_area_detected" ? "success" : "warning"}">${locationStatus}</span>
+          <span class="chip ${consolidationStatus === "ready_for_review" || consolidationStatus === "verified_unique" ? "success" : "neutral"}">${consolidationStatus}</span>
           <span class="chip neutral">${report.id}</span>
         </div>
       </div>
@@ -66,10 +185,66 @@ async function loadCommunityReports() {
 function setupCommunityReportForm() {
   const form = document.querySelector("[data-community-report-form]");
   const msg = document.querySelector("[data-community-report-message]");
+  const locationMsg = document.querySelector("[data-location-status]");
+  const currentLocationButton = document.querySelector("[data-use-current-location]");
   if (!form) return;
+
+  function updateLocationMessage() {
+    if (!locationMsg) return;
+    const method = selectedLocationMethod(form);
+    const lat = numberOrNull(form.lat.value);
+    const lng = numberOrNull(form.lng.value);
+    const areaLevel = form.area_level.value;
+    if (method === "gps_current_location") {
+      locationMsg.textContent = lat !== null && lng !== null
+        ? "Titik GPS sudah terisi. Laporan siap masuk antrian review lokasi."
+        : "Tekan Gunakan lokasi saya agar koordinat perangkat terisi.";
+      return;
+    }
+    if (method === "manual_map_pin") {
+      locationMsg.textContent = lat !== null && lng !== null
+        ? "Titik pin manual sudah terisi. Verifikator tetap perlu cek area administrasi."
+        : "Masukkan latitude dan longitude dari titik peta.";
+      return;
+    }
+    locationMsg.textContent = ["province", "city", "district"].includes(areaLevel)
+      ? "Area masih luas. Laporan diterima, tetapi belum dipakai untuk konsolidasi sampai desa/titik jelas."
+      : "Wilayah pemerintah dipilih. Tambahkan titik GPS/peta jika memungkinkan.";
+  }
+
+  form.querySelectorAll("input[name='location_input_method'], input[name='lat'], input[name='lng'], select[name='area_level']").forEach((field) => {
+    field.addEventListener("change", updateLocationMessage);
+    field.addEventListener("input", updateLocationMessage);
+  });
+  setupAdminAreaTree(form, updateLocationMessage);
+
+  currentLocationButton?.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      if (locationMsg) locationMsg.textContent = "Browser tidak mendukung geolocation. Masukkan titik lat/lng manual.";
+      return;
+    }
+    if (locationMsg) locationMsg.textContent = "Mengambil lokasi perangkat...";
+    navigator.geolocation.getCurrentPosition((pos) => {
+      form.querySelector("input[name='location_input_method'][value='gps_current_location']").checked = true;
+      form.lat.value = pos.coords.latitude.toFixed(6);
+      form.lng.value = pos.coords.longitude.toFixed(6);
+      form.location_accuracy_meters.value = Math.round(pos.coords.accuracy || 0);
+      form.area_level.value = "point";
+      updateLocationMessage();
+    }, () => {
+      if (locationMsg) locationMsg.textContent = "Lokasi perangkat gagal diambil. Masukkan lat/lng manual atau pilih wilayah pemerintah.";
+    }, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    });
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const method = selectedLocationMethod(form);
+    const lat = numberOrNull(form.lat.value);
+    const lng = numberOrNull(form.lng.value);
     const payload = {
       disaster_event_id: "event-sim-001",
       reporter_name: form.reporter_name.value.trim(),
@@ -79,7 +254,19 @@ function setupCommunityReportForm() {
       report_type: form.report_type.value,
       title: form.title.value.trim(),
       description: form.description.value.trim(),
-      location_text: form.location_text.value.trim(),
+      location_text: buildLocationText(form),
+      lat,
+      lng,
+      location_accuracy_meters: numberOrNull(form.location_accuracy_meters.value),
+      location_input_method: method,
+      location_source: method === "gps_current_location" ? "browser_geolocation" : method,
+      admin_level: form.area_level.value,
+      area_level: form.area_level.value,
+      admin_area_id: form.village_code.value || form.district_code.value || form.city_code.value || form.province_code.value || "",
+      province_name: selectText(form.province_name),
+      city_name: selectText(form.city_name),
+      district_name: selectText(form.district_name),
+      village_name: selectText(form.village_name),
       affected_people_count: Number(form.affected_people_count.value || 0),
       priority: form.priority.value,
       urgent_needs: form.urgent_needs.value.trim(),
@@ -89,7 +276,12 @@ function setupCommunityReportForm() {
     };
 
     if (!payload.reporter_name || !payload.title || !payload.description || !payload.location_text) {
-      if (msg) msg.textContent = "Lengkapi nama, judul, lokasi, dan deskripsi laporan.";
+      if (msg) msg.textContent = "Lengkapi nama, judul, lokasi/wilayah, dan deskripsi laporan.";
+      return;
+    }
+
+    if (method === "manual_map_pin" && (lat === null || lng === null)) {
+      if (msg) msg.textContent = "Untuk pilihan titik peta, latitude dan longitude harus diisi.";
       return;
     }
 
@@ -100,12 +292,16 @@ function setupCommunityReportForm() {
         body: JSON.stringify(payload)
       });
       form.reset();
-      if (msg) msg.textContent = `Laporan masuk: ${data.community_report.id}. Status awal submitted/belum terverifikasi.`;
+      form.querySelector("input[name='location_input_method'][value='government_area_select']").checked = true;
+      updateLocationMessage();
+      if (msg) msg.textContent = `Laporan masuk: ${data.community_report.id}. Lokasi: ${data.community_report.location_status || "no_coordinate"}, konsolidasi: ${data.community_report.consolidation_status || "not_ready_no_location"}.`;
       await loadCommunityReports();
     } catch (err) {
       if (msg) msg.textContent = err.message;
     }
   });
+
+  updateLocationMessage();
 }
 
 function setupCommunityReportActions() {

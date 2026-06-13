@@ -1,4 +1,4 @@
-const RN_SYNC_API_BASE = window.RN_API_BASE || "http://192.168.100.32:8092";
+const RN_SYNC_API_BASE = window.RN_API_BASE || (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 const RN_SYNC_QUEUE_KEY = "rn_sync_pending_events_v1";
 const RN_SYNC_DEVICE_KEY = "rn_device_id_v1";
 

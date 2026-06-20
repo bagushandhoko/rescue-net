@@ -1,527 +1,319 @@
-RESCUE-NET HANDOFF LATEST
-Updated: 2026-06-10
-Project path: /volume1/web/rescue-net
-Runtime API path: /volume1/docker/rescue-net-api
-Runtime API port: 8092
-Database: PostgreSQL container postgres-main, database rescuenet_db
-Public/local web path: /volume1/web/rescue-net
+RESCUE-NET HANDOFF FOR NEXT CODEX
+Updated: 2026-06-20
+
+READ THIS FILE FIRST. DO NOT AUDIT RESCUE-NET FROM ZERO.
 
 ============================================================
-1. CURRENT STATUS
+1. OBJECTIVE AND BOUNDARY
 ============================================================
 
-Rescue-Net prototype is active and running.
+Rescue-Net is an open disaster coordination system joining government command,
+community reports, poskos, organizations, volunteers, donors, logistics,
+medical posts, shelters, transport, evidence, verification, and recovery.
 
-Main live URLs:
-- Local welcome:
-  http://192.168.100.32/rescue-net/
-- Local War Room:
-  http://192.168.100.32/rescue-net/pages/war-room.html?event=event-sim-001
-- Domain/Tailscale welcome:
-  https://osiun.tail251e1e.ts.net/rescue-net/
-- Domain/Tailscale War Room:
-  https://osiun.tail251e1e.ts.net/rescue-net/pages/war-room.html?event=event-sim-001
-- Mock-up viewer:
-  https://osiun.tail251e1e.ts.net/rescue-net/pages/mockup.html?screen=welcome
+Work only on Rescue-Net unless the owner explicitly requests another system.
+Do not modify OSIUN while working on Rescue-Net.
 
-API health:
-- curl http://127.0.0.1:8092/health
-
-AI context:
-- curl -s http://127.0.0.1:8092/ai/context/event-sim-001 | python3 -m json.tool
-
-Current AI context summary confirmed:
-- posko_count: 4
-- organization_count: 6
-- volunteer_count: 3
-- open_logistic_need_count: 2
-- aid_offer_count: 2
-- distribution_flow_count: 4
-- resource_request_count: 1
-- stock_item_count: 4
-- stock_movement_count: 16
-- meal_production_count: 2
-- medical_case_count: 2
-- medical_supply_use_count: 2
-- shelter_occupancy_count: 2
-- shelter_need_count: 2
-- missing_person_count: 2
-- found_person_count: 2
-- search_found_match_count: 2
-- donor_program_count: 1
-- donor_program_update_count: 2
+Preserve the current color palette. Functional readiness and clear operational
+flow take priority over cosmetic redesign.
 
 ============================================================
-2. LIVE MODULES NOW ACTIVE
+2. PATHS AND URLS
 ============================================================
 
-Sidebar live modules currently active:
-- Mock-up
-- Active Disasters
-- War Room
-- Map
-- Organisasi & Posko
-- Posko Detail
-- Logistik
-- Distribusi
-- Dapur Umum
-- Posko Medis
-- Shelter
-- Search & Found
-- Program Khusus
-- Donor Program
-- Recovery
-- Kirim Bantuan
-- Relawan
-- Alat Kerja
-- Profil Sumber Daya
-- Evidence
-- Verification
-- AI Analyst
-- AI Settings
-- Sync Console
-- Contact Directory
-
-Pages intentionally not in main sidebar:
-- auth.html
-- disaster-detail.html
-- edit-bantuan.html
-
-Reason:
-These are child/utility pages, not primary module pages.
-
-============================================================
-3. NEW MODULES ADDED IN THIS STAGE
-============================================================
-
-A. Mock-up Viewer
-Files:
-- pages/mockup.html
-- assets/js/mockup.js
-- assets/img/mockup/*.png
-- scripts/build-mockup-blueprint-manifest.py
-
-Behavior:
-- Mock-up viewer is separate from live prototype.
-- It has no live sidebar.
-- It uses top header menu only.
-- It shows full static mock-up images.
-- Image titles/subtitles/captions hidden because titles already exist inside images.
-- Login & Registrasi moved to the end of mock-up menu.
-
-Mock-up image folder:
-- /volume1/web/rescue-net/assets/img/mockup
-
-Uploaded mock-up images include:
-- welcome page rescue-net.png
-- bencana aktif.png
-- war room.png
-- login & registrasi.png
-- organisasi & posko.png
-- registrasi & verifikasi Posko.png
-- posko logistik.png
-- manajemen distribusi.png
-- dapur umum.png
-- shelter & akomodasi.png
-- search & found.png
-- program khusus.png
-- manajemen relawan.png
-- manajemen alat kerja.png
-- Profil Sumber Daya.png
-- evidence centre.png
-- verification & Approval.png
-- alat komunikasi.png
-- kompilasi tampilan HP.png
-
-B. Program Khusus
-Files:
-- pages/program-khusus.html
-- assets/js/program-khusus.js
-
-Backend/API:
-- /donor-programs
-- /donor-program-updates
-- /ai/context/{event_id} now includes donor_programs and donor_program_updates.
-
-Current AI context includes:
-- donor_program_count
-- donor_program_update_count
-
-C. AI Analyst
-Files:
-- pages/ai-analyst.html
-- assets/js/ai-analyst.js
-
-Purpose:
-- Displays AI context alerts, recommendations, and sources.
-- Can ask AI through /ai/ask if user BYOK key is saved.
-
-D. Event-driven Sync
-Files:
-- assets/js/rn-sync-engine.js
-- pages/sync-console.html
-
-Purpose:
-- No continuous 10-second polling.
-- Sync triggers on:
-  - page open
-  - app visible
-  - browser focus
-  - device back online
-  - manual Sync Now button
-- Designed for HP/Desktop users joining online without continuously stressing server.
-
-E. Resource Booking
-File:
-- assets/js/rn-resource-booking.js
-
-Purpose:
-- Quick booking/request workflow from War Room.
-- Adds resource_request_count into AI context.
-
-F. Profil Sumber Daya
-Files:
-- pages/resource-profile.html
-- assets/js/resource-profile.js
-
-Purpose:
-- Live page for organizations, poskos, volunteers, tools/shared resources.
-- Reads from /ai/context/{event_id}.
-
-G. Recovery / Reconstruction
-Files:
-- pages/recovery-reconstruction.html
-- assets/js/recovery-reconstruction.js
-
-Purpose:
-- Live page for recovery/reconstruction projects.
-- Uses donor_programs with program_type recovery_reconstruction.
-
-============================================================
-4. WAR ROOM LIVE FIXES
-============================================================
-
-Files:
-- pages/war-room.html
-- assets/js/war-room.js
-
-Fixes:
-- War Room live now uses event_id from URL:
-  ?event=event-sim-001
-- No longer hardcoded to event-aceh-2025.
-- War Room reads:
-  /ai/context/{eventId}
-- Program Khusus and Program Updates appear in War Room.
-- renderSpecialPrograms duplicate/unsafe function was cleaned.
-- Live War Room confirmed working after event URL fix.
-
-Important:
-If War Room loads wrong event again, check:
-- assets/js/war-room.js
-- ensure no const EVENT_ID = "event-aceh-2025"
-- ensure loadWarRoom uses:
-  const eventId = getEventId()
-  api(`/ai/context/${eventId}`)
-
-============================================================
-5. LAYOUT / RESOLUTION FIXES
-============================================================
-
-Files:
-- assets/js/rn-layout-mode.js
-- assets/css/style.css
-
-Final behavior:
-- Live local and live domain now visually matched using viewport/DPR fix.
-- Local live was:
-  LIVE | LOCAL | w=1821 | dpr=0.75
-- Domain live was:
-  LIVE | DOMAIN | w=1366 | dpr=1
-- Domain live is adjusted to match local using:
-  appShell.style.zoom = "0.75"
-  width/minWidth = "133.333vw"
-  minHeight = "133.333vh"
-- Sidebar height compensated to 133.333vh so side menu scrollbar matches full screen.
-- Debug badge was removed.
-
-Mock-up:
-- Domain mock-up was already correct.
-- Local mock-up adjusted to match domain.
-
-Important:
-Do not reintroduce debug badge:
-- rnLayoutDebugBadge should not appear.
-Check:
-grep -n "rnLayoutDebugBadge" assets/js/rn-layout-mode.js
-
-============================================================
-6. API / DATABASE NOTES
-============================================================
+Repository and static website:
+  /volume1/web/rescue-net
 
 Runtime backend:
-- /volume1/docker/rescue-net-api/main.py
-- Docker container: rescue-net-api
-- Port: 8092
+  /volume1/docker/rescue-net-api
 
-Repo backend copy:
-- /volume1/web/rescue-net/backend/main.py
+Cross-platform app runtime:
+  /volume1/web/rescue-net-app
 
-Important:
-Runtime main.py may contain local database defaults.
-Repo backend/main.py must NOT contain real password.
+GitHub:
+  https://github.com/bagushandhoko/rescue-net
+  branch main
 
-Before commit/push always sanitize:
-- Replace rescunet_dev_password URLs with safe placeholder/no-password URL:
-  postgresql://rescuenet_user@localhost:5432/rescuenet_db
+Public website:
+  https://osiun.tail251e1e.ts.net/rescue-net/
 
-Secret scan must be empty before push.
-Use the scanner embedded in rn-push.sh / rn-push-main.sh, or run the same check manually.
-The scanner looks for OpenAI-style keys, database passwords, POSTGRES_PASSWORD values, and PostgreSQL URLs with embedded passwords.
+Public API proxy:
+  https://osiun.tail251e1e.ts.net/rescue-net-api
+
+Local API:
+  http://127.0.0.1:8092
+
+Database:
+  PostgreSQL container postgres-main
+  database rescuenet_db
+
+Main simulation event:
+  event-sim-001
 
 ============================================================
-7. IMPORTANT COMMANDS
+3. REPOSITORY LAYOUT
 ============================================================
+
+Website:
+  index.html
+  pages/
+  assets/css/style.css
+  assets/js/
+
+Backend source:
+  backend/
+
+Cross-platform application:
+  apps/rescue-net-app/
+
+Database migrations:
+  database/migrations/
+
+Operational documentation:
+  docs/CURRENT_STATUS.md
+  docs/HANDOFF_LATEST_RN.txt
+  docs/NEXT_AGENT_PROMPT.md
+  docs/BLUEPRINT.md
+  docs/CROSS_PLATFORM_APP_DESIGN.md
+
+Runtime copies are deployments, not separate products. After a live hotfix,
+copy final source back to the repository before commit.
+
+============================================================
+4. REQUIRED WORKFLOW
+============================================================
+
+Before edits:
+
+1. Read README.md, CURRENT_STATUS.md, this handoff, and BLUEPRINT.md.
+2. Check git status.
+3. Create timestamped backups of every live file to be changed.
+4. Ignore unrelated user changes. Never revert them.
+
+Backend validation:
+
+  python3 -m py_compile main.py app_shared.py routes/*.py
+
+Frontend validation:
+
+  node --check path/to/file.js
+
+Rebuild API:
+
+  cd /volume1/docker/rescue-net-api
+  sudo /usr/local/bin/docker build -t rescue-net-api:0.1 .
+  sudo /usr/local/bin/docker rm -f rescue-net-api
+  sudo /usr/local/bin/docker run -d \
+    --name rescue-net-api \
+    --restart unless-stopped \
+    --env-file /volume1/docker/rescue-net-api/.env \
+    -p 8092:8092 \
+    rescue-net-api:0.1
+
+IMPORTANT:
+Never omit --env-file. Without it, API startup fails because PostgreSQL falls
+back to localhost.
 
 Health:
-curl http://127.0.0.1:8092/health
 
-AI context:
-curl -s http://127.0.0.1:8092/ai/context/event-sim-001 | python3 -m json.tool
+  curl -fsS http://127.0.0.1:8092/health
 
-Check sidebar refs:
-python3 - <<'PY'
-from pathlib import Path
-import re
-pages = sorted(Path("pages").glob("*.html"))
-page_names = {p.name for p in pages}
-nav_refs = set()
-for p in [Path("index.html")] + pages:
-    text = p.read_text(errors="ignore")
-    m = re.search(r"<nav[^>]*>(.*?)</nav>", text, re.S)
-    if not m:
-        continue
-    for href in re.findall(r'href="([^"]+)"', m.group(1)):
-        clean = href.split("?")[0].split("#")[0].replace("../", "").replace("pages/", "")
-        if clean.endswith(".html"):
-            nav_refs.add(clean)
-print("PAGES NOT IN SIDE MENU:")
-for x in sorted(page_names - nav_refs):
-    print("-", x)
-PY
+Full smoke:
 
-Check mock-up files:
-ls -lah assets/img/mockup
+  cd /volume1/web/rescue-net
+  sh scripts/rn-smoke-test.sh
 
-Check layout debug removed:
-grep -n "rnLayoutDebugBadge\|LIVE | DOMAIN\|MOCK | LOCAL\|badge" assets/js/rn-layout-mode.js
+Secret scan:
+
+  sh scripts/rn-secret-scan.sh
+
+Push:
+
+  sudo ./rn-push-main.sh
+
+Verify:
+
+  sudo git fetch origin main
+  sudo git log --oneline origin/main..HEAD
+
+The final command should return no unpushed commits.
 
 ============================================================
-8. NEXT RECOMMENDED WORK
+5. CONSOLIDATION BEHAVIOR
 ============================================================
 
-Recommended next steps:
-1. Stabilize live pages after visual check on local and domain.
-2. Add backend endpoints/table support for Resource Profile if richer data needed.
-3. Add backend endpoints/table support for Recovery/Reconstruction if it should be separate from donor_programs.
-4. Add proper public API proxy if external browsers later fail API calls.
-5. Create automated smoke-test script for all primary pages.
-6. Update README with module list, runtime setup, and demo URLs.
-7. Only after visual and API checks, commit and push GitHub.
+Raw reports are not operational facts.
+
+Location status distinguishes GPS, map point, official admin area, manual
+location, aggregate report, and invalid location.
+
+Duplicate detection covers:
+  need
+  community_report
+  posko
+
+Safe first pass:
+  use MAX, not SUM, when reports may overlap.
+
+National rollup:
+  minimum = smallest value for same relative area, aggregate excluded
+  optimal = consolidated detail, MAX per posko/detail
+  maximum = optimal plus aggregate context
+
+Trace path:
+  national item -> province/city/district/village -> posko -> raw source IDs
+
+Aggregate province/city/district values are command context unless explicitly
+included by maximum scenario.
+
+Manual command correction:
+  never overwrite raw data
+  store original value
+  store corrected value
+  store delta
+  store actor, reason, note, timestamp
+  display manual contribution in War Room
+
+Unknown units such as one sack, one box, or one plastic bag must remain in
+unit review unless a trusted conversion exists.
 
 ============================================================
-9. DO NOT DO
+6. TRUSTED VERIFIER
 ============================================================
 
-- Do not push GitHub before secret scan is empty.
-- Do not copy runtime backend/main.py to repo and commit without sanitizing DB password.
-- Do not re-add global zoom CSS blindly.
-- Do not mix mock-up viewer navigation with live sidebar navigation.
-- Do not use 10-second continuous sync polling; sync should remain event-driven.
+Trusted Verifier is operational.
 
+Never use one generic "verified" badge. Keep these separate:
+  identity
+  location
+  organization membership
+  report source
+  report content
+  consolidated need
 
-============================================================
-10. UPDATE 2026-06-11 - RESOURCE PROFILE + RECOVERY BACKEND
-============================================================
+Tables:
+  verifier_profiles
+  trusted_verification_requests
+  verification_endorsements
 
-Backend API recovered and confirmed healthy after rollback/rebuild.
+IMPORTANT DATABASE COMPATIBILITY:
+An older unrelated table named verification_requests already exists. Do not
+rename trusted_verification_requests back to verification_requests.
 
-Current backend status:
-- Container: rescue-net-api
-- Port: 8092
-- /health: 200 OK
-- /ai/context/event-sim-001: normal
-- /resource-profiles: active
-- /recovery-projects: active
-- /recovery-project-updates: active
+Verifier levels:
+  community verifier
+  organization verifier
+  government verifier
+  trusted public verifier
+  official/RN admin verifier
 
-Resource Profile backend:
-- Table: resource_profiles
-- Endpoint:
-  GET /resource-profiles
-  POST /resource-profiles
-  PATCH /resource-profiles/{resource_id}
-  DELETE /resource-profiles/{resource_id}
-- Test data:
-  Truk Logistik 5 Ton
-  owner_id: org-sim-bpbd
-  disaster_event_id: event-sim-001
+Token:
+  seven-day token
+  only SHA-256 token hash stored
+  verification URL returned by API
 
-Recovery/Reconstruction backend:
-- Tables:
-  recovery_projects
-  recovery_project_updates
-- Endpoint:
-  GET /recovery-projects
-  POST /recovery-projects
-  PATCH /recovery-projects/{project_id}
-  DELETE /recovery-projects/{project_id}
-  GET /recovery-project-updates
-  POST /recovery-project-updates
-- Active project:
-  id: recovery-61507d93816b
-  project_name: Perbaikan Jembatan Darurat Simulasi
-  progress_percent: 20
-  current_amount: 10000000
-- Duplicate test project recovery-5773f39cc380 was soft-deleted.
+Responses:
+  approved
+  needs_correction
+  not_known
+  rejected
 
-Frontend:
-- assets/js/resource-profile.js now reads /resource-profiles
-- assets/js/recovery-reconstruction.js now reads /recovery-projects
-- assets/js/war-room.js attaches Resource/Recovery directly from:
-  /resource-profiles
-  /recovery-projects
-  /recovery-project-updates
-- War Room does not require /ai/context to include resource/recovery yet.
+Endorsements:
+  one explicit scope
+  visible on profile
+  revocable
+  audit metadata retained
 
-Important:
-Do not patch /ai/context with large regex insertions. Previous attempt caused IndentationError.
-If AI Context integration is needed later, do it manually inside the actual ai context function after confirming exact indentation and run node/python syntax tests before rebuild.
+Registration:
+  app supports registered verifier, invited verifier, or no verifier
+  verifier data is stored locally while offline
+  request is created after device registration sync succeeds
 
-Current module coverage:
-Prototype module coverage is complete enough for Rescue-Net demo/pilot:
-- Active Disasters
-- War Room
-- Map
-- Organization & Posko
-- Logistics
-- Distribution
-- Public Kitchen
-- Medical Posko
-- Shelter
-- Search & Found
-- Program Khusus / Donor Program
-- Recovery / Reconstruction
-- Volunteers
-- Work Tools
-- Resource Profile
-- Evidence
-- Verification
-- AI Analyst
-- AI Settings
-- Sync Console
-- Contact Directory
-- Mock-up Viewer
+Current limitation:
+  SMS/email gateway not connected; share the verification URL manually.
 
-Remaining production-grade work:
-- RBAC/session hardening
-- audit log
-- evidence upload linking to every object
-- offline sync conflict resolution
-- migrations instead of ad-hoc CREATE TABLE
-- automated endpoint/page smoke tests
-- safe AI Context integration for Resource/Recovery
-
+Schema ownership:
+  API user cannot ALTER every legacy table.
+  volunteer_profiles is owned by another role.
+  Do not force ALTER on it. Use verification_endorsements for volunteer trust.
 
 ============================================================
-11. PRODUCTION GRADE PHASE STARTED
+7. APP / OFFLINE
 ============================================================
 
-GitHub push is postponed due to credential/token issue.
+One app core is packaged for Web/PWA, Android, iOS, Windows, and Linux.
 
-Local production hardening started:
-- scripts/rn-smoke-test.sh
-- scripts/rn-backup-before-change.sh
-- docs/PRODUCTION_GRADE_ROADMAP.md
+App source:
+  apps/rescue-net-app/
 
-Rule from now:
-Before any risky backend/frontend patch:
-1. Run scripts/rn-backup-before-change.sh
-2. Apply patch
-3. Run python3 -m py_compile for backend
-4. Rebuild API if needed
-5. Run scripts/rn-smoke-test.sh
-6. Only then continue
+Runtime:
+  /volume1/web/rescue-net-app
 
-============================================================
-12. UPDATE 2026-06-11 - FUNCTION HARDENING CHECKPOINT
-============================================================
+Offline data:
+  device profile
+  posko registration
+  reports
+  evidence photo data URL
+  sync queue
+  selected event/organization context
 
-GitHub push is still postponed. Continue from Synology state.
+When online without an active event, app forces the user to select an active
+event or create one before sync.
 
-Backup verified:
-- /volume1/docker/backup-rescue-net-prod-20260611-143742
-- Includes web, API, and rescuenet_db.sql.
+Service worker cache:
+  rescue-net-app-v6
 
-Live/static and database changes completed:
-- audit_events table created.
-- audit triggers active for core tables: disaster_events, logistic_needs, aid_offers, distribution_flows, evidence_files, resource_profiles, recovery_projects, recovery_project_updates.
-- sync rejected events are now marked as conflict/needs_review in frontend local queue.
-- Sync Console has Retry Conflicts action.
-- Evidence page accepts object deep links via event, object_type, object_id, node_id.
-- Operational modules now link directly to Evidence for relevant objects.
-- Frontend requests now attach X-RN-Session-Token, X-RN-User-Id, and X-RN-Role when session exists.
-- Session UI refreshes after login/logout.
-
-Backend source/runtime files prepared:
-- Duplicate route definitions removed in backend/main.py.
-- Source route audit currently reports route_count=89 and no duplicate routes.
-- Optional RBAC middleware added behind RN_ENFORCE_RBAC=true.
-- Source endpoints added for:
-  GET /audit-events
-  GET /sync-conflicts
-  POST /sync-conflicts/{conflict_id}/resolve
-- /volume1/docker/rescue-net-api main.py/app_shared.py/routes are synced with /volume1/web/rescue-net/backend.
-- Runtime backup before sync:
-  /volume1/docker/rescue-net-api.BEFORE-source-sync-20260611-200702
-
-Important:
-- The running container has not been restarted in this checkpoint because sudo Docker access is not available in non-interactive SSH.
-- To activate backend source changes, rebuild/restart rescue-net-api with sudo from Synology terminal.
-- Keep RN_ENFORCE_RBAC=false until demo flows are verified after restart, then enable gradually.
-
-Smoke test:
-- scripts/rn-smoke-test.sh now checks API health, AI context, Resource/Recovery endpoints, JS syntax, backend source compile, duplicate backend routes, and required pages.
-- Latest smoke test passed.
+Old installed APKs do not receive embedded app source updates. Rebuild and
+reinstall APK after app changes.
 
 ============================================================
-2026-06-11 FUNCTION HARDENING UPDATE
+8. UI AND MOBILE RULES
 ============================================================
 
-Backup before changes:
-- Full production backup verified at /volume1/docker/backup-rescue-net-prod-20260611-143742
-- Extra per-file backup moved to /volume1/docker/backup-rescue-net-prod-20260611-143742/file-backups
+Maintain responsive HP layouts.
+Do not add global zoom hacks.
+Do not reintroduce rnLayoutDebugBadge.
+Keep the header menu on all live pages.
+Operational pages retain their operational sidebar.
+Mock-up viewer remains separate and uses bitmap mock-up references.
 
-Live without backend rebuild:
-- Evidence page accepts deep links with event/object_type/object_id/node_id query params.
-- Core field modules now expose Add Evidence links for logistics, distribution, posko detail, public kitchen, medical post, shelter, search/found, donor program, special program, resource profile, recovery, and verification objects.
-- Sync Console now shows both its demo draft queue and the main RN offline queue stored in localStorage key rn_sync_pending_events_v1.
-- Retry Conflicts now moves conflict events from both queues back to pending_sync.
-- Sync Push now also triggers the RN sync engine when only the main app offline queue has pending events.
-- Smoke test passed after these changes: OK: ALL SMOKE TESTS PASSED.
+CSS has accumulated override blocks. Inspect cascade and screenshots before
+cleanup; do not delete broad blocks blindly.
 
-Database applied live:
-- Migration 014 audit/sync conflict foundation adjusted for existing sync tables and created audit_events.
-- Migration 015 created audit trigger function and triggers for core operational tables owned by rescuenet_user.
-- Audit trigger tested inside rollback transaction and produced audit row as expected.
+============================================================
+9. SECURITY
+============================================================
 
-Prepared but requires backend rebuild/restart:
-- Backend source includes GET /audit-events.
-- Backend source includes GET /sync-conflicts.
-- Backend source includes POST /sync-conflicts/{conflict_id}/resolve.
-- Optional backend RBAC middleware is present behind RN_ENFORCE_RBAC=true and defaults off.
-- Source was synced to /volume1/docker/rescue-net-api, but running API process still needs container rebuild/restart.
-- Helper script exists: scripts/rn-rebuild-api.sh.
+Never commit:
+  .env
+  passwords
+  GitHub token
+  AI keys
+  database dumps
+  uploaded evidence
+  real patient/victim data
+  private keys
 
-GitHub status:
-- Local Synology git has new commits not pushed.
-- Push is intentionally postponed because GitHub token/password access is not available non-interactively.
+RBAC middleware exists but production authentication still needs hardening.
+Sensitive medical and Search & Found media must remain restricted.
+
+Identity endorsement is a trust signal, not proof that a report is correct.
+AI must describe this distinction in its recommendations.
+
+============================================================
+10. CURRENT NEXT WORK
+============================================================
+
+Highest-value next tasks:
+
+1. Integrate SMS/email delivery for Trusted Verifier URLs.
+2. Add abuse/rate limits and suspicious verifier activity scoring.
+3. Show separate verification badges on posko/reporter detail screens.
+4. Add automated consolidation and verifier tests.
+5. Rebuild store-ready Android/iOS/Desktop packages.
+6. Harden login and backend RBAC.
+7. Move runtime schema creation into migrations.
+8. Refactor main.py gradually without changing route contracts.
+
+Do not begin with a broad redesign or a full audit. Start by checking health,
+git status, CURRENT_STATUS, and the exact module requested by the owner.

@@ -1,0 +1,17 @@
+{
+  "appId": "org.rescuenet.app",
+  "appName": "Rescue-Net",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#fff7f0",
+      "showSpinner": false
+    }
+  }
+}
+

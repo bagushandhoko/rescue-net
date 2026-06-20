@@ -74,6 +74,24 @@
       <div class="panel">
         <div class="panel-header">
           <div>
+            <h3>Rollup Nasional / Range View</h3>
+            <p>Angka nasional memakai penjumlahan dari consolidated detail. Setiap detail tetap memakai angka terbesar per posko saat ada overlap.</p>
+          </div>
+        </div>
+        <div class="event-list" data-national-rollup></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Trace Detail</h3>
+        <p class="subtitle">Klik angka nasional secara operasional harus bisa ditelusuri sampai posko/desa dan sumber raw report.</p>
+        <div class="event-list" data-rollup-trace></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
             <h3>Raw Reports Queue</h3>
             <p>Laporan mentah dari masyarakat dan posko. Level provinsi/kabupaten menjadi konteks agregat, bukan angka final.</p>
           </div>
@@ -129,7 +147,7 @@
 </div>
 
 <script src="../assets/js/rn-public-header.js?v=global-header-1"></script>
-<script src="../assets/js/data-consolidation.js?v=data-consolidation-1"></script>
+<script src="../assets/js/data-consolidation.js?v=data-consolidation-national-rollup-1"></script>
 <script src="../assets/js/session-role.js?v=role-ui-1"></script>
 <script src="../assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
 </body>

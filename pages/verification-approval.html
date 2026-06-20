@@ -74,6 +74,84 @@
 
     <section class="content-grid">
       <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Verifier Requests</h3>
+            <p>Permintaan verifikasi identitas/keanggotaan. Ini tidak otomatis memverifikasi laporan atau kebutuhan.</p>
+          </div>
+        </div>
+        <div class="event-list" id="trustedVerifierRequests"></div>
+      </div>
+      <div class="panel">
+        <h3>Endorsements</h3>
+        <div class="event-list" id="trustedEndorsements"></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Verifier Registry</h3>
+            <p>Calon verifikator harus disetujui dan diberi scope sebelum boleh memberikan endorsement.</p>
+          </div>
+        </div>
+        <form class="rn-form" id="verifierRegistrationForm">
+          <div class="form-grid">
+            <label>Nama<input name="display_name" required></label>
+            <label>Jenis
+              <select name="verifier_type">
+                <option value="community">Community</option>
+                <option value="organization">Organization</option>
+                <option value="government">Government</option>
+                <option value="public_figure">Public Figure</option>
+                <option value="rn_admin">RN Admin</option>
+              </select>
+            </label>
+            <label>Jabatan/peran<input name="position_title" placeholder="Ketua RW / BPBD / Koordinator"></label>
+            <label>Nomor HP<input name="phone"></label>
+            <label>Email<input name="email" type="email"></label>
+            <label>Deskripsi peran<input name="public_role_description"></label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="submit">Daftar Calon Verifikator</button></div>
+        </form>
+        <div class="event-list" id="trustedVerifierRegistry"></div>
+      </div>
+      <div class="panel">
+        <h3>Revoked & Suspicious Activity</h3>
+        <div class="event-list" id="revokedVerifications"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="tokenVerificationPanel" hidden>
+      <div class="panel-header">
+        <div>
+          <h3>Respons Permintaan Verifikasi</h3>
+          <p>Nyatakan hubungan dan pilih keputusan. Persetujuan hanya berlaku untuk scope yang diminta.</p>
+        </div>
+      </div>
+      <form class="rn-form" id="tokenVerificationForm">
+        <div class="form-grid">
+          <label>Verifier ID terdaftar<input name="verifier_id" placeholder="verifier-..."></label>
+          <label>Nama verifikator<input name="verifier_display_name" required></label>
+          <label>Peran<input name="verifier_role" placeholder="Ketua RW / Koordinator / BPBD"></label>
+          <label>Keputusan
+            <select name="decision">
+              <option value="approved">Saya mengenal dan membenarkan identitas ini</option>
+              <option value="needs_correction">Saya mengenal, data perlu dikoreksi</option>
+              <option value="not_known">Saya tidak mengenal</option>
+              <option value="rejected">Saya menolak memverifikasi</option>
+            </select>
+          </label>
+          <label>Pernyataan<textarea name="statement" rows="3"></textarea></label>
+          <label>Catatan koreksi<textarea name="correction_note" rows="3"></textarea></label>
+        </div>
+        <div class="form-actions"><button class="btn primary" type="submit">Kirim Keputusan</button></div>
+      </form>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
         <h3>Organizations</h3>
         <div class="event-list" id="verifyOrganizations"></div>
       </div>
@@ -107,7 +185,7 @@
   </main>
 </div>
 
-<script src="../assets/js/verification-approval.js?v=live-1"></script>
+<script src="../assets/js/verification-approval.js?v=trusted-verifier-1"></script>
 <script src="../assets/js/session-role.js?v=role-ui-1"></script>
 <script src="../assets/js/rn-public-header.js?v=global-header-1"></script>
 <script src="../assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>

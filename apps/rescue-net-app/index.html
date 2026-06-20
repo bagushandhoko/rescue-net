@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f05a42">
+  <title>Rescue-Net App</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+  <div class="app-frame">
+    <header class="app-header">
+      <div class="brand">
+        <img src="src/logo.svg" alt="Rescue-Net">
+        <div>
+          <strong>Rescue-Net</strong>
+          <span>Field & Command App</span>
+        </div>
+      </div>
+      <button class="icon-button" type="button" data-refresh aria-label="Refresh">R</button>
+    </header>
+    <section class="api-config">
+      <label>API Base
+        <input data-api-base-input value="http://192.168.100.32:8092">
+      </label>
+      <button class="btn" type="button" data-save-api>Save API</button>
+    </section>
+
+    <main>
+      <section class="context-gate hidden" data-context-gate>
+        <div class="context-box">
+          <h2>Pilih Bencana Aktif</h2>
+          <p class="message">Saat online, data offline harus dikaitkan ke bencana aktif atau buat bencana baru sebelum sinkronisasi.</p>
+          <label>Bencana aktif<select data-event-select><option value="">Memuat...</option></select></label>
+          <label>Organisasi RN<select data-active-org-select><option value="">Pilih organisasi</option></select></label>
+          <div class="actions">
+            <button class="btn primary" type="button" data-save-context>Gunakan Bencana Ini</button>
+          </div>
+          <div class="mini-form">
+            <h2>Buat Bencana Baru</h2>
+            <label>Nama bencana<input data-new-event-name placeholder="Contoh: Banjir Bandung"></label>
+            <label>Jenis<input data-new-event-type placeholder="banjir / gempa / longsor"></label>
+            <label>Lokasi ringkas<input data-new-event-location placeholder="Kab/Kota, Provinsi"></label>
+            <button class="btn" type="button" data-create-event>Buat & Gunakan</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Open Disaster Coordination</p>
+          <h1>Koordinasi bencana dari laporan warga sampai keputusan bantuan.</h1>
+          <p>App ini membaca data RN pusat, menyimpan cache lokal, dan menandai data yang perlu review lokasi, duplikasi, atau satuan.</p>
+        </div>
+        <div class="status-card">
+          <span>API</span>
+          <strong data-api-status>Checking...</strong>
+          <small data-api-url></small>
+        </div>
+      </section>
+
+      <nav class="tabbar" aria-label="Mode aplikasi">
+        <button class="active" type="button" data-view="warroom">War Room</button>
+        <button type="button" data-view="register">Registrasi</button>
+        <button type="button" data-view="report">Laporan</button>
+        <button type="button" data-view="organization">Organisasi</button>
+        <button type="button" data-view="consolidation">Konsolidasi</button>
+        <button type="button" data-view="units">Unit</button>
+        <button type="button" data-view="sync">Sync</button>
+      </nav>
+
+      <section class="view active" data-panel="warroom">
+        <article class="profile-card" data-profile-card>
+          <span>Perangkat ini</span>
+          <strong data-profile-name>Belum registrasi</strong>
+          <small data-profile-detail>Daftarkan posko/organisasi supaya app otomatis dikenali saat dibuka.</small>
+        </article>
+        <div class="metric-grid">
+          <article><span>Raw Reports</span><strong data-metric="raw_reports_total">0</strong></article>
+          <article><span>Consolidated</span><strong data-metric="consolidated_needs">0</strong></article>
+          <article><span>Location Review</span><strong data-metric="location_review_needed">0</strong></article>
+          <article><span>Unit Review</span><strong data-unit-review>0</strong></article>
+        </div>
+        <div class="section-head">
+          <h2>Consolidated Needs</h2>
+          <button class="btn" type="button" data-rebuild>Rebuild</button>
+        </div>
+        <div class="list" data-consolidated-list></div>
+      </section>
+
+      <section class="view" data-panel="register">
+        <form class="form" data-register-form>
+          <label>Organisasi / Posko<input name="organization_name" required placeholder="Contoh: Posko Mercy Bandung"></label>
+          <label>PIC / Operator<input name="member_name" required placeholder="Nama penanggung jawab"></label>
+          <label>Jenis
+            <select name="role">
+              <option value="posko_operator">Posko</option>
+              <option value="org_admin">Organisasi</option>
+              <option value="field_member">Relawan Lapangan</option>
+              <option value="medical_operator">Medis</option>
+              <option value="logistic_operator">Logistik</option>
+              <option value="verifier">Verifikator</option>
+            </select>
+          </label>
+          <div class="grid-two">
+            <label>Provinsi<select name="province" data-area-select="register-province"><option value="">Pilih</option></select></label>
+            <label>Kab/Kota<select name="city" data-area-select="register-city" disabled><option value="">Pilih</option></select></label>
+            <label>Kecamatan<select name="district" data-area-select="register-district" disabled><option value="">Pilih</option></select></label>
+            <label>Desa/Kelurahan<select name="village" data-area-select="register-village" disabled><option value="">Pilih</option></select></label>
+          </div>
+          <label>Catatan cakupan/tugas<textarea name="notes" rows="3" placeholder="Contoh: dapur umum, evakuasi, distribusi air bersih"></textarea></label>
+          <fieldset>
+            <legend>Verifikator yang Mengenal Anda</legend>
+            <label>Pilihan
+              <select name="verifier_mode">
+                <option value="registered">Cari verifikator terdaftar di RN</option>
+                <option value="invite">Undang verifikator baru</option>
+                <option value="none">Saya belum punya verifikator</option>
+              </select>
+            </label>
+            <div class="grid-two">
+              <label>Verifier ID RN<input name="requested_verifier_id" placeholder="verifier-..."></label>
+              <label>Nama verifikator<input name="requested_verifier_name" placeholder="Nama pihak yang mengenal Anda"></label>
+              <label>Jabatan/peran<input name="requested_verifier_role" placeholder="Ketua RW / BPBD / Koordinator"></label>
+              <label>Nomor HP<input name="requested_verifier_phone"></label>
+              <label>Email<input name="requested_verifier_email" type="email"></label>
+              <label>Hubungan dengan Anda<input name="verifier_relationship" placeholder="Ketua RW saya / koordinator organisasi"></label>
+            </div>
+            <p class="message">Badge hanya membuktikan identitas/keanggotaan sesuai scope. Lokasi, laporan, dan kebutuhan tetap diverifikasi terpisah.</p>
+          </fieldset>
+          <div class="actions">
+            <button class="btn primary" type="submit">Simpan Registrasi</button>
+          </div>
+          <p class="message" data-register-message>Registrasi disimpan di HP dulu, lalu otomatis sync saat online.</p>
+        </form>
+      </section>
+
+      <section class="view" data-panel="report">
+        <form class="form" data-report-form>
+          <label>Nama pelapor<input name="reporter_name" required placeholder="Nama / posko"></label>
+          <label>Judul laporan<input name="title" required placeholder="Contoh: Air bersih dibutuhkan"></label>
+          <label>Kebutuhan mendesak<input name="urgent_needs" placeholder="Contoh: air bersih, makanan siap saji"></label>
+          <label>Deskripsi<textarea name="description" required rows="4"></textarea></label>
+          <div class="grid-two">
+            <label>Provinsi<select name="province"><option value="">Pilih</option></select></label>
+            <label>Kab/Kota<select name="city" disabled><option value="">Pilih</option></select></label>
+            <label>Kecamatan<select name="district" disabled><option value="">Pilih</option></select></label>
+            <label>Desa/Kelurahan<select name="village" disabled><option value="">Pilih</option></select></label>
+          </div>
+          <div class="grid-two">
+            <label>Item kebutuhan<input name="need_item" placeholder="Contoh: air bersih"></label>
+            <label>Jumlah<input name="need_quantity" inputmode="decimal" placeholder="Contoh: 20"></label>
+            <label>Satuan<input name="need_unit" placeholder="dus / liter / porsi / pcs"></label>
+            <label>Foto bukti<input name="evidence_file" type="file" accept="image/*" capture="environment"></label>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button" data-use-gps>GPS saya</button>
+            <button class="btn primary" type="submit">Kirim</button>
+          </div>
+          <p class="message" data-report-message>Laporan masuk sebagai data indikasi sampai diverifikasi.</p>
+        </form>
+      </section>
+
+      <section class="view" data-panel="consolidation">
+        <div class="section-head">
+          <h2>Raw Queue</h2>
+          <button class="btn" type="button" data-check-duplicates>Check Duplicate</button>
+        </div>
+        <div class="list" data-raw-list></div>
+      </section>
+
+      <section class="view" data-panel="organization">
+        <form class="form" data-org-form>
+          <label>Organisasi / komunitas<input name="organization_name" required placeholder="Basarnas / Mercy / PMI / Komunitas"></label>
+          <label>Member / PIC<input name="member_name" required placeholder="Nama petugas"></label>
+          <label>Role
+            <select name="role">
+              <option value="field_member">Member Lapangan</option>
+              <option value="org_admin">Admin Organisasi</option>
+              <option value="logistic_operator">Operator Logistik</option>
+              <option value="medical_operator">Medis</option>
+              <option value="verifier">Verifikator</option>
+            </select>
+          </label>
+          <label>Posko / Unit<input name="posko_name" placeholder="Posko Basarnas A / Mercy Medical Team"></label>
+          <label>Catatan area kerja<textarea name="notes" rows="3" placeholder="Cakupan wilayah, tugas, kontak radio, dll."></textarea></label>
+          <div class="actions">
+            <button class="btn primary" type="submit">Simpan Offline</button>
+          </div>
+          <p class="message" data-org-message>Data organisasi tersimpan di perangkat dulu, lalu ikut sync queue.</p>
+        </form>
+        <div class="list" data-org-list></div>
+      </section>
+
+      <section class="view" data-panel="units">
+        <form class="form inline" data-unit-form>
+          <label>Item<input name="item_name" value="air mineral 600ml"></label>
+          <label>Jumlah<input name="quantity" type="number" value="1"></label>
+          <label>Satuan<input name="unit" value="dus"></label>
+          <button class="btn primary" type="submit">Normalisasi</button>
+        </form>
+        <pre class="result" data-unit-result>{}</pre>
+        <div class="list" data-unit-catalog></div>
+      </section>
+
+      <section class="view" data-panel="sync">
+        <div class="metric-grid">
+          <article><span>Pending</span><strong data-sync-pending>0</strong></article>
+          <article><span>Synced</span><strong data-sync-synced>0</strong></article>
+          <article><span>Conflict</span><strong data-sync-conflict>0</strong></article>
+          <article><span>Storage</span><strong data-sync-storage>HP</strong></article>
+        </div>
+        <div class="section-head">
+          <h2>Offline Sync Queue</h2>
+          <button class="btn primary" type="button" data-sync-now>Sync Sekarang</button>
+        </div>
+        <p class="message">Konflik muncul di sini bila server menolak data, ada duplikasi, atau data lokal lebih baru dari data pusat.</p>
+        <div class="list" data-sync-list></div>
+      </section>
+
+    </main>
+  </div>
+  <script src="src/app.js"></script>
+</body>
+</html>
+

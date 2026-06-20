@@ -1,244 +1,245 @@
 # Rescue-Net Current Status
 
-Last checkpoint: BYOK AI Analyst workflow and API deduplication.
+Updated: 2026-06-20
 
-## Running Environment
+## Runtime
 
-- Static web: `/volume1/web/rescue-net`
-- Backend source/runtime: `/volume1/docker/rescue-net-api`
+- Web repository/live static files: `/volume1/web/rescue-net`
+- FastAPI runtime source: `/volume1/docker/rescue-net-api`
+- Cross-platform app runtime source: `/volume1/web/rescue-net-app`
 - API container: `rescue-net-api`
 - API port: `8092`
 - PostgreSQL container: `postgres-main`
 - Database: `rescuenet_db`
-- Main prototype event: `event-aceh-2025`
+- Public web: `https://osiun.tail251e1e.ts.net/rescue-net/`
+- Public API proxy: `https://osiun.tail251e1e.ts.net/rescue-net-api`
+- Main simulation event: `event-sim-001`
+- GitHub: `https://github.com/bagushandhoko/rescue-net`
+- Branch: `main`
 
-## Implemented Modules
+The runtime API must be started with:
 
-### Core
-- Active disaster data
-- Organization and posko registry
-- Ecosystem member consolidation
-- Resource sharing
-- Resource request / assignment
-- Offline sync pull/push foundation
-- Sync Console UI
+```sh
+--env-file /volume1/docker/rescue-net-api/.env
+```
 
-### Logistics / Posko
-- Posko Detail
-- Stock movement
-- Incoming aid verification
-- Duplicate receiving protection
-- Stock transfer between poskos
-- Stock summary by posko
+Without the env file, the container falls back to PostgreSQL on localhost and fails startup.
 
-### Dapur Umum
-- Kitchen context
-- Meal production
-- Ingredient stock deduction
-- Kitchen UI
+## Source Of Truth
 
-### Posko Medis
-- Medical context
-- Medical cases
-- Medical supply usage
-- Medical stock deduction
-- Medical UI
+After the 2026-06-20 GitHub synchronization:
 
-### Shelter
-- Shelter context
-- Occupancy records
-- Shelter needs
-- Shelter UI
+- Website source: repository root.
+- Backend source: `backend/`.
+- Cross-platform app source: `apps/rescue-net-app/`.
+- Runtime deployment copies remain in the three Synology paths above.
 
-### Search & Found
-- Missing person reports
-- Found person reports
-- Manual match
-- Reunited / investigating / rejected status
-- Search & Found UI
+Do not edit only the runtime copy and leave the repository behind. After a live fix, copy the final source back into the repository before committing.
 
-### AI
-- Integrated `/ai/context/{disaster_event_id}`
-- AI Context includes logistics, stock, kitchen, medical, shelter, search & found
-- Encrypted BYOK user AI key storage
-- `/ai/user-key`
-- `/ai/user-model`
-- `/ai/ask`
-- AI Settings UI
-- AI Analyst UI
-- API duplicate routes cleaned
+## Working Features
 
-## Important Security Rules
+### Web and operations
 
-- API keys must never be committed to GitHub.
-- `.env` must not be committed.
-- User AI keys are stored encrypted in `ai_user_settings`.
-- API key is never returned to browser.
-- UI only shows masked key like `****1234`.
-- `AI_KEY_ENCRYPTION_SECRET` exists only in runtime `.env`.
+- Welcome / Active Disasters
+- War Room
+- Data Konsolidasi
+- Community Reports
+- Map and administrative location foundation
+- Organizations and poskos
+- Logistics and stock movement
+- Distribution and transport
+- Public kitchen
+- Medical post
+- Shelter
+- Search & Found
+- Volunteers
+- Work tools
+- Resource profiles and requests
+- Aid offers and donor programs
+- Recovery / reconstruction
+- Evidence
+- Verification & Approval
+- AI Analyst and BYOK settings
+- Event-driven sync and conflict queue
+- Audit endpoints
 
-## Current Known Notes
+### Consolidation
 
-- User demo key is dummy and returns invalid API key from OpenAI.
-- Real AI answer requires entering a real key in AI Settings UI.
-- The encryption secret used in prototype was shown during development; rotate it before production.
-- `main.py` grew large because prototype endpoints were appended quickly. Future refactor should split routes by module.
+- Raw reports remain separate from operational facts.
+- Location is classified as GPS/map/admin-area/manual/aggregate.
+- Duplicate candidates exist for needs, community reports, and poskos.
+- First-pass consolidation uses MAX instead of SUM when overlap is possible.
+- National rollup supports:
+  - `minimum`: minimum value per same area; aggregate reports excluded.
+  - `optimal`: consolidated detail using MAX per posko/detail.
+  - `maximum`: optimal plus aggregate context.
+- National values can be traced to area, posko, and raw source IDs.
+- Aggregate province/city/district reports are marked as context.
+- Command Center can apply manual corrections without overwriting raw data.
+- Manual corrections store original value, corrected value, delta, actor, reason, and note.
+- War Room identifies how much of a displayed value comes from manual correction.
+- Unit normalization preserves unknown local packaging for review instead of unsafe summation.
 
-## Next Recommended Work
+### Trusted Verifier
 
-1. Refactor backend into module files:
-   - `routes_ai.py`
-   - `routes_posko.py`
-   - `routes_logistics.py`
-   - `routes_kitchen.py`
-   - `routes_medical.py`
-   - `routes_shelter.py`
-   - `routes_search_found.py`
-   - `routes_sync.py`
-2. Add role-based auth.
-3. Add production-grade migration runner.
-4. Add test seed script.
-5. Add UI sidebar shared template.
-6. Add AI organization-key fallback after user-key.
-7. Add audit logs for AI ask events without storing secret.
-8. Add deployment README.
+Trusted Verifier is implemented end-to-end.
 
-## Backend Refactor Started
+It separates:
 
-Backend route-module structure prepared:
+- identity verification
+- location verification
+- organization membership
+- report-source verification
+- report verification
+- consolidated need status
 
-- backend/main.py
-- backend/app_shared.py
-- backend/routes/__init__.py
-- backend/routes/ai_routes.py
+Implemented tables:
 
-Current status:
-- Runtime endpoints still live in main.py.
-- routes/ai_routes.py is currently a placeholder.
-- Next planned refactor is to move AI routes from main.py into routes/ai_routes.py.
+- `verifier_profiles`
+- `trusted_verification_requests`
+- `verification_endorsements`
 
-AI endpoints to move later:
-- GET /ai/context/{disaster_event_id}
-- POST /ai/user-key
-- GET /ai/user-key/{user_id}
-- POST /ai/user-model
-- DELETE /ai/user-key/{user_id}
-- POST /ai/ask
+The table is intentionally named `trusted_verification_requests`; an older unrelated table named `verification_requests` already exists in the database.
 
-Refactor rule:
-- Move one route group at a time.
-- Run python3 -m py_compile main.py.
-- Rebuild Docker.
-- Verify /health, /openapi.json, /ai/context, /ai/user-key, and /ai/ask.
+Verifier lifecycle:
 
-## Latest Prototype Modules Added
+- `candidate_verifier`
+- `community_verifier`
+- `organization_verifier`
+- `government_verifier`
+- `official_verifier`
+- `trusted_public_verifier`
+- suspended/rejected states
 
-The following modules have been added after the previous checkpoint:
+Request flow:
 
-### Contact Directory / Notification Foundation
+1. Registrant selects an RN verifier, invites a verifier, or continues without one.
+2. RN creates a seven-day token.
+3. Only the token hash is stored.
+4. Verifier approves, requests correction, rejects, or states they do not know the target.
+5. Approval creates an endorsement for one explicit scope.
+6. Endorsement may be revoked.
+7. Identity badge does not verify reports or needs.
 
-- New live page: `pages/contact-directory.html`
-- New JS: `assets/js/contact-directory.js`
-- Reads operational contacts from:
-  - posko officer in charge
-  - distribution officer in charge
-  - aid donor contact
-  - volunteer contact
-  - donor program PIC
-- Supports:
-  - Call button
-  - WhatsApp button
-  - phone normalization for Indonesian numbers
+UAT completed:
 
-### Frontend Role-Aware Session Controls
+- register verifier
+- approve verifier and scopes
+- create token request
+- approve posko identity
+- verify separate badge fields
+- revoke endorsement
+- remove UAT records
 
-- New shared JS: `assets/js/session-role.js`
-- Reads `RN_USER` and `RN_SESSION_TOKEN` from localStorage.
-- Displays current user and role in page header.
-- Supports frontend-only visibility rules for actions:
-  - verify
-  - upload evidence
-  - create donor program
-  - create work tool
-  - create volunteer assignment
-  - AI ask
+### Cross-platform application
 
-Important note:
-This is frontend role-awareness only. Backend role enforcement is still required before production.
+The same offline-first core is used for:
 
-### Map / Geospatial Foundation
+- Web/PWA
+- Android via Capacitor
+- iOS source project
+- Windows portable package
+- Linux portable package
 
-- New live page: `pages/map.html`
-- New JS: `assets/js/map.js`
-- New migration: `013_map_geospatial_foundation.sql`
-- API:
-  - `GET /map-context/{disaster_event_id}`
-  - `POST /map-points`
-- Supports:
-  - custom map points
-  - posko location candidates
-  - work tool locations
-  - missing/found locations
-  - Google Maps and OpenStreetMap links
+Features:
 
-### Auth & Role Foundation
+- local registration profile
+- offline community reports
+- offline evidence photo data
+- local sync queue
+- event/organization context gate when online
+- administrative area tree with local RN source and `wilayah.id` fallback
+- GPS capture
+- device registration
+- Trusted Verifier fields in registration
 
-- New live page: `pages/auth.html`
-- New JS: `assets/js/auth.js`
-- New migration: `012_auth_role_foundation.sql`
-- API:
-  - `GET /auth/roles`
-  - `POST /auth/demo-login`
-  - `GET /auth/me/{session_token}`
-- Current roles:
-  - command_center
-  - posko_operator
-  - medical_operator
-  - shelter_operator
-  - donor
-  - volunteer
-  - viewer
+Service worker cache: `rescue-net-app-v6`.
 
-### Donor Program / Transparency
+An already-installed APK contains its bundled assets. Web/PWA updates do not update an old APK. Rebuild/reinstall the APK after app source changes.
 
-- New live page: `pages/donor-program.html`
-- New JS: `assets/js/donor-program.js`
-- New migration: `011_donor_program_transparency.sql`
-- API:
-  - `GET /donor-program-context/{disaster_event_id}`
-  - `POST /donor-programs`
-  - `POST /donor-program-updates`
+## Important Endpoints
 
-### Evidence
+Core:
 
-- New live page: `pages/evidence.html`
-- New JS: `assets/js/evidence.js`
-- Uses existing:
-  - `GET /evidence`
-  - `POST /evidence/upload`
+- `GET /health`
+- `GET /ai/context/{event_id}`
+- `GET /central-data/status`
+- `GET /audit-events`
+- `GET /sync-conflicts`
 
-### Verification Approval
+Consolidation:
 
-- New live page: `pages/verification-approval.html`
-- New JS: `assets/js/verification-approval.js`
-- New migration: `010_verification_approval_module.sql`
-- API:
-  - `GET /verification-context/{disaster_event_id}`
-  - `POST /verification-actions`
+- `GET /data-consolidation/summary`
+- `GET /data-consolidation/raw-reports`
+- `GET /data-consolidation/national-rollup`
+- `GET /data-consolidation/posko-coverage-review`
+- `POST /duplicates/check`
+- `GET /duplicates/candidates`
+- `POST /duplicates/{candidate_id}/resolve`
+- `POST /consolidated-needs/rebuild`
+- `GET /consolidated-needs`
+- `POST /command-corrections`
+- `GET /command-corrections`
 
-## Current Remaining Production Gaps
+Trusted Verifier:
 
-Rescue-Net prototype is broad and working, but not production-ready yet.
+- `POST /public/verifier-profiles`
+- `GET /verifier-profiles`
+- `PATCH /verifier-profiles/{id}/status`
+- `POST /public/verification-requests`
+- `GET /verification-requests`
+- `POST /public/verification-requests/respond?token=...`
+- `GET /verification-endorsements`
+- `POST /verification-endorsements/{id}/revoke`
+- `GET /verification-context/{event_id}`
 
-Remaining major gaps:
+App registration:
 
-1. Backend role enforcement middleware.
-2. Real login/password/OAuth/JWT.
-3. Audit logs for sensitive actions.
-4. Leaflet visual map.
-5. Shared sidebar/header template to remove repeated HTML.
-6. Backend refactor from large `main.py` into route modules.
-7. Migration runner and seed script.
-8. Production backup/restore procedure.
-9. Sensitive data permission for medical and search-found.
-10. Federation conflict resolution.
+- `POST /device-registrations`
+- `GET /admin-areas/children`
+- `GET /admin-areas/tree`
+
+## Validation
+
+Run after backend or shared frontend changes:
+
+```sh
+cd /volume1/web/rescue-net
+sh scripts/rn-smoke-test.sh
+```
+
+Expected result:
+
+```text
+OK: ALL SMOKE TESTS PASSED
+```
+
+Before GitHub push:
+
+```sh
+sh scripts/rn-secret-scan.sh
+```
+
+The scan must produce no secret finding.
+
+## Known Risks
+
+- `backend/main.py` is large and should be split gradually, one route family at a time.
+- CSS contains multiple historical override blocks; do not delete them blindly.
+- RBAC middleware exists but production enforcement and real authentication still require hardening.
+- Medical and Search & Found data need stricter production privacy policies.
+- SMS/email delivery for verifier invitations is not integrated. The API currently returns a secure shareable verification URL.
+- Some older database tables are owned by another PostgreSQL role. Do not assume the API user can ALTER every table.
+- `volunteer_profiles` was intentionally not altered by Trusted Verifier migration; volunteer endorsements remain in the endorsement table.
+- Existing UAT/demo records are present. Avoid treating them as production facts.
+
+## Next Priorities
+
+1. Add real SMS/email delivery for verification URLs.
+2. Add rate limits and suspicious verifier scoring.
+3. Display identity/location/report/need badges on every relevant profile/detail page.
+4. Rebuild Android/iOS/Desktop artifacts from the synchronized app source.
+5. Add automated tests for consolidation scenarios and Trusted Verifier.
+6. Harden authentication/RBAC.
+7. Move schema creation into versioned migrations.
+8. Refactor backend route groups incrementally.

@@ -19,13 +19,15 @@ function rnMoney(n) {
 
 
 const RN_API_BASE = window.RN_API_BASE || (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
+let warScenario = localStorage.getItem("rn_war_scenario") || "optimal";
+let latestScenarioPayload = null;
 function getEventId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("event") || params.get("id") || "event-sim-001";
 }
 
-function safe(v) {
-  return v === null || v === undefined || v === "" ? "n/a" : v;
+function safe(v, fallback = "n/a") {
+  return v === null || v === undefined || v === "" ? fallback : v;
 }
 
 function setText(id, value) {
@@ -49,8 +51,14 @@ function card(title, body, chip = "") {
   `;
 }
 
-async function api(path) {
-  const res = await fetch(RN_API_BASE + path);
+async function api(path, options = {}) {
+  const res = await fetch(RN_API_BASE + path, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    },
+    ...options
+  });
   if (!res.ok) throw new Error(await res.text());
   return await res.json();
 }
@@ -98,6 +106,142 @@ function renderStockWatch(ctx) {
   el.innerHTML = [...needs, ...stock].join("") || card("No stock data", "Belum ada data stok/kebutuhan.", "empty");
 }
 
+function formatQty(value) {
+  const num = Number(value || 0);
+  return Number.isInteger(num) ? String(num) : num.toFixed(2);
+}
+
+function scenarioLabel(scenario) {
+  if (scenario === "minimum") return "Minimum";
+  if (scenario === "maximum") return "Maximum";
+  return "Optimal";
+}
+
+function renderScenarioButtons() {
+  document.querySelectorAll("[data-war-scenario]").forEach(btn => {
+    const active = btn.getAttribute("data-war-scenario") === warScenario;
+    btn.classList.toggle("primary", active);
+  });
+}
+
+function describeCorrectionTarget(row) {
+  const trace = row.trace || {};
+  const place = [trace.village, trace.district, trace.city, trace.province].filter(Boolean).join(", ") || trace.posko_name || "lokasi belum rinci";
+  const warning = Number(row.duplicate_warning_count || 0) > 0 ? " | konflik/overlap" : "";
+  const corrected = row.has_command_correction ? ` | koreksi ${formatQty(row.effective_quantity_final)}` : "";
+  return `${safe(row.item_name)} ${formatQty(row.effective_quantity_final || row.quantity_final)} ${safe(row.quantity_unit, "")} | ${place}${warning}${corrected}`;
+}
+
+function populateCorrectionTargets(payload) {
+  const select = document.getElementById("commandCorrectionTarget");
+  if (!select) return;
+  const rows = [...(payload?.detail_rows || [])].sort((a, b) => {
+    const aw = Number(a.duplicate_warning_count || 0) + (a.has_command_correction ? 1 : 0);
+    const bw = Number(b.duplicate_warning_count || 0) + (b.has_command_correction ? 1 : 0);
+    return bw - aw;
+  });
+  select.innerHTML = rows.length ? rows.map(row => `
+    <option value="${row.id}" data-current="${row.effective_quantity_final || row.quantity_final || 0}">
+      ${describeCorrectionTarget(row)}
+    </option>
+  `).join("") : '<option value="">Belum ada consolidated detail</option>';
+}
+
+function renderCommandCorrectionTrace(payload) {
+  const target = document.getElementById("commandCorrectionTrace");
+  if (!target) return;
+  const rows = (payload?.detail_rows || []).filter(row => row.has_command_correction);
+  target.innerHTML = rows.length ? rows.slice(0, 8).map(row => {
+    const correction = row.manual_correction || {};
+    const delta = Number(row.manual_correction_delta || 0);
+    const deltaText = `${delta >= 0 ? "+" : ""}${formatQty(delta)} ${safe(row.quantity_unit, "")}`;
+    return card(
+      `${safe(row.item_name)} | ${formatQty(row.effective_quantity_final)} ${safe(row.quantity_unit, "")}`,
+      `Original: ${formatQty(row.original_quantity_final)} | Koreksi manual: ${deltaText}<br>` +
+      `Alasan: ${safe(correction.correction_reason)}<br>${safe(correction.correction_note, "")}`,
+      "manual correction"
+    );
+  }).join("") : card("Belum ada koreksi pusat", "Koreksi manual akan tampil di sini dan tetap terpisah dari raw data.", "empty");
+}
+
+async function renderWarScenarioRollup(eventId) {
+  const listEl = document.getElementById("warScenarioRollup");
+  const statusEl = document.getElementById("warScenarioStatus");
+  if (!listEl) return;
+  renderScenarioButtons();
+  if (statusEl) statusEl.textContent = `Scenario: ${scenarioLabel(warScenario)}. Loading...`;
+  try {
+    const payload = await api(`/data-consolidation/national-rollup?disaster_event_id=${encodeURIComponent(eventId)}&scenario=${encodeURIComponent(warScenario)}`);
+    latestScenarioPayload = payload;
+    populateCorrectionTargets(payload);
+    renderCommandCorrectionTrace(payload);
+    const rows = payload.national_rollup || [];
+    listEl.innerHTML = rows.length ? rows.slice(0, 8).map(row => {
+      const warning = Number(row.duplicate_warning_count || 0) > 0;
+      const chip = warning ? `${row.duplicate_warning_count} overlap` : row.view_mode;
+      return card(
+        `${safe(row.item_name)} | ${formatQty(row.baseline_quantity)} ${safe(row.quantity_unit, "")}`,
+        `Range: ${formatQty(row.range_min)}-${formatQty(row.range_max)} ${safe(row.quantity_unit, "")}<br>` +
+        `Detail: ${safe(row.detail_count)} | Sources: ${safe(row.source_count)}<br>` +
+        `Koreksi manual: ${formatQty(row.manual_correction_abs_total)} ${safe(row.quantity_unit, "")} dari total | ${safe(row.corrected_detail_count, 0)} detail<br>` +
+        `${safe(row.operator_note, "")}`,
+        chip
+      );
+    }).join("") : card(
+      "Belum ada rollup nasional",
+      "Klik Rebuild Consolidated Needs di Data Konsolidasi agar skenario War Room punya basis data.",
+      "empty"
+    );
+    if (statusEl) {
+      const warningCount = rows.reduce((sum, row) => sum + Number(row.duplicate_warning_count || 0), 0);
+      const correctionTotal = rows.reduce((sum, row) => sum + Number(row.manual_correction_abs_total || 0), 0);
+      statusEl.textContent = `${scenarioLabel(warScenario)}: ${rows.length} item, ${warningCount} warning overlap, ${formatQty(correctionTotal)} koreksi manual.`;
+    }
+  } catch (err) {
+    listEl.innerHTML = card("Scenario rollup belum siap", err.message, "pending");
+    if (statusEl) statusEl.textContent = `Scenario: ${scenarioLabel(warScenario)} gagal dimuat.`;
+  }
+}
+
+function setupCommandCorrectionForm() {
+  const form = document.getElementById("commandCorrectionForm");
+  if (!form) return;
+  const select = document.getElementById("commandCorrectionTarget");
+  const status = document.getElementById("commandCorrectionStatus");
+  select?.addEventListener("change", () => {
+    const selected = select.options[select.selectedIndex];
+    const input = form.elements.corrected_quantity;
+    if (input && selected?.dataset.current) input.value = selected.dataset.current;
+  });
+  document.getElementById("refreshCorrectionTargets")?.addEventListener("click", async () => {
+    await renderWarScenarioRollup(getEventId());
+  });
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const targetId = form.elements.target_id.value;
+    const correctedQuantity = Number(form.elements.corrected_quantity.value);
+    if (!targetId || Number.isNaN(correctedQuantity)) {
+      if (status) status.textContent = "Pilih data dan isi nilai koreksi dulu.";
+      return;
+    }
+    if (status) status.textContent = "Menyimpan koreksi pusat...";
+    await api("/command-corrections", {
+      method: "POST",
+      body: JSON.stringify({
+        disaster_event_id: getEventId(),
+        target_type: "consolidated_need",
+        target_id: targetId,
+        corrected_quantity: correctedQuantity,
+        corrected_by: "command-center-web",
+        correction_reason: form.elements.correction_reason.value,
+        correction_note: form.elements.correction_note.value
+      })
+    });
+    if (status) status.textContent = "Koreksi tersimpan. Rollup nasional diperbarui.";
+    await renderWarScenarioRollup(getEventId());
+  });
+}
+
 
 function renderModuleSummary(ctx) {
   const s = ctx.summary || {};
@@ -123,6 +267,30 @@ function renderModuleSummary(ctx) {
     <div><span>Special Programs</span><b>${safe(s.donor_program_count)}</b></div>
     <div><span>Program Updates</span><b>${safe(s.donor_program_update_count)}</b></div>
   `;
+}
+
+async function renderTrustedVerifierWarRoom(eventId) {
+  const list = document.getElementById("warTrustedVerifierList");
+  const summary = document.getElementById("warTrustedVerifierSummary");
+  if (!list || !summary) return;
+  try {
+    const ctx = await api(`/verification-context/${encodeURIComponent(eventId)}`);
+    const s = ctx.summary || {};
+    summary.innerHTML = `
+      <div><span>Pending requests</span><b>${safe(s.pending_verifier_request_count, 0)}</b></div>
+      <div><span>Candidate verifiers</span><b>${safe(s.candidate_verifier_count, 0)}</b></div>
+      <div><span>Active endorsements</span><b>${safe(s.active_endorsement_count, 0)}</b></div>
+      <div><span>Revoked</span><b>${safe(s.revoked_endorsement_count, 0)}</b></div>
+    `;
+    const endorsements = (ctx.verification_endorsements || []).filter(x => x.status === "active");
+    list.innerHTML = endorsements.length ? endorsements.slice(0, 6).map(e => card(
+      `${safe(e.target_type)}: ${safe(e.target_id)}`,
+      `Identitas/scope: ${safe(e.verification_scope)}<br>Diverifikasi oleh ${safe(e.verifier_display_name)} (${safe(e.verifier_role)})<br>Laporan dan kebutuhan tetap perlu verifikasi sendiri.`,
+      `trust L${safe(e.verification_level)}`
+    )).join("") : card("Belum ada endorsement aktif", "Request verifikator akan muncul setelah registrasi dan persetujuan.", "empty");
+  } catch (err) {
+    list.innerHTML = card("Trusted Verifier belum termuat", err.message, "pending");
+  }
 }
 
 async function renderCommunityReports(eventId) {
@@ -233,6 +401,8 @@ async function loadWarRoom() {
   renderAlerts(ctx.alerts || []);
   renderRecommendations(ctx.recommendations || []);
   renderStockWatch(ctx);
+  try { await renderWarScenarioRollup(eventId); } catch (err) { console.error('render scenario rollup failed', err); }
+  try { await renderTrustedVerifierWarRoom(eventId); } catch (err) { console.error('render trusted verifier failed', err); }
   renderModuleSummary(ctx);
   try { await renderCommunityReports(eventId); } catch (err) { console.error('render community reports failed', err); }
   try { renderSpecialPrograms(ctx); } catch (err) { console.error('render special programs failed', err); }
@@ -290,6 +460,15 @@ function setupQuickBookingForm() {
 document.addEventListener("DOMContentLoaded", () => {
   fixProgramLinks();
   setupQuickBookingForm();
+  setupCommandCorrectionForm();
+  document.querySelectorAll("[data-war-scenario]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      warScenario = btn.getAttribute("data-war-scenario") || "optimal";
+      localStorage.setItem("rn_war_scenario", warScenario);
+      renderScenarioButtons();
+      await renderWarScenarioRollup(getEventId());
+    });
+  });
   const btn = document.getElementById("refreshWarRoom");
   if (btn) btn.addEventListener("click", () => loadWarRoom().catch(err => setText("warRoomStatus", err.message)));
 

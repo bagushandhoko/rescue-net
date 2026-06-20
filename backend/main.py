@@ -3,7 +3,7 @@ import json
 import hashlib
 import secrets
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
@@ -347,6 +347,29 @@ class PoskoCreate(BaseModel):
     organization_id: Optional[str] = None
     verification_status: str = "self_reported"
     operational_status: str = "active"
+
+class DeviceRegistrationCreate(BaseModel):
+    disaster_event_id: str = "event-sim-001"
+    local_id: Optional[str] = None
+    device_id: Optional[str] = None
+    organization_name: str
+    member_name: Optional[str] = None
+    role: str = "posko_operator"
+    posko_name: Optional[str] = None
+    notes: Optional[str] = None
+    location_text: Optional[str] = None
+    area_level: Optional[str] = None
+    province_name: Optional[str] = None
+    city_name: Optional[str] = None
+    district_name: Optional[str] = None
+    village_name: Optional[str] = None
+    admin_area_id: Optional[str] = None
+    verifier_mode: Optional[str] = "none"
+    requested_verifier_id: Optional[str] = None
+    requested_verifier_name: Optional[str] = None
+    requested_verifier_phone: Optional[str] = None
+    requested_verifier_email: Optional[str] = None
+    verifier_relationship: Optional[str] = None
 
 class VolunteerCreate(BaseModel):
     name: str
@@ -930,6 +953,140 @@ def create_posko(payload: PoskoCreate):
         row = rows_to_dicts(cur)[0]
         conn.commit()
         return row
+
+@app.post("/device-registrations")
+def register_device_posko(payload: DeviceRegistrationCreate):
+    ensure_location_resolution_tables()
+    ensure_trusted_verifier_tables()
+    org_id = "org-" + hashlib.sha1((payload.device_id or payload.organization_name).encode("utf-8")).hexdigest()[:12]
+    posko_id = "posko-" + hashlib.sha1(((payload.device_id or payload.local_id or payload.organization_name) + "|" + payload.disaster_event_id).encode("utf-8")).hexdigest()[:12]
+    org_name = payload.organization_name.strip()
+    posko_name = (payload.posko_name or payload.organization_name).strip()
+    location_text = payload.location_text or "Lokasi belum dipilih"
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT id FROM disaster_events WHERE id = %s;", (payload.disaster_event_id,))
+        if not cur.fetchone():
+            raise HTTPException(status_code=404, detail="Disaster event not found")
+
+        cur.execute("""
+        INSERT INTO organizations (id, name, organization_type, trust_level, status, device_id, contact_person, notes)
+        VALUES (%s,%s,%s,'unverified','pending',%s,%s,%s)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          organization_type = EXCLUDED.organization_type,
+          device_id = EXCLUDED.device_id,
+          contact_person = EXCLUDED.contact_person,
+          notes = EXCLUDED.notes
+        RETURNING *;
+        """, (org_id, org_name, payload.role, payload.device_id, payload.member_name, payload.notes))
+        org = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        INSERT INTO posko_nodes (
+          id, disaster_event_id, organization_id, name, node_type, location,
+          verification_status, operational_status, device_id, area_level,
+          admin_area_id, province_name, city_name, district_name, village_name, notes
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,'self_reported','active',%s,%s,%s,%s,%s,%s,%s,%s)
+        ON CONFLICT (id) DO UPDATE SET
+          organization_id = EXCLUDED.organization_id,
+          name = EXCLUDED.name,
+          node_type = EXCLUDED.node_type,
+          location = EXCLUDED.location,
+          operational_status = 'active',
+          device_id = EXCLUDED.device_id,
+          area_level = EXCLUDED.area_level,
+          admin_area_id = EXCLUDED.admin_area_id,
+          province_name = EXCLUDED.province_name,
+          city_name = EXCLUDED.city_name,
+          district_name = EXCLUDED.district_name,
+          village_name = EXCLUDED.village_name,
+          notes = EXCLUDED.notes
+        RETURNING *;
+        """, (
+            posko_id, payload.disaster_event_id, org_id, posko_name, payload.role, location_text,
+            payload.device_id, payload.area_level, payload.admin_area_id, payload.province_name,
+            payload.city_name, payload.district_name, payload.village_name, payload.notes
+        ))
+        posko = rows_to_dicts(cur)[0]
+
+        cur.execute("""
+        INSERT INTO sync_events
+        (id, event_id, object_type, object_id, operation, payload_json, source_device_id, verification_status, apply_status)
+        VALUES (%s,%s,'device_registration',%s,'upsert',%s,%s,'unverified','applied')
+        ON CONFLICT (event_id) DO NOTHING;
+        """, (
+            "syncev-" + uuid.uuid4().hex[:12],
+            payload.local_id or ("device-reg-" + uuid.uuid4().hex[:12]),
+            posko_id,
+            json.dumps(payload.model_dump(), default=str),
+            payload.device_id
+        ))
+        if payload.area_level in {"province", "city", "district"}:
+            area_id = "oparea-" + hashlib.sha1((posko_id + "|" + (payload.admin_area_id or payload.area_level or "aggregate")).encode("utf-8")).hexdigest()[:12]
+            cur.execute("""
+            INSERT INTO operational_areas (
+                id, disaster_event_id, owner_type, owner_id, area_level,
+                province_code, city_code, district_code, village_code,
+                coverage_description, verification_status
+            )
+            VALUES (%s,%s,'posko',%s,%s,%s,%s,%s,%s,%s,'self_reported')
+            ON CONFLICT (id) DO UPDATE SET
+              area_level = EXCLUDED.area_level,
+              province_code = EXCLUDED.province_code,
+              city_code = EXCLUDED.city_code,
+              district_code = EXCLUDED.district_code,
+              village_code = EXCLUDED.village_code,
+              coverage_description = EXCLUDED.coverage_description,
+              updated_at = NOW();
+            """, (
+                area_id, payload.disaster_event_id, posko_id, payload.area_level,
+                payload.admin_area_id if payload.area_level == "province" else None,
+                payload.admin_area_id if payload.area_level == "city" else None,
+                payload.admin_area_id if payload.area_level == "district" else None,
+                payload.admin_area_id if payload.area_level == "village" else None,
+                "Aggregate coverage registration. Must be broken down into child posko/village-level reports before final distribution."
+            ))
+        verification_request = None
+        verification_token = None
+        if payload.verifier_mode in {"registered", "invite"} and (
+            payload.requested_verifier_id or payload.requested_verifier_name
+        ):
+            verification_token = secrets.token_urlsafe(32)
+            verification_request_id = "verreq-" + uuid.uuid4().hex[:12]
+            cur.execute("""
+            INSERT INTO trusted_verification_requests (
+                id, requester_type, requester_id, target_type, target_id,
+                requested_verifier_id, requested_verifier_name, requested_verifier_phone,
+                requested_verifier_email, relationship_description, verification_scope,
+                message, status, token_hash, expires_at
+            )
+            VALUES (%s,'device_registration',%s,'posko',%s,%s,%s,%s,%s,%s,'posko_identity',%s,'pending',%s,%s)
+            RETURNING id, target_type, target_id, requested_verifier_id, requested_verifier_name,
+                      relationship_description, verification_scope, status, expires_at, created_at;
+            """, (
+                verification_request_id, payload.local_id, posko_id,
+                payload.requested_verifier_id, payload.requested_verifier_name,
+                payload.requested_verifier_phone, payload.requested_verifier_email,
+                payload.verifier_relationship or "Mengenal pendaftar",
+                f"Permintaan verifikasi identitas posko {posko_name}. Verifikasi ini tidak otomatis membenarkan lokasi, laporan, atau kebutuhan.",
+                hashlib.sha256(verification_token.encode("utf-8")).hexdigest(),
+                datetime.utcnow() + timedelta(days=7)
+            ))
+            verification_request = rows_to_dicts(cur)[0]
+        conn.commit()
+
+    return {
+        "status": "registered",
+        "organization": org,
+        "posko": posko,
+        "verification_request": verification_request,
+        "verification_url": (
+            f"/rescue-net/pages/verification-approval.html?token={verification_token}"
+            if verification_token else None
+        )
+    }
 
 @app.get("/volunteers")
 def get_volunteers():
@@ -3814,8 +3971,401 @@ class VerificationActionCreate(BaseModel):
     reviewer_role: Optional[str] = "command_center"
     review_notes: Optional[str] = None
 
+
+class VerifierProfileCreate(BaseModel):
+    user_id: Optional[str] = None
+    display_name: str
+    verifier_type: str = "community"
+    organization_id: Optional[str] = None
+    position_title: Optional[str] = None
+    public_role_description: Optional[str] = None
+    phone: Optional[str] = None
+    email: Optional[str] = None
+    verifier_status: str = "candidate_verifier"
+    trust_level: int = 1
+    allowed_verification_scope: Optional[list[str]] = None
+
+
+class VerificationRequestCreate(BaseModel):
+    requester_type: str = "self_registration"
+    requester_id: Optional[str] = None
+    target_type: str
+    target_id: str
+    requested_verifier_id: Optional[str] = None
+    requested_verifier_name: Optional[str] = None
+    requested_verifier_phone: Optional[str] = None
+    requested_verifier_email: Optional[str] = None
+    relationship_description: str
+    verification_scope: str = "identity"
+    message: Optional[str] = None
+
+
+class VerificationRequestDecision(BaseModel):
+    decision: str
+    verifier_id: Optional[str] = None
+    verifier_display_name: Optional[str] = None
+    verifier_role: Optional[str] = None
+    statement: Optional[str] = None
+    correction_note: Optional[str] = None
+
+
+class VerifierStatusUpdate(BaseModel):
+    verifier_status: str
+    trust_level: Optional[int] = None
+    allowed_verification_scope: Optional[list[str]] = None
+    reviewed_by: Optional[str] = "rn-command-center"
+    notes: Optional[str] = None
+
+
+class EndorsementRevoke(BaseModel):
+    revoked_by: Optional[str] = "rn-command-center"
+    reason: str
+
+
+def ensure_trusted_verifier_tables():
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS verifier_profiles (
+            id TEXT PRIMARY KEY,
+            user_id TEXT,
+            display_name TEXT NOT NULL,
+            verifier_type TEXT NOT NULL DEFAULT 'community',
+            organization_id TEXT,
+            position_title TEXT,
+            public_role_description TEXT,
+            phone TEXT,
+            email TEXT,
+            identity_verification_status TEXT NOT NULL DEFAULT 'pending',
+            verifier_status TEXT NOT NULL DEFAULT 'candidate_verifier',
+            trust_level INTEGER NOT NULL DEFAULT 1,
+            allowed_verification_scope_json JSONB NOT NULL DEFAULT '["identity"]',
+            suspicious_activity_count INTEGER NOT NULL DEFAULT 0,
+            approved_by TEXT,
+            approved_at TIMESTAMP,
+            notes TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+        """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS trusted_verification_requests (
+            id TEXT PRIMARY KEY,
+            requester_type TEXT NOT NULL,
+            requester_id TEXT,
+            target_type TEXT NOT NULL,
+            target_id TEXT NOT NULL,
+            requested_verifier_id TEXT,
+            requested_verifier_name TEXT,
+            requested_verifier_phone TEXT,
+            requested_verifier_email TEXT,
+            relationship_description TEXT NOT NULL,
+            verification_scope TEXT NOT NULL,
+            message TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            token_hash TEXT NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            decided_at TIMESTAMP,
+            correction_note TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+        """)
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS verification_endorsements (
+            id TEXT PRIMARY KEY,
+            request_id TEXT REFERENCES trusted_verification_requests(id) ON DELETE SET NULL,
+            target_type TEXT NOT NULL,
+            target_id TEXT NOT NULL,
+            verifier_id TEXT,
+            verifier_display_name TEXT NOT NULL,
+            verifier_role TEXT,
+            verification_scope TEXT NOT NULL,
+            verification_level INTEGER NOT NULL DEFAULT 1,
+            statement TEXT,
+            status TEXT NOT NULL DEFAULT 'active',
+            visible_on_profile BOOLEAN NOT NULL DEFAULT TRUE,
+            verified_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            expires_at TIMESTAMP,
+            revoked_at TIMESTAMP,
+            revoked_by TEXT,
+            revoke_reason TEXT,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+        """)
+        for table in ("posko_nodes", "organizations"):
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS identity_verification_status TEXT NOT NULL DEFAULT 'unverified';")
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS identity_verified_by TEXT;")
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS identity_verified_at TIMESTAMP;")
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS trusted_verifier_count INTEGER NOT NULL DEFAULT 0;")
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS public_verified_badge BOOLEAN NOT NULL DEFAULT FALSE;")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_verifier_profiles_status ON verifier_profiles(verifier_status, trust_level);")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_trusted_verification_requests_target ON trusted_verification_requests(target_type, target_id, status);")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_verification_endorsements_target ON verification_endorsements(target_type, target_id, status);")
+        conn.commit()
+
+
+def verifier_target_table(target_type: str):
+    return {
+        "posko": "posko_nodes",
+        "organization": "organizations",
+        "volunteer": "volunteer_profiles",
+        "resource_provider": "organizations",
+        "reporter": None,
+        "community_report": None,
+    }.get(target_type)
+
+
+def apply_identity_endorsement(cur, target_type: str, target_id: str, verifier_name: str):
+    table = verifier_target_table(target_type)
+    if not table:
+        return
+    cur.execute(f"""
+    UPDATE {table}
+    SET identity_verification_status = 'verified',
+        identity_verified_by = %s,
+        identity_verified_at = NOW(),
+        trusted_verifier_count = trusted_verifier_count + 1,
+        public_verified_badge = TRUE
+    WHERE id = %s;
+    """, (verifier_name, target_id))
+
+
+@app.post("/public/verifier-profiles")
+def register_verifier_profile(payload: VerifierProfileCreate):
+    ensure_trusted_verifier_tables()
+    allowed_types = {"community", "organization", "government", "public_figure", "rn_admin"}
+    if payload.verifier_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid verifier_type")
+    verifier_id = "verifier-" + uuid.uuid4().hex[:12]
+    scopes = payload.allowed_verification_scope or ["identity"]
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO verifier_profiles (
+            id, user_id, display_name, verifier_type, organization_id,
+            position_title, public_role_description, phone, email,
+            verifier_status, trust_level, allowed_verification_scope_json
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING *;
+        """, (
+            verifier_id, payload.user_id, payload.display_name, payload.verifier_type,
+            payload.organization_id, payload.position_title, payload.public_role_description,
+            payload.phone, payload.email, payload.verifier_status, payload.trust_level,
+            json.dumps(scopes)
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+    return {"status": "registered", "verifier_profile": row}
+
+
+@app.get("/verifier-profiles")
+def list_verifier_profiles(status: Optional[str] = None, q: Optional[str] = None):
+    ensure_trusted_verifier_tables()
+    where = ["1=1"]
+    params = []
+    if status:
+        where.append("verifier_status = %s")
+        params.append(status)
+    if q:
+        where.append("(display_name ILIKE %s OR position_title ILIKE %s OR public_role_description ILIKE %s)")
+        params.extend([f"%{q}%"] * 3)
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM verifier_profiles WHERE " + " AND ".join(where) + " ORDER BY trust_level DESC, updated_at DESC LIMIT 300;", params)
+        return rows_to_dicts(cur)
+
+
+@app.patch("/verifier-profiles/{verifier_id}/status")
+def update_verifier_profile_status(verifier_id: str, payload: VerifierStatusUpdate):
+    ensure_trusted_verifier_tables()
+    allowed = {"candidate_verifier", "community_verifier", "organization_verifier", "government_verifier", "official_verifier", "trusted_public_verifier", "suspended", "rejected"}
+    if payload.verifier_status not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid verifier_status")
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        UPDATE verifier_profiles
+        SET verifier_status = %s,
+            trust_level = COALESCE(%s, trust_level),
+            allowed_verification_scope_json = COALESCE(%s, allowed_verification_scope_json),
+            approved_by = %s,
+            approved_at = CASE WHEN %s NOT IN ('candidate_verifier','rejected','suspended') THEN NOW() ELSE approved_at END,
+            notes = COALESCE(%s, notes),
+            updated_at = NOW()
+        WHERE id = %s
+        RETURNING *;
+        """, (
+            payload.verifier_status, payload.trust_level,
+            json.dumps(payload.allowed_verification_scope) if payload.allowed_verification_scope is not None else None,
+            payload.reviewed_by, payload.verifier_status, payload.notes, verifier_id
+        ))
+        rows = rows_to_dicts(cur)
+        conn.commit()
+    if not rows:
+        raise HTTPException(status_code=404, detail="Verifier not found")
+    return {"status": "updated", "verifier_profile": rows[0]}
+
+
+@app.post("/public/verification-requests")
+def create_trusted_verification_request(payload: VerificationRequestCreate):
+    ensure_trusted_verifier_tables()
+    allowed_targets = {"reporter", "posko", "organization", "volunteer", "resource_provider", "community_report"}
+    allowed_scopes = {"identity", "posko_identity", "organization_membership", "location", "report_source"}
+    if payload.target_type not in allowed_targets or payload.verification_scope not in allowed_scopes:
+        raise HTTPException(status_code=400, detail="Invalid target_type or verification_scope")
+    raw_token = secrets.token_urlsafe(32)
+    request_id = "verreq-" + uuid.uuid4().hex[:12]
+    expires_at = datetime.utcnow() + timedelta(days=7)
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        INSERT INTO trusted_verification_requests (
+            id, requester_type, requester_id, target_type, target_id,
+            requested_verifier_id, requested_verifier_name, requested_verifier_phone,
+            requested_verifier_email, relationship_description, verification_scope,
+            message, status, token_hash, expires_at
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending',%s,%s)
+        RETURNING *;
+        """, (
+            request_id, payload.requester_type, payload.requester_id,
+            payload.target_type, payload.target_id, payload.requested_verifier_id,
+            payload.requested_verifier_name, payload.requested_verifier_phone,
+            payload.requested_verifier_email, payload.relationship_description,
+            payload.verification_scope, payload.message,
+            hashlib.sha256(raw_token.encode("utf-8")).hexdigest(), expires_at
+        ))
+        row = rows_to_dicts(cur)[0]
+        conn.commit()
+    row.pop("token_hash", None)
+    return {
+        "status": "pending",
+        "verification_request": row,
+        "verification_token": raw_token,
+        "verification_url": f"/rescue-net/pages/verification-approval.html?token={raw_token}"
+    }
+
+
+@app.get("/verification-requests")
+def list_trusted_verification_requests(status: Optional[str] = None, target_type: Optional[str] = None):
+    ensure_trusted_verifier_tables()
+    where = ["1=1"]
+    params = []
+    if status:
+        where.append("status = %s")
+        params.append(status)
+    if target_type:
+        where.append("target_type = %s")
+        params.append(target_type)
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT id, requester_type, requester_id, target_type, target_id, requested_verifier_id, requested_verifier_name, requested_verifier_phone, requested_verifier_email, relationship_description, verification_scope, message, status, expires_at, decided_at, correction_note, created_at, updated_at FROM trusted_verification_requests WHERE " + " AND ".join(where) + " ORDER BY created_at DESC LIMIT 300;", params)
+        return rows_to_dicts(cur)
+
+
+@app.post("/public/verification-requests/respond")
+def respond_trusted_verification_request(token: str, payload: VerificationRequestDecision):
+    ensure_trusted_verifier_tables()
+    allowed = {"approved", "needs_correction", "rejected", "not_known"}
+    if payload.decision not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid decision")
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        SELECT * FROM trusted_verification_requests
+        WHERE token_hash = %s AND status = 'pending' AND expires_at > NOW()
+        LIMIT 1;
+        """, (token_hash,))
+        rows = rows_to_dicts(cur)
+        if not rows:
+            raise HTTPException(status_code=404, detail="Request not found, expired, or already decided")
+        req = rows[0]
+        verifier = None
+        if payload.verifier_id:
+            cur.execute("SELECT * FROM verifier_profiles WHERE id = %s LIMIT 1;", (payload.verifier_id,))
+            vr = rows_to_dicts(cur)
+            verifier = vr[0] if vr else None
+            if not verifier or verifier.get("verifier_status") in {"candidate_verifier", "suspended", "rejected"}:
+                raise HTTPException(status_code=403, detail="Verifier is not approved to endorse")
+            scopes = verifier.get("allowed_verification_scope_json") or []
+            if isinstance(scopes, str):
+                scopes = json.loads(scopes)
+            if req["verification_scope"] not in scopes:
+                raise HTTPException(status_code=403, detail="Verifier scope does not allow this verification")
+        cur.execute("""
+        UPDATE trusted_verification_requests
+        SET status = %s, correction_note = %s, decided_at = NOW(), updated_at = NOW()
+        WHERE id = %s;
+        """, (payload.decision, payload.correction_note, req["id"]))
+        endorsement = None
+        if payload.decision == "approved":
+            verifier_name = payload.verifier_display_name or (verifier or {}).get("display_name") or req.get("requested_verifier_name") or "Trusted verifier"
+            verifier_role = payload.verifier_role or (verifier or {}).get("position_title") or (verifier or {}).get("public_role_description")
+            level = int((verifier or {}).get("trust_level") or 1)
+            endorsement_id = "endorse-" + uuid.uuid4().hex[:12]
+            cur.execute("""
+            INSERT INTO verification_endorsements (
+                id, request_id, target_type, target_id, verifier_id,
+                verifier_display_name, verifier_role, verification_scope,
+                verification_level, statement, status, visible_on_profile
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'active',TRUE)
+            RETURNING *;
+            """, (
+                endorsement_id, req["id"], req["target_type"], req["target_id"],
+                payload.verifier_id, verifier_name, verifier_role,
+                req["verification_scope"], level, payload.statement
+            ))
+            endorsement = rows_to_dicts(cur)[0]
+            if req["verification_scope"] in {"identity", "posko_identity", "organization_membership"}:
+                apply_identity_endorsement(cur, req["target_type"], req["target_id"], verifier_name)
+        conn.commit()
+    return {"status": payload.decision, "endorsement": endorsement}
+
+
+@app.get("/verification-endorsements")
+def list_verification_endorsements(target_type: Optional[str] = None, target_id: Optional[str] = None, status: Optional[str] = "active"):
+    ensure_trusted_verifier_tables()
+    where = ["1=1"]
+    params = []
+    for key, value in (("target_type", target_type), ("target_id", target_id), ("status", status)):
+        if value:
+            where.append(f"{key} = %s")
+            params.append(value)
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("SELECT * FROM verification_endorsements WHERE " + " AND ".join(where) + " ORDER BY verified_at DESC LIMIT 300;", params)
+        return rows_to_dicts(cur)
+
+
+@app.post("/verification-endorsements/{endorsement_id}/revoke")
+def revoke_verification_endorsement(endorsement_id: str, payload: EndorsementRevoke):
+    ensure_trusted_verifier_tables()
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("""
+        UPDATE verification_endorsements
+        SET status = 'revoked', revoked_at = NOW(), revoked_by = %s,
+            revoke_reason = %s, updated_at = NOW()
+        WHERE id = %s AND status = 'active'
+        RETURNING *;
+        """, (payload.revoked_by, payload.reason, endorsement_id))
+        rows = rows_to_dicts(cur)
+        if not rows:
+            raise HTTPException(status_code=404, detail="Active endorsement not found")
+        row = rows[0]
+        table = verifier_target_table(row["target_type"])
+        if table:
+            cur.execute("SELECT COUNT(*) FROM verification_endorsements WHERE target_type = %s AND target_id = %s AND status = 'active';", (row["target_type"], row["target_id"]))
+            active_count = cur.fetchone()[0]
+            cur.execute(f"""
+            UPDATE {table}
+            SET trusted_verifier_count = %s,
+                public_verified_badge = %s,
+                identity_verification_status = CASE WHEN %s = 0 THEN 'unverified' ELSE identity_verification_status END
+            WHERE id = %s;
+            """, (active_count, active_count > 0, active_count, row["target_id"]))
+        conn.commit()
+    return {"status": "revoked", "endorsement": row}
+
 @app.get("/verification-context/{disaster_event_id}")
 def get_verification_context(disaster_event_id: str):
+    ensure_trusted_verifier_tables()
     context = {
         "disaster_event_id": disaster_event_id,
         "organizations": [],
@@ -3827,6 +4377,9 @@ def get_verification_context(disaster_event_id: str):
         "missing_person_reports": [],
         "found_person_reports": [],
         "verification_actions": [],
+        "verifier_profiles": [],
+        "verification_requests": [],
+        "verification_endorsements": [],
         "summary": {},
         "generated_at": datetime.utcnow().isoformat()
     }
@@ -3896,6 +4449,12 @@ def get_verification_context(disaster_event_id: str):
         read_by_disaster("missing_person_reports", "missing_person_reports")
         read_by_disaster("found_person_reports", "found_person_reports")
         read_by_disaster("verification_actions", "verification_actions", limit=200)
+        cur.execute("SELECT * FROM verifier_profiles ORDER BY trust_level DESC, updated_at DESC LIMIT 200;")
+        context["verifier_profiles"] = rows_to_dicts(cur)
+        cur.execute("SELECT id, requester_type, requester_id, target_type, target_id, requested_verifier_id, requested_verifier_name, requested_verifier_phone, requested_verifier_email, relationship_description, verification_scope, message, status, expires_at, decided_at, correction_note, created_at, updated_at FROM trusted_verification_requests ORDER BY created_at DESC LIMIT 200;")
+        context["verification_requests"] = rows_to_dicts(cur)
+        cur.execute("SELECT * FROM verification_endorsements ORDER BY verified_at DESC LIMIT 200;")
+        context["verification_endorsements"] = rows_to_dicts(cur)
 
         def count_pending(items):
             n = 0
@@ -3924,6 +4483,11 @@ def get_verification_context(disaster_event_id: str):
             "pending_volunteer_count": count_pending(context["volunteers"]),
             "pending_aid_offer_count": count_pending(context["aid_offers"]),
             "pending_work_tool_count": count_pending(context["work_tool_requests"]),
+            "verifier_profile_count": len(context["verifier_profiles"]),
+            "candidate_verifier_count": len([x for x in context["verifier_profiles"] if x.get("verifier_status") == "candidate_verifier"]),
+            "pending_verifier_request_count": len([x for x in context["verification_requests"] if x.get("status") == "pending"]),
+            "active_endorsement_count": len([x for x in context["verification_endorsements"] if x.get("status") == "active"]),
+            "revoked_endorsement_count": len([x for x in context["verification_endorsements"] if x.get("status") == "revoked"]),
         }
 
     return context
@@ -4855,6 +5419,16 @@ class ConsolidatedNeedCreate(BaseModel):
     status: Optional[str] = "draft"
 
 
+class CommandCorrectionCreate(BaseModel):
+    disaster_event_id: str = "event-sim-001"
+    target_type: str = "consolidated_need"
+    target_id: str
+    corrected_quantity: float
+    corrected_by: Optional[str] = "command-center"
+    correction_reason: Optional[str] = None
+    correction_note: Optional[str] = None
+
+
 class FederationNodeCreate(BaseModel):
     node_name: str
     node_type: str = "partner"
@@ -5719,6 +6293,23 @@ def ensure_location_resolution_tables():
                 updated_at TIMESTAMP NOT NULL DEFAULT NOW()
             );
             """)
+            cur.execute("""
+            CREATE TABLE IF NOT EXISTS command_corrections (
+                id TEXT PRIMARY KEY,
+                disaster_event_id TEXT NOT NULL REFERENCES disaster_events(id) ON DELETE CASCADE,
+                target_type TEXT NOT NULL DEFAULT 'consolidated_need',
+                target_id TEXT NOT NULL,
+                original_quantity NUMERIC NOT NULL DEFAULT 0,
+                corrected_quantity NUMERIC NOT NULL DEFAULT 0,
+                correction_delta NUMERIC NOT NULL DEFAULT 0,
+                corrected_by TEXT,
+                correction_reason TEXT,
+                correction_note TEXT,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+            """)
 
             for table in ("posko_nodes", "logistic_needs"):
                 cur.execute(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS geo_location_id TEXT;")
@@ -5732,6 +6323,18 @@ def ensure_location_resolution_tables():
             cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS coverage_radius_meters DOUBLE PRECISION;")
             cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS parent_posko_id TEXT;")
             cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS canonical_posko_id TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS device_id TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS area_level TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS admin_area_id TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS province_name TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS city_name TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS district_name TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS village_name TEXT;")
+            cur.execute("ALTER TABLE posko_nodes ADD COLUMN IF NOT EXISTS notes TEXT;")
+
+            cur.execute("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS device_id TEXT;")
+            cur.execute("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS contact_person TEXT;")
+            cur.execute("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS notes TEXT;")
 
             cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS source_type TEXT;")
             cur.execute("ALTER TABLE logistic_needs ADD COLUMN IF NOT EXISTS source_id TEXT;")
@@ -5748,8 +6351,12 @@ def ensure_location_resolution_tables():
 
             cur.execute("CREATE INDEX IF NOT EXISTS idx_duplicate_candidates_event_status ON duplicate_candidates(disaster_event_id, status);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_consolidated_needs_event_status ON consolidated_needs(disaster_event_id, status);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_command_corrections_event_target ON command_corrections(disaster_event_id, target_type, target_id, status);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_operational_areas_event_owner ON operational_areas(disaster_event_id, owner_type, owner_id);")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_official_admin_areas_parent ON official_admin_areas(parent_code, level);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_posko_nodes_device ON posko_nodes(device_id);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_posko_nodes_admin_area ON posko_nodes(admin_area_id);")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_organizations_device ON organizations(device_id);")
             conn.commit()
 
 
@@ -6119,6 +6726,73 @@ def check_duplicate_candidates(payload: DuplicateCheckRequest):
                         """, (cand_id, payload.disaster_event_id, a["id"], b["id"], min(100, score), reason, bool(same_village or same_district or same_city)))
                         candidates.append(rn_dict_row(cur))
                         created += 1
+            if payload.object_type in {"posko", "posko_node", "all"}:
+                cur.execute("""
+                SELECT id, disaster_event_id, organization_id, name, node_type, location,
+                       COALESCE(admin_area_id, '') AS admin_area_id,
+                       COALESCE(area_level, '') AS area_level,
+                       COALESCE(province_name, '') AS province_name,
+                       COALESCE(city_name, '') AS city_name,
+                       COALESCE(district_name, '') AS district_name,
+                       COALESCE(village_name, '') AS village_name,
+                       lat, lng,
+                       COALESCE(parent_posko_id, '') AS parent_posko_id,
+                       COALESCE(canonical_posko_id, '') AS canonical_posko_id
+                FROM posko_nodes
+                WHERE disaster_event_id = %s
+                  AND operational_status <> 'closed'
+                ORDER BY created_at DESC
+                LIMIT 400;
+                """, (payload.disaster_event_id,))
+                poskos = rn_rows_to_dicts(cur)
+                for i, a in enumerate(poskos):
+                    for b in poskos[i + 1:]:
+                        if a["id"] == b["id"]:
+                            continue
+                        same_admin = a.get("admin_area_id") and a.get("admin_area_id") == b.get("admin_area_id")
+                        same_village = a.get("village_name") and a.get("village_name") == b.get("village_name") and a.get("district_name") == b.get("district_name")
+                        same_location_text = (a.get("location") or "").strip().lower() and (a.get("location") or "").strip().lower() == (b.get("location") or "").strip().lower()
+                        same_org = a.get("organization_id") and a.get("organization_id") == b.get("organization_id")
+                        aggregate_overlap = bool(a.get("area_level") in {"province", "city", "district"} or b.get("area_level") in {"province", "city", "district"})
+                        close_gps = False
+                        if a.get("lat") is not None and a.get("lng") is not None and b.get("lat") is not None and b.get("lng") is not None:
+                            close_gps = abs(float(a["lat"]) - float(b["lat"])) < 0.001 and abs(float(a["lng"]) - float(b["lng"])) < 0.001
+                        if not (same_admin or same_village or same_location_text or close_gps or (same_org and aggregate_overlap)):
+                            continue
+                        score = 45
+                        score += 25 if same_admin else 0
+                        score += 20 if close_gps else 0
+                        score += 15 if same_location_text else 0
+                        score += 10 if same_org else 0
+                        score += 10 if aggregate_overlap else 0
+                        reason = "posko location overlap"
+                        if same_admin:
+                            reason += " + same admin area"
+                        if close_gps:
+                            reason += " + close GPS"
+                        if same_location_text:
+                            reason += " + same location text"
+                        if same_org:
+                            reason += " + same organization"
+                        if aggregate_overlap:
+                            reason += " + aggregate/child coverage overlap"
+                        cur.execute("""
+                        SELECT id FROM duplicate_candidates
+                        WHERE disaster_event_id = %s AND object_type = 'posko'
+                          AND ((object_id_a = %s AND object_id_b = %s) OR (object_id_a = %s AND object_id_b = %s))
+                        LIMIT 1;
+                        """, (payload.disaster_event_id, a["id"], b["id"], b["id"], a["id"]))
+                        if cur.fetchone():
+                            continue
+                        cand_id = "dupcand-" + uuid.uuid4().hex[:12]
+                        cur.execute("""
+                        INSERT INTO duplicate_candidates
+                        (id, disaster_event_id, object_type, object_id_a, object_id_b, match_score, match_reason, same_admin_area, status)
+                        VALUES (%s,%s,'posko',%s,%s,%s,%s,%s,'candidate')
+                        RETURNING *;
+                        """, (cand_id, payload.disaster_event_id, a["id"], b["id"], min(100, score), reason, bool(same_admin or same_village)))
+                        candidates.append(rn_dict_row(cur))
+                        created += 1
             conn.commit()
 
     return {"status": "checked", "created": created, "candidates": candidates}
@@ -6143,6 +6817,56 @@ def list_duplicate_candidates(disaster_event_id: Optional[str] = None, status: O
             cur.execute("SELECT * FROM duplicate_candidates WHERE " + " AND ".join(where) + " ORDER BY match_score DESC, created_at DESC LIMIT 300;", params)
             rows = rn_rows_to_dicts(cur)
     return rows
+
+
+@app.get("/data-consolidation/posko-coverage-review")
+def posko_coverage_review(disaster_event_id: str = "event-sim-001"):
+    ensure_location_resolution_tables()
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            SELECT p.*, o.name AS organization_name
+            FROM posko_nodes p
+            LEFT JOIN organizations o ON o.id = p.organization_id
+            WHERE p.disaster_event_id = %s
+              AND COALESCE(p.area_level, '') IN ('province', 'city', 'district')
+              AND p.operational_status <> 'closed'
+            ORDER BY p.created_at DESC
+            LIMIT 200;
+            """, (disaster_event_id,))
+            aggregate_poskos = rn_rows_to_dicts(cur)
+            review = []
+            for row in aggregate_poskos:
+                level = row.get("area_level")
+                admin_id = row.get("admin_area_id")
+                child_where = ["disaster_event_id = %s", "operational_status <> 'closed'", "id <> %s", "organization_id = %s"]
+                params = [disaster_event_id, row["id"], row["organization_id"]]
+                if level == "province":
+                    child_where.append("province_name = %s")
+                    params.append(row.get("province_name"))
+                elif level == "city":
+                    child_where.append("city_name = %s")
+                    params.append(row.get("city_name"))
+                elif level == "district":
+                    child_where.append("district_name = %s")
+                    params.append(row.get("district_name"))
+                child_where.append("COALESCE(area_level, '') IN ('village', 'point')")
+                cur.execute("SELECT COUNT(*) FROM posko_nodes WHERE " + " AND ".join(child_where) + ";", params)
+                child_count = cur.fetchone()[0]
+                review.append({
+                    **row,
+                    "child_posko_count": child_count,
+                    "coverage_status": "needs_child_posko_breakdown" if child_count == 0 else "has_child_posko",
+                    "sop_rule": "Aggregate posko/organization is command coverage only. Do not use it as final distribution target until village/point posko or verified beneficiary group exists.",
+                    "admin_area_id": admin_id
+                })
+    return {
+        "status": "ok",
+        "disaster_event_id": disaster_event_id,
+        "aggregate_posko_total": len(review),
+        "needs_child_breakdown": len([x for x in review if x["coverage_status"] == "needs_child_posko_breakdown"]),
+        "items": review
+    }
 
 
 @app.get("/data-consolidation/raw-reports")
@@ -6263,6 +6987,320 @@ def list_consolidated_needs(disaster_event_id: Optional[str] = None, status: Opt
             cur.execute("SELECT * FROM consolidated_needs WHERE " + " AND ".join(where) + " ORDER BY updated_at DESC LIMIT 300;", params)
             rows = rn_rows_to_dicts(cur)
     return rows
+
+
+@app.get("/command-corrections")
+def list_command_corrections(disaster_event_id: str = "event-sim-001", status: Optional[str] = "active"):
+    ensure_location_resolution_tables()
+    params = [disaster_event_id]
+    where = ["disaster_event_id = %s"]
+    if status:
+        where.append("status = %s")
+        params.append(status)
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM command_corrections WHERE " + " AND ".join(where) + " ORDER BY updated_at DESC LIMIT 300;", params)
+            rows = rn_rows_to_dicts(cur)
+    return rows
+
+
+@app.post("/command-corrections")
+def create_command_correction(payload: CommandCorrectionCreate):
+    ensure_location_resolution_tables()
+    if payload.target_type != "consolidated_need":
+        raise HTTPException(status_code=400, detail="Only consolidated_need command correction is available")
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            SELECT id, disaster_event_id, quantity_final
+            FROM consolidated_needs
+            WHERE id = %s AND disaster_event_id = %s
+            LIMIT 1;
+            """, (payload.target_id, payload.disaster_event_id))
+            need = rn_dict_row(cur)
+            if not need:
+                raise HTTPException(status_code=404, detail="Consolidated need not found")
+            original_quantity = float(need.get("quantity_final") or 0)
+            corrected_quantity = float(payload.corrected_quantity or 0)
+            correction_delta = corrected_quantity - original_quantity
+            cur.execute("""
+            UPDATE command_corrections
+            SET status = 'superseded', updated_at = NOW()
+            WHERE disaster_event_id = %s AND target_type = %s AND target_id = %s AND status = 'active';
+            """, (payload.disaster_event_id, payload.target_type, payload.target_id))
+            correction_id = "cmdcorr-" + uuid.uuid4().hex[:12]
+            cur.execute("""
+            INSERT INTO command_corrections (
+                id, disaster_event_id, target_type, target_id,
+                original_quantity, corrected_quantity, correction_delta,
+                corrected_by, correction_reason, correction_note, status
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'active')
+            RETURNING *;
+            """, (
+                correction_id, payload.disaster_event_id, payload.target_type, payload.target_id,
+                original_quantity, corrected_quantity, correction_delta,
+                payload.corrected_by, payload.correction_reason, payload.correction_note
+            ))
+            row = rn_dict_row(cur)
+            conn.commit()
+    return {"status": "corrected", "command_correction": row}
+
+
+@app.get("/data-consolidation/national-rollup")
+def data_consolidation_national_rollup(disaster_event_id: str = "event-sim-001", include_aggregate: bool = False, scenario: str = "optimal"):
+    ensure_location_resolution_tables()
+    ensure_community_report_tables()
+    scenario = (scenario or "optimal").strip().lower()
+    if scenario not in {"minimum", "optimal", "maximum"}:
+        raise HTTPException(status_code=400, detail="scenario must be minimum, optimal, or maximum")
+    if scenario == "maximum":
+        include_aggregate = True
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+            SELECT cn.*,
+                   p.name AS posko_name,
+                   p.organization_id,
+                   COALESCE(p.area_level, '') AS posko_area_level,
+                   COALESCE(p.admin_area_id, '') AS posko_admin_area_id,
+                   COALESCE(p.province_name, '') AS province_name,
+                   COALESCE(p.city_name, '') AS city_name,
+                   COALESCE(p.district_name, '') AS district_name,
+                   COALESCE(p.village_name, '') AS village_name,
+                   COALESCE(p.location, '') AS posko_location
+            FROM consolidated_needs cn
+            LEFT JOIN posko_nodes p ON p.id = cn.canonical_posko_id
+            WHERE cn.disaster_event_id = %s
+              AND COALESCE(cn.status, '') NOT IN ('rejected', 'closed')
+            ORDER BY cn.need_type, cn.item_name, cn.quantity_unit, cn.updated_at DESC;
+            """, (disaster_event_id,))
+            needs = rn_rows_to_dicts(cur)
+            cur.execute("""
+            SELECT *
+            FROM duplicate_candidates
+            WHERE disaster_event_id = %s
+              AND status IN ('candidate', 'needs_review', 'confirmed_duplicate')
+            ORDER BY match_score DESC, created_at DESC
+            LIMIT 500;
+            """, (disaster_event_id,))
+            duplicate_rows = rn_rows_to_dicts(cur)
+            cur.execute("""
+            SELECT *
+            FROM command_corrections
+            WHERE disaster_event_id = %s
+              AND target_type = 'consolidated_need'
+              AND status = 'active';
+            """, (disaster_event_id,))
+            correction_rows = rn_rows_to_dicts(cur)
+            cur.execute("""
+            SELECT owner_id, owner_type, area_level, coverage_description, verification_status
+            FROM operational_areas
+            WHERE disaster_event_id = %s
+              AND area_level IN ('province', 'city', 'district')
+            ORDER BY updated_at DESC
+            LIMIT 200;
+            """, (disaster_event_id,))
+            aggregate_areas = rn_rows_to_dicts(cur)
+
+    duplicate_by_id = {}
+    for cand in duplicate_rows:
+        for key in (cand.get("object_id_a"), cand.get("object_id_b")):
+            if key:
+                duplicate_by_id.setdefault(str(key), []).append(cand)
+    correction_by_need_id = {str(row["target_id"]): row for row in correction_rows if row.get("target_id")}
+
+    aggregate_levels = {"province", "city", "district"}
+    detail_rows = []
+    aggregate_context = []
+    grouped = {}
+    for row in needs:
+        source_ids = row.get("source_ids_json") or []
+        if isinstance(source_ids, str):
+            try:
+                source_ids = json.loads(source_ids)
+            except Exception:
+                source_ids = [source_ids]
+        source_ids = [str(x) for x in source_ids if x]
+        posko_id = row.get("canonical_posko_id")
+        correction = correction_by_need_id.get(str(row.get("id")))
+        original_quantity_final = float(row.get("quantity_final") or 0)
+        effective_quantity_final = float(correction.get("corrected_quantity") if correction else original_quantity_final)
+        manual_delta = float(correction.get("correction_delta") or 0) if correction else 0
+        area_level = row.get("posko_area_level") or ("area" if row.get("canonical_area_id") else "")
+        duplicate_hits = []
+        for source_id in source_ids + ([str(posko_id)] if posko_id else []):
+            duplicate_hits.extend(duplicate_by_id.get(source_id, []))
+        duplicate_hits = {hit["id"]: hit for hit in duplicate_hits}.values()
+        is_aggregate_context = area_level in aggregate_levels or (
+            row.get("canonical_area_id") and str(row.get("canonical_area_id")).lower() not in {"", "unknown-area"}
+            and not row.get("canonical_posko_id")
+        )
+        trace = {
+            "province": row.get("province_name") or "",
+            "city": row.get("city_name") or "",
+            "district": row.get("district_name") or "",
+            "village": row.get("village_name") or "",
+            "posko_id": posko_id,
+            "posko_name": row.get("posko_name") or row.get("canonical_area_id") or "area report",
+            "area_level": area_level or "unknown",
+            "source_ids": source_ids
+        }
+        enriched = {
+            **row,
+            "trace": trace,
+            "original_quantity_final": original_quantity_final,
+            "effective_quantity_final": effective_quantity_final,
+            "has_command_correction": bool(correction),
+            "manual_correction_delta": manual_delta,
+            "manual_correction_delta_abs": abs(manual_delta),
+            "manual_correction": correction,
+            "is_aggregate_context": bool(is_aggregate_context),
+            "duplicate_warning_count": len(list(duplicate_hits)),
+            "duplicate_warnings": [
+                {
+                    "id": hit.get("id"),
+                    "object_type": hit.get("object_type"),
+                    "match_score": hit.get("match_score"),
+                    "match_reason": hit.get("match_reason"),
+                    "status": hit.get("status")
+                }
+                for hit in duplicate_hits
+            ],
+            "sop_note": (
+                "Aggregate command context only; trace to child posko/village before distribution."
+                if is_aggregate_context
+                else "Detail candidate; may enter national baseline, with warning if overlaps remain."
+            )
+        }
+        if is_aggregate_context and not include_aggregate:
+            aggregate_context.append(enriched)
+            continue
+        detail_rows.append(enriched)
+        area_key = "|".join([
+            str(row.get("posko_admin_area_id") or ""),
+            str(row.get("canonical_posko_id") or ""),
+            str(row.get("canonical_area_id") or ""),
+            str(row.get("village_name") or ""),
+            str(row.get("district_name") or ""),
+            str(row.get("city_name") or ""),
+            str(row.get("province_name") or "")
+        ])
+        group_key = (
+            row.get("need_type") or "need",
+            (row.get("item_name") or "unknown").strip().lower(),
+            row.get("quantity_unit") or ""
+        )
+        if scenario == "minimum":
+            group_key = group_key + (area_key,)
+        bucket = grouped.setdefault(group_key, {
+            "need_type": row.get("need_type") or "need",
+            "item_name": row.get("item_name") or "unknown",
+            "quantity_unit": row.get("quantity_unit") or "",
+            "scenario_area_key": area_key if scenario == "minimum" else "",
+            "baseline_quantity": 0,
+            "range_min": 0,
+            "range_max": 0,
+            "detail_count": 0,
+            "source_count": 0,
+            "duplicate_warning_count": 0,
+            "manual_correction_total": 0,
+            "manual_correction_abs_total": 0,
+            "corrected_detail_count": 0,
+            "has_warning": False,
+            "trace_rows": []
+        })
+        row_min = effective_quantity_final if correction else float(row.get("quantity_min") or row.get("quantity_final") or 0)
+        row_final = effective_quantity_final
+        row_max = max(effective_quantity_final, float(row.get("quantity_max") or row.get("quantity_final") or 0))
+        if scenario == "minimum":
+            if bucket["detail_count"] == 0:
+                bucket["baseline_quantity"] = row_min
+                bucket["range_min"] = row_min
+                bucket["range_max"] = row_max
+            else:
+                bucket["baseline_quantity"] = min(float(bucket["baseline_quantity"] or 0), row_min)
+                bucket["range_min"] = min(float(bucket["range_min"] or 0), row_min)
+                bucket["range_max"] = min(float(bucket["range_max"] or 0), row_max)
+        else:
+            bucket["baseline_quantity"] += row_final
+            bucket["range_min"] += row_min
+            bucket["range_max"] += row_max
+        bucket["detail_count"] += 1
+        bucket["source_count"] += int(row.get("source_count") or len(source_ids) or 0)
+        bucket["duplicate_warning_count"] += enriched["duplicate_warning_count"]
+        bucket["manual_correction_total"] += manual_delta
+        bucket["manual_correction_abs_total"] += abs(manual_delta)
+        bucket["corrected_detail_count"] += 1 if correction else 0
+        bucket["has_warning"] = bucket["has_warning"] or enriched["duplicate_warning_count"] > 0
+        bucket["trace_rows"].append(enriched)
+
+    if scenario == "minimum":
+        min_grouped = {}
+        for row in grouped.values():
+            key = (row["need_type"], row["item_name"].strip().lower(), row["quantity_unit"])
+            bucket = min_grouped.setdefault(key, {
+                "need_type": row["need_type"],
+                "item_name": row["item_name"],
+                "quantity_unit": row["quantity_unit"],
+                "baseline_quantity": 0,
+                "range_min": 0,
+                "range_max": 0,
+                "detail_count": 0,
+                "source_count": 0,
+                "duplicate_warning_count": 0,
+                "manual_correction_total": 0,
+                "manual_correction_abs_total": 0,
+                "corrected_detail_count": 0,
+                "has_warning": False,
+                "trace_rows": []
+            })
+            bucket["baseline_quantity"] += float(row["baseline_quantity"] or 0)
+            bucket["range_min"] += float(row["range_min"] or 0)
+            bucket["range_max"] += float(row["range_max"] or 0)
+            bucket["detail_count"] += int(row["detail_count"] or 0)
+            bucket["source_count"] += int(row["source_count"] or 0)
+            bucket["duplicate_warning_count"] += int(row["duplicate_warning_count"] or 0)
+            bucket["manual_correction_total"] += float(row["manual_correction_total"] or 0)
+            bucket["manual_correction_abs_total"] += float(row["manual_correction_abs_total"] or 0)
+            bucket["corrected_detail_count"] += int(row["corrected_detail_count"] or 0)
+            bucket["has_warning"] = bucket["has_warning"] or bool(row["has_warning"])
+            bucket["trace_rows"].extend(row["trace_rows"])
+        national_rollup = sorted(min_grouped.values(), key=lambda item: (item["need_type"], item["item_name"]))
+    else:
+        national_rollup = sorted(grouped.values(), key=lambda item: (item["need_type"], item["item_name"]))
+    for item in national_rollup:
+        item["scenario"] = scenario
+        if scenario == "minimum":
+            item["view_mode"] = "minimum_same_area_dedup"
+            item["operator_note"] = "Minimum memakai angka terkecil untuk posko/wilayah yang relatif sama dan tidak menghitung agregat."
+        elif scenario == "maximum":
+            item["view_mode"] = "maximum_with_aggregate_context"
+            item["operator_note"] = "Maximum menghitung detail plus konteks agregat. Pakai untuk estimasi kapasitas terburuk, bukan angka distribusi final."
+        else:
+            item["view_mode"] = "optimal_baseline_sum_of_max_per_posko"
+            item["operator_note"] = (
+                "Optimal memakai penjumlahan angka terbesar per posko/detail. "
+                "Range memperlihatkan min-max dari sumber konsolidasi. Warning berarti ada sumber/posko lain yang perlu review sebelum final."
+            )
+        baseline = float(item.get("baseline_quantity") or 0)
+        item["manual_correction_share"] = (
+            float(item.get("manual_correction_abs_total") or 0) / baseline
+            if baseline else 0
+        )
+    return {
+        "status": "ok",
+        "disaster_event_id": disaster_event_id,
+        "scenario": scenario,
+        "include_aggregate": include_aggregate,
+        "rule": "minimum=min per same area without aggregate; optimal=sum of consolidated detail rows using MAX per posko; maximum=optimal plus aggregate context.",
+        "national_rollup": national_rollup,
+        "detail_rows": detail_rows,
+        "aggregate_context": aggregate_context,
+        "aggregate_areas": aggregate_areas,
+        "command_correction_count": len(correction_rows),
+        "duplicate_candidate_count": len(duplicate_rows)
+    }
 
 
 @app.get("/data-consolidation/evidence-requirements")

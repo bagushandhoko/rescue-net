@@ -25,6 +25,17 @@ The prototype is designed for fast field operation first: small functional chang
 - Database name: `rescuenet_db`
 - Branch: `main`
 
+## Repository Source Layout
+
+- Website: repository root (`index.html`, `pages/`, `assets/`)
+- FastAPI backend: `backend/`
+- Offline-first Web/PWA/Android/iOS/Desktop source: `apps/rescue-net-app/`
+- Database migrations: `database/migrations/`
+- Current operational handoff: `docs/HANDOFF_LATEST_RN.txt`
+
+Runtime deployment paths are separate copies on Synology. After a live hotfix,
+always synchronize the final backend/app source back into the repository.
+
 Run quick checks on the Synology host:
 
 ```sh
@@ -168,3 +179,5 @@ After a successful push, `git log --oneline origin/main..HEAD` should be empty.
 - Keep layout/color changes small until core functions are stable.
 - Current handoff: `docs/HANDOFF_LATEST_RN.txt`
 - Full blueprint: `docs/BLUEPRINT.md`
+- Current status: `docs/CURRENT_STATUS.md`
+- Do not modify OSIUN while working on Rescue-Net unless explicitly requested.

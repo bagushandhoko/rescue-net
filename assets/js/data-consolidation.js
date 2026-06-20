@@ -1,4 +1,4 @@
-const RN_API_BASE = window.RESCUE_NET_CONFIG?.API_BASE || window.RN_API_BASE || (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
+const RN_API_BASE = window.RESCUE_NET_CONFIG?.API_BASE || window.RN_API_BASE || "http://192.168.100.32:8092";
 const EVENT_ID = new URLSearchParams(window.location.search).get("event") || "event-sim-001";
 
 async function rnFetch(path, options = {}) {
@@ -116,6 +116,76 @@ function renderConsolidated(rows) {
   )).join("") : card("Belum ada consolidated needs", "Klik Rebuild untuk membuat draft kebutuhan terkonsolidasi dari raw logistic needs.", "empty");
 }
 
+function formatQty(value) {
+  const num = Number(value || 0);
+  return Number.isInteger(num) ? String(num) : num.toFixed(2);
+}
+
+function renderNationalRollup(payload) {
+  const target = document.querySelector("[data-national-rollup]");
+  if (!target) return;
+  const rows = payload?.national_rollup || [];
+  target.innerHTML = rows.length ? rows.map(row => {
+    const warning = row.duplicate_warning_count > 0;
+    const chip = warning ? `<span class="chip warning">${row.duplicate_warning_count} overlap</span>` : '<span class="chip success">baseline detail</span>';
+    return `
+      <article class="event-card">
+        <div class="event-main">
+          <div>
+            <h4>${safe(row.item_name)} | ${formatQty(row.baseline_quantity)} ${safe(row.quantity_unit, "")}</h4>
+            <p>
+              Range: ${formatQty(row.range_min)}-${formatQty(row.range_max)} ${safe(row.quantity_unit, "")}<br>
+              Detail: ${row.detail_count || 0} posko/area | Sources: ${row.source_count || 0}<br>
+              ${row.operator_note || ""}
+            </p>
+          </div>
+          <div class="chips">
+            <span class="chip neutral">${safe(row.need_type)}</span>
+            ${chip}
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("") : card("Belum ada rollup nasional", "Klik Rebuild Consolidated Needs lalu muat ulang data konsolidasi.", "empty");
+}
+
+function renderRollupTrace(payload) {
+  const target = document.querySelector("[data-rollup-trace]");
+  if (!target) return;
+  const details = payload?.detail_rows || [];
+  const aggregate = payload?.aggregate_context || [];
+  const rows = details.slice(0, 12).map(row => {
+    const trace = row.trace || {};
+    const place = [trace.village, trace.district, trace.city, trace.province].filter(Boolean).join(", ") || trace.area_level || "lokasi belum rinci";
+    const warning = row.duplicate_warning_count > 0;
+    return `
+      <article class="event-card">
+        <div class="event-main">
+          <div>
+            <h4>${safe(row.item_name)} | ${formatQty(row.quantity_final)} ${safe(row.quantity_unit, "")}</h4>
+            <p>${place}<br>${safe(trace.posko_name)} | ${safe(trace.posko_id, "area report")}</p>
+            <small>Sources: ${(trace.source_ids || []).join(", ") || "n/a"}</small>
+          </div>
+          <div class="chips">
+            <span class="chip ${warning ? "warning" : "success"}">${warning ? "ada overlap" : "detail"}</span>
+            <span class="chip neutral">${safe(trace.area_level)}</span>
+          </div>
+        </div>
+      </article>
+    `;
+  });
+  const aggregateRows = aggregate.slice(0, 6).map(row => {
+    const trace = row.trace || {};
+    const place = [trace.district, trace.city, trace.province].filter(Boolean).join(", ") || trace.area_level || "area agregat";
+    return card(
+      `${safe(row.item_name)} | konteks agregat`,
+      `${place}<br>${row.sop_note || "Jangan masuk angka final sebelum dipecah ke posko/desa."}`,
+      "aggregate context"
+    );
+  });
+  target.innerHTML = rows.concat(aggregateRows).join("") || card("Belum ada trace", "Trace akan muncul setelah consolidated needs tersedia.", "empty");
+}
+
 function renderAreas(rows) {
   const target = document.querySelector("[data-operational-areas]");
   if (!target) return;
@@ -161,11 +231,12 @@ function renderEvidenceRequirements(payload) {
 
 async function loadDataConsolidation() {
   try {
-    const [summary, rawReports, duplicates, consolidated, areas, groups, evidenceRules] = await Promise.all([
+    const [summary, rawReports, duplicates, consolidated, nationalRollup, areas, groups, evidenceRules] = await Promise.all([
       rnFetch(`/data-consolidation/summary?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
       rnFetch(`/data-consolidation/raw-reports?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
       rnFetch(`/duplicates/candidates?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
       rnFetch(`/consolidated-needs?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
+      rnFetch(`/data-consolidation/national-rollup?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
       rnFetch(`/operational-areas?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
       rnFetch(`/beneficiary-groups?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
       rnFetch("/data-consolidation/evidence-requirements")
@@ -180,6 +251,8 @@ async function loadDataConsolidation() {
     renderRawReports(rawReports);
     renderDuplicates(duplicates);
     renderConsolidated(consolidated);
+    renderNationalRollup(nationalRollup);
+    renderRollupTrace(nationalRollup);
     renderAreas(areas);
     renderBeneficiaryGroups(groups);
     renderEvidenceRequirements(evidenceRules);

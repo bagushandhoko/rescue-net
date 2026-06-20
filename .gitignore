@@ -21,3 +21,8 @@ venv/
 node_modules/
 dist/
 build/
+
+# Runtime safety backups are kept on Synology, not in GitHub.
+backups/codex-*/
+backups/trusted-verifier-*/
+backups/github-sync-*/

@@ -1,0 +1,18 @@
+{
+  "name": "Rescue-Net",
+  "short_name": "Rescue-Net",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff7f0",
+  "theme_color": "#f05a42",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "src/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

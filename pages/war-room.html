@@ -99,6 +99,92 @@
       <div class="panel">
         <div class="panel-header">
           <div>
+            <h3>Skenario Konsolidasi Nasional</h3>
+            <p>Pilih cara membaca kebutuhan logistik, alat kerja, relawan, dan data nasional sebelum keputusan bantuan.</p>
+          </div>
+          <div class="form-actions scenario-actions" role="group" aria-label="Skenario konsolidasi">
+            <button class="btn" type="button" data-war-scenario="minimum">Minimum</button>
+            <button class="btn primary" type="button" data-war-scenario="optimal">Optimal</button>
+            <button class="btn" type="button" data-war-scenario="maximum">Maximum</button>
+          </div>
+        </div>
+        <div class="event-list" id="warScenarioRollup"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Aturan Skenario</h3>
+        <div class="summary-list" id="warScenarioRules">
+          <div><span>Minimum</span><b>min tanpa agregat</b></div>
+          <div><span>Optimal</span><b>MAX per posko</b></div>
+          <div><span>Maximum</span><b>plus agregat</b></div>
+        </div>
+        <p class="subtitle" id="warScenarioStatus">Scenario: optimal.</p>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Trusted Verifier</h3>
+            <p>Trust identitas dipakai sebagai sinyal prioritas kontak, bukan bukti bahwa laporan atau kebutuhan sudah benar.</p>
+          </div>
+          <a class="btn" href="verification-approval.html?event=event-sim-001">Open Verification</a>
+        </div>
+        <div class="event-list" id="warTrustedVerifierList"></div>
+      </div>
+      <aside class="panel summary">
+        <h3>Verification Signal</h3>
+        <div class="summary-list" id="warTrustedVerifierSummary"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Koreksi Komando</h3>
+            <p>Pilih data konflik/detail, koreksi nilai di tingkat pusat, dan RN akan menandai porsi koreksi manual di angka nasional.</p>
+          </div>
+        </div>
+        <form class="rn-form" id="commandCorrectionForm">
+          <div class="form-grid">
+            <label>Data yang dikoreksi
+              <select name="target_id" id="commandCorrectionTarget"></select>
+            </label>
+            <label>Nilai koreksi pusat
+              <input name="corrected_quantity" type="number" min="0" step="0.01" placeholder="Contoh: 1000">
+            </label>
+            <label>Alasan koreksi
+              <select name="correction_reason">
+                <option value="command_verification">Verifikasi pusat</option>
+                <option value="conflict_resolution">Resolusi data konflik</option>
+                <option value="field_call_confirmation">Konfirmasi telepon lapangan</option>
+                <option value="official_command_update">Update komando resmi</option>
+              </select>
+            </label>
+            <label>Catatan
+              <input name="correction_note" placeholder="Contoh: posko A/B overlap, angka pusat dipakai sementara">
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan Koreksi</button>
+            <button class="btn" type="button" id="refreshCorrectionTargets">Refresh Data Konflik</button>
+          </div>
+        </form>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Manual Correction Trace</h3>
+        <p class="subtitle" id="commandCorrectionStatus">Belum ada koreksi dipilih.</p>
+        <div class="event-list" id="commandCorrectionTrace"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
             <h3>Laporan Masyarakat</h3>
             <p>Community intelligence: pending, verified, dan high priority report dari warga/relawan/posko.</p>
           </div>
@@ -241,7 +327,7 @@
   </main>
 </div>
 
-<script src="../assets/js/war-room.js?v=resource-recovery-direct-6"></script>
+<script src="../assets/js/war-room.js?v=trusted-verifier-1"></script>
 <script src="../assets/js/rn-sync-engine.js?v=event-sync-2"></script>
 <script src="../assets/js/rn-resource-booking.js?v=booking-sync-2"></script>
 <script src="../assets/js/rn-public-header.js?v=global-header-1"></script>

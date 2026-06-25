@@ -26,3 +26,5 @@ build/
 backups/codex-*/
 backups/trusted-verifier-*/
 backups/github-sync-*/
+
+backups/rn-access-fix-*/

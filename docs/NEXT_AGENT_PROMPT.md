@@ -10,7 +10,7 @@ Read in order:
 4. `docs/BLUEPRINT.md`
 5. `docs/CROSS_PLATFORM_APP_DESIGN.md`
 
-Do not modify OSIUN. This task scope is Rescue-Net unless the owner explicitly says otherwise.
+Do not modify unrelated systems on the same server. This task scope is Rescue-Net unless the owner explicitly says otherwise.
 
 ## Environment
 
@@ -18,8 +18,8 @@ Do not modify OSIUN. This task scope is Rescue-Net unless the owner explicitly s
 - Runtime API: `/volume1/docker/rescue-net-api`
 - Cross-platform app runtime: `/volume1/web/rescue-net-app`
 - API: `http://127.0.0.1:8092`
-- Public web: `https://osiun.tail251e1e.ts.net/rescue-net/`
-- Public API: `https://osiun.tail251e1e.ts.net/rescue-net-api`
+- Public web: active production domain, path `/rescue-net/`
+- Public API: active production domain, path `/rescue-net-api`
 - PostgreSQL: `postgres-main`, database `rescuenet_db`
 - GitHub: `https://github.com/bagushandhoko/rescue-net`
 - Branch: `main`

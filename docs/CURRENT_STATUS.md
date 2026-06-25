@@ -11,8 +11,8 @@ Updated: 2026-06-20
 - API port: `8092`
 - PostgreSQL container: `postgres-main`
 - Database: `rescuenet_db`
-- Public web: `https://osiun.tail251e1e.ts.net/rescue-net/`
-- Public API proxy: `https://osiun.tail251e1e.ts.net/rescue-net-api`
+- Public web: use the active production domain configured on the server, path `/rescue-net/`.
+- Public API proxy: use the active production domain configured on the server, path `/rescue-net-api`.
 - Main simulation event: `event-sim-001`
 - GitHub: `https://github.com/bagushandhoko/rescue-net`
 - Branch: `main`

@@ -12,7 +12,7 @@ community reports, poskos, organizations, volunteers, donors, logistics,
 medical posts, shelters, transport, evidence, verification, and recovery.
 
 Work only on Rescue-Net unless the owner explicitly requests another system.
-Do not modify OSIUN while working on Rescue-Net.
+Do not modify unrelated systems on the same server while working on Rescue-Net.
 
 Preserve the current color palette. Functional readiness and clear operational
 flow take priority over cosmetic redesign.
@@ -35,10 +35,10 @@ GitHub:
   branch main
 
 Public website:
-  https://osiun.tail251e1e.ts.net/rescue-net/
+  /rescue-net/ on the active production domain.
 
 Public API proxy:
-  https://osiun.tail251e1e.ts.net/rescue-net-api
+  /rescue-net-api on the active production domain.
 
 Local API:
   http://127.0.0.1:8092

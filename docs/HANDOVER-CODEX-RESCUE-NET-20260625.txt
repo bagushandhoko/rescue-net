@@ -1,0 +1,241 @@
+RESCUE-NET HANDOVER FOR NEXT CODEX
+Generated: 2026-06-25
+Scope: Rescue-Net only.
+
+IMPORTANT RULES
+1. Work only on Rescue-Net unless the owner explicitly asks otherwise.
+2. Do not modify unrelated systems on the same server.
+3. Always make a backup before changing live files or database schema.
+4. Do not revert user changes. If the repo is dirty, inspect first and preserve unrelated work.
+5. Before pushing, run a secret scan and check git status.
+6. Production rebuild is manual unless the owner asks Codex to do it. Do not assume a rebuild happened.
+
+CURRENT DEPLOYMENT MAP
+- Web/static repo: /volume1/web/rescue-net
+- Backend source/runtime: /volume1/docker/rescue-net-api
+- PWA/app source/runtime: /volume1/web/rescue-net-app
+- API container: rescue-net-api
+- API port: 8092
+- DB container: postgres-main
+- DB name: rescuenet_db
+- Public web path: /rescue-net/
+- Public API path: /rescue-net-api
+- Main branch is pushed to GitHub from /volume1/web/rescue-net.
+
+GIT STATUS AT LAST HANDOVER
+- The repo had been pushed to origin/main after Trusted Verifier, consolidation, app source, and operational docs.
+- Latest known pushed commit before this cleanup: 4fae975 Sync live Rescue-Net and add operational handoff.
+- This handover update should be committed after removing unrelated references and unrelated untracked files from the RN folder.
+
+WHAT RESCUE-NET IS
+Rescue-Net is an open disaster coordination and relief management system. It connects official command, community reports, posko, volunteers, organizations, donors, medical posts, shelters, logistics providers, transport providers, and evidence verification into one coordinated workflow.
+
+The critical principle: raw reports are not operational truth. Raw inputs must pass location validation, duplicate/overlap checks, trust signals, operator review, and consolidation before being used as official operational data.
+
+MAIN USER FLOWS
+1. Public landing
+   - Welcome page with disaster imagery and live summary cards.
+   - Header menu on desktop and mobile:
+     Home, War Room, About Us, Fitur/Mockup, Laporan Masyarakat, Download, Login/Registrasi.
+   - Mobile header/menu was previously corrected; preserve current visual state unless owner requests layout redesign.
+
+2. Laporan Masyarakat
+   - Public users submit incident/need/evidence reports.
+   - Reports must remain raw/pending until validated.
+   - Location should support:
+     GPS/share location,
+     map point,
+     official admin-area tree Provinsi -> Kabupaten/Kota -> Kecamatan -> Desa/Kelurahan,
+     manual emergency location with review status.
+
+3. Offline mobile/PWA registration
+   - Installed app should let a user register offline, identify posko/organization/community role, fill posko location, fill needs, attach photos.
+   - Data is stored locally first and syncs automatically when online.
+   - When online, user should be prompted to link to an active disaster event or create a new event if appropriate.
+   - User can choose an active organization/parent organization during online sync.
+   - Offline local cache is acceptable for draft queue, but not as final official data.
+
+4. War Room
+   - Operational command view.
+   - Shows consolidated needs, events, posko, logistics, evidence, and verification queues.
+   - Needs scenario selector:
+     minimum: ignore broad aggregate claims and use the smallest reliable overlapping posko/detail value.
+     optimal: use the most reasonable value with anti-duplication logic, preferred for normal operations.
+     maximum: include aggregate/broad claims plus detailed posko values, marked clearly as high-side planning.
+   - Command can apply manual corrections. Corrections must remain traceable, for example total 1000 where 250 is manual correction.
+
+5. Data Consolidation
+   - The most important RN module.
+   - Goal: separate raw reports/claims from official operational data.
+   - New or existing data must not be blindly summed.
+   - Overlapping posko in similar location/need category should use MAX by default, not SUM.
+   - SUM only when operator confirms the beneficiary groups/areas are different.
+   - Broad organization/province-level reports must not override village/posko detail. They should be treated as aggregate reports and shown as a separate range/assumption layer unless verified into detail.
+
+6. Trusted Verifier / Verifikator Tepercaya
+   - Allows reporters, personal posko, small organizations, communities, kitchens, transport/resource providers, or volunteers to ask a verifier who knows them.
+   - Verifier can be RT/RW/Lurah/Camat/BPBD, organization leader, community coordinator, public figure, trusted local person, or RN admin.
+   - Important separation:
+     identity_verified is not the same as report_verified.
+     location_verified is not the same as organization_verified.
+     organization_verified is not the same as need/consolidated_verified.
+   - Badge text must never imply all reports are true.
+
+BACKEND FEATURES ALREADY IMPLEMENTED
+The live API has route_count around 138 at the last smoke test.
+
+Trusted Verifier:
+- Tables:
+  verifier_profiles
+  trusted_verification_requests
+  verification_endorsements
+- Additional identity fields added to posko_nodes and organizations:
+  identity_verification_status
+  identity_verified_by
+  identity_verified_at
+  trusted_verifier_count
+  public_verified_badge
+- Endpoints:
+  GET/POST /public/verifier-profiles
+  GET/POST /verifier-profiles
+  PATCH /verifier-profiles/{id}/status
+  POST /public/verification-requests
+  GET /verification-requests
+  POST /public/verification-requests/respond?token=...
+  GET /verification-endorsements
+  PATCH /verification-endorsements/{id}/revoke
+- device-registrations can accept verifier info and create posko_identity request.
+- verification-context includes verifier data summary.
+
+Consolidation:
+- /data-consolidation/national-rollup supports scenario=minimum|optimal|maximum.
+- command corrections are supported through /command-corrections.
+- War Room has scenario buttons.
+
+Apps/download:
+- PWA/app source is in apps/rescue-net-app in repo and runtime at /volume1/web/rescue-net-app.
+- Download menu should be simple:
+  Android
+  iOS
+  Windows
+  Linux
+- Installed Android app should not show Download inside the app unless specifically needed for another platform.
+- Android APK/build artifacts were being prepared; confirm latest artifact path before telling user it is final.
+- iOS source is for opening/building on Mac/Xcode, not installable directly on iPhone without proper Apple signing/TestFlight/App Store flow.
+- Windows/Linux desktop builds need packaging/signing decisions before public release.
+
+DATA MODEL PRINCIPLES
+Location status:
+- location_verified_gps: GPS accepted.
+- location_verified_map_point: user selected a map point.
+- location_verified_admin_area: selected official admin area down to desa/kelurahan.
+- location_review: manual or unclear location.
+- aggregate_report: only province/kabupaten/large-area claim.
+- invalid_location: unusable.
+
+Unit normalization:
+- RN must avoid rigid database assumptions like "1 box" or "1 plastic bag" always meaning the same quantity.
+- Store original_unit_label and original_quantity.
+- Store normalized_unit and normalized_quantity only when conversion is known.
+- If conversion unknown, keep as needs_review_unit_conversion.
+- Examples:
+  1 dus air mineral can vary by brand/size.
+  1 kantong plastik may vary widely.
+  1 karung may vary by commodity.
+- Do not convert uncertain package units into final operational quantity without evidence or operator confirmation.
+
+Conflict and anti-misinformation handling:
+- Duplicate/overlap candidates should be detected by location, need type, time, reporter, posko name, beneficiary group, evidence, and distance.
+- Recommended default for same place/same need/same beneficiary group is MAX, not SUM.
+- Broad organization reports should be displayed as aggregate/range layer and traceable to source.
+- Detailed posko/village reports should remain drill-down traceable.
+- Operator can merge, separate, reject, request more evidence, escalate to posko, or convert to logistic need.
+
+LOCATION TREE SOURCE PLAN
+Use official Indonesia administrative master data:
+- Master dropdown: Kemendagri/data.go.id KODE ADMINISTRASI WILAYAH or DATA MASTER KODE DESA/KELURAHAN.
+- BPS bridging: BPS SIG Bridging Kode when matching BPS statistics with Kemendagri codes.
+- Village/kelurahan boundary maps: BIG administrative boundaries for reverse-checking GPS/map point.
+- Demographic support: BPS/Dukcapil/Open Data daerah as supporting data, not as primary dropdown source.
+
+Implementation guidance:
+- Add/sync a wilayah_master table or static API-backed cache:
+  province_code, province_name,
+  city_code, city_name,
+  district_code, district_name,
+  village_code, village_name,
+  source, source_version, updated_at.
+- UI should be cascading tree:
+  Provinsi -> Kabupaten/Kota -> Kecamatan -> Desa/Kelurahan.
+- Offline app should cache the tree or at least the last synced relevant regions.
+
+CRITICAL FILES TO CHECK FIRST
+- README.md
+- docs/CURRENT_STATUS.md
+- docs/HANDOFF_LATEST_RN.txt
+- docs/NEXT_AGENT_PROMPT.md
+- docs/BLUEPRINT.md
+- docs/CROSS_PLATFORM_APP_DESIGN.md
+- apps/rescue-net-app/
+- Backend source in /volume1/docker/rescue-net-api:
+  main.py
+  app_shared.py
+  routes/
+
+DEPLOY / REBUILD NOTES
+Typical backend rebuild reported by owner:
+1. Build image rescue-net-api:0.1
+2. Replace container rescue-net-api
+3. Health check with curl
+
+If health check says "Recv failure: Connection reset by peer":
+- Check container logs first.
+- Common causes: import error, DB migration/schema mismatch, startup crash, port conflict.
+- Use docker logs rescue-net-api and curl local port after container has settled.
+- Do not keep changing frontend if backend data is not up; fix API startup first.
+
+GITHUB PUSH PROCEDURE
+From /volume1/web/rescue-net:
+1. git status --short
+2. Run secret scan script if available.
+3. git add only intended files.
+4. git commit -m "clear message"
+5. Use the repo push helper or configured origin push.
+6. Verify:
+   git fetch origin main
+   git rev-list --count origin/main..HEAD should be 0
+   git rev-list --count HEAD..origin/main should be 0
+
+KNOWN NEXT WORK
+1. Finish official wilayah tree integration:
+   - master table/cache,
+   - cascading UI in registration/report/posko forms,
+   - offline cache strategy,
+   - mapping to location verification status.
+2. Harden offline sync:
+   - local queue status,
+   - retry,
+   - conflict display,
+   - event/organization link prompt after reconnect.
+3. Finish consolidation UX:
+   - clear drill-down from national -> province -> city -> district -> village -> posko,
+   - scenario labels minimum/optimal/maximum,
+   - conflict badges,
+   - manual correction trace.
+4. Complete app packaging:
+   - Android APK/AAB,
+   - iOS Xcode source + signing instructions,
+   - Windows installer,
+   - Linux package,
+   - download links on website.
+5. UAT:
+   - no-login public report,
+   - registration offline then sync,
+   - trusted verifier request and approval,
+   - duplicate/overlap reports,
+   - aggregate province report vs detail village posko,
+   - War Room scenario switch,
+   - command correction trace.
+
+LAST CLEANUP NOTE
+An unrelated untracked report file was found in the RN folder. It is not part of Rescue-Net and should not be committed. It should be backed up outside the active repo state and removed from the active RN folder.

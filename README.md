@@ -5,9 +5,9 @@ Rescue-Net is an open-source Disaster Management System for coordinating disaste
 ## Live URLs
 
 - Local web: `http://192.168.100.32/rescue-net/`
-- Tailscale/domain web: `https://osiun.tail251e1e.ts.net/rescue-net/`
-- War Room: `https://osiun.tail251e1e.ts.net/rescue-net/pages/war-room.html?event=event-sim-001`
-- Mock-up viewer: `https://osiun.tail251e1e.ts.net/rescue-net/pages/mockup.html?screen=welcome`
+- Deployment web aktif: gunakan domain yang terpasang di server produksi.
+- War Room: `/rescue-net/pages/war-room.html?event=event-sim-001`
+- Mock-up viewer: `/rescue-net/pages/mockup.html?screen=welcome`
 - API health: `http://127.0.0.1:8092/health`
 
 ## Purpose
@@ -180,4 +180,4 @@ After a successful push, `git log --oneline origin/main..HEAD` should be empty.
 - Current handoff: `docs/HANDOFF_LATEST_RN.txt`
 - Full blueprint: `docs/BLUEPRINT.md`
 - Current status: `docs/CURRENT_STATUS.md`
-- Do not modify OSIUN while working on Rescue-Net unless explicitly requested.
+- Do not modify unrelated systems on the same server while working on Rescue-Net unless explicitly requested.

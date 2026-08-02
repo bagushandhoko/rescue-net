@@ -64,6 +64,12 @@
       "label": "Snapshot JSON",
       "fieldtype": "Code",
       "options": "JSON"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
     }
   ],
   "permissions": [

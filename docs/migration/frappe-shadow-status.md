@@ -56,3 +56,11 @@ Do not route production /rescue-net or /rescue-net-api traffic to Frappe yet. Th
 - Snapshot metrics: active_posko_count=10, open_need_count=8, aid_offer_count=7, distribution_flow_count=6.
 - Shadow counts after build: RN War Room Snapshot=1.
 - Existing /rescue-net, /rescue-net-api, and Frappe shadow 8095 remained HTTP 200/running.
+
+## Relationship Field Hardening 2026-08-02
+
+- Added legacy_payload Code/JSON field to P0 DocTypes for audit-preserving shadow import.
+- Added legacy relationship fields for Posko, Logistic Need, Aid Offer, and Distribution Flow.
+- Reloaded Frappe DocTypes and reran idempotent importer. Counts remained stable: Disaster Event=5, Organization=8, Posko=10, Logistic Need=8, Aid Offer=7, Distribution Flow=6, War Room Snapshot=1.
+- Verified sample records contain disaster_event_legacy_id, organization/posko/aid-offer references, and non-empty legacy_payload.
+- Rebuilt War Room Snapshot after schema/import hardening.

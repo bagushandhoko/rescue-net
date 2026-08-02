@@ -69,6 +69,27 @@
       "fieldname": "need_status",
       "label": "Need Status",
       "fieldtype": "Data"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    },
+    {
+      "fieldname": "disaster_event_legacy_id",
+      "label": "Disaster Event Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "posko_legacy_id",
+      "label": "Posko Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "source_table",
+      "label": "Source Table",
+      "fieldtype": "Data"
     }
   ],
   "permissions": [

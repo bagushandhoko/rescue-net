@@ -63,6 +63,37 @@
       "fieldname": "offer_status",
       "label": "Offer Status",
       "fieldtype": "Data"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    },
+    {
+      "fieldname": "disaster_event_legacy_id",
+      "label": "Disaster Event Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "target_posko_legacy_id",
+      "label": "Target Posko Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "pickup_location",
+      "label": "Pickup Location",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "donor_contact",
+      "label": "Donor Contact",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
     }
   ],
   "permissions": [

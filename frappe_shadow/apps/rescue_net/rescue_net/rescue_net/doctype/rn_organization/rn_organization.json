@@ -47,6 +47,12 @@
       "fieldname": "contact_summary",
       "label": "Contact Summary",
       "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
     }
   ],
   "permissions": [

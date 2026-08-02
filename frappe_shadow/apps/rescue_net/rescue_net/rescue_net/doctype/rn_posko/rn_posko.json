@@ -64,6 +64,32 @@
       "fieldname": "longitude",
       "label": "Longitude",
       "fieldtype": "Float"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    },
+    {
+      "fieldname": "disaster_event_legacy_id",
+      "label": "Disaster Event Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "organization_legacy_id",
+      "label": "Organization Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "operational_status",
+      "label": "Operational Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data"
     }
   ],
   "permissions": [

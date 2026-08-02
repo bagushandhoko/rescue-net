@@ -52,6 +52,12 @@
       "fieldname": "started_at",
       "label": "Started At",
       "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
     }
   ],
   "permissions": [

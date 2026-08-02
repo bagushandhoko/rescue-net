@@ -176,8 +176,12 @@ def _map_posko(row):
     data.update(
         {
             "title": row.get("name") or row["id"],
+            "disaster_event_legacy_id": _legacy_ref("disaster_events", row.get("disaster_event_id")),
+            "organization_legacy_id": _legacy_ref("organizations", row.get("organization_id")),
             "posko_type": row.get("node_type"),
             "address": row.get("location"),
+            "operational_status": row.get("operational_status"),
+            "verification_status": row.get("verification_status"),
             "latitude": row.get("lat"),
             "longitude": row.get("lng"),
         }
@@ -191,10 +195,13 @@ def _map_logistic_need(row):
         {
             "title": row.get("item_name") or row["id"],
             "item_name": row.get("item_name") or row["id"],
+            "disaster_event_legacy_id": _legacy_ref("disaster_events", row.get("disaster_event_id")),
+            "posko_legacy_id": _legacy_ref("posko_nodes", row.get("node_id")),
             "quantity": row.get("quantity_needed"),
             "unit": row.get("unit"),
             "urgency": row.get("priority"),
             "need_status": row.get("status"),
+            "source_table": "logistic_needs",
         }
     )
     return data
@@ -206,10 +213,13 @@ def _map_consolidated_need(row):
         {
             "title": row.get("item_name") or row["id"],
             "item_name": row.get("item_name") or row["id"],
+            "disaster_event_legacy_id": _legacy_ref("disaster_events", row.get("disaster_event_id")),
+            "posko_legacy_id": _legacy_ref("posko_nodes", row.get("canonical_posko_id")),
             "quantity": row.get("quantity_final"),
             "unit": row.get("quantity_unit"),
             "urgency": row.get("confidence_level"),
             "need_status": row.get("status"),
+            "source_table": "consolidated_needs",
         }
     )
     return data
@@ -221,10 +231,15 @@ def _map_aid_offer(row):
         {
             "title": f"{row.get('donor_name') or row['id']} - {row.get('item_name') or 'Aid Offer'}",
             "donor_name": row.get("donor_name") or row["id"],
+            "disaster_event_legacy_id": _legacy_ref("disaster_events", row.get("disaster_event_id")),
+            "target_posko_legacy_id": _legacy_ref("posko_nodes", row.get("target_node_id")),
             "item_name": row.get("item_name"),
             "quantity": row.get("quantity"),
             "unit": row.get("unit"),
+            "pickup_location": row.get("pickup_location"),
             "offer_status": row.get("status"),
+            "donor_contact": row.get("donor_contact"),
+            "notes": row.get("notes"),
         }
     )
     return data
@@ -235,6 +250,11 @@ def _map_distribution_flow(row):
     data.update(
         {
             "title": row["id"],
+            "disaster_event_legacy_id": _legacy_ref("disaster_events", row.get("disaster_event_id")),
+            "need_legacy_id": _legacy_ref("logistic_needs", row.get("need_id")),
+            "aid_offer_legacy_id": _legacy_ref("aid_offers", row.get("aid_offer_id")),
+            "destination_posko_legacy_id": _legacy_ref("posko_nodes", row.get("destination_node_id")),
+            "eta_final": row.get("eta_final"),
             "flow_status": row.get("status"),
         }
     )

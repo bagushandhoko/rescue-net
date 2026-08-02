@@ -64,3 +64,13 @@ Do not route production /rescue-net or /rescue-net-api traffic to Frappe yet. Th
 - Reloaded Frappe DocTypes and reran idempotent importer. Counts remained stable: Disaster Event=5, Organization=8, Posko=10, Logistic Need=8, Aid Offer=7, Distribution Flow=6, War Room Snapshot=1.
 - Verified sample records contain disaster_event_legacy_id, organization/posko/aid-offer references, and non-empty legacy_payload.
 - Rebuilt War Room Snapshot after schema/import hardening.
+
+## Shadow Validation Report 2026-08-02
+
+- Added validation module rescue_net.migration.validation.
+- Validation status: pass.
+- Count checks passed for Disaster Event, Organization, Posko, Logistic Need, Aid Offer, and Distribution Flow.
+- Duplicate legacy_id checks passed with 0 duplicates.
+- legacy_payload completeness passed with 0 missing payloads.
+- Orphan legacy reference checks passed with 0 orphan references across Posko, Logistic Need, Aid Offer, and Distribution Flow.
+- Existing /rescue-net, /rescue-net-api, and Frappe shadow 8095 remained HTTP 200/running.

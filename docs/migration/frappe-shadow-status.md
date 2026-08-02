@@ -48,3 +48,11 @@ Do not route production /rescue-net or /rescue-net-api traffic to Frappe yet. Th
 - Imported shadow counts: RN Disaster Event=5, RN Organization=8, RN Posko=10, RN Logistic Need=8, RN Aid Offer=7, RN Distribution Flow=6, RN War Room Snapshot=0.
 - Importer is idempotent by legacy_id; second run updated existing records without increasing counts.
 - Existing /rescue-net and /rescue-net-api remained HTTP 200/running after import.
+
+## War Room Snapshot 2026-08-02
+
+- Added Frappe shadow War Room builder at rescue_net.migration.war_room.
+- Built snapshot legacy_id shadow-war-room:p0.
+- Snapshot metrics: active_posko_count=10, open_need_count=8, aid_offer_count=7, distribution_flow_count=6.
+- Shadow counts after build: RN War Room Snapshot=1.
+- Existing /rescue-net, /rescue-net-api, and Frappe shadow 8095 remained HTTP 200/running.

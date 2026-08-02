@@ -1,0 +1,88 @@
+version: "3.7"
+
+services:
+  mariadb:
+    image: mariadb:10.6
+    container_name: osiun-frappe-mariadb
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: osiun_root_123
+    volumes:
+      - ./mariadb:/var/lib/mysql
+    restart: unless-stopped
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: osiun-frappe-redis-cache
+    restart: unless-stopped
+
+  redis-queue:
+    image: redis:7-alpine
+    container_name: osiun-frappe-redis-queue
+    restart: unless-stopped
+
+  backend:
+    image: frappe/erpnext:v15
+    container_name: osiun-frappe-backend
+    depends_on:
+      - mariadb
+      - redis-cache
+      - redis-queue
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - ./logs:/home/frappe/frappe-bench/logs
+      - ./apps/rescue_net:/home/frappe/frappe-bench/apps/rescue_net
+    ports:
+      - "8095:8000"
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: "3306"
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: "9000"
+    command: >
+      bash -lc "
+      cd /home/frappe/frappe-bench &&
+      ./env/bin/pip install -q -e apps/rescue_net &&
+      bench --site osiun.localhost serve --port 8000
+      "
+    restart: unless-stopped
+
+  worker-default:
+    image: frappe/erpnext:v15
+    container_name: osiun-frappe-worker-default
+    depends_on:
+      - backend
+      - redis-queue
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - ./logs:/home/frappe/frappe-bench/logs
+      - ./apps/rescue_net:/home/frappe/frappe-bench/apps/rescue_net
+    command: >
+      bash -lc "
+      cd /home/frappe/frappe-bench &&
+      ./env/bin/pip install -q -e apps/rescue_net &&
+      bench --site osiun.localhost worker --queue default
+      "
+    restart: unless-stopped
+
+  scheduler:
+    image: frappe/erpnext:v15
+    container_name: osiun-frappe-scheduler
+    depends_on:
+      - backend
+      - redis-queue
+    volumes:
+      - ./sites:/home/frappe/frappe-bench/sites
+      - ./logs:/home/frappe/frappe-bench/logs
+      - ./apps/rescue_net:/home/frappe/frappe-bench/apps/rescue_net
+    command: >
+      bash -lc "
+      cd /home/frappe/frappe-bench &&
+      ./env/bin/pip install -q -e apps/rescue_net &&
+      bench --site osiun.localhost schedule
+      "
+    restart: unless-stopped

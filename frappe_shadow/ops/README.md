@@ -15,3 +15,7 @@ If Frappe website pages return `No module named osiun_core`, clear the stale `in
 ## P0 Cutover Gate
 
 Run `./p0-cutover-gate.sh` before any P0 cutover discussion. It is a dry-run gate only: it runs smoke checks, validates shadow readiness, confirms compatibility API remains shadow-only, and prints the manual steps still required before any reroute.
+
+## Backup Pack
+
+Run ./pre-cutover-backup.sh to create a timestamped PostgreSQL source backup and Frappe shadow MariaDB backup before final sync or cutover rehearsal.

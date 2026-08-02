@@ -31,6 +31,17 @@ Expected result:
 P0 CUTOVER GATE PASS shadow-only dry-run
 ```
 
+
+## Backup Pack
+
+Run this before final sync or cutover rehearsal:
+
+`ash
+/volume1/docker/osiun-frappe-shadow/ops/pre-cutover-backup.sh
+`
+
+It creates PostgreSQL and Frappe MariaDB backups under /volume1/web/rescue-net/_archive/frappe-p0-precutover/<timestamp>/, plus SHA256SUMS and MANIFEST.txt.
+
 ## Manual Cutover Window
 
 Do not start this section without explicit owner approval.

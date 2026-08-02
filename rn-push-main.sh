@@ -51,8 +51,16 @@ if [ "$HAS_CHANGES" -eq 1 ]; then
   git commit -m "Owner update Rescue-Net $(date '+%Y-%m-%d %H:%M:%S')"
 fi
 
-git remote set-url origin "https://${GITHUB_TOKEN}@github.com/bagushandhoko/rescue-net.git"
-git push origin main
+git remote set-url origin "https://github.com/bagushandhoko/rescue-net.git"
+
+export GITHUB_TOKEN
+
+git -c 'credential.helper=!f() {
+  if [ "$1" = "get" ]; then
+    printf "%s\n" "username=x-access-token"
+    printf "%s\n" "password=$GITHUB_TOKEN"
+  fi
+}; f' push origin main
 git remote set-url origin "https://github.com/bagushandhoko/rescue-net.git"
 
 echo "OK: pushed to GitHub main."

@@ -42,6 +42,23 @@ Run this before final sync or cutover rehearsal:
 
 It creates PostgreSQL and Frappe MariaDB backups under /volume1/web/rescue-net/_archive/frappe-p0-precutover/<timestamp>/, plus SHA256SUMS and MANIFEST.txt.
 
+
+## Final Sync Rehearsal
+
+Run this while still shadow-only to prove the final sync steps are idempotent:
+
+`ash
+/volume1/docker/osiun-frappe-shadow/ops/p0-final-sync-rehearsal.sh
+`
+
+Expected result:
+
+`	ext
+P0 FINAL SYNC REHEARSAL PASS shadow-only
+`
+
+The rehearsal runs import_live, Link backfill, War Room snapshot rebuild, validation, smoke test, and the P0 cutover dry-run gate.
+
 ## Manual Cutover Window
 
 Do not start this section without explicit owner approval.

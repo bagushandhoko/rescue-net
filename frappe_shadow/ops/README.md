@@ -19,3 +19,7 @@ Run `./p0-cutover-gate.sh` before any P0 cutover discussion. It is a dry-run gat
 ## Backup Pack
 
 Run ./pre-cutover-backup.sh to create a timestamped PostgreSQL source backup and Frappe shadow MariaDB backup before final sync or cutover rehearsal.
+
+## Final Sync Rehearsal
+
+Run ./p0-final-sync-rehearsal.sh to exercise import, link backfill, War Room rebuild, validation, smoke test, and dry-run cutover gate while staying shadow-only.

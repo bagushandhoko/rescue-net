@@ -15,6 +15,27 @@ DOCTYPE_TABLE_MAP = {
     "RN Distribution Flow": ["distribution_flows"],
 }
 
+LINK_COVERAGE_CHECKS = {
+    "RN Posko": [
+        ("disaster_event_legacy_id", "disaster_event", "RN Disaster Event"),
+        ("organization_legacy_id", "organization", "RN Organization"),
+    ],
+    "RN Logistic Need": [
+        ("disaster_event_legacy_id", "disaster_event", "RN Disaster Event"),
+        ("posko_legacy_id", "posko", "RN Posko"),
+    ],
+    "RN Aid Offer": [
+        ("disaster_event_legacy_id", "disaster_event", "RN Disaster Event"),
+        ("target_posko_legacy_id", "target_posko", "RN Posko"),
+    ],
+    "RN Distribution Flow": [
+        ("disaster_event_legacy_id", "disaster_event", "RN Disaster Event"),
+        ("need_legacy_id", "logistic_need", "RN Logistic Need"),
+        ("aid_offer_legacy_id", "aid_offer", "RN Aid Offer"),
+        ("destination_posko_legacy_id", "destination_posko", "RN Posko"),
+    ],
+}
+
 REFERENCE_CHECKS = {
     "RN Posko": [
         ("disaster_event_legacy_id", "RN Disaster Event"),
@@ -46,6 +67,7 @@ def build_validation_report():
         "duplicates": _duplicate_checks(),
         "missing_legacy_payload": _missing_payload_checks(),
         "orphan_references": _orphan_reference_checks(),
+        "link_coverage": _link_coverage_checks(),
     }
     report["summary"] = _summary(report)
     return report
@@ -123,6 +145,62 @@ def _orphan_reference_checks():
                 "orphan_count": len(missing),
                 "orphans": missing[:20],
                 "status": "pass" if not missing else "fail",
+            }
+        result[doctype] = per_field
+    return result
+
+
+def _link_coverage_checks():
+    result = {}
+    legacy_name_maps = {
+        doctype: {
+            row.legacy_id: row.name
+            for row in frappe.get_all(doctype, fields=["legacy_id", "name"], limit_page_length=0)
+            if row.legacy_id
+        }
+        for doctype in DOCTYPE_TABLE_MAP
+    }
+
+    for doctype, checks in LINK_COVERAGE_CHECKS.items():
+        rows = frappe.get_all(
+            doctype,
+            fields=["name", "legacy_id"] + [field for pair in checks for field in pair[:2]],
+            limit_page_length=0,
+        )
+        per_field = {}
+        for legacy_field, link_field, target_doctype in checks:
+            expected_count = 0
+            linked_count = 0
+            mismatch = []
+            for row in rows:
+                legacy_value = row.get(legacy_field)
+                if not legacy_value:
+                    continue
+                expected_name = legacy_name_maps[target_doctype].get(legacy_value)
+                if not expected_name:
+                    continue
+                expected_count += 1
+                actual_name = row.get(link_field)
+                if actual_name == expected_name:
+                    linked_count += 1
+                else:
+                    mismatch.append(
+                        {
+                            "name": row.name,
+                            "legacy_id": row.legacy_id,
+                            legacy_field: legacy_value,
+                            link_field: actual_name,
+                            "expected_link": expected_name,
+                        }
+                    )
+            per_field[link_field] = {
+                "legacy_field": legacy_field,
+                "target_doctype": target_doctype,
+                "expected_link_count": expected_count,
+                "linked_count": linked_count,
+                "missing_or_mismatch_count": len(mismatch),
+                "missing_or_mismatch": mismatch[:20],
+                "status": "pass" if not mismatch else "fail",
             }
         result[doctype] = per_field
     return result

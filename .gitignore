@@ -28,3 +28,5 @@ backups/trusted-verifier-*/
 backups/github-sync-*/
 
 backups/rn-access-fix-*/
+backups/
+*.bak-before-*

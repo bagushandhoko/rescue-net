@@ -1,0 +1,95 @@
+/* =========================================================
+   Rescue-Net Navigation Engine v2
+   Centralized operational navigation
+   ========================================================= */
+
+.rn-nav-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: transparent;
+}
+
+.rn-nav-v2-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.rn-nav-v2-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 14px;
+  border-radius: 9px;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+  user-select: none;
+}
+
+.rn-nav-v2-summary::-webkit-details-marker {
+  display: none;
+}
+
+.rn-nav-v2-summary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.rn-nav-v2-chevron {
+  display: inline-block;
+  transition: transform 160ms ease;
+}
+
+.rn-nav-v2-group[open] .rn-nav-v2-chevron {
+  transform: rotate(180deg);
+}
+
+.rn-nav-v2-children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 3px 0 8px;
+  padding-left: 10px;
+}
+
+.rn-nav-v2-modules {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rn-nav-v2-link {
+  display: block;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.rn-nav-v2-child {
+  padding-left: 20px;
+  font-size: 0.94em;
+}
+
+.rn-nav-v2-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.rn-nav-v2-link.active,
+.rn-nav-v2-link[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.14);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .rn-nav-v2-summary,
+  .rn-nav-v2-link {
+    min-height: 44px;
+  }
+}

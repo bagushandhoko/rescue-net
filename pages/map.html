@@ -5,6 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Map</title>
   <link rel="stylesheet" href="../assets/css/style.css?v=warroom-after-active-1">
+
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get("embedded") !== "war-room") return;
+
+  document.documentElement.classList.add("rn-map-embedded");
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      document.body.classList.add("rn-map-embedded-body");
+    });
+  } else {
+    document.body.classList.add("rn-map-embedded-body");
+  }
+})();
+</script>
+
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=nav-v2-1" />
+  <link rel="stylesheet" href="../assets/css/rn-war-room.css?v=war-room-ui-1" />
 </head>
 <body>
 <div class="app-shell">
@@ -141,9 +162,10 @@
   </main>
 </div>
 
-<script src="../assets/js/map.js?v=live-1"></script>
+<script src="../assets/js/map.js?v=api-rollback-1785642340"></script>
 <script src="../assets/js/session-role.js?v=role-ui-1"></script>
 <script src="../assets/js/rn-public-header.js?v=global-header-1"></script>
 <script src="../assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=rn-navigation-v2-1"></script>
 </body>
 </html>

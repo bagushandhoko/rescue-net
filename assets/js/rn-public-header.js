@@ -10,6 +10,7 @@
     { label: "Data Konsolidasi", href: `${prefix}pages/data-consolidation.html?event=event-sim-001` },
     { label: "Download", href: `${prefix}../rescue-net-app/download.html` },
     { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
+    { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` },
     { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" }
   ];
 

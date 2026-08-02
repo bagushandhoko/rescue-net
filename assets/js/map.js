@@ -1,5 +1,10 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
-const DISASTER_ID = "event-aceh-2025";
+const RN_API_BASE = `${window.location.origin}/rescue-net-api`;
+
+const MAP_PARAMS = new URLSearchParams(window.location.search);
+const DISASTER_ID =
+  MAP_PARAMS.get("event") ||
+  MAP_PARAMS.get("disaster_event_id") ||
+  "event-sim-001";
 
 function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;
@@ -11,12 +16,33 @@ function statusMsg(msg) {
 }
 
 async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(RN_API_BASE + path, {
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      ...options
+    });
+
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(
+        `API ${res.status}: ${detail || res.statusText}`
+      );
+    }
+
+    return await res.json();
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("API timeout setelah 15 detik.");
+    }
+
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
 }
 
 function mapLinks(p) {
@@ -74,11 +100,18 @@ function renderPoints(points) {
 }
 
 async function loadMap() {
-  statusMsg("Loading map context...");
-  const ctx = await api(`/map-context/${DISASTER_ID}`);
+  statusMsg(`Loading map context untuk ${DISASTER_ID}...`);
+
+  const ctx = await api(
+    `/map-context/${encodeURIComponent(DISASTER_ID)}`
+  );
+
   renderSummary(ctx.summary || {});
   renderPoints(ctx.points || []);
-  statusMsg("Loaded: " + ctx.generated_at);
+
+  statusMsg(
+    `Loaded ${DISASTER_ID}: ${ctx.generated_at || "ready"}`
+  );
 }
 
 function setupForm() {

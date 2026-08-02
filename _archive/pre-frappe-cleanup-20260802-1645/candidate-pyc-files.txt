@@ -1,0 +1,6 @@
+./backend/__pycache__/app_shared.cpython-38.pyc
+./backend/__pycache__/main.cpython-38.pyc
+./backend/routes/__pycache__/__init__.cpython-38.pyc
+./backend/routes/__pycache__/ai_routes.cpython-38.pyc
+./backend/routes/__pycache__/auth_routes.cpython-38.pyc
+./backend/routes/__pycache__/map_routes.cpython-38.pyc

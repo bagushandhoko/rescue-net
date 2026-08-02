@@ -74,3 +74,11 @@ Do not route production /rescue-net or /rescue-net-api traffic to Frappe yet. Th
 - legacy_payload completeness passed with 0 missing payloads.
 - Orphan legacy reference checks passed with 0 orphan references across Posko, Logistic Need, Aid Offer, and Distribution Flow.
 - Existing /rescue-net, /rescue-net-api, and Frappe shadow 8095 remained HTTP 200/running.
+
+## Frappe Link Backfill 2026-08-02
+
+- Added real Link fields for target_posko on RN Aid Offer, plus logistic_need and aid_offer on RN Distribution Flow.
+- Backfilled existing Link fields from validated legacy references.
+- Backfill summary: Posko disaster_event 10/10, Posko organization 6/10, Logistic Need disaster_event 8/8, Logistic Need posko 7/8, Aid Offer disaster_event 7/7, Aid Offer target_posko 3/7, Distribution Flow disaster_event 6/6, Distribution Flow destination_posko 6/6, Distribution Flow aid_offer 1/6, Distribution Flow logistic_need 0/6. Partial fields reflect blank source references, not orphan references.
+- Validation report still passes with 0 failures after Link backfill.
+- Existing /rescue-net, /rescue-net-api, and Frappe shadow 8095 remained HTTP 200/running.

@@ -94,6 +94,12 @@
       "fieldname": "notes",
       "label": "Notes",
       "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "target_posko",
+      "label": "Target Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko"
     }
   ],
   "permissions": [

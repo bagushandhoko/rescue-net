@@ -101,6 +101,18 @@
       "fieldname": "eta_final",
       "label": "ETA Final",
       "fieldtype": "Data"
+    },
+    {
+      "fieldname": "logistic_need",
+      "label": "Logistic Need",
+      "fieldtype": "Link",
+      "options": "RN Logistic Need"
+    },
+    {
+      "fieldname": "aid_offer",
+      "label": "Aid Offer",
+      "fieldtype": "Link",
+      "options": "RN Aid Offer"
     }
   ],
   "permissions": [

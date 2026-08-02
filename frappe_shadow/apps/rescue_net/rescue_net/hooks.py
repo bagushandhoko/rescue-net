@@ -1,0 +1,6 @@
+app_name = "rescue_net"
+app_title = "Rescue-Net"
+app_publisher = "Rescue-Net"
+app_description = "Rescue-Net shadow migration app"
+app_email = "bagushandhoko@gmail.com"
+app_license = "MIT"

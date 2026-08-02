@@ -1,0 +1,2725 @@
+                                Table "public.ai_user_settings"
+       Column       |            Type             | Collation | Nullable |       Default       
+--------------------+-----------------------------+-----------+----------+---------------------
+ id                 | text                        |           | not null | 
+ user_id            | text                        |           | not null | 
+ organization_id    | text                        |           |          | 
+ provider           | text                        |           | not null | 'openai'::text
+ model_name         | text                        |           |          | 'gpt-4o-mini'::text
+ encrypted_api_key  | text                        |           | not null | 
+ api_key_last4      | text                        |           |          | 
+ api_key_label      | text                        |           |          | 
+ status             | text                        |           |          | 'active'::text
+ owner_type         | text                        |           |          | 'user'::text
+ owner_id           | text                        |           |          | 
+ visibility_scope   | text                        |           |          | 'private'::text
+ access_policy      | text                        |           |          | 'owner_only'::text
+ created_by_user_id | text                        |           |          | 
+ updated_by_user_id | text                        |           |          | 
+ created_at         | timestamp without time zone |           | not null | now()
+ updated_at         | timestamp without time zone |           | not null | now()
+Indexes:
+    "ai_user_settings_pkey" PRIMARY KEY, btree (id)
+    "ai_user_settings_user_id_provider_key" UNIQUE CONSTRAINT, btree (user_id, provider)
+    "idx_ai_user_settings_org" btree (organization_id)
+    "idx_ai_user_settings_user" btree (user_id)
+
+Index "public.ai_user_settings_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.ai_user_settings"
+
+Index "public.ai_user_settings_user_id_provider_key"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ user_id  | text | yes  | user_id
+ provider | text | yes  | provider
+unique, btree, for table "public.ai_user_settings"
+
+                                         Table "public.aid_offers"
+         Column          |            Type             | Collation | Nullable |          Default           
+-------------------------+-----------------------------+-----------+----------+----------------------------
+ id                      | text                        |           | not null | 
+ disaster_event_id       | text                        |           | not null | 
+ donor_name              | text                        |           | not null | 
+ item_name               | text                        |           | not null | 
+ quantity                | numeric                     |           | not null | 
+ unit                    | text                        |           | not null | 
+ pickup_location         | text                        |           | not null | 
+ ready_at                | text                        |           |          | 
+ status                  | text                        |           | not null | 'available'::text
+ created_at              | timestamp without time zone |           | not null | now()
+ donor_contact           | text                        |           |          | 
+ donor_type              | text                        |           |          | 'personal_guest'::text
+ delivery_mode           | text                        |           |          | 'need_pickup'::text
+ target_node_id          | text                        |           |          | 
+ target_node_name        | text                        |           |          | 
+ expected_arrival_at     | text                        |           |          | 
+ notes                   | text                        |           |          | 
+ edit_code_hash          | text                        |           |          | 
+ edit_code_created_at    | timestamp without time zone |           |          | 
+ last_edited_at          | timestamp without time zone |           |          | 
+ edit_count              | integer                     |           |          | 0
+ owner_type              | text                        |           |          | 'personal_guest'::text
+ owner_id                | text                        |           |          | 
+ visibility_scope        | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy           | text                        |           |          | 'request_required'::text
+ source_server_id        | text                        |           |          | 
+ source_device_id        | text                        |           |          | 
+ source_organization_id  | text                        |           |          | 
+ source_posko_id         | text                        |           |          | 
+ created_by_user_id      | text                        |           |          | 
+ updated_by_user_id      | text                        |           |          | 
+ version                 | integer                     |           |          | 1
+ sync_status             | text                        |           |          | 'synced'::text
+ deleted_at              | timestamp without time zone |           |          | 
+ officer_in_charge_name  | text                        |           |          | 
+ officer_in_charge_phone | text                        |           |          | 
+ officer_in_charge_role  | text                        |           |          | 
+ original_quantity       | numeric                     |           |          | 
+ original_unit           | text                        |           |          | 
+ normalized_quantity     | numeric                     |           |          | 
+ normalized_unit         | text                        |           |          | 
+ conversion_status       | text                        |           | not null | 'not_normalized'::text
+ conversion_factor       | numeric                     |           |          | 
+ conversion_notes        | text                        |           |          | 
+Indexes:
+    "aid_offers_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "aid_offers_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "distribution_flows" CONSTRAINT "distribution_flows_aid_offer_id_fkey" FOREIGN KEY (aid_offer_id) REFERENCES aid_offers(id) ON DELETE SET NULL
+    TABLE "stock_movements" CONSTRAINT "stock_movements_related_aid_offer_id_fkey" FOREIGN KEY (related_aid_offer_id) REFERENCES aid_offers(id) ON DELETE SET NULL
+Triggers:
+    trg_audit_aid_offers AFTER INSERT OR DELETE OR UPDATE ON aid_offers FOR EACH ROW EXECUTE FUNCTION rn_audit_row_change()
+
+  Index "public.aid_offers_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.aid_offers"
+
+                            Table "public.audit_events"
+       Column       |            Type             | Collation | Nullable | Default 
+--------------------+-----------------------------+-----------+----------+---------
+ id                 | text                        |           | not null | 
+ disaster_event_id  | text                        |           |          | 
+ actor_user_id      | text                        |           |          | 
+ actor_role         | text                        |           |          | 
+ actor_display_name | text                        |           |          | 
+ action             | text                        |           | not null | 
+ object_table       | text                        |           | not null | 
+ object_id          | text                        |           |          | 
+ before_data        | jsonb                       |           |          | 
+ after_data         | jsonb                       |           |          | 
+ ip_address         | text                        |           |          | 
+ user_agent         | text                        |           |          | 
+ source_device_id   | text                        |           |          | 
+ source_server_id   | text                        |           |          | 
+ created_at         | timestamp without time zone |           | not null | now()
+Indexes:
+    "audit_events_pkey" PRIMARY KEY, btree (id)
+    "idx_audit_events_actor" btree (actor_user_id, actor_role)
+    "idx_audit_events_created" btree (created_at DESC)
+    "idx_audit_events_disaster" btree (disaster_event_id)
+    "idx_audit_events_object" btree (object_table, object_id)
+
+ Index "public.audit_events_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.audit_events"
+
+                            Table "public.audit_logs"
+      Column       |            Type             | Collation | Nullable | Default 
+-------------------+-----------------------------+-----------+----------+---------
+ id                | text                        |           | not null | 
+ actor_type        | text                        |           |          | 
+ actor_id          | text                        |           |          | 
+ action            | text                        |           | not null | 
+ object_type       | text                        |           | not null | 
+ object_id         | text                        |           | not null | 
+ before_json       | jsonb                       |           |          | 
+ after_json        | jsonb                       |           |          | 
+ source_server_id  | text                        |           |          | 
+ source_device_id  | text                        |           |          | 
+ disaster_event_id | text                        |           |          | 
+ created_at        | timestamp without time zone |           | not null | now()
+Indexes:
+    "audit_logs_pkey" PRIMARY KEY, btree (id)
+
+  Index "public.audit_logs_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.audit_logs"
+
+                                  Table "public.beneficiary_groups"
+         Column         |            Type             | Collation | Nullable |        Default        
+------------------------+-----------------------------+-----------+----------+-----------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           | not null | 
+ geo_location_id        | text                        |           |          | 
+ group_name             | text                        |           | not null | 
+ group_type             | text                        |           |          | 'community'::text
+ estimated_people_count | integer                     |           |          | 0
+ household_count        | integer                     |           |          | 0
+ description            | text                        |           |          | 
+ verified_status        | text                        |           | not null | 'self_reported'::text
+ created_at             | timestamp without time zone |           | not null | now()
+ updated_at             | timestamp without time zone |           | not null | now()
+Indexes:
+    "beneficiary_groups_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "beneficiary_groups_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "beneficiary_groups_geo_location_id_fkey" FOREIGN KEY (geo_location_id) REFERENCES geo_locations(id) ON DELETE SET NULL
+
+Index "public.beneficiary_groups_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.beneficiary_groups"
+
+                                  Table "public.canonical_entities"
+         Column         |            Type             | Collation | Nullable |        Default        
+------------------------+-----------------------------+-----------+----------+-----------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           | not null | 
+ entity_type            | text                        |           | not null | 
+ canonical_object_id    | text                        |           | not null | 
+ merged_object_ids_json | jsonb                       |           | not null | '[]'::jsonb
+ merge_strategy         | text                        |           | not null | 'manual_review'::text
+ merge_notes            | text                        |           |          | 
+ created_by             | text                        |           |          | 
+ created_at             | timestamp without time zone |           | not null | now()
+ updated_at             | timestamp without time zone |           | not null | now()
+Indexes:
+    "canonical_entities_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "canonical_entities_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+Index "public.canonical_entities_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.canonical_entities"
+
+                                 Table "public.command_corrections"
+       Column       |            Type             | Collation | Nullable |          Default          
+--------------------+-----------------------------+-----------+----------+---------------------------
+ id                 | text                        |           | not null | 
+ disaster_event_id  | text                        |           | not null | 
+ target_type        | text                        |           | not null | 'consolidated_need'::text
+ target_id          | text                        |           | not null | 
+ original_quantity  | numeric                     |           | not null | 0
+ corrected_quantity | numeric                     |           | not null | 0
+ correction_delta   | numeric                     |           | not null | 0
+ corrected_by       | text                        |           |          | 
+ correction_reason  | text                        |           |          | 
+ correction_note    | text                        |           |          | 
+ status             | text                        |           | not null | 'active'::text
+ created_at         | timestamp without time zone |           | not null | now()
+ updated_at         | timestamp without time zone |           | not null | now()
+Indexes:
+    "command_corrections_pkey" PRIMARY KEY, btree (id)
+    "idx_command_corrections_event_target" btree (disaster_event_id, target_type, target_id, status)
+Foreign-key constraints:
+    "command_corrections_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+Index "public.command_corrections_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.command_corrections"
+
+                          Table "public.community_report_evidence"
+       Column        |            Type             | Collation | Nullable |     Default     
+---------------------+-----------------------------+-----------+----------+-----------------
+ id                  | text                        |           | not null | 
+ report_id           | text                        |           | not null | 
+ file_url            | text                        |           | not null | 
+ file_type           | text                        |           |          | 'url'::text
+ caption             | text                        |           |          | 
+ verification_status | text                        |           | not null | 'pending'::text
+ uploaded_at         | timestamp without time zone |           | not null | now()
+Indexes:
+    "community_report_evidence_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "community_report_evidence_report_id_fkey" FOREIGN KEY (report_id) REFERENCES community_reports(id) ON DELETE CASCADE
+
+Index "public.community_report_evidence_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.community_report_evidence"
+
+                Table "public.community_report_verifications"
+    Column     |            Type             | Collation | Nullable | Default 
+---------------+-----------------------------+-----------+----------+---------
+ id            | text                        |           | not null | 
+ report_id     | text                        |           | not null | 
+ verifier_id   | text                        |           |          | 
+ verifier_role | text                        |           |          | 
+ action        | text                        |           | not null | 
+ notes         | text                        |           |          | 
+ before_status | text                        |           |          | 
+ after_status  | text                        |           |          | 
+ created_at    | timestamp without time zone |           | not null | now()
+Indexes:
+    "community_report_verifications_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "community_report_verifications_report_id_fkey" FOREIGN KEY (report_id) REFERENCES community_reports(id) ON DELETE CASCADE
+
+Index "public.community_report_verifications_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.community_report_verifications"
+
+                                      Table "public.community_reports"
+           Column            |            Type             | Collation | Nullable |         Default         
+-----------------------------+-----------------------------+-----------+----------+-------------------------
+ id                          | text                        |           | not null | 
+ disaster_event_id           | text                        |           | not null | 
+ reporter_name               | text                        |           | not null | 
+ reporter_phone              | text                        |           |          | 
+ reporter_role               | text                        |           | not null | 'warga_terdampak'::text
+ reporter_verification_level | text                        |           | not null | 'anonymous'::text
+ report_type                 | text                        |           | not null | 
+ title                       | text                        |           | not null | 
+ description                 | text                        |           | not null | 
+ location_text               | text                        |           | not null | 
+ lat                         | double precision            |           |          | 
+ lng                         | double precision            |           |          | 
+ affected_people_count       | integer                     |           |          | 0
+ priority                    | text                        |           | not null | 'normal'::text
+ urgent_needs                | text                        |           |          | 
+ status                      | text                        |           | not null | 'submitted'::text
+ trust_score                 | integer                     |           | not null | 0
+ assigned_verifier_type      | text                        |           |          | 
+ assigned_verifier_id        | text                        |           |          | 
+ verified_by                 | text                        |           |          | 
+ verified_at                 | timestamp without time zone |           |          | 
+ converted_object_type       | text                        |           |          | 
+ converted_object_id         | text                        |           |          | 
+ consent_to_contact          | boolean                     |           | not null | true
+ created_at                  | timestamp without time zone |           | not null | now()
+ updated_at                  | timestamp without time zone |           | not null | now()
+ deleted_at                  | timestamp without time zone |           |          | 
+ location_accuracy_meters    | double precision            |           |          | 
+ location_input_method       | text                        |           |          | 
+ location_source             | text                        |           |          | 
+ location_status             | text                        |           |          | 
+ admin_area_id               | text                        |           |          | 
+ admin_level                 | text                        |           |          | 
+ area_level                  | text                        |           |          | 
+ province_name               | text                        |           |          | 
+ city_name                   | text                        |           |          | 
+ district_name               | text                        |           |          | 
+ village_name                | text                        |           |          | 
+ is_aggregate                | boolean                     |           | not null | false
+ consolidation_status        | text                        |           |          | 
+Indexes:
+    "community_reports_pkey" PRIMARY KEY, btree (id)
+    "idx_community_reports_event_status" btree (disaster_event_id, status)
+    "idx_community_reports_type" btree (report_type)
+Foreign-key constraints:
+    "community_reports_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "community_report_evidence" CONSTRAINT "community_report_evidence_report_id_fkey" FOREIGN KEY (report_id) REFERENCES community_reports(id) ON DELETE CASCADE
+    TABLE "community_report_verifications" CONSTRAINT "community_report_verifications_report_id_fkey" FOREIGN KEY (report_id) REFERENCES community_reports(id) ON DELETE CASCADE
+
+Index "public.community_reports_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.community_reports"
+
+                                Table "public.consolidated_needs"
+       Column       |            Type             | Collation | Nullable |        Default        
+--------------------+-----------------------------+-----------+----------+-----------------------
+ id                 | text                        |           | not null | 
+ disaster_event_id  | text                        |           | not null | 
+ canonical_area_id  | text                        |           |          | 
+ canonical_posko_id | text                        |           |          | 
+ need_type          | text                        |           | not null | 'logistic'::text
+ item_name          | text                        |           | not null | 
+ quantity_final     | numeric                     |           | not null | 0
+ quantity_unit      | text                        |           | not null | 'paket'::text
+ quantity_min       | numeric                     |           |          | 
+ quantity_max       | numeric                     |           |          | 
+ confidence_level   | text                        |           | not null | 'medium'::text
+ source_count       | integer                     |           | not null | 0
+ source_ids_json    | jsonb                       |           | not null | '[]'::jsonb
+ merge_method       | text                        |           | not null | 'manual_review'::text
+ status             | text                        |           | not null | 'draft'::text
+ verified_by        | text                        |           |          | 
+ verified_at        | timestamp without time zone |           |          | 
+ created_at         | timestamp without time zone |           | not null | now()
+ updated_at         | timestamp without time zone |           | not null | now()
+Indexes:
+    "consolidated_needs_pkey" PRIMARY KEY, btree (id)
+    "idx_consolidated_needs_event_status" btree (disaster_event_id, status)
+Foreign-key constraints:
+    "consolidated_needs_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+Index "public.consolidated_needs_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.consolidated_needs"
+
+                                Table "public.coordination_channels"
+      Column       |            Type             | Collation | Nullable |          Default           
+-------------------+-----------------------------+-----------+----------+----------------------------
+ id                | text                        |           | not null | 
+ disaster_event_id | text                        |           | not null | 
+ channel_name      | text                        |           | not null | 
+ channel_type      | text                        |           | not null | 
+ visibility_scope  | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy     | text                        |           |          | 'request_required'::text
+ created_by        | text                        |           |          | 
+ status            | text                        |           |          | 'active'::text
+ created_at        | timestamp without time zone |           | not null | now()
+ updated_at        | timestamp without time zone |           | not null | now()
+Indexes:
+    "coordination_channels_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "coordination_channels_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "coordination_messages" CONSTRAINT "coordination_messages_channel_id_fkey" FOREIGN KEY (channel_id) REFERENCES coordination_channels(id) ON DELETE CASCADE
+
+Index "public.coordination_channels_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.coordination_channels"
+
+                                 Table "public.coordination_messages"
+       Column        |            Type             | Collation | Nullable |          Default           
+---------------------+-----------------------------+-----------+----------+----------------------------
+ id                  | text                        |           | not null | 
+ channel_id          | text                        |           | not null | 
+ sender_type         | text                        |           | not null | 
+ sender_id           | text                        |           | not null | 
+ message_text        | text                        |           | not null | 
+ related_object_type | text                        |           |          | 
+ related_object_id   | text                        |           |          | 
+ visibility_scope    | text                        |           |          | 'disaster_ecosystem'::text
+ created_at          | timestamp without time zone |           | not null | now()
+Indexes:
+    "coordination_messages_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "coordination_messages_channel_id_fkey" FOREIGN KEY (channel_id) REFERENCES coordination_channels(id) ON DELETE CASCADE
+
+Index "public.coordination_messages_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.coordination_messages"
+
+                                   Table "public.devices"
+        Column         |            Type             | Collation | Nullable |    Default     
+-----------------------+-----------------------------+-----------+----------+----------------
+ id                    | text                        |           | not null | 
+ device_name           | text                        |           | not null | 
+ device_type           | text                        |           | not null | 
+ owner_user_id         | text                        |           |          | 
+ owner_organization_id | text                        |           |          | 
+ last_seen_at          | timestamp without time zone |           |          | 
+ public_key            | text                        |           |          | 
+ status                | text                        |           |          | 'active'::text
+ created_at            | timestamp without time zone |           | not null | now()
+ updated_at            | timestamp without time zone |           | not null | now()
+Indexes:
+    "devices_pkey" PRIMARY KEY, btree (id)
+
+    Index "public.devices_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.devices"
+
+                            Table "public.disaster_ecosystem_members"
+       Column        |            Type             | Collation | Nullable |        Default        
+---------------------+-----------------------------+-----------+----------+-----------------------
+ id                  | text                        |           | not null | 
+ disaster_event_id   | text                        |           | not null | 
+ member_type         | text                        |           | not null | 
+ member_id           | text                        |           | not null | 
+ role_in_disaster    | text                        |           | not null | 
+ joined_at           | timestamp without time zone |           | not null | now()
+ verification_status | text                        |           |          | 'self_reported'::text
+ trust_level         | text                        |           |          | 'self_reported'::text
+ permissions_json    | jsonb                       |           |          | '{}'::jsonb
+ status              | text                        |           |          | 'active'::text
+ created_at          | timestamp without time zone |           | not null | now()
+ updated_at          | timestamp without time zone |           | not null | now()
+Indexes:
+    "disaster_ecosystem_members_pkey" PRIMARY KEY, btree (id)
+    "idx_ecosystem_members_event" btree (disaster_event_id)
+    "idx_ecosystem_members_member" btree (member_type, member_id)
+Foreign-key constraints:
+    "disaster_ecosystem_members_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+Index "public.disaster_ecosystem_members_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.disaster_ecosystem_members"
+
+                           Table "public.disaster_events"
+    Column     |            Type             | Collation | Nullable |    Default     
+---------------+-----------------------------+-----------+----------+----------------
+ id            | text                        |           | not null | 
+ name          | text                        |           | not null | 
+ disaster_type | text                        |           | not null | 
+ location      | text                        |           | not null | 
+ status        | text                        |           | not null | 'active'::text
+ severity      | text                        |           | not null | 'normal'::text
+ created_at    | timestamp without time zone |           | not null | now()
+Indexes:
+    "disaster_events_pkey" PRIMARY KEY, btree (id)
+Referenced by:
+    TABLE "aid_offers" CONSTRAINT "aid_offers_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "beneficiary_groups" CONSTRAINT "beneficiary_groups_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "canonical_entities" CONSTRAINT "canonical_entities_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "command_corrections" CONSTRAINT "command_corrections_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "community_reports" CONSTRAINT "community_reports_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "consolidated_needs" CONSTRAINT "consolidated_needs_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "coordination_channels" CONSTRAINT "coordination_channels_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "disaster_ecosystem_members" CONSTRAINT "disaster_ecosystem_members_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "distribution_flows" CONSTRAINT "distribution_flows_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "donor_program_updates" CONSTRAINT "donor_program_updates_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "donor_programs" CONSTRAINT "donor_programs_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "duplicate_candidates" CONSTRAINT "duplicate_candidates_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "found_person_reports" CONSTRAINT "found_person_reports_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "kitchen_meal_productions" CONSTRAINT "kitchen_meal_productions_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "logistic_needs" CONSTRAINT "logistic_needs_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "map_points" CONSTRAINT "map_points_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "medical_cases" CONSTRAINT "medical_cases_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "medical_supply_uses" CONSTRAINT "medical_supply_uses_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "missing_person_reports" CONSTRAINT "missing_person_reports_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "operational_areas" CONSTRAINT "operational_areas_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "posko_nodes" CONSTRAINT "posko_nodes_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "resource_shares" CONSTRAINT "resource_shares_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "resources" CONSTRAINT "resources_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "search_found_matches" CONSTRAINT "search_found_matches_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "shelter_needs" CONSTRAINT "shelter_needs_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "shelter_occupancies" CONSTRAINT "shelter_occupancies_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "stock_movements" CONSTRAINT "stock_movements_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "transport_spaces" CONSTRAINT "transport_spaces_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "verification_actions" CONSTRAINT "verification_actions_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "volunteer_assignments" CONSTRAINT "volunteer_assignments_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "volunteer_profiles" CONSTRAINT "volunteer_profiles_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    TABLE "work_tool_requests" CONSTRAINT "work_tool_requests_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Triggers:
+    trg_audit_disaster_events AFTER INSERT OR DELETE OR UPDATE ON disaster_events FOR EACH ROW EXECUTE FUNCTION rn_audit_row_change()
+
+Index "public.disaster_events_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.disaster_events"
+
+                                      Table "public.distribution_flows"
+         Column          |            Type             | Collation | Nullable |            Default            
+-------------------------+-----------------------------+-----------+----------+-------------------------------
+ id                      | text                        |           | not null | 
+ disaster_event_id       | text                        |           | not null | 
+ need_id                 | text                        |           |          | 
+ aid_offer_id            | text                        |           |          | 
+ transport_space_id      | text                        |           |          | 
+ destination_node_id     | text                        |           |          | 
+ eta_final               | text                        |           |          | 
+ status                  | text                        |           | not null | 'planned'::text
+ created_at              | timestamp without time zone |           | not null | now()
+ owner_type              | text                        |           |          | 'system'::text
+ owner_id                | text                        |           |          | 
+ visibility_scope        | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy           | text                        |           |          | 'command_center_assign'::text
+ source_server_id        | text                        |           |          | 
+ source_device_id        | text                        |           |          | 
+ source_organization_id  | text                        |           |          | 
+ source_posko_id         | text                        |           |          | 
+ created_by_user_id      | text                        |           |          | 
+ updated_by_user_id      | text                        |           |          | 
+ version                 | integer                     |           |          | 1
+ sync_status             | text                        |           |          | 'synced'::text
+ deleted_at              | timestamp without time zone |           |          | 
+ officer_in_charge_name  | text                        |           |          | 
+ officer_in_charge_phone | text                        |           |          | 
+ officer_in_charge_role  | text                        |           |          | 
+Indexes:
+    "distribution_flows_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "distribution_flows_aid_offer_id_fkey" FOREIGN KEY (aid_offer_id) REFERENCES aid_offers(id) ON DELETE SET NULL
+    "distribution_flows_destination_node_id_fkey" FOREIGN KEY (destination_node_id) REFERENCES posko_nodes(id) ON DELETE SET NULL
+    "distribution_flows_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "distribution_flows_need_id_fkey" FOREIGN KEY (need_id) REFERENCES logistic_needs(id) ON DELETE SET NULL
+    "distribution_flows_transport_space_id_fkey" FOREIGN KEY (transport_space_id) REFERENCES transport_spaces(id) ON DELETE SET NULL
+Referenced by:
+    TABLE "stock_movements" CONSTRAINT "stock_movements_related_distribution_flow_id_fkey" FOREIGN KEY (related_distribution_flow_id) REFERENCES distribution_flows(id) ON DELETE SET NULL
+Triggers:
+    trg_audit_distribution_flows AFTER INSERT OR DELETE OR UPDATE ON distribution_flows FOR EACH ROW EXECUTE FUNCTION rn_audit_row_change()
+
+Index "public.distribution_flows_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.distribution_flows"
+
+                                 Table "public.donor_program_updates"
+         Column          |            Type             | Collation | Nullable |        Default         
+-------------------------+-----------------------------+-----------+----------+------------------------
+ id                      | text                        |           | not null | 
+ program_id              | text                        |           | not null | 
+ disaster_event_id       | text                        |           | not null | 
+ update_title            | text                        |           | not null | 
+ update_type             | text                        |           |          | 'progress'::text
+ amount_used             | numeric                     |           |          | 0
+ amount_unit             | text                        |           |          | 'IDR'::text
+ description             | text                        |           |          | 
+ evidence_file_id        | text                        |           |          | 
+ created_by_user_id      | text                        |           |          | 
+ created_at              | timestamp without time zone |           | not null | now()
+ updated_at              | timestamp without time zone |           | not null | now()
+ deleted_at              | timestamp without time zone |           |          | 
+ progress_percent        | numeric                     |           |          | 0
+ amount_spent            | numeric                     |           |          | 0
+ update_notes            | text                        |           |          | 
+ officer_in_charge_name  | text                        |           |          | 
+ officer_in_charge_phone | text                        |           |          | 
+ public_visibility       | text                        |           |          | 'summary_public'::text
+ verification_status     | text                        |           |          | 'self_reported'::text
+ sync_status             | text                        |           |          | 'synced'::text
+ version                 | integer                     |           |          | 1
+Indexes:
+    "donor_program_updates_pkey" PRIMARY KEY, btree (id)
+    "idx_donor_program_updates_disaster" btree (disaster_event_id)
+    "idx_donor_program_updates_program" btree (program_id)
+Foreign-key constraints:
+    "donor_program_updates_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "donor_program_updates_program_id_fkey" FOREIGN KEY (program_id) REFERENCES donor_programs(id) ON DELETE CASCADE
+
+Index "public.donor_program_updates_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.donor_program_updates"
+
+                                  Table "public.donor_programs"
+       Column       |            Type             | Collation | Nullable |        Default         
+--------------------+-----------------------------+-----------+----------+------------------------
+ id                 | text                        |           | not null | 
+ disaster_event_id  | text                        |           | not null | 
+ program_name       | text                        |           | not null | 
+ program_type       | text                        |           |          | 'general_relief'::text
+ owner_type         | text                        |           |          | 'organization'::text
+ owner_id           | text                        |           |          | 
+ target_description | text                        |           |          | 
+ target_amount      | numeric                     |           |          | 0
+ target_unit        | text                        |           |          | 'IDR'::text
+ current_amount     | numeric                     |           |          | 0
+ status             | text                        |           |          | 'active'::text
+ location           | text                        |           |          | 
+ contact_person     | text                        |           |          | 
+ contact_phone      | text                        |           |          | 
+ notes              | text                        |           |          | 
+ created_by_user_id | text                        |           |          | 
+ created_at         | timestamp without time zone |           | not null | now()
+ updated_at         | timestamp without time zone |           | not null | now()
+ deleted_at         | timestamp without time zone |           |          | 
+Indexes:
+    "donor_programs_pkey" PRIMARY KEY, btree (id)
+    "idx_donor_programs_disaster" btree (disaster_event_id)
+Foreign-key constraints:
+    "donor_programs_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "donor_program_updates" CONSTRAINT "donor_program_updates_program_id_fkey" FOREIGN KEY (program_id) REFERENCES donor_programs(id) ON DELETE CASCADE
+
+Index "public.donor_programs_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.donor_programs"
+
+                                Table "public.duplicate_candidates"
+          Column          |            Type             | Collation | Nullable |      Default      
+--------------------------+-----------------------------+-----------+----------+-------------------
+ id                       | text                        |           | not null | 
+ disaster_event_id        | text                        |           | not null | 
+ object_type              | text                        |           | not null | 
+ object_id_a              | text                        |           | not null | 
+ object_id_b              | text                        |           | not null | 
+ match_score              | integer                     |           | not null | 0
+ match_reason             | text                        |           |          | 
+ location_distance_meters | double precision            |           |          | 
+ same_admin_area          | boolean                     |           |          | false
+ same_name_score          | integer                     |           |          | 0
+ same_contact_score       | integer                     |           |          | 0
+ same_owner_score         | integer                     |           |          | 0
+ status                   | text                        |           | not null | 'candidate'::text
+ reviewed_by              | text                        |           |          | 
+ review_notes             | text                        |           |          | 
+ created_at               | timestamp without time zone |           | not null | now()
+ updated_at               | timestamp without time zone |           | not null | now()
+Indexes:
+    "duplicate_candidates_pkey" PRIMARY KEY, btree (id)
+    "idx_duplicate_candidates_event_status" btree (disaster_event_id, status)
+Foreign-key constraints:
+    "duplicate_candidates_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+Index "public.duplicate_candidates_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.duplicate_candidates"
+
+                                     Table "public.evidence_files"
+         Column         |            Type             | Collation | Nullable |         Default          
+------------------------+-----------------------------+-----------+----------+--------------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           |          | 
+ node_id                | text                        |           |          | 
+ linked_object_type     | text                        |           | not null | 
+ linked_object_id       | text                        |           |          | 
+ evidence_type          | text                        |           | not null | 
+ filename               | text                        |           | not null | 
+ file_path              | text                        |           | not null | 
+ mime_type              | text                        |           |          | 
+ size_bytes             | bigint                      |           |          | 0
+ uploaded_by            | text                        |           |          | 
+ verification_status    | text                        |           | not null | 'pending'::text
+ created_at             | timestamp without time zone |           | not null | now()
+ owner_type             | text                        |           |          | 'registered_user'::text
+ owner_id               | text                        |           |          | 
+ visibility_scope       | text                        |           |          | 'restricted'::text
+ access_policy          | text                        |           |          | 'request_required'::text
+ source_server_id       | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ source_posko_id        | text                        |           |          | 
+ created_by_user_id     | text                        |           |          | 
+ updated_by_user_id     | text                        |           |          | 
+ version                | integer                     |           |          | 1
+ sync_status            | text                        |           |          | 'synced'::text
+ deleted_at             | timestamp without time zone |           |          | 
+Indexes:
+    "evidence_files_pkey" PRIMARY KEY, btree (id)
+Triggers:
+    trg_audit_evidence_files AFTER INSERT OR DELETE OR UPDATE ON evidence_files FOR EACH ROW EXECUTE FUNCTION rn_audit_row_change()
+
+Index "public.evidence_files_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.evidence_files"
+
+                               Table "public.federation_nodes"
+      Column       |            Type             | Collation | Nullable |      Default       
+-------------------+-----------------------------+-----------+----------+--------------------
+ id                | text                        |           | not null | 
+ node_name         | text                        |           | not null | 
+ node_type         | text                        |           | not null | 'partner'::text
+ base_url          | text                        |           |          | 
+ organization_id   | text                        |           |          | 
+ trust_level       | text                        |           | not null | 'unverified'::text
+ sync_scope        | text                        |           | not null | 'event'::text
+ disaster_event_id | text                        |           |          | 
+ status            | text                        |           | not null | 'active'::text
+ notes             | text                        |           |          | 
+ created_at        | timestamp without time zone |           | not null | now()
+ updated_at        | timestamp without time zone |           | not null | now()
+Indexes:
+    "federation_nodes_pkey" PRIMARY KEY, btree (id)
+    "idx_federation_nodes_event" btree (disaster_event_id, status)
+Referenced by:
+    TABLE "federation_repositories" CONSTRAINT "federation_repositories_node_id_fkey" FOREIGN KEY (node_id) REFERENCES federation_nodes(id) ON DELETE CASCADE
+    TABLE "federation_sync_logs" CONSTRAINT "federation_sync_logs_node_id_fkey" FOREIGN KEY (node_id) REFERENCES federation_nodes(id) ON DELETE SET NULL
+
+Index "public.federation_nodes_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.federation_nodes"
+
+                            Table "public.federation_repositories"
+     Column      |            Type             | Collation | Nullable |        Default        
+-----------------+-----------------------------+-----------+----------+-----------------------
+ id              | text                        |           | not null | 
+ node_id         | text                        |           | not null | 
+ repository_name | text                        |           | not null | 
+ repository_type | text                        |           | not null | 'sync_events'::text
+ endpoint_path   | text                        |           |          | '/sync/pull'::text
+ direction       | text                        |           | not null | 'bidirectional'::text
+ conflict_policy | text                        |           | not null | 'manual_review'::text
+ status          | text                        |           | not null | 'active'::text
+ notes           | text                        |           |          | 
+ last_sync_at    | timestamp without time zone |           |          | 
+ created_at      | timestamp without time zone |           | not null | now()
+ updated_at      | timestamp without time zone |           | not null | now()
+Indexes:
+    "federation_repositories_pkey" PRIMARY KEY, btree (id)
+    "idx_federation_repos_node" btree (node_id, status)
+Foreign-key constraints:
+    "federation_repositories_node_id_fkey" FOREIGN KEY (node_id) REFERENCES federation_nodes(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "federation_sync_logs" CONSTRAINT "federation_sync_logs_repository_id_fkey" FOREIGN KEY (repository_id) REFERENCES federation_repositories(id) ON DELETE SET NULL
+
+Index "public.federation_repositories_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.federation_repositories"
+
+                     Table "public.federation_sync_logs"
+    Column     |            Type             | Collation | Nullable | Default 
+---------------+-----------------------------+-----------+----------+---------
+ id            | text                        |           | not null | 
+ node_id       | text                        |           |          | 
+ repository_id | text                        |           |          | 
+ direction     | text                        |           | not null | 
+ status        | text                        |           | not null | 
+ manifest_json | jsonb                       |           |          | 
+ notes         | text                        |           |          | 
+ created_at    | timestamp without time zone |           | not null | now()
+Indexes:
+    "federation_sync_logs_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "federation_sync_logs_node_id_fkey" FOREIGN KEY (node_id) REFERENCES federation_nodes(id) ON DELETE SET NULL
+    "federation_sync_logs_repository_id_fkey" FOREIGN KEY (repository_id) REFERENCES federation_repositories(id) ON DELETE SET NULL
+
+Index "public.federation_sync_logs_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.federation_sync_logs"
+
+                                       Table "public.found_person_reports"
+         Column         |            Type             | Collation | Nullable |              Default               
+------------------------+-----------------------------+-----------+----------+------------------------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           | not null | 
+ finder_name            | text                        |           |          | 
+ finder_contact         | text                        |           |          | 
+ person_code            | text                        |           | not null | 
+ person_name            | text                        |           |          | 
+ age_group              | text                        |           |          | 
+ gender                 | text                        |           |          | 
+ found_location         | text                        |           |          | 
+ found_time             | text                        |           |          | 
+ current_location       | text                        |           |          | 
+ condition_notes        | text                        |           |          | 
+ description            | text                        |           |          | 
+ clothing_description   | text                        |           |          | 
+ special_notes          | text                        |           |          | 
+ status                 | text                        |           |          | 'found'::text
+ privacy_level          | text                        |           |          | 'restricted'::text
+ visibility_scope       | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy          | text                        |           |          | 'search_found_role_required'::text
+ source_posko_id        | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_server_id       | text                        |           |          | 
+ created_by_user_id     | text                        |           |          | 
+ updated_by_user_id     | text                        |           |          | 
+ verification_status    | text                        |           |          | 'self_reported'::text
+ sync_status            | text                        |           |          | 'synced'::text
+ version                | integer                     |           |          | 1
+ deleted_at             | timestamp without time zone |           |          | 
+ created_at             | timestamp without time zone |           | not null | now()
+ updated_at             | timestamp without time zone |           | not null | now()
+Indexes:
+    "found_person_reports_pkey" PRIMARY KEY, btree (id)
+    "idx_found_person_disaster" btree (disaster_event_id)
+    "idx_found_person_status" btree (status)
+Foreign-key constraints:
+    "found_person_reports_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "search_found_matches" CONSTRAINT "search_found_matches_found_report_id_fkey" FOREIGN KEY (found_report_id) REFERENCES found_person_reports(id) ON DELETE CASCADE
+
+Index "public.found_person_reports_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.found_person_reports"
+
+                             Table "public.geo_locations"
+     Column      |            Type             | Collation | Nullable |    Default     
+-----------------+-----------------------------+-----------+----------+----------------
+ id              | text                        |           | not null | 
+ country_code    | text                        |           |          | 'ID'::text
+ province_code   | text                        |           |          | 
+ province_name   | text                        |           |          | 
+ city_code       | text                        |           |          | 
+ city_name       | text                        |           |          | 
+ district_code   | text                        |           |          | 
+ district_name   | text                        |           |          | 
+ village_code    | text                        |           |          | 
+ village_name    | text                        |           |          | 
+ location_name   | text                        |           | not null | 
+ lat             | double precision            |           |          | 
+ lng             | double precision            |           |          | 
+ accuracy_meters | double precision            |           |          | 
+ admin_level     | text                        |           | not null | 'point'::text
+ source          | text                        |           |          | 'manual'::text
+ created_at      | timestamp without time zone |           | not null | now()
+ updated_at      | timestamp without time zone |           | not null | now()
+Indexes:
+    "geo_locations_pkey" PRIMARY KEY, btree (id)
+Referenced by:
+    TABLE "beneficiary_groups" CONSTRAINT "beneficiary_groups_geo_location_id_fkey" FOREIGN KEY (geo_location_id) REFERENCES geo_locations(id) ON DELETE SET NULL
+
+ Index "public.geo_locations_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.geo_locations"
+
+     Index "public.idx_ai_user_settings_org"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ organization_id | text | yes  | organization_id
+btree, for table "public.ai_user_settings"
+
+Index "public.idx_ai_user_settings_user"
+ Column  | Type | Key? | Definition 
+---------+------+------+------------
+ user_id | text | yes  | user_id
+btree, for table "public.ai_user_settings"
+
+    Index "public.idx_audit_events_actor"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ actor_user_id | text | yes  | actor_user_id
+ actor_role    | text | yes  | actor_role
+btree, for table "public.audit_events"
+
+           Index "public.idx_audit_events_created"
+   Column   |            Type             | Key? | Definition 
+------------+-----------------------------+------+------------
+ created_at | timestamp without time zone | yes  | created_at
+btree, for table "public.audit_events"
+
+      Index "public.idx_audit_events_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.audit_events"
+
+  Index "public.idx_audit_events_object"
+    Column    | Type | Key? |  Definition  
+--------------+------+------+--------------
+ object_table | text | yes  | object_table
+ object_id    | text | yes  | object_id
+btree, for table "public.audit_events"
+
+ Index "public.idx_command_corrections_event_target"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+ target_type       | text | yes  | target_type
+ target_id         | text | yes  | target_id
+ status            | text | yes  | status
+btree, for table "public.command_corrections"
+
+  Index "public.idx_community_reports_event_status"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+ status            | text | yes  | status
+btree, for table "public.community_reports"
+
+Index "public.idx_community_reports_type"
+   Column    | Type | Key? | Definition  
+-------------+------+------+-------------
+ report_type | text | yes  | report_type
+btree, for table "public.community_reports"
+
+ Index "public.idx_consolidated_needs_event_status"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+ status            | text | yes  | status
+btree, for table "public.consolidated_needs"
+
+  Index "public.idx_donor_program_updates_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.donor_program_updates"
+
+Index "public.idx_donor_program_updates_program"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ program_id | text | yes  | program_id
+btree, for table "public.donor_program_updates"
+
+     Index "public.idx_donor_programs_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.donor_programs"
+
+Index "public.idx_duplicate_candidates_event_status"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+ status            | text | yes  | status
+btree, for table "public.duplicate_candidates"
+
+     Index "public.idx_ecosystem_members_event"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.disaster_ecosystem_members"
+
+Index "public.idx_ecosystem_members_member"
+   Column    | Type | Key? | Definition  
+-------------+------+------+-------------
+ member_type | text | yes  | member_type
+ member_id   | text | yes  | member_id
+btree, for table "public.disaster_ecosystem_members"
+
+      Index "public.idx_federation_nodes_event"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+ status            | text | yes  | status
+btree, for table "public.federation_nodes"
+
+Index "public.idx_federation_repos_node"
+ Column  | Type | Key? | Definition 
+---------+------+------+------------
+ node_id | text | yes  | node_id
+ status  | text | yes  | status
+btree, for table "public.federation_repositories"
+
+      Index "public.idx_found_person_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.found_person_reports"
+
+Index "public.idx_found_person_status"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ status | text | yes  | status
+btree, for table "public.found_person_reports"
+
+      Index "public.idx_kitchen_meal_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.kitchen_meal_productions"
+
+Index "public.idx_kitchen_meal_posko"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ posko_id | text | yes  | posko_id
+btree, for table "public.kitchen_meal_productions"
+
+       Index "public.idx_map_points_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.map_points"
+
+  Index "public.idx_map_points_object"
+   Column    | Type | Key? | Definition  
+-------------+------+------+-------------
+ object_type | text | yes  | object_type
+ object_id   | text | yes  | object_id
+btree, for table "public.map_points"
+
+   Index "public.idx_map_points_status"
+    Column    | Type | Key? |  Definition  
+--------------+------+------+--------------
+ point_status | text | yes  | point_status
+btree, for table "public.map_points"
+
+      Index "public.idx_medical_cases_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.medical_cases"
+
+Index "public.idx_medical_cases_posko"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ posko_id | text | yes  | posko_id
+btree, for table "public.medical_cases"
+
+   Index "public.idx_medical_supply_uses_case"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ medical_case_id | text | yes  | medical_case_id
+btree, for table "public.medical_supply_uses"
+
+Index "public.idx_medical_supply_uses_posko"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ posko_id | text | yes  | posko_id
+btree, for table "public.medical_supply_uses"
+
+     Index "public.idx_missing_person_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.missing_person_reports"
+
+Index "public.idx_missing_person_status"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ status | text | yes  | status
+btree, for table "public.missing_person_reports"
+
+Index "public.idx_official_admin_areas_parent"
+   Column    | Type | Key? | Definition  
+-------------+------+------+-------------
+ parent_code | text | yes  | parent_code
+ level       | text | yes  | level
+btree, for table "public.official_admin_areas"
+
+  Index "public.idx_operational_areas_event_owner"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+ owner_type        | text | yes  | owner_type
+ owner_id          | text | yes  | owner_id
+btree, for table "public.operational_areas"
+
+Index "public.idx_organizations_device"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ device_id | text | yes  | device_id
+btree, for table "public.organizations"
+
+  Index "public.idx_posko_nodes_admin_area"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ admin_area_id | text | yes  | admin_area_id
+btree, for table "public.posko_nodes"
+
+Index "public.idx_posko_nodes_device"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ device_id | text | yes  | device_id
+btree, for table "public.posko_nodes"
+
+Index "public.idx_recovery_project_updates_project"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ project_id | text | yes  | project_id
+btree, for table "public.recovery_project_updates"
+
+    Index "public.idx_recovery_projects_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.recovery_projects"
+
+    Index "public.idx_resource_profiles_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.resource_profiles"
+
+Index "public.idx_resource_profiles_owner"
+   Column   | Type | Key? | Definition 
+------------+------+------+------------
+ owner_type | text | yes  | owner_type
+ owner_id   | text | yes  | owner_id
+btree, for table "public.resource_profiles"
+
+ Index "public.idx_resource_requests_disaster_event"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.resource_requests"
+
+         Index "public.idx_resources_event"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.resources"
+
+      Index "public.idx_resources_type"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ resource_type | text | yes  | resource_type
+btree, for table "public.resources"
+
+  Index "public.idx_search_found_matches_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.search_found_matches"
+
+Index "public.idx_search_found_matches_status"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ status | text | yes  | status
+btree, for table "public.search_found_matches"
+
+      Index "public.idx_shelter_needs_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.shelter_needs"
+
+Index "public.idx_shelter_needs_posko"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ posko_id | text | yes  | posko_id
+btree, for table "public.shelter_needs"
+
+   Index "public.idx_shelter_occupancies_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.shelter_occupancies"
+
+Index "public.idx_shelter_occupancies_posko"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ posko_id | text | yes  | posko_id
+btree, for table "public.shelter_occupancies"
+
+     Index "public.idx_stock_movements_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.stock_movements"
+
+Index "public.idx_stock_movements_item"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ item_name | text | yes  | item_name
+btree, for table "public.stock_movements"
+
+Index "public.idx_stock_movements_posko"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ posko_id | text | yes  | posko_id
+btree, for table "public.stock_movements"
+
+   Index "public.idx_stock_movements_type"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ movement_type | text | yes  | movement_type
+btree, for table "public.stock_movements"
+
+  Index "public.idx_sync_events_object"
+   Column    | Type | Key? | Definition  
+-------------+------+------+-------------
+ object_type | text | yes  | object_type
+ object_id   | text | yes  | object_id
+btree, for table "public.sync_events"
+
+       Index "public.idx_sync_events_source"
+      Column      | Type | Key? |    Definition    
+------------------+------+------+------------------
+ source_server_id | text | yes  | source_server_id
+ source_device_id | text | yes  | source_device_id
+btree, for table "public.sync_events"
+
+Index "public.idx_trusted_verification_requests_target"
+   Column    | Type | Key? | Definition  
+-------------+------+------+-------------
+ target_type | text | yes  | target_type
+ target_id   | text | yes  | target_id
+ status      | text | yes  | status
+btree, for table "public.trusted_verification_requests"
+
+Index "public.idx_unit_conversions_lookup"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ item_name | text | yes  | item_name
+ from_unit | text | yes  | from_unit
+ to_unit   | text | yes  | to_unit
+btree, for table "public.unit_conversions"
+
+      Index "public.idx_user_accounts_org"
+     Column      | Type | Key? |   Definition    
+-----------------+------+------+-----------------
+ organization_id | text | yes  | organization_id
+btree, for table "public.user_accounts"
+
+Index "public.idx_user_accounts_posko"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ posko_id | text | yes  | posko_id
+btree, for table "public.user_accounts"
+
+Index "public.idx_user_accounts_role"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ role   | text | yes  | role
+btree, for table "public.user_accounts"
+
+   Index "public.idx_user_sessions_token"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ session_token | text | yes  | session_token
+btree, for table "public.user_sessions"
+
+  Index "public.idx_verification_actions_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.verification_actions"
+
+Index "public.idx_verification_actions_object"
+   Column    | Type | Key? | Definition  
+-------------+------+------+-------------
+ object_type | text | yes  | object_type
+ object_id   | text | yes  | object_id
+btree, for table "public.verification_actions"
+
+Index "public.idx_verification_endorsements_target"
+   Column    | Type | Key? | Definition  
+-------------+------+------+-------------
+ target_type | text | yes  | target_type
+ target_id   | text | yes  | target_id
+ status      | text | yes  | status
+btree, for table "public.verification_endorsements"
+
+    Index "public.idx_verifier_profiles_status"
+     Column      |  Type   | Key? |   Definition    
+-----------------+---------+------+-----------------
+ verifier_status | text    | yes  | verifier_status
+ trust_level     | integer | yes  | trust_level
+btree, for table "public.verifier_profiles"
+
+  Index "public.idx_volunteer_assignments_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.volunteer_assignments"
+
+   Index "public.idx_volunteer_profiles_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.volunteer_profiles"
+
+   Index "public.idx_work_tool_requests_disaster"
+      Column       | Type | Key? |    Definition     
+-------------------+------+------+-------------------
+ disaster_event_id | text | yes  | disaster_event_id
+btree, for table "public.work_tool_requests"
+
+                           Table "public.item_catalog"
+    Column    |            Type             | Collation | Nullable |   Default   
+--------------+-----------------------------+-----------+----------+-------------
+ id           | text                        |           | not null | 
+ item_name    | text                        |           | not null | 
+ category     | text                        |           |          | 
+ base_unit    | text                        |           |          | 
+ aliases_json | jsonb                       |           | not null | '[]'::jsonb
+ notes        | text                        |           |          | 
+ created_at   | timestamp without time zone |           | not null | now()
+ updated_at   | timestamp without time zone |           | not null | now()
+Indexes:
+    "item_catalog_pkey" PRIMARY KEY, btree (id)
+    "item_catalog_item_name_key" UNIQUE CONSTRAINT, btree (item_name)
+
+Index "public.item_catalog_item_name_key"
+  Column   | Type | Key? | Definition 
+-----------+------+------+------------
+ item_name | text | yes  | item_name
+unique, btree, for table "public.item_catalog"
+
+ Index "public.item_catalog_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.item_catalog"
+
+                                    Table "public.kitchen_meal_productions"
+            Column            |            Type             | Collation | Nullable |          Default           
+------------------------------+-----------------------------+-----------+----------+----------------------------
+ id                           | text                        |           | not null | 
+ disaster_event_id            | text                        |           | not null | 
+ posko_id                     | text                        |           | not null | 
+ meal_name                    | text                        |           | not null | 
+ portions                     | integer                     |           | not null | 
+ production_time              | text                        |           |          | 
+ target_distribution_location | text                        |           |          | 
+ status                       | text                        |           |          | 'prepared'::text
+ ingredients_json             | jsonb                       |           |          | '[]'::jsonb
+ notes                        | text                        |           |          | 
+ owner_type                   | text                        |           |          | 'posko'::text
+ owner_id                     | text                        |           |          | 
+ visibility_scope             | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy                | text                        |           |          | 'request_required'::text
+ source_server_id             | text                        |           |          | 
+ source_device_id             | text                        |           |          | 
+ source_organization_id       | text                        |           |          | 
+ source_posko_id              | text                        |           |          | 
+ created_by_user_id           | text                        |           |          | 
+ updated_by_user_id           | text                        |           |          | 
+ verification_status          | text                        |           |          | 'self_reported'::text
+ sync_status                  | text                        |           |          | 'synced'::text
+ version                      | integer                     |           |          | 1
+ deleted_at                   | timestamp without time zone |           |          | 
+ created_at                   | timestamp without time zone |           | not null | now()
+ updated_at                   | timestamp without time zone |           | not null | now()
+Indexes:
+    "kitchen_meal_productions_pkey" PRIMARY KEY, btree (id)
+    "idx_kitchen_meal_disaster" btree (disaster_event_id)
+    "idx_kitchen_meal_posko" btree (posko_id)
+Foreign-key constraints:
+    "kitchen_meal_productions_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "kitchen_meal_productions_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+
+Index "public.kitchen_meal_productions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.kitchen_meal_productions"
+
+                                          Table "public.logistic_needs"
+            Column             |            Type             | Collation | Nullable |          Default           
+-------------------------------+-----------------------------+-----------+----------+----------------------------
+ id                            | text                        |           | not null | 
+ disaster_event_id             | text                        |           | not null | 
+ node_id                       | text                        |           |          | 
+ item_name                     | text                        |           | not null | 
+ quantity_needed               | numeric                     |           | not null | 
+ unit                          | text                        |           | not null | 
+ priority                      | text                        |           | not null | 'normal'::text
+ needed_before                 | text                        |           |          | 
+ status                        | text                        |           | not null | 'open'::text
+ created_at                    | timestamp without time zone |           | not null | now()
+ owner_type                    | text                        |           |          | 'posko'::text
+ owner_id                      | text                        |           |          | 
+ visibility_scope              | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy                 | text                        |           |          | 'request_required'::text
+ source_server_id              | text                        |           |          | 
+ source_device_id              | text                        |           |          | 
+ source_organization_id        | text                        |           |          | 
+ source_posko_id               | text                        |           |          | 
+ created_by_user_id            | text                        |           |          | 
+ updated_by_user_id            | text                        |           |          | 
+ version                       | integer                     |           |          | 1
+ sync_status                   | text                        |           |          | 'synced'::text
+ deleted_at                    | timestamp without time zone |           |          | 
+ geo_location_id               | text                        |           |          | 
+ operational_area_id           | text                        |           |          | 
+ lat                           | double precision            |           |          | 
+ lng                           | double precision            |           |          | 
+ location_accuracy_meters      | double precision            |           |          | 
+ admin_level                   | text                        |           |          | 
+ duplicate_group_id            | text                        |           |          | 
+ source_type                   | text                        |           |          | 
+ source_id                     | text                        |           |          | 
+ reporting_org_id              | text                        |           |          | 
+ reporting_posko_id            | text                        |           |          | 
+ affected_group_id             | text                        |           |          | 
+ beneficiary_group_description | text                        |           |          | 
+ is_aggregate                  | boolean                     |           | not null | false
+ aggregation_level             | text                        |           |          | 
+ parent_aggregate_id           | text                        |           |          | 
+ canonical_need_id             | text                        |           |          | 
+ verification_status           | text                        |           | not null | 'self_reported'::text
+ confidence_score              | integer                     |           | not null | 50
+ original_quantity             | numeric                     |           |          | 
+ original_unit                 | text                        |           |          | 
+ normalized_quantity           | numeric                     |           |          | 
+ normalized_unit               | text                        |           |          | 
+ conversion_status             | text                        |           | not null | 'not_normalized'::text
+ conversion_factor             | numeric                     |           |          | 
+ conversion_notes              | text                        |           |          | 
+Indexes:
+    "logistic_needs_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "logistic_needs_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "logistic_needs_node_id_fkey" FOREIGN KEY (node_id) REFERENCES posko_nodes(id) ON DELETE SET NULL
+Referenced by:
+    TABLE "distribution_flows" CONSTRAINT "distribution_flows_need_id_fkey" FOREIGN KEY (need_id) REFERENCES logistic_needs(id) ON DELETE SET NULL
+    TABLE "stock_movements" CONSTRAINT "stock_movements_related_logistic_need_id_fkey" FOREIGN KEY (related_logistic_need_id) REFERENCES logistic_needs(id) ON DELETE SET NULL
+Triggers:
+    trg_audit_logistic_needs AFTER INSERT OR DELETE OR UPDATE ON logistic_needs FOR EACH ROW EXECUTE FUNCTION rn_audit_row_change()
+
+Index "public.logistic_needs_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.logistic_needs"
+
+                                Table "public.map_points"
+       Column       |            Type             | Collation | Nullable |    Default     
+--------------------+-----------------------------+-----------+----------+----------------
+ id                 | text                        |           | not null | 
+ disaster_event_id  | text                        |           | not null | 
+ object_type        | text                        |           | not null | 
+ object_id          | text                        |           |          | 
+ label              | text                        |           | not null | 
+ description        | text                        |           |          | 
+ latitude           | numeric                     |           |          | 
+ longitude          | numeric                     |           |          | 
+ location_text      | text                        |           |          | 
+ point_status       | text                        |           |          | 'active'::text
+ priority           | text                        |           |          | 'normal'::text
+ created_by_user_id | text                        |           |          | 
+ created_at         | timestamp without time zone |           | not null | now()
+ updated_at         | timestamp without time zone |           | not null | now()
+ deleted_at         | timestamp without time zone |           |          | 
+Indexes:
+    "map_points_pkey" PRIMARY KEY, btree (id)
+    "idx_map_points_disaster" btree (disaster_event_id)
+    "idx_map_points_object" btree (object_type, object_id)
+    "idx_map_points_status" btree (point_status)
+Foreign-key constraints:
+    "map_points_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+  Index "public.map_points_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.map_points"
+
+                                        Table "public.medical_cases"
+         Column         |            Type             | Collation | Nullable |            Default            
+------------------------+-----------------------------+-----------+----------+-------------------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           | not null | 
+ posko_id               | text                        |           | not null | 
+ patient_code           | text                        |           | not null | 
+ age_group              | text                        |           |          | 
+ gender                 | text                        |           |          | 
+ complaint              | text                        |           | not null | 
+ severity               | text                        |           |          | 'minor'::text
+ triage_status          | text                        |           |          | 'green'::text
+ treatment_notes        | text                        |           |          | 
+ referral_needed        | boolean                     |           |          | false
+ referral_destination   | text                        |           |          | 
+ status                 | text                        |           |          | 'treated'::text
+ owner_type             | text                        |           |          | 'posko'::text
+ owner_id               | text                        |           |          | 
+ visibility_scope       | text                        |           |          | 'restricted_medical'::text
+ access_policy          | text                        |           |          | 'medical_role_required'::text
+ source_server_id       | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ source_posko_id        | text                        |           |          | 
+ created_by_user_id     | text                        |           |          | 
+ updated_by_user_id     | text                        |           |          | 
+ verification_status    | text                        |           |          | 'self_reported'::text
+ sync_status            | text                        |           |          | 'synced'::text
+ version                | integer                     |           |          | 1
+ deleted_at             | timestamp without time zone |           |          | 
+ created_at             | timestamp without time zone |           | not null | now()
+ updated_at             | timestamp without time zone |           | not null | now()
+Indexes:
+    "medical_cases_pkey" PRIMARY KEY, btree (id)
+    "idx_medical_cases_disaster" btree (disaster_event_id)
+    "idx_medical_cases_posko" btree (posko_id)
+Foreign-key constraints:
+    "medical_cases_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "medical_cases_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "medical_supply_uses" CONSTRAINT "medical_supply_uses_medical_case_id_fkey" FOREIGN KEY (medical_case_id) REFERENCES medical_cases(id) ON DELETE SET NULL
+
+ Index "public.medical_cases_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.medical_cases"
+
+                                     Table "public.medical_supply_uses"
+         Column         |            Type             | Collation | Nullable |            Default            
+------------------------+-----------------------------+-----------+----------+-------------------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           | not null | 
+ posko_id               | text                        |           | not null | 
+ medical_case_id        | text                        |           |          | 
+ item_name              | text                        |           | not null | 
+ quantity               | numeric                     |           | not null | 
+ unit                   | text                        |           | not null | 
+ notes                  | text                        |           |          | 
+ owner_type             | text                        |           |          | 'posko'::text
+ owner_id               | text                        |           |          | 
+ visibility_scope       | text                        |           |          | 'restricted_medical'::text
+ access_policy          | text                        |           |          | 'medical_role_required'::text
+ source_server_id       | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ source_posko_id        | text                        |           |          | 
+ created_by_user_id     | text                        |           |          | 
+ updated_by_user_id     | text                        |           |          | 
+ verification_status    | text                        |           |          | 'self_reported'::text
+ sync_status            | text                        |           |          | 'synced'::text
+ version                | integer                     |           |          | 1
+ deleted_at             | timestamp without time zone |           |          | 
+ created_at             | timestamp without time zone |           | not null | now()
+ updated_at             | timestamp without time zone |           | not null | now()
+Indexes:
+    "medical_supply_uses_pkey" PRIMARY KEY, btree (id)
+    "idx_medical_supply_uses_case" btree (medical_case_id)
+    "idx_medical_supply_uses_posko" btree (posko_id)
+Foreign-key constraints:
+    "medical_supply_uses_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "medical_supply_uses_medical_case_id_fkey" FOREIGN KEY (medical_case_id) REFERENCES medical_cases(id) ON DELETE SET NULL
+    "medical_supply_uses_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+
+Index "public.medical_supply_uses_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.medical_supply_uses"
+
+                                      Table "public.missing_person_reports"
+         Column         |            Type             | Collation | Nullable |              Default               
+------------------------+-----------------------------+-----------+----------+------------------------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           | not null | 
+ reporter_name          | text                        |           |          | 
+ reporter_contact       | text                        |           |          | 
+ reporter_relation      | text                        |           |          | 
+ person_code            | text                        |           | not null | 
+ person_name            | text                        |           |          | 
+ age_group              | text                        |           |          | 
+ gender                 | text                        |           |          | 
+ last_seen_location     | text                        |           |          | 
+ last_seen_time         | text                        |           |          | 
+ description            | text                        |           |          | 
+ clothing_description   | text                        |           |          | 
+ special_notes          | text                        |           |          | 
+ status                 | text                        |           |          | 'missing'::text
+ privacy_level          | text                        |           |          | 'restricted'::text
+ visibility_scope       | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy          | text                        |           |          | 'search_found_role_required'::text
+ source_posko_id        | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_server_id       | text                        |           |          | 
+ created_by_user_id     | text                        |           |          | 
+ updated_by_user_id     | text                        |           |          | 
+ verification_status    | text                        |           |          | 'self_reported'::text
+ sync_status            | text                        |           |          | 'synced'::text
+ version                | integer                     |           |          | 1
+ deleted_at             | timestamp without time zone |           |          | 
+ created_at             | timestamp without time zone |           | not null | now()
+ updated_at             | timestamp without time zone |           | not null | now()
+Indexes:
+    "missing_person_reports_pkey" PRIMARY KEY, btree (id)
+    "idx_missing_person_disaster" btree (disaster_event_id)
+    "idx_missing_person_status" btree (status)
+Foreign-key constraints:
+    "missing_person_reports_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "search_found_matches" CONSTRAINT "search_found_matches_missing_report_id_fkey" FOREIGN KEY (missing_report_id) REFERENCES missing_person_reports(id) ON DELETE CASCADE
+
+Index "public.missing_person_reports_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.missing_person_reports"
+
+                          Table "public.official_admin_areas"
+   Column    |            Type             | Collation | Nullable |       Default       
+-------------+-----------------------------+-----------+----------+---------------------
+ code        | text                        |           | not null | 
+ parent_code | text                        |           |          | 
+ name        | text                        |           | not null | 
+ level       | text                        |           | not null | 
+ source_name | text                        |           | not null | 'manual_seed'::text
+ source_url  | text                        |           |          | 
+ is_active   | boolean                     |           | not null | true
+ updated_at  | timestamp without time zone |           | not null | now()
+Indexes:
+    "official_admin_areas_pkey" PRIMARY KEY, btree (code)
+    "idx_official_admin_areas_parent" btree (parent_code, level)
+
+Index "public.official_admin_areas_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ code   | text | yes  | code
+primary key, btree, for table "public.official_admin_areas"
+
+                                 Table "public.operational_areas"
+        Column        |            Type             | Collation | Nullable |        Default        
+----------------------+-----------------------------+-----------+----------+-----------------------
+ id                   | text                        |           | not null | 
+ disaster_event_id    | text                        |           | not null | 
+ owner_type           | text                        |           | not null | 
+ owner_id             | text                        |           | not null | 
+ area_level           | text                        |           | not null | 'point'::text
+ country_code         | text                        |           |          | 'ID'::text
+ province_code        | text                        |           |          | 
+ city_code            | text                        |           |          | 
+ district_code        | text                        |           |          | 
+ village_code         | text                        |           |          | 
+ center_lat           | double precision            |           |          | 
+ center_lng           | double precision            |           |          | 
+ radius_meters        | double precision            |           |          | 
+ boundary_geojson     | jsonb                       |           |          | 
+ coverage_description | text                        |           |          | 
+ verification_status  | text                        |           | not null | 'self_reported'::text
+ created_at           | timestamp without time zone |           | not null | now()
+ updated_at           | timestamp without time zone |           | not null | now()
+Indexes:
+    "operational_areas_pkey" PRIMARY KEY, btree (id)
+    "idx_operational_areas_event_owner" btree (disaster_event_id, owner_type, owner_id)
+Foreign-key constraints:
+    "operational_areas_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+Index "public.operational_areas_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.operational_areas"
+
+                                          Table "public.organizations"
+            Column            |            Type             | Collation | Nullable |          Default           
+------------------------------+-----------------------------+-----------+----------+----------------------------
+ id                           | text                        |           | not null | 
+ name                         | text                        |           | not null | 
+ organization_type            | text                        |           | not null | 
+ trust_level                  | text                        |           | not null | 'unverified'::text
+ status                       | text                        |           | not null | 'pending'::text
+ created_at                   | timestamp without time zone |           | not null | now()
+ owner_type                   | text                        |           |          | 'organization'::text
+ owner_id                     | text                        |           |          | 
+ visibility_scope             | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy                | text                        |           |          | 'request_required'::text
+ source_server_id             | text                        |           |          | 
+ source_device_id             | text                        |           |          | 
+ source_organization_id       | text                        |           |          | 
+ source_posko_id              | text                        |           |          | 
+ created_by_user_id           | text                        |           |          | 
+ updated_by_user_id           | text                        |           |          | 
+ version                      | integer                     |           |          | 1
+ sync_status                  | text                        |           |          | 'synced'::text
+ deleted_at                   | timestamp without time zone |           |          | 
+ device_id                    | text                        |           |          | 
+ contact_person               | text                        |           |          | 
+ notes                        | text                        |           |          | 
+ identity_verification_status | text                        |           | not null | 'unverified'::text
+ identity_verified_by         | text                        |           |          | 
+ identity_verified_at         | timestamp without time zone |           |          | 
+ trusted_verifier_count       | integer                     |           | not null | 0
+ public_verified_badge        | boolean                     |           | not null | false
+Indexes:
+    "organizations_pkey" PRIMARY KEY, btree (id)
+    "idx_organizations_device" btree (device_id)
+Referenced by:
+    TABLE "posko_nodes" CONSTRAINT "posko_nodes_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL
+
+ Index "public.organizations_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.organizations"
+
+                                           Table "public.posko_nodes"
+            Column            |            Type             | Collation | Nullable |          Default           
+------------------------------+-----------------------------+-----------+----------+----------------------------
+ id                           | text                        |           | not null | 
+ disaster_event_id            | text                        |           | not null | 
+ organization_id              | text                        |           |          | 
+ name                         | text                        |           | not null | 
+ node_type                    | text                        |           | not null | 
+ location                     | text                        |           | not null | 
+ verification_status          | text                        |           | not null | 'self_reported'::text
+ operational_status           | text                        |           | not null | 'active'::text
+ created_at                   | timestamp without time zone |           | not null | now()
+ owner_type                   | text                        |           |          | 'organization'::text
+ owner_id                     | text                        |           |          | 
+ visibility_scope             | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy                | text                        |           |          | 'request_required'::text
+ source_server_id             | text                        |           |          | 
+ source_device_id             | text                        |           |          | 
+ source_organization_id       | text                        |           |          | 
+ source_posko_id              | text                        |           |          | 
+ created_by_user_id           | text                        |           |          | 
+ updated_by_user_id           | text                        |           |          | 
+ version                      | integer                     |           |          | 1
+ sync_status                  | text                        |           |          | 'synced'::text
+ deleted_at                   | timestamp without time zone |           |          | 
+ officer_in_charge_name       | text                        |           |          | 
+ officer_in_charge_phone      | text                        |           |          | 
+ officer_in_charge_role       | text                        |           |          | 
+ geo_location_id              | text                        |           |          | 
+ operational_area_id          | text                        |           |          | 
+ lat                          | double precision            |           |          | 
+ lng                          | double precision            |           |          | 
+ location_accuracy_meters     | double precision            |           |          | 
+ admin_level                  | text                        |           |          | 
+ duplicate_group_id           | text                        |           |          | 
+ coverage_radius_meters       | double precision            |           |          | 
+ parent_posko_id              | text                        |           |          | 
+ canonical_posko_id           | text                        |           |          | 
+ device_id                    | text                        |           |          | 
+ area_level                   | text                        |           |          | 
+ admin_area_id                | text                        |           |          | 
+ province_name                | text                        |           |          | 
+ city_name                    | text                        |           |          | 
+ district_name                | text                        |           |          | 
+ village_name                 | text                        |           |          | 
+ notes                        | text                        |           |          | 
+ identity_verification_status | text                        |           | not null | 'unverified'::text
+ identity_verified_by         | text                        |           |          | 
+ identity_verified_at         | timestamp without time zone |           |          | 
+ trusted_verifier_count       | integer                     |           | not null | 0
+ public_verified_badge        | boolean                     |           | not null | false
+Indexes:
+    "posko_nodes_pkey" PRIMARY KEY, btree (id)
+    "idx_posko_nodes_admin_area" btree (admin_area_id)
+    "idx_posko_nodes_device" btree (device_id)
+Foreign-key constraints:
+    "posko_nodes_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "posko_nodes_organization_id_fkey" FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE SET NULL
+Referenced by:
+    TABLE "distribution_flows" CONSTRAINT "distribution_flows_destination_node_id_fkey" FOREIGN KEY (destination_node_id) REFERENCES posko_nodes(id) ON DELETE SET NULL
+    TABLE "kitchen_meal_productions" CONSTRAINT "kitchen_meal_productions_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+    TABLE "logistic_needs" CONSTRAINT "logistic_needs_node_id_fkey" FOREIGN KEY (node_id) REFERENCES posko_nodes(id) ON DELETE SET NULL
+    TABLE "medical_cases" CONSTRAINT "medical_cases_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+    TABLE "medical_supply_uses" CONSTRAINT "medical_supply_uses_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+    TABLE "shelter_needs" CONSTRAINT "shelter_needs_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+    TABLE "shelter_occupancies" CONSTRAINT "shelter_occupancies_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+    TABLE "stock_movements" CONSTRAINT "stock_movements_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+    TABLE "volunteer_profiles" CONSTRAINT "volunteer_profiles_assigned_posko_id_fkey" FOREIGN KEY (assigned_posko_id) REFERENCES posko_nodes(id) ON DELETE SET NULL
+
+  Index "public.posko_nodes_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.posko_nodes"
+
+                             Table "public.recovery_project_updates"
+       Column        |            Type             | Collation | Nullable |        Default        
+---------------------+-----------------------------+-----------+----------+-----------------------
+ id                  | text                        |           | not null | 
+ project_id          | text                        |           | not null | 
+ disaster_event_id   | text                        |           | not null | 
+ update_type         | text                        |           |          | 'progress'::text
+ progress_percent    | numeric                     |           |          | 0
+ amount_spent        | numeric                     |           |          | 0
+ update_title        | text                        |           | not null | 
+ update_notes        | text                        |           |          | 
+ evidence_file_id    | text                        |           |          | 
+ verification_status | text                        |           |          | 'self_reported'::text
+ created_by_user_id  | text                        |           |          | 
+ created_at          | timestamp without time zone |           |          | now()
+ updated_at          | timestamp without time zone |           |          | now()
+ deleted_at          | timestamp without time zone |           |          | 
+ sync_status         | text                        |           |          | 'synced'::text
+ version             | integer                     |           |          | 1
+Indexes:
+    "recovery_project_updates_pkey" PRIMARY KEY, btree (id)
+    "idx_recovery_project_updates_project" btree (project_id)
+Triggers:
+    trg_audit_recovery_project_updates AFTER INSERT OR DELETE OR UPDATE ON recovery_project_updates FOR EACH ROW EXECUTE FUNCTION rn_audit_row_change()
+
+Index "public.recovery_project_updates_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.recovery_project_updates"
+
+                                     Table "public.recovery_projects"
+       Column       |            Type             | Collation | Nullable |             Default             
+--------------------+-----------------------------+-----------+----------+---------------------------------
+ id                 | text                        |           | not null | 
+ disaster_event_id  | text                        |           | not null | 
+ project_name       | text                        |           | not null | 
+ project_type       | text                        |           |          | 'recovery_reconstruction'::text
+ owner_type         | text                        |           |          | 'organization'::text
+ owner_id           | text                        |           |          | 
+ target_description | text                        |           |          | 
+ location           | text                        |           |          | 
+ priority           | text                        |           |          | 'normal'::text
+ target_amount      | numeric                     |           |          | 0
+ current_amount     | numeric                     |           |          | 0
+ progress_percent   | numeric                     |           |          | 0
+ status             | text                        |           |          | 'planned'::text
+ start_date         | text                        |           |          | 
+ target_finish_date | text                        |           |          | 
+ pic_name           | text                        |           |          | 
+ pic_phone          | text                        |           |          | 
+ notes              | text                        |           |          | 
+ created_by_user_id | text                        |           |          | 
+ created_at         | timestamp without time zone |           |          | now()
+ updated_at         | timestamp without time zone |           |          | now()
+ deleted_at         | timestamp without time zone |           |          | 
+ sync_status        | text                        |           |          | 'synced'::text
+ version            | integer                     |           |          | 1
+Indexes:
+    "recovery_projects_pkey" PRIMARY KEY, btree (id)
+    "idx_recovery_projects_disaster" btree (disaster_event_id)
+Triggers:
+    trg_audit_recovery_projects AFTER INSERT OR DELETE OR UPDATE ON recovery_projects FOR EACH ROW EXECUTE FUNCTION rn_audit_row_change()
+
+Index "public.recovery_projects_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.recovery_projects"
+
+                                 Table "public.resource_assignments"
+            Column            |            Type             | Collation | Nullable |     Default      
+------------------------------+-----------------------------+-----------+----------+------------------
+ id                           | text                        |           | not null | 
+ resource_id                  | text                        |           | not null | 
+ assigned_to_type             | text                        |           | not null | 
+ assigned_to_id               | text                        |           | not null | 
+ assigned_by                  | text                        |           |          | 
+ related_need_id              | text                        |           |          | 
+ related_distribution_flow_id | text                        |           |          | 
+ assigned_quantity            | numeric                     |           |          | 
+ assignment_notes             | text                        |           |          | 
+ status                       | text                        |           |          | 'assigned'::text
+ assigned_at                  | timestamp without time zone |           | not null | now()
+ completed_at                 | timestamp without time zone |           |          | 
+ created_at                   | timestamp without time zone |           | not null | now()
+ updated_at                   | timestamp without time zone |           | not null | now()
+Indexes:
+    "resource_assignments_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "resource_assignments_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
+
+Index "public.resource_assignments_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.resource_assignments"
+
+                                 Table "public.resource_profiles"
+        Column        |            Type             | Collation | Nullable |        Default        
+----------------------+-----------------------------+-----------+----------+-----------------------
+ id                   | text                        |           | not null | 
+ disaster_event_id    | text                        |           | not null | 
+ owner_type           | text                        |           | not null | 
+ owner_id             | text                        |           | not null | 
+ resource_name        | text                        |           | not null | 
+ resource_type        | text                        |           | not null | 
+ category             | text                        |           |          | 
+ quantity             | numeric                     |           |          | 1
+ unit                 | text                        |           |          | 'unit'::text
+ capacity_description | text                        |           |          | 
+ availability_status  | text                        |           |          | 'available'::text
+ current_location     | text                        |           |          | 
+ coverage_area        | text                        |           |          | 
+ pic_name             | text                        |           |          | 
+ pic_phone            | text                        |           |          | 
+ verification_status  | text                        |           |          | 'self_reported'::text
+ notes                | text                        |           |          | 
+ created_by_user_id   | text                        |           |          | 
+ created_at           | timestamp without time zone |           |          | now()
+ updated_at           | timestamp without time zone |           |          | now()
+ deleted_at           | timestamp without time zone |           |          | 
+ sync_status          | text                        |           |          | 'synced'::text
+ version              | integer                     |           |          | 1
+Indexes:
+    "resource_profiles_pkey" PRIMARY KEY, btree (id)
+    "idx_resource_profiles_disaster" btree (disaster_event_id)
+    "idx_resource_profiles_owner" btree (owner_type, owner_id)
+Triggers:
+    trg_audit_resource_profiles AFTER INSERT OR DELETE OR UPDATE ON resource_profiles FOR EACH ROW EXECUTE FUNCTION rn_audit_row_change()
+
+Index "public.resource_profiles_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.resource_profiles"
+
+                                   Table "public.resource_requests"
+            Column            |            Type             | Collation | Nullable |      Default      
+------------------------------+-----------------------------+-----------+----------+-------------------
+ id                           | text                        |           | not null | 
+ resource_id                  | text                        |           | not null | 
+ requested_by_type            | text                        |           | not null | 
+ requested_by_id              | text                        |           | not null | 
+ request_reason               | text                        |           |          | 
+ related_need_id              | text                        |           |          | 
+ related_distribution_flow_id | text                        |           |          | 
+ requested_quantity           | numeric                     |           |          | 
+ requested_time               | text                        |           |          | 
+ status                       | text                        |           |          | 'requested'::text
+ approved_by                  | text                        |           |          | 
+ approved_at                  | timestamp without time zone |           |          | 
+ created_at                   | timestamp without time zone |           | not null | now()
+ updated_at                   | timestamp without time zone |           | not null | now()
+ disaster_event_id            | text                        |           |          | 
+Indexes:
+    "resource_requests_pkey" PRIMARY KEY, btree (id)
+    "idx_resource_requests_disaster_event" btree (disaster_event_id)
+Foreign-key constraints:
+    "resource_requests_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
+
+Index "public.resource_requests_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.resource_requests"
+
+                                       Table "public.resource_shares"
+          Column           |            Type             | Collation | Nullable |          Default           
+---------------------------+-----------------------------+-----------+----------+----------------------------
+ id                        | text                        |           | not null | 
+ resource_id               | text                        |           | not null | 
+ shared_by_owner_id        | text                        |           |          | 
+ shared_to_scope           | text                        |           |          | 'disaster_ecosystem'::text
+ shared_to_organization_id | text                        |           |          | 
+ disaster_event_id         | text                        |           | not null | 
+ access_policy             | text                        |           |          | 'request_required'::text
+ valid_from                | timestamp without time zone |           |          | 
+ valid_until               | timestamp without time zone |           |          | 
+ status                    | text                        |           |          | 'active'::text
+ created_at                | timestamp without time zone |           | not null | now()
+ updated_at                | timestamp without time zone |           | not null | now()
+Indexes:
+    "resource_shares_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "resource_shares_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "resource_shares_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
+
+Index "public.resource_shares_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.resource_shares"
+
+                                       Table "public.resources"
+       Column        |            Type             | Collation | Nullable |          Default           
+---------------------+-----------------------------+-----------+----------+----------------------------
+ id                  | text                        |           | not null | 
+ disaster_event_id   | text                        |           | not null | 
+ resource_type       | text                        |           | not null | 
+ owner_type          | text                        |           | not null | 
+ owner_id            | text                        |           | not null | 
+ name                | text                        |           | not null | 
+ description         | text                        |           |          | 
+ capacity_json       | jsonb                       |           |          | '{}'::jsonb
+ location            | text                        |           |          | 
+ status              | text                        |           |          | 'available'::text
+ visibility_scope    | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy       | text                        |           |          | 'request_required'::text
+ verification_status | text                        |           |          | 'self_reported'::text
+ trust_level         | text                        |           |          | 'self_reported'::text
+ created_at          | timestamp without time zone |           | not null | now()
+ updated_at          | timestamp without time zone |           | not null | now()
+Indexes:
+    "resources_pkey" PRIMARY KEY, btree (id)
+    "idx_resources_event" btree (disaster_event_id)
+    "idx_resources_type" btree (resource_type)
+Foreign-key constraints:
+    "resources_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "resource_assignments" CONSTRAINT "resource_assignments_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
+    TABLE "resource_requests" CONSTRAINT "resource_requests_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
+    TABLE "resource_shares" CONSTRAINT "resource_shares_resource_id_fkey" FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
+
+   Index "public.resources_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.resources"
+
+                                      Table "public.search_found_matches"
+       Column        |            Type             | Collation | Nullable |              Default               
+---------------------+-----------------------------+-----------+----------+------------------------------------
+ id                  | text                        |           | not null | 
+ disaster_event_id   | text                        |           | not null | 
+ missing_report_id   | text                        |           |          | 
+ found_report_id     | text                        |           |          | 
+ match_score         | numeric                     |           |          | 0
+ match_reason        | text                        |           |          | 
+ status              | text                        |           |          | 'candidate'::text
+ reviewed_by         | text                        |           |          | 
+ reviewed_at         | timestamp without time zone |           |          | 
+ reunion_notes       | text                        |           |          | 
+ privacy_level       | text                        |           |          | 'restricted'::text
+ visibility_scope    | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy       | text                        |           |          | 'search_found_role_required'::text
+ created_by_user_id  | text                        |           |          | 
+ updated_by_user_id  | text                        |           |          | 
+ verification_status | text                        |           |          | 'self_reported'::text
+ sync_status         | text                        |           |          | 'synced'::text
+ version             | integer                     |           |          | 1
+ deleted_at          | timestamp without time zone |           |          | 
+ created_at          | timestamp without time zone |           | not null | now()
+ updated_at          | timestamp without time zone |           | not null | now()
+Indexes:
+    "search_found_matches_pkey" PRIMARY KEY, btree (id)
+    "idx_search_found_matches_disaster" btree (disaster_event_id)
+    "idx_search_found_matches_status" btree (status)
+Foreign-key constraints:
+    "search_found_matches_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "search_found_matches_found_report_id_fkey" FOREIGN KEY (found_report_id) REFERENCES found_person_reports(id) ON DELETE CASCADE
+    "search_found_matches_missing_report_id_fkey" FOREIGN KEY (missing_report_id) REFERENCES missing_person_reports(id) ON DELETE CASCADE
+
+Index "public.search_found_matches_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.search_found_matches"
+
+                                       Table "public.servers"
+        Column         |            Type             | Collation | Nullable |        Default        
+-----------------------+-----------------------------+-----------+----------+-----------------------
+ id                    | text                        |           | not null | 
+ server_name           | text                        |           | not null | 
+ server_type           | text                        |           | not null | 
+ owner_organization_id | text                        |           |          | 
+ region                | text                        |           |          | 
+ base_url              | text                        |           |          | 
+ public_key            | text                        |           |          | 
+ trust_level           | text                        |           |          | 'self_reported'::text
+ status                | text                        |           |          | 'active'::text
+ created_at            | timestamp without time zone |           | not null | now()
+ updated_at            | timestamp without time zone |           | not null | now()
+Indexes:
+    "servers_pkey" PRIMARY KEY, btree (id)
+
+    Index "public.servers_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.servers"
+
+                                       Table "public.shelter_needs"
+         Column         |            Type             | Collation | Nullable |          Default           
+------------------------+-----------------------------+-----------+----------+----------------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           | not null | 
+ posko_id               | text                        |           | not null | 
+ item_name              | text                        |           | not null | 
+ quantity_needed        | numeric                     |           | not null | 
+ unit                   | text                        |           | not null | 
+ priority               | text                        |           |          | 'normal'::text
+ needed_before          | text                        |           |          | 
+ status                 | text                        |           |          | 'open'::text
+ notes                  | text                        |           |          | 
+ owner_type             | text                        |           |          | 'posko'::text
+ owner_id               | text                        |           |          | 
+ visibility_scope       | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy          | text                        |           |          | 'request_required'::text
+ source_server_id       | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ source_posko_id        | text                        |           |          | 
+ created_by_user_id     | text                        |           |          | 
+ updated_by_user_id     | text                        |           |          | 
+ verification_status    | text                        |           |          | 'self_reported'::text
+ sync_status            | text                        |           |          | 'synced'::text
+ version                | integer                     |           |          | 1
+ deleted_at             | timestamp without time zone |           |          | 
+ created_at             | timestamp without time zone |           | not null | now()
+ updated_at             | timestamp without time zone |           | not null | now()
+Indexes:
+    "shelter_needs_pkey" PRIMARY KEY, btree (id)
+    "idx_shelter_needs_disaster" btree (disaster_event_id)
+    "idx_shelter_needs_posko" btree (posko_id)
+Foreign-key constraints:
+    "shelter_needs_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "shelter_needs_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+
+ Index "public.shelter_needs_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.shelter_needs"
+
+                                    Table "public.shelter_occupancies"
+         Column         |            Type             | Collation | Nullable |          Default           
+------------------------+-----------------------------+-----------+----------+----------------------------
+ id                     | text                        |           | not null | 
+ disaster_event_id      | text                        |           | not null | 
+ posko_id               | text                        |           | not null | 
+ shelter_name           | text                        |           | not null | 
+ capacity_total         | integer                     |           | not null | 0
+ current_occupancy      | integer                     |           | not null | 0
+ families_count         | integer                     |           |          | 0
+ children_count         | integer                     |           |          | 0
+ elderly_count          | integer                     |           |          | 0
+ disabled_count         | integer                     |           |          | 0
+ sanitation_status      | text                        |           |          | 'unknown'::text
+ water_status           | text                        |           |          | 'unknown'::text
+ electricity_status     | text                        |           |          | 'unknown'::text
+ safety_status          | text                        |           |          | 'unknown'::text
+ notes                  | text                        |           |          | 
+ status                 | text                        |           |          | 'active'::text
+ owner_type             | text                        |           |          | 'posko'::text
+ owner_id               | text                        |           |          | 
+ visibility_scope       | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy          | text                        |           |          | 'request_required'::text
+ source_server_id       | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ source_posko_id        | text                        |           |          | 
+ created_by_user_id     | text                        |           |          | 
+ updated_by_user_id     | text                        |           |          | 
+ verification_status    | text                        |           |          | 'self_reported'::text
+ sync_status            | text                        |           |          | 'synced'::text
+ version                | integer                     |           |          | 1
+ deleted_at             | timestamp without time zone |           |          | 
+ created_at             | timestamp without time zone |           | not null | now()
+ updated_at             | timestamp without time zone |           | not null | now()
+Indexes:
+    "shelter_occupancies_pkey" PRIMARY KEY, btree (id)
+    "idx_shelter_occupancies_disaster" btree (disaster_event_id)
+    "idx_shelter_occupancies_posko" btree (posko_id)
+Foreign-key constraints:
+    "shelter_occupancies_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "shelter_occupancies_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+
+Index "public.shelter_occupancies_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.shelter_occupancies"
+
+                                         Table "public.stock_movements"
+            Column            |            Type             | Collation | Nullable |          Default           
+------------------------------+-----------------------------+-----------+----------+----------------------------
+ id                           | text                        |           | not null | 
+ disaster_event_id            | text                        |           | not null | 
+ posko_id                     | text                        |           | not null | 
+ item_name                    | text                        |           | not null | 
+ quantity                     | numeric                     |           | not null | 
+ unit                         | text                        |           | not null | 
+ movement_type                | text                        |           | not null | 
+ movement_direction           | text                        |           | not null | 
+ source_type                  | text                        |           |          | 
+ source_id                    | text                        |           |          | 
+ destination_type             | text                        |           |          | 
+ destination_id               | text                        |           |          | 
+ related_aid_offer_id         | text                        |           |          | 
+ related_distribution_flow_id | text                        |           |          | 
+ related_logistic_need_id     | text                        |           |          | 
+ notes                        | text                        |           |          | 
+ evidence_file_id             | text                        |           |          | 
+ owner_type                   | text                        |           |          | 'posko'::text
+ owner_id                     | text                        |           |          | 
+ visibility_scope             | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy                | text                        |           |          | 'request_required'::text
+ source_server_id             | text                        |           |          | 
+ source_device_id             | text                        |           |          | 
+ source_organization_id       | text                        |           |          | 
+ source_posko_id              | text                        |           |          | 
+ created_by_user_id           | text                        |           |          | 
+ updated_by_user_id           | text                        |           |          | 
+ verification_status          | text                        |           |          | 'self_reported'::text
+ sync_status                  | text                        |           |          | 'synced'::text
+ version                      | integer                     |           |          | 1
+ deleted_at                   | timestamp without time zone |           |          | 
+ created_at                   | timestamp without time zone |           | not null | now()
+ updated_at                   | timestamp without time zone |           | not null | now()
+Indexes:
+    "stock_movements_pkey" PRIMARY KEY, btree (id)
+    "idx_stock_movements_disaster" btree (disaster_event_id)
+    "idx_stock_movements_item" btree (item_name)
+    "idx_stock_movements_posko" btree (posko_id)
+    "idx_stock_movements_type" btree (movement_type)
+Foreign-key constraints:
+    "stock_movements_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "stock_movements_posko_id_fkey" FOREIGN KEY (posko_id) REFERENCES posko_nodes(id) ON DELETE CASCADE
+    "stock_movements_related_aid_offer_id_fkey" FOREIGN KEY (related_aid_offer_id) REFERENCES aid_offers(id) ON DELETE SET NULL
+    "stock_movements_related_distribution_flow_id_fkey" FOREIGN KEY (related_distribution_flow_id) REFERENCES distribution_flows(id) ON DELETE SET NULL
+    "stock_movements_related_logistic_need_id_fkey" FOREIGN KEY (related_logistic_need_id) REFERENCES logistic_needs(id) ON DELETE SET NULL
+
+Index "public.stock_movements_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.stock_movements"
+
+                               Table "public.sync_batches"
+      Column      |            Type             | Collation | Nullable |     Default     
+------------------+-----------------------------+-----------+----------+-----------------
+ id               | text                        |           | not null | 
+ source_server_id | text                        |           |          | 
+ target_server_id | text                        |           |          | 
+ started_at       | timestamp without time zone |           | not null | now()
+ completed_at     | timestamp without time zone |           |          | 
+ event_count      | integer                     |           |          | 0
+ status           | text                        |           |          | 'started'::text
+ checksum         | text                        |           |          | 
+Indexes:
+    "sync_batches_pkey" PRIMARY KEY, btree (id)
+
+ Index "public.sync_batches_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.sync_batches"
+
+                             Table "public.sync_conflicts"
+      Column       |            Type             | Collation | Nullable |   Default    
+-------------------+-----------------------------+-----------+----------+--------------
+ id                | text                        |           | not null | 
+ object_type       | text                        |           | not null | 
+ object_id         | text                        |           | not null | 
+ local_version     | integer                     |           |          | 
+ incoming_version  | integer                     |           |          | 
+ local_payload     | jsonb                       |           |          | 
+ incoming_payload  | jsonb                       |           |          | 
+ conflict_type     | text                        |           | not null | 
+ resolution_status | text                        |           |          | 'open'::text
+ resolved_by       | text                        |           |          | 
+ resolved_at       | timestamp without time zone |           |          | 
+ created_at        | timestamp without time zone |           | not null | now()
+Indexes:
+    "sync_conflicts_pkey" PRIMARY KEY, btree (id)
+
+Index "public.sync_conflicts_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.sync_conflicts"
+
+                                    Table "public.sync_events"
+         Column         |            Type             | Collation | Nullable |      Default       
+------------------------+-----------------------------+-----------+----------+--------------------
+ id                     | text                        |           | not null | 
+ event_id               | text                        |           | not null | 
+ object_type            | text                        |           | not null | 
+ object_id              | text                        |           | not null | 
+ operation              | text                        |           | not null | 
+ payload_json           | jsonb                       |           | not null | '{}'::jsonb
+ source_server_id       | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_user_id         | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ created_at             | timestamp without time zone |           | not null | now()
+ received_at            | timestamp without time zone |           | not null | now()
+ event_hash             | text                        |           |          | 
+ previous_event_hash    | text                        |           |          | 
+ sync_batch_id          | text                        |           |          | 
+ verification_status    | text                        |           |          | 'unverified'::text
+ apply_status           | text                        |           |          | 'pending'::text
+Indexes:
+    "sync_events_pkey" PRIMARY KEY, btree (id)
+    "idx_sync_events_object" btree (object_type, object_id)
+    "idx_sync_events_source" btree (source_server_id, source_device_id)
+    "sync_events_event_id_key" UNIQUE CONSTRAINT, btree (event_id)
+
+Index "public.sync_events_event_id_key"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ event_id | text | yes  | event_id
+unique, btree, for table "public.sync_events"
+
+  Index "public.sync_events_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.sync_events"
+
+                                        Table "public.transport_spaces"
+         Column          |            Type             | Collation | Nullable |             Default             
+-------------------------+-----------------------------+-----------+----------+---------------------------------
+ id                      | text                        |           | not null | 
+ disaster_event_id       | text                        |           | not null | 
+ provider_name           | text                        |           | not null | 
+ transport_type          | text                        |           | not null | 
+ route_origin            | text                        |           | not null | 
+ route_destination       | text                        |           | not null | 
+ capacity_weight_kg      | numeric                     |           |          | 0
+ capacity_volume_m3      | numeric                     |           |          | 0
+ departure_time          | text                        |           |          | 
+ eta                     | text                        |           |          | 
+ status                  | text                        |           | not null | 'available'::text
+ created_at              | timestamp without time zone |           | not null | now()
+ owner_type              | text                        |           |          | 'organization'::text
+ owner_id                | text                        |           |          | 
+ visibility_scope        | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy           | text                        |           |          | 'owner_approval_required'::text
+ source_server_id        | text                        |           |          | 
+ source_device_id        | text                        |           |          | 
+ source_organization_id  | text                        |           |          | 
+ source_posko_id         | text                        |           |          | 
+ created_by_user_id      | text                        |           |          | 
+ updated_by_user_id      | text                        |           |          | 
+ version                 | integer                     |           |          | 1
+ sync_status             | text                        |           |          | 'synced'::text
+ deleted_at              | timestamp without time zone |           |          | 
+ officer_in_charge_name  | text                        |           |          | 
+ officer_in_charge_phone | text                        |           |          | 
+ officer_in_charge_role  | text                        |           |          | 
+Indexes:
+    "transport_spaces_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "transport_spaces_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "distribution_flows" CONSTRAINT "distribution_flows_transport_space_id_fkey" FOREIGN KEY (transport_space_id) REFERENCES transport_spaces(id) ON DELETE SET NULL
+
+Index "public.transport_spaces_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.transport_spaces"
+
+                          Table "public.trusted_verification_requests"
+          Column          |            Type             | Collation | Nullable |     Default     
+--------------------------+-----------------------------+-----------+----------+-----------------
+ id                       | text                        |           | not null | 
+ requester_type           | text                        |           | not null | 
+ requester_id             | text                        |           |          | 
+ target_type              | text                        |           | not null | 
+ target_id                | text                        |           | not null | 
+ requested_verifier_id    | text                        |           |          | 
+ requested_verifier_name  | text                        |           |          | 
+ requested_verifier_phone | text                        |           |          | 
+ requested_verifier_email | text                        |           |          | 
+ relationship_description | text                        |           | not null | 
+ verification_scope       | text                        |           | not null | 
+ message                  | text                        |           |          | 
+ status                   | text                        |           | not null | 'pending'::text
+ token_hash               | text                        |           | not null | 
+ expires_at               | timestamp without time zone |           | not null | 
+ decided_at               | timestamp without time zone |           |          | 
+ correction_note          | text                        |           |          | 
+ created_at               | timestamp without time zone |           | not null | now()
+ updated_at               | timestamp without time zone |           | not null | now()
+Indexes:
+    "trusted_verification_requests_pkey" PRIMARY KEY, btree (id)
+    "idx_trusted_verification_requests_target" btree (target_type, target_id, status)
+Referenced by:
+    TABLE "verification_endorsements" CONSTRAINT "verification_endorsements_request_id_fkey" FOREIGN KEY (request_id) REFERENCES trusted_verification_requests(id) ON DELETE SET NULL
+
+Index "public.trusted_verification_requests_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.trusted_verification_requests"
+
+                                 Table "public.unit_conversions"
+      Column      |            Type             | Collation | Nullable |         Default          
+------------------+-----------------------------+-----------+----------+--------------------------
+ id               | text                        |           | not null | 
+ item_name        | text                        |           |          | 
+ from_unit        | text                        |           | not null | 
+ to_unit          | text                        |           | not null | 
+ multiplier       | numeric                     |           | not null | 
+ confidence_level | text                        |           | not null | 'operator_defined'::text
+ source           | text                        |           | not null | 'operator'::text
+ notes            | text                        |           |          | 
+ created_at       | timestamp without time zone |           | not null | now()
+ updated_at       | timestamp without time zone |           | not null | now()
+Indexes:
+    "unit_conversions_pkey" PRIMARY KEY, btree (id)
+    "idx_unit_conversions_lookup" btree (item_name, from_unit, to_unit)
+
+Index "public.unit_conversions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.unit_conversions"
+
+                             Table "public.user_accounts"
+     Column      |            Type             | Collation | Nullable |    Default     
+-----------------+-----------------------------+-----------+----------+----------------
+ id              | text                        |           | not null | 
+ username        | text                        |           | not null | 
+ display_name    | text                        |           | not null | 
+ phone           | text                        |           |          | 
+ email           | text                        |           |          | 
+ role            | text                        |           | not null | 'viewer'::text
+ organization_id | text                        |           |          | 
+ posko_id        | text                        |           |          | 
+ status          | text                        |           |          | 'active'::text
+ created_at      | timestamp without time zone |           | not null | now()
+ updated_at      | timestamp without time zone |           | not null | now()
+ deleted_at      | timestamp without time zone |           |          | 
+Indexes:
+    "user_accounts_pkey" PRIMARY KEY, btree (id)
+    "idx_user_accounts_org" btree (organization_id)
+    "idx_user_accounts_posko" btree (posko_id)
+    "idx_user_accounts_role" btree (role)
+    "user_accounts_username_key" UNIQUE CONSTRAINT, btree (username)
+Referenced by:
+    TABLE "user_sessions" CONSTRAINT "user_sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES user_accounts(id) ON DELETE CASCADE
+
+ Index "public.user_accounts_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.user_accounts"
+
+Index "public.user_accounts_username_key"
+  Column  | Type | Key? | Definition 
+----------+------+------+------------
+ username | text | yes  | username
+unique, btree, for table "public.user_accounts"
+
+                            Table "public.user_sessions"
+    Column     |            Type             | Collation | Nullable |    Default     
+---------------+-----------------------------+-----------+----------+----------------
+ id            | text                        |           | not null | 
+ user_id       | text                        |           | not null | 
+ session_token | text                        |           | not null | 
+ status        | text                        |           |          | 'active'::text
+ created_at    | timestamp without time zone |           | not null | now()
+ expires_at    | timestamp without time zone |           |          | 
+ deleted_at    | timestamp without time zone |           |          | 
+Indexes:
+    "user_sessions_pkey" PRIMARY KEY, btree (id)
+    "idx_user_sessions_token" btree (session_token)
+    "user_sessions_session_token_key" UNIQUE CONSTRAINT, btree (session_token)
+Foreign-key constraints:
+    "user_sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES user_accounts(id) ON DELETE CASCADE
+
+ Index "public.user_sessions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.user_sessions"
+
+Index "public.user_sessions_session_token_key"
+    Column     | Type | Key? |  Definition   
+---------------+------+------+---------------
+ session_token | text | yes  | session_token
+unique, btree, for table "public.user_sessions"
+
+                             Table "public.verification_actions"
+       Column        |            Type             | Collation | Nullable |     Default      
+---------------------+-----------------------------+-----------+----------+------------------
+ id                  | text                        |           | not null | 
+ disaster_event_id   | text                        |           | not null | 
+ object_type         | text                        |           | not null | 
+ object_id           | text                        |           | not null | 
+ action_type         | text                        |           | not null | 'verify'::text
+ verification_status | text                        |           | not null | 'verified'::text
+ trust_level         | text                        |           |          | 
+ reviewed_by         | text                        |           |          | 
+ reviewer_role       | text                        |           |          | 
+ review_notes        | text                        |           |          | 
+ created_at          | timestamp without time zone |           | not null | now()
+ updated_at          | timestamp without time zone |           | not null | now()
+ deleted_at          | timestamp without time zone |           |          | 
+Indexes:
+    "verification_actions_pkey" PRIMARY KEY, btree (id)
+    "idx_verification_actions_disaster" btree (disaster_event_id)
+    "idx_verification_actions_object" btree (object_type, object_id)
+Foreign-key constraints:
+    "verification_actions_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+Index "public.verification_actions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.verification_actions"
+
+                          Table "public.verification_endorsements"
+        Column         |            Type             | Collation | Nullable |    Default     
+-----------------------+-----------------------------+-----------+----------+----------------
+ id                    | text                        |           | not null | 
+ request_id            | text                        |           |          | 
+ target_type           | text                        |           | not null | 
+ target_id             | text                        |           | not null | 
+ verifier_id           | text                        |           |          | 
+ verifier_display_name | text                        |           | not null | 
+ verifier_role         | text                        |           |          | 
+ verification_scope    | text                        |           | not null | 
+ verification_level    | integer                     |           | not null | 1
+ statement             | text                        |           |          | 
+ status                | text                        |           | not null | 'active'::text
+ visible_on_profile    | boolean                     |           | not null | true
+ verified_at           | timestamp without time zone |           | not null | now()
+ expires_at            | timestamp without time zone |           |          | 
+ revoked_at            | timestamp without time zone |           |          | 
+ revoked_by            | text                        |           |          | 
+ revoke_reason         | text                        |           |          | 
+ created_at            | timestamp without time zone |           | not null | now()
+ updated_at            | timestamp without time zone |           | not null | now()
+Indexes:
+    "verification_endorsements_pkey" PRIMARY KEY, btree (id)
+    "idx_verification_endorsements_target" btree (target_type, target_id, status)
+Foreign-key constraints:
+    "verification_endorsements_request_id_fkey" FOREIGN KEY (request_id) REFERENCES trusted_verification_requests(id) ON DELETE SET NULL
+
+Index "public.verification_endorsements_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.verification_endorsements"
+
+                        Table "public.verification_requests"
+    Column    |            Type             | Collation | Nullable |     Default     
+--------------+-----------------------------+-----------+----------+-----------------
+ id           | text                        |           | not null | 
+ object_type  | text                        |           | not null | 
+ object_id    | text                        |           | not null | 
+ requested_by | text                        |           |          | 
+ status       | text                        |           | not null | 'pending'::text
+ notes        | text                        |           |          | 
+ created_at   | timestamp without time zone |           | not null | now()
+Indexes:
+    "verification_requests_pkey" PRIMARY KEY, btree (id)
+
+Index "public.verification_requests_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.verification_requests"
+
+                                         Table "public.verifier_profiles"
+             Column              |            Type             | Collation | Nullable |          Default           
+---------------------------------+-----------------------------+-----------+----------+----------------------------
+ id                              | text                        |           | not null | 
+ user_id                         | text                        |           |          | 
+ display_name                    | text                        |           | not null | 
+ verifier_type                   | text                        |           | not null | 'community'::text
+ organization_id                 | text                        |           |          | 
+ position_title                  | text                        |           |          | 
+ public_role_description         | text                        |           |          | 
+ phone                           | text                        |           |          | 
+ email                           | text                        |           |          | 
+ identity_verification_status    | text                        |           | not null | 'pending'::text
+ verifier_status                 | text                        |           | not null | 'candidate_verifier'::text
+ trust_level                     | integer                     |           | not null | 1
+ allowed_verification_scope_json | jsonb                       |           | not null | '["identity"]'::jsonb
+ suspicious_activity_count       | integer                     |           | not null | 0
+ approved_by                     | text                        |           |          | 
+ approved_at                     | timestamp without time zone |           |          | 
+ notes                           | text                        |           |          | 
+ created_at                      | timestamp without time zone |           | not null | now()
+ updated_at                      | timestamp without time zone |           | not null | now()
+Indexes:
+    "verifier_profiles_pkey" PRIMARY KEY, btree (id)
+    "idx_verifier_profiles_status" btree (verifier_status, trust_level)
+
+Index "public.verifier_profiles_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.verifier_profiles"
+
+                            Table "public.volunteer_assignments"
+       Column       |            Type             | Collation | Nullable |     Default      
+--------------------+-----------------------------+-----------+----------+------------------
+ id                 | text                        |           | not null | 
+ disaster_event_id  | text                        |           | not null | 
+ volunteer_id       | text                        |           |          | 
+ assigned_to_type   | text                        |           |          | 'posko'::text
+ assigned_to_id     | text                        |           |          | 
+ task_name          | text                        |           | not null | 
+ task_description   | text                        |           |          | 
+ priority           | text                        |           |          | 'normal'::text
+ status             | text                        |           |          | 'assigned'::text
+ created_by_user_id | text                        |           |          | 
+ created_at         | timestamp without time zone |           | not null | now()
+ updated_at         | timestamp without time zone |           | not null | now()
+ deleted_at         | timestamp without time zone |           |          | 
+Indexes:
+    "volunteer_assignments_pkey" PRIMARY KEY, btree (id)
+    "idx_volunteer_assignments_disaster" btree (disaster_event_id)
+Foreign-key constraints:
+    "volunteer_assignments_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+    "volunteer_assignments_volunteer_id_fkey" FOREIGN KEY (volunteer_id) REFERENCES volunteer_profiles(id) ON DELETE CASCADE
+
+Index "public.volunteer_assignments_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.volunteer_assignments"
+
+                                Table "public.volunteer_profiles"
+       Column        |            Type             | Collation | Nullable |        Default        
+---------------------+-----------------------------+-----------+----------+-----------------------
+ id                  | text                        |           | not null | 
+ disaster_event_id   | text                        |           | not null | 
+ volunteer_name      | text                        |           | not null | 
+ contact             | text                        |           |          | 
+ skill_tags          | text                        |           |          | 
+ availability_status | text                        |           |          | 'available'::text
+ current_location    | text                        |           |          | 
+ assigned_posko_id   | text                        |           |          | 
+ verification_status | text                        |           |          | 'self_reported'::text
+ notes               | text                        |           |          | 
+ created_at          | timestamp without time zone |           | not null | now()
+ updated_at          | timestamp without time zone |           | not null | now()
+ deleted_at          | timestamp without time zone |           |          | 
+Indexes:
+    "volunteer_profiles_pkey" PRIMARY KEY, btree (id)
+    "idx_volunteer_profiles_disaster" btree (disaster_event_id)
+Foreign-key constraints:
+    "volunteer_profiles_assigned_posko_id_fkey" FOREIGN KEY (assigned_posko_id) REFERENCES posko_nodes(id) ON DELETE SET NULL
+    "volunteer_profiles_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+Referenced by:
+    TABLE "volunteer_assignments" CONSTRAINT "volunteer_assignments_volunteer_id_fkey" FOREIGN KEY (volunteer_id) REFERENCES volunteer_profiles(id) ON DELETE CASCADE
+
+Index "public.volunteer_profiles_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.volunteer_profiles"
+
+                                        Table "public.volunteers"
+         Column         |            Type             | Collation | Nullable |          Default           
+------------------------+-----------------------------+-----------+----------+----------------------------
+ id                     | text                        |           | not null | 
+ name                   | text                        |           | not null | 
+ phone                  | text                        |           |          | 
+ email                  | text                        |           |          | 
+ main_skill             | text                        |           | not null | 
+ location               | text                        |           | not null | 
+ availability           | text                        |           | not null | 'available'::text
+ duration_available     | text                        |           |          | 
+ verification_status    | text                        |           | not null | 'self_reported'::text
+ created_at             | timestamp without time zone |           | not null | now()
+ owner_type             | text                        |           |          | 'registered_user'::text
+ owner_id               | text                        |           |          | 
+ visibility_scope       | text                        |           |          | 'disaster_ecosystem'::text
+ access_policy          | text                        |           |          | 'request_required'::text
+ source_server_id       | text                        |           |          | 
+ source_device_id       | text                        |           |          | 
+ source_organization_id | text                        |           |          | 
+ source_posko_id        | text                        |           |          | 
+ created_by_user_id     | text                        |           |          | 
+ updated_by_user_id     | text                        |           |          | 
+ version                | integer                     |           |          | 1
+ sync_status            | text                        |           |          | 'synced'::text
+ deleted_at             | timestamp without time zone |           |          | 
+Indexes:
+    "volunteers_pkey" PRIMARY KEY, btree (id)
+
+  Index "public.volunteers_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.volunteers"
+
+                                Table "public.work_tool_requests"
+         Column          |            Type             | Collation | Nullable |      Default      
+-------------------------+-----------------------------+-----------+----------+-------------------
+ id                      | text                        |           | not null | 
+ disaster_event_id       | text                        |           | not null | 
+ requested_by_type       | text                        |           |          | 'posko'::text
+ requested_by_id         | text                        |           |          | 
+ tool_name               | text                        |           | not null | 
+ tool_type               | text                        |           |          | 
+ quantity                | numeric                     |           |          | 1
+ unit                    | text                        |           |          | 'unit'::text
+ location                | text                        |           |          | 
+ needed_for              | text                        |           |          | 
+ priority                | text                        |           |          | 'normal'::text
+ required_operator_skill | text                        |           |          | 
+ status                  | text                        |           |          | 'requested'::text
+ approved_by             | text                        |           |          | 
+ assigned_resource_id    | text                        |           |          | 
+ notes                   | text                        |           |          | 
+ created_by_user_id      | text                        |           |          | 
+ created_at              | timestamp without time zone |           | not null | now()
+ updated_at              | timestamp without time zone |           | not null | now()
+ deleted_at              | timestamp without time zone |           |          | 
+Indexes:
+    "work_tool_requests_pkey" PRIMARY KEY, btree (id)
+    "idx_work_tool_requests_disaster" btree (disaster_event_id)
+Foreign-key constraints:
+    "work_tool_requests_disaster_event_id_fkey" FOREIGN KEY (disaster_event_id) REFERENCES disaster_events(id) ON DELETE CASCADE
+
+Index "public.work_tool_requests_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | text | yes  | id
+primary key, btree, for table "public.work_tool_requests"
+

@@ -30,3 +30,7 @@ backups/github-sync-*/
 backups/rn-access-fix-*/
 backups/
 *.bak-before-*
+
+# Pre-Frappe local database backups (do not publish)
+_archive/pre-frappe-db-*/
+*.dump

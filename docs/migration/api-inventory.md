@@ -1,0 +1,145 @@
+# Rescue-Net API Inventory
+
+Generated from live /rescue-net-api/openapi.json.
+
+- GET / - Root
+- GET /admin-areas/children - List Admin Area Children
+- GET /admin-areas/sources - Official Admin Area Sources
+- GET /admin-areas/tree - List Admin Area Tree
+- POST /ai/ask - Ai Ask
+- GET /ai/context/{disaster_event_id} - Get Ai Context
+- POST /ai/user-key - Save Ai User Key
+- DELETE /ai/user-key/{user_id} - Delete Ai User Key
+- GET /ai/user-key/{user_id} - Get Ai User Key Status
+- POST /ai/user-model - Update Ai User Model
+- GET /aid-offers - Get Aid Offers
+- POST /aid-offers - Create Aid Offer
+- POST /aid-offers/{aid_offer_id}/officer - Update Aid Offer Officer
+- GET /audit-events - List Audit Events
+- POST /auth/demo-login - Demo Login
+- GET /auth/me/{session_token} - Auth Me
+- GET /auth/roles - Get Auth Roles
+- GET /beneficiary-groups - List Beneficiary Groups
+- POST /beneficiary-groups - Create Beneficiary Group
+- GET /central-data/status - Central Data Status
+- GET /command-corrections - List Command Corrections
+- POST /command-corrections - Create Command Correction
+- GET /community-reports - List Community Reports
+- GET /community-reports/{report_id} - Get Community Report
+- PATCH /community-reports/{report_id}/consolidation - Update Community Report Consolidation
+- POST /community-reports/{report_id}/convert - Convert Community Report
+- PATCH /community-reports/{report_id}/status - Update Community Report Status
+- GET /consolidated-needs - List Consolidated Needs
+- POST /consolidated-needs - Create Consolidated Need
+- POST /consolidated-needs/rebuild - Rebuild Consolidated Needs
+- GET /data-consolidation/evidence-requirements - Data Consolidation Evidence Requirements
+- GET /data-consolidation/national-rollup - Data Consolidation National Rollup
+- GET /data-consolidation/posko-coverage-review - Posko Coverage Review
+- GET /data-consolidation/raw-reports - List Data Consolidation Raw Reports
+- GET /data-consolidation/summary - Data Consolidation Summary
+- POST /device-registrations - Register Device Posko
+- GET /disasters - Get Disasters
+- POST /disasters - Create Disaster
+- GET /distribution-flows - Get Distribution Flows
+- POST /distribution-flows - Create Distribution Flow
+- POST /distribution-flows/{flow_id}/officer - Update Distribution Flow Officer
+- GET /donor-program-context/{disaster_event_id} - Get Donor Program Context
+- POST /donor-program-updates - Create Donor Program Update
+- GET /donor-programs - List Donor Programs
+- POST /donor-programs - Create Donor Program
+- GET /donor-programs/{program_id} - Get Donor Program
+- GET /duplicates/candidates - List Duplicate Candidates
+- POST /duplicates/check - Check Duplicate Candidates
+- POST /duplicates/{candidate_id}/resolve - Resolve Duplicate Candidate
+- GET /ecosystem-members/{disaster_event_id} - Get Ecosystem Members
+- GET /evidence - Get Evidence
+- POST /evidence/upload - Upload Evidence
+- GET /federation/manifest/{disaster_event_id} - Federation Manifest
+- GET /federation/nodes - List Federation Nodes
+- POST /federation/nodes - Create Federation Node
+- GET /federation/repositories - List Federation Repositories
+- POST /federation/repositories - Create Federation Repository
+- GET /federation/sync-logs - List Federation Sync Logs
+- POST /federation/sync-logs - Create Federation Sync Log
+- POST /found-person-reports - Create Found Person Report
+- GET /geo/locations - List Geo Locations
+- POST /geo/locations - Create Geo Location
+- GET /health - Health
+- GET /kitchen-context/{posko_id} - Get Kitchen Context
+- POST /kitchen-meal-production - Create Kitchen Meal Production
+- POST /legacy-volunteers - Create Legacy Volunteer
+- GET /logistic-needs - Get Logistic Needs
+- POST /logistic-needs - Create Logistic Need
+- GET /map-context/{disaster_event_id} - Get Map Context
+- POST /map-points - Create Map Point
+- POST /medical-cases - Create Medical Case
+- GET /medical-context/{posko_id} - Get Medical Context
+- POST /medical-supply-use - Create Medical Supply Use
+- POST /missing-person-reports - Create Missing Person Report
+- GET /operational-areas - List Operational Areas
+- POST /operational-areas - Create Operational Area
+- GET /organizations - Get Organizations
+- POST /organizations - Create Organization
+- GET /posko-context/{posko_id} - Get Posko Context
+- POST /posko/verify-aid-received - Verify Aid Received
+- GET /poskos - Get Poskos
+- POST /poskos - Create Posko
+- POST /poskos/{posko_id}/officer - Update Posko Officer
+- POST /public/aid-offers - Public Create Aid Offer
+- POST /public/aid-offers/verify-edit - Public Verify Aid Offer Edit
+- PUT /public/aid-offers/{aid_offer_id} - Public Update Aid Offer
+- POST /public/community-reports - Submit Community Report
+- POST /public/verification-requests - Create Trusted Verification Request
+- POST /public/verification-requests/respond - Respond Trusted Verification Request
+- POST /public/verifier-profiles - Register Verifier Profile
+- GET /recovery-project-updates - List Recovery Project Updates
+- POST /recovery-project-updates - Create Recovery Project Update
+- GET /recovery-projects - List Recovery Projects
+- POST /recovery-projects - Create Recovery Project
+- DELETE /recovery-projects/{project_id} - Delete Recovery Project
+- PATCH /recovery-projects/{project_id} - Patch Recovery Project
+- GET /resource-assignments - Get Resource Assignments
+- GET /resource-profiles - List Resource Profiles
+- POST /resource-profiles - Create Resource Profile
+- DELETE /resource-profiles/{resource_id} - Delete Resource Profile
+- PATCH /resource-profiles/{resource_id} - Patch Resource Profile
+- GET /resource-requests - Get Resource Requests
+- POST /resource-requests - Create Resource Request
+- POST /resource-requests/{request_id}/approve - Approve Resource Request
+- GET /resource-shares/{disaster_event_id} - Get Resource Shares
+- GET /resources/{disaster_event_id} - Get Resources
+- GET /search-found-context/{disaster_event_id} - Get Search Found Context
+- POST /search-found-matches - Create Search Found Match
+- POST /search-found-matches/{match_id}/status - Update Search Found Match Status
+- GET /shelter-context/{posko_id} - Get Shelter Context
+- POST /shelter-needs - Create Shelter Need
+- POST /shelter-occupancy - Create Shelter Occupancy
+- POST /special-program-updates - Create Special Program Update
+- POST /special-programs - Create Special Program
+- POST /stock-movements - Create Stock Movement
+- GET /stock-movements/{posko_id} - Get Stock Movements
+- POST /stock-transfer - Create Stock Transfer
+- GET /sync-conflicts - List Sync Conflicts
+- POST /sync-conflicts/{conflict_id}/resolve - Resolve Sync Conflict
+- GET /sync/pull/{disaster_event_id} - Sync Pull
+- POST /sync/push - Sync Push
+- GET /transport-spaces - Get Transport Spaces
+- POST /transport-spaces - Create Transport Space
+- POST /transport-spaces/{transport_id}/officer - Update Transport Officer
+- GET /unit-catalog - List Unit Catalog
+- POST /unit-conversions - Create Unit Conversion
+- POST /unit-normalize - Unit Normalize
+- GET /unit-review - Unit Review
+- POST /verification-actions - Create Verification Action
+- GET /verification-context/{disaster_event_id} - Get Verification Context
+- GET /verification-endorsements - List Verification Endorsements
+- POST /verification-endorsements/{endorsement_id}/revoke - Revoke Verification Endorsement
+- GET /verification-requests - List Trusted Verification Requests
+- GET /verifier-profiles - List Verifier Profiles
+- PATCH /verifier-profiles/{verifier_id}/status - Update Verifier Profile Status
+- POST /volunteer-assignments - Create Volunteer Assignment
+- GET /volunteer-context/{disaster_event_id} - Get Volunteer Context
+- GET /volunteers - Get Volunteers
+- POST /volunteers - Create Volunteer Profile
+- POST /work-tool-requests - Create Work Tool Request
+- GET /work-tools-context/{disaster_event_id} - Get Work Tools Context

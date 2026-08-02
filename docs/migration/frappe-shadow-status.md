@@ -40,3 +40,11 @@ Do not route production /rescue-net or /rescue-net-api traffic to Frappe yet. Th
 - rescue_net app: listed in Frappe site apps.
 - P0 DocTypes: reloaded successfully; current shadow counts are 0 rows each before import.
 - Import scaffold: rescue_net.migration.import_from_rescuenet_pg exposes shadow_status, compare_doctype_counts, and dry-run import_from_pg placeholder.
+
+## Shadow Import 2026-08-02
+
+- Frappe backend was attached to Docker network rescue-net-net so it can resolve postgres-main for shadow import.
+- Source counts: disaster_events=5, organizations=8, posko_nodes=10, logistic_needs=6, consolidated_needs=2, aid_offers=7, distribution_flows=6.
+- Imported shadow counts: RN Disaster Event=5, RN Organization=8, RN Posko=10, RN Logistic Need=8, RN Aid Offer=7, RN Distribution Flow=6, RN War Room Snapshot=0.
+- Importer is idempotent by legacy_id; second run updated existing records without increasing counts.
+- Existing /rescue-net and /rescue-net-api remained HTTP 200/running after import.

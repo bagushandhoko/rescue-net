@@ -111,6 +111,97 @@ function formatQty(value) {
   return Number.isInteger(num) ? String(num) : num.toFixed(2);
 }
 
+function renderCriticalNeedsTable(ctx) {
+  const body = document.getElementById("criticalNeedsBody");
+  if (!body) return;
+
+  const stockByItem = {};
+  (ctx.stock_summary || []).forEach(s => {
+    const key = (s.item_name || "").toLowerCase();
+    stockByItem[key] = (stockByItem[key] || 0) + Number(s.current_quantity || 0);
+  });
+
+  const priorityRank = { critical: 0, urgent: 1, high: 1, normal: 2, low: 3 };
+  const needs = (ctx.logistic_needs || [])
+    .filter(n => n.status === "open")
+    .sort((a, b) => (priorityRank[a.priority] ?? 9) - (priorityRank[b.priority] ?? 9))
+    .slice(0, 8);
+
+  if (!needs.length) {
+    body.innerHTML = `<tr><td colspan="4">Belum ada kebutuhan kritis terbuka.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = needs.map(n => {
+    const needed = Number(n.quantity_needed || 0);
+    const key = (n.item_name || "").toLowerCase();
+    const available = stockByItem[key] || 0;
+    const gap = Math.max(needed - available, 0);
+    const gapClass = gap > 0 ? "" : "ok";
+    return `
+      <tr>
+        <td>${safe(n.item_name)}<br><small class="subtitle">${safe(n.priority)}</small></td>
+        <td>${formatQty(needed)} ${safe(n.unit, "")}</td>
+        <td>${formatQty(available)} ${safe(n.unit, "")}</td>
+        <td class="gap-value ${gapClass}">${formatQty(gap)}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderNeedsByLocation(ctx) {
+  const el = document.getElementById("needsByLocation");
+  if (!el) return;
+
+  const poskoById = {};
+  (ctx.poskos || []).forEach(p => { poskoById[p.id] = p; });
+
+  const groups = {};
+  (ctx.logistic_needs || [])
+    .filter(n => n.status === "open")
+    .forEach(n => {
+      const posko = poskoById[n.node_id];
+      const label = safe(posko && posko.location, "Lokasi belum terdata");
+      groups[label] = (groups[label] || 0) + 1;
+    });
+
+  const rows = Object.entries(groups).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+  el.innerHTML = rows.length
+    ? rows.map(([loc, count]) => `<div><span>${loc}</span><b>${count} kebutuhan</b></div>`).join("")
+    : `<div><span>Belum ada kebutuhan terbuka</span><b>-</b></div>`;
+}
+
+function renderDistributionStatus(ctx) {
+  const body = document.getElementById("distributionStatusBody");
+  if (!body) return;
+
+  const statusLabel = {
+    planned: "Planned",
+    dispatched: "Dispatched",
+    stock_transferred: "Dispatched",
+    delivered: "Delivered",
+    received_verified: "Confirmed",
+    confirmed: "Confirmed"
+  };
+
+  const counts = {};
+  (ctx.distribution_flows || []).forEach(f => {
+    const key = statusLabel[f.status] || safe(f.status, "Unknown");
+    counts[key] = (counts[key] || 0) + 1;
+  });
+
+  const order = ["Planned", "Dispatched", "Delivered", "Confirmed"];
+  const rows = [
+    ...order.filter(k => counts[k]).map(k => [k, counts[k]]),
+    ...Object.entries(counts).filter(([k]) => !order.includes(k))
+  ];
+
+  body.innerHTML = rows.length
+    ? rows.map(([status, count]) => `<tr><td>${status}</td><td>${count}</td></tr>`).join("")
+    : `<tr><td colspan="2">Belum ada distribusi tercatat.</td></tr>`;
+}
+
 function scenarioLabel(scenario) {
   if (scenario === "minimum") return "Minimum";
   if (scenario === "maximum") return "Maximum";
@@ -189,7 +280,7 @@ async function renderWarScenarioRollup(eventId) {
       );
     }).join("") : card(
       "Belum ada rollup nasional",
-      "Klik Rebuild Consolidated Needs di Data Konsolidasi agar skenario War Room punya basis data.",
+      "Klik Rebuild Consolidated Needs di Data Konsolidasi agar skenario Control Centre punya basis data.",
       "empty"
     );
     if (statusEl) {
@@ -401,6 +492,9 @@ async function loadWarRoom() {
   renderAlerts(ctx.alerts || []);
   renderRecommendations(ctx.recommendations || []);
   renderStockWatch(ctx);
+  renderCriticalNeedsTable(ctx);
+  renderNeedsByLocation(ctx);
+  renderDistributionStatus(ctx);
   try { await renderWarScenarioRollup(eventId); } catch (err) { console.error('render scenario rollup failed', err); }
   try { await renderTrustedVerifierWarRoom(eventId); } catch (err) { console.error('render trusted verifier failed', err); }
   renderModuleSummary(ctx);

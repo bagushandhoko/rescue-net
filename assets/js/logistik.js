@@ -155,6 +155,8 @@ function setupAidOfferForm() {
       unit: form.unit.value.trim(),
       pickup_location: form.pickup_location.value.trim(),
       ready_at: form.ready_at.value.trim(),
+      batch_no: form.batch_no ? form.batch_no.value.trim() : null,
+      expiry_date: form.expiry_date ? form.expiry_date.value.trim() : null,
       status: form.status.value
     };
 

@@ -68,10 +68,30 @@
       box-shadow: 0 10px 24px rgba(126,72,55,.14);
     }
 
+    .mock-title-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .mock-brand h1 {
       font-size: 21px;
       margin: 0;
       letter-spacing: -.04em;
+    }
+
+    .mock-live-link {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 800;
+      color: white;
+      background: linear-gradient(135deg, var(--rn-accent), var(--rn-accent-2));
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
     }
 
     .mock-brand p {
@@ -218,15 +238,6 @@
       font-weight: 800;
     }
 
-    @media (max-width: 860px) {
-      .mock-top {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-      .mock-actions { justify-content: flex-start; }
-      .mock-main { padding: 14px; }
-    }
-  
     .mock-titlebar, .mock-caption {
       display: none !important;
     }
@@ -235,18 +246,81 @@
       padding-top: 10px !important;
     }
 
-    /* Local-only mockup scale: domain stays unchanged */
-    body.rn-local-access .mock-main {
-      transform: scale(1.08);
-      transform-origin: top center;
-      width: 92.6%;
-      margin-left: auto;
-      margin-right: auto;
+    /* Local-only mockup scale (desktop only): domain stays unchanged.
+       On phones this must not run — the mobile layout below handles it. */
+    @media (min-width: 861px) {
+      body.rn-local-access .mock-main {
+        transform: scale(1.08);
+        transform-origin: top center;
+        width: 92.6%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      body.rn-local-access .mock-header {
+        transform: scale(0.98);
+        transform-origin: top center;
+      }
     }
 
-    body.rn-local-access .mock-header {
-      transform: scale(0.98);
-      transform-origin: top center;
+    /* Phone layout: feels like the actual HP screen, not a framed picture.
+       Small sticky bar + a single-row screen switcher, image fills the
+       width with no card/padding since the crop already is the phone frame. */
+    @media (max-width: 860px) {
+      .mock-top {
+        align-items: center;
+        flex-direction: row;
+        padding: 8px 12px 6px;
+        gap: 10px;
+      }
+
+      .mock-brand { min-width: 0; gap: 8px; }
+      .mock-brand img { width: 30px; height: 30px; border-radius: 10px; }
+      .mock-brand h1 { font-size: 13px; }
+      .mock-brand p { display: none; }
+      .mock-live-link { font-size: 10px; padding: 3px 8px; }
+
+      .mock-actions { display: none; }
+
+      .mock-nav-wrap {
+        padding: 0 10px 8px;
+      }
+
+      .mock-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        max-height: none;
+        gap: 0 12px;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+
+      .mock-nav::-webkit-scrollbar { display: none; }
+
+      .mock-nav a {
+        font-size: 10px;
+        flex: 0 0 auto;
+      }
+
+      .mock-main {
+        padding: 0 !important;
+      }
+
+      .mock-image-frame {
+        max-width: 420px;
+        margin: 6px auto 0;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        padding: 0;
+        box-shadow: none;
+      }
+
+      .mock-image-frame img {
+        border-radius: 0;
+        background: transparent;
+      }
     }
 
 </style>
@@ -258,14 +332,16 @@
       <div class="mock-brand">
         <img src="../assets/img/rn-logo.png" alt="Rescue-Net">
         <div>
-          <h1>Rescue-Net Mock-up</h1>
+          <div class="mock-title-row">
+            <h1>Rescue-Net Mock-up</h1>
+            <a class="mock-live-link" href="war-room.html?event=event-sim-001">Live Prototype</a>
+          </div>
           <p>Blueprint Static Design Viewer</p>
         </div>
       </div>
 
       <div class="mock-actions">
         <a class="btn" href="../index.html">Welcome Live</a>
-        <a class="btn primary" href="war-room.html?event=event-sim-001">Prototype Live</a>
       <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
       </div>
     </div>
@@ -290,8 +366,8 @@
   </main>
 </div>
 
-<script src="../assets/js/mockup.js?v=layout-direct-1"></script>
-<script src="../assets/js/rn-public-header.js?v=global-header-1"></script>
-<script src="../assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
+<script src="../assets/js/mockup.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-public-header.js?v=fix-20260820c"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
 </body>
 </html>

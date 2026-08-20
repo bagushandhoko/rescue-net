@@ -1,0 +1,30 @@
+.recovery-page .topbar {
+  align-items: flex-start;
+  gap: 18px;
+}
+.recovery-page .topbar .form-actions {
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+.recovery-page .content-grid {
+  align-items: start;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, .8fr);
+}
+.recovery-page .panel.summary .rn-form {
+  margin-top: 12px;
+}
+.recovery-page textarea,
+.recovery-page input {
+  max-width: 100%;
+}
+.recovery-page .event-list {
+  min-height: 140px;
+}
+@media (max-width: 900px) {
+  .recovery-page .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .recovery-page .topbar .form-actions {
+    justify-content: flex-start;
+  }
+}

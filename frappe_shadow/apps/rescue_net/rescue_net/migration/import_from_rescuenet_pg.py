@@ -23,6 +23,13 @@ SOURCE_COUNTS_SQL = {
     "consolidated_needs": "select count(*) from consolidated_needs",
     "aid_offers": "select count(*) from aid_offers",
     "distribution_flows": "select count(*) from distribution_flows",
+    "stock_opnames": "select count(*) from stock_opnames",
+    "evacuee_registrations": "select count(*) from evacuee_registrations",
+    "donation_tenders": "select count(*) from donation_tenders",
+    "donation_bids": "select count(*) from donation_bids",
+    "action_plans": "select count(*) from action_plans",
+    "action_plan_updates": "select count(*) from action_plan_updates",
+
 }
 
 

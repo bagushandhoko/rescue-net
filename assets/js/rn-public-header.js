@@ -6,7 +6,7 @@
     { label: "About Us", href: `${prefix}index.html#tentang` },
     { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` },
     { label: "Home", href: `${prefix}index.html` },
-    { label: "War Room", href: `${prefix}pages/war-room.html?event=event-sim-001` },
+    { label: "Control Centre", href: `${prefix}pages/war-room.html?event=event-sim-001` },
     { label: "Data Konsolidasi", href: `${prefix}pages/data-consolidation.html?event=event-sim-001` },
     { label: "Download", href: `${prefix}../rescue-net-app/download.html` },
     { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
@@ -20,7 +20,11 @@
   }
 
   function buildHeader() {
-    if (isHome || document.querySelector(".rn-public-header")) return;
+    if (
+      isHome ||
+      document.body.classList.contains("mockup-viewer") ||
+      document.querySelector(".rn-public-header")
+    ) return;
 
     const header = document.createElement("header");
     header.className = "rn-public-header";

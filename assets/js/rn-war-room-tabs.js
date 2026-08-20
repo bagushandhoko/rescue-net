@@ -102,7 +102,7 @@
 
         if (!section || !main.contains(section)) {
           console.debug(
-            `[RN War Room v3] target tidak ditemukan: ${id}`
+            `[RN Control Centre v3] target tidak ditemukan: ${id}`
           );
           continue;
         }
@@ -206,7 +206,7 @@
     tabs.setAttribute("role", "tablist");
     tabs.setAttribute(
       "aria-label",
-      "War Room workspace"
+      "Control Centre workspace"
     );
 
     tabs.innerHTML = TABS.map(tab => `
@@ -346,7 +346,7 @@
 
     if (!main) {
       console.warn(
-        "[RN War Room v3] elemen main tidak ditemukan"
+        "[RN Control Centre v3] elemen main tidak ditemukan"
       );
       return;
     }
@@ -399,7 +399,7 @@
     );
 
     console.info(
-      "[RN War Room v3] visibility tabs initialized",
+      "[RN Control Centre v3] visibility tabs initialized",
       getSelectedTab()
     );
   }

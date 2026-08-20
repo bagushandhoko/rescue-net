@@ -13,6 +13,7 @@
   function applyLayoutMode() {
     const isLocal = isLocalHost();
     const isMockup = window.location.pathname.includes("/mockup.html");
+    const isDesktopViewport = window.innerWidth > 900;
 
     document.documentElement.classList.toggle("rn-local-access", isLocal);
     document.documentElement.classList.toggle("rn-external-access", !isLocal);
@@ -47,10 +48,11 @@
       mockShell.style.transform = "";
     }
 
-    // LIVE:
+    // LIVE (desktop only):
     // Domain w=1366,dpr=1 dibuat seperti lokal w=1821,dpr=.75.
-    // 1366 / 1821 ≈ 0.75.
-    if (!isMockup && !isLocal && appShell) {
+    // 1366 / 1821 ≈ 0.75. Di layar HP/mobile, biarkan CSS responsif
+    // (@media max-width:900px) yang mengatur, jangan dipaksa zoom.
+    if (!isMockup && !isLocal && isDesktopViewport && appShell) {
       document.body.style.overflowX = "auto";
       appShell.style.zoom = "0.75";
       appShell.style.width = "133.333vw";

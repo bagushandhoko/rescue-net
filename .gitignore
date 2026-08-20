@@ -33,4 +33,5 @@ backups/
 
 # Pre-Frappe local database backups (do not publish)
 _archive/pre-frappe-db-*/
+_archive/frappe-p0-precutover/
 *.dump

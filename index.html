@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rescue-Net | Open Disaster Coordination</title>
-  <link rel="stylesheet" href="assets/css/style.css?v=welcome-menu-toggle-fix-1" />
+  <link rel="stylesheet" href="assets/css/style.css?v=fix-20260820d" />
 
 
 
@@ -26,7 +26,7 @@
         <a href="index.html">Home</a>
         <a href="pages/laporan-masyarakat.html">Laporan Masyarakat</a>
         <a href="pages/kirim-bantuan.html">Kirim Bantuan</a>
-        <a href="pages/war-room.html?event=event-sim-001">War Room</a>
+        <a href="pages/war-room.html?event=event-sim-001">Control Centre</a>
         <a href="pages/data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
         <a class="welcome-login-link" href="pages/auth.html">Login/registrasi</a>
       </nav>
@@ -39,13 +39,22 @@
       <section class="welcome-hero" id="tentang">
         <div class="welcome-copy">
           <div class="welcome-title-row">
-            <h1>Open Disaster Coordination & Relief Management System</h1>
+            <h1>Rescue-Net</h1>
           </div>
+          <p class="welcome-lead">Open Disaster Coordination & Relief Management System</p>
           <p class="subtitle">
             Rescue-Net mengintegrasikan penanganan bencana resmi pemerintah dengan kekuatan masyarakat,
             relawan, organisasi kemanusiaan, donor, posko, tenaga medis, dan penyedia logistik dalam satu
             sistem koordinasi terbuka.
           </p>
+          <div class="welcome-cta">
+            <a class="btn primary" href="pages/auth.html">Masuk</a>
+            <a class="btn" href="pages/auth.html">Daftar</a>
+          </div>
+          <div class="welcome-cta secondary">
+            <a class="btn" href="#bencana-aktif">Lihat Bencana Aktif</a>
+            <a class="btn help" href="pages/kirim-bantuan.html">Saya Ingin Membantu</a>
+          </div>
           <p class="subtitle">
             Platform ini menyatukan kebutuhan lapangan, bantuan, relawan, transportasi, logistik, posko medis,
             shelter, pencarian korban, alat kerja, dan bukti terverifikasi agar respons bencana berjalan lebih
@@ -55,6 +64,9 @@
 
         <div class="welcome-visual" aria-label="Rescue-Net disaster response visual">
           <img src="assets/img/rn-welcome-disaster-hero.png" alt="Tim Rescue-Net melakukan respons di area banjir">
+          <span class="welcome-badge badge-top"><i>&#10003;</i>Data Terverifikasi</span>
+          <span class="welcome-badge badge-left"><i>&#9679;</i>Koordinasi Terbuka</span>
+          <span class="welcome-badge badge-right"><i>&#9678;</i>Bantuan Tepat Sasaran</span>
         </div>
       </section>
 
@@ -92,7 +104,7 @@
               <h3>Bencana Aktif</h3>
               <p>Data kejadian aktif dari Rescue-Net API.</p>
             </div>
-            <a class="btn primary" href="pages/war-room.html?event=event-sim-001">Buka War Room</a>
+            <a class="btn primary" href="pages/war-room.html?event=event-sim-001">Buka Control Centre</a>
         <a href="pages/data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
           </div>
 
@@ -118,7 +130,7 @@
 
           <h4>Quick Actions</h4>
           <div class="button-stack">
-            <a class="btn primary" href="pages/war-room.html?event=event-sim-001">War Room</a>
+            <a class="btn primary" href="pages/war-room.html?event=event-sim-001">Control Centre</a>
         <a href="pages/data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
             <a class="btn" href="pages/evidence.html?event=event-sim-001">Evidence</a>
             <a class="btn" href="pages/ai-analyst.html?event=event-sim-001">AI Analyst</a>
@@ -154,7 +166,7 @@
 
   <script src="assets/js/api.js?v=header-logo-clean-2"></script>
   <script src="assets/js/session-role.js?v=role-ui-1"></script>
-  <script src="assets/js/rn-layout-mode.js?v=no-debug-badge-1"></script>
+  <script src="assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
 </body>
 </html>
 

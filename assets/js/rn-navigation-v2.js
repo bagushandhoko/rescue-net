@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.0.0",
+    version: "2.0.2",
 
     posko: [
       {
@@ -56,6 +56,10 @@
     ],
 
     modules: [
+      {
+        label: "Map",
+        href: "map.html?event=event-sim-001"
+      },
       {
         label: "Organisasi",
         href: "organisasi-posko.html"
@@ -182,29 +186,42 @@
     return bestScore >= 3 ? best : null;
   }
 
-  function renderNavigation(nav) {
-    const poskoActive = CONFIG.posko.some(item => isActive(item.href));
+  function groupHtml(label, items, groupId) {
+    const active = items.some(item => isActive(item.href));
 
-    nav.classList.add("rn-nav-v2");
-    nav.setAttribute("data-rn-navigation-version", CONFIG.version);
-    nav.setAttribute("aria-label", "Navigasi operasional Rescue-Net");
-
-    nav.innerHTML = `
-      <details class="rn-nav-v2-group" ${poskoActive ? "open" : ""}>
+    return `
+      <details class="rn-nav-v2-group" data-rn-group="${groupId}" ${active ? "open" : ""}>
         <summary class="rn-nav-v2-summary">
-          <span>Posko</span>
+          <span>${escapeHtml(label)}</span>
           <span class="rn-nav-v2-chevron" aria-hidden="true">⌄</span>
         </summary>
 
         <div class="rn-nav-v2-children">
-          ${CONFIG.posko.map(item => linkHtml(item, true)).join("")}
+          ${items.map(item => linkHtml(item, true)).join("")}
         </div>
       </details>
-
-      <div class="rn-nav-v2-modules">
-        ${CONFIG.modules.map(item => linkHtml(item, false)).join("")}
-      </div>
     `;
+  }
+
+  function renderNavigation(nav) {
+    nav.classList.add("rn-nav-v2");
+    nav.setAttribute("data-rn-navigation-version", CONFIG.version);
+    nav.setAttribute("aria-label", "Navigasi operasional Rescue-Net");
+
+    nav.innerHTML =
+      groupHtml("Posko", CONFIG.posko, "posko") +
+      groupHtml("Modul", CONFIG.modules, "modul");
+
+    // Accordion: only one group open at a time.
+    const groups = Array.from(nav.querySelectorAll(".rn-nav-v2-group"));
+    groups.forEach(group => {
+      group.addEventListener("toggle", () => {
+        if (!group.open) return;
+        groups.forEach(other => {
+          if (other !== group) other.open = false;
+        });
+      });
+    });
   }
 
   function preserveEventContext(nav) {

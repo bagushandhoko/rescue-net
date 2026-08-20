@@ -1,7 +1,7 @@
 const MOCKUP_ITEMS = [
   ["welcome", "Welcome", "welcome page rescue-net.png"],
   ["active-disasters", "Active Disasters", "bencana aktif.png"],
-  ["war-room", "War Room", "war room.png"],
+  ["war-room", "Control Centre", "war room.png"],
   ["organisasi-posko", "Organisasi & Posko", "organisasi & posko.png"],
   ["registrasi-verifikasi-posko", "Registrasi & Verifikasi Posko", "registrasi & verifikasi Posko.png"],
   ["posko-logistik", "Posko Logistik", "posko logistik.png"],
@@ -22,6 +22,11 @@ const MOCKUP_ITEMS = [
   key,
   title,
   image: `../assets/img/mockup/${file}`,
+  // Source images show desktop + HP side by side; the "hp/" crop keeps
+  // only the phone portion. "mobile" is already an HP-only compilation.
+  hpImage: key === "mobile"
+    ? `../assets/img/mockup/${file}`
+    : `../assets/img/mockup/hp/${file}`,
   file
 }));
 
@@ -30,7 +35,12 @@ function getScreen() {
   return params.get("screen") || "welcome";
 }
 
+function isMobileViewport() {
+  return window.innerWidth <= 860;
+}
+
 function renderMockup() {
+  const isMobile = isMobileViewport();
   const activeKey = getScreen();
   const item = MOCKUP_ITEMS.find(x => x.key === activeKey) || MOCKUP_ITEMS[0];
 
@@ -47,8 +57,10 @@ function renderMockup() {
     return `<a class="${cls}" href="mockup.html?screen=${encodeURIComponent(x.key)}">${x.title}</a>`;
   }).join("");
 
+  const imageSrc = isMobile ? item.hpImage : item.image;
+
   frame.innerHTML = `
-    <img id="mockImage" src="${encodeURI(item.image)}" alt="${item.title}">
+    <img id="mockImage" src="${encodeURI(imageSrc)}" alt="${item.title}">
   `;
 
   const img = document.getElementById("mockImage");
@@ -78,5 +90,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("rn-local-access");
   }
   renderMockup();
+
+  let lastIsMobile = isMobileViewport();
+  window.addEventListener("resize", () => {
+    const nowIsMobile = isMobileViewport();
+    if (nowIsMobile === lastIsMobile) return;
+    lastIsMobile = nowIsMobile;
+    renderMockup();
+  });
 });
 

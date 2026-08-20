@@ -11,7 +11,7 @@ window.RN_MOCKUP_ITEMS = [
   {
     "key": "active-disasters",
     "title": "02 Active Disasters",
-    "subtitle": "Daftar bencana aktif dan pintu masuk ke War Room.",
+    "subtitle": "Daftar bencana aktif dan pintu masuk ke Control Centre.",
     "image": "../assets/img/mockup/bencana%20aktif.png",
     "caption": "File: bencana aktif.png",
     "status": "matched",
@@ -19,7 +19,7 @@ window.RN_MOCKUP_ITEMS = [
   },
   {
     "key": "war-room",
-    "title": "03 War Room / Command Center",
+    "title": "03 Control Centre / Command Center",
     "subtitle": "Command center untuk satu bencana aktif.",
     "image": "../assets/img/mockup/war%20room.png",
     "caption": "File: war room.png",

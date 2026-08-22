@@ -370,6 +370,11 @@ def provision_native_viewer(user, dry_run=True):
         "rn_account": None,
     }
 
+    if decision.get("status") == "already_provisioned":
+        result["status"] = "already_provisioned"
+        result["rn_account"] = decision.get("rn_account")
+        return result
+
     if decision.get("status") != "eligible_native_viewer":
         result["status"] = "not_eligible"
         return result

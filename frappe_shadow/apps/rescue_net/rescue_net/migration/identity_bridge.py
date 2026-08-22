@@ -231,3 +231,112 @@ def link_identity_on_login(login_manager=None):
             "mode": "safe-failure",
             "status": "bridge_error",
         }
+
+
+def evaluate_native_provisioning(user):
+    """Read-only decision for creating a native RN viewer account."""
+    user = _normalize_email(user)
+
+    result = {
+        "mode": "read-only",
+        "user": user or None,
+        "status": None,
+        "rn_account": None,
+        "email": None,
+        "user_type": None,
+    }
+
+    if user in {"guest", "administrator"}:
+        result["status"] = "system_identity_not_eligible"
+        return result
+
+    if not user or "@" not in user:
+        result["status"] = "invalid_identity"
+        return result
+
+    frappe_user = frappe.db.get_value(
+        "User",
+        user,
+        ["name", "email", "enabled", "user_type", "full_name"],
+        as_dict=True,
+    )
+
+    if not frappe_user:
+        result["status"] = "frappe_user_missing"
+        return result
+
+    user_name = frappe_user.get("name")
+    email = _normalize_email(frappe_user.get("email") or user)
+
+    result["email"] = email
+    result["user_type"] = frappe_user.get("user_type")
+
+    if user_name in {"Guest", "Administrator"}:
+        result["status"] = "system_identity_not_eligible"
+        return result
+
+    if not frappe_user.get("enabled"):
+        result["status"] = "frappe_user_disabled"
+        return result
+
+    if not email or "@" not in email:
+        result["status"] = "missing_or_invalid_email"
+        return result
+
+    domain = email.rsplit("@", 1)[1]
+    if domain.endswith(LOCAL_DOMAIN_SUFFIX):
+        result["status"] = "local_shadow_only"
+        return result
+
+    if frappe_user.get("user_type") != "Website User":
+        result["status"] = "non_website_user_not_eligible"
+        return result
+
+    linked = frappe.get_all(
+        "RN User Account",
+        filters={"frappe_user": frappe_user.get("name")},
+        fields=["name", "legacy_id", "email", "status"],
+        limit_page_length=10,
+    )
+
+    if len(linked) > 1:
+        result["status"] = "ambiguous_existing_link"
+        return result
+
+    if len(linked) == 1:
+        result["rn_account"] = linked[0].get("name")
+        result["status"] = "already_provisioned"
+        return result
+
+    by_email = frappe.get_all(
+        "RN User Account",
+        filters={"email": email},
+        fields=[
+            "name",
+            "legacy_id",
+            "email",
+            "status",
+            "frappe_user",
+        ],
+        limit_page_length=10,
+    )
+
+    if len(by_email) > 1:
+        result["status"] = "ambiguous_rn_email"
+        return result
+
+    if len(by_email) == 1:
+        result["rn_account"] = by_email[0].get("name")
+
+        if (
+            by_email[0].get("status") == "active"
+            and not by_email[0].get("frappe_user")
+        ):
+            result["status"] = "existing_rn_account_link_candidate"
+        else:
+            result["status"] = "existing_rn_account_requires_review"
+
+        return result
+
+    result["status"] = "eligible_native_viewer"
+    return result

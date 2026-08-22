@@ -1,0 +1,119 @@
+{
+  "doctype": "DocType",
+  "name": "RN User Account",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "field:legacy_id",
+  "naming_rule": "By fieldname",
+  "title_field": "title",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "legacy_source",
+      "label": "Legacy Source",
+      "fieldtype": "Data",
+      "default": "rescue-net-fastapi"
+    },
+    {
+      "fieldname": "migration_status",
+      "label": "Migration Status",
+      "fieldtype": "Select",
+      "options": "Shadow Imported\nValidated\nNeeds Review",
+      "default": "Shadow Imported"
+    },
+    {
+      "fieldname": "title",
+      "label": "Display Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "username",
+      "label": "Username",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "phone",
+      "label": "Phone",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "email",
+      "label": "Email",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "frappe_user",
+      "label": "Frappe User",
+      "fieldtype": "Link",
+      "options": "User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "role",
+      "label": "Role",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "requested_role",
+      "label": "Requested Role",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "role_request_status",
+      "label": "Role Request Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "organization",
+      "label": "Organization",
+      "fieldtype": "Link",
+      "options": "RN Organization"
+    },
+    {
+      "fieldname": "organization_legacy_id",
+      "label": "Organization Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko"
+    },
+    {
+      "fieldname": "posko_legacy_id",
+      "label": "Posko Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 0,
+      "cancel": 0,
+      "amend": 0
+    }
+  ]
+}

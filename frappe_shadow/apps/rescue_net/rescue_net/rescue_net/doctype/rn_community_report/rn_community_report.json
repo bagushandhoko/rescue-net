@@ -1,0 +1,273 @@
+{
+  "doctype": "DocType",
+  "name": "RN Community Report",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "field:legacy_id",
+  "naming_rule": "By fieldname",
+  "title_field": "title",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "legacy_source",
+      "label": "Legacy Source",
+      "fieldtype": "Data",
+      "default": "rescue-net-fastapi"
+    },
+    {
+      "fieldname": "migration_status",
+      "label": "Migration Status",
+      "fieldtype": "Select",
+      "options": "Shadow Imported\nValidated\nNeeds Review",
+      "default": "Shadow Imported"
+    },
+    {
+      "fieldname": "title",
+      "label": "Report Title",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "disaster_event_legacy_id",
+      "label": "Disaster Event Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reporter_user",
+      "label": "Reporter User",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "reporter_user_legacy_id",
+      "label": "Reporter User Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reporter_profile_legacy_id",
+      "label": "Reporter Profile Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reporter_name",
+      "label": "Reporter Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reporter_phone",
+      "label": "Reporter Phone",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reporter_role",
+      "label": "Reporter Role",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reporter_verification_level",
+      "label": "Reporter Verification Level",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "report_type",
+      "label": "Report Type",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "affected_people_count",
+      "label": "Affected People Count",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "priority",
+      "label": "Priority",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "urgent_needs",
+      "label": "Urgent Needs",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "location_text",
+      "label": "Location Text",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "has_coordinates",
+      "label": "Has Coordinates",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "latitude",
+      "label": "Latitude",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "longitude",
+      "label": "Longitude",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "location_accuracy_meters",
+      "label": "Location Accuracy Meters",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "location_input_method",
+      "label": "Location Input Method",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "location_source",
+      "label": "Location Source",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "location_status",
+      "label": "Location Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "admin_area_id",
+      "label": "Admin Area ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "admin_level",
+      "label": "Admin Level",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "area_level",
+      "label": "Area Level",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "province_name",
+      "label": "Provinsi",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "city_name",
+      "label": "Kabupaten/Kota",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "district_name",
+      "label": "Kecamatan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "village_name",
+      "label": "Desa/Kelurahan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "is_aggregate",
+      "label": "Aggregate Area",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "consolidation_status",
+      "label": "Consolidation Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "trust_score",
+      "label": "Trust Score",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "assigned_verifier_type",
+      "label": "Assigned Verifier Type",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "assigned_verifier_id",
+      "label": "Assigned Verifier ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "verified_by",
+      "label": "Verified By",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "verified_at",
+      "label": "Verified At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "converted_object_type",
+      "label": "Converted Object Type",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "converted_object_id",
+      "label": "Converted Object ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "consent_to_contact",
+      "label": "Consent To Contact",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "legacy_created_at",
+      "label": "Legacy Created At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "legacy_updated_at",
+      "label": "Legacy Updated At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "legacy_deleted_at",
+      "label": "Legacy Deleted At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 0,
+      "cancel": 0,
+      "amend": 0
+    }
+  ]
+}

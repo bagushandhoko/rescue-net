@@ -4,3 +4,6 @@ app_publisher = "Rescue-Net"
 app_description = "Rescue-Net shadow migration app"
 app_email = "bagushandhoko@gmail.com"
 app_license = "MIT"
+
+# Rescue-Net authenticated identity bridge
+on_login = "rescue_net.migration.identity_bridge.link_identity_on_login"

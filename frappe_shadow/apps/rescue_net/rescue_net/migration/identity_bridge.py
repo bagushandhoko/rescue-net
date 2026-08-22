@@ -451,3 +451,69 @@ def provision_native_viewer(user, dry_run=True):
     result["rn_account"] = doc.name
 
     return result
+
+
+def handle_identity_on_login(login_manager=None):
+    """
+    Final Rescue-Net login identity orchestration.
+
+    Existing eligible RN identity -> safe link.
+    New eligible Website User -> native viewer provisioning.
+    Never auto-grants operator privileges.
+    """
+    user = _normalize_email(
+        getattr(login_manager, "user", None)
+    )
+
+    if not user:
+        return {
+            "mode": "login-orchestration",
+            "status": "missing_login_user",
+        }
+
+    try:
+        link_result = link_identity_on_login(login_manager)
+
+        decision = evaluate_native_provisioning(user)
+
+        if decision.get("status") == "already_provisioned":
+            return {
+                "mode": "login-orchestration",
+                "status": "ready",
+                "rn_account": decision.get("rn_account"),
+                "link": link_result,
+                "provisioning": decision,
+            }
+
+        if decision.get("status") == "eligible_native_viewer":
+            provision = provision_native_viewer(
+                user,
+                dry_run=False,
+            )
+
+            return {
+                "mode": "login-orchestration",
+                "status": provision.get("status"),
+                "rn_account": provision.get("rn_account"),
+                "link": link_result,
+                "provisioning": provision,
+            }
+
+        return {
+            "mode": "login-orchestration",
+            "status": "no_provisioning",
+            "reason": decision.get("status"),
+            "link": link_result,
+            "provisioning": decision,
+        }
+
+    except Exception:
+        frappe.log_error(
+            message=frappe.get_traceback(),
+            title="Rescue-Net Login Identity Orchestration",
+        )
+
+        return {
+            "mode": "safe-failure",
+            "status": "orchestration_error",
+        }

@@ -340,3 +340,109 @@ def evaluate_native_provisioning(user):
 
     result["status"] = "eligible_native_viewer"
     return result
+
+
+def provision_native_viewer(user, dry_run=True):
+    """
+    Provision exactly one native RN viewer account.
+
+    Safe by default:
+    - dry_run=True
+    - only eligible Website User
+    - never grants operator role
+    - never fills legacy_id
+    - never approves requested_role
+    """
+    if isinstance(dry_run, str):
+        dry_run = dry_run.strip().lower() not in {
+            "0", "false", "no", "off"
+        }
+    else:
+        dry_run = bool(dry_run)
+
+    decision = evaluate_native_provisioning(user)
+
+    result = {
+        "mode": "dry-run" if dry_run else "write",
+        "status": None,
+        "decision": decision,
+        "proposed": None,
+        "rn_account": None,
+    }
+
+    if decision.get("status") != "eligible_native_viewer":
+        result["status"] = "not_eligible"
+        return result
+
+    frappe_user = frappe.db.get_value(
+        "User",
+        decision["user"],
+        [
+            "name",
+            "email",
+            "enabled",
+            "user_type",
+            "full_name",
+            "username",
+        ],
+        as_dict=True,
+    )
+
+    if not frappe_user:
+        result["status"] = "frappe_user_missing"
+        return result
+
+    email = _normalize_email(frappe_user.get("email"))
+
+    proposed = {
+        "title": frappe_user.get("full_name") or email,
+        "username": frappe_user.get("username") or email,
+        "email": email,
+        "frappe_user": frappe_user.get("name"),
+        "role": "viewer",
+        "requested_role": None,
+        "role_request_status": "none",
+        "status": "active",
+        "legacy_id": None,
+        "legacy_source": None,
+        "migration_status": None,
+    }
+
+    result["proposed"] = proposed
+
+    if dry_run:
+        result["status"] = "would_create_native_viewer"
+        return result
+
+    # Re-evaluate immediately before the write.
+    final_decision = evaluate_native_provisioning(
+        frappe_user.get("name")
+    )
+
+    if final_decision.get("status") != "eligible_native_viewer":
+        result["decision"] = final_decision
+        result["status"] = "eligibility_changed"
+        return result
+
+    existing = frappe.db.exists(
+        "RN User Account",
+        {"frappe_user": frappe_user.get("name")},
+    )
+
+    if existing:
+        result["status"] = "already_provisioned"
+        result["rn_account"] = existing
+        return result
+
+    doc = frappe.new_doc("RN User Account")
+
+    for key, value in proposed.items():
+        if key in doc.meta.get_valid_columns():
+            doc.set(key, value)
+
+    doc.insert(ignore_permissions=True)
+
+    result["status"] = "created_native_viewer"
+    result["rn_account"] = doc.name
+
+    return result

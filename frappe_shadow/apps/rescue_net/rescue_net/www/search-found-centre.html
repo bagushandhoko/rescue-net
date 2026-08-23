@@ -1,0 +1,506 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+
+<style>
+.rn{
+ max-width:1180px;
+ margin:24px auto;
+ padding:0 14px 90px
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:14px
+}
+.card{
+ border:1px solid #ddd;
+ border-radius:12px;
+ padding:14px;
+ margin:10px 0
+}
+input,select,textarea{
+ width:100%;
+ min-height:44px;
+ padding:10px;
+ margin:5px 0
+}
+button{min-height:44px}
+.actions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:6px;
+ margin-top:8px
+}
+.badge{
+ display:inline-block;
+ padding:4px 8px;
+ border:1px solid #ddd;
+ border-radius:999px;
+ margin:3px;
+ font-size:.8rem
+}
+.notice{
+ padding:12px;
+ border-radius:10px;
+ background:#fff5d6;
+ margin:10px 0
+}
+@media(max-width:800px){
+ .grid{grid-template-columns:1fr}
+}
+</style>
+
+<div class="rn">
+
+<h2>Search &amp; Found</h2>
+
+<div class="notice">
+<b>Privacy:</b>
+gunakan kode orang pada tampilan operasional.
+Nama lengkap hanya untuk operator berwenang.
+Evidence identifikasi wajib disimpan sebagai file privat.
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h4>Laporan Orang Hilang</h4>
+
+<input id="mCode"
+ placeholder="Kode orang, contoh MP-001">
+
+<input id="mName"
+ placeholder="Nama lengkap - data terbatas">
+
+<input id="mLocation"
+ placeholder="Lokasi terakhir terlihat">
+
+<input id="mTime"
+ type="datetime-local">
+
+<textarea id="mDescription"
+ placeholder="Ciri / deskripsi"></textarea>
+
+<textarea id="mClothing"
+ placeholder="Pakaian terakhir"></textarea>
+
+<button class="btn btn-primary"
+ id="saveMissing">
+Simpan Laporan Hilang
+</button>
+</div>
+
+<div class="card">
+<h4>Laporan Orang Ditemukan</h4>
+
+<input id="fCode"
+ placeholder="Kode orang, contoh FP-001">
+
+<input id="fName"
+ placeholder="Nama lengkap - data terbatas">
+
+<input id="fLocation"
+ placeholder="Lokasi ditemukan">
+
+<input id="fTime"
+ type="datetime-local">
+
+<textarea id="fDescription"
+ placeholder="Ciri / deskripsi"></textarea>
+
+<textarea id="fClothing"
+ placeholder="Pakaian / ciri pakaian"></textarea>
+
+<button class="btn btn-primary"
+ id="saveFound">
+Simpan Laporan Ditemukan
+</button>
+</div>
+
+</div>
+
+<div class="card" id="matchPanel">
+<h4>Pencocokan Operator</h4>
+
+<select id="missingSelect"></select>
+<select id="foundSelect"></select>
+
+<textarea id="matchBasis"
+ placeholder="Dasar pencocokan"></textarea>
+
+<button class="btn btn-primary"
+ id="saveMatch">
+Buat Kandidat Match
+</button>
+</div>
+
+<h3>Orang Hilang</h3>
+<div id="missingList"></div>
+
+<h3>Orang Ditemukan</h3>
+<div id="foundList"></div>
+
+<h3>Pencocokan</h3>
+<div id="matchList"></div>
+
+</div>
+
+<script>
+document.addEventListener(
+ "DOMContentLoaded",
+ async()=>{
+
+ const call=(method,args={})=>
+  new Promise((ok,fail)=>{
+   frappe.call({
+    method,
+    args,
+    callback:r=>ok(r.message),
+    error:fail
+   });
+  });
+
+ const esc=s=>String(s??"")
+  .replace(/[&<>"']/g,c=>({
+   "&":"&amp;",
+   "<":"&lt;",
+   ">":"&gt;",
+   '"':"&quot;",
+   "'":"&#039;"
+  }[c]));
+
+ let data={};
+
+ function evidence(doctype,name){
+  return `
+   <div class="actions">
+    <input type="file"
+     data-file-for="${esc(name)}">
+
+    <button
+     class="btn btn-sm btn-secondary ev"
+     data-dt="${esc(doctype)}"
+     data-id="${esc(name)}">
+     Bukti Privat
+    </button>
+   </div>
+  `;
+ }
+
+ async function upload(btn){
+  const input=document.querySelector(
+   `[data-file-for="${btn.dataset.id}"]`
+  );
+
+  if(!input?.files?.length){
+   alert("Pilih file");
+   return;
+  }
+
+  const fd=new FormData();
+  fd.append("file",input.files[0]);
+  fd.append("is_private","1");
+
+  const r=await fetch(
+   "/api/method/upload_file",
+   {
+    method:"POST",
+    body:fd,
+    headers:{
+     "X-Frappe-CSRF-Token":
+      frappe.csrf_token
+    }
+   }
+  );
+
+  const j=await r.json();
+
+  if(!j.message?.file_url){
+   throw new Error("Upload gagal");
+  }
+
+  await call(
+   "rescue_net.api_search_found.add_evidence",
+   {
+    linked_doctype:
+     btn.dataset.dt,
+    linked_name:
+     btn.dataset.id,
+    file_url:
+     j.message.file_url,
+    evidence_type:
+     "verification"
+   }
+  );
+
+  alert("Evidence privat tersimpan");
+ }
+
+ function render(){
+  document.getElementById(
+   "matchPanel"
+  ).style.display=
+   data.mode==="manager"
+   ? ""
+   : "none";
+
+  const missingOpen=
+   (data.missing||[])
+   .filter(x=>x.report_status==="missing");
+
+  const foundOpen=
+   (data.found||[])
+   .filter(x=>x.report_status==="found");
+
+  document.getElementById(
+   "missingSelect"
+  ).innerHTML=
+   missingOpen.map(x=>`
+    <option value="${esc(x.name)}">
+     ${esc(x.person_code)}
+     · ${esc(x.last_seen_location||"")}
+    </option>
+   `).join("");
+
+  document.getElementById(
+   "foundSelect"
+  ).innerHTML=
+   foundOpen.map(x=>`
+    <option value="${esc(x.name)}">
+     ${esc(x.person_code)}
+     · ${esc(x.found_location||"")}
+    </option>
+   `).join("");
+
+  document.getElementById(
+   "missingList"
+  ).innerHTML=
+   (data.missing||[]).map(x=>`
+    <div class="card">
+     <b>${esc(x.person_code)}</b>
+
+     <span class="badge">
+      ${esc(x.report_status)}
+     </span>
+
+     <div>
+      Terakhir terlihat:
+      ${esc(x.last_seen_location||"-")}
+     </div>
+
+     <div>
+      ${esc(x.description||"")}
+     </div>
+
+     ${evidence(
+      "RN Missing Person Report",
+      x.name
+     )}
+    </div>
+   `).join("")
+   || "<p>Belum ada laporan.</p>";
+
+  document.getElementById(
+   "foundList"
+  ).innerHTML=
+   (data.found||[]).map(x=>`
+    <div class="card">
+     <b>${esc(x.person_code)}</b>
+
+     <span class="badge">
+      ${esc(x.report_status)}
+     </span>
+
+     <div>
+      Ditemukan:
+      ${esc(x.found_location||"-")}
+     </div>
+
+     <div>
+      ${esc(x.description||"")}
+     </div>
+
+     ${evidence(
+      "RN Found Person Report",
+      x.name
+     )}
+    </div>
+   `).join("")
+   || "<p>Belum ada laporan.</p>";
+
+  document.getElementById(
+   "matchList"
+  ).innerHTML=
+   (data.matches||[]).map(x=>`
+    <div class="card">
+
+     <b>
+      ${esc(x.missing_report)}
+      ↔
+      ${esc(x.found_report)}
+     </b>
+
+     <span class="badge">
+      ${esc(x.match_status)}
+     </span>
+
+     <div>
+      ${esc(x.match_basis||"")}
+     </div>
+
+     ${data.mode==="manager"
+      && x.match_status==="proposed"
+      ? `
+       <div class="actions">
+        <button
+         class="btn btn-sm btn-secondary match-status"
+         data-id="${esc(x.name)}"
+         data-status="confirmed">
+         Confirm
+        </button>
+
+        <button
+         class="btn btn-sm btn-secondary match-status"
+         data-id="${esc(x.name)}"
+         data-status="rejected">
+         Reject
+        </button>
+       </div>
+      `
+      : ""}
+
+     ${data.mode==="manager"
+      && x.match_status==="confirmed"
+      ? `
+       <div class="actions">
+        <button
+         class="btn btn-sm btn-primary match-status"
+         data-id="${esc(x.name)}"
+         data-status="reunited">
+         Reunifikasi Selesai
+        </button>
+
+        <button
+         class="btn btn-sm btn-secondary match-status"
+         data-id="${esc(x.name)}"
+         data-status="rejected">
+         Reject
+        </button>
+       </div>
+      `
+      : ""}
+
+     ${evidence(
+      "RN Search Found Match",
+      x.name
+     )}
+
+    </div>
+   `).join("")
+   || "<p>Belum ada pencocokan.</p>";
+
+  document.querySelectorAll(
+   ".match-status"
+  ).forEach(btn=>{
+   btn.onclick=async()=>{
+    await call(
+     "rescue_net.api_search_found.update_match_status",
+     {
+      match:btn.dataset.id,
+      new_status:btn.dataset.status
+     }
+    );
+
+    await load();
+   };
+  });
+
+  document.querySelectorAll(
+   ".ev"
+  ).forEach(btn=>{
+   btn.onclick=()=>{
+    upload(btn).catch(
+     e=>alert(e.message||e)
+    );
+   };
+  });
+ }
+
+ async function load(){
+  data=await call(
+   "rescue_net.api_search_found.dashboard"
+  );
+  render();
+ }
+
+ document.getElementById(
+  "saveMissing"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_search_found.create_missing_report",
+   {
+    person_code:
+     document.getElementById("mCode").value,
+    person_name:
+     document.getElementById("mName").value,
+    last_seen_location:
+     document.getElementById("mLocation").value,
+    last_seen_time:
+     document.getElementById("mTime").value || null,
+    description:
+     document.getElementById("mDescription").value,
+    clothing_description:
+     document.getElementById("mClothing").value
+   }
+  );
+
+  await load();
+ };
+
+ document.getElementById(
+  "saveFound"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_search_found.create_found_report",
+   {
+    person_code:
+     document.getElementById("fCode").value,
+    person_name:
+     document.getElementById("fName").value,
+    found_location:
+     document.getElementById("fLocation").value,
+    found_time:
+     document.getElementById("fTime").value || null,
+    description:
+     document.getElementById("fDescription").value,
+    clothing_description:
+     document.getElementById("fClothing").value
+   }
+  );
+
+  await load();
+ };
+
+ document.getElementById(
+  "saveMatch"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_search_found.propose_match",
+   {
+    missing_report:
+     document.getElementById("missingSelect").value,
+    found_report:
+     document.getElementById("foundSelect").value,
+    match_basis:
+     document.getElementById("matchBasis").value
+   }
+  );
+
+  await load();
+ };
+
+ await load();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,71 @@
+{
+  "doctype": "DocType",
+  "name": "RN Search Found Match",
+  "module": "Rescue Net",
+  "title_field": "match_status",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "missing_report",
+      "label": "Missing Report",
+      "fieldtype": "Link",
+      "options": "RN Missing Person Report",
+      "reqd": 1
+    },
+    {
+      "fieldname": "found_report",
+      "label": "Found Report",
+      "fieldtype": "Link",
+      "options": "RN Found Person Report",
+      "reqd": 1
+    },
+    {
+      "fieldname": "match_status",
+      "label": "Match Status",
+      "fieldtype": "Select",
+      "options": "proposed\nconfirmed\nrejected\nreunited",
+      "default": "proposed"
+    },
+    {
+      "fieldname": "match_basis",
+      "label": "Dasar Pencocokan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "review_notes",
+      "label": "Catatan Review",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "reviewed_by_user",
+      "label": "Reviewed By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "reviewed_at",
+      "label": "Reviewed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "pending"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

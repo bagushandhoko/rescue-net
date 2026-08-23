@@ -1,0 +1,656 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+
+<style>
+.rn{
+ max-width:1180px;
+ margin:24px auto;
+ padding:0 14px 90px
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:14px
+}
+.card{
+ border:1px solid #ddd;
+ border-radius:12px;
+ padding:14px;
+ margin:10px 0
+}
+input,select,textarea{
+ width:100%;
+ min-height:44px;
+ padding:10px;
+ margin:5px 0
+}
+button{
+ min-height:44px
+}
+.actions{
+ display:flex;
+ gap:6px;
+ flex-wrap:wrap;
+ margin-top:8px
+}
+.badge{
+ display:inline-block;
+ border:1px solid #ddd;
+ border-radius:999px;
+ padding:4px 8px;
+ margin:3px;
+ font-size:.8rem
+}
+.notice{
+ background:#eef6ff;
+ border-radius:10px;
+ padding:10px;
+ margin:10px 0
+}
+.rn-mobile-nav{
+ display:none
+}
+@media(max-width:850px){
+ .grid{
+  grid-template-columns:1fr
+ }
+}
+@media(max-width:700px){
+ .rn{
+  margin:10px auto;
+  padding:0 10px 82px
+ }
+ .actions button{
+  flex:1 1 45%
+ }
+ .rn-mobile-nav{
+  display:grid;
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:1000;
+  grid-template-columns:repeat(4,1fr);
+  background:#fff;
+  border-top:1px solid #ddd;
+  padding:6px 4px
+ }
+ .rn-mobile-nav a{
+  text-align:center;
+  padding:8px 3px;
+  text-decoration:none;
+  font-size:.78rem
+ }
+}
+</style>
+
+
+<div class="rn">
+
+<h2>Volunteer Operations</h2>
+
+<div class="notice">
+Profil relawan menyimpan skill, availability dan lokasi.
+Penugasan aktif hanya boleh satu pada satu waktu untuk
+mencegah double-booking.
+</div>
+
+
+<div class="grid">
+
+<div class="card">
+<h4>Profil Relawan</h4>
+
+<input
+ id="volunteerName"
+ placeholder="Nama relawan">
+
+<input
+ id="contact"
+ placeholder="Kontak / WhatsApp">
+
+<input
+ id="mainSkill"
+ placeholder="Skill utama">
+
+<textarea
+ id="skillTags"
+ placeholder="Skill tambahan, pisahkan dengan koma"></textarea>
+
+<input
+ id="durationAvailable"
+ placeholder="Contoh: 6 jam / 3 hari">
+
+<input
+ id="currentLocation"
+ placeholder="Lokasi saat ini">
+
+<textarea
+ id="profileNotes"
+ placeholder="Catatan"></textarea>
+
+<button
+ class="btn btn-primary"
+ id="saveProfile">
+Buat Profil Relawan
+</button>
+</div>
+
+
+<div
+ class="card"
+ id="assignmentForm">
+
+<h4>Penugasan Relawan</h4>
+
+<select id="volunteer"></select>
+
+<select id="posko"></select>
+
+<select id="assignmentType">
+<option value="posko">Posko</option>
+<option value="medical">Medis</option>
+<option value="shelter">Shelter</option>
+<option value="logistics">Logistik</option>
+<option value="distribution">Distribusi</option>
+<option value="field_assessment">Assessment Lapangan</option>
+<option value="search_rescue">Search & Rescue</option>
+<option value="other">Lainnya</option>
+</select>
+
+<input
+ id="taskTitle"
+ placeholder="Tugas / aktivitas">
+
+<input
+ id="targetReference"
+ placeholder="Referensi kebutuhan/kasus/flow">
+
+<input
+ id="requiredSkill"
+ placeholder="Skill yang dibutuhkan">
+
+<select id="priority">
+<option value="normal">Normal</option>
+<option value="urgent">Urgent</option>
+<option value="critical">Critical</option>
+</select>
+
+<label>
+Mulai shift
+<input
+ id="shiftStart"
+ type="datetime-local">
+</label>
+
+<label>
+Selesai shift
+<input
+ id="shiftEnd"
+ type="datetime-local">
+</label>
+
+<textarea
+ id="assignmentNotes"
+ placeholder="Catatan penugasan"></textarea>
+
+<button
+ class="btn btn-primary"
+ id="saveAssignment">
+Buat Penugasan
+</button>
+
+</div>
+</div>
+
+
+<h3>Relawan</h3>
+<div id="profiles"></div>
+
+<h3>Penugasan</h3>
+<div id="assignments"></div>
+
+</div>
+
+
+<nav class="rn-mobile-nav">
+<a href="/kelompok-posko">Posko</a>
+<a href="/medical-centre">Medis</a>
+<a href="/shelter-centre">Shelter</a>
+<a href="/volunteer-centre"><b>Relawan</b></a>
+</nav>
+
+
+<script>
+document.addEventListener(
+ "DOMContentLoaded",
+ async()=>{
+
+ const call=(method,args={})=>
+  new Promise((ok,fail)=>{
+   frappe.call({
+    method,
+    args,
+    callback:r=>ok(r.message),
+    error:fail
+   });
+  });
+
+ const esc=s=>String(s??"")
+  .replace(/[&<>"']/g,c=>({
+   "&":"&amp;",
+   "<":"&lt;",
+   ">":"&gt;",
+   '"':"&quot;",
+   "'":"&#039;"
+  }[c]));
+
+ let data={};
+
+ function nextButtons(a){
+  const map={
+   planned:[
+    "accepted",
+    "cancelled"
+   ],
+   accepted:[
+    "checked_in",
+    "cancelled"
+   ],
+   checked_in:[
+    "in_progress",
+    "completed",
+    "cancelled"
+   ],
+   in_progress:[
+    "completed",
+    "cancelled"
+   ]
+  };
+
+  return (map[a.assignment_status]||[])
+   .map(status=>`
+    <button
+     class="btn btn-sm btn-secondary assignment-status"
+     data-id="${esc(a.name)}"
+     data-status="${esc(status)}">
+     ${esc(status)}
+    </button>
+   `).join("");
+ }
+
+ function evidenceBlock(a){
+  return `
+   <div class="actions">
+    <input
+     type="file"
+     data-file-for="${esc(a.name)}">
+
+    <button
+     class="btn btn-sm btn-secondary evidence-btn"
+     data-id="${esc(a.name)}">
+     Bukti Privat
+    </button>
+   </div>
+  `;
+ }
+
+ async function uploadEvidence(btn){
+  const input=document.querySelector(
+   `[data-file-for="${btn.dataset.id}"]`
+  );
+
+  if(!input?.files?.length){
+   alert("Pilih file terlebih dahulu");
+   return;
+  }
+
+  const fd=new FormData();
+
+  fd.append(
+   "file",
+   input.files[0]
+  );
+
+  fd.append(
+   "is_private",
+   "1"
+  );
+
+  const response=await fetch(
+   "/api/method/upload_file",
+   {
+    method:"POST",
+    body:fd,
+    headers:{
+     "X-Frappe-CSRF-Token":
+      frappe.csrf_token
+    }
+   }
+  );
+
+  const result=await response.json();
+
+  if(!result.message?.file_url){
+   throw new Error(
+    "Upload evidence gagal"
+   );
+  }
+
+  await call(
+   "rescue_net.api_volunteer.add_evidence",
+   {
+    assignment:
+     btn.dataset.id,
+
+    file_url:
+     result.message.file_url,
+
+    evidence_type:
+     "verification"
+   }
+  );
+
+  alert("Evidence privat tersimpan");
+ }
+
+ function render(){
+  document.getElementById(
+   "assignmentForm"
+  ).style.display=
+   data.mode==="manager"
+   ? ""
+   : "none";
+
+  const profileMap={};
+
+  (data.profiles||[])
+   .forEach(p=>{
+    profileMap[p.name]=p;
+   });
+
+  document.getElementById(
+   "profiles"
+  ).innerHTML=
+   (data.profiles||[])
+   .map(p=>`
+    <div class="card">
+     <b>${esc(p.volunteer_name)}</b>
+
+     <div>${esc(p.main_skill)}</div>
+
+     <span class="badge">
+      ${esc(p.availability_status)}
+     </span>
+
+     ${p.skill_tags
+      ? `<div>
+          Skill:
+          ${esc(p.skill_tags)}
+         </div>`
+      : ""}
+
+     ${p.current_location
+      ? `<div>
+          Lokasi:
+          ${esc(p.current_location)}
+         </div>`
+      : ""}
+
+     ${p.contact
+      ? `<div>
+          Kontak:
+          ${esc(p.contact)}
+         </div>`
+      : ""}
+    </div>
+   `).join("")
+   || "<p>Belum ada profil relawan.</p>";
+
+  document.getElementById(
+   "volunteer"
+  ).innerHTML=
+   (data.profiles||[])
+   .filter(
+    p=>
+     p.availability_status==="available"
+     || p.availability_status==="limited"
+   )
+   .map(p=>`
+    <option value="${esc(p.name)}">
+     ${esc(p.volunteer_name)}
+     · ${esc(p.main_skill)}
+    </option>
+   `).join("");
+
+  document.getElementById(
+   "posko"
+  ).innerHTML=
+   (data.poskos||[])
+   .map(p=>`
+    <option value="${esc(p.name)}">
+     ${esc(p.title)}
+    </option>
+   `).join("");
+
+  document.getElementById(
+   "assignments"
+  ).innerHTML=
+   (data.assignments||[])
+   .map(a=>{
+    const p=profileMap[
+     a.volunteer
+    ];
+
+    return `
+     <div class="card">
+
+      <b>
+       ${esc(
+        p?.volunteer_name
+        || a.volunteer
+       )}
+      </b>
+
+      <div>
+       ${esc(a.task_title)}
+      </div>
+
+      <span class="badge">
+       ${esc(a.assignment_type)}
+      </span>
+
+      <span class="badge">
+       ${esc(a.priority)}
+      </span>
+
+      <span class="badge">
+       ${esc(a.assignment_status)}
+      </span>
+
+      ${a.required_skill
+       ? `<div>
+           Skill:
+           ${esc(a.required_skill)}
+          </div>`
+       : ""}
+
+      ${a.target_reference
+       ? `<div>
+           Ref:
+           ${esc(a.target_reference)}
+          </div>`
+       : ""}
+
+      <div class="actions">
+       ${nextButtons(a)}
+      </div>
+
+      ${evidenceBlock(a)}
+     </div>
+    `;
+   }).join("")
+   || "<p>Belum ada penugasan.</p>";
+
+  document.querySelectorAll(
+   ".assignment-status"
+  ).forEach(btn=>{
+   btn.onclick=async()=>{
+    let completionNotes=null;
+
+    if(btn.dataset.status==="completed"){
+     completionNotes=prompt(
+      "Catatan penyelesaian:"
+     );
+    }
+
+    await call(
+     "rescue_net.api_volunteer.update_assignment_status",
+     {
+      assignment:
+       btn.dataset.id,
+
+      new_status:
+       btn.dataset.status,
+
+      completion_notes:
+       completionNotes
+     }
+    );
+
+    await load();
+   };
+  });
+
+  document.querySelectorAll(
+   ".evidence-btn"
+  ).forEach(btn=>{
+   btn.onclick=()=>{
+    uploadEvidence(btn)
+     .catch(e=>alert(
+      e.message||e
+     ));
+   };
+  });
+ }
+
+ async function load(){
+  data=await call(
+   "rescue_net.api_volunteer.dashboard"
+  );
+
+  render();
+ }
+
+ document.getElementById(
+  "saveProfile"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_volunteer.create_profile",
+   {
+    volunteer_name:
+     document.getElementById(
+      "volunteerName"
+     ).value,
+
+    contact:
+     document.getElementById(
+      "contact"
+     ).value,
+
+    main_skill:
+     document.getElementById(
+      "mainSkill"
+     ).value,
+
+    skill_tags:
+     document.getElementById(
+      "skillTags"
+     ).value,
+
+    duration_available:
+     document.getElementById(
+      "durationAvailable"
+     ).value,
+
+    current_location:
+     document.getElementById(
+      "currentLocation"
+     ).value,
+
+    notes:
+     document.getElementById(
+      "profileNotes"
+     ).value
+   }
+  );
+
+  await load();
+ };
+
+ document.getElementById(
+  "saveAssignment"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_volunteer.create_assignment",
+   {
+    volunteer:
+     document.getElementById(
+      "volunteer"
+     ).value,
+
+    posko:
+     document.getElementById(
+      "posko"
+     ).value,
+
+    assignment_type:
+     document.getElementById(
+      "assignmentType"
+     ).value,
+
+    task_title:
+     document.getElementById(
+      "taskTitle"
+     ).value,
+
+    target_reference:
+     document.getElementById(
+      "targetReference"
+     ).value,
+
+    required_skill:
+     document.getElementById(
+      "requiredSkill"
+     ).value,
+
+    priority:
+     document.getElementById(
+      "priority"
+     ).value,
+
+    shift_start:
+     document.getElementById(
+      "shiftStart"
+     ).value || null,
+
+    shift_end:
+     document.getElementById(
+      "shiftEnd"
+     ).value || null,
+
+    assignment_notes:
+     document.getElementById(
+      "assignmentNotes"
+     ).value
+   }
+  );
+
+  await load();
+ };
+
+ await load();
+});
+</script>
+
+{% endblock %}

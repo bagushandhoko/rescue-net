@@ -1,0 +1,137 @@
+{
+  "doctype": "DocType",
+  "name": "RN Donor Program Update",
+  "module": "Rescue Net",
+  "engine": "InnoDB",
+  "track_changes": 1,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "field_order": [
+    "program",
+    "disaster_event",
+    "update_type",
+    "progress_percent",
+    "amount_spent",
+    "amount_unit",
+    "update_title",
+    "update_notes",
+    "evidence_file_id",
+    "evidence_required",
+    "evidence_status",
+    "officer_in_charge_name",
+    "officer_in_charge_phone",
+    "public_visibility",
+    "created_by_user",
+    "observed_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "program",
+      "fieldtype": "Link",
+      "label": "Program",
+      "options": "RN Donor Program",
+      "reqd": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "fieldtype": "Data",
+      "label": "Disaster Event",
+      "reqd": 1
+    },
+    {
+      "fieldname": "update_type",
+      "fieldtype": "Select",
+      "label": "Update Type",
+      "options": "progress\nspending\nhandover\ncompletion",
+      "default": "progress",
+      "reqd": 1
+    },
+    {
+      "fieldname": "progress_percent",
+      "fieldtype": "Percent",
+      "label": "Progress Percent",
+      "default": "0"
+    },
+    {
+      "fieldname": "amount_spent",
+      "fieldtype": "Float",
+      "label": "Amount Spent",
+      "default": "0"
+    },
+    {
+      "fieldname": "amount_unit",
+      "fieldtype": "Data",
+      "label": "Amount Unit",
+      "default": "IDR"
+    },
+    {
+      "fieldname": "update_title",
+      "fieldtype": "Data",
+      "label": "Update Title",
+      "reqd": 1
+    },
+    {
+      "fieldname": "update_notes",
+      "fieldtype": "Small Text",
+      "label": "Update Notes"
+    },
+    {
+      "fieldname": "evidence_file_id",
+      "fieldtype": "Data",
+      "label": "Evidence File ID / URL"
+    },
+    {
+      "fieldname": "evidence_required",
+      "fieldtype": "Check",
+      "label": "Evidence Required",
+      "default": "0",
+      "read_only": 1
+    },
+    {
+      "fieldname": "evidence_status",
+      "fieldtype": "Select",
+      "label": "Evidence Status",
+      "options": "not_required\npending\nprovided",
+      "default": "not_required",
+      "read_only": 1
+    },
+    {
+      "fieldname": "officer_in_charge_name",
+      "fieldtype": "Data",
+      "label": "Officer in Charge"
+    },
+    {
+      "fieldname": "officer_in_charge_phone",
+      "fieldtype": "Data",
+      "label": "Officer Phone"
+    },
+    {
+      "fieldname": "public_visibility",
+      "fieldtype": "Select",
+      "label": "Public Visibility",
+      "options": "summary_public\ninternal\nrestricted",
+      "default": "summary_public"
+    },
+    {
+      "fieldname": "created_by_user",
+      "fieldtype": "Data",
+      "label": "Created By User",
+      "read_only": 1
+    },
+    {
+      "fieldname": "observed_at",
+      "fieldtype": "Datetime",
+      "label": "Observed At",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

@@ -4,7 +4,6 @@
   "module": "Rescue Net",
   "custom": 0,
   "is_submittable": 0,
-  "autoname": "field:legacy_id",
   "naming_rule": "By fieldname",
   "title_field": "title",
   "fields": [

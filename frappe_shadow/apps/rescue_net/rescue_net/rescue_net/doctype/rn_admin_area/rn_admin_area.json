@@ -1,0 +1,21 @@
+{
+  "doctype": "DocType",
+  "name": "RN Admin Area",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "field:code",
+  "title_field": "area_name",
+  "fields": [
+    {"fieldname":"code","label":"Area Code","fieldtype":"Data","reqd":1,"unique":1},
+    {"fieldname":"area_name","label":"Area Name","fieldtype":"Data","reqd":1},
+    {"fieldname":"level","label":"Level","fieldtype":"Select","options":"province\ncity\ndistrict\nvillage","reqd":1},
+    {"fieldname":"parent_code","label":"Parent Code","fieldtype":"Data"},
+    {"fieldname":"source","label":"Source","fieldtype":"Data"},
+    {"fieldname":"source_reference","label":"Source Reference","fieldtype":"Data"},
+    {"fieldname":"enabled","label":"Enabled","fieldtype":"Check","default":"1"}
+  ],
+  "permissions": [
+    {"role":"System Manager","read":1,"write":1,"create":1,"delete":1}
+  ]
+}

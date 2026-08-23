@@ -1,0 +1,112 @@
+{
+  "doctype": "DocType",
+  "name": "RN Shelter Household",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "household_code",
+  "fields": [
+    {
+      "fieldname": "posko",
+      "label": "Shelter / Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "household_code",
+      "label": "Kode Keluarga / Grup",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "members_count",
+      "label": "Jumlah Anggota",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "infants_count",
+      "label": "Bayi / Balita",
+      "fieldtype": "Int",
+      "default": 0
+    },
+    {
+      "fieldname": "children_count",
+      "label": "Anak",
+      "fieldtype": "Int",
+      "default": 0
+    },
+    {
+      "fieldname": "elderly_count",
+      "label": "Lansia",
+      "fieldtype": "Int",
+      "default": 0
+    },
+    {
+      "fieldname": "pregnant_count",
+      "label": "Ibu Hamil",
+      "fieldtype": "Int",
+      "default": 0
+    },
+    {
+      "fieldname": "disability_count",
+      "label": "Disabilitas",
+      "fieldtype": "Int",
+      "default": 0
+    },
+    {
+      "fieldname": "household_status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "checked_in\nmoved\nchecked_out",
+      "default": "checked_in"
+    },
+    {
+      "fieldname": "check_in_at",
+      "label": "Check In At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "moved_at",
+      "label": "Moved At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "checked_out_at",
+      "label": "Checked Out At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "destination",
+      "label": "Tujuan Perpindahan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan Terbatas",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

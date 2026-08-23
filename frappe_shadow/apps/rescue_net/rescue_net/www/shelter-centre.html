@@ -1,0 +1,986 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+
+<style>
+.rn{
+ max-width:1180px;
+ margin:24px auto;
+ padding:0 14px 90px
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:14px
+}
+.card{
+ border:1px solid #ddd;
+ border-radius:12px;
+ padding:14px;
+ margin:10px 0
+}
+input,select,textarea{
+ width:100%;
+ min-height:44px;
+ padding:10px;
+ margin:5px 0
+}
+button{
+ min-height:44px
+}
+.actions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:6px;
+ margin-top:8px
+}
+.badge{
+ display:inline-block;
+ border:1px solid #ddd;
+ border-radius:999px;
+ padding:4px 8px;
+ margin:3px 3px 3px 0;
+ font-size:.8rem
+}
+.warning{
+ background:#fff5d6;
+ padding:10px;
+ border-radius:10px;
+ margin:10px 0
+}
+.kpis{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:10px;
+ margin:12px 0
+}
+.kpi{
+ border:1px solid #ddd;
+ border-radius:10px;
+ padding:12px
+}
+.kpi b{
+ display:block;
+ font-size:1.35rem
+}
+.rn-mobile-nav{
+ display:none
+}
+@media(max-width:850px){
+ .grid{
+  grid-template-columns:1fr
+ }
+ .kpis{
+  grid-template-columns:1fr
+ }
+}
+@media(max-width:700px){
+ .rn{
+  margin:10px auto;
+  padding:0 10px 82px
+ }
+ .actions button{
+  flex:1 1 45%
+ }
+ .rn-mobile-nav{
+  display:grid;
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:1000;
+  grid-template-columns:repeat(4,1fr);
+  background:#fff;
+  border-top:1px solid #ddd;
+  padding:6px 4px
+ }
+ .rn-mobile-nav a{
+  text-align:center;
+  padding:8px 3px;
+  text-decoration:none;
+  font-size:.78rem
+ }
+}
+</style>
+
+<div class="rn">
+
+<h2>Shelter Operations</h2>
+
+<div class="warning">
+<b>Privacy:</b>
+gunakan kode keluarga/grup, bukan nama lengkap,
+NIK atau nomor pribadi korban.
+Snapshot penghuni dan registrasi keluarga
+ditampilkan terpisah dan tidak dijumlahkan otomatis.
+</div>
+
+<label>
+Shelter / Posko
+<select id="posko"></select>
+</label>
+
+<div id="poskoContact"></div>
+
+<div class="kpis">
+ <div class="kpi">
+  <small>Snapshot Penghuni Terakhir</small>
+  <b id="kpiOccupancy">0</b>
+ </div>
+ <div class="kpi">
+  <small>Keluarga Aktif Terdaftar</small>
+  <b id="kpiHouseholds">0</b>
+ </div>
+ <div class="kpi">
+  <small>Kebutuhan Terbuka</small>
+  <b id="kpiNeeds">0</b>
+ </div>
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h4>Update Kapasitas Shelter</h4>
+
+<input
+ id="shelterName"
+ placeholder="Nama Shelter">
+
+<input
+ id="capacity"
+ type="number"
+ min="0"
+ placeholder="Kapasitas">
+
+<input
+ id="occupancy"
+ type="number"
+ min="0"
+ placeholder="Penghuni saat ini">
+
+<input
+ id="families"
+ type="number"
+ min="0"
+ placeholder="Jumlah keluarga">
+
+<input
+ id="occInfants"
+ type="number"
+ min="0"
+ placeholder="Bayi / balita">
+
+<input
+ id="occChildren"
+ type="number"
+ min="0"
+ placeholder="Anak">
+
+<input
+ id="occElderly"
+ type="number"
+ min="0"
+ placeholder="Lansia">
+
+<input
+ id="occPregnant"
+ type="number"
+ min="0"
+ placeholder="Ibu hamil">
+
+<input
+ id="occDisability"
+ type="number"
+ min="0"
+ placeholder="Disabilitas">
+
+<button
+ class="btn btn-primary"
+ id="saveOccupancy">
+Simpan Snapshot
+</button>
+</div>
+
+
+<div class="card">
+<h4>Check-in Keluarga / Grup</h4>
+
+<input
+ id="householdCode"
+ placeholder="Kode keluarga / grup">
+
+<input
+ id="members"
+ type="number"
+ min="1"
+ placeholder="Jumlah anggota">
+
+<input
+ id="hhInfants"
+ type="number"
+ min="0"
+ placeholder="Bayi / balita">
+
+<input
+ id="hhChildren"
+ type="number"
+ min="0"
+ placeholder="Anak">
+
+<input
+ id="hhElderly"
+ type="number"
+ min="0"
+ placeholder="Lansia">
+
+<input
+ id="hhPregnant"
+ type="number"
+ min="0"
+ placeholder="Ibu hamil">
+
+<input
+ id="hhDisability"
+ type="number"
+ min="0"
+ placeholder="Disabilitas">
+
+<textarea
+ id="hhNotes"
+ placeholder="Catatan terbatas"></textarea>
+
+<button
+ class="btn btn-primary"
+ id="saveHousehold">
+Check-in
+</button>
+</div>
+
+
+<div class="card">
+<h4>Kebutuhan Shelter</h4>
+
+<input
+ id="needItem"
+ placeholder="Contoh: selimut, matras, air">
+
+<select id="quantityMode">
+<option value="unknown">Jumlah belum diketahui</option>
+<option value="exact">Exact</option>
+<option value="estimated">Estimasi</option>
+<option value="range">Range</option>
+</select>
+
+<input
+ id="quantityNeeded"
+ type="number"
+ step="0.01"
+ placeholder="Jumlah / estimasi">
+
+<input
+ id="quantityMin"
+ type="number"
+ step="0.01"
+ placeholder="Minimum">
+
+<input
+ id="quantityMax"
+ type="number"
+ step="0.01"
+ placeholder="Maksimum">
+
+<input
+ id="quantityText"
+ placeholder="Keterangan jumlah">
+
+<input
+ id="unit"
+ placeholder="Satuan">
+
+<select id="priority">
+<option value="normal">Normal</option>
+<option value="urgent">Urgent</option>
+<option value="critical">Critical</option>
+</select>
+
+<textarea
+ id="needNotes"
+ placeholder="Catatan kebutuhan"></textarea>
+
+<button
+ class="btn btn-primary"
+ id="saveNeed">
+Tambah Kebutuhan
+</button>
+</div>
+
+</div>
+
+
+<h3>Snapshot Kapasitas</h3>
+<div id="occupancies"></div>
+
+<h3>Keluarga / Grup Terdaftar</h3>
+<div id="households"></div>
+
+<h3>Kebutuhan Shelter</h3>
+<div id="needs"></div>
+
+</div>
+
+
+<nav class="rn-mobile-nav">
+<a href="/kelompok-posko">Posko</a>
+<a href="/logistics-centre">Logistik</a>
+<a href="/medical-centre">Medis</a>
+<a href="/shelter-centre"><b>Shelter</b></a>
+</nav>
+
+
+<script>
+document.addEventListener(
+ "DOMContentLoaded",
+ async()=>{
+
+ const call=(method,args={})=>
+  new Promise((ok,fail)=>{
+   frappe.call({
+    method,
+    args,
+    callback:r=>ok(r.message),
+    error:fail
+   });
+  });
+
+ const esc=s=>String(s??"")
+  .replace(/[&<>"']/g,c=>({
+   "&":"&amp;",
+   "<":"&lt;",
+   ">":"&gt;",
+   '"':"&quot;",
+   "'":"&#039;"
+  }[c]));
+
+ const num=id=>{
+  const value=
+   document.getElementById(id).value;
+
+  return value===""
+   ? 0
+   : Number(value);
+ };
+
+ function wa(value){
+  let n=String(value||"")
+   .replace(/\D/g,"");
+
+  if(n.startsWith("0")){
+   n="62"+n.slice(1);
+  }else if(n.startsWith("8")){
+   n="62"+n;
+  }
+
+  return n
+   ? "https://wa.me/"+n
+   : "";
+ }
+
+ let data={};
+
+ function evidenceBlock(doctype,name){
+  return `
+   <div class="actions">
+    <input
+     type="file"
+     data-file-for="${esc(name)}">
+
+    <button
+     class="btn btn-sm btn-secondary evidence-btn"
+     data-doctype="${esc(doctype)}"
+     data-id="${esc(name)}">
+     Tambah Bukti Privat
+    </button>
+   </div>
+  `;
+ }
+
+ async function uploadEvidence(btn){
+  const input=document.querySelector(
+   `[data-file-for="${btn.dataset.id}"]`
+  );
+
+  if(!input?.files?.length){
+   alert("Pilih file terlebih dahulu");
+   return;
+  }
+
+  const fd=new FormData();
+
+  fd.append(
+   "file",
+   input.files[0]
+  );
+
+  fd.append(
+   "is_private",
+   "1"
+  );
+
+  const response=await fetch(
+   "/api/method/upload_file",
+   {
+    method:"POST",
+    body:fd,
+    headers:{
+     "X-Frappe-CSRF-Token":
+      frappe.csrf_token
+    }
+   }
+  );
+
+  const result=await response.json();
+
+  if(!result.message?.file_url){
+   throw new Error(
+    "Upload evidence gagal"
+   );
+  }
+
+  await call(
+   "rescue_net.api_shelter.add_evidence",
+   {
+    linked_doctype:
+     btn.dataset.doctype,
+
+    linked_name:
+     btn.dataset.id,
+
+    file_url:
+     result.message.file_url,
+
+    evidence_type:
+     "verification"
+   }
+  );
+
+  alert("Evidence privat tersimpan");
+ }
+
+ function needQty(n){
+  if(n.quantity_mode==="range"){
+   return `${esc(n.quantity_min)}
+    - ${esc(n.quantity_max)}
+    ${esc(n.unit||"")}`;
+  }
+
+  if(
+   n.quantity_mode==="exact"
+   || n.quantity_mode==="estimated"
+  ){
+   return `${esc(n.quantity_needed)}
+    ${esc(n.unit||"")}`;
+  }
+
+  return esc(
+   n.quantity_text
+   || "Jumlah belum diketahui"
+  );
+ }
+
+ function render(){
+  const posko=
+   document.getElementById(
+    "posko"
+   ).value;
+
+  const poskoRow=
+   (data.poskos||[])
+   .find(x=>x.name===posko);
+
+  const contact=
+   poskoRow?.officer_in_charge_phone;
+
+  document.getElementById(
+   "poskoContact"
+  ).innerHTML=contact
+   ? `<p>
+       <a
+        class="btn btn-success"
+        target="_blank"
+        rel="noopener"
+        href="${wa(contact)}">
+        Hubungi Posko via WhatsApp
+       </a>
+      </p>`
+   : "";
+
+  const occs=
+   (data.occupancies||[])
+   .filter(x=>x.posko===posko);
+
+  const households=
+   (data.households||[])
+   .filter(x=>x.posko===posko);
+
+  const needs=
+   (data.needs||[])
+   .filter(x=>x.posko===posko);
+
+  const latest=
+   occs.length
+   ? occs[0]
+   : null;
+
+  document.getElementById(
+   "kpiOccupancy"
+  ).textContent=latest
+   ? `${latest.current_occupancy}
+      / ${latest.capacity_total}`
+   : "0";
+
+  const activeHouseholds=
+   households.filter(
+    x=>x.household_status==="checked_in"
+   );
+
+  document.getElementById(
+   "kpiHouseholds"
+  ).textContent=
+   activeHouseholds.length;
+
+  document.getElementById(
+   "kpiNeeds"
+  ).textContent=
+   needs.filter(
+    x=>
+     x.need_status==="open"
+     || x.need_status==="partially_met"
+   ).length;
+
+  document.getElementById(
+   "occupancies"
+  ).innerHTML=
+   occs.map(o=>{
+    let pct=null;
+
+    if(Number(o.capacity_total)>0){
+     pct=Math.round(
+      Number(o.current_occupancy)
+      *1000
+      /Number(o.capacity_total)
+     )/10;
+    }
+
+    return `
+     <div class="card">
+      <b>${esc(o.shelter_name)}</b>
+
+      <div>
+       ${esc(o.current_occupancy)}
+       / ${esc(o.capacity_total)}
+       ${pct===null
+        ? ""
+        : `(${esc(pct)}%)`}
+      </div>
+
+      <div>
+       Keluarga:
+       ${esc(o.families_count)}
+      </div>
+
+      <div>
+       Bayi/Balita ${esc(o.infants_count)}
+       · Anak ${esc(o.children_count)}
+       · Lansia ${esc(o.elderly_count)}
+       · Hamil ${esc(o.pregnant_count)}
+       · Disabilitas ${esc(o.disability_count)}
+      </div>
+
+      <small>
+       Observasi:
+       ${esc(o.observed_at||"")}
+      </small>
+
+      ${evidenceBlock(
+       "RN Shelter Occupancy",
+       o.name
+      )}
+     </div>
+    `;
+   }).join("")
+   || "<p>Belum ada snapshot.</p>";
+
+  document.getElementById(
+   "households"
+  ).innerHTML=
+   households.map(h=>`
+    <div class="card">
+     <b>${esc(h.household_code)}</b>
+
+     <div>
+      ${esc(h.members_count)}
+      anggota
+     </div>
+
+     <span class="badge">
+      ${esc(h.household_status)}
+     </span>
+
+     <div>
+      Bayi/Balita ${esc(h.infants_count)}
+      · Anak ${esc(h.children_count)}
+      · Lansia ${esc(h.elderly_count)}
+      · Hamil ${esc(h.pregnant_count)}
+      · Disabilitas ${esc(h.disability_count)}
+     </div>
+
+     ${h.destination
+      ? `<div>
+          Tujuan:
+          ${esc(h.destination)}
+         </div>`
+      : ""}
+
+     <div class="actions">
+      ${h.household_status==="checked_in"
+       ? `
+        <button
+         class="btn btn-sm btn-secondary household-status"
+         data-id="${esc(h.name)}"
+         data-status="moved">
+         Pindah
+        </button>
+
+        <button
+         class="btn btn-sm btn-secondary household-status"
+         data-id="${esc(h.name)}"
+         data-status="checked_out">
+         Check-out
+        </button>
+       `
+       : ""}
+     </div>
+
+     ${evidenceBlock(
+      "RN Shelter Household",
+      h.name
+     )}
+    </div>
+   `).join("")
+   || "<p>Belum ada keluarga terdaftar.</p>";
+
+  document.getElementById(
+   "needs"
+  ).innerHTML=
+   needs.map(n=>`
+    <div class="card">
+     <b>${esc(n.item_name)}</b>
+
+     <div>
+      ${needQty(n)}
+     </div>
+
+     <span class="badge">
+      ${esc(n.priority)}
+     </span>
+
+     <span class="badge">
+      ${esc(n.need_status)}
+     </span>
+
+     <div class="actions">
+      ${n.need_status==="open"
+       ? `
+        <button
+         class="btn btn-sm btn-secondary need-status"
+         data-id="${esc(n.name)}"
+         data-status="partially_met">
+         Terpenuhi Sebagian
+        </button>
+
+        <button
+         class="btn btn-sm btn-secondary need-status"
+         data-id="${esc(n.name)}"
+         data-status="met">
+         Terpenuhi
+        </button>
+       `
+       : ""}
+
+      ${n.need_status==="partially_met"
+       ? `
+        <button
+         class="btn btn-sm btn-secondary need-status"
+         data-id="${esc(n.name)}"
+         data-status="met">
+         Terpenuhi
+        </button>
+       `
+       : ""}
+     </div>
+
+     ${evidenceBlock(
+      "RN Shelter Need",
+      n.name
+     )}
+    </div>
+   `).join("")
+   || "<p>Belum ada kebutuhan.</p>";
+
+  document.querySelectorAll(
+   ".household-status"
+  ).forEach(btn=>{
+   btn.onclick=async()=>{
+    let destination=null;
+
+    if(btn.dataset.status==="moved"){
+     destination=prompt(
+      "Tujuan perpindahan:"
+     );
+
+     if(!destination){
+      return;
+     }
+    }
+
+    await call(
+     "rescue_net.api_shelter.update_household_status",
+     {
+      household:btn.dataset.id,
+      new_status:btn.dataset.status,
+      destination
+     }
+    );
+
+    await load();
+   };
+  });
+
+  document.querySelectorAll(
+   ".need-status"
+  ).forEach(btn=>{
+   btn.onclick=async()=>{
+    await call(
+     "rescue_net.api_shelter.update_need_status",
+     {
+      shelter_need:btn.dataset.id,
+      new_status:btn.dataset.status
+     }
+    );
+
+    await load();
+   };
+  });
+
+  document.querySelectorAll(
+   ".evidence-btn"
+  ).forEach(btn=>{
+   btn.onclick=()=>{
+    uploadEvidence(btn)
+     .catch(e=>alert(
+      e.message||e
+     ));
+   };
+  });
+ }
+
+ async function load(){
+  data=await call(
+   "rescue_net.api_shelter.dashboard"
+  );
+
+  const select=
+   document.getElementById(
+    "posko"
+   );
+
+  const previous=
+   select.value;
+
+  select.innerHTML=
+   (data.poskos||[])
+   .map(p=>`
+    <option value="${esc(p.name)}">
+     ${esc(p.title)}
+    </option>
+   `).join("");
+
+  if(previous){
+   select.value=previous;
+  }
+
+  render();
+ }
+
+ document.getElementById(
+  "posko"
+ ).onchange=render;
+
+ document.getElementById(
+  "saveOccupancy"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_shelter.create_occupancy",
+   {
+    posko:
+     document.getElementById(
+      "posko"
+     ).value,
+
+    shelter_name:
+     document.getElementById(
+      "shelterName"
+     ).value,
+
+    capacity_total:num(
+     "capacity"
+    ),
+
+    current_occupancy:num(
+     "occupancy"
+    ),
+
+    families_count:num(
+     "families"
+    ),
+
+    infants_count:num(
+     "occInfants"
+    ),
+
+    children_count:num(
+     "occChildren"
+    ),
+
+    elderly_count:num(
+     "occElderly"
+    ),
+
+    pregnant_count:num(
+     "occPregnant"
+    ),
+
+    disability_count:num(
+     "occDisability"
+    )
+   }
+  );
+
+  await load();
+ };
+
+ document.getElementById(
+  "saveHousehold"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_shelter.check_in_household",
+   {
+    posko:
+     document.getElementById(
+      "posko"
+     ).value,
+
+    household_code:
+     document.getElementById(
+      "householdCode"
+     ).value,
+
+    members_count:num(
+     "members"
+    ),
+
+    infants_count:num(
+     "hhInfants"
+    ),
+
+    children_count:num(
+     "hhChildren"
+    ),
+
+    elderly_count:num(
+     "hhElderly"
+    ),
+
+    pregnant_count:num(
+     "hhPregnant"
+    ),
+
+    disability_count:num(
+     "hhDisability"
+    ),
+
+    notes:
+     document.getElementById(
+      "hhNotes"
+     ).value
+   }
+  );
+
+  await load();
+ };
+
+ document.getElementById(
+  "saveNeed"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_shelter.create_need",
+   {
+    posko:
+     document.getElementById(
+      "posko"
+     ).value,
+
+    item_name:
+     document.getElementById(
+      "needItem"
+     ).value,
+
+    quantity_mode:
+     document.getElementById(
+      "quantityMode"
+     ).value,
+
+    quantity_needed:
+     document.getElementById(
+      "quantityNeeded"
+     ).value,
+
+    quantity_min:
+     document.getElementById(
+      "quantityMin"
+     ).value,
+
+    quantity_max:
+     document.getElementById(
+      "quantityMax"
+     ).value,
+
+    quantity_text:
+     document.getElementById(
+      "quantityText"
+     ).value,
+
+    unit:
+     document.getElementById(
+      "unit"
+     ).value,
+
+    priority:
+     document.getElementById(
+      "priority"
+     ).value,
+
+    notes:
+     document.getElementById(
+      "needNotes"
+     ).value
+   }
+  );
+
+  await load();
+ };
+
+ await load();
+});
+</script>
+
+{% endblock %}

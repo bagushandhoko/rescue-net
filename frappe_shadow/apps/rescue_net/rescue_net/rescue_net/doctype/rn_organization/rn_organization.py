@@ -24,3 +24,14 @@ class RNOrganization(Document):
         if not self.identity_verification_status:
             self.identity_verification_status = "unverified"
 
+
+    # RN_PRIVACY_GUARD_V1
+    def validate(self):
+        if not self.privacy_mode:
+            self.privacy_mode = "closed"
+
+        if self.privacy_mode == "closed":
+            self.allow_posko_public_choice = 0
+
+        if not self.control_centre_share:
+            self.control_centre_share = "aggregate"

@@ -255,6 +255,27 @@
       "label": "Legacy Payload",
       "fieldtype": "Code",
       "options": "JSON"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "source_updated_at",
+      "label": "Source Updated At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "freshness_policy_minutes",
+      "label": "Freshness Policy Minutes",
+      "fieldtype": "Int",
+      "default": "360"
+    },
+    {
+      "fieldname": "data_quality_note",
+      "label": "Data Quality Note",
+      "fieldtype": "Small Text"
     }
   ],
   "permissions": [

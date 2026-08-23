@@ -116,6 +116,32 @@
       "fieldname": "public_verified_badge",
       "label": "Public Verified Badge",
       "fieldtype": "Check"
+    },
+    {
+      "fieldname": "privacy_mode",
+      "label": "Privacy Mode",
+      "fieldtype": "Select",
+      "options": "closed\nopen",
+      "default": "closed"
+    },
+    {
+      "fieldname": "allow_posko_public_choice",
+      "label": "Allow Posko Public Choice",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "control_centre_share",
+      "label": "Control Centre Share",
+      "fieldtype": "Select",
+      "options": "aggregate\nfull_authorized",
+      "default": "aggregate"
+    },
+    {
+      "fieldname": "public_activity_summary",
+      "label": "Public Activity Summary",
+      "fieldtype": "Check",
+      "default": "0"
     }
   ],
   "permissions": [

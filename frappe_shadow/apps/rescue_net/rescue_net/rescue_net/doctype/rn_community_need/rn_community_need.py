@@ -57,19 +57,56 @@ class RNCommunityNeed(Document):
                     if memberships:
                         self.community_owner = memberships[0].organization
 
-                if not self.community_owner:
-                    memberships = frappe.get_all(
-                        "RN Organization Membership",
-                        filters={
-                            "user_account": rn_user.name,
-                            "status": "approved",
-                        },
-                        fields=["organization"],
-                        order_by="approved_at desc, creation asc",
-                        limit_page_length=1,
-                    )
-                    if memberships:
-                        self.community_owner = memberships[0].organization
+
+        # RN_NORMALIZATION_V1
+        if not self.raw_need_text:
+            self.raw_need_text = (
+                self.description
+                or self.title
+                or ""
+            )
+
+        from rescue_net.intelligence.normalization import classify_text
+
+        suggestion = classify_text(self.raw_need_text)
+
+        if not self.item_kind or self.item_kind == "tidak_diketahui":
+            self.item_kind = suggestion["item_kind"]
+
+        if not self.canonical_category:
+            self.canonical_category = suggestion["canonical_category"]
+
+        if not self.canonical_group:
+            self.canonical_group = suggestion["canonical_group"]
+
+        if not self.canonical_item:
+            self.canonical_item = suggestion["canonical_item"]
+
+        if (
+            not self.quantity_mode
+            or self.quantity_mode == "unknown"
+        ):
+            self.quantity_mode = suggestion["quantity_mode"]
+
+        if self.quantity_min is None:
+            self.quantity_min = suggestion["quantity_min"]
+
+        if self.quantity_max is None:
+            self.quantity_max = suggestion["quantity_max"]
+
+        if not self.estimate_text:
+            self.estimate_text = suggestion["estimate_text"]
+
+        if not self.normalization_source:
+            self.normalization_source = "rule"
+
+        if not self.normalization_confidence:
+            self.normalization_confidence = suggestion[
+                "normalization_confidence"
+            ]
+
+        if not self.normalization_status:
+            self.normalization_status = "suggested"
 
         if not self.handling_mode:
             self.handling_mode = "community"

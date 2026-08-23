@@ -24,3 +24,34 @@ class RNPosko(Document):
         if not self.identity_verification_status:
             self.identity_verification_status = "self_reported"
 
+
+    # RN_PRIVACY_GUARD_V1
+    def validate(self):
+        if not self.public_detail:
+            self.public_detail = "inherit"
+
+        if not self.organization:
+            return
+
+        org = frappe.db.get_value(
+            "RN Organization",
+            self.organization,
+            [
+                "privacy_mode",
+                "allow_posko_public_choice",
+            ],
+            as_dict=True,
+        )
+
+        if (
+            self.public_detail == "public"
+            and org
+            and (
+                org.privacy_mode != "open"
+                or not org.allow_posko_public_choice
+            )
+        ):
+            frappe.throw(
+                "Posko tidak dapat dibuka ke publik karena "
+                "kebijakan Kelompok tidak mengizinkannya"
+            )

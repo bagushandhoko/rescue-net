@@ -69,6 +69,26 @@
       "label": "Legacy Payload",
       "fieldtype": "Code",
       "options": "JSON"
+    },
+    {
+      "fieldname": "trust_score_before",
+      "label": "Trust Score Before",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "trust_score_after",
+      "label": "Trust Score After",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "evidence_count",
+      "label": "Evidence Count",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "decision_confidence",
+      "label": "Decision Confidence",
+      "fieldtype": "Int"
     }
   ],
   "permissions": [

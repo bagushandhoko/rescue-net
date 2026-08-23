@@ -1,0 +1,245 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<style>
+.rn{max-width:1050px;margin:24px auto}
+.rn-card{border:1px solid #ddd;border-radius:10px;padding:16px;margin:12px 0}
+.rn-meta{font-size:.9em;color:#666}
+.rn-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.rn-evidence{margin-top:12px;padding-top:12px;border-top:1px solid #eee}
+.rn-badge{display:inline-block;padding:3px 8px;border:1px solid #ccc;border-radius:14px;margin-right:5px}
+.rn textarea,.rn input,.rn select{width:100%;padding:8px;margin:5px 0 8px}
+</style>
+
+<div class="rn">
+  <h2>Verification Centre</h2>
+  <p>
+    Laporan mentah tetap disimpan. Verifikasi menambah tingkat
+    kepercayaan dan audit trail, bukan mengganti sumber asli.
+  </p>
+
+  <p>
+    <a href="/laporan-masyarakat">Laporan Masyarakat</a>
+    ·
+    <a href="/data-consolidation">Data Konsolidasi</a>
+  </p>
+
+  <div id="mode"></div>
+  <div id="reports"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const box = document.getElementById("reports");
+  const modeBox = document.getElementById("mode");
+
+  function call(method,args={}) {
+    return new Promise((resolve,reject)=>{
+      frappe.call({
+        method,
+        args,
+        callback:r=>resolve(r.message),
+        error:reject
+      });
+    });
+  }
+
+  async function uploadFile(file) {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("is_private", "1");
+
+    const res = await fetch("/api/method/upload_file", {
+      method:"POST",
+      headers:{
+        "X-Frappe-CSRF-Token": frappe.csrf_token
+      },
+      body:fd
+    });
+
+    if (!res.ok) {
+      throw new Error("Upload file gagal");
+    }
+
+    const data = await res.json();
+    return data.message.file_url;
+  }
+
+  async function showEvidence(report) {
+    const rows = await call(
+      "rescue_net.api_verification.list_evidence",
+      {report}
+    );
+
+    const target = document.getElementById(
+      "evidence-" + report
+    );
+
+    target.innerHTML = rows.length
+      ? rows.map(e => `
+        <div class="rn-meta">
+          <a href="${e.file_url}" target="_blank">
+            ${e.evidence_type || e.file_type || "evidence"}
+          </a>
+          · ${e.verification_status || "pending"}
+          ${e.caption ? " · " + e.caption : ""}
+        </div>
+      `).join("")
+      : "<div class='rn-meta'>Belum ada bukti.</div>";
+  }
+
+  async function reload() {
+    const data = await call(
+      "rescue_net.api_verification.dashboard"
+    );
+
+    modeBox.innerHTML = `
+      <p>
+        Mode: <b>${data.mode}</b>
+        · Role: ${data.role}
+      </p>`;
+
+    box.innerHTML = data.reports.map(r => {
+      const verifier = data.mode === "verifier";
+
+      const actions = verifier ? `
+        <div class="rn-actions">
+          <button class="btn btn-sm btn-secondary verify-action"
+                  data-report="${r.name}" data-action="triage">
+            Triage
+          </button>
+          <button class="btn btn-sm btn-primary verify-action"
+                  data-report="${r.name}" data-action="verify">
+            Verify
+          </button>
+          <button class="btn btn-sm btn-secondary verify-action"
+                  data-report="${r.name}" data-action="escalate">
+            Escalate
+          </button>
+          <button class="btn btn-sm btn-danger verify-action"
+                  data-report="${r.name}" data-action="reject">
+            Reject
+          </button>
+        </div>
+      ` : "";
+
+      return `
+        <div class="rn-card">
+          <h4>${r.title}</h4>
+
+          <div>
+            <span class="rn-badge">${r.status}</span>
+            <span class="rn-badge">
+              Trust ${r.trust_score ?? "-"}
+            </span>
+            <span class="rn-badge">
+              ${r.freshness.status}
+              ${r.freshness.age_minutes === null
+                ? ""
+                : " · " + r.freshness.age_minutes + " min"}
+            </span>
+          </div>
+
+          <p>${r.description || ""}</p>
+
+          <div class="rn-meta">
+            ${r.village_name || r.district_name ||
+              r.city_name || r.province_name ||
+              r.location_text || "Lokasi belum lengkap"}
+            · Evidence: ${r.evidence_count}
+          </div>
+
+          <div class="rn-evidence">
+            <b>Bukti / Evidence</b>
+            <div id="evidence-${r.name}"></div>
+
+            <input type="file" id="file-${r.name}">
+            <input id="caption-${r.name}"
+                   placeholder="Keterangan singkat bukti">
+            <button class="btn btn-sm btn-secondary add-evidence"
+                    data-report="${r.name}">
+              Tambah Bukti
+            </button>
+          </div>
+
+          ${actions}
+        </div>`;
+    }).join("");
+
+    for (const r of data.reports) {
+      await showEvidence(r.name);
+    }
+
+    document.querySelectorAll(".add-evidence").forEach(b => {
+      b.onclick = async () => {
+        const report = b.dataset.report;
+        const input = document.getElementById(
+          "file-" + report
+        );
+
+        if (!input.files.length) {
+          frappe.msgprint("Pilih file bukti.");
+          return;
+        }
+
+        b.disabled = true;
+
+        try {
+          const url = await uploadFile(
+            input.files[0]
+          );
+
+          await call(
+            "rescue_net.api_verification.add_evidence",
+            {
+              report,
+              file_url:url,
+              evidence_type:"photo",
+              caption:document.getElementById(
+                "caption-" + report
+              ).value
+            }
+          );
+
+          await reload();
+        } finally {
+          b.disabled = false;
+        }
+      };
+    });
+
+    document.querySelectorAll(".verify-action").forEach(b => {
+      b.onclick = async () => {
+        const action = b.dataset.action;
+
+        const notes = prompt(
+          action === "verify"
+            ? "Catatan verifikasi (wajib bila tanpa evidence):"
+            : "Catatan tindakan:"
+        );
+
+        if (
+          (action === "reject" ||
+           action === "escalate") &&
+          !notes
+        ) {
+          return;
+        }
+
+        await call(
+          "rescue_net.api_verification.act",
+          {
+            report:b.dataset.report,
+            action,
+            notes:notes || ""
+          }
+        );
+
+        await reload();
+      };
+    });
+  }
+
+  await reload();
+});
+</script>
+{% endblock %}

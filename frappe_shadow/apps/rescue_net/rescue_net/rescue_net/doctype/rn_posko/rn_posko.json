@@ -205,6 +205,65 @@
       "fieldname": "public_verified_badge",
       "label": "Public Verified Badge",
       "fieldtype": "Check"
+    },
+    {
+      "fieldname": "public_detail",
+      "label": "Public Detail",
+      "fieldtype": "Select",
+      "options": "inherit\nprivate\npublic",
+      "default": "inherit"
+    },
+    {
+      "fieldname": "public_participation",
+      "label": "Public Participation",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "accept_volunteers",
+      "label": "Accept Volunteers",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "accept_goods",
+      "label": "Accept Goods",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "accept_donations",
+      "label": "Accept Donations",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "accept_partners",
+      "label": "Accept Partners",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "public_service_access",
+      "label": "Public Service Access",
+      "fieldtype": "Check",
+      "default": "0"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "source_updated_at",
+      "label": "Source Updated At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "freshness_policy_minutes",
+      "label": "Freshness Policy Minutes",
+      "fieldtype": "Int",
+      "default": "180"
     }
   ],
   "permissions": [

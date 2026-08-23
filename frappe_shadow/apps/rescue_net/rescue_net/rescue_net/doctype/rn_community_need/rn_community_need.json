@@ -135,6 +135,95 @@
       "label": "Verification Status",
       "fieldtype": "Data",
       "default": "unverified"
+    },
+    {
+      "fieldname": "raw_need_text",
+      "label": "Raw Need Text",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "item_kind",
+      "label": "Barang / Jasa",
+      "fieldtype": "Select",
+      "options": "barang\njasa\ncampuran\ntidak_diketahui",
+      "default": "tidak_diketahui"
+    },
+    {
+      "fieldname": "canonical_category",
+      "label": "Canonical Category",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "canonical_group",
+      "label": "Canonical Group",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "canonical_item",
+      "label": "Canonical Item",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "quantity_mode",
+      "label": "Quantity Mode",
+      "fieldtype": "Select",
+      "options": "exact\nestimated\nrange\nunknown",
+      "default": "unknown"
+    },
+    {
+      "fieldname": "quantity_min",
+      "label": "Quantity Min",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "quantity_max",
+      "label": "Quantity Max",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "estimate_text",
+      "label": "Estimate Text",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "normalization_source",
+      "label": "Normalization Source",
+      "fieldtype": "Select",
+      "options": "manual\nrule\nai",
+      "default": "rule"
+    },
+    {
+      "fieldname": "normalization_confidence",
+      "label": "Normalization Confidence",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "normalization_status",
+      "label": "Normalization Status",
+      "fieldtype": "Select",
+      "options": "suggested\nreviewed\naccepted",
+      "default": "suggested"
+    },
+    {
+      "fieldname": "normalization_note",
+      "label": "Normalization Note",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "source_updated_at",
+      "label": "Source Updated At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "freshness_policy_minutes",
+      "label": "Freshness Policy Minutes",
+      "fieldtype": "Int",
+      "default": "180"
     }
   ],
   "permissions": [

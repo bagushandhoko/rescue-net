@@ -1,0 +1,106 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<style>
+.rn{max-width:1100px;margin:24px auto}
+.rn-card{border:1px solid #ddd;border-radius:10px;padding:15px;margin:10px 0}
+.rn-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.rn-kpi{border:1px solid #ddd;border-radius:10px;padding:14px}
+.rn-kpi b{font-size:1.4em;display:block}
+.rn-meta{color:#666;font-size:.9em}
+@media(max-width:700px){.rn-kpis{grid-template-columns:1fr 1fr}}
+</style>
+
+<div class="rn">
+<h2>Data Konsolidasi</h2>
+
+<p>
+Raw report tidak dihapus atau ditimpa. Sistem mengelompokkan
+kebutuhan yang relatif sama dan memakai <b>MAX</b> sebagai
+safe first pass bila overlap belum dapat dibuktikan terpisah.
+</p>
+
+<div class="rn-kpis">
+  <div class="rn-kpi">
+    <span>Raw Needs</span>
+    <b id="raw">0</b>
+  </div>
+  <div class="rn-kpi">
+    <span>Canonical Groups</span>
+    <b id="groups">0</b>
+  </div>
+  <div class="rn-kpi">
+    <span>Rule</span>
+    <b>MAX</b>
+  </div>
+  <div class="rn-kpi">
+    <span>Truth</span>
+    <b>Derived</b>
+  </div>
+</div>
+
+<h3 style="margin-top:25px">Operational Estimates</h3>
+<div id="list"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  frappe.call({
+    method:"rescue_net.api_intelligence.control_centre_summary",
+    callback:r=>{
+      const data=r.message;
+
+      document.getElementById("raw").textContent =
+        data.raw_need_count;
+
+      document.getElementById("groups").textContent =
+        data.groups.length;
+
+      document.getElementById("list").innerHTML =
+        data.groups.map(g => `
+          <div class="rn-card">
+            <h4>${g.canonical_group}</h4>
+
+            <div>${g.area}</div>
+
+            <div class="rn-meta">
+              ${g.source_count} laporan/kebutuhan
+              · ${g.organization_count} Kelompok
+              · confidence ${g.confidence}% (${g.confidence_label})
+            </div>
+
+            <p>
+              Estimasi aman:
+              ${
+                g.estimate_min === null
+                ? "belum cukup data kuantitatif"
+                : (
+                    (g.estimate_min === g.estimate_max
+                      ? g.estimate_min
+                      : g.estimate_min + " – " + g.estimate_max)
+                    + " "
+                    + (g.units.length === 1
+                        ? g.units[0]
+                        : "")
+                  )
+              }
+            </p>
+
+            <div class="rn-meta">
+              Fresh: ${g.fresh_count}
+              · Stale: ${g.stale_count}
+              · Update terbaru: ${g.newest_update || "-"}
+              · Sumber tertua: ${g.oldest_source_used || "-"}
+            </div>
+
+            <div class="rn-meta">
+              Method: ${g.estimate_method}.
+              Ini derived estimate, bukan pengganti raw report.
+            </div>
+          </div>
+        `).join("")
+        || "<p>Belum ada kebutuhan aktif.</p>";
+    }
+  });
+});
+</script>
+{% endblock %}

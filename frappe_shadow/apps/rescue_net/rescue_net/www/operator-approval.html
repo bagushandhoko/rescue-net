@@ -1,0 +1,100 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<div style="max-width:950px;margin:25px auto">
+  <h2>Approval Operator Posko</h2>
+
+  <p>
+    Approval ini mengubah role efektif menjadi
+    <b>posko_operator</b>. Role pending tidak mempunyai
+    hak operasional sebelum disetujui.
+  </p>
+
+  <div id="requests"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const box = document.getElementById("requests");
+
+  function call(method,args={}) {
+    return new Promise((resolve,reject)=>{
+      frappe.call({
+        method,
+        args,
+        callback:r=>resolve(r.message),
+        error:reject
+      });
+    });
+  }
+
+  async function reload() {
+    const rows = await call(
+      "rescue_net.api_operator_approval.pending_requests"
+    );
+
+    if (!rows.length) {
+      box.innerHTML = "<p>Tidak ada request operator pending.</p>";
+      return;
+    }
+
+    box.innerHTML = rows.map(r => `
+      <div style="
+        border:1px solid #ddd;
+        padding:15px;
+        margin:12px 0;
+        border-radius:8px
+      ">
+        <b>${r.title || r.email || r.name}</b><br>
+        User: ${r.name}<br>
+        Posko: ${r.posko}<br>
+        Effective role: ${r.role}<br>
+        Requested role: ${r.requested_role}<br>
+        Status: ${r.role_request_status}<br><br>
+
+        <button
+          class="btn btn-primary approve"
+          data-user="${r.name}"
+          data-posko="${r.posko}">
+          Approve Operator
+        </button>
+
+        <button
+          class="btn btn-secondary reject"
+          data-user="${r.name}"
+          data-posko="${r.posko}">
+          Reject
+        </button>
+      </div>
+    `).join("");
+
+    document.querySelectorAll(".approve").forEach(b => {
+      b.onclick = async () => {
+        await call(
+          "rescue_net.api_operator_approval.approve_posko_operator",
+          {
+            user_account:b.dataset.user,
+            posko:b.dataset.posko
+          }
+        );
+        await reload();
+      };
+    });
+
+    document.querySelectorAll(".reject").forEach(b => {
+      b.onclick = async () => {
+        await call(
+          "rescue_net.api_operator_approval.reject_posko_operator",
+          {
+            user_account:b.dataset.user,
+            posko:b.dataset.posko
+          }
+        );
+        await reload();
+      };
+    });
+  }
+
+  await reload();
+});
+</script>
+{% endblock %}

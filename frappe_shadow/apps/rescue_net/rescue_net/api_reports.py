@@ -30,6 +30,7 @@ def submit_community_report(
     village_code=None,
     consent_to_contact=0,
     location_input_method=None,
+    create_need=0,
 ):
     if frappe.session.user == "Guest":
         frappe.throw("Login diperlukan untuk mengirim laporan")
@@ -76,10 +77,97 @@ def submit_community_report(
 
     doc.insert(ignore_permissions=True)
 
+    community_need = None
+
+    if cint(create_need):
+        need_text = (urgent_needs or "").strip()
+
+        if not need_text:
+            frappe.throw(
+                "Kebutuhan Mendesak wajib diisi bila dijadikan kebutuhan penanganan"
+            )
+
+        need = frappe.new_doc("RN Community Need")
+        need.title = f"Kebutuhan - {doc.title}"
+        need.source_report = doc.name
+        need.requester_user = doc.reporter_user
+        need.disaster_event = doc.disaster_event
+
+        if doc.reporter_user:
+            need.community_owner = frappe.db.get_value(
+                "RN User Account",
+                doc.reporter_user,
+                "organization",
+            )
+
+            if not need.community_owner:
+                memberships = frappe.get_all(
+                    "RN Organization Membership",
+                    filters={
+                        "user_account": doc.reporter_user,
+                        "status": "approved",
+                    },
+                    fields=["organization"],
+                    order_by="approved_at desc, creation asc",
+                    limit_page_length=1,
+                )
+                if memberships:
+                    need.community_owner = memberships[0].organization
+
+            if not need.community_owner:
+                memberships = frappe.get_all(
+                    "RN Organization Membership",
+                    filters={
+                        "user_account": doc.reporter_user,
+                        "status": "approved",
+                    },
+                    fields=["organization"],
+                    order_by="approved_at desc, creation asc",
+                    limit_page_length=1,
+                )
+                if memberships:
+                    need.community_owner = memberships[0].organization
+
+        need.need_type = doc.report_type
+        need.description = need_text
+
+        if priority in ("low", "medium", "high", "critical"):
+            need.urgency = priority
+
+        need.handling_mode = "community"
+        need.takeover_status = "none"
+        need.status = "open"
+
+        need.verification_status = "unverified"
+        need.verification_status = "unverified"
+        need.insert(ignore_permissions=True)
+        community_need = need.name
+
+        frappe.db.set_value(
+            "RN Community Report",
+            doc.name,
+            {
+                "converted_object_type": "RN Community Need",
+                "converted_object_id": need.name,
+            },
+            update_modified=False,
+        )
+
+        frappe.db.set_value(
+            "RN Community Report",
+            doc.name,
+            {
+                "converted_object_type": "RN Community Need",
+                "converted_object_id": need.name,
+            },
+            update_modified=False,
+        )
+
     return {
         "name": doc.name,
         "status": doc.status,
         "reporter_user": doc.reporter_user,
         "admin_area_id": doc.admin_area_id,
         "has_coordinates": doc.has_coordinates,
+        "community_need": community_need,
     }

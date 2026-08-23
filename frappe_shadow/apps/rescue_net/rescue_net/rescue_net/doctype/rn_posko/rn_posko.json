@@ -4,8 +4,6 @@
   "module": "Rescue Net",
   "custom": 0,
   "is_submittable": 0,
-  "autoname": "field:legacy_id",
-  "naming_rule": "By fieldname",
   "title_field": "title",
   "fields": [
     {
@@ -90,6 +88,123 @@
       "fieldname": "verification_status",
       "label": "Verification Status",
       "fieldtype": "Data"
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "visibility_scope",
+      "label": "Visibility Scope",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "access_policy",
+      "label": "Access Policy",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "officer_in_charge_name",
+      "label": "Officer In Charge",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "officer_in_charge_phone",
+      "label": "Officer Phone",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "officer_in_charge_role",
+      "label": "Officer Role",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "admin_area_id",
+      "label": "Admin Area ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "admin_level",
+      "label": "Admin Level",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "area_level",
+      "label": "Area Level",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "province_name",
+      "label": "Province",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "city_name",
+      "label": "City",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "district_name",
+      "label": "District",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "village_name",
+      "label": "Village",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "coverage_radius_meters",
+      "label": "Coverage Radius Meters",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "parent_posko",
+      "label": "Parent Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko"
+    },
+    {
+      "fieldname": "canonical_posko",
+      "label": "Canonical Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "identity_verification_status",
+      "label": "Identity Verification Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "identity_verified_by",
+      "label": "Identity Verified By",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "identity_verified_at",
+      "label": "Identity Verified At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "trusted_verifier_count",
+      "label": "Trusted Verifier Count",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "public_verified_badge",
+      "label": "Public Verified Badge",
+      "fieldtype": "Check"
     }
   ],
   "permissions": [

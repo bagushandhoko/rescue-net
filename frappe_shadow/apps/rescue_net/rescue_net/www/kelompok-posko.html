@@ -1,0 +1,320 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<style>
+.rn-wrap{max-width:1000px;margin:25px auto}
+.rn-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.rn-card{border:1px solid #ddd;border-radius:10px;padding:18px;margin-bottom:18px}
+.rn-card input,.rn-card select,.rn-card textarea{width:100%;padding:9px;margin:5px 0 10px}
+.rn-item{border-top:1px solid #eee;padding:10px 0}
+.rn-muted{font-size:.9em;color:#666}
+@media(max-width:700px){.rn-grid{grid-template-columns:1fr}}
+</style>
+
+<div class="rn-wrap">
+<h2>Kelompok & Posko</h2>
+<p>
+  Kelompok adalah asal komunitas. Posko adalah node penanganan.
+  Mengambil alih kebutuhan tidak mengubah laporan atau Kelompok asal.
+</p>
+
+<p>
+<a href="/laporan-masyarakat">← Laporan Masyarakat</a>
+</p>
+
+<div class="rn-grid">
+  <div class="rn-card">
+    <h3>Tambah Kelompok</h3>
+    <input id="org_name" placeholder="Nama Kelompok">
+    <select id="org_type">
+      <option value="community">Community</option>
+      <option value="government">Government</option>
+      <option value="ngo">NGO</option>
+      <option value="org_admin">Org Admin</option>
+      <option value="posko_operator">Posko Operator</option>
+    </select>
+    <input id="org_contact" placeholder="Kontak">
+    <textarea id="org_notes" placeholder="Catatan"></textarea>
+    <button class="btn btn-primary" id="create_org">Simpan Kelompok</button>
+    <div class="rn-muted">
+      Kelompok baru: pending / unverified.
+    </div>
+  </div>
+
+  <div class="rn-card">
+    <h3>Tambah Posko / Node</h3>
+    <input id="posko_name" placeholder="Nama Posko">
+    <select id="posko_type">
+      <option value="logistics">Logistics</option>
+      <option value="kitchen">Kitchen</option>
+      <option value="medical">Medical</option>
+      <option value="shelter">Shelter</option>
+      <option value="org_admin">Org Admin</option>
+      <option value="posko_operator">Posko Operator</option>
+    </select>
+    <select id="posko_org"><option value="">Mandiri / tanpa Kelompok</option></select>
+    <input id="posko_address" placeholder="Alamat / area Posko">
+    <button class="btn btn-primary" id="create_posko">Simpan Posko</button>
+    <div class="rn-muted">
+      Posko baru: self_reported. Membuat Posko tidak otomatis memberi role operator.
+    </div>
+  </div>
+</div>
+
+<div class="rn-card">
+  <h3>Daftar Kelompok</h3>
+  <div id="organizations"></div>
+</div>
+
+<div class="rn-card">
+  <h3>Daftar Posko</h3>
+  <div id="poskos"></div>
+</div>
+
+<div class="rn-card">
+  <h3>Kebutuhan Penanganan</h3>
+  <div class="rn-muted">
+    Raw report tetap terpisah. Verification status ditampilkan di setiap kebutuhan.
+  </div>
+  <div id="needs"></div>
+</div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const $ = id => document.getElementById(id);
+
+  function call(method,args={}) {
+    return new Promise((resolve,reject)=>{
+      frappe.call({
+        method,
+        args,
+        callback:r=>resolve(r.message),
+        error:reject
+      });
+    });
+  }
+
+  let context = await call(
+    "rescue_net.api_community_cluster.get_context"
+  );
+
+  async function reload() {
+    context = await call(
+      "rescue_net.api_community_cluster.get_context"
+    );
+
+    const orgs = await call(
+      "rescue_net.api_community_cluster.list_organizations"
+    );
+
+    $("organizations").innerHTML = "";
+    $("posko_org").innerHTML =
+      '<option value="">Mandiri / tanpa Kelompok</option>';
+
+    orgs.forEach(o => {
+      const member = context.memberships.find(
+        m => m.organization === o.name
+      );
+
+      $("organizations").innerHTML += `
+        <div class="rn-item">
+          <b>${o.title}</b><br>
+          ${o.organization_type || ""} ·
+          ${o.status || ""} ·
+          ${o.trust_level || ""}
+          ${member ? `<br>Membership: ${member.status}` : ""}
+          ${!member ? `<br><button
+            class="btn btn-sm btn-secondary join-org"
+            data-id="${o.name}">Gabung Kelompok</button>` : ""}
+        </div>`;
+
+      if (member && member.status === "approved") {
+        $("posko_org").innerHTML +=
+          `<option value="${o.name}">${o.title}</option>`;
+      }
+    });
+
+    document.querySelectorAll(".join-org").forEach(b => {
+      b.onclick = async () => {
+        await call(
+          "rescue_net.api_community_cluster.request_membership",
+          {organization:b.dataset.id}
+        );
+        await reload();
+      };
+    });
+
+    const poskos = await call(
+      "rescue_net.api_community_cluster.list_poskos"
+    );
+
+    $("poskos").innerHTML = poskos.map(p => {
+      const assignment = context.assignments.find(
+        a => a.posko === p.name
+      );
+
+      let operatorAction = "";
+
+      if (
+        assignment &&
+        assignment.status === "pending" &&
+        context.user.role !== "posko_operator"
+      ) {
+        if (
+          context.user.requested_role === "posko_operator" &&
+          context.user.role_request_status === "pending"
+        ) {
+          operatorAction =
+            "<br><b>Pengajuan Operator: pending approval</b>";
+        } else {
+          operatorAction = `
+            <br>
+            <button
+              class="btn btn-sm btn-secondary request-operator"
+              data-posko="${p.name}">
+              Ajukan sebagai Operator Posko
+            </button>`;
+        }
+      }
+
+      if (
+        assignment &&
+        assignment.status === "approved" &&
+        context.user.role === "posko_operator"
+      ) {
+        operatorAction =
+          "<br><b>Operator Posko aktif</b>";
+      }
+
+      return `
+        <div class="rn-item">
+          <b>${p.title}</b><br>
+          ${p.posko_type || ""} ·
+          ${p.operational_status || ""} ·
+          ${p.verification_status || ""}
+          ${operatorAction}
+        </div>`;
+    }).join("");
+
+    document.querySelectorAll(".request-operator").forEach(b => {
+      b.onclick = async () => {
+        await call(
+          "rescue_net.api_operator_approval.request_posko_operator",
+          {posko:b.dataset.posko}
+        );
+        await reload();
+      };
+    });
+
+    const needs = await call(
+      "rescue_net.api_community_cluster.list_needs"
+    );
+
+    const approvedPoskos = new Set(
+      context.assignments
+        .filter(a => a.status === "approved")
+        .map(a => a.posko)
+    );
+
+    if (context.user.posko) {
+      approvedPoskos.add(context.user.posko);
+    }
+
+    $("needs").innerHTML = needs.map(n => {
+      let action = "";
+
+      if (
+        context.user.role === "posko_operator" &&
+        approvedPoskos.size
+      ) {
+        const options = [...approvedPoskos].map(
+          p => `<option value="${p}">${p}</option>`
+        ).join("");
+
+        if (n.handling_mode === "community") {
+          action = `
+            <select id="take-${n.name}">${options}</select>
+            <button class="btn btn-sm btn-primary takeover"
+                    data-id="${n.name}">
+              Ambil Alih Penanganan
+            </button>`;
+        }
+      }
+
+      return `
+        <div class="rn-item">
+          <b>${n.title}</b><br>
+          Source: ${n.source_report || "-"}<br>
+          Kelompok asal: ${n.community_owner || "Individual"}<br>
+          Verification: ${n.verification_status || "unverified"}<br>
+          Handling: ${n.handling_mode}
+          ${n.handling_posko ? " · " + n.handling_posko : ""}
+          <div>${action}</div>
+        </div>`;
+    }).join("");
+
+    document.querySelectorAll(".takeover").forEach(b => {
+      b.onclick = async () => {
+        const posko = $("take-" + b.dataset.id).value;
+
+        await call(
+          "rescue_net.api_community_needs.take_over",
+          {
+            community_need:b.dataset.id,
+            posko:posko
+          }
+        );
+
+        await reload();
+      };
+    });
+  }
+
+  $("create_org").onclick = async () => {
+    if (!$("org_name").value.trim()) {
+      frappe.msgprint("Nama Kelompok wajib diisi");
+      return;
+    }
+
+    await call(
+      "rescue_net.api_community_cluster.create_organization",
+      {
+        title:$("org_name").value,
+        organization_type:$("org_type").value,
+        contact_person:$("org_contact").value,
+        notes:$("org_notes").value
+      }
+    );
+
+    $("org_name").value = "";
+    await reload();
+  };
+
+  $("create_posko").onclick = async () => {
+    if (
+      !$("posko_name").value.trim() ||
+      !$("posko_address").value.trim()
+    ) {
+      frappe.msgprint("Nama dan alamat Posko wajib diisi");
+      return;
+    }
+
+    await call(
+      "rescue_net.api_community_cluster.create_posko",
+      {
+        title:$("posko_name").value,
+        posko_type:$("posko_type").value,
+        address:$("posko_address").value,
+        organization:$("posko_org").value || null
+      }
+    );
+
+    $("posko_name").value = "";
+    $("posko_address").value = "";
+    await reload();
+  };
+
+  await reload();
+});
+</script>
+{% endblock %}

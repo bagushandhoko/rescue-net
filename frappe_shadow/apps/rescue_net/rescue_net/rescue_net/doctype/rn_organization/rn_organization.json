@@ -4,8 +4,6 @@
   "module": "Rescue Net",
   "custom": 0,
   "is_submittable": 0,
-  "autoname": "field:legacy_id",
-  "naming_rule": "By fieldname",
   "title_field": "title",
   "fields": [
     {
@@ -53,6 +51,71 @@
       "label": "Legacy Payload",
       "fieldtype": "Code",
       "options": "JSON"
+    },
+    {
+      "fieldname": "trust_level",
+      "label": "Trust Level",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "visibility_scope",
+      "label": "Visibility Scope",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "access_policy",
+      "label": "Access Policy",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "contact_person",
+      "label": "Contact Person",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "identity_verification_status",
+      "label": "Identity Verification Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "identity_verified_by",
+      "label": "Identity Verified By",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "identity_verified_at",
+      "label": "Identity Verified At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "trusted_verifier_count",
+      "label": "Trusted Verifier Count",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "public_verified_badge",
+      "label": "Public Verified Badge",
+      "fieldtype": "Check"
     }
   ],
   "permissions": [

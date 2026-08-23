@@ -43,6 +43,7 @@
 
 <div class="rn-report">
   <h2>Laporan Masyarakat</h2>
+  <p><a href="/kelompok-posko">Kelompok & Posko →</a></p>
 
   <label>Judul Laporan</label>
   <input id="title">
@@ -73,6 +74,15 @@
 
   <label>Kebutuhan Mendesak</label>
   <textarea id="urgent_needs"></textarea>
+
+  <label style="margin-top:10px">
+    <input id="create_need" type="checkbox" style="width:auto">
+    Jadikan sebagai kebutuhan penanganan
+  </label>
+  <div style="font-size:0.9em">
+    Awalnya dikelola masyarakat/Kelompok. Posko dapat mengambil alih
+    penanganannya kemudian tanpa mengubah asal kebutuhan.
+  </div>
 
   <div id="manual-area-section">
 <h4 style="margin-top:25px">Wilayah</h4>
@@ -281,6 +291,16 @@ document.addEventListener("DOMContentLoaded", async function () {
       return;
     }
 
+    if (
+      $("create_need").checked &&
+      !$("urgent_needs").value.trim()
+    ) {
+      frappe.msgprint(
+        "Isi Kebutuhan Mendesak sebelum menjadikannya kebutuhan penanganan"
+      );
+      return;
+    }
+
     $("submit_report").disabled = true;
 
     try {
@@ -301,13 +321,20 @@ document.addEventListener("DOMContentLoaded", async function () {
           district_code: $("district").value,
           village_code: $("village").value,
           consent_to_contact: $("consent").checked ? 1 : 0,
-          location_input_method: method
+          location_input_method: method,
+          create_need: $("create_need").checked ? 1 : 0
         }
       );
+
+      const needInfo = result.community_need
+        ? `<br>Kebutuhan penanganan: <b>${result.community_need}</b>
+           <br>Status awal: dikelola masyarakat/Kelompok`
+        : "";
 
       $("result").innerHTML =
         `<div class="alert alert-success">
           Laporan berhasil dikirim: <b>${result.name}</b>
+          ${needInfo}
         </div>`;
     } finally {
       $("submit_report").disabled = false;

@@ -1,0 +1,83 @@
+{
+  "doctype": "DocType",
+  "name": "RN Community Report Verification",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "legacy_source",
+      "label": "Legacy Source",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "migration_status",
+      "label": "Migration Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "report",
+      "label": "Report",
+      "fieldtype": "Link",
+      "options": "RN Community Report",
+      "reqd": 1
+    },
+    {
+      "fieldname": "verifier_user",
+      "label": "Verifier",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "verifier_role",
+      "label": "Verifier Role",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "action",
+      "label": "Action",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "before_status",
+      "label": "Before Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "after_status",
+      "label": "After Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "event_created_at",
+      "label": "Created At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

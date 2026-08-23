@@ -1,0 +1,414 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+
+<style>
+.rn-wrap{max-width:1200px;margin:24px auto;padding:0 14px 80px}
+.rn-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.rn-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+.rn-card,.rn-kpi{border:1px solid #ddd;border-radius:12px;padding:14px;margin:10px 0;background:#fff}
+.rn-kpi b{display:block;font-size:1.5rem}
+input,select,textarea{width:100%;min-height:44px;padding:9px;margin:5px 0;border:1px solid #ccc;border-radius:7px}
+textarea{min-height:70px}
+button{min-height:42px}
+.rn-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.rn-badge{display:inline-block;padding:4px 8px;border:1px solid #ddd;border-radius:999px;margin:3px;font-size:.82rem}
+.rn-note{padding:12px;border-radius:10px;background:#fff5d6;margin:10px 0}
+.rn-muted{opacity:.72;font-size:.9rem}
+@media(max-width:800px){
+ .rn-grid{grid-template-columns:1fr}
+ .rn-kpis{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+
+<div class="rn-wrap">
+
+<h2>Dapur Umum</h2>
+
+<p class="rn-muted">
+Produksi makanan, penggunaan bahan, saldo efektif dapur,
+distribusi porsi, dan evidence operasional.
+</p>
+
+<div class="rn-note">
+<b>Stock Observation tetap snapshot.</b>
+Pemakaian bahan dapur dicatat sebagai consumption event terpisah,
+sehingga provenance stok tidak diubah.
+</div>
+
+<div class="rn-kpis">
+ <div class="rn-kpi"><span>Produksi</span><b id="kProduction">0</b></div>
+ <div class="rn-kpi"><span>Total Porsi</span><b id="kPortions">0</b></div>
+ <div class="rn-kpi"><span>Penggunaan Bahan</span><b id="kUsage">0</b></div>
+ <div class="rn-kpi"><span>Item Stok</span><b id="kStock">0</b></div>
+</div>
+
+<div class="rn-grid">
+
+<div class="rn-card">
+<h4>Catat Produksi Makanan</h4>
+
+<input id="posko"
+ placeholder="RN Posko ID">
+
+<input id="meal"
+ placeholder="Nama makanan">
+
+<input id="portions"
+ type="number"
+ value="100"
+ min="1"
+ placeholder="Jumlah porsi">
+
+<input id="target"
+ placeholder="Target lokasi distribusi">
+
+<textarea id="notes"
+ placeholder="Catatan produksi"></textarea>
+
+<hr>
+
+<h5>Bahan</h5>
+
+<input id="ingredient"
+ placeholder="Nama bahan">
+
+<div class="rn-grid">
+ <input id="ingredientQty"
+  type="number"
+  step="0.01"
+  value="1"
+  placeholder="Jumlah">
+
+ <input id="ingredientUnit"
+  value="kg"
+  placeholder="Unit">
+</div>
+
+<button class="btn btn-primary" id="saveProduction">
+Simpan Produksi
+</button>
+</div>
+
+<div class="rn-card">
+<h4>Saldo Efektif Dapur</h4>
+
+<p class="rn-muted">
+Snapshot stok terbaru dikurangi penggunaan dapur setelah snapshot tersebut.
+</p>
+
+<div id="stockList"></div>
+</div>
+
+</div>
+
+<h3>Meal Productions</h3>
+<div id="productionList"></div>
+
+<h3>Ingredient Consumption</h3>
+<div id="usageList"></div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded",async()=>{
+
+ const params=new URLSearchParams(location.search);
+ const queryPosko=params.get("posko")||params.get("id")||"";
+
+ if(queryPosko){
+  document.getElementById("posko").value=queryPosko;
+ }
+
+ let data={};
+
+ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#039;"
+ }[c]));
+
+ const val=id=>document.getElementById(id).value;
+
+ const call=(method,args={})=>new Promise((resolve,reject)=>{
+  frappe.call({
+   method,
+   args,
+   callback:r=>resolve(r.message),
+   error:reject
+  });
+ });
+
+ const notice=text=>frappe.show_alert({
+  message:text,
+  indicator:"green"
+ });
+
+ function evidenceBlock(name){
+  return `
+   <div class="rn-actions">
+    <input type="file" data-file="${esc(name)}">
+    <button
+     class="btn btn-sm btn-secondary evidence"
+     data-name="${esc(name)}">
+     Evidence Privat
+    </button>
+   </div>
+  `;
+ }
+
+ async function uploadEvidence(btn){
+  const input=document.querySelector(
+   `[data-file="${btn.dataset.name}"]`
+  );
+
+  if(!input?.files?.length){
+   alert("Pilih file.");
+   return;
+  }
+
+  const fd=new FormData();
+  fd.append("file",input.files[0]);
+  fd.append("is_private","1");
+
+  const response=await fetch(
+   "/api/method/upload_file",
+   {
+    method:"POST",
+    body:fd,
+    headers:{
+     "X-Frappe-CSRF-Token":frappe.csrf_token
+    }
+   }
+  );
+
+  const json=await response.json();
+  const fileUrl=json.message?.file_url;
+
+  if(!fileUrl){
+   throw new Error("Upload gagal");
+  }
+
+  await call(
+   "rescue_net.api_kitchen.add_evidence",
+   {
+    linked_doctype:"RN Kitchen Production",
+    linked_name:btn.dataset.name,
+    file_url:fileUrl
+   }
+  );
+
+  notice("Evidence privat tersimpan");
+ }
+
+ function statusButtons(row){
+  if(row.production_status==="prepared"){
+   return `
+    <button class="btn btn-sm btn-primary lifecycle"
+     data-name="${esc(row.name)}"
+     data-status="dispatched">
+     Dispatch
+    </button>
+   `;
+  }
+
+  if(row.production_status==="dispatched"){
+   return `
+    <button class="btn btn-sm btn-primary lifecycle"
+     data-name="${esc(row.name)}"
+     data-status="distributed">
+     Tandai Distributed
+    </button>
+   `;
+  }
+
+  return "";
+ }
+
+ function render(){
+  const productions=data.productions||[];
+  const usages=data.ingredient_usages||[];
+  const stocks=data.stock_summary||[];
+
+  document.getElementById("kProduction").textContent=
+   productions.length;
+
+  document.getElementById("kPortions").textContent=
+   productions.reduce(
+    (n,x)=>n+Number(x.portions||0),
+    0
+   );
+
+  document.getElementById("kUsage").textContent=
+   usages.length;
+
+  document.getElementById("kStock").textContent=
+   stocks.length;
+
+  document.getElementById("stockList").innerHTML=
+   stocks.map(x=>`
+    <div class="rn-card">
+     <b>${esc(x.item_name)}</b>
+     <span class="rn-badge">${esc(x.quantity_mode)}</span>
+
+     <div>
+      Snapshot:
+      ${esc(x.snapshot_quantity)}
+      ${esc(x.unit)}
+     </div>
+
+     <div>
+      Dipakai setelah snapshot:
+      ${esc(x.kitchen_used_after_snapshot)}
+      ${esc(x.unit)}
+     </div>
+
+     <div>
+      <b>Efektif tersedia:
+      ${esc(x.effective_available)}
+      ${esc(x.unit)}</b>
+     </div>
+
+     <div class="rn-muted">
+      Posko: ${esc(x.posko)}
+     </div>
+    </div>
+   `).join("") || "<p>Belum ada stok tersedia.</p>";
+
+  document.getElementById("productionList").innerHTML=
+   productions.map(x=>`
+    <div class="rn-card">
+     <b>${esc(x.meal_name)}</b>
+
+     <span class="rn-badge">
+      ${esc(x.production_status)}
+     </span>
+
+     <div>
+      ${esc(x.portions)} porsi
+     </div>
+
+     <div>
+      Target:
+      ${esc(x.target_distribution_location||"-")}
+     </div>
+
+     <div>
+      Posko:
+      ${esc(x.posko)}
+     </div>
+
+     <div class="rn-actions">
+      ${statusButtons(x)}
+     </div>
+
+     ${evidenceBlock(x.name)}
+    </div>
+   `).join("") || "<p>Belum ada produksi.</p>";
+
+  document.getElementById("usageList").innerHTML=
+   usages.map(x=>`
+    <div class="rn-card">
+     <b>${esc(x.item_name)}</b>
+
+     <span class="rn-badge">
+      ${esc(x.usage_status)}
+     </span>
+
+     <div>
+      Digunakan:
+      ${esc(x.quantity)}
+      ${esc(x.unit)}
+     </div>
+
+     <div>
+      Sebelum:
+      ${esc(x.available_before)}
+      →
+      Sesudah:
+      ${esc(x.available_after)}
+     </div>
+
+     <div class="rn-muted">
+      Basis snapshot:
+      ${esc(x.stock_observation)}
+     </div>
+    </div>
+   `).join("") || "<p>Belum ada pemakaian bahan.</p>";
+
+  bindActions();
+ }
+
+ function bindActions(){
+  document.querySelectorAll(".lifecycle").forEach(btn=>{
+   btn.onclick=async()=>{
+    await call(
+     "rescue_net.api_kitchen.update_production_status",
+     {
+      production:btn.dataset.name,
+      new_status:btn.dataset.status
+     }
+    );
+
+    await load();
+   };
+  });
+
+  document.querySelectorAll(".evidence").forEach(btn=>{
+   btn.onclick=()=>{
+    uploadEvidence(btn).catch(e=>alert(e.message||e));
+   };
+  });
+ }
+
+ async function load(){
+  const p=queryPosko||val("posko");
+
+  data=await call(
+   "rescue_net.api_kitchen.dashboard",
+   {
+    posko:p||null
+   }
+  );
+
+  render();
+ }
+
+ document.getElementById("saveProduction").onclick=async()=>{
+  const posko=val("posko").trim();
+  const meal=val("meal").trim();
+  const ingredient=val("ingredient").trim();
+
+  if(!posko||!meal||!ingredient){
+   alert("Posko, nama makanan, dan bahan wajib diisi.");
+   return;
+  }
+
+  await call(
+   "rescue_net.api_kitchen.create_production",
+   {
+    posko,
+    meal_name:meal,
+    portions:val("portions"),
+    target_distribution_location:val("target"),
+    notes:val("notes"),
+    ingredients:JSON.stringify([
+     {
+      item_name:ingredient,
+      quantity:val("ingredientQty"),
+      unit:val("ingredientUnit")
+     }
+    ])
+   }
+  );
+
+  notice("Produksi makanan tersimpan");
+  await load();
+ };
+
+ await load();
+});
+</script>
+
+{% endblock %}

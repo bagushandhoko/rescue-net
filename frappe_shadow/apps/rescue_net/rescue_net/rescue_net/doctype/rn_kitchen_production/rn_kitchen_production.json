@@ -1,0 +1,97 @@
+{
+  "doctype": "DocType",
+  "name": "RN Kitchen Production",
+  "module": "Rescue Net",
+  "title_field": "meal_name",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "meal_name",
+      "label": "Nama Makanan",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "portions",
+      "label": "Porsi",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "production_time",
+      "label": "Waktu Produksi",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "target_distribution_location",
+      "label": "Target Distribusi",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "production_status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "prepared\ndispatched\ndistributed",
+      "default": "prepared"
+    },
+    {
+      "fieldname": "dispatched_at",
+      "label": "Dispatched At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "distributed_at",
+      "label": "Distributed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

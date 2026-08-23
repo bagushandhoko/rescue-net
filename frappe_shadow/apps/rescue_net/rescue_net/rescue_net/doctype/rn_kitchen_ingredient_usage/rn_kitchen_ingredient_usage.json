@@ -1,0 +1,110 @@
+{
+  "doctype": "DocType",
+  "name": "RN Kitchen Ingredient Usage",
+  "module": "Rescue Net",
+  "title_field": "item_name",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "production",
+      "label": "Kitchen Production",
+      "fieldtype": "Link",
+      "options": "RN Kitchen Production",
+      "reqd": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "item_name",
+      "label": "Ingredient",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "quantity",
+      "label": "Quantity Used",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "unit",
+      "label": "Unit",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "stock_observation",
+      "label": "Stock Observation Basis",
+      "fieldtype": "Link",
+      "options": "RN Stock Observation"
+    },
+    {
+      "fieldname": "stock_quantity_mode",
+      "label": "Stock Quantity Mode",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "stock_basis_quantity",
+      "label": "Stock Basis Quantity",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "available_before",
+      "label": "Available Before",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "available_after",
+      "label": "Available After",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "consumed_at",
+      "label": "Consumed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "usage_status",
+      "label": "Usage Status",
+      "fieldtype": "Select",
+      "options": "consumed",
+      "default": "consumed"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

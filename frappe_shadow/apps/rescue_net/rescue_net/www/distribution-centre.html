@@ -1,0 +1,201 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<style>
+.rn{
+  max-width:1050px;
+  margin:24px auto;
+  padding:0 14px 90px;
+}
+.rn-nav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0 18px;
+}
+.rn-nav a{
+  border:1px solid #ddd;
+  border-radius:999px;
+  padding:7px 11px;
+  text-decoration:none;
+}
+.card{
+  border:1px solid #ddd;
+  border-radius:12px;
+  padding:14px;
+  margin:10px 0;
+}
+.meta{
+  font-size:.88em;
+  color:#666;
+  margin-top:5px;
+}
+input,select{
+  width:100%;
+  padding:10px;
+  min-height:44px;
+  margin:5px 0;
+}
+button{
+  min-height:44px;
+}
+.actions{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.badge{
+  display:inline-block;
+  border:1px solid #ccc;
+  border-radius:999px;
+  padding:3px 8px;
+  margin:3px 3px 3px 0;
+  font-size:.82em;
+}
+.rn-mobile-nav{
+  display:none;
+}
+
+@media(max-width:700px){
+  .rn{
+    margin:10px auto;
+    padding:0 10px 82px;
+  }
+  .rn h2{
+    font-size:1.45rem;
+  }
+  .card{
+    padding:12px;
+  }
+  .rn-nav{
+    display:none;
+  }
+  .actions button{
+    flex:1 1 46%;
+  }
+  .rn-mobile-nav{
+    display:grid;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:1000;
+    grid-template-columns:repeat(4,1fr);
+    background:#fff;
+    border-top:1px solid #ddd;
+    padding:6px 4px;
+  }
+  .rn-mobile-nav a{
+    text-align:center;
+    text-decoration:none;
+    padding:8px 3px;
+    font-size:.78rem;
+  }
+}
+</style>
+<div class="rn">
+<h2>Distribusi</h2>
+<p><b>Offered ≠ in transit ≠ arrived ≠ received ≠ stock tersedia.</b> Penerimaan barang tidak otomatis menambah stok sampai Posko membuat Stock Observation.</p>
+<div class="rn-nav">
+<a href="/kelompok-posko">Kelompok & Posko</a>
+<a href="/logistics-centre">Logistik</a>
+<a href="/distribution-centre"><b>Distribusi</b></a>
+<a href="/data-consolidation">Control Centre</a>
+</div>
+
+<div class="card">
+<h4>Buat Distribution Flow</h4>
+<select id="dest"></select>
+<input id="item" placeholder="Barang / kebutuhan">
+<select id="mode"><option value="unknown">Jumlah belum diketahui</option><option value="estimated">Estimasi</option><option value="exact">Pasti</option></select>
+<input id="qty" type="number" step="0.01" placeholder="Jumlah (opsional)">
+<input id="unit" placeholder="Satuan (opsional)">
+<button class="btn btn-primary" id="create">Buat Flow</button>
+</div>
+
+<h3>Flow</h3><div id="flows"></div>
+</div>
+
+<nav class="rn-mobile-nav">
+<a href="/kelompok-posko">Posko</a>
+<a href="/logistics-centre">Logistik</a>
+<a href="/distribution-centre"><b>Distribusi</b></a>
+<a href="/data-consolidation">Control</a>
+</nav>
+
+<script>
+document.addEventListener("DOMContentLoaded", async()=>{
+ const call=(method,args={})=>new Promise((ok,fail)=>frappe.call({method,args,callback:r=>ok(r.message),error:fail}));
+ let data;
+
+ async function load(){
+   data=await call("rescue_net.api_logistics.dashboard");
+   document.getElementById("dest").innerHTML=data.poskos.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");
+   document.getElementById("flows").innerHTML=data.flows.map(f=>`
+    <div class="card">
+      <b>${f.canonical_group||f.item_name||"Belum dikelompokkan"}</b>
+      <div>${f.item_name||""}</div>
+
+      <div style="margin-top:7px">
+        ${
+          f.quantity_mode==="unknown"
+          ? "Jumlah belum diketahui"
+          : ((f.quantity??"")+" "+(f.unit||""))
+        }
+      </div>
+
+      <div>
+        <span class="badge">${f.flow_status}</span>
+        <span class="badge">${f.quantity_mode||"unknown"}</span>
+        <span class="badge">${f.freshness.status}</span>
+      </div>
+
+      <div class="meta">
+        ${
+          f.freshness.age_minutes===null
+          ? "Waktu update lapangan belum diketahui"
+          : "Update "+f.freshness.age_minutes+" menit lalu"
+        }
+      </div>
+      <div class="actions">
+       ${nextButtons(f)}
+      </div>
+    </div>`).join("")||"<p>Belum ada flow.</p>";
+
+   document.querySelectorAll("[data-flow-action]").forEach(b=>{
+     b.onclick=async()=>{
+       await call("rescue_net.api_logistics.update_flow_status",{
+         flow:b.dataset.flow,
+         new_status:b.dataset.flowAction
+       });
+       await load();
+     };
+   });
+ }
+
+ function nextButtons(f){
+   const m={
+    planned:["assigned_pickup"],
+    assigned_pickup:["dispatched","in_transit"],
+    dispatched:["in_transit"],
+    in_transit:["arrived_at_posko"],
+    arrived_at_posko:["received"]
+   };
+   return (m[f.flow_status]||[]).map(x=>`<button class="btn btn-sm btn-secondary" data-flow="${f.name}" data-flow-action="${x}">${x}</button>`).join("");
+ }
+
+ document.getElementById("create").onclick=async()=>{
+   await call("rescue_net.api_logistics.create_flow",{
+     destination_posko:document.getElementById("dest").value,
+     item_text:document.getElementById("item").value,
+     quantity:document.getElementById("qty").value,
+     unit:document.getElementById("unit").value,
+     quantity_mode:document.getElementById("mode").value
+   });
+   await load();
+ };
+
+ await load();
+});
+</script>
+{% endblock %}

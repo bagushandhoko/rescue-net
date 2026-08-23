@@ -4,8 +4,6 @@
   "module": "Rescue Net",
   "custom": 0,
   "is_submittable": 0,
-  "autoname": "field:legacy_id",
-  "naming_rule": "By fieldname",
   "title_field": "title",
   "fields": [
     {
@@ -100,6 +98,110 @@
       "label": "Target Posko",
       "fieldtype": "Link",
       "options": "RN Posko"
+    },
+    {
+      "fieldname": "raw_item_text",
+      "label": "Raw Item Text",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "quantity_mode",
+      "label": "Quantity Mode",
+      "fieldtype": "Select",
+      "options": "exact\nestimated\nrange\nunknown",
+      "default": "unknown"
+    },
+    {
+      "fieldname": "quantity_min",
+      "label": "Quantity Min",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "quantity_max",
+      "label": "Quantity Max",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "estimate_text",
+      "label": "Estimate Text",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "canonical_category",
+      "label": "Canonical Category",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "canonical_group",
+      "label": "Canonical Group",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "canonical_item",
+      "label": "Canonical Item",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "normalization_source",
+      "label": "Normalization Source",
+      "fieldtype": "Select",
+      "options": "manual\nrule\nai",
+      "default": "rule"
+    },
+    {
+      "fieldname": "normalization_confidence",
+      "label": "Normalization Confidence",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "normalization_status",
+      "label": "Normalization Status",
+      "fieldtype": "Select",
+      "options": "suggested\nreviewed\naccepted",
+      "default": "suggested"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "source_updated_at",
+      "label": "Source Updated At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "freshness_policy_minutes",
+      "label": "Freshness Policy Minutes",
+      "fieldtype": "Int",
+      "default": "180"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "donor_user",
+      "label": "Donor User",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "ready_at",
+      "label": "Ready At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "batch_no",
+      "label": "Batch No",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "expiry_date",
+      "label": "Expiry Date",
+      "fieldtype": "Date"
     }
   ],
   "permissions": [

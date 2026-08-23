@@ -50,26 +50,16 @@ def _classify(doc, raw):
         doc.estimate_text = suggestion["estimate_text"]
 
 
-class RNAidOffer(Document):
+class RNStockObservation(Document):
     def autoname(self):
-        if self.legacy_id:
-            self.name = self.legacy_id
-            return
-
-        seed = f"{self.donor_name or ''}:{self.item_name or ''}:{frappe.generate_hash(length=12)}"
-        self.name = "rn-aid-" + hashlib.sha256(
+        seed = f"{self.posko}:{self.item_name or ''}:{frappe.generate_hash(length=12)}"
+        self.name = "rn-stock-" + hashlib.sha256(
             seed.encode()
         ).hexdigest()[:20]
 
     def before_insert(self):
-        if self.legacy_id:
-            return
-
-        self.legacy_source = None
-        self.migration_status = None
-
-        if not self.donor_user:
-            self.donor_user = _actor()
+        if not self.created_by_user:
+            self.created_by_user = _actor()
 
         if not self.raw_item_text:
             self.raw_item_text = self.item_name or self.title or ""
@@ -84,9 +74,3 @@ class RNAidOffer(Document):
 
         if not self.source_updated_at:
             self.source_updated_at = self.observed_at
-
-        if not self.offer_status:
-            self.offer_status = "available"
-
-        if not self.verification_status:
-            self.verification_status = "self_reported"

@@ -1,0 +1,255 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<style>
+.rn{
+  max-width:1100px;
+  margin:24px auto;
+  padding:0 14px 90px;
+}
+.rn-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.rn-nav{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:12px 0 18px;
+}
+.rn-nav a{
+  border:1px solid #ddd;
+  border-radius:999px;
+  padding:7px 11px;
+  text-decoration:none;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.card{
+  border:1px solid #ddd;
+  border-radius:12px;
+  padding:14px;
+  margin:10px 0;
+}
+label{
+  display:block;
+  margin:7px 0;
+}
+input,select,textarea{
+  width:100%;
+  padding:10px;
+  min-height:44px;
+}
+button{
+  min-height:44px;
+}
+.meta{
+  font-size:.88em;
+  color:#666;
+  margin-top:5px;
+}
+.rn-status{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:7px;
+}
+.badge{
+  border:1px solid #ccc;
+  border-radius:999px;
+  padding:3px 8px;
+  font-size:.82em;
+}
+.rn-mobile-nav{
+  display:none;
+}
+
+@media(max-width:700px){
+  .rn{
+    margin:10px auto;
+    padding:0 10px 82px;
+  }
+  .grid{
+    grid-template-columns:1fr;
+  }
+  .rn h2{
+    font-size:1.45rem;
+    margin-bottom:5px;
+  }
+  .card{
+    padding:12px;
+  }
+  .rn-nav{
+    display:none;
+  }
+  .rn-mobile-nav{
+    display:grid;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    z-index:1000;
+    grid-template-columns:repeat(4,1fr);
+    background:#fff;
+    border-top:1px solid #ddd;
+    padding:6px 4px;
+  }
+  .rn-mobile-nav a{
+    text-align:center;
+    text-decoration:none;
+    padding:8px 3px;
+    font-size:.78rem;
+  }
+}
+</style>
+<div class="rn">
+<div class="rn-top">
+<div>
+<h2>Logistik Posko</h2>
+<p>
+Jumlah boleh pasti, estimasi, range, atau belum diketahui.
+Waktu update lapangan ditampilkan terpisah dari waktu perubahan sistem.
+</p>
+</div>
+</div>
+
+<div class="rn-nav">
+<a href="/kelompok-posko">Kelompok & Posko</a>
+<a href="/logistics-centre"><b>Logistik</b></a>
+<a href="/distribution-centre">Distribusi</a>
+<a href="/data-consolidation">Control Centre</a>
+</div>
+
+<label>Posko
+<select id="posko"></select>
+</label>
+
+<div class="grid">
+<div class="card">
+<h4>Update Stok</h4>
+<input id="stockText" placeholder="Contoh: Aqua 600 ml sekitar 20 dus">
+<select id="stockMode"><option value="unknown">Belum diketahui</option><option value="estimated">Estimasi</option><option value="exact">Pasti</option><option value="range">Range</option></select>
+<input id="stockQty" type="number" step="0.01" placeholder="Jumlah (opsional)">
+<input id="stockUnit" placeholder="Satuan (opsional)">
+<button class="btn btn-primary" id="saveStock">Simpan Observasi Stok</button>
+</div>
+
+<div class="card">
+<h4>Tambah Kebutuhan</h4>
+<input id="needText" placeholder="Contoh: butuh air minum untuk ±200 orang">
+<select id="needMode"><option value="unknown">Belum diketahui</option><option value="estimated">Estimasi</option><option value="exact">Pasti</option><option value="range">Range</option></select>
+<input id="needQty" type="number" step="0.01" placeholder="Jumlah (opsional)">
+<input id="needUnit" placeholder="Satuan (opsional)">
+<button class="btn btn-primary" id="saveNeed">Simpan Kebutuhan</button>
+</div>
+</div>
+
+<h3>Stok Terbaru</h3><div id="stocks"></div>
+<h3>Kebutuhan</h3><div id="needs"></div>
+</div>
+
+<nav class="rn-mobile-nav">
+<a href="/kelompok-posko">Posko</a>
+<a href="/logistics-centre"><b>Logistik</b></a>
+<a href="/distribution-centre">Distribusi</a>
+<a href="/data-consolidation">Control</a>
+</nav>
+
+<script>
+document.addEventListener("DOMContentLoaded", async()=>{
+ const call=(method,args={})=>new Promise((ok,fail)=>frappe.call({method,args,callback:r=>ok(r.message),error:fail}));
+ let data;
+
+ async function load(){
+   data=await call("rescue_net.api_logistics.dashboard");
+   const s=document.getElementById("posko");
+   const old=s.value;
+   s.innerHTML=data.poskos.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");
+   if(old) s.value=old;
+   render();
+ }
+
+ function render(){
+   const p=document.getElementById("posko").value;
+   document.getElementById("stocks").innerHTML=data.stocks.filter(x=>x.posko===p).map(x=>`
+    <div class="card">
+    <b>${x.canonical_group||x.item_name||"Belum dikelompokkan"}</b>
+    <div class="meta">${x.raw_item_text||x.item_name||""}</div>
+    <div style="margin-top:7px">
+      ${
+        x.quantity_mode==="unknown"
+        ? "Jumlah belum diketahui"
+        : (
+            x.quantity_mode==="range"
+            ? ((x.quantity_min??"?")+" – "+(x.quantity_max??"?")+" "+(x.unit||""))
+            : ((x.quantity??"")+" "+(x.unit||""))
+          )
+      }
+    </div>
+    <div class="rn-status">
+      <span class="badge">${x.quantity_mode||"unknown"}</span>
+      <span class="badge">${x.freshness.status}</span>
+      <span class="badge">${x.verification_status||"self_reported"}</span>
+    </div>
+    <div class="meta">
+      ${
+        x.freshness.age_minutes===null
+        ? "Waktu update lapangan belum diketahui"
+        : "Update "+x.freshness.age_minutes+" menit lalu"
+      }
+    </div>
+    </div>`).join("")||"<p>Belum ada observasi stok.</p>";
+
+   document.getElementById("needs").innerHTML=data.needs.filter(x=>x.posko===p).map(x=>`
+    <div class="card">
+    <b>${x.canonical_group||x.item_name||"Belum dikelompokkan"}</b>
+    <div>${x.raw_item_text||""}</div>
+    <div class="rn-status">
+      <span class="badge">${x.quantity_mode||"unknown"}</span>
+      <span class="badge">${x.freshness.status}</span>
+      <span class="badge">${x.verification_status||"self_reported"}</span>
+      <span class="badge">${x.need_status||"open"}</span>
+    </div>
+    <div class="meta">
+      ${
+        x.freshness.age_minutes===null
+        ? "Waktu update lapangan belum diketahui"
+        : "Update "+x.freshness.age_minutes+" menit lalu"
+      }
+    </div>
+    </div>`).join("")||"<p>Belum ada kebutuhan.</p>";
+ }
+
+ document.getElementById("posko").onchange=render;
+
+ document.getElementById("saveStock").onclick=async()=>{
+   await call("rescue_net.api_logistics.create_stock_observation",{
+     posko:document.getElementById("posko").value,
+     item_text:document.getElementById("stockText").value,
+     quantity:document.getElementById("stockQty").value,
+     unit:document.getElementById("stockUnit").value,
+     quantity_mode:document.getElementById("stockMode").value
+   });
+   await load();
+ };
+
+ document.getElementById("saveNeed").onclick=async()=>{
+   await call("rescue_net.api_logistics.create_need",{
+     posko:document.getElementById("posko").value,
+     item_text:document.getElementById("needText").value,
+     quantity:document.getElementById("needQty").value,
+     unit:document.getElementById("needUnit").value,
+     quantity_mode:document.getElementById("needMode").value
+   });
+   await load();
+ };
+
+ await load();
+});
+</script>
+{% endblock %}

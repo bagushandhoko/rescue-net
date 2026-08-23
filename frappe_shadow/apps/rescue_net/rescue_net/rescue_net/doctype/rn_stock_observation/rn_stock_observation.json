@@ -1,33 +1,14 @@
 {
   "doctype": "DocType",
-  "name": "RN Logistic Need",
+  "name": "RN Stock Observation",
   "module": "Rescue Net",
   "custom": 0,
   "is_submittable": 0,
   "title_field": "title",
   "fields": [
     {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data",
-      "default": "rescue-net-fastapi"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Select",
-      "options": "Shadow Imported\nValidated\nNeeds Review",
-      "default": "Shadow Imported"
-    },
-    {
       "fieldname": "title",
-      "label": "Need Title",
+      "label": "Stock Observation",
       "fieldtype": "Data",
       "reqd": 1
     },
@@ -41,52 +22,12 @@
       "fieldname": "posko",
       "label": "Posko",
       "fieldtype": "Link",
-      "options": "RN Posko"
+      "options": "RN Posko",
+      "reqd": 1
     },
     {
       "fieldname": "item_name",
       "label": "Item Name",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "quantity",
-      "label": "Quantity",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "unit",
-      "label": "Unit",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "urgency",
-      "label": "Urgency",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "need_status",
-      "label": "Need Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    },
-    {
-      "fieldname": "disaster_event_legacy_id",
-      "label": "Disaster Event Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "posko_legacy_id",
-      "label": "Posko Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "source_table",
-      "label": "Source Table",
       "fieldtype": "Data"
     },
     {
@@ -95,11 +36,17 @@
       "fieldtype": "Long Text"
     },
     {
+      "fieldname": "quantity",
+      "label": "Quantity",
+      "fieldtype": "Float"
+    },
+    {
       "fieldname": "quantity_mode",
       "label": "Quantity Mode",
       "fieldtype": "Select",
       "options": "exact\nestimated\nrange\nunknown",
-      "default": "unknown"
+      "default": "unknown",
+      "reqd": 1
     },
     {
       "fieldname": "quantity_min",
@@ -112,9 +59,21 @@
       "fieldtype": "Float"
     },
     {
+      "fieldname": "unit",
+      "label": "Unit",
+      "fieldtype": "Data"
+    },
+    {
       "fieldname": "estimate_text",
       "label": "Estimate Text",
       "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "stock_state",
+      "label": "Stock State",
+      "fieldtype": "Select",
+      "options": "available\nreserved\ndamaged\nexpired\nunknown",
+      "default": "available"
     },
     {
       "fieldname": "canonical_category",
@@ -153,7 +112,8 @@
     {
       "fieldname": "observed_at",
       "label": "Observed At",
-      "fieldtype": "Datetime"
+      "fieldtype": "Datetime",
+      "reqd": 1
     },
     {
       "fieldname": "source_updated_at",
@@ -179,9 +139,9 @@
       "options": "RN User Account"
     },
     {
-      "fieldname": "needed_before",
-      "label": "Needed Before",
-      "fieldtype": "Datetime"
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
     }
   ],
   "permissions": [
@@ -190,10 +150,7 @@
       "read": 1,
       "write": 1,
       "create": 1,
-      "delete": 1,
-      "submit": 0,
-      "cancel": 0,
-      "amend": 0
+      "delete": 1
     }
   ]
 }

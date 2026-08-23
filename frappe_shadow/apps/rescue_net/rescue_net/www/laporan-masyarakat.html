@@ -1,0 +1,319 @@
+{% extends "templates/web.html" %}
+
+{% block page_content %}
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<style>
+.rn-report {
+  max-width: 900px;
+  margin: 25px auto;
+}
+.rn-report label {
+  font-weight: 600;
+  margin-top: 12px;
+}
+.rn-report input,
+.rn-report select,
+.rn-report textarea {
+  width: 100%;
+  padding: 9px;
+  margin-top: 5px;
+}
+.rn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+#rn-map {
+  height: 420px;
+  margin-top: 12px;
+  border-radius: 8px;
+}
+.rn-actions {
+  margin-top: 18px;
+}
+@media(max-width:700px) {
+  .rn-grid { grid-template-columns:1fr; }
+}
+</style>
+
+<div class="rn-report">
+  <h2>Laporan Masyarakat</h2>
+
+  <label>Judul Laporan</label>
+  <input id="title">
+
+  <label>Jenis Laporan</label>
+  <input id="report_type">
+
+  <label>Deskripsi</label>
+  <textarea id="description" rows="5"></textarea>
+
+  <div class="rn-grid">
+    <div>
+      <label>Prioritas</label>
+      <select id="priority">
+        <option value="">Pilih</option>
+        <option value="low">Rendah</option>
+        <option value="medium">Sedang</option>
+        <option value="high">Tinggi</option>
+        <option value="critical">Kritis</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Jumlah Terdampak</label>
+      <input id="affected_people_count" type="number" min="0">
+    </div>
+  </div>
+
+  <label>Kebutuhan Mendesak</label>
+  <textarea id="urgent_needs"></textarea>
+
+  <div id="manual-area-section">
+<h4 style="margin-top:25px">Wilayah</h4>
+
+  <div class="rn-grid">
+    <div>
+      <label>Provinsi</label>
+      <select id="province"></select>
+    </div>
+
+    <div>
+      <label>Kabupaten / Kota</label>
+      <select id="city"></select>
+    </div>
+
+    <div>
+      <label>Kecamatan</label>
+      <select id="district"></select>
+    </div>
+
+    <div>
+      <label>Desa / Kelurahan</label>
+      <select id="village"></select>
+    </div>
+  </div>
+
+  <label>Alamat / Keterangan Lokasi</label>
+  <textarea id="location_text"></textarea>
+  </div>
+
+  <h4 style="margin-top:25px">Titik Lokasi</h4>
+
+  <button type="button" class="btn btn-secondary" id="gps">
+    Gunakan Lokasi Saya
+  </button>
+
+  <button type="button"
+          class="btn btn-link"
+          id="manual_location"
+          style="display:none">
+    Pilih wilayah secara manual
+  </button>
+
+  <div id="gps_status"
+       style="margin-top:10px;font-weight:600"></div>
+
+  <div class="rn-grid">
+    <div>
+      <label>Latitude</label>
+      <input id="latitude" type="number" step="any">
+    </div>
+    <div>
+      <label>Longitude</label>
+      <input id="longitude" type="number" step="any">
+    </div>
+  </div>
+
+  <div id="rn-map"></div>
+
+  <label style="margin-top:18px">
+    <input id="consent" type="checkbox" style="width:auto">
+    Saya bersedia dihubungi terkait laporan ini
+  </label>
+
+  <div class="rn-actions">
+    <button class="btn btn-primary" id="submit_report">
+      Kirim Laporan
+    </button>
+  </div>
+
+  <div id="result" style="margin-top:15px"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", async function () {
+  const $ = id => document.getElementById(id);
+
+  function api(method, args = {}) {
+    return new Promise((resolve, reject) => {
+      frappe.call({
+        method: method,
+        args: args,
+        callback: r => resolve(r.message),
+        error: reject
+      });
+    });
+  }
+
+  function resetSelect(id, label) {
+    $(id).innerHTML = `<option value="">${label}</option>`;
+  }
+
+  function fill(id, rows, label) {
+    resetSelect(id, label);
+    rows.forEach(r => {
+      const o = document.createElement("option");
+      o.value = r.code;
+      o.textContent = r.area_name;
+      $(id).appendChild(o);
+    });
+  }
+
+  const provinces = await api(
+    "rescue_net.api_admin_areas.get_provinces"
+  );
+  fill("province", provinces, "Pilih Provinsi");
+  resetSelect("city", "Pilih Kabupaten/Kota");
+  resetSelect("district", "Pilih Kecamatan");
+  resetSelect("village", "Pilih Desa/Kelurahan");
+
+  $("province").onchange = async () => {
+    resetSelect("district", "Pilih Kecamatan");
+    resetSelect("village", "Pilih Desa/Kelurahan");
+
+    const rows = $("province").value
+      ? await api(
+          "rescue_net.api_admin_areas.get_children",
+          {parent_code:$("province").value, level:"city"}
+        )
+      : [];
+
+    fill("city", rows, "Pilih Kabupaten/Kota");
+  };
+
+  $("city").onchange = async () => {
+    resetSelect("village", "Pilih Desa/Kelurahan");
+
+    const rows = $("city").value
+      ? await api(
+          "rescue_net.api_admin_areas.get_children",
+          {parent_code:$("city").value, level:"district"}
+        )
+      : [];
+
+    fill("district", rows, "Pilih Kecamatan");
+  };
+
+  $("district").onchange = async () => {
+    const rows = $("district").value
+      ? await api(
+          "rescue_net.api_admin_areas.get_children",
+          {parent_code:$("district").value, level:"village"}
+        )
+      : [];
+
+    fill("village", rows, "Pilih Desa/Kelurahan");
+  };
+
+  const map = L.map("rn-map").setView([-2.5, 118], 5);
+
+  L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {maxZoom:19, attribution:"© OpenStreetMap"}
+  ).addTo(map);
+
+  let marker = null;
+  let method = null;
+
+  function setPoint(lat, lng, inputMethod) {
+    $("latitude").value = Number(lat).toFixed(6);
+    $("longitude").value = Number(lng).toFixed(6);
+    method = inputMethod;
+
+    if (marker) marker.remove();
+
+    marker = L.marker([lat, lng]).addTo(map);
+  }
+
+  map.on("click", e => {
+    setPoint(e.latlng.lat, e.latlng.lng, "map");
+  });
+
+  $("gps").onclick = () => {
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        setPoint(lat, lng, "gps");
+        map.setView([lat, lng], 16);
+
+        ["province", "city", "district", "village"].forEach(id => {
+          $(id).value = "";
+        });
+
+        $("manual-area-section").style.display = "none";
+        $("manual_location").style.display = "inline-block";
+        $("gps_status").textContent = "Lokasi GPS digunakan";
+      },
+      err => frappe.msgprint("Lokasi GPS tidak dapat dibaca: " + err.message),
+      {enableHighAccuracy:true}
+    );
+  };
+
+  $("manual_location").onclick = () => {
+    $("manual-area-section").style.display = "";
+    $("manual_location").style.display = "none";
+    $("gps_status").textContent = "Pilih wilayah secara manual";
+  };
+
+  $("submit_report").onclick = async () => {
+    if (!$("title").value.trim() || !$("description").value.trim()) {
+      frappe.msgprint("Judul dan deskripsi wajib diisi");
+      return;
+    }
+
+    $("submit_report").disabled = true;
+
+    try {
+      const result = await api(
+        "rescue_net.api_reports.submit_community_report",
+        {
+          title: $("title").value,
+          description: $("description").value,
+          report_type: $("report_type").value,
+          priority: $("priority").value,
+          affected_people_count: $("affected_people_count").value || 0,
+          urgent_needs: $("urgent_needs").value,
+          location_text: $("location_text").value,
+          latitude: $("latitude").value,
+          longitude: $("longitude").value,
+          province_code: $("province").value,
+          city_code: $("city").value,
+          district_code: $("district").value,
+          village_code: $("village").value,
+          consent_to_contact: $("consent").checked ? 1 : 0,
+          location_input_method: method
+        }
+      );
+
+      $("result").innerHTML =
+        `<div class="alert alert-success">
+          Laporan berhasil dikirim: <b>${result.name}</b>
+        </div>`;
+    } finally {
+      $("submit_report").disabled = false;
+    }
+  };
+});
+</script>
+
+{% endblock %}

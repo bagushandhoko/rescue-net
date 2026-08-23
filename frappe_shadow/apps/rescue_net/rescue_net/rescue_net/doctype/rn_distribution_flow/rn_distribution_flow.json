@@ -292,6 +292,17 @@
       "label": "Currency",
       "fieldtype": "Data",
       "default": "IDR"
+    },
+    {
+      "fieldname": "transport_space",
+      "label": "Transport Space",
+      "fieldtype": "Link",
+      "options": "RN Transport Space"
+    },
+    {
+      "fieldname": "transport_space_legacy_id",
+      "label": "Transport Space Legacy ID",
+      "fieldtype": "Data"
     }
   ],
   "permissions": [

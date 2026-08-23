@@ -1,101 +1,38 @@
 {% extends "templates/web.html" %}
 {% block page_content %}
 <style>
-.rn{
-  max-width:1050px;
-  margin:24px auto;
-  padding:0 14px 90px;
-}
-.rn-nav{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin:12px 0 18px;
-}
-.rn-nav a{
-  border:1px solid #ddd;
-  border-radius:999px;
-  padding:7px 11px;
-  text-decoration:none;
-}
-.card{
-  border:1px solid #ddd;
-  border-radius:12px;
-  padding:14px;
-  margin:10px 0;
-}
-.meta{
-  font-size:.88em;
-  color:#666;
-  margin-top:5px;
-}
-input,select{
-  width:100%;
-  padding:10px;
-  min-height:44px;
-  margin:5px 0;
-}
-button{
-  min-height:44px;
-}
-.actions{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-  margin-top:10px;
-}
-.badge{
-  display:inline-block;
-  border:1px solid #ccc;
-  border-radius:999px;
-  padding:3px 8px;
-  margin:3px 3px 3px 0;
-  font-size:.82em;
-}
-.rn-mobile-nav{
-  display:none;
-}
+.rn{max-width:1180px;margin:24px auto;padding:0 14px 90px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{border:1px solid #ddd;border-radius:12px;padding:14px;margin:10px 0}
+.rn-nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}
+.rn-nav a,.badge{border:1px solid #ddd;border-radius:999px;padding:5px 9px;text-decoration:none}
+input,select{width:100%;min-height:44px;padding:10px;margin:5px 0}
+button{min-height:44px}
+.meta{font-size:.88em;color:#666;margin-top:5px}
+.actions,.status{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.badge{font-size:.8rem}
+.ev{display:flex;gap:6px;align-items:center;margin-top:10px}
+.rn-mobile-nav{display:none}
 
 @media(max-width:700px){
-  .rn{
-    margin:10px auto;
-    padding:0 10px 82px;
-  }
-  .rn h2{
-    font-size:1.45rem;
-  }
-  .card{
-    padding:12px;
-  }
-  .rn-nav{
-    display:none;
-  }
-  .actions button{
-    flex:1 1 46%;
-  }
-  .rn-mobile-nav{
-    display:grid;
-    position:fixed;
-    left:0;
-    right:0;
-    bottom:0;
-    z-index:1000;
-    grid-template-columns:repeat(4,1fr);
-    background:#fff;
-    border-top:1px solid #ddd;
-    padding:6px 4px;
-  }
-  .rn-mobile-nav a{
-    text-align:center;
-    text-decoration:none;
-    padding:8px 3px;
-    font-size:.78rem;
-  }
+ .rn{margin:10px auto;padding:0 10px 82px}
+ .grid{grid-template-columns:1fr}
+ .rn-nav{display:none}
+ .rn h2{font-size:1.45rem}
+ .actions button{flex:1 1 46%}
+ .rn-mobile-nav{
+   display:grid;position:fixed;left:0;right:0;bottom:0;z-index:1000;
+   grid-template-columns:repeat(4,1fr);background:#fff;
+   border-top:1px solid #ddd;padding:6px 4px
+ }
+ .rn-mobile-nav a{text-align:center;text-decoration:none;padding:8px 3px;font-size:.78rem}
 }
 </style>
+
 <div class="rn">
-<h2>Distribusi</h2>
-<p><b>Offered ≠ in transit ≠ arrived ≠ received ≠ stock tersedia.</b> Penerimaan barang tidak otomatis menambah stok sampai Posko membuat Stock Observation.</p>
+<h2>Distribusi Logistik</h2>
+<p><b>Bantuan tersedia ≠ in transit ≠ tiba ≠ diterima ≠ stok.</b></p>
+
 <div class="rn-nav">
 <a href="/kelompok-posko">Kelompok & Posko</a>
 <a href="/logistics-centre">Logistik</a>
@@ -103,17 +40,52 @@ button{
 <a href="/data-consolidation">Control Centre</a>
 </div>
 
+<div class="grid">
+
 <div class="card">
-<h4>Buat Distribution Flow</h4>
-<select id="dest"></select>
-<input id="item" placeholder="Barang / kebutuhan">
-<select id="mode"><option value="unknown">Jumlah belum diketahui</option><option value="estimated">Estimasi</option><option value="exact">Pasti</option></select>
-<input id="qty" type="number" step="0.01" placeholder="Jumlah (opsional)">
-<input id="unit" placeholder="Satuan (opsional)">
-<button class="btn btn-primary" id="create">Buat Flow</button>
+<h4>Tambah Transport</h4>
+<select id="transportPosko"></select>
+<input id="provider" placeholder="Provider / komunitas transport">
+<select id="transportType">
+<option value="darat">Darat</option>
+<option value="laut">Laut</option>
+<option value="udara">Udara</option>
+<option value="lainnya">Lainnya</option>
+</select>
+<input id="origin" placeholder="Asal">
+<input id="routeDest" placeholder="Tujuan">
+<input id="capKg" type="number" step="0.01" placeholder="Kapasitas KG">
+<input id="capM3" type="number" step="0.01" placeholder="Kapasitas M3">
+<label>Berangkat <input id="departure" type="datetime-local"></label>
+<label>ETA <input id="eta" type="datetime-local"></label>
+<button class="btn btn-primary" id="saveTransport">Simpan Transport</button>
 </div>
 
-<h3>Flow</h3><div id="flows"></div>
+<div class="card">
+<h4>Matching & Distribution Flow</h4>
+<label>Posko Tujuan<select id="dest"></select></label>
+<label>Kebutuhan<select id="needSel"><option value="">Tanpa Need</option></select></label>
+<label>Bantuan<select id="aidSel"><option value="">Tanpa Aid Offer</option></select></label>
+<label>Transport<select id="transportSel"><option value="">Tanpa Transport</option></select></label>
+<input id="item" placeholder="Barang / kebutuhan">
+<select id="mode">
+<option value="unknown">Jumlah belum diketahui</option>
+<option value="estimated">Estimasi</option>
+<option value="exact">Pasti</option>
+<option value="range">Range</option>
+</select>
+<input id="qty" type="number" step="0.01" placeholder="Jumlah (opsional)">
+<input id="unit" placeholder="Satuan (opsional)">
+<button class="btn btn-primary" id="create">Buat Distribution Flow</button>
+</div>
+
+</div>
+
+<h3>Transport Tersedia</h3>
+<div id="transports"></div>
+
+<h3>Distribution Flow</h3>
+<div id="flows"></div>
 </div>
 
 <nav class="rn-mobile-nav">
@@ -124,73 +96,229 @@ button{
 </nav>
 
 <script>
-document.addEventListener("DOMContentLoaded", async()=>{
- const call=(method,args={})=>new Promise((ok,fail)=>frappe.call({method,args,callback:r=>ok(r.message),error:fail}));
- let data;
+document.addEventListener("DOMContentLoaded",async()=>{
+ const call=(method,args={})=>new Promise((ok,fail)=>frappe.call({
+   method,args,callback:r=>ok(r.message),error:fail
+ }));
 
- async function load(){
-   data=await call("rescue_net.api_logistics.dashboard");
-   document.getElementById("dest").innerHTML=data.poskos.map(p=>`<option value="${p.name}">${p.title}</option>`).join("");
-   document.getElementById("flows").innerHTML=data.flows.map(f=>`
-    <div class="card">
-      <b>${f.canonical_group||f.item_name||"Belum dikelompokkan"}</b>
-      <div>${f.item_name||""}</div>
+ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+ }[c]));
 
-      <div style="margin-top:7px">
-        ${
-          f.quantity_mode==="unknown"
-          ? "Jumlah belum diketahui"
-          : ((f.quantity??"")+" "+(f.unit||""))
-        }
-      </div>
+ const dt=v=>v ? v.replace("T"," ")+":00" : null;
 
-      <div>
-        <span class="badge">${f.flow_status}</span>
-        <span class="badge">${f.quantity_mode||"unknown"}</span>
-        <span class="badge">${f.freshness.status}</span>
-      </div>
+ let data={};
 
-      <div class="meta">
-        ${
-          f.freshness.age_minutes===null
-          ? "Waktu update lapangan belum diketahui"
-          : "Update "+f.freshness.age_minutes+" menit lalu"
-        }
-      </div>
-      <div class="actions">
-       ${nextButtons(f)}
-      </div>
-    </div>`).join("")||"<p>Belum ada flow.</p>";
+ function ev(doctype,name){
+   return `<div class="ev">
+    <input type="file">
+    <button class="btn btn-sm btn-secondary"
+      data-evidence-doctype="${esc(doctype)}"
+      data-evidence-name="${esc(name)}">Tambah Bukti</button>
+   </div>`;
+ }
 
-   document.querySelectorAll("[data-flow-action]").forEach(b=>{
-     b.onclick=async()=>{
-       await call("rescue_net.api_logistics.update_flow_status",{
-         flow:b.dataset.flow,
-         new_status:b.dataset.flowAction
-       });
-       await load();
-     };
+ async function uploadEvidence(btn){
+   const input=btn.parentElement.querySelector("input[type=file]");
+   if(!input.files.length) return alert("Pilih file bukti dulu");
+
+   const fd=new FormData();
+   fd.append("file",input.files[0]);
+   fd.append("is_private","1");
+
+   const r=await fetch("/api/method/upload_file",{
+     method:"POST",
+     body:fd,
+     headers:{"X-Frappe-CSRF-Token":frappe.csrf_token}
    });
+
+   const j=await r.json();
+   if(!j.message?.file_url) throw new Error("Upload file gagal");
+
+   await call("rescue_net.api_logistics.add_evidence",{
+    linked_doctype:btn.dataset.evidenceDoctype,
+    linked_name:btn.dataset.evidenceName,
+    file_url:j.message.file_url,
+    evidence_type:"photo"
+   });
+
+   alert("Bukti tersimpan");
+ }
+
+ function bindEvidence(){
+   document.querySelectorAll("[data-evidence-doctype]").forEach(btn=>{
+     btn.onclick=()=>uploadEvidence(btn).catch(e=>alert(e.message||e));
+   });
+ }
+
+ function statusLabel(s){
+   return ({
+    planned:"Rencana",
+    assigned_pickup:"Penjemputan Ditugaskan",
+    dispatched:"Diberangkatkan",
+    in_transit:"Dalam Perjalanan",
+    arrived_at_posko:"Tiba di Posko",
+    partially_received:"Diterima Sebagian",
+    received:"Diterima",
+    cancelled:"Dibatalkan"
+   })[s] || s;
  }
 
  function nextButtons(f){
    const m={
-    planned:["assigned_pickup"],
-    assigned_pickup:["dispatched","in_transit"],
-    dispatched:["in_transit"],
-    in_transit:["arrived_at_posko"],
-    arrived_at_posko:["received"]
+    planned:["assigned_pickup","cancelled"],
+    assigned_pickup:["dispatched","in_transit","cancelled"],
+    dispatched:["in_transit","arrived_at_posko","cancelled"],
+    in_transit:["arrived_at_posko","cancelled"],
+    arrived_at_posko:["partially_received","received","cancelled"],
+    partially_received:["partially_received","received"]
    };
-   return (m[f.flow_status]||[]).map(x=>`<button class="btn btn-sm btn-secondary" data-flow="${f.name}" data-flow-action="${x}">${x}</button>`).join("");
+
+   return (m[f.flow_status]||[]).map(x=>`
+    <button class="btn btn-sm btn-secondary"
+      data-flow="${esc(f.name)}"
+      data-flow-action="${esc(x)}">${esc(statusLabel(x))}</button>
+   `).join("");
  }
+
+ function fillSelects(){
+   const options=(data.poskos||[]).map(
+    p=>`<option value="${esc(p.name)}">${esc(p.title)}</option>`
+   ).join("");
+
+   document.getElementById("dest").innerHTML=options;
+   document.getElementById("transportPosko").innerHTML=options;
+
+   const posko=document.getElementById("dest").value;
+
+   document.getElementById("needSel").innerHTML=
+    `<option value="">Tanpa Need</option>`+
+    (data.needs||[]).filter(x=>x.posko===posko).map(
+     x=>`<option value="${esc(x.name)}">${esc(x.canonical_group||x.item_name)}</option>`
+    ).join("");
+
+   document.getElementById("aidSel").innerHTML=
+    `<option value="">Tanpa Aid Offer</option>`+
+    (data.offers||[]).filter(
+      x=>x.target_posko===posko &&
+      ["available","need_pickup"].includes(x.offer_status)
+    ).map(
+     x=>`<option value="${esc(x.name)}">${esc(x.canonical_group||x.item_name)} · ${esc(x.donor_name||"")}</option>`
+    ).join("");
+
+   document.getElementById("transportSel").innerHTML=
+    `<option value="">Tanpa Transport</option>`+
+    (data.transports||[]).filter(
+      x=>x.transport_status==="available"
+    ).map(
+     x=>`<option value="${esc(x.name)}">${esc(x.provider_name)} · ${esc(x.transport_type||"")}</option>`
+    ).join("");
+ }
+
+ async function load(){
+   data=await call("rescue_net.api_logistics.dashboard");
+   fillSelects();
+   render();
+ }
+
+ function render(){
+   document.getElementById("transports").innerHTML=(data.transports||[])
+   .map(t=>`<div class="card">
+     <b>${esc(t.provider_name)}</b>
+     <div>${esc(t.transport_type||"")} · ${esc(t.route_origin||"")} → ${esc(t.route_destination||"")}</div>
+     <div>Kapasitas: ${esc(t.capacity_weight_kg||"-")} kg · ${esc(t.capacity_volume_m3||"-")} m³</div>
+     <div class="status">
+      <span class="badge">${esc(t.transport_status)}</span>
+      <span class="badge">${esc(t.verification_status||"self_reported")}</span>
+      <span class="badge">${esc(t.freshness?.status||"unknown")}</span>
+     </div>
+     ${ev("RN Transport Space",t.name)}
+   </div>`).join("") || "<p>Belum ada transport.</p>";
+
+   document.getElementById("flows").innerHTML=(data.flows||[])
+   .map(f=>`<div class="card">
+     <b>${esc(f.canonical_group||f.item_name||"Belum dikelompokkan")}</b>
+     <div>${esc(f.item_name||"")}</div>
+     <div>${f.quantity_mode==="unknown" ? "Jumlah belum diketahui" : `${esc(f.quantity||"")} ${esc(f.unit||"")}`}</div>
+     <div>Transport: ${esc(f.transport_space||"-")}</div>
+     <div class="status">
+      <span class="badge">${esc(statusLabel(f.flow_status))}</span>
+      <span class="badge">${esc(f.quantity_mode||"unknown")}</span>
+      <span class="badge">${esc(f.freshness?.status||"unknown")}</span>
+     </div>
+     <div class="actions">${nextButtons(f)}</div>
+     ${ev("RN Distribution Flow",f.name)}
+   </div>`).join("") || "<p>Belum ada flow.</p>";
+
+   document.querySelectorAll("[data-flow-action]").forEach(btn=>{
+    btn.onclick=async()=>{
+     let rq=null;
+     let ru=null;
+
+     if(["partially_received","received"].includes(btn.dataset.flowAction)){
+       rq=prompt("Jumlah yang diterima (boleh kosong jika belum pasti):","");
+       ru=rq ? prompt("Satuan:","") : null;
+     }
+
+     await call("rescue_net.api_logistics.update_flow_status",{
+      flow:btn.dataset.flow,
+      new_status:btn.dataset.flowAction,
+      received_quantity:rq,
+      received_unit:ru
+     });
+
+     await load();
+    };
+   });
+
+   bindEvidence();
+ }
+
+ document.getElementById("dest").onchange=fillSelects;
+
+ document.getElementById("needSel").onchange=()=>{
+   const x=(data.needs||[]).find(n=>n.name===document.getElementById("needSel").value);
+   if(!x) return;
+   document.getElementById("item").value=x.raw_item_text||x.item_name||"";
+   document.getElementById("qty").value=x.quantity||"";
+   document.getElementById("unit").value=x.unit||"";
+   document.getElementById("mode").value=x.quantity_mode||"unknown";
+ };
+
+ document.getElementById("aidSel").onchange=()=>{
+   const x=(data.offers||[]).find(n=>n.name===document.getElementById("aidSel").value);
+   if(!x) return;
+   document.getElementById("item").value=x.raw_item_text||x.item_name||"";
+   document.getElementById("qty").value=x.quantity||"";
+   document.getElementById("unit").value=x.unit||"";
+   document.getElementById("mode").value=x.quantity_mode||"unknown";
+ };
+
+ document.getElementById("saveTransport").onclick=async()=>{
+   await call("rescue_net.api_logistics.create_transport_space",{
+    coordination_posko:document.getElementById("transportPosko").value,
+    provider_name:document.getElementById("provider").value,
+    transport_type:document.getElementById("transportType").value,
+    route_origin:document.getElementById("origin").value,
+    route_destination:document.getElementById("routeDest").value,
+    capacity_weight_kg:document.getElementById("capKg").value,
+    capacity_volume_m3:document.getElementById("capM3").value,
+    departure_time:dt(document.getElementById("departure").value),
+    eta:dt(document.getElementById("eta").value)
+   });
+   await load();
+ };
 
  document.getElementById("create").onclick=async()=>{
    await call("rescue_net.api_logistics.create_flow",{
-     destination_posko:document.getElementById("dest").value,
-     item_text:document.getElementById("item").value,
-     quantity:document.getElementById("qty").value,
-     unit:document.getElementById("unit").value,
-     quantity_mode:document.getElementById("mode").value
+    destination_posko:document.getElementById("dest").value,
+    item_text:document.getElementById("item").value,
+    quantity:document.getElementById("qty").value,
+    unit:document.getElementById("unit").value,
+    quantity_mode:document.getElementById("mode").value,
+    logistic_need:document.getElementById("needSel").value||null,
+    aid_offer:document.getElementById("aidSel").value||null,
+    transport_space:document.getElementById("transportSel").value||null
    });
    await load();
  };

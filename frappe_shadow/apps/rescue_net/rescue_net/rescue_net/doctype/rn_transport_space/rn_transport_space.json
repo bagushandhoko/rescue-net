@@ -1,0 +1,145 @@
+{
+  "doctype": "DocType",
+  "name": "RN Transport Space",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "title",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "legacy_source",
+      "label": "Legacy Source",
+      "fieldtype": "Data",
+      "default": "rescue-net-fastapi"
+    },
+    {
+      "fieldname": "migration_status",
+      "label": "Migration Status",
+      "fieldtype": "Select",
+      "options": "Shadow Imported\nValidated\nNeeds Review",
+      "default": "Shadow Imported"
+    },
+    {
+      "fieldname": "title",
+      "label": "Transport Space",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "coordination_posko",
+      "label": "Coordination Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "provider_name",
+      "label": "Provider",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "transport_type",
+      "label": "Jenis Transport",
+      "fieldtype": "Select",
+      "options": "darat\nlaut\nudara\nlainnya"
+    },
+    {
+      "fieldname": "route_origin",
+      "label": "Asal",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "route_destination",
+      "label": "Tujuan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "capacity_weight_kg",
+      "label": "Kapasitas KG",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "capacity_volume_m3",
+      "label": "Kapasitas M3",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "departure_time",
+      "label": "Berangkat",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "eta",
+      "label": "ETA",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "transport_status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "available\nreserved\nassigned\nin_transit\narrived\ncompleted\ncancelled",
+      "default": "available"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "source_updated_at",
+      "label": "Source Updated At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "freshness_policy_minutes",
+      "label": "Freshness Policy Minutes",
+      "fieldtype": "Int",
+      "default": "180"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "disaster_event_legacy_id",
+      "label": "Disaster Event Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

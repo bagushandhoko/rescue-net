@@ -148,6 +148,7 @@ def dashboard(posko=None):
             "stocks":[],
             "offers":[],
             "flows":[],
+            "transports":[],
         }
 
     poskos = frappe.get_all(
@@ -216,6 +217,23 @@ def dashboard(posko=None):
         limit_page_length=1000,
     )
 
+    transports = frappe.get_all(
+        "RN Transport Space",
+        filters={"coordination_posko":["in", allowed]},
+        fields=[
+            "name","title","coordination_posko",
+            "provider_name","transport_type",
+            "route_origin","route_destination",
+            "capacity_weight_kg","capacity_volume_m3",
+            "departure_time","eta","transport_status",
+            "verification_status","observed_at",
+            "source_updated_at","freshness_policy_minutes",
+            "modified",
+        ],
+        order_by="creation desc",
+        limit_page_length=1000,
+    )
+
     flows = frappe.get_all(
         "RN Distribution Flow",
         filters=[
@@ -225,6 +243,7 @@ def dashboard(posko=None):
             "name","title","source_posko","destination_posko",
             "item_name","quantity","unit","quantity_mode",
             "canonical_group","flow_status","eta_final",
+            "transport_space",
             "received_quantity","received_unit",
             "source_updated_at","observed_at",
             "freshness_policy_minutes","modified",
@@ -237,13 +256,14 @@ def dashboard(posko=None):
         (needs, "need"),
         (stocks, "stock"),
         (offers, "stock"),
+        (transports, "stock"),
         (flows, "stock"),
     ]:
         for row in collection:
             row["freshness"] = freshness(
                 row.get("source_updated_at"),
                 row.get("observed_at"),
-                row.get("modified"),
+                None,
                 row.get("freshness_policy_minutes"),
                 kind,
             )
@@ -253,6 +273,7 @@ def dashboard(posko=None):
         "needs":needs,
         "stocks":stocks,
         "offers":offers,
+        "transports":transports,
         "flows":flows,
     }
 
@@ -428,6 +449,53 @@ def create_aid_offer(
     }
 
 
+
+@frappe.whitelist()
+def create_transport_space(
+    coordination_posko,
+    provider_name,
+    transport_type=None,
+    route_origin=None,
+    route_destination=None,
+    capacity_weight_kg=None,
+    capacity_volume_m3=None,
+    departure_time=None,
+    eta=None,
+):
+    actor = rn_actor()
+
+    if not _can_contribute(actor, coordination_posko):
+        frappe.throw(
+            "Anda tidak dapat menambahkan transport untuk Posko ini",
+            frappe.PermissionError,
+        )
+
+    doc = frappe.new_doc("RN Transport Space")
+    doc.title = provider_name
+    doc.coordination_posko = coordination_posko
+    doc.provider_name = provider_name
+    doc.transport_type = transport_type
+    doc.route_origin = route_origin
+    doc.route_destination = route_destination
+
+    if capacity_weight_kg not in (None, ""):
+        doc.capacity_weight_kg = flt(capacity_weight_kg)
+
+    if capacity_volume_m3 not in (None, ""):
+        doc.capacity_volume_m3 = flt(capacity_volume_m3)
+
+    doc.departure_time = departure_time
+    doc.eta = eta
+    doc.transport_status = "available"
+    doc.insert(ignore_permissions=True)
+
+    return {
+        "transport": doc.name,
+        "transport_status": doc.transport_status,
+        "provider_name": doc.provider_name,
+    }
+
+
 @frappe.whitelist()
 def create_flow(
     destination_posko,
@@ -440,6 +508,7 @@ def create_flow(
     aid_offer=None,
     transport_reference=None,
     transport_provider=None,
+    transport_space=None,
     eta_final=None,
 ):
     actor = rn_actor()
@@ -449,6 +518,96 @@ def create_flow(
             frappe.throw(
                 "Anda tidak dapat membuat flow untuk Posko ini",
                 frappe.PermissionError,
+            )
+
+    transport_doc = None
+
+    if transport_space:
+        locked = frappe.db.sql(
+            """
+            SELECT name, transport_status
+            FROM `tabRN Transport Space`
+            WHERE name=%s
+            FOR UPDATE
+            """,
+            (transport_space,),
+            as_dict=True,
+        )
+
+        if not locked:
+            frappe.throw("Transport tidak ditemukan")
+
+        if locked[0].transport_status != "available":
+            frappe.throw(
+                "Transport sudah dipakai atau tidak tersedia"
+            )
+
+        transport_doc = frappe.get_doc(
+            "RN Transport Space",
+            transport_space,
+        )
+
+        if not _can_contribute(
+            actor,
+            transport_doc.coordination_posko,
+        ):
+            frappe.throw(
+                "Anda tidak dapat menggunakan transport ini",
+                frappe.PermissionError,
+            )
+
+    aid_doc = None
+
+    if aid_offer:
+        locked_aid = frappe.db.sql(
+            """
+            SELECT name, offer_status
+            FROM `tabRN Aid Offer`
+            WHERE name=%s
+            FOR UPDATE
+            """,
+            (aid_offer,),
+            as_dict=True,
+        )
+
+        if not locked_aid:
+            frappe.throw("Aid Offer tidak ditemukan")
+
+        if locked_aid[0].offer_status not in (
+            "available",
+            "need_pickup",
+        ):
+            frappe.throw(
+                "Aid Offer sudah dialokasikan atau tidak tersedia"
+            )
+
+        aid_doc = frappe.get_doc(
+            "RN Aid Offer",
+            aid_offer,
+        )
+
+        if (
+            aid_doc.target_posko
+            and aid_doc.target_posko != destination_posko
+        ):
+            frappe.throw(
+                "Aid Offer ditujukan ke Posko yang berbeda"
+            )
+
+    need_doc = None
+
+    if logistic_need:
+        need_doc = frappe.get_doc(
+            "RN Logistic Need",
+            logistic_need,
+        )
+
+        if (
+            need_doc.posko
+            and need_doc.posko != destination_posko
+        ):
+            frappe.throw(
+                "Kebutuhan berasal dari Posko yang berbeda"
             )
 
     doc = frappe.new_doc("RN Distribution Flow")
@@ -467,9 +626,44 @@ def create_flow(
     doc.aid_offer = aid_offer
     doc.transport_reference = transport_reference
     doc.transport_provider = transport_provider
+    doc.transport_space = transport_space
     doc.eta_final = eta_final
     doc.flow_status = "planned"
     doc.insert(ignore_permissions=True)
+
+    if transport_doc:
+        frappe.db.set_value(
+            "RN Transport Space",
+            transport_doc.name,
+            {
+                "transport_status":"reserved",
+                "source_updated_at":now_datetime(),
+            },
+            update_modified=False,
+        )
+
+    if aid_doc:
+        frappe.db.set_value(
+            "RN Aid Offer",
+            aid_doc.name,
+            {
+                "offer_status":"reserved",
+                "source_updated_at":now_datetime(),
+            },
+            update_modified=False,
+        )
+
+    if (
+        need_doc
+        and (need_doc.need_status or "open") == "open"
+    ):
+        frappe.db.set_value(
+            "RN Logistic Need",
+            need_doc.name,
+            "need_status",
+            "in_progress",
+            update_modified=False,
+        )
 
     return {
         "flow":doc.name,
@@ -549,6 +743,50 @@ def update_flow_status(
 
     doc.save(ignore_permissions=True)
 
+    if doc.transport_space:
+        transport_status = {
+            "assigned_pickup":"assigned",
+            "dispatched":"assigned",
+            "in_transit":"in_transit",
+            "arrived_at_posko":"arrived",
+            "partially_received":"arrived",
+            "received":"completed",
+            "cancelled":"available",
+        }.get(new_status)
+
+        if transport_status:
+            frappe.db.set_value(
+                "RN Transport Space",
+                doc.transport_space,
+                {
+                    "transport_status":transport_status,
+                    "source_updated_at":now,
+                },
+                update_modified=False,
+            )
+
+    if doc.aid_offer:
+        offer_status = {
+            "assigned_pickup":"reserved",
+            "dispatched":"in_transit",
+            "in_transit":"in_transit",
+            "arrived_at_posko":"in_transit",
+            "partially_received":"in_transit",
+            "received":"delivered",
+            "cancelled":"available",
+        }.get(new_status)
+
+        if offer_status:
+            frappe.db.set_value(
+                "RN Aid Offer",
+                doc.aid_offer,
+                {
+                    "offer_status":offer_status,
+                    "source_updated_at":now,
+                },
+                update_modified=False,
+            )
+
     return {
         "flow":doc.name,
         "previous_status":current,
@@ -565,6 +803,7 @@ ALLOWED_EVIDENCE_DOCTYPES = {
     "RN Aid Offer",
     "RN Distribution Flow",
     "RN Stock Observation",
+    "RN Transport Space",
 }
 
 
@@ -595,6 +834,12 @@ def add_evidence(
         posko = frappe.db.get_value(linked_doctype, linked_name, "destination_posko")
     elif linked_doctype == "RN Stock Observation":
         posko = frappe.db.get_value(linked_doctype, linked_name, "posko")
+    elif linked_doctype == "RN Transport Space":
+        posko = frappe.db.get_value(
+            linked_doctype,
+            linked_name,
+            "coordination_posko",
+        )
 
     if posko and not _can_contribute(actor, posko):
         frappe.throw(
@@ -662,7 +907,7 @@ def public_dashboard(posko):
         row["freshness"] = freshness(
             row.source_updated_at,
             row.observed_at,
-            row.modified,
+            None,
             row.freshness_policy_minutes,
             "stock",
         )
@@ -732,7 +977,7 @@ def control_centre_logistics():
             fr = freshness(
                 row.source_updated_at,
                 row.observed_at,
-                row.modified,
+                None,
                 row.freshness_policy_minutes,
                 "stock",
             )
@@ -789,6 +1034,10 @@ def control_centre_logistics():
         "available_stock":stock_summary,
         "pipeline_count":len(flows),
         "pipeline":flows,
+        "available_transport_count":frappe.db.count(
+            "RN Transport Space",
+            {"transport_status":"available"},
+        ),
         "important_rule":(
             "Aid Offer, Distribution Flow, Received goods, and Stock Observation "
             "are separate states. Received flow never creates available stock automatically."

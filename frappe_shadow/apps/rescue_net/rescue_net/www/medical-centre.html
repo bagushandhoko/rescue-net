@@ -1,0 +1,802 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+
+<style>
+.rn{
+ max-width:1180px;
+ margin:24px auto;
+ padding:0 14px 90px
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:14px
+}
+.card{
+ border:1px solid #ddd;
+ border-radius:12px;
+ padding:14px;
+ margin:10px 0
+}
+input,select,textarea{
+ width:100%;
+ min-height:44px;
+ padding:10px;
+ margin:5px 0
+}
+button{min-height:44px}
+.badge{
+ display:inline-block;
+ border:1px solid #ddd;
+ border-radius:999px;
+ padding:4px 8px;
+ margin:3px;
+ font-size:.8rem
+}
+.red{border-color:#d33}
+.yellow{border-color:#d9a400}
+.green{border-color:#299b50}
+.black{
+ background:#222;
+ color:#fff
+}
+.actions{
+ display:flex;
+ gap:6px;
+ flex-wrap:wrap;
+ margin-top:8px
+}
+.rn-mobile-nav{display:none}
+.privacy{
+ background:#fff5d6;
+ padding:10px;
+ border-radius:10px;
+ margin:10px 0
+}
+@media(max-width:850px){
+ .grid{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+ .rn{
+  margin:10px auto;
+  padding:0 10px 82px
+ }
+ .actions button{
+  flex:1 1 45%
+ }
+ .rn-mobile-nav{
+  display:grid;
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:1000;
+  grid-template-columns:repeat(4,1fr);
+  background:#fff;
+  border-top:1px solid #ddd;
+  padding:6px 4px
+ }
+ .rn-mobile-nav a{
+  text-align:center;
+  padding:8px 3px;
+  text-decoration:none;
+  font-size:.78rem
+ }
+}
+</style>
+
+<div class="rn">
+
+<h2>Medis Operations</h2>
+
+<div class="privacy">
+<b>Data Medis Bersifat Terbatas.</b>
+Gunakan kode pasien, bukan nama lengkap/NIK.
+Foto dan dokumen medis disimpan sebagai private evidence.
+</div>
+
+<label>
+Posko Medis
+<select id="posko"></select>
+</label>
+
+<div id="poskoContact"></div>
+
+<div class="grid">
+
+<div class="card">
+<h4>Triase / Kasus Baru</h4>
+
+<input
+ id="patientCode"
+ placeholder="Kode pasien">
+
+<select id="ageGroup">
+<option value="unknown">Usia tidak diketahui</option>
+<option value="infant">Bayi</option>
+<option value="child">Anak</option>
+<option value="adolescent">Remaja</option>
+<option value="adult">Dewasa</option>
+<option value="elderly">Lansia</option>
+</select>
+
+<select id="gender">
+<option value="unknown">Gender tidak diketahui</option>
+<option value="male">Laki-laki</option>
+<option value="female">Perempuan</option>
+<option value="other">Lainnya</option>
+</select>
+
+<textarea
+ id="complaint"
+ placeholder="Keluhan / kondisi"></textarea>
+
+<select id="severity">
+<option value="mild">Mild</option>
+<option value="moderate">Moderate</option>
+<option value="severe">Severe</option>
+<option value="critical">Critical</option>
+</select>
+
+<select id="triage">
+<option value="green">Hijau</option>
+<option value="yellow">Kuning</option>
+<option value="red">Merah</option>
+<option value="black">Hitam</option>
+</select>
+
+<textarea
+ id="treatment"
+ placeholder="Catatan penanganan"></textarea>
+
+<button
+ class="btn btn-primary"
+ id="saveCase">
+Simpan Kasus
+</button>
+</div>
+
+
+<div class="card">
+<h4>Pemakaian Obat / Alat</h4>
+
+<select id="supplyCase">
+<option value="">Tanpa Medical Case</option>
+</select>
+
+<input
+ id="supplyItem"
+ placeholder="Obat / alat medis">
+
+<input
+ id="supplyQty"
+ type="number"
+ step="0.01"
+ placeholder="Jumlah">
+
+<input
+ id="supplyUnit"
+ placeholder="Satuan">
+
+<textarea
+ id="supplyNotes"
+ placeholder="Catatan"></textarea>
+
+<button
+ class="btn btn-primary"
+ id="saveSupply">
+Catat Pemakaian
+</button>
+
+<small>
+Catatan pemakaian tidak otomatis mengurangi
+Stock Observation.
+</small>
+</div>
+
+
+<div class="card">
+<h4>Evakuasi Medis</h4>
+
+<select id="evacCase"></select>
+
+<input
+ id="provider"
+ placeholder="Provider ambulans / evakuasi">
+
+<input
+ id="vehicle"
+ placeholder="Ambulans / kendaraan">
+
+<input
+ id="vehicleContact"
+ placeholder="Kontak kendaraan / WA">
+
+<input
+ id="destination"
+ placeholder="Rumah sakit / fasilitas tujuan">
+
+<textarea
+ id="evacNotes"
+ placeholder="Catatan evakuasi"></textarea>
+
+<button
+ class="btn btn-primary"
+ id="saveEvac">
+Buat Evakuasi
+</button>
+</div>
+
+</div>
+
+
+<h3>Kasus Medis</h3>
+<div id="cases"></div>
+
+<h3>Evakuasi</h3>
+<div id="evacuations"></div>
+
+<h3>Pemakaian Obat / Alat</h3>
+<div id="supplies"></div>
+
+</div>
+
+
+<nav class="rn-mobile-nav">
+<a href="/kelompok-posko">Posko</a>
+<a href="/logistics-centre">Logistik</a>
+<a href="/medical-centre"><b>Medis</b></a>
+<a href="/data-consolidation">Control</a>
+</nav>
+
+
+<script>
+document.addEventListener(
+ "DOMContentLoaded",
+ async()=>{
+
+ const call=(method,args={})=>
+  new Promise((ok,fail)=>{
+   frappe.call({
+    method,
+    args,
+    callback:r=>ok(r.message),
+    error:fail
+   });
+  });
+
+ const esc=s=>String(s??"")
+  .replace(/[&<>"']/g,c=>({
+   "&":"&amp;",
+   "<":"&lt;",
+   ">":"&gt;",
+   '"':"&quot;",
+   "'":"&#039;"
+  }[c]));
+
+ let data={};
+
+ function wa(value){
+  let n=String(value||"")
+   .replace(/\D/g,"");
+
+  if(n.startsWith("0")){
+   n="62"+n.slice(1);
+  }else if(n.startsWith("8")){
+   n="62"+n;
+  }
+
+  return n
+   ? "https://wa.me/"+n
+   : "";
+ }
+
+ function triageClass(value){
+  return {
+   red:"red",
+   yellow:"yellow",
+   green:"green",
+   black:"black"
+  }[value] || "";
+ }
+
+ function caseButtons(c){
+  const map={
+   active:[
+    "stabilized",
+    "referred",
+    "discharged"
+   ],
+   stabilized:[
+    "referred",
+    "admitted",
+    "discharged"
+   ],
+   referred:[
+    "evacuating",
+    "admitted"
+   ],
+   evacuating:[
+    "admitted",
+    "discharged"
+   ],
+   admitted:[
+    "discharged"
+   ],
+   discharged:["closed"],
+   deceased:["closed"]
+  };
+
+  return (map[c.case_status]||[])
+   .map(s=>`
+    <button
+     class="btn btn-sm btn-secondary case-status"
+     data-id="${esc(c.name)}"
+     data-status="${esc(s)}">
+     ${esc(s)}
+    </button>
+   `).join("");
+ }
+
+ function evacButtons(e){
+  const map={
+   requested:[
+    "assigned",
+    "cancelled"
+   ],
+   assigned:[
+    "en_route_pickup",
+    "patient_on_board",
+    "cancelled"
+   ],
+   en_route_pickup:[
+    "patient_on_board",
+    "cancelled"
+   ],
+   patient_on_board:[
+    "arrived_hospital"
+   ],
+   arrived_hospital:[
+    "handover_complete"
+   ]
+  };
+
+  return (map[e.evacuation_status]||[])
+   .map(s=>`
+    <button
+     class="btn btn-sm btn-secondary evac-status"
+     data-id="${esc(e.name)}"
+     data-status="${esc(s)}">
+     ${esc(s)}
+    </button>
+   `).join("");
+ }
+
+ function evidence(doctype,name){
+  return `
+   <div class="actions">
+    <input
+     type="file"
+     data-file-for="${esc(name)}">
+    <button
+     class="btn btn-sm btn-secondary medical-evidence"
+     data-doctype="${esc(doctype)}"
+     data-id="${esc(name)}">
+     Tambah Bukti Privat
+    </button>
+   </div>
+  `;
+ }
+
+ async function uploadEvidence(btn){
+  const input=document.querySelector(
+   `[data-file-for="${btn.dataset.id}"]`
+  );
+
+  if(!input?.files?.length){
+   alert("Pilih file terlebih dahulu");
+   return;
+  }
+
+  const fd=new FormData();
+
+  fd.append(
+   "file",
+   input.files[0]
+  );
+
+  fd.append(
+   "is_private",
+   "1"
+  );
+
+  const r=await fetch(
+   "/api/method/upload_file",
+   {
+    method:"POST",
+    body:fd,
+    headers:{
+     "X-Frappe-CSRF-Token":
+      frappe.csrf_token
+    }
+   }
+  );
+
+  const j=await r.json();
+
+  if(!j.message?.file_url){
+   throw new Error(
+    "Upload file gagal"
+   );
+  }
+
+  await call(
+   "rescue_net.api_medical.add_evidence",
+   {
+    reference_doctype:
+     btn.dataset.doctype,
+    reference_name:
+     btn.dataset.id,
+    file_url:
+     j.message.file_url,
+    evidence_type:
+     "photo_restricted"
+   }
+  );
+
+  alert("Bukti privat tersimpan");
+ }
+
+ function render(){
+  const posko=
+   document.getElementById(
+    "posko"
+   ).value;
+
+  const poskoRow=
+   (data.poskos||[])
+   .find(x=>x.name===posko);
+
+  const contact=
+   poskoRow?.officer_in_charge_phone;
+
+  document.getElementById(
+   "poskoContact"
+  ).innerHTML=contact
+   ? `<p><a
+       class="btn btn-success"
+       target="_blank"
+       rel="noopener"
+       href="${wa(contact)}">
+       Hubungi Posko via WhatsApp
+      </a></p>`
+   : "";
+
+  const cases=
+   (data.cases||[])
+   .filter(x=>x.posko===posko);
+
+  document.getElementById(
+   "cases"
+  ).innerHTML=cases
+   .map(c=>`
+    <div class="card">
+     <b>${esc(c.patient_code)}</b>
+     <div>${esc(c.complaint)}</div>
+
+     <span class="badge ${triageClass(c.triage_status)}">
+      Triase ${esc(c.triage_status)}
+     </span>
+
+     <span class="badge">
+      ${esc(c.severity)}
+     </span>
+
+     <span class="badge">
+      ${esc(c.case_status)}
+     </span>
+
+     <div class="actions">
+      ${caseButtons(c)}
+     </div>
+
+     ${evidence(
+      "RN Medical Case",
+      c.name
+     )}
+    </div>
+   `).join("")
+   || "<p>Belum ada kasus.</p>";
+
+  const caseOptions=
+   cases.map(c=>`
+    <option value="${esc(c.name)}">
+     ${esc(c.patient_code)} ·
+     ${esc(c.triage_status)}
+    </option>
+   `).join("");
+
+  document.getElementById(
+   "supplyCase"
+  ).innerHTML=
+   '<option value="">Tanpa Medical Case</option>'
+   +caseOptions;
+
+  document.getElementById(
+   "evacCase"
+  ).innerHTML=caseOptions;
+
+  document.getElementById(
+   "evacuations"
+  ).innerHTML=
+   (data.evacuations||[])
+   .filter(x=>x.posko===posko)
+   .map(e=>`
+    <div class="card">
+     <b>${esc(e.destination_facility)}</b>
+     <div>
+      ${esc(e.provider_name||"")}
+      ·
+      ${esc(e.transport_reference||"")}
+     </div>
+
+     <span class="badge">
+      ${esc(e.evacuation_status)}
+     </span>
+
+     <div class="actions">
+      ${evacButtons(e)}
+     </div>
+
+     ${evidence(
+      "RN Medical Evacuation",
+      e.name
+     )}
+    </div>
+   `).join("")
+   || "<p>Belum ada evakuasi.</p>";
+
+  document.getElementById(
+   "supplies"
+  ).innerHTML=
+   (data.supply_uses||[])
+   .filter(x=>x.posko===posko)
+   .map(s=>`
+    <div class="card">
+     <b>${esc(s.item_name)}</b>
+     <div>
+      ${esc(s.quantity)}
+      ${esc(s.unit)}
+     </div>
+     <small>
+      ${esc(s.used_at||"")}
+     </small>
+    </div>
+   `).join("")
+   || "<p>Belum ada pemakaian.</p>";
+
+  document.querySelectorAll(
+   ".case-status"
+  ).forEach(btn=>{
+   btn.onclick=async()=>{
+    await call(
+     "rescue_net.api_medical.update_case_status",
+     {
+      medical_case:btn.dataset.id,
+      new_status:btn.dataset.status
+     }
+    );
+
+    await load();
+   };
+  });
+
+  document.querySelectorAll(
+   ".evac-status"
+  ).forEach(btn=>{
+   btn.onclick=async()=>{
+    await call(
+     "rescue_net.api_medical.update_evacuation_status",
+     {
+      evacuation:btn.dataset.id,
+      new_status:btn.dataset.status
+     }
+    );
+
+    await load();
+   };
+  });
+
+  document.querySelectorAll(
+   ".medical-evidence"
+  ).forEach(btn=>{
+   btn.onclick=()=>{
+    uploadEvidence(btn)
+     .catch(e=>alert(
+      e.message||e
+     ));
+   };
+  });
+ }
+
+ async function load(){
+  data=await call(
+   "rescue_net.api_medical.dashboard"
+  );
+
+  const select=
+   document.getElementById(
+    "posko"
+   );
+
+  const old=select.value;
+
+  select.innerHTML=
+   (data.poskos||[])
+   .map(p=>`
+    <option value="${esc(p.name)}">
+     ${esc(p.title)}
+    </option>
+   `).join("");
+
+  if(old){
+   select.value=old;
+  }
+
+  render();
+ }
+
+ document.getElementById(
+  "posko"
+ ).onchange=render;
+
+ document.getElementById(
+  "saveCase"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_medical.create_case",
+   {
+    posko:
+     document.getElementById(
+      "posko"
+     ).value,
+
+    patient_code:
+     document.getElementById(
+      "patientCode"
+     ).value,
+
+    complaint:
+     document.getElementById(
+      "complaint"
+     ).value,
+
+    age_group:
+     document.getElementById(
+      "ageGroup"
+     ).value,
+
+    gender:
+     document.getElementById(
+      "gender"
+     ).value,
+
+    severity:
+     document.getElementById(
+      "severity"
+     ).value,
+
+    triage_status:
+     document.getElementById(
+      "triage"
+     ).value,
+
+    treatment_notes:
+     document.getElementById(
+      "treatment"
+     ).value
+   }
+  );
+
+  await load();
+ };
+
+ document.getElementById(
+  "saveSupply"
+ ).onclick=async()=>{
+  const result=await call(
+   "rescue_net.api_medical.record_supply_use",
+   {
+    posko:
+     document.getElementById(
+      "posko"
+     ).value,
+
+    medical_case:
+     document.getElementById(
+      "supplyCase"
+     ).value || null,
+
+    item_name:
+     document.getElementById(
+      "supplyItem"
+     ).value,
+
+    quantity:
+     document.getElementById(
+      "supplyQty"
+     ).value,
+
+    unit:
+     document.getElementById(
+      "supplyUnit"
+     ).value,
+
+    notes:
+     document.getElementById(
+      "supplyNotes"
+     ).value
+   }
+  );
+
+  if(result.stock_updated===false){
+   alert(
+    "Pemakaian tercatat. "
+    +"Stock Observation tidak berubah otomatis."
+   );
+  }
+
+  await load();
+ };
+
+ document.getElementById(
+  "saveEvac"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_medical.create_evacuation",
+   {
+    posko:
+     document.getElementById(
+      "posko"
+     ).value,
+
+    medical_case:
+     document.getElementById(
+      "evacCase"
+     ).value,
+
+    provider_name:
+     document.getElementById(
+      "provider"
+     ).value,
+
+    transport_reference:
+     document.getElementById(
+      "vehicle"
+     ).value,
+
+    vehicle_contact:
+     document.getElementById(
+      "vehicleContact"
+     ).value,
+
+    destination_facility:
+     document.getElementById(
+      "destination"
+     ).value,
+
+    notes:
+     document.getElementById(
+      "evacNotes"
+     ).value
+   }
+  );
+
+  await load();
+ };
+
+ await load();
+});
+</script>
+
+{% endblock %}

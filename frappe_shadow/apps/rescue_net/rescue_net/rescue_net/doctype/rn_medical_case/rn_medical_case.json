@@ -1,0 +1,128 @@
+{
+  "doctype": "DocType",
+  "name": "RN Medical Case",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "patient_code",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "legacy_source",
+      "label": "Legacy Source",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "migration_status",
+      "label": "Migration Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko Medis",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "patient_code",
+      "label": "Kode Pasien",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "age_group",
+      "label": "Kelompok Usia",
+      "fieldtype": "Select",
+      "options": "unknown\ninfant\nchild\nadolescent\nadult\nelderly",
+      "default": "unknown"
+    },
+    {
+      "fieldname": "gender",
+      "label": "Gender",
+      "fieldtype": "Select",
+      "options": "unknown\nmale\nfemale\nother",
+      "default": "unknown"
+    },
+    {
+      "fieldname": "complaint",
+      "label": "Keluhan / Kondisi",
+      "fieldtype": "Small Text",
+      "reqd": 1
+    },
+    {
+      "fieldname": "severity",
+      "label": "Severity",
+      "fieldtype": "Select",
+      "options": "mild\nmoderate\nsevere\ncritical",
+      "default": "mild"
+    },
+    {
+      "fieldname": "triage_status",
+      "label": "Triase",
+      "fieldtype": "Select",
+      "options": "green\nyellow\nred\nblack",
+      "default": "green"
+    },
+    {
+      "fieldname": "case_status",
+      "label": "Status Kasus",
+      "fieldtype": "Select",
+      "options": "active\nstabilized\nreferred\nevacuating\nadmitted\ndischarged\ndeceased\nclosed",
+      "default": "active"
+    },
+    {
+      "fieldname": "treatment_notes",
+      "label": "Catatan Penanganan",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "source_updated_at",
+      "label": "Source Updated At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "doctype": "DocType",
+  "name": "RN Medical Evidence",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "fields": [
+    {
+      "fieldname": "reference_doctype",
+      "label": "Reference DocType",
+      "fieldtype": "Link",
+      "options": "DocType",
+      "reqd": 1
+    },
+    {
+      "fieldname": "reference_name",
+      "label": "Reference",
+      "fieldtype": "Dynamic Link",
+      "options": "reference_doctype",
+      "reqd": 1
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "file_url",
+      "label": "Private Evidence File",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "evidence_type",
+      "label": "Evidence Type",
+      "fieldtype": "Select",
+      "options": "medical_note\nhandover\nreferral\nphoto_restricted\nother",
+      "default": "other"
+    },
+    {
+      "fieldname": "caption",
+      "label": "Caption",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "uploaded_at",
+      "label": "Uploaded At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "uploaded_by_user",
+      "label": "Uploaded By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "pending"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

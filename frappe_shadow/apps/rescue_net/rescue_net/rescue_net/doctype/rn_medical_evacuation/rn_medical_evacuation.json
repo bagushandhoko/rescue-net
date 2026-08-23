@@ -1,0 +1,98 @@
+{
+  "doctype": "DocType",
+  "name": "RN Medical Evacuation",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "destination_facility",
+  "fields": [
+    {
+      "fieldname": "posko",
+      "label": "Posko Medis",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "medical_case",
+      "label": "Medical Case",
+      "fieldtype": "Link",
+      "options": "RN Medical Case",
+      "reqd": 1
+    },
+    {
+      "fieldname": "provider_name",
+      "label": "Provider Evakuasi",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "transport_reference",
+      "label": "Ambulans / Kendaraan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "vehicle_contact",
+      "label": "Kontak Kendaraan / WA",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "destination_facility",
+      "label": "Fasilitas Tujuan",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "evacuation_status",
+      "label": "Status Evakuasi",
+      "fieldtype": "Select",
+      "options": "requested\nassigned\nen_route_pickup\npatient_on_board\narrived_hospital\nhandover_complete\ncancelled",
+      "default": "requested"
+    },
+    {
+      "fieldname": "requested_at",
+      "label": "Requested At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "departed_at",
+      "label": "Departed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "arrived_at",
+      "label": "Arrived At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "handover_at",
+      "label": "Handover At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

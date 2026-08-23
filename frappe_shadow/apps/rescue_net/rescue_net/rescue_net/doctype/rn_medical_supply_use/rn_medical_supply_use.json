@@ -1,0 +1,78 @@
+{
+  "doctype": "DocType",
+  "name": "RN Medical Supply Use",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "item_name",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko Medis",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "medical_case",
+      "label": "Medical Case",
+      "fieldtype": "Link",
+      "options": "RN Medical Case"
+    },
+    {
+      "fieldname": "item_name",
+      "label": "Obat / Alat",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "quantity",
+      "label": "Jumlah",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "unit",
+      "label": "Satuan",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "used_at",
+      "label": "Digunakan At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

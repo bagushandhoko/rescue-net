@@ -1,0 +1,99 @@
+{
+  "doctype": "DocType",
+  "name": "RN Work Tool Deployment",
+  "module": "Rescue Net",
+  "title_field": "deployment_status",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "work_tool_request",
+      "label": "Work Tool Request",
+      "fieldtype": "Link",
+      "options": "RN Work Tool Request",
+      "reqd": 1
+    },
+    {
+      "fieldname": "resource_profile",
+      "label": "Resource Profile",
+      "fieldtype": "Link",
+      "options": "RN Resource Profile",
+      "reqd": 1
+    },
+    {
+      "fieldname": "quantity_assigned",
+      "label": "Quantity Assigned",
+      "fieldtype": "Float",
+      "default": "1",
+      "reqd": 1
+    },
+    {
+      "fieldname": "unit",
+      "label": "Unit",
+      "fieldtype": "Data",
+      "default": "unit"
+    },
+    {
+      "fieldname": "deployment_status",
+      "label": "Deployment Status",
+      "fieldtype": "Select",
+      "options": "reserved\ndeployed\nin_use\ncompleted\ncancelled",
+      "default": "reserved"
+    },
+    {
+      "fieldname": "destination_location",
+      "label": "Destination Location",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "operator_name",
+      "label": "Operator Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "operator_skill",
+      "label": "Operator Skill",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "deployed_at",
+      "label": "Deployed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "completed_at",
+      "label": "Completed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "pending"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

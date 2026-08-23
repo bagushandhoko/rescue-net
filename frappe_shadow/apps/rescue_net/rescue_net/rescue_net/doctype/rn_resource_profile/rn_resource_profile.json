@@ -1,0 +1,114 @@
+{
+  "doctype": "DocType",
+  "name": "RN Resource Profile",
+  "module": "Rescue Net",
+  "title_field": "resource_name",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Select",
+      "options": "organization\nposko\nindividual\nexternal",
+      "default": "organization",
+      "reqd": 1
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "resource_name",
+      "label": "Nama Sumber Daya / Alat",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "resource_type",
+      "label": "Resource Type",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "category",
+      "label": "Category",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "quantity",
+      "label": "Quantity",
+      "fieldtype": "Float",
+      "default": "1"
+    },
+    {
+      "fieldname": "unit",
+      "label": "Unit",
+      "fieldtype": "Data",
+      "default": "unit"
+    },
+    {
+      "fieldname": "capacity_description",
+      "label": "Capacity Description",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "availability_status",
+      "label": "Availability",
+      "fieldtype": "Select",
+      "options": "available\nlimited\nunavailable\nmaintenance",
+      "default": "available"
+    },
+    {
+      "fieldname": "current_location",
+      "label": "Current Location",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "coverage_area",
+      "label": "Coverage Area",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "pic_name",
+      "label": "PIC Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "pic_phone",
+      "label": "PIC Phone",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

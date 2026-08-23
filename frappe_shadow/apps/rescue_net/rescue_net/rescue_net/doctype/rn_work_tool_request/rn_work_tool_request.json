@@ -1,0 +1,111 @@
+{
+  "doctype": "DocType",
+  "name": "RN Work Tool Request",
+  "module": "Rescue Net",
+  "title_field": "tool_name",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "requested_by_type",
+      "label": "Requested By Type",
+      "fieldtype": "Select",
+      "options": "posko\norganization\nother",
+      "default": "posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "requested_by_id",
+      "label": "Requested By ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "tool_name",
+      "label": "Nama Alat",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "tool_type",
+      "label": "Tool Type",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "quantity",
+      "label": "Quantity",
+      "fieldtype": "Float",
+      "default": "1"
+    },
+    {
+      "fieldname": "unit",
+      "label": "Unit",
+      "fieldtype": "Data",
+      "default": "unit"
+    },
+    {
+      "fieldname": "location",
+      "label": "Lokasi Kebutuhan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "needed_for",
+      "label": "Needed For",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "priority",
+      "label": "Priority",
+      "fieldtype": "Select",
+      "options": "normal\nurgent\ncritical",
+      "default": "normal"
+    },
+    {
+      "fieldname": "required_operator_skill",
+      "label": "Required Operator Skill",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "request_status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "requested\nmatched\nin_progress\npartially_fulfilled\nfulfilled\ncancelled",
+      "default": "requested"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

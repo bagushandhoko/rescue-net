@@ -1,0 +1,914 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+
+<style>
+.rn-wrap{
+ max-width:1200px;
+ margin:24px auto;
+ padding:0 14px 90px
+}
+.rn-grid{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:14px
+}
+.rn-card{
+ border:1px solid #ddd;
+ border-radius:12px;
+ padding:14px;
+ margin:10px 0;
+ background:#fff
+}
+.rn-kpis{
+ display:grid;
+ grid-template-columns:repeat(4,minmax(0,1fr));
+ gap:10px;
+ margin:14px 0
+}
+.rn-kpi{
+ border:1px solid #ddd;
+ border-radius:12px;
+ padding:12px
+}
+.rn-kpi b{
+ display:block;
+ font-size:1.5rem
+}
+input,select,textarea{
+ width:100%;
+ min-height:44px;
+ padding:9px;
+ margin:5px 0;
+ border:1px solid #ccc;
+ border-radius:7px
+}
+textarea{min-height:76px}
+button{min-height:42px}
+.rn-actions{
+ display:flex;
+ flex-wrap:wrap;
+ gap:7px;
+ margin-top:8px
+}
+.rn-badge{
+ display:inline-block;
+ padding:4px 8px;
+ border:1px solid #ddd;
+ border-radius:999px;
+ margin:3px;
+ font-size:.82rem
+}
+.rn-notice{
+ padding:12px;
+ border-radius:10px;
+ background:#fff5d6;
+ margin:10px 0
+}
+.rn-muted{
+ opacity:.72;
+ font-size:.9rem
+}
+.rn-private{
+ margin-top:8px;
+ padding:8px;
+ border:1px dashed #bbb;
+ border-radius:8px
+}
+@media(max-width:800px){
+ .rn-grid{grid-template-columns:1fr}
+ .rn-kpis{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+
+<div class="rn-wrap">
+
+<h2>Resource &amp; Alat Kerja</h2>
+
+<p class="rn-muted">
+Profil alat/sumber daya, kebutuhan alat lapangan,
+alokasi kapasitas, deployment, dan evidence operasional.
+</p>
+
+<div class="rn-notice">
+<b>Pemisahan data:</b>
+Resource/Alat Kerja bukan stok logistik dan bukan transport space.
+PIC/contact tidak ditampilkan di dashboard umum.
+Evidence operasional disimpan sebagai file privat.
+</div>
+
+<div class="rn-kpis">
+ <div class="rn-kpi">
+  <span>Resource</span>
+  <b id="kResource">0</b>
+ </div>
+ <div class="rn-kpi">
+  <span>Request Terbuka</span>
+  <b id="kRequest">0</b>
+ </div>
+ <div class="rn-kpi">
+  <span>Critical/Urgent</span>
+  <b id="kUrgent">0</b>
+ </div>
+ <div class="rn-kpi">
+  <span>Deployment Aktif</span>
+  <b id="kDeploy">0</b>
+ </div>
+</div>
+
+<div class="rn-grid">
+
+<div class="rn-card">
+<h4>Daftarkan Resource / Alat</h4>
+
+<input id="rName"
+ placeholder="Nama alat, contoh Excavator">
+
+<input id="rType"
+ placeholder="Jenis, contoh heavy_equipment">
+
+<input id="rCategory"
+ placeholder="Kategori, contoh earthmoving">
+
+<select id="rOwnerType">
+ <option value="posko">Posko</option>
+ <option value="organization">Kelompok</option>
+ <option value="individual">Individu</option>
+ <option value="external">External</option>
+</select>
+
+<input id="rOwner"
+ placeholder="ID Posko / Kelompok pemilik">
+
+<div class="rn-grid">
+ <input id="rQty"
+  type="number"
+  step="0.01"
+  value="1"
+  placeholder="Jumlah">
+
+ <input id="rUnit"
+  value="unit"
+  placeholder="Unit">
+</div>
+
+<textarea id="rCapacity"
+ placeholder="Deskripsi kapasitas"></textarea>
+
+<input id="rLocation"
+ placeholder="Lokasi saat ini">
+
+<input id="rCoverage"
+ placeholder="Area cakupan">
+
+<input id="rPicName"
+ placeholder="Nama PIC - data terbatas">
+
+<input id="rPicPhone"
+ placeholder="Kontak PIC - data terbatas">
+
+<button class="btn btn-primary"
+ id="saveResource">
+Daftarkan Resource
+</button>
+</div>
+
+<div class="rn-card">
+<h4>Permintaan Alat Kerja</h4>
+
+<input id="qName"
+ placeholder="Nama alat yang dibutuhkan">
+
+<input id="qType"
+ placeholder="Jenis alat">
+
+<select id="qRequesterType">
+ <option value="posko">Posko</option>
+ <option value="organization">Kelompok</option>
+ <option value="other">Lainnya</option>
+</select>
+
+<input id="qRequester"
+ placeholder="ID Posko / Kelompok peminta">
+
+<div class="rn-grid">
+ <input id="qQty"
+  type="number"
+  step="0.01"
+  value="1"
+  placeholder="Jumlah">
+
+ <input id="qUnit"
+  value="unit"
+  placeholder="Unit">
+</div>
+
+<input id="qLocation"
+ placeholder="Lokasi kebutuhan">
+
+<textarea id="qNeeded"
+ placeholder="Digunakan untuk apa"></textarea>
+
+<select id="qPriority">
+ <option value="normal">Normal</option>
+ <option value="urgent">Urgent</option>
+ <option value="critical">Critical</option>
+</select>
+
+<input id="qSkill"
+ placeholder="Skill operator yang dibutuhkan">
+
+<textarea id="qNotes"
+ placeholder="Catatan"></textarea>
+
+<button class="btn btn-primary"
+ id="saveRequest">
+Buat Permintaan Alat
+</button>
+</div>
+
+</div>
+
+<div class="rn-card" id="allocationPanel">
+<h4>Allocation / Deployment</h4>
+
+<p class="rn-muted">
+Hanya Control Centre. Reservasi akan mengunci kapasitas
+agar resource tidak dialokasikan melebihi jumlah tersedia.
+</p>
+
+<select id="allocationRequest"></select>
+
+<select id="allocationResource"></select>
+
+<div class="rn-grid">
+ <input id="allocationQty"
+  type="number"
+  step="0.01"
+  value="1"
+  placeholder="Jumlah dialokasikan">
+
+ <input id="allocationDestination"
+  placeholder="Lokasi tujuan">
+</div>
+
+<input id="allocationOperator"
+ placeholder="Nama operator">
+
+<input id="allocationSkill"
+ placeholder="Skill operator">
+
+<button class="btn btn-primary"
+ id="saveAllocation">
+Reserve Resource
+</button>
+</div>
+
+<h3>Resource Tersedia</h3>
+<div id="resourceList"></div>
+
+<h3>Permintaan Alat</h3>
+<div id="requestList"></div>
+
+<h3>Deployment</h3>
+<div id="deploymentList"></div>
+
+</div>
+
+<script>
+document.addEventListener(
+ "DOMContentLoaded",
+ async()=>{
+
+ const params=
+  new URLSearchParams(location.search);
+
+ const disasterEvent=
+  params.get("event") || null;
+
+ let data={};
+
+ const call=(method,args={})=>
+  new Promise((resolve,reject)=>{
+   frappe.call({
+    method,
+    args,
+    callback:r=>resolve(r.message),
+    error:reject
+   });
+  });
+
+ const esc=v=>String(v??"")
+  .replace(/[&<>"']/g,c=>({
+   "&":"&amp;",
+   "<":"&lt;",
+   ">":"&gt;",
+   '"':"&quot;",
+   "'":"&#039;"
+  }[c]));
+
+ const val=id=>
+  document.getElementById(id).value;
+
+ function notify(text){
+  frappe.show_alert({
+   message:text,
+   indicator:"green"
+  });
+ }
+
+ function evidenceBlock(doctype,name){
+  return `
+   <div class="rn-actions">
+    <input type="file"
+     data-file="${esc(name)}">
+
+    <button
+     class="btn btn-sm btn-secondary evidence"
+     data-dt="${esc(doctype)}"
+     data-name="${esc(name)}">
+     Evidence Privat
+    </button>
+   </div>
+  `;
+ }
+
+ async function uploadEvidence(btn){
+  const input=document.querySelector(
+   `[data-file="${btn.dataset.name}"]`
+  );
+
+  if(!input?.files?.length){
+   alert("Pilih file terlebih dahulu.");
+   return;
+  }
+
+  const fd=new FormData();
+
+  fd.append(
+   "file",
+   input.files[0]
+  );
+
+  fd.append(
+   "is_private",
+   "1"
+  );
+
+  const response=await fetch(
+   "/api/method/upload_file",
+   {
+    method:"POST",
+    body:fd,
+    headers:{
+     "X-Frappe-CSRF-Token":
+      frappe.csrf_token
+    }
+   }
+  );
+
+  const json=await response.json();
+
+  const fileUrl=
+   json.message?.file_url;
+
+  if(!fileUrl){
+   throw new Error(
+    "Upload file gagal"
+   );
+  }
+
+  await call(
+   "rescue_net.api_resource_tools.add_evidence",
+   {
+    linked_doctype:
+     btn.dataset.dt,
+    linked_name:
+     btn.dataset.name,
+    file_url:fileUrl,
+    evidence_type:
+     "verification"
+   }
+  );
+
+  notify("Evidence privat tersimpan");
+ }
+
+ async function showPic(name){
+  const r=await call(
+   "rescue_net.api_resource_tools.restricted_resource",
+   {
+    resource_profile:name
+   }
+  );
+
+  const box=document.querySelector(
+   `[data-pic-box="${name}"]`
+  );
+
+  if(box){
+   box.innerHTML=
+    `<b>PIC terbatas:</b> `+
+    `${esc(r.pic_name||"-")} · `+
+    `${esc(r.pic_phone||"-")}`;
+  }
+ }
+
+ function resourceName(id){
+  const r=(data.resources||[])
+   .find(x=>x.name===id);
+
+  return r
+   ? r.resource_name
+   : id;
+ }
+
+ function requestName(id){
+  const r=(data.requests||[])
+   .find(x=>x.name===id);
+
+  return r
+   ? r.tool_name
+   : id;
+ }
+
+ function renderKpis(){
+  const requests=data.requests||[];
+  const deployments=
+   data.deployments||[];
+
+  document.getElementById(
+   "kResource"
+  ).textContent=
+   (data.resources||[]).length;
+
+  document.getElementById(
+   "kRequest"
+  ).textContent=
+   requests.filter(x=>
+    !["fulfilled","cancelled"]
+     .includes(x.request_status)
+   ).length;
+
+  document.getElementById(
+   "kUrgent"
+  ).textContent=
+   requests.filter(x=>
+    ["urgent","critical"]
+     .includes(x.priority)
+    &&
+    !["fulfilled","cancelled"]
+     .includes(x.request_status)
+   ).length;
+
+  document.getElementById(
+   "kDeploy"
+  ).textContent=
+   deployments.filter(x=>
+    ["reserved","deployed","in_use"]
+     .includes(x.deployment_status)
+   ).length;
+ }
+
+ function renderAllocation(){
+  const panel=
+   document.getElementById(
+    "allocationPanel"
+   );
+
+  panel.style.display=
+   data.mode==="control"
+   ? ""
+   : "none";
+
+  if(data.mode!=="control"){
+   return;
+  }
+
+  const requests=
+   (data.requests||[])
+   .filter(x=>
+    !["fulfilled","cancelled"]
+     .includes(x.request_status)
+   );
+
+  const resources=
+   (data.resources||[])
+   .filter(x=>
+    ["available","limited"]
+     .includes(x.availability_status)
+    &&
+    Number(
+     x.available_quantity||0
+    )>0
+   );
+
+  document.getElementById(
+   "allocationRequest"
+  ).innerHTML=
+   requests.map(x=>`
+    <option value="${esc(x.name)}">
+     ${esc(x.tool_name)}
+     · ${esc(x.quantity)} ${esc(x.unit)}
+     · ${esc(x.priority)}
+    </option>
+   `).join("");
+
+  document.getElementById(
+   "allocationResource"
+  ).innerHTML=
+   resources.map(x=>`
+    <option value="${esc(x.name)}">
+     ${esc(x.resource_name)}
+     · available ${esc(x.available_quantity)}
+       ${esc(x.unit)}
+    </option>
+   `).join("");
+ }
+
+ function renderResources(){
+  const target=
+   document.getElementById(
+    "resourceList"
+   );
+
+  target.innerHTML=
+   (data.resources||[]).map(x=>`
+    <div class="rn-card">
+
+     <b>${esc(x.resource_name)}</b>
+
+     <span class="rn-badge">
+      ${esc(x.availability_status)}
+     </span>
+
+     <span class="rn-badge">
+      ${esc(x.resource_type)}
+     </span>
+
+     <div>
+      Jumlah:
+      ${esc(x.quantity)}
+      ${esc(x.unit)}
+     </div>
+
+     <div>
+      Dialokasikan aktif:
+      ${esc(x.active_allocated)}
+      · Tersedia:
+      <b>${esc(x.available_quantity)}</b>
+     </div>
+
+     <div>
+      Lokasi:
+      ${esc(x.current_location||"-")}
+     </div>
+
+     <div>
+      Coverage:
+      ${esc(x.coverage_area||"-")}
+     </div>
+
+     <div>
+      ${esc(x.capacity_description||"")}
+     </div>
+
+     <div class="rn-private"
+      data-pic-box="${esc(x.name)}">
+      PIC disembunyikan.
+     </div>
+
+     <div class="rn-actions">
+      <button
+       class="btn btn-sm btn-secondary show-pic"
+       data-name="${esc(x.name)}">
+       Lihat PIC
+      </button>
+     </div>
+
+     ${evidenceBlock(
+      "RN Resource Profile",
+      x.name
+     )}
+
+    </div>
+   `).join("")
+   ||
+   "<p>Belum ada Resource Profile.</p>";
+ }
+
+ function renderRequests(){
+  const target=
+   document.getElementById(
+    "requestList"
+   );
+
+  target.innerHTML=
+   (data.requests||[]).map(x=>`
+    <div class="rn-card">
+
+     <b>${esc(x.tool_name)}</b>
+
+     <span class="rn-badge">
+      ${esc(x.request_status)}
+     </span>
+
+     <span class="rn-badge">
+      ${esc(x.priority)}
+     </span>
+
+     <div>
+      Kebutuhan:
+      ${esc(x.quantity)}
+      ${esc(x.unit)}
+     </div>
+
+     <div>
+      Lokasi:
+      ${esc(x.location||"-")}
+     </div>
+
+     <div>
+      Untuk:
+      ${esc(x.needed_for||"-")}
+     </div>
+
+     <div>
+      Skill operator:
+      ${esc(x.required_operator_skill||"-")}
+     </div>
+
+     ${evidenceBlock(
+      "RN Work Tool Request",
+      x.name
+     )}
+
+    </div>
+   `).join("")
+   ||
+   "<p>Belum ada permintaan alat.</p>";
+ }
+
+ function lifecycleButtons(x){
+  if(data.mode!=="control"){
+   return "";
+  }
+
+  if(x.deployment_status==="reserved"){
+   return `
+    <button class="btn btn-sm btn-primary dep-action"
+     data-name="${esc(x.name)}"
+     data-status="deployed">
+     Deploy
+    </button>
+
+    <button class="btn btn-sm btn-secondary dep-action"
+     data-name="${esc(x.name)}"
+     data-status="cancelled">
+     Cancel
+    </button>
+   `;
+  }
+
+  if(x.deployment_status==="deployed"){
+   return `
+    <button class="btn btn-sm btn-primary dep-action"
+     data-name="${esc(x.name)}"
+     data-status="in_use">
+     Mulai Digunakan
+    </button>
+
+    <button class="btn btn-sm btn-secondary dep-action"
+     data-name="${esc(x.name)}"
+     data-status="completed">
+     Selesai
+    </button>
+   `;
+  }
+
+  if(x.deployment_status==="in_use"){
+   return `
+    <button class="btn btn-sm btn-primary dep-action"
+     data-name="${esc(x.name)}"
+     data-status="completed">
+     Selesaikan Deployment
+    </button>
+   `;
+  }
+
+  return "";
+ }
+
+ function renderDeployments(){
+  const target=
+   document.getElementById(
+    "deploymentList"
+   );
+
+  target.innerHTML=
+   (data.deployments||[]).map(x=>`
+    <div class="rn-card">
+
+     <b>
+      ${esc(resourceName(x.resource_profile))}
+      →
+      ${esc(requestName(x.work_tool_request))}
+     </b>
+
+     <span class="rn-badge">
+      ${esc(x.deployment_status)}
+     </span>
+
+     <div>
+      Qty:
+      ${esc(x.quantity_assigned)}
+      ${esc(x.unit)}
+     </div>
+
+     <div>
+      Tujuan:
+      ${esc(x.destination_location||"-")}
+     </div>
+
+     <div>
+      Skill:
+      ${esc(x.operator_skill||"-")}
+     </div>
+
+     <div class="rn-actions">
+      ${lifecycleButtons(x)}
+     </div>
+
+     ${evidenceBlock(
+      "RN Work Tool Deployment",
+      x.name
+     )}
+
+    </div>
+   `).join("")
+   ||
+   "<p>Belum ada deployment.</p>";
+ }
+
+ function bindActions(){
+  document.querySelectorAll(
+   ".show-pic"
+  ).forEach(btn=>{
+   btn.onclick=()=>{
+    showPic(btn.dataset.name)
+     .catch(e=>alert(
+      e.message||e
+     ));
+   };
+  });
+
+  document.querySelectorAll(
+   ".evidence"
+  ).forEach(btn=>{
+   btn.onclick=()=>{
+    uploadEvidence(btn)
+     .catch(e=>alert(
+      e.message||e
+     ));
+   };
+  });
+
+  document.querySelectorAll(
+   ".dep-action"
+  ).forEach(btn=>{
+   btn.onclick=async()=>{
+    await call(
+     "rescue_net.api_resource_tools.update_deployment_status",
+     {
+      deployment:
+       btn.dataset.name,
+      new_status:
+       btn.dataset.status
+     }
+    );
+
+    await load();
+   };
+  });
+ }
+
+ function render(){
+  renderKpis();
+  renderAllocation();
+  renderResources();
+  renderRequests();
+  renderDeployments();
+  bindActions();
+ }
+
+ async function load(){
+  data=await call(
+   "rescue_net.api_resource_tools.dashboard",
+   {
+    disaster_event:
+     disasterEvent
+   }
+  );
+
+  render();
+ }
+
+ document.getElementById(
+  "saveResource"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_resource_tools.create_resource_profile",
+   {
+    resource_name:val("rName"),
+    resource_type:val("rType"),
+    owner_type:val("rOwnerType"),
+    owner_id:val("rOwner"),
+    disaster_event:
+     disasterEvent,
+    category:val("rCategory"),
+    quantity:val("rQty"),
+    unit:val("rUnit"),
+    capacity_description:
+     val("rCapacity"),
+    current_location:
+     val("rLocation"),
+    coverage_area:
+     val("rCoverage"),
+    pic_name:val("rPicName"),
+    pic_phone:val("rPicPhone")
+   }
+  );
+
+  notify("Resource tersimpan");
+  await load();
+ };
+
+ document.getElementById(
+  "saveRequest"
+ ).onclick=async()=>{
+  await call(
+   "rescue_net.api_resource_tools.create_work_tool_request",
+   {
+    tool_name:val("qName"),
+    requested_by_type:
+     val("qRequesterType"),
+    requested_by_id:
+     val("qRequester"),
+    disaster_event:
+     disasterEvent,
+    tool_type:val("qType"),
+    quantity:val("qQty"),
+    unit:val("qUnit"),
+    location:val("qLocation"),
+    needed_for:val("qNeeded"),
+    priority:val("qPriority"),
+    required_operator_skill:
+     val("qSkill"),
+    notes:val("qNotes")
+   }
+  );
+
+  notify("Permintaan alat tersimpan");
+  await load();
+ };
+
+ document.getElementById(
+  "saveAllocation"
+ ).onclick=async()=>{
+  const request=
+   val("allocationRequest");
+
+  const resource=
+   val("allocationResource");
+
+  if(!request || !resource){
+   alert(
+    "Request dan Resource harus dipilih."
+   );
+   return;
+  }
+
+  await call(
+   "rescue_net.api_resource_tools.create_deployment",
+   {
+    work_tool_request:request,
+    resource_profile:resource,
+    quantity_assigned:
+     val("allocationQty"),
+    destination_location:
+     val("allocationDestination"),
+    operator_name:
+     val("allocationOperator"),
+    operator_skill:
+     val("allocationSkill")
+   }
+  );
+
+  notify("Resource berhasil di-reserve");
+  await load();
+ };
+
+ await load();
+});
+</script>
+
+{% endblock %}

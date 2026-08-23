@@ -1,0 +1,103 @@
+{
+  "doctype": "DocType",
+  "name": "RN Volunteer Profile",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "volunteer_name",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "user_account",
+      "label": "User Account",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "volunteer_name",
+      "label": "Nama Relawan",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "contact",
+      "label": "Kontak / WhatsApp",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "main_skill",
+      "label": "Skill Utama",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "skill_tags",
+      "label": "Skill Tambahan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "availability_status",
+      "label": "Availability",
+      "fieldtype": "Select",
+      "options": "available\nlimited\nassigned\nunavailable",
+      "default": "available"
+    },
+    {
+      "fieldname": "duration_available",
+      "label": "Durasi Tersedia",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "current_location",
+      "label": "Lokasi Saat Ini",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "assigned_posko",
+      "label": "Assigned Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "source_updated_at",
+      "label": "Source Updated At",
+      "fieldtype": "Datetime"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

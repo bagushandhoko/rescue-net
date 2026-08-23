@@ -1,0 +1,129 @@
+{
+  "doctype": "DocType",
+  "name": "RN Volunteer Assignment",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "task_title",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "volunteer",
+      "label": "Relawan",
+      "fieldtype": "Link",
+      "options": "RN Volunteer Profile",
+      "reqd": 1
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "assignment_type",
+      "label": "Jenis Penugasan",
+      "fieldtype": "Select",
+      "options": "posko\nmedical\nshelter\nlogistics\ndistribution\nfield_assessment\nsearch_rescue\nother",
+      "default": "posko"
+    },
+    {
+      "fieldname": "task_title",
+      "label": "Tugas",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "target_reference",
+      "label": "Referensi Target",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "required_skill",
+      "label": "Skill Dibutuhkan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "priority",
+      "label": "Prioritas",
+      "fieldtype": "Select",
+      "options": "normal\nurgent\ncritical",
+      "default": "normal"
+    },
+    {
+      "fieldname": "assignment_status",
+      "label": "Status Penugasan",
+      "fieldtype": "Select",
+      "options": "planned\naccepted\nchecked_in\nin_progress\ncompleted\ncancelled",
+      "default": "planned"
+    },
+    {
+      "fieldname": "shift_start",
+      "label": "Shift Start",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "shift_end",
+      "label": "Shift End",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "accepted_at",
+      "label": "Accepted At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "checked_in_at",
+      "label": "Checked In At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "completed_at",
+      "label": "Completed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "assignment_notes",
+      "label": "Catatan Penugasan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "completion_notes",
+      "label": "Catatan Penyelesaian",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

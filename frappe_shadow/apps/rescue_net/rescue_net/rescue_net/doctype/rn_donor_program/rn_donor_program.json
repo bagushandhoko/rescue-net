@@ -23,7 +23,21 @@
     "public_visibility",
     "created_by_user",
     "observed_at",
-    "notes"
+    "notes",
+    "target_location",
+    "target_node_id",
+    "target_beneficiaries",
+    "budget_target",
+    "budget_received",
+    "budget_spent",
+    "priority",
+    "start_date",
+    "end_date",
+    "description",
+    "officer_in_charge_name",
+    "officer_in_charge_phone",
+    "evidence_file_id",
+    "updated_by_user"
   ],
   "fields": [
     {
@@ -84,7 +98,7 @@
       "fieldname": "status",
       "fieldtype": "Select",
       "label": "Status",
-      "options": "active\ncompleted\ncancelled",
+      "options": "planned\nactive\ncompleted\ncancelled",
       "default": "active"
     },
     {
@@ -125,6 +139,81 @@
       "fieldname": "notes",
       "fieldtype": "Small Text",
       "label": "Notes"
+    },
+    {
+      "fieldname": "target_location",
+      "fieldtype": "Data",
+      "label": "Target Location"
+    },
+    {
+      "fieldname": "target_node_id",
+      "fieldtype": "Data",
+      "label": "Target Node ID"
+    },
+    {
+      "fieldname": "target_beneficiaries",
+      "fieldtype": "Small Text",
+      "label": "Target Beneficiaries"
+    },
+    {
+      "fieldname": "budget_target",
+      "fieldtype": "Float",
+      "label": "Budget Target",
+      "default": "0"
+    },
+    {
+      "fieldname": "budget_received",
+      "fieldtype": "Float",
+      "label": "Budget Received",
+      "default": "0"
+    },
+    {
+      "fieldname": "budget_spent",
+      "fieldtype": "Float",
+      "label": "Budget Spent",
+      "default": "0"
+    },
+    {
+      "fieldname": "priority",
+      "fieldtype": "Data",
+      "label": "Priority",
+      "default": "normal"
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "label": "Start Date"
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "label": "End Date"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "officer_in_charge_name",
+      "fieldtype": "Data",
+      "label": "Officer in Charge"
+    },
+    {
+      "fieldname": "officer_in_charge_phone",
+      "fieldtype": "Data",
+      "label": "Officer Phone"
+    },
+    {
+      "fieldname": "evidence_file_id",
+      "fieldtype": "Data",
+      "label": "Evidence File ID"
+    },
+    {
+      "fieldname": "updated_by_user",
+      "fieldtype": "Data",
+      "label": "Updated By User",
+      "read_only": 1
     }
   ],
   "permissions": [

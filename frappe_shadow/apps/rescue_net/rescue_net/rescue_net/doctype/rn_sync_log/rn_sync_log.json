@@ -1,0 +1,145 @@
+{
+  "doctype": "DocType",
+  "name": "RN Sync Log",
+  "module": "Rescue Net",
+  "autoname": "hash",
+  "track_changes": 1,
+  "title_field": "event_id",
+  "field_order": [
+    "event_id",
+    "object_type",
+    "object_id",
+    "operation",
+    "source_device_id",
+    "source_server_id",
+    "source_user_id",
+    "source_organization_id",
+    "disaster_event_id",
+    "payload_json",
+    "payload_checksum",
+    "verification_status",
+    "apply_status",
+    "apply_result_json",
+    "conflict_status",
+    "error_message",
+    "received_at",
+    "applied_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "event_id",
+      "label": "Event ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "object_type",
+      "label": "Object Type",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "object_id",
+      "label": "Object ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "operation",
+      "label": "Operation",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "source_device_id",
+      "label": "Source Device ID",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "source_server_id",
+      "label": "Source Server ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "source_user_id",
+      "label": "Source User ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "source_organization_id",
+      "label": "Source Organization ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "disaster_event_id",
+      "label": "Disaster Event ID",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "payload_json",
+      "label": "Payload JSON",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "payload_checksum",
+      "label": "Payload Checksum",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "unverified"
+    },
+    {
+      "fieldname": "apply_status",
+      "label": "Apply Status",
+      "fieldtype": "Select",
+      "options": "accepted\napplied\nstored_only\nrejected\nduplicate_ignored\nconflict",
+      "default": "accepted",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "apply_result_json",
+      "label": "Apply Result JSON",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "conflict_status",
+      "label": "Conflict Status",
+      "fieldtype": "Select",
+      "options": "\nneeds_review\nretry_pending\nresolved"
+    },
+    {
+      "fieldname": "error_message",
+      "label": "Error Message",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "received_at",
+      "label": "Received At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "applied_at",
+      "label": "Applied At",
+      "fieldtype": "Datetime"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1
+    }
+  ]
+}

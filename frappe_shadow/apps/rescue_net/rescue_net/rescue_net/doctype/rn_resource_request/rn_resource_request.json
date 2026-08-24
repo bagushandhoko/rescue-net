@@ -1,0 +1,105 @@
+{
+  "doctype": "DocType",
+  "name": "RN Resource Request",
+  "module": "Rescue Net",
+  "autoname": "hash",
+  "track_changes": 1,
+  "title_field": "requested_by_id",
+  "field_order": [
+    "sync_event_id",
+    "source_object_id",
+    "resource_profile",
+    "requested_by_type",
+    "requested_by_id",
+    "request_reason",
+    "related_need_id",
+    "related_distribution_flow_id",
+    "requested_quantity",
+    "requested_time",
+    "request_status",
+    "source_user_id"
+  ],
+  "fields": [
+    {
+      "fieldname": "sync_event_id",
+      "label": "Sync Event ID",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "source_object_id",
+      "label": "Source Object ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "resource_profile",
+      "label": "Resource",
+      "fieldtype": "Link",
+      "options": "RN Resource Profile",
+      "reqd": 1
+    },
+    {
+      "fieldname": "requested_by_type",
+      "label": "Requested By Type",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "requested_by_id",
+      "label": "Requested By ID",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "request_reason",
+      "label": "Request Reason",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "related_need_id",
+      "label": "Related Need ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "related_distribution_flow_id",
+      "label": "Related Distribution Flow ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "requested_quantity",
+      "label": "Requested Quantity",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "requested_time",
+      "label": "Requested Time",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "request_status",
+      "label": "Request Status",
+      "fieldtype": "Select",
+      "options": "requested\napproved\nrejected\nfulfilled\ncancelled",
+      "default": "requested",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "source_user_id",
+      "label": "Source User ID",
+      "fieldtype": "Data"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "report": 1,
+      "export": 1,
+      "share": 1
+    }
+  ]
+}

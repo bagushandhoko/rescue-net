@@ -5,6 +5,11 @@ import frappe
 import requests
 from frappe.utils import now_datetime
 
+from rescue_net.access_policy import (
+    is_system_manager,
+    rn_actor,
+)
+
 
 DEFAULT_MODEL = "gpt-4o-mini"
 
@@ -89,6 +94,37 @@ def _safe_setting(doc):
         "status": doc.status,
         "created_at": doc.creation,
         "updated_at": doc.modified,
+    }
+
+
+@frappe.whitelist()
+def session_info():
+    from frappe.sessions import get_csrf_token
+
+    user = _require_login()
+    organization_id = None
+
+    if frappe.db.exists("DocType", "RN User Account"):
+        meta = frappe.get_meta("RN User Account")
+
+        if meta.has_field("frappe_user"):
+            for fieldname in (
+                "organization",
+                "organization_id",
+            ):
+                if meta.has_field(fieldname):
+                    organization_id = frappe.db.get_value(
+                        "RN User Account",
+                        {"frappe_user": user},
+                        fieldname,
+                    )
+                    if organization_id:
+                        break
+
+    return {
+        "user": user,
+        "organization_id": organization_id,
+        "csrf_token": get_csrf_token(),
     }
 
 
@@ -287,6 +323,91 @@ def delete_user_key(
     }
 
 
+def _member_orgs(actor):
+    if not actor or not actor.name:
+        return []
+
+    result = frappe.get_all(
+        "RN Organization Membership",
+        filters={
+            "user_account": actor.name,
+            "status": "approved",
+        },
+        pluck="organization",
+        limit_page_length=500,
+    )
+
+    if getattr(actor, "organization", None):
+        result.append(actor.organization)
+
+    return list(set(x for x in result if x))
+
+
+def _ai_scope_poskos(refresh=False):
+    cache_key = "_rn_ai_scope_poskos"
+    missing = "__rn_ai_scope_missing__"
+
+    if not refresh:
+        cached = getattr(
+            frappe.local,
+            cache_key,
+            missing,
+        )
+        if cached != missing:
+            return cached
+
+    actor = rn_actor()
+
+    # None = unrestricted/global Control Centre context.
+    if (
+        is_system_manager()
+        or getattr(actor, "role", None)
+        == "command_center"
+    ):
+        scope = None
+    elif not actor or not actor.name:
+        scope = []
+    else:
+        result = set()
+
+        for org in _member_orgs(actor):
+            result.update(
+                frappe.get_all(
+                    "RN Posko",
+                    filters={
+                        "organization": org
+                    },
+                    pluck="name",
+                    limit_page_length=1000,
+                )
+            )
+
+        result.update(
+            frappe.get_all(
+                "RN Posko Assignment",
+                filters={
+                    "user_account": actor.name,
+                    "status": "approved",
+                },
+                pluck="posko",
+                limit_page_length=500,
+            )
+        )
+
+        if getattr(actor, "posko", None):
+            result.add(actor.posko)
+
+        scope = sorted(result)
+
+    setattr(
+        frappe.local,
+        cache_key,
+        scope,
+    )
+
+    return scope
+
+
 def _rows(
     doctype,
     disaster_event_id,
@@ -311,6 +432,27 @@ def _rows(
             actual.append(field)
 
     filters = {}
+
+    scope_poskos = _ai_scope_poskos()
+
+    if scope_poskos is not None:
+        if not scope_poskos:
+            return []
+
+        if doctype == "RN Posko":
+            filters["name"] = [
+                "in",
+                scope_poskos,
+            ]
+        elif meta.has_field("posko"):
+            filters["posko"] = [
+                "in",
+                scope_poskos,
+            ]
+        else:
+            # Never expose non-Posko-scoped event records
+            # to ordinary scoped users.
+            return []
 
     if meta.has_field("disaster_event"):
         filters["disaster_event"] = (
@@ -372,7 +514,8 @@ def _active_count(rows):
 
 @frappe.whitelist()
 def context(disaster_event_id):
-    _require_control()
+    _require_login()
+    _ai_scope_poskos(refresh=True)
 
     poskos = _rows(
         "RN Posko",

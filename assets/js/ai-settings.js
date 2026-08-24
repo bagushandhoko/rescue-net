@@ -1,18 +1,83 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
+const RN_FRAPPE_BASE = location.origin + "/rescue-net-frappe/api/method";
+let RN_FRAPPE_SESSION = null;
 
 function statusMsg(msg) {
   const el = document.getElementById("aiSettingsStatus");
   if (el) el.textContent = msg;
 }
 
-async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
+async function frappeCall(method, args = {}, write = false) {
+  let url = `${RN_FRAPPE_BASE}/${method}`;
 
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  const headers = {
+    "Accept": "application/json"
+  };
+
+  const options = {
+    credentials: "same-origin",
+    headers
+  };
+
+  if (write) {
+    if (!RN_FRAPPE_SESSION?.csrf_token) {
+      throw new Error("Frappe session belum siap.");
+    }
+
+    headers["Content-Type"] = "application/json";
+    headers["X-Frappe-CSRF-Token"] = RN_FRAPPE_SESSION.csrf_token;
+
+    options.method = "POST";
+    options.body = JSON.stringify(args);
+  } else {
+    const query = new URLSearchParams();
+
+    Object.entries(args).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "") {
+        query.set(key, value);
+      }
+    });
+
+    if (query.toString()) {
+      url += "?" + query.toString();
+    }
+  }
+
+  const res = await fetch(url, options);
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(
+      data.message ||
+      data.exception ||
+      `Frappe API error ${res.status}`
+    );
+  }
+
+  return Object.prototype.hasOwnProperty.call(data, "message")
+    ? data.message
+    : data;
+}
+
+async function ensureSession() {
+  if (RN_FRAPPE_SESSION) return RN_FRAPPE_SESSION;
+
+  RN_FRAPPE_SESSION = await frappeCall(
+    "rescue_net.api_ai.session_info"
+  );
+
+  const form = getForm();
+
+  if (form?.user_id) {
+    form.user_id.value = RN_FRAPPE_SESSION.user;
+    form.user_id.readOnly = true;
+  }
+
+  if (form?.organization_id && RN_FRAPPE_SESSION.organization_id) {
+    form.organization_id.value =
+      RN_FRAPPE_SESSION.organization_id;
+  }
+
+  return RN_FRAPPE_SESSION;
 }
 
 function getForm() {
@@ -46,14 +111,21 @@ function renderKeyStatus(data) {
 }
 
 async function checkKeyStatus() {
+  const session = await ensureSession();
   const form = getForm();
-  const userId = form.user_id.value.trim();
-  const provider = form.provider.value;
 
-  statusMsg("Checking AI key status...");
-  const data = await api(`/ai/user-key/${encodeURIComponent(userId)}?provider=${encodeURIComponent(provider)}`);
+  statusMsg("Checking Frappe AI key status...");
+
+  const data = await frappeCall(
+    "rescue_net.api_ai.get_user_key_status",
+    {
+      user_id: session.user,
+      provider: form.provider.value
+    }
+  );
+
   renderKeyStatus(data);
-  statusMsg("Key status loaded.");
+  statusMsg("Frappe AI key status loaded.");
 }
 
 async function saveKey(e) {
@@ -61,8 +133,10 @@ async function saveKey(e) {
 
   const form = getForm();
 
+  const session = await ensureSession();
+
   const payload = {
-    user_id: form.user_id.value.trim(),
+    user_id: session.user,
     organization_id: form.organization_id.value.trim() || null,
     provider: form.provider.value,
     model_name: form.model_name.value,
@@ -70,11 +144,13 @@ async function saveKey(e) {
     api_key_label: form.api_key_label.value.trim()
   };
 
-  statusMsg("Saving encrypted AI key...");
-  const data = await api("/ai/user-key", {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
+  statusMsg("Saving encrypted AI key to Frappe...");
+
+  const data = await frappeCall(
+    "rescue_net.api_ai.save_user_key",
+    payload,
+    true
+  );
 
   form.api_key.value = "";
   renderKeyStatus({
@@ -87,19 +163,27 @@ async function saveKey(e) {
 }
 
 async function deleteKey() {
+  const session = await ensureSession();
   const form = getForm();
-  const userId = form.user_id.value.trim();
   const provider = form.provider.value;
 
-  if (!confirm(`Delete AI key for ${userId}/${provider}?`)) return;
+  if (!confirm(`Delete AI key for ${session.user}/${provider}?`)) {
+    return;
+  }
 
-  statusMsg("Deleting AI key...");
-  await api(`/ai/user-key/${encodeURIComponent(userId)}?provider=${encodeURIComponent(provider)}`, {
-    method: "DELETE"
-  });
+  statusMsg("Deleting Frappe AI key...");
 
-  statusMsg("AI key deleted.");
+  await frappeCall(
+    "rescue_net.api_ai.delete_user_key",
+    {
+      user_id: session.user,
+      provider
+    },
+    true
+  );
+
   await checkKeyStatus();
+  statusMsg("AI key deleted.");
 }
 
 document.addEventListener("DOMContentLoaded", () => {

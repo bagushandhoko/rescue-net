@@ -1,4 +1,5 @@
-const RN_API_BASE = window.RN_API_BASE || (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
+const RN_FRAPPE_BASE = location.origin + "/rescue-net-frappe/api/method";
+let RN_FRAPPE_SESSION = null;
 
 function getEventId() {
   const params = new URLSearchParams(window.location.search);
@@ -14,13 +15,73 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
-async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+async function frappeCall(method, args = {}, write = false) {
+  let url = `${RN_FRAPPE_BASE}/${method}`;
+
+  const headers = {
+    "Accept": "application/json"
+  };
+
+  const options = {
+    credentials: "same-origin",
+    headers
+  };
+
+  if (write) {
+    if (!RN_FRAPPE_SESSION?.csrf_token) {
+      throw new Error("Frappe session belum siap.");
+    }
+
+    headers["Content-Type"] = "application/json";
+    headers["X-Frappe-CSRF-Token"] = RN_FRAPPE_SESSION.csrf_token;
+
+    options.method = "POST";
+    options.body = JSON.stringify(args);
+  } else {
+    const query = new URLSearchParams();
+
+    Object.entries(args).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "") {
+        query.set(key, value);
+      }
+    });
+
+    if (query.toString()) {
+      url += "?" + query.toString();
+    }
+  }
+
+  const res = await fetch(url, options);
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(
+      data.message ||
+      data.exception ||
+      `Frappe API error ${res.status}`
+    );
+  }
+
+  return Object.prototype.hasOwnProperty.call(data, "message")
+    ? data.message
+    : data;
+}
+
+async function ensureSession() {
+  if (RN_FRAPPE_SESSION) return RN_FRAPPE_SESSION;
+
+  RN_FRAPPE_SESSION = await frappeCall(
+    "rescue_net.api_ai.session_info"
+  );
+
+  const form = document.getElementById("aiAskForm");
+
+  if (form?.user_id) {
+    form.user_id.value = RN_FRAPPE_SESSION.user;
+    form.user_id.readOnly = true;
+  }
+
+  return RN_FRAPPE_SESSION;
 }
 
 function card(title, body, chip = "") {
@@ -41,12 +102,15 @@ function buildOperationalRecommendations(ctx, resources, recoveryProjects) {
   const s = ctx.summary || {};
   const recommendations = [];
 
-  const unavailableResources = resources.filter(r => r.status && r.status !== "available");
+  const unavailableResources = resources.filter(r => {
+    const status = r.availability_status || r.status || "";
+    return status && status !== "available";
+  });
   const transportAssets = resources.filter(r => ["transport", "vehicle"].includes(String(r.resource_type || r.category || "").toLowerCase()));
   const medicalAssets = resources.filter(r => String(r.resource_type || r.category || "").toLowerCase().includes("medical"));
   const recoveryActive = recoveryProjects.filter(p => !["completed", "cancelled"].includes(String(p.status || "").toLowerCase()));
 
-  if (Number(s.open_logistic_need_count || 0) > 0 && transportAssets.length > 0) {
+  if (Number(s.open_need_count ?? s.open_needs_count ?? 0) > 0 && transportAssets.length > 0) {
     recommendations.push(`Gunakan ${transportAssets.length} aset transport terdaftar untuk prioritas open logistic needs. Cocokkan kapasitas dan PIC sebelum assignment.`);
   }
 
@@ -72,7 +136,7 @@ function buildOperationalRecommendations(ctx, resources, recoveryProjects) {
 function renderResourceRecoverySources(resources, recoveryProjects) {
   const resourceCards = resources.slice(0, 8).map(r => card(
     safe(r.resource_name),
-    `Type: ${safe(r.resource_type)}<br>Owner: ${safe(r.owner_type)} / ${safe(r.owner_id)}<br>Status: ${safe(r.status)}<br>Capacity: ${safe(r.capacity_description)}`,
+    `Type: ${safe(r.resource_type)}<br>Owner: ${safe(r.owner_type)} / ${safe(r.owner_id)}<br>Status: ${safe(r.availability_status || r.status)}<br>Capacity: ${safe(r.capacity_description)}`,
     "resource"
   ));
 
@@ -89,11 +153,17 @@ async function loadAiContext() {
   const eventId = getEventId();
   setText("aiStatus", "Loading AI context...");
 
-  const [ctx, resources, recoveryProjects] = await Promise.all([
-    api(`/ai/context/${eventId}`),
-    api(`/resource-profiles?disaster_event_id=${encodeURIComponent(eventId)}`),
-    api(`/recovery-projects?disaster_event_id=${encodeURIComponent(eventId)}`)
-  ]);
+  await ensureSession();
+
+  const ctx = await frappeCall(
+    "rescue_net.api_ai.context",
+    {
+      disaster_event_id: eventId
+    }
+  );
+
+  const resources = ctx.resource_profiles || [];
+  const recoveryProjects = ctx.recovery_projects || [];
   const s = ctx.summary || {};
   const operationalRecommendations = buildOperationalRecommendations(ctx, resources || [], recoveryProjects || []);
   const combinedRecommendations = [
@@ -102,15 +172,22 @@ async function loadAiContext() {
   ];
 
   setText("aiKpiPosko", safe(s.posko_count));
-  setText("aiKpiNeeds", Number(s.open_logistic_need_count || 0) + Number(s.shelter_need_count || 0));
+  setText(
+    "aiKpiNeeds",
+    Number(s.open_need_count ?? s.open_needs_count ?? 0)
+  );
   setText("aiKpiAlerts", (ctx.alerts || []).length);
-  setText("aiKpiPrograms", Number(s.donor_program_count || 0) + Number((recoveryProjects || []).length));
+  setText(
+    "aiKpiPrograms",
+    Number(s.program_count || 0) +
+    Number(recoveryProjects.length || 0)
+  );
 
   document.getElementById("aiAlerts").innerHTML = (ctx.alerts || []).length
     ? ctx.alerts.slice(0, 10).map(a => card(
-        `${safe(a.type)} · ${safe(a.level)}`,
-        `${safe(a.message)}<br>Source: ${safe(a.source_table)} / ${safe(a.source_id)}`,
-        safe(a.level)
+        safe(a.type),
+        safe(a.message),
+        safe(a.level || "alert")
       )).join("")
     : card("No alerts", "Belum ada alert.", "ok");
 
@@ -141,17 +218,18 @@ function setupAiAsk() {
     setText("aiAnswer", "Asking AI...");
 
     try {
-      const payload = {
-        user_id: form.user_id.value.trim(),
-        disaster_event_id: getEventId(),
-        provider: "openai",
-        question: form.question.value.trim()
-      };
+      const session = await ensureSession();
 
-      const res = await api("/ai/ask", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
+      const res = await frappeCall(
+        "rescue_net.api_ai.ask",
+        {
+          user_id: session.user,
+          disaster_event_id: getEventId(),
+          provider: "openai",
+          question: form.question.value.trim()
+        },
+        true
+      );
 
       setText("aiAnswer", res.answer || res.message || JSON.stringify(res, null, 2));
     } catch (err) {

@@ -16,7 +16,7 @@ def _actor():
 
 
 def _classify(doc, raw):
-    from rescue_net.intelligence.normalization import classify_text
+    from rescue_net.intelligence.normalization_registry import classify_text
 
     suggestion = classify_text(raw)
 

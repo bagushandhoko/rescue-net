@@ -1,0 +1,93 @@
+{
+  "doctype": "DocType",
+  "name": "RN Normalization Rule",
+  "module": "Rescue Net",
+  "custom": 0,
+  "autoname": "field:rule_name",
+  "title_field": "rule_name",
+  "track_changes": 1,
+  "search_fields": "canonical_category,canonical_group,canonical_item,aliases",
+  "sort_field": "priority",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "rule_name",
+      "label": "Rule Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "enabled",
+      "label": "Enabled",
+      "fieldtype": "Check",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "priority",
+      "label": "Priority",
+      "fieldtype": "Int",
+      "default": "100",
+      "in_list_view": 1,
+      "description": "Angka lebih besar diprioritaskan."
+    },
+    {
+      "fieldname": "canonical_category",
+      "label": "Canonical Category",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "canonical_group",
+      "label": "Canonical Group",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "canonical_item",
+      "label": "Canonical Item",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "match_mode",
+      "label": "Match Mode",
+      "fieldtype": "Select",
+      "options": "contains\nexact",
+      "default": "contains",
+      "reqd": 1
+    },
+    {
+      "fieldname": "aliases",
+      "label": "Aliases / Istilah Lapangan",
+      "fieldtype": "Long Text",
+      "reqd": 1,
+      "description": "Satu istilah per baris. Contoh: aqua kecil, air mineral 600ml, air botol."
+    },
+    {
+      "fieldname": "confidence",
+      "label": "Rule Confidence",
+      "fieldtype": "Int",
+      "default": "95",
+      "description": "Nilai 0-100."
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

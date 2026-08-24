@@ -74,7 +74,7 @@
     {
       "fieldname": "requested_time",
       "label": "Requested Time",
-      "fieldtype": "Datetime"
+      "fieldtype": "Data"
     },
     {
       "fieldname": "request_status",

@@ -15,27 +15,51 @@ SYNC_MANAGER_ROLES = {
 }
 
 
-def _require_control():
-    if frappe.session.user == "Guest":
+def _require_login():
+    user = frappe.session.user
+
+    if not user or user == "Guest":
         frappe.throw(
             "Login diperlukan untuk Sync.",
             frappe.PermissionError,
         )
 
+    return user
+
+
+def _has_control():
     if is_system_manager():
-        return
+        return True
 
-    actor = rn_actor()
+    if (
+        not frappe.session.user
+        or frappe.session.user == "Guest"
+    ):
+        return False
 
-    if actor and getattr(
-        actor,
-        "role",
-        None,
-    ) in SYNC_MANAGER_ROLES:
+    try:
+        actor = rn_actor()
+    except Exception:
+        return False
+
+    return bool(
+        actor
+        and getattr(
+            actor,
+            "role",
+            None,
+        ) in SYNC_MANAGER_ROLES
+    )
+
+
+def _require_control():
+    _require_login()
+
+    if _has_control():
         return
 
     frappe.throw(
-        "Sync API shadow saat ini hanya "
+        "Sync write saat ini hanya "
         "untuk Control Centre.",
         frappe.PermissionError,
     )
@@ -513,18 +537,229 @@ def _push(
     }
 
 
+def _identity_keys(value):
+    if not value:
+        return set()
+
+    value = str(value).strip()
+
+    if not value:
+        return set()
+
+    keys = {value}
+
+    if ":" in value:
+        keys.add(
+            value.split(":", 1)[1]
+        )
+
+    return keys
+
+
+def _same_identity(left, right):
+    return bool(
+        _identity_keys(left)
+        & _identity_keys(right)
+    )
+
+
+def _prepare_scoped_booking_events(events):
+    actor = rn_actor()
+
+    if not actor:
+        frappe.throw(
+            "RN User Account aktif diperlukan "
+            "untuk Sync booking.",
+            frappe.PermissionError,
+        )
+
+    actor_name = getattr(
+        actor,
+        "name",
+        None,
+    )
+    actor_org = getattr(
+        actor,
+        "organization",
+        None,
+    )
+    actor_posko = getattr(
+        actor,
+        "posko",
+        None,
+    )
+
+    raw_events = _loads(
+        events,
+        [],
+    )
+
+    if not isinstance(
+        raw_events,
+        list,
+    ):
+        frappe.throw(
+            "events harus berupa list."
+        )
+
+    prepared = []
+
+    for raw_event in raw_events:
+        event = dict(
+            raw_event or {}
+        )
+
+        object_type = str(
+            event.get(
+                "object_type"
+            ) or ""
+        ).strip()
+
+        operation = str(
+            event.get(
+                "operation"
+            ) or ""
+        ).strip()
+
+        if (
+            object_type
+            != "resource_request"
+            or operation != "create"
+        ):
+            frappe.throw(
+                "User biasa hanya boleh "
+                "Sync booking resource_request/create.",
+                frappe.PermissionError,
+            )
+
+        payload = _loads(
+            event.get(
+                "payload_json"
+            ),
+            {},
+        )
+
+        if not isinstance(
+            payload,
+            dict,
+        ):
+            frappe.throw(
+                "payload_json booking tidak valid."
+            )
+
+        requested_by_type = str(
+            payload.get(
+                "requested_by_type"
+            )
+            or "user"
+        ).strip().lower()
+
+        requested_by_id = (
+            payload.get(
+                "requested_by_id"
+            )
+        )
+
+        if requested_by_type in {
+            "user",
+            "individual",
+            "personal",
+            "other",
+            "lainnya",
+        }:
+            requested_by_type = "user"
+            requested_by_id = (
+                actor_name
+                or frappe.session.user
+            )
+
+        elif requested_by_type in {
+            "organization",
+            "organisation",
+            "kelompok",
+            "group",
+        }:
+            if not actor_org:
+                frappe.throw(
+                    "Akun ini belum terhubung "
+                    "ke Kelompok.",
+                    frappe.PermissionError,
+                )
+
+            requested_by_type = "organization"
+            requested_by_id = actor_org
+
+        elif requested_by_type == "posko":
+            if not actor_posko:
+                frappe.throw(
+                    "Akun ini belum terhubung "
+                    "ke Posko.",
+                    frappe.PermissionError,
+                )
+
+            requested_by_id = actor_posko
+
+        else:
+            frappe.throw(
+                "Tipe requester booking "
+                "tidak valid.",
+                frappe.PermissionError,
+            )
+
+        payload["requested_by_type"] = (
+            requested_by_type
+        )
+        payload["requested_by_id"] = (
+            requested_by_id
+        )
+
+        # Browser tidak menjadi authority
+        # untuk identitas user.
+        event["source_user_id"] = (
+            actor_name
+            or frappe.session.user
+        )
+
+        event[
+            "source_organization_id"
+        ] = actor_org
+
+        event[
+            "disaster_event_id"
+        ] = payload.get(
+            "disaster_event_id"
+        )
+
+        event[
+            "payload_json"
+        ] = payload
+
+        prepared.append(event)
+
+    return prepared
+
+
 @frappe.whitelist()
 def push(
     source_device_id=None,
     source_server_id=None,
     events=None,
 ):
-    _require_control()
+    _require_login()
+
+    if _has_control():
+        prepared_events = events
+    else:
+        prepared_events = (
+            _prepare_scoped_booking_events(
+                events
+            )
+        )
 
     return _push(
         source_device_id,
         source_server_id,
-        events,
+        prepared_events,
     )
 
 
@@ -724,6 +959,9 @@ def _resource_requests(
 
 def _sync_events(
     since=None,
+    disaster_event_id=None,
+    resolved_event=None,
+    safe=False,
 ):
     filters = {}
 
@@ -733,27 +971,52 @@ def _sync_events(
             since,
         ]
 
+    if safe and disaster_event_id:
+        event_ids = []
+
+        for value in (
+            disaster_event_id,
+            resolved_event,
+        ):
+            if (
+                value
+                and value not in event_ids
+            ):
+                event_ids.append(value)
+
+        filters["disaster_event_id"] = [
+            "in",
+            event_ids,
+        ]
+
+    fields = [
+        "name",
+        "event_id",
+        "object_type",
+        "object_id",
+        "operation",
+        "source_server_id",
+        "source_device_id",
+        "source_user_id",
+        "source_organization_id",
+        "verification_status",
+        "apply_status",
+        "conflict_status",
+        "error_message",
+        "creation",
+        "modified",
+    ]
+
+    if not safe:
+        fields.insert(
+            5,
+            "payload_json",
+        )
+
     rows = frappe.get_all(
         "RN Sync Log",
         filters=filters,
-        fields=[
-            "name",
-            "event_id",
-            "object_type",
-            "object_id",
-            "operation",
-            "payload_json",
-            "source_server_id",
-            "source_device_id",
-            "source_user_id",
-            "source_organization_id",
-            "verification_status",
-            "apply_status",
-            "conflict_status",
-            "error_message",
-            "creation",
-            "modified",
-        ],
+        fields=fields,
         order_by="creation desc",
         limit_page_length=200,
     )
@@ -762,6 +1025,7 @@ def _sync_events(
 
     for row in rows:
         item = dict(row)
+
         item["id"] = item.pop(
             "name"
         )
@@ -772,17 +1036,21 @@ def _sync_events(
             item.pop("modified")
         )
 
-        try:
-            item["payload_json"] = (
-                _loads(
-                    item.get(
-                        "payload_json"
-                    ),
-                    {},
+        if (
+            not safe
+            and "payload_json" in item
+        ):
+            try:
+                item["payload_json"] = (
+                    _loads(
+                        item.get(
+                            "payload_json"
+                        ),
+                        {},
+                    )
                 )
-            )
-        except Exception:
-            pass
+            except Exception:
+                pass
 
         result.append(item)
 
@@ -792,6 +1060,7 @@ def _sync_events(
 def _pull(
     disaster_event_id,
     since=None,
+    safe_sync_events=False,
 ):
     resolved_event = (
         _resolve_disaster_event(
@@ -871,7 +1140,12 @@ def _pull(
                 300,
             ),
         "sync_events":
-            _sync_events(since),
+            _sync_events(
+                since,
+                disaster_event_id,
+                resolved_event,
+                safe_sync_events,
+            ),
     }
 
 
@@ -880,11 +1154,14 @@ def pull(
     disaster_event_id,
     since=None,
 ):
-    _require_control()
+    _require_login()
 
     return _pull(
         disaster_event_id,
         since,
+        safe_sync_events=(
+            not _has_control()
+        ),
     )
 
 

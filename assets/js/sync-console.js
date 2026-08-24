@@ -1,3 +1,272 @@
+// RN_SYNC_FRAPPE_SHADOW_BRIDGE
+(() => {
+  const params = new URLSearchParams(
+    window.location.search
+  );
+
+  if (
+    params.get("sync_backend")
+    !== "frappe"
+  ) {
+    return;
+  }
+
+  const nativeFetch =
+    window.fetch.bind(window);
+
+  const frappeBase =
+    location.origin
+    + "/rescue-net-frappe/api/method";
+
+  let frappeSession = null;
+
+  async function frappeCall(
+    method,
+    args = {},
+    write = false
+  ) {
+    let url =
+      `${frappeBase}/${method}`;
+
+    const headers = {
+      "Accept": "application/json"
+    };
+
+    const options = {
+      credentials: "same-origin",
+      headers
+    };
+
+    if (write) {
+      const session =
+        await ensureSession();
+
+      if (!session.csrf_token) {
+        throw new Error(
+          "Frappe CSRF token tidak tersedia."
+        );
+      }
+
+      headers["Content-Type"] =
+        "application/json";
+
+      headers["X-Frappe-CSRF-Token"] =
+        session.csrf_token;
+
+      options.method = "POST";
+      options.body = JSON.stringify(args);
+    } else {
+      const query =
+        new URLSearchParams();
+
+      Object.entries(args)
+        .forEach(([key, value]) => {
+          if (
+            value !== null
+            && value !== undefined
+            && value !== ""
+          ) {
+            query.set(key, value);
+          }
+        });
+
+      if (query.toString()) {
+        url += "?" + query.toString();
+      }
+    }
+
+    const res =
+      await nativeFetch(url, options);
+
+    const data =
+      await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(
+        data.message
+        || data.exception
+        || `Frappe API error ${res.status}`
+      );
+    }
+
+    return Object.prototype
+      .hasOwnProperty.call(
+        data,
+        "message"
+      )
+      ? data.message
+      : data;
+  }
+
+  async function ensureSession() {
+    if (frappeSession) {
+      return frappeSession;
+    }
+
+    frappeSession =
+      await frappeCall(
+        "rescue_net.api_ai.session_info"
+      );
+
+    if (
+      !frappeSession
+      || !frappeSession.user
+      || frappeSession.user === "Guest"
+    ) {
+      throw new Error(
+        "Login Frappe diperlukan untuk Sync shadow."
+      );
+    }
+
+    return frappeSession;
+  }
+
+  function jsonResponse(data) {
+    return new Response(
+      JSON.stringify(data),
+      {
+        status: 200,
+        headers: {
+          "Content-Type":
+            "application/json"
+        }
+      }
+    );
+  }
+
+  window.fetch =
+    async function(input, options = {}) {
+      const rawUrl =
+        typeof input === "string"
+          ? input
+          : input.url;
+
+      const url =
+        new URL(rawUrl, location.href);
+
+      if (
+        url.pathname.endsWith(
+          "/sync/push"
+        )
+      ) {
+        const body =
+          typeof options.body === "string"
+            ? JSON.parse(
+                options.body || "{}"
+              )
+            : (
+                options.body || {}
+              );
+
+        const result =
+          await frappeCall(
+            "rescue_net.api_sync.push",
+            body,
+            true
+          );
+
+        return jsonResponse(result);
+      }
+
+      const pull =
+        url.pathname.match(
+          /\/sync\/pull\/([^/]+)$/
+        );
+
+      if (pull) {
+        const args = {
+          disaster_event_id:
+            decodeURIComponent(pull[1])
+        };
+
+        const since =
+          url.searchParams.get("since");
+
+        if (since) {
+          args.since = since;
+        }
+
+        const result =
+          await frappeCall(
+            "rescue_net.api_sync.pull",
+            args,
+            false
+          );
+
+        return jsonResponse(result);
+      }
+
+      return nativeFetch(
+        input,
+        options
+      );
+    };
+
+  function showFrappeBadge() {
+    if (
+      document.getElementById(
+        "rnFrappeShadowBadge"
+      )
+    ) {
+      return;
+    }
+
+    const badge =
+      document.createElement("div");
+
+    badge.id =
+      "rnFrappeShadowBadge";
+
+    badge.textContent =
+      "Backend: Frappe Shadow";
+
+    const mobile =
+      window.matchMedia(
+        "(max-width:640px)"
+      ).matches;
+
+    badge.style.cssText = [
+      "position:fixed",
+      mobile ? "right:7px" : "right:14px",
+      mobile ? "bottom:7px" : "bottom:14px",
+      "z-index:99999",
+      mobile
+        ? "padding:4px 7px"
+        : "padding:7px 11px",
+      "border-radius:999px",
+      "background:#173b67",
+      "color:#fff",
+      mobile
+        ? "font:600 9px/1.2 sans-serif"
+        : "font:600 12px/1.2 sans-serif",
+      "box-shadow:0 2px 8px rgba(0,0,0,.15)",
+      "pointer-events:none",
+      "opacity:.86"
+    ].join(";");
+
+    document.body.appendChild(
+      badge
+    );
+  }
+
+  if (
+    document.readyState === "loading"
+  ) {
+    document.addEventListener(
+      "DOMContentLoaded",
+      showFrappeBadge,
+      { once: true }
+    );
+  } else {
+    showFrappeBadge();
+  }
+
+  console.log(
+    "[RN Sync Bridge] "
+    + "Frappe shadow push/pull enabled"
+  );
+})();
+
 const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 const LOCAL_KEY = "rn_sync_console_drafts";
 const APP_QUEUE_KEY = "rn_sync_pending_events_v1";
@@ -244,8 +513,22 @@ async function syncPush() {
 }
 
 async function syncPull() {
+  const params = new URLSearchParams(window.location.search);
   const input = document.querySelector('input[name="disaster_event_id"]');
-  const disasterId = input ? input.value.trim() : "event-aceh-2025";
+
+  const disasterId =
+    params.get("event")
+    || params.get("id")
+    || (input ? input.value.trim() : "")
+    || (
+      window.RNSync
+        ? window.RNSync.getEventId()
+        : "event-aceh-2025"
+    );
+
+  if (input && disasterId) {
+    input.value = disasterId;
+  }
 
   statusMsg("Pulling latest data for " + disasterId + "...");
 
@@ -563,3 +846,251 @@ document.addEventListener("DOMContentLoaded", () => {
   loadFederation().catch(err => statusMsg(err.message));
 });
 
+
+
+// RN_HUMAN_RESOURCE_PICKER
+(() => {
+  function escText(value) {
+    return String(value ?? "").trim();
+  }
+
+  function eventId() {
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    return (
+      params.get("event")
+      || params.get("id")
+      || (
+        window.RNSync
+          ? window.RNSync.getEventId()
+          : "event-aceh-2025"
+      )
+    );
+  }
+
+  function readCachedResources() {
+    const key =
+      `rn_sync_cache_${eventId()}`;
+
+    try {
+      const cached =
+        JSON.parse(
+          localStorage.getItem(key)
+          || "{}"
+        );
+
+      return (
+        cached.data?.resources
+        || []
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  function resourceLabel(row) {
+    const name =
+      escText(
+        row.resource_name
+        || row.title
+        || row.item_name
+        || "Sumber daya"
+      );
+
+    const type =
+      escText(
+        row.resource_type
+        || "barang"
+      );
+
+    const owner =
+      escText(
+        row.owner_id
+        || row.owner_name
+        || ""
+      );
+
+    const status =
+      escText(
+        row.availability_status
+        || row.status
+        || ""
+      );
+
+    const parts = [
+      name,
+      type
+        ? `Jenis: ${type}`
+        : "",
+      owner
+        ? `Pemilik: ${owner}`
+        : "",
+      status
+        ? `Status: ${status}`
+        : ""
+    ].filter(Boolean);
+
+    return parts.join(" — ");
+  }
+
+  function installPicker(resources) {
+    const current =
+      document.querySelector(
+        '[name="resource_id"]'
+      );
+
+    if (!current) {
+      return;
+    }
+
+    let select = current;
+
+    if (
+      current.tagName
+      !== "SELECT"
+    ) {
+      select =
+        document.createElement(
+          "select"
+        );
+
+      select.name =
+        current.name;
+
+      select.id =
+        current.id || "";
+
+      if (current.required) {
+        select.required = true;
+      }
+
+      current.replaceWith(
+        select
+      );
+    }
+
+    const previous =
+      select.value;
+
+    select.innerHTML = "";
+
+    const first =
+      document.createElement(
+        "option"
+      );
+
+    first.value = "";
+    first.textContent =
+      "Pilih alat, transport, atau barang";
+
+    select.appendChild(first);
+
+    (resources || [])
+      .filter(row => {
+        const status =
+          row.availability_status
+          || row.status
+          || "";
+
+        return (
+          !status
+          || status === "available"
+        );
+      })
+      .forEach(row => {
+        const value =
+          row.id
+          || row.name
+          || row.resource_id;
+
+        if (!value) {
+          return;
+        }
+
+        const option =
+          document.createElement(
+            "option"
+          );
+
+        option.value = value;
+        option.textContent =
+          resourceLabel(row);
+
+        select.appendChild(
+          option
+        );
+      });
+
+    if (
+      previous
+      && [...select.options]
+        .some(
+          o => o.value === previous
+        )
+    ) {
+      select.value = previous;
+    }
+
+    const label =
+      select.closest("label");
+
+    if (label) {
+      for (
+        const node
+        of label.childNodes
+      ) {
+        if (
+          node.nodeType
+          === Node.TEXT_NODE
+          && node.textContent.trim()
+        ) {
+          node.textContent =
+            "Alat / Transport / Barang ";
+          break;
+        }
+      }
+    }
+  }
+
+  function refreshPicker(
+    explicitResources
+  ) {
+    const resources =
+      explicitResources
+      || readCachedResources();
+
+    installPicker(
+      resources
+    );
+  }
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+      refreshPicker();
+
+      setTimeout(
+        refreshPicker,
+        1200
+      );
+    }
+  );
+
+  window.addEventListener(
+    "rn:sync-complete",
+    event => {
+      refreshPicker(
+        event.detail
+          ?.pull_data
+          ?.resources
+        || []
+      );
+    }
+  );
+
+  window.RNRefreshResourcePicker =
+    refreshPicker;
+})();

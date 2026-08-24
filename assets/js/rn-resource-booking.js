@@ -29,7 +29,7 @@ async function rnCreateResourceRequestOfflineReady(payload) {
   const normalized = {
     disaster_event_id: eventId,
     resource_id: payload.resource_id,
-    requested_by_type: payload.requested_by_type || "posko",
+    requested_by_type: payload.requested_by_type || "user",
     requested_by_id: payload.requested_by_id,
     request_reason: payload.request_reason,
     related_need_id: payload.related_need_id || null,
@@ -46,7 +46,6 @@ async function rnCreateResourceRequestOfflineReady(payload) {
       object_id: "local-resource-request-" + Date.now(),
       operation: "create",
       payload_json: normalized,
-      source_user_id: "field-user-demo",
       source_organization_id: normalized.requested_by_id
     });
 
@@ -71,7 +70,6 @@ async function rnCreateResourceRequestOfflineReady(payload) {
       object_id: "local-resource-request-" + Date.now(),
       operation: "create",
       payload_json: normalized,
-      source_user_id: "field-user-demo",
       source_organization_id: normalized.requested_by_id
     });
 

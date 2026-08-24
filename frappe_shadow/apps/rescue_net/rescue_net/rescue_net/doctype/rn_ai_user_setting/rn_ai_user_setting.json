@@ -1,0 +1,104 @@
+{
+  "doctype": "DocType",
+  "name": "RN AI User Setting",
+  "module": "Rescue Net",
+  "custom": 0,
+  "track_changes": 1,
+  "field_order": [
+    "user_id",
+    "organization_id",
+    "provider",
+    "model_name",
+    "api_key",
+    "api_key_last4",
+    "api_key_label",
+    "status",
+    "owner_type",
+    "owner_id",
+    "created_by_user_id",
+    "updated_by_user_id"
+  ],
+  "fields": [
+    {
+      "fieldname": "user_id",
+      "label": "User ID",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "organization_id",
+      "label": "Organization ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "provider",
+      "label": "Provider",
+      "fieldtype": "Data",
+      "default": "openai",
+      "reqd": 1
+    },
+    {
+      "fieldname": "model_name",
+      "label": "Model",
+      "fieldtype": "Data",
+      "default": "gpt-4o-mini"
+    },
+    {
+      "fieldname": "api_key",
+      "label": "API Key",
+      "fieldtype": "Password"
+    },
+    {
+      "fieldname": "api_key_last4",
+      "label": "API Key Last 4",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "api_key_label",
+      "label": "API Key Label",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "active\ndeleted",
+      "default": "active"
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Data",
+      "default": "user",
+      "read_only": 1
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "created_by_user_id",
+      "label": "Created By User",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "updated_by_user_id",
+      "label": "Updated By User",
+      "fieldtype": "Data",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

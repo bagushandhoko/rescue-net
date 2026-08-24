@@ -1,0 +1,166 @@
+{
+  "doctype": "DocType",
+  "name": "RN Recovery Project",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "track_changes": 1,
+  "field_order": [
+    "disaster_event",
+    "project_name",
+    "project_type",
+    "owner_type",
+    "owner_id",
+    "target_description",
+    "location",
+    "priority",
+    "target_amount",
+    "current_amount",
+    "progress_percent",
+    "status",
+    "start_date",
+    "target_finish_date",
+    "pic_name",
+    "pic_phone",
+    "notes",
+    "created_by_user",
+    "observed_at",
+    "version",
+    "is_deleted",
+    "deleted_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "project_name",
+      "label": "Project Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "project_type",
+      "label": "Project Type",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Data",
+      "default": "organization"
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "target_description",
+      "label": "Target Description",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "location",
+      "label": "Location",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "priority",
+      "label": "Priority",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "target_amount",
+      "label": "Target Amount",
+      "fieldtype": "Currency",
+      "default": "0"
+    },
+    {
+      "fieldname": "current_amount",
+      "label": "Current Amount",
+      "fieldtype": "Currency",
+      "default": "0"
+    },
+    {
+      "fieldname": "progress_percent",
+      "label": "Progress Percent",
+      "fieldtype": "Float",
+      "default": "0"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Data",
+      "default": "planned"
+    },
+    {
+      "fieldname": "start_date",
+      "label": "Start Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "target_finish_date",
+      "label": "Target Finish Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "pic_name",
+      "label": "PIC Name",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "pic_phone",
+      "label": "PIC Phone",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By User",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "version",
+      "label": "Version",
+      "fieldtype": "Int",
+      "default": "1",
+      "read_only": 1
+    },
+    {
+      "fieldname": "is_deleted",
+      "label": "Deleted",
+      "fieldtype": "Check",
+      "default": "0",
+      "read_only": 1
+    },
+    {
+      "fieldname": "deleted_at",
+      "label": "Deleted At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

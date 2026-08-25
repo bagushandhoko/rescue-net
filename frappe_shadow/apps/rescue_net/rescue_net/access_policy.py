@@ -18,11 +18,16 @@ def rn_actor(required=True):
             frappe.throw("Login diperlukan")
         return None
 
-    if user == "Administrator":
+    if (
+        user == "Administrator"
+        or "System Manager" in frappe.get_roles(user)
+    ):
         return frappe._dict({
             "name": None,
             "frappe_user": user,
             "role": "system_manager",
+            "organization": None,
+            "posko": None,
         })
 
     actor = frappe.db.get_value(

@@ -1,26 +1,11 @@
 import frappe
 from frappe.utils import now_datetime
 
+from rescue_net.access_policy import rn_actor
+
 
 def _actor():
-    if frappe.session.user in ("Guest", "Administrator"):
-        frappe.throw("Login diperlukan")
-
-    actor = frappe.db.get_value(
-        "RN User Account",
-        {"frappe_user": frappe.session.user, "status": "active"},
-        [
-            "name", "title", "email", "role",
-            "requested_role", "role_request_status",
-            "organization", "posko"
-        ],
-        as_dict=True,
-    )
-
-    if not actor:
-        frappe.throw("Akun Rescue-Net aktif tidak ditemukan")
-
-    return actor
+    return rn_actor()
 
 
 @frappe.whitelist()

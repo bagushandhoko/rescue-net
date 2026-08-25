@@ -7,6 +7,7 @@ CONTAINER="${RN_API_CONTAINER:-rescue-net-api}"
 PORT="${RN_API_PORT:-8092}"
 ENV_FILE="${RN_API_ENV_FILE:-/volume1/docker/rescue-net-api/.env}"
 UPLOADS="${RN_UPLOADS_DIR:-/volume1/docker/osiun-api/data/uploads}"
+NETWORK="${RN_API_NETWORK:-rescue-net-net}"
 
 if [ ! -f "$API_DIR/main.py" ]; then
   echo "ERROR: main.py not found in $API_DIR"
@@ -33,7 +34,7 @@ sudo docker build --no-cache -t "$IMAGE" .
 
 echo "3. Replace container"
 sudo docker rm -f "$CONTAINER" 2>/dev/null || true
-sudo docker run -d   --name "$CONTAINER"   --restart unless-stopped   -p "$PORT:$PORT"   --env-file "$ENV_FILE"   -v "$UPLOADS:/data/uploads"   "$IMAGE"
+sudo docker run -d   --name "$CONTAINER"   --restart unless-stopped   --network "$NETWORK"   -p "$PORT:$PORT"   --env-file "$ENV_FILE"   -v "$UPLOADS:/data/uploads"   "$IMAGE"
 
 echo "4. Health check"
 sleep 3

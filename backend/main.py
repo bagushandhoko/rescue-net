@@ -6595,25 +6595,92 @@ def official_admin_area_sources():
     }
 
 
+
+def rn_wilayah_fallback_children(parent_code: Optional[str], level: Optional[str]):
+    """
+    Temporary server-side fallback for administrative areas.
+
+    Primary source remains Rescue-Net official_admin_areas.
+    This fallback is used only while the local master is empty/demo.
+    """
+    if level not in {"province", "city", "district", "village"}:
+        return []
+
+    paths = {
+        "province": "provinces",
+        "city": f"regencies/{parent_code}" if parent_code else None,
+        "district": f"districts/{parent_code}" if parent_code else None,
+        "village": f"villages/{parent_code}" if parent_code else None,
+    }
+
+    path = paths.get(level)
+    if not path:
+        return []
+
+    url = f"https://wilayah.id/api/{path}.json"
+
+    try:
+        import json
+        import urllib.request
+
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Rescue-Net/0.1"}
+        )
+
+        with urllib.request.urlopen(req, timeout=15) as response:
+            body = json.loads(response.read().decode("utf-8"))
+
+        result = []
+
+        for item in body.get("data", []):
+            code = str(item.get("code") or "").strip()
+            name = str(item.get("name") or "").strip()
+
+            if not code or not name:
+                continue
+
+            result.append({
+                "code": code,
+                "parent_code": parent_code or None,
+                "name": name,
+                "level": level,
+                "source_name": "wilayah.id administrative area API - temporary fallback",
+                "source_url": url,
+            })
+
+        return result
+
+    except Exception:
+        # Jangan membuat form laporan mati jika sumber fallback sedang gagal.
+        return []
+
+
 @app.get("/admin-areas/children")
 def list_admin_area_children(parent_code: Optional[str] = None, level: Optional[str] = None, q: Optional[str] = None):
     ensure_location_resolution_tables()
+
     with get_conn() as conn:
         with conn.cursor() as cur:
             seed_official_admin_areas(cur)
+
             where = ["is_active = TRUE"]
             params = []
+
             if parent_code:
                 where.append("parent_code = %s")
                 params.append(parent_code)
             else:
                 where.append("parent_code IS NULL")
+
             if level:
                 where.append("level = %s")
                 params.append(level)
+
             if q:
                 where.append("name ILIKE %s")
                 params.append(f"%{q}%")
+
             cur.execute("""
             SELECT code, parent_code, name, level, source_name, source_url
             FROM official_admin_areas
@@ -6621,9 +6688,32 @@ def list_admin_area_children(parent_code: Optional[str] = None, level: Optional[
             ORDER BY name
             LIMIT 500;
             """, params)
+
             rows = rn_rows_to_dicts(cur)
             conn.commit()
-    return rows
+
+    # Master lokal resmi selalu menang.
+    # Seed/demo tidak boleh membatasi dropdown nasional.
+    has_demo_rows = any(
+        "demo cache" in str(row.get("source_name") or "").lower()
+        for row in rows
+    )
+
+    if rows and not has_demo_rows:
+        return rows
+
+    fallback_rows = rn_wilayah_fallback_children(parent_code, level)
+
+    if q and fallback_rows:
+        needle = q.casefold()
+        fallback_rows = [
+            row for row in fallback_rows
+            if needle in str(row.get("name") or "").casefold()
+        ]
+
+    # Jika fallback sedang gagal, tetap kembalikan data lokal yang ada
+    # daripada membuat endpoint error total.
+    return fallback_rows or rows
 
 
 @app.get("/admin-areas/tree")

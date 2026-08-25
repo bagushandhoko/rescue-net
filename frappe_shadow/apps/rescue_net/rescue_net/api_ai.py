@@ -916,6 +916,11 @@ def ask(
                 "distribution_flows",
                 [],
             )[:80],
+        "kitchen_meal_productions":
+            ctx.get(
+                "kitchen_meal_productions",
+                [],
+            )[:50],
         "medical_cases":
             ctx.get(
                 "medical_cases",
@@ -954,6 +959,11 @@ def ask(
         "recovery_projects":
             ctx.get(
                 "recovery_projects",
+                [],
+            )[:80],
+        "special_programs":
+            ctx.get(
+                "special_programs",
                 [],
             )[:80],
     }

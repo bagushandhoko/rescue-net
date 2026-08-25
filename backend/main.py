@@ -12,6 +12,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from routes.auth_routes import router as auth_router
+from app_shared import resolve_session_user as rn_resolve_session_user
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -97,6 +98,28 @@ def role_allows_path(role: str, path: str):
     return classify_path_action(path) in allowed
 
 
+REPORTER_CONTACT_ROLES = {"command_center", "posko_operator", "medical_operator", "shelter_operator"}
+
+
+def rn_caller_can_view_reporter_contact(request: Request) -> bool:
+    session_token = request.headers.get("X-RN-Session-Token")
+    if not session_token:
+        return False
+    session_user = rn_resolve_session_user(session_token)
+    if not session_user:
+        return False
+    return (session_user.get("role") or "viewer") in REPORTER_CONTACT_ROLES
+
+
+def rn_scrub_reporter_contact(report: dict, allowed: bool) -> dict:
+    if allowed:
+        return report
+    scrubbed = dict(report)
+    if scrubbed.get("reporter_phone"):
+        scrubbed["reporter_phone"] = None
+    return scrubbed
+
+
 @app.middleware("http")
 async def optional_rbac_middleware(request: Request, call_next):
     if not rbac_enabled() or request.method not in RBAC_MUTATING_METHODS:
@@ -107,10 +130,17 @@ async def optional_rbac_middleware(request: Request, call_next):
         return await call_next(request)
 
     session_token = request.headers.get("X-RN-Session-Token")
-    role = request.headers.get("X-RN-Role") or "viewer"
 
     if not session_token:
         raise HTTPException(status_code=401, detail="Session token required")
+
+    # CRITICAL: role authority comes only from the server-resolved session,
+    # never from the client-supplied X-RN-Role header (spoofable).
+    session_user = rn_resolve_session_user(session_token)
+    if not session_user:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+
+    role = session_user.get("role") or "viewer"
 
     if not role_allows_path(role, path):
         raise HTTPException(status_code=403, detail=f"Role {role} is not allowed to mutate {path}")
@@ -914,13 +944,16 @@ def get_organizations():
 
 @app.post("/organizations")
 def create_organization(payload: OrganizationCreate):
+    # Self-verification lockdown: trust_level/status are never taken from
+    # the client on create. New organizations always start unverified /
+    # pending; verification happens through the separate verifier workflow.
     item_id = "org-" + uuid.uuid4().hex[:12]
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
-        INSERT INTO organizations (id, name, organization_type, trust_level, status)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO organizations (id, name, organization_type, trust_level, status, identity_verification_status)
+        VALUES (%s, %s, %s, 'unverified', 'pending', 'unverified')
         RETURNING *;
-        """, (item_id, payload.name, payload.organization_type, payload.trust_level, payload.status))
+        """, (item_id, payload.name, payload.organization_type))
         row = rows_to_dicts(cur)[0]
         conn.commit()
         return row
@@ -933,12 +966,15 @@ def get_poskos():
 
 @app.post("/poskos")
 def create_posko(payload: PoskoCreate):
+    # Self-verification lockdown: verification_status is never taken from
+    # the client on create. New poskos always start self_reported;
+    # community_verified/official_verified require the verifier workflow.
     item_id = "posko-" + uuid.uuid4().hex[:12]
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
         INSERT INTO posko_nodes
-        (id, disaster_event_id, organization_id, name, node_type, location, verification_status, operational_status)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+        (id, disaster_event_id, organization_id, name, node_type, location, verification_status, operational_status, identity_verification_status)
+        VALUES (%s,%s,%s,%s,%s,%s,'self_reported',%s,'unverified')
         RETURNING *;
         """, (
             item_id,
@@ -947,7 +983,6 @@ def create_posko(payload: PoskoCreate):
             payload.name,
             payload.node_type,
             payload.location,
-            payload.verification_status,
             payload.operational_status,
         ))
         row = rows_to_dicts(cur)[0]
@@ -4139,6 +4174,10 @@ def register_verifier_profile(payload: VerifierProfileCreate):
         raise HTTPException(status_code=400, detail="Invalid verifier_type")
     verifier_id = "verifier-" + uuid.uuid4().hex[:12]
     scopes = payload.allowed_verification_scope or ["identity"]
+    # Self-verification lockdown: verifier_status/trust_level are never
+    # taken from the client. Every self-registered verifier starts as an
+    # unprivileged candidate; elevation happens only via PATCH by an
+    # authorized reviewer.
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
         INSERT INTO verifier_profiles (
@@ -4146,12 +4185,12 @@ def register_verifier_profile(payload: VerifierProfileCreate):
             position_title, public_role_description, phone, email,
             verifier_status, trust_level, allowed_verification_scope_json
         )
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,'candidate_verifier',1,%s)
         RETURNING *;
         """, (
             verifier_id, payload.user_id, payload.display_name, payload.verifier_type,
             payload.organization_id, payload.position_title, payload.public_role_description,
-            payload.phone, payload.email, payload.verifier_status, payload.trust_level,
+            payload.phone, payload.email,
             json.dumps(scopes)
         ))
         row = rows_to_dicts(cur)[0]
@@ -4261,11 +4300,30 @@ def list_trusted_verification_requests(status: Optional[str] = None, target_type
 
 
 @app.post("/public/verification-requests/respond")
-def respond_trusted_verification_request(token: str, payload: VerificationRequestDecision):
+def respond_trusted_verification_request(
+    token: str,
+    payload: VerificationRequestDecision,
+    request: Request,
+):
     ensure_trusted_verifier_tables()
+
+    # URL tetap /public/ demi compatibility, tetapi keputusan verifikasi
+    # bukan operasi anonim. Verifier wajib login.
+    session_token = request.headers.get("X-RN-Session-Token")
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Verifier login required")
+
+    session_user = rn_resolve_session_user(session_token)
+    if not session_user:
+        raise HTTPException(status_code=401, detail="Invalid or expired verifier session")
     allowed = {"approved", "needs_correction", "rejected", "not_known"}
     if payload.decision not in allowed:
         raise HTTPException(status_code=400, detail="Invalid decision")
+    # A verification token identifies the REQUEST, not the responder.
+    # Approval must always be tied to an accountable, authorized verifier
+    # identity - it must never depend on the token alone.
+    if not payload.verifier_id:
+        raise HTTPException(status_code=400, detail="verifier_id is required to respond to a verification request")
     token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute("""
@@ -4277,18 +4335,39 @@ def respond_trusted_verification_request(token: str, payload: VerificationReques
         if not rows:
             raise HTTPException(status_code=404, detail="Request not found, expired, or already decided")
         req = rows[0]
-        verifier = None
-        if payload.verifier_id:
-            cur.execute("SELECT * FROM verifier_profiles WHERE id = %s LIMIT 1;", (payload.verifier_id,))
-            vr = rows_to_dicts(cur)
-            verifier = vr[0] if vr else None
-            if not verifier or verifier.get("verifier_status") in {"candidate_verifier", "suspended", "rejected"}:
-                raise HTTPException(status_code=403, detail="Verifier is not approved to endorse")
-            scopes = verifier.get("allowed_verification_scope_json") or []
-            if isinstance(scopes, str):
-                scopes = json.loads(scopes)
-            if req["verification_scope"] not in scopes:
-                raise HTTPException(status_code=403, detail="Verifier scope does not allow this verification")
+        # verifier_id dari request tidak boleh dipakai untuk
+        # mengatasnamakan verifier lain. Profile harus milik user login.
+        cur.execute("""
+        SELECT *
+        FROM verifier_profiles
+        WHERE id = %s
+          AND user_id = %s
+        LIMIT 1;
+        """, (payload.verifier_id, session_user["id"]))
+        vr = rows_to_dicts(cur)
+        verifier = vr[0] if vr else None
+
+        if not verifier:
+            raise HTTPException(
+                status_code=403,
+                detail="Verifier profile does not belong to authenticated user"
+            )
+
+        if verifier.get("verifier_status") in {"candidate_verifier", "suspended", "rejected"}:
+            raise HTTPException(status_code=403, detail="Verifier is not approved to endorse")
+
+        # Jika request memang ditujukan ke verifier tertentu,
+        # verifier lain tidak boleh mengambil alih.
+        if req.get("requested_verifier_id") and req["requested_verifier_id"] != payload.verifier_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Verification request is assigned to another verifier"
+            )
+        scopes = verifier.get("allowed_verification_scope_json") or []
+        if isinstance(scopes, str):
+            scopes = json.loads(scopes)
+        if req["verification_scope"] not in scopes:
+            raise HTTPException(status_code=403, detail="Verifier scope does not allow this verification")
         cur.execute("""
         UPDATE trusted_verification_requests
         SET status = %s, correction_note = %s, decided_at = NOW(), updated_at = NOW()
@@ -4296,9 +4375,9 @@ def respond_trusted_verification_request(token: str, payload: VerificationReques
         """, (payload.decision, payload.correction_note, req["id"]))
         endorsement = None
         if payload.decision == "approved":
-            verifier_name = payload.verifier_display_name or (verifier or {}).get("display_name") or req.get("requested_verifier_name") or "Trusted verifier"
-            verifier_role = payload.verifier_role or (verifier or {}).get("position_title") or (verifier or {}).get("public_role_description")
-            level = int((verifier or {}).get("trust_level") or 1)
+            verifier_name = verifier.get("display_name") or "Trusted verifier"
+            verifier_role = verifier.get("position_title") or verifier.get("public_role_description")
+            level = int(verifier.get("trust_level") or 1)
             endorsement_id = "endorse-" + uuid.uuid4().hex[:12]
             cur.execute("""
             INSERT INTO verification_endorsements (
@@ -4316,6 +4395,18 @@ def respond_trusted_verification_request(token: str, payload: VerificationReques
             endorsement = rows_to_dicts(cur)[0]
             if req["verification_scope"] in {"identity", "posko_identity", "organization_membership"}:
                 apply_identity_endorsement(cur, req["target_type"], req["target_id"], verifier_name)
+        cur.execute("""
+        INSERT INTO audit_events
+        (id, actor_user_id, actor_role, action, object_table, object_id, after_data)
+        VALUES (%s,%s,%s,%s,'trusted_verification_requests',%s,%s);
+        """, (
+            "audit-" + uuid.uuid4().hex[:12], session_user["id"], "verifier",
+            f"verification_{payload.decision}", req["id"], json.dumps({
+                "target_type": req["target_type"],
+                "target_id": req["target_id"],
+                "verifier_id": payload.verifier_id,
+            }),
+        ))
         conn.commit()
     return {"status": payload.decision, "endorsement": endorsement}
 
@@ -5288,8 +5379,11 @@ class RecoveryProjectUpdateCreate(BaseModel):
 
 class CommunityReportCreate(BaseModel):
     disaster_event_id: str = "event-sim-001"
-    reporter_name: str
+    reporter_name: Optional[str] = None  # required unless prefillable from a logged-in session
     reporter_phone: Optional[str] = None
+    reporter_email: Optional[str] = None
+    preferred_contact_method: Optional[str] = "whatsapp"
+    reporter_organization_id: Optional[str] = None
     reporter_role: str = "warga_terdampak"
     reporter_verification_level: str = "anonymous"
     report_type: str
@@ -5910,14 +6004,49 @@ def community_report_with_evidence(cur, report_id: str):
 
 
 @app.post("/public/community-reports")
-def submit_community_report(payload: CommunityReportCreate):
+def submit_community_report(payload: CommunityReportCreate, request: Request):
     ensure_community_report_tables()
     report_id = "cr-" + uuid.uuid4().hex[:12]
     trust_score = calculate_community_trust(payload)
     location_state = derive_community_location_state(payload)
 
+    session_user = rn_resolve_session_user(request.headers.get("X-RN-Session-Token"))
+    reporter_user_id = session_user["id"] if session_user else None
+    effective_name = payload.reporter_name or (session_user or {}).get("display_name")
+    effective_phone = payload.reporter_phone or (session_user or {}).get("phone")
+    effective_email = payload.reporter_email or (session_user or {}).get("email")
+    effective_org_id = payload.reporter_organization_id or (session_user or {}).get("organization_id")
+    contact_method = payload.preferred_contact_method if payload.preferred_contact_method in {"whatsapp", "phone", "email", "other"} else "whatsapp"
+
+    if not effective_name:
+        raise HTTPException(status_code=400, detail="Nama pelapor wajib diisi")
+    if not reporter_user_id and not effective_phone and not effective_email:
+        raise HTTPException(status_code=400, detail="Minimal satu metode kontak (WhatsApp/telepon/email) wajib diisi")
+
     with get_conn() as conn:
         with conn.cursor() as cur:
+            reporter_profile_id = None
+            if reporter_user_id:
+                cur.execute("SELECT id FROM reporter_profiles WHERE user_id = %s LIMIT 1;", (reporter_user_id,))
+                existing = rows_to_dicts(cur)
+                if existing:
+                    reporter_profile_id = existing[0]["id"]
+                    cur.execute("""
+                    UPDATE reporter_profiles
+                    SET display_name = %s, phone = %s, email = %s, preferred_contact_method = %s,
+                        organization_id = %s, consent_to_contact = %s, updated_at = NOW()
+                    WHERE id = %s;
+                    """, (effective_name, effective_phone, effective_email, contact_method,
+                          effective_org_id, payload.consent_to_contact, reporter_profile_id))
+            if not reporter_profile_id:
+                reporter_profile_id = "rp-" + uuid.uuid4().hex[:12]
+                cur.execute("""
+                INSERT INTO reporter_profiles
+                (id, user_id, display_name, phone, email, preferred_contact_method, organization_id, consent_to_contact)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s);
+                """, (reporter_profile_id, reporter_user_id, effective_name, effective_phone, effective_email,
+                      contact_method, effective_org_id, payload.consent_to_contact))
+
             cur.execute("""
             INSERT INTO community_reports (
                 id, disaster_event_id, reporter_name, reporter_phone, reporter_role,
@@ -5926,14 +6055,14 @@ def submit_community_report(payload: CommunityReportCreate):
                 location_source, location_status, admin_area_id, admin_level, area_level,
                 province_name, city_name, district_name, village_name, is_aggregate,
                 consolidation_status, affected_people_count, priority, urgent_needs,
-                status, trust_score, consent_to_contact
+                status, trust_score, consent_to_contact, reporter_profile_id
             )
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
-                    %s,%s,%s,%s,%s,%s,%s,%s,'submitted',%s,%s)
+                    %s,%s,%s,%s,%s,%s,%s,%s,'submitted',%s,%s,%s)
             RETURNING *;
             """, (
-                report_id, payload.disaster_event_id, payload.reporter_name,
-                payload.reporter_phone, payload.reporter_role,
+                report_id, payload.disaster_event_id, effective_name,
+                effective_phone, payload.reporter_role,
                 payload.reporter_verification_level, payload.report_type,
                 payload.title, payload.description, payload.location_text,
                 payload.lat, payload.lng, payload.location_accuracy_meters,
@@ -5943,7 +6072,7 @@ def submit_community_report(payload: CommunityReportCreate):
                 payload.city_name, payload.district_name, payload.village_name,
                 location_state["is_aggregate"], location_state["consolidation_status"],
                 payload.affected_people_count, payload.priority, payload.urgent_needs, trust_score,
-                payload.consent_to_contact
+                payload.consent_to_contact, reporter_profile_id
             ))
             report = rn_dict_row(cur)
 
@@ -5968,7 +6097,7 @@ def submit_community_report(payload: CommunityReportCreate):
 
 
 @app.get("/community-reports")
-def list_community_reports(disaster_event_id: Optional[str] = None, status: Optional[str] = None, report_type: Optional[str] = None):
+def list_community_reports(request: Request, disaster_event_id: Optional[str] = None, status: Optional[str] = None, report_type: Optional[str] = None):
     ensure_community_report_tables()
     where = ["deleted_at IS NULL"]
     params = []
@@ -5991,18 +6120,19 @@ def list_community_reports(disaster_event_id: Optional[str] = None, status: Opti
             )
             rows = rn_rows_to_dicts(cur)
 
-    return rows
+    contact_allowed = rn_caller_can_view_reporter_contact(request)
+    return [rn_scrub_reporter_contact(r, contact_allowed) for r in rows]
 
 
 @app.get("/community-reports/{report_id}")
-def get_community_report(report_id: str):
+def get_community_report(report_id: str, request: Request):
     ensure_community_report_tables()
     with get_conn() as conn:
         with conn.cursor() as cur:
             report = community_report_with_evidence(cur, report_id)
     if not report:
         raise HTTPException(status_code=404, detail="Community report not found")
-    return report
+    return rn_scrub_reporter_contact(report, rn_caller_can_view_reporter_contact(request))
 
 
 @app.patch("/community-reports/{report_id}/status")

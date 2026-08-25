@@ -79,12 +79,12 @@
     {
       "fieldname": "departure_time",
       "label": "Berangkat",
-      "fieldtype": "Datetime"
+      "fieldtype": "Data"
     },
     {
       "fieldname": "eta",
       "label": "ETA",
-      "fieldtype": "Datetime"
+      "fieldtype": "Data"
     },
     {
       "fieldname": "transport_status",

@@ -189,9 +189,16 @@
       "options": "RN User Account"
     },
     {
+      "fieldname": "handling_mode",
+      "label": "Cara Penanganan",
+      "fieldtype": "Select",
+      "options": "active_booking\nneed_pickup",
+      "default": "need_pickup"
+    },
+    {
       "fieldname": "ready_at",
-      "label": "Ready At",
-      "fieldtype": "Datetime"
+      "label": "Kapan Siap / Waktu Pickup",
+      "fieldtype": "Data"
     },
     {
       "fieldname": "batch_no",

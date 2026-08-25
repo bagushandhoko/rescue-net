@@ -1043,3 +1043,417 @@ def control_centre_logistics():
             "are separate states. Received flow never creates available stock automatically."
         ),
     }
+
+
+# RN_USER_AID_OFFER_V1
+
+def _resolve_user_aid_event(value):
+    value = str(value or "").strip()
+
+    if not value:
+        return None
+
+    if frappe.db.exists(
+        "RN Disaster Event",
+        value,
+    ):
+        return value
+
+    for legacy_id in (
+        value,
+        "disaster_events:" + value,
+    ):
+        name = frappe.db.get_value(
+            "RN Disaster Event",
+            {"legacy_id": legacy_id},
+            "name",
+        )
+
+        if name:
+            return name
+
+    return None
+
+
+def _resolve_user_aid_posko(value):
+    value = str(value or "").strip()
+
+    if not value:
+        return None
+
+    if frappe.db.exists(
+        "RN Posko",
+        value,
+    ):
+        return value
+
+    for legacy_id in (
+        value,
+        "posko_nodes:" + value,
+    ):
+        name = frappe.db.get_value(
+            "RN Posko",
+            {"legacy_id": legacy_id},
+            "name",
+        )
+
+        if name:
+            return name
+
+    return None
+
+
+def _require_user_aid_actor():
+    actor = rn_actor()
+
+    if (
+        not actor
+        or not getattr(
+            actor,
+            "name",
+            None,
+        )
+    ):
+        frappe.throw(
+            "Login diperlukan untuk "
+            "Kirim Bantuan melalui akun.",
+            frappe.PermissionError,
+        )
+
+    return actor
+
+
+def _user_aid_posko_allowed(
+    actor,
+    posko,
+):
+    if not posko:
+        return True
+
+    if _can_contribute(
+        actor,
+        posko,
+    ):
+        return True
+
+    return bool(
+        public_posko_allowed(posko)
+        and cint(
+            frappe.db.get_value(
+                "RN Posko",
+                posko,
+                "public_participation",
+            ) or 0
+        )
+        and cint(
+            frappe.db.get_value(
+                "RN Posko",
+                posko,
+                "accept_goods",
+            ) or 0
+        )
+    )
+
+
+@frappe.whitelist()
+def create_user_aid_offer(
+    disaster_event,
+    donor_name,
+    item_text,
+    quantity=None,
+    unit=None,
+    quantity_mode="exact",
+    handling_mode="need_pickup",
+    target_posko=None,
+    pickup_location=None,
+    ready_at=None,
+    donor_contact=None,
+    notes=None,
+    batch_no=None,
+    expiry_date=None,
+):
+    actor = _require_user_aid_actor()
+
+    handling_mode = str(
+        handling_mode or ""
+    ).strip().lower()
+
+    if handling_mode not in {
+        "active_booking",
+        "need_pickup",
+    }:
+        frappe.throw(
+            "Cara penanganan bantuan "
+            "tidak valid."
+        )
+
+    item_text = str(
+        item_text or ""
+    ).strip()
+
+    donor_name = str(
+        donor_name or ""
+    ).strip()
+
+    if not item_text:
+        frappe.throw(
+            "Barang bantuan wajib diisi."
+        )
+
+    if not donor_name:
+        frappe.throw(
+            "Nama donatur/sumber "
+            "wajib diisi."
+        )
+
+    event = _resolve_user_aid_event(
+        disaster_event
+    )
+
+    if not event:
+        frappe.throw(
+            "Disaster Event tidak ditemukan: "
+            + str(disaster_event)
+        )
+
+    posko = _resolve_user_aid_posko(
+        target_posko
+    )
+
+    if (
+        handling_mode == "active_booking"
+        and not posko
+    ):
+        frappe.throw(
+            "Aktif Booking memerlukan "
+            "Posko tujuan."
+        )
+
+    if (
+        target_posko
+        and not posko
+    ):
+        frappe.throw(
+            "Posko tidak ditemukan: "
+            + str(target_posko)
+        )
+
+    if (
+        posko
+        and not _user_aid_posko_allowed(
+            actor,
+            posko,
+        )
+    ):
+        frappe.throw(
+            "Posko ini tidak membuka "
+            "penerimaan bantuan "
+            "untuk akun Anda.",
+            frappe.PermissionError,
+        )
+
+    if posko:
+        posko_event = frappe.db.get_value(
+            "RN Posko",
+            posko,
+            "disaster_event",
+        )
+
+        if (
+            posko_event
+            and posko_event != event
+        ):
+            frappe.throw(
+                "Posko tujuan tidak berada "
+                "pada Disaster Event yang sama."
+            )
+
+    if quantity not in (
+        None,
+        "",
+    ):
+        qty = flt(quantity)
+
+        if qty <= 0:
+            frappe.throw(
+                "Jumlah bantuan harus "
+                "lebih dari 0."
+            )
+    else:
+        qty = None
+
+    doc = frappe.new_doc(
+        "RN Aid Offer"
+    )
+
+    doc.title = (
+        f"{item_text} - {donor_name}"
+    )
+
+    doc.disaster_event = event
+    doc.target_posko = posko
+
+    # Identitas authoritative berasal
+    # dari session Frappe.
+    doc.donor_user = actor.name
+
+    doc.donor_name = donor_name
+    doc.donor_contact = donor_contact
+
+    doc.item_name = item_text
+    doc.raw_item_text = item_text
+
+    if qty is not None:
+        doc.quantity = qty
+
+    doc.unit = unit
+    doc.quantity_mode = (
+        quantity_mode or "exact"
+    )
+
+    doc.pickup_location = (
+        pickup_location
+    )
+
+    doc.ready_at = ready_at
+    doc.notes = notes
+    doc.batch_no = batch_no
+    doc.expiry_date = expiry_date
+
+    doc.handling_mode = (
+        handling_mode
+    )
+
+    if (
+        handling_mode
+        == "need_pickup"
+    ):
+        doc.offer_status = (
+            "need_pickup"
+        )
+    else:
+        doc.offer_status = (
+            "available"
+        )
+
+    now = now_datetime()
+
+    if not doc.observed_at:
+        doc.observed_at = now
+
+    if not doc.source_updated_at:
+        doc.source_updated_at = now
+
+    if not doc.verification_status:
+        doc.verification_status = (
+            "self_reported"
+        )
+
+    doc.insert(
+        ignore_permissions=True
+    )
+
+    return {
+        "aid_offer": doc.name,
+        "donor_user": doc.donor_user,
+        "handling_mode":
+            doc.handling_mode,
+        "offer_status":
+            doc.offer_status,
+        "target_posko":
+            doc.target_posko,
+        "distribution_link":
+            "RN Distribution Flow.aid_offer",
+    }
+
+
+@frappe.whitelist()
+def my_aid_offers(
+    limit=100,
+):
+    actor = _require_user_aid_actor()
+
+    limit = max(
+        1,
+        min(
+            cint(limit or 100),
+            500,
+        ),
+    )
+
+    offers = frappe.get_all(
+        "RN Aid Offer",
+        filters={
+            "donor_user":
+                actor.name,
+        },
+        fields=[
+            "name",
+            "title",
+            "disaster_event",
+            "target_posko",
+            "donor_name",
+            "item_name",
+            "quantity",
+            "unit",
+            "quantity_mode",
+            "pickup_location",
+            "ready_at",
+            "handling_mode",
+            "offer_status",
+            "verification_status",
+            "creation",
+            "modified",
+        ],
+        order_by="creation desc",
+        limit_page_length=limit,
+    )
+
+    names = [
+        x.name
+        for x in offers
+    ]
+
+    by_offer = defaultdict(list)
+
+    if names:
+        flows = frappe.get_all(
+            "RN Distribution Flow",
+            filters={
+                "aid_offer": [
+                    "in",
+                    names,
+                ],
+            },
+            fields=[
+                "name",
+                "aid_offer",
+                "destination_posko",
+                "flow_status",
+                "eta_final",
+            ],
+            order_by="creation desc",
+            limit_page_length=1000,
+        )
+
+        for flow in flows:
+            by_offer[
+                flow.aid_offer
+            ].append(flow)
+
+    result = []
+
+    for offer in offers:
+        row = dict(offer)
+        row["distribution_flows"] = (
+            by_offer.get(
+                offer.name,
+                [],
+            )
+        )
+        result.append(row)
+
+    return {
+        "user": actor.name,
+        "offers": result,
+    }

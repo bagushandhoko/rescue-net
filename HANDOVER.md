@@ -110,23 +110,30 @@ public / masyarakat** (NO kartu stok — one-off or repeated shipments).
     `SIM-PUB-SHIP-1..3` (Komunitas Peduli Bandung Raya, Air Mineral, waves 1-3)
     toward WARGA.
 - **Frontend:**
-  - **Merged-posko function switcher = a sidebar TOP GROUP** (owner's ask:
-    split the sidebar in two — top group picks which function of the merged
-    posko, bottom groups are the normal menu). Implemented once in
-    `assets/js/rn-navigation-v2.js` → `mountPoskoFunctionGroup(nav)`: reads
-    `?id=` (+ `?event=`), calls guest `api_control_centre.posko_functions`,
-    and if `functions.length >= 2` prepends a `<details open
-    data-rn-group="posko-fn">` group labelled `Posko: <title>` with one child
-    link per active function (Logistik → `posko-logistik.html`, Shelter →
-    `shelter-detail.html`, Dapur Umum → `dapur-umum.html`, each `?id=&event=`).
-    Accordion re-wired idempotently (`wireAccordion`, `data-rnAccordionWired`
-    guard); the posko-fn group starts open, others closed. Works on all pages
-    the unified nav mounts on (logistik / shelter / dapur / posko-detail) with
-    NO per-page markup. CSS accent in `rn-navigation-v2.css`
-    (`[data-rn-group="posko-fn"]` — divider + uppercase summary). The old
-    in-page `#poskoFnNav` bar and `logistik.js` `renderFnNav`/`FN_PAGES` were
-    removed. Playwright-verified: WARGA shows the group first + open on all 3
-    pages with the right active link; JOGJA (not merged) and no-`id` show none.
+  - **Merged-posko function switcher = a sidebar TOP GROUP, login-only**
+    (owner's ask: split the sidebar in two — top group picks which function of
+    the merged posko, bottom groups are the normal menu; and it only shows when
+    logged in, because a merged posko is run by ONE operator handling all 3
+    functions). Implemented once in `assets/js/rn-navigation-v2.js` →
+    `mountPoskoFunctionGroup(nav)`: bails unless `isLoggedIn()`
+    (`RN_SESSION.getUser()` truthy) AND the URL has `?id=`; calls guest
+    `api_control_centre.posko_functions`; if `functions.length >= 2` prepends a
+    `<details open data-rn-group="posko-fn">` group labelled `Posko: <title>`
+    with one child link per active function (Logistik → `posko-logistik.html`,
+    Shelter → `shelter-detail.html`, Dapur Umum → `dapur-umum.html`, each
+    `?id=&event=`). Re-runs on the `rn:frappe-session` event (session-role.js
+    fires it after the authoritative check) so the group appears/disappears
+    with login state; `removePoskoFunctionGroup` handles the negative cases.
+    Accordion re-wired idempotently (`wireAccordion`, `data-rnAccordionWired`).
+    `posko-logistik.html` also syncs `?id=` into the URL + calls
+    `window.rnRefreshPoskoFunctionGroup()` in `loadBoard()` so picking a posko
+    from the `#logistikPoskoSelect` dropdown updates the sidebar group too.
+    Works on every unified-nav page (logistik / shelter / dapur / posko-detail)
+    with NO per-page markup. CSS accent in `rn-navigation-v2.css`
+    (`[data-rn-group="posko-fn"]`). Old in-page `#poskoFnNav` bar +
+    `logistik.js` `renderFnNav`/`FN_PAGES` removed. Playwright-verified:
+    guest → no group; logged-in + merged posko → group first/open/3 links on
+    all 3 pages; not-merged / no-`id` → none.
   - `pages/posko-logistik.html`: `<div id="logistikRoleBanner">` +
     `<section id="publicShipPanel">` "Kiriman Masyarakat" table.
   - `assets/js/logistik.js`: `renderRoleBanner` (collector = blue, receiver =

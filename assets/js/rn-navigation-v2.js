@@ -247,11 +247,29 @@
     return "";
   }
 
+  function removePoskoFunctionGroup(nav) {
+    const g = nav.querySelector('[data-rn-group="posko-fn"]');
+    if (g) g.remove();
+  }
+
+  // The merged-posko switcher is an operator tool: a merged posko is run by
+  // ONE logged-in user handling all 3 functions. Hide it for guests.
+  function isLoggedIn() {
+    try {
+      const u = window.RN_SESSION && window.RN_SESSION.getUser();
+      return !!(u && (u.user_id || u.username || u.user || u.email));
+    } catch (e) {
+      return false;
+    }
+  }
+
   async function mountPoskoFunctionGroup(nav) {
     if (!window.RN_FRAPPE) return;
 
     const poskoId = urlParam(["id", "posko"]);
-    if (!poskoId) return;
+    if (!poskoId) { removePoskoFunctionGroup(nav); return; }
+
+    if (!isLoggedIn()) { removePoskoFunctionGroup(nav); return; }
 
     let info = null;
     try {
@@ -264,7 +282,10 @@
     }
 
     const fns = (info && info.functions || []).filter(f => FN_PAGES[f]);
-    if (fns.length < 2) return; // not a merged posko — nothing to switch
+    if (fns.length < 2) { // not a merged posko — nothing to switch
+      removePoskoFunctionGroup(nav);
+      return;
+    }
 
     const event = urlParam(["event", "disaster_event_id"]);
     const q = id =>
@@ -280,8 +301,7 @@
     if (title.length > 34) title = title.slice(0, 33) + "…";
 
     // Remove a stale copy (e.g. re-init) then prepend as the top group.
-    const old = nav.querySelector('[data-rn-group="posko-fn"]');
-    if (old) old.remove();
+    removePoskoFunctionGroup(nav);
     nav.insertAdjacentHTML(
       "afterbegin",
       groupHtml("Posko: " + title, items, "posko-fn", true)
@@ -325,6 +345,11 @@
     preserveEventContext(nav);
     mountPoskoFunctionGroup(nav).catch(() => {});
 
+    // Re-evaluate once session-role.js confirms/denies the login (async).
+    window.addEventListener("rn:frappe-session", () => {
+      mountPoskoFunctionGroup(nav).catch(() => {});
+    });
+
     document.documentElement.classList.add("rn-navigation-v2-ready");
 
     console.info(
@@ -332,6 +357,13 @@
       currentFile()
     );
   }
+
+  // Let a page (e.g. posko-logistik.html's posko dropdown) refresh the top
+  // function group after it changes the active posko / URL.
+  window.rnRefreshPoskoFunctionGroup = function () {
+    const nav = findOperationalNavigation();
+    if (nav) mountPoskoFunctionGroup(nav).catch(() => {});
+  };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initialize);

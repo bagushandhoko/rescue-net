@@ -459,6 +459,18 @@ async function loadBoard() {
   const posko = poskoParam();
   if (!posko) { setStatus("Pilih posko."); return; }
 
+  // Keep the URL + the sidebar function group in sync with the active posko,
+  // so opening this page plain (no ?id=) and picking a posko still shows the
+  // merged-posko function switcher in the sidebar.
+  try {
+    const u = new URL(location.href);
+    if (u.searchParams.get("id") !== posko) {
+      u.searchParams.set("id", posko);
+      history.replaceState(null, "", u);
+    }
+    if (window.rnRefreshPoskoFunctionGroup) window.rnRefreshPoskoFunctionGroup();
+  } catch (e) {}
+
   setStatus("Memuat data logistik…");
   try {
     const b = await RN_FRAPPE.call(

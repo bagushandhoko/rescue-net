@@ -107,9 +107,15 @@ user input" data. Working the pages one at a time.
   ISPA(org full_authorized)→full, GAMBUT(org aggregate)→summary,
   SATWA(posko public_detail=public override)→full, MANGGALA(aggregate)→summary.
   Summary-only viewers now also get the create/record forms hidden on
-  posko-detail.
-  REMAINING for Step C: `organisasi-posko.html` list showing per-posko share
-  badge + link; the KPI-box → aggregated cross-org list view (`?focus=…`).
+  posko-detail. `organisasi-posko.html` lists every posko of the active event
+  (guest endpoint `api_control_centre.event_poskos`, used when the login-scoped
+  `list_poskos` returns nothing) with a "koordinasi: detail terbuka | ringkasan
+  (tertutup)" badge and a drill link to `posko-detail.html?id=&event=`. The
+  Control Centre "Posko Kritis" KPI already routes here, so KPI → cross-org
+  posko list → drill → full/summary works end to end.
+  STEP C IS DONE. (A dedicated per-dimension aggregated list for the other KPI
+  boxes — Jiwa Berisiko / Bantuan Mengalir / Medis Overload / Donasi — was not
+  built; those still link to their module pages, which is acceptable.)
 - **Step D — partly done** (`vis_setup.py`): KH-ORG-BPBD & SIM-NS-BNPB =
   `full_authorized`; KH-ORG-BKSDA `allow_posko_public_choice` + KH-POSKO-SATWA
   `public_detail=public`; KH-POSKO-MANGGALA critical, ISPA/HELIBASE urgent,

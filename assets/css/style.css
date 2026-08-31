@@ -4044,3 +4044,22 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 @media (max-width: 760px) {
   .rn-upload-grid { grid-template-columns: 1fr; }
 }
+
+/* Posko Logistik — kartu stok extras + drawer */
+.rn-kpi-edit { border:0; background:rgba(232,117,88,.15); color:#c0392b; border-radius:6px; font-size:11px; padding:1px 6px; cursor:pointer; margin-left:6px; }
+.btn.mini { min-height:auto; padding:5px 10px; font-size:11px; }
+.rn-table .rn-in { color:#1c5b34; }
+.rn-table .rn-table .rn-out, .rn-table .rn-out { color:#c0392b; }
+.rn-table td small { color:#9a8f88; }
+.rn-otw { font-weight:800; color:#b26a1a; text-decoration:underline; }
+
+.rn-drawer { position:fixed; inset:0; background:rgba(20,16,14,.55); display:none; z-index:99999; }
+.rn-drawer.is-open { display:grid; place-items:center; }
+.rn-drawer-card { width:min(560px,94vw); max-height:88vh; overflow:auto; background:#fff; border-radius:14px; box-shadow:0 24px 70px rgba(0,0,0,.3); }
+.rn-drawer-card header { display:flex; justify-content:space-between; align-items:center; padding:16px 18px; border-bottom:1px solid #eee6e1; }
+.rn-drawer-card header button { border:0; background:transparent; font-size:22px; cursor:pointer; color:#8a5a45; }
+.rn-drawer-card > div:last-child { padding:16px 18px; }
+.rn-drawer-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f0e8e2; }
+.rn-drawer-row:last-child { border-bottom:0; }
+.rn-drawer .rn-form label { display:block; margin:10px 0 4px; font-size:12px; font-weight:800; }
+.rn-drawer .rn-form input { width:100%; }

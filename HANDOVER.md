@@ -88,11 +88,32 @@ user input" data. Working the pages one at a time.
   "Asal & Trace Logistik" (nearest incoming flow + step tracker), "Upload Foto
   Kondisi" (-> evidence page), "Konversi & Volume" reference, "Barang Masuk /
   Keluar" tabs, and the two create forms tucked in a collapsed <details>.
-  Backend: new guest endpoint `api_control_centre.logistik_board(posko,
-  disaster_event)` (reuses `posko_detail` for the visibility gate). `logistik.js`
-  fully rewritten; removed the broken `dms-inline.js` include. NOTE: the Frappe
-  backend is a single worker and `logistik_board` is heavy - the page can take
-  several seconds to populate on a cold backend.
+  Backend: guest `api_control_centre.logistik_board(posko, disaster_event)`
+  (reuses `posko_detail`). **E2E logistics chain added:**
+  - Custom Fields (no migrate): `RN Posko.rn_beneficiary_count/note/updated_at`,
+    `RN Stock Observation.rn_daily_consumption/rn_consumption_source`,
+    `RN Distribution Flow.rn_movement_type`.
+  - New endpoints: `logistik_stock_cards`, `logistik_incoming`,
+    `logistik_open_needs` (public papan kebutuhan), `set_posko_beneficiary`,
+    `set_item_consumption`, `fulfill_need` (public → creates RN Aid Offer vs a
+    need). `logistik_board` now returns `stock_cards` (per-item: stok ada /
+    masuk 7h / keluar 7h / OTW / kebutuhan / gap / laju konsumsi / estimasi
+    habis = stok÷laju, + a variant with OTW) and `incoming` (each with a
+    `distribusi_url` deep-link).
+  - Seed `rn_logistik_e2e.py`: collector posko `SIM-LOG-GUDANG-JOGJA`
+    (Yogyakarta, `rn_beneficiary_count=0`, `collection_hub`) + org + user
+    `GUDANGJOGJA` → `RN Transport Space` convoy → `RN Distribution Flow` chain
+    Jogja → BNPB hub → WARGA (disaster posko, 1200 jiwa) → consumption flows;
+    stock rows at each hop; 2 aid offers toward WARGA. So the DB graph is
+    connected: non-disaster collector → transport → hub → disaster posko →
+    beneficiaries.
+  - Frontend `logistik.js`: "Kartu Stok" table, editable Jiwa Dilayani (✎),
+    OTW cell → drawer of inbound flows → "Proses distribusi →", "Penuhi" →
+    fulfill_need form. `SIM-NS-WARGA`/`SIM-NS-BNPB` flipped to
+    `full_authorized` so the cards show.
+  NOTE: Frappe is a single worker; `logistik_board` is heavy (~0.2-0.5s local
+  but the NAS→Funnel DNS is flaky — test via `http://host.docker.internal/`
+  from the Playwright container, or `docker exec ... curl localhost:8000`).
 
 
 

@@ -883,33 +883,29 @@ def logistik_board(posko, disaster_event=None):
     detail = base.get("detail") or {}
     full = base["detail_allowed"]
 
-    # Jiwa dilayani: shelter occupancy at this posko.
-    jiwa = 0
-    try:
-        for row in frappe.get_all(
-            "RN Shelter Occupancy",
-            filters={"posko": name},
-            fields=["current_occupancy"],
-            limit_page_length=200,
-        ):
-            jiwa += int(_num(row.get("current_occupancy")))
-    except Exception:
-        jiwa = 0
+    # Jiwa dilayani: manual field first, else shelter occupancy.
+    bene = _posko_beneficiary(name)
+    jiwa = bene["count"]
+    if not jiwa:
+        try:
+            for row in frappe.get_all(
+                "RN Shelter Occupancy",
+                filters={"posko": name},
+                fields=["current_occupancy"],
+                limit_page_length=200,
+            ):
+                jiwa += int(_num(row.get("current_occupancy")))
+        except Exception:
+            jiwa = 0
 
-    # Stok yang menipis: stock rows flagged low/critical.
-    stok_menipis = 0
-    try:
-        for row in frappe.get_all(
-            "RN Stock Observation",
-            filters={"posko": name},
-            fields=_sf("RN Stock Observation", ["name", "stock_state"]),
-            limit_page_length=500,
-        ):
-            st = str(row.get("stock_state") or "").lower()
-            if st in {"low", "critical", "habis", "menipis", "out"}:
-                stok_menipis += 1
-    except Exception:
-        stok_menipis = 0
+    cards = _stock_cards(name)
+
+    # Stok menipis: kartu stok yang habis dalam < 3 hari.
+    stok_menipis = sum(
+        1 for c in cards
+        if c.get("estimasi_habis_hari") is not None
+        and c["estimasi_habis_hari"] < 3
+    )
 
     urgent_terms = {"critical", "urgent", "high", "tinggi", "darurat"}
 
@@ -1003,25 +999,409 @@ def logistik_board(posko, disaster_event=None):
             "step": step,
         }
 
+    posko_out = dict(base["posko"])
+    posko_out["beneficiary_count"] = bene["count"]
+    posko_out["beneficiary_note"] = bene["note"]
+    posko_out["beneficiary_updated_at"] = bene["updated_at"]
+
     return {
-        "posko": base["posko"],
+        "posko": posko_out,
         "organization": base["organization"],
         "share_mode": base["share_mode"],
         "detail_allowed": full,
         "kpi": {
             "jiwa_dilayani": jiwa,
             "stok_menipis": stok_menipis,
-            "stok_item": summary["stock_item_count"],
+            "stok_item": len(cards),
             "kebutuhan_kritis": summary["critical_need_count"],
             "kebutuhan_terbuka": summary["open_need_count"],
             "bantuan_menuju": summary["incoming_flow_count"],
         },
+        "stock_cards": cards if full else [],
+        "stock_cards_total": len(cards),
         "urgent_needs": urgent_show,
         "urgent_needs_total": urgent_total,
         "movements_in": movements_in,
         "movements_out": movements_out,
+        "incoming": _incoming_flows(name) if full else [],
         "trace": trace,
         "conversions": _LOGISTIK_CONVERSIONS,
+    }
+
+
+# ============================================================
+# Logistik stock-card + beneficiary + open-needs helpers
+# ============================================================
+def _posko_beneficiary(name):
+    row = frappe.db.get_value(
+        "RN Posko", name,
+        ["rn_beneficiary_count", "rn_beneficiary_note",
+         "rn_beneficiary_updated_at"],
+        as_dict=True,
+    ) or {}
+    return {
+        "count": int(_num(row.get("rn_beneficiary_count"))),
+        "note": row.get("rn_beneficiary_note"),
+        "updated_at": row.get("rn_beneficiary_updated_at"),
+    }
+
+
+def _norm_item(v):
+    import re
+    return re.sub(r"[_\s]+", " ", str(v or "").strip().lower())
+
+
+_RECEIVED_STATES = {
+    "received", "received_verified", "arrived", "arrived_at_posko",
+    "stock_transferred", "completed", "closed",
+}
+_INTRANSIT_STATES = {"dispatched", "in_transit", "on_the_way", "assigned_pickup"}
+
+
+def _stock_cards(name):
+    import json as _json
+    from frappe.utils import get_datetime, now_datetime
+
+    now = now_datetime()
+
+    def _age_days(dt):
+        try:
+            return max(0.0, (now - get_datetime(dt)).total_seconds() / 86400.0)
+        except Exception:
+            return 999.0
+
+    # latest stock observation per item
+    obs_fields = _sf("RN Stock Observation", [
+        "name", "item_name", "canonical_item", "quantity", "unit",
+        "stock_state", "observed_at", "rn_daily_consumption",
+        "rn_consumption_source",
+    ])
+    latest = {}
+    for o in frappe.get_all(
+        "RN Stock Observation", filters={"posko": name},
+        fields=obs_fields, order_by="observed_at desc", limit_page_length=500,
+    ):
+        key = _norm_item(o.get("canonical_item") or o.get("item_name"))
+        if key and key not in latest:
+            latest[key] = o
+
+    # flows touching this posko
+    flow_fields = _sf("RN Distribution Flow", [
+        "name", "item_name", "quantity", "unit", "flow_status",
+        "rn_movement_type", "source_posko", "destination_posko",
+        "received_quantity", "dispatched_at", "received_at",
+        "in_transit_at", "modified",
+    ])
+    flows_in = frappe.get_all(
+        "RN Distribution Flow", filters={"destination_posko": name},
+        fields=flow_fields, limit_page_length=500,
+    )
+    flows_out = frappe.get_all(
+        "RN Distribution Flow", filters={"source_posko": name},
+        fields=flow_fields, limit_page_length=500,
+    )
+
+    # open needs per item
+    need_qty = {}
+    for n in frappe.get_all(
+        "RN Logistic Need", filters={"posko": name},
+        fields=_sf("RN Logistic Need", ["name", "item_name", "quantity",
+                "unit", "need_status", "legacy_payload"]),
+        limit_page_length=300,
+    ):
+        if str(n.get("need_status") or "open").lower() in {
+            "fulfilled", "closed", "cancelled", "met",
+        }:
+            continue
+        payload = n.get("legacy_payload")
+        if isinstance(payload, str) and payload.strip():
+            try:
+                payload = _json.loads(payload)
+            except (ValueError, TypeError):
+                payload = {}
+        req = _num((payload or {}).get("required_quantity") or n.get("quantity"))
+        k = _norm_item(n.get("item_name"))
+        need_qty[k] = need_qty.get(k, 0.0) + req
+
+    keys = set(latest) | set(need_qty)
+    for f in flows_in + flows_out:
+        keys.add(_norm_item(f.get("item_name")))
+
+    cards = []
+    for k in sorted(keys):
+        if not k:
+            continue
+        o = latest.get(k) or {}
+        label = (o.get("item_name")
+                 or next((f.get("item_name") for f in flows_in + flows_out
+                          if _norm_item(f.get("item_name")) == k), k))
+        unit = o.get("unit") or next(
+            (f.get("unit") for f in flows_in + flows_out
+             if _norm_item(f.get("item_name")) == k), "")
+
+        stok_ada = _num(o.get("quantity"))
+
+        masuk_7h = sum(
+            _num(f.get("received_quantity") or f.get("quantity"))
+            for f in flows_in
+            if _norm_item(f.get("item_name")) == k
+            and str(f.get("flow_status") or "").lower() in _RECEIVED_STATES
+            and _age_days(f.get("received_at") or f.get("modified")) <= 7
+        )
+        keluar_7h = sum(
+            _num(f.get("quantity")) for f in flows_out
+            if _norm_item(f.get("item_name")) == k
+            and _age_days(f.get("dispatched_at") or f.get("modified")) <= 7
+        )
+        otw = sum(
+            _num(f.get("quantity")) for f in flows_in
+            if _norm_item(f.get("item_name")) == k
+            and str(f.get("flow_status") or "").lower() in _INTRANSIT_STATES
+        )
+        otw_count = sum(
+            1 for f in flows_in
+            if _norm_item(f.get("item_name")) == k
+            and str(f.get("flow_status") or "").lower() in _INTRANSIT_STATES
+        )
+
+        kebutuhan = need_qty.get(k, 0.0)
+        gap = max(0.0, kebutuhan - stok_ada - otw)
+
+        manual_rate = _num(o.get("rn_daily_consumption"))
+        if manual_rate > 0:
+            laju, laju_src = manual_rate, "manual"
+        elif keluar_7h > 0:
+            laju, laju_src = round(keluar_7h / 7.0, 2), "computed"
+        else:
+            laju, laju_src = 0.0, "none"
+
+        habis = round(stok_ada / laju, 1) if laju > 0 else None
+        habis_otw = round((stok_ada + otw) / laju, 1) if laju > 0 else None
+
+        cards.append({
+            "item": label,
+            "unit": unit,
+            "stok_ada": stok_ada,
+            "masuk_7h": masuk_7h,
+            "keluar_7h": keluar_7h,
+            "otw": otw,
+            "otw_count": otw_count,
+            "kebutuhan": kebutuhan,
+            "gap": gap,
+            "laju_harian": laju,
+            "laju_sumber": laju_src,
+            "estimasi_habis_hari": habis,
+            "estimasi_habis_dengan_otw_hari": habis_otw,
+            "observed_at": o.get("observed_at"),
+        })
+
+    cards.sort(key=lambda c: (
+        c["estimasi_habis_hari"] if c["estimasi_habis_hari"] is not None else 1e9,
+        -c["gap"],
+    ))
+    return cards
+
+
+def _incoming_flows(name):
+    fields = _sf("RN Distribution Flow", [
+        "name", "item_name", "quantity", "unit", "flow_status",
+        "source_posko", "eta_final", "transport_provider", "transport_type",
+        "dispatched_at", "in_transit_at", "arrived_at", "received_at",
+        "received_quantity", "logistic_need", "transport_space", "modified",
+    ])
+    out = []
+    for f in frappe.get_all(
+        "RN Distribution Flow", filters={"destination_posko": name},
+        fields=fields, order_by="modified desc", limit_page_length=100,
+    ):
+        f["id"] = f.pop("name", None)
+        f["distribusi_url"] = (
+            "management-distribusi.html?flow=" + str(f["id"] or "")
+        )
+        out.append(f)
+    return out
+
+
+@frappe.whitelist(allow_guest=True)
+def logistik_stock_cards(posko, disaster_event=None):
+    name = _resolve_posko(posko)
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+    return {"posko": name, "cards": _stock_cards(name)}
+
+
+@frappe.whitelist(allow_guest=True)
+def logistik_incoming(posko, disaster_event=None):
+    name = _resolve_posko(posko)
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+    return {"posko": name, "incoming": _incoming_flows(name)}
+
+
+@frappe.whitelist(allow_guest=True)
+def logistik_open_needs(disaster_event, limit=200):
+    """Public 'papan kebutuhan' - open logistic needs across every posko of
+    an event, each with the serving posko's beneficiary count and fulfilment
+    so an outside collector / the public can pick one to fulfil."""
+    import json as _json
+
+    event = canonical_event(disaster_event)
+    need_cols = cols("RN Logistic Need")
+    rows = frappe.get_all(
+        "RN Logistic Need",
+        filters=event_filters(need_cols, event),
+        fields=_sf("RN Logistic Need", [
+            "name", "legacy_id", "item_name", "quantity", "unit", "urgency",
+            "need_status", "needed_before", "posko", "legacy_payload",
+        ]),
+        order_by="modified desc",
+        limit_page_length=int(limit),
+    )
+
+    posko_cache = {}
+
+    def _posko_info(pn):
+        if pn not in posko_cache:
+            r = frappe.db.get_value(
+                "RN Posko", pn,
+                ["title", "city_name", "province_name", "organization",
+                 "rn_beneficiary_count", "latitude", "longitude"],
+                as_dict=True,
+            ) or {}
+            posko_cache[pn] = r
+        return posko_cache[pn]
+
+    out = []
+    for n in rows:
+        if str(n.get("need_status") or "open").lower() in {
+            "fulfilled", "closed", "cancelled", "met",
+        }:
+            continue
+        payload = n.get("legacy_payload")
+        if isinstance(payload, str) and payload.strip():
+            try:
+                payload = _json.loads(payload)
+            except (ValueError, TypeError):
+                payload = {}
+        payload = payload or {}
+        req = _num(payload.get("required_quantity") or n.get("quantity"))
+        real = _num(payload.get("realized_quantity"))
+        pi = _posko_info(n.get("posko")) if n.get("posko") else {}
+        out.append({
+            "id": n.get("legacy_id") or n["name"],
+            "name": n["name"],
+            "item": n.get("item_name"),
+            "unit": n.get("unit"),
+            "required": req,
+            "realized": real,
+            "gap": max(0.0, req - real),
+            "percent": round(real / req * 100, 1) if req else 0.0,
+            "priority": n.get("urgency"),
+            "needed_before": n.get("needed_before"),
+            "posko": n.get("posko"),
+            "posko_title": pi.get("title"),
+            "posko_area": " / ".join(
+                x for x in [pi.get("city_name"), pi.get("province_name")] if x
+            ),
+            "beneficiary_count": int(_num(pi.get("rn_beneficiary_count"))),
+        })
+
+    out.sort(key=lambda x: (
+        0 if str(x["priority"] or "").lower() in {"critical", "urgent", "high"}
+        else 1,
+        -x["gap"],
+    ))
+    return {"disaster_event": event, "needs": out}
+
+
+@frappe.whitelist()
+def set_posko_beneficiary(posko, count, note=None):
+    from rescue_net.access_policy import rn_actor
+    from frappe.utils import now_datetime
+
+    actor = rn_actor()
+    name = _resolve_posko(posko)
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+
+    frappe.db.set_value("RN Posko", name, {
+        "rn_beneficiary_count": int(_num(count)),
+        "rn_beneficiary_note": note,
+        "rn_beneficiary_updated_at": now_datetime(),
+    })
+    frappe.db.commit()
+    return {"posko": name, "beneficiary_count": int(_num(count))}
+
+
+@frappe.whitelist()
+def set_item_consumption(posko, item_name, daily_rate):
+    from rescue_net.access_policy import rn_actor
+
+    rn_actor()
+    name = _resolve_posko(posko)
+    obs = frappe.get_all(
+        "RN Stock Observation",
+        filters={"posko": name, "item_name": item_name},
+        fields=["name"], order_by="observed_at desc", limit_page_length=1,
+    )
+    if not obs:
+        frappe.throw("Belum ada observasi stok untuk item ini")
+    frappe.db.set_value("RN Stock Observation", obs[0]["name"], {
+        "rn_daily_consumption": _num(daily_rate),
+        "rn_consumption_source": "manual",
+    })
+    frappe.db.commit()
+    return {"stock_observation": obs[0]["name"], "daily_rate": _num(daily_rate)}
+
+
+@frappe.whitelist(allow_guest=True)
+def fulfill_need(need, donor_name, quantity, unit=None,
+                 pickup_location=None, contact=None, disaster_event=None):
+    """Public: an outside collector / member of the public offers to fill a
+    specific open need. Creates an RN Aid Offer targeting the need's posko
+    and links it to the need."""
+    import json as _json
+
+    n = frappe.db.get_value(
+        "RN Logistic Need",
+        need if frappe.db.exists("RN Logistic Need", need)
+        else {"legacy_id": need},
+        ["name", "item_name", "unit", "posko", "disaster_event"],
+        as_dict=True,
+    )
+    if not n:
+        frappe.throw("Kebutuhan tidak ditemukan")
+
+    if not str(donor_name or "").strip():
+        frappe.throw("Nama donatur wajib diisi")
+
+    doc = frappe.new_doc("RN Aid Offer")
+    doc.legacy_source = "public_fulfil"
+    doc.title = f"Donasi {n.get('item_name')} - {donor_name}"
+    for f, v in {
+        "disaster_event": n.get("disaster_event"),
+        "donor_name": str(donor_name).strip(),
+        "donor_contact": contact,
+        "item_name": n.get("item_name"),
+        "quantity": _num(quantity),
+        "unit": unit or n.get("unit"),
+        "offer_status": "need_pickup",
+        "handling_mode": "need_pickup",
+        "target_posko": n.get("posko"),
+        "pickup_location": pickup_location,
+        "verification_status": "self_reported",
+        "legacy_payload": _json.dumps({"fulfils_need": n["name"], "public": True}),
+    }.items():
+        if v is not None and doc.meta.has_field(f):
+            setattr(doc, f, v)
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "aid_offer": doc.name,
+        "need": n["name"],
+        "target_posko": n.get("posko"),
+        "message": "Terima kasih. Penawaran bantuan tercatat dan menunggu penjemputan/konfirmasi posko.",
     }
 
 

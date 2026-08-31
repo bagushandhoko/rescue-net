@@ -21,6 +21,12 @@ function fmt(v) {
   return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 }).format(n);
 }
 
+function fmtWhen(v) {
+  if (!v) return "-";
+  const s = String(v).replace("T", " ");
+  return s.slice(0, 16);
+}
+
 function priorityChip(priority) {
   const p = String(priority || "").toLowerCase();
   let cls = "neutral";
@@ -138,35 +144,192 @@ function renderKpi(b) {
   if (h) h.textContent = `${fmt(k.kebutuhan_terbuka || 0)} kebutuhan terbuka`;
   const hs = document.getElementById("kpiStokHint");
   if (hs) hs.textContent = `${fmt(k.stok_item || 0)} item stok tercatat`;
+  const jn = document.getElementById("kpiJiwaHint");
+  if (jn) {
+    jn.textContent = (b.posko && b.posko.beneficiary_note) || "jiwa di shelter posko";
+  }
 }
 
-function renderUrgentNeeds(b) {
+function habisChip(days) {
+  if (days === null || days === undefined) return `<span class="rn-muted">—</span>`;
+  let cls = "good";
+  if (days < 3) cls = "danger";
+  else if (days < 7) cls = "warning";
+  return `<span class="chip ${cls}">${fmt(days)} hari</span>`;
+}
+
+function renderStockCards(b) {
   const body = document.getElementById("urgentNeedsBody");
-  const rows = b.urgent_needs || [];
-  const total = b.urgent_needs_total || rows.length;
+  const cards = b.stock_cards || [];
+  const total = b.stock_cards_total || cards.length;
 
   const cnt = document.getElementById("urgentNeedsCount");
   if (cnt) cnt.textContent = `${total} item`;
-
   const shown = document.getElementById("urgentNeedsShown");
-  if (shown) shown.textContent = `Menampilkan ${rows.length} dari ${total} item`;
-
+  if (shown) shown.textContent = b.detail_allowed
+    ? `${cards.length} kartu stok`
+    : "Detail dikunci — login sebagai operator posko";
   const more = document.getElementById("urgentNeedsMore");
   if (more) more.href = `posko-detail.html?id=${encodeURIComponent(poskoParam())}&event=${encodeURIComponent(eventParam())}`;
 
   if (!body) return;
-  body.innerHTML = rows.length
-    ? rows.map(n => `
+  if (!b.detail_allowed) {
+    body.innerHTML = `<tr><td colspan="10" class="rn-muted">Kartu stok hanya tampil untuk operator posko / organisasi yang membuka koordinasi.</td></tr>`;
+    return;
+  }
+  body.innerHTML = cards.length
+    ? cards.map(c => `
         <tr>
-          <td>${safe(n.item_name)} <small>${safe(n.unit)}</small></td>
-          <td>${fmt(n.stok_tersedia)} ${safe(n.unit)}</td>
-          <td class="rn-gap">${fmt(n.gap)}</td>
-          <td>${safe(n.estimasi_habis)}</td>
-          <td>${safe(n.waktu_harus_tiba)}</td>
-          <td>${priorityChip(n.priority)}</td>
+          <td><b>${safe(c.item)}</b> <small>${safe(c.unit)}</small></td>
+          <td>${fmt(c.stok_ada)}</td>
+          <td class="rn-in">${c.masuk_7h ? "+" + fmt(c.masuk_7h) : "—"}</td>
+          <td class="rn-out">${c.keluar_7h ? "−" + fmt(c.keluar_7h) : "—"}</td>
+          <td>${
+            c.otw
+              ? `<a href="#" class="rn-otw" data-item="${encodeURIComponent(c.item)}">${fmt(c.otw)} (${c.otw_count})</a>`
+              : "—"
+          }</td>
+          <td>${c.kebutuhan ? fmt(c.kebutuhan) : "—"}</td>
+          <td class="rn-gap">${c.gap ? fmt(c.gap) : "—"}</td>
+          <td>${c.laju_harian ? fmt(c.laju_harian) + "/hari" : "—"}<br><small>${c.laju_sumber === "manual" ? "manual" : c.laju_sumber === "computed" ? "otomatis" : ""}</small></td>
+          <td>${habisChip(c.estimasi_habis_hari)}${
+            c.estimasi_habis_dengan_otw_hari && c.otw
+              ? `<br><small>+OTW: ${fmt(c.estimasi_habis_dengan_otw_hari)} h</small>`
+              : ""
+          }</td>
+          <td><button class="btn ghost mini rn-penuhi" data-item="${encodeURIComponent(c.item)}" data-unit="${encodeURIComponent(c.unit || "")}">Penuhi</button></td>
         </tr>
       `).join("")
-    : `<tr><td colspan="6">Belum ada kebutuhan mendesak.</td></tr>`;
+    : `<tr><td colspan="10">Belum ada kartu stok.</td></tr>`;
+
+  body.querySelectorAll(".rn-otw").forEach(a => {
+    a.addEventListener("click", e => {
+      e.preventDefault();
+      openIncomingDrawer(decodeURIComponent(a.dataset.item));
+    });
+  });
+  body.querySelectorAll(".rn-penuhi").forEach(btn => {
+    btn.addEventListener("click", () => openFulfill(
+      decodeURIComponent(btn.dataset.item),
+      decodeURIComponent(btn.dataset.unit || "")
+    ));
+  });
+}
+
+function openIncomingDrawer(item) {
+  const b = LOGISTIK_BOARD || {};
+  const rows = (b.incoming || []).filter(
+    f => (f.item_name || "").toLowerCase() === item.toLowerCase()
+  );
+  const list = rows.length
+    ? rows.map(f => `
+        <div class="rn-drawer-row">
+          <div>
+            <b>${safe(f.source_posko)}</b> · ${fmt(f.quantity)} ${safe(f.unit)}
+            <br><small>${statusChip(f.flow_status)} · ETA ${fmtWhen(f.eta_final)} · ${safe(f.transport_provider)}</small>
+          </div>
+          <a class="btn ghost mini" href="${safe(f.distribusi_url)}">Proses distribusi →</a>
+        </div>
+      `).join("")
+    : `<p class="rn-muted">Tidak ada kiriman OTW untuk item ini.</p>`;
+  showDrawer(`Bantuan OTW — ${item}`, list);
+}
+
+function openFulfill(item, unit) {
+  const posko = poskoParam();
+  const html = `
+    <form id="fulfillForm" class="rn-form">
+      <p class="rn-muted">Penawaran ini bisa dari posko pengumpul di daerah aman, atau kiriman warga.</p>
+      <label>Item<input value="${safe(item)}" readonly></label>
+      <label>Nama donatur / posko pengumpul<input name="donor_name" required></label>
+      <label>Jumlah<input name="quantity" type="number" step="0.01" required></label>
+      <label>Satuan<input name="unit" value="${safe(unit)}"></label>
+      <label>Lokasi pickup<input name="pickup_location" placeholder="gudang / alamat"></label>
+      <label>Kontak<input name="contact" placeholder="No. HP / email"></label>
+      <div class="form-actions"><button class="btn primary" type="submit">Kirim penawaran</button>
+      <span class="form-message" id="fulfillMsg"></span></div>
+    </form>`;
+  showDrawer(`Penuhi kebutuhan — ${item}`, html);
+  const form = document.getElementById("fulfillForm");
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = document.getElementById("fulfillMsg");
+    msg.textContent = "Mengirim…";
+    try {
+      // find an open need for this item at this posko
+      const board = LOGISTIK_BOARD || {};
+      let needRef = null;
+      try {
+        const on = await RN_FRAPPE.call(
+          "rescue_net.api_control_centre.logistik_open_needs",
+          { disaster_event: eventParam() }
+        );
+        const list = (on && on.needs) || [];
+        const hit = list.find(x =>
+          x.posko === board.posko?.name &&
+          (x.item || "").toLowerCase() === item.toLowerCase()
+        ) || list.find(x => (x.item || "").toLowerCase() === item.toLowerCase());
+        needRef = hit && (hit.id || hit.name);
+      } catch (e2) {}
+      if (!needRef) { msg.textContent = "Tidak ada kebutuhan terbuka yang cocok untuk item ini."; return; }
+      const r = await RN_FRAPPE.call(
+        "rescue_net.api_control_centre.fulfill_need",
+        {
+          need: needRef,
+          donor_name: form.donor_name.value.trim(),
+          quantity: Number(form.quantity.value || 0),
+          unit: form.unit.value.trim(),
+          pickup_location: form.pickup_location.value.trim(),
+          contact: form.contact.value.trim(),
+        },
+        { method: "POST" }
+      );
+      msg.textContent = r.message || "Tercatat.";
+      form.reset();
+      setTimeout(() => { hideDrawer(); loadBoard(); }, 1200);
+    } catch (err) {
+      msg.textContent = err.message || String(err);
+    }
+  });
+}
+
+function showDrawer(title, html) {
+  let d = document.getElementById("rnDrawer");
+  if (!d) {
+    d = document.createElement("div");
+    d.id = "rnDrawer";
+    d.className = "rn-drawer";
+    d.innerHTML = `<div class="rn-drawer-card"><header><b id="rnDrawerTitle"></b><button id="rnDrawerX" type="button">×</button></header><div id="rnDrawerBody"></div></div>`;
+    document.body.appendChild(d);
+    d.addEventListener("click", e => { if (e.target === d) hideDrawer(); });
+    d.querySelector("#rnDrawerX").addEventListener("click", hideDrawer);
+  }
+  d.querySelector("#rnDrawerTitle").textContent = title;
+  d.querySelector("#rnDrawerBody").innerHTML = html;
+  d.classList.add("is-open");
+}
+function hideDrawer() {
+  const d = document.getElementById("rnDrawer");
+  if (d) d.classList.remove("is-open");
+}
+
+async function editBeneficiary() {
+  const posko = poskoParam();
+  const cur = (LOGISTIK_BOARD && LOGISTIK_BOARD.posko && LOGISTIK_BOARD.posko.beneficiary_count) || 0;
+  const val = prompt("Jumlah jiwa yang dilayani posko ini:", cur);
+  if (val === null) return;
+  const note = prompt("Catatan (opsional):",
+    (LOGISTIK_BOARD && LOGISTIK_BOARD.posko && LOGISTIK_BOARD.posko.beneficiary_note) || "");
+  try {
+    await RN_FRAPPE.call(
+      "rescue_net.api_control_centre.set_posko_beneficiary",
+      { posko, count: Number(val || 0), note: note || "" },
+      { method: "POST" }
+    );
+    loadBoard();
+  } catch (err) {
+    setStatus("Gagal simpan jiwa dilayani: " + (err.message || err));
+  }
 }
 
 function renderMovements(b) {
@@ -259,7 +422,7 @@ async function loadBoard() {
 
     renderShareBanner(b);
     renderKpi(b);
-    renderUrgentNeeds(b);
+    renderStockCards(b);
     renderMovements(b);
     renderTrace(b);
     renderConversions(b);
@@ -386,6 +549,8 @@ async function boot() {
     document.getElementById("movTabMasuk").classList.remove("is-active");
     if (LOGISTIK_BOARD) renderMovements(LOGISTIK_BOARD);
   });
+
+  document.getElementById("kpiJiwaEdit")?.addEventListener("click", editBeneficiary);
 
   setupLogisticNeedForm();
   setupAidOfferForm();

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Logistik</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=logistik-dms-20260831">
+  <link rel="stylesheet" href="../assets/css/style.css?v=logistik-e2e-20260831">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=unified-menu-20260821f" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=unified-menu-20260821f" />
 </head>
@@ -72,15 +72,15 @@
     <div id="logistikShareBanner" class="rn-share-banner" hidden></div>
 
     <section class="kpi-grid">
-      <div class="kpi-card">
-        <span>Jiwa Dilayani</span>
+      <div class="kpi-card" id="kpiJiwaCard">
+        <span>Jiwa Dilayani <button type="button" id="kpiJiwaEdit" class="rn-kpi-edit" title="Ubah jumlah jiwa dilayani">✎</button></span>
         <strong id="kpiJiwa">-</strong>
-        <small id="kpiJiwaHint">jiwa di shelter posko</small>
+        <small id="kpiJiwaHint">jumlah korban dilayani posko</small>
       </div>
       <div class="kpi-card warning">
         <span>Stok Menipis</span>
         <strong id="kpiStok">-</strong>
-        <small id="kpiStokHint">item &lt; ambang aman</small>
+        <small id="kpiStokHint">item habis &lt; 3 hari</small>
       </div>
       <div class="kpi-card danger">
         <span>Kebutuhan Kritis</span>
@@ -90,7 +90,7 @@
       <div class="kpi-card">
         <span>Bantuan Menuju Posko</span>
         <strong id="kpiMenuju">-</strong>
-        <small id="kpiMenujuHint">pengiriman masuk</small>
+        <small id="kpiMenujuHint">pengiriman masuk (OTW)</small>
       </div>
     </section>
 
@@ -98,8 +98,8 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>Kebutuhan Mendesak <span class="chip danger" id="urgentNeedsCount">0 item</span></h3>
-            <p>Item dengan gap terbesar &amp; prioritas tertinggi.</p>
+            <h3>Kartu Stok <span class="chip danger" id="urgentNeedsCount">0 item</span></h3>
+            <p>Per item: stok ada, masuk/keluar 7 hari, OTW, kebutuhan, gap, dan estimasi habis (stok ÷ laju konsumsi).</p>
           </div>
         </div>
 
@@ -108,15 +108,19 @@
             <thead>
               <tr>
                 <th>Item</th>
-                <th>Stok Tersedia</th>
-                <th>Gap (Kekurangan)</th>
+                <th>Stok Ada</th>
+                <th>Masuk 7h</th>
+                <th>Keluar 7h</th>
+                <th>OTW</th>
+                <th>Kebutuhan</th>
+                <th>Gap</th>
+                <th>Laju/hari</th>
                 <th>Estimasi Habis</th>
-                <th>Waktu Harus Tiba</th>
-                <th>Prioritas</th>
+                <th>Aksi</th>
               </tr>
             </thead>
             <tbody id="urgentNeedsBody">
-              <tr><td colspan="6">Memuat…</td></tr>
+              <tr><td colspan="10">Memuat…</td></tr>
             </tbody>
           </table>
         </div>
@@ -239,7 +243,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=logistik-dms-20260831"></script>
-<script src="../assets/js/logistik.js?v=logistik-dms-20260831"></script>
+<script src="../assets/js/logistik.js?v=logistik-e2e-20260831b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

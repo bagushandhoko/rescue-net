@@ -634,6 +634,14 @@ def _sf(doctype, wanted):
 
 
 @frappe.whitelist(allow_guest=True)
+def event_poskos(disaster_event):
+    """Flat posko list for an event, each tagged with Control Centre
+    sharing mode. Used by the Kelompok & Posko list to badge + link
+    every posko across all organisations."""
+    return map_points(canonical_event(disaster_event))
+
+
+@frappe.whitelist(allow_guest=True)
 def posko_detail(posko, disaster_event=None):
     """Posko view for the Control Centre drill-down.
 

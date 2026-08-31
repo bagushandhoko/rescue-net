@@ -9,6 +9,85 @@ function safe(v) {
 }
 
 
+function currentEventParam() {
+  const p = new URLSearchParams(location.search);
+  return (
+    p.get("event") ||
+    p.get("disaster_event_id") ||
+    ""
+  );
+}
+
+
+// Public per-event posko list (guest-allowed), normalised to the shape
+// renderPoskos expects, with Control Centre sharing mode included.
+async function publicEventPoskos() {
+  const event = currentEventParam();
+  if (!event) return [];
+
+  let points = [];
+  try {
+    const res = await RN_FRAPPE.call(
+      "rescue_net.api_control_centre.event_poskos",
+      { disaster_event: event }
+    );
+    points = Array.isArray(res) ? res : (res.points || res.items || []);
+  } catch (e) {
+    return [];
+  }
+
+  return points.map(pt => ({
+    name: pt.posko_id || pt.id || pt.name,
+    legacy_id: pt.id,
+    title: pt.name,
+    posko_type: pt.posko_type,
+    organization: pt.organization,
+    address: pt.address,
+    operational_status: pt.status,
+    verification_status: pt.status,
+    share_mode: pt.share_mode,
+    detail_allowed: pt.detail_allowed
+  }));
+}
+
+
+// Tag each posko row with { share_mode, detail_allowed } from the
+// Control Centre visibility rules for the active event.
+async function mergeShareMode(poskoRows) {
+  const event = currentEventParam();
+  if (!event || !poskoRows || !poskoRows.length) return;
+
+  let points = [];
+  try {
+    const res = await RN_FRAPPE.call(
+      "rescue_net.api_control_centre.event_poskos",
+      { disaster_event: event }
+    );
+    points = Array.isArray(res) ? res : (res.points || res.items || []);
+  } catch (e) {
+    return;
+  }
+
+  const byKey = {};
+  points.forEach(pt => {
+    [pt.posko_id, pt.id, pt.name].forEach(k => {
+      if (k) byKey[String(k)] = pt;
+    });
+  });
+
+  poskoRows.forEach(p => {
+    const hit =
+      byKey[String(p.name)] ||
+      byKey[String(p.legacy_id)] ||
+      byKey[String(p.id)];
+    if (hit) {
+      p.share_mode = hit.share_mode;
+      p.detail_allowed = hit.detail_allowed;
+    }
+  });
+}
+
+
 function statusMsg(msg) {
   const el =
     document.getElementById(
@@ -94,21 +173,54 @@ function renderPoskos(items) {
 
   if (!target) return;
 
+  const event = currentEventParam();
+
   target.innerHTML =
     items.length
-      ? items.map(p => card(
-          p.title ||
-          p.posko_name ||
-          p.name,
+      ? items.map(p => {
+          const pid =
+            p.name || p.legacy_id || p.id || "";
 
-          `ID: ${safe(p.name)}<br>` +
-          `Type: ${safe(p.posko_type)}<br>` +
-          `Organization: ${safe(p.organization)}<br>` +
-          `Address: ${safe(p.address)}`,
+          const shareTxt =
+            p.share_mode === "full"
+              ? "koordinasi: detail terbuka"
+              : (
+                  p.share_mode === "summary"
+                    ? "koordinasi: ringkasan (tertutup)"
+                    : ""
+                );
 
-          p.operational_status ||
-          p.verification_status
-        )).join("")
+          const link =
+            `posko-detail.html?id=${
+              encodeURIComponent(pid)
+            }${
+              event
+                ? "&event=" + encodeURIComponent(event)
+                : ""
+            }`;
+
+          return card(
+            p.title || p.posko_name || p.name,
+
+            `ID: ${safe(p.name)}<br>` +
+            `Type: ${safe(p.posko_type)}<br>` +
+            `Organization: ${safe(p.organization)}<br>` +
+            `Address: ${safe(p.address)}<br>` +
+            (
+              shareTxt
+                ? `<b>${shareTxt}</b><br>`
+                : ""
+            ) +
+            `<a href="${link}">${
+              p.detail_allowed
+                ? "Buka detail posko →"
+                : "Buka ringkasan posko →"
+            }</a>`,
+
+            p.operational_status ||
+            p.verification_status
+          );
+        }).join("")
       : card(
           "Belum ada Posko",
           "Belum ada RN Posko.",
@@ -148,20 +260,20 @@ async function loadOrgPosko() {
     "Loading Organization & Posko from Frappe..."
   );
 
+  // A guest / non-member gets a permission error from the login-scoped
+  // endpoints - treat that as "no rows" so the public fallback can run.
+  const softCall = (method) =>
+    RN_FRAPPE.call(method, {}).catch(() => []);
+
   const [
     organizations,
     poskos
   ] = await Promise.all([
-    RN_FRAPPE.call(
-      "rescue_net.api_community_cluster." +
-      "list_organizations",
-      {}
+    softCall(
+      "rescue_net.api_community_cluster.list_organizations"
     ),
-
-    RN_FRAPPE.call(
-      "rescue_net.api_community_cluster." +
-      "list_poskos",
-      {}
+    softCall(
+      "rescue_net.api_community_cluster.list_poskos"
     )
   ]);
 
@@ -188,12 +300,22 @@ async function loadOrgPosko() {
           []
         );
 
+  await mergeShareMode(poskoRows);
+
+  // Fallback: if the (login-scoped) posko list is empty but an event is
+  // selected, show every posko of that event from the public endpoint,
+  // already carrying the Control Centre sharing mode.
+  let poskoDisplay = poskoRows;
+  if (!poskoDisplay.length && currentEventParam()) {
+    poskoDisplay = await publicEventPoskos();
+  }
+
   renderOrganizations(
     orgRows
   );
 
   renderPoskos(
-    poskoRows
+    poskoDisplay
   );
 
   fillOrganizationSelect(
@@ -222,7 +344,7 @@ async function loadOrgPosko() {
 
   if (poskoKpi) {
     poskoKpi.textContent =
-      poskoRows.length;
+      poskoDisplay.length;
   }
 
   if (pendingKpi) {
@@ -249,7 +371,7 @@ async function loadOrgPosko() {
     organizations:
       orgRows,
     poskos:
-      poskoRows
+      poskoDisplay
   };
 }
 

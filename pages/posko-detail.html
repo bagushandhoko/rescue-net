@@ -61,11 +61,23 @@
       <div class="status-pill">Posko Detail · Live Stock</div>
     </header>
 
+    <div id="poskoShareBanner" class="rn-share-banner" hidden></div>
+
     <section class="kpi-grid">
       <div class="kpi-card danger"><span>Role</span><strong id="kpiRole">-</strong><small>node type</small></div>
       <div class="kpi-card"><span>Needs</span><strong id="kpiNeeds">0</strong><small>open needs</small></div>
       <div class="kpi-card warning"><span>Stock Items</span><strong id="kpiStock">0</strong><small>summary rows</small></div>
       <div class="kpi-card"><span>Flows</span><strong id="kpiFlows">0</strong><small>distribution</small></div>
+    </section>
+
+    <section class="panel" id="poskoSummaryPanel" hidden>
+      <div class="panel-header">
+        <div>
+          <h3>Ringkasan Posko</h3>
+          <p id="poskoSummaryCaption">Angka gabungan dari seluruh aktivitas posko ini.</p>
+        </div>
+      </div>
+      <div class="summary-list" id="poskoSummaryRollup"></div>
     </section>
 
     <section class="content-grid">
@@ -182,8 +194,8 @@
   </main>
 </div>
 
-<script src="../assets/js/rn-frappe-client.js?v=frappe-posko-final-1"></script>
-<script src="../assets/js/posko-detail.js?v=frappe-posko-final-1"></script>
+<script src="../assets/js/rn-frappe-client.js?v=sharemode-20260831"></script>
+<script src="../assets/js/posko-detail.js?v=sharemode-20260831"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

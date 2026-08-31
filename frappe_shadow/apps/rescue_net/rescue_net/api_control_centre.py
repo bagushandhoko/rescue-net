@@ -557,6 +557,253 @@ def event_evidence(event, limit=60):
     return out[:limit]
 
 
+def _num(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _resolve_posko(value):
+    value = str(value or "").strip()
+
+    if not value:
+        return None
+
+    if frappe.db.exists("RN Posko", value):
+        return value
+
+    return frappe.db.get_value(
+        "RN Posko", {"legacy_id": value}, "name"
+    ) or frappe.db.get_value(
+        "RN Posko", {"legacy_id": "posko_nodes:" + value}, "name"
+    )
+
+
+def _sf(doctype, wanted):
+    """Keep only fields that actually exist on the doctype."""
+    valid = cols(doctype)
+    return [f for f in wanted if f == "name" or f in valid]
+
+
+@frappe.whitelist(allow_guest=True)
+def posko_detail(posko, disaster_event=None):
+    """Posko view for the Control Centre drill-down.
+
+    Always returns a safe summary rollup. Adds the per-record `detail`
+    bundle only when the organisation's Control Centre sharing (or the
+    posko's own override, or the viewer being an operator/member) allows
+    full detail. See rescue_net.visibility.effective_posko_share.
+    """
+    import json
+
+    name = _resolve_posko(posko)
+
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+
+    p = frappe.db.get_value(
+        "RN Posko",
+        name,
+        [
+            "name", "legacy_id", "title", "posko_type", "organization",
+            "address", "province_name", "city_name", "district_name",
+            "latitude", "longitude", "operational_status",
+            "verification_status", "public_detail",
+            "officer_in_charge_name", "officer_in_charge_phone",
+            "officer_in_charge_role", "disaster_event",
+        ],
+        as_dict=True,
+    ) or {}
+
+    org_name = p.get("organization")
+    org = frappe.db.get_value(
+        "RN Organization",
+        org_name,
+        ["name", "title", "organization_type",
+         "control_centre_share", "verification_status"],
+        as_dict=True,
+    ) or {} if org_name else {}
+
+    try:
+        from rescue_net.visibility import effective_posko_share
+        from rescue_net.access_policy import rn_actor
+
+        try:
+            actor = rn_actor(required=False)
+        except Exception:
+            actor = None
+
+        share = effective_posko_share(name, actor)
+    except Exception:
+        share = {"mode": "summary", "reason": "visibility_unavailable"}
+
+    full = share.get("mode") == "full"
+
+    # ---- needs ----------------------------------------------------------
+    need_rows = frappe.get_all(
+        "RN Logistic Need",
+        filters={"posko": name},
+        fields=_sf("RN Logistic Need", ["name", "item_name", "quantity", "unit",
+                "urgency", "need_status", "legacy_payload", "modified"]),
+        order_by="modified desc",
+        limit_page_length=200,
+    )
+
+    urgent = {"critical", "urgent", "high", "tinggi", "darurat"}
+    req_total = real_total = 0.0
+    open_needs = crit_needs = 0
+    detail_needs = []
+
+    for n in need_rows:
+        payload = n.get("legacy_payload")
+        if isinstance(payload, str) and payload.strip():
+            try:
+                payload = json.loads(payload)
+            except (ValueError, TypeError):
+                payload = {}
+        if not isinstance(payload, dict):
+            payload = {}
+
+        required = _num(payload.get("required_quantity") or n.get("quantity"))
+        realized = _num(payload.get("realized_quantity"))
+        if realized > required > 0:
+            realized = required
+        gap = max(0.0, required - realized)
+
+        status = str(n.get("need_status") or "open").lower()
+        if status not in {"fulfilled", "closed", "cancelled", "met"}:
+            open_needs += 1
+            req_total += required
+            real_total += realized
+            if str(n.get("urgency") or "").lower() in urgent:
+                crit_needs += 1
+
+        if full:
+            detail_needs.append({
+                "item_name": n.get("item_name"),
+                "quantity_required": required,
+                "realized_quantity": realized,
+                "gap": gap,
+                "realization_percent": (
+                    round(realized / required * 100, 1) if required else 0.0
+                ),
+                "unit": n.get("unit"),
+                "priority": n.get("urgency"),
+                "status": status,
+            })
+
+    # ---- stock / flows / offers / medical / volunteers / shelter ------
+    stock_count = frappe.db.count("RN Stock Observation", {"posko": name})
+    medical_count = frappe.db.count("RN Medical Case", {"posko": name})
+    volunteer_count = frappe.db.count("RN Volunteer Assignment", {"posko": name})
+    shelter_count = frappe.db.count("RN Shelter Occupancy", {"posko": name})
+
+    flow_rows = frappe.get_all(
+        "RN Distribution Flow",
+        filters={"destination_posko": name},
+        fields=_sf("RN Distribution Flow", ["name", "item_name", "quantity",
+                "unit", "flow_status", "source_posko"]),
+        order_by="modified desc",
+        limit_page_length=100,
+    )
+    out_flow_rows = frappe.get_all(
+        "RN Distribution Flow",
+        filters={"source_posko": name},
+        fields=_sf("RN Distribution Flow", ["name", "item_name", "quantity",
+                "unit", "flow_status", "destination_posko"]),
+        order_by="modified desc",
+        limit_page_length=100,
+    )
+
+    offer_cols = cols("RN Aid Offer")
+    offer_filter = None
+
+    if "target_posko" in offer_cols:
+        offer_filter = {"target_posko": name}
+    elif "organization" in offer_cols and org_name:
+        offer_filter = {"organization": org_name}
+    elif "disaster_event" in offer_cols and p.get("disaster_event"):
+        offer_filter = {"disaster_event": p.get("disaster_event")}
+
+    offer_rows = frappe.get_all(
+        "RN Aid Offer",
+        filters=offer_filter,
+        fields=_sf("RN Aid Offer", ["name", "item_name", "quantity", "unit",
+                "offer_status", "status"]),
+        limit_page_length=100,
+    ) if offer_filter else []
+
+    summary = {
+        "open_need_count": open_needs,
+        "critical_need_count": crit_needs,
+        "need_required_total": round(req_total, 1),
+        "need_realized_total": round(real_total, 1),
+        "need_realization_percent": (
+            round(real_total / req_total * 100, 1) if req_total else 0.0
+        ),
+        "stock_item_count": stock_count,
+        "incoming_flow_count": len(flow_rows),
+        "outgoing_flow_count": len(out_flow_rows),
+        "aid_offer_count": len(offer_rows),
+        "medical_case_count": medical_count,
+        "volunteer_assignment_count": volunteer_count,
+        "shelter_occupancy_count": shelter_count,
+    }
+
+    result = {
+        "posko": {
+            "id": p.get("legacy_id") or name,
+            "name": name,
+            "title": p.get("title") or name,
+            "posko_type": p.get("posko_type"),
+            "address": p.get("address"),
+            "province_name": p.get("province_name"),
+            "city_name": p.get("city_name"),
+            "district_name": p.get("district_name"),
+            "latitude": p.get("latitude"),
+            "longitude": p.get("longitude"),
+            "operational_status": p.get("operational_status"),
+            "verification_status": p.get("verification_status"),
+            "disaster_event": p.get("disaster_event"),
+        },
+        "organization": {
+            "id": org.get("name"),
+            "title": org.get("title"),
+            "type": org.get("organization_type"),
+            "control_centre_share": org.get("control_centre_share") or "aggregate",
+            "verification_status": org.get("verification_status"),
+        },
+        "share_mode": share.get("mode", "summary"),
+        "detail_allowed": full,
+        "share_reason": share.get("reason"),
+        "summary": summary,
+    }
+
+    if full:
+        result["detail"] = {
+            "needs": detail_needs,
+            "stocks": frappe.get_all(
+                "RN Stock Observation",
+                filters={"posko": name},
+                fields=_sf("RN Stock Observation", ["name", "item_name",
+                        "quantity", "unit", "stock_state", "observed_at"]),
+                order_by="observed_at desc",
+                limit_page_length=100,
+            ),
+            "incoming_flows": flow_rows,
+            "outgoing_flows": out_flow_rows,
+            "aid_offers": offer_rows,
+            "officer": {
+                "name": p.get("officer_in_charge_name"),
+                "phone": p.get("officer_in_charge_phone"),
+                "role": p.get("officer_in_charge_role"),
+            },
+        }
+
+    return result
+
+
 @frappe.whitelist(
     allow_guest=True
 )

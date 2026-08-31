@@ -744,7 +744,38 @@ function renderMap(
             )}
           </b>
 
+          <br>
+
+          Koordinasi:
+          <b>
+            ${
+              point.detail_allowed
+                ? "detail terbuka"
+                : "ringkasan (tertutup)"
+            }
+          </b>
+
           <br><br>
+
+          <a
+            href="posko-detail.html?id=${
+              encodeURIComponent(
+                point.posko_id
+                || point.id
+                || ""
+              )
+            }&event=${
+              encodeURIComponent(eventId())
+            }"
+          >
+            ${
+              point.detail_allowed
+                ? "Buka detail posko →"
+                : "Buka ringkasan posko →"
+            }
+          </a>
+
+          <br>
 
           <a
             target="_blank"

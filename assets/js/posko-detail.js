@@ -354,66 +354,151 @@ function renderFlows(items) {
 }
 
 
+function currentEventParam() {
+  const p = new URLSearchParams(location.search);
+  return p.get("event") || p.get("disaster_event_id") || "";
+}
+
+
+function renderShareBanner(res) {
+  const el = document.getElementById("poskoShareBanner");
+  if (!el) return;
+
+  const orgTitle =
+    (res.organization && res.organization.title) || "organisasi ini";
+
+  if (res.detail_allowed) {
+    el.className = "rn-share-banner is-full";
+    el.innerHTML =
+      `<b>Detail penuh</b> — ${safe(orgTitle)} membuka koordinasi penuh ` +
+      `untuk Control Centre.`;
+  } else {
+    el.className = "rn-share-banner is-summary";
+    el.innerHTML =
+      `<b>Ringkasan saja</b> — ${safe(orgTitle)} menutup koordinasi detail. ` +
+      `Yang tampil hanya angka gabungan. Login sebagai anggota/operator ` +
+      `${safe(orgTitle)} untuk melihat detail per-record.`;
+  }
+
+  el.hidden = false;
+}
+
+
+function renderSummaryRollup(summary) {
+  const panel = document.getElementById("poskoSummaryPanel");
+  const el = document.getElementById("poskoSummaryRollup");
+  if (!el || !panel) return;
+
+  const s = summary || {};
+
+  const rows = [
+    ["Kebutuhan terbuka", s.open_need_count],
+    ["Kebutuhan kritis", s.critical_need_count],
+    [
+      "Realisasi kebutuhan",
+      `${Number(s.need_realization_percent || 0).toFixed(0)}% ` +
+      `(${safe(s.need_realized_total)} / ${safe(s.need_required_total)})`
+    ],
+    ["Item stok", s.stock_item_count],
+    ["Distribusi masuk", s.incoming_flow_count],
+    ["Distribusi keluar", s.outgoing_flow_count],
+    ["Tawaran bantuan", s.aid_offer_count],
+    ["Kasus medis", s.medical_case_count],
+    ["Penugasan relawan", s.volunteer_assignment_count],
+    ["Okupansi shelter", s.shelter_occupancy_count]
+  ];
+
+  el.innerHTML = rows
+    .map(
+      ([label, value]) => `
+        <div>
+          <span>${label}</span>
+          <b>${safe(value)}</b>
+        </div>
+      `
+    )
+    .join("");
+
+  panel.hidden = false;
+}
+
+
 async function loadPosko() {
   setStatus(
     "Loading Frappe Posko context..."
   );
 
-  const result =
+  const res =
     await RN_FRAPPE.call(
-      "rescue_net.api_logistics.dashboard",
+      "rescue_net.api_control_centre.posko_detail",
       {
-        posko:
-          getPoskoId()
+        posko: getPoskoId(),
+        disaster_event: currentEventParam()
       }
     );
 
+  renderShareBanner(res);
+  renderSummaryRollup(res.summary);
+
+  const d = res.detail || {};
+
   const ctx = {
-    posko:
-      result.poskos?.[0] ||
-      {
-        name:
-          getPoskoId()
-      },
+    posko: {
+      name: res.posko && res.posko.name || getPoskoId(),
+      title: res.posko && res.posko.title,
+      posko_type: res.posko && res.posko.posko_type,
+      organization:
+        (res.organization && res.organization.title) ||
+        (res.organization && res.organization.id) ||
+        "-",
+      operational_status: res.posko && res.posko.operational_status,
+      verification_status: res.posko && res.posko.verification_status
+    },
 
-    needs:
-      result.needs || [],
+    needs: (d.needs || []).map(n => ({
+      item_name: n.item_name,
+      quantity: n.quantity_required,
+      unit: n.unit,
+      urgency: n.priority,
+      need_status: n.status
+    })),
 
-    stocks:
-      result.stocks || [],
+    stocks: d.stocks || [],
 
-    offers:
-      result.offers || [],
+    offers: (d.aid_offers || []).map(a => ({
+      item_name: a.item_name,
+      quantity: a.quantity,
+      unit: a.unit,
+      offer_status: a.offer_status || a.status,
+      donor_name:
+        (res.organization && res.organization.title) || ""
+    })),
 
-    transports:
-      result.transports || [],
-
-    flows:
-      result.flows || []
+    flows: [
+      ...(d.incoming_flows || []).map(f => ({
+        ...f,
+        destination_posko: res.posko && res.posko.title
+      })),
+      ...(d.outgoing_flows || []).map(f => ({
+        ...f,
+        source_posko: res.posko && res.posko.title
+      }))
+    ]
   };
 
-  POSKO_CONTEXT_CACHE =
-    ctx;
+  POSKO_CONTEXT_CACHE = ctx;
 
   renderOverview(ctx);
-  renderStockSummary(
-    ctx.stocks
-  );
-  renderStockObservations(
-    ctx.stocks
-  );
-  renderNeeds(
-    ctx.needs
-  );
-  renderIncomingAid(
-    ctx.offers
-  );
-  renderFlows(
-    ctx.flows
-  );
+  renderStockSummary(ctx.stocks);
+  renderStockObservations(ctx.stocks);
+  renderNeeds(ctx.needs);
+  renderIncomingAid(ctx.offers);
+  renderFlows(ctx.flows);
 
   setStatus(
-    "Loaded from Frappe"
+    res.detail_allowed
+      ? "Loaded from Frappe - detail penuh"
+      : "Loaded from Frappe - ringkasan (koordinasi organisasi tertutup)"
   );
 }
 

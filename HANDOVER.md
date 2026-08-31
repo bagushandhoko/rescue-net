@@ -87,12 +87,25 @@ user input" data. Working the pages one at a time.
   forms/JS (e.g. `event-aceh-2025`) and still target the retired FastAPI/PG —
   wiring each page to consume the picked `?event=` and hit Frappe is the
   page-by-page pass (part of Step C / the general functional sweep).
-- **Step C:** `pages/posko-detail.html` + `pages/organisasi-posko.html` render a
-  **summary** vs **full-detail** view driven by `share_mode` / `detail_allowed`;
-  KPI box → aggregated cross-org list (`?focus=…`) → drill into a posko.
-- **Step D:** flip 1–2 sim orgs to `full_authorized`, set some posko
-  `operational_status` to critical/warning (partly done in `vis_setup.py`), so
-  both visibility modes and map colours are visible.
+- **Step C — DONE (core):** new guest endpoint
+  `rescue_net.api_control_centre.posko_detail(posko, disaster_event)` returns a
+  safe **summary** rollup always, plus a `detail` bundle (needs/stocks/flows/
+  offers/officer) only when `effective_posko_share` says `full`. `posko-detail.js`
+  now calls it: shows a green "Detail penuh" / amber "Ringkasan saja — <org>
+  menutup koordinasi" banner (`.rn-share-banner`), a "Ringkasan Posko" rollup
+  panel (always), and the per-record sections only in full mode. Control Centre
+  map-marker popups now show `Koordinasi: detail terbuka | ringkasan` and a
+  "Buka detail/ringkasan posko →" link to `posko-detail.html?id=…&event=…`
+  (uses `point.posko_id` + `detail_allowed` from `map_points`). Verified:
+  ISPA(org full_authorized)→full, GAMBUT(org aggregate)→summary,
+  SATWA(posko public_detail=public override)→full, MANGGALA(aggregate)→summary.
+  REMAINING for Step C: `organisasi-posko.html` list showing per-posko share
+  badge + link; the KPI-box → aggregated cross-org list view (`?focus=…`); hide
+  the create/record forms on posko-detail for summary-only viewers.
+- **Step D — partly done** (`vis_setup.py`): KH-ORG-BPBD & SIM-NS-BNPB =
+  `full_authorized`; KH-ORG-BKSDA `allow_posko_public_choice` + KH-POSKO-SATWA
+  `public_detail=public`; KH-POSKO-MANGGALA critical, ISPA/HELIBASE urgent,
+  SIM-NS-POSKO-TNIAL-SHIP critical.
 - `api_ai._build_context` summary has no `volunteer_count` → the "Relawan"
   module tile always shows 0 (1-line fix pending).
 - Pre-existing uncommitted frontend↔Frappe rewiring (~30 `assets/js/*.js`, most

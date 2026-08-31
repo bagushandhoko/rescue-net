@@ -3984,3 +3984,63 @@ body:not(.home-page) nav a[href*="war-room.html"] {
     display: none !important;
   }
 }
+
+/* ============ Posko Logistik dashboard (DMS mock-up) ============ */
+.rn-logistik-topbar { flex-wrap: wrap; gap: 16px; }
+.rn-logistik-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rn-inline-select { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: #8a5a45; }
+.rn-inline-select select {
+  min-height: 38px; padding: 6px 30px 6px 12px; border-radius: 10px;
+  border: 1px solid rgba(232,117,88,.35); background: #fff; font-size: 13px; font-weight: 700;
+  max-width: 320px;
+}
+
+.rn-logistik-grid { align-items: start; }
+
+.rn-table-wrap { overflow-x: auto; }
+.rn-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rn-table th, .rn-table td { text-align: left; padding: 11px 12px; border-bottom: 1px solid rgba(120,80,60,.12); vertical-align: middle; }
+.rn-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #8c827c; font-weight: 800; }
+.rn-table td small { color: #9a8f88; display: block; font-size: 11px; }
+.rn-table tr:last-child td { border-bottom: 0; }
+.rn-table .rn-gap { color: #c0392b; font-weight: 800; }
+
+.rn-table-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; font-size: 12px; color: #8c827c; }
+
+.rn-tabs { display: inline-flex; gap: 6px; }
+.rn-tab { padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(232,117,88,.28); background: #fff; font-size: 12px; font-weight: 800; color: #8a5a45; cursor: pointer; }
+.rn-tab.is-active { background: #e87558; color: #fff; border-color: #e87558; }
+
+.rn-sub-h { margin: 20px 0 10px; font-size: 14px; }
+.rn-muted { color: #9a8f88; font-size: 12px; }
+
+.rn-trace { border: 1px solid rgba(120,80,60,.14); border-radius: 12px; padding: 14px; background: #fff8f4; }
+.rn-trace-line { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12.5px; }
+.rn-trace-line span { color: #8c827c; }
+.rn-trace-steps { display: flex; align-items: center; margin-top: 12px; }
+.rn-trace-steps i { flex: 1; height: 2px; background: rgba(120,80,60,.2); }
+.rn-trace-dot { font-size: 10px; font-weight: 800; color: #9a8f88; white-space: nowrap; }
+.rn-trace-dot.is-done { color: #1c5b34; }
+
+.rn-upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rn-upload-tile { display: flex; flex-direction: column; gap: 4px; padding: 14px; border: 1px dashed rgba(232,117,88,.45); border-radius: 12px; text-decoration: none; color: #40312b; background: #fff; }
+.rn-upload-tile b { font-size: 13px; }
+.rn-upload-tile span { font-size: 11px; font-weight: 800; color: #e87558; }
+
+.rn-conv { display: grid; gap: 8px; }
+.rn-conv-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 11px; border: 1px solid rgba(120,80,60,.12); border-radius: 9px; font-size: 12.5px; }
+.rn-conv-row span { color: #8c827c; }
+
+.rn-input-drawer > summary { list-style: none; cursor: pointer; }
+.rn-input-drawer > summary::-webkit-details-marker { display: none; }
+.rn-input-drawer > summary h3::after { content: " ⌄"; }
+.rn-input-drawer[open] > summary h3::after { content: " ⌃"; }
+.rn-input-drawer .rn-form h4 { margin: 18px 0 8px; font-size: 13px; }
+
+.rn-page-status { margin-top: 14px; font-size: 12px; color: #8c827c; }
+
+.btn.ghost { background: transparent; border: 1px solid rgba(232,117,88,.4); color: #e87558; }
+
+@media (max-width: 760px) {
+  .rn-upload-grid { grid-template-columns: 1fr; }
+}

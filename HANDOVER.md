@@ -80,6 +80,22 @@ user input" data. Working the pages one at a time.
 
 ### IN PROGRESS / NEXT
 
+- **Posko Logistik page rebuilt to the DMS mock-up (`blueprint/dms*.pdf`,
+  `assets/img/mockup/posko logistik.png`).** Was forms-only; now a real
+  dashboard: posko selector + share banner, 4 KPI tiles (Jiwa Dilayani / Stok
+  Menipis / Kebutuhan Kritis / Bantuan Menuju Posko), "Kebutuhan Mendesak"
+  table (item / stok tersedia / gap / estimasi habis / waktu tiba / prioritas),
+  "Asal & Trace Logistik" (nearest incoming flow + step tracker), "Upload Foto
+  Kondisi" (-> evidence page), "Konversi & Volume" reference, "Barang Masuk /
+  Keluar" tabs, and the two create forms tucked in a collapsed <details>.
+  Backend: new guest endpoint `api_control_centre.logistik_board(posko,
+  disaster_event)` (reuses `posko_detail` for the visibility gate). `logistik.js`
+  fully rewritten; removed the broken `dms-inline.js` include. NOTE: the Frappe
+  backend is a single worker and `logistik_board` is heavy - the page can take
+  several seconds to populate on a cold backend.
+
+
+
 - **Step B — DONE:** `assets/js/rn-public-header.js` now renders a shared
   disaster-event `<select>` ("BENCANA") in the public header on all 27 pages
   that include it (war-room.html keeps its own). Reads `?event=` → localStorage

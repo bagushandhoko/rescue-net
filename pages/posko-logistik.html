@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Logistik</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=eventpicker-20260831">
+  <link rel="stylesheet" href="../assets/css/style.css?v=logistik-dms-20260831">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=unified-menu-20260821f" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=unified-menu-20260821f" />
 </head>
@@ -24,14 +24,14 @@
       <a href="war-room.html?event=event-sim-001">Control Centre</a>
       <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
       <a href="map.html?event=event-sim-001">Map</a>
-      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
       <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
       <a class="active" href="posko-logistik.html">Logistik</a>
       <a href="management-distribusi.html">Distribusi</a>
       <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
       <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
       <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
-      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="search-found.html?event=event-sim-001">Search &amp; Found</a>
       <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
       <a href="donor-program.html?event=event-sim-001">Donor Program</a>
       <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
@@ -49,161 +49,176 @@
   </aside>
 
   <main class="main">
-    <header class="topbar">
-    <div class="rn-page-mobile-title">Logistik</div>
+    <header class="topbar rn-logistik-topbar">
+      <div class="rn-page-mobile-title">Posko Logistik</div>
 
       <div>
-        <p class="eyebrow">Field Needs & Stock Intelligence</p>
+        <p class="eyebrow">Field Needs &amp; Stock Intelligence</p>
         <h2>Posko Logistik</h2>
         <p class="subtitle">
-          Fokus utama halaman ini adalah kebutuhan lapangan, stok yang tersedia,
-          kapan stok habis, dan bantuan apa yang harus masuk ke posko.
+          Pantau stok, kebutuhan, dan pergerakan bantuan secara real-time.
         </p>
       </div>
-      <div class="status-pill">API Connected · PostgreSQL</div>
+
+      <div class="rn-logistik-controls">
+        <label class="rn-inline-select">
+          <span>Posko</span>
+          <select id="logistikPoskoSelect"><option>Memuat…</option></select>
+        </label>
+        <span class="status-pill" id="logistikUpdated">Terakhir diperbarui —</span>
+      </div>
     </header>
 
+    <div id="logistikShareBanner" class="rn-share-banner" hidden></div>
+
     <section class="kpi-grid">
-      <div class="kpi-card danger">
-        <span>Kebutuhan Critical</span>
-        <strong>Live</strong>
-        <small>berdasarkan priority</small>
+      <div class="kpi-card">
+        <span>Jiwa Dilayani</span>
+        <strong id="kpiJiwa">-</strong>
+        <small id="kpiJiwaHint">jiwa di shelter posko</small>
       </div>
       <div class="kpi-card warning">
-        <span>Stok Habis &lt;24 Jam</span>
-        <strong>Need ETA</strong>
-        <small>prototype</small>
+        <span>Stok Menipis</span>
+        <strong id="kpiStok">-</strong>
+        <small id="kpiStokHint">item &lt; ambang aman</small>
+      </div>
+      <div class="kpi-card danger">
+        <span>Kebutuhan Kritis</span>
+        <strong id="kpiKritis">-</strong>
+        <small id="kpiKritisHint">prioritas tertinggi</small>
       </div>
       <div class="kpi-card">
-        <span>Bantuan Tersedia</span>
-        <strong>API</strong>
-        <small>/aid-offers</small>
-      </div>
-      <div class="kpi-card">
-        <span>Trace</span>
-        <strong>QR Ready</strong>
-        <small>next step</small>
+        <span>Bantuan Menuju Posko</span>
+        <strong id="kpiMenuju">-</strong>
+        <small id="kpiMenujuHint">pengiriman masuk</small>
       </div>
     </section>
 
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>Tambah Kebutuhan Logistik</h3>
-          <p>Input kebutuhan langsung masuk ke Rescue-Net API dan PostgreSQL.</p>
+    <section class="content-grid rn-logistik-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Kebutuhan Mendesak <span class="chip danger" id="urgentNeedsCount">0 item</span></h3>
+            <p>Item dengan gap terbesar &amp; prioritas tertinggi.</p>
+          </div>
         </div>
-        <span class="status-pill mini">Live Input</span>
+
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Stok Tersedia</th>
+                <th>Gap (Kekurangan)</th>
+                <th>Estimasi Habis</th>
+                <th>Waktu Harus Tiba</th>
+                <th>Prioritas</th>
+              </tr>
+            </thead>
+            <tbody id="urgentNeedsBody">
+              <tr><td colspan="6">Memuat…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rn-table-foot">
+          <span id="urgentNeedsShown">—</span>
+          <a class="btn ghost" id="urgentNeedsMore" href="#">Lihat Semua Kebutuhan</a>
+        </div>
       </div>
 
+      <aside class="panel summary">
+        <div class="panel-header">
+          <div><h3>Asal &amp; Trace Logistik</h3><p>Pengiriman terdekat menuju posko.</p></div>
+        </div>
+        <div id="traceCard" class="rn-trace">Memuat…</div>
+
+        <h3 class="rn-sub-h">Upload Foto Kondisi</h3>
+        <div class="rn-upload-grid">
+          <a class="rn-upload-tile" id="uploadStok" href="#">
+            <b>Kondisi Stok</b><span>Unggah Foto</span>
+          </a>
+          <a class="rn-upload-tile" id="uploadPosko" href="#">
+            <b>Kondisi Posko</b><span>Unggah Foto</span>
+          </a>
+        </div>
+
+        <h3 class="rn-sub-h">Konversi &amp; Volume</h3>
+        <div class="rn-conv" id="conversionBody"></div>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Barang Masuk / Keluar</h3>
+          <p>Pergerakan logistik dari &amp; menuju posko ini.</p>
+        </div>
+        <div class="rn-tabs" role="tablist">
+          <button class="rn-tab is-active" id="movTabMasuk" type="button">Masuk</button>
+          <button class="rn-tab" id="movTabKeluar" type="button">Keluar</button>
+        </div>
+      </div>
+
+      <div class="rn-table-wrap">
+        <table class="rn-table">
+          <thead>
+            <tr>
+              <th id="movWhoHead">Dari</th>
+              <th>Item</th>
+              <th>Jumlah</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="movBody">
+            <tr><td colspan="4">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <details class="panel create-panel rn-input-drawer">
+      <summary>
+        <h3>Tambah Data Logistik</h3>
+        <p>Input kebutuhan lapangan &amp; bantuan tersedia — langsung ke database.</p>
+      </summary>
+
       <form class="rn-form" data-rn-create-logistic-need>
+        <h4>Tambah Kebutuhan Logistik</h4>
         <div class="form-grid">
-          <label>
-            Disaster Event ID
-            <input name="disaster_event_id" value="event-aceh-2025" required>
-          </label>
-
-          <label>
-            Posko / Node ID
-            <input name="node_id" value="posko-logistik-aceh">
-          </label>
-
-          <label>
-            Item Dibutuhkan
-            <input name="item_name" placeholder="Contoh: Air Minum / Beras / Obat" required>
-          </label>
-
-          <label>
-            Jumlah
-            <input name="quantity_needed" type="number" step="0.01" placeholder="2500" required>
-          </label>
-
-          <label>
-            Satuan
-            <input name="unit" placeholder="liter / kg / dus / pcs" required>
-          </label>
-
-          <label>
-            Prioritas
+          <label>Disaster Event ID<input name="disaster_event_id" required></label>
+          <label>Posko / Node ID<input name="node_id"></label>
+          <label>Item Dibutuhkan<input name="item_name" placeholder="Air Minum / Beras / Obat" required></label>
+          <label>Jumlah<input name="quantity_needed" type="number" step="0.01" placeholder="2500" required></label>
+          <label>Satuan<input name="unit" placeholder="liter / kg / dus / pcs" required></label>
+          <label>Prioritas
             <select name="priority">
               <option value="normal">normal</option>
               <option value="urgent">urgent</option>
               <option value="critical">critical</option>
             </select>
           </label>
-
-          <label>
-            Harus Tiba Sebelum
-            <input name="needed_before" placeholder="Contoh: Hari ini 18:00">
-          </label>
+          <label>Harus Tiba Sebelum<input name="needed_before" placeholder="Hari ini 18:00"></label>
         </div>
-
         <div class="form-actions">
           <button class="btn primary" type="submit">Simpan Kebutuhan</button>
           <span class="form-message" data-rn-logistic-message></span>
         </div>
       </form>
-    </section>
-
-    
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>Tambah Bantuan Tersedia</h3>
-          <p>Input bantuan dari donatur/pengumpul bantuan. Data masuk ke /aid-offers.</p>
-        </div>
-        <span class="status-pill mini">Aid Offer</span>
-      </div>
 
       <form class="rn-form" data-rn-create-aid-offer>
+        <h4>Tambah Bantuan Tersedia</h4>
         <div class="form-grid">
-          <label>
-            Disaster Event ID
-            <input name="disaster_event_id" value="event-aceh-2025" required>
-          </label>
-
-          <label>
-            Nama Donatur / Sumber
-            <input name="donor_name" placeholder="Contoh: PT Sumber Air Baik" required>
-          </label>
-
-          <label>
-            Item Bantuan
-            <input name="item_name" placeholder="Air Mineral / Beras / Selimut" required>
-          </label>
-
-          <label>
-            Jumlah
-            <input name="quantity" type="number" step="0.01" placeholder="1000" required>
-          </label>
-
-          <label>
-            Satuan
-            <input name="unit" placeholder="dus / kg / pcs" required>
-          </label>
-
-          <label>
-            Lokasi Pickup
-            <input name="pickup_location" placeholder="Gudang / alamat donor" required>
-          </label>
-
-          <label>
-            Siap Diambil
-            <input name="ready_at" placeholder="Hari ini 15:00">
-          </label>
-
-          <label>
-            No. Batch
-            <input name=batch_no>
-          </label>
-
-          <label>
-            Expiry Date
-            <input name=expiry_date type=date>
-            <small>Kosongkan kalau barang tahan lama / tidak ada expiry.</small>
-          </label>
-
-          <label>
-            Status
+          <label>Disaster Event ID<input name="disaster_event_id" required></label>
+          <label>Nama Donatur / Sumber<input name="donor_name" placeholder="PT Sumber Air Baik" required></label>
+          <label>Item Bantuan<input name="item_name" placeholder="Air Mineral / Beras / Selimut" required></label>
+          <label>Jumlah<input name="quantity" type="number" step="0.01" placeholder="1000" required></label>
+          <label>Satuan<input name="unit" placeholder="dus / kg / pcs" required></label>
+          <label>Lokasi Pickup<input name="pickup_location" placeholder="Gudang / alamat donor" required></label>
+          <label>Siap Diambil<input name="ready_at" placeholder="Hari ini 15:00"></label>
+          <label>No. Batch<input name="batch_no"></label>
+          <label>Expiry Date<input name="expiry_date" type="date"><small>Kosongkan kalau tidak ada expiry.</small></label>
+          <label>Status
             <select name="status">
               <option value="available">available</option>
               <option value="need_pickup">need_pickup</option>
@@ -212,58 +227,21 @@
             </select>
           </label>
         </div>
-
         <div class="form-actions">
           <button class="btn primary" type="submit">Simpan Bantuan</button>
           <span class="form-message" data-rn-aid-message></span>
         </div>
       </form>
-    </section>
+    </details>
 
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Kebutuhan Lapangan</h3>
-            <p>Live dari endpoint /logistic-needs.</p>
-          </div>
-        </div>
-
-        <div class="event-list" data-rn-logistic-needs></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Bantuan Tersedia</h3>
-        <p class="subtitle">Live dari endpoint /aid-offers.</p>
-        <div class="event-list" data-rn-aid-offers></div>
-      </aside>
-    </section>
-
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>Catatan Logistik Berikutnya</h3>
-          <p>Fitur berikut akan mengubah halaman ini menjadi dashboard kebutuhan nyata di lapangan.</p>
-        </div>
-      </div>
-
-      <ol class="issue-list">
-        <li>Hitung kebutuhan berbasis jumlah jiwa di posko.</li>
-        <li>Perkiraan stok habis berdasarkan konsumsi per hari.</li>
-        <li>Trace barcode / QR untuk barang masuk dan keluar.</li>
-        <li>Perpindahan logistik antar posko.</li>
-        <li>Matching otomatis dengan bantuan tersedia dan transport space.</li>
-      </ol>
-    </section>
+    <div class="rn-page-status" data-rn-logistik-status></div>
   </main>
 </div>
 
-<script src="../assets/js/rn-frappe-client.js?v=frappe-batch-a-1"></script>
-<script src="../assets/js/logistik.js?v=frappe-batch-a-1"></script>
+<script src="../assets/js/rn-frappe-client.js?v=logistik-dms-20260831"></script>
+<script src="../assets/js/logistik.js?v=logistik-dms-20260831"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
-<script src="../assets/js/dms-inline.js?v=domain-p1-1"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=single-nav-20260822a"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>

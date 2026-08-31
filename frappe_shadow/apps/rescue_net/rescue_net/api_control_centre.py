@@ -859,6 +859,172 @@ def posko_detail(posko, disaster_event=None):
     return result
 
 
+# Unit conversion reference (static domain data).
+_LOGISTIK_CONVERSIONS = [
+    {"item": "Beras", "base_unit": "karung", "factor": 50, "target_unit": "kg"},
+    {"item": "Air Mineral", "base_unit": "dus", "factor": 24, "target_unit": "botol (600 ml)"},
+    {"item": "Minyak Goreng", "base_unit": "dus", "factor": 12, "target_unit": "liter"},
+    {"item": "Mie Instan", "base_unit": "dus", "factor": 40, "target_unit": "pcs"},
+    {"item": "Selimut", "base_unit": "bal", "factor": 25, "target_unit": "pcs"},
+]
+
+
+@frappe.whitelist(allow_guest=True)
+def logistik_board(posko, disaster_event=None):
+    """Posko Logistik dashboard (matches the DMS mock-up).
+
+    Reuses posko_detail() for the visibility-gated summary + detail, then
+    reshapes into KPI tiles, an urgent-needs table, in/out movements, a
+    nearest-shipment trace and the unit-conversion reference.
+    """
+    base = posko_detail(posko, disaster_event)
+    name = base["posko"]["name"]
+    summary = base["summary"]
+    detail = base.get("detail") or {}
+    full = base["detail_allowed"]
+
+    # Jiwa dilayani: shelter occupancy at this posko.
+    jiwa = 0
+    try:
+        for row in frappe.get_all(
+            "RN Shelter Occupancy",
+            filters={"posko": name},
+            fields=["current_occupancy"],
+            limit_page_length=200,
+        ):
+            jiwa += int(_num(row.get("current_occupancy")))
+    except Exception:
+        jiwa = 0
+
+    # Stok yang menipis: stock rows flagged low/critical.
+    stok_menipis = 0
+    try:
+        for row in frappe.get_all(
+            "RN Stock Observation",
+            filters={"posko": name},
+            fields=_sf("RN Stock Observation", ["name", "stock_state"]),
+            limit_page_length=500,
+        ):
+            st = str(row.get("stock_state") or "").lower()
+            if st in {"low", "critical", "habis", "menipis", "out"}:
+                stok_menipis += 1
+    except Exception:
+        stok_menipis = 0
+
+    urgent_terms = {"critical", "urgent", "high", "tinggi", "darurat"}
+
+    # Urgent needs table.
+    need_src = detail.get("needs") or []
+    needs_full = frappe.get_all(
+        "RN Logistic Need",
+        filters={"posko": name},
+        fields=_sf("RN Logistic Need", ["name", "item_name", "quantity", "unit",
+                "urgency", "need_status", "needed_before", "legacy_payload"]),
+        order_by="modified desc",
+        limit_page_length=200,
+    )
+
+    import json
+
+    urgent_rows = []
+    for n in needs_full:
+        status = str(n.get("need_status") or "open").lower()
+        if status in {"fulfilled", "closed", "cancelled", "met"}:
+            continue
+
+        payload = n.get("legacy_payload")
+        if isinstance(payload, str) and payload.strip():
+            try:
+                payload = json.loads(payload)
+            except (ValueError, TypeError):
+                payload = {}
+        if not isinstance(payload, dict):
+            payload = {}
+
+        required = _num(payload.get("required_quantity") or n.get("quantity"))
+        realized = _num(payload.get("realized_quantity"))
+        if realized > required > 0:
+            realized = required
+
+        urgent_rows.append({
+            "item_name": n.get("item_name"),
+            "unit": n.get("unit"),
+            "stok_tersedia": realized,
+            "gap": max(0.0, required - realized),
+            "estimasi_habis": payload.get("estimasi_habis") or "-",
+            "waktu_harus_tiba": n.get("needed_before") or "-",
+            "priority": n.get("urgency") or "normal",
+        })
+
+    urgent_rows.sort(key=lambda r: (
+        0 if str(r["priority"]).lower() in urgent_terms else 1,
+        -_num(r["gap"]),
+    ))
+
+    urgent_total = len(urgent_rows)
+    urgent_show = urgent_rows[: (8 if full else 3)]
+
+    # In / out movements.
+    def _mv(rows, who_key, who_label):
+        out = []
+        for f in rows or []:
+            out.append({
+                who_label: f.get(who_key),
+                "item_name": f.get("item_name"),
+                "quantity": f.get("quantity"),
+                "unit": f.get("unit"),
+                "status": f.get("flow_status"),
+            })
+        return out
+
+    movements_in = _mv(detail.get("incoming_flows"), "source_posko", "dari")
+    movements_out = _mv(detail.get("outgoing_flows"), "destination_posko", "tujuan")
+
+    # Nearest shipment trace = newest incoming flow.
+    trace = None
+    inc = detail.get("incoming_flows") or []
+    if inc:
+        f = inc[0]
+        st = str(f.get("flow_status") or "").lower()
+        step = 1
+        if st in {"dispatched", "in_transit", "on_the_way"}:
+            step = 2
+        elif st in {"arrived_at_posko", "partially_received"}:
+            step = 3
+        elif st in {"received", "completed", "closed"}:
+            step = 4
+        trace = {
+            "dari": f.get("source_posko"),
+            "item_name": f.get("item_name"),
+            "quantity": f.get("quantity"),
+            "unit": f.get("unit"),
+            "status": f.get("flow_status"),
+            "resi": "RN-" + str(f.get("name") or "")[-10:].upper(),
+            "step": step,
+        }
+
+    return {
+        "posko": base["posko"],
+        "organization": base["organization"],
+        "share_mode": base["share_mode"],
+        "detail_allowed": full,
+        "kpi": {
+            "jiwa_dilayani": jiwa,
+            "stok_menipis": stok_menipis,
+            "stok_item": summary["stock_item_count"],
+            "kebutuhan_kritis": summary["critical_need_count"],
+            "kebutuhan_terbuka": summary["open_need_count"],
+            "bantuan_menuju": summary["incoming_flow_count"],
+        },
+        "urgent_needs": urgent_show,
+        "urgent_needs_total": urgent_total,
+        "movements_in": movements_in,
+        "movements_out": movements_out,
+        "trace": trace,
+        "conversions": _LOGISTIK_CONVERSIONS,
+    }
+
+
 @frappe.whitelist(
     allow_guest=True
 )

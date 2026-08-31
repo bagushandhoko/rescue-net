@@ -2724,7 +2724,7 @@ html.rn-external-access body:not(.mockup-viewer) .main {
 .rn-public-header {
   min-height: 68px;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 20px;
   padding: 8px 42px;
@@ -2794,6 +2794,44 @@ html.rn-external-access body:not(.mockup-viewer) .main {
   background: #40312b;
 }
 
+/* Shared disaster-event picker in the public header */
+.rn-event-picker {
+  display: inline-flex;
+  align-items: center;
+}
+
+.rn-event-picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rn-event-picker label > span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #8a5a45;
+}
+
+.rn-event-picker select {
+  max-width: 260px;
+  min-height: 38px;
+  padding: 6px 30px 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(232,117,88,.35);
+  background: rgba(255,255,255,.72);
+  color: #40312b;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rn-event-picker select:focus-visible {
+  outline: 2px solid rgba(232,117,88,.55);
+  outline-offset: 1px;
+}
+
 body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .app-shell {
   min-height: calc(100vh - 68px);
 }
@@ -2821,13 +2859,27 @@ body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
     grid-row: 1;
   }
 
+  .rn-event-picker {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .rn-event-picker label {
+    width: 100%;
+  }
+
+  .rn-event-picker select {
+    flex: 1;
+    max-width: none;
+  }
+
   .rn-public-links {
     display: none;
   }
 
   .rn-public-header.is-open .rn-public-links {
     grid-column: 1 / -1;
-    grid-row: 2;
+    grid-row: 3;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;

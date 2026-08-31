@@ -73,8 +73,20 @@ user input" data. Working the pages one at a time.
 
 ### IN PROGRESS / NEXT
 
-- **Step B:** a reusable disaster-event picker on **every** `pages/*.html`
-  (currently only Control Centre has one); all page JS scopes to `?event=`.
+- **Step B — DONE:** `assets/js/rn-public-header.js` now renders a shared
+  disaster-event `<select>` ("BENCANA") in the public header on all 27 pages
+  that include it (war-room.html keeps its own). Reads `?event=` → localStorage
+  `rn_active_event` → `event-sim-001`; injects `?event=` into the URL when
+  missing (`history.replaceState`) so each page's own JS can read it; on change
+  reloads with the new `?event=`. Options come from
+  `rescue_net.api_ai.public_active_disasters` (guest); degrades to the single
+  current option if that fetch fails. CSS `.rn-event-picker` in `style.css`
+  (header grid → 4 cols; mobile → own row). Cache-busters bumped to
+  `?v=eventpicker-20260831` on rn-public-header.js and style.css.
+  NOTE: many pages still hardcode a `Disaster Event ID` default in their own
+  forms/JS (e.g. `event-aceh-2025`) and still target the retired FastAPI/PG —
+  wiring each page to consume the picked `?event=` and hit Frappe is the
+  page-by-page pass (part of Step C / the general functional sweep).
 - **Step C:** `pages/posko-detail.html` + `pages/organisasi-posko.html` render a
   **summary** vs **full-detail** view driven by `share_mode` / `detail_allowed`;
   KPI box → aggregated cross-org list (`?focus=…`) → drill into a posko.

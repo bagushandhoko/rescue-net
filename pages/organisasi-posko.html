@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Kelompok & Posko</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=logistik-e2e-20260831">
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=unified-menu-20260821f" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=unified-menu-20260821f" />
 </head>
@@ -138,8 +138,25 @@
           </label>
 
           <label>
-            Jenis Posko
+            Jenis Posko (utama)
             <input name="node_type" placeholder="logistics / kitchen / medical / shelter" required>
+          </label>
+
+          <fieldset class="rn-fn-picker">
+            <legend>Fungsi posko (boleh &gt; 1 dalam satu posko)</legend>
+            <label class="rn-check"><input type="checkbox" name="fn_logistics"> Logistik</label>
+            <label class="rn-check"><input type="checkbox" name="fn_shelter"> Shelter</label>
+            <label class="rn-check"><input type="checkbox" name="fn_kitchen"> Dapur Umum</label>
+            <p class="subtitle">Kalau menyatu, sub-menu fungsi muncul di halaman posko dan bisa dikelola satu admin / satu login.</p>
+          </fieldset>
+
+          <label>
+            Peran Logistik
+            <select name="logistics_role">
+              <option value="">— (bukan posko logistik)</option>
+              <option value="collector">Pengumpul (daerah aman, tak melayani korban)</option>
+              <option value="receiver">Penerima (daerah bencana, melayani korban)</option>
+            </select>
           </label>
 
           <label>
@@ -179,8 +196,8 @@
   </main>
 </div>
 
-<script src="../assets/js/rn-frappe-client.js?v=sharelist-20260831"></script>
-<script src="../assets/js/org-posko.js?v=sharelist-20260831"></script>
+<script src="../assets/js/rn-frappe-client.js?v=poskofn-20260831"></script>
+<script src="../assets/js/org-posko.js?v=poskofn-20260831"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

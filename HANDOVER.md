@@ -4,7 +4,7 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-08-31_
+_Last updated: 2026-08-31 (posko function model)_
 
 ---
 
@@ -77,6 +77,74 @@ user input" data. Working the pages one at a time.
     RN Evidence File + RN Operational Evidence). `public_dashboard` returns it as
     `evidence`; `api_frontend_bridge.evidence_context` returns the same list, so
     the Control Centre "Bukti Lapangan" and the Evidence page are consistent.
+
+### DONE — Posko function model (collector/receiver + merged shelter/kitchen)
+
+Per owner: a posko logistik is either **pengumpul** (collector, safe area, 0
+beneficiaries) or **penerima** (receiver, disaster area, serves beneficiaries).
+Beneficiaries may sit in a **separate** shelter posko or a **merged** one; when
+creating a posko you choose which functions (logistics / shelter / dapur umum)
+live in that single posko so one admin / one login runs it. Logistics supply
+comes from **another posko logistik** (has kartu stok) OR **direct from the
+public / masyarakat** (NO kartu stok — one-off or repeated shipments).
+
+- **Frappe (deployed, verified — shadow md5 == container md5):**
+  - Custom Fields (no migrate): `RN Posko.rn_fn_logistics/rn_fn_shelter/
+    rn_fn_kitchen` (Check) + `RN Posko.rn_logistics_role` (Select
+    `\ncollector\nreceiver`). Backfilled 14 poskos from `posko_type`.
+  - `api_control_centre._posko_functions(name)` → `{functions[], logistics_role,
+    is_collector, is_merged}`. Wired into `posko_detail` (spread into
+    `result["posko"]`), `map_points` (per-point `functions` / `logistics_role`
+    via `_row_fns`), and `logistik_board` (returns `functions`,
+    `logistics_role`, `is_collector`, `public_shipments`).
+  - `_public_shipments(name)` → `RN Aid Offer` where `target_posko==name`,
+    shaped `{donor_name,item_name,quantity,unit,status,ready_at,wave}` (wave from
+    `legacy_payload.wave` / `public_repeated`).
+  - New whitelisted `set_posko_functions(posko, functions, logistics_role)`
+    (JSON or CSV `functions`) — sets the 4 fields, returns `_posko_functions`.
+  - Seed `rn_posko_functions.py` (idempotent, ran OK): WARGA
+    (`SIM-NS-POSKO-WARGA`) = merged logistics+shelter+kitchen, receiver, 1200
+    jiwa, with `RN Shelter Occupancy SIM-MERGE-SHELTER-WARGA` (1200) +
+    `RN Kitchen Production SIM-MERGE-KITCHEN-WARGA` (1200 portions);
+    `SIM-LOG-GUDANG-JOGJA` = collector; 3 repeated public shipments
+    `SIM-PUB-SHIP-1..3` (Komunitas Peduli Bandung Raya, Air Mineral, waves 1-3)
+    toward WARGA.
+- **Frontend:**
+  - `pages/posko-logistik.html`: `<nav id="poskoFnNav">` sub-nav +
+    `<div id="logistikRoleBanner">` + `<section id="publicShipPanel">` "Kiriman
+    Masyarakat" table.
+  - `assets/js/logistik.js`: `FN_PAGES`, `renderFnNav` (shown only when
+    `functions.length >= 2`, links to `posko-logistik.html` /
+    `shelter-detail.html` / `dapur-umum.html` with `?id=&event=`),
+    `renderRoleBanner` (collector = blue, receiver = amber w/ jiwa count),
+    `renderPublicShipments`; `renderKpi` is collector-aware (Jiwa Dilayani card
+    → "Peran Posko" / "Pengumpul", ✎ hidden).
+  - `pages/organisasi-posko.html` create-posko form: `.rn-fn-picker` fieldset
+    (fn_logistics / fn_shelter / fn_kitchen checkboxes) + `logistics_role`
+    select. `assets/js/org-posko.js` `setupPoskoForm` rewritten to read
+    `form.elements` properly (fixes a pre-existing `form.title` bug), then calls
+    `create_posko` → `set_posko_functions`.
+  - `style.css`: `.rn-fn-nav/.rn-fn-tab/.rn-fn-label`, `.rn-role-banner`
+    (is-collector / is-receiver), `.rn-fn-picker/.rn-check`. Cache-buster
+    `?v=poskofn-20260831` on style.css (all pages), logistik.js, org-posko.js,
+    rn-frappe-client.js (organisasi-posko.html).
+  - **Playwright-verified** via `http://host.docker.internal/rescue-net/…`
+    (wait ≥ 8 s — single gunicorn worker is slow):
+    WARGA → fn-nav "Logistik · Shelter · Dapur Umum", role banner "Penerima …
+    melayani 1.200 jiwa", Kiriman Masyarakat panel visible, detail penuh;
+    JOGJA → "Peran Posko / Pengumpul", ✎ hidden, blue collector banner, fn-nav
+    hidden, no public-ship panel; create-posko form has all 3 checkboxes + the
+    role select.
+
+### NEXT
+
+- Add the same function sub-nav to `dapur-umum.html` and `shelter-detail.html`
+  so a merged posko can switch between its functions from any of the three
+  pages (only `posko-logistik.html` renders it today).
+- `api_ai._build_context` summary has no `volunteer_count` → the "Relawan"
+  module tile always shows 0 (1-line fix pending).
+- General page-by-page sweep: many pages still hardcode `event-aceh-2025` and
+  target the retired FastAPI/PG.
 
 ### IN PROGRESS / NEXT
 

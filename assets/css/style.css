@@ -4063,3 +4063,17 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-drawer-row:last-child { border-bottom:0; }
 .rn-drawer .rn-form label { display:block; margin:10px 0 4px; font-size:12px; font-weight:800; }
 .rn-drawer .rn-form input { width:100%; }
+
+/* Posko function sub-nav + logistics role banner */
+.rn-fn-nav { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 14px; }
+.rn-fn-label { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#8a5a45; }
+.rn-fn-tab { padding:7px 14px; border-radius:999px; border:1px solid rgba(232,117,88,.3); background:#fff; font-size:12px; font-weight:800; color:#8a5a45; text-decoration:none; }
+.rn-fn-tab.is-active { background:#e87558; color:#fff; border-color:#e87558; }
+.rn-role-banner { margin:0 0 14px; padding:11px 15px; border-radius:11px; font-size:12.5px; border:1px solid transparent; }
+.rn-role-banner.is-collector { color:#1e4f7a; background:#e6f1fb; border-color:rgba(30,79,122,.25); }
+.rn-role-banner.is-receiver { color:#7a4a12; background:#fff3e0; border-color:rgba(166,91,19,.25); }
+
+.rn-fn-picker { border:1px solid rgba(120,80,60,.18); border-radius:10px; padding:10px 12px; margin:6px 0; }
+.rn-fn-picker legend { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:#8a5a45; padding:0 4px; }
+.rn-check { display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; margin:4px 0; }
+.rn-check input { width:auto; }

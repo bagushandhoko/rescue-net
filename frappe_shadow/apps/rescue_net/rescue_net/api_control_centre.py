@@ -84,6 +84,11 @@ def map_points(event):
         "lng",
         "organization",
         "public_detail",
+        "rn_fn_logistics",
+        "rn_fn_shelter",
+        "rn_fn_kitchen",
+        "rn_logistics_role",
+        "rn_beneficiary_count",
         "disaster_event",
         "disaster_event_id",
     ]
@@ -106,6 +111,29 @@ def map_points(event):
         fields=fields,
         limit_page_length=500,
     )
+
+    def _row_fns(r):
+        fns = []
+        if r.get("rn_fn_logistics"):
+            fns.append("logistics")
+        if r.get("rn_fn_shelter"):
+            fns.append("shelter")
+        if r.get("rn_fn_kitchen"):
+            fns.append("kitchen")
+        if not fns:
+            t = (r.get("posko_type") or "").lower()
+            if t in {"logistics", "collection_hub"}:
+                fns = ["logistics"]
+            elif t in {"shelter", "kitchen"}:
+                fns = [t]
+        role = r.get("rn_logistics_role")
+        if not role and "logistics" in fns:
+            role = ("collector"
+                    if not int(_num(r.get("rn_beneficiary_count")))
+                    else "receiver")
+        return {"functions": fns, "logistics_role": role}
+
+    _fn = {r.get("name"): _row_fns(r) for r in rows}
 
     result = []
 
@@ -205,6 +233,16 @@ def map_points(event):
 
             "organization":
                 row.get("organization"),
+
+            "functions":
+                _fn.get(
+                    row.get("name"), {}
+                ).get("functions", []),
+
+            "logistics_role":
+                _fn.get(
+                    row.get("name"), {}
+                ).get("logistics_role"),
 
             "google_maps_url":
                 (
@@ -821,6 +859,7 @@ def posko_detail(posko, disaster_event=None):
             "operational_status": p.get("operational_status"),
             "verification_status": p.get("verification_status"),
             "disaster_event": p.get("disaster_event"),
+            **_posko_functions(name),
         },
         "organization": {
             "id": org.get("name"),
@@ -1004,11 +1043,16 @@ def logistik_board(posko, disaster_event=None):
     posko_out["beneficiary_note"] = bene["note"]
     posko_out["beneficiary_updated_at"] = bene["updated_at"]
 
+    is_collector = bool(posko_out.get("is_collector"))
+
     return {
         "posko": posko_out,
         "organization": base["organization"],
         "share_mode": base["share_mode"],
         "detail_allowed": full,
+        "is_collector": is_collector,
+        "logistics_role": posko_out.get("logistics_role"),
+        "functions": posko_out.get("functions", []),
         "kpi": {
             "jiwa_dilayani": jiwa,
             "stok_menipis": stok_menipis,
@@ -1024,9 +1068,45 @@ def logistik_board(posko, disaster_event=None):
         "movements_in": movements_in,
         "movements_out": movements_out,
         "incoming": _incoming_flows(name) if full else [],
+        "public_shipments": _public_shipments(name) if full else [],
         "trace": trace,
         "conversions": _LOGISTIK_CONVERSIONS,
     }
+
+
+def _public_shipments(name):
+    """Aid offers coming straight from the public / another collector toward
+    this posko - "kiriman masyarakat", no stock card, one-off or repeated."""
+    import json
+    fields = _sf("RN Aid Offer", [
+        "name", "donor_name", "item_name", "quantity", "unit",
+        "offer_status", "handling_mode", "ready_at", "pickup_location",
+        "legacy_payload", "creation", "modified",
+    ])
+    out = []
+    for o in frappe.get_all(
+        "RN Aid Offer", filters={"target_posko": name},
+        fields=fields, order_by="creation desc", limit_page_length=100,
+    ):
+        wave = None
+        p = o.get("legacy_payload")
+        if isinstance(p, str) and p.strip():
+            try:
+                wave = (json.loads(p) or {}).get("wave")
+            except Exception:
+                wave = None
+        out.append({
+            "id": o["name"],
+            "donor_name": o.get("donor_name"),
+            "item_name": o.get("item_name"),
+            "quantity": o.get("quantity"),
+            "unit": o.get("unit"),
+            "status": o.get("offer_status"),
+            "ready_at": o.get("ready_at"),
+            "pickup_location": o.get("pickup_location"),
+            "wave": wave,
+        })
+    return out
 
 
 # ============================================================
@@ -1043,6 +1123,51 @@ def _posko_beneficiary(name):
         "count": int(_num(row.get("rn_beneficiary_count"))),
         "note": row.get("rn_beneficiary_note"),
         "updated_at": row.get("rn_beneficiary_updated_at"),
+    }
+
+
+def _posko_functions(name):
+    """Which posko functions are enabled + the logistics role.
+
+    A posko can serve several functions at once (logistik + shelter + dapur
+    umum). rn_logistics_role: 'collector' (daerah aman, tak melayani korban)
+    or 'receiver' (daerah bencana, melayani korban)."""
+    cols_p = cols("RN Posko")
+    fields = [f for f in (
+        "posko_type", "rn_fn_logistics", "rn_fn_shelter", "rn_fn_kitchen",
+        "rn_logistics_role", "rn_beneficiary_count",
+    ) if f in cols_p]
+    r = frappe.db.get_value("RN Posko", name, fields, as_dict=True) or {}
+
+    fns = []
+    if r.get("rn_fn_logistics"):
+        fns.append("logistics")
+    if r.get("rn_fn_shelter"):
+        fns.append("shelter")
+    if r.get("rn_fn_kitchen"):
+        fns.append("kitchen")
+    if not fns:
+        # fall back to posko_type
+        t = (r.get("posko_type") or "").lower()
+        if t in {"logistics", "collection_hub"}:
+            fns = ["logistics"]
+        elif t == "shelter":
+            fns = ["shelter"]
+        elif t == "kitchen":
+            fns = ["kitchen"]
+        else:
+            fns = [t] if t else []
+
+    role = r.get("rn_logistics_role")
+    if not role and "logistics" in fns:
+        role = "collector" if not int(_num(r.get("rn_beneficiary_count"))) else "receiver"
+
+    return {
+        "functions": fns,
+        "logistics_role": role,
+        "is_collector": role == "collector",
+        "is_merged": len([f for f in fns if f in
+                          {"logistics", "shelter", "kitchen"}]) > 1,
     }
 
 
@@ -1312,6 +1437,40 @@ def logistik_open_needs(disaster_event, limit=200):
         -x["gap"],
     ))
     return {"disaster_event": event, "needs": out}
+
+
+@frappe.whitelist()
+def set_posko_functions(posko, functions=None, logistics_role=None):
+    """Set which functions a posko serves (logistik / shelter / dapur umum)
+    and, for logistik, whether it is a collector or a receiver.
+    `functions` may be a JSON array or a comma string."""
+    import json
+    from rescue_net.access_policy import rn_actor
+
+    rn_actor()
+    name = _resolve_posko(posko)
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+
+    if isinstance(functions, str):
+        functions = functions.strip()
+        try:
+            functions = json.loads(functions)
+        except Exception:
+            functions = [x.strip() for x in functions.split(",") if x.strip()]
+    functions = set(functions or [])
+
+    upd = {
+        "rn_fn_logistics": 1 if "logistics" in functions else 0,
+        "rn_fn_shelter": 1 if "shelter" in functions else 0,
+        "rn_fn_kitchen": 1 if "kitchen" in functions else 0,
+    }
+    if logistics_role in ("collector", "receiver"):
+        upd["rn_logistics_role"] = logistics_role
+
+    frappe.db.set_value("RN Posko", name, upd)
+    frappe.db.commit()
+    return {"posko": name, **_posko_functions(name)}
 
 
 @frappe.whitelist()

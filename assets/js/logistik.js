@@ -133,10 +133,75 @@ function renderShareBanner(b) {
   el.hidden = false;
 }
 
+const FN_PAGES = {
+  logistics: { label: "Logistik", href: "posko-logistik.html" },
+  shelter: { label: "Shelter", href: "shelter-detail.html" },
+  kitchen: { label: "Dapur Umum", href: "dapur-umum.html" }
+};
+
+function renderFnNav(b) {
+  const nav = document.getElementById("poskoFnNav");
+  if (!nav) return;
+  const fns = (b.functions || []).filter(f => FN_PAGES[f]);
+  if (fns.length < 2) { nav.hidden = true; return; }
+  const pid = encodeURIComponent(poskoParam());
+  const ev = encodeURIComponent(eventParam());
+  nav.innerHTML =
+    `<span class="rn-fn-label">Fungsi posko:</span>` +
+    fns.map(f => {
+      const p = FN_PAGES[f];
+      const active = p.href === "posko-logistik.html" ? " is-active" : "";
+      return `<a class="rn-fn-tab${active}" href="${p.href}?id=${pid}&event=${ev}">${p.label}</a>`;
+    }).join("");
+  nav.hidden = false;
+}
+
+function renderRoleBanner(b) {
+  const el = document.getElementById("logistikRoleBanner");
+  if (!el) return;
+  const role = b.logistics_role;
+  if (role === "collector") {
+    el.className = "rn-role-banner is-collector";
+    el.innerHTML = `<b>Posko Logistik Pengumpul</b> — di daerah aman, tidak melayani korban. Stok di sini dikirim ke posko penerima di daerah bencana.`;
+    el.hidden = false;
+  } else if (role === "receiver") {
+    el.className = "rn-role-banner is-receiver";
+    el.innerHTML = `<b>Posko Logistik Penerima</b> — di daerah bencana, melayani ${fmt(b.kpi && b.kpi.jiwa_dilayani || 0)} jiwa.`;
+    el.hidden = false;
+  } else {
+    el.hidden = true;
+  }
+}
+
+function renderPublicShipments(b) {
+  const panel = document.getElementById("publicShipPanel");
+  const body = document.getElementById("publicShipBody");
+  const cnt = document.getElementById("publicShipCount");
+  const rows = b.public_shipments || [];
+  if (!panel || !body) return;
+  if (!rows.length) { panel.hidden = true; return; }
+  if (cnt) cnt.textContent = rows.length;
+  body.innerHTML = rows.map(s => `
+    <tr>
+      <td><b>${safe(s.donor_name)}</b></td>
+      <td>${safe(s.item_name)}</td>
+      <td>${fmt(s.quantity)} ${safe(s.unit)}</td>
+      <td>${s.wave ? "Gel. " + s.wave : (safe(s.ready_at) || "—")}</td>
+      <td>${statusChip(s.status)}</td>
+    </tr>`).join("");
+  panel.hidden = false;
+}
+
 function renderKpi(b) {
   const k = b.kpi || {};
   const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  set("kpiJiwa", fmt(k.jiwa_dilayani || 0));
+  const collector = !!b.is_collector;
+  const jiwaCard = document.getElementById("kpiJiwaCard");
+  const jiwaEdit = document.getElementById("kpiJiwaEdit");
+  if (jiwaCard) jiwaCard.querySelector("span").firstChild.textContent =
+    collector ? "Peran Posko " : "Jiwa Dilayani ";
+  if (jiwaEdit) jiwaEdit.style.display = collector ? "none" : "";
+  set("kpiJiwa", collector ? "Pengumpul" : fmt(k.jiwa_dilayani || 0));
   set("kpiStok", fmt(k.stok_menipis || 0));
   set("kpiKritis", fmt(k.kebutuhan_kritis || 0));
   set("kpiMenuju", fmt(k.bantuan_menuju || 0));
@@ -146,7 +211,9 @@ function renderKpi(b) {
   if (hs) hs.textContent = `${fmt(k.stok_item || 0)} item stok tercatat`;
   const jn = document.getElementById("kpiJiwaHint");
   if (jn) {
-    jn.textContent = (b.posko && b.posko.beneficiary_note) || "jiwa di shelter posko";
+    jn.textContent = collector
+      ? "posko pengumpul di daerah aman"
+      : ((b.posko && b.posko.beneficiary_note) || "jumlah korban dilayani posko");
   }
 }
 
@@ -420,9 +487,12 @@ async function loadBoard() {
     );
     LOGISTIK_BOARD = b;
 
+    renderFnNav(b);
     renderShareBanner(b);
+    renderRoleBanner(b);
     renderKpi(b);
     renderStockCards(b);
+    renderPublicShipments(b);
     renderMovements(b);
     renderTrace(b);
     renderConversions(b);

@@ -464,66 +464,59 @@ function setupPoskoForm() {
     "submit",
     async e => {
       e.preventDefault();
+      const el = form.elements;
+      const val = n => (el[n] && el[n].value || "").trim();
 
-      const title =
-        form.title?.value?.trim() ||
-        form.posko_name
-          ?.value
-          ?.trim();
+      const title = val("name") || val("posko_name") || val("title");
+      const poskoType = val("node_type") || val("posko_type");
+      const address = val("location") || val("address");
 
-      const poskoType =
-        form.posko_type
-          ?.value
-          ?.trim();
-
-      const address =
-        form.address
-          ?.value
-          ?.trim();
-
-      if (
-        !title ||
-        !poskoType ||
-        !address
-      ) {
-        statusMsg(
-          "Nama Posko, tipe, dan alamat wajib diisi."
-        );
+      if (!title || !poskoType || !address) {
+        statusMsg("Nama Posko, tipe, dan alamat wajib diisi.");
         return;
       }
 
-      statusMsg(
-        "Saving Posko..."
-      );
+      const functions = [];
+      if (el.fn_logistics && el.fn_logistics.checked) functions.push("logistics");
+      if (el.fn_shelter && el.fn_shelter.checked) functions.push("shelter");
+      if (el.fn_kitchen && el.fn_kitchen.checked) functions.push("kitchen");
+      if (!functions.length && ["logistics", "shelter", "kitchen"].includes(poskoType)) {
+        functions.push(poskoType);
+      }
+      const logisticsRole = val("logistics_role");
 
-      await RN_FRAPPE.call(
-        "rescue_net.api_community_cluster." +
-        "create_posko",
+      statusMsg("Menyimpan posko…");
+
+      const created = await RN_FRAPPE.call(
+        "rescue_net.api_community_cluster.create_posko",
         {
           title,
-
-          posko_type:
-            poskoType,
-
+          posko_type: poskoType,
           address,
-
-          organization:
-            form.organization
-              ?.value
-              ?.trim() ||
-            null
+          organization: val("organization_id") || val("organization") || null
         },
-        {
-          method: "POST"
-        }
+        { method: "POST" }
       );
+
+      // apply functions + logistics role
+      const poskoId =
+        (created && (created.name || created.posko || created.id)) || title;
+      try {
+        await RN_FRAPPE.call(
+          "rescue_net.api_control_centre.set_posko_functions",
+          {
+            posko: poskoId,
+            functions: JSON.stringify(functions),
+            logistics_role: logisticsRole || ""
+          },
+          { method: "POST" }
+        );
+      } catch (fe) {
+        statusMsg("Posko dibuat, tapi gagal set fungsi: " + (fe.message || fe));
+      }
 
       form.reset();
-
-      statusMsg(
-        "Posko saved."
-      );
-
+      statusMsg("Posko tersimpan" + (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "") + ".");
       await loadOrgPosko();
     }
   );

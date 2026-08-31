@@ -16,6 +16,20 @@
   border: 0;
 }
 
+/* Top group: function switcher for a merged posko (logistik+shelter+dapur) */
+.rn-nav-v2-group[data-rn-group="posko-fn"] {
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.rn-nav-v2-group[data-rn-group="posko-fn"] .rn-nav-v2-summary {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
 .rn-nav-v2-summary {
   display: flex;
   align-items: center;

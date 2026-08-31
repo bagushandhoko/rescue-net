@@ -133,28 +133,8 @@ function renderShareBanner(b) {
   el.hidden = false;
 }
 
-const FN_PAGES = {
-  logistics: { label: "Logistik", href: "posko-logistik.html" },
-  shelter: { label: "Shelter", href: "shelter-detail.html" },
-  kitchen: { label: "Dapur Umum", href: "dapur-umum.html" }
-};
-
-function renderFnNav(b) {
-  const nav = document.getElementById("poskoFnNav");
-  if (!nav) return;
-  const fns = (b.functions || []).filter(f => FN_PAGES[f]);
-  if (fns.length < 2) { nav.hidden = true; return; }
-  const pid = encodeURIComponent(poskoParam());
-  const ev = encodeURIComponent(eventParam());
-  nav.innerHTML =
-    `<span class="rn-fn-label">Fungsi posko:</span>` +
-    fns.map(f => {
-      const p = FN_PAGES[f];
-      const active = p.href === "posko-logistik.html" ? " is-active" : "";
-      return `<a class="rn-fn-tab${active}" href="${p.href}?id=${pid}&event=${ev}">${p.label}</a>`;
-    }).join("");
-  nav.hidden = false;
-}
+/* The merged-posko function switcher now lives in the sidebar top group
+   (rn-navigation-v2.js → mountPoskoFunctionGroup). */
 
 function renderRoleBanner(b) {
   const el = document.getElementById("logistikRoleBanner");
@@ -487,7 +467,6 @@ async function loadBoard() {
     );
     LOGISTIK_BOARD = b;
 
-    renderFnNav(b);
     renderShareBanner(b);
     renderRoleBanner(b);
     renderKpi(b);

@@ -186,8 +186,8 @@
     return bestScore >= 3 ? best : null;
   }
 
-  function groupHtml(label, items, groupId) {
-    const active = items.some(item => isActive(item.href));
+  function groupHtml(label, items, groupId, forceOpen) {
+    const active = forceOpen || items.some(item => isActive(item.href));
 
     return `
       <details class="rn-nav-v2-group" data-rn-group="${groupId}" ${active ? "open" : ""}>
@@ -203,6 +203,21 @@
     `;
   }
 
+  // Accordion: only one group open at a time. Idempotent per group.
+  function wireAccordion(nav) {
+    const groups = Array.from(nav.querySelectorAll(".rn-nav-v2-group"));
+    groups.forEach(group => {
+      if (group.dataset.rnAccordionWired) return;
+      group.dataset.rnAccordionWired = "1";
+      group.addEventListener("toggle", () => {
+        if (!group.open) return;
+        groups.forEach(other => {
+          if (other !== group) other.open = false;
+        });
+      });
+    });
+  }
+
   function renderNavigation(nav) {
     nav.classList.add("rn-nav-v2");
     nav.setAttribute("data-rn-navigation-version", CONFIG.version);
@@ -212,15 +227,70 @@
       groupHtml("Posko", CONFIG.posko, "posko") +
       groupHtml("Modul", CONFIG.modules, "modul");
 
-    // Accordion: only one group open at a time.
-    const groups = Array.from(nav.querySelectorAll(".rn-nav-v2-group"));
-    groups.forEach(group => {
-      group.addEventListener("toggle", () => {
-        if (!group.open) return;
-        groups.forEach(other => {
-          if (other !== group) other.open = false;
-        });
-      });
+    wireAccordion(nav);
+  }
+
+  /* ---- Top group: function switcher for a merged posko ---- */
+
+  const FN_PAGES = {
+    logistics: { label: "Logistik", href: "posko-logistik.html" },
+    shelter: { label: "Shelter", href: "shelter-detail.html" },
+    kitchen: { label: "Dapur Umum", href: "dapur-umum.html" }
+  };
+
+  function urlParam(names) {
+    const params = new URLSearchParams(window.location.search);
+    for (const n of names) {
+      const v = params.get(n);
+      if (v) return v;
+    }
+    return "";
+  }
+
+  async function mountPoskoFunctionGroup(nav) {
+    if (!window.RN_FRAPPE) return;
+
+    const poskoId = urlParam(["id", "posko"]);
+    if (!poskoId) return;
+
+    let info = null;
+    try {
+      info = await window.RN_FRAPPE.call(
+        "rescue_net.api_control_centre.posko_functions",
+        { posko: poskoId }
+      );
+    } catch (e) {
+      return;
+    }
+
+    const fns = (info && info.functions || []).filter(f => FN_PAGES[f]);
+    if (fns.length < 2) return; // not a merged posko — nothing to switch
+
+    const event = urlParam(["event", "disaster_event_id"]);
+    const q = id =>
+      "?id=" + encodeURIComponent(id) +
+      (event ? "&event=" + encodeURIComponent(event) : "");
+
+    const items = fns.map(f => ({
+      label: FN_PAGES[f].label,
+      href: FN_PAGES[f].href + q(poskoId)
+    }));
+
+    let title = (info.title || poskoId).replace(/^\[SIMULASI\]\s*/i, "");
+    if (title.length > 34) title = title.slice(0, 33) + "…";
+
+    // Remove a stale copy (e.g. re-init) then prepend as the top group.
+    const old = nav.querySelector('[data-rn-group="posko-fn"]');
+    if (old) old.remove();
+    nav.insertAdjacentHTML(
+      "afterbegin",
+      groupHtml("Posko: " + title, items, "posko-fn", true)
+    );
+    wireAccordion(nav);
+
+    // The active function's page is current — keep only this group open.
+    Array.from(nav.querySelectorAll(".rn-nav-v2-group")).forEach(g => {
+      g.open = g.getAttribute("data-rn-group") === "posko-fn";
     });
   }
 
@@ -253,6 +323,7 @@
 
     renderNavigation(nav);
     preserveEventContext(nav);
+    mountPoskoFunctionGroup(nav).catch(() => {});
 
     document.documentElement.classList.add("rn-navigation-v2-ready");
 

@@ -110,15 +110,28 @@ public / masyarakat** (NO kartu stok — one-off or repeated shipments).
     `SIM-PUB-SHIP-1..3` (Komunitas Peduli Bandung Raya, Air Mineral, waves 1-3)
     toward WARGA.
 - **Frontend:**
-  - `pages/posko-logistik.html`: `<nav id="poskoFnNav">` sub-nav +
-    `<div id="logistikRoleBanner">` + `<section id="publicShipPanel">` "Kiriman
-    Masyarakat" table.
-  - `assets/js/logistik.js`: `FN_PAGES`, `renderFnNav` (shown only when
-    `functions.length >= 2`, links to `posko-logistik.html` /
-    `shelter-detail.html` / `dapur-umum.html` with `?id=&event=`),
-    `renderRoleBanner` (collector = blue, receiver = amber w/ jiwa count),
-    `renderPublicShipments`; `renderKpi` is collector-aware (Jiwa Dilayani card
-    → "Peran Posko" / "Pengumpul", ✎ hidden).
+  - **Merged-posko function switcher = a sidebar TOP GROUP** (owner's ask:
+    split the sidebar in two — top group picks which function of the merged
+    posko, bottom groups are the normal menu). Implemented once in
+    `assets/js/rn-navigation-v2.js` → `mountPoskoFunctionGroup(nav)`: reads
+    `?id=` (+ `?event=`), calls guest `api_control_centre.posko_functions`,
+    and if `functions.length >= 2` prepends a `<details open
+    data-rn-group="posko-fn">` group labelled `Posko: <title>` with one child
+    link per active function (Logistik → `posko-logistik.html`, Shelter →
+    `shelter-detail.html`, Dapur Umum → `dapur-umum.html`, each `?id=&event=`).
+    Accordion re-wired idempotently (`wireAccordion`, `data-rnAccordionWired`
+    guard); the posko-fn group starts open, others closed. Works on all pages
+    the unified nav mounts on (logistik / shelter / dapur / posko-detail) with
+    NO per-page markup. CSS accent in `rn-navigation-v2.css`
+    (`[data-rn-group="posko-fn"]` — divider + uppercase summary). The old
+    in-page `#poskoFnNav` bar and `logistik.js` `renderFnNav`/`FN_PAGES` were
+    removed. Playwright-verified: WARGA shows the group first + open on all 3
+    pages with the right active link; JOGJA (not merged) and no-`id` show none.
+  - `pages/posko-logistik.html`: `<div id="logistikRoleBanner">` +
+    `<section id="publicShipPanel">` "Kiriman Masyarakat" table.
+  - `assets/js/logistik.js`: `renderRoleBanner` (collector = blue, receiver =
+    amber w/ jiwa count), `renderPublicShipments`; `renderKpi` is
+    collector-aware (Jiwa Dilayani card → "Peran Posko" / "Pengumpul", ✎ hidden).
   - `pages/organisasi-posko.html` create-posko form: `.rn-fn-picker` fieldset
     (fn_logistics / fn_shelter / fn_kitchen checkboxes) + `logistics_role`
     select. `assets/js/org-posko.js` `setupPoskoForm` rewritten to read
@@ -138,9 +151,13 @@ public / masyarakat** (NO kartu stok — one-off or repeated shipments).
 
 ### NEXT
 
-- Add the same function sub-nav to `dapur-umum.html` and `shelter-detail.html`
-  so a merged posko can switch between its functions from any of the three
-  pages (only `posko-logistik.html` renders it today).
+- Merged-posko function switcher is now a sidebar top group and shows on all
+  unified-nav pages — DONE. Remaining polish: on `posko-logistik.html` the
+  posko can also be changed via the `#logistikPoskoSelect` dropdown; the
+  sidebar group only reflects the URL `?id=`, so switching via the dropdown
+  doesn't refresh it. Have `logistik.js` push the new id into the URL
+  (`history.replaceState`) and re-call `mountPoskoFunctionGroup`, or just
+  reload with `?id=`.
 - `api_ai._build_context` summary has no `volunteer_count` → the "Relawan"
   module tile always shows 0 (1-line fix pending).
 - General page-by-page sweep: many pages still hardcode `event-aceh-2025` and

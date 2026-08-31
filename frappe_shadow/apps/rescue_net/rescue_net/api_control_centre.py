@@ -1171,6 +1171,24 @@ def _posko_functions(name):
     }
 
 
+@frappe.whitelist(allow_guest=True)
+def posko_functions(posko):
+    """Tiny guest lookup for the sidebar function-switcher group.
+
+    Returns {posko, title, functions[], logistics_role, is_collector,
+    is_merged}. Used by rn-navigation-v2.js to render the top sidebar group
+    for a posko that merges logistik / shelter / dapur umum in one node."""
+    name = _resolve_posko(posko)
+    if not name:
+        return {"posko": None, "title": None, "functions": [],
+                "logistics_role": None, "is_collector": False,
+                "is_merged": False}
+    out = _posko_functions(name)
+    out["posko"] = name
+    out["title"] = frappe.db.get_value("RN Posko", name, "title") or name
+    return out
+
+
 def _norm_item(v):
     import re
     return re.sub(r"[_\s]+", " ", str(v or "").strip().lower())

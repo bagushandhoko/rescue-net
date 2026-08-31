@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import now_datetime
 
 from rescue_net.access_policy import (
@@ -466,6 +467,8 @@ def create_assignment(
     shift_end=None,
     assignment_notes=None,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     _assert_manager_posko(
@@ -760,6 +763,8 @@ def add_evidence(
 
 @frappe.whitelist()
 def dashboard(posko=None):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     role = _role(actor)

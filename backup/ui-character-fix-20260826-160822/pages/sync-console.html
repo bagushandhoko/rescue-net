@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Sync Console</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=fix-20260820d">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=unified-menu-20260821f" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=unified-menu-20260821f" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a class="active" href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">Sync Console</div>
+
+      <div>
+        <p class="eyebrow">Offline ??? Online Simulator</p>
+        <h2>Sync Console</h2>
+        <p class="subtitle">Simulasi HP/laptop membuat booking saat offline, lalu sync ke server saat online.</p>
+        <p class="subtitle" id="syncStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Offline-first Prototype</div>
+    </header>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Create Offline Booking</h3>
+            <p>Data disimpan dulu di browser localStorage.</p>
+          </div>
+        </div>
+
+        <form class="rn-form" id="offlineForm">
+          <div class="form-grid">
+            <label>Disaster Event ID
+              <input name="disaster_event_id" value="event-aceh-2025" required>
+            </label>
+            <label>Device ID
+              <input name="source_device_id" value="device-harley-phone-01" required>
+            </label>
+            <label>Resource ID
+              <input name="resource_id" value="res-tni-transport-air-01" required>
+            </label>
+            <label>Requested By Type
+              <input name="requested_by_type" value="community_group" required>
+            </label>
+            <label>Requested By ID
+              <input name="requested_by_id" value="group-harley-rescue" required>
+            </label>
+            <label>Quantity
+              <input name="requested_quantity" type="number" value="1">
+            </label>
+            <label>Requested Time
+              <input name="requested_time" value="Besok pagi">
+            </label>
+            <label>Reason
+              <input name="request_reason" value="Offline booking transport dari HP/laptop, lalu sync saat online.">
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Offline Draft</button>
+            <button class="btn" type="button" id="clearLocal">Clear Local Drafts</button>
+            <button class="btn" type="button" id="retryConflicts">Retry Conflicts</button>
+            <button class="btn primary" type="button" id="syncPush">Sync Push</button>
+            <button class="btn primary" type="button" id="syncPull">Sync Pull</button>
+          </div>
+        </form>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Sync Flow</h3>
+        <div class="summary-list">
+          <div><span>Local DB</span><b>localStorage demo</b></div>
+          <div><span>Push</span><b>/sync/push</b></div>
+          <div><span>Pull</span><b>/sync/pull</b></div>
+          <div><span>Apply</span><b>resource_request</b></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Local Offline Drafts</h3><p>Booking yang dibuat saat offline.</p></div></div>
+        <div class="event-list" id="localDrafts"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Server Resource Requests</h3>
+        <div class="event-list" id="serverRequests"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Server Assignments</h3><p>Data approved/assigned dari server.</p></div></div>
+        <div class="event-list" id="serverAssignments"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Recent Sync Events</h3>
+        <div class="event-list" id="syncEvents"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Server Sync Conflicts</h3><p>Conflict yang sudah tercatat di server.</p></div>
+          <button class="btn" type="button" id="refreshConflicts">Refresh</button>
+        </div>
+        <div class="event-list" id="serverConflicts"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Audit Events</h3>
+        <div class="event-list" id="auditEvents"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Federation Repository</h3>
+            <p>Daftarkan node partner dan ekspor manifest sync yang sudah membawa warning konsolidasi.</p>
+          </div>
+          <button class="btn" type="button" id="exportFederationManifest">Export Manifest</button>
+        </div>
+
+        <form class="rn-form" id="federationNodeForm">
+          <div class="form-grid">
+            <label>Node Name
+              <input name="node_name" value="BPBD Partner Node">
+            </label>
+            <label>Node Type
+              <select name="node_type">
+                <option value="government">government</option>
+                <option value="ngo">ngo</option>
+                <option value="posko">posko</option>
+                <option value="partner">partner</option>
+              </select>
+            </label>
+            <label>Base URL
+              <input name="base_url" placeholder="https://partner.example/rescue-net">
+            </label>
+            <label>Trust Level
+              <select name="trust_level">
+                <option value="unverified">unverified</option>
+                <option value="trusted">trusted</option>
+                <option value="official">official</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Add Federation Node</button>
+          </div>
+        </form>
+
+        <div class="event-list" id="federationNodes"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Federation Logs</h3>
+        <p class="subtitle">Manifest export/import dicatat tanpa menarik data eksternal otomatis.</p>
+        <div class="event-list" id="federationLogs"></div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=frappe-group-f-1"></script>
+<script src="../assets/js/sync-console.js?v=frappe-group-f-1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-sync-engine.js?v=frappe-group-f-1"></script>
+<script src="../assets/js/rn-public-header.js?v=fix-20260820c"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=single-nav-20260822a"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>
+

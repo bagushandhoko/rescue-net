@@ -1,4 +1,3 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 const DISASTER_ID = "event-aceh-2025";
 
 function safe(v) {
@@ -31,11 +30,85 @@ function contactActions(phone, message) {
 }
 
 async function api(path) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" }
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  if (
+    url.pathname.startsWith(
+      "/ai/context/"
+    )
+  ) {
+    const eventId =
+      decodeURIComponent(
+        url.pathname
+          .slice(
+            "/ai/context/".length
+          )
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_ai.context",
+      {
+        disaster_event_id:
+          eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname.startsWith(
+      "/volunteer-context/"
+    )
+  ) {
+    const data =
+      await RN_FRAPPE.call(
+        "rescue_net.api_volunteer." +
+        "control_centre_volunteers",
+        {}
+      );
+
+    return {
+      volunteers:
+        data.volunteers ||
+        data.profiles ||
+        [],
+      assignments:
+        data.assignments ||
+        [],
+      summary:
+        data
+    };
+  }
+
+  if (
+    url.pathname.startsWith(
+      "/donor-program-context/"
+    )
+  ) {
+    const eventId =
+      decodeURIComponent(
+        url.pathname
+          .slice(
+            "/donor-program-context/".length
+          )
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_donor_program.context",
+      {
+        disaster_event:
+          eventId
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Contact route after Frappe cutover: " +
+    url.pathname
+  );
 }
 
 function card(title, body, chip = "", actions = "") {

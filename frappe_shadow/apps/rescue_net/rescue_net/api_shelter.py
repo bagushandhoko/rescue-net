@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import cint, flt, now_datetime
 
 from rescue_net.access_policy import (
@@ -204,6 +205,8 @@ def _all_shelters():
 
 @frappe.whitelist()
 def dashboard(posko=None):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     allowed = _accessible_shelters(
@@ -340,6 +343,8 @@ def create_occupancy(
     pregnant_count=0,
     disability_count=0,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     _assert_shelter_access(
@@ -571,6 +576,8 @@ def create_need(
     needed_before=None,
     notes=None,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     _assert_shelter_access(

@@ -1,111 +1,113 @@
 {
-  "doctype": "DocType",
-  "name": "RN Recovery Project Update",
-  "module": "Rescue Net",
-  "custom": 0,
-  "is_submittable": 0,
-  "track_changes": 1,
-  "field_order": [
-    "project",
-    "disaster_event",
-    "update_type",
-    "progress_percent",
-    "amount_spent",
-    "update_title",
-    "update_notes",
-    "evidence_file_id",
-    "verification_status",
-    "created_by_user",
-    "observed_at",
-    "is_deleted",
-    "deleted_at"
-  ],
-  "fields": [
-    {
-      "fieldname": "project",
-      "label": "Recovery Project",
-      "fieldtype": "Link",
-      "options": "RN Recovery Project",
-      "reqd": 1
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "update_type",
-      "label": "Update Type",
-      "fieldtype": "Data",
-      "default": "progress"
-    },
-    {
-      "fieldname": "progress_percent",
-      "label": "Progress Percent",
-      "fieldtype": "Float",
-      "default": "0"
-    },
-    {
-      "fieldname": "amount_spent",
-      "label": "Amount Spent",
-      "fieldtype": "Currency",
-      "default": "0"
-    },
-    {
-      "fieldname": "update_title",
-      "label": "Update Title",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "update_notes",
-      "label": "Update Notes",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "evidence_file_id",
-      "label": "Evidence File ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "verification_status",
-      "label": "Verification Status",
-      "fieldtype": "Data",
-      "default": "self_reported"
-    },
-    {
-      "fieldname": "created_by_user",
-      "label": "Created By User",
-      "fieldtype": "Data",
-      "read_only": 1
-    },
-    {
-      "fieldname": "observed_at",
-      "label": "Observed At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "is_deleted",
-      "label": "Deleted",
-      "fieldtype": "Check",
-      "default": "0",
-      "read_only": 1
-    },
-    {
-      "fieldname": "deleted_at",
-      "label": "Deleted At",
-      "fieldtype": "Datetime",
-      "read_only": 1
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Recovery Project Update",
+ "module": "Rescue Net",
+ "custom": 0,
+ "is_submittable": 0,
+ "track_changes": 1,
+ "field_order": [
+  "project",
+  "disaster_event",
+  "update_type",
+  "progress_percent",
+  "amount_spent",
+  "update_title",
+  "update_notes",
+  "evidence_file_id",
+  "verification_status",
+  "created_by_user",
+  "observed_at",
+  "is_deleted",
+  "deleted_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "project",
+   "label": "Recovery Project",
+   "fieldtype": "Link",
+   "options": "RN Recovery Project",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "reqd": 1,
+   "description": "Disaster event associated with this record.",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "update_type",
+   "label": "Update Type",
+   "fieldtype": "Data",
+   "default": "progress"
+  },
+  {
+   "fieldname": "progress_percent",
+   "label": "Progress Percent",
+   "fieldtype": "Float",
+   "default": "0"
+  },
+  {
+   "fieldname": "amount_spent",
+   "label": "Amount Spent",
+   "fieldtype": "Currency",
+   "default": "0"
+  },
+  {
+   "fieldname": "update_title",
+   "label": "Update Title",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "update_notes",
+   "label": "Update Notes",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "evidence_file_id",
+   "label": "Evidence File ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verification Status",
+   "fieldtype": "Data",
+   "default": "self_reported"
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Created By User",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Observed At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "is_deleted",
+   "label": "Deleted",
+   "fieldtype": "Check",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deleted_at",
+   "label": "Deleted At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
 }

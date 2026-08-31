@@ -35,3 +35,7 @@ backups/
 _archive/pre-frappe-db-*/
 _archive/frappe-p0-precutover/
 *.dump
+
+# Stray runtime pre-change backups, keep local only
+*.pre-*
+*.pre-frappe-*

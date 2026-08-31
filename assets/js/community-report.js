@@ -1,19 +1,206 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 
 async function rnFetch(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API error ${res.status}: ${text}`);
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  let body = {};
+
+  if (options.body) {
+    body =
+      typeof options.body === "string"
+        ? JSON.parse(options.body)
+        : options.body;
   }
-  return await res.json();
+
+  if (
+    url.pathname ===
+      "/admin-areas/children"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "admin_area_children",
+      {
+        parent_code:
+          url.searchParams.get(
+            "parent_code"
+          )
+          || url.searchParams.get(
+            "parent"
+          )
+          || "",
+
+        level:
+          url.searchParams.get(
+            "level"
+          )
+          || ""
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/community-reports"
+    && method === "GET"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "community_reports",
+      {
+        disaster_event:
+          url.searchParams.get(
+            "disaster_event_id"
+          )
+          || "event-sim-001",
+
+        status:
+          url.searchParams.get(
+            "status"
+          )
+          || null
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/public/community-reports"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "submit_community_report_bridge",
+      {
+        title:
+          body.title,
+
+        description:
+          body.description,
+
+        report_type:
+          body.report_type || null,
+
+        priority:
+          body.priority || null,
+
+        affected_people_count:
+          Number(
+            body.affected_people_count || 0
+          ),
+
+        urgent_needs:
+          body.urgent_needs || null,
+
+        location_text:
+          body.location_text || null,
+
+        latitude:
+          body.latitude ?? body.lat ?? null,
+
+        longitude:
+          body.longitude ?? body.lng ?? null,
+
+        province_code:
+          body.province_code || null,
+
+        city_code:
+          body.city_code || null,
+
+        district_code:
+          body.district_code || null,
+
+        village_code:
+          body.village_code || null,
+
+        consent_to_contact:
+          body.consent_to_contact
+            ? 1
+            : 0,
+
+        location_input_method:
+          body.location_input_method || null,
+
+        create_need:
+          body.create_need
+            ? 1
+            : 0
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  const statusMatch =
+    url.pathname.match(
+      /^\/community-reports\/([^/]+)\/status$/
+    );
+
+  if (
+    statusMatch
+    && (
+      method === "POST"
+      || method === "PATCH"
+    )
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "set_community_report_status",
+      {
+        report:
+          decodeURIComponent(
+            statusMatch[1]
+          ),
+
+        status:
+          body.status
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  const convertMatch =
+    url.pathname.match(
+      /^\/community-reports\/([^/]+)\/convert$/
+    );
+
+  if (
+    convertMatch
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "convert_community_report",
+      {
+        report:
+          decodeURIComponent(
+            convertMatch[1]
+          )
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Community Report route: "
+    + method
+    + " "
+    + url.pathname
+  );
 }
+
 
 function trustLabel(score) {
   if (score >= 86) return "verified/trusted";
@@ -347,4 +534,3 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCommunityReportActions();
   loadCommunityReports();
 });
-

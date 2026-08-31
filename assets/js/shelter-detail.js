@@ -1,45 +1,63 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 let SHELTER_CONTEXT_CACHE = null;
 
 function getShelterPoskoId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("id") || "posko-shelter-melati";
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  return (
+    params.get("id") ||
+    "posko-sim-shelter"
+  );
 }
 
 function statusMsg(msg) {
-  const el = document.getElementById("shelterStatus");
-  if (el) el.textContent = msg;
-}
+  const el =
+    document.getElementById(
+      "shelterStatus"
+    );
 
-async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  if (el) {
+    el.textContent = msg;
+  }
 }
 
 function safe(v) {
-  return v === null || v === undefined || v === "" ? "n/a" : v;
+  return (
+    v === null ||
+    v === undefined ||
+    v === ""
+  ) ? "n/a" : v;
 }
 
-function evidenceLink(objectType, objectId, label = "Add Evidence") {
-  if (!objectId) return "";
-  const eventId = SHELTER_CONTEXT_CACHE?.posko?.disaster_event_id || "event-aceh-2025";
-  return `<br><a href="evidence.html?event=${encodeURIComponent(eventId)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}&node_id=${encodeURIComponent(getShelterPoskoId())}">${label}</a>`;
+function rowId(row) {
+  return (
+    row?.name ||
+    row?.id ||
+    row?.legacy_id ||
+    ""
+  );
 }
 
-function card(title, body, chip = "") {
+function card(
+  title,
+  body,
+  chip = ""
+) {
   return `
     <article class="event-card">
       <div class="event-main">
         <div>
-          <h4>${title}</h4>
+          <h4>${safe(title)}</h4>
           <p>${body}</p>
         </div>
         <div class="chips">
-          ${chip ? `<span class="chip warning">${chip}</span>` : ""}
+          ${
+            chip
+              ? `<span class="chip warning">${safe(chip)}</span>`
+              : ""
+          }
         </div>
       </div>
     </article>
@@ -47,163 +65,403 @@ function card(title, body, chip = "") {
 }
 
 function latestOccupancy(items) {
-  return items && items.length ? items[0] : null;
+  return (
+    items &&
+    items.length
+  )
+    ? items[0]
+    : null;
 }
 
 function renderOccupancies(items) {
-  const el = document.getElementById("shelterOccupancies");
-  el.innerHTML = items.length ? items.map(o => card(
-    o.shelter_name,
-    `Occupancy: ${o.current_occupancy}/${o.capacity_total}<br>Families: ${safe(o.families_count)}<br>Children: ${safe(o.children_count)} · Elderly: ${safe(o.elderly_count)} · Disabled: ${safe(o.disabled_count)}<br>Water: ${safe(o.water_status)} · Sanitation: ${safe(o.sanitation_status)}<br>${safe(o.notes)}${evidenceLink("shelter_occupancy", o.id)}`,
-    o.status
-  )).join("") : card("Belum ada occupancy", "Catat data hunian shelter.", "empty");
+  const el =
+    document.getElementById(
+      "shelterOccupancies"
+    );
+
+  if (!el) return;
+
+  el.innerHTML =
+    items.length
+      ? items.map(o => card(
+          o.shelter_name,
+          `Occupancy: ${safe(o.current_occupancy)}/` +
+          `${safe(o.capacity_total)}<br>` +
+          `Families: ${safe(o.families_count)}<br>` +
+          `Children: ${safe(o.children_count)} · ` +
+          `Elderly: ${safe(o.elderly_count)} · ` +
+          `Disabled: ${safe(o.disability_count)}`,
+          o.verification_status
+        )).join("")
+      : card(
+          "Belum ada occupancy",
+          "Catat data hunian shelter.",
+          "empty"
+        );
 }
 
 function renderNeeds(items) {
-  const el = document.getElementById("shelterNeeds");
-  el.innerHTML = items.length ? items.map(n => card(
-    n.item_name,
-    `Need: ${n.quantity_needed} ${n.unit}<br>Priority: ${safe(n.priority)}<br>Before: ${safe(n.needed_before)}<br>${safe(n.notes)}${evidenceLink("shelter_need", n.id)}`,
-    n.status
-  )).join("") : card("Belum ada kebutuhan shelter", "Tambahkan kebutuhan shelter.", "empty");
+  const el =
+    document.getElementById(
+      "shelterNeeds"
+    );
+
+  if (!el) return;
+
+  el.innerHTML =
+    items.length
+      ? items.map(n => card(
+          n.item_name,
+          `Need: ${safe(n.quantity_needed)} ${safe(n.unit)}<br>` +
+          `Priority: ${safe(n.priority)}<br>` +
+          `Before: ${safe(n.needed_before)}`,
+          n.need_status
+        )).join("")
+      : card(
+          "Belum ada kebutuhan shelter",
+          "Tambahkan kebutuhan shelter.",
+          "empty"
+        );
 }
 
 function renderStock(items) {
-  const el = document.getElementById("shelterStock");
-  el.innerHTML = items.length ? items.map(s => card(
-    s.item_name,
-    `Current stock: <b>${s.current_quantity}</b> ${s.unit}`,
-    s.unit
-  )).join("") : card("Belum ada stok shelter", "Belum ada distribusi barang ke shelter.", "empty");
+  const el =
+    document.getElementById(
+      "shelterStock"
+    );
+
+  if (!el) return;
+
+  el.innerHTML =
+    items.length
+      ? items.map(s => card(
+          s.item_name,
+          `Current stock: <b>${safe(s.quantity)}</b> ${safe(s.unit)}`,
+          s.stock_state
+        )).join("")
+      : card(
+          "Belum ada stok shelter",
+          "Belum ada Stock Observation.",
+          "empty"
+        );
 }
 
 function renderFlows(items) {
-  const el = document.getElementById("shelterFlows");
-  el.innerHTML = items.length ? items.map(f => card(
-    f.id,
-    `Aid: ${safe(f.aid_offer_id)}<br>Transport: ${safe(f.transport_space_id)}<br>ETA: ${safe(f.eta_final)}${evidenceLink("distribution_flow", f.id)}`,
-    f.status
-  )).join("") : card("Belum ada distribution flow", "Belum ada distribusi menuju shelter.", "empty");
+  const el =
+    document.getElementById(
+      "shelterFlows"
+    );
+
+  if (!el) return;
+
+  el.innerHTML =
+    items.length
+      ? items.map(f => card(
+          rowId(f),
+          `Item: ${safe(f.item_name)}<br>` +
+          `Source: ${safe(f.source_posko)}<br>` +
+          `ETA: ${safe(f.eta_final)}`,
+          f.flow_status
+        )).join("")
+      : card(
+          "Belum ada distribution flow",
+          "Belum ada distribusi menuju shelter.",
+          "empty"
+        );
 }
 
 async function loadShelter() {
-  const poskoId = getShelterPoskoId();
-  statusMsg("Loading shelter context...");
+  const poskoId =
+    getShelterPoskoId();
 
-  const ctx = await api(`/shelter-context/${poskoId}`);
+  statusMsg(
+    "Loading shelter context..."
+  );
+
+  const [
+    shelter,
+    logistics
+  ] = await Promise.all([
+    RN_FRAPPE.call(
+      "rescue_net.api_shelter.dashboard",
+      {
+        posko: poskoId
+      }
+    ),
+
+    RN_FRAPPE.call(
+      "rescue_net.api_logistics.dashboard",
+      {
+        posko: poskoId
+      }
+    )
+  ]);
+
+  const posko =
+    shelter.poskos?.[0] ||
+    logistics.poskos?.[0] ||
+    {
+      name: poskoId
+    };
+
+  const ctx = {
+    posko,
+    occupancies:
+      shelter.occupancies || [],
+    households:
+      shelter.households || [],
+    needs:
+      shelter.needs || [],
+    stocks:
+      logistics.stocks || [],
+    flows:
+      logistics.flows || []
+  };
+
   SHELTER_CONTEXT_CACHE = ctx;
 
-  const posko = ctx.posko || {};
-  const occ = ctx.shelter_occupancies || [];
-  const needs = ctx.shelter_needs || [];
-  const stock = ctx.stock_summary || [];
-  const flows = ctx.distribution_flows || [];
-  const latest = latestOccupancy(occ);
+  const latest =
+    latestOccupancy(
+      ctx.occupancies
+    );
 
-  document.getElementById("shelterTitle").textContent = posko.name || poskoId;
-  document.getElementById("shelterSubtitle").textContent = `${safe(posko.location)} · ${safe(posko.node_type)} · ${safe(posko.operational_status)}`;
+  const title =
+    document.getElementById(
+      "shelterTitle"
+    );
 
-  document.getElementById("kpiCapacity").textContent = latest ? latest.capacity_total : 0;
-  document.getElementById("kpiOccupancy").textContent = latest ? latest.current_occupancy : 0;
-  document.getElementById("kpiFamilies").textContent = latest ? latest.families_count : 0;
-  document.getElementById("kpiNeeds").textContent = needs.length;
+  const subtitle =
+    document.getElementById(
+      "shelterSubtitle"
+    );
 
-  renderOccupancies(occ);
-  renderNeeds(needs);
-  renderStock(stock);
-  renderFlows(flows);
+  if (title) {
+    title.textContent =
+      posko.title ||
+      posko.name ||
+      poskoId;
+  }
 
-  const occForm = document.getElementById("occupancyForm");
-  if (occForm && occForm.posko_id) occForm.posko_id.value = poskoId;
+  if (subtitle) {
+    subtitle.textContent =
+      `${safe(posko.posko_type)} · ` +
+      `${safe(posko.operational_status)} · ` +
+      `${safe(posko.verification_status)}`;
+  }
 
-  statusMsg("Loaded: " + ctx.generated_at);
+  const values = {
+    kpiCapacity:
+      latest?.capacity_total || 0,
+
+    kpiOccupancy:
+      latest?.current_occupancy || 0,
+
+    kpiFamilies:
+      latest?.families_count || 0,
+
+    kpiNeeds:
+      ctx.needs.length
+  };
+
+  Object.entries(values)
+    .forEach(([id, value]) => {
+      const el =
+        document.getElementById(id);
+
+      if (el) {
+        el.textContent = value;
+      }
+    });
+
+  renderOccupancies(
+    ctx.occupancies
+  );
+
+  renderNeeds(
+    ctx.needs
+  );
+
+  renderStock(
+    ctx.stocks
+  );
+
+  renderFlows(
+    ctx.flows
+  );
+
+  const form =
+    document.getElementById(
+      "occupancyForm"
+    );
+
+  if (
+    form &&
+    form.posko_id
+  ) {
+    form.posko_id.value =
+      poskoId;
+  }
+
+  statusMsg(
+    "Loaded from Frappe"
+  );
 }
 
 function setupOccupancyForm() {
-  const form = document.getElementById("occupancyForm");
+  const form =
+    document.getElementById(
+      "occupancyForm"
+    );
+
   if (!form) return;
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    if (!SHELTER_CONTEXT_CACHE) {
+      await RN_FRAPPE.call(
+        "rescue_net.api_shelter.create_occupancy",
+        {
+          posko:
+            form.posko_id.value.trim(),
+
+          shelter_name:
+            form.shelter_name.value.trim(),
+
+          capacity_total:
+            Number(
+              form.capacity_total.value || 0
+            ),
+
+          current_occupancy:
+            Number(
+              form.current_occupancy.value || 0
+            ),
+
+          families_count:
+            Number(
+              form.families_count.value || 0
+            ),
+
+          children_count:
+            Number(
+              form.children_count.value || 0
+            ),
+
+          elderly_count:
+            Number(
+              form.elderly_count.value || 0
+            ),
+
+          disability_count:
+            Number(
+              form.disabled_count.value || 0
+            )
+        },
+        {
+          method: "POST"
+        }
+      );
+
+      statusMsg(
+        "Shelter occupancy saved."
+      );
+
       await loadShelter();
     }
-
-    const posko = SHELTER_CONTEXT_CACHE.posko;
-
-    const payload = {
-      disaster_event_id: posko.disaster_event_id,
-      posko_id: form.posko_id.value.trim(),
-      shelter_name: form.shelter_name.value.trim(),
-      capacity_total: Number(form.capacity_total.value || 0),
-      current_occupancy: Number(form.current_occupancy.value || 0),
-      families_count: Number(form.families_count.value || 0),
-      children_count: Number(form.children_count.value || 0),
-      elderly_count: Number(form.elderly_count.value || 0),
-      disabled_count: Number(form.disabled_count.value || 0),
-      sanitation_status: form.sanitation_status.value.trim(),
-      water_status: form.water_status.value.trim(),
-      electricity_status: form.electricity_status.value.trim(),
-      safety_status: form.safety_status.value.trim(),
-      notes: form.notes.value.trim(),
-      status: "active",
-      created_by_user_id: "shelter-operator"
-    };
-
-    statusMsg("Saving shelter occupancy...");
-    await api("/shelter-occupancy", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    statusMsg("Shelter occupancy saved.");
-    await loadShelter();
-  });
+  );
 }
 
 function setupNeedForm() {
-  const form = document.getElementById("needForm");
+  const form =
+    document.getElementById(
+      "needForm"
+    );
+
   if (!form) return;
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    if (!SHELTER_CONTEXT_CACHE) {
+      await RN_FRAPPE.call(
+        "rescue_net.api_shelter.create_need",
+        {
+          posko:
+            getShelterPoskoId(),
+
+          item_name:
+            form.item_name.value.trim(),
+
+          quantity_mode:
+            "known",
+
+          quantity_needed:
+            Number(
+              form.quantity_needed.value || 0
+            ),
+
+          unit:
+            form.unit.value.trim(),
+
+          priority:
+            form.priority.value,
+
+          needed_before:
+            form.needed_before.value.trim(),
+
+          notes:
+            form.notes.value.trim()
+        },
+        {
+          method: "POST"
+        }
+      );
+
+      statusMsg(
+        "Shelter need saved."
+      );
+
       await loadShelter();
     }
-
-    const posko = SHELTER_CONTEXT_CACHE.posko;
-
-    const payload = {
-      disaster_event_id: posko.disaster_event_id,
-      posko_id: getShelterPoskoId(),
-      item_name: form.item_name.value.trim(),
-      quantity_needed: Number(form.quantity_needed.value || 0),
-      unit: form.unit.value.trim(),
-      priority: form.priority.value,
-      needed_before: form.needed_before.value.trim(),
-      notes: form.notes.value.trim(),
-      created_by_user_id: "shelter-operator"
-    };
-
-    statusMsg("Saving shelter need...");
-    await api("/shelter-needs", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    statusMsg("Shelter need saved.");
-    await loadShelter();
-  });
+  );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  setupOccupancyForm();
-  setupNeedForm();
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    if (!window.RN_FRAPPE) {
+      statusMsg(
+        "Frappe client tidak tersedia."
+      );
+      return;
+    }
 
-  const btn = document.getElementById("refreshShelter");
-  if (btn) btn.addEventListener("click", () => loadShelter().catch(err => statusMsg(err.message)));
+    setupOccupancyForm();
+    setupNeedForm();
 
-  loadShelter().catch(err => statusMsg(err.message));
-});
+    const btn =
+      document.getElementById(
+        "refreshShelter"
+      );
+
+    if (btn) {
+      btn.addEventListener(
+        "click",
+        () =>
+          loadShelter()
+            .catch(
+              err =>
+                statusMsg(err.message)
+            )
+      );
+    }
+
+    loadShelter().catch(
+      err =>
+        statusMsg(err.message)
+    );
+  }
+);

@@ -1,281 +1,282 @@
 {
-  "doctype": "DocType",
-  "name": "RN Posko",
-  "module": "Rescue Net",
-  "custom": 0,
-  "is_submittable": 0,
-  "title_field": "title",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data",
-      "default": "rescue-net-fastapi"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Select",
-      "options": "Shadow Imported\nValidated\nNeeds Review",
-      "default": "Shadow Imported"
-    },
-    {
-      "fieldname": "title",
-      "label": "Posko Name",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Link",
-      "options": "RN Disaster Event"
-    },
-    {
-      "fieldname": "organization",
-      "label": "Organization",
-      "fieldtype": "Link",
-      "options": "RN Organization"
-    },
-    {
-      "fieldname": "posko_type",
-      "label": "Posko Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "address",
-      "label": "Address",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "latitude",
-      "label": "Latitude",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "longitude",
-      "label": "Longitude",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    },
-    {
-      "fieldname": "disaster_event_legacy_id",
-      "label": "Disaster Event Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "organization_legacy_id",
-      "label": "Organization Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "operational_status",
-      "label": "Operational Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "verification_status",
-      "label": "Verification Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "owner_type",
-      "label": "Owner Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "owner_id",
-      "label": "Owner ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "visibility_scope",
-      "label": "Visibility Scope",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "access_policy",
-      "label": "Access Policy",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "officer_in_charge_name",
-      "label": "Officer In Charge",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "officer_in_charge_phone",
-      "label": "Officer Phone",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "officer_in_charge_role",
-      "label": "Officer Role",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "admin_area_id",
-      "label": "Admin Area ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "admin_level",
-      "label": "Admin Level",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "area_level",
-      "label": "Area Level",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "province_name",
-      "label": "Province",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "city_name",
-      "label": "City",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "district_name",
-      "label": "District",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "village_name",
-      "label": "Village",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "coverage_radius_meters",
-      "label": "Coverage Radius Meters",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "parent_posko",
-      "label": "Parent Posko",
-      "fieldtype": "Link",
-      "options": "RN Posko"
-    },
-    {
-      "fieldname": "canonical_posko",
-      "label": "Canonical Posko",
-      "fieldtype": "Link",
-      "options": "RN Posko"
-    },
-    {
-      "fieldname": "notes",
-      "label": "Notes",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "identity_verification_status",
-      "label": "Identity Verification Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "identity_verified_by",
-      "label": "Identity Verified By",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "identity_verified_at",
-      "label": "Identity Verified At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "trusted_verifier_count",
-      "label": "Trusted Verifier Count",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "public_verified_badge",
-      "label": "Public Verified Badge",
-      "fieldtype": "Check"
-    },
-    {
-      "fieldname": "public_detail",
-      "label": "Public Detail",
-      "fieldtype": "Select",
-      "options": "inherit\nprivate\npublic",
-      "default": "inherit"
-    },
-    {
-      "fieldname": "public_participation",
-      "label": "Public Participation",
-      "fieldtype": "Check",
-      "default": "0"
-    },
-    {
-      "fieldname": "accept_volunteers",
-      "label": "Accept Volunteers",
-      "fieldtype": "Check",
-      "default": "0"
-    },
-    {
-      "fieldname": "accept_goods",
-      "label": "Accept Goods",
-      "fieldtype": "Check",
-      "default": "0"
-    },
-    {
-      "fieldname": "accept_donations",
-      "label": "Accept Donations",
-      "fieldtype": "Check",
-      "default": "0"
-    },
-    {
-      "fieldname": "accept_partners",
-      "label": "Accept Partners",
-      "fieldtype": "Check",
-      "default": "0"
-    },
-    {
-      "fieldname": "public_service_access",
-      "label": "Public Service Access",
-      "fieldtype": "Check",
-      "default": "0"
-    },
-    {
-      "fieldname": "observed_at",
-      "label": "Observed At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "source_updated_at",
-      "label": "Source Updated At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "freshness_policy_minutes",
-      "label": "Freshness Policy Minutes",
-      "fieldtype": "Int",
-      "default": "180"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 0,
-      "cancel": 0,
-      "amend": 0
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Posko",
+ "module": "Rescue Net",
+ "custom": 0,
+ "is_submittable": 0,
+ "title_field": "title",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "legacy_source",
+   "label": "Legacy Source",
+   "fieldtype": "Data",
+   "default": "rescue-net-fastapi"
+  },
+  {
+   "fieldname": "migration_status",
+   "label": "Migration Status",
+   "fieldtype": "Select",
+   "options": "Shadow Imported\nValidated\nNeeds Review",
+   "default": "Shadow Imported"
+  },
+  {
+   "fieldname": "title",
+   "label": "Posko Name",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "description": "Disaster event associated with this record."
+  },
+  {
+   "fieldname": "organization",
+   "label": "Organization",
+   "fieldtype": "Link",
+   "options": "RN Organization"
+  },
+  {
+   "fieldname": "posko_type",
+   "label": "Posko Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "address",
+   "label": "Address",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "latitude",
+   "label": "Latitude",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "longitude",
+   "label": "Longitude",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "disaster_event_legacy_id",
+   "label": "Disaster Event Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "organization_legacy_id",
+   "label": "Organization Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "operational_status",
+   "label": "Operational Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verification Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "owner_type",
+   "label": "Owner Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "owner_id",
+   "label": "Owner ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "visibility_scope",
+   "label": "Visibility Scope",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "access_policy",
+   "label": "Access Policy",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "officer_in_charge_name",
+   "label": "Officer In Charge",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "officer_in_charge_phone",
+   "label": "Officer Phone",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "officer_in_charge_role",
+   "label": "Officer Role",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "admin_area_id",
+   "label": "Admin Area ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "admin_level",
+   "label": "Admin Level",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "area_level",
+   "label": "Area Level",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "province_name",
+   "label": "Province",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "city_name",
+   "label": "City",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "district_name",
+   "label": "District",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "village_name",
+   "label": "Village",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "coverage_radius_meters",
+   "label": "Coverage Radius Meters",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "parent_posko",
+   "label": "Parent Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "canonical_posko",
+   "label": "Canonical Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "notes",
+   "label": "Notes",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "identity_verification_status",
+   "label": "Identity Verification Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "identity_verified_by",
+   "label": "Identity Verified By",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "identity_verified_at",
+   "label": "Identity Verified At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "trusted_verifier_count",
+   "label": "Trusted Verifier Count",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "public_verified_badge",
+   "label": "Public Verified Badge",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "public_detail",
+   "label": "Public Detail",
+   "fieldtype": "Select",
+   "options": "inherit\nprivate\npublic",
+   "default": "inherit"
+  },
+  {
+   "fieldname": "public_participation",
+   "label": "Public Participation",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "accept_volunteers",
+   "label": "Accept Volunteers",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "accept_goods",
+   "label": "Accept Goods",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "accept_donations",
+   "label": "Accept Donations",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "accept_partners",
+   "label": "Accept Partners",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "public_service_access",
+   "label": "Public Service Access",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Observed At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_updated_at",
+   "label": "Source Updated At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "freshness_policy_minutes",
+   "label": "Freshness Policy Minutes",
+   "fieldtype": "Int",
+   "default": "180"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 0,
+   "cancel": 0,
+   "amend": 0
+  }
+ ]
 }

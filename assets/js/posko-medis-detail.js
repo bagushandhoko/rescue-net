@@ -1,45 +1,81 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 let MEDICAL_CONTEXT_CACHE = null;
 
 function getMedicalPoskoId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("id") || "posko-medis-aceh";
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  return (
+    params.get("id") ||
+    "posko-sim-medis"
+  );
 }
 
 function statusMsg(msg) {
-  const el = document.getElementById("medicalStatus");
-  if (el) el.textContent = msg;
-}
+  const el =
+    document.getElementById(
+      "medicalStatus"
+    );
 
-async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  if (el) {
+    el.textContent = msg;
+  }
 }
 
 function safe(v) {
-  return v === null || v === undefined || v === "" ? "n/a" : v;
+  return (
+    v === null ||
+    v === undefined ||
+    v === ""
+  ) ? "n/a" : v;
 }
 
-function evidenceLink(objectType, objectId, label = "Add Evidence") {
-  if (!objectId) return "";
-  const eventId = MEDICAL_CONTEXT_CACHE?.posko?.disaster_event_id || "event-aceh-2025";
-  return `<br><a href="evidence.html?event=${encodeURIComponent(eventId)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}&node_id=${encodeURIComponent(getMedicalPoskoId())}">${label}</a>`;
+function rowId(row) {
+  return (
+    row?.name ||
+    row?.id ||
+    row?.legacy_id ||
+    ""
+  );
 }
 
-function card(title, body, chip = "") {
+function evidenceLink(
+  objectType,
+  objectId,
+  label = "Add Evidence"
+) {
+  if (!objectId) {
+    return "";
+  }
+
+  return (
+    `<br><a href="evidence.html?` +
+    `object_type=${encodeURIComponent(objectType)}` +
+    `&object_id=${encodeURIComponent(objectId)}` +
+    `&node_id=${encodeURIComponent(getMedicalPoskoId())}` +
+    `">${label}</a>`
+  );
+}
+
+function card(
+  title,
+  body,
+  chip = ""
+) {
   return `
     <article class="event-card">
       <div class="event-main">
         <div>
-          <h4>${title}</h4>
+          <h4>${safe(title)}</h4>
           <p>${body}</p>
         </div>
         <div class="chips">
-          ${chip ? `<span class="chip warning">${chip}</span>` : ""}
+          ${
+            chip
+              ? `<span class="chip warning">${safe(chip)}</span>`
+              : ""
+          }
         </div>
       </div>
     </article>
@@ -47,161 +83,418 @@ function card(title, body, chip = "") {
 }
 
 function renderStock(items) {
-  const el = document.getElementById("medicalStock");
-  el.innerHTML = items.length ? items.map(s => card(
-    s.item_name,
-    `Current stock: <b>${s.current_quantity}</b> ${s.unit}`,
-    s.unit
-  )).join("") : card("Belum ada stok medis", "Tambahkan stok obat/alat medis dulu.", "empty");
+  const el =
+    document.getElementById(
+      "medicalStock"
+    );
+
+  if (!el) return;
+
+  el.innerHTML =
+    items.length
+      ? items.map(s => card(
+          s.item_name,
+          `Current stock: <b>${
+            safe(
+              s.quantity ??
+              s.current_quantity
+            )
+          }</b> ${safe(s.unit)}`,
+          s.stock_state || s.unit
+        )).join("")
+      : card(
+          "Belum ada stok medis",
+          "Belum ada Stock Observation untuk Posko ini.",
+          "empty"
+        );
 }
 
 function renderCases(items) {
-  const el = document.getElementById("medicalCases");
-  el.innerHTML = items.length ? items.map(c => card(
-    c.patient_code,
-    `Complaint: ${safe(c.complaint)}<br>Severity: ${safe(c.severity)} · Triage: ${safe(c.triage_status)}<br>Treatment: ${safe(c.treatment_notes)}<br>Case ID: ${c.id}${evidenceLink("medical_case", c.id)}`,
-    c.status
-  )).join("") : card("Belum ada kasus medis", "Catat kasus medis pertama.", "empty");
+  const el =
+    document.getElementById(
+      "medicalCases"
+    );
+
+  if (!el) return;
+
+  el.innerHTML =
+    items.length
+      ? items.map(c => {
+          const id = rowId(c);
+
+          return card(
+            c.patient_code,
+            `Complaint: ${safe(c.complaint)}<br>` +
+            `Severity: ${safe(c.severity)} · ` +
+            `Triage: ${safe(c.triage_status)}<br>` +
+            `Treatment: ${safe(c.treatment_notes)}<br>` +
+            `Case ID: ${safe(id)}` +
+            evidenceLink(
+              "medical_case",
+              id
+            ),
+            c.case_status ||
+            c.status
+          );
+        }).join("")
+      : card(
+          "Belum ada kasus medis",
+          "Catat kasus medis pertama.",
+          "empty"
+        );
 }
 
 function renderUses(items) {
-  const el = document.getElementById("medicalUses");
-  el.innerHTML = items.length ? items.map(u => card(
-    u.item_name,
-    `${u.quantity} ${u.unit}<br>Case: ${safe(u.medical_case_id)}<br>${safe(u.notes)}${evidenceLink("medical_supply_use", u.id)}`,
-    u.id
-  )).join("") : card("Belum ada pemakaian medis", "Belum ada obat/alat dipakai.", "empty");
+  const el =
+    document.getElementById(
+      "medicalUses"
+    );
+
+  if (!el) return;
+
+  el.innerHTML =
+    items.length
+      ? items.map(u => {
+          const id = rowId(u);
+
+          return card(
+            u.item_name,
+            `${safe(u.quantity)} ${safe(u.unit)}<br>` +
+            `Case: ${safe(u.medical_case)}<br>` +
+            `${safe(u.notes)}` +
+            evidenceLink(
+              "medical_supply_use",
+              id
+            ),
+            id
+          );
+        }).join("")
+      : card(
+          "Belum ada pemakaian medis",
+          "Belum ada obat/alat dipakai.",
+          "empty"
+        );
 }
 
-function renderMovements(items) {
-  const el = document.getElementById("medicalMovements");
-  el.innerHTML = items.length ? items.map(m => card(
-    m.item_name,
-    `${m.movement_type} · ${m.movement_direction}<br>${m.quantity} ${m.unit}<br>${safe(m.notes)}${evidenceLink("stock_movement", m.id)}`,
-    m.created_at ? m.created_at.slice(0, 16).replace("T", " ") : m.id
-  )).join("") : card("Belum ada movement", "Belum ada pergerakan stok medis.", "empty");
+function renderMovements() {
+  const el =
+    document.getElementById(
+      "medicalMovements"
+    );
+
+  if (!el) return;
+
+  el.innerHTML =
+    card(
+      "Stock Observation",
+      "Stok medis sekarang membaca RN Stock Observation canonical.",
+      "Frappe"
+    );
 }
 
 async function loadMedical() {
-  const poskoId = getMedicalPoskoId();
-  statusMsg("Loading medical context...");
+  const poskoId =
+    getMedicalPoskoId();
 
-  const ctx = await api(`/medical-context/${poskoId}`);
+  statusMsg(
+    "Loading medical context..."
+  );
+
+  const [
+    medical,
+    logistics
+  ] = await Promise.all([
+    RN_FRAPPE.call(
+      "rescue_net.api_medical.dashboard",
+      {
+        posko: poskoId
+      }
+    ),
+
+    RN_FRAPPE.call(
+      "rescue_net.api_logistics.dashboard",
+      {
+        posko: poskoId
+      }
+    )
+  ]);
+
+  const posko =
+    medical.poskos?.[0] ||
+    logistics.poskos?.[0] ||
+    {
+      name: poskoId
+    };
+
+  const ctx = {
+    posko,
+    cases:
+      medical.cases || [],
+    supply_uses:
+      medical.supply_uses || [],
+    evacuations:
+      medical.evacuations || [],
+    stocks:
+      logistics.stocks || []
+  };
+
   MEDICAL_CONTEXT_CACHE = ctx;
 
-  const posko = ctx.posko || {};
-  const stock = ctx.stock_summary || [];
-  const cases = ctx.medical_cases || [];
-  const uses = ctx.medical_supply_uses || [];
-  const movements = ctx.stock_movements || [];
+  const title =
+    document.getElementById(
+      "medicalTitle"
+    );
 
-  document.getElementById("medicalTitle").textContent = posko.name || poskoId;
-  document.getElementById("medicalSubtitle").textContent = `${safe(posko.location)} · ${safe(posko.node_type)} · ${safe(posko.operational_status)}`;
+  const subtitle =
+    document.getElementById(
+      "medicalSubtitle"
+    );
 
-  document.getElementById("kpiPosko").textContent = safe(posko.node_type);
-  document.getElementById("kpiStock").textContent = stock.length;
-  document.getElementById("kpiCases").textContent = cases.length;
-  document.getElementById("kpiUses").textContent = uses.length;
-
-  renderStock(stock);
-  renderCases(cases);
-  renderUses(uses);
-  renderMovements(movements);
-
-  const caseForm = document.getElementById("caseForm");
-  const useForm = document.getElementById("supplyUseForm");
-  if (caseForm && caseForm.posko_id) caseForm.posko_id.value = poskoId;
-
-  if (useForm && uses.length === 0 && cases.length > 0) {
-    useForm.medical_case_id.value = cases[0].id;
+  if (title) {
+    title.textContent =
+      posko.title ||
+      posko.name ||
+      poskoId;
   }
 
-  statusMsg("Loaded: " + ctx.generated_at);
+  if (subtitle) {
+    subtitle.textContent =
+      `${safe(posko.posko_type)} · ` +
+      `${safe(posko.operational_status)} · ` +
+      `${safe(posko.verification_status)}`;
+  }
+
+  const kpiPosko =
+    document.getElementById(
+      "kpiPosko"
+    );
+
+  const kpiStock =
+    document.getElementById(
+      "kpiStock"
+    );
+
+  const kpiCases =
+    document.getElementById(
+      "kpiCases"
+    );
+
+  const kpiUses =
+    document.getElementById(
+      "kpiUses"
+    );
+
+  if (kpiPosko) {
+    kpiPosko.textContent =
+      safe(posko.posko_type);
+  }
+
+  if (kpiStock) {
+    kpiStock.textContent =
+      ctx.stocks.length;
+  }
+
+  if (kpiCases) {
+    kpiCases.textContent =
+      ctx.cases.length;
+  }
+
+  if (kpiUses) {
+    kpiUses.textContent =
+      ctx.supply_uses.length;
+  }
+
+  renderStock(ctx.stocks);
+  renderCases(ctx.cases);
+  renderUses(ctx.supply_uses);
+  renderMovements();
+
+  const caseForm =
+    document.getElementById(
+      "caseForm"
+    );
+
+  if (
+    caseForm &&
+    caseForm.posko_id
+  ) {
+    caseForm.posko_id.value =
+      poskoId;
+  }
+
+  const useForm =
+    document.getElementById(
+      "supplyUseForm"
+    );
+
+  if (
+    useForm &&
+    useForm.medical_case_id &&
+    !useForm.medical_case_id.value &&
+    ctx.cases.length
+  ) {
+    useForm.medical_case_id.value =
+      rowId(ctx.cases[0]);
+  }
+
+  statusMsg(
+    "Loaded from Frappe"
+  );
 }
 
 function setupCaseForm() {
-  const form = document.getElementById("caseForm");
+  const form =
+    document.getElementById(
+      "caseForm"
+    );
+
   if (!form) return;
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    if (!MEDICAL_CONTEXT_CACHE) {
+      const result =
+        await RN_FRAPPE.call(
+          "rescue_net.api_medical.create_case",
+          {
+            posko:
+              form.posko_id.value.trim(),
+
+            patient_code:
+              form.patient_code.value.trim(),
+
+            complaint:
+              form.complaint.value.trim(),
+
+            age_group:
+              form.age_group.value.trim(),
+
+            gender:
+              form.gender.value.trim(),
+
+            severity:
+              form.severity.value,
+
+            triage_status:
+              form.triage_status.value,
+
+            treatment_notes:
+              form.treatment_notes.value.trim()
+          },
+          {
+            method: "POST"
+          }
+        );
+
+      const useForm =
+        document.getElementById(
+          "supplyUseForm"
+        );
+
+      if (
+        useForm &&
+        useForm.medical_case_id
+      ) {
+        useForm.medical_case_id.value =
+          result.medical_case || "";
+      }
+
+      statusMsg(
+        "Medical case saved."
+      );
+
       await loadMedical();
     }
-
-    const posko = MEDICAL_CONTEXT_CACHE.posko;
-
-    const payload = {
-      disaster_event_id: posko.disaster_event_id,
-      posko_id: form.posko_id.value.trim(),
-      patient_code: form.patient_code.value.trim(),
-      age_group: form.age_group.value.trim(),
-      gender: form.gender.value.trim(),
-      complaint: form.complaint.value.trim(),
-      severity: form.severity.value,
-      triage_status: form.triage_status.value,
-      treatment_notes: form.treatment_notes.value.trim(),
-      referral_needed: false,
-      status: "treated",
-      created_by_user_id: "medical-operator"
-    };
-
-    statusMsg("Saving medical case...");
-    const created = await api("/medical-cases", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    const useForm = document.getElementById("supplyUseForm");
-    if (useForm) useForm.medical_case_id.value = created.id;
-
-    statusMsg("Medical case saved.");
-    await loadMedical();
-  });
+  );
 }
 
 function setupSupplyUseForm() {
-  const form = document.getElementById("supplyUseForm");
+  const form =
+    document.getElementById(
+      "supplyUseForm"
+    );
+
   if (!form) return;
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    if (!MEDICAL_CONTEXT_CACHE) {
+      await RN_FRAPPE.call(
+        "rescue_net.api_medical.record_supply_use",
+        {
+          posko:
+            getMedicalPoskoId(),
+
+          medical_case:
+            form.medical_case_id
+              .value
+              .trim() ||
+            null,
+
+          item_name:
+            form.item_name.value.trim(),
+
+          quantity:
+            Number(
+              form.quantity.value || 0
+            ),
+
+          unit:
+            form.unit.value.trim(),
+
+          notes:
+            form.notes.value.trim()
+        },
+        {
+          method: "POST"
+        }
+      );
+
+      statusMsg(
+        "Medical supply use saved."
+      );
+
       await loadMedical();
     }
-
-    const posko = MEDICAL_CONTEXT_CACHE.posko;
-
-    const payload = {
-      disaster_event_id: posko.disaster_event_id,
-      posko_id: getMedicalPoskoId(),
-      medical_case_id: form.medical_case_id.value.trim() || null,
-      item_name: form.item_name.value.trim(),
-      quantity: Number(form.quantity.value || 0),
-      unit: form.unit.value.trim(),
-      notes: form.notes.value.trim(),
-      created_by_user_id: "medical-operator"
-    };
-
-    statusMsg("Saving medical supply use...");
-    await api("/medical-supply-use", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    statusMsg("Medical supply use saved.");
-    await loadMedical();
-  });
+  );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  setupCaseForm();
-  setupSupplyUseForm();
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    if (!window.RN_FRAPPE) {
+      statusMsg(
+        "Frappe client tidak tersedia."
+      );
+      return;
+    }
 
-  const btn = document.getElementById("refreshMedical");
-  if (btn) btn.addEventListener("click", () => loadMedical().catch(err => statusMsg(err.message)));
+    setupCaseForm();
+    setupSupplyUseForm();
 
-  loadMedical().catch(err => statusMsg(err.message));
-});
+    const btn =
+      document.getElementById(
+        "refreshMedical"
+      );
+
+    if (btn) {
+      btn.addEventListener(
+        "click",
+        () => loadMedical()
+          .catch(
+            err =>
+              statusMsg(err.message)
+          )
+      );
+    }
+
+    loadMedical().catch(
+      err =>
+        statusMsg(err.message)
+    );
+  }
+);

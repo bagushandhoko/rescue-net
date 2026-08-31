@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="960"
+     height="540"
+     viewBox="0 0 960 540">
+
+<rect width="960" height="540" fill="#f4f1ee"/>
+
+<rect
+ x="38"
+ y="38"
+ width="884"
+ height="464"
+ rx="26"
+ fill="#ffffff"
+ stroke="#eadfd8"
+ stroke-width="2"
+/>
+
+<text
+ x="80"
+ y="105"
+ font-family="Arial"
+ font-size="27"
+ font-weight="700"
+ fill="#e95432"
+>
+SIMULASI LAPANGAN
+</text>
+
+<text
+ x="80"
+ y="143"
+ font-family="Arial"
+ font-size="20"
+ fill="#786d67"
+>
+Komunitas Landrover • Rescue-Net
+</text>
+
+<line
+ x1="80"
+ y1="185"
+ x2="880"
+ y2="185"
+ stroke="#eee4de"
+/>
+
+<text
+ x="80"
+ y="260"
+ font-family="Arial"
+ font-size="36"
+ font-weight="700"
+ fill="#201b18"
+>
+Akses Kaway XVI Terganggu
+</text>
+
+<text
+ x="80"
+ y="320"
+ font-family="Arial"
+ font-size="22"
+ fill="#675d57"
+>
+Material longsor menghambat jalur distribusi.
+</text>
+
+<rect
+ x="80"
+ y="385"
+ width="800"
+ height="70"
+ rx="14"
+ fill="#fff0e9"
+/>
+
+<text
+ x="105"
+ y="428"
+ font-family="Arial"
+ font-size="19"
+ font-weight="700"
+ fill="#e95432"
+>
+DATA DEMO — BUKAN KEJADIAN BENCANA NYATA
+</text>
+
+</svg>

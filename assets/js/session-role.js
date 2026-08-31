@@ -1,17 +1,59 @@
 (function () {
+  const FRAPPE_METHOD_BASE =
+    location.origin +
+    "/rescue-net-frappe/api/method";
+
   function safe(v) {
-    return v === null || v === undefined || v === "" ? "n/a" : v;
+    return (
+      v === null ||
+      v === undefined ||
+      v === ""
+    )
+      ? "n/a"
+      : v;
   }
 
   function getUser() {
     try {
-      return JSON.parse(localStorage.getItem("RN_USER") || "null");
-    } catch (e) {
+      return JSON.parse(
+        localStorage.getItem(
+          "RN_USER"
+        ) || "null"
+      );
+    } catch (_) {
       return null;
     }
   }
 
-  function roleAllows(role, action) {
+  /*
+   * Kept only for old page compatibility.
+   * Frappe cookie is now authoritative.
+   */
+  function getSessionToken() {
+    return "";
+  }
+
+  /*
+   * Legacy X-RN-* headers are retired.
+   */
+  function getAuthHeaders() {
+    return {};
+  }
+
+  function roleAllows(
+    role,
+    action
+  ) {
+    /*
+     * System Manager is global authority
+     * in the Frappe implementation.
+     */
+    if (
+      role === "system_manager"
+    ) {
+      return true;
+    }
+
     const rules = {
       command_center: [
         "verify",
@@ -26,6 +68,7 @@
         "upload_evidence",
         "ai_ask"
       ],
+
       posko_operator: [
         "create_stock",
         "create_distribution",
@@ -33,133 +76,371 @@
         "upload_evidence",
         "ai_ask"
       ],
+
       medical_operator: [
         "create_medical",
         "upload_evidence",
         "ai_ask"
       ],
+
       shelter_operator: [
         "create_shelter",
         "upload_evidence",
         "ai_ask"
       ],
+
       donor: [
         "create_aid_offer",
         "create_donor_program",
         "upload_evidence"
       ],
+
       volunteer: [
         "view_assignment"
       ],
+
       viewer: []
     };
 
-    return (rules[role] || []).includes(action);
+    return (
+      rules[role] || []
+    ).includes(action);
   }
 
+  function normalizeSession(
+    session
+  ) {
+    if (!session) {
+      return null;
+    }
 
-  function getSessionToken() {
-    return localStorage.getItem("RN_SESSION_TOKEN") || "";
+    const userId =
+      session.user ||
+      session.frappe_user ||
+      session.rn_user_account ||
+      session.user_id ||
+      "";
+
+    return {
+      ...session,
+
+      id:
+        session.id ||
+        userId,
+
+      username:
+        session.username ||
+        userId,
+
+      email:
+        session.email ||
+        (
+          String(userId).includes("@")
+            ? userId
+            : null
+        ),
+
+      display_name:
+        session.display_name ||
+        session.full_name ||
+        userId,
+
+      role:
+        session.role ||
+        "viewer",
+
+      organization_id:
+        session.organization_id ??
+        session.organization ??
+        null,
+
+      posko_id:
+        session.posko_id ??
+        session.posko ??
+        null
+    };
   }
 
-  function getAuthHeaders() {
-    const user = getUser();
-    const token = getSessionToken();
-    const headers = {};
+  async function refreshSession() {
+    try {
+      const res = await fetch(
+        FRAPPE_METHOD_BASE +
+        "/rescue_net.api_auth.session_info",
+        {
+          method: "GET",
 
-    if (token) headers["X-RN-Session-Token"] = token;
-    if (user && user.id) headers["X-RN-User-Id"] = user.id;
-    if (user && user.role) headers["X-RN-Role"] = user.role;
+          credentials:
+            "include",
 
-    return headers;
-  }
+          headers: {
+            "Accept":
+              "application/json"
+          }
+        }
+      );
 
-  function shouldAttachAuth(input) {
-    const url = typeof input === "string" ? input : (input && input.url) || "";
-    return url.includes(":8092") || url.includes("/rescue-net-api") || url.startsWith("/api/") || url.startsWith("/auth/");
-  }
+      if (
+        res.status === 401 ||
+        res.status === 403
+      ) {
+        localStorage.removeItem(
+          "RN_FRAPPE_SESSION_MARKER"
+        );
 
-  function installAuthenticatedFetch() {
-    if (window.__RN_AUTH_FETCH_INSTALLED__) return;
-    if (!window.fetch) return;
+        localStorage.removeItem(
+          "RN_USER"
+        );
 
-    const nativeFetch = window.fetch.bind(window);
-    window.fetch = function rnAuthenticatedFetch(input, init = {}) {
-      if (!shouldAttachAuth(input)) {
-        return nativeFetch(input, init);
+        refreshSessionUi();
+
+        return null;
       }
 
-      const headers = new Headers(init.headers || (input && input.headers) || {});
-      Object.entries(getAuthHeaders()).forEach(([key, value]) => {
-        if (value && !headers.has(key)) headers.set(key, value);
-      });
+      if (!res.ok) {
+        throw new Error(
+          await res.text()
+        );
+      }
 
-      return nativeFetch(input, { ...init, headers });
-    };
+      const payload =
+        await res.json();
 
-    window.__RN_AUTH_FETCH_INSTALLED__ = true;
+      const session =
+        normalizeSession(
+          Object.prototype
+            .hasOwnProperty.call(
+              payload,
+              "message"
+            )
+            ? payload.message
+            : payload
+        );
+
+      localStorage.removeItem(
+        "RN_FRAPPE_SESSION_MARKER"
+      );
+
+      if (session) {
+        localStorage.setItem(
+          "RN_USER",
+          JSON.stringify(session)
+        );
+      }
+
+      refreshSessionUi();
+
+      window.dispatchEvent(
+        new CustomEvent(
+          "rn:frappe-session",
+          {
+            detail: session
+          }
+        )
+      );
+
+      return session;
+
+    } catch (err) {
+      console.error(
+        "[RN Session]",
+        err
+      );
+
+      return null;
+    }
+  }
+
+  async function requireSession() {
+    const session =
+      await refreshSession();
+
+    if (session) {
+      return session;
+    }
+
+    const next =
+      encodeURIComponent(
+        location.pathname +
+        location.search +
+        location.hash
+      );
+
+    let loginPath =
+      "auth.html";
+
+    if (
+      !location.pathname.includes(
+        "/pages/"
+      )
+    ) {
+      loginPath =
+        "pages/auth.html";
+    }
+
+    location.href =
+      loginPath +
+      "?next=" +
+      next;
+
+    return null;
   }
 
   function renderSessionPill() {
-    const user = getUser();
+    const user =
+      getUser();
 
-    const topbars = document.querySelectorAll(".topbar");
-    if (!topbars.length) return;
+    const topbars =
+      document.querySelectorAll(
+        ".topbar"
+      );
 
-    topbars.forEach(topbar => {
-      let pill = topbar.querySelector("[data-rn-session-pill]");
-      if (!pill) {
-        pill = document.createElement("div");
-        pill.className = "status-pill";
-        pill.setAttribute("data-rn-session-pill", "true");
-        topbar.appendChild(pill);
-      }
+    if (!topbars.length) {
+      return;
+    }
 
-      if (user) {
-        pill.innerHTML = `User: ${safe(user.display_name)}<br>Role: ${safe(user.role)}`;
-      } else {
-        pill.innerHTML = `<a href="auth.html">Login</a>`;
-        if (location.pathname.endsWith("/index.html") || location.pathname.endsWith("/rescue-net/")) {
-          pill.innerHTML = `<a href="pages/auth.html">Login</a>`;
+    topbars.forEach(
+      topbar => {
+        let pill =
+          topbar.querySelector(
+            "[data-rn-session-pill]"
+          );
+
+        if (!pill) {
+          pill =
+            document.createElement(
+              "div"
+            );
+
+          pill.className =
+            "status-pill";
+
+          pill.setAttribute(
+            "data-rn-session-pill",
+            "true"
+          );
+
+          topbar.appendChild(
+            pill
+          );
+        }
+
+        if (user) {
+          pill.innerHTML =
+            `User: ${
+              safe(
+                user.display_name
+              )
+            }<br>` +
+            `Role: ${
+              safe(user.role)
+            }`;
+
+        } else {
+          let href =
+            "auth.html";
+
+          if (
+            !location.pathname.includes(
+              "/pages/"
+            )
+          ) {
+            href =
+              "pages/auth.html";
+          }
+
+          pill.innerHTML =
+            `<a href="${href}">` +
+            "Login</a>";
         }
       }
-
-    });
+    );
   }
 
   function applyRoleVisibility() {
-    const user = getUser();
-    const role = user ? user.role : "viewer";
+    const user =
+      getUser();
 
-    document.querySelectorAll("[data-requires-role-action]").forEach(el => {
-      const action = el.getAttribute("data-requires-role-action");
-      if (!roleAllows(role, action)) {
-        el.style.display = "none";
-      }
-    });
+    const role =
+      user
+        ? user.role
+        : "viewer";
 
-    document.querySelectorAll("[data-command-only]").forEach(el => {
-      if (role !== "command_center") {
-        el.style.display = "none";
-      }
-    });
+    document
+      .querySelectorAll(
+        "[data-requires-role-action]"
+      )
+      .forEach(el => {
+        const action =
+          el.getAttribute(
+            "data-requires-role-action"
+          );
+
+        el.style.display =
+          roleAllows(
+            role,
+            action
+          )
+            ? ""
+            : "none";
+      });
+
+    document
+      .querySelectorAll(
+        "[data-command-only]"
+      )
+      .forEach(el => {
+        const allowed =
+          role ===
+            "command_center" ||
+          role ===
+            "system_manager";
+
+        el.style.display =
+          allowed
+            ? ""
+            : "none";
+      });
   }
-
-  window.RN_SESSION = {
-    getUser,
-    getSessionToken,
-    getAuthHeaders,
-    roleAllows
-  };
-
-  installAuthenticatedFetch();
 
   function refreshSessionUi() {
     renderSessionPill();
     applyRoleVisibility();
   }
 
-  document.addEventListener("DOMContentLoaded", refreshSessionUi);
-  window.addEventListener("rn:session-changed", refreshSessionUi);
-  window.addEventListener("storage", refreshSessionUi);
+  window.RN_SESSION = {
+    getUser,
+    getSessionToken,
+    getAuthHeaders,
+    roleAllows,
+    refresh:
+      refreshSession,
+    require:
+      requireSession
+  };
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+      /*
+       * Render cached state immediately,
+       * then reconcile against authoritative
+       * Frappe session.
+       */
+      refreshSessionUi();
+
+      refreshSession();
+    }
+  );
+
+  window.addEventListener(
+    "rn:session-changed",
+    () => {
+      refreshSession();
+    }
+  );
+
+  window.addEventListener(
+    "storage",
+    refreshSessionUi
+  );
 })();

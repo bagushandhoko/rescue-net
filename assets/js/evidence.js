@@ -1,4 +1,3 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 const params = new URLSearchParams(window.location.search);
 const DISASTER_ID = params.get("event") || params.get("disaster_event_id") || "event-aceh-2025";
 
@@ -11,11 +10,168 @@ function statusMsg(msg) {
   if (el) el.textContent = msg;
 }
 
-async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, options);
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+
+async function rnFileToBase64(file) {
+  const buffer =
+    await file.arrayBuffer();
+
+  const bytes =
+    new Uint8Array(buffer);
+
+  let binary = "";
+
+  const chunk = 0x8000;
+
+  for (
+    let i = 0;
+    i < bytes.length;
+    i += chunk
+  ) {
+    binary +=
+      String.fromCharCode(
+        ...bytes.subarray(
+          i,
+          Math.min(
+            i + chunk,
+            bytes.length
+          )
+        )
+      );
+  }
+
+  return btoa(binary);
 }
+
+
+async function api(path, options = {}) {
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  if (
+    url.pathname === "/evidence"
+    && method === "GET"
+  ) {
+    const params =
+      new URLSearchParams(
+        location.search
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "evidence_context",
+      {
+        disaster_event:
+          params.get("event")
+          || null
+      }
+    );
+  }
+
+  if (
+    url.pathname === "/evidence/upload"
+    && method === "POST"
+  ) {
+    if (
+      !(
+        options.body
+        instanceof FormData
+      )
+    ) {
+      throw new Error(
+        "Evidence upload membutuhkan FormData."
+      );
+    }
+
+    const formData =
+      options.body;
+
+    const file =
+      formData.get("file");
+
+    if (
+      !(file instanceof File)
+    ) {
+      throw new Error(
+        "Evidence file tidak ditemukan."
+      );
+    }
+
+    const contentBase64 =
+      await rnFileToBase64(file);
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "upload_evidence",
+      {
+        filename:
+          file.name,
+
+        content_base64:
+          contentBase64,
+
+        disaster_event:
+          formData.get(
+            "disaster_event_id"
+          ),
+
+        node_id:
+          formData.get(
+            "node_id"
+          )
+          || null,
+
+        linked_object_type:
+          formData.get(
+            "linked_object_type"
+          )
+          || null,
+
+        linked_object_id:
+          formData.get(
+            "linked_object_id"
+          )
+          || null,
+
+        evidence_type:
+          formData.get(
+            "evidence_type"
+          )
+          || "photo",
+
+        uploaded_by:
+          formData.get(
+            "uploaded_by"
+          )
+          || null,
+
+        caption:
+          formData.get(
+            "caption"
+          )
+          || null
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Evidence route: "
+    + method
+    + " "
+    + url.pathname
+  );
+}
+
 
 function card(title, body, chip = "") {
   return `

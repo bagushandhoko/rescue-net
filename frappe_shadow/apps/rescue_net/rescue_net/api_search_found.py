@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import now_datetime
 
 from rescue_net.access_policy import (
@@ -109,6 +110,10 @@ def create_missing_report(
     description=None,
     clothing_description=None,
 ):
+    # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     if posko and not _can_operate_posko(
@@ -124,7 +129,11 @@ def create_missing_report(
         "RN Missing Person Report"
     )
 
-    doc.disaster_event = disaster_event
+    doc.disaster_event = (
+        _resolve_disaster_event(
+            disaster_event
+        )
+    )
     doc.posko = posko
     doc.person_code = person_code
     doc.person_name = person_name
@@ -165,6 +174,10 @@ def create_found_report(
     description=None,
     clothing_description=None,
 ):
+    # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     if posko and not _can_operate_posko(
@@ -180,7 +193,11 @@ def create_found_report(
         "RN Found Person Report"
     )
 
-    doc.disaster_event = disaster_event
+    doc.disaster_event = (
+        _resolve_disaster_event(
+            disaster_event
+        )
+    )
     doc.posko = posko
     doc.person_code = person_code
     doc.person_name = person_name
@@ -554,21 +571,75 @@ def restricted_record(
     }
 
 
+def _resolve_disaster_event(value):
+    if not value:
+        return None
+
+    value = str(value).strip()
+
+    if not value:
+        return None
+
+    if frappe.db.exists(
+        "RN Disaster Event",
+        value,
+    ):
+        return value
+
+    candidates = [value]
+
+    if not value.startswith(
+        "disaster_events:"
+    ):
+        candidates.append(
+            "disaster_events:" + value
+        )
+
+    for legacy_id in candidates:
+        name = frappe.db.get_value(
+            "RN Disaster Event",
+            {
+                "legacy_id":
+                    legacy_id
+            },
+            "name",
+        )
+
+        if name:
+            return name
+
+        if frappe.db.exists(
+            "RN Disaster Event",
+            legacy_id,
+        ):
+            return legacy_id
+
+    return value
+
+
 @frappe.whitelist()
 def dashboard(disaster_event=None):
+    # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
+
+    resolved_event = (
+        _resolve_disaster_event(
+            disaster_event
+        )
+    )
 
     missing_filters = {}
     found_filters = {}
 
-    if disaster_event:
+    if resolved_event:
         missing_filters[
             "disaster_event"
-        ] = disaster_event
+        ] = resolved_event
 
         found_filters[
             "disaster_event"
-        ] = disaster_event
+        ] = resolved_event
 
     missing = frappe.get_all(
         "RN Missing Person Report",

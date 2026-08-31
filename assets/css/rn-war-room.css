@@ -306,3 +306,79 @@ main > section.hero-command.rn-war-section-active {
     width: 100%;
   }
 }
+
+
+/* ==========================================================
+   Active Disaster — integrated Control Centre switcher
+   ========================================================== */
+
+.rn-active-disaster-switcher {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(
+    --border,
+    rgba(127, 127, 127, 0.22)
+  );
+}
+
+.rn-active-disaster-switcher__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.rn-active-disaster-switcher__label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.rn-active-disaster-switcher__count {
+  font-size: 11px;
+  opacity: .65;
+}
+
+.rn-active-disaster-switcher__control {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.rn-active-disaster-select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(
+    --border,
+    rgba(127, 127, 127, .28)
+  );
+  border-radius: 8px;
+  padding: 9px 10px;
+  font: inherit;
+  background: var(
+    --surface,
+    transparent
+  );
+  color: inherit;
+}
+
+.rn-active-disaster-status {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: .72;
+}
+
+@media (max-width: 720px) {
+  .rn-active-disaster-switcher__control {
+    grid-template-columns: 1fr;
+  }
+
+  .rn-active-disaster-status {
+    white-space: normal;
+  }
+}

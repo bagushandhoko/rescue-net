@@ -1,186 +1,487 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
-const DISASTER_ID = "event-aceh-2025";
+const DISASTER_ID =
+  new URLSearchParams(
+    location.search
+  ).get("event") ||
+  "event-sim-001";
 
-let DONOR_CONTEXT = null;
 
 function safe(v) {
-  return v === null || v === undefined || v === "" ? "n/a" : v;
+  return (
+    v === null ||
+    v === undefined ||
+    v === ""
+  )
+    ? "n/a"
+    : v;
 }
 
-function money(v, unit = "IDR") {
-  const n = Number(v || 0);
-  if (unit === "IDR") return "Rp " + n.toLocaleString("id-ID");
-  return n.toLocaleString("id-ID") + " " + unit;
+
+function rupiah(value) {
+  return new Intl.NumberFormat(
+    "id-ID"
+  ).format(
+    Number(value || 0)
+  );
 }
+
 
 function statusMsg(msg) {
-  const el = document.getElementById("donorProgramStatus");
-  if (el) el.textContent = msg;
+  const el =
+    document.getElementById(
+      "donorProgramStatus"
+    ) ||
+    document.getElementById(
+      "programStatus"
+    );
+
+  if (el) {
+    el.textContent = msg;
+  }
 }
 
-function evidenceLink(objectType, objectId, label = "Add Evidence") {
-  if (!objectId || objectId === "n/a") return "";
-  return `<br><a href="evidence.html?event=${encodeURIComponent(DISASTER_ID)}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">${label}</a>`;
-}
 
-async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
-}
-
-function card(title, body, chip = "") {
+function card(
+  title,
+  body,
+  chip = ""
+) {
   return `
     <article class="event-card">
       <div class="event-main">
         <div>
-          <h4>${title}</h4>
+          <h4>${safe(title)}</h4>
           <p>${body}</p>
         </div>
+
         <div class="chips">
-          ${chip ? `<span class="chip warning">${chip}</span>` : ""}
+          ${
+            chip
+              ? `<span class="chip warning">${safe(chip)}</span>`
+              : ""
+          }
         </div>
       </div>
     </article>
   `;
 }
 
-function renderSummary(summary) {
-  const el = document.getElementById("donorProgramSummary");
-  if (!el) return;
 
-  el.innerHTML = `
-    <div><span>Program</span><b>${summary.program_count || 0}</b></div>
-    <div><span>Active</span><b>${summary.active_count || 0}</b></div>
-    <div><span>Updates</span><b>${summary.update_count || 0}</b></div>
-    <div><span>Target Total</span><b>${money(summary.target_total || 0)}</b></div>
-    <div><span>Current Total</span><b>${money(summary.current_total || 0)}</b></div>
-    <div><span>Spent/Reported</span><b>${money(summary.spent_total || 0)}</b></div>
-  `;
-}
-
-function renderPrograms(programs) {
-  const el = document.getElementById("donorProgramList");
-  if (!el) return;
-
-  el.innerHTML = programs.length ? programs.map(p => {
-    const unit = p.target_unit || "IDR";
-    const updates = (p.updates || []).slice(0, 5).map(u =>
-      `<br>• ${safe(u.update_title)} — ${money(u.amount_used, u.amount_unit)} — ${safe(u.created_at)}`
-    ).join("");
-
-    return card(
-      safe(p.program_name),
-      `Type: ${safe(p.program_type)}<br>
-       Owner: ${safe(p.owner_type)} · ${safe(p.owner_id)}<br>
-       Target: ${money(p.target_amount, unit)}<br>
-       Reported: ${money(p.current_amount, unit)}<br>
-       Spent from updates: ${money(p.spent_amount, unit)}<br>
-       Location: ${safe(p.location)}<br>
-       PIC: ${safe(p.contact_person)} · HP: ${safe(p.contact_phone)}<br>
-       Target Description: ${safe(p.target_description)}<br>
-       Updates: ${p.update_count || 0}${updates}${evidenceLink("donor_program", p.id)}`,
-      safe(p.status)
+function renderPrograms(items) {
+  const target =
+    document.getElementById(
+      "programList"
+    ) ||
+    document.getElementById(
+      "donorPrograms"
     );
-  }).join("") : card("Belum ada donor program", "Buat program donasi/transparansi baru.", "empty");
+
+  if (!target) return;
+
+  target.innerHTML =
+    items.length
+      ? items.map(p => card(
+          p.program_name,
+          `Type: ${safe(p.program_type)}<br>` +
+          `Owner: ${safe(p.owner_type)} / ${safe(p.owner_id)}<br>` +
+          `Target: ${rupiah(p.target_amount)} ${safe(p.target_unit)}<br>` +
+          `Location: ${safe(p.location)}<br>` +
+          `Progress: ${safe(p.progress_percent)}%`,
+          p.program_status ||
+          p.status
+        )).join("")
+      : card(
+          "Belum ada Donor Program",
+          "Belum ada program pada disaster event ini.",
+          "empty"
+        );
 }
 
-function fillProgramSelect(programs) {
-  const select = document.querySelector("[name='program_id']");
+
+function renderUpdates(items) {
+  const target =
+    document.getElementById(
+      "programUpdates"
+    ) ||
+    document.getElementById(
+      "updateList"
+    );
+
+  if (!target) return;
+
+  target.innerHTML =
+    items.length
+      ? items.map(u => card(
+          u.update_title,
+          `Program: ${safe(u.program)}<br>` +
+          `Type: ${safe(u.update_type)}<br>` +
+          `Progress: ${safe(u.progress_percent)}%<br>` +
+          `Spent: ${rupiah(u.amount_spent)} ${safe(u.amount_unit)}<br>` +
+          `${safe(u.update_notes)}`,
+          u.verification_status ||
+          u.update_type
+        )).join("")
+      : card(
+          "Belum ada program update",
+          "Belum ada update untuk program.",
+          "empty"
+        );
+}
+
+
+function fillProgramSelect(items) {
+  const select =
+    document.querySelector(
+      '#programUpdateForm [name="program_id"]'
+    ) ||
+    document.querySelector(
+      '#programUpdateForm [name="program"]'
+    );
+
   if (!select) return;
 
-  select.innerHTML = programs.map(p => `
-    <option value="${p.id}">${safe(p.program_name)} · ${safe(p.status)}</option>
-  `).join("");
+  /*
+   * Kalau field-nya INPUT biasa jangan mengganti
+   * menjadi option list.
+   */
+  if (
+    select.tagName !== "SELECT"
+  ) {
+    return;
+  }
+
+  select.innerHTML =
+    `<option value="">Pilih program</option>` +
+    items.map(p => `
+      <option value="${safe(p.name)}">
+        ${safe(p.program_name)}
+      </option>
+    `).join("");
 }
 
-async function loadDonorPrograms() {
-  statusMsg("Loading donor program context...");
-  const ctx = await api(`/donor-program-context/${DISASTER_ID}`);
-  DONOR_CONTEXT = ctx;
 
-  renderSummary(ctx.summary || {});
-  renderPrograms(ctx.programs || []);
-  fillProgramSelect(ctx.programs || []);
+function renderSummary(ctx) {
+  const summary =
+    ctx.summary || {};
 
-  statusMsg("Loaded: " + ctx.generated_at);
+  const mapping = {
+    kpiPrograms:
+      summary.program_count ??
+      (ctx.programs || []).length,
+
+    kpiUpdates:
+      summary.update_count ??
+      (ctx.updates || []).length,
+
+    kpiActive:
+      summary.active_program_count ??
+      0
+  };
+
+  Object.entries(mapping)
+    .forEach(
+      ([id, value]) => {
+        const el =
+          document.getElementById(id);
+
+        if (el) {
+          el.textContent =
+            value ?? 0;
+        }
+      }
+    );
 }
+
+
+async function loadPrograms() {
+  statusMsg(
+    "Loading Donor Program from Frappe..."
+  );
+
+  const ctx =
+    await RN_FRAPPE.call(
+      "rescue_net.api_donor_program.context",
+      {
+        disaster_event:
+          DISASTER_ID
+      }
+    );
+
+  const programs =
+    ctx.programs || [];
+
+  const updates =
+    ctx.updates || [];
+
+  renderPrograms(
+    programs
+  );
+
+  renderUpdates(
+    updates
+  );
+
+  renderSummary(
+    ctx
+  );
+
+  fillProgramSelect(
+    programs
+  );
+
+  statusMsg(
+    "Loaded from Frappe"
+  );
+}
+
 
 function setupProgramForm() {
-  const form = document.getElementById("donorProgramForm");
+  const form =
+    document.getElementById(
+      "programForm"
+    );
+
   if (!form) return;
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    const payload = {
-      disaster_event_id: DISASTER_ID,
-      program_name: form.program_name.value.trim(),
-      program_type: form.program_type.value.trim(),
-      owner_type: form.owner_type.value,
-      owner_id: form.owner_id.value.trim(),
-      target_description: form.target_description.value.trim(),
-      target_amount: Number(form.target_amount.value || 0),
-      target_unit: form.target_unit.value.trim() || "IDR",
-      location: form.location.value.trim(),
-      contact_person: form.contact_person.value.trim(),
-      contact_phone: form.contact_phone.value.trim(),
-      notes: form.notes.value.trim(),
-      created_by_user_id: "donor-program-operator"
-    };
+      statusMsg(
+        "Saving Donor Program..."
+      );
 
-    statusMsg("Saving donor program...");
-    await api("/donor-programs", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+      const result =
+        await RN_FRAPPE.call(
+          "rescue_net.api_donor_program." +
+          "create_program",
+          {
+            disaster_event:
+              DISASTER_ID,
 
-    form.reset();
-    statusMsg("Donor program saved.");
-    await loadDonorPrograms();
-  });
+            program_name:
+              form.program_name.value
+                .trim(),
+
+            program_type:
+              form.program_type?.value ||
+              "general_relief",
+
+            owner_type:
+              form.owner_type?.value ||
+              "organization",
+
+            owner_id:
+              form.owner_id?.value
+                ?.trim() ||
+              null,
+
+            target_description:
+              form.target_description?.value
+                ?.trim() ||
+              null,
+
+            target_amount:
+              Number(
+                form.target_amount?.value ||
+                0
+              ),
+
+            target_unit:
+              form.target_unit?.value
+                ?.trim() ||
+              "IDR",
+
+            location:
+              form.location?.value
+                ?.trim() ||
+              null,
+
+            contact_person:
+              form.contact_person?.value
+                ?.trim() ||
+              null,
+
+            contact_phone:
+              form.contact_phone?.value
+                ?.trim() ||
+              null,
+
+            notes:
+              form.notes?.value
+                ?.trim() ||
+              null,
+
+            public_visibility:
+              form.public_visibility?.value ||
+              "summary_public"
+          },
+          {
+            method: "POST"
+          }
+        );
+
+      console.log(
+        "DONOR_PROGRAM_CREATE:",
+        result
+      );
+
+      statusMsg(
+        "Donor Program saved."
+      );
+
+      form.reset();
+
+      await loadPrograms();
+    }
+  );
 }
+
 
 function setupUpdateForm() {
-  const form = document.getElementById("donorProgramUpdateForm");
+  const form =
+    document.getElementById(
+      "programUpdateForm"
+    );
+
   if (!form) return;
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    const payload = {
-      program_id: form.program_id.value,
-      disaster_event_id: DISASTER_ID,
-      update_title: form.update_title.value.trim(),
-      update_type: form.update_type.value,
-      amount_used: Number(form.amount_used.value || 0),
-      amount_unit: form.amount_unit.value.trim() || "IDR",
-      description: form.description.value.trim(),
-      evidence_file_id: form.evidence_file_id.value.trim() || null,
-      created_by_user_id: "donor-program-operator"
-    };
+      const program =
+        form.program_id?.value
+          ?.trim() ||
+        form.program?.value
+          ?.trim();
 
-    statusMsg("Saving donor program update...");
-    await api("/donor-program-updates", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+      if (!program) {
+        statusMsg(
+          "Program ID wajib diisi."
+        );
+        return;
+      }
 
-    form.reset();
-    statusMsg("Program update saved.");
-    await loadDonorPrograms();
-  });
+      statusMsg(
+        "Saving Program Update..."
+      );
+
+      const result =
+        await RN_FRAPPE.call(
+          "rescue_net.api_donor_program." +
+          "create_update",
+          {
+            program,
+
+            update_title:
+              form.update_title.value
+                .trim(),
+
+            update_type:
+              form.update_type?.value ||
+              "progress",
+
+            progress_percent:
+              Number(
+                form.progress_percent?.value ||
+                0
+              ),
+
+            amount_spent:
+              Number(
+                form.amount_spent?.value ||
+                0
+              ),
+
+            amount_unit:
+              form.amount_unit?.value
+                ?.trim() ||
+              null,
+
+            update_notes:
+              form.update_notes?.value
+                ?.trim() ||
+              null,
+
+            officer_in_charge_name:
+              form.officer_in_charge_name
+                ?.value
+                ?.trim() ||
+              null,
+
+            officer_in_charge_phone:
+              form.officer_in_charge_phone
+                ?.value
+                ?.trim() ||
+              null,
+
+            public_visibility:
+              form.public_visibility?.value ||
+              "summary_public"
+          },
+          {
+            method: "POST"
+          }
+        );
+
+      console.log(
+        "DONOR_PROGRAM_UPDATE:",
+        result
+      );
+
+      statusMsg(
+        "Program update saved."
+      );
+
+      form.reset();
+
+      await loadPrograms();
+    }
+  );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  setupProgramForm();
-  setupUpdateForm();
 
-  const btn = document.getElementById("refreshDonorPrograms");
-  if (btn) btn.addEventListener("click", () => loadDonorPrograms().catch(err => statusMsg(err.message)));
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    if (!window.RN_FRAPPE) {
+      statusMsg(
+        "Frappe client tidak tersedia."
+      );
+      return;
+    }
 
-  loadDonorPrograms().catch(err => statusMsg(err.message));
-});
+    setupProgramForm();
+    setupUpdateForm();
+
+    const refresh =
+      document.getElementById(
+        "refreshPrograms"
+      ) ||
+      document.getElementById(
+        "refreshDonorPrograms"
+      );
+
+    if (refresh) {
+      refresh.addEventListener(
+        "click",
+        () =>
+          loadPrograms().catch(
+            err =>
+              statusMsg(
+                err.message
+              )
+          )
+      );
+    }
+
+    loadPrograms().catch(
+      err =>
+        statusMsg(
+          err.message
+        )
+    );
+  }
+);

@@ -1,87 +1,88 @@
 {
-  "doctype": "DocType",
-  "name": "RN War Room Snapshot",
-  "module": "Rescue Net",
-  "custom": 0,
-  "is_submittable": 0,
-  "autoname": "field:legacy_id",
-  "naming_rule": "By fieldname",
-  "title_field": "title",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data",
-      "default": "rescue-net-fastapi"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Select",
-      "options": "Shadow Imported\nValidated\nNeeds Review",
-      "default": "Shadow Imported"
-    },
-    {
-      "fieldname": "title",
-      "label": "Snapshot Title",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Link",
-      "options": "RN Disaster Event"
-    },
-    {
-      "fieldname": "active_posko_count",
-      "label": "Active Posko Count",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "open_need_count",
-      "label": "Open Need Count",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "aid_offer_count",
-      "label": "Aid Offer Count",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "distribution_flow_count",
-      "label": "Distribution Flow Count",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "snapshot_json",
-      "label": "Snapshot JSON",
-      "fieldtype": "Code",
-      "options": "JSON"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 0,
-      "cancel": 0,
-      "amend": 0
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN War Room Snapshot",
+ "module": "Rescue Net",
+ "custom": 0,
+ "is_submittable": 0,
+ "autoname": "field:legacy_id",
+ "naming_rule": "By fieldname",
+ "title_field": "title",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "legacy_source",
+   "label": "Legacy Source",
+   "fieldtype": "Data",
+   "default": "rescue-net-fastapi"
+  },
+  {
+   "fieldname": "migration_status",
+   "label": "Migration Status",
+   "fieldtype": "Select",
+   "options": "Shadow Imported\nValidated\nNeeds Review",
+   "default": "Shadow Imported"
+  },
+  {
+   "fieldname": "title",
+   "label": "Snapshot Title",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "description": "Disaster event associated with this record."
+  },
+  {
+   "fieldname": "active_posko_count",
+   "label": "Active Posko Count",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "open_need_count",
+   "label": "Open Need Count",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "aid_offer_count",
+   "label": "Aid Offer Count",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "distribution_flow_count",
+   "label": "Distribution Flow Count",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "snapshot_json",
+   "label": "Snapshot JSON",
+   "fieldtype": "Code",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 0,
+   "cancel": 0,
+   "amend": 0
+  }
+ ]
 }

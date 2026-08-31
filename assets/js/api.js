@@ -1,21 +1,88 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
-
 async function rnFetch(path, options = {}) {
-  const res = await fetch(`${RN_API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API error ${res.status}: ${text}`);
+  if (!window.RN_FRAPPE) {
+    throw new Error(
+      "RN_FRAPPE client belum dimuat."
+    );
   }
 
-  return await res.json();
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  let body = {};
+
+  if (options.body) {
+    body =
+      typeof options.body === "string"
+        ? JSON.parse(options.body)
+        : options.body;
+  }
+
+  if (
+    url.pathname === "/disasters"
+    && method === "GET"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.compat.api.disasters",
+      {
+        limit: 100
+      }
+    );
+  }
+
+  if (
+    url.pathname === "/disasters"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "create_disaster_event",
+      {
+        payload_json:
+          JSON.stringify(body)
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  if (
+    url.pathname.startsWith(
+      "/ai/context/"
+    )
+  ) {
+    const eventId =
+      decodeURIComponent(
+        url.pathname.slice(
+          "/ai/context/".length
+        )
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_ai.context",
+      {
+        disaster_event_id:
+          eventId
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Home route: "
+    + method
+    + " "
+    + url.pathname
+  );
 }
+
 
 function severityClass(severity) {
   if (severity === "critical") return "danger";

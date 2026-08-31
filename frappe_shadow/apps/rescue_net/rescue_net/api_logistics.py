@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import cint, flt, now_datetime
 
 from rescue_net.access_policy import (
@@ -130,6 +131,8 @@ def _class_fields(prefix=""):
 
 @frappe.whitelist()
 def dashboard(posko=None):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
     allowed = _accessible_poskos(actor)
 
@@ -291,6 +294,8 @@ def create_need(
     urgency="normal",
     needed_before=None,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     if not _can_contribute(actor, posko):
@@ -343,6 +348,8 @@ def create_stock_observation(
     stock_state="available",
     notes=None,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     if not _can_operate(actor, posko):
@@ -396,6 +403,8 @@ def create_aid_offer(
     pickup_location=None,
     donor_contact=None,
 ):
+    # RN_CANONICAL_REF target_posko = resolve_posko(target_posko)
+    target_posko = resolve_posko(target_posko)
     actor = rn_actor()
 
     internal = _can_contribute(actor, target_posko)
@@ -462,6 +471,8 @@ def create_transport_space(
     departure_time=None,
     eta=None,
 ):
+    # RN_CANONICAL_REF coordination_posko = resolve_posko(coordination_posko)
+    coordination_posko = resolve_posko(coordination_posko)
     actor = rn_actor()
 
     if not _can_contribute(actor, coordination_posko):
@@ -511,6 +522,10 @@ def create_flow(
     transport_space=None,
     eta_final=None,
 ):
+    # RN_CANONICAL_REF destination_posko = resolve_posko(destination_posko)
+    destination_posko = resolve_posko(destination_posko)
+    # RN_CANONICAL_REF source_posko = resolve_posko(source_posko)
+    source_posko = resolve_posko(source_posko)
     actor = rn_actor()
 
     if not _can_operate(actor, destination_posko):
@@ -1106,21 +1121,62 @@ def _resolve_user_aid_posko(value):
 def _require_user_aid_actor():
     actor = rn_actor()
 
-    if (
-        not actor
-        or not getattr(
-            actor,
-            "name",
-            None,
-        )
-    ):
+    if not actor:
         frappe.throw(
             "Login diperlukan untuk "
             "Kirim Bantuan melalui akun.",
             frappe.PermissionError,
         )
 
-    return actor
+    if getattr(actor, "name", None):
+        return actor
+
+    # System Manager dan privileged Frappe users
+    # dapat mempunyai pseudo actor tanpa RN identity.
+    # Untuk operasi ownership, resolve RN User Account
+    # yang terhubung ke frappe.session.user tanpa
+    # menurunkan role/privilege actor global.
+    account = frappe.db.get_value(
+        "RN User Account",
+        {
+            "frappe_user": frappe.session.user,
+            "status": "active",
+        },
+        [
+            "name",
+            "organization",
+            "posko",
+        ],
+        as_dict=True,
+    )
+
+    if account:
+        actor = frappe._dict(dict(actor))
+        actor.name = account.name
+
+        if not getattr(
+            actor,
+            "organization",
+            None,
+        ):
+            actor.organization = (
+                account.organization
+            )
+
+        if not getattr(
+            actor,
+            "posko",
+            None,
+        ):
+            actor.posko = account.posko
+
+        return actor
+
+    frappe.throw(
+        "Akun Rescue-Net aktif diperlukan "
+        "untuk operasi bantuan berbasis ownership.",
+        frappe.PermissionError,
+    )
 
 
 def _user_aid_posko_allowed(
@@ -1368,6 +1424,204 @@ def create_user_aid_offer(
 
 
 @frappe.whitelist()
+def update_user_aid_offer(
+    aid_offer,
+    item_text=None,
+    quantity=None,
+    unit=None,
+    handling_mode=None,
+    target_posko=None,
+    pickup_location=None,
+    ready_at=None,
+    notes=None,
+    batch_no=None,
+    expiry_date=None,
+):
+    actor = _require_user_aid_actor()
+
+    if not aid_offer:
+        frappe.throw(
+            "Aid Offer wajib diisi"
+        )
+
+    if not frappe.db.exists(
+        "RN Aid Offer",
+        aid_offer,
+    ):
+        frappe.throw(
+            "Aid Offer tidak ditemukan"
+        )
+
+    doc = frappe.get_doc(
+        "RN Aid Offer",
+        aid_offer,
+    )
+
+    if doc.donor_user != actor.name:
+        frappe.throw(
+            "Anda tidak berwenang mengubah bantuan ini",
+            frappe.PermissionError,
+        )
+
+    if handling_mode is not None:
+        handling_mode = str(
+            handling_mode or ""
+        ).strip()
+
+        if handling_mode not in {
+            "active_booking",
+            "need_pickup",
+        }:
+            frappe.throw(
+                "Handling mode tidak valid"
+            )
+
+        doc.handling_mode = handling_mode
+
+    if target_posko is not None:
+        target_posko = str(
+            target_posko or ""
+        ).strip()
+
+        if target_posko:
+            resolved_posko = (
+                _resolve_user_aid_posko(
+                    target_posko
+                )
+            )
+
+            if not resolved_posko:
+                frappe.throw(
+                    "Posko tujuan tidak ditemukan"
+                )
+
+            posko_event = frappe.db.get_value(
+                "RN Posko",
+                resolved_posko,
+                "disaster_event",
+            )
+
+            if (
+                doc.disaster_event
+                and posko_event
+                and posko_event
+                != doc.disaster_event
+            ):
+                frappe.throw(
+                    "Posko tujuan berbeda disaster event"
+                )
+
+            doc.target_posko = (
+                resolved_posko
+            )
+        else:
+            doc.target_posko = None
+
+    if item_text is not None:
+        item_text = str(
+            item_text or ""
+        ).strip()
+
+        if item_text:
+            doc.item_name = item_text
+            doc.raw_item_text = item_text
+
+    if quantity is not None:
+        value = str(quantity).strip()
+
+        if value:
+            try:
+                qty = float(value)
+            except Exception:
+                frappe.throw(
+                    "Quantity tidak valid"
+                )
+
+            if qty < 0:
+                frappe.throw(
+                    "Quantity tidak boleh negatif"
+                )
+
+            doc.quantity = qty
+            doc.quantity_mode = "exact"
+
+    if unit is not None:
+        value = str(unit or "").strip()
+        if value:
+            doc.unit = value
+
+    if pickup_location is not None:
+        doc.pickup_location = (
+            str(
+                pickup_location or ""
+            ).strip()
+            or None
+        )
+
+    if ready_at is not None:
+        doc.ready_at = (
+            str(
+                ready_at or ""
+            ).strip()
+            or None
+        )
+
+    if notes is not None:
+        doc.notes = (
+            str(
+                notes or ""
+            ).strip()
+            or None
+        )
+
+    if batch_no is not None:
+        doc.batch_no = (
+            str(
+                batch_no or ""
+            ).strip()
+            or None
+        )
+
+    if expiry_date is not None:
+        doc.expiry_date = (
+            str(
+                expiry_date or ""
+            ).strip()
+            or None
+        )
+
+    doc.source_updated_at = now_datetime()
+
+    doc.save(
+        ignore_permissions=True
+    )
+
+    return {
+        "aid_offer": doc.name,
+        "donor_user": doc.donor_user,
+        "disaster_event":
+            doc.disaster_event,
+        "target_posko":
+            doc.target_posko,
+        "item_name":
+            doc.item_name,
+        "quantity":
+            doc.quantity,
+        "unit":
+            doc.unit,
+        "handling_mode":
+            doc.handling_mode,
+        "pickup_location":
+            doc.pickup_location,
+        "ready_at":
+            doc.ready_at,
+        "offer_status":
+            doc.offer_status,
+        "updated_at":
+            doc.source_updated_at,
+    }
+
+@frappe.whitelist()
 def my_aid_offers(
     limit=100,
 ):
@@ -1456,4 +1710,251 @@ def my_aid_offers(
     return {
         "user": actor.name,
         "offers": result,
+    }
+
+@frappe.whitelist()
+def receive_flow_and_update_stock(
+    flow,
+    received_quantity,
+    received_unit=None,
+    receipt_note=None,
+):
+    """
+    Mark a Distribution Flow as received and create
+    the resulting destination Stock Observation in
+    the same database transaction.
+
+    Stock Observation is the canonical Rescue-Net
+    stock model; legacy Stock Movement is not
+    recreated.
+    """
+    actor = rn_actor()
+
+    qty = flt(received_quantity)
+
+    if qty <= 0:
+        frappe.throw(
+            "Jumlah diterima harus lebih dari 0"
+        )
+
+    # Lock the flow so two receipt requests cannot
+    # process the same flow concurrently.
+    locked_flow = frappe.db.sql(
+        """
+        SELECT name
+        FROM `tabRN Distribution Flow`
+        WHERE name=%s
+        FOR UPDATE
+        """,
+        (flow,),
+        as_dict=True,
+    )
+
+    if not locked_flow:
+        frappe.throw(
+            "Distribution Flow tidak ditemukan"
+        )
+
+    doc = frappe.get_doc(
+        "RN Distribution Flow",
+        flow,
+    )
+
+    destination = doc.destination_posko
+
+    if not destination:
+        frappe.throw(
+            "Distribution Flow tidak memiliki "
+            "destination Posko"
+        )
+
+    if not _can_operate(
+        actor,
+        destination,
+    ):
+        frappe.throw(
+            "Anda tidak dapat menerima flow ini",
+            frappe.PermissionError,
+        )
+
+    current_status = (
+        doc.flow_status or "planned"
+    )
+
+    if "received" not in TRANSITIONS.get(
+        current_status,
+        set(),
+    ):
+        frappe.throw(
+            "Flow harus berada pada status "
+            "arrived_at_posko atau "
+            "partially_received sebelum "
+            "dapat diterima. "
+            f"Status saat ini: {current_status}"
+        )
+
+    unit = (
+        received_unit
+        or doc.unit
+        or ""
+    ).strip()
+
+    if not unit:
+        frappe.throw(
+            "Unit penerimaan wajib tersedia"
+        )
+
+    item_name = (
+        doc.item_name
+        or doc.raw_item_text
+        or ""
+    ).strip()
+
+    if not item_name:
+        frappe.throw(
+            "Item Distribution Flow tidak tersedia"
+        )
+
+    # Coarse lock on destination Posko serializes
+    # stock updates even when no previous observation
+    # exists yet.
+    frappe.db.sql(
+        """
+        SELECT name
+        FROM `tabRN Posko`
+        WHERE name=%s
+        FOR UPDATE
+        """,
+        (destination,),
+    )
+
+    latest = frappe.db.sql(
+        """
+        SELECT
+            name,
+            quantity,
+            unit,
+            quantity_mode
+        FROM `tabRN Stock Observation`
+        WHERE
+            posko=%s
+            AND item_name=%s
+        ORDER BY
+            observed_at DESC,
+            creation DESC
+        LIMIT 1
+        FOR UPDATE
+        """,
+        (
+            destination,
+            item_name,
+        ),
+        as_dict=True,
+    )
+
+    previous_quantity = 0.0
+
+    if latest:
+        prev = latest[0]
+
+        previous_unit = (
+            prev.unit or ""
+        ).strip()
+
+        if (
+            previous_unit
+            and previous_unit != unit
+        ):
+            frappe.throw(
+                "Unit stok terakhir berbeda: "
+                f"{previous_unit} != {unit}. "
+                "Normalisasi unit diperlukan "
+                "sebelum penerimaan."
+            )
+
+        previous_mode = (
+            prev.quantity_mode or "unknown"
+        )
+
+        if (
+            previous_mode != "exact"
+            and prev.quantity not in (
+                None,
+                "",
+            )
+        ):
+            frappe.throw(
+                "Stok terakhir bukan quantity "
+                "exact. Verifikasi stok terlebih "
+                "dahulu sebelum menerima flow."
+            )
+
+        previous_quantity = flt(
+            prev.quantity or 0
+        )
+
+    # Preserve the existing lifecycle and all its
+    # side effects for Transport Space / Aid Offer.
+    flow_result = update_flow_status(
+        flow=flow,
+        new_status="received",
+        received_quantity=qty,
+        received_unit=unit,
+        receipt_note=(
+            receipt_note
+            or "Diterima melalui Posko Detail"
+        ),
+    )
+
+    now = now_datetime()
+
+    stock = frappe.new_doc(
+        "RN Stock Observation"
+    )
+
+    stock.title = (
+        f"{item_name} - receipt"
+    )
+
+    stock.disaster_event = (
+        doc.disaster_event
+    )
+
+    stock.posko = destination
+    stock.item_name = item_name
+    stock.raw_item_text = item_name
+
+    stock.quantity = (
+        previous_quantity + qty
+    )
+
+    stock.quantity_mode = "exact"
+    stock.unit = unit
+    stock.stock_state = "available"
+
+    stock.notes = (
+        "Verified receipt from "
+        f"Distribution Flow {flow}. "
+        f"Received {qty} {unit}. "
+        f"Previous stock {previous_quantity} {unit}."
+    )
+
+    stock.observed_at = now
+    stock.source_updated_at = now
+
+    stock.insert(
+        ignore_permissions=True
+    )
+
+    return {
+        "flow": flow_result,
+        "stock_observation": stock.name,
+        "previous_quantity":
+            previous_quantity,
+        "received_quantity": qty,
+        "current_quantity":
+            stock.quantity,
+        "unit": unit,
+        "destination_posko":
+            destination,
     }

@@ -1,26 +1,184 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
-
 function getDisasterId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("id") || "event-aceh-2025";
 }
 
-async function rnFetch(path, options = {}) {
-  const res = await fetch(`${RN_API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
-  });
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API error ${res.status}: ${text}`);
+async function rnFetch(path, options = {}) {
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  let body = {};
+
+  if (options.body) {
+    body =
+      typeof options.body === "string"
+        ? JSON.parse(options.body)
+        : options.body;
   }
 
-  return await res.json();
+  if (
+    url.pathname === "/disasters"
+    && method === "GET"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.compat.api.disasters",
+      {
+        limit: 100
+      }
+    );
+  }
+
+  if (
+    url.pathname.startsWith(
+      "/ecosystem-members/"
+    )
+  ) {
+    const eventId =
+      decodeURIComponent(
+        url.pathname.slice(
+          "/ecosystem-members/".length
+        )
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "disaster_ecosystem_members",
+      {
+        disaster_event: eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname.startsWith(
+      "/resources/"
+    )
+  ) {
+    const eventId =
+      decodeURIComponent(
+        url.pathname.slice(
+          "/resources/".length
+        )
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "disaster_resources",
+      {
+        disaster_event: eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname === "/resource-requests"
+    && method === "GET"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "disaster_resource_requests",
+      {
+        disaster_event:
+          getDisasterId()
+      }
+    );
+  }
+
+  if (
+    url.pathname === "/resource-assignments"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "resource_assignments",
+      {
+        disaster_event:
+          getDisasterId()
+      }
+    );
+  }
+
+  if (
+    url.pathname.startsWith(
+      "/ai/context/"
+    )
+  ) {
+    const eventId =
+      decodeURIComponent(
+        url.pathname.slice(
+          "/ai/context/".length
+        )
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_ai.context",
+      {
+        disaster_event_id:
+          eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname === "/resource-requests"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "create_resource_request",
+      {
+        ...body,
+        disaster_event:
+          getDisasterId()
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  const approveMatch =
+    url.pathname.match(
+      /^\/resource-requests\/([^/]+)\/approve$/
+    );
+
+  if (
+    approveMatch
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "approve_resource_request",
+      {
+        resource_request:
+          decodeURIComponent(
+            approveMatch[1]
+          ),
+        assignment_notes:
+          body.assignment_notes || null
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Disaster Detail route: "
+    + method
+    + " "
+    + url.pathname
+  );
 }
+
 
 function safe(v) {
   return v === null || v === undefined || v === "" ? "n/a" : v;

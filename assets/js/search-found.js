@@ -1,36 +1,105 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 let SF_CONTEXT_CACHE = null;
 
 function statusMsg(msg) {
-  const el = document.getElementById("sfStatus");
-  if (el) el.textContent = msg;
+  const el =
+    document.getElementById(
+      "sfStatus"
+    );
+
+  if (el) {
+    el.textContent = msg;
+  }
 }
 
 function getDisasterId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("event") || "event-aceh-2025";
-}
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
 
-async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  return (
+    params.get("event") ||
+    "event-aceh-2025"
+  );
 }
 
 function safe(v) {
-  return v === null || v === undefined || v === "" ? "n/a" : v;
+  return (
+    v === null ||
+    v === undefined ||
+    v === ""
+  )
+    ? "n/a"
+    : v;
 }
 
-function evidenceLink(objectType, objectId, label = "Add Evidence") {
-  if (!objectId || objectId === "n/a") return "";
-  const eventId = encodeURIComponent(getDisasterId());
-  return `<br><a href="evidence.html?event=${eventId}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}">${label}</a>`;
+function rowId(row) {
+  if (!row) {
+    return "";
+  }
+
+  return (
+    row.name ||
+    row.id ||
+    row.legacy_id ||
+    ""
+  );
 }
 
-function card(title, body, chip = "") {
+function reportStatus(row) {
+  if (!row) {
+    return "";
+  }
+
+  return (
+    row.report_status ||
+    row.status ||
+    ""
+  );
+}
+
+function matchStatus(row) {
+  if (!row) {
+    return "";
+  }
+
+  return (
+    row.match_status ||
+    row.status ||
+    ""
+  );
+}
+
+function evidenceLink(
+  objectType,
+  objectId,
+  label = "Add Evidence"
+) {
+  if (
+    !objectId ||
+    objectId === "n/a"
+  ) {
+    return "";
+  }
+
+  const eventId =
+    encodeURIComponent(
+      getDisasterId()
+    );
+
+  return (
+    `<br><a href="evidence.html?event=${eventId}` +
+    `&object_type=${encodeURIComponent(objectType)}` +
+    `&object_id=${encodeURIComponent(objectId)}">` +
+    `${label}</a>`
+  );
+}
+
+function card(
+  title,
+  body,
+  chip = ""
+) {
   return `
     <article class="event-card">
       <div class="event-main">
@@ -38,8 +107,13 @@ function card(title, body, chip = "") {
           <h4>${title}</h4>
           <p>${body}</p>
         </div>
+
         <div class="chips">
-          ${chip ? `<span class="chip warning">${chip}</span>` : ""}
+          ${
+            chip
+              ? `<span class="chip warning">${chip}</span>`
+              : ""
+          }
         </div>
       </div>
     </article>
@@ -47,170 +121,511 @@ function card(title, body, chip = "") {
 }
 
 function renderMissing(items) {
-  const el = document.getElementById("missingReports");
-  el.innerHTML = items.length ? items.map(m => card(
-    `${m.person_code} · ${safe(m.person_name)}`,
-    `Last seen: ${safe(m.last_seen_location)} · ${safe(m.last_seen_time)}<br>Reporter: ${safe(m.reporter_relation)} · ${safe(m.reporter_contact)}<br>${safe(m.description)}<br>Clothing: ${safe(m.clothing_description)}${evidenceLink("missing_person_report", m.id)}`,
-    m.status
-  )).join("") : card("Belum ada laporan hilang", "Tambahkan missing report.", "empty");
+  const el =
+    document.getElementById(
+      "missingReports"
+    );
+
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML =
+    items.length
+      ? items.map(m => {
+          const id = rowId(m);
+
+          return card(
+            `${safe(m.person_code)} · ${safe(m.person_name)}`,
+            `Last seen: ${safe(m.last_seen_location)} · ` +
+            `${safe(m.last_seen_time)}<br>` +
+            `${safe(m.description)}<br>` +
+            `Clothing: ${safe(m.clothing_description)}` +
+            evidenceLink(
+              "missing_person_report",
+              id
+            ),
+            reportStatus(m)
+          );
+        }).join("")
+      : card(
+          "Belum ada laporan hilang",
+          "Tambahkan missing report.",
+          "empty"
+        );
 }
 
 function renderFound(items) {
-  const el = document.getElementById("foundReports");
-  el.innerHTML = items.length ? items.map(f => card(
-    `${f.person_code} · ${safe(f.person_name)}`,
-    `Found: ${safe(f.found_location)} · ${safe(f.found_time)}<br>Current: ${safe(f.current_location)}<br>Condition: ${safe(f.condition_notes)}<br>Clothing: ${safe(f.clothing_description)}${evidenceLink("found_person_report", f.id)}`,
-    f.status
-  )).join("") : card("Belum ada laporan ditemukan", "Tambahkan found report.", "empty");
-}
+  const el =
+    document.getElementById(
+      "foundReports"
+    );
 
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML =
+    items.length
+      ? items.map(f => {
+          const id = rowId(f);
+
+          return card(
+            `${safe(f.person_code)} · ${safe(f.person_name)}`,
+            `Found: ${safe(f.found_location)} · ` +
+            `${safe(f.found_time)}<br>` +
+            `${safe(f.description)}<br>` +
+            `Clothing: ${safe(f.clothing_description)}` +
+            evidenceLink(
+              "found_person_report",
+              id
+            ),
+            reportStatus(f)
+          );
+        }).join("")
+      : card(
+          "Belum ada laporan ditemukan",
+          "Tambahkan found report.",
+          "empty"
+        );
+}
 
 function renderMatches(items) {
-  const el = document.getElementById("matches");
-  el.innerHTML = items.length ? items.map(m => `
-    <article class="event-card">
-      <div class="event-main">
-        <div>
-          <h4>${safe(m.missing_person_code)} ↔ ${safe(m.found_person_code)}</h4>
-          <p>Score: ${safe(m.match_score)}<br>Reason: ${safe(m.match_reason)}<br>Missing: ${safe(m.missing_person_name)} · Found: ${safe(m.found_person_name)}</p>
-        </div>
-        <div class="chips">
-          <span class="chip warning">${m.status}</span>
-          ${m.status !== "reunited" ? `<button class="btn primary" type="button" onclick="updateMatchStatus('${m.id}', 'reunited')">Mark Reunited</button>` : ""}
-          ${m.status === "candidate" ? `<button class="btn" type="button" onclick="updateMatchStatus('${m.id}', 'investigating')">Investigating</button>` : ""}
-          ${m.status !== "rejected" && m.status !== "reunited" ? `<button class="btn" type="button" onclick="updateMatchStatus('${m.id}', 'rejected')">Reject</button>` : ""}
-        </div>
-      </div>
-    </article>
-  `).join("") : card("Belum ada match", "Match bisa dibuat manual/AI-ready nanti.", "empty");
+  const el =
+    document.getElementById(
+      "matches"
+    );
+
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML =
+    items.length
+      ? items.map(m => {
+          const id =
+            rowId(m);
+
+          const status =
+            matchStatus(m);
+
+          return `
+            <article class="event-card">
+              <div class="event-main">
+                <div>
+                  <h4>
+                    ${safe(
+                      m.missing_person_code ||
+                      m.missing_report
+                    )}
+                    ↔
+                    ${safe(
+                      m.found_person_code ||
+                      m.found_report
+                    )}
+                  </h4>
+
+                  <p>
+                    Basis:
+                    ${safe(
+                      m.match_basis ||
+                      m.match_reason
+                    )}
+                    <br>
+
+                    Review:
+                    ${safe(
+                      m.review_notes
+                    )}
+                  </p>
+                </div>
+
+                <div class="chips">
+                  <span class="chip warning">
+                    ${safe(status)}
+                  </span>
+
+                  ${
+                    status !== "reunited"
+                      ? `<button class="btn primary"
+                           type="button"
+                           onclick="updateMatchStatus(
+                             '${id}',
+                             'reunited'
+                           )">
+                           Mark Reunited
+                         </button>`
+                      : ""
+                  }
+
+                  ${
+                    status === "candidate"
+                      ? `<button class="btn"
+                           type="button"
+                           onclick="updateMatchStatus(
+                             '${id}',
+                             'investigating'
+                           )">
+                           Investigating
+                         </button>`
+                      : ""
+                  }
+
+                  ${
+                    status !== "rejected" &&
+                    status !== "reunited"
+                      ? `<button class="btn"
+                           type="button"
+                           onclick="updateMatchStatus(
+                             '${id}',
+                             'rejected'
+                           )">
+                           Reject
+                         </button>`
+                      : ""
+                  }
+                </div>
+              </div>
+            </article>
+          `;
+        }).join("")
+      : card(
+          "Belum ada match",
+          "Match bisa dibuat melalui pencocokan laporan.",
+          "empty"
+        );
 }
 
-async function updateMatchStatus(matchId, status) {
-  const notes = status === "reunited"
-    ? prompt("Reunion notes", "Keluarga sudah dikonfirmasi dan dipertemukan.")
-    : prompt("Review notes", "");
+async function updateMatchStatus(
+  matchId,
+  status
+) {
+  const notes =
+    prompt(
+      "Review notes",
+      status === "reunited"
+        ? "Keluarga sudah dikonfirmasi dan dipertemukan."
+        : ""
+    );
 
-  statusMsg("Updating match status...");
-  await api(`/search-found-matches/${matchId}/status`, {
-    method: "POST",
-    body: JSON.stringify({
-      status,
-      reviewed_by: "search-found-operator",
-      reunion_notes: notes || ""
-    })
-  });
+  statusMsg(
+    "Updating match status..."
+  );
 
-  statusMsg("Match status updated.");
+  await window.RN_FRAPPE.call(
+    "rescue_net.api_search_found." +
+    "update_match_status",
+    {
+      match: matchId,
+      new_status: status,
+      review_notes:
+        notes || ""
+    },
+    {
+      method: "POST"
+    }
+  );
+
+  statusMsg(
+    "Match status updated."
+  );
+
   await loadSearchFound();
 }
 
+window.updateMatchStatus =
+  updateMatchStatus;
 
 async function loadSearchFound() {
-  const disasterId = getDisasterId();
-  statusMsg("Loading Search & Found context...");
+  const disasterId =
+    getDisasterId();
 
-  const ctx = await api(`/search-found-context/${disasterId}`);
-  SF_CONTEXT_CACHE = ctx;
+  statusMsg(
+    "Loading Search & Found context..."
+  );
 
-  const missing = ctx.missing_person_reports || [];
-  const found = ctx.found_person_reports || [];
-  const matches = ctx.matches || [];
-  const summary = ctx.summary || {};
+  const ctx =
+    await window.RN_FRAPPE.call(
+      "rescue_net.api_search_found.dashboard",
+      {
+        disaster_event:
+          disasterId
+      }
+    );
 
-  document.getElementById("kpiMissing").textContent = summary.missing_count || missing.length;
-  document.getElementById("kpiFound").textContent = summary.found_count || found.length;
-  document.getElementById("kpiMatches").textContent = summary.match_count || matches.length;
-  document.getElementById("kpiReunited").textContent = summary.reunited_count || 0;
+  SF_CONTEXT_CACHE =
+    ctx || {};
+
+  const missing =
+    ctx.missing ||
+    ctx.missing_person_reports ||
+    ctx.missing_reports ||
+    [];
+
+  const found =
+    ctx.found ||
+    ctx.found_person_reports ||
+    ctx.found_reports ||
+    [];
+
+  const matches =
+    ctx.matches ||
+    ctx.search_found_matches ||
+    [];
+
+  const summary =
+    ctx.summary || {};
+
+  const reunitedCount =
+    matches.filter(
+      row =>
+        matchStatus(row) ===
+        "reunited"
+    ).length;
+
+  const kpiMissing =
+    document.getElementById(
+      "kpiMissing"
+    );
+
+  const kpiFound =
+    document.getElementById(
+      "kpiFound"
+    );
+
+  const kpiMatches =
+    document.getElementById(
+      "kpiMatches"
+    );
+
+  const kpiReunited =
+    document.getElementById(
+      "kpiReunited"
+    );
+
+  if (kpiMissing) {
+    kpiMissing.textContent =
+      summary.missing_count ??
+      summary.missing_person_count ??
+      missing.length;
+  }
+
+  if (kpiFound) {
+    kpiFound.textContent =
+      summary.found_count ??
+      summary.found_person_count ??
+      found.length;
+  }
+
+  if (kpiMatches) {
+    kpiMatches.textContent =
+      summary.match_count ??
+      summary.search_found_match_count ??
+      matches.length;
+  }
+
+  if (kpiReunited) {
+    kpiReunited.textContent =
+      summary.reunited_count ??
+      reunitedCount;
+  }
 
   renderMissing(missing);
   renderFound(found);
   renderMatches(matches);
-  renderManualMatchPanel();
 
-  const missingForm = document.getElementById("missingForm");
-  if (missingForm && missingForm.disaster_event_id) missingForm.disaster_event_id.value = disasterId;
+  const missingForm =
+    document.getElementById(
+      "missingForm"
+    );
 
-  statusMsg("Loaded: " + ctx.generated_at);
+  if (
+    missingForm &&
+    missingForm.disaster_event_id
+  ) {
+    missingForm
+      .disaster_event_id
+      .value =
+      disasterId;
+  }
+
+  statusMsg(
+    "Loaded: " +
+    safe(
+      ctx.generated_at
+    )
+  );
 }
 
 function setupMissingForm() {
-  const form = document.getElementById("missingForm");
-  if (!form) return;
+  const form =
+    document.getElementById(
+      "missingForm"
+    );
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  if (!form) {
+    return;
+  }
 
-    const payload = {
-      disaster_event_id: form.disaster_event_id.value.trim(),
-      reporter_name: form.reporter_name.value.trim(),
-      reporter_contact: form.reporter_contact.value.trim(),
-      reporter_relation: form.reporter_relation.value.trim(),
-      person_code: form.person_code.value.trim(),
-      person_name: form.person_name.value.trim(),
-      age_group: form.age_group.value.trim(),
-      gender: form.gender.value.trim(),
-      last_seen_location: form.last_seen_location.value.trim(),
-      last_seen_time: form.last_seen_time.value.trim(),
-      description: form.description.value.trim(),
-      clothing_description: form.clothing_description.value.trim(),
-      special_notes: form.special_notes.value.trim(),
-      created_by_user_id: "search-found-operator"
-    };
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    statusMsg("Saving missing report...");
-    await api("/missing-person-reports", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+      const disasterEvent =
+        (
+          form.disaster_event_id
+            ? form.disaster_event_id.value
+            : getDisasterId()
+        ).trim();
 
-    statusMsg("Missing report saved.");
-    await loadSearchFound();
-  });
+      const payload = {
+        person_code:
+          form.person_code.value.trim(),
+
+        person_name:
+          form.person_name.value.trim(),
+
+        disaster_event:
+          disasterEvent,
+
+        last_seen_location:
+          form.last_seen_location.value.trim(),
+
+        last_seen_time:
+          form.last_seen_time.value.trim(),
+
+        description:
+          form.description.value.trim(),
+
+        clothing_description:
+          form.clothing_description.value.trim()
+      };
+
+      statusMsg(
+        "Saving missing report..."
+      );
+
+      await window.RN_FRAPPE.call(
+        "rescue_net.api_search_found." +
+        "create_missing_report",
+        payload,
+        {
+          method: "POST"
+        }
+      );
+
+      statusMsg(
+        "Missing report saved."
+      );
+
+      form.reset();
+
+      await loadSearchFound();
+    }
+  );
 }
 
 function setupFoundForm() {
-  const form = document.getElementById("foundForm");
-  if (!form) return;
+  const form =
+    document.getElementById(
+      "foundForm"
+    );
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  if (!form) {
+    return;
+  }
 
-    const disasterId = getDisasterId();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    const payload = {
-      disaster_event_id: disasterId,
-      finder_name: form.finder_name.value.trim(),
-      finder_contact: form.finder_contact.value.trim(),
-      person_code: form.person_code.value.trim(),
-      person_name: form.person_name.value.trim(),
-      age_group: form.age_group.value.trim(),
-      gender: form.gender.value.trim(),
-      found_location: form.found_location.value.trim(),
-      found_time: form.found_time.value.trim(),
-      current_location: form.current_location.value.trim(),
-      condition_notes: form.condition_notes.value.trim(),
-      description: form.description.value.trim(),
-      clothing_description: form.clothing_description.value.trim(),
-      created_by_user_id: "search-found-operator"
-    };
+      const payload = {
+        person_code:
+          form.person_code.value.trim(),
 
-    statusMsg("Saving found report...");
-    await api("/found-person-reports", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+        person_name:
+          form.person_name.value.trim(),
 
-    statusMsg("Found report saved.");
-    await loadSearchFound();
-  });
+        disaster_event:
+          getDisasterId(),
+
+        found_location:
+          form.found_location.value.trim(),
+
+        found_time:
+          form.found_time.value.trim(),
+
+        description:
+          form.description.value.trim(),
+
+        clothing_description:
+          form.clothing_description.value.trim()
+      };
+
+      statusMsg(
+        "Saving found report..."
+      );
+
+      await window.RN_FRAPPE.call(
+        "rescue_net.api_search_found." +
+        "create_found_report",
+        payload,
+        {
+          method: "POST"
+        }
+      );
+
+      statusMsg(
+        "Found report saved."
+      );
+
+      form.reset();
+
+      await loadSearchFound();
+    }
+  );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  setupMissingForm();
-  setupFoundForm();
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    if (!window.RN_FRAPPE) {
+      statusMsg(
+        "Frappe client tidak tersedia."
+      );
 
-  const btn = document.getElementById("refreshSf");
-  if (btn) btn.addEventListener("click", () => loadSearchFound().catch(err => statusMsg(err.message)));
+      return;
+    }
 
-  loadSearchFound().catch(err => statusMsg(err.message));
-});
+    setupMissingForm();
+    setupFoundForm();
+
+    const btn =
+      document.getElementById(
+        "refreshSf"
+      );
+
+    if (btn) {
+      btn.addEventListener(
+        "click",
+        () => {
+          loadSearchFound().catch(
+            err =>
+              statusMsg(
+                err.message
+              )
+          );
+        }
+      );
+    }
+
+    loadSearchFound().catch(
+      err =>
+        statusMsg(
+          err.message
+        )
+    );
+  }
+);

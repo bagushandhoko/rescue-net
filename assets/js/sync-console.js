@@ -1,273 +1,3 @@
-// RN_SYNC_FRAPPE_SHADOW_BRIDGE
-(() => {
-  const params = new URLSearchParams(
-    window.location.search
-  );
-
-  if (
-    params.get("sync_backend")
-    !== "frappe"
-  ) {
-    return;
-  }
-
-  const nativeFetch =
-    window.fetch.bind(window);
-
-  const frappeBase =
-    location.origin
-    + "/rescue-net-frappe/api/method";
-
-  let frappeSession = null;
-
-  async function frappeCall(
-    method,
-    args = {},
-    write = false
-  ) {
-    let url =
-      `${frappeBase}/${method}`;
-
-    const headers = {
-      "Accept": "application/json"
-    };
-
-    const options = {
-      credentials: "same-origin",
-      headers
-    };
-
-    if (write) {
-      const session =
-        await ensureSession();
-
-      if (!session.csrf_token) {
-        throw new Error(
-          "Frappe CSRF token tidak tersedia."
-        );
-      }
-
-      headers["Content-Type"] =
-        "application/json";
-
-      headers["X-Frappe-CSRF-Token"] =
-        session.csrf_token;
-
-      options.method = "POST";
-      options.body = JSON.stringify(args);
-    } else {
-      const query =
-        new URLSearchParams();
-
-      Object.entries(args)
-        .forEach(([key, value]) => {
-          if (
-            value !== null
-            && value !== undefined
-            && value !== ""
-          ) {
-            query.set(key, value);
-          }
-        });
-
-      if (query.toString()) {
-        url += "?" + query.toString();
-      }
-    }
-
-    const res =
-      await nativeFetch(url, options);
-
-    const data =
-      await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      throw new Error(
-        data.message
-        || data.exception
-        || `Frappe API error ${res.status}`
-      );
-    }
-
-    return Object.prototype
-      .hasOwnProperty.call(
-        data,
-        "message"
-      )
-      ? data.message
-      : data;
-  }
-
-  async function ensureSession() {
-    if (frappeSession) {
-      return frappeSession;
-    }
-
-    frappeSession =
-      await frappeCall(
-        "rescue_net.api_ai.session_info"
-      );
-
-    if (
-      !frappeSession
-      || !frappeSession.user
-      || frappeSession.user === "Guest"
-    ) {
-      throw new Error(
-        "Login Frappe diperlukan untuk Sync shadow."
-      );
-    }
-
-    return frappeSession;
-  }
-
-  function jsonResponse(data) {
-    return new Response(
-      JSON.stringify(data),
-      {
-        status: 200,
-        headers: {
-          "Content-Type":
-            "application/json"
-        }
-      }
-    );
-  }
-
-  window.fetch =
-    async function(input, options = {}) {
-      const rawUrl =
-        typeof input === "string"
-          ? input
-          : input.url;
-
-      const url =
-        new URL(rawUrl, location.href);
-
-      if (
-        url.pathname.endsWith(
-          "/sync/push"
-        )
-      ) {
-        const body =
-          typeof options.body === "string"
-            ? JSON.parse(
-                options.body || "{}"
-              )
-            : (
-                options.body || {}
-              );
-
-        const result =
-          await frappeCall(
-            "rescue_net.api_sync.push",
-            body,
-            true
-          );
-
-        return jsonResponse(result);
-      }
-
-      const pull =
-        url.pathname.match(
-          /\/sync\/pull\/([^/]+)$/
-        );
-
-      if (pull) {
-        const args = {
-          disaster_event_id:
-            decodeURIComponent(pull[1])
-        };
-
-        const since =
-          url.searchParams.get("since");
-
-        if (since) {
-          args.since = since;
-        }
-
-        const result =
-          await frappeCall(
-            "rescue_net.api_sync.pull",
-            args,
-            false
-          );
-
-        return jsonResponse(result);
-      }
-
-      return nativeFetch(
-        input,
-        options
-      );
-    };
-
-  function showFrappeBadge() {
-    if (
-      document.getElementById(
-        "rnFrappeShadowBadge"
-      )
-    ) {
-      return;
-    }
-
-    const badge =
-      document.createElement("div");
-
-    badge.id =
-      "rnFrappeShadowBadge";
-
-    badge.textContent =
-      "Backend: Frappe Shadow";
-
-    const mobile =
-      window.matchMedia(
-        "(max-width:640px)"
-      ).matches;
-
-    badge.style.cssText = [
-      "position:fixed",
-      mobile ? "right:7px" : "right:14px",
-      mobile ? "bottom:7px" : "bottom:14px",
-      "z-index:99999",
-      mobile
-        ? "padding:4px 7px"
-        : "padding:7px 11px",
-      "border-radius:999px",
-      "background:#173b67",
-      "color:#fff",
-      mobile
-        ? "font:600 9px/1.2 sans-serif"
-        : "font:600 12px/1.2 sans-serif",
-      "box-shadow:0 2px 8px rgba(0,0,0,.15)",
-      "pointer-events:none",
-      "opacity:.86"
-    ].join(";");
-
-    document.body.appendChild(
-      badge
-    );
-  }
-
-  if (
-    document.readyState === "loading"
-  ) {
-    document.addEventListener(
-      "DOMContentLoaded",
-      showFrappeBadge,
-      { once: true }
-    );
-  } else {
-    showFrappeBadge();
-  }
-
-  console.log(
-    "[RN Sync Bridge] "
-    + "Frappe shadow push/pull enabled"
-  );
-})();
-
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 const LOCAL_KEY = "rn_sync_console_drafts";
 const APP_QUEUE_KEY = "rn_sync_pending_events_v1";
 
@@ -338,18 +68,147 @@ function eventBody(item, sourceLabel) {
 }
 
 async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error("API " + res.status + ": " + text);
+  if (!window.RN_FRAPPE) {
+    throw new Error(
+      "RN_FRAPPE client belum dimuat."
+    );
   }
 
-  return await res.json();
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  let body = {};
+
+  if (options.body) {
+    body =
+      typeof options.body === "string"
+        ? JSON.parse(options.body)
+        : options.body;
+  }
+
+  if (
+    url.pathname === "/sync/push"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_sync.push",
+      body,
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  const pullMatch =
+    url.pathname.match(
+      /^\/sync\/pull\/([^/]+)$/
+    );
+
+  if (pullMatch) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_sync.pull",
+      {
+        disaster_event_id:
+          decodeURIComponent(
+            pullMatch[1]
+          ),
+
+        since:
+          url.searchParams.get(
+            "since"
+          )
+          || null
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/sync-conflicts"
+    || url.pathname ===
+      "/audit-events"
+  ) {
+    const rows =
+      await RN_FRAPPE.call(
+        "rescue_net.api_sync.status",
+        {
+          limit:
+            Number(
+              url.searchParams.get(
+                "limit"
+              )
+              || 50
+            )
+        }
+      );
+
+    if (
+      url.pathname ===
+      "/sync-conflicts"
+    ) {
+      return (
+        rows || []
+      ).filter(
+        row =>
+          row.conflict_status
+          && row.conflict_status
+          !== "none"
+          && row.conflict_status
+          !== "resolved"
+      );
+    }
+
+    return rows || [];
+  }
+
+  const conflictResolve =
+    url.pathname.match(
+      /^\/sync-conflicts\/([^/]+)\/resolve$/
+    );
+
+  if (
+    conflictResolve
+    && method !== "GET"
+  ) {
+    throw new Error(
+      "Server-side conflict resolution "
+      + "legacy sudah dinonaktifkan. "
+      + "Gunakan retry queue canonical."
+    );
+  }
+
+  if (
+    url.pathname.startsWith(
+      "/federation/"
+    )
+  ) {
+    if (method === "GET") {
+      return [];
+    }
+
+    throw new Error(
+      "Federation FastAPI legacy sudah "
+      + "dinonaktifkan dan belum memiliki "
+      + "model canonical Frappe."
+    );
+  }
+
+  throw new Error(
+    "Unsupported Sync Console route: "
+    + method
+    + " "
+    + url.pathname
+  );
 }
+
 
 function card(title, body, chip) {
   return `
@@ -692,13 +551,13 @@ async function loadFederation() {
     if (nodesEl) {
       const nodeCards = nodes.length ? nodes.map(n => card(
         n.node_name,
-        `${n.node_type} ?? ${n.trust_level}<br>${n.base_url || "no remote url"}<br>${n.notes || ""}`,
+        `${n.node_type} • ${n.trust_level}<br>${n.base_url || "no remote url"}<br>${n.notes || ""}`,
         n.status
       )) : [card("Belum ada federation node", "Tambahkan node partner dulu. Auto-pull eksternal belum aktif sampai credential jelas.", "empty")];
 
       const repoCards = repos.map(r => card(
-        `Repository ?? ${r.repository_name}`,
-        `${r.node_name || r.node_id}<br>${r.repository_type} ?? ${r.direction} ?? policy ${r.conflict_policy}`,
+        `Repository • ${r.repository_name}`,
+        `${r.node_name || r.node_id}<br>${r.repository_type} • ${r.direction} • policy ${r.conflict_policy}`,
         r.status
       ));
 
@@ -707,7 +566,7 @@ async function loadFederation() {
 
     if (logsEl) {
       logsEl.innerHTML = logs.length ? logs.map(l => card(
-        `${l.direction} ?? ${l.status}`,
+        `${l.direction} • ${l.status}`,
         `${l.node_id || "local"} / ${l.repository_id || "manifest"}<br>${l.notes || ""}<br>${l.created_at || ""}`,
         "federation"
       )).join("") : card("No federation log", "Manifest export/import akan tercatat di sini.", "empty");

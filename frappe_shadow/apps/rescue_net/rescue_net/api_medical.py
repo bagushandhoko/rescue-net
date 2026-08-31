@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import flt, now_datetime
 
 from rescue_net.access_policy import (
@@ -205,6 +206,8 @@ def _assert_medical_access(actor, posko):
 
 @frappe.whitelist()
 def dashboard(posko=None):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
     allowed = _accessible_poskos(actor)
 
@@ -339,6 +342,8 @@ def create_case(
     triage_status="green",
     treatment_notes=None,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     _assert_medical_access(
@@ -449,6 +454,8 @@ def record_supply_use(
     medical_case=None,
     notes=None,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     _assert_medical_access(

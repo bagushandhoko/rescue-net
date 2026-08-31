@@ -1,5 +1,3 @@
-const RN_API_BASE = `${window.location.origin}/rescue-net-api`;
-
 const MAP_PARAMS = new URLSearchParams(window.location.search);
 const DISASTER_ID =
   MAP_PARAMS.get("event") ||
@@ -15,35 +13,105 @@ function statusMsg(msg) {
   if (el) el.textContent = msg;
 }
 
+
 async function api(path, options = {}) {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
 
-  try {
-    const res = await fetch(RN_API_BASE + path, {
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
-      ...options
-    });
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
 
-    if (!res.ok) {
-      const detail = await res.text();
-      throw new Error(
-        `API ${res.status}: ${detail || res.statusText}`
-      );
-    }
+  let body = {};
 
-    return await res.json();
-  } catch (error) {
-    if (error.name === "AbortError") {
-      throw new Error("API timeout setelah 15 detik.");
-    }
-
-    throw error;
-  } finally {
-    window.clearTimeout(timeoutId);
+  if (options.body) {
+    body =
+      typeof options.body === "string"
+        ? JSON.parse(options.body)
+        : options.body;
   }
+
+  if (
+    url.pathname.startsWith(
+      "/map-context/"
+    )
+    && method === "GET"
+  ) {
+    const eventId =
+      decodeURIComponent(
+        url.pathname.slice(
+          "/map-context/".length
+        )
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "map_context",
+      {
+        disaster_event:
+          eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname === "/map-points"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "create_map_point",
+      {
+        disaster_event:
+          body.disaster_event_id
+          || body.disaster_event
+          || DISASTER_ID,
+
+        object_type:
+          body.object_type || null,
+
+        object_id:
+          body.object_id || null,
+
+        label:
+          body.label,
+
+        description:
+          body.description || null,
+
+        latitude:
+          Number(body.latitude),
+
+        longitude:
+          Number(body.longitude),
+
+        location_text:
+          body.location_text || null,
+
+        point_status:
+          body.point_status || "active",
+
+        priority:
+          body.priority || "normal"
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Map route: "
+    + method
+    + " "
+    + url.pathname
+  );
 }
+
 
 function mapLinks(p) {
   if (p.latitude === null || p.latitude === undefined || p.longitude === null || p.longitude === undefined) {

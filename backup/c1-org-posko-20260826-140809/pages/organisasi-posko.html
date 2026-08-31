@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Kelompok & Posko</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=fix-20260820d">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=unified-menu-20260821f" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=unified-menu-20260821f" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a class="active" href="organisasi-posko.html">Kelompok & Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">Kelompok & Posko</div>
+
+<div>
+        <p class="eyebrow">Registry & Operational Nodes</p>
+        <h2>Kelompok & Posko</h2>
+        <p class="subtitle">
+          Daftarkan kelompok, komunitas, posko resmi, posko warga, dapur umum, gudang, posko medis,
+          atau titik distribusi. Data tersimpan langsung ke Rescue-Net API dan PostgreSQL.
+        </p>
+      </div>
+      <div class="status-pill">API Connected · PostgreSQL</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Kelompok Terdaftar</span><strong id="kpiOrgCount">-</strong><small>live data</small></div>
+      <div class="kpi-card"><span>Posko Aktif</span><strong id="kpiPoskoCount">-</strong><small>live data</small></div>
+      <div class="kpi-card warning"><span>Pending Verification</span><strong id="kpiPendingCount">-</strong><small>kelompok + posko</small></div>
+      <div class="kpi-card"><span>Database</span><strong>ON</strong><small>rescuenet_db</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Tambah Kelompok</h3>
+            <p>Untuk pemerintah, NGO, komunitas, perusahaan, kampus, atau kelompok warga.</p>
+          </div>
+        </div>
+
+        <form class="rn-form" data-rn-create-org>
+          <div class="form-grid">
+            <label>
+              Nama Kelompok
+              <input name="name" placeholder="Contoh: Komunitas Rescue Lokal" required>
+            </label>
+
+            <label>
+              Jenis Kelompok
+              <input name="organization_type" placeholder="government / ngo / community" required>
+            </label>
+          </div>
+
+          <p class="subtitle">
+            Kelompok baru selalu dibuat dengan status <b>pending</b> dan trust level <b>unverified</b>.
+            Verifikasi hanya dapat dilakukan oleh tim verifikator melalui alur verifikasi terpisah.
+          </p>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan Kelompok</button>
+            <span class="form-message" data-rn-org-message></span>
+          </div>
+        </form>
+
+        <hr class="rn-separator">
+
+        <div class="panel-header">
+          <div>
+            <h3>Daftar Kelompok</h3>
+            <p>Live dari endpoint /organizations.</p>
+          </div>
+        </div>
+
+        <div class="event-list" data-rn-organizations></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Tambah Posko / Node</h3>
+        <p class="subtitle">Posko bisa terkait Kelompok, atau mandiri.</p>
+
+        <form class="rn-form" data-rn-create-posko>
+          <label>
+            Disaster Event ID
+            <input name="disaster_event_id" value="event-aceh-2025" required>
+          </label>
+
+          <label>
+            Kelompok
+            <select name="organization_id" data-rn-org-select>
+              <option value="">Mandiri / tanpa kelompok</option>
+            </select>
+          </label>
+
+          <label>
+            Nama Posko
+            <input name="name" placeholder="Contoh: Posko Logistik RW 05" required>
+          </label>
+
+          <label>
+            Jenis Posko
+            <input name="node_type" placeholder="logistics / kitchen / medical / shelter" required>
+          </label>
+
+          <label>
+            Lokasi
+            <input name="location" placeholder="Alamat / area posko" required>
+          </label>
+
+          <label>
+            Operational Status
+            <select name="operational_status">
+              <option value="active">active</option>
+              <option value="standby">standby</option>
+              <option value="offline">offline</option>
+            </select>
+          </label>
+
+          <p class="subtitle">Status verifikasi posko baru selalu <b>self_reported</b> dan hanya dapat diubah melalui alur verifikasi.</p>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan Posko</button>
+          </div>
+          <span class="form-message" data-rn-posko-message></span>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Daftar Posko / Operational Node</h3>
+          <p>Live dari endpoint /poskos.</p>
+        </div>
+      </div>
+
+      <div class="event-list" data-rn-poskos></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/org-posko.js?v=1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-sync-engine.js?v=event-sync-2"></script>
+<script src="../assets/js/rn-public-header.js?v=fix-20260820c"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=single-nav-20260822a"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

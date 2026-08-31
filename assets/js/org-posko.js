@@ -1,148 +1,452 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
-
-async function rnFetch(path, options = {}) {
-  const res = await fetch(`${RN_API_BASE}${path}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API error ${res.status}: ${text}`);
-  }
-
-  return await res.json();
+function safe(v) {
+  return (
+    v === null ||
+    v === undefined ||
+    v === ""
+  )
+    ? "n/a"
+    : v;
 }
 
-async function loadOrganizations() {
-  const target = document.querySelector("[data-rn-organizations]");
-  const select = document.querySelector("[data-rn-org-select]");
+
+function statusMsg(msg) {
+  const el =
+    document.getElementById(
+      "orgPoskoStatus"
+    ) ||
+    document.querySelector(
+      "[data-org-posko-status]"
+    );
+
+  if (el) {
+    el.textContent = msg;
+  }
+}
+
+
+function card(
+  title,
+  body,
+  chip = ""
+) {
+  return `
+    <article class="event-card">
+      <div class="event-main">
+        <div>
+          <h4>${safe(title)}</h4>
+          <p>${body}</p>
+        </div>
+
+        <div class="chips">
+          ${
+            chip
+              ? `<span class="chip warning">${safe(chip)}</span>`
+              : ""
+          }
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+
+function renderOrganizations(items) {
+  const target =
+    document.querySelector(
+      "[data-rn-organizations]"
+    ) ||
+    document.getElementById(
+      "organizationList"
+    );
+
   if (!target) return;
 
-  try {
-    const orgs = await rnFetch("/organizations");
+  target.innerHTML =
+    items.length
+      ? items.map(o => card(
+          o.title ||
+          o.organization_name ||
+          o.name,
 
-    target.innerHTML = orgs.map(org => `
-      <article class="event-card">
-        <div class="event-main">
-          <div>
-            <h4>${org.name}</h4>
-            <p>${org.organization_type} · ${org.trust_level} · ${org.status}</p>
-          </div>
-          <div class="chips">
-            <span class="chip neutral">${org.id}</span>
-          </div>
-        </div>
-      </article>
-    `).join("");
+          `ID: ${safe(o.name)}<br>` +
+          `Type: ${safe(o.organization_type)}<br>` +
+          `Contact: ${safe(o.contact_person)}`,
 
-    if (select) {
-      select.innerHTML = `<option value="">Mandiri / tanpa organisasi</option>` + orgs.map(org => `
-        <option value="${org.id}">${org.name}</option>
-      `).join("");
-    }
-
-  } catch (err) {
-    target.innerHTML = `<article class="event-card"><h4>Gagal load organisasi</h4><p>${err.message}</p></article>`;
-  }
+          o.verification_status ||
+          o.status
+        )).join("")
+      : card(
+          "Belum ada organisasi",
+          "Belum ada RN Organization.",
+          "empty"
+        );
 }
 
-async function loadPoskos() {
-  const target = document.querySelector("[data-rn-poskos]");
+
+function renderPoskos(items) {
+  const target =
+    document.querySelector(
+      "[data-rn-poskos]"
+    ) ||
+    document.getElementById(
+      "poskoList"
+    );
+
   if (!target) return;
 
-  try {
-    const poskos = await rnFetch("/poskos");
+  target.innerHTML =
+    items.length
+      ? items.map(p => card(
+          p.title ||
+          p.posko_name ||
+          p.name,
 
-    target.innerHTML = poskos.map(posko => `
-      <article class="event-card" onclick="window.location.href='posko-detail.html?id=${posko.id}'" style="cursor:pointer">
-        <div class="event-main">
-          <div>
-            <h4>${posko.name}</h4>
-            <p>${posko.node_type} · ${posko.location} · ${posko.verification_status} · ${posko.operational_status}</p>
-          </div>
-          <div class="chips">
-            <span class="chip neutral">${posko.disaster_event_id}</span>
-            <span class="chip neutral">${posko.id}</span>
-          </div>
-        </div>
-      </article>
-    `).join("");
+          `ID: ${safe(p.name)}<br>` +
+          `Type: ${safe(p.posko_type)}<br>` +
+          `Organization: ${safe(p.organization)}<br>` +
+          `Address: ${safe(p.address)}`,
 
-  } catch (err) {
-    target.innerHTML = `<article class="event-card"><h4>Gagal load posko</h4><p>${err.message}</p></article>`;
-  }
+          p.operational_status ||
+          p.verification_status
+        )).join("")
+      : card(
+          "Belum ada Posko",
+          "Belum ada RN Posko.",
+          "empty"
+        );
 }
+
+
+function fillOrganizationSelect(items) {
+  const select =
+    document.querySelector(
+      '#poskoForm [name="organization"]'
+    ) ||
+    document.querySelector(
+      '[data-create-posko] [name="organization"]'
+    );
+
+  if (
+    !select ||
+    select.tagName !== "SELECT"
+  ) {
+    return;
+  }
+
+  select.innerHTML =
+    `<option value="">Tanpa organisasi</option>` +
+    items.map(o => `
+      <option value="${safe(o.name)}">
+        ${safe(o.title || o.name)}
+      </option>
+    `).join("");
+}
+
+
+async function loadOrgPosko() {
+  statusMsg(
+    "Loading Organization & Posko from Frappe..."
+  );
+
+  const [
+    organizations,
+    poskos
+  ] = await Promise.all([
+    RN_FRAPPE.call(
+      "rescue_net.api_community_cluster." +
+      "list_organizations",
+      {}
+    ),
+
+    RN_FRAPPE.call(
+      "rescue_net.api_community_cluster." +
+      "list_poskos",
+      {}
+    )
+  ]);
+
+  /*
+   * Toleransi response:
+   * backend dapat mengembalikan array langsung
+   * atau object wrapper.
+   */
+  const orgRows =
+    Array.isArray(organizations)
+      ? organizations
+      : (
+          organizations.organizations ||
+          organizations.items ||
+          []
+        );
+
+  const poskoRows =
+    Array.isArray(poskos)
+      ? poskos
+      : (
+          poskos.poskos ||
+          poskos.items ||
+          []
+        );
+
+  renderOrganizations(
+    orgRows
+  );
+
+  renderPoskos(
+    poskoRows
+  );
+
+  fillOrganizationSelect(
+    orgRows
+  );
+
+  const orgKpi =
+    document.getElementById(
+      "kpiOrgCount"
+    );
+
+  const poskoKpi =
+    document.getElementById(
+      "kpiPoskoCount"
+    );
+
+  const pendingKpi =
+    document.getElementById(
+      "kpiPendingCount"
+    );
+
+  if (orgKpi) {
+    orgKpi.textContent =
+      orgRows.length;
+  }
+
+  if (poskoKpi) {
+    poskoKpi.textContent =
+      poskoRows.length;
+  }
+
+  if (pendingKpi) {
+    pendingKpi.textContent =
+      orgRows.filter(x => {
+        const status = String(
+          x.verification_status ||
+          x.status ||
+          ""
+        ).toLowerCase();
+
+        return (
+          status === "pending" ||
+          status === "unverified"
+        );
+      }).length;
+  }
+
+  statusMsg(
+    "Loaded from Frappe"
+  );
+
+  return {
+    organizations:
+      orgRows,
+    poskos:
+      poskoRows
+  };
+}
+
 
 function setupOrganizationForm() {
-  const form = document.querySelector("[data-rn-create-org]");
-  const msg = document.querySelector("[data-rn-org-message]");
+  const form =
+    document.querySelector(
+      "[data-rn-create-org]"
+    ) ||
+    document.getElementById(
+      "organizationForm"
+    );
+
   if (!form) return;
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    const payload = {
-      name: form.name.value.trim(),
-      organization_type: form.organization_type.value.trim(),
-      trust_level: form.trust_level.value,
-      status: form.status.value
-    };
+      const title =
+        form.title?.value?.trim() ||
+        form.organization_name
+          ?.value
+          ?.trim();
 
-    try {
-      if (msg) msg.textContent = "Menyimpan organisasi...";
-      await rnFetch("/organizations", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
+      if (!title) {
+        statusMsg(
+          "Nama organisasi wajib diisi."
+        );
+        return;
+      }
+
+      statusMsg(
+        "Saving Organization..."
+      );
+
+      await RN_FRAPPE.call(
+        "rescue_net.api_community_cluster." +
+        "create_organization",
+        {
+          title,
+
+          organization_type:
+            form.organization_type
+              ?.value ||
+            "community",
+
+          contact_person:
+            form.contact_person
+              ?.value
+              ?.trim() ||
+            null,
+
+          notes:
+            form.notes
+              ?.value
+              ?.trim() ||
+            null
+        },
+        {
+          method: "POST"
+        }
+      );
+
       form.reset();
-      if (msg) msg.textContent = "Organisasi berhasil disimpan.";
-      await loadOrganizations();
-    } catch (err) {
-      if (msg) msg.textContent = err.message;
+
+      statusMsg(
+        "Organization saved."
+      );
+
+      await loadOrgPosko();
     }
-  });
+  );
 }
+
 
 function setupPoskoForm() {
-  const form = document.querySelector("[data-rn-create-posko]");
-  const msg = document.querySelector("[data-rn-posko-message]");
+  const form =
+    document.querySelector(
+      "[data-rn-create-posko]"
+    ) ||
+    document.getElementById(
+      "poskoForm"
+    );
+
   if (!form) return;
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  form.addEventListener(
+    "submit",
+    async e => {
+      e.preventDefault();
 
-    const payload = {
-      disaster_event_id: form.disaster_event_id.value.trim(),
-      organization_id: form.organization_id.value || null,
-      name: form.name.value.trim(),
-      node_type: form.node_type.value.trim(),
-      location: form.location.value.trim(),
-      verification_status: form.verification_status.value,
-      operational_status: form.operational_status.value
-    };
+      const title =
+        form.title?.value?.trim() ||
+        form.posko_name
+          ?.value
+          ?.trim();
 
-    try {
-      if (msg) msg.textContent = "Menyimpan posko...";
-      await rnFetch("/poskos", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
+      const poskoType =
+        form.posko_type
+          ?.value
+          ?.trim();
+
+      const address =
+        form.address
+          ?.value
+          ?.trim();
+
+      if (
+        !title ||
+        !poskoType ||
+        !address
+      ) {
+        statusMsg(
+          "Nama Posko, tipe, dan alamat wajib diisi."
+        );
+        return;
+      }
+
+      statusMsg(
+        "Saving Posko..."
+      );
+
+      await RN_FRAPPE.call(
+        "rescue_net.api_community_cluster." +
+        "create_posko",
+        {
+          title,
+
+          posko_type:
+            poskoType,
+
+          address,
+
+          organization:
+            form.organization
+              ?.value
+              ?.trim() ||
+            null
+        },
+        {
+          method: "POST"
+        }
+      );
+
       form.reset();
-      if (msg) msg.textContent = "Posko berhasil disimpan.";
-      await loadPoskos();
-    } catch (err) {
-      if (msg) msg.textContent = err.message;
+
+      statusMsg(
+        "Posko saved."
+      );
+
+      await loadOrgPosko();
     }
-  });
+  );
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  loadOrganizations();
-  loadPoskos();
-  setupOrganizationForm();
-  setupPoskoForm();
-});
+
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    if (!window.RN_FRAPPE) {
+      statusMsg(
+        "Frappe client tidak tersedia."
+      );
+      return;
+    }
+
+    setupOrganizationForm();
+    setupPoskoForm();
+
+    const refresh =
+      document.getElementById(
+        "refreshOrgPosko"
+      ) ||
+      document.querySelector(
+        "[data-refresh-org-posko]"
+      );
+
+    if (refresh) {
+      refresh.addEventListener(
+        "click",
+        () =>
+          loadOrgPosko().catch(
+            err =>
+              statusMsg(
+                err.message
+              )
+          )
+      );
+    }
+
+    loadOrgPosko().catch(
+      err =>
+        statusMsg(
+          err.message
+        )
+    );
+  }
+);

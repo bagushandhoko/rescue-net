@@ -1,20 +1,187 @@
-const RN_API_BASE = window.RESCUE_NET_CONFIG?.API_BASE || window.RN_API_BASE || "http://192.168.100.32:8092";
 const EVENT_ID = new URLSearchParams(window.location.search).get("event") || "event-sim-001";
 
+
 async function rnFetch(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    },
-    ...options
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`API error ${res.status}: ${text}`);
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  const eventId =
+    url.searchParams.get(
+      "disaster_event_id"
+    )
+    || (
+      typeof EVENT_ID !== "undefined"
+        ? EVENT_ID
+        : "event-sim-001"
+    );
+
+  if (
+    url.pathname ===
+      "/data-consolidation/summary"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "consolidation_summary",
+      {
+        disaster_event:
+          eventId
+      }
+    );
   }
-  return await res.json();
+
+  if (
+    url.pathname ===
+      "/data-consolidation/raw-reports"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "consolidation_raw_reports",
+      {
+        disaster_event:
+          eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/duplicates/candidates"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "duplicate_candidates",
+      {
+        disaster_event:
+          eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/consolidated-needs"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "consolidated_needs",
+      {
+        disaster_event:
+          eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/data-consolidation/national-rollup"
+  ) {
+    const summary =
+      await RN_FRAPPE.call(
+        "rescue_net.api_frontend_bridge."
+        + "consolidation_summary",
+        {
+          disaster_event:
+            eventId
+        }
+      );
+
+    return {
+      disaster_event_id:
+        eventId,
+      summary,
+      national_rollup:
+        summary
+    };
+  }
+
+  if (
+    url.pathname ===
+      "/operational-areas"
+  ) {
+    const data =
+      await RN_FRAPPE.call(
+        "rescue_net.api_frontend_bridge."
+        + "consolidation_auxiliary",
+        {
+          disaster_event:
+            eventId
+        }
+      );
+
+    return (
+      data.operational_areas
+      || []
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/beneficiary-groups"
+  ) {
+    const data =
+      await RN_FRAPPE.call(
+        "rescue_net.api_frontend_bridge."
+        + "consolidation_auxiliary",
+        {
+          disaster_event:
+            eventId
+        }
+      );
+
+    return (
+      data.beneficiary_groups
+      || []
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/data-consolidation/evidence-requirements"
+  ) {
+    const data =
+      await RN_FRAPPE.call(
+        "rescue_net.api_frontend_bridge."
+        + "consolidation_auxiliary",
+        {
+          disaster_event:
+            eventId
+        }
+      );
+
+    return (
+      data.evidence_requirements
+      || []
+    );
+  }
+
+  if (method !== "GET") {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "unsupported_consolidation_operation",
+      {
+        operation:
+          url.pathname
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Consolidation route: "
+    + url.pathname
+  );
 }
+
 
 function setText(selector, value) {
   const el = document.querySelector(selector);
@@ -325,4 +492,3 @@ document.addEventListener("DOMContentLoaded", () => {
   setupActions();
   loadDataConsolidation();
 });
-

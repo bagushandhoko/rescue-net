@@ -56,17 +56,17 @@
         <p class="eyebrow">Public Aid Edit</p>
         <h2>Edit Bantuan Saya</h2>
         <p class="subtitle">
-          Donatur personal bisa mengubah data bantuan memakai Aid ID, nomor HP, dan kode edit.
+          Bantuan hanya dapat diubah oleh akun Rescue-Net yang membuat Aid Offer tersebut.
         </p>
       </div>
-      <div class="status-pill">HP + Kode Edit</div>
+      <div class="status-pill">Frappe Session</div>
     </header>
 
     <section class="panel">
       <div class="panel-header">
         <div>
           <h3>Verifikasi dan Update Bantuan</h3>
-          <p>Gunakan kode yang muncul saat pertama submit bantuan.</p>
+          <p>Masukkan Aid Offer ID milik akun Rescue-Net yang sedang login.</p>
         </div>
       </div>
 
@@ -75,16 +75,6 @@
           <label>
             Aid Offer ID
             <input name="aid_offer_id" placeholder="aid-xxxxxxxxxxxx" required>
-          </label>
-
-          <label>
-            HP / WhatsApp
-            <input name="donor_contact" placeholder="0812xxxx" required>
-          </label>
-
-          <label>
-            Kode Edit
-            <input name="edit_code" placeholder="6 digit" required>
           </label>
 
           <label>
@@ -154,8 +144,9 @@
   </main>
 </div>
 
-<script src="../assets/js/public-aid.js?v=1"></script>
-<script src="../assets/js/session-role.js?v=role-ui-1"></script>
+<script src="../assets/js/rn-frappe-client.js?v=frappe-public-aid-1"></script>
+<script src="../assets/js/public-aid.js?v=frappe-public-aid-1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=fix-20260820c"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=single-nav-20260822a"></script>

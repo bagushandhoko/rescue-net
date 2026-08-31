@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event
 from frappe.utils import (
     flt,
     now_datetime,
@@ -299,6 +300,8 @@ def create_resource_profile(
     pic_phone=None,
     notes=None,
 ):
+    # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
 
     if not _is_manager(actor):
@@ -425,6 +428,8 @@ def create_work_tool_request(
     required_operator_skill=None,
     notes=None,
 ):
+    # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
 
     if not _is_manager(actor):
@@ -943,6 +948,8 @@ def _visible_request(actor, row):
 
 @frappe.whitelist()
 def dashboard(disaster_event=None):
+    # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
 
     resource_filters = {}

@@ -1,4 +1,3 @@
-const RN_SYNC_API_BASE = window.RN_API_BASE || (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 const RN_SYNC_QUEUE_KEY = "rn_sync_pending_events_v1";
 const RN_SYNC_DEVICE_KEY = "rn_device_id_v1";
 
@@ -72,17 +71,79 @@ function rnQueueEvent(event) {
 }
 
 async function rnFetch(path, options = {}) {
-  const res = await fetch(RN_SYNC_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-
-  if (!res.ok) {
-    throw new Error(await res.text());
+  if (!window.RN_FRAPPE) {
+    throw new Error(
+      "RN_FRAPPE client belum dimuat."
+    );
   }
 
-  return await res.json();
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  let body = {};
+
+  if (options.body) {
+    body =
+      typeof options.body === "string"
+        ? JSON.parse(options.body)
+        : options.body;
+  }
+
+  if (
+    url.pathname === "/sync/push"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_sync.push",
+      body,
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  const pull =
+    url.pathname.match(
+      /^\/sync\/pull\/([^/]+)$/
+    );
+
+  if (
+    pull
+    && method === "GET"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_sync.pull",
+      {
+        disaster_event_id:
+          decodeURIComponent(
+            pull[1]
+          ),
+
+        since:
+          url.searchParams.get(
+            "since"
+          )
+          || null
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Frappe Sync route: "
+    + method
+    + " "
+    + url.pathname
+  );
 }
+
 
 async function rnPushPending() {
   const queue = rnGetQueue();

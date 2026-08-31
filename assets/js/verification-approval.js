@@ -1,4 +1,3 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 const DISASTER_ID = "event-aceh-2025";
 
 let VERIFY_CONTEXT = null;
@@ -12,14 +11,158 @@ function statusMsg(msg) {
   if (el) el.textContent = msg;
 }
 
+
 async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  let body = {};
+
+  if (options.body) {
+    body =
+      typeof options.body === "string"
+        ? JSON.parse(options.body)
+        : options.body;
+  }
+
+  if (
+    url.pathname.startsWith(
+      "/verification-context/"
+    )
+  ) {
+    const eventId =
+      decodeURIComponent(
+        url.pathname.slice(
+          "/verification-context/".length
+        )
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "verification_context",
+      {
+        disaster_event:
+          eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/public/verifier-profiles"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "create_verifier_profile",
+      body,
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  const verifierMatch =
+    url.pathname.match(
+      /^\/verifier-profiles\/([^/]+)\/status$/
+    );
+
+  if (
+    verifierMatch
+    && (
+      method === "POST"
+      || method === "PATCH"
+    )
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "set_verifier_status",
+      {
+        verifier:
+          decodeURIComponent(
+            verifierMatch[1]
+          ),
+
+        status:
+          body.status
+          || body.verifier_status
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  const endorsementMatch =
+    url.pathname.match(
+      /^\/verification-endorsements\/([^/]+)\/revoke$/
+    );
+
+  if (
+    endorsementMatch
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "revoke_verification_endorsement",
+      {
+        endorsement:
+          decodeURIComponent(
+            endorsementMatch[1]
+          )
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/verification-actions"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "create_verification_action",
+      body,
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/public/verification-requests/respond"
+    && method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "reject_legacy_token_verification",
+      {},
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Verification route: "
+    + method
+    + " "
+    + url.pathname
+  );
 }
+
 
 function card(title, body, chip = "", actions = "") {
   return `

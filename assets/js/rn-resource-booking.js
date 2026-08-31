@@ -1,83 +1,116 @@
-const RN_RESOURCE_API_BASE = window.RN_API_BASE || (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
-
 function rnBookingStatus(msg) {
   const el =
-    document.querySelector("[data-rn-booking-status]") ||
-    document.getElementById("rnBookingStatus") ||
-    document.getElementById("warRoomStatus") ||
-    document.getElementById("rnSyncStatus");
+    document.querySelector(
+      "[data-rn-booking-status]"
+    ) ||
+    document.getElementById(
+      "rnBookingStatus"
+    ) ||
+    document.getElementById(
+      "warRoomStatus"
+    ) ||
+    document.getElementById(
+      "rnSyncStatus"
+    );
 
-  if (el) el.textContent = msg;
-  console.log("[RN Booking]", msg);
-}
-
-async function rnBookingFetch(path, options = {}) {
-  const res = await fetch(RN_RESOURCE_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
-}
-
-async function rnCreateResourceRequestOfflineReady(payload) {
-  const eventId =
-    payload.disaster_event_id ||
-    (window.RNSync ? window.RNSync.getEventId() : "event-aceh-2025");
-
-  const normalized = {
-    disaster_event_id: eventId,
-    resource_id: payload.resource_id,
-    requested_by_type: payload.requested_by_type || "user",
-    requested_by_id: payload.requested_by_id,
-    request_reason: payload.request_reason,
-    related_need_id: payload.related_need_id || null,
-    related_distribution_flow_id: payload.related_distribution_flow_id || null,
-    requested_quantity: Number(payload.requested_quantity || 1),
-    requested_time: payload.requested_time || "secepatnya"
-  };
-
-  if (!navigator.onLine) {
-    if (!window.RNSync) throw new Error("RNSync engine not loaded");
-
-    const draft = window.RNSync.queueEvent({
-      object_type: "resource_request",
-      object_id: "local-resource-request-" + Date.now(),
-      operation: "create",
-      payload_json: normalized,
-      source_organization_id: normalized.requested_by_id
-    });
-
-    rnBookingStatus(`Offline booking saved. Will sync when online: ${draft.event_id}`);
-    return { local_saved: true, draft };
-  }
-
-  try {
-    const result = await rnBookingFetch("/resource-requests", {
-      method: "POST",
-      body: JSON.stringify(normalized)
-    });
-
-    rnBookingStatus("Booking sent to server.");
-    return result;
-
-  } catch (err) {
-    if (!window.RNSync) throw err;
-
-    const draft = window.RNSync.queueEvent({
-      object_type: "resource_request",
-      object_id: "local-resource-request-" + Date.now(),
-      operation: "create",
-      payload_json: normalized,
-      source_organization_id: normalized.requested_by_id
-    });
-
-    rnBookingStatus(`Server failed. Saved locally for sync: ${draft.event_id}`);
-    return { local_saved: true, draft, server_error: err.message };
+  if (el) {
+    el.textContent = msg;
   }
 }
 
-window.RNResourceBooking = {
-  createResourceRequest: rnCreateResourceRequestOfflineReady
-};
+
+async function rnCreateResourceRequestOfflineReady(
+  payload = {}
+) {
+  if (!window.RN_FRAPPE) {
+    throw new Error(
+      "Frappe client tidak tersedia"
+    );
+  }
+
+  rnBookingStatus(
+    "Saving Work Tool Request..."
+  );
+
+  const result =
+    await RN_FRAPPE.call(
+      "rescue_net.api_resource_tools." +
+      "create_work_tool_request",
+      {
+        tool_name:
+          payload.tool_name ||
+          payload.resource_name ||
+          payload.item_name ||
+          "Resource",
+
+        requested_by_type:
+          payload.requested_by_type ||
+          payload.owner_type ||
+          "posko",
+
+        requested_by_id:
+          payload.requested_by_id ||
+          payload.owner_id ||
+          payload.posko ||
+          null,
+
+        disaster_event:
+          payload.disaster_event ||
+          payload.disaster_event_id ||
+          payload.event_id ||
+          null,
+
+        tool_type:
+          payload.tool_type ||
+          payload.resource_type ||
+          null,
+
+        quantity:
+          Number(
+            payload.quantity ||
+            payload.quantity_requested ||
+            1
+          ),
+
+        unit:
+          payload.unit ||
+          "unit",
+
+        location:
+          payload.location ||
+          payload.destination_location ||
+          null,
+
+        needed_for:
+          payload.needed_for ||
+          payload.purpose ||
+          null,
+
+        priority:
+          payload.priority ||
+          "normal",
+
+        required_operator_skill:
+          payload.required_operator_skill ||
+          payload.operator_skill ||
+          null,
+
+        notes:
+          payload.notes ||
+          null
+      },
+      {
+        method: "POST"
+      }
+    );
+
+  rnBookingStatus(
+    "Resource request saved in Frappe."
+  );
+
+  return result;
+}
+
+
+window.rnCreateResourceRequestOfflineReady =
+  rnCreateResourceRequestOfflineReady;

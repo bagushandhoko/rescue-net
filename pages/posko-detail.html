@@ -80,8 +80,8 @@
       </div>
 
       <aside class="panel summary">
-        <h3>Add Stock Movement</h3>
-        <p class="subtitle">Catat barang masuk/keluar posko.</p>
+        <h3>Record Stock Observation</h3>
+        <p class="subtitle">Catat snapshot stok aktual Posko.</p>
 
         <form class="rn-form" id="stockForm">
           <label>Item Name
@@ -92,24 +92,6 @@
           </label>
           <label>Unit
             <input name="unit" value="dus" required>
-          </label>
-          <label>Movement Type
-            <select name="movement_type">
-              <option value="stock_in">stock_in</option>
-              <option value="stock_out">stock_out</option>
-              <option value="transfer_in">transfer_in</option>
-              <option value="transfer_out">transfer_out</option>
-              <option value="adjustment">adjustment</option>
-              <option value="reserved">reserved</option>
-              <option value="damaged">damaged</option>
-              <option value="expired">expired</option>
-            </select>
-          </label>
-          <label>Direction
-            <select name="movement_direction">
-              <option value="in">in</option>
-              <option value="out">out</option>
-            </select>
           </label>
           <label>Notes
             <input name="notes" value="Catatan stok dari posko.">
@@ -126,14 +108,14 @@
         <div class="panel-header">
           <div>
             <h3>Stock Summary</h3>
-            <p>Saldo stok berdasarkan semua movement masuk/keluar.</p>
+            <p>Snapshot stok terbaru dari RN Stock Observation.</p>
           </div>
         </div>
         <div class="event-list" id="stockSummary"></div>
       </div>
 
       <aside class="panel summary">
-        <h3>Stock Movements</h3>
+        <h3>Stock Observations</h3>
         <div class="event-list" id="stockMovements"></div>
       </aside>
     </section>
@@ -141,8 +123,8 @@
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
-          <h3>Transfer Stock to Another Posko</h3>
-          <p>Kirim stok dari posko ini ke Dapur Umum, Posko Medis, Shelter, atau posko lain.</p>
+          <h3>Create Distribution Flow</h3>
+          <p>Buat Distribution Flow dari Posko ini ke Posko tujuan.</p>
         </div>
       </div>
 
@@ -166,7 +148,7 @@
         </div>
 
         <div class="form-actions">
-          <button class="btn primary" type="submit">Transfer Stock</button>
+          <button class="btn primary" type="submit">Create Distribution Flow</button>
         </div>
       </form>
     </section>
@@ -200,10 +182,9 @@
   </main>
 </div>
 
-<script src="../assets/js/posko-detail.js?v=4"></script>
-<script src="../assets/js/session-role.js?v=role-ui-1"></script>
-<script src="../assets/js/rn-sync-engine.js?v=event-sync-1"></script>
-<script src="../assets/js/rn-resource-booking.js?v=booking-sync-1"></script>
+<script src="../assets/js/rn-frappe-client.js?v=frappe-posko-final-1"></script>
+<script src="../assets/js/posko-detail.js?v=frappe-posko-final-1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=fix-20260820c"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=single-nav-20260822a"></script>

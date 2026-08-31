@@ -1,0 +1,300 @@
+[
+    {
+        "Id": "a904bbe8893d6bf2526e3dbee7ea7c4eb1d5a14bb22ca12a3e3c920dc4618fcc",
+        "Created": "2026-08-02T13:16:31.614513102Z",
+        "Path": "/usr/local/bin/entrypoint.sh",
+        "Args": [
+            "bash",
+            "-lc",
+            "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && bench --site osiun.localhost serve --port 8000"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 22632,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-08-27T01:53:24.948521481Z",
+            "FinishedAt": "2026-08-27T01:52:42.327027203Z",
+            "StartedTs": 1787795604,
+            "FinishedTs": 1787795562
+        },
+        "Image": "sha256:20e56826fc0d9682aaa3b84cd3ecee854960545452422f9212ff54115472f811",
+        "ResolvConfPath": "/volume1/@docker/containers/a904bbe8893d6bf2526e3dbee7ea7c4eb1d5a14bb22ca12a3e3c920dc4618fcc/resolv.conf",
+        "HostnamePath": "/volume1/@docker/containers/a904bbe8893d6bf2526e3dbee7ea7c4eb1d5a14bb22ca12a3e3c920dc4618fcc/hostname",
+        "HostsPath": "/volume1/@docker/containers/a904bbe8893d6bf2526e3dbee7ea7c4eb1d5a14bb22ca12a3e3c920dc4618fcc/hosts",
+        "LogPath": "/volume1/@docker/containers/a904bbe8893d6bf2526e3dbee7ea7c4eb1d5a14bb22ca12a3e3c920dc4618fcc/log.db",
+        "Name": "/osiun-frappe-backend",
+        "RestartCount": 37,
+        "Driver": "btrfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "/volume1/docker/osiun-frappe-shadow/apps/rescue_net:/home/frappe/frappe-bench/apps/rescue_net",
+                "/volume1/docker/osiun-frappe-shadow/sites:/home/frappe/frappe-bench/sites",
+                "/volume1/docker/osiun-frappe-shadow/logs:/home/frappe/frappe-bench/logs"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "db",
+                "Config": {}
+            },
+            "NetworkMode": "osiun-frappe-shadow_default",
+            "PortBindings": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "",
+                        "HostPort": "8095"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "unless-stopped",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "host",
+            "Dns": [],
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Env": [
+                "PATH=/home/frappe/.nvm/versions/node/v20.19.2/bin/:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "GPG_KEY=A035C8C19219BA821ECEA86B64E628F8D684696D",
+                "PYTHON_VERSION=3.11.6",
+                "PYTHON_PIP_VERSION=23.2.1",
+                "PYTHON_SETUPTOOLS_VERSION=65.5.1",
+                "PYTHON_GET_PIP_URL=https://github.com/pypa/get-pip/raw/4cfa4081d27285bda1220a62a5ebf5b4bd749cdb/public/get-pip.py",
+                "PYTHON_GET_PIP_SHA256=9cc01665956d22b3bf057ae8287b035827bfd895da235bcea200ab3b811790b6",
+                "NVM_DIR=/home/frappe/.nvm",
+                "DB_HOST=mariadb",
+                "DB_PORT=3306",
+                "REDIS_CACHE=redis-cache:6379",
+                "REDIS_QUEUE=redis-queue:6379",
+                "SOCKETIO_PORT=9000"
+            ],
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 0,
+            "NanoCpus": 0,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": null,
+            "BlkioDeviceWriteBps": null,
+            "BlkioDeviceReadIOps": null,
+            "BlkioDeviceWriteIOps": null,
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "KernelMemory": 0,
+            "KernelMemoryTCP": 0,
+            "MemoryReservation": 0,
+            "MemorySwap": 0,
+            "MemorySwappiness": null,
+            "OomKillDisable": false,
+            "PidsLimit": null,
+            "Ulimits": null,
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/asound",
+                "/proc/acpi",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "GraphDriver": {
+            "Data": null,
+            "Name": "btrfs"
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/volume1/docker/osiun-frappe-shadow/apps/rescue_net",
+                "Destination": "/home/frappe/frappe-bench/apps/rescue_net",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/volume1/docker/osiun-frappe-shadow/logs",
+                "Destination": "/home/frappe/frappe-bench/logs",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/volume1/docker/osiun-frappe-shadow/sites",
+                "Destination": "/home/frappe/frappe-bench/sites",
+                "Mode": "",
+                "RW": true,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "a904bbe8893d",
+            "Domainname": "",
+            "User": "frappe",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "8000/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/home/frappe/.nvm/versions/node/v20.19.2/bin/:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "GPG_KEY=A035C8C19219BA821ECEA86B64E628F8D684696D",
+                "PYTHON_VERSION=3.11.6",
+                "PYTHON_PIP_VERSION=23.2.1",
+                "PYTHON_SETUPTOOLS_VERSION=65.5.1",
+                "PYTHON_GET_PIP_URL=https://github.com/pypa/get-pip/raw/4cfa4081d27285bda1220a62a5ebf5b4bd749cdb/public/get-pip.py",
+                "PYTHON_GET_PIP_SHA256=9cc01665956d22b3bf057ae8287b035827bfd895da235bcea200ab3b811790b6",
+                "NVM_DIR=/home/frappe/.nvm",
+                "DB_HOST=mariadb",
+                "DB_PORT=3306",
+                "REDIS_CACHE=redis-cache:6379",
+                "REDIS_QUEUE=redis-queue:6379",
+                "SOCKETIO_PORT=9000"
+            ],
+            "Cmd": [
+                "bash",
+                "-lc",
+                "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && bench --site osiun.localhost serve --port 8000"
+            ],
+            "Image": "frappe/erpnext:v15",
+            "Volumes": {
+                "/home/frappe/frappe-bench/logs": {},
+                "/home/frappe/frappe-bench/sites": {}
+            },
+            "WorkingDir": "/home/frappe/frappe-bench",
+            "Entrypoint": [
+                "/usr/local/bin/entrypoint.sh"
+            ],
+            "OnBuild": null,
+            "Labels": {},
+            "DDSM": false
+        },
+        "NetworkSettings": {
+            "Bridge": "",
+            "SandboxID": "025b3f0cf992fc7a34be45ebf5840fb814d0ac19ebf8a318a2c73a79b481e1bf",
+            "HairpinMode": false,
+            "LinkLocalIPv6Address": "",
+            "LinkLocalIPv6PrefixLen": 0,
+            "Ports": {
+                "8000/tcp": [
+                    {
+                        "HostIp": "0.0.0.0",
+                        "HostPort": "8095"
+                    }
+                ]
+            },
+            "SandboxKey": "/var/run/docker/netns/025b3f0cf992",
+            "SecondaryIPAddresses": null,
+            "SecondaryIPv6Addresses": null,
+            "EndpointID": "",
+            "Gateway": "",
+            "GlobalIPv6Address": "",
+            "GlobalIPv6PrefixLen": 0,
+            "IPAddress": "",
+            "IPPrefixLen": 0,
+            "IPv6Gateway": "",
+            "MacAddress": "",
+            "Networks": {
+                "osiun-frappe-shadow_default": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "backend",
+                        "a904bbe8893d"
+                    ],
+                    "NetworkID": "1426b6fc9875524a9b666e76240a4c99806a658c226e9917a90f57e42a10351b",
+                    "EndpointID": "92a5788362a062b841d1f309f8af2604c13450e22a7b2ae3c63f0e42824dbe4a",
+                    "Gateway": "192.168.240.1",
+                    "IPAddress": "192.168.240.5",
+                    "IPPrefixLen": 20,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "MacAddress": "02:42:c0:a8:f0:05",
+                    "DriverOpts": null
+                },
+                "rescue-net-net": {
+                    "IPAMConfig": {},
+                    "Links": null,
+                    "Aliases": [
+                        "a904bbe8893d"
+                    ],
+                    "NetworkID": "5c90699f664720c26b6614fbb0a0596d41986a48afcf23d2395cfc8cce9098a6",
+                    "EndpointID": "2698dd9a0c4e29d87be809b9f5ecf85fe489e8d34f0c6d2c0b30179861586a07",
+                    "Gateway": "172.29.0.1",
+                    "IPAddress": "172.29.0.3",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "MacAddress": "02:42:ac:1d:00:03",
+                    "DriverOpts": {}
+                }
+            }
+        }
+    }
+]

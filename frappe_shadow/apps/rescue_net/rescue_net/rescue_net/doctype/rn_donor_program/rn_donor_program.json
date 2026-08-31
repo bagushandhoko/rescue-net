@@ -1,228 +1,230 @@
 {
-  "doctype": "DocType",
-  "name": "RN Donor Program",
-  "module": "Rescue Net",
-  "engine": "InnoDB",
-  "track_changes": 1,
-  "sort_field": "modified",
-  "sort_order": "DESC",
-  "field_order": [
-    "disaster_event",
-    "program_name",
-    "program_type",
-    "owner_type",
-    "owner_id",
-    "target_description",
-    "target_amount",
-    "target_unit",
-    "current_amount",
-    "status",
-    "location",
-    "contact_person",
-    "contact_phone",
-    "public_visibility",
-    "created_by_user",
-    "observed_at",
-    "notes",
-    "target_location",
-    "target_node_id",
-    "target_beneficiaries",
-    "budget_target",
-    "budget_received",
-    "budget_spent",
-    "priority",
-    "start_date",
-    "end_date",
-    "description",
-    "officer_in_charge_name",
-    "officer_in_charge_phone",
-    "evidence_file_id",
-    "updated_by_user"
-  ],
-  "fields": [
-    {
-      "fieldname": "disaster_event",
-      "fieldtype": "Data",
-      "label": "Disaster Event",
-      "reqd": 1
-    },
-    {
-      "fieldname": "program_name",
-      "fieldtype": "Data",
-      "label": "Program Name",
-      "reqd": 1
-    },
-    {
-      "fieldname": "program_type",
-      "fieldtype": "Data",
-      "label": "Program Type",
-      "default": "general_relief"
-    },
-    {
-      "fieldname": "owner_type",
-      "fieldtype": "Select",
-      "label": "Owner Type",
-      "options": "organization\nposko\ncommunity_group",
-      "default": "organization"
-    },
-    {
-      "fieldname": "owner_id",
-      "fieldtype": "Data",
-      "label": "Owner ID"
-    },
-    {
-      "fieldname": "target_description",
-      "fieldtype": "Small Text",
-      "label": "Target Description"
-    },
-    {
-      "fieldname": "target_amount",
-      "fieldtype": "Float",
-      "label": "Target Amount",
-      "default": "0"
-    },
-    {
-      "fieldname": "target_unit",
-      "fieldtype": "Data",
-      "label": "Target Unit",
-      "default": "IDR"
-    },
-    {
-      "fieldname": "current_amount",
-      "fieldtype": "Float",
-      "label": "Current Amount",
-      "default": "0",
-      "read_only": 1
-    },
-    {
-      "fieldname": "status",
-      "fieldtype": "Select",
-      "label": "Status",
-      "options": "planned\nactive\ncompleted\ncancelled",
-      "default": "active"
-    },
-    {
-      "fieldname": "location",
-      "fieldtype": "Data",
-      "label": "Location"
-    },
-    {
-      "fieldname": "contact_person",
-      "fieldtype": "Data",
-      "label": "Contact Person"
-    },
-    {
-      "fieldname": "contact_phone",
-      "fieldtype": "Data",
-      "label": "Contact Phone"
-    },
-    {
-      "fieldname": "public_visibility",
-      "fieldtype": "Select",
-      "label": "Public Visibility",
-      "options": "summary_public\ninternal\nrestricted",
-      "default": "summary_public"
-    },
-    {
-      "fieldname": "created_by_user",
-      "fieldtype": "Data",
-      "label": "Created By User",
-      "read_only": 1
-    },
-    {
-      "fieldname": "observed_at",
-      "fieldtype": "Datetime",
-      "label": "Observed At",
-      "read_only": 1
-    },
-    {
-      "fieldname": "notes",
-      "fieldtype": "Small Text",
-      "label": "Notes"
-    },
-    {
-      "fieldname": "target_location",
-      "fieldtype": "Data",
-      "label": "Target Location"
-    },
-    {
-      "fieldname": "target_node_id",
-      "fieldtype": "Data",
-      "label": "Target Node ID"
-    },
-    {
-      "fieldname": "target_beneficiaries",
-      "fieldtype": "Small Text",
-      "label": "Target Beneficiaries"
-    },
-    {
-      "fieldname": "budget_target",
-      "fieldtype": "Float",
-      "label": "Budget Target",
-      "default": "0"
-    },
-    {
-      "fieldname": "budget_received",
-      "fieldtype": "Float",
-      "label": "Budget Received",
-      "default": "0"
-    },
-    {
-      "fieldname": "budget_spent",
-      "fieldtype": "Float",
-      "label": "Budget Spent",
-      "default": "0"
-    },
-    {
-      "fieldname": "priority",
-      "fieldtype": "Data",
-      "label": "Priority",
-      "default": "normal"
-    },
-    {
-      "fieldname": "start_date",
-      "fieldtype": "Date",
-      "label": "Start Date"
-    },
-    {
-      "fieldname": "end_date",
-      "fieldtype": "Date",
-      "label": "End Date"
-    },
-    {
-      "fieldname": "description",
-      "fieldtype": "Small Text",
-      "label": "Description"
-    },
-    {
-      "fieldname": "officer_in_charge_name",
-      "fieldtype": "Data",
-      "label": "Officer in Charge"
-    },
-    {
-      "fieldname": "officer_in_charge_phone",
-      "fieldtype": "Data",
-      "label": "Officer Phone"
-    },
-    {
-      "fieldname": "evidence_file_id",
-      "fieldtype": "Data",
-      "label": "Evidence File ID"
-    },
-    {
-      "fieldname": "updated_by_user",
-      "fieldtype": "Data",
-      "label": "Updated By User",
-      "read_only": 1
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Donor Program",
+ "module": "Rescue Net",
+ "engine": "InnoDB",
+ "track_changes": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "field_order": [
+  "disaster_event",
+  "program_name",
+  "program_type",
+  "owner_type",
+  "owner_id",
+  "target_description",
+  "target_amount",
+  "target_unit",
+  "current_amount",
+  "status",
+  "location",
+  "contact_person",
+  "contact_phone",
+  "public_visibility",
+  "created_by_user",
+  "observed_at",
+  "notes",
+  "target_location",
+  "target_node_id",
+  "target_beneficiaries",
+  "budget_target",
+  "budget_received",
+  "budget_spent",
+  "priority",
+  "start_date",
+  "end_date",
+  "description",
+  "officer_in_charge_name",
+  "officer_in_charge_phone",
+  "evidence_file_id",
+  "updated_by_user"
+ ],
+ "fields": [
+  {
+   "fieldname": "disaster_event",
+   "fieldtype": "Link",
+   "label": "Disaster Event",
+   "reqd": 1,
+   "description": "Disaster event associated with this record.",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "program_name",
+   "fieldtype": "Data",
+   "label": "Program Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "program_type",
+   "fieldtype": "Data",
+   "label": "Program Type",
+   "default": "general_relief"
+  },
+  {
+   "fieldname": "owner_type",
+   "fieldtype": "Select",
+   "label": "Owner Type",
+   "options": "organization\nposko\ncommunity_group",
+   "default": "organization"
+  },
+  {
+   "fieldname": "owner_id",
+   "fieldtype": "Data",
+   "label": "Owner ID"
+  },
+  {
+   "fieldname": "target_description",
+   "fieldtype": "Small Text",
+   "label": "Target Description"
+  },
+  {
+   "fieldname": "target_amount",
+   "fieldtype": "Float",
+   "label": "Target Amount",
+   "default": "0"
+  },
+  {
+   "fieldname": "target_unit",
+   "fieldtype": "Data",
+   "label": "Target Unit",
+   "default": "IDR"
+  },
+  {
+   "fieldname": "current_amount",
+   "fieldtype": "Float",
+   "label": "Current Amount",
+   "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "planned\nactive\ncompleted\ncancelled",
+   "default": "active"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Data",
+   "label": "Location"
+  },
+  {
+   "fieldname": "contact_person",
+   "fieldtype": "Data",
+   "label": "Contact Person"
+  },
+  {
+   "fieldname": "contact_phone",
+   "fieldtype": "Data",
+   "label": "Contact Phone"
+  },
+  {
+   "fieldname": "public_visibility",
+   "fieldtype": "Select",
+   "label": "Public Visibility",
+   "options": "summary_public\ninternal\nrestricted",
+   "default": "summary_public"
+  },
+  {
+   "fieldname": "created_by_user",
+   "fieldtype": "Data",
+   "label": "Created By User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "observed_at",
+   "fieldtype": "Datetime",
+   "label": "Observed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "target_location",
+   "fieldtype": "Data",
+   "label": "Target Location"
+  },
+  {
+   "fieldname": "target_node_id",
+   "fieldtype": "Data",
+   "label": "Target Node ID"
+  },
+  {
+   "fieldname": "target_beneficiaries",
+   "fieldtype": "Small Text",
+   "label": "Target Beneficiaries"
+  },
+  {
+   "fieldname": "budget_target",
+   "fieldtype": "Float",
+   "label": "Budget Target",
+   "default": "0"
+  },
+  {
+   "fieldname": "budget_received",
+   "fieldtype": "Float",
+   "label": "Budget Received",
+   "default": "0"
+  },
+  {
+   "fieldname": "budget_spent",
+   "fieldtype": "Float",
+   "label": "Budget Spent",
+   "default": "0"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Data",
+   "label": "Priority",
+   "default": "normal"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "officer_in_charge_name",
+   "fieldtype": "Data",
+   "label": "Officer in Charge"
+  },
+  {
+   "fieldname": "officer_in_charge_phone",
+   "fieldtype": "Data",
+   "label": "Officer Phone"
+  },
+  {
+   "fieldname": "evidence_file_id",
+   "fieldtype": "Data",
+   "label": "Evidence File ID"
+  },
+  {
+   "fieldname": "updated_by_user",
+   "fieldtype": "Data",
+   "label": "Updated By User",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
 }

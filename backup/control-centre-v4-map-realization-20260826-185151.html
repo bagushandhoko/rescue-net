@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+  <title>Rescue-Net | Control Centre</title>
+
+  <link
+    rel="stylesheet"
+    href="../assets/css/rn-control-centre-v4.css?v=1"
+  >
+</head>
+
+<body>
+<div class="cc-shell">
+
+  <!-- =====================================================
+       DESKTOP SIDEBAR
+       ===================================================== -->
+  <aside class="cc-sidebar">
+    <a class="cc-brand" href="../index.html">
+      <span class="cc-logo">RN</span>
+      <span>Rescue-Net</span>
+    </a>
+
+    <nav class="cc-nav">
+      <a class="active" href="#">
+        <span data-icon="dashboard"></span>
+        Control Centre
+      </a>
+
+      <a href="map.html">
+        <span data-icon="map"></span>
+        Situasi & Peta
+      </a>
+
+      <a href="organisasi-posko.html">
+        <span data-icon="home"></span>
+        Posko
+      </a>
+
+      <a href="posko-logistik.html">
+        <span data-icon="package"></span>
+        Logistik
+      </a>
+
+      <a href="management-distribusi.html">
+        <span data-icon="truck"></span>
+        Distribusi
+      </a>
+
+      <a href="posko-medis-detail.html">
+        <span data-icon="heart"></span>
+        Medis
+      </a>
+
+      <a href="management-relawan.html">
+        <span data-icon="users"></span>
+        Relawan
+      </a>
+
+      <a href="kirim-bantuan.html">
+        <span data-icon="box"></span>
+        Donasi
+      </a>
+
+      <a href="program-khusus.html">
+        <span data-icon="clipboard"></span>
+        Program
+      </a>
+
+      <a href="search-found.html">
+        <span data-icon="search"></span>
+        Search & Found
+      </a>
+
+      <a href="laporan-masyarakat.html">
+        <span data-icon="report"></span>
+        Laporan
+      </a>
+    </nav>
+
+    <div class="cc-system-card">
+      <div class="cc-system-line">
+        <span class="cc-dot green"></span>
+        <strong>Status Sistem</strong>
+      </div>
+
+      <p>Semua sistem normal</p>
+
+      <div class="cc-system-divider"></div>
+
+      <small>Terakhir diperbarui</small>
+      <strong id="sidebarUpdated">-</strong>
+    </div>
+
+    <div class="cc-user-card">
+      <div class="cc-avatar">RN</div>
+      <div>
+        <strong>Rescue-Net</strong>
+        <span>Public Viewer</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- =====================================================
+       MAIN
+       ===================================================== -->
+  <main class="cc-main">
+
+    <!-- MOBILE TOP -->
+    <div class="cc-mobile-top">
+      <button class="cc-icon-btn" type="button" aria-label="Menu">
+        <span data-icon="menu"></span>
+      </button>
+
+      <span class="cc-logo">RN</span>
+
+      <button class="cc-icon-btn" type="button" aria-label="Notifikasi">
+        <span data-icon="bell"></span>
+      </button>
+    </div>
+
+    <!-- HEADER -->
+    <header class="cc-header">
+      <div class="cc-heading">
+        <div class="cc-title-row">
+          <h1>
+            <span class="desktop-only">Control Centre — </span>
+            <span id="disasterName">Memuat bencana...</span>
+          </h1>
+
+          <span
+            class="cc-alert-badge"
+            id="severityBadge"
+          >
+            -
+          </span>
+        </div>
+
+        <div class="cc-mobile-subtitle" id="mobileDisasterName">
+          -
+        </div>
+
+        <p>
+          Data diperbarui
+          <span id="lastUpdateRelative">-</span>
+          <span class="desktop-only"> • </span>
+          <span class="desktop-only" id="lastUpdated">-</span>
+        </p>
+      </div>
+
+      <div class="cc-header-actions">
+        <div class="cc-event-select-wrap">
+          <span data-icon="pin"></span>
+          <select
+            id="activeEventSelect"
+            aria-label="Pilih bencana aktif"
+          >
+            <option>Memuat...</option>
+          </select>
+        </div>
+
+        <button class="cc-share-btn" type="button" id="shareButton">
+          <span data-icon="share"></span>
+          Bagikan Situasi
+        </button>
+      </div>
+    </header>
+
+    <!-- =====================================================
+         KPI
+         ===================================================== -->
+    <section class="cc-kpi-grid">
+
+      <article class="cc-kpi red">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-icon" data-icon="people-risk"></span>
+          <div>
+            <span>Jiwa Berisiko</span>
+            <small>&lt;24 Jam</small>
+          </div>
+        </div>
+        <strong id="kpiRisk">-</strong>
+        <p id="kpiRiskTrend">Data live</p>
+        <div class="cc-progress"><i></i></div>
+      </article>
+
+      <article class="cc-kpi red">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-icon" data-icon="home"></span>
+          <div>
+            <span>Posko Kritis</span>
+          </div>
+        </div>
+        <strong id="kpiPoskoCritical">-</strong>
+        <p id="kpiPoskoTrend">Data live</p>
+        <div class="cc-progress"><i></i></div>
+      </article>
+
+      <article class="cc-kpi green">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-icon" data-icon="truck"></span>
+          <div>
+            <span>Bantuan Mengalir</span>
+          </div>
+        </div>
+        <strong id="kpiAidFlow">-</strong>
+        <p id="kpiAidTrend">Data live</p>
+        <div class="cc-progress"><i></i></div>
+      </article>
+
+      <article class="cc-kpi orange">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-icon" data-icon="road"></span>
+          <div>
+            <span>Distribusi Terhambat</span>
+          </div>
+        </div>
+        <strong id="kpiBlockedDistribution">-</strong>
+        <p id="kpiBlockedTrend">Data live</p>
+        <div class="cc-progress"><i></i></div>
+      </article>
+
+      <article class="cc-kpi red">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-icon" data-icon="heart"></span>
+          <div>
+            <span>Posko Medis Overload</span>
+          </div>
+        </div>
+        <strong id="kpiMedicalOverload">-</strong>
+        <p id="kpiMedicalTrend">Data live</p>
+        <div class="cc-progress"><i></i></div>
+      </article>
+
+      <article class="cc-kpi orange">
+        <div class="cc-kpi-top">
+          <span class="cc-kpi-icon" data-icon="box"></span>
+          <div>
+            <span>Donasi Menumpuk</span>
+          </div>
+        </div>
+        <strong id="kpiDonation">-</strong>
+        <p id="kpiDonationTrend">Data live</p>
+        <div class="cc-progress"><i></i></div>
+      </article>
+
+    </section>
+
+    <!-- =====================================================
+         PRIMARY GRID
+         ===================================================== -->
+    <section class="cc-primary-grid">
+
+      <!-- MAP -->
+      <article class="cc-panel cc-map-panel">
+        <header>
+          <h2 id="mapTitle">Peta Situasi</h2>
+        </header>
+
+        <div class="cc-map-frame">
+          <iframe
+            id="situationMap"
+            title="Peta Situasi"
+            loading="lazy"
+          ></iframe>
+        </div>
+
+        <footer class="cc-map-legend">
+          <span><i class="cc-dot red"></i>Kritis</span>
+          <span><i class="cc-dot orange"></i>Terganggu</span>
+          <span><i class="cc-dot green"></i>Aman</span>
+        </footer>
+      </article>
+
+      <!-- PRIORITY -->
+      <article class="cc-panel cc-priority-panel">
+        <header>
+          <h2>Prioritas Keputusan</h2>
+        </header>
+
+        <div
+          class="cc-priority-list"
+          id="priorityDecisionList"
+        >
+          <div class="cc-empty">Memuat prioritas...</div>
+        </div>
+
+        <footer>
+          <span>Lihat semua prioritas</span>
+          <span>→</span>
+        </footer>
+      </article>
+
+      <!-- CRITICAL NEEDS -->
+      <article class="cc-panel cc-needs-panel">
+        <header>
+          <h2>Kebutuhan Kritis <small>(72 Jam)</small></h2>
+        </header>
+
+        <div class="cc-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Kebutuhan</th>
+                <th>Dibutuhkan</th>
+                <th>Tersedia</th>
+                <th>Gap</th>
+              </tr>
+            </thead>
+            <tbody id="criticalNeedsBody">
+              <tr>
+                <td colspan="4">Memuat kebutuhan...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <footer>
+          <span>Lihat semua kebutuhan</span>
+          <span>→</span>
+        </footer>
+      </article>
+
+      <!-- EVIDENCE -->
+      <article class="cc-panel cc-evidence-panel">
+        <header>
+          <h2>Bukti Lapangan Terkini</h2>
+        </header>
+
+        <div
+          class="cc-evidence-list"
+          id="latestEvidenceList"
+        >
+          <div class="cc-empty">Memuat bukti...</div>
+        </div>
+
+        <footer>
+          <span>Lihat semua bukti</span>
+          <span>→</span>
+        </footer>
+      </article>
+
+    </section>
+
+    <!-- =====================================================
+         MODULE CARDS
+         ===================================================== -->
+    <section class="cc-module-grid">
+
+      <article class="cc-module orange">
+        <header>
+          <span class="cc-module-icon" data-icon="package"></span>
+          <h3>Logistik</h3>
+        </header>
+
+        <span>Stok Tersedia</span>
+        <strong id="moduleLogisticsValue">-</strong>
+        <p id="moduleLogisticsDetail">-</p>
+        <div class="cc-spark" data-tone="orange"></div>
+
+        <footer>
+          <span>Status</span>
+          <b id="moduleLogisticsStatus">-</b>
+        </footer>
+      </article>
+
+      <article class="cc-module orange">
+        <header>
+          <span class="cc-module-icon" data-icon="truck"></span>
+          <h3>Distribusi</h3>
+        </header>
+
+        <span>Pengiriman Aktif</span>
+        <strong id="moduleDistributionValue">-</strong>
+        <p id="moduleDistributionDetail">-</p>
+        <div class="cc-spark" data-tone="orange"></div>
+
+        <footer>
+          <span>Status</span>
+          <b id="moduleDistributionStatus">-</b>
+        </footer>
+      </article>
+
+      <article class="cc-module red">
+        <header>
+          <span class="cc-module-icon" data-icon="heart"></span>
+          <h3>Medis</h3>
+        </header>
+
+        <span>Fasilitas Aktif</span>
+        <strong id="moduleMedicalValue">-</strong>
+        <p id="moduleMedicalDetail">-</p>
+        <div class="cc-spark" data-tone="red"></div>
+
+        <footer>
+          <span>Status</span>
+          <b id="moduleMedicalStatus">-</b>
+        </footer>
+      </article>
+
+      <article class="cc-module green">
+        <header>
+          <span class="cc-module-icon" data-icon="users"></span>
+          <h3>Relawan</h3>
+        </header>
+
+        <span>Relawan Aktif</span>
+        <strong id="moduleVolunteerValue">-</strong>
+        <p id="moduleVolunteerDetail">-</p>
+        <div class="cc-spark" data-tone="green"></div>
+
+        <footer>
+          <span>Status</span>
+          <b id="moduleVolunteerStatus">-</b>
+        </footer>
+      </article>
+
+      <article class="cc-module orange">
+        <header>
+          <span class="cc-module-icon" data-icon="clipboard"></span>
+          <h3>Program</h3>
+        </header>
+
+        <span>Program Berjalan</span>
+        <strong id="moduleProgramValue">-</strong>
+        <p id="moduleProgramDetail">-</p>
+        <div class="cc-spark" data-tone="orange"></div>
+
+        <footer>
+          <span>Status</span>
+          <b id="moduleProgramStatus">-</b>
+        </footer>
+      </article>
+
+      <article class="cc-module red">
+        <header>
+          <span class="cc-module-icon" data-icon="search"></span>
+          <h3>Search & Found</h3>
+        </header>
+
+        <span>Laporan Masuk</span>
+        <strong id="moduleSearchValue">-</strong>
+        <p id="moduleSearchDetail">-</p>
+        <div class="cc-spark" data-tone="red"></div>
+
+        <footer>
+          <span>Status</span>
+          <b id="moduleSearchStatus">-</b>
+        </footer>
+      </article>
+
+    </section>
+
+    <div class="cc-runtime-status" id="warRoomStatus">
+      Memuat Control Centre...
+    </div>
+
+  </main>
+
+  <!-- =====================================================
+       MOBILE BOTTOM NAV
+       ===================================================== -->
+  <nav class="cc-mobile-bottom">
+    <a class="active" href="#">
+      <span data-icon="dashboard"></span>
+      <small>Control Centre</small>
+    </a>
+
+    <a href="map.html">
+      <span data-icon="map"></span>
+      <small>Peta</small>
+    </a>
+
+    <a href="organisasi-posko.html">
+      <span data-icon="home"></span>
+      <small>Posko</small>
+    </a>
+
+    <a href="kirim-bantuan.html">
+      <span data-icon="truck"></span>
+      <small>Kirim Bantuan</small>
+    </a>
+
+    <a href="#">
+      <span data-icon="menu"></span>
+      <small>Lainnya</small>
+    </a>
+  </nav>
+
+</div>
+
+<script src="../assets/js/rn-control-centre-v4.js?v=1"></script>
+</body>
+</html>

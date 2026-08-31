@@ -2,6 +2,7 @@ import hashlib
 import json
 
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 import requests
 from frappe.utils import now_datetime
 
@@ -512,14 +513,188 @@ def _active_count(rows):
     )
 
 
+def _num(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _enrich_needs(rows):
+    """Surface real realisasi/gap for the Control Centre critical-needs table.
+
+    RN Logistic Need has no fulfilled column; the seeds keep the real numbers
+    in legacy_payload (required_quantity / realized_quantity / gap). Expose
+    them as clean numeric fields and normalise priority/status aliases, then
+    drop the raw payload so nothing private leaks to the public dashboard.
+    """
+    import json
+
+    for row in rows:
+        payload = row.pop("legacy_payload", None)
+
+        if isinstance(payload, str) and payload.strip():
+            try:
+                payload = json.loads(payload)
+            except (ValueError, TypeError):
+                payload = None
+
+        if not isinstance(payload, dict):
+            payload = {}
+
+        required = _num(
+            payload.get("required_quantity")
+            or payload.get("quantity_needed")
+            or payload.get("quantity_final")
+            or row.get("quantity")
+        )
+
+        realized = _num(
+            payload.get("realized_quantity")
+            or payload.get("fulfilled_quantity")
+            or payload.get("delivered_quantity")
+        )
+
+        if realized > required > 0:
+            realized = required
+
+        gap = max(0.0, required - realized)
+
+        row["required_quantity"] = required
+        row["quantity_required"] = required
+        row["realized_quantity"] = realized
+        row["fulfilled_quantity"] = realized
+        row["gap"] = gap
+        row["realization_percent"] = (
+            round(realized / required * 100, 1)
+            if required > 0
+            else 0.0
+        )
+
+        row["priority"] = (
+            row.get("priority")
+            or row.get("urgency")
+            or payload.get("priority")
+            or "normal"
+        )
+        row["status"] = (
+            row.get("status")
+            or row.get("need_status")
+            or payload.get("status")
+            or "open"
+        )
+
+
+
+def _resolve_disaster_event(value):
+    if not value:
+        return value
+
+    value = str(value).strip()
+
+    if frappe.db.exists(
+        "RN Disaster Event",
+        value,
+    ):
+        return value
+
+    candidates = [value]
+
+    if not value.startswith(
+        "disaster_events:"
+    ):
+        candidates.append(
+            "disaster_events:" + value
+        )
+
+    for legacy_id in candidates:
+        name = frappe.db.get_value(
+            "RN Disaster Event",
+            {"legacy_id": legacy_id},
+            "name",
+        )
+
+        if name:
+            return name
+
+        if frappe.db.exists(
+            "RN Disaster Event",
+            legacy_id,
+        ):
+            return legacy_id
+
+    return value
+
+
+def _disaster_summary(name):
+    if not name:
+        return None
+
+    if not frappe.db.exists(
+        "RN Disaster Event",
+        name,
+    ):
+        return None
+
+    meta = frappe.get_meta(
+        "RN Disaster Event"
+    )
+
+    candidates = (
+        "title",
+        "status",
+        "disaster_type",
+        "severity",
+        "location",
+        "start_date",
+        "end_date",
+    )
+
+    fields = ["name"]
+
+    for fieldname in candidates:
+        if meta.has_field(fieldname):
+            fields.append(fieldname)
+
+    row = frappe.db.get_value(
+        "RN Disaster Event",
+        name,
+        fields,
+        as_dict=True,
+    )
+
+    return dict(row) if row else None
+
 @frappe.whitelist()
-def context(disaster_event_id):
-    _require_login()
-    _ai_scope_poskos(refresh=True)
+def _build_context(disaster_event_id, public=False):
+    # RN_CANONICAL_REF disaster_event_id = resolve_disaster_event(disaster_event_id)
+    disaster_event_id = resolve_disaster_event(disaster_event_id)
+    if public:
+        # Guest viewer Control Centre:
+        # global read scope, but result will
+        # be sanitized before leaving API.
+        setattr(
+            frappe.local,
+            "_rn_ai_scope_poskos",
+            None,
+        )
+    else:
+        _require_login()
+        _ai_scope_poskos(
+            refresh=True
+        )
+
+    resolved_event = _resolve_disaster_event(
+        disaster_event_id
+    )
+
+    disaster = _disaster_summary(
+        resolved_event
+    )
 
     poskos = _rows(
         "RN Posko",
-        disaster_event_id,
+        resolved_event,
         [
             "posko_name",
             "location",
@@ -530,7 +705,7 @@ def context(disaster_event_id):
 
     needs = _rows(
         "RN Logistic Need",
-        disaster_event_id,
+        resolved_event,
         [
             "item_name",
             "quantity",
@@ -538,13 +713,18 @@ def context(disaster_event_id):
             "priority",
             "status",
             "need_status",
+            "urgency",
             "location",
+            "needed_before",
+            "legacy_payload",
         ],
     )
 
+    _enrich_needs(needs)
+
     offers = _rows(
         "RN Aid Offer",
-        disaster_event_id,
+        resolved_event,
         [
             "item_name",
             "quantity",
@@ -555,7 +735,7 @@ def context(disaster_event_id):
 
     flows = _rows(
         "RN Distribution Flow",
-        disaster_event_id,
+        resolved_event,
         [
             "item_name",
             "quantity",
@@ -567,7 +747,7 @@ def context(disaster_event_id):
 
     stock = _rows(
         "RN Stock Observation",
-        disaster_event_id,
+        resolved_event,
         [
             "item_name",
             "quantity",
@@ -579,7 +759,7 @@ def context(disaster_event_id):
 
     kitchen = _rows(
         "RN Kitchen Production",
-        disaster_event_id,
+        resolved_event,
         [
             "meal_name",
             "portions",
@@ -591,7 +771,7 @@ def context(disaster_event_id):
 
     medical = _rows(
         "RN Medical Case",
-        disaster_event_id,
+        resolved_event,
         [
             "triage_level",
             "case_status",
@@ -603,7 +783,7 @@ def context(disaster_event_id):
 
     shelter_occ = _rows(
         "RN Shelter Occupancy",
-        disaster_event_id,
+        resolved_event,
         [
             "shelter_name",
             "capacity_total",
@@ -615,7 +795,7 @@ def context(disaster_event_id):
 
     shelter_needs = _rows(
         "RN Shelter Need",
-        disaster_event_id,
+        resolved_event,
         [
             "item_name",
             "quantity",
@@ -630,21 +810,21 @@ def context(disaster_event_id):
     # no names, contacts or identity attributes.
     missing = _rows(
         "RN Missing Person Report",
-        disaster_event_id,
+        resolved_event,
         ["status"],
         50,
     )
 
     found = _rows(
         "RN Found Person Report",
-        disaster_event_id,
+        resolved_event,
         ["status"],
         50,
     )
 
     matches = _rows(
         "RN Search Found Match",
-        disaster_event_id,
+        resolved_event,
         [
             "status",
             "match_status",
@@ -655,7 +835,7 @@ def context(disaster_event_id):
 
     resources = _rows(
         "RN Resource Profile",
-        disaster_event_id,
+        resolved_event,
         [
             "resource_name",
             "resource_type",
@@ -670,7 +850,7 @@ def context(disaster_event_id):
 
     recovery = _rows(
         "RN Recovery Project",
-        disaster_event_id,
+        resolved_event,
         [
             "project_name",
             "project_type",
@@ -686,7 +866,7 @@ def context(disaster_event_id):
 
     programs = _rows(
         "RN Donor Program",
-        disaster_event_id,
+        resolved_event,
         [
             "program_name",
             "program_type",
@@ -705,6 +885,22 @@ def context(disaster_event_id):
         if x.get("program_type")
         == "special_program"
     ]
+
+    program_updates = _rows(
+        "RN Donor Program Update",
+        resolved_event,
+        [
+            "program",
+            "update_type",
+            "update_title",
+            "progress_percent",
+            "amount_spent",
+            "amount_unit",
+            "update_notes",
+            "observed_at",
+        ],
+        80,
+    )
 
     open_needs = (
         _active_count(needs)
@@ -734,6 +930,14 @@ def context(disaster_event_id):
             len(programs),
         "special_program_count":
             len(special_programs),
+        "stock_item_count":
+            len(stock),
+        "meal_production_count":
+            len(kitchen),
+        "missing_person_count":
+            len(missing),
+        "found_person_count":
+            len(found),
     }
 
     alerts = []
@@ -745,10 +949,6 @@ def context(disaster_event_id):
             "message":
                 f"{open_needs} kebutuhan masih aktif.",
         })
-        recommendations.append(
-            "Prioritaskan kebutuhan aktif "
-            "berdasarkan urgensi dan bukti."
-        )
 
     unavailable = [
         x for x in resources
@@ -774,18 +974,117 @@ def context(disaster_event_id):
         }
     ]
 
-    if recovery_active:
-        recommendations.append(
-            f"Pantau {len(recovery_active)} "
-            "proyek recovery aktif."
+    # ----------------------------------------------------------
+    # Priority decisions - real records first, computed fallback.
+    # Each item is {title, reason} so the Control Centre panel
+    # renders text instead of a bare "Prioritas" label.
+    # ----------------------------------------------------------
+    urgent_terms = {"critical", "urgent", "high", "tinggi", "darurat"}
+
+    ranked_needs = sorted(
+        (
+            row for row in needs
+            if _status(row) not in {
+                "fulfilled", "closed", "cancelled", "completed",
+            }
+        ),
+        key=lambda row: (
+            0 if str(row.get("priority", "")).lower() in urgent_terms else 1,
+            -_num(row.get("gap")),
+        ),
+    )
+
+    for row in ranked_needs[:3]:
+        item = (
+            row.get("item_name")
+            or row.get("title")
+            or "Kebutuhan"
         )
+        gap = _num(row.get("gap"))
+        pct = _num(row.get("realization_percent"))
+        unit = row.get("unit") or ""
+        recommendations.append({
+            "title": f"Tutup gap: {item}",
+            "reason": (
+                f"Realisasi {pct:.0f}%, sisa "
+                f"{gap:,.0f} {unit}".strip()
+                + (
+                    f" - {row.get('location')}"
+                    if row.get("location") else ""
+                )
+            ),
+            "priority": row.get("priority") or "urgent",
+        })
+
+    action_plans = _rows(
+        "RN Action Plan",
+        resolved_event,
+        [
+            "title",
+            "category",
+            "priority",
+            "status",
+            "target_quantity",
+            "target_unit",
+            "assigned_to",
+            "notes",
+        ],
+        20,
+    )
+
+    for plan in action_plans:
+        if _status(plan) in {"completed", "cancelled", "done"}:
+            continue
+        target = _num(plan.get("target_quantity"))
+        bits = [b for b in [
+            plan.get("category"),
+            (
+                f"target {target:,.0f} {plan.get('target_unit') or ''}".strip()
+                if target else None
+            ),
+            (
+                f"PIC {plan.get('assigned_to')}"
+                if plan.get("assigned_to") else None
+            ),
+            plan.get("status"),
+        ] if b]
+        recommendations.append({
+            "title": plan.get("title") or "Rencana Aksi",
+            "reason": " - ".join(bits) or (plan.get("notes") or ""),
+            "priority": plan.get("priority") or "high",
+        })
+
+    for project in recovery_active:
+        recommendations.append({
+            "title": (
+                project.get("project_name")
+                or "Proyek recovery"
+            ),
+            "reason": (
+                f"Progress {_num(project.get('progress_percent')):.0f}% - "
+                f"{project.get('status') or 'aktif'}"
+            ),
+            "priority": project.get("priority") or "normal",
+        })
+
+    if not recommendations and open_needs:
+        recommendations.append({
+            "title": "Prioritaskan kebutuhan aktif",
+            "reason": (
+                f"{open_needs} kebutuhan masih terbuka - "
+                "urutkan berdasarkan urgensi dan bukti."
+            ),
+            "priority": "high",
+        })
 
     summary["alert_count"] = len(alerts)
 
     return {
         "generated_at": now_datetime(),
         "disaster_event_id":
-            disaster_event_id,
+            resolved_event,
+        "disaster":
+            disaster,
         "summary": summary,
         "alerts": alerts,
         "recommendations":
@@ -796,6 +1095,8 @@ def context(disaster_event_id):
         "aid_offers": offers,
         "distribution_flows": flows,
         "kitchen_meal_productions":
+            kitchen,
+        "kitchen_productions":
             kitchen,
         "medical_cases": medical,
         "shelter_occupancies":
@@ -812,10 +1113,176 @@ def context(disaster_event_id):
             resources,
         "recovery_projects":
             recovery,
+        "donor_programs":
+            programs,
+        "donor_program_updates":
+            program_updates,
         "special_programs":
             special_programs,
     }
 
+
+def _public_scrub(value):
+    """
+    Remove private/contact/credential fields
+    recursively from public Control Centre data.
+    """
+    blocked_parts = (
+        "phone",
+        "email",
+        "contact",
+        "password",
+        "token",
+        "secret",
+        "api_key",
+        "identity",
+        "created_by_user",
+        "last_updated_by_user",
+    )
+
+    if isinstance(value, list):
+        return [
+            _public_scrub(x)
+            for x in value
+        ]
+
+    if isinstance(value, dict):
+        result = {}
+
+        for key, item in value.items():
+            low = str(key).lower()
+
+            if any(
+                part in low
+                for part in blocked_parts
+            ):
+                continue
+
+            result[key] = (
+                _public_scrub(item)
+            )
+
+        return result
+
+    return value
+
+
+@frappe.whitelist()
+def context(disaster_event_id):
+    return _build_context(
+        disaster_event_id,
+        public=False,
+    )
+
+
+@frappe.whitelist(allow_guest=True)
+def public_context(disaster_event_id):
+    ctx = _build_context(
+        disaster_event_id,
+        public=True,
+    )
+
+    result = _public_scrub(ctx)
+
+    # ========================================================
+    # Public Disaster identity
+    # ========================================================
+    # Context lama hanya membawa subset field.
+    # Untuk Control Centre publik, enrich menggunakan
+    # RN Disaster Event canonical, tetapi hanya field
+    # operasional yang aman ditampilkan publik.
+    disaster = result.get("disaster") or {}
+
+    disaster_name = (
+        disaster.get("name")
+        or result.get("disaster_event_id")
+    )
+
+    if disaster_name:
+        meta = frappe.get_meta(
+            "RN Disaster Event"
+        )
+
+        candidates = [
+            "title",
+            "event_type",
+            "disaster_type",
+            "severity",
+            "event_status",
+            "status",
+            "location_text",
+            "location",
+            "started_at",
+            "start_time",
+            "ended_at",
+            "end_time",
+            "description",
+        ]
+
+        fields = [
+            field
+            for field in candidates
+            if meta.has_field(field)
+        ]
+
+        if fields:
+            row = frappe.db.get_value(
+                "RN Disaster Event",
+                disaster_name,
+                fields,
+                as_dict=True,
+            )
+
+            if row:
+                disaster.update(
+                    dict(row)
+                )
+
+    # Canonical → compatibility aliases.
+    #
+    # Renderer Control Centre lama masih membaca
+    # disaster_type/status/location.
+    disaster["disaster_type"] = (
+        disaster.get("disaster_type")
+        or disaster.get("event_type")
+        or "disaster"
+    )
+
+    disaster["status"] = (
+        disaster.get("status")
+        or disaster.get("event_status")
+        or "active"
+    )
+
+    disaster["event_status"] = (
+        disaster.get("event_status")
+        or disaster.get("status")
+    )
+
+    disaster["location"] = (
+        disaster.get("location")
+        or disaster.get("location_text")
+        or ""
+    )
+
+    disaster["location_text"] = (
+        disaster.get("location_text")
+        or disaster.get("location")
+        or ""
+    )
+
+    disaster["title"] = (
+        disaster.get("title")
+        or disaster.get("name")
+        or "Disaster Event"
+    )
+
+    result["disaster"] = disaster
+
+    result["viewer_mode"] = "public"
+    result["read_only"] = True
+
+    return result
 
 @frappe.whitelist()
 def ask(
@@ -1082,4 +1549,242 @@ recovery coordination.
                 setting.api_key_last4
                 or ""
             ),
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def public_active_disasters():
+    rows = frappe.get_all(
+        "RN Disaster Event",
+        filters={
+            "event_status": "active"
+        },
+        fields=[
+            "name",
+            "legacy_id",
+            "title",
+            "severity",
+            "event_status",
+            "started_at",
+        ],
+        order_by="started_at desc",
+        limit_page_length=100,
+    )
+
+    return [
+        {
+            "id":
+                row.legacy_id
+                or row.name,
+
+            "name":
+                row.name,
+
+            "legacy_id":
+                row.legacy_id,
+
+            "title":
+                row.title
+                or row.name,
+
+            "severity":
+                row.severity,
+
+            "status":
+                row.event_status,
+
+            "event_status":
+                row.event_status,
+
+            "started_at":
+                row.started_at,
+        }
+        for row in rows
+    ]
+
+
+@frappe.whitelist(allow_guest=True)
+def public_map_context(disaster_event_id):
+    disaster_event_id = str(
+        disaster_event_id or ""
+    ).strip()
+
+    if not disaster_event_id:
+        frappe.throw(
+            "disaster_event_id diperlukan"
+        )
+
+    if not disaster_event_id.startswith(
+        "disaster_events:"
+    ):
+        canonical_event = (
+            "disaster_events:"
+            + disaster_event_id
+        )
+    else:
+        canonical_event = disaster_event_id
+
+    meta = frappe.get_meta(
+        "RN Posko"
+    )
+
+    columns = set(
+        meta.get_valid_columns()
+    )
+
+    wanted = [
+        "name",
+        "legacy_id",
+        "title",
+        "posko_type",
+        "address",
+        "status",
+        "operational_status",
+        "severity",
+        "latitude",
+        "longitude",
+        "lat",
+        "lng",
+        "disaster_event",
+        "disaster_event_id",
+    ]
+
+    fields = [
+        field
+        for field in wanted
+        if field == "name"
+        or field in columns
+    ]
+
+    filters = {}
+
+    if "disaster_event" in columns:
+        filters["disaster_event"] = canonical_event
+    elif "disaster_event_id" in columns:
+        filters["disaster_event_id"] = canonical_event
+
+    rows = frappe.get_all(
+        "RN Posko",
+        filters=filters,
+        fields=fields,
+        limit_page_length=500,
+    )
+
+    points = []
+
+    for row in rows:
+        row = dict(row)
+
+        lat = (
+            row.get("latitude")
+            or row.get("lat")
+        )
+
+        lng = (
+            row.get("longitude")
+            or row.get("lng")
+        )
+
+        try:
+            lat = float(lat)
+            lng = float(lng)
+        except (TypeError, ValueError):
+            continue
+
+        status = str(
+            row.get("operational_status")
+            or row.get("severity")
+            or row.get("status")
+            or "normal"
+        ).lower()
+
+        if status in {
+            "critical",
+            "overload",
+            "danger",
+            "emergency",
+        }:
+            situation = "critical"
+
+        elif status in {
+            "urgent",
+            "warning",
+            "affected",
+            "disrupted",
+        }:
+            situation = "warning"
+
+        else:
+            situation = "safe"
+
+        points.append({
+            "id":
+                row.get("legacy_id")
+                or row.get("name"),
+
+            "name":
+                row.get("title")
+                or row.get("name"),
+
+            "posko_type":
+                row.get("posko_type"),
+
+            "address":
+                row.get("address"),
+
+            "latitude":
+                lat,
+
+            "longitude":
+                lng,
+
+            "status":
+                status,
+
+            "situation":
+                situation,
+
+            "google_maps_url":
+                "https://www.google.com/maps/search/"
+                "?api=1&query="
+                + str(lat)
+                + ","
+                + str(lng),
+        })
+
+    return {
+        "disaster_event_id":
+            canonical_event,
+
+        "points":
+            points,
+
+        "summary": {
+            "total":
+                len(points),
+
+            "critical":
+                sum(
+                    1
+                    for p in points
+                    if p["situation"]
+                    == "critical"
+                ),
+
+            "warning":
+                sum(
+                    1
+                    for p in points
+                    if p["situation"]
+                    == "warning"
+                ),
+
+            "safe":
+                sum(
+                    1
+                    for p in points
+                    if p["situation"]
+                    == "safe"
+                ),
+        },
     }

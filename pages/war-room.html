@@ -2,386 +2,487 @@
 <html lang="id">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover"
+  >
+
   <title>Rescue-Net | Control Centre</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=fix-20260820d">
-  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=unified-menu-20260821f" />
-  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=unified-menu-20260821f" />
-  <link rel="stylesheet" href="../assets/css/rn-war-room.css?v=war-tabs-v3-1785647955" />
+
+  <link
+    rel="stylesheet"
+    href="../assets/vendor/leaflet/leaflet.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="../assets/css/rn-control-centre-final.css?v=visfeed-20260831"
+  >
 </head>
+
 <body>
-<div class="app-shell">
-  <aside class="sidebar">
-    <div class="brand">
-      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
-      <div>
-        <h1>Rescue-Net</h1>
-        <p>Disaster Management System</p>
-      </div>
+
+<div class="cc">
+
+  <!-- SIDEBAR DESKTOP -->
+  <aside class="cc-sidebar">
+
+    <div class="cc-brand">
+      <div class="cc-brand-logo">RN</div>
+      <strong>Rescue-Net</strong>
     </div>
 
     <nav>
-      <a href="../index.html">Active Disasters</a>
-      <a href="war-room.html?event=event-sim-001">Control Centre</a>
-      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
-      <a href="map.html?event=event-sim-001">Map</a>
-      <a href="organisasi-posko.html">Organisasi & Posko</a>
-      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
-      <a href="posko-logistik.html">Logistik</a>
-      <a href="management-distribusi.html">Distribusi</a>
-      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
-      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
-      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
-      <a href="search-found.html?event=event-sim-001">Search & Found</a>
-      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
-      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
-      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
-      <a href="kirim-bantuan.html">Kirim Bantuan</a>
-      <a href="management-relawan.html">Relawan</a>
-      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
-      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
-      <a href="evidence.html?event=event-sim-001">Evidence</a>
-      <a href="verification-approval.html?event=event-sim-001">Verification</a>
-      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
-      <a href="ai-settings.html">AI Settings</a>
-      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
-      <a href="contact-directory.html">Contact Directory</a>
+      <a class="active">▦ Control Centre</a>
+      <a href="map.html">⌖ Situasi & Peta</a>
+      <a href="organisasi-posko.html">⌂ Posko</a>
+      <a href="posko-logistik.html">□ Logistik</a>
+      <a href="management-distribusi.html">⇄ Distribusi</a>
+      <a href="posko-medis-detail.html">♡ Medis</a>
+      <a href="management-relawan.html">♙ Relawan</a>
+      <a href="kirim-bantuan.html">◇ Donasi</a>
+      <a href="program-khusus.html">▤ Program</a>
+      <a href="search-found.html">⌕ Search & Found</a>
     </nav>
+
+    <div class="cc-system">
+      <strong>
+        <i></i>
+        Status Sistem
+      </strong>
+
+      <span>Semua sistem normal</span>
+
+      <hr>
+
+      <small>Terakhir diperbarui</small>
+      <b id="sidebarUpdated">-</b>
+    </div>
+
   </aside>
 
-  <main class="main warroom-main">
-    <header class="topbar">
-    <div class="rn-page-mobile-title">Control Centre</div>
 
-<div>
-        <p class="eyebrow">Command Center Dashboard</p>
-        <h2>Control Centre</h2>
-        <p class="subtitle">Dashboard pusat komando yang membaca semua modul live Rescue-Net.</p>
-        <p class="subtitle" id="warRoomStatus">Loading live context...</p>
-        <p class="subtitle" id="rnSyncStatus" data-rn-sync-status>Sync idle.</p>
+  <main class="cc-main">
+
+    <!-- MOBILE HEADER -->
+    <div class="cc-mobile-bar">
+      <button>☰</button>
+      <div class="cc-brand-logo">RN</div>
+      <button>♢</button>
+    </div>
+
+
+    <!-- HEADER -->
+    <header class="cc-header">
+
+      <div>
+        <h1>
+          <span class="desktop-only">
+            Control Centre —
+          </span>
+
+          <span id="disasterName">
+            Memuat...
+          </span>
+        </h1>
+
+        <div
+          id="mobileDisasterName"
+          class="cc-mobile-disaster"
+        ></div>
+
+        <p>
+          Data diperbarui
+          <span id="lastUpdateRelative">
+            -
+          </span>
+        </p>
       </div>
-      <div class="form-actions">
-        <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
-        <button class="btn primary" id="refreshWarRoom">Refresh Control Centre</button>
+
+      <div class="cc-header-actions">
+
+        <select id="activeEventSelect">
+          <option>Memuat...</option>
+        </select>
+
+        <span
+          id="severityBadge"
+          class="cc-severity"
+        >
+          -
+        </span>
+
       </div>
+
     </header>
 
-    <section class="hero-command panel">
-      <div>
-        <p class="eyebrow">Live Disaster</p>
-        <h3 id="disasterName">Loading...</h3>
-        <p id="disasterMeta" class="subtitle">-</p>
-        <div class="chips">
-          <span class="chip warning" id="eventIdChip">event</span>
-          <span class="chip" id="severityChip">severity</span>
-          <span class="chip" id="statusChip">status</span>
-        </div>
-      </div>
-      <div class="command-clock">
-        <span>Operational Time</span>
-        <strong id="clockNow">--:--</strong>
-        <small id="generatedAt">-</small>
-      </div>
-    </section>
 
-    <section class="kpi-grid">
-      <div class="kpi-card danger"><span>Alerts</span><strong id="kpiAlerts">0</strong><small>critical risks</small></div>
-      <div class="kpi-card"><span>Posko</span><strong id="kpiPosko">0</strong><small>active nodes</small></div>
-      <div class="kpi-card warning"><span>Open Needs</span><strong id="kpiNeeds">0</strong><small>logistics + shelter</small></div>
-      <div class="kpi-card"><span>Stock Items</span><strong id="kpiStock">0</strong><small>tracked inventory</small></div>
-    </section>
+    <!-- KEBUTUHAN 2 KOLOM -->
+    <section class="cc-needs">
 
-    <section class="kpi-grid">
-      <div class="kpi-card"><span>Meal Production</span><strong id="kpiMeals">0</strong><small>dapur umum</small></div>
-      <div class="kpi-card warning"><span>Medical Cases</span><strong id="kpiMedical">0</strong><small>restricted</small></div>
-      <div class="kpi-card"><span>Shelter</span><strong id="kpiShelter">0</strong><small>occupancy rows</small></div>
-      <div class="kpi-card danger"><span>Missing</span><strong id="kpiMissing">0</strong><small>open reports</small></div>
-    </section>
+      <div class="cc-section-title">
+        <strong>
+          Kebutuhan Kritis
+        </strong>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Kebutuhan Kritis (72 Jam)</h3>
-            <p>Kebutuhan logistik terbuka dengan prioritas tertinggi, dibandingkan stok yang tersedia.</p>
-          </div>
-        </div>
-        <div class="rn-table-wrap">
-          <table class="rn-table" id="criticalNeedsTable">
-            <thead>
-              <tr><th>Kebutuhan</th><th>Dibutuhkan</th><th>Tersedia</th><th>Gap</th></tr>
-            </thead>
-            <tbody id="criticalNeedsBody"></tbody>
-          </table>
-        </div>
+        <span>
+          72 Jam • Kebutuhan vs Realisasi
+        </span>
       </div>
 
-      <aside class="panel summary">
-        <h3>Kebutuhan menurut Lokasi</h3>
-        <p class="subtitle">Needs map (ringkas per lokasi posko, sambil menunggu titik GPS posko terisi).</p>
-        <div class="summary-list" id="needsByLocation"></div>
-      </aside>
-    </section>
+      <div class="cc-needs-grid">
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Distribution Status</h3>
-            <p>Planned, dispatched, delivered, confirmed - status distribusi bantuan saat ini.</p>
-          </div>
-        </div>
-        <div class="rn-table-wrap">
-          <table class="rn-table" id="distributionStatusTable">
-            <thead>
-              <tr><th>Status</th><th>Jumlah Flow</th></tr>
-            </thead>
-            <tbody id="distributionStatusBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+        <table>
+          <thead>
+            <tr>
+              <th>Kebutuhan</th>
+              <th>Butuh</th>
+              <th>Realisasi</th>
+              <th>Progress</th>
+              <th>Gap</th>
+            </tr>
+          </thead>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Skenario Konsolidasi Nasional</h3>
-            <p>Pilih cara membaca kebutuhan logistik, alat kerja, relawan, dan data nasional sebelum keputusan bantuan.</p>
-          </div>
-          <div class="form-actions scenario-actions" role="group" aria-label="Skenario konsolidasi">
-            <button class="btn" type="button" data-war-scenario="minimum">Minimum</button>
-            <button class="btn primary" type="button" data-war-scenario="optimal">Optimal</button>
-            <button class="btn" type="button" data-war-scenario="maximum">Maximum</button>
-          </div>
-        </div>
-        <div class="event-list" id="warScenarioRollup"></div>
-      </div>
+          <tbody id="criticalNeedsBodyLeft">
+            <tr>
+              <td colspan="5">
+                Memuat...
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-      <aside class="panel summary">
-        <h3>Aturan Skenario</h3>
-        <div class="summary-list" id="warScenarioRules">
-          <div><span>Minimum</span><b>min tanpa agregat</b></div>
-          <div><span>Optimal</span><b>MAX per posko</b></div>
-          <div><span>Maximum</span><b>plus agregat</b></div>
-        </div>
-        <p class="subtitle" id="warScenarioStatus">Scenario: optimal.</p>
-      </aside>
-    </section>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Trusted Verifier</h3>
-            <p>Trust identitas dipakai sebagai sinyal prioritas kontak, bukan bukti bahwa laporan atau kebutuhan sudah benar.</p>
-          </div>
-          <a class="btn" href="verification-approval.html?event=event-sim-001">Open Verification</a>
-        </div>
-        <div class="event-list" id="warTrustedVerifierList"></div>
-      </div>
-      <aside class="panel summary">
-        <h3>Verification Signal</h3>
-        <div class="summary-list" id="warTrustedVerifierSummary"></div>
-      </aside>
-    </section>
+        <table>
+          <thead>
+            <tr>
+              <th>Kebutuhan</th>
+              <th>Butuh</th>
+              <th>Realisasi</th>
+              <th>Progress</th>
+              <th>Gap</th>
+            </tr>
+          </thead>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Koreksi Komando</h3>
-            <p>Pilih data konflik/detail, koreksi nilai di tingkat pusat, dan RN akan menandai porsi koreksi manual di angka nasional.</p>
-          </div>
-        </div>
-        <form class="rn-form" id="commandCorrectionForm">
-          <div class="form-grid">
-            <label>Data yang dikoreksi
-              <select name="target_id" id="commandCorrectionTarget"></select>
-            </label>
-            <label>Nilai koreksi pusat
-              <input name="corrected_quantity" type="number" min="0" step="0.01" placeholder="Contoh: 1000">
-            </label>
-            <label>Alasan koreksi
-              <select name="correction_reason">
-                <option value="command_verification">Verifikasi pusat</option>
-                <option value="conflict_resolution">Resolusi data konflik</option>
-                <option value="field_call_confirmation">Konfirmasi telepon lapangan</option>
-                <option value="official_command_update">Update komando resmi</option>
-              </select>
-            </label>
-            <label>Catatan
-              <input name="correction_note" placeholder="Contoh: posko A/B overlap, angka pusat dipakai sementara">
-            </label>
-          </div>
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Simpan Koreksi</button>
-            <button class="btn" type="button" id="refreshCorrectionTargets">Refresh Data Konflik</button>
-          </div>
-        </form>
+          <tbody id="criticalNeedsBodyRight">
+            <tr>
+              <td colspan="5">
+                Memuat...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
       </div>
 
-      <aside class="panel summary">
-        <h3>Manual Correction Trace</h3>
-        <p class="subtitle" id="commandCorrectionStatus">Belum ada koreksi dipilih.</p>
-        <div class="event-list" id="commandCorrectionTrace"></div>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Laporan Masyarakat</h3>
-            <p>Community intelligence: pending, verified, dan high priority report dari warga/relawan/posko.</p>
-          </div>
-          <a class="btn" href="laporan-masyarakat.html">Open Queue</a>
-        </div>
-        <div class="event-list" id="communityReportsList"></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Community Report Status</h3>
-        <div class="summary-list" id="communityReportSummary">
-          <div><span>Submitted</span><b>0</b></div>
-          <div><span>Verified</span><b>0</b></div>
-          <div><span>Escalated</span><b>0</b></div>
-        </div>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Critical Alerts</h3>
-            <p>Risiko operasional prioritas tertinggi.</p>
-          </div>
-        </div>
-        <div class="event-list" id="alertsList"></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>AI Recommendations</h3>
-        <p class="subtitle">Rekomendasi otomatis dari data operasional.</p>
-        <div class="event-list" id="recommendationsList"></div>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Stock & Logistics Watch</h3>
-            <p>Stok, kebutuhan logistik, dan titik kritis distribusi.</p>
-          </div>
-        </div>
-        <div class="event-list" id="stockWatch"></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Operational Modules</h3>
-        <div class="summary-list" id="moduleSummary"></div>
-      </aside>
-    </section>
-  
-    
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Program Khusus</h3>
-            <p>Program bantuan khusus, donor program, PLTS, air bersih, obat, dapur umum, atau dukungan infrastruktur darurat.</p>
-          </div>
-          <a class="btn" href="program-khusus.html?event=event-sim-001">Open Program</a>
-        </div>
-        <div class="event-list" id="specialProgramsList"></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Program Updates</h3>
-        <p class="subtitle">Progress dan pengeluaran terakhir.</p>
-        <div class="event-list" id="specialProgramUpdatesList"></div>
-      </aside>
-    </section>
-
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>Quick Transport Booking</h3>
-          <p>Test booking transport/resource. Jika offline, tersimpan lokal dan otomatis sync saat online.</p>
-          <p class="subtitle" id="rnBookingStatus" data-rn-booking-status>Booking idle.</p>
-        </div>
-      </div>
-
-      <form class="rn-form" id="quickBookingForm">
-        <div class="form-grid">
-          <label>Resource ID
-            <input name="resource_id" value="res-tni-transport-air-01">
-          </label>
-          <label>Requested By ID
-            <input name="requested_by_id" value="posko-sim-logistik">
-          </label>
-          <label>Requested By Type
-            <select name="requested_by_type">
-              <option value="posko">posko</option>
-              <option value="community_group">community_group</option>
-              <option value="organization">organization</option>
-            </select>
-          </label>
-          <label>Quantity
-            <input name="requested_quantity" type="number" value="1">
-          </label>
-          <label>Requested Time
-            <input name="requested_time" value="Besok pagi">
-          </label>
-          <label>Reason
-            <input name="request_reason" value="Booking transport untuk distribusi ke shelter.">
-          </label>
-        </div>
-        <div class="form-actions">
-          <button class="btn primary" type="submit">Book Transport</button>
-          <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
-        </div>
-      </form>
     </section>
 
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Profil Sumber Daya</h3>
-            <p>Aset, kapasitas, lokasi, dan PIC yang bisa dikerahkan.</p>
-          </div>
-          <a class="btn" href="resource-profile.html?event=event-sim-001">Buka Modul</a>
-        </div>
-        <div class="event-list" id="warRoomResourceProfiles"></div>
-      </div>
+    <!-- KPI -->
+    <section class="cc-kpis">
 
-      <aside class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Recovery / Reconstruction</h3>
-            <p>Project pemulihan, progress, dana, dan update lapangan.</p>
-          </div>
-          <a class="btn" href="recovery-reconstruction.html?event=event-sim-001">Buka Modul</a>
-        </div>
-        <div class="event-list" id="warRoomRecoveryProjects"></div>
-      </aside>
+      <article>
+        <span class="cc-kpi-icon red">♙</span>
+        <small>Jiwa Berisiko</small>
+        <strong id="kpiRisk">-</strong>
+        <em>Live</em>
+      </article>
+
+      <article>
+        <span class="cc-kpi-icon red">⌂</span>
+        <small>Posko Kritis</small>
+        <strong id="kpiPoskoCritical">-</strong>
+        <em>Live</em>
+      </article>
+
+      <article>
+        <span class="cc-kpi-icon green">⇄</span>
+        <small>Bantuan Mengalir</small>
+        <strong id="kpiAidFlow">-</strong>
+        <em>Live</em>
+      </article>
+
+      <article>
+        <span class="cc-kpi-icon orange">⌁</span>
+        <small>Distribusi Terhambat</small>
+        <strong id="kpiBlockedDistribution">-</strong>
+        <em>Live</em>
+      </article>
+
+      <article>
+        <span class="cc-kpi-icon red">♡</span>
+        <small>Medis Overload</small>
+        <strong id="kpiMedicalOverload">-</strong>
+        <em>Live</em>
+      </article>
+
+      <article>
+        <span class="cc-kpi-icon orange">◇</span>
+        <small>Donasi Menumpuk</small>
+        <strong id="kpiDonation">-</strong>
+        <em>Live</em>
+      </article>
+
     </section>
+
+
+    <!-- MAIN GRID -->
+    <section class="cc-grid-main">
+
+      <!-- MAP -->
+      <article class="cc-card cc-map-card">
+
+        <header>
+          <strong id="mapTitle">
+            Peta Situasi
+          </strong>
+
+          <span id="mapSummary">
+            -
+          </span>
+        </header>
+
+        <div
+          id="situationMap"
+          class="cc-map"
+        ></div>
+
+        <div class="cc-map-legend">
+          <span>
+            <i class="critical"></i>
+            Kritis
+          </span>
+
+          <span>
+            <i class="warning"></i>
+            Terganggu
+          </span>
+
+          <span>
+            <i class="safe"></i>
+            Aman
+          </span>
+        </div>
+
+      </article>
+
+
+      <!-- PRIORITY -->
+      <article class="cc-card">
+
+        <header>
+          <strong>
+            Prioritas Keputusan
+          </strong>
+        </header>
+
+        <div
+          id="priorityDecisionList"
+          class="cc-priority"
+        >
+          Memuat...
+        </div>
+
+      </article>
+
+
+      <!-- EVIDENCE -->
+      <article class="cc-card">
+
+        <header>
+          <strong>
+            Bukti Lapangan Terkini
+          </strong>
+        </header>
+
+        <div
+          id="latestEvidenceList"
+          class="cc-evidence"
+        >
+          Memuat...
+        </div>
+
+      </article>
+
+    </section>
+
+
+    <!-- MODULE BOTTOM -->
+    <section class="cc-modules">
+
+      <article>
+        <b>□ Logistik</b>
+        <strong id="moduleLogisticsValue">-</strong>
+        <span id="moduleLogisticsDetail">-</span>
+        <div class="cc-mini-chart" id="chartLogistics"></div>
+        <em id="moduleLogisticsStatus">-</em>
+      </article>
+
+      <article>
+        <b>⇄ Distribusi</b>
+        <strong id="moduleDistributionValue">-</strong>
+        <span id="moduleDistributionDetail">-</span>
+        <div class="cc-mini-chart" id="chartDistribution"></div>
+        <em id="moduleDistributionStatus">-</em>
+      </article>
+
+      <article>
+        <b>♡ Medis</b>
+        <strong id="moduleMedicalValue">-</strong>
+        <span id="moduleMedicalDetail">-</span>
+        <div class="cc-mini-chart" id="chartMedical"></div>
+        <em id="moduleMedicalStatus">-</em>
+      </article>
+
+      <article>
+        <b>♙ Relawan</b>
+        <strong id="moduleVolunteerValue">-</strong>
+        <span id="moduleVolunteerDetail">-</span>
+        <div class="cc-mini-chart" id="chartVolunteer"></div>
+        <em id="moduleVolunteerStatus">-</em>
+      </article>
+
+      <article>
+        <b>▤ Program</b>
+        <strong id="moduleProgramValue">-</strong>
+        <span id="moduleProgramDetail">-</span>
+        <div class="cc-mini-chart" id="chartProgram"></div>
+        <em id="moduleProgramStatus">-</em>
+      </article>
+
+      <article>
+        <b>⌕ Search & Found</b>
+        <strong id="moduleSearchValue">-</strong>
+        <span id="moduleSearchDetail">-</span>
+        <div class="cc-mini-chart" id="chartSearch"></div>
+        <em id="moduleSearchStatus">-</em>
+      </article>
+
+    </section>
+
+
+    <div id="warRoomStatus" class="cc-status">
+      Loading...
+    </div>
 
   </main>
+
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="cc-mobile-nav">
+
+    <a class="active">
+      ▦
+      <small>Control</small>
+    </a>
+
+    <a href="map.html">
+      ⌖
+      <small>Peta</small>
+    </a>
+
+    <a href="organisasi-posko.html">
+      ⌂
+      <small>Posko</small>
+    </a>
+
+    <a href="kirim-bantuan.html">
+      ⇄
+      <small>Bantuan</small>
+    </a>
+
+    <a>
+      ☰
+      <small>Lainnya</small>
+    </a>
+
+  </nav>
+
 </div>
 
-<script src="../assets/js/war-room.js?v=fix-20260820e"></script>
-<script src="../assets/js/rn-sync-engine.js?v=api-rollback-1785642340"></script>
-<script src="../assets/js/rn-resource-booking.js?v=booking-sync-2"></script>
-<script src="../assets/js/rn-public-header.js?v=fix-20260820c"></script>
-<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=single-nav-20260822a"></script>
-<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
-  <script src="../assets/js/rn-war-room-tabs.js?v=war-tabs-v3-1785647955"></script>
+
+<!-- EVIDENCE DETAIL MODAL -->
+<div id="evidenceModal" class="cc-evidence-modal" hidden>
+
+  <button
+    id="evidenceModalClose"
+    class="cc-evidence-modal-close"
+    type="button"
+    aria-label="Tutup"
+  >&times;</button>
+
+  <div class="cc-evidence-modal-card">
+
+    <div class="cc-evidence-modal-image">
+      <img id="evidenceModalImage" src="" alt="Bukti lapangan">
+    </div>
+
+    <div class="cc-evidence-modal-content">
+
+      <span
+        id="evidenceModalBadge"
+        class="cc-evidence-demo-badge"
+        hidden
+      >SIMULASI</span>
+
+      <h2 id="evidenceModalTitle">-</h2>
+
+      <div
+        id="evidenceModalLocation"
+        class="cc-evidence-modal-location"
+      >-</div>
+
+      <p id="evidenceModalDescription">-</p>
+
+      <div class="cc-evidence-modal-meta">
+
+        <div>
+          <span>Jenis Laporan</span>
+          <strong id="evidenceModalType">-</strong>
+        </div>
+
+        <div>
+          <span>Pelapor</span>
+          <strong id="evidenceModalReporter">-</strong>
+        </div>
+
+        <div>
+          <span>Prioritas</span>
+          <strong id="evidenceModalPriority">-</strong>
+        </div>
+
+        <div>
+          <span>Status</span>
+          <strong id="evidenceModalStatus">-</strong>
+        </div>
+
+        <div>
+          <span>Koordinat</span>
+          <strong id="evidenceModalCoords">-</strong>
+        </div>
+
+        <div>
+          <span>Diperbarui</span>
+          <strong id="evidenceModalTime">-</strong>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script
+  src="../assets/vendor/leaflet/leaflet.js"
+></script>
+
+<script
+  src="../assets/js/rn-control-centre-final.js?v=visfeed-20260831"
+></script>
+
 </body>
 </html>
-

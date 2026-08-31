@@ -1,199 +1,200 @@
 {
-  "doctype": "DocType",
-  "name": "RN Logistic Need",
-  "module": "Rescue Net",
-  "custom": 0,
-  "is_submittable": 0,
-  "title_field": "title",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data",
-      "default": "rescue-net-fastapi"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Select",
-      "options": "Shadow Imported\nValidated\nNeeds Review",
-      "default": "Shadow Imported"
-    },
-    {
-      "fieldname": "title",
-      "label": "Need Title",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Link",
-      "options": "RN Disaster Event"
-    },
-    {
-      "fieldname": "posko",
-      "label": "Posko",
-      "fieldtype": "Link",
-      "options": "RN Posko"
-    },
-    {
-      "fieldname": "item_name",
-      "label": "Item Name",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "quantity",
-      "label": "Quantity",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "unit",
-      "label": "Unit",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "urgency",
-      "label": "Urgency",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "need_status",
-      "label": "Need Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    },
-    {
-      "fieldname": "disaster_event_legacy_id",
-      "label": "Disaster Event Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "posko_legacy_id",
-      "label": "Posko Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "source_table",
-      "label": "Source Table",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "raw_item_text",
-      "label": "Raw Item Text",
-      "fieldtype": "Long Text"
-    },
-    {
-      "fieldname": "quantity_mode",
-      "label": "Quantity Mode",
-      "fieldtype": "Select",
-      "options": "exact\nestimated\nrange\nunknown",
-      "default": "unknown"
-    },
-    {
-      "fieldname": "quantity_min",
-      "label": "Quantity Min",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "quantity_max",
-      "label": "Quantity Max",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "estimate_text",
-      "label": "Estimate Text",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "canonical_category",
-      "label": "Canonical Category",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "canonical_group",
-      "label": "Canonical Group",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "canonical_item",
-      "label": "Canonical Item",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "normalization_source",
-      "label": "Normalization Source",
-      "fieldtype": "Select",
-      "options": "manual\nrule\nai",
-      "default": "rule"
-    },
-    {
-      "fieldname": "normalization_confidence",
-      "label": "Normalization Confidence",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "normalization_status",
-      "label": "Normalization Status",
-      "fieldtype": "Select",
-      "options": "suggested\nreviewed\naccepted",
-      "default": "suggested"
-    },
-    {
-      "fieldname": "observed_at",
-      "label": "Observed At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "source_updated_at",
-      "label": "Source Updated At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "freshness_policy_minutes",
-      "label": "Freshness Policy Minutes",
-      "fieldtype": "Int",
-      "default": "180"
-    },
-    {
-      "fieldname": "verification_status",
-      "label": "Verification Status",
-      "fieldtype": "Data",
-      "default": "self_reported"
-    },
-    {
-      "fieldname": "created_by_user",
-      "label": "Created By",
-      "fieldtype": "Link",
-      "options": "RN User Account"
-    },
-    {
-      "fieldname": "needed_before",
-      "label": "Needed Before",
-      "fieldtype": "Datetime"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 0,
-      "cancel": 0,
-      "amend": 0
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Logistic Need",
+ "module": "Rescue Net",
+ "custom": 0,
+ "is_submittable": 0,
+ "title_field": "title",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "legacy_source",
+   "label": "Legacy Source",
+   "fieldtype": "Data",
+   "default": "rescue-net-fastapi"
+  },
+  {
+   "fieldname": "migration_status",
+   "label": "Migration Status",
+   "fieldtype": "Select",
+   "options": "Shadow Imported\nValidated\nNeeds Review",
+   "default": "Shadow Imported"
+  },
+  {
+   "fieldname": "title",
+   "label": "Need Title",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "description": "Disaster event associated with this record."
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "item_name",
+   "label": "Item Name",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "quantity",
+   "label": "Quantity",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "unit",
+   "label": "Unit",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "urgency",
+   "label": "Urgency",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "need_status",
+   "label": "Need Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "disaster_event_legacy_id",
+   "label": "Disaster Event Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "posko_legacy_id",
+   "label": "Posko Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "source_table",
+   "label": "Source Table",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "raw_item_text",
+   "label": "Raw Item Text",
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "quantity_mode",
+   "label": "Quantity Mode",
+   "fieldtype": "Select",
+   "options": "exact\nestimated\nrange\nunknown",
+   "default": "unknown"
+  },
+  {
+   "fieldname": "quantity_min",
+   "label": "Quantity Min",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "quantity_max",
+   "label": "Quantity Max",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "estimate_text",
+   "label": "Estimate Text",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "canonical_category",
+   "label": "Canonical Category",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "canonical_group",
+   "label": "Canonical Group",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "canonical_item",
+   "label": "Canonical Item",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "normalization_source",
+   "label": "Normalization Source",
+   "fieldtype": "Select",
+   "options": "manual\nrule\nai",
+   "default": "rule"
+  },
+  {
+   "fieldname": "normalization_confidence",
+   "label": "Normalization Confidence",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "normalization_status",
+   "label": "Normalization Status",
+   "fieldtype": "Select",
+   "options": "suggested\nreviewed\naccepted",
+   "default": "suggested"
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Observed At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_updated_at",
+   "label": "Source Updated At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "freshness_policy_minutes",
+   "label": "Freshness Policy Minutes",
+   "fieldtype": "Int",
+   "default": "180"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verification Status",
+   "fieldtype": "Data",
+   "default": "self_reported"
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Created By",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "needed_before",
+   "label": "Needed Before",
+   "fieldtype": "Datetime"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 0,
+   "cancel": 0,
+   "amend": 0
+  }
+ ]
 }

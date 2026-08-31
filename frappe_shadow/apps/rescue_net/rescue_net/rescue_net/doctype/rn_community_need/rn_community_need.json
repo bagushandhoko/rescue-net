@@ -1,238 +1,239 @@
 {
-  "doctype": "DocType",
-  "name": "RN Community Need",
-  "module": "Rescue Net",
-  "custom": 0,
-  "is_submittable": 0,
-  "title_field": "title",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Select",
-      "options": "Shadow Imported\nValidated\nNeeds Review"
-    },
-    {
-      "fieldname": "title",
-      "label": "Need Title",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "source_report",
-      "label": "Source Community Report",
-      "fieldtype": "Link",
-      "options": "RN Community Report",
-      "reqd": 1
-    },
-    {
-      "fieldname": "requester_user",
-      "label": "Requester",
-      "fieldtype": "Link",
-      "options": "RN User Account"
-    },
-    {
-      "fieldname": "community_owner",
-      "label": "Kelompok Masyarakat",
-      "fieldtype": "Link",
-      "options": "RN Organization"
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Link",
-      "options": "RN Disaster Event"
-    },
-    {
-      "fieldname": "need_type",
-      "label": "Need Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "description",
-      "label": "Description",
-      "fieldtype": "Long Text"
-    },
-    {
-      "fieldname": "quantity",
-      "label": "Quantity",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "unit",
-      "label": "Unit",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "urgency",
-      "label": "Urgency",
-      "fieldtype": "Select",
-      "options": "low\nmedium\nhigh\ncritical"
-    },
-    {
-      "fieldname": "status",
-      "label": "Status",
-      "fieldtype": "Select",
-      "options": "open\nin_progress\nfulfilled\nclosed\ncancelled",
-      "default": "open"
-    },
-    {
-      "fieldname": "handling_mode",
-      "label": "Handling Mode",
-      "fieldtype": "Select",
-      "options": "community\nposko",
-      "default": "community",
-      "reqd": 1
-    },
-    {
-      "fieldname": "handling_posko",
-      "label": "Handling Posko",
-      "fieldtype": "Link",
-      "options": "RN Posko"
-    },
-    {
-      "fieldname": "takeover_status",
-      "label": "Take Over Status",
-      "fieldtype": "Select",
-      "options": "none\npending\naccepted\nreleased",
-      "default": "none",
-      "reqd": 1
-    },
-    {
-      "fieldname": "takeover_requested_at",
-      "label": "Take Over Requested At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "takeover_at",
-      "label": "Taken Over At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "takeover_by",
-      "label": "Taken Over By",
-      "fieldtype": "Link",
-      "options": "RN User Account"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    },
-    {
-      "fieldname": "verification_status",
-      "label": "Verification Status",
-      "fieldtype": "Data",
-      "default": "unverified"
-    },
-    {
-      "fieldname": "raw_need_text",
-      "label": "Raw Need Text",
-      "fieldtype": "Long Text"
-    },
-    {
-      "fieldname": "item_kind",
-      "label": "Barang / Jasa",
-      "fieldtype": "Select",
-      "options": "barang\njasa\ncampuran\ntidak_diketahui",
-      "default": "tidak_diketahui"
-    },
-    {
-      "fieldname": "canonical_category",
-      "label": "Canonical Category",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "canonical_group",
-      "label": "Canonical Group",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "canonical_item",
-      "label": "Canonical Item",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "quantity_mode",
-      "label": "Quantity Mode",
-      "fieldtype": "Select",
-      "options": "exact\nestimated\nrange\nunknown",
-      "default": "unknown"
-    },
-    {
-      "fieldname": "quantity_min",
-      "label": "Quantity Min",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "quantity_max",
-      "label": "Quantity Max",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "estimate_text",
-      "label": "Estimate Text",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "normalization_source",
-      "label": "Normalization Source",
-      "fieldtype": "Select",
-      "options": "manual\nrule\nai",
-      "default": "rule"
-    },
-    {
-      "fieldname": "normalization_confidence",
-      "label": "Normalization Confidence",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "normalization_status",
-      "label": "Normalization Status",
-      "fieldtype": "Select",
-      "options": "suggested\nreviewed\naccepted",
-      "default": "suggested"
-    },
-    {
-      "fieldname": "normalization_note",
-      "label": "Normalization Note",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "observed_at",
-      "label": "Observed At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "source_updated_at",
-      "label": "Source Updated At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "freshness_policy_minutes",
-      "label": "Freshness Policy Minutes",
-      "fieldtype": "Int",
-      "default": "180"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Community Need",
+ "module": "Rescue Net",
+ "custom": 0,
+ "is_submittable": 0,
+ "title_field": "title",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "legacy_source",
+   "label": "Legacy Source",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "migration_status",
+   "label": "Migration Status",
+   "fieldtype": "Select",
+   "options": "Shadow Imported\nValidated\nNeeds Review"
+  },
+  {
+   "fieldname": "title",
+   "label": "Need Title",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "source_report",
+   "label": "Source Community Report",
+   "fieldtype": "Link",
+   "options": "RN Community Report",
+   "reqd": 1
+  },
+  {
+   "fieldname": "requester_user",
+   "label": "Requester",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "community_owner",
+   "label": "Kelompok Masyarakat",
+   "fieldtype": "Link",
+   "options": "RN Organization"
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "description": "Disaster event associated with this record."
+  },
+  {
+   "fieldname": "need_type",
+   "label": "Need Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "description",
+   "label": "Description",
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "quantity",
+   "label": "Quantity",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "unit",
+   "label": "Unit",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "urgency",
+   "label": "Urgency",
+   "fieldtype": "Select",
+   "options": "low\nmedium\nhigh\ncritical"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "open\nin_progress\nfulfilled\nclosed\ncancelled",
+   "default": "open"
+  },
+  {
+   "fieldname": "handling_mode",
+   "label": "Handling Mode",
+   "fieldtype": "Select",
+   "options": "community\nposko",
+   "default": "community",
+   "reqd": 1
+  },
+  {
+   "fieldname": "handling_posko",
+   "label": "Handling Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "takeover_status",
+   "label": "Take Over Status",
+   "fieldtype": "Select",
+   "options": "none\npending\naccepted\nreleased",
+   "default": "none",
+   "reqd": 1
+  },
+  {
+   "fieldname": "takeover_requested_at",
+   "label": "Take Over Requested At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "takeover_at",
+   "label": "Taken Over At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "takeover_by",
+   "label": "Taken Over By",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verification Status",
+   "fieldtype": "Data",
+   "default": "unverified"
+  },
+  {
+   "fieldname": "raw_need_text",
+   "label": "Raw Need Text",
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "item_kind",
+   "label": "Barang / Jasa",
+   "fieldtype": "Select",
+   "options": "barang\njasa\ncampuran\ntidak_diketahui",
+   "default": "tidak_diketahui"
+  },
+  {
+   "fieldname": "canonical_category",
+   "label": "Canonical Category",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "canonical_group",
+   "label": "Canonical Group",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "canonical_item",
+   "label": "Canonical Item",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "quantity_mode",
+   "label": "Quantity Mode",
+   "fieldtype": "Select",
+   "options": "exact\nestimated\nrange\nunknown",
+   "default": "unknown"
+  },
+  {
+   "fieldname": "quantity_min",
+   "label": "Quantity Min",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "quantity_max",
+   "label": "Quantity Max",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "estimate_text",
+   "label": "Estimate Text",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "normalization_source",
+   "label": "Normalization Source",
+   "fieldtype": "Select",
+   "options": "manual\nrule\nai",
+   "default": "rule"
+  },
+  {
+   "fieldname": "normalization_confidence",
+   "label": "Normalization Confidence",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "normalization_status",
+   "label": "Normalization Status",
+   "fieldtype": "Select",
+   "options": "suggested\nreviewed\naccepted",
+   "default": "suggested"
+  },
+  {
+   "fieldname": "normalization_note",
+   "label": "Normalization Note",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Observed At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_updated_at",
+   "label": "Source Updated At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "freshness_policy_minutes",
+   "label": "Freshness Policy Minutes",
+   "fieldtype": "Int",
+   "default": "180"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
 }

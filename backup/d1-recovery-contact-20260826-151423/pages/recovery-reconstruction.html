@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Recovery & Reconstruction</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=fix-20260820d">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=unified-menu-20260821f" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=unified-menu-20260821f" />
+  <link rel="stylesheet" href="../assets/css/recovery-page-fix.css?v=1">
+</head>
+<body class="recovery-page">
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a class="active" href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">Recovery</div>
+
+      <div>
+        <p class="eyebrow">RECOVERY & RECONSTRUCTION</p>
+        <h2>Recovery & Reconstruction</h2>
+        <p class="subtitle">Kelola proyek pemulihan fasilitas umum, akses warga, layanan dasar, dan rekonstruksi pascabencana.</p>
+        <p class="subtitle" id="recoveryStatus" data-rn-sync-status>Loading...</p>
+      </div>
+      <div class="form-actions">
+        <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
+        <button class="btn primary" id="refreshRecovery">Refresh</button>
+      </div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Projects</span><strong id="kpiProjects">0</strong><small>recovery programs</small></div>
+      <div class="kpi-card warning"><span>Target</span><strong id="kpiTarget">0</strong><small>budget target</small></div>
+      <div class="kpi-card"><span>Current</span><strong id="kpiCurrent">0</strong><small>current amount</small></div>
+      <div class="kpi-card danger"><span>Updates</span><strong id="kpiUpdates">0</strong><small>progress updates</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Recovery Projects</h3>
+        <div class="event-list" id="recoveryList"></div>
+      </div>
+
+      <aside class="panel">
+        <h3>Buat Recovery Project</h3>
+        <form class="rn-form" id="recoveryForm">
+          <label>Nama Project
+            <input name="program_name" value="Perbaikan Jembatan Darurat Simulasi" required>
+          </label>
+          <label>Target Deskripsi
+            <input name="target_description" value="Pemulihan akses darurat menuju shelter, fasilitas umum, dan layanan dasar">
+          </label>
+          <label>Target Amount
+            <input name="target_amount" type="number" value="75000000">
+          </label>
+          <label>Catatan
+            <textarea name="notes" rows="4">Project pemulihan fasilitas umum, akses warga, layanan dasar, dan pekerjaan rekonstruksi.</textarea>
+          </label>
+          <button class="btn primary" type="submit">Simpan Project</button>
+        </form>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/recovery-reconstruction.js?v=backend-full-2"></script>
+<script src="../assets/js/rn-sync-engine.js?v=event-sync-2"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=single-nav-20260822a"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

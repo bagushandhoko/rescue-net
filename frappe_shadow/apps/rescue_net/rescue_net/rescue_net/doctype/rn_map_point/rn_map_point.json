@@ -1,0 +1,100 @@
+{
+  "doctype": "DocType",
+  "name": "RN Map Point",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "track_changes": 1,
+  "title_field": "label",
+  "field_order": [
+    "disaster_event",
+    "object_type",
+    "object_id",
+    "label",
+    "description",
+    "latitude",
+    "longitude",
+    "location_text",
+    "point_status",
+    "priority",
+    "created_by_user",
+    "observed_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "disaster_event",
+      "fieldtype": "Link",
+      "label": "Disaster Event",
+      "options": "RN Disaster Event",
+      "reqd": 1
+    },
+    {
+      "fieldname": "object_type",
+      "fieldtype": "Data",
+      "label": "Object Type"
+    },
+    {
+      "fieldname": "object_id",
+      "fieldtype": "Data",
+      "label": "Object ID"
+    },
+    {
+      "fieldname": "label",
+      "fieldtype": "Data",
+      "label": "Label",
+      "reqd": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "latitude",
+      "fieldtype": "Float",
+      "label": "Latitude",
+      "reqd": 1
+    },
+    {
+      "fieldname": "longitude",
+      "fieldtype": "Float",
+      "label": "Longitude",
+      "reqd": 1
+    },
+    {
+      "fieldname": "location_text",
+      "fieldtype": "Data",
+      "label": "Location"
+    },
+    {
+      "fieldname": "point_status",
+      "fieldtype": "Data",
+      "label": "Point Status"
+    },
+    {
+      "fieldname": "priority",
+      "fieldtype": "Data",
+      "label": "Priority"
+    },
+    {
+      "fieldname": "created_by_user",
+      "fieldtype": "Link",
+      "label": "Created By",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "observed_at",
+      "fieldtype": "Datetime",
+      "label": "Observed At"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

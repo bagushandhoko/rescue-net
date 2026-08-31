@@ -1,132 +1,133 @@
 {
-  "doctype": "DocType",
-  "name": "RN Shelter Occupancy",
-  "module": "Rescue Net",
-  "custom": 0,
-  "is_submittable": 0,
-  "title_field": "shelter_name",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Link",
-      "options": "RN Disaster Event"
-    },
-    {
-      "fieldname": "posko",
-      "label": "Shelter / Posko",
-      "fieldtype": "Link",
-      "options": "RN Posko",
-      "reqd": 1
-    },
-    {
-      "fieldname": "shelter_name",
-      "label": "Nama Shelter",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "capacity_total",
-      "label": "Kapasitas",
-      "fieldtype": "Int",
-      "default": 0,
-      "reqd": 1
-    },
-    {
-      "fieldname": "current_occupancy",
-      "label": "Penghuni Saat Ini",
-      "fieldtype": "Int",
-      "default": 0,
-      "reqd": 1
-    },
-    {
-      "fieldname": "families_count",
-      "label": "Jumlah Keluarga",
-      "fieldtype": "Int",
-      "default": 0
-    },
-    {
-      "fieldname": "infants_count",
-      "label": "Bayi / Balita",
-      "fieldtype": "Int",
-      "default": 0
-    },
-    {
-      "fieldname": "children_count",
-      "label": "Anak",
-      "fieldtype": "Int",
-      "default": 0
-    },
-    {
-      "fieldname": "elderly_count",
-      "label": "Lansia",
-      "fieldtype": "Int",
-      "default": 0
-    },
-    {
-      "fieldname": "pregnant_count",
-      "label": "Ibu Hamil",
-      "fieldtype": "Int",
-      "default": 0
-    },
-    {
-      "fieldname": "disability_count",
-      "label": "Disabilitas",
-      "fieldtype": "Int",
-      "default": 0
-    },
-    {
-      "fieldname": "observed_at",
-      "label": "Observed At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "source_updated_at",
-      "label": "Source Updated At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "verification_status",
-      "label": "Verification Status",
-      "fieldtype": "Data",
-      "default": "self_reported"
-    },
-    {
-      "fieldname": "created_by_user",
-      "label": "Created By",
-      "fieldtype": "Link",
-      "options": "RN User Account"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Shelter Occupancy",
+ "module": "Rescue Net",
+ "custom": 0,
+ "is_submittable": 0,
+ "title_field": "shelter_name",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "legacy_source",
+   "label": "Legacy Source",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "migration_status",
+   "label": "Migration Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "description": "Disaster event associated with this record."
+  },
+  {
+   "fieldname": "posko",
+   "label": "Shelter / Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko",
+   "reqd": 1
+  },
+  {
+   "fieldname": "shelter_name",
+   "label": "Nama Shelter",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "capacity_total",
+   "label": "Kapasitas",
+   "fieldtype": "Int",
+   "default": 0,
+   "reqd": 1
+  },
+  {
+   "fieldname": "current_occupancy",
+   "label": "Penghuni Saat Ini",
+   "fieldtype": "Int",
+   "default": 0,
+   "reqd": 1
+  },
+  {
+   "fieldname": "families_count",
+   "label": "Jumlah Keluarga",
+   "fieldtype": "Int",
+   "default": 0
+  },
+  {
+   "fieldname": "infants_count",
+   "label": "Bayi / Balita",
+   "fieldtype": "Int",
+   "default": 0
+  },
+  {
+   "fieldname": "children_count",
+   "label": "Anak",
+   "fieldtype": "Int",
+   "default": 0
+  },
+  {
+   "fieldname": "elderly_count",
+   "label": "Lansia",
+   "fieldtype": "Int",
+   "default": 0
+  },
+  {
+   "fieldname": "pregnant_count",
+   "label": "Ibu Hamil",
+   "fieldtype": "Int",
+   "default": 0
+  },
+  {
+   "fieldname": "disability_count",
+   "label": "Disabilitas",
+   "fieldtype": "Int",
+   "default": 0
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Observed At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_updated_at",
+   "label": "Source Updated At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verification Status",
+   "fieldtype": "Data",
+   "default": "self_reported"
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Created By",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
 }

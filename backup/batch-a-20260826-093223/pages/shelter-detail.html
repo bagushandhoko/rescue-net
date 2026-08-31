@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Shelter Detail</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=fix-20260820d">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=unified-menu-20260821f" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=unified-menu-20260821f" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a class="active" href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">Shelter</div>
+
+      <div>
+        <p class="eyebrow">Temporary Accommodation</p>
+        <h2 id="shelterTitle">Shelter</h2>
+        <p class="subtitle" id="shelterSubtitle">Loading...</p>
+        <p class="subtitle" id="shelterStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Shelter · Occupancy</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Capacity</span><strong id="kpiCapacity">0</strong><small>total</small></div>
+      <div class="kpi-card"><span>Occupancy</span><strong id="kpiOccupancy">0</strong><small>current</small></div>
+      <div class="kpi-card warning"><span>Families</span><strong id="kpiFamilies">0</strong><small>families</small></div>
+      <div class="kpi-card"><span>Needs</span><strong id="kpiNeeds">0</strong><small>open needs</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Shelter Occupancy</h3>
+            <p>Data kapasitas dan penghuni shelter.</p>
+          </div>
+        </div>
+        <div class="event-list" id="shelterOccupancies"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Record Occupancy</h3>
+        <p class="subtitle">Catat kondisi hunian shelter.</p>
+
+        <form class="rn-form" id="occupancyForm">
+          <label>Shelter Posko ID
+            <input name="posko_id" value="posko-shelter-melati" required>
+          </label>
+          <label>Shelter Name
+            <input name="shelter_name" value="Shelter Warga Gang Melati" required>
+          </label>
+          <label>Capacity Total
+            <input name="capacity_total" type="number" value="200" required>
+          </label>
+          <label>Current Occupancy
+            <input name="current_occupancy" type="number" value="135" required>
+          </label>
+          <label>Families Count
+            <input name="families_count" type="number" value="42">
+          </label>
+          <label>Children Count
+            <input name="children_count" type="number" value="38">
+          </label>
+          <label>Elderly Count
+            <input name="elderly_count" type="number" value="12">
+          </label>
+          <label>Disabled Count
+            <input name="disabled_count" type="number" value="3">
+          </label>
+          <label>Sanitation Status
+            <input name="sanitation_status" value="limited">
+          </label>
+          <label>Water Status
+            <input name="water_status" value="needs_supply">
+          </label>
+          <label>Electricity Status
+            <input name="electricity_status" value="partial">
+          </label>
+          <label>Safety Status
+            <input name="safety_status" value="safe">
+          </label>
+          <label>Notes
+            <input name="notes" value="Shelter aktif, butuh air dan selimut.">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Occupancy</button>
+            <button class="btn" type="button" id="refreshShelter">Refresh</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Shelter Needs</h3>
+            <p>Kebutuhan shelter untuk penghuni.</p>
+          </div>
+        </div>
+        <div class="event-list" id="shelterNeeds"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Add Shelter Need</h3>
+        <form class="rn-form" id="needForm">
+          <label>Item Name
+            <input name="item_name" value="Selimut" required>
+          </label>
+          <label>Quantity Needed
+            <input name="quantity_needed" type="number" value="150" required>
+          </label>
+          <label>Unit
+            <input name="unit" value="pcs" required>
+          </label>
+          <label>Priority
+            <select name="priority">
+              <option value="normal">normal</option>
+              <option value="urgent">urgent</option>
+              <option value="critical">critical</option>
+            </select>
+          </label>
+          <label>Needed Before
+            <input name="needed_before" value="Besok pagi">
+          </label>
+          <label>Notes
+            <input name="notes" value="Untuk anak-anak dan lansia.">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Save Shelter Need</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Shelter Stock</h3>
+            <p>Barang yang tersedia di shelter.</p>
+          </div>
+        </div>
+        <div class="event-list" id="shelterStock"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Distribution Flows</h3>
+        <p class="subtitle">Distribusi yang menuju shelter.</p>
+        <div class="event-list" id="shelterFlows"></div>
+      </aside>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/shelter-detail.js?v=1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-sync-engine.js?v=event-sync-1"></script>
+<script src="../assets/js/rn-public-header.js?v=fix-20260820c"></script>
+<script src="../assets/js/dms-inline.js?v=domain-p1-1"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=single-nav-20260822a"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

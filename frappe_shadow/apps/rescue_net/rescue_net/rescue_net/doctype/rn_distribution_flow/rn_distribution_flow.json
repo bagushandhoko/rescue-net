@@ -1,320 +1,321 @@
 {
-  "doctype": "DocType",
-  "name": "RN Distribution Flow",
-  "module": "Rescue Net",
-  "custom": 0,
-  "is_submittable": 0,
-  "title_field": "title",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data",
-      "default": "rescue-net-fastapi"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Select",
-      "options": "Shadow Imported\nValidated\nNeeds Review",
-      "default": "Shadow Imported"
-    },
-    {
-      "fieldname": "title",
-      "label": "Distribution Flow",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Link",
-      "options": "RN Disaster Event"
-    },
-    {
-      "fieldname": "source_posko",
-      "label": "Source Posko",
-      "fieldtype": "Link",
-      "options": "RN Posko"
-    },
-    {
-      "fieldname": "destination_posko",
-      "label": "Destination Posko",
-      "fieldtype": "Link",
-      "options": "RN Posko"
-    },
-    {
-      "fieldname": "item_name",
-      "label": "Item Name",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "quantity",
-      "label": "Quantity",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "unit",
-      "label": "Unit",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "flow_status",
-      "label": "Flow Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    },
-    {
-      "fieldname": "disaster_event_legacy_id",
-      "label": "Disaster Event Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "need_legacy_id",
-      "label": "Need Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "aid_offer_legacy_id",
-      "label": "Aid Offer Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "destination_posko_legacy_id",
-      "label": "Destination Posko Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "eta_final",
-      "label": "ETA Final",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "logistic_need",
-      "label": "Logistic Need",
-      "fieldtype": "Link",
-      "options": "RN Logistic Need"
-    },
-    {
-      "fieldname": "aid_offer",
-      "label": "Aid Offer",
-      "fieldtype": "Link",
-      "options": "RN Aid Offer"
-    },
-    {
-      "fieldname": "raw_item_text",
-      "label": "Raw Item Text",
-      "fieldtype": "Long Text"
-    },
-    {
-      "fieldname": "quantity_mode",
-      "label": "Quantity Mode",
-      "fieldtype": "Select",
-      "options": "exact\nestimated\nrange\nunknown",
-      "default": "unknown"
-    },
-    {
-      "fieldname": "quantity_min",
-      "label": "Quantity Min",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "quantity_max",
-      "label": "Quantity Max",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "estimate_text",
-      "label": "Estimate Text",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "canonical_category",
-      "label": "Canonical Category",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "canonical_group",
-      "label": "Canonical Group",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "canonical_item",
-      "label": "Canonical Item",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "normalization_source",
-      "label": "Normalization Source",
-      "fieldtype": "Select",
-      "options": "manual\nrule\nai",
-      "default": "rule"
-    },
-    {
-      "fieldname": "normalization_confidence",
-      "label": "Normalization Confidence",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "normalization_status",
-      "label": "Normalization Status",
-      "fieldtype": "Select",
-      "options": "suggested\nreviewed\naccepted",
-      "default": "suggested"
-    },
-    {
-      "fieldname": "observed_at",
-      "label": "Observed At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "source_updated_at",
-      "label": "Source Updated At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "freshness_policy_minutes",
-      "label": "Freshness Policy Minutes",
-      "fieldtype": "Int",
-      "default": "180"
-    },
-    {
-      "fieldname": "verification_status",
-      "label": "Verification Status",
-      "fieldtype": "Data",
-      "default": "self_reported"
-    },
-    {
-      "fieldname": "created_by_user",
-      "label": "Created By",
-      "fieldtype": "Link",
-      "options": "RN User Account"
-    },
-    {
-      "fieldname": "last_updated_by_user",
-      "label": "Last Updated By",
-      "fieldtype": "Link",
-      "options": "RN User Account"
-    },
-    {
-      "fieldname": "transport_reference",
-      "label": "Transport Reference",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "transport_provider",
-      "label": "Transport Provider",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "transport_type",
-      "label": "Transport Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "route_origin",
-      "label": "Route Origin",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "route_destination",
-      "label": "Route Destination",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "assigned_pickup_at",
-      "label": "Assigned Pickup At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "dispatched_at",
-      "label": "Dispatched At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "in_transit_at",
-      "label": "In Transit At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "arrived_at",
-      "label": "Arrived At Posko",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "received_at",
-      "label": "Received At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "cancelled_at",
-      "label": "Cancelled At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "received_quantity",
-      "label": "Received Quantity",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "received_unit",
-      "label": "Received Unit",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "receipt_note",
-      "label": "Receipt Note",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "estimated_cost",
-      "label": "Estimated Cost",
-      "fieldtype": "Currency"
-    },
-    {
-      "fieldname": "actual_cost",
-      "label": "Actual Cost",
-      "fieldtype": "Currency"
-    },
-    {
-      "fieldname": "currency_code",
-      "label": "Currency",
-      "fieldtype": "Data",
-      "default": "IDR"
-    },
-    {
-      "fieldname": "transport_space",
-      "label": "Transport Space",
-      "fieldtype": "Link",
-      "options": "RN Transport Space"
-    },
-    {
-      "fieldname": "transport_space_legacy_id",
-      "label": "Transport Space Legacy ID",
-      "fieldtype": "Data"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 0,
-      "cancel": 0,
-      "amend": 0
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Distribution Flow",
+ "module": "Rescue Net",
+ "custom": 0,
+ "is_submittable": 0,
+ "title_field": "title",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "legacy_source",
+   "label": "Legacy Source",
+   "fieldtype": "Data",
+   "default": "rescue-net-fastapi"
+  },
+  {
+   "fieldname": "migration_status",
+   "label": "Migration Status",
+   "fieldtype": "Select",
+   "options": "Shadow Imported\nValidated\nNeeds Review",
+   "default": "Shadow Imported"
+  },
+  {
+   "fieldname": "title",
+   "label": "Distribution Flow",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "description": "Disaster event associated with this record."
+  },
+  {
+   "fieldname": "source_posko",
+   "label": "Source Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "destination_posko",
+   "label": "Destination Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "item_name",
+   "label": "Item Name",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "quantity",
+   "label": "Quantity",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "unit",
+   "label": "Unit",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "flow_status",
+   "label": "Flow Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "disaster_event_legacy_id",
+   "label": "Disaster Event Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "need_legacy_id",
+   "label": "Need Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "aid_offer_legacy_id",
+   "label": "Aid Offer Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "destination_posko_legacy_id",
+   "label": "Destination Posko Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "eta_final",
+   "label": "ETA Final",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "logistic_need",
+   "label": "Logistic Need",
+   "fieldtype": "Link",
+   "options": "RN Logistic Need"
+  },
+  {
+   "fieldname": "aid_offer",
+   "label": "Aid Offer",
+   "fieldtype": "Link",
+   "options": "RN Aid Offer"
+  },
+  {
+   "fieldname": "raw_item_text",
+   "label": "Raw Item Text",
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "quantity_mode",
+   "label": "Quantity Mode",
+   "fieldtype": "Select",
+   "options": "exact\nestimated\nrange\nunknown",
+   "default": "unknown"
+  },
+  {
+   "fieldname": "quantity_min",
+   "label": "Quantity Min",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "quantity_max",
+   "label": "Quantity Max",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "estimate_text",
+   "label": "Estimate Text",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "canonical_category",
+   "label": "Canonical Category",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "canonical_group",
+   "label": "Canonical Group",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "canonical_item",
+   "label": "Canonical Item",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "normalization_source",
+   "label": "Normalization Source",
+   "fieldtype": "Select",
+   "options": "manual\nrule\nai",
+   "default": "rule"
+  },
+  {
+   "fieldname": "normalization_confidence",
+   "label": "Normalization Confidence",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "normalization_status",
+   "label": "Normalization Status",
+   "fieldtype": "Select",
+   "options": "suggested\nreviewed\naccepted",
+   "default": "suggested"
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Observed At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_updated_at",
+   "label": "Source Updated At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "freshness_policy_minutes",
+   "label": "Freshness Policy Minutes",
+   "fieldtype": "Int",
+   "default": "180"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verification Status",
+   "fieldtype": "Data",
+   "default": "self_reported"
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Created By",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "last_updated_by_user",
+   "label": "Last Updated By",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "transport_reference",
+   "label": "Transport Reference",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "transport_provider",
+   "label": "Transport Provider",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "transport_type",
+   "label": "Transport Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "route_origin",
+   "label": "Route Origin",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "route_destination",
+   "label": "Route Destination",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "assigned_pickup_at",
+   "label": "Assigned Pickup At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "dispatched_at",
+   "label": "Dispatched At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "in_transit_at",
+   "label": "In Transit At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "arrived_at",
+   "label": "Arrived At Posko",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Received At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "cancelled_at",
+   "label": "Cancelled At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "received_quantity",
+   "label": "Received Quantity",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "received_unit",
+   "label": "Received Unit",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "receipt_note",
+   "label": "Receipt Note",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "estimated_cost",
+   "label": "Estimated Cost",
+   "fieldtype": "Currency"
+  },
+  {
+   "fieldname": "actual_cost",
+   "label": "Actual Cost",
+   "fieldtype": "Currency"
+  },
+  {
+   "fieldname": "currency_code",
+   "label": "Currency",
+   "fieldtype": "Data",
+   "default": "IDR"
+  },
+  {
+   "fieldname": "transport_space",
+   "label": "Transport Space",
+   "fieldtype": "Link",
+   "options": "RN Transport Space"
+  },
+  {
+   "fieldname": "transport_space_legacy_id",
+   "label": "Transport Space Legacy ID",
+   "fieldtype": "Data"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 0,
+   "cancel": 0,
+   "amend": 0
+  }
+ ]
 }

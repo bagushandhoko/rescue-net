@@ -1,4 +1,5 @@
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event
 
 from frappe.utils import flt, now_datetime
 
@@ -299,6 +300,8 @@ def create_program(
     notes=None,
     public_visibility="summary_public",
 ):
+    # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
 
     owner_type = _owner_type(
@@ -631,6 +634,8 @@ def attach_evidence(
 def context(
     disaster_event=None,
 ):
+    # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
 
     filters = {}
@@ -835,6 +840,8 @@ def create_special_program(
     officer_in_charge_phone=None,
     evidence_file_id=None,
 ):
+    # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
 
     owner_type = _owner_type(
@@ -1098,6 +1105,8 @@ def create_special_program_update(
 def list_special_programs(
     disaster_event=None,
 ):
+    # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
 
     filters = {

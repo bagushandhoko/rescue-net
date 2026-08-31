@@ -2,6 +2,7 @@ import json
 from collections import defaultdict
 
 import frappe
+from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 
 from frappe.utils import (
     cint,
@@ -369,6 +370,10 @@ def create_production(
     target_distribution_location=None,
     notes=None,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
+    # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
+    disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
 
     _assert_operate(
@@ -628,6 +633,8 @@ def effective_stock(
     item_name,
     unit,
 ):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     _assert_operate(
@@ -725,6 +732,8 @@ def add_evidence(
 
 @frappe.whitelist()
 def dashboard(posko=None):
+    # RN_CANONICAL_REF posko = resolve_posko(posko)
+    posko = resolve_posko(posko)
     actor = rn_actor()
 
     allowed = _allowed_poskos(actor)

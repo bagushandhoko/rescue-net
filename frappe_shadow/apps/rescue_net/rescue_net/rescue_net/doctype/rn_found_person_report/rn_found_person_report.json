@@ -1,96 +1,97 @@
 {
-  "doctype": "DocType",
-  "name": "RN Found Person Report",
-  "module": "Rescue Net",
-  "title_field": "person_code",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Link",
-      "options": "RN Disaster Event"
-    },
-    {
-      "fieldname": "posko",
-      "label": "Posko",
-      "fieldtype": "Link",
-      "options": "RN Posko"
-    },
-    {
-      "fieldname": "person_code",
-      "label": "Kode Orang",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "person_name",
-      "label": "Nama Lengkap - Terbatas",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "found_location",
-      "label": "Lokasi Ditemukan",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "found_time",
-      "label": "Waktu Ditemukan",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "description",
-      "label": "Ciri / Deskripsi",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "clothing_description",
-      "label": "Pakaian / Ciri Pakaian",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "report_status",
-      "label": "Status",
-      "fieldtype": "Select",
-      "options": "found\nreunited\nclosed",
-      "default": "found"
-    },
-    {
-      "fieldname": "observed_at",
-      "label": "Observed At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "created_by_user",
-      "label": "Created By",
-      "fieldtype": "Link",
-      "options": "RN User Account"
-    },
-    {
-      "fieldname": "verification_status",
-      "label": "Verification Status",
-      "fieldtype": "Data",
-      "default": "self_reported"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Found Person Report",
+ "module": "Rescue Net",
+ "title_field": "person_code",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "description": "Disaster event associated with this record."
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "person_code",
+   "label": "Kode Orang",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "person_name",
+   "label": "Nama Lengkap - Terbatas",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "found_location",
+   "label": "Lokasi Ditemukan",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "found_time",
+   "label": "Waktu Ditemukan",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "description",
+   "label": "Ciri / Deskripsi",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "clothing_description",
+   "label": "Pakaian / Ciri Pakaian",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "report_status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "found\nreunited\nclosed",
+   "default": "found"
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Observed At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Created By",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verification Status",
+   "fieldtype": "Data",
+   "default": "self_reported"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
 }

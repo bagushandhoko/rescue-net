@@ -1,5 +1,3 @@
-const RN_API_BASE = window.RN_API_BASE || (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
-
 function getEventId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("event") || params.get("id") || "event-sim-001";
@@ -25,13 +23,133 @@ function evidenceLink(objectType, objectId, label = "Add Evidence") {
 }
 
 async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
+  const method =
+    String(
+      options.method || "GET"
+    ).toUpperCase();
+
+  let body = {};
+
+  if (options.body) {
+    body =
+      typeof options.body === "string"
+        ? JSON.parse(options.body)
+        : options.body;
+  }
+
+  const url =
+    new URL(
+      path,
+      location.origin
+    );
+
+  if (
+    url.pathname ===
+      "/recovery-projects" &&
+    method === "GET"
+  ) {
+    const disasterEventId =
+      url.searchParams.get(
+        "disaster_event_id"
+      );
+
+    const status =
+      url.searchParams.get(
+        "status"
+      );
+
+    return await RN_FRAPPE.call(
+      "rescue_net.api_recovery.list_projects",
+      {
+        disaster_event_id:
+          disasterEventId || null,
+
+        status:
+          status || null
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/recovery-projects" &&
+    method === "POST"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_recovery.create_project",
+      {
+        disaster_event_id:
+          body.disaster_event_id,
+
+        project_name:
+          body.project_name,
+
+        project_type:
+          body.project_type || null,
+
+        owner_type:
+          body.owner_type || null,
+
+        owner_id:
+          body.owner_id || null,
+
+        target_description:
+          body.target_description || null,
+
+        location:
+          body.location || null,
+
+        priority:
+          body.priority || null,
+
+        target_amount:
+          Number(
+            body.target_amount || 0
+          ),
+
+        current_amount:
+          Number(
+            body.current_amount || 0
+          ),
+
+        progress_percent:
+          Number(
+            body.progress_percent || 0
+          ),
+
+        status:
+          body.status || null,
+
+        start_date:
+          body.start_date || null,
+
+        target_finish_date:
+          body.target_finish_date || null,
+
+        pic_name:
+          body.pic_name || null,
+
+        pic_phone:
+          body.pic_phone || null,
+
+        notes:
+          body.notes || null
+      },
+      {
+        method: "POST"
+      }
+    );
+  }
+
+  throw new Error(
+    "Unsupported Recovery route after "
+    + "Frappe cutover: "
+    + method
+    + " "
+    + url.pathname
+  );
 }
+
 
 function card(p) {
   return `

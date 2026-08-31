@@ -1,266 +1,684 @@
-const RN_API_BASE = (location.protocol === "https:" ? location.origin + "/rescue-net-api" : "http://192.168.100.32:8092");
 let POSKO_CONTEXT_CACHE = null;
 
+
 function getPoskoId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("id") || "posko-logistik-aceh";
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+  return (
+    params.get("id") ||
+    "posko-sim-logistik"
+  );
 }
 
-async function api(path, options = {}) {
-  const res = await fetch(RN_API_BASE + path, {
-    headers: { "Content-Type": "application/json" },
-    ...options
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return await res.json();
-}
 
 function safe(v) {
-  return v === null || v === undefined || v === "" ? "n/a" : v;
+  return (
+    v === null ||
+    v === undefined ||
+    v === ""
+  )
+    ? "n/a"
+    : v;
 }
+
+
+function rowId(row) {
+  return (
+    row?.name ||
+    row?.id ||
+    row?.legacy_id ||
+    ""
+  );
+}
+
 
 function setStatus(msg) {
-  const el = document.getElementById("poskoStatus");
-  if (el) el.textContent = msg;
+  const el =
+    document.getElementById(
+      "poskoStatus"
+    );
+
+  if (el) {
+    el.textContent = msg;
+  }
 }
 
-function evidenceLink(objectType, objectId, eventId, label = "Add Evidence") {
-  if (!objectId) return "";
-  const event = encodeURIComponent(eventId || POSKO_CONTEXT_CACHE?.posko?.disaster_event_id || "event-aceh-2025");
-  return `<br><a href="evidence.html?event=${event}&object_type=${encodeURIComponent(objectType)}&object_id=${encodeURIComponent(objectId)}&node_id=${encodeURIComponent(getPoskoId())}">${label}</a>`;
-}
 
-function card(title, body, chip = "") {
+function card(
+  title,
+  body,
+  chip = ""
+) {
   return `
     <article class="event-card">
       <div class="event-main">
         <div>
-          <h4>${title}</h4>
+          <h4>${safe(title)}</h4>
           <p>${body}</p>
         </div>
+
         <div class="chips">
-          ${chip ? `<span class="chip warning">${chip}</span>` : ""}
+          ${
+            chip
+              ? `<span class="chip warning">${safe(chip)}</span>`
+              : ""
+          }
         </div>
       </div>
     </article>
   `;
 }
 
+
 function renderOverview(ctx) {
-  const p = ctx.posko || {};
-  const org = ctx.organization || {};
-  const disaster = ctx.disaster || {};
+  const posko =
+    ctx.posko || {};
 
-  document.getElementById("poskoTitle").textContent = p.name || p.id || "Posko";
-  document.getElementById("poskoSubtitle").textContent = `${safe(p.location)} · ${safe(p.node_type)} · ${safe(p.operational_status)}`;
+  const title =
+    document.getElementById(
+      "poskoTitle"
+    );
 
-  document.getElementById("kpiRole").textContent = safe(p.node_type);
-  document.getElementById("kpiNeeds").textContent = (ctx.logistic_needs || []).length;
-  document.getElementById("kpiStock").textContent = (ctx.stock_summary || []).length;
-  document.getElementById("kpiFlows").textContent = (ctx.distribution_flows || []).length;
+  const subtitle =
+    document.getElementById(
+      "poskoSubtitle"
+    );
 
-  document.getElementById("poskoOverview").innerHTML = `
-    <div><span>Posko ID</span><b>${safe(p.id)}</b></div>
-    <div><span>Name</span><b>${safe(p.name)}</b></div>
-    <div><span>Type</span><b>${safe(p.node_type)}</b></div>
-    <div><span>Location</span><b>${safe(p.location)}</b></div>
-    <div><span>Organization</span><b>${safe(org.name || p.organization_id)}</b></div>
-    <div><span>Disaster</span><b>${safe(disaster.name || p.disaster_event_id)}</b></div>
-    <div><span>Verification</span><b>${safe(p.verification_status)}</b></div>
-    <div><span>Sync</span><b>${safe(p.sync_status)}</b></div>
-  `;
+  if (title) {
+    title.textContent =
+      posko.title ||
+      posko.name ||
+      getPoskoId();
+  }
+
+  if (subtitle) {
+    subtitle.textContent =
+      `${safe(posko.posko_type)} · ` +
+      `${safe(posko.operational_status)} · ` +
+      `${safe(posko.verification_status)}`;
+  }
+
+  const overview =
+    document.getElementById(
+      "poskoOverview"
+    );
+
+  if (overview) {
+    overview.innerHTML = `
+      <div>
+        <span>Posko</span>
+        <b>${safe(posko.title)}</b>
+      </div>
+
+      <div>
+        <span>Canonical ID</span>
+        <b>${safe(posko.name)}</b>
+      </div>
+
+      <div>
+        <span>Type</span>
+        <b>${safe(posko.posko_type)}</b>
+      </div>
+
+      <div>
+        <span>Organization</span>
+        <b>${safe(posko.organization)}</b>
+      </div>
+
+      <div>
+        <span>Status</span>
+        <b>${safe(posko.operational_status)}</b>
+      </div>
+
+      <div>
+        <span>Verification</span>
+        <b>${safe(posko.verification_status)}</b>
+      </div>
+    `;
+  }
+
+  const values = {
+    kpiRole:
+      posko.posko_type || "-",
+
+    kpiNeeds:
+      (ctx.needs || []).length,
+
+    kpiStock:
+      (ctx.stocks || []).length,
+
+    kpiFlows:
+      (ctx.flows || []).length
+  };
+
+  Object.entries(values)
+    .forEach(
+      ([id, value]) => {
+        const el =
+          document.getElementById(id);
+
+        if (el) {
+          el.textContent = value;
+        }
+      }
+    );
 }
+
 
 function renderStockSummary(items) {
-  const el = document.getElementById("stockSummary");
-  el.innerHTML = items.length ? items.map(s => card(
-    s.item_name,
-    `Current stock: <b>${s.current_quantity}</b> ${s.unit}`,
-    s.unit
-  )).join("") : card("Belum ada stock summary", "Tambahkan stock movement dulu.", "empty");
+  const el =
+    document.getElementById(
+      "stockSummary"
+    );
+
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML =
+    items.length
+      ? items.map(s => card(
+          s.item_name,
+          `Quantity: <b>${safe(s.quantity)}</b> ` +
+          `${safe(s.unit)}<br>` +
+          `Mode: ${safe(s.quantity_mode)}<br>` +
+          `Observed: ${safe(s.observed_at)}`,
+          s.stock_state
+        )).join("")
+      : card(
+          "Belum ada stock observation",
+          "Belum ada snapshot stok.",
+          "empty"
+        );
 }
 
-function renderStockMovements(items) {
-  const el = document.getElementById("stockMovements");
-  el.innerHTML = items.length ? items.map(m => card(
-    m.item_name,
-    `${m.movement_type} · ${m.movement_direction}<br>${m.quantity} ${m.unit}<br>${safe(m.notes)}${evidenceLink("stock_movement", m.id, m.disaster_event_id)}`,
-    m.created_at ? m.created_at.slice(0, 16).replace("T", " ") : m.id
-  )).join("") : card("Belum ada stock movement", "Belum ada barang masuk/keluar.", "empty");
+
+function renderStockObservations(items) {
+  const el =
+    document.getElementById(
+      "stockMovements"
+    );
+
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML =
+    items.length
+      ? items.map(s => card(
+          s.item_name,
+          `${safe(s.quantity)} ${safe(s.unit)}<br>` +
+          `${safe(s.notes)}<br>` +
+          `Observed: ${safe(s.observed_at)}`,
+          s.quantity_mode
+        )).join("")
+      : card(
+          "Belum ada observation",
+          "Belum ada riwayat snapshot stok.",
+          "empty"
+        );
 }
+
 
 function renderNeeds(items) {
-  const el = document.getElementById("logisticNeeds");
-  el.innerHTML = items.length ? items.map(n => card(
-    n.item_name,
-    `Need: ${safe(n.quantity_needed)} ${safe(n.unit)}<br>Priority: ${safe(n.priority)}<br>Before: ${safe(n.needed_before)}${evidenceLink("logistic_need", n.id, n.disaster_event_id)}`,
-    n.status
-  )).join("") : card("Belum ada kebutuhan", "Tidak ada kebutuhan aktif.", "empty");
-}
+  const el =
+    document.getElementById(
+      "logisticNeeds"
+    );
 
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML =
+    items.length
+      ? items.map(n => card(
+          n.item_name,
+          `Need: ${safe(n.quantity)} ${safe(n.unit)}<br>` +
+          `Urgency: ${safe(n.urgency)}<br>` +
+          `Status: ${safe(n.need_status)}`,
+          n.need_status
+        )).join("")
+      : card(
+          "Belum ada kebutuhan",
+          "Tidak ada kebutuhan aktif.",
+          "empty"
+        );
+}
 
 
 function renderIncomingAid(items) {
-  const el = document.getElementById("incomingAid");
+  const el =
+    document.getElementById(
+      "incomingAid"
+    );
 
-  el.innerHTML = items.length ? items.map(a => {
-    const isReceived = a.status === "received_verified";
-    return `
-      <article class="event-card">
-        <div class="event-main">
-          <div>
-            <h4>${a.item_name}</h4>
-            <p>${safe(a.quantity)} ${safe(a.unit)}<br>Donor: ${safe(a.donor_name)}<br>Status: ${safe(a.status)}${evidenceLink("aid_offer", a.id, a.disaster_event_id)}</p>
-          </div>
-          <div class="chips">
-            <span class="chip warning">${a.delivery_mode || a.status}</span>
-            ${isReceived ? `<span class="chip neutral">verified</span>` : `<button class="btn primary" type="button" onclick="verifyAidReceived('${a.id}')">Verify Received</button>`}
-          </div>
-        </div>
-      </article>
-    `;
-  }).join("") : card("Belum ada incoming aid", "Belum ada bantuan menuju posko ini.", "empty");
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML =
+    items.length
+      ? items.map(a => card(
+          a.item_name,
+          `${safe(a.quantity)} ${safe(a.unit)}<br>` +
+          `Donor: ${safe(a.donor_name)}<br>` +
+          `Status: ${safe(a.offer_status)}`,
+          a.offer_status
+        )).join("")
+      : card(
+          "Belum ada incoming aid",
+          "Belum ada Aid Offer menuju Posko ini.",
+          "empty"
+        );
 }
 
-async function verifyAidReceived(aidOfferId) {
+
+function canReceiveFlow(flow) {
+  return [
+    "arrived_at_posko",
+    "partially_received"
+  ].includes(
+    String(
+      flow.flow_status || ""
+    )
+  );
+}
+
+
+function renderFlows(items) {
+  const el =
+    document.getElementById(
+      "distributionFlows"
+    );
+
+  if (!el) {
+    return;
+  }
+
+  el.innerHTML =
+    items.length
+      ? items.map(f => {
+          const id =
+            rowId(f);
+
+          const button =
+            canReceiveFlow(f)
+              ? `
+                <button
+                  class="btn primary"
+                  type="button"
+                  onclick="receiveFlow('${id}')"
+                >
+                  Verify Received
+                </button>
+              `
+              : "";
+
+          return `
+            <article class="event-card">
+              <div class="event-main">
+                <div>
+                  <h4>${safe(f.item_name)}</h4>
+
+                  <p>
+                    Flow: ${safe(id)}<br>
+                    Source: ${safe(f.source_posko)}<br>
+                    Destination: ${safe(f.destination_posko)}<br>
+                    Quantity:
+                    ${safe(f.quantity)}
+                    ${safe(f.unit)}<br>
+                    ETA: ${safe(f.eta_final)}
+                  </p>
+                </div>
+
+                <div class="chips">
+                  <span class="chip warning">
+                    ${safe(f.flow_status)}
+                  </span>
+
+                  ${button}
+                </div>
+              </div>
+            </article>
+          `;
+        }).join("")
+      : card(
+          "Belum ada distribution flow",
+          "Belum ada distribusi menuju Posko ini.",
+          "empty"
+        );
+}
+
+
+async function loadPosko() {
+  setStatus(
+    "Loading Frappe Posko context..."
+  );
+
+  const result =
+    await RN_FRAPPE.call(
+      "rescue_net.api_logistics.dashboard",
+      {
+        posko:
+          getPoskoId()
+      }
+    );
+
+  const ctx = {
+    posko:
+      result.poskos?.[0] ||
+      {
+        name:
+          getPoskoId()
+      },
+
+    needs:
+      result.needs || [],
+
+    stocks:
+      result.stocks || [],
+
+    offers:
+      result.offers || [],
+
+    transports:
+      result.transports || [],
+
+    flows:
+      result.flows || []
+  };
+
+  POSKO_CONTEXT_CACHE =
+    ctx;
+
+  renderOverview(ctx);
+  renderStockSummary(
+    ctx.stocks
+  );
+  renderStockObservations(
+    ctx.stocks
+  );
+  renderNeeds(
+    ctx.needs
+  );
+  renderIncomingAid(
+    ctx.offers
+  );
+  renderFlows(
+    ctx.flows
+  );
+
+  setStatus(
+    "Loaded from Frappe"
+  );
+}
+
+
+async function receiveFlow(flowId) {
   if (!POSKO_CONTEXT_CACHE) {
     await loadPosko();
   }
 
-  const ctx = POSKO_CONTEXT_CACHE;
-  const aid = (ctx.incoming_aid || []).find(x => x.id === aidOfferId);
+  const flow =
+    (
+      POSKO_CONTEXT_CACHE.flows ||
+      []
+    ).find(
+      item =>
+        rowId(item) === flowId
+    );
 
-  if (!aid) {
-    setStatus("Aid offer not found in current context.");
+  if (!flow) {
+    setStatus(
+      "Distribution Flow tidak ditemukan."
+    );
+
     return;
   }
 
-  const flow = (ctx.distribution_flows || []).find(f => f.aid_offer_id === aidOfferId);
+  const quantity =
+    Number(
+      prompt(
+        `Jumlah diterima untuk ${safe(flow.item_name)} ` +
+        `(${safe(flow.unit)})`,
+        flow.quantity || 1
+      )
+    );
 
-  const qty = Number(prompt(`Jumlah diterima untuk ${aid.item_name} (${aid.unit})`, aid.quantity || 1));
-  if (!qty || qty <= 0) {
-    setStatus("Verify cancelled: invalid quantity.");
+  if (
+    !quantity ||
+    quantity <= 0
+  ) {
+    setStatus(
+      "Verify receipt dibatalkan."
+    );
+
     return;
   }
 
-  const payload = {
-    posko_id: getPoskoId(),
-    disaster_event_id: ctx.posko.disaster_event_id,
-    aid_offer_id: aid.id,
-    item_name: aid.item_name,
-    quantity_received: qty,
-    unit: aid.unit,
-    received_by: "operator-posko",
-    notes: "Diverifikasi diterima melalui Posko Detail.",
-    distribution_flow_id: flow ? flow.id : null
-  };
+  setStatus(
+    "Verifying received flow..."
+  );
 
-  setStatus("Verifying received aid...");
-  await api("/posko/verify-aid-received", {
-    method: "POST",
-    body: JSON.stringify(payload)
-  });
+  const result =
+    await RN_FRAPPE.call(
+      "rescue_net.api_logistics." +
+      "receive_flow_and_update_stock",
+      {
+        flow:
+          flowId,
 
-  setStatus("Aid verified and stock updated.");
+        received_quantity:
+          quantity,
+
+        received_unit:
+          flow.unit || null,
+
+        receipt_note:
+          "Diverifikasi melalui Posko Detail."
+      },
+      {
+        method: "POST"
+      }
+    );
+
+  setStatus(
+    `Receipt verified. Current stock: ` +
+    `${safe(result.current_quantity)} ` +
+    `${safe(result.unit)}`
+  );
+
   await loadPosko();
 }
 
-function renderFlows(items) {
-  const el = document.getElementById("distributionFlows");
-  el.innerHTML = items.length ? items.map(f => card(
-    f.id,
-    `Aid: ${safe(f.aid_offer_id)}<br>Transport: ${safe(f.transport_space_id)}<br>ETA: ${safe(f.eta_final)}${evidenceLink("distribution_flow", f.id, f.disaster_event_id)}`,
-    f.status
-  )).join("") : card("Belum ada distribution flow", "Belum ada distribusi menuju posko ini.", "empty");
-}
-
-async function loadPosko() {
-  const poskoId = getPoskoId();
-  setStatus("Loading posko context...");
-
-  const ctx = await api(`/posko-context/${poskoId}`);
-  POSKO_CONTEXT_CACHE = ctx;
-
-  renderOverview(ctx);
-  renderStockSummary(ctx.stock_summary || []);
-  renderStockMovements(ctx.stock_movements || []);
-  renderNeeds(ctx.logistic_needs || []);
-  renderIncomingAid(ctx.incoming_aid || []);
-  renderFlows(ctx.distribution_flows || []);
-
-  setStatus("Loaded: " + ctx.generated_at);
-}
 
 function setupStockForm() {
-  const form = document.getElementById("stockForm");
-  if (!form) return;
+  const form =
+    document.getElementById(
+      "stockForm"
+    );
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  if (!form) {
+    return;
+  }
 
-    const ctx = await api(`/posko-context/${getPoskoId()}`);
-    const disasterId = ctx.posko.disaster_event_id;
+  form.addEventListener(
+    "submit",
+    async event => {
+      event.preventDefault();
 
-    const payload = {
-      disaster_event_id: disasterId,
-      posko_id: getPoskoId(),
-      item_name: form.item_name.value.trim(),
-      quantity: Number(form.quantity.value || 0),
-      unit: form.unit.value.trim(),
-      movement_type: form.movement_type.value,
-      movement_direction: form.movement_direction.value,
-      notes: form.notes.value.trim()
-    };
+      const quantity =
+        Number(
+          form.quantity.value || 0
+        );
 
-    setStatus("Saving stock movement...");
-    await api("/stock-movements", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+      if (quantity < 0) {
+        setStatus(
+          "Quantity tidak boleh negatif."
+        );
 
-    setStatus("Stock movement saved.");
-    await loadPosko();
-  });
+        return;
+      }
+
+      setStatus(
+        "Saving stock observation..."
+      );
+
+      await RN_FRAPPE.call(
+        "rescue_net.api_logistics." +
+        "create_stock_observation",
+        {
+          posko:
+            getPoskoId(),
+
+          item_text:
+            form.item_name
+              .value
+              .trim(),
+
+          quantity,
+
+          unit:
+            form.unit
+              .value
+              .trim(),
+
+          quantity_mode:
+            "exact",
+
+          stock_state:
+            "available",
+
+          notes:
+            form.notes
+              .value
+              .trim()
+        },
+        {
+          method: "POST"
+        }
+      );
+
+      setStatus(
+        "Stock observation saved."
+      );
+
+      await loadPosko();
+    }
+  );
 }
 
 
 function setupTransferForm() {
-  const form = document.getElementById("transferForm");
-  if (!form) return;
+  const form =
+    document.getElementById(
+      "transferForm"
+    );
 
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
+  if (!form) {
+    return;
+  }
 
-    if (!POSKO_CONTEXT_CACHE) {
+  form.addEventListener(
+    "submit",
+    async event => {
+      event.preventDefault();
+
+      const quantity =
+        Number(
+          form.quantity.value || 0
+        );
+
+      if (
+        !quantity ||
+        quantity <= 0
+      ) {
+        setStatus(
+          "Quantity transfer harus lebih dari 0."
+        );
+
+        return;
+      }
+
+      setStatus(
+        "Creating Distribution Flow..."
+      );
+
+      const result =
+        await RN_FRAPPE.call(
+          "rescue_net.api_logistics." +
+          "create_flow",
+          {
+            source_posko:
+              getPoskoId(),
+
+            destination_posko:
+              form.destination_posko_id
+                .value
+                .trim(),
+
+            item_text:
+              form.item_name
+                .value
+                .trim(),
+
+            quantity,
+
+            unit:
+              form.unit
+                .value
+                .trim(),
+
+            quantity_mode:
+              "exact"
+          },
+          {
+            method: "POST"
+          }
+        );
+
+      setStatus(
+        "Distribution Flow created: " +
+        safe(
+          result.flow ||
+          result.name
+        )
+      );
+
       await loadPosko();
     }
-
-    const ctx = POSKO_CONTEXT_CACHE;
-    const payload = {
-      disaster_event_id: ctx.posko.disaster_event_id,
-      source_posko_id: getPoskoId(),
-      destination_posko_id: form.destination_posko_id.value.trim(),
-      item_name: form.item_name.value.trim(),
-      quantity: Number(form.quantity.value || 0),
-      unit: form.unit.value.trim(),
-      notes: form.notes.value.trim(),
-      created_by_user_id: "operator-posko"
-    };
-
-    setStatus("Transferring stock...");
-    await api("/stock-transfer", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    setStatus("Stock transferred.");
-    await loadPosko();
-  });
+  );
 }
 
 
-document.addEventListener("DOMContentLoaded", () => {
-  setupStockForm();
-  setupTransferForm();
-  loadPosko().catch(err => setStatus(err.message));
-});
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    if (!window.RN_FRAPPE) {
+      setStatus(
+        "Frappe client tidak tersedia."
+      );
+
+      return;
+    }
+
+    setupStockForm();
+    setupTransferForm();
+
+    loadPosko()
+      .catch(
+        err =>
+          setStatus(
+            err.message
+          )
+      );
+  }
+);
+
+
+window.receiveFlow =
+  receiveFlow;

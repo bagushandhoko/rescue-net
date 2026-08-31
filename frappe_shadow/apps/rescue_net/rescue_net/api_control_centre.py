@@ -375,6 +375,24 @@ def enrich_report_evidence(rows):
                 row["evidence_url"] = attached[0]["file_url"]
 
 
+def _user_label(user_name):
+    """RN User Account -> {'label': display name, 'role': ...}."""
+    if not user_name:
+        return {}
+
+    row = frappe.db.get_value(
+        "RN User Account",
+        user_name,
+        ["title", "username", "role"],
+        as_dict=True,
+    ) or {}
+
+    return {
+        "label": row.get("title") or row.get("username") or user_name,
+        "role": row.get("role"),
+    }
+
+
 def _ev_norm(**kw):
     """Normalise one evidence record to the shape both the Control Centre
     'Bukti Lapangan' panel and the Evidence page expect."""
@@ -398,6 +416,8 @@ def _ev_norm(**kw):
         "latitude": kw.get("latitude"),
         "longitude": kw.get("longitude"),
         "reporter_name": kw.get("reporter_name"),
+        "uploader": kw.get("uploader"),
+        "uploader_role": kw.get("uploader_role"),
         "posko": kw.get("posko"),
         "linked_object_type": kw.get("linked_object_type"),
         "linked_object_id": kw.get("linked_object_id"),
@@ -422,13 +442,14 @@ def event_evidence(event, limit=60):
     seen = set()
 
     def push(row):
-        key = (row.get("evidence_url"), row.get("id"))
-        if row.get("evidence_url") and key not in seen:
-            seen.add(key)
+        url = row.get("evidence_url")
+        if url and url not in seen:
+            seen.add(url)
             out.append(row)
 
-    # --- 1. Community reports for this event (sim seeds live here) ---
+    # --- Collect this event's community reports (context for the evidence) ---
     report_names = set()
+    rep_rows = []
 
     if frappe.db.exists("DocType", "RN Community Report"):
         rep_cols = cols("RN Community Report")
@@ -440,60 +461,79 @@ def event_evidence(event, limit=60):
                     "name", "title", "description", "report_type",
                     "priority", "status", "location_text", "latitude",
                     "longitude", "legacy_payload", "reporter_name",
-                    "creation", "modified",
+                    "reporter_user", "creation", "modified",
                 ) if f == "name" or f in rep_cols
             ],
             order_by="modified desc" if "modified" in rep_cols else "creation desc",
             limit_page_length=limit,
         )
+        report_names = {r["name"] for r in rep_rows}
 
-        for r in rep_rows:
-            report_names.add(r["name"])
-            payload = r.get("legacy_payload")
+    rep_by_name = {r["name"]: r for r in rep_rows}
 
-            if isinstance(payload, str) and payload.strip():
-                try:
-                    payload = json.loads(payload)
-                except (ValueError, TypeError):
-                    payload = None
-
-            ev = payload.get("evidence") if isinstance(payload, dict) else None
-            src = payload.get("source") if isinstance(payload, dict) else None
-
-            if isinstance(ev, dict) and (ev.get("image") or ev.get("url") or ev.get("file_url")):
-                push(_ev_norm(
-                    id=r["name"], source="community_report",
-                    evidence_url=ev.get("image") or ev.get("url") or ev.get("file_url"),
-                    caption=ev.get("caption"), evidence_type=ev.get("evidence_type") or "photo",
-                    description=ev.get("details") or r.get("description"),
-                    title=r.get("title"), report_type=r.get("report_type"),
-                    priority=r.get("priority"), status=r.get("status"),
-                    location_text=r.get("location_text"),
-                    latitude=r.get("latitude"), longitude=r.get("longitude"),
-                    reporter_name=r.get("reporter_name") or src,
-                    linked_object_type="RN Community Report", linked_object_id=r["name"],
-                    disaster_event_id=event,
-                    creation=r.get("creation"), modified=r.get("modified"),
-                ))
-
-    # --- 2. RN Community Report Evidence (structured child evidence) ---
+    # --- 1. RN Community Report Evidence (structured, user-attributed) ---
     if frappe.db.exists("DocType", "RN Community Report Evidence") and report_names:
+        cre_cols = cols("RN Community Report Evidence")
+        cre_fields = [f for f in (
+            "name", "report", "file_url", "caption", "evidence_type",
+            "verification_status", "uploader_user", "observed_at", "creation",
+        ) if f == "name" or f in cre_cols]
+
         for e in frappe.get_all(
             "RN Community Report Evidence",
             filters={"report": ["in", list(report_names)]},
-            fields=["name", "report", "file_url", "caption", "evidence_type",
-                    "verification_status", "observed_at", "creation"],
+            fields=cre_fields,
             limit_page_length=limit,
         ):
+            up = _user_label(e.get("uploader_user"))
+            r = rep_by_name.get(e.get("report"), {})
             push(_ev_norm(
                 id=e["name"], source="community_report_evidence",
                 file_url=e.get("file_url"), caption=e.get("caption"),
                 evidence_type=e.get("evidence_type"), status=e.get("verification_status"),
-                title=e.get("caption"),
+                title=e.get("caption") or r.get("title"),
+                description=r.get("description"),
+                report_type=r.get("report_type"), priority=r.get("priority"),
+                location_text=r.get("location_text"),
+                latitude=r.get("latitude"), longitude=r.get("longitude"),
+                uploader=up.get("label"), uploader_role=up.get("role"),
+                reporter_name=up.get("label") or r.get("reporter_name"),
                 linked_object_type="RN Community Report", linked_object_id=e.get("report"),
                 disaster_event_id=event,
                 observed_at=e.get("observed_at"), creation=e.get("creation"),
             ))
+
+    # --- 2. Community-report legacy_payload photo (fallback, unattributed) ---
+    for r in rep_rows:
+        payload = r.get("legacy_payload")
+        if isinstance(payload, str) and payload.strip():
+            try:
+                payload = json.loads(payload)
+            except (ValueError, TypeError):
+                payload = None
+        ev = payload.get("evidence") if isinstance(payload, dict) else None
+        src = payload.get("source") if isinstance(payload, dict) else None
+        if not isinstance(ev, dict):
+            continue
+        url = ev.get("image") or ev.get("url") or ev.get("file_url")
+        if not url:
+            continue
+        up = _user_label(r.get("reporter_user"))
+        push(_ev_norm(
+            id=r["name"], source="community_report",
+            evidence_url=url,
+            caption=ev.get("caption"), evidence_type=ev.get("evidence_type") or "photo",
+            description=ev.get("details") or r.get("description"),
+            title=r.get("title"), report_type=r.get("report_type"),
+            priority=r.get("priority"), status=r.get("status"),
+            location_text=r.get("location_text"),
+            latitude=r.get("latitude"), longitude=r.get("longitude"),
+            uploader=up.get("label"), uploader_role=up.get("role"),
+            reporter_name=up.get("label") or r.get("reporter_name") or src,
+            linked_object_type="RN Community Report", linked_object_id=r["name"],
+            disaster_event_id=event,
+            creation=r.get("creation"), modified=r.get("modified"),
+        ))
 
     # --- 3. RN Evidence File (native uploads) ---
     if frappe.db.exists("DocType", "RN Evidence File"):
@@ -506,17 +546,21 @@ def event_evidence(event, limit=60):
                     "name", "posko", "file_url", "caption", "evidence_type",
                     "linked_doctype", "linked_name", "reference_doctype",
                     "reference_name", "object_type", "object_id",
+                    "uploaded_by", "created_by_user",
                     "verification_status", "observed_at", "creation",
                 ) if f == "name" or f in ef_cols
             ],
             order_by="creation desc",
             limit_page_length=limit,
         ):
+            up = _user_label(e.get("uploaded_by") or e.get("created_by_user"))
             push(_ev_norm(
                 id=e["name"], source="evidence_file",
                 file_url=e.get("file_url"), caption=e.get("caption"),
                 evidence_type=e.get("evidence_type"), status=e.get("verification_status"),
                 title=e.get("caption"), posko=e.get("posko"),
+                uploader=up.get("label"), uploader_role=up.get("role"),
+                reporter_name=up.get("label"),
                 linked_object_type=e.get("linked_doctype") or e.get("reference_doctype") or e.get("object_type"),
                 linked_object_id=e.get("linked_name") or e.get("reference_name") or e.get("object_id"),
                 disaster_event_id=event,
@@ -538,16 +582,19 @@ def event_evidence(event, limit=60):
                 "RN Operational Evidence",
                 filters={"posko": ["in", posko_names]},
                 fields=["name", "posko", "file_url", "caption", "evidence_type",
-                        "linked_doctype", "linked_name", "verification_status",
-                        "observed_at", "creation"],
+                        "linked_doctype", "linked_name", "uploader_user",
+                        "verification_status", "observed_at", "creation"],
                 order_by="creation desc",
                 limit_page_length=limit,
             ):
+                up = _user_label(e.get("uploader_user"))
                 push(_ev_norm(
                     id=e["name"], source="operational_evidence",
                     file_url=e.get("file_url"), caption=e.get("caption"),
                     evidence_type=e.get("evidence_type"), status=e.get("verification_status"),
                     title=e.get("caption"), posko=e.get("posko"),
+                    uploader=up.get("label"), uploader_role=up.get("role"),
+                    reporter_name=up.get("label"),
                     linked_object_type=e.get("linked_doctype"),
                     linked_object_id=e.get("linked_name"),
                     disaster_event_id=event,

@@ -55,8 +55,15 @@ user input" data. Working the pages one at a time.
   - Seed scripts live outside the repo at
     `/volume1/docker/osiun-playwright-check/out-cc-map-20260831/`
     (`rn_natsim_v2.py`, `rn_natsim_needs.py`, `rn_karhutla.py`,
-    `rn_karhutla_e2e.py`, `vis_setup.py`) — re-runnable, idempotent (upsert by
-    `legacy_id`).
+    `rn_karhutla_e2e.py`, `vis_setup.py`, `seed_evidence_rows.py`) —
+    re-runnable, idempotent (upsert by `legacy_id`).
+  - **Evidence is real DB input, user-attributed:** every sim photo has an
+    `RN Community Report Evidence` row (`report` link + `file_url` +
+    `uploader_user` = the operator's `RN User Account`), and the parent
+    `RN Community Report.reporter_user` is set too. `event_evidence()` prefers
+    the structured child row (dedup by URL), so the Control Centre "Bukti"
+    panel and the Evidence page show the SAME records WITH "Pelapor /
+    Pengunggah: <user> (<role>)".
 - **Step A of the visibility feature (deployed):**
   - New `frappe_shadow/apps/rescue_net/rescue_net/visibility.py` —
     `effective_posko_share(posko, actor)` → `full` | `summary` from
@@ -99,9 +106,10 @@ user input" data. Working the pages one at a time.
   (uses `point.posko_id` + `detail_allowed` from `map_points`). Verified:
   ISPA(org full_authorized)→full, GAMBUT(org aggregate)→summary,
   SATWA(posko public_detail=public override)→full, MANGGALA(aggregate)→summary.
+  Summary-only viewers now also get the create/record forms hidden on
+  posko-detail.
   REMAINING for Step C: `organisasi-posko.html` list showing per-posko share
-  badge + link; the KPI-box → aggregated cross-org list view (`?focus=…`); hide
-  the create/record forms on posko-detail for summary-only viewers.
+  badge + link; the KPI-box → aggregated cross-org list view (`?focus=…`).
 - **Step D — partly done** (`vis_setup.py`): KH-ORG-BPBD & SIM-NS-BNPB =
   `full_authorized`; KH-ORG-BKSDA `allow_posko_public_choice` + KH-POSKO-SATWA
   `public_detail=public`; KH-POSKO-MANGGALA critical, ISPA/HELIBASE urgent,

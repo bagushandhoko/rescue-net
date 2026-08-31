@@ -1072,9 +1072,17 @@ function openEvidenceModal(
 
   setText(
     "evidenceModalReporter",
-    row.evidence_photographer
-    || row.reporter_name
-    || "-"
+    (
+      row.uploader
+      || row.evidence_photographer
+      || row.reporter_name
+      || "-"
+    )
+    + (
+      row.uploader_role
+        ? ` (${row.uploader_role})`
+        : ""
+    )
   );
 
   setText(

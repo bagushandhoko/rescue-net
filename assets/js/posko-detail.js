@@ -440,6 +440,16 @@ async function loadPosko() {
   renderShareBanner(res);
   renderSummaryRollup(res.summary);
 
+  // Summary-only viewers cannot record/transfer for this posko.
+  const canEdit = !!res.detail_allowed;
+  document
+    .querySelectorAll(".create-panel")
+    .forEach(el => { el.hidden = !canEdit; });
+  const stockPanel =
+    document.getElementById("stockForm") &&
+    document.getElementById("stockForm").closest(".panel");
+  if (stockPanel) stockPanel.hidden = !canEdit;
+
   const d = res.detail || {};
 
   const ctx = {

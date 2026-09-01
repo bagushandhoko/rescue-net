@@ -125,6 +125,322 @@ function linkCard(
 }
 
 
+/* ==========================================================
+   KPI / module drill-down — Rescue-Net integrates data from
+   many groups. Clicking a figure opens the underlying list of
+   items / objects / situations, grouped by organisation; a
+   closed organisation contributes only its summary.
+   ========================================================== */
+
+const DRILL_MODULE = {
+  kebutuhan: "posko-logistik.html?focus=kebutuhan",
+  posko_kritis: "organisasi-posko.html?status=critical",
+  distribusi: "management-distribusi.html?focus=flow",
+  distribusi_terhambat: "management-distribusi.html?focus=pickup",
+  medis: "posko-medis-detail.html?focus=cases",
+  donasi: "posko-logistik.html?focus=bantuan",
+  stok: "posko-logistik.html",
+  relawan: "management-relawan.html",
+  program: "donor-program.html",
+  search: "search-found.html"
+};
+
+
+function drillCard(
+  startEl,
+  dimension,
+  hint
+) {
+  const card =
+    startEl
+    && startEl.closest("article");
+
+  if (!card || card.dataset.drill) {
+    return;
+  }
+
+  card.dataset.drill = dimension;
+
+  card.classList.add("cc-clickable");
+  card.setAttribute("role", "button");
+  card.setAttribute("tabindex", "0");
+  card.title =
+    hint
+    || "Klik untuk membuka rincian lintas kelompok";
+
+  function go() {
+    openDrill(dimension);
+  }
+
+  card.addEventListener("click", go);
+
+  card.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key === "Enter"
+        || event.key === " "
+      ) {
+        event.preventDefault();
+        go();
+      }
+    }
+  );
+}
+
+
+function priClass(value) {
+  const v =
+    String(value || "").toLowerCase();
+
+  if (
+    ["critical", "darurat", "tinggi", "urgent", "segera", "high"]
+      .includes(v)
+  ) {
+    return "hi";
+  }
+
+  if (["medium", "sedang", "normal"].includes(v)) {
+    return "mid";
+  }
+
+  return "lo";
+}
+
+
+async function openDrill(dimension) {
+  const modal =
+    document.getElementById("drillModal");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
+
+  setText("drillTitle", "Memuat…");
+  setText("drillSub", "");
+
+  const body =
+    document.getElementById("drillBody");
+
+  if (body) {
+    body.innerHTML =
+      `<div class="cc-drill-loading">Memuat rincian…</div>`;
+  }
+
+  const link =
+    document.getElementById("drillModuleLink");
+
+  if (link) {
+    const u =
+      new URL(
+        DRILL_MODULE[dimension] || "#",
+        location.href
+      );
+
+    u.searchParams.set("event", eventId());
+    link.href = u.toString();
+  }
+
+  try {
+    const data =
+      await call(
+        "rescue_net.api_control_centre.kpi_drilldown",
+        {
+          disaster_event: eventId(),
+          dimension
+        }
+      );
+
+    renderDrill(data);
+  }
+  catch (err) {
+    if (body) {
+      body.innerHTML =
+        `<div class="cc-drill-loading">
+           Gagal memuat rincian: ${safe(err && err.message || err)}
+         </div>`;
+    }
+  }
+}
+
+
+function closeDrill() {
+  const modal =
+    document.getElementById("drillModal");
+
+  if (modal) {
+    modal.hidden = true;
+  }
+
+  document.body.style.overflow = "";
+}
+
+
+function drillItemsHtml(items) {
+  if (!items || !items.length) {
+    return `<p class="cc-drill-empty-items">Tidak ada baris rincian.</p>`;
+  }
+
+  return `
+    <ul class="cc-drill-items">
+      ${items.map(it => {
+        const poskoLabel =
+          it.posko_title || it.posko;
+
+        const next =
+          it.posko
+            ? `<a
+                 class="cc-drill-next"
+                 href="posko-detail.html?id=${
+                   encodeURIComponent(it.posko)
+                 }&event=${
+                   encodeURIComponent(eventId())
+                 }"
+               >Lanjut →</a>`
+            : "";
+
+        return `
+          <li>
+            <div class="cc-drill-item-main">
+              <strong>${safe(it.title)}</strong>
+              ${
+                it.priority
+                  ? `<span
+                       class="cc-drill-pri ${priClass(it.priority)}"
+                     >${safe(it.priority)}</span>`
+                  : ""
+              }
+              ${
+                it.status
+                  ? `<span class="cc-drill-stat">${safe(it.status)}</span>`
+                  : ""
+              }
+            </div>
+
+            ${
+              it.detail
+                ? `<div class="cc-drill-item-sub">${safe(it.detail)}</div>`
+                : ""
+            }
+
+            <div class="cc-drill-item-foot">
+              ${
+                poskoLabel
+                  ? `<span>📍 ${safe(poskoLabel)}</span>`
+                  : ""
+              }
+              <span>🏢 ${safe(it.organization_title || "-")}</span>
+              ${next}
+            </div>
+          </li>
+        `;
+      }).join("")}
+    </ul>
+  `;
+}
+
+
+function drillGroupHtml(g) {
+  const open =
+    g.share_mode === "full";
+
+  const totals = [];
+
+  totals.push(`<span><b>${format(g.count)}</b> item</span>`);
+
+  if (g.posko_count) {
+    totals.push(`<span><b>${format(g.posko_count)}</b> posko</span>`);
+  }
+
+  if (g.total_quantity) {
+    totals.push(`<span>Total <b>${format(g.total_quantity)}</b></span>`);
+  }
+
+  if (g.total_gap) {
+    totals.push(`<span>Gap <b>${format(g.total_gap)}</b></span>`);
+  }
+
+  if (g.critical_count) {
+    totals.push(
+      `<span class="crit"><b>${format(g.critical_count)}</b> kritis</span>`
+    );
+  }
+
+  const bodyHtml =
+    open
+      ? drillItemsHtml(g.items)
+      : `<p class="cc-drill-locked">
+           🔒 <strong>${safe(g.organization_title)}</strong>
+           menutup koordinasi rinci — hanya ringkasan di atas yang
+           dibagikan ke Control Centre${
+             g.hidden_count
+               ? ` (${format(g.hidden_count)} baris disembunyikan)`
+               : ""
+           }.
+         </p>`;
+
+  return `
+    <section class="cc-drill-group ${open ? "is-open" : "is-closed"}">
+      <header class="cc-drill-group-head">
+        <div class="cc-drill-org">
+          <strong>${safe(g.organization_title || "-")}</strong>
+          ${
+            g.organization_type
+              ? `<span class="cc-drill-type">${safe(g.organization_type)}</span>`
+              : ""
+          }
+        </div>
+        <span class="cc-drill-badge ${open ? "open" : "closed"}">
+          ${open ? "Terbuka · rincian" : "Tertutup · ringkasan"}
+        </span>
+      </header>
+
+      <div class="cc-drill-summary">
+        ${totals.join("")}
+      </div>
+
+      ${bodyHtml}
+    </section>
+  `;
+}
+
+
+function renderDrill(data) {
+  data = data || {};
+
+  setText(
+    "drillTitle",
+    data.title || "Rincian"
+  );
+
+  setText(
+    "drillSub",
+    `${format(data.total || 0)} item · `
+    + `${format(data.org_count || 0)} kelompok · `
+    + `${format(data.shown_total || 0)} rincian terbuka · `
+    + `${format(data.hidden_total || 0)} ringkasan`
+  );
+
+  const body =
+    document.getElementById("drillBody");
+
+  if (!body) {
+    return;
+  }
+
+  const groups =
+    data.groups || [];
+
+  body.innerHTML =
+    groups.length
+      ? groups.map(drillGroupHtml).join("")
+      : `<div class="cc-drill-loading">Belum ada data untuk dimensi ini.</div>`;
+}
+
+
 async function call(
   method,
   params = {}
@@ -523,58 +839,49 @@ function renderKpi(
     || 0
   );
 
-  // Jiwa Berisiko = kebutuhan logistik + shelter yang masih terbuka.
-  linkCard(
+  // Setiap KPI membuka rincian lintas kelompok: daftar item/objek/
+  // situasi di baliknya, dikelompokkan per organisasi; klik "Lanjut"
+  // membuka poskonya. Organisasi tertutup hanya membagi ringkasan.
+  drillCard(
     document.getElementById("kpiRisk"),
-    "posko-logistik.html",
-    { focus: "kebutuhan" },
-    "Jiwa Berisiko = total kebutuhan logistik & shelter yang belum "
-    + "terpenuhi. Klik untuk membuka daftar Kebutuhan Lapangan."
+    "kebutuhan",
+    "Jiwa Berisiko = kebutuhan logistik & shelter yang belum terpenuhi. "
+    + "Klik untuk rincian per kelompok."
   );
 
-  // Posko Kritis = jumlah posko berstatus kritis.
-  linkCard(
+  drillCard(
     document.getElementById("kpiPoskoCritical"),
-    "organisasi-posko.html",
-    { status: "critical" },
-    "Posko Kritis = jumlah posko berstatus kritis. Klik untuk "
-    + "membuka daftar posko."
+    "posko_kritis",
+    "Posko Kritis = posko berstatus kritis. Klik untuk daftar posko "
+    + "per kelompok."
   );
 
-  // Bantuan Mengalir = jumlah alur distribusi (RN Distribution Flow).
-  linkCard(
+  drillCard(
     document.getElementById("kpiAidFlow"),
-    "management-distribusi.html",
-    { focus: "flow" },
-    "Bantuan Mengalir = jumlah alur distribusi bantuan yang berjalan. "
-    + "Klik untuk membuka Distribution Flow."
+    "distribusi",
+    "Bantuan Mengalir = alur distribusi bantuan yang berjalan. Klik "
+    + "untuk rincian per kelompok."
   );
 
-  // Distribusi Terhambat = alert akses/rute/jalan pada distribusi.
-  linkCard(
+  drillCard(
     document.getElementById("kpiBlockedDistribution"),
-    "management-distribusi.html",
-    { focus: "pickup" },
-    "Distribusi Terhambat = alert akses/rute distribusi. Klik untuk "
-    + "membuka Bantuan Perlu Pickup & Transport."
+    "distribusi_terhambat",
+    "Distribusi Terhambat = alur distribusi yang macet/menunggu pickup. "
+    + "Klik untuk rincian per kelompok."
   );
 
-  // Medis Overload = jumlah kasus medis (RN Medical Case).
-  linkCard(
+  drillCard(
     document.getElementById("kpiMedicalOverload"),
-    "posko-medis-detail.html",
-    { focus: "cases" },
-    "Medis Overload = jumlah kasus medis aktif. Klik untuk membuka "
-    + "daftar Medical Cases."
+    "medis",
+    "Medis Overload = kasus medis tercatat. Klik untuk rincian per "
+    + "kelompok."
   );
 
-  // Donasi Menumpuk = tawaran bantuan (RN Aid Offer) yang belum tersalur.
-  linkCard(
+  drillCard(
     document.getElementById("kpiDonation"),
-    "posko-logistik.html",
-    { focus: "bantuan" },
-    "Donasi Menumpuk = tawaran bantuan yang belum tersalur. Klik "
-    + "untuk membuka daftar Bantuan Tersedia."
+    "donasi",
+    "Donasi Menumpuk = tawaran bantuan yang belum tersalur. Klik untuk "
+    + "rincian per kelompok."
   );
 }
 
@@ -1318,34 +1625,40 @@ function renderModules(ctx) {
     "Live"
   );
 
-  linkCard(
+  drillCard(
     document.getElementById("moduleLogisticsValue"),
-    "posko-logistik.html"
+    "stok",
+    "Stok barang tercatat per posko. Klik untuk rincian per kelompok."
   );
 
-  linkCard(
+  drillCard(
     document.getElementById("moduleDistributionValue"),
-    "management-distribusi.html"
+    "distribusi",
+    "Alur distribusi bantuan. Klik untuk rincian per kelompok."
   );
 
-  linkCard(
+  drillCard(
     document.getElementById("moduleMedicalValue"),
-    "posko-medis-detail.html"
+    "medis",
+    "Kasus medis tercatat. Klik untuk rincian per kelompok."
   );
 
-  linkCard(
+  drillCard(
     document.getElementById("moduleVolunteerValue"),
-    "management-relawan.html"
+    "relawan",
+    "Penugasan relawan. Klik untuk rincian per kelompok."
   );
 
-  linkCard(
+  drillCard(
     document.getElementById("moduleProgramValue"),
-    "donor-program.html"
+    "program",
+    "Program khusus & donasi terarah. Klik untuk rincian per kelompok."
   );
 
-  linkCard(
+  drillCard(
     document.getElementById("moduleSearchValue"),
-    "search-found.html"
+    "search",
+    "Laporan orang hilang & ditemukan. Klik untuk rincian per kelompok."
   );
 }
 
@@ -1596,6 +1909,31 @@ async function load() {
         );
 
       document
+        .getElementById(
+          "drillModalClose"
+        )
+        ?.addEventListener(
+          "click",
+          closeDrill
+        );
+
+      document
+        .getElementById(
+          "drillModal"
+        )
+        ?.addEventListener(
+          "click",
+          event => {
+            if (
+              event.target.id
+              === "drillModal"
+            ) {
+              closeDrill();
+            }
+          }
+        );
+
+      document
         .addEventListener(
           "keydown",
           event => {
@@ -1604,6 +1942,7 @@ async function load() {
               === "Escape"
             ) {
               closeEvidenceModal();
+              closeDrill();
             }
           }
         );

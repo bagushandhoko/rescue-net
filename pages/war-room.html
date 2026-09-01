@@ -17,7 +17,7 @@
 
   <link
     rel="stylesheet"
-    href="../assets/css/rn-control-centre-final.css?v=evuser-20260831"
+    href="../assets/css/rn-control-centre-final.css?v=drill-20260901"
   >
 </head>
 
@@ -476,12 +476,49 @@
 </div>
 
 
+<!-- KPI DRILL-DOWN MODAL -->
+<div id="drillModal" class="cc-drill-modal" hidden>
+
+  <button
+    id="drillModalClose"
+    class="cc-drill-close"
+    type="button"
+    aria-label="Tutup"
+  >&times;</button>
+
+  <div class="cc-drill-card">
+
+    <header class="cc-drill-head">
+      <span class="cc-drill-kicker">Rincian lintas kelompok</span>
+      <h2 id="drillTitle">-</h2>
+      <p id="drillSub" class="cc-drill-sub">-</p>
+    </header>
+
+    <div id="drillBody" class="cc-drill-body">Memuat…</div>
+
+    <footer class="cc-drill-foot">
+      <span class="cc-drill-legend">
+        <i class="open"></i> Kelompok terbuka — rincian item
+        <i class="closed"></i> Kelompok tertutup — ringkasan saja
+      </span>
+      <a
+        id="drillModuleLink"
+        class="cc-drill-modlink"
+        href="#"
+      >Buka halaman modul →</a>
+    </footer>
+
+  </div>
+
+</div>
+
+
 <script
   src="../assets/vendor/leaflet/leaflet.js"
 ></script>
 
 <script
-  src="../assets/js/rn-control-centre-final.js?v=evuser-20260831"
+  src="../assets/js/rn-control-centre-final.js?v=drill-20260901"
 ></script>
 
 </body>

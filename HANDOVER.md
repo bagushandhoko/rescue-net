@@ -156,6 +156,44 @@ public / masyarakat** (NO kartu stok — one-off or repeated shipments).
     hidden, no public-ship panel; create-posko form has all 3 checkboxes + the
     role select.
 
+### DONE — KPI drill-down across groups (2026-09-01)
+
+Every Control Centre KPI box + module tile now opens an in-page **drill-down
+modal** listing the underlying items/objects/situations, grouped by the owning
+organisation. Each item row shows its posko + organisation and a **"Lanjut →"**
+link to `posko-detail.html`. An organisation that shares only `aggregate`
+(closed coordination) contributes **counts/totals only** — no item rows
+(`🔒 … menutup koordinasi rinci`); `full_authorized` orgs (or a posko whose
+`public_detail=public` overrides an aggregate org) contribute the full list.
+
+- **Backend (`api_control_centre.py`, deployed to container — RESTART PENDING):**
+  new guest endpoint `kpi_drilldown(disaster_event, dimension, limit=500)`.
+  Dimensions: `kebutuhan` (RN Logistic Need + RN Shelter Need),
+  `posko_kritis` (map_points critical), `distribusi` / `distribusi_terhambat`
+  (RN Distribution Flow), `medis` (RN Medical Case), `donasi` (RN Aid Offer),
+  `stok` (RN Stock Observation, latest per posko+item), `relawan`
+  (RN Volunteer Assignment), `program` (RN Donor Program), `search`
+  (RN Missing/Found Person Report). `_OrgResolver` caches posko→org→share;
+  `_group_by_org` splits each group's rows into `items` (share=full) vs
+  `hidden_count` (share=summary) and always emits `count` / `posko_count` /
+  `total_quantity` / `total_gap` / `critical_count`. Guest-tested on both sims:
+  karhutla `kebutuhan` → BPBD(full_authorized)=8 items, BKSDA(aggregate but
+  KH-POSKO-SATWA public)=1 item, MPA/MANGGALA(aggregate)=summary only.
+- **Frontend:** `rn-control-centre-final.js` — new `drillCard()` / `openDrill()`
+  / `renderDrill()` replace the six KPI `linkCard()` calls and the six module
+  `linkCard()` calls. `war-room.html` — `#drillModal` markup + cache-buster
+  `?v=drill-20260901` on the css/js tags. `rn-control-centre-final.css` — full
+  `.cc-drill-*` block (green "Terbuka · rincian" / amber "Tertutup · ringkasan"
+  badges, per-item posko/org + Lanjut link, footer legend + "Buka halaman
+  modul →" fallback link).
+- **DEPLOY STATE:** `api_control_centre.py` is copied into
+  `osiun-frappe-backend` + chowned + byte-compile-checked OK; container backup
+  `api_control_centre.py.bak-20260901-drill`. **`docker restart
+  osiun-frappe-backend` is blocked by the Claude auto-mode classifier — the
+  user must run it** (or add `Bash(sudo docker restart osiun-frappe-backend:*)`).
+  Until then the running gunicorn serves the old code and the modal shows
+  "Gagal memuat rincian".
+
 ### NEXT
 
 - Merged-posko function switcher is now a sidebar top group and shows on all

@@ -186,13 +186,17 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
   `.cc-drill-*` block (green "Terbuka · rincian" / amber "Tertutup · ringkasan"
   badges, per-item posko/org + Lanjut link, footer legend + "Buka halaman
   modul →" fallback link).
-- **DEPLOY STATE:** `api_control_centre.py` is copied into
-  `osiun-frappe-backend` + chowned + byte-compile-checked OK; container backup
-  `api_control_centre.py.bak-20260901-drill`. **`docker restart
-  osiun-frappe-backend` is blocked by the Claude auto-mode classifier — the
-  user must run it** (or add `Bash(sudo docker restart osiun-frappe-backend:*)`).
-  Until then the running gunicorn serves the old code and the modal shows
-  "Gagal memuat rincian".
+- **DEPLOY STATE:** `api_control_centre.py` deployed to `osiun-frappe-backend`
+  + container restarted; `kpi_drilldown` verified live over guest HTTP.
+  Container backup `api_control_centre.py.bak-20260901-drill`.
+- **Data backfill (2026-09-01):** every `RN Aid Offer` had `target_posko` set
+  so donations attribute to an org and appear in the `donasi` drill-down +
+  posko-logistik "Kiriman Masyarakat". Script
+  `out-cc-map-20260831/fix_aid_offer_target_posko.py` (idempotent, ran OK,
+  18 rows). 0 aid offers remain without a posko. Detail-vs-summary still
+  depends on the org's `control_centre_share`: karhutla/sim-001 show plenty of
+  detail; `event-aceh-2025` shows summary-only because "BPBD Aceh Barat" is
+  `aggregate` (flip it to `full_authorized` if that event should show detail).
 
 ### NEXT
 

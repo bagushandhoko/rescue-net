@@ -120,6 +120,82 @@
     }).join("");
   }
 
+  function renderSafety(ak) {
+    $("#safetyBeds").textContent = fmt(ak.tempat_tidur_tersedia);
+    $("#safetyOccupants").textContent = fmt(ak.relawan_menginap);
+    $("#safetyOccupantsPct").textContent = ak.tempat_tidur_tersedia
+      ? Math.round((100 * ak.relawan_menginap) / ak.tempat_tidur_tersedia) + "% kapasitas"
+      : "-";
+    $("#safetyPoints").textContent = fmt(ak.titik_aman);
+    $("#safetyBriefingCount").textContent = fmt(ak.briefing_hari_ini);
+
+    var el = $("#safetyBriefingList");
+    if (!ak.briefing_list || !ak.briefing_list.length) {
+      el.innerHTML = '<article class="event-card"><div class="event-main"><div><h4>Tidak ada briefing hari ini</h4></div></div></article>';
+      return;
+    }
+    el.innerHTML = ak.briefing_list.map(function (b) {
+      return (
+        '<article class="event-card"><div class="event-main"><div><h4>' + esc(b.title) + "</h4><p>" + esc(b.waktu) + " · " + esc(b.lokasi) + "</p></div>" +
+        '<div class="chips"><span class="chip ' + (b.status === "completed" ? "ok" : "") + '">' + esc(b.status) + "</span></div></div></article>"
+      );
+    }).join("");
+  }
+
+  function setupRegisterModal() {
+    var openBtn = $("#openRegisterBtn");
+    var modal = $("#registerModal");
+    if (!openBtn || !modal) return;
+
+    openBtn.addEventListener("click", function () {
+      modal.hidden = false;
+      document.body.style.overflow = "hidden";
+    });
+    modal.querySelectorAll("[data-close-register]").forEach(function (el) {
+      el.addEventListener("click", function () {
+        modal.hidden = true;
+        document.body.style.overflow = "";
+      });
+    });
+
+    var form = $("#registerVolunteerForm");
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var msg = $("#registerMsg");
+      msg.textContent = "Mendaftarkan…";
+      try {
+        var fd = new FormData(form);
+        var res = await window.RN_FRAPPE.call(
+          "rescue_net.api_volunteer.register_volunteer",
+          {
+            volunteer_name: fd.get("volunteer_name"),
+            contact: fd.get("contact"),
+            disaster_event: getEventId(),
+            skill_category: fd.get("skill_category"),
+            skill_tags: fd.get("skill_tags"),
+            duration_available: fd.get("duration_available"),
+            current_location: fd.get("current_location"),
+            preferences: fd.get("preferences"),
+            equipment_owned: fd.get("equipment_owned"),
+            needs_transport: form.needs_transport.checked ? 1 : 0,
+            notes: fd.get("notes"),
+          },
+          { method: "POST" }
+        );
+        msg.textContent = (res && res.message) || "Pendaftaran berhasil.";
+        form.reset();
+        await loadBoard();
+        setTimeout(function () {
+          modal.hidden = true;
+          document.body.style.overflow = "";
+          msg.textContent = "";
+        }, 1800);
+      } catch (err) {
+        msg.textContent = "Gagal: " + (err && err.message || err);
+      }
+    });
+  }
+
   function renderPapan(rows) {
     $("#papanCount").textContent = rows.length;
     var el = $("#papanPenugasan");
@@ -146,6 +222,7 @@
     renderFilterKeterampilan(data.filter_keterampilan || []);
     renderJenisRelawan(data.jenis_relawan || []);
     renderPapan(data.papan_penugasan || []);
+    renderSafety(data.akomodasi_keselamatan || { tempat_tidur_tersedia: 0, relawan_menginap: 0, titik_aman: 0, briefing_hari_ini: 0, briefing_list: [] });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -156,6 +233,7 @@
     document.querySelectorAll("#relawanDrill [data-close]").forEach(function (el) { el.addEventListener("click", closeDrill); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
     setupSearch();
+    setupRegisterModal();
     loadBoard().catch(function (err) { console.error("[relawan board]", err); });
   });
 })();

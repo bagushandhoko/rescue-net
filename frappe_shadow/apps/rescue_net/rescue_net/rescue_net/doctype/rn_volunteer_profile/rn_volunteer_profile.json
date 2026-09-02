@@ -71,6 +71,30 @@
    "options": "RN Posko"
   },
   {
+   "fieldname": "skill_category",
+   "label": "Kategori Keahlian",
+   "fieldtype": "Select",
+   "options": "\nMedis\nEvakuasi\nSearch & Found\nPickup & Transport\nDapur & Logistik\nKomunikasi\nShelter\nLainnya"
+  },
+  {
+   "fieldname": "preferences",
+   "label": "Preferensi Penugasan",
+   "fieldtype": "Small Text",
+   "description": "Preferensi/pilihan penempatan, mis. 'lebih suka evakuasi darat', 'tidak bisa malam hari'."
+  },
+  {
+   "fieldname": "equipment_owned",
+   "label": "Peralatan yang Dimiliki",
+   "fieldtype": "Small Text",
+   "description": "Fasilitas/peralatan yang dibawa sendiri, mis. 'motor trail, HT, kamera'."
+  },
+  {
+   "fieldname": "needs_transport",
+   "label": "Butuh Transport dari Panitia",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
    "fieldname": "notes",
    "label": "Catatan",
    "fieldtype": "Small Text"

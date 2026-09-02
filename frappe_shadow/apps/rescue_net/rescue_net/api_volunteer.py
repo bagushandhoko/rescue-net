@@ -3,6 +3,7 @@ from collections import defaultdict
 import frappe
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import now_datetime
+from frappe.rate_limiter import rate_limit
 
 from rescue_net.access_policy import (
     can_manage_organization,
@@ -317,6 +318,73 @@ def create_profile(
         "availability_status": (
             doc.availability_status
         ),
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(key="contact", limit=10, seconds=60 * 60)
+def register_volunteer(
+    volunteer_name,
+    contact,
+    disaster_event=None,
+    skill_category=None,
+    main_skill=None,
+    skill_tags=None,
+    duration_available=None,
+    current_location=None,
+    preferences=None,
+    equipment_owned=None,
+    needs_transport=0,
+    notes=None,
+):
+    """Public self-service "Daftar Jadi Relawan" (no login required) — the
+    "sarana pendaftaran relawan yang mau berangkat" from the blueprint's
+    Management Relawan section. Unlike create_profile() this does not
+    require an authenticated RN User Account: it creates a standalone
+    RN Volunteer Profile (user_account left empty, same as most existing
+    sim/community volunteer records), self_reported, immediately visible on
+    the Manajemen Relawan board with the fields the blueprint calls for:
+    kategori keahlian, waktu tersedia, preferensi, dan fasilitas/peralatan
+    yang dimiliki.
+    """
+    volunteer_name = (volunteer_name or "").strip()
+    contact = (contact or "").strip()
+
+    if not volunteer_name:
+        frappe.throw("Nama relawan wajib diisi")
+
+    if not contact:
+        frappe.throw("Kontak / WhatsApp wajib diisi")
+
+    if not main_skill and not skill_category:
+        frappe.throw("Kategori atau skill utama wajib diisi")
+
+    event = resolve_disaster_event(disaster_event)
+
+    doc = frappe.new_doc("RN Volunteer Profile")
+    doc.disaster_event = event
+    doc.volunteer_name = volunteer_name
+    doc.contact = contact
+    doc.main_skill = main_skill or skill_category
+    doc.skill_category = skill_category
+    doc.skill_tags = skill_tags
+    doc.availability_status = "available"
+    doc.duration_available = duration_available
+    doc.current_location = current_location
+    doc.preferences = preferences
+    doc.equipment_owned = equipment_owned
+    doc.needs_transport = 1 if str(needs_transport) in ("1", "true", "True", "on") else 0
+    doc.notes = notes
+    doc.verification_status = "self_reported"
+    doc.observed_at = now_datetime()
+    doc.source_updated_at = doc.observed_at
+
+    doc.insert(ignore_permissions=True)
+
+    return {
+        "volunteer": doc.name,
+        "availability_status": doc.availability_status,
+        "message": "Pendaftaran diterima. Posko akan menghubungi Anda untuk penugasan.",
     }
 
 
@@ -1093,6 +1161,13 @@ def _drill(title, sub, href):
     return {"title": title, "sub": sub, "href": href}
 
 
+def _num_i(v):
+    try:
+        return int(v or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 @frappe.whitelist(allow_guest=True)
 def volunteer_board(disaster_event=None):
     """Manajemen Relawan dashboard (matches the DMS mock-up), guest read-only.
@@ -1105,9 +1180,8 @@ def volunteer_board(disaster_event=None):
     schema binds one assignment to one volunteer at creation, so there is no
     "open slot needing N relawan" concept to draw from), and Fatigue Risk
     (checked-in/in-progress assignments running longer than
-    FATIGUE_HOURS_THRESHOLD). "Akomodasi & Keselamatan" has no backing
-    doctype (same gap as Shelter's "Akomodasi Relawan/Petugas") — honestly
-    omitted.
+    FATIGUE_HOURS_THRESHOLD). "Akomodasi & Keselamatan" is backed by the new
+    RN Volunteer Accommodation / RN Safety Briefing doctypes.
     """
     event = resolve_disaster_event(disaster_event) or disaster_event
 
@@ -1115,6 +1189,7 @@ def volunteer_board(disaster_event=None):
         "RN Volunteer Profile",
         filters={"disaster_event": event} if event else {},
         fields=["name", "volunteer_name", "contact", "main_skill", "skill_tags",
+                "skill_category", "preferences", "equipment_owned", "needs_transport",
                 "availability_status", "duration_available", "current_location",
                 "assigned_posko", "user_account", "verification_status"],
         order_by="availability_status asc, volunteer_name asc",
@@ -1162,9 +1237,13 @@ def volunteer_board(disaster_event=None):
             "name": p.name,
             "volunteer_name": p.volunteer_name,
             "organisasi": org_by_user.get(p.user_account) or "-",
+            "skill_category": p.skill_category or "-",
             "skills": skills[:4],
             "lokasi": p.current_location or posko_titles.get(p.assigned_posko) or "-",
             "durasi": p.duration_available or "-",
+            "preferensi": p.preferences or "-",
+            "peralatan": p.equipment_owned or "-",
+            "butuh_transport": bool(p.needs_transport),
             "status": p.availability_status,
             "href": None,
         })
@@ -1188,6 +1267,51 @@ def volunteer_board(disaster_event=None):
         }
         for a in planned_assignments
     ]
+
+    accom_rows = frappe.get_all(
+        "RN Volunteer Accommodation",
+        filters={"disaster_event": event} if event else {},
+        fields=["name", "location_name", "capacity_beds", "occupants_count",
+                "is_safe_point", "safety_status", "posko"],
+        limit_page_length=200,
+    )
+    today = frappe.utils.getdate()
+    briefings = frappe.get_all(
+        "RN Safety Briefing",
+        filters={"disaster_event": event} if event else {},
+        fields=["name", "title", "scheduled_at", "location", "briefing_status"],
+        order_by="scheduled_at asc",
+        limit_page_length=200,
+    )
+    briefings_today = [
+        b for b in briefings
+        if b.scheduled_at and frappe.utils.getdate(b.scheduled_at) == today
+        and b.briefing_status != "cancelled"
+    ]
+
+    akomodasi_keselamatan = {
+        "tempat_tidur_tersedia": sum(_num_i(a.capacity_beds) for a in accom_rows),
+        "relawan_menginap": sum(_num_i(a.occupants_count) for a in accom_rows),
+        "titik_aman": sum(1 for a in accom_rows if a.is_safe_point),
+        "briefing_hari_ini": len(briefings_today),
+        "akomodasi": [
+            {
+                "lokasi": a.location_name,
+                "kapasitas": _num_i(a.capacity_beds),
+                "terisi": _num_i(a.occupants_count),
+                "pct": round(100.0 * _num_i(a.occupants_count) / _num_i(a.capacity_beds), 1)
+                       if _num_i(a.capacity_beds) else 0,
+                "is_safe_point": bool(a.is_safe_point),
+                "safety_status": a.safety_status,
+            }
+            for a in accom_rows
+        ],
+        "briefing_list": [
+            {"title": b.title, "waktu": str(b.scheduled_at)[11:16] if b.scheduled_at else "-",
+             "lokasi": b.location or "-", "status": b.briefing_status}
+            for b in briefings_today
+        ],
+    }
 
     return {
         "disaster_event": event,
@@ -1228,4 +1352,5 @@ def volunteer_board(disaster_event=None):
         "filter_keterampilan": filter_keterampilan,
         "jenis_relawan": jenis_relawan,
         "papan_penugasan": papan_penugasan,
+        "akomodasi_keselamatan": akomodasi_keselamatan,
     }

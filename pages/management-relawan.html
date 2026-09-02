@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Manajemen Relawan</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=relawan-20260902">
+  <link rel="stylesheet" href="../assets/css/style.css?v=relawan-20260902b">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -58,7 +58,10 @@
         <p class="subtitle">Kelola relawan, keterampilan, dan penugasan secara real-time.</p>
         <p class="subtitle" id="relawanStatus" data-relawan-status>Memuat…</p>
       </div>
-      <div class="status-pill" id="relawanUpdated">Relawan · Live</div>
+      <div class="rn-rw-header-actions">
+        <div class="status-pill" id="relawanUpdated">Relawan · Live</div>
+        <button type="button" class="btn primary" id="openRegisterBtn">+ Daftar Jadi Relawan</button>
+      </div>
     </header>
 
     <section class="kpi-grid rn-rw-kpi">
@@ -119,7 +122,13 @@
 
       <div class="panel">
         <div class="panel-header"><div><h3>Akomodasi & Keselamatan</h3></div></div>
-        <p class="rn-muted rn-sh-gap-note">Belum ada data terpisah untuk akomodasi/keselamatan relawan (belum ada doctype khusus — lihat catatan yang sama di halaman Shelter). Akan ditambahkan bila modulnya sudah mencatat data ini.</p>
+        <div class="rn-rw-safety-grid">
+          <div class="rn-rw-safety-tile"><span>Akomodasi Tersedia</span><b id="safetyBeds">-</b><small>tempat tidur</small></div>
+          <div class="rn-rw-safety-tile"><span>Relawan Menginap</span><b id="safetyOccupants">-</b><small id="safetyOccupantsPct">-</small></div>
+          <div class="rn-rw-safety-tile"><span>Titik Aman Aktif</span><b id="safetyPoints">-</b><small>posko &amp; akomodasi</small></div>
+          <div class="rn-rw-safety-tile"><span>Briefing Keselamatan</span><b id="safetyBriefingCount">-</b><small>jadwal hari ini</small></div>
+        </div>
+        <div class="event-list" id="safetyBriefingList"></div>
       </div>
     </section>
 
@@ -232,7 +241,67 @@
   </div>
 </div>
 
-<script src="../assets/js/relawan.js?v=relawan-20260902"></script>
+<div id="registerModal" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close-register></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="registerModalTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="registerModalTitle">Daftar Jadi Relawan</h3><p class="rn-muted">Isi data ini untuk bergabung sebagai relawan — tidak perlu login. Petugas posko akan menghubungi Anda.</p></div>
+      <button type="button" class="rn-ba-modal-close" data-close-register aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body">
+      <form class="rn-form" id="registerVolunteerForm">
+        <div class="form-grid">
+          <label>Nama Lengkap
+            <input name="volunteer_name" required>
+          </label>
+          <label>No HP / WhatsApp
+            <input name="contact" required>
+          </label>
+          <label>Kategori Keahlian
+            <select name="skill_category">
+              <option value="">Pilih kategori…</option>
+              <option>Medis</option>
+              <option>Evakuasi</option>
+              <option>Search &amp; Found</option>
+              <option>Pickup &amp; Transport</option>
+              <option>Dapur &amp; Logistik</option>
+              <option>Komunikasi</option>
+              <option>Shelter</option>
+              <option>Lainnya</option>
+            </select>
+          </label>
+          <label>Skill Tambahan / Detail
+            <input name="skill_tags" placeholder="mis. K9 handler, SIM B2, P3K">
+          </label>
+          <label>Waktu / Durasi Tersedia
+            <input name="duration_available" placeholder="mis. 3 hari, sampai kondisi normal">
+          </label>
+          <label>Lokasi Saat Ini
+            <input name="current_location" placeholder="mis. Meulaboh, Aceh Barat">
+          </label>
+          <label>Preferensi Penugasan
+            <input name="preferences" placeholder="mis. lebih suka evakuasi darat, tidak bisa malam hari">
+          </label>
+          <label>Peralatan yang Dimiliki
+            <input name="equipment_owned" placeholder="mis. motor trail, HT, kamera">
+          </label>
+          <label class="rn-rw-checkbox-label">
+            <input type="checkbox" name="needs_transport"> Butuh transport dari panitia untuk berangkat
+          </label>
+          <label>Catatan Tambahan
+            <input name="notes">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Daftar Sekarang</button>
+          <span class="form-message" id="registerMsg"></span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/relawan.js?v=relawan-20260902b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-frappe-client.js?v=frappe-group-f-1"></script>
 <script src="../assets/js/rn-sync-engine.js?v=frappe-group-f-1"></script>

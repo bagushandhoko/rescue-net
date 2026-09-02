@@ -193,6 +193,22 @@
       .join("");
   }
 
+  function renderAkomodasiRelawan(rows) {
+    var body = $("#akomodasiRelawanBody");
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="5"><em class="rn-muted">Belum ada akomodasi relawan/petugas tercatat.</em></td></tr>';
+      return;
+    }
+    body.innerHTML = rows
+      .map(function (r) {
+        return (
+          "<tr><td><b>" + esc(r.lokasi) + "</b></td><td>" + fmt(r.terisi) + " / " + fmt(r.kapasitas) + "</td>" +
+          "<td>" + fmt(r.kapasitas) + "</td><td>" + fmt(r.tersedia) + "</td><td>" + r.pct + "%</td></tr>"
+        );
+      })
+      .join("");
+  }
+
   function renderSanitasiAir(t) {
     var el = $("#sanitasiAir");
     el.innerHTML =
@@ -284,6 +300,7 @@
     renderCheckinOut(data.checkin_checkout || { checkin_people: 0, checkin_households: 0, checkout_people: 0, checkout_households: 0, moved_people: 0, moved_households: 0 });
     renderKelompokRentan(data.kelompok_rentan || []);
     renderPeringatan(data.peringatan || []);
+    renderAkomodasiRelawan(data.akomodasi_relawan || []);
 
     var evidenceHref =
       "evidence.html?event=" + encodeURIComponent(data.disaster_event || "") + "&object_type=shelter";

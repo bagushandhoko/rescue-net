@@ -4959,3 +4959,13 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-md-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rn-md-board { grid-template-columns: 1fr; }
 }
+
+/* Manajemen Relawan — header CTA + Akomodasi & Keselamatan (real data) */
+.rn-rw-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.rn-rw-safety-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.rn-rw-safety-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel2); }
+.rn-rw-safety-tile span { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.rn-rw-safety-tile b { display: block; font-size: 20px; margin-top: 4px; }
+.rn-rw-safety-tile small { color: var(--muted); font-size: 11px; }
+.rn-rw-checkbox-label { display: flex; align-items: center; gap: 8px; flex-direction: row; font-size: 13px; }
+.rn-rw-checkbox-label input { width: auto; }

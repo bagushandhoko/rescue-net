@@ -1,0 +1,73 @@
+{
+  "doctype": "DocType",
+  "name": "RN Safety Briefing",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "title",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event",
+      "reqd": 1
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko"
+    },
+    {
+      "fieldname": "title",
+      "label": "Judul Briefing",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "scheduled_at",
+      "label": "Jadwal",
+      "fieldtype": "Datetime",
+      "reqd": 1
+    },
+    {
+      "fieldname": "location",
+      "label": "Lokasi",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "briefing_status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "scheduled\ncompleted\ncancelled",
+      "default": "scheduled"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

@@ -1086,10 +1086,10 @@ def shelter_board(disaster_event=None):
     invented thresholds), Kelompok Rentan, Check-in/Check-out hari ini
     (real RN Shelter Household rows), Peringatan Keselamatan (overcapacity +
     critical needs — no safety/sanitation status field exists on RN Shelter
-    Occupancy yet, so nothing is fabricated there) and the evidence strip.
-    "Akomodasi Relawan/Petugas" and literal toilet/water-point counts from
-    the mock-up have no backing doctype — honestly omitted rather than
-    invented (see HANDOVER.md).
+    Occupancy yet, so nothing is fabricated there), the evidence strip, and
+    Akomodasi Relawan/Petugas (RN Volunteer Accommodation — separate from
+    the disaster-victim shelters above). Literal toilet/water-point counts
+    from the mock-up still have no backing doctype — honestly omitted.
     """
     event = resolve_disaster_event(disaster_event) or disaster_event
 
@@ -1105,6 +1105,7 @@ def shelter_board(disaster_event=None):
             "kapasitas_okupansi": {}, "kebutuhan_dasar": [],
             "kelompok_rentan": [], "checkin_checkout": {},
             "peringatan": [], "bukti": [], "bukti_total": 0,
+            "akomodasi_relawan": [],
         }
 
     latest = _latest_occupancies(posko_names)
@@ -1309,4 +1310,26 @@ def shelter_board(disaster_event=None):
         "peringatan": peringatan,
         "bukti": bukti,
         "bukti_total": len(bukti),
+        "akomodasi_relawan": _akomodasi_relawan(event),
     }
+
+
+def _akomodasi_relawan(event):
+    rows = frappe.get_all(
+        "RN Volunteer Accommodation",
+        filters={"disaster_event": event} if event else {},
+        fields=["name", "location_name", "capacity_beds", "occupants_count"],
+        limit_page_length=200,
+    )
+    out = []
+    for a in rows:
+        cap = cint(a.capacity_beds)
+        cur = cint(a.occupants_count)
+        out.append({
+            "lokasi": a.location_name,
+            "kapasitas": cap,
+            "terisi": cur,
+            "tersedia": max(0, cap - cur),
+            "pct": round(100.0 * cur / cap, 1) if cap else 0,
+        })
+    return out

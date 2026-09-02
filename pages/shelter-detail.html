@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Shelter & Akomodasi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=shelter-20260902">
+  <link rel="stylesheet" href="../assets/css/style.css?v=shelter-20260902b">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -117,8 +117,14 @@
       <div class="panel">
         <div class="panel-header">
           <div><h3>Akomodasi Relawan / Petugas</h3></div>
+          <a class="rn-seeall" href="management-relawan.html">Kelola di Relawan →</a>
         </div>
-        <p class="rn-muted rn-sh-gap-note">Belum ada data terpisah untuk akomodasi relawan/petugas (belum ada doctype khusus — beda dari shelter penyintas di atas). Akan ditambahkan bila modul Relawan sudah mencatat lokasi menginap.</p>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Lokasi</th><th>Relawan / Petugas</th><th>Kapasitas</th><th>Tersedia</th><th>Okupansi</th></tr></thead>
+            <tbody id="akomodasiRelawanBody"><tr><td colspan="5">Memuat…</td></tr></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="panel">
@@ -286,7 +292,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=frappe-batch-a-1"></script>
-<script src="../assets/js/shelter-detail.js?v=shelter-20260902"></script>
+<script src="../assets/js/shelter-detail.js?v=shelter-20260902b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

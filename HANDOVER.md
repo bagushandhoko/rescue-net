@@ -354,6 +354,52 @@ here). Owner decisions this pass: **fix as we go** (report per page), and
     cards, auto-match guest-guard message, only pre-existing 403s remain.
   - Cache-busters: `style.css`/`distribusi.js` → `?v=distribusi-20260902`.
 
+- **Volunteer accommodation/safety gap fix + public volunteer registration
+  (2026-09-02c).** Owner asked to go back and build real backing for the 2
+  gaps left honest-empty in steps 2–3 (per the "complete, don't omit"
+  directive), then separately asked for a public "daftar jadi relawan" entry
+  point after sharing a new blueprint doc excerpt.
+  - **2 new DocTypes** (first ones added this project, not just Custom
+    Fields): `RN Volunteer Accommodation` (`location_name`, `posko`,
+    `accommodation_type`, `capacity_beds`, `occupants_count`,
+    `is_safe_point`, `safety_status`, ...) and `RN Safety Briefing`
+    (`title`, `scheduled_at`, `location`, `briefing_status`, ...). Files
+    under `frappe_shadow/apps/rescue_net/rescue_net/rescue_net/doctype/`,
+    same minimal JSON shape as every other doctype in this app (`doctype`,
+    `name`, `module`, `custom`, `is_submittable`, `title_field`, `fields`,
+    `permissions` — no extra boilerplate needed). Deployed + `bench migrate`
+    on `osiun-frappe-backend` (no errors; verified both doctypes + new
+    columns exist via console). Seeded 3 accommodation records + 3 safety
+    briefings (2 today) for event-sim-001.
+  - `RN Volunteer Profile` got 3 new fields (`skill_category` select,
+    `preferences`, `equipment_owned`, `needs_transport` check) — the exact
+    set the blueprint's Management Relawan section calls for ("katagori
+    keahlian, waktu berangkat, preferences/pilihan, fasilitas yang
+    tersedia"). Migrated alongside the 2 new doctypes.
+  - `api_shelter.shelter_board` → new `akomodasi_relawan` list (real, from
+    `RN Volunteer Accommodation`); `shelter-detail.html`'s "Akomodasi
+    Relawan/Petugas" panel now a real table instead of the empty-state note.
+  - `api_volunteer.volunteer_board` → new `akomodasi_keselamatan` block
+    (beds available/occupied, safe-point count, today's briefings);
+    `management-relawan.html`'s "Akomodasi & Keselamatan" panel now real
+    stat tiles + a briefing list.
+  - **New public endpoint `rescue_net.api_volunteer.register_volunteer`**
+    (`allow_guest=True`, rate-limited 10/hour by `contact`, mirrors
+    `api_auth.register`'s pattern) — the blueprint's "sarana pendaftaran
+    relawan yang mau berangkat". Unlike `create_profile` it needs no login;
+    creates a standalone `RN Volunteer Profile` (no `user_account`, same
+    shape as most existing sim/community volunteers), `self_reported`,
+    immediately live on the board. New "+ Daftar Jadi Relawan" button in
+    `management-relawan.html`'s header opens a modal form (Nama, Kontak,
+    Kategori Keahlian, Skill Tambahan, Waktu Tersedia, Lokasi, Preferensi,
+    Peralatan, Butuh Transport checkbox, Catatan) — no page reload, calls
+    the endpoint directly, refreshes the board on success. Verified
+    end-to-end via Playwright: filled + submitted the real form in a real
+    browser, `kpiTerdaftar` went 8→9, then cleaned up the test record.
+  - Deployed to `osiun-frappe-backend` (md5 verified). Playwright
+    `/volume1/docker/osiun-playwright-check/rn-relawan-accom.js`. Cache-busters
+    bumped to `?v=shelter-20260902b` / `?v=relawan-20260902b`.
+
 ## System snapshot
 
 - **Stack:** Frappe / MariaDB is the system of record. Site `osiun.localhost` in

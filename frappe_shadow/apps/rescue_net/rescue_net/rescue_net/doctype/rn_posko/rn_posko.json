@@ -126,6 +126,22 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "officer_in_charge_email",
+   "label": "Officer Email",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "emergency_contact",
+   "label": "Kontak Darurat",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "facilities",
+   "label": "Fasilitas Tersedia",
+   "fieldtype": "Small Text",
+   "description": "Comma-separated tags, mis. Logistik,Makanan,Air Bersih,Medis."
+  },
+  {
    "fieldname": "admin_area_id",
    "label": "Admin Area ID",
    "fieldtype": "Data"

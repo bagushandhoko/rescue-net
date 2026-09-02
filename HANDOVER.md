@@ -873,6 +873,64 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
     message, mobile viewport exactly contained.
   - Cache-busters: `style.css`/`verification-approval.js` → `?v=verif-20260902`.
 
+- **Sidebar/header dedup across the whole site (2026-09-02e).** Owner flagged
+  that the shared top public header (`rn-public-header.js`: About Us/Fitur
+  Mockup/Home/Bencana Aktif/**Control Centre**/**Data Konsolidasi**/Download/
+  Laporan Masyarakat/**Kirim Bantuan**/Login) duplicated 4 entries that were
+  ALSO in every page's left sidebar (`Active Disasters`→index.html,
+  `Control Centre`, `Data Konsolidasi`, `Kirim Bantuan`) — removed those 4
+  `<a>` lines from the standard sidebar `<nav>` block across **29** files at
+  once (Python regex pass, verified byte-identical block first via grep).
+  Also gave `pages/war-room.html` (Control Centre) — which had its own
+  bespoke 9-item icon sidebar, structurally unlike every other page's
+  `.app-shell`/`.sidebar` — the same deduped 21-item module list (still
+  inside its own `.cc-sidebar` container/CSS; did **not** touch its distinct
+  `.cc-header` event-selector bar or attempt a full structural migration to
+  `.app-shell` — that's separate, larger scope). Verified via Playwright:
+  war-room.html renders with no JS errors and the new sidebar list; spot-
+  checked dapur-umum/evidence/verification-approval still render correctly
+  post-mass-edit (`rn-navcheck.js`).
+
+- **Organisasi & Posko (`pages/organisasi-posko.html` + `assets/js/
+  org-posko.js`) — BUILT & DEPLOYED (2026-09-02), step 7a of the 12-step
+  order (paired with the new Registrasi & Verifikasi Posko page).** 4 KPIs
+  (Organisasi Aktif/Posko Aktif/Pending Verifikasi/Anggota Terdaftar),
+  Struktur Organisasi with a Pohon Hierarki/Daftar toggle (org → posko tree,
+  click an org to select), and a detail rail with tabs (Ringkasan/Posko/
+  Anggota/Program) showing real `trust_level`/`trusted_verifier_count` (no
+  fabricated 0-100 score — checked the blueprint docs, there's no such
+  formula documented, so none was invented) and a real signal checklist.
+  Old create-org/create-posko forms + raw lists kept in `<details>`.
+  - **Backend:** new guest endpoints `api_control_centre.org_posko_board`
+    and `org_detail`. "Anggota Terdaftar" sums real `RN Organization
+    Membership` (approved) *and* `RN User Account.organization` — the
+    formal Membership doctype is sparsely populated in the seed data (1
+    global row) while `RN User Account.organization` is much better
+    populated (25 rows across 14 orgs), so both real sources are unioned
+    rather than under-counting off the sparser one alone. "Program" reuses
+    `RN Donor Program.owner_type=="organization"/owner_id` (a real but loose
+    reference, not a proper Link field). Fixed a real bug while testing:
+    `operational_status` isn't just active/offline — some sim posko records
+    use it as a severity field (`critical`/`urgent`/`normal`), so "Posko
+    Aktif" was undercounting until the "active" check was changed to "not
+    explicitly offline/inactive/closed" instead of `== "active"` literally.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-orgposko.js` (desktop + 390px
+    mobile). Verified: KPIs correct, tree/list toggle, org select → detail
+    fetch + tabs all work, mobile viewport contained.
+  - Cache-busters: `style.css`/`org-posko.js` → `?v=orgposko-20260902`.
+  - **Backend prep also landed for the paired Registrasi & Verifikasi Posko
+    page (frontend not yet built — next up):** `RN Posko` gained 3 new
+    fields (`officer_in_charge_email`, `emergency_contact`, `facilities`),
+    migrated. `api_community_cluster.create_posko` extended with matching
+    optional kwargs (backward compatible); added `update_posko`,
+    `submit_posko_verification` ("Ajukan Verifikasi"), and `delete_posko`
+    (real delete, but refuses — with a clear message to mark the posko
+    offline instead — if any operational record still references it, so a
+    click can't silently orphan data). New guest reads
+    `api_control_centre.posko_verification_checklist` (5 real filled-field
+    checks) and `posko_registry_board` (KPIs + Daftar Posko table).
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

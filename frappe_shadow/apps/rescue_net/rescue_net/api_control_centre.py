@@ -3138,3 +3138,259 @@ def auto_match_distribution(disaster_event=None, limit=5):
         })
 
     return {"matched": len(created), "flows": created}
+
+
+# ============================================================
+# Organisasi & Posko — pages/organisasi-posko.html
+# ============================================================
+
+_ORG_PENDING_TERMS = {"pending", "self_reported", "", None}
+_POSKO_INACTIVE_TERMS = {"offline", "inactive", "closed", "non_aktif", "nonaktif"}
+
+
+def _org_member_count(org_name):
+    """Real member count: RN Organization Membership (formal, approved)
+    union RN User Account.organization (looser but far more populated in
+    the current seed data — most sim/community accounts never went through
+    a formal Membership record)."""
+    membership_users = set(frappe.get_all(
+        "RN Organization Membership",
+        filters={"organization": org_name, "status": "approved"},
+        pluck="user_account",
+    ))
+    account_users = set(frappe.get_all(
+        "RN User Account", filters={"organization": org_name}, pluck="name",
+    ))
+    return len(membership_users | account_users)
+
+
+def _org_program_count(org_name):
+    return frappe.db.count("RN Donor Program", {"owner_type": "organization", "owner_id": org_name})
+
+
+@frappe.whitelist(allow_guest=True)
+def org_posko_board(disaster_event=None):
+    """Organisasi & Posko dashboard (matches the DMS mock-up), guest
+    read-only. KPI totals + a tree (event -> organisasi -> posko) + a flat
+    orgs list with real trust/member/program counts for the detail rail.
+    """
+    event = canonical_event(disaster_event) if disaster_event else None
+
+    posko_filter = {"disaster_event": event} if event else {}
+    poskos = frappe.get_all(
+        "RN Posko", filters=posko_filter,
+        fields=["name", "title", "organization", "posko_type", "operational_status", "verification_status"],
+        limit_page_length=1000,
+    )
+
+    org_names = sorted({p.organization for p in poskos if p.organization})
+    if not org_names and not event:
+        org_names = frappe.get_all("RN Organization", pluck="name", limit_page_length=200)
+
+    posko_by_org = {}
+    for p in poskos:
+        posko_by_org.setdefault(p.organization, []).append(p)
+
+    orgs_raw = frappe.get_all(
+        "RN Organization", filters={"name": ["in", org_names]} if org_names else {},
+        fields=["name", "title", "organization_type", "verification_status",
+                "trust_level", "trusted_verifier_count", "status", "modified"],
+        limit_page_length=500,
+    )
+
+    orgs = []
+    posko_aktif_total = 0
+    pending_total = 0
+    anggota_total = 0
+
+    for o in orgs_raw:
+        org_poskos = posko_by_org.get(o.name, [])
+        posko_list = [
+            {"name": p.name, "title": p.title, "posko_type": p.posko_type,
+             "status": p.operational_status, "verification_status": p.verification_status,
+             "href": "posko-detail.html?id=" + p.name + "&event=" + (event or "")}
+            for p in org_poskos
+        ]
+        active_poskos = sum(1 for p in org_poskos if str(p.operational_status or "").lower() not in _POSKO_INACTIVE_TERMS)
+        posko_aktif_total += active_poskos
+
+        members = _org_member_count(o.name)
+        anggota_total += members
+        programs = _org_program_count(o.name)
+
+        org_pending = str(o.verification_status or "") in _ORG_PENDING_TERMS
+        posko_pending = sum(1 for p in org_poskos if str(p.verification_status or "") in _ORG_PENDING_TERMS)
+        pending_total += posko_pending + (1 if org_pending else 0)
+
+        orgs.append({
+            "name": o.name, "title": o.title, "organization_type": o.organization_type,
+            "verification_status": o.verification_status or "self_reported",
+            "trust_level": o.trust_level or "unverified",
+            "trusted_verifier_count": o.trusted_verifier_count or 0,
+            "status": o.status or "active",
+            "modified": o.modified,
+            "posko_count": len(org_poskos), "posko_active_count": active_poskos,
+            "member_count": members, "program_count": programs,
+            "poskos": posko_list,
+        })
+
+    orgs.sort(key=lambda r: -r["posko_count"])
+
+    return {
+        "disaster_event": event,
+        "generated_at": frappe.utils.now_datetime(),
+        "totals": {
+            "organisasi_aktif": sum(1 for o in orgs if o["status"] == "active" or o["verification_status"] not in _ORG_PENDING_TERMS),
+            "posko_aktif": posko_aktif_total,
+            "pending_verifikasi": pending_total,
+            "anggota_terdaftar": anggota_total,
+        },
+        "tree": {
+            "event": event,
+            "orgs": [{"name": o["name"], "title": o["title"], "posko_count": o["posko_count"],
+                      "verification_status": o["verification_status"], "poskos": o["poskos"]}
+                     for o in orgs],
+        },
+        "orgs": orgs,
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def org_detail(organization):
+    """Detail rail for one organisasi — real fields + poskos + a simple
+    member list (best-effort: RN User Account rows with this organization,
+    since RN Organization Membership is sparsely populated in the seed
+    data) + real RN Donor Program rows."""
+    org = frappe.db.get_value(
+        "RN Organization", organization,
+        ["name", "title", "organization_type", "verification_status", "trust_level",
+         "trusted_verifier_count", "identity_verification_status", "contact_person",
+         "notes", "modified"],
+        as_dict=True,
+    )
+    if not org:
+        frappe.throw("Organisasi tidak ditemukan")
+
+    poskos = frappe.get_all(
+        "RN Posko", filters={"organization": organization},
+        fields=["name", "title", "posko_type", "operational_status", "verification_status"],
+        limit_page_length=200,
+    )
+
+    members = frappe.get_all(
+        "RN User Account", filters={"organization": organization},
+        fields=["name", "title", "role", "status"], limit_page_length=200,
+    )
+
+    programs = frappe.get_all(
+        "RN Donor Program", filters={"owner_type": "organization", "owner_id": organization},
+        fields=["name", "program_name", "status", "target_amount", "current_amount", "target_unit"],
+        limit_page_length=200,
+    )
+
+    checklist = {
+        "identitas_organisasi": bool(org.get("verification_status") not in _ORG_PENDING_TERMS),
+        "kontak_person": bool(org.get("contact_person")),
+        "trusted_verifier": bool((org.get("trusted_verifier_count") or 0) > 0),
+    }
+
+    return {
+        "org": org,
+        "poskos": poskos,
+        "members": members,
+        "programs": programs,
+        "checklist": checklist,
+    }
+
+
+# ============================================================
+# Registrasi & Verifikasi Posko — pages/registrasi-posko.html (NEW)
+# ============================================================
+
+@frappe.whitelist(allow_guest=True)
+def posko_verification_checklist(posko):
+    """Real checklist for the mock-up's "Status Verifikasi Posko" panel —
+    every item is a literal field-filled check, not a fabricated status."""
+    doc = frappe.db.get_value(
+        "RN Posko", posko,
+        ["name", "officer_in_charge_email", "officer_in_charge_phone",
+         "officer_in_charge_name", "latitude", "longitude",
+         "trusted_verifier_count", "verification_status"],
+        as_dict=True,
+    )
+    if not doc:
+        frappe.throw("Posko tidak ditemukan")
+
+    items = [
+        {"key": "email", "label": "Email", "value": doc.officer_in_charge_email,
+         "done": bool(doc.officer_in_charge_email)},
+        {"key": "phone", "label": "Nomor HP", "value": doc.officer_in_charge_phone,
+         "done": bool(doc.officer_in_charge_phone)},
+        {"key": "pic", "label": "Identitas PIC", "value": doc.officer_in_charge_name,
+         "done": bool(doc.officer_in_charge_name)},
+        {"key": "location", "label": "Lokasi Posko",
+         "value": (f"{doc.latitude}, {doc.longitude}" if doc.latitude and doc.longitude else None),
+         "done": bool(doc.latitude and doc.longitude)},
+        {"key": "trusted_verifier", "label": "Trusted Verifier",
+         "value": doc.trusted_verifier_count, "done": bool((doc.trusted_verifier_count or 0) > 0)},
+    ]
+
+    return {
+        "posko": doc.name,
+        "verification_status": doc.verification_status or "self_reported",
+        "items": items,
+        "ready_to_submit": all(i["done"] for i in items[:4]),  # trusted_verifier comes after submission
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def posko_registry_board(disaster_event=None, limit=200):
+    """KPI totals + Daftar Posko table for the mock-up, guest read-only."""
+    event = canonical_event(disaster_event) if disaster_event else None
+    filters = {"disaster_event": event} if event else {}
+
+    rows = frappe.get_all(
+        "RN Posko", filters=filters,
+        fields=["name", "title", "posko_type", "address", "city_name",
+                "officer_in_charge_name", "rn_beneficiary_count",
+                "verification_status", "operational_status", "modified"],
+        order_by="modified desc", limit_page_length=int(limit),
+    )
+
+    def _cap(r):
+        try:
+            return int(r.get("rn_beneficiary_count") or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    posko_list = [{
+        "name": r.name, "title": r.title, "jenis": r.posko_type,
+        "lokasi": r.city_name or r.address or "-",
+        "pic": r.officer_in_charge_name or "-",
+        "kapasitas": _cap(r),
+        "status_verifikasi": r.verification_status or "self_reported",
+        "terakhir_diperbarui": r.modified,
+        "href": "registrasi-posko.html?id=" + r.name + "&event=" + (event or ""),
+    } for r in rows]
+
+    verif_counts = {"pending": 0, "official_verified": 0, "community_verified": 0}
+    for r in rows:
+        v = str(r.verification_status or "self_reported").lower()
+        if v in ("pending", "self_reported", "", "needs_correction"):
+            verif_counts["pending"] += 1
+        elif v == "community_verified":
+            verif_counts["community_verified"] += 1
+        elif v in ("official_verified", "verified"):
+            verif_counts["official_verified"] += 1
+
+    return {
+        "disaster_event": event,
+        "generated_at": frappe.utils.now_datetime(),
+        "totals": {
+            "posko_aktif": sum(1 for r in rows if str(r.operational_status or "").lower() not in _POSKO_INACTIVE_TERMS),
+            "pending_verification": verif_counts["pending"],
+            "official_verified": verif_counts["official_verified"],
+            "community_verified": verif_counts["community_verified"],
+        },
+        "poskos": posko_list,
+    }

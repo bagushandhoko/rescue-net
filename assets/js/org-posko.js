@@ -1,3 +1,189 @@
+/* ============================================================
+ * New dashboard (matches organisasi & posko.png): calls
+ * rescue_net.api_control_centre.org_posko_board / org_detail (guest).
+ * Legacy create-org/create-posko forms + lists kept in <details>,
+ * unchanged, still calling api_community_cluster.*.
+ * ============================================================ */
+(function () {
+  "use strict";
+
+  var $ = function (sel, root) { return (root || document).querySelector(sel); };
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function fmt(n) { return Number(n || 0).toLocaleString("id-ID"); }
+  function getEventId() { return new URLSearchParams(window.location.search).get("event") || "event-sim-001"; }
+  function fmtTime(t) { return t ? String(t).slice(0, 16).replace("T", " ") : "-"; }
+
+  var state = { orgs: [], view: "tree", selected: null };
+  var BOARD_CACHE = null;
+
+  function statusPillClass(status) {
+    var l = String(status || "").toLowerCase();
+    if (["verified", "official_verified", "community_verified"].indexOf(l) !== -1) return "ok";
+    if (l === "pending" || l === "self_reported") return "warning";
+    if (l === "critical") return "danger";
+    return "";
+  }
+
+  function renderKpi(t) {
+    $("#kpiOrgAktif").textContent = fmt(t.organisasi_aktif);
+    $("#kpiPoskoAktif").textContent = fmt(t.posko_aktif);
+    $("#kpiPendingVerif").textContent = fmt(t.pending_verifikasi);
+    $("#kpiAnggota").textContent = fmt(t.anggota_terdaftar);
+  }
+
+  function orgCardHtml(o) {
+    var isSel = state.selected === o.name;
+    return (
+      '<div class="rn-op-org' + (isSel ? " is-selected" : "") + '" data-org="' + esc(o.name) + '">' +
+      "<div class=\"rn-op-org-head\"><b>" + esc(o.title) + '</b><span class="chip ' + statusPillClass(o.verification_status) + '">' + esc(o.verification_status) + "</span></div>" +
+      '<small>' + fmt(o.posko_count) + " posko · " + fmt(o.member_count) + " anggota</small>" +
+      "</div>"
+    );
+  }
+
+  function renderTree(orgs) {
+    var el = $("#orgTree");
+    if (!orgs.length) {
+      el.innerHTML = '<p class="rn-muted">Belum ada organisasi dengan posko untuk event ini.</p>';
+      return;
+    }
+    if (state.view === "list") {
+      el.innerHTML = '<div class="rn-op-list">' + orgs.map(orgCardHtml).join("") + "</div>";
+    } else {
+      el.innerHTML = '<div class="rn-op-tree">' + orgs.map(function (o) {
+        var isSel = state.selected === o.name;
+        var poskoRows = (o.poskos || []).map(function (p) {
+          return (
+            '<a class="rn-op-posko-row" href="' + esc(p.href) + '">' +
+            "<span>" + esc(p.title) + "</span>" +
+            '<span class="chip ' + statusPillClass(p.status) + '">' + esc(p.status) + "</span></a>"
+          );
+        }).join("");
+        return (
+          '<div class="rn-op-tree-node' + (isSel ? " is-selected" : "") + '">' +
+          '<div class="rn-op-tree-org" data-org="' + esc(o.name) + '">' +
+          "<b>" + esc(o.title) + '</b><span class="chip ' + statusPillClass(o.verification_status) + '">' + fmt(o.posko_count) + " posko</span>" +
+          "</div>" +
+          '<div class="rn-op-tree-poskos">' + (poskoRows || '<span class="rn-muted">Belum ada posko.</span>') + "</div>" +
+          "</div>"
+        );
+      }).join("") + "</div>";
+    }
+    el.querySelectorAll("[data-org]").forEach(function (node) {
+      node.addEventListener("click", function (e) {
+        if (e.target.closest(".rn-op-posko-row")) return;
+        selectOrg(node.getAttribute("data-org"));
+      });
+    });
+  }
+
+  function renderDetail(detail) {
+    var org = detail.org;
+    var poskos = detail.poskos || [];
+    var members = detail.members || [];
+    var programs = detail.programs || [];
+    var checklist = detail.checklist || {};
+
+    var poskoRows = poskos.length
+      ? poskos.map(function (p) {
+          return '<div class="rn-op-detail-row"><b>' + esc(p.title) + '</b><span class="chip ' + statusPillClass(p.operational_status) + '">' + esc(p.operational_status) + "</span></div>";
+        }).join("")
+      : '<p class="rn-muted">Belum ada posko.</p>';
+
+    var memberRows = members.length
+      ? members.map(function (m) { return '<div class="rn-op-detail-row"><b>' + esc(m.title || m.name) + "</b><small>" + esc(m.role || "-") + "</small></div>"; }).join("")
+      : '<p class="rn-muted">Belum ada anggota terdaftar.</p>';
+
+    var programRows = programs.length
+      ? programs.map(function (p) { return '<div class="rn-op-detail-row"><b>' + esc(p.program_name) + '</b><span class="chip">' + esc(p.status) + "</span></div>"; }).join("")
+      : '<p class="rn-muted">Belum ada program.</p>';
+
+    var checklistHtml = ["identitas_organisasi", "kontak_person", "trusted_verifier"].map(function (k) {
+      var labels = { identitas_organisasi: "Identitas Organisasi", kontak_person: "Kontak Person Terisi", trusted_verifier: "Punya Trusted Verifier" };
+      var ok = checklist[k];
+      return '<li class="' + (ok ? "is-done" : "") + '">' + (ok ? "✓" : "○") + " " + labels[k] + "</li>";
+    }).join("");
+
+    $("#orgDetailPanel").innerHTML =
+      '<div class="rn-op-detail-head"><h3>' + esc(org.title) + '</h3><span class="chip ' + statusPillClass(org.verification_status) + '">' + esc(org.verification_status) + "</span></div>" +
+      '<p class="rn-muted">' + esc(org.organization_type) + " · " + esc(org.contact_person || "-") + "</p>" +
+      '<div class="rn-tabs rn-op-detail-tabs">' +
+      '<button type="button" class="rn-tab is-active" data-tab="ringkasan">Ringkasan</button>' +
+      '<button type="button" class="rn-tab" data-tab="posko">Posko (' + poskos.length + ')</button>' +
+      '<button type="button" class="rn-tab" data-tab="anggota">Anggota (' + members.length + ')</button>' +
+      '<button type="button" class="rn-tab" data-tab="program">Program (' + programs.length + ')</button>' +
+      "</div>" +
+      '<div class="rn-op-tabpane" data-pane="ringkasan">' +
+      '<div class="rn-va-trust"><span>Trust Level</span><b>' + esc(org.trust_level) + "</b>" +
+      "<span>Verifier Terpercaya</span><b>" + fmt(org.trusted_verifier_count) + "</b></div>" +
+      '<ul class="rn-op-checklist">' + checklistHtml + "</ul>" +
+      '<p class="rn-muted">Terakhir diperbarui: ' + fmtTime(org.modified) + "</p>" +
+      "</div>" +
+      '<div class="rn-op-tabpane" data-pane="posko" hidden>' + poskoRows + "</div>" +
+      '<div class="rn-op-tabpane" data-pane="anggota" hidden>' + memberRows + "</div>" +
+      '<div class="rn-op-tabpane" data-pane="program" hidden>' + programRows + "</div>";
+
+    $("#orgDetailPanel").querySelectorAll(".rn-op-detail-tabs .rn-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        $("#orgDetailPanel").querySelectorAll(".rn-op-detail-tabs .rn-tab").forEach(function (t) { t.classList.remove("is-active"); });
+        tab.classList.add("is-active");
+        $("#orgDetailPanel").querySelectorAll(".rn-op-tabpane").forEach(function (p) { p.hidden = p.getAttribute("data-pane") !== tab.getAttribute("data-tab"); });
+      });
+    });
+  }
+
+  async function selectOrg(name) {
+    state.selected = name;
+    renderTree(state.orgs);
+    $("#orgDetailPanel").innerHTML = '<p class="rn-muted">Memuat…</p>';
+    try {
+      var detail = await window.RN_FRAPPE.call("rescue_net.api_control_centre.org_detail", { organization: name });
+      renderDetail(detail);
+    } catch (err) {
+      $("#orgDetailPanel").innerHTML = '<p class="rn-muted">Gagal memuat: ' + esc(err && err.message || err) + "</p>";
+    }
+  }
+
+  function setupViewTabs() {
+    document.querySelectorAll("#treeViewTabs .rn-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        document.querySelectorAll("#treeViewTabs .rn-tab").forEach(function (t) { t.classList.remove("is-active"); });
+        tab.classList.add("is-active");
+        state.view = tab.getAttribute("data-view");
+        renderTree(state.orgs);
+      });
+    });
+  }
+
+  async function loadBoard() {
+    var data = await window.RN_FRAPPE.call("rescue_net.api_control_centre.org_posko_board", { disaster_event: getEventId() });
+    BOARD_CACHE = data;
+    state.orgs = data.orgs || [];
+    $("#orgUpdated").textContent = "Organisasi · Diperbarui " + fmtTime(data.generated_at).slice(11, 16);
+    renderKpi(data.totals || {});
+    renderTree(state.orgs);
+    if (state.orgs.length && !state.selected) selectOrg(state.orgs[0].name);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (!window.RN_FRAPPE) return;
+    setupViewTabs();
+    loadBoard()
+      .then(function () {
+        var el = document.getElementById("orgStatus");
+        if (el) el.textContent = "Dimuat " + state.orgs.length + " organisasi.";
+      })
+      .catch(function (err) {
+        var el = document.getElementById("orgStatus");
+        if (el) el.textContent = "Gagal memuat: " + (err && err.message || err);
+      });
+  });
+})();
+
 function safe(v) {
   return (
     v === null ||

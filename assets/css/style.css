@@ -5080,3 +5080,41 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-va-actionbar .rn-va-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rn-va-fields { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ============================================================
+   Organisasi & Posko — pages/organisasi-posko.html
+   ============================================================ */
+.rn-op-kpi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rn-op-row { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+
+.rn-op-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.rn-op-org, .rn-op-tree-org {
+  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel2); cursor: pointer;
+}
+.rn-op-org.is-selected, .rn-op-tree-node.is-selected .rn-op-tree-org { border-color: var(--coral, #e8835d); background: rgba(232,131,93,.08); }
+.rn-op-org-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.rn-op-org small { color: var(--muted); font-size: 11px; }
+
+.rn-op-tree { display: flex; flex-direction: column; gap: 10px; }
+.rn-op-tree-node { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.rn-op-tree-org { display: flex; align-items: center; justify-content: space-between; border: 0; border-radius: 0; }
+.rn-op-tree-poskos { display: flex; flex-direction: column; }
+.rn-op-posko-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px 8px 24px;
+  border-top: 1px solid var(--line); text-decoration: none; color: inherit; font-size: 12px;
+}
+.rn-op-posko-row:hover { background: rgba(232,131,93,.06); }
+.rn-op-tree-poskos .rn-muted { padding: 8px 12px 8px 24px; display: block; border-top: 1px solid var(--line); font-size: 12px; }
+
+.rn-op-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rn-op-detail-tabs { margin: 12px 0; flex-wrap: wrap; }
+.rn-op-detail-tabs .rn-tab { font-size: 11px; padding: 6px 10px; }
+.rn-op-detail-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.rn-op-detail-row:last-child { border-bottom: 0; }
+.rn-op-checklist { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.rn-op-checklist li.is-done { color: #2f9e59; }
+
+@media (max-width: 1100px) {
+  .rn-op-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-op-row { grid-template-columns: minmax(0, 1fr); }
+}

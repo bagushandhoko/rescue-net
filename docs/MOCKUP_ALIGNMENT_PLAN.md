@@ -324,8 +324,8 @@ Batch by kesiapan backend & kemiripan (pakai komponen bagian 3):
 6. ✅ **Verification & Approval** — DONE 2026-09-02 (`approval_queue` +
    `approval_item_detail` + real write `approval_action`; "Merge" intentionally
    not implemented). Lihat `HANDOVER.md`.
-7. **Organisasi & Posko** + **Registrasi & Verifikasi Posko** (halaman baru) —
-   sepasang, trust-level & tree.
+7. 🟡 **Organisasi & Posko** ✅ DONE 2026-09-02 + **Registrasi & Verifikasi
+   Posko** (halaman baru) — backend done, frontend in progress. Lihat `HANDOVER.md`.
 8. **Manajemen Alat Kerja** — `api_resource_tools`.
 9. **Profil Sumber Daya** — `api_resource_tools`.
 10. **Program Khusus** — gabung `api_recovery` / `api_donor_program`.
@@ -357,7 +357,7 @@ Tiap endpoint dashboard mengembalikan, selain `totals` + data panel:
 - [x] `api_control_centre.distribusi_board(disaster_event)` — DONE 2026-09-02, + `auto_match_distribution` write action
 - [x] `api_control_centre.evidence_board(disaster_event)` + perluas `event_evidence` — DONE 2026-09-02
 - [x] `api_verification.approval_queue(disaster_event)` + `approval_item_detail` — DONE 2026-09-02, + real `approval_action` write endpoint
-- [ ] `api_control_centre.org_posko_board(disaster_event)` + `posko_verification_checklist`
+- [x] `api_control_centre.org_posko_board(disaster_event)` + `posko_verification_checklist` — DONE 2026-09-02
 - [ ] `api_resource_tools.tools_board(disaster_event)`
 - [ ] `api_resource_tools.resource_profile(target)`
 - [ ] `program_board(disaster_event)` + `program_detail(program)`

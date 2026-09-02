@@ -193,6 +193,89 @@
       '<div class="rn-ak-summary-tile"><span>Kerusakan Baru</span><b>' + fmt(s.kerusakan_baru) + '</b></div>';
   }
 
+  var OBJECT_TYPE_METHOD = "rescue_net.api_resource_tools.work_objects_board";
+  var CREATE_OBJECT_METHOD = "rescue_net.api_resource_tools.create_work_object";
+
+  function renderGroups(groups) {
+    var el = $("#groupList");
+    if (!groups || !groups.length) {
+      el.innerHTML = '<p class="rn-muted" style="padding:8px 10px;">Belum ada Resource Profile untuk dikelompokkan.</p>';
+      return;
+    }
+    el.innerHTML = groups.map(function (g) {
+      var totalCol = g.same_unit
+        ? fmt(g.total_qty) + " " + esc((g.unit_breakdown[0] || {}).unit || "")
+        : g.unit_breakdown.map(function (u) { return '<span class="rn-ak-unit-chip">' + fmt(u.qty) + " " + esc(u.unit) + "</span>"; }).join("");
+      var sourceLabel = g.source === "manual" ? "Manual" : g.source === "ai" ? "AI" : g.source === "rule" ? "Aturan" : "-";
+      return (
+        '<div class="rn-ak-group-row"><b>' + esc(g.group) + "</b>" +
+        "<span>" + fmt(g.item_count) + " item</span>" +
+        "<span>" + totalCol + "</span>" +
+        "<span>" + fmt(g.posko_spread) + " lokasi</span>" +
+        '<span><span class="chip">' + esc(sourceLabel) + (g.avg_confidence ? " " + g.avg_confidence + "%" : "") + "</span></span></div>"
+      );
+    }).join("");
+  }
+
+  var STATUS_CHIP = { open: "warning", in_progress: "", resolved: "ok" };
+  var STATUS_LABEL = { open: "Terbuka", in_progress: "Dikerjakan", resolved: "Selesai" };
+
+  function renderObjects(objects) {
+    var el = $("#objectList");
+    if (!objects || !objects.length) {
+      el.innerHTML = '<p class="rn-muted">Belum ada object kerja dilaporkan.</p>';
+      return;
+    }
+    el.innerHTML = objects.map(function (o) {
+      var preds = (o.predictions || []).map(function (p) {
+        return (
+          '<div class="rn-ak-pred-row"><span><b>' + esc(p.label) + " × " + fmt(p.predicted_qty) + '</b><small>' + esc(p.basis) + "</small></span>" +
+          '<span class="chip ' + (p.gap > 0 ? "danger" : "ok") + '">' + (p.gap > 0 ? "Kurang " + fmt(p.gap) : "Cukup") + " (siap " + fmt(p.ready_available) + ")</span></div>"
+        );
+      }).join("") || '<p class="rn-muted" style="font-size:11px;">Tidak ada prediksi untuk jenis object ini.</p>';
+      return (
+        '<div class="rn-ak-object-card"><div class="rn-ak-object-head"><b>' + esc(o.title) + "</b>" +
+        '<span class="chip ' + (STATUS_CHIP[o.status] || "") + '">' + (STATUS_LABEL[o.status] || o.status) + "</span></div>" +
+        '<div class="rn-ak-object-meta">' + esc(o.object_type_label) + " · " + fmt(o.size_value) + " " + esc(o.size_unit || "") + " · " + esc(o.location || "-") + "</div>" +
+        '<div class="rn-ak-object-preds">' + preds + "</div></div>"
+      );
+    }).join("");
+  }
+
+  async function loadObjects() {
+    var data = await window.RN_FRAPPE.call(OBJECT_TYPE_METHOD, { disaster_event: getEventId() });
+    renderObjects(data.objects || []);
+  }
+
+  function setupObjectForm() {
+    var toggleBtn = document.querySelector('[data-toggle="objectForm"]');
+    var form = document.getElementById("objectForm");
+    if (!toggleBtn || !form) return;
+    toggleBtn.addEventListener("click", function () { form.classList.toggle("is-open"); });
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var msg = $("#objectFormMsg");
+      msg.textContent = "Menyimpan & menghitung prediksi…";
+      try {
+        await window.RN_FRAPPE.call(CREATE_OBJECT_METHOD, {
+          title: form.title.value.trim(),
+          object_type: form.object_type.value,
+          size_value: Number(form.size_value.value),
+          size_unit: form.size_unit.value.trim(),
+          location: form.location.value.trim(),
+          notes: form.notes.value.trim(),
+          disaster_event: getEventId(),
+        }, { method: "POST" });
+        form.reset();
+        form.classList.remove("is-open");
+        msg.textContent = "";
+        await loadObjects();
+      } catch (err) {
+        msg.textContent = "Gagal: " + (err && err.message || err) + (/login|permission|akses/i.test(String(err && err.message)) ? " (perlu login)" : "");
+      }
+    });
+  }
+
   async function loadBoard() {
     var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: getEventId() });
     BOARD_CACHE = data;
@@ -208,6 +291,8 @@
     renderAssets(data.asset_registry || []);
     renderBlockers(data.blockers || []);
     renderSummary(data.summary || {});
+    renderGroups(data.groups || []);
+    $("#groupsNote").textContent = data.groups_note || "";
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -217,6 +302,8 @@
     });
     document.querySelectorAll("#alatKerjaDrill [data-close]").forEach(function (el) { el.addEventListener("click", closeDrill); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
+    setupObjectForm();
+    loadObjects().catch(function (err) { console.error("[work objects board]", err); });
     loadBoard().catch(function (err) { console.error("[alat kerja board]", err); });
   });
 })();

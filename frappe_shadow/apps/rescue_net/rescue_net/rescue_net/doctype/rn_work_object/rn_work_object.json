@@ -1,0 +1,97 @@
+{
+  "doctype": "DocType",
+  "name": "RN Work Object",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "title",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event",
+      "reqd": 1
+    },
+    {
+      "fieldname": "title",
+      "label": "Nama Object Kerja",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "object_type",
+      "label": "Jenis Object",
+      "fieldtype": "Select",
+      "options": "longsoran\njembatan_putus\npuing_berat\npohon_tumbang\nakses_terendam\nlainnya",
+      "default": "longsoran",
+      "reqd": 1
+    },
+    {
+      "fieldname": "location",
+      "label": "Lokasi",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "size_value",
+      "label": "Ukuran",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "size_unit",
+      "label": "Satuan Ukuran",
+      "fieldtype": "Data",
+      "description": "mis. m3, m, m2, pohon"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status Penanganan",
+      "fieldtype": "Select",
+      "options": "open\nin_progress\nresolved",
+      "default": "open"
+    },
+    {
+      "fieldname": "reported_by",
+      "label": "Dilaporkan Oleh",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

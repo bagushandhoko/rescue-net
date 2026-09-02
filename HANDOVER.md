@@ -1143,6 +1143,83 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
     renders without error, zero horizontal overflow at 390px.
   - Cache-buster: `style.css`/`resource-profile.js` → `?v=resprofile-20260902`.
 
+- **Control Centre header stacking fixed (2026-09-02, "menu numpuk"):**
+  after loading `rn-public-header.js` on `war-room.html` (previous entry),
+  the owner flagged it looked stacked/crowded. Playwright bounding-rect
+  measurement found the real bug: `.rn-public-links` (the header's 10 nav
+  links) had no `flex-wrap`, so at 1440px they overflowed their grid column
+  by ~31px (`scrollWidth` 947 vs 916px available), visually colliding the
+  "Login/registrasi" pill with the disaster-event picker next to it —
+  `overlap:true` measured via `getBoundingClientRect`, confirmed present
+  on *every* page (not war-room-specific), just newly visible because this
+  was the first time this session anyone looked closely at the header on
+  a freshly-touched page. Fixed by adding `flex-wrap:wrap` + `min-width:0`
+  to `.rn-public-links` in both `style.css` (site-wide) and the new
+  `rn-public-header-standalone.css` (war-room's copy) — wraps to a second
+  centered row instead of overflowing. Re-measured `overlap:false` on both
+  a normal page and war-room.html after the fix. The mobile 3-row stack
+  war-room now has (public header w/ picker + `.cc-mobile-bar` + its own
+  `.cc-header` title bar) was checked too and found to NOT be worse than
+  a normal page's 2-row stack (drawer-topbar + public header, then that
+  page's own `.topbar` — comparable total height) — so left as-is; the
+  actual "numpuk" was the desktop overlap, not extra mobile rows.
+
+- **Manajemen Alat Kerja extended: Object Kerja + AI equipment-grouping
+  (2026-09-02, owner directive, same day as step 8 build):** two real
+  additions to `pages/alat-kerja.html`/`assets/js/alat-kerja.js`, not
+  originally in the mock-up but requested directly.
+  - **Object Kerja & Prediksi Kebutuhan Alat** — new doctype `RN Work
+    Object` (object_type: longsoran/jembatan_putus/puing_berat/
+    pohon_tumbang/akses_terendam/lainnya, size_value + size_unit,
+    location, status). New guest endpoint `api_resource_tools.
+    work_objects_board(disaster_event)` runs each object through a small,
+    explicitly-documented heuristic (`_EQUIP_PREDICTION_RULES`, e.g. "1
+    ekskavator per ~150 m³ material longsor") to predict equipment
+    category + quantity, then cross-references real `ready_available`
+    count per category (same categories as the Inventari Alat tiles) to
+    surface a real `gap`. Deliberately labelled as a heuristic estimate,
+    not an engineering calculation, both in the API response
+    (`method_note`) and on the page. New writes `create_work_object`
+    (login required, any authenticated actor — deliberately not gated to
+    MANAGER_ROLES since reporting a damaged object is closer to a field
+    report than an operator action) and `update_work_object_status`
+    (manager-gated). Seeded 4 objects for event-sim-001 tied to the
+    existing Aceh Barat narrative (longsoran KM 12, jembatan putus Alue
+    Gajah, puing Pasar Meulaboh, pohon tumbang jalur evakuasi Samatiga).
+  - **Kelompok Alat (Normalisasi AI Lintas Posko)** — `tools_board` gained
+    a `groups` key that groups every Resource Profile (any owner —
+    organization/posko/individual, i.e. genuinely cross-posko) by a
+    canonical group name, so the same equipment scattered across many
+    owners with different raw names/units still rolls up into one line.
+    Reused real, already-existing infrastructure instead of building a
+    new "AI" concept from scratch: added `canonical_category/group/item` +
+    `normalization_source/confidence/status` fields to `RN Resource
+    Profile` (exact same field shape already used on `RN Stock
+    Observation`/`RN Community Need`), and extended
+    `rescue_net.intelligence.normalization.classify_text()` (the app's
+    existing rule-based keyword classifier, previously only wired to
+    Community Need classification) with 6 new specific rules — Ekskavator/
+    Genset/Pompa Air/Forklift/Chainsaw/Perahu Karet — replacing one overly
+    generic "Alat Berat" rule that would have lumped them all together.
+    Groups honestly show a `source` (`manual` when an operator set
+    canonical fields directly, `rule` when `classify_text()` guessed it
+    live, never a fabricated black-box "ai" call for what's actually
+    deterministic keyword matching) and `avg_confidence`. **Different
+    units are never summed** — `same_unit:false` groups return
+    `total_qty:null` and a per-unit `unit_breakdown` array instead (e.g.
+    Genset: 5×`unit` + 2×`set`, shown as two separate chips) — backfilled
+    the 30 step-8 seed resources with `normalization_source=manual,
+    confidence=100` and added one extra Genset row in a different unit
+    from a different org specifically so this case is real and visible in
+    the demo, not just structurally supported.
+  - Deployed to `osiun-frappe-backend` (md5 verified, migrated cleanly) +
+    restarted. Playwright `/volume1/docker/osiun-playwright-check/
+    rn-alatkerja2.js`: 4 object cards with real predictions/gaps render,
+    10 group rows including the mixed-unit Genset case, guest write shows
+    graceful "perlu login" message, zero mobile overflow, zero console
+    errors.
+  - Cache-buster: `style.css`/`alat-kerja.js` → `?v=alatkerja-20260902b`.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

@@ -115,11 +115,64 @@ RULES = [
     {
         "kind": "jasa",
         "category": "Peralatan Operasional",
+        "group": "Ekskavator",
+        "item": "Ekskavator",
+        "terms": [
+            "excavator", "ekskavator", "bulldozer",
+        ],
+    },
+    {
+        "kind": "jasa",
+        "category": "Peralatan Operasional",
+        "group": "Genset",
+        "item": "Genset",
+        "terms": [
+            "genset", "generator", "generator set",
+        ],
+    },
+    {
+        "kind": "jasa",
+        "category": "Peralatan Operasional",
+        "group": "Pompa Air",
+        "item": "Pompa Air",
+        "terms": [
+            "pompa air", "pompa lumpur", "water pump", "pompa",
+        ],
+    },
+    {
+        "kind": "jasa",
+        "category": "Peralatan Operasional",
+        "group": "Forklift",
+        "item": "Forklift",
+        "terms": [
+            "forklift",
+        ],
+    },
+    {
+        "kind": "jasa",
+        "category": "Peralatan Operasional",
+        "group": "Chainsaw",
+        "item": "Chainsaw",
+        "terms": [
+            "chainsaw", "gergaji mesin", "gergaji chainsaw",
+        ],
+    },
+    {
+        "kind": "jasa",
+        "category": "Peralatan Operasional",
+        "group": "Perahu Karet",
+        "item": "Perahu Karet",
+        "terms": [
+            "perahu karet", "rubber boat", "perahu evakuasi",
+        ],
+    },
+    {
+        "kind": "jasa",
+        "category": "Peralatan Operasional",
         "group": "Alat Berat",
         "item": "Layanan Alat Berat",
         "terms": [
-            "excavator", "ekskavator", "bulldozer",
-            "alat berat"
+            "alat berat",
         ],
     },
     {

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Alat Kerja</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=alatkerja-20260902">
+  <link rel="stylesheet" href="../assets/css/style.css?v=alatkerja-20260902b">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -104,6 +104,46 @@
       <aside class="panel">
         <div class="panel-header"><div><h3>Hambatan Alat Kerja</h3></div></div>
         <div class="event-list" id="blockerList"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid rn-ak-row2">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Object Kerja & Prediksi Kebutuhan Alat</h3><p>Insiden/kerusakan lapangan (longsoran, jembatan putus, puing berat, dll) dengan estimasi kebutuhan alat.</p></div>
+        </div>
+        <div id="objectList"></div>
+        <button class="rn-pr-add-btn" data-toggle="objectForm" type="button">+ Lapor Object Kerja</button>
+        <form class="rn-ak-object-form" id="objectForm">
+          <input name="title" placeholder="Nama object kerja (mis. Longsoran KM 12)" required>
+          <div class="rn-ak-object-form-grid">
+            <select name="object_type">
+              <option value="longsoran">Longsoran</option>
+              <option value="jembatan_putus">Jembatan Putus</option>
+              <option value="puing_berat">Puing Berat</option>
+              <option value="pohon_tumbang">Pohon Tumbang</option>
+              <option value="akses_terendam">Akses Terendam</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+            <input name="location" placeholder="Lokasi">
+            <input name="size_value" type="number" step="0.1" placeholder="Ukuran (mis. 300)" required>
+            <input name="size_unit" placeholder="Satuan (m3/m/m2/pohon)">
+          </div>
+          <input name="notes" placeholder="Catatan tambahan (opsional)">
+          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan & Prediksi</button></div>
+          <span class="rn-pr-add-msg" id="objectFormMsg"></span>
+        </form>
+      </div>
+
+      <aside class="panel">
+        <div class="panel-header">
+          <div><h3>Kelompok Alat (Normalisasi AI Lintas Posko)</h3><p>Alat sejenis digabung otomatis meski nama/satuan berbeda antar posko.</p></div>
+        </div>
+        <div class="rn-ak-group-row is-head">
+          <span>Kelompok</span><span>Jumlah Item</span><span>Total / Satuan</span><span>Posko</span><span>Sumber</span>
+        </div>
+        <div id="groupList"></div>
+        <p class="rn-muted" id="groupsNote" style="font-size:11px;margin-top:8px;"></p>
       </aside>
     </section>
 
@@ -258,7 +298,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=frappe-batch-b-1"></script>
-<script src="../assets/js/alat-kerja.js?v=alatkerja-20260902"></script>
+<script src="../assets/js/alat-kerja.js?v=alatkerja-20260902b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

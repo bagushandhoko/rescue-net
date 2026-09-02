@@ -197,6 +197,24 @@ Mockup: `manajemen alat kerja.png`
   × 6 kategori, status tersebar Ready/Assigned/Maintenance/Critical), 9 Work
   Tool Request (mix priority/status), 5 Work Tool Deployment (operator +
   jadwal hari ini), 3 Stock Observation BBM/Oli di Posko BNPB Meulaboh.
+- **TAMBAHAN 2026-09-02 (owner directive, sesi sama):** **Object Kerja &
+  Prediksi Kebutuhan Alat** — halaman baru `RN Work Object` (longsoran/
+  jembatan putus/puing berat/pohon tumbang/akses terendam/lainnya) dengan
+  ukuran (m³/m/m²/pohon), diprediksi jadi kebutuhan alat via heuristik
+  sederhana yang didokumentasikan (bukan rumus rekayasa resmi), dicocokkan
+  ke ketersediaan alat real (`ready_available`/`gap`). Endpoint guest
+  `work_objects_board` + write `create_work_object`/
+  `update_work_object_status`. **Kelompok Alat (Normalisasi AI Lintas
+  Posko)** — panel baru di `tools_board.groups`: alat sejenis dari SEMUA
+  owner/posko dikelompokkan otomatis pakai `canonical_category/group/item`
+  (field baru di `RN Resource Profile`, pola sama dgn `RN Stock
+  Observation`/`RN Community Need`) + `classify_text()` (rule-based, sudah
+  ada di `rescue_net.intelligence.normalization`, diperluas dgn 6 rule alat
+  kerja baru: Ekskavator/Genset/Pompa Air/Forklift/Chainsaw/Perahu Karet).
+  Alat dengan satuan berbeda antar posko ditampilkan terpisah per satuan
+  (tidak dijumlahkan langsung) — normalization_source jujur berlabel
+  manual/rule/ai, tidak pernah mengklaim panggilan AI black-box padahal
+  aturan kata kunci deterministik.
 
 ### 4.7 Dapur Umum — `pages/dapur-umum.html` + `assets/js/dapur-umum.js`
 Mockup: `dapur umum.png` · (dashboard call `api_kitchen.dashboard` sekarang **error

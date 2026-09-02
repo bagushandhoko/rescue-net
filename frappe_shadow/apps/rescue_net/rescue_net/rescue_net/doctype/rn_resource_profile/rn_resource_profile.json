@@ -101,6 +101,40 @@
    "fieldname": "notes",
    "label": "Notes",
    "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "canonical_category",
+   "label": "Canonical Category",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "canonical_group",
+   "label": "Canonical Group",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "canonical_item",
+   "label": "Canonical Item",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "normalization_source",
+   "label": "Normalization Source",
+   "fieldtype": "Select",
+   "options": "manual\nrule\nai",
+   "default": "rule"
+  },
+  {
+   "fieldname": "normalization_confidence",
+   "label": "Normalization Confidence",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "normalization_status",
+   "label": "Normalization Status",
+   "fieldtype": "Select",
+   "options": "suggested\nreviewed\naccepted",
+   "default": "suggested"
   }
  ],
  "permissions": [

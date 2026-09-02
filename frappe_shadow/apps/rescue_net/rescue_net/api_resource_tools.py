@@ -1,7 +1,9 @@
+import math
 from collections import defaultdict
 
 import frappe
 from rescue_net.reference_resolver import resolve_disaster_event
+from rescue_net.intelligence.normalization import classify_text
 from frappe.utils import (
     flt,
     get_datetime,
@@ -1292,7 +1294,9 @@ def tools_board(disaster_event=None):
         fields=[
             "name", "resource_name", "resource_type", "category", "quantity",
             "unit", "availability_status", "current_location", "coverage_area",
-            "verification_status", "modified",
+            "verification_status", "modified", "owner_type", "owner_id",
+            "canonical_category", "canonical_group", "canonical_item",
+            "normalization_source", "normalization_confidence",
         ],
         order_by="category asc, resource_name asc",
         limit_page_length=2000,
@@ -1555,6 +1559,71 @@ def tools_board(disaster_event=None):
         "kerusakan_baru": kerusakan_baru,
     }
 
+    # --- Kelompok Alat (AI Normalisasi Lintas Posko) ---
+    # Groups every resource (any owner_type — organization/posko/individual)
+    # by a canonical group name so the same equipment scattered across many
+    # posko/owners with different raw names or units still rolls up into one
+    # line. Uses the stored canonical_* fields when a human/manager already
+    # set them (normalization_status=accepted); otherwise falls back to the
+    # same rule-based classify_text() used for RN Community Need/RN Stock
+    # Observation elsewhere in the app, honestly labelled "rule"/"ai" per
+    # normalization_source (this app never claims a black-box "AI" call —
+    # the rules are deterministic keyword matches).
+    equip_groups = defaultdict(lambda: {
+        "total_qty": 0.0, "unit_breakdown": defaultdict(float),
+        "locations": set(), "confidence_scores": [], "sources": set(),
+        "item_count": 0, "category": None,
+    })
+    for r in resources:
+        if r.canonical_group:
+            group_key = r.canonical_group
+            cat_label = r.canonical_category or _CATEGORY_LABELS.get(r.category, r.category)
+            source = r.normalization_source or "rule"
+            confidence = r.normalization_confidence
+        else:
+            guess = classify_text(r.resource_name or r.category or "")
+            group_key = guess["canonical_group"] or _CATEGORY_LABELS.get(r.category, r.category) or "Lainnya"
+            cat_label = guess["canonical_category"] or _CATEGORY_LABELS.get(r.category, r.category)
+            source = "rule" if guess["canonical_group"] else "tidak_diketahui"
+            confidence = guess["normalization_confidence"] if guess["canonical_group"] else None
+
+        g = equip_groups[group_key]
+        g["category"] = cat_label
+        g["total_qty"] += flt(r.quantity)
+        g["unit_breakdown"][r.unit or "unit"] += flt(r.quantity)
+        if r.current_location:
+            g["locations"].add(r.current_location)
+        if confidence:
+            g["confidence_scores"].append(confidence)
+        g["sources"].add(source)
+        g["item_count"] += 1
+
+    groups = []
+    for group_key, g in equip_groups.items():
+        same_unit = len(g["unit_breakdown"]) == 1
+        groups.append({
+            "group": group_key,
+            "category": g["category"],
+            "item_count": g["item_count"],
+            "total_qty": round(g["total_qty"], 1) if same_unit else None,
+            "unit_breakdown": [
+                {"unit": u, "qty": round(q, 1)} for u, q in g["unit_breakdown"].items()
+            ],
+            "same_unit": same_unit,
+            "posko_spread": len(g["locations"]),
+            "avg_confidence": (
+                round(sum(g["confidence_scores"]) / len(g["confidence_scores"]))
+                if g["confidence_scores"] else None
+            ),
+            "source": (
+                "manual" if "manual" in g["sources"]
+                else "ai" if "ai" in g["sources"]
+                else "rule" if "rule" in g["sources"]
+                else "tidak_diketahui"
+            ),
+        })
+    groups.sort(key=lambda x: -x["item_count"])
+
     return {
         "disaster_event": event,
         "generated_at": now_datetime(),
@@ -1568,6 +1637,13 @@ def tools_board(disaster_event=None):
         "fuel": fuel,
         "blockers": blockers,
         "summary": summary,
+        "groups": groups,
+        "groups_note": (
+            "Pengelompokan otomatis lintas posko/pemilik berdasarkan nama alat "
+            "(aturan kata kunci, ditandai 'rule', atau ditetapkan manual oleh "
+            "operator, ditandai 'manual'). Alat dengan satuan berbeda "
+            "ditampilkan terpisah per satuan, tidak dijumlahkan langsung."
+        ),
         "asset_registry": [
             {
                 "code": r.name,
@@ -1803,3 +1879,170 @@ def add_personal_support_need(
         "work_tool_request": doc.name,
         "status": doc.request_status,
     }
+
+
+_OBJECT_TYPE_LABELS = {
+    "longsoran": "Longsoran",
+    "jembatan_putus": "Jembatan Putus",
+    "puing_berat": "Puing Berat",
+    "pohon_tumbang": "Pohon Tumbang",
+    "akses_terendam": "Akses Terendam",
+    "lainnya": "Lainnya",
+}
+
+# Each entry: (equipment category, size-per-unit divisor, plain-language basis).
+# qty = max(1, ceil(size_value / divisor)). Deliberately a simple, documented
+# heuristic — not an engineering calculation — used to give a starting-point
+# estimate of equipment demand from a reported work object's rough size.
+_EQUIP_PREDICTION_RULES = {
+    "longsoran": [
+        ("ekskavator", 150, "1 ekskavator per ~150 m³ material longsor"),
+    ],
+    "jembatan_putus": [
+        ("perahu_karet", 25, "1 perahu karet per ~25 m bentang sebagai jalur alternatif"),
+        ("genset", 50, "1 genset per ~50 m bentang untuk penerangan area kerja malam"),
+    ],
+    "puing_berat": [
+        ("chainsaw", 100, "1 chainsaw per ~100 m² puing berpohon/berkayu"),
+        ("forklift", 300, "1 forklift per ~300 m² puing untuk angkut material berat"),
+    ],
+    "pohon_tumbang": [
+        ("chainsaw", 5, "1 chainsaw per ~5 pohon tumbang"),
+    ],
+    "akses_terendam": [
+        ("pompa_air", 200, "1 pompa air per ~200 m² area tergenang"),
+    ],
+    "lainnya": [],
+}
+
+
+def _predict_equipment(object_type, size_value, ready_by_category):
+    rules = _EQUIP_PREDICTION_RULES.get(object_type, [])
+    size = flt(size_value)
+    out = []
+    for category, divisor, basis in rules:
+        qty = max(1, math.ceil(size / divisor)) if size > 0 else 1
+        ready = ready_by_category.get(category, 0)
+        out.append({
+            "category": category,
+            "label": _CATEGORY_LABELS.get(category, category),
+            "predicted_qty": qty,
+            "basis": basis,
+            "ready_available": ready,
+            "gap": max(0, qty - ready),
+        })
+    return out
+
+
+@frappe.whitelist(allow_guest=True)
+def work_objects_board(disaster_event=None):
+    """Object Kerja & Prediksi Kebutuhan Alat — real reported incident/damage
+    objects (longsoran/jembatan putus/puing berat/...) with a heuristic
+    equipment-need prediction per object, cross-referenced against real
+    ready-available counts per category (same categories as tools_board's
+    Inventari Alat per Kategori) so a gap is visible immediately.
+    """
+    event = resolve_disaster_event(disaster_event)
+    filters = {"disaster_event": event} if event else {}
+
+    objects = frappe.get_all(
+        "RN Work Object",
+        filters=filters,
+        fields=[
+            "name", "title", "object_type", "location", "size_value",
+            "size_unit", "status", "reported_by", "notes", "observed_at",
+        ],
+        order_by="creation desc",
+        limit_page_length=200,
+    )
+
+    resources = frappe.get_all(
+        "RN Resource Profile",
+        filters=filters,
+        fields=["category", "availability_status"],
+        limit_page_length=2000,
+    )
+    ready_by_category = defaultdict(int)
+    for r in resources:
+        if r.availability_status == "available":
+            ready_by_category[r.category] += 1
+
+    rows = []
+    for o in objects:
+        predictions = _predict_equipment(o.object_type, o.size_value, ready_by_category)
+        rows.append({
+            "name": o.name,
+            "title": o.title,
+            "object_type": o.object_type,
+            "object_type_label": _OBJECT_TYPE_LABELS.get(o.object_type, o.object_type),
+            "location": o.location,
+            "size_value": o.size_value,
+            "size_unit": o.size_unit,
+            "status": o.status,
+            "reported_by": o.reported_by,
+            "notes": o.notes,
+            "observed_at": o.observed_at,
+            "predictions": predictions,
+            "total_gap": sum(p["gap"] for p in predictions),
+        })
+
+    return {
+        "disaster_event": event,
+        "generated_at": now_datetime(),
+        "objects": rows,
+        "open_count": sum(1 for r in rows if r["status"] == "open"),
+        "method_note": (
+            "Prediksi kebutuhan alat adalah estimasi heuristik dari ukuran "
+            "object kerja (bukan perhitungan teknik/rekayasa resmi) — "
+            "gunakan sebagai titik awal perencanaan, bukan keputusan akhir."
+        ),
+    }
+
+
+@frappe.whitelist()
+def create_work_object(
+    title,
+    object_type,
+    size_value,
+    size_unit=None,
+    location=None,
+    notes=None,
+    disaster_event=None,
+):
+    disaster_event = resolve_disaster_event(disaster_event)
+    actor = rn_actor()
+
+    doc = frappe.new_doc("RN Work Object")
+    doc.disaster_event = disaster_event
+    doc.title = title
+    doc.object_type = object_type
+    doc.size_value = flt(size_value)
+    doc.size_unit = size_unit
+    doc.location = location
+    doc.status = "open"
+    doc.reported_by = _actor_name(actor) or "Guest"
+    doc.notes = notes
+    doc.verification_status = "self_reported"
+    doc.insert(ignore_permissions=True)
+
+    return {
+        "work_object": doc.name,
+        "predictions": _predict_equipment(doc.object_type, doc.size_value, {}),
+    }
+
+
+@frappe.whitelist()
+def update_work_object_status(work_object, status):
+    actor = rn_actor()
+
+    if not _is_manager(actor):
+        frappe.throw("Hak operator diperlukan", frappe.PermissionError)
+
+    if status not in ("open", "in_progress", "resolved"):
+        frappe.throw("Status tidak valid")
+
+    doc = frappe.get_doc("RN Work Object", work_object)
+    doc.status = status
+    doc.save(ignore_permissions=True)
+
+    return {"work_object": doc.name, "status": doc.status}

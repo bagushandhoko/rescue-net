@@ -25,8 +25,10 @@
 
 <div class="cc">
 
+  <div class="cc-sidebar-backdrop" id="ccSidebarBackdrop" hidden></div>
+
   <!-- SIDEBAR DESKTOP -->
-  <aside class="cc-sidebar">
+  <aside class="cc-sidebar" id="ccSidebar">
 
     <div class="cc-brand">
       <div class="cc-brand-logo">RN</div>
@@ -79,7 +81,7 @@
 
     <!-- MOBILE HEADER -->
     <div class="cc-mobile-bar">
-      <button>☰</button>
+      <button id="ccMenuBtn" type="button" aria-label="Buka menu navigasi" aria-controls="ccSidebar" aria-expanded="false">☰</button>
       <div class="cc-brand-logo">RN</div>
       <button>♢</button>
     </div>
@@ -381,36 +383,6 @@
   </main>
 
 
-  <!-- MOBILE BOTTOM NAV -->
-  <nav class="cc-mobile-nav">
-
-    <a class="active">
-      ▦
-      <small>Control</small>
-    </a>
-
-    <a href="map.html">
-      ⌖
-      <small>Peta</small>
-    </a>
-
-    <a href="organisasi-posko.html">
-      ⌂
-      <small>Posko</small>
-    </a>
-
-    <a href="kirim-bantuan.html">
-      ⇄
-      <small>Bantuan</small>
-    </a>
-
-    <a>
-      ☰
-      <small>Lainnya</small>
-    </a>
-
-  </nav>
-
 </div>
 
 
@@ -532,6 +504,37 @@
 <script
   src="../assets/js/rn-control-centre-final.js?v=needdrill-20260901"
 ></script>
+
+<script>
+(function () {
+  "use strict";
+  var sidebar = document.getElementById("ccSidebar");
+  var backdrop = document.getElementById("ccSidebarBackdrop");
+  var btn = document.getElementById("ccMenuBtn");
+  if (!sidebar || !backdrop || !btn) return;
+
+  function open() {
+    sidebar.classList.add("is-open");
+    backdrop.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+  }
+  function close() {
+    sidebar.classList.remove("is-open");
+    backdrop.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+  }
+  btn.addEventListener("click", function () {
+    sidebar.classList.contains("is-open") ? close() : open();
+  });
+  backdrop.addEventListener("click", close);
+  sidebar.addEventListener("click", function (e) {
+    if (e.target.closest("a[href]")) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+})();
+</script>
 
 </body>
 </html>

@@ -856,11 +856,35 @@ body {
     display: none;
   }
 
+  .cc-sidebar.is-open {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    z-index: 320;
+    overflow-y: auto;
+    box-shadow: 0 0 0 2000px rgba(0, 0, 0, .35);
+  }
+
+  .cc-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 310;
+    background: rgba(0, 0, 0, .35);
+  }
+
+  .cc-sidebar-backdrop[hidden] {
+    display: none;
+  }
+
   .cc-main {
     padding:
       max(9px, env(safe-area-inset-top))
       8px
-      68px;
+      12px;
   }
 
   .desktop-only {

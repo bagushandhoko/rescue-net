@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | Management Distribusi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <title>Rescue-Net | Manajemen Distribusi</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=distribusi-20260902">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -49,52 +49,161 @@
   </aside>
 
   <main class="main">
-    <header class="topbar">
-    <div class="rn-page-mobile-title">Distribusi</div>
+    <header class="topbar rn-md-topbar">
+      <div class="rn-page-mobile-title">Manajemen Distribusi</div>
 
       <div>
         <p class="eyebrow">Aid Flow & Transport Matching</p>
-        <h2>Management Distribusi</h2>
+        <h2>Manajemen Distribusi</h2>
         <p class="subtitle">
           Menghubungkan bantuan dari donatur, kebutuhan posko, relawan pickup, dan penyedia transport
           menjadi aliran distribusi yang bisa dipantau.
         </p>
+        <p class="subtitle" id="distribusiStatus">Memuat…</p>
       </div>
-      <div class="status-pill">Live API · PostgreSQL</div>
+      <div class="status-pill" id="distribusiUpdated">Distribusi · Live</div>
     </header>
 
-    <section class="kpi-grid">
-      <div class="kpi-card warning"><span>Need Pickup</span><strong>Live</strong><small>aid offers</small></div>
-      <div class="kpi-card"><span>Self Delivery</span><strong>Live</strong><small>incoming posko</small></div>
-      <div class="kpi-card"><span>Transport Space</span><strong>Live</strong><small>available capacity</small></div>
-      <div class="kpi-card danger"><span>Distribution Flow</span><strong>Track</strong><small>end-to-end</small></div>
+    <section class="kpi-grid rn-md-kpi">
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="transport">
+        <span>Transport Space</span><strong id="kpiTransport">-</strong><small>utilisasi keseluruhan</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="darat">
+        <span>Kapasitas Darat</span><strong id="kpiDarat">-</strong><small>terpakai</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="laut">
+        <span>Kapasitas Laut</span><strong id="kpiLaut">-</strong><small>terpakai</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="udara">
+        <span>Kapasitas Udara</span><strong id="kpiUdara">-</strong><small>terpakai</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="kebutuhan">
+        <span>Kebutuhan Belum Match</span><strong id="kpiKebutuhan">-</strong><small>item terbuka</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="terhambat">
+        <span>Distribusi Terhambat</span><strong id="kpiTerhambat">-</strong><small>perlu tindakan</small>
+      </button>
     </section>
 
-    <section class="content-grid">
+    <section class="content-grid rn-md-row2">
       <div class="panel">
         <div class="panel-header">
-          <div>
-            <h3>Bantuan Perlu Pickup</h3>
-            <p>Donatur sudah input bantuan, tapi butuh dijemput relawan/transport.</p>
+          <div><h3>Papan Pencocokan (Matching Board)</h3><p>Pencocokan kebutuhan, bantuan, relawan pickup, dan transportasi.</p></div>
+        </div>
+        <div class="rn-md-board">
+          <div class="rn-md-board-col">
+            <div class="rn-md-board-head"><span>📦 Kebutuhan</span><b id="boardKebutuhanCount">0</b></div>
+            <div class="rn-md-board-list" id="boardKebutuhan"></div>
+          </div>
+          <div class="rn-md-board-col">
+            <div class="rn-md-board-head"><span>🎁 Bantuan</span><b id="boardBantuanCount">0</b></div>
+            <div class="rn-md-board-list" id="boardBantuan"></div>
+          </div>
+          <div class="rn-md-board-col">
+            <div class="rn-md-board-head"><span>🚴 Relawan Pickup</span><b id="boardRelawanCount">0</b></div>
+            <div class="rn-md-board-list" id="boardRelawan"></div>
+          </div>
+          <div class="rn-md-board-col">
+            <div class="rn-md-board-head"><span>🚚 Transportasi</span><b id="boardTransportCount">0</b></div>
+            <div class="rn-md-board-list" id="boardTransport"></div>
           </div>
         </div>
-        <div class="event-list" data-need-pickup></div>
+        <div class="rn-md-board-foot">
+          <span id="matchedTodayLabel">— distribusi berhasil dicocokkan hari ini</span>
+          <button class="btn primary mini" id="autoMatchBtn" type="button">Otomatis Cocokkan ⚡</button>
+        </div>
+        <p class="rn-muted" id="autoMatchMsg"></p>
       </div>
 
-      <aside class="panel summary">
-        <h3>Donatur Antar Sendiri</h3>
-        <p class="subtitle">Bantuan yang direncanakan masuk langsung ke posko.</p>
-        <div class="event-list" data-self-delivery></div>
-      </aside>
-    </section>
-
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>Tambah Transport Space</h3>
-          <p>Penyedia transport seperti komunitas mobil, kapal, pelni, maskapai, truk, pickup, atau relawan driver.</p>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Ruang Transportasi <small class="rn-muted">(Real-time)</small></h3></div></div>
+        <div class="rn-tabs" role="tablist" id="transportTabs">
+          <button class="rn-tab is-active" data-type="darat" type="button">Darat</button>
+          <button class="rn-tab" data-type="laut" type="button">Laut</button>
+          <button class="rn-tab" data-type="udara" type="button">Udara</button>
+        </div>
+        <div class="rn-donut-wrap">
+          <div class="rn-donut" id="transportDonut"><div class="rn-donut-center"><strong id="transportPct">0%</strong><small id="transportM3">0/0 m³</small></div></div>
+          <ul class="rn-donut-legend" id="transportLegend"></ul>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Unit</th><th>Kapasitas</th><th>Rute</th><th>Status</th></tr></thead>
+            <tbody id="transportUnitBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
+          </table>
         </div>
       </div>
+    </section>
+
+    <section class="content-grid rn-md-row2">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Alur Distribusi <small class="rn-muted">(Live Shipment)</small></h3><p>Pemantauan distribusi bantuan secara real-time dari pickup hingga diterima.</p></div>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>ID Distribusi</th><th>Kebutuhan</th><th>Bantuan</th><th>Pickup Oleh</th><th>Transportasi</th><th>Rute</th><th>ETA</th><th>Status</th><th>Trace</th></tr></thead>
+            <tbody id="alurBody"><tr><td colspan="9">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="rn-table-foot"><span id="alurShown">—</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Peringatan & Hambatan</h3></div></div>
+        <div class="event-list" id="peringatanList"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-dp-grid3">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Pedoman Kemasan</h3></div></div>
+        <ul class="rn-md-ref-list">
+          <li>Gunakan kardus kuat 5–20 kg/box</li>
+          <li>Segel rapat &amp; tahan air</li>
+          <li>Label isi &amp; tujuan jelas</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Panduan Berat & Volume</h3></div></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Item</th><th>Satuan</th><th>Faktor</th><th>Ke</th></tr></thead>
+            <tbody id="conversionBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Trace & Barcode</h3></div></div>
+        <ul class="rn-md-ref-list">
+          <li>Setiap flow distribusi punya kode trace unik (kolom "Trace" di Alur Distribusi)</li>
+          <li>Format: <code>RN-XXXXXXXX</code>, diturunkan dari ID record — bisa dipakai untuk pelacakan manual</li>
+          <li>Barcode/QR scan belum tersedia (belum ada integrasi scanner)</li>
+        </ul>
+      </div>
+    </section>
+
+    <details class="panel rn-input-drawer">
+      <summary>
+        <h3>Bantuan Perlu Pickup &amp; Donatur Antar Sendiri (Riwayat)</h3>
+      </summary>
+      <div class="content-grid">
+        <div>
+          <h4>Bantuan Perlu Pickup</h4>
+          <div class="event-list" data-need-pickup></div>
+        </div>
+        <aside>
+          <h4>Donatur Antar Sendiri</h4>
+          <div class="event-list" data-self-delivery></div>
+        </aside>
+      </div>
+    </details>
+
+    <details class="panel create-panel rn-input-drawer">
+      <summary>
+        <h3>Tambah Transport Space</h3>
+        <p>Penyedia transport seperti komunitas mobil, kapal, pelni, maskapai, truk, pickup, atau relawan driver.</p>
+      </summary>
 
       <form class="rn-form" data-create-transport>
         <div class="form-grid">
@@ -113,61 +222,63 @@
           <span class="form-message" data-transport-message></span>
         </div>
       </form>
-    </section>
+    </details>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Transport Space Tersedia</h3>
-            <p>Live dari /transport-spaces.</p>
-          </div>
-        </div>
-        <div class="event-list" data-transport-spaces></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Buat Distribution Flow</h3>
-        <p class="subtitle">Manual matching awal antara bantuan dan transport.</p>
-
-        <form class="rn-form" data-create-flow>
-          <label>Disaster Event ID <input name="disaster_event_id" value="event-aceh-2025" required></label>
-          <label>Need ID <input name="need_id" placeholder="optional"></label>
-          <label>Aid Offer ID <input name="aid_offer_id" placeholder="aid-..." required></label>
-          <label>Transport ID <input name="transport_space_id" placeholder="transport-..." required></label>
-          <label>Destination Node ID <input name="destination_node_id" value="posko-logistik-aceh"></label>
-          <label>ETA Final <input name="eta_final" placeholder="Besok 18:00"></label>
-          <label>Status
-            <select name="status">
-              <option value="planned">planned</option>
-              <option value="assigned_pickup">assigned_pickup</option>
-              <option value="in_transit">in_transit</option>
-              <option value="arrived_at_posko">arrived_at_posko</option>
-            </select>
-          </label>
-
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Simpan Flow</button>
-          </div>
-          <span class="form-message" data-flow-message></span>
-        </form>
-      </aside>
-    </section>
-
-    <section class="panel create-panel">
-      <div class="panel-header">
+    <details class="panel rn-input-drawer">
+      <summary>
+        <h3>Transport Space Tersedia &amp; Buat Distribution Flow (Riwayat)</h3>
+      </summary>
+      <div class="content-grid">
         <div>
-          <h3>Distribution Flow</h3>
-          <p>Live dari /distribution-flows.</p>
+          <h4>Transport Space Tersedia</h4>
+          <div class="event-list" data-transport-spaces></div>
         </div>
+        <aside>
+          <h4>Buat Distribution Flow</h4>
+          <form class="rn-form" data-create-flow>
+            <label>Disaster Event ID <input name="disaster_event_id" value="event-aceh-2025" required></label>
+            <label>Need ID <input name="need_id" placeholder="optional"></label>
+            <label>Aid Offer ID <input name="aid_offer_id" placeholder="aid-..." required></label>
+            <label>Transport ID <input name="transport_space_id" placeholder="transport-..." required></label>
+            <label>Destination Node ID <input name="destination_node_id" value="posko-logistik-aceh"></label>
+            <label>ETA Final <input name="eta_final" placeholder="Besok 18:00"></label>
+            <label>Status
+              <select name="status">
+                <option value="planned">planned</option>
+                <option value="assigned_pickup">assigned_pickup</option>
+                <option value="in_transit">in_transit</option>
+                <option value="arrived_at_posko">arrived_at_posko</option>
+              </select>
+            </label>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Simpan Flow</button>
+            </div>
+            <span class="form-message" data-flow-message></span>
+          </form>
+        </aside>
       </div>
+    </details>
+
+    <details class="panel rn-input-drawer">
+      <summary><h3>Distribution Flow (Riwayat Mentah)</h3></summary>
       <div class="event-list" data-distribution-flows></div>
-    </section>
+    </details>
   </main>
 </div>
 
+<div id="distribusiDrill" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="distribusiDrillTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="distribusiDrillTitle">-</h3><p id="distribusiDrillSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body" id="distribusiDrillBody"></div>
+  </div>
+</div>
+
 <script src="../assets/js/rn-frappe-client.js?v=frappe-batch-a-1"></script>
-<script src="../assets/js/distribusi.js?v=frappe-batch-a-1"></script>
+<script src="../assets/js/distribusi.js?v=distribusi-20260902"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-resource-booking.js?v=booking-sync-1"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>

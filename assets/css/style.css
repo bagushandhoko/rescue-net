@@ -4929,3 +4929,33 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-rw-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rn-rw-jenis { grid-template-columns: 1fr; }
 }
+
+/* ============================================================
+   Manajemen Distribusi — pages/management-distribusi.html
+   ============================================================ */
+.rn-md-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.rn-md-row2 { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+
+.rn-md-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
+.rn-md-board-col { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
+.rn-md-board-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 700; }
+.rn-md-board-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+.rn-md-board-item { background: var(--panel, #fff); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; position: relative; }
+.rn-md-board-item b { display: block; font-size: 12px; }
+.rn-md-board-item small { display: block; font-size: 11px; color: var(--muted); }
+.rn-md-board-item .chip { margin-top: 4px; font-size: 10px; }
+.rn-md-board-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+.rn-md-board-foot .btn.mini { padding: 6px 12px; font-size: 12px; }
+
+.rn-md-ref-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.7; }
+.rn-md-ref-list code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; }
+
+@media (max-width: 1100px) {
+  .rn-md-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rn-md-row2 { grid-template-columns: 1fr; }
+  .rn-md-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .rn-md-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-md-board { grid-template-columns: 1fr; }
+}

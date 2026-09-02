@@ -305,6 +305,55 @@ here). Owner decisions this pass: **fix as we go** (report per page), and
     (`session_info` for guests + a role-gated form check, both unrelated).
   - Cache-busters: `style.css`/`relawan.js` → `?v=relawan-20260902`.
 
+- **Manajemen Distribusi (`pages/management-distribusi.html` +
+  `assets/js/distribusi.js`) — BUILT & DEPLOYED (2026-09-02), step 4 of the
+  12-step order.** Biggest page so far. 6 clickable KPIs (Transport Space /
+  Kapasitas Darat / Laut / Udara / Kebutuhan Belum Match / Distribusi
+  Terhambat), a **read-only** 4-column Papan Pencocokan (Kebutuhan / Bantuan /
+  Relawan Pickup / Transportasi — deep-links to the owning module rather than
+  a drag/drop redesign; no page anywhere in the app has that interaction
+  pattern, so it wasn't invented here either), Ruang Transportasi with real
+  Darat/Laut/Udara tabs + donut + Unit Aktif table, Alur Distribusi (Live
+  Shipment, all 18 real `RN Distribution Flow` rows) with a Trace column,
+  Peringatan & Hambatan, and a static reference footer (Pedoman Kemasan /
+  Panduan Berat & Volume — reuses `_LOGISTIK_CONVERSIONS` / Trace & Barcode).
+  Old panels (Bantuan Perlu Pickup, Donatur Antar Sendiri, both forms,
+  Transport Space Tersedia, Distribution Flow raw list) kept in `<details>`.
+  - **Owner directive this session: when a mock-up panel has no backing data,
+    build it for real (new fields/records), don't just document the gap.**
+    Applied here:
+    - `RN Transport Space` only had 1 darat record — Laut/Udara existed only
+      as loose text on `SIM-NS-FLOW-TNIAL`/`SIM-NS-FLOW-GARUDA`
+      (`transport_type` was `None` on both). Created 2 real records (TNI AL
+      KRI, TNI AU/Garuda Cargo — capacities matched to their existing
+      `RN Aid Offer` "Kapasitas Angkut Laut/Udara" rows) + linked both flows
+      to them via `transport_space`/`transport_type`. The Laut/Udara KPI
+      tiles are now backed by genuine master data, not a hidden zero.
+    - **"Otomatis Cocokkan" is a real write endpoint**, not a UI-only button:
+      `rescue_net.api_control_centre.auto_match_distribution` (login
+      required — no guest write, matches every other create_* endpoint in
+      the app) greedily pairs an open `RN Logistic Need` with an
+      case-insensitive item-name-matching available `RN Aid Offer` and a
+      free `RN Transport Space`, then actually creates an
+      `RN Distribution Flow`. Verified via console as Administrator (rolled
+      back after, no permanent test data): 1 real match found (Obat-Obatan).
+      Guest click shows a graceful "perlu login sebagai operator" message
+      rather than a raw 403.
+  - **Backend:** new guest endpoint `rescue_net.api_control_centre.
+    distribusi_board(disaster_event)`. Capacity % is volume-basis (m³);
+    utilised = transport_status in reserved/assigned/in_transit/arrived/
+    completed. "Kebutuhan Belum Match" = open needs with no
+    `RN Distribution Flow.logistic_need` pointing at them. "Peringatan"
+    combines blocked flows + aid offers unpicked ≥3 days + any transport
+    type ≥90% utilised — all real, derived signals.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-distribusi.js`. Verified: all
+    6 KPIs correct, 4 drills open (2 item-list, 2 capacity-info), matching
+    board counts (20/15/1/1) render, transport tabs switch correctly (Laut
+    100%/900m³ verified), 18-row Alur Distribusi table, 6 real Peringatan
+    cards, auto-match guest-guard message, only pre-existing 403s remain.
+  - Cache-busters: `style.css`/`distribusi.js` → `?v=distribusi-20260902`.
+
 ## System snapshot
 
 - **Stack:** Frappe / MariaDB is the system of record. Site `osiun.localhost` in

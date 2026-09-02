@@ -2613,3 +2613,395 @@ def active_disasters_board(limit=60):
         },
         "events": out_events,
     }
+
+
+# ============================================================
+# Manajemen Distribusi — pages/management-distribusi.html
+# ============================================================
+
+_DISTRIBUSI_STATUS_LABEL = {
+    "planned": "Direncanakan",
+    "assigned_pickup": "Menunggu Pickup",
+    "dispatched": "Dalam Perjalanan",
+    "in_transit": "Dalam Perjalanan",
+    "arrived": "Tiba di Tujuan",
+    "received": "Diterima",
+    "received_verified": "Diterima (Terverifikasi)",
+    "stock_transferred": "Stok Ditransfer",
+    "cancelled": "Dibatalkan",
+}
+
+
+def _distribusi_posko_titles(names):
+    names = {n for n in names if n}
+    if not names:
+        return {}
+    return {
+        r.name: r.title
+        for r in frappe.get_all(
+            "RN Posko", filters={"name": ["in", list(names)]},
+            fields=["name", "title"], limit_page_length=len(names),
+        )
+    }
+
+
+def _distribusi_trace(name):
+    return "RN-" + str(name or "")[-8:].upper()
+
+
+def _qty_fmt(value):
+    v = _num(value)
+    if v == int(v):
+        return f"{int(v):,}".replace(",", ".")
+    return f"{v:,.1f}".replace(",", ".")
+
+
+@frappe.whitelist(allow_guest=True)
+def distribusi_board(disaster_event=None):
+    """Manajemen Distribusi dashboard (matches the DMS mock-up), guest
+    read-only. One payload: KPI totals + drill items, the 4-column matching
+    board (read-only overview — deep-links to the module that owns each
+    record, not a drag/drop redesign), Ruang Transportasi (real per
+    transport_type, since RN Transport Space.transport_type already has
+    darat/laut/udara/lainnya), Alur Distribusi (live RN Distribution Flow),
+    Peringatan & Hambatan, and the static Pedoman Kemasan reference (reuses
+    `_LOGISTIK_CONVERSIONS`, same source as Posko Logistik's "Konversi").
+    Write action `auto_match_distribution` (login required) actually creates
+    RN Distribution Flow records — not a UI-only button.
+    """
+    event = canonical_event(disaster_event) if disaster_event else None
+
+    flow_filter = event_filters(cols("RN Distribution Flow"), event) if event else {}
+    flows = frappe.get_all(
+        "RN Distribution Flow", filters=flow_filter,
+        fields=_sf("RN Distribution Flow", [
+            "name", "item_name", "quantity", "unit", "flow_status",
+            "source_posko", "destination_posko", "eta_final",
+            "transport_provider", "transport_type", "transport_space",
+            "logistic_need", "aid_offer", "dispatched_at", "in_transit_at",
+            "arrived_at", "received_at", "modified",
+        ]),
+        order_by="modified desc", limit_page_length=500,
+    )
+
+    transport_filter = event_filters(cols("RN Transport Space"), event) if event else {}
+    transports = frappe.get_all(
+        "RN Transport Space", filters=transport_filter,
+        fields=["name", "provider_name", "transport_type", "transport_status",
+                "capacity_weight_kg", "capacity_volume_m3", "route_origin",
+                "route_destination", "observed_at"],
+        limit_page_length=200,
+    )
+
+    need_filter = event_filters(cols("RN Logistic Need"), event) if event else {}
+    needs = frappe.get_all(
+        "RN Logistic Need", filters=need_filter,
+        fields=["name", "item_name", "quantity", "unit", "urgency",
+                "need_status", "posko"],
+        limit_page_length=500,
+    )
+
+    offer_filter = event_filters(cols("RN Aid Offer"), event) if event else {}
+    offers = frappe.get_all(
+        "RN Aid Offer", filters=offer_filter,
+        fields=["name", "item_name", "quantity", "unit", "offer_status",
+                "handling_mode", "target_posko", "observed_at"],
+        limit_page_length=500,
+    )
+
+    posko_names = (
+        {f.source_posko for f in flows} | {f.destination_posko for f in flows}
+        | {n.posko for n in needs} | {o.target_posko for o in offers}
+    )
+    posko_titles = _distribusi_posko_titles(posko_names)
+
+    matched_need_ids = {f.logistic_need for f in flows if f.logistic_need}
+    matched_offer_ids = {f.aid_offer for f in flows if f.aid_offer}
+
+    # ---- capacity utilisation (overall + per transport_type) ----
+    UTILISED_STATES = {"reserved", "assigned", "in_transit", "arrived", "completed"}
+
+    def _cap_bucket(rows):
+        total_kg = sum(_num(t.capacity_weight_kg) for t in rows)
+        used_kg = sum(_num(t.capacity_weight_kg) for t in rows if t.transport_status in UTILISED_STATES)
+        pct = round(100.0 * used_kg / total_kg, 1) if total_kg else 0
+        return {
+            "tersedia_m3": round(sum(_num(t.capacity_volume_m3) for t in rows
+                                      if t.transport_status == "available"), 1),
+            "terpakai_m3": round(sum(_num(t.capacity_volume_m3) for t in rows
+                                      if t.transport_status in UTILISED_STATES), 1),
+            "total_m3": round(sum(_num(t.capacity_volume_m3) for t in rows), 1),
+            "pct": pct,
+            "units": [
+                {
+                    "provider": t.provider_name,
+                    "capacity_m3": _num(t.capacity_volume_m3),
+                    "route": (t.route_origin or "-") + " → " + (t.route_destination or "-"),
+                    "status": t.transport_status,
+                    "pct": round(100.0 * _num(t.capacity_weight_kg) /
+                                  (_num(t.capacity_weight_kg) or 1), 0) if t.transport_status in UTILISED_STATES else 0,
+                }
+                for t in rows
+            ],
+        }
+
+    overall_cap = _cap_bucket(transports)
+    by_type = {
+        ttype: _cap_bucket([t for t in transports if t.transport_type == ttype])
+        for ttype in ("darat", "laut", "udara")
+    }
+
+    # ---- KPI totals ----
+    urgent_terms = {"critical", "urgent", "high", "tinggi", "darurat"}
+    open_needs = [n for n in needs if str(n.need_status or "open").lower() == "open"]
+    unmatched_needs = [n for n in open_needs if n.name not in matched_need_ids]
+
+    blocked_flows = [f for f in flows if str(f.flow_status or "").lower() in _DRILL_BLOCKED_FLOW]
+
+    totals = {
+        "transport_space_pct": overall_cap["pct"],
+        "kapasitas_darat_pct": by_type["darat"]["pct"],
+        "kapasitas_laut_pct": by_type["laut"]["pct"],
+        "kapasitas_udara_pct": by_type["udara"]["pct"],
+        "kebutuhan_belum_match": len(unmatched_needs),
+        "distribusi_terhambat": len(blocked_flows),
+    }
+
+    def _drill(title, sub, href=None):
+        return {"title": title, "sub": sub, "href": href}
+
+    kpi_items = {
+        "kebutuhan_items": [
+            _drill(n.item_name, (posko_titles.get(n.posko) or "-") + f" · {_qty_fmt(n.quantity)} {n.unit or ''}".rstrip(),
+                   "posko-logistik.html?id=" + (n.posko or "") + "&event=" + (event or ""))
+            for n in sorted(unmatched_needs, key=lambda r: 0 if str(r.urgency).lower() in urgent_terms else 1)[:30]
+        ],
+        "terhambat_items": [
+            _drill(f.item_name or f.name, _DISTRIBUSI_STATUS_LABEL.get(f.flow_status, f.flow_status),
+                   "posko-detail.html?id=" + (f.destination_posko or f.source_posko or "") + "&event=" + (event or ""))
+            for f in blocked_flows[:30]
+        ],
+    }
+
+    # ---- matching board (read-only 4 columns) ----
+    unmatched_offers = [o for o in offers
+                         if o.name not in matched_offer_ids
+                         and str(o.offer_status or "").lower() not in _DRILL_DELIVERED_OFFER]
+
+    pickup_volunteers = frappe.get_all(
+        "RN Volunteer Assignment",
+        filters={"assignment_type": "distribution"} if not event else
+                 {"assignment_type": "distribution", "disaster_event": event},
+        fields=["name", "volunteer", "posko", "task_title", "assignment_status"],
+        limit_page_length=100,
+    )
+    vol_names = {v.volunteer for v in pickup_volunteers if v.volunteer}
+    vol_titles = {}
+    if vol_names:
+        vol_titles = {
+            r.name: r.volunteer_name
+            for r in frappe.get_all("RN Volunteer Profile", filters={"name": ["in", list(vol_names)]},
+                                     fields=["name", "volunteer_name"], limit_page_length=len(vol_names))
+        }
+
+    matching_board = {
+        "kebutuhan": {
+            "total": len(unmatched_needs),
+            "items": [
+                {"title": n.item_name, "sub": (posko_titles.get(n.posko) or "-") + f" · {_qty_fmt(n.quantity)} {n.unit or ''}".rstrip(),
+                 "urgency": n.urgency,
+                 "href": "posko-logistik.html?id=" + (n.posko or "") + "&event=" + (event or "")}
+                for n in unmatched_needs[:6]
+            ],
+        },
+        "bantuan": {
+            "total": len(unmatched_offers),
+            "items": [
+                {"title": o.item_name, "sub": f"{_qty_fmt(o.quantity)} {o.unit or ''} · " + (posko_titles.get(o.target_posko) or "-"),
+                 "status": o.offer_status,
+                 "href": "posko-logistik.html?id=" + (o.target_posko or "") + "&event=" + (event or "")}
+                for o in unmatched_offers[:6]
+            ],
+        },
+        "relawan_pickup": {
+            "total": len(pickup_volunteers),
+            "items": [
+                {"title": vol_titles.get(v.volunteer, v.volunteer), "sub": v.task_title,
+                 "href": None}
+                for v in pickup_volunteers[:6]
+            ],
+        },
+        "transportasi": {
+            "total": sum(1 for t in transports if t.transport_status == "available"),
+            "items": [
+                {"title": t.provider_name, "sub": t.transport_type + " · " + (t.route_origin or "-") + " → " + (t.route_destination or "-"),
+                 "href": None}
+                for t in transports if t.transport_status == "available"
+            ][:6],
+        },
+    }
+
+    today = frappe.utils.getdate()
+    matched_today = sum(
+        1 for f in flows
+        if f.dispatched_at and frappe.utils.getdate(f.dispatched_at) == today
+    )
+
+    # ---- Alur Distribusi (live shipment table) ----
+    alur_distribusi = []
+    for f in flows[:40]:
+        alur_distribusi.append({
+            "id": f.name,
+            "kebutuhan": (posko_titles.get(f.destination_posko) or "-") + f" · {_qty_fmt(f.quantity)} {f.unit or ''}".rstrip(),
+            "bantuan": f.item_name or "-",
+            "pickup_oleh": f.transport_provider or posko_titles.get(f.source_posko) or "-",
+            "transportasi": (f.transport_type or "-"),
+            "rute": (posko_titles.get(f.source_posko) or "-") + " → " + (posko_titles.get(f.destination_posko) or "-"),
+            "eta": f.eta_final or "-",
+            "status": f.flow_status,
+            "status_label": _DISTRIBUSI_STATUS_LABEL.get(f.flow_status, f.flow_status or "-"),
+            "trace": _distribusi_trace(f.name),
+            "href": "posko-detail.html?id=" + (f.destination_posko or f.source_posko or "") + "&event=" + (event or ""),
+        })
+
+    # ---- Peringatan & Hambatan ----
+    peringatan = []
+    for f in blocked_flows[:10]:
+        peringatan.append({
+            "title": "Distribusi Terhambat — " + (f.item_name or f.name),
+            "sub": _DISTRIBUSI_STATUS_LABEL.get(f.flow_status, f.flow_status) + " · " +
+                   (posko_titles.get(f.source_posko) or "-") + " → " + (posko_titles.get(f.destination_posko) or "-"),
+            "level": "critical",
+            "href": "posko-detail.html?id=" + (f.destination_posko or f.source_posko or "") + "&event=" + (event or ""),
+        })
+    now = frappe.utils.now_datetime()
+    for o in unmatched_offers:
+        if o.observed_at and (now - o.observed_at).total_seconds() / 86400.0 >= 3:
+            peringatan.append({
+                "title": "Penumpukan Donasi — " + (o.item_name or o.name),
+                "sub": f"Belum dijemput ≥3 hari di {posko_titles.get(o.target_posko) or '-'}",
+                "level": "warning",
+                "href": "posko-logistik.html?id=" + (o.target_posko or "") + "&event=" + (event or ""),
+            })
+    for ttype, label in (("darat", "Darat"), ("laut", "Laut"), ("udara", "Udara")):
+        if by_type[ttype]["pct"] >= 90:
+            peringatan.append({
+                "title": f"Kapasitas {label} Hampir Penuh",
+                "sub": f"{by_type[ttype]['pct']}% terpakai — pertimbangkan opsi tambahan.",
+                "level": "warning",
+                "href": None,
+            })
+
+    return {
+        "disaster_event": event,
+        "generated_at": now,
+        "totals": totals,
+        "kpi_items": kpi_items,
+        "matching_board": matching_board,
+        "matched_today": matched_today,
+        "ruang_transportasi": {"overall": overall_cap, "by_type": by_type},
+        "alur_distribusi": alur_distribusi,
+        "peringatan": peringatan,
+        "conversions": _LOGISTIK_CONVERSIONS,
+    }
+
+
+@frappe.whitelist()
+def auto_match_distribution(disaster_event=None, limit=5):
+    """Real (if simple) auto-matcher for the mock-up's "Otomatis Cocokkan"
+    button: pairs an open RN Logistic Need with an available RN Aid Offer of
+    the same item (case-insensitive) and an available RN Transport Space,
+    then creates an RN Distribution Flow linking all three. Requires login
+    (any authenticated actor — this mirrors the other create_* endpoints'
+    bar, there being no single posko to gate against here).
+    """
+    from rescue_net.access_policy import rn_actor
+    import re
+
+    rn_actor()  # login required; raises if guest
+
+    event = canonical_event(disaster_event) if disaster_event else None
+    limit = min(int(limit or 5), 20)
+
+    need_filter = event_filters(cols("RN Logistic Need"), event) if event else {}
+    needs = frappe.get_all(
+        "RN Logistic Need", filters=dict(need_filter, need_status="open"),
+        fields=["name", "item_name", "quantity", "unit", "urgency", "posko"],
+        order_by="modified desc", limit_page_length=200,
+    )
+
+    offer_filter = event_filters(cols("RN Aid Offer"), event) if event else {}
+    offers = frappe.get_all(
+        "RN Aid Offer", filters=offer_filter,
+        fields=["name", "item_name", "quantity", "unit", "offer_status", "target_posko"],
+        order_by="modified desc", limit_page_length=200,
+    )
+    open_offers = [o for o in offers if str(o.offer_status or "").lower() in
+                   {"available", "ready", "need_pickup"}]
+
+    transport_filter = event_filters(cols("RN Transport Space"), event) if event else {}
+    free_transports = frappe.get_all(
+        "RN Transport Space", filters=dict(transport_filter, transport_status="available"),
+        fields=["name", "provider_name", "transport_type"],
+        limit_page_length=50,
+    )
+
+    already_matched_needs = {f.logistic_need for f in frappe.get_all(
+        "RN Distribution Flow", filters={"logistic_need": ["is", "set"]},
+        fields=["logistic_need"], limit_page_length=2000) if f.logistic_need}
+    already_matched_offers = {f.aid_offer for f in frappe.get_all(
+        "RN Distribution Flow", filters={"aid_offer": ["is", "set"]},
+        fields=["aid_offer"], limit_page_length=2000) if f.aid_offer}
+
+    def _norm(text):
+        return re.sub(r"[^a-z0-9]+", "", str(text or "").lower())
+
+    used_offers, used_transports = set(), set()
+    created = []
+
+    for n in needs:
+        if len(created) >= limit:
+            break
+        if n.name in already_matched_needs:
+            continue
+        need_key = _norm(n.item_name)
+        offer = next(
+            (o for o in open_offers
+             if o.name not in already_matched_offers and o.name not in used_offers
+             and _norm(o.item_name) == need_key),
+            None,
+        )
+        if not offer:
+            continue
+        transport = next(
+            (t for t in free_transports if t.name not in used_transports), None,
+        )
+        if not transport:
+            break
+
+        flow = frappe.new_doc("RN Distribution Flow")
+        flow.disaster_event = event
+        flow.title = f"Auto-match: {n.item_name}"
+        flow.item_name = n.item_name
+        flow.quantity = min(_num(n.quantity), _num(offer.quantity)) or _num(n.quantity)
+        flow.unit = n.unit or offer.unit
+        flow.flow_status = "planned"
+        flow.source_posko = offer.target_posko
+        flow.destination_posko = n.posko
+        flow.logistic_need = n.name
+        flow.aid_offer = offer.name
+        flow.transport_space = transport.name
+        flow.transport_provider = transport.provider_name
+        flow.transport_type = transport.transport_type
+        flow.dispatched_at = frappe.utils.now_datetime()
+        flow.verification_status = "self_reported"
+        flow.insert(ignore_permissions=True)
+
+        used_offers.add(offer.name)
+        used_transports.add(transport.name)
+        created.append({
+            "flow": flow.name, "item_name": n.item_name,
+            "need": n.name, "offer": offer.name, "transport": transport.name,
+        })
+
+    return {"matched": len(created), "flows": created}

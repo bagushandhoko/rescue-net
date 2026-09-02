@@ -2789,9 +2789,11 @@ html.rn-external-access body:not(.mockup-viewer) .main {
 
 .rn-public-links {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 18px;
+  gap: 8px 14px;
+  min-width: 0;
 }
 
 .rn-public-links a {

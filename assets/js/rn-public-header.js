@@ -11,9 +11,10 @@
     { label: "Data Konsolidasi", href: `${prefix}pages/data-consolidation.html?event=event-sim-001` },
     { label: "Download", href: `${prefix}../rescue-net-app/download.html` },
     { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
-    { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` },
-    { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" }
+    { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` }
   ];
+
+  const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
   // ---- Shared disaster-event picker -----------------------------------------
   const RN_EVENT_DEFAULT = "event-sim-001";
@@ -155,6 +156,7 @@
     header.innerHTML = `
       <a class="rn-public-brand" href="${prefix}index.html" aria-label="Rescue-Net Home">
         <img src="${prefix}assets/img/rn-logo-web.png" alt="">
+        <span class="rn-public-brand-name">Rescue-Net</span>
       </a>
       <nav class="rn-public-links" aria-label="Rescue-Net public navigation">
         ${links.map(link => `<a class="${link.className || ""}" href="${link.href}">${link.label}</a>`).join("")}
@@ -167,6 +169,12 @@
     document.body.insertBefore(header, document.body.firstChild);
 
     buildEventPicker(header);
+
+    const loginEl = document.createElement("a");
+    loginEl.className = LOGIN_LINK.className;
+    loginEl.href = LOGIN_LINK.href;
+    loginEl.textContent = LOGIN_LINK.label;
+    header.insertBefore(loginEl, header.querySelector(".rn-public-toggle"));
 
     const button = header.querySelector(".rn-public-toggle");
     button.addEventListener("click", () => {

@@ -95,6 +95,18 @@
    "default": "0"
   },
   {
+   "fieldname": "service_areas",
+   "label": "Wilayah Layanan",
+   "fieldtype": "Small Text",
+   "description": "Satu wilayah per baris, format 'Nama Area - peran' (mis. 'Jakarta Selatan - utama')."
+  },
+  {
+   "fieldname": "availability_schedule",
+   "label": "Waktu Ketersediaan",
+   "fieldtype": "Small Text",
+   "description": "Satu jadwal per baris, format 'Hari - Jam' (mis. 'Senin - Jumat: 08:00-20:00')."
+  },
+  {
    "fieldname": "notes",
    "label": "Catatan",
    "fieldtype": "Small Text"

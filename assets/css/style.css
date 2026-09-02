@@ -5198,3 +5198,65 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-ak-cat-grid { grid-template-columns: minmax(0, 1fr); }
   .rn-ak-summary { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ============================================================
+   Profil Sumber Daya — pages/resource-profile.html
+   ============================================================ */
+.rn-pr-chips { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.rn-pr-chip-card { display: flex; flex-direction: column; gap: 2px; }
+.rn-pr-chip-card span { font-size: 10px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.rn-pr-chip-card b { font-size: 15px; }
+.rn-pr-chip-card small { font-size: 11px; color: var(--muted); }
+
+.rn-pr-card { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+.rn-pr-avatar {
+  width: 64px; height: 64px; border-radius: 50%; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--coral, #e8835d), #c25a3a);
+  color: #fff; font-size: 22px; font-weight: 700;
+}
+.rn-pr-card-main { flex: 1 1 260px; min-width: 0; }
+.rn-pr-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rn-pr-name-row h3 { margin: 0; }
+.rn-pr-role { color: var(--muted); font-size: 13px; margin: 2px 0 8px; }
+.rn-pr-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.rn-pr-about { flex: 1 1 260px; min-width: 0; }
+.rn-pr-about p { font-size: 13px; margin: 0 0 6px; }
+.rn-pr-joined { font-size: 11px; color: var(--muted); }
+.rn-pr-edit-btn { flex: 0 0 auto; }
+
+.rn-pr-grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rn-pr-grid4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+.rn-pr-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.rn-pr-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); font-size: 12px;
+}
+.rn-pr-item b { display: block; font-size: 13px; }
+.rn-pr-item small { color: var(--muted); }
+.rn-pr-add-btn { width: 100%; background: none; border: 1px dashed var(--line); border-radius: 10px; padding: 8px; font-size: 12px; color: var(--muted); cursor: pointer; }
+.rn-pr-add-btn:hover { border-color: var(--coral, #e8835d); color: var(--coral, #e8835d); }
+.rn-pr-add-form { display: none; flex-direction: column; gap: 6px; margin-top: 8px; }
+.rn-pr-add-form.is-open { display: flex; }
+.rn-pr-add-form input, .rn-pr-add-form select { padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; background: var(--panel); }
+.rn-pr-add-form .rn-pr-add-actions { display: flex; gap: 6px; }
+.rn-pr-add-form .rn-pr-add-actions button { flex: 1 1 0; padding: 6px; font-size: 12px; }
+.rn-pr-add-msg { font-size: 11px; color: var(--muted); }
+
+.rn-pr-edit-form { display: none; flex-direction: column; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+.rn-pr-edit-form.is-open { display: flex; }
+.rn-pr-edit-form textarea, .rn-pr-edit-form input { padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; background: var(--panel); width: 100%; }
+
+.rn-pr-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 1100px) {
+  .rn-pr-chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rn-pr-grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-pr-grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .rn-pr-chips { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-pr-grid3 { grid-template-columns: minmax(0, 1fr); }
+  .rn-pr-grid4 { grid-template-columns: minmax(0, 1fr); }
+}

@@ -261,19 +261,41 @@ Mockup: `program khusus.png`
   + `program_detail(program)` guest. Sumber: `RN Donor Program`, `RN Action Plan`,
   `RN Recovery Project`.
 
-### 4.11 Profil Sumber Daya — `pages/resource-profile.html` + `assets/js/*` (baru `resource-profile.js`)
-Mockup: `Profil Sumber Daya.png`
-- **PERTAHANKAN:** section "Organizations", "Posko & Nodes", "Volunteers",
-  "Tools / Shared Resources" (jadikan tab/detail bila perlu, jangan hapus).
-- **TAMBAH:** 5 status chip atas (Peran Utama / Tingkat Kepercayaan skor / Email /
-  HP / ID Terverifikasi); **kartu profil** (foto, nama, Aktif, peran, lokasi,
-  kontak, Tentang Saya, Bergabung sejak, Edit Profil); grid kartu:
-  **Keahlian/Skill** (+ Tersertifikasi, + Tambah), **Kendaraan** (+ Tambah),
-  **Fasilitas** (+ Tambah), **Bantuan Barang Tersedia** (+ Tambah), **Wilayah
-  Layanan** (+ Tambah), **Waktu Ketersediaan** (+ Atur Jadwal), **Kebutuhan
-  Support** (Dibutuhkan + Ajukan); tombol **Simpan Perubahan**.
-- **BACKEND:** `api_resource_tools.resource_profile(actor|posko)` guest-read +
-  setter login. Sumber: `RN User Account`, `RN Volunteer Skill`, `RN Resource*`.
+### 4.11 ✅ Profil Sumber Daya — `pages/resource-profile.html` + `assets/js/resource-profile.js` — DONE 2026-09-02
+Mockup: `Profil Sumber Daya.png` — turned out to be a **personal volunteer/
+member profile** (not the multi-category directory the old page was), same
+kind of concept-mismatch as Shelter/Verification earlier in this pass.
+- **PERTAHANKAN:** old "Organizations"/"Posko & Nodes"/"Volunteers"/
+  "Tools / Shared Resources" 4-panel directory kept working inside a
+  `<details class="rn-input-drawer">`.
+- **TAMBAH (real data, self-service editable by the profile's own owner):**
+  5 status chips (Peran Utama / Tingkat Kepercayaan / Email / HP / ID
+  Terverifikasi — all real field checks, no fabricated 0-100 trust score);
+  profile card (initials avatar — no AI image-gen available, same
+  placeholder policy as evidence photos — name, Aktif badge, role/org,
+  location/email/phone, Tentang Saya, real "Bergabung sejak" from the
+  account's own `creation` timestamp, Edit Profil); **Keahlian/Skill**
+  (main_skill + skill_tags), **Kendaraan**/**Fasilitas**/**Bantuan Barang
+  Tersedia** (all `RN Resource Profile`, `owner_type=individual`),
+  **Wilayah Layanan**/**Waktu Ketersediaan** (2 new fields), **Kebutuhan
+  Support** (`RN Work Tool Request`, `requested_by_type=other` — the
+  doctype's own `validate()` only allows posko/organization/other, "other"
+  is the closest fit for an individual requester) — every "+ Tambah"/"Atur
+  Jadwal"/"Ajukan Kebutuhan" is a real write, login-gated.
+- **BACKEND:** `api_resource_tools.resource_profile_board(user_account)`
+  guest-read (defaults to the logged-in user, else a seeded demo profile —
+  same "default when nothing specified" convention as every other board) +
+  new self-service writes `add_personal_resource`/`add_personal_support_need`
+  (deliberately NOT the existing manager-only `create_resource_profile`/
+  `create_work_tool_request`, which require a MANAGER_ROLES operator role —
+  wrong gate for "I manage my own profile"). Extended
+  `api_volunteer.update_profile` with `skill_category`/`preferences`/
+  `equipment_owned`/`service_areas`/`availability_schedule`. New
+  `RN Volunteer Profile` fields: `service_areas`, `availability_schedule`.
+  Extended `_can_manage_reference` with an `individual` case (a person can
+  manage their own `owner_type=individual` resources). `RN Volunteer Skill`
+  mentioned in the original plan line does not actually exist as a
+  doctype — real skills come from `main_skill`/`skill_tags` instead.
 
 ### 4.12 Evidence Center — `pages/evidence.html` + `assets/js/*`
 Mockup: `evidence centre.png`
@@ -347,7 +369,10 @@ Batch by kesiapan backend & kemiripan (pakai komponen bagian 3):
    6 kategori alat + 30 Resource Profile, 9 Work Tool Request, 5 Work Tool
    Deployment, 3 Stock Observation BBM diseed untuk event-sim-001; legacy
    `dashboard()` diperbaiki guest-access). Lihat `HANDOVER.md`.
-9. **Profil Sumber Daya** — `api_resource_tools`.
+9. ✅ **Profil Sumber Daya** — DONE 2026-09-02 (`resource_profile_board` guest
+   endpoint; turned out to be a personal volunteer profile, not a directory —
+   old directory kept in `<details>`; 2 new RN Volunteer Profile fields). Lihat
+   `HANDOVER.md`.
 10. **Program Khusus** — gabung `api_recovery` / `api_donor_program`.
 11. **Alat Komunikasi** (halaman baru) — perlu doctype/seed, paling banyak kerja baru.
 12. **Pass responsif HP** — setelah semua halaman di atas jadi.
@@ -379,6 +404,6 @@ Tiap endpoint dashboard mengembalikan, selain `totals` + data panel:
 - [x] `api_verification.approval_queue(disaster_event)` + `approval_item_detail` — DONE 2026-09-02, + real `approval_action` write endpoint
 - [x] `api_control_centre.org_posko_board(disaster_event)` + `posko_verification_checklist` — DONE 2026-09-02
 - [x] `api_resource_tools.tools_board(disaster_event)`
-- [ ] `api_resource_tools.resource_profile(target)`
+- [x] `api_resource_tools.resource_profile_board(user_account)`
 - [ ] `program_board(disaster_event)` + `program_detail(program)`
 - [ ] `comms_board(disaster_event)` (+ doctype/seed alat komunikasi)

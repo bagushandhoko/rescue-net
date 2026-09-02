@@ -98,6 +98,12 @@ def _can_manage_reference(
             )
         )
 
+    if reference_type == "individual":
+        return bool(
+            reference_id
+            and _actor_name(actor) == reference_id
+        ) or _is_control_manager(actor)
+
     return _is_control_manager(actor)
 
 
@@ -1575,4 +1581,225 @@ def tools_board(disaster_event=None):
         "privacy": (
             "Aggregate only. PIC/contact tidak dikirim melalui board publik."
         ),
+    }
+
+
+DEFAULT_DEMO_PROFILE_USER = "SIM-VOL-YUSUF"
+
+_PERSONAL_CATEGORIES = ("kendaraan", "fasilitas", "barang_bantuan")
+
+
+def _split_lines(text):
+    return [line.strip() for line in (text or "").split("\n") if line.strip()]
+
+
+@frappe.whitelist(allow_guest=True)
+def resource_profile_board(user_account=None):
+    """Profil Sumber Daya (matches the DMS mock-up) — a single volunteer/
+    member's own profile: verified-contact chips, skills, personally-owned
+    vehicles/facilities/aid items (RN Resource Profile, owner_type=
+    individual), service areas + availability schedule (RN Volunteer
+    Profile), and open personal support needs (RN Work Tool Request,
+    requested_by_type=other). Guest-read; falls back to a seeded demo
+    profile when no session/param identifies a user, same convention as
+    every other board defaulting to event-sim-001 when no event is given.
+    """
+    actor = rn_actor(required=False)
+    target = user_account or _actor_name(actor) or DEFAULT_DEMO_PROFILE_USER
+
+    ua = frappe.db.get_value(
+        "RN User Account", target,
+        ["name", "title", "username", "phone", "email", "role", "organization", "posko", "status", "creation"],
+        as_dict=True,
+    )
+    if not ua:
+        frappe.throw("Akun tidak ditemukan", frappe.DoesNotExistError)
+
+    org_title = (
+        frappe.db.get_value("RN Organization", ua.organization, "title")
+        if ua.organization else None
+    )
+
+    vp = frappe.db.get_value(
+        "RN Volunteer Profile", {"user_account": target},
+        ["name", "volunteer_name", "contact", "main_skill", "skill_tags", "availability_status",
+         "duration_available", "current_location", "assigned_posko", "skill_category", "preferences",
+         "equipment_owned", "needs_transport", "notes", "verification_status",
+         "service_areas", "availability_schedule"],
+        as_dict=True,
+    )
+
+    resources = frappe.get_all(
+        "RN Resource Profile",
+        filters={"owner_type": "individual", "owner_id": target},
+        fields=["name", "resource_name", "category", "resource_type", "quantity", "unit",
+                "capacity_description", "availability_status", "current_location", "notes"],
+        order_by="creation desc",
+        limit_page_length=200,
+    )
+
+    needs = frappe.get_all(
+        "RN Work Tool Request",
+        filters={"requested_by_type": "other", "requested_by_id": target},
+        fields=["name", "tool_name", "tool_type", "quantity", "unit", "priority",
+                "request_status", "needed_for", "location"],
+        order_by="creation desc",
+        limit_page_length=200,
+    )
+
+    by_cat = {c: [] for c in _PERSONAL_CATEGORIES}
+    for r in resources:
+        by_cat.setdefault(r.category or "lainnya", []).append(r)
+
+    skills = []
+    if vp:
+        if vp.main_skill:
+            skills.append(vp.main_skill)
+        skills += [
+            s.strip() for s in (vp.skill_tags or "").split(",")
+            if s.strip() and s.strip() not in skills
+        ]
+
+    verified = bool(vp and vp.verification_status == "verified")
+    name_display = (vp.volunteer_name if vp else None) or ua.title or ua.username
+
+    can_edit = bool(actor and _actor_name(actor) == target)
+
+    return {
+        "target": target,
+        "volunteer_profile": vp.name if vp else None,
+        "generated_at": now_datetime(),
+        "can_edit": can_edit,
+        "identity": {
+            "name": name_display,
+            "role": (vp.main_skill if vp else None) or ua.role,
+            "organization": org_title,
+            "location": (vp.current_location if vp else None) or "-",
+            "email": ua.email,
+            "phone": ua.phone or (vp.contact if vp else None),
+            "about": (vp.notes if vp else None) or "-",
+            "joined_at": ua.creation,
+            "aktif": (vp.availability_status != "unavailable") if vp else (ua.status == "active"),
+        },
+        "chips": {
+            "peran_utama": ((vp.main_skill if vp else None) or ua.role or "-"),
+            "peran_tipe": "Relawan" if vp else "Anggota Organisasi",
+            "trust_label": "Terverifikasi" if verified else "Belum Terverifikasi",
+            "email_verified": bool(ua.email),
+            "phone_verified": bool(ua.phone or (vp.contact if vp else None)),
+            "id_verified": verified,
+        },
+        "skills": [
+            {"label": s, "status_label": "Tersertifikasi" if verified else "Belum Tersertifikasi"}
+            for s in skills
+        ],
+        "kendaraan": by_cat.get("kendaraan", []),
+        "fasilitas": by_cat.get("fasilitas", []),
+        "barang_bantuan": by_cat.get("barang_bantuan", []),
+        "service_areas": _split_lines(vp.service_areas if vp else None),
+        "schedule": _split_lines(vp.availability_schedule if vp else None),
+        "support_needs": needs,
+        "raw": {
+            "skill_tags": (vp.skill_tags if vp else None) or "",
+            "service_areas": (vp.service_areas if vp else None) or "",
+            "availability_schedule": (vp.availability_schedule if vp else None) or "",
+            "current_location": (vp.current_location if vp else None) or "",
+            "notes": (vp.notes if vp else None) or "",
+        },
+    }
+
+
+@frappe.whitelist()
+def add_personal_resource(
+    resource_name,
+    category,
+    resource_type=None,
+    quantity=1,
+    unit="unit",
+    capacity_description=None,
+    availability_status="available",
+    current_location=None,
+    notes=None,
+    disaster_event=None,
+):
+    """Self-service add for Profil Sumber Daya's Kendaraan/Fasilitas/Bantuan
+    Barang cards — an individual manages their own RN Resource Profile rows
+    without needing a MANAGER_ROLES operator role (unlike
+    create_resource_profile, which is for org/posko-owned equipment)."""
+    disaster_event = resolve_disaster_event(disaster_event)
+    actor = rn_actor()
+    owner_id = _actor_name(actor)
+
+    if not owner_id:
+        frappe.throw("Akun Rescue-Net aktif tidak ditemukan", frappe.PermissionError)
+
+    if category not in _PERSONAL_CATEGORIES:
+        frappe.throw("Kategori tidak valid")
+
+    doc = frappe.new_doc("RN Resource Profile")
+    doc.disaster_event = disaster_event
+    doc.owner_type = "individual"
+    doc.owner_id = owner_id
+    doc.resource_name = resource_name
+    doc.resource_type = resource_type or category
+    doc.category = category
+    doc.quantity = flt(quantity or 1)
+    doc.unit = unit
+    doc.capacity_description = capacity_description
+    doc.availability_status = availability_status
+    doc.current_location = current_location
+    doc.notes = notes
+    doc.verification_status = "self_reported"
+    doc.insert(ignore_permissions=True)
+
+    return {
+        "resource_profile": doc.name,
+        "category": doc.category,
+        "availability_status": doc.availability_status,
+    }
+
+
+@frappe.whitelist()
+def add_personal_support_need(
+    tool_name,
+    tool_type=None,
+    quantity=1,
+    unit="unit",
+    location=None,
+    needed_for=None,
+    priority="normal",
+    notes=None,
+    disaster_event=None,
+):
+    """Self-service "Ajukan Kebutuhan" for Profil Sumber Daya's Kebutuhan
+    Support card — creates a real RN Work Tool Request for the logged-in
+    individual (requested_by_type="other", the closest fit the doctype's
+    own validate() allows for a non-posko/non-organization requester)."""
+    disaster_event = resolve_disaster_event(disaster_event)
+    actor = rn_actor()
+    owner_id = _actor_name(actor)
+
+    if not owner_id:
+        frappe.throw("Akun Rescue-Net aktif tidak ditemukan", frappe.PermissionError)
+
+    doc = frappe.new_doc("RN Work Tool Request")
+    doc.disaster_event = disaster_event
+    doc.requested_by_type = "other"
+    doc.requested_by_id = owner_id
+    doc.tool_name = tool_name
+    doc.tool_type = tool_type
+    doc.quantity = flt(quantity or 1)
+    doc.unit = unit
+    doc.location = location
+    doc.needed_for = needed_for
+    doc.priority = priority
+    doc.request_status = "requested"
+    doc.notes = notes
+    doc.created_by_user = owner_id
+    doc.verification_status = "self_reported"
+    doc.insert(ignore_permissions=True)
+
+    return {
+        "work_tool_request": doc.name,
+        "status": doc.request_status,
     }

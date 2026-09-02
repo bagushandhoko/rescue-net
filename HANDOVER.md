@@ -1033,6 +1033,116 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
     403), zero horizontal overflow at 390px.
   - Cache-buster: `style.css`/`alat-kerja.js` → `?v=alatkerja-20260902`.
 
+- **Control Centre mobile menu fixed (2026-09-02, same day as step 8/9):**
+  the owner flagged the sidebar changes "belum bener" on `war-room.html`.
+  Root cause was two separate bugs: (1) the mobile ☰ button had no click
+  handler and `.cc-sidebar` was `display:none` at ≤760px with no way to
+  reveal it, so the already-deduped module list was completely unreachable
+  on mobile — the only reachable mobile nav was a stale separate 5-item
+  bottom tab bar (Control/Peta/Posko/Bantuan/Lainnya) that still linked
+  "Bantuan" even though that item was deliberately removed everywhere else
+  as a header duplicate. Fixed by wiring the ☰ button to a real off-canvas
+  drawer (`.cc-sidebar.is-open` + backdrop) and deleting the dead bottom
+  bar. (2) **Bigger finding:** `rn-navigation-v2.js` — loaded on every page
+  except `war-room.html` — completely replaces whatever static `<nav><a>`
+  list is in the HTML with its own hardcoded `CONFIG.posko`/`CONFIG.modules`
+  grouped accordion at runtime. This means most of this session's careful
+  static-`<nav>` edits (dedup pass, "Registrasi & Verifikasi Posko" rollout)
+  were invisible on every page that loads this script — the real rendered
+  menu is `CONFIG`, not the HTML. `war-room.html` was the one page that
+  *didn't* load the script, so it alone showed the raw static list —
+  looking structurally different from every other page even after the
+  earlier dedup work landed. Fixed by (a) loading `rn-navigation-v2.js` +
+  `.css` on `war-room.html` too (its `.cc-sidebar > nav` qualifies via the
+  script's own `OPERATIONAL_LINKS` scoring, no other change needed), (b)
+  adding the missing "Registrasi & Verifikasi Posko" item to `CONFIG.posko`
+  (was never added there, only to the static per-page fallback), bumping
+  `CONFIG.version` 2.0.2→2.0.3, and bumping the cache-buster query string
+  on all 28 pages that load the script. Verified via Playwright
+  (`rn-warroom-menu.js`, `rn-navcheck2.js`): all three spot-checked pages
+  (dapur-umum/alat-kerja/war-room) now render the identical 23-item grouped
+  menu (13 Posko + 10 Modul), war-room's mobile drawer opens/closes
+  correctly with a backdrop, zero console errors, desktop layout unaffected.
+  **Lesson for any future nav edit:** always check whether
+  `rn-navigation-v2.js` is loaded on the page before assuming a static
+  `<nav>` edit will be visible — if it's loaded, edit `CONFIG` in that file
+  instead (or in addition, for the no-JS fallback).
+
+- **Profil Sumber Daya (`pages/resource-profile.html` + `assets/js/
+  resource-profile.js`) — BUILT & DEPLOYED (2026-09-02), step 9/12.** The
+  mockup turned out to be a **personal volunteer/member profile** (status
+  chips, profile card, Keahlian/Kendaraan/Fasilitas/Bantuan Barang/Wilayah
+  Layanan/Waktu Ketersediaan/Kebutuhan Support cards, all self-editable) —
+  not the old page's multi-category directory (Organizations/Posko/
+  Volunteers/Tools), same kind of concept-swap as Shelter/Verification
+  earlier in this pass. Old directory kept working inside `<details>`.
+  - **Backend:** new guest endpoint `api_resource_tools.resource_profile_board
+    (user_account)` — defaults to the logged-in session's `RN User Account`,
+    else falls back to a seeded demo volunteer (`SIM-VOL-YUSUF`), same
+    "sensible default when nothing specified" convention every other board
+    uses for its event param. Kendaraan/Fasilitas/Bantuan Barang all map to
+    real `RN Resource Profile` rows with `owner_type=individual` — new
+    self-service write `add_personal_resource` (deliberately separate from
+    the existing `create_resource_profile`, which gates on a MANAGER_ROLES
+    operator role that a plain volunteer will never have; the right gate
+    for "I manage my own stuff" is just "is this actually me", which
+    required extending `_can_manage_reference` with an `individual` case).
+    Kebutuhan Support maps to `RN Work Tool Request` — new self-service
+    write `add_personal_support_need` using `requested_by_type="other"`,
+    **not** `"individual"` — the doctype's own `validate()` only allows
+    `{posko, organization, other}`, discovered by hitting a real
+    `ValidationError` while seeding (the Select field on the JSON schema
+    listed `individual` as valid for `RN Resource Profile.owner_type`, but
+    `RN Work Tool Request.requested_by_type`'s Python `validate()` has a
+    narrower, separate allow-list that doesn't include it). Skills/Wilayah
+    Layanan/Waktu Ketersediaan/Tentang Saya/Edit Profil all write through
+    `api_volunteer.update_profile`, extended with `skill_category`/
+    `preferences`/`equipment_owned`/`service_areas`/`availability_schedule`
+    kwargs (the function already existed with a correct self-ownership
+    check via `doc.user_account == actor.name` — just missing params for
+    fields the mock-up needed).
+  - **New `RN Volunteer Profile` fields** (migrated): `service_areas`,
+    `availability_schedule` (both Small Text, one line per entry, parsed/
+    joined client-side — same free-text-list pattern as `skill_tags`,
+    deliberately not new child-table doctypes since nothing else in the app
+    uses that pattern and the data is inherently simple key-value lines).
+  - **Trust chips are honest, not fabricated:** "Tingkat Kepercayaan"/"ID
+    Terverifikasi" read the volunteer profile's real `verification_status`
+    (self_reported/verified) rather than inventing the mock-up's 0-100
+    numeric score — same "no invented formula" call already made for
+    Organisasi & Posko's trust display. Email/HP Terverifikasi are a plain
+    "field is filled" check, same honesty level as Registrasi Posko's
+    verification checklist elsewhere in this app.
+  - **Demo persona seeded:** enriched an existing thin volunteer record
+    ("Yusuf Hidayat", Search & Found/K9 Handler, Samatiga Aceh Barat) rather
+    than inventing a new one — linked a new `RN User Account`
+    (`SIM-VOL-YUSUF`, `legacy_id`-named since native accounts require a
+    linked Frappe `User` the autoname can hash, which sim/demo accounts
+    don't have), filled skill_tags/service_areas/availability_schedule/
+    notes, and added 5 `RN Resource Profile` rows (2 kendaraan, 1 fasilitas,
+    2 barang_bantuan) + 3 `RN Work Tool Request` (BBM/Tenda/Peralatan Masak)
+    owned by that account.
+  - Also fixed the same recurring guest-whitelist-style issue on the
+    *legacy* directory panel while in there: its `Promise.all([dashboard,
+    api_ai.context, control_centre_volunteers])` had no per-call `.catch`,
+    so `api_ai.context` (never guest-whitelisted) rejecting the whole
+    `Promise.all` silently blanked the entire drawer for guests — including
+    the Organizations/Resources data that `dashboard()` already returns
+    correctly since its earlier guest-access fix. Added per-call `.catch`
+    fallbacks (matching the existing pattern already used for
+    `control_centre_volunteers`) so each of the 4 legacy panels degrades
+    independently. Also wired the KPI counters in that panel
+    (`kpiOrg`/`kpiPosko`/`kpiVolunteer`/`kpiResource`), which had never
+    been set by any code since the page was first built — a pre-existing,
+    unrelated bug fixed opportunistically while already in the function.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-resprofile.js` (desktop 1440px
+    + 390px mobile). Verified: identity/chips/skills/kendaraan/fasilitas/
+    barang/wilayah/jadwal/kebutuhan all render real seeded data, guest write
+    attempts show a graceful "perlu login" message (no crash), legacy drawer
+    renders without error, zero horizontal overflow at 390px.
+  - Cache-buster: `style.css`/`resource-profile.js` → `?v=resprofile-20260902`.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

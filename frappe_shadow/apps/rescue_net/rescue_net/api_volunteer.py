@@ -396,6 +396,11 @@ def update_profile(
     duration_available=None,
     current_location=None,
     notes=None,
+    skill_category=None,
+    preferences=None,
+    equipment_owned=None,
+    service_areas=None,
+    availability_schedule=None,
 ):
     actor = rn_actor()
 
@@ -436,6 +441,21 @@ def update_profile(
 
     if notes is not None:
         doc.notes = notes
+
+    if skill_category is not None:
+        doc.skill_category = skill_category
+
+    if preferences is not None:
+        doc.preferences = preferences
+
+    if equipment_owned is not None:
+        doc.equipment_owned = equipment_owned
+
+    if service_areas is not None:
+        doc.service_areas = service_areas
+
+    if availability_schedule is not None:
+        doc.availability_schedule = availability_schedule
 
     doc.source_updated_at = (
         now_datetime()

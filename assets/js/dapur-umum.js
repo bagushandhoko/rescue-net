@@ -58,6 +58,7 @@
   function statusPillClass(status) {
     if (status === "kritis") return "danger";
     if (status === "waspada") return "warning";
+    if (status === "aman") return "ok";
     return "";
   }
 
@@ -301,13 +302,11 @@
       .join("");
   }
 
-  function renderBukti(rows) {
+  var PLACEHOLDER_ICONS = ["🍚", "🥘", "🔥"];
+
+  function renderBukti(rows, uploadHref) {
     var el = $("#buktiGrid");
-    if (!rows.length) {
-      el.innerHTML = '<p class="rn-muted">Belum ada foto bukti dapur.</p>';
-      return;
-    }
-    el.innerHTML = rows
+    var real = rows
       .map(function (r) {
         var url = r.evidence_url || r.file_url || "";
         return (
@@ -316,6 +315,24 @@
         );
       })
       .join("");
+
+    var placeholders = "";
+    if (!rows.length) {
+      // No real evidence uploaded yet for this posko — show labeled
+      // simulation placeholders (icon + gradient), never a fabricated photo.
+      placeholders = PLACEHOLDER_ICONS.map(function (icon) {
+        return (
+          '<div class="rn-dp-photo-placeholder" title="Simulasi — belum ada foto asli">' +
+          "<span>" + icon + "</span><small>Simulasi</small></div>"
+        );
+      }).join("");
+    }
+
+    var upload =
+      '<a class="rn-dp-upload-tile" href="' + esc(uploadHref || "#") + '">' +
+      "<span>＋</span>Unggah Foto</a>";
+
+    el.innerHTML = real + placeholders + upload;
   }
 
   async function loadBoard() {
@@ -341,14 +358,14 @@
     renderDistribusi(data.distribusi_hari_ini_list || []);
     renderRelawan(data.relawan_dapur || { total: 0, aktif: 0, istirahat: 0, tidak_aktif: 0, list: [] });
     renderFuel(data.gas_bbm || []);
-    renderBukti(data.bukti || []);
+
+    var evidenceHref =
+      "evidence.html?event=" + encodeURIComponent(data.disaster_event || "") +
+      "&object_type=posko&object_id=" + encodeURIComponent(posko.name || poskoId);
+    renderBukti(data.bukti || [], evidenceHref);
 
     var seeAll = $("#evidenceSeeAll");
-    if (seeAll) {
-      seeAll.href =
-        "evidence.html?event=" + encodeURIComponent(data.disaster_event || "") +
-        "&object_type=posko&object_id=" + encodeURIComponent(posko.name || poskoId);
-    }
+    if (seeAll) seeAll.href = evidenceHref;
 
     statusMsg("Dimuat pukul " + String(data.generated_at || "").slice(11, 16));
   }

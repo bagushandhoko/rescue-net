@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Dapur Umum</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=dapur-20260902">
+  <link rel="stylesheet" href="../assets/css/style.css?v=dapur-20260902b">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -82,8 +82,8 @@
       </button>
     </section>
 
-    <section class="content-grid rn-dp-grid3">
-      <div class="panel">
+    <section class="content-grid rn-dp-row2">
+      <div class="panel rn-dp-target-panel">
         <div class="panel-header"><div><h3>Target Layanan</h3></div></div>
         <div class="rn-dp-target">
           <div><span>Total Target</span><b id="targetTotal">-</b><small>porsi / hari</small></div>
@@ -92,7 +92,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel rn-dp-donut-panel">
         <div class="panel-header"><div><h3>Produksi Makanan Hari Ini</h3></div></div>
         <div class="rn-donut-wrap">
           <div class="rn-donut" id="produksiDonut"><div class="rn-donut-center"><strong id="donutTotal">0</strong><small>porsi</small></div></div>
@@ -100,21 +100,25 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel rn-dp-stok-panel">
         <div class="panel-header">
           <div><h3>Stok Bahan Dapur</h3></div>
+          <a class="rn-seeall" href="posko-logistik.html" id="stokSeeAll">Lihat Semua →</a>
         </div>
         <div class="rn-table-wrap">
           <table class="rn-table">
-            <thead><tr><th>Bahan Baku</th><th>Stok</th><th>Satuan</th><th>Status</th></tr></thead>
+            <thead><tr><th>Bahan Baku</th><th>Stok Saat Ini</th><th>Satuan</th><th>Status</th></tr></thead>
             <tbody id="stokBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
           </table>
         </div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header"><div><h3>Kebutuhan Bahan Kritis</h3></div></div>
-        <div class="event-list" id="kebutuhanKritis"></div>
+      <div class="panel rn-dp-kritis-panel">
+        <div class="panel-header">
+          <div><h3>Kebutuhan Bahan Kritis</h3></div>
+          <a class="rn-seeall" href="posko-logistik.html" id="kritisSeeAll">Lihat Semua →</a>
+        </div>
+        <div class="event-list rn-dp-kritis-list" id="kebutuhanKritis"></div>
       </div>
     </section>
 
@@ -146,13 +150,13 @@
       </div>
     </section>
 
-    <section class="content-grid rn-dp-grid2">
+    <section class="content-grid rn-dp-row4">
       <div class="panel">
         <div class="panel-header">
           <div><h3>Evidence Foto Dapur</h3></div>
-          <a class="rn-seeall" href="#" id="evidenceSeeAll">Tambah Bukti →</a>
+          <a class="rn-seeall" href="#" id="evidenceSeeAll">Lihat Semua →</a>
         </div>
-        <div class="rn-bukti-grid" id="buktiGrid"><p class="rn-muted">Memuat…</p></div>
+        <div class="rn-dp-evidence-strip" id="buktiGrid"><p class="rn-muted">Memuat…</p></div>
       </div>
 
       <div class="panel">
@@ -238,7 +242,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=frappe-client-403fix-1"></script>
-<script src="../assets/js/dapur-umum.js?v=dapur-20260902"></script>
+<script src="../assets/js/dapur-umum.js?v=dapur-20260902b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

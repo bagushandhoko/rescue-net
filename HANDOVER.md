@@ -180,6 +180,20 @@ here). Owner decisions this pass: **fix as we go** (report per page), and
     render, only pre-existing (unrelated) console noise is `session_info` 403
     for guests (shared `session-role.js` behaviour on every page).
   - Cache-busters: `style.css`/`dapur-umum.js` → `?v=dapur-20260902`.
+  - **Layout precision pass (2026-09-02b):** owner asked for pixel-closer match
+    to the mock-up. Row 2 changed from a 3-col grid to the mock-up's real
+    4-column layout (Target Layanan / Produksi donut / Stok Bahan Dapur table /
+    Kebutuhan Bahan Kritis, widths `.95fr .95fr 1.7fr 1.1fr`); Target Layanan
+    switched from 3 boxed mini-cards to plain stacked rows (matches mock-up,
+    fits the now-narrower column); Evidence + Gas/BBM row widened to an
+    asymmetric `1.6fr 1fr` split; stock status pill "aman" now uses the
+    existing `.chip.ok` (green) instead of a neutral chip. **No AI image-gen
+    tool is available in this environment** — asked the owner how to handle
+    "Evidence Foto Dapur" (empty for posko-sim-dapur, no real uploads yet);
+    they chose labeled icon/gradient placeholder tiles (`.rn-dp-photo-placeholder`,
+    honestly marked "Simulasi") over an empty-state or fabricated photos, shown
+    alongside the real "Unggah Foto" tile — swaps automatically for real thumbs
+    once evidence exists for the posko.
 
 ## System snapshot
 

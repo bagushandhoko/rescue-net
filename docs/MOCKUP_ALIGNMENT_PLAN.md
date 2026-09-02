@@ -318,7 +318,9 @@ Batch by kesiapan backend & kemiripan (pakai komponen bagian 3):
 4. ✅ **Manajemen Distribusi** — DONE 2026-09-02 (`distribusi_board` guest
    endpoint + real `auto_match_distribution` write action + 2 new RN
    Transport Space (laut/udara) filling a genuine data gap). Lihat `HANDOVER.md`.
-5. **Evidence Center** — `event_evidence` sudah unified; tinggal perluas + KPI.
+5. ✅ **Evidence Center** — DONE 2026-09-02 (`evidence_board` guest endpoint,
+   `event_evidence`/`_ev_norm` diperluas dengan module/visibility/mime; 2
+   doctype evidence dapat field `visibility_scope` baru). Lihat `HANDOVER.md`.
 6. **Verification & Approval** — `api_verification` + `api_operator_approval` ada.
 7. **Organisasi & Posko** + **Registrasi & Verifikasi Posko** (halaman baru) —
    sepasang, trust-level & tree.
@@ -351,7 +353,7 @@ Tiap endpoint dashboard mengembalikan, selain `totals` + data panel:
 - [x] `api_shelter.shelter_board(disaster_event)` — DONE 2026-09-02; `dashboard`/`api_logistics.dashboard` juga dibuat `allow_guest`
 - [x] `api_volunteer.volunteer_board(disaster_event)` — DONE 2026-09-02; `dashboard` juga dibuat `allow_guest`
 - [x] `api_control_centre.distribusi_board(disaster_event)` — DONE 2026-09-02, + `auto_match_distribution` write action
-- [ ] `api_control_centre.evidence_board(disaster_event)` + perluas `event_evidence`
+- [x] `api_control_centre.evidence_board(disaster_event)` + perluas `event_evidence` — DONE 2026-09-02
 - [ ] `api_verification.approval_queue(disaster_event)` + `approval_item_detail`
 - [ ] `api_control_centre.org_posko_board(disaster_event)` + `posko_verification_checklist`
 - [ ] `api_resource_tools.tools_board(disaster_event)`

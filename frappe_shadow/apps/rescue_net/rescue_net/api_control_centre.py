@@ -431,6 +431,52 @@ def _user_label(user_name):
     }
 
 
+_MODULE_KEYWORDS = [
+    ("Medis", ("medical", "medis")),
+    ("Distribusi", ("distribution", "distribusi", "transport", "road_access")),
+    ("Logistik", ("logistic", "logistik", "stock", "aid_offer", "aid offer", "donation", "donasi")),
+    ("Search & Found", ("missing_person", "found_person", "search_found", "missing", "found")),
+    ("Shelter", ("shelter",)),
+    ("Dapur Umum", ("kitchen", "dapur")),
+    ("Relawan", ("volunteer", "relawan")),
+    ("Program", ("donor", "recovery", "program", "work_tool", "resource_profile")),
+]
+
+
+def _evidence_module(linked_object_type, report_type=None):
+    # report_type (from RN Community Report) is the real classifying signal
+    # for community-submitted evidence — linked_object_type is uniformly
+    # "RN Community Report" for that whole source, so it can't distinguish
+    # modules on its own.
+    for text in (report_type, linked_object_type):
+        text = str(text or "").lower()
+        if not text:
+            continue
+        for label, keywords in _MODULE_KEYWORDS:
+            if any(k in text for k in keywords):
+                return label
+    return "Lainnya"
+
+
+_MIME_EXT = {
+    "jpg": "image", "jpeg": "image", "png": "image", "gif": "image", "webp": "image",
+    "mp4": "video", "mov": "video", "webm": "video", "avi": "video",
+    "pdf": "document", "doc": "document", "docx": "document", "xls": "document", "xlsx": "document",
+}
+
+
+def _evidence_mime(file_type, url):
+    if file_type:
+        ft = str(file_type).lower()
+        if "video" in ft:
+            return "video"
+        if "image" in ft or "photo" in ft:
+            return "image"
+        return "document"
+    ext = str(url or "").rsplit(".", 1)[-1].lower() if url and "." in str(url) else ""
+    return _MIME_EXT.get(ext, "image")
+
+
 def _ev_norm(**kw):
     """Normalise one evidence record to the shape both the Control Centre
     'Bukti Lapangan' panel and the Evidence page expect."""
@@ -464,6 +510,9 @@ def _ev_norm(**kw):
         "created_at": kw.get("created_at") or kw.get("creation"),
         "creation": kw.get("creation"),
         "modified": kw.get("modified"),
+        "module": _evidence_module(kw.get("linked_object_type"), kw.get("report_type")),
+        "visibility": kw.get("visibility_scope") or "restricted",
+        "mime": _evidence_mime(kw.get("file_type"), url),
     }
 
 
@@ -513,8 +562,9 @@ def event_evidence(event, limit=60):
     if frappe.db.exists("DocType", "RN Community Report Evidence") and report_names:
         cre_cols = cols("RN Community Report Evidence")
         cre_fields = [f for f in (
-            "name", "report", "file_url", "caption", "evidence_type",
+            "name", "report", "file_url", "caption", "evidence_type", "file_type",
             "verification_status", "uploader_user", "observed_at", "creation",
+            "visibility_scope",
         ) if f == "name" or f in cre_cols]
 
         for e in frappe.get_all(
@@ -529,6 +579,7 @@ def event_evidence(event, limit=60):
                 id=e["name"], source="community_report_evidence",
                 file_url=e.get("file_url"), caption=e.get("caption"),
                 evidence_type=e.get("evidence_type"), status=e.get("verification_status"),
+                file_type=e.get("file_type"), visibility_scope=e.get("visibility_scope"),
                 title=e.get("caption") or r.get("title"),
                 description=r.get("description"),
                 report_type=r.get("report_type"), priority=r.get("priority"),
@@ -621,7 +672,8 @@ def event_evidence(event, limit=60):
                 filters={"posko": ["in", posko_names]},
                 fields=["name", "posko", "file_url", "caption", "evidence_type",
                         "linked_doctype", "linked_name", "uploader_user",
-                        "verification_status", "observed_at", "creation"],
+                        "verification_status", "observed_at", "creation",
+                        "visibility_scope"],
                 order_by="creation desc",
                 limit_page_length=limit,
             ):
@@ -630,6 +682,7 @@ def event_evidence(event, limit=60):
                     id=e["name"], source="operational_evidence",
                     file_url=e.get("file_url"), caption=e.get("caption"),
                     evidence_type=e.get("evidence_type"), status=e.get("verification_status"),
+                    visibility_scope=e.get("visibility_scope"),
                     title=e.get("caption"), posko=e.get("posko"),
                     uploader=up.get("label"), uploader_role=up.get("role"),
                     reporter_name=up.get("label"),
@@ -640,6 +693,86 @@ def event_evidence(event, limit=60):
                 ))
 
     return out[:limit]
+
+
+_EVIDENCE_MODULE_ORDER = [
+    "Logistik", "Medis", "Distribusi", "Program", "Search & Found",
+    "Shelter", "Dapur Umum", "Relawan", "Lainnya",
+]
+
+
+@frappe.whitelist(allow_guest=True)
+def evidence_board(disaster_event=None, limit=300):
+    """Evidence Center dashboard (matches the DMS mock-up), guest read-only.
+
+    Wraps the already-unified `event_evidence()` feed with the mock-up's KPI
+    totals + Filter Modul chip counts. Rows are returned as-is (already rich
+    — thumbnail url, module, GPS, uploader+role, verification status,
+    visibility) for the frontend to search/filter/paginate client-side, the
+    same pattern as Bencana Aktif / Daftar Relawan / Daftar Shelter.
+    "Ekspor" (CSV) is a real client-side export of the currently filtered
+    rows, not a stub.
+    """
+    event = canonical_event(disaster_event) if disaster_event else None
+    rows = event_evidence(event, limit=int(limit)) if event else []
+
+    today = frappe.utils.getdate()
+
+    def _is_today(row):
+        d = row.get("created_at") or row.get("creation")
+        return bool(d and frappe.utils.getdate(d) == today)
+
+    def _is_geotagged(row):
+        lat, lng = row.get("latitude"), row.get("longitude")
+        return bool(lat and lng and (abs(_num(lat)) > 0.0001 or abs(_num(lng)) > 0.0001))
+
+    evidence_baru = [r for r in rows if _is_today(r)]
+    pending = [r for r in rows if str(r.get("status") or "").lower() == "pending"]
+    restricted = [r for r in rows if r.get("visibility") == "restricted"]
+    geotagged = [r for r in rows if _is_geotagged(r)]
+    serah_terima = [r for r in rows if str(r.get("evidence_type") or "").lower() in ("handover", "document")]
+    video = [r for r in rows if r.get("mime") == "video"]
+
+    def _drill(row):
+        return {
+            "title": row.get("title") or row.get("caption") or "Evidence",
+            "sub": (row.get("module") or "-") + " · " + (row.get("location_text") or row.get("posko") or "-"),
+            "href": row.get("evidence_url"),
+        }
+
+    module_counts = {}
+    for r in rows:
+        key = r.get("module") or "Lainnya"
+        module_counts[key] = module_counts.get(key, 0) + 1
+
+    filter_modul = [{"label": "Semua", "count": len(rows)}] + [
+        {"label": label, "count": module_counts[label]}
+        for label in _EVIDENCE_MODULE_ORDER
+        if module_counts.get(label)
+    ]
+
+    return {
+        "disaster_event": event,
+        "generated_at": frappe.utils.now_datetime(),
+        "totals": {
+            "evidence_baru": len(evidence_baru),
+            "pending_verifikasi": len(pending),
+            "restricted": len(restricted),
+            "geotagged": len(geotagged),
+            "dokumen_serah_terima": len(serah_terima),
+            "video_evidence": len(video),
+        },
+        "kpi_items": {
+            "evidence_baru_items": [_drill(r) for r in evidence_baru[:30]],
+            "pending_items": [_drill(r) for r in pending[:30]],
+            "restricted_items": [_drill(r) for r in restricted[:30]],
+            "geotagged_items": [_drill(r) for r in geotagged[:30]],
+            "serah_terima_items": [_drill(r) for r in serah_terima[:30]],
+            "video_items": [_drill(r) for r in video[:30]],
+        },
+        "filter_modul": filter_modul,
+        "rows": rows,
+    }
 
 
 def _num(value):

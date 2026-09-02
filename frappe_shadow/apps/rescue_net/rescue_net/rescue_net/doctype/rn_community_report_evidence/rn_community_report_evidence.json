@@ -81,6 +81,14 @@
       "label": "Uploader",
       "fieldtype": "Link",
       "options": "RN User Account"
+    },
+    {
+      "fieldname": "visibility_scope",
+      "label": "Visibilitas",
+      "fieldtype": "Select",
+      "options": "restricted\npublic",
+      "default": "public",
+      "description": "Bukti laporan masyarakat defaultnya publik (transparansi); operator bisa membatasi bila isinya sensitif."
     }
   ],
   "permissions": [

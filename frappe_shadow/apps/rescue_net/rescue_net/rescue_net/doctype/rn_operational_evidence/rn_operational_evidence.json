@@ -64,6 +64,14 @@
       "label": "Verification Status",
       "fieldtype": "Data",
       "default": "pending"
+    },
+    {
+      "fieldname": "visibility_scope",
+      "label": "Visibilitas",
+      "fieldtype": "Select",
+      "options": "restricted\npublic",
+      "default": "restricted",
+      "description": "Semua file evidence disimpan private (lihat add_evidence()); field ini murni menandai apakah OPERATOR sudah mengizinkan evidence ini ditampilkan publik atau tetap terbatas untuk internal posko/operator."
     }
   ],
   "permissions": [

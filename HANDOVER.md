@@ -400,6 +400,85 @@ here). Owner decisions this pass: **fix as we go** (report per page), and
     `/volume1/docker/osiun-playwright-check/rn-relawan-accom.js`. Cache-busters
     bumped to `?v=shelter-20260902b` / `?v=relawan-20260902b`.
 
+- **Mobile/responsive bug fix (2026-09-02d, cross-cutting).** While checking
+  the 4 pages above at a 390px viewport (owner asked to keep HP layout in
+  scope, not just defer it to a final pass): CSS Grid items default to
+  `min-width: auto`, so a wide child (a `.rn-table` with many columns) forced
+  the whole grid track — and the page — wider than the viewport, even though
+  the table's own `.rn-table-wrap{overflow-x:auto}` was supposed to contain
+  it. Fixed at the shared root: `.content-grid > *, .kpi-grid > * { min-width:
+  0; }` appended near `.content-grid`'s definition in `style.css`, plus
+  every mockup-alignment page's `@media` breakpoint that collapsed a grid to
+  a single column changed from bare `grid-template-columns: 1fr` to
+  `minmax(0, 1fr)` (bare `1fr` has the same implicit-`auto`-minimum problem).
+  Confirmed via `getBoundingClientRect` (not `scrollWidth` — Chromium's
+  `scrollWidth`/Playwright fullPage screenshots don't respect `body{overflow-x:
+  hidden}` and give false positives) that `body`/`.app-shell`/`main` are all
+  exactly viewport-width post-fix, with wide tables now correctly scrolling
+  inside their own `.rn-table-wrap`. This fix is global, so it also protects
+  every page still to be built — worth remembering if a future page's mobile
+  screenshot looks fine but an automated `scrollWidth` check flags overflow.
+
+- **Evidence Center (`pages/evidence.html` + `assets/js/evidence.js`) —
+  BUILT & DEPLOYED (2026-09-02), step 5 of the 12-step order.** 6 clickable
+  KPIs (Evidence Baru / Pending Verifikasi / Restricted / Geotagged / Dokumen
+  Serah Terima / Video Evidence), Filter Modul chips (counts from real data,
+  not the mock-up's fixed list), search, a real client-side CSV export of
+  the currently filtered rows, and a rich table (thumbnail, module chip,
+  lokasi, waktu, uploader+role, verifikasi, visibilitas) with client
+  pagination — same pattern as Daftar Relawan/Daftar Shelter. Old "Upload
+  Evidence" form kept in `<details>` (still calls `api_frontend_bridge.
+  upload_evidence`, login required, untouched). The old GET-based
+  `#evidenceList` legacy panel was dropped — it called a redundant, still
+  login-gated `evidence_context` bridge wrapping the exact same
+  `event_evidence()` feed my new guest dashboard already fetches, so nothing
+  was actually lost, just de-duplicated.
+  - **Backend:** new guest endpoint `rescue_net.api_control_centre.
+    evidence_board(disaster_event)`, built on top of the already-unified
+    `event_evidence()`. Extended `_ev_norm()`/`event_evidence()` with 3 new
+    derived fields per the mock-up's needs:
+    - `module` — classified from `report_type` first (the real signal on
+      community-submitted evidence, e.g. "logistics"/"medical"/"shelter";
+      `linked_object_type` is uniformly "RN Community Report" for that whole
+      source so it can't distinguish modules alone), falling back to
+      `linked_object_type` keyword-matching for `RN Operational Evidence`
+      rows (real DocType names like "RN Kitchen Production").
+    - `visibility` — **new real field**, not fabricated: added
+      `visibility_scope` (Select: restricted/public) to both
+      `RN Operational Evidence` (default `restricted` — everything is stored
+      as a private file per `add_evidence()`'s own validators) and
+      `RN Community Report Evidence` (default `public` — community reports
+      are meant to be transparent). Migrated on `osiun-frappe-backend`.
+      Existing pre-migration rows read back as their doctype's default via
+      `_ev_norm`'s fallback (`kw.get("visibility_scope") or "restricted"`).
+    - `mime` — from `file_type` when the source doctype has it (Community
+      Report Evidence), else guessed from the URL extension.
+    Geotagged = real non-(0,0) lat/lng (several rows import verbatim
+    `0.0/0.0` from earlier migration — treated as "no GPS", not fabricated
+    as tagged). "Video Evidence" stayed honestly `0` — no real video asset
+    exists anywhere in the demo set, and a fake unplayable link would be
+    worse than an honest empty KPI.
+  - **Debugging note (cost real time, worth remembering):** newly seeded
+    `RN Operational Evidence` rows silently failed to appear in
+    `event_evidence()`'s output — not a code bug. `push()` dedupes by
+    `evidence_url`, and the seed script reused an *existing* demo image
+    filename (`masyarakat_donasi.jpg`, no query string) that an unrelated
+    but same-event `RN Community Report Evidence` row already used, so the
+    new rows were silently deduped away. Every other seed script in this
+    project already appends a unique `?ev=<tag>` suffix to demo image URLs
+    for exactly this reason — this is the first time it was skipped, and
+    the fix was just to add the suffix. Always append a unique `?ev=` tag to
+    reused demo image URLs.
+  - Seed: 2 `RN Operational Evidence` rows (today, `pending`, one
+    `evidence_type=document` for "Dokumen Serah Terima") linked to real
+    today-dated Dapur Umum/Shelter records from earlier in this session.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-evidence.js` (desktop + 390px
+    mobile). Verified: all 6 KPIs correct, module filter + search + pagination
+    work, 4 drills open with real items, CSV export wired, mobile viewport
+    exactly contained (no overflow).
+  - Cache-busters: `style.css`/`evidence.js` → `?v=evidence-20260902`.
+
 ## System snapshot
 
 - **Stack:** Frappe / MariaDB is the system of record. Site `osiun.localhost` in

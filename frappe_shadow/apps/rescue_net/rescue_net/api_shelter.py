@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import frappe
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
-from frappe.utils import cint, flt, now_datetime
+from frappe.utils import cint, flt, getdate, now_datetime
 
 from rescue_net.access_policy import (
     can_manage_organization,
@@ -203,18 +203,21 @@ def _all_shelters():
     )
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def dashboard(posko=None):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
-    actor = rn_actor()
+    actor = rn_actor(required=False)
 
     allowed = _accessible_shelters(
         actor
     )
 
     if posko:
-        if posko not in allowed:
+        # Guests reading a specific posko get a public read-only view of
+        # that one posko (same guest-read model as shelter_board); the
+        # manager allow-list only gates authenticated actors.
+        if actor and posko not in allowed:
             frappe.throw(
                 "Akses Shelter ditolak",
                 frappe.PermissionError,
@@ -1034,4 +1037,276 @@ def control_centre_shelter():
             "Tidak ada identitas korban "
             "dalam agregat Control Centre."
         ),
+    }
+
+
+_BASIC_NEED_CATALOG = [
+    ("Makanan", ("makan", "beras", "nasi", "sembako")),
+    ("Air Bersih", ("air",)),
+    ("Sanitasi", ("sanitasi", "toilet", "mck", "disinfektan", "sabun")),
+    ("Selimut", ("selimut", "matras")),
+    ("Perlengkapan Bayi", ("bayi", "mpasi", "susu", "popok")),
+]
+
+_VULNERABLE_LABELS = {
+    "infants_count": "Bayi (0-1 th)",
+    "children_count": "Anak-anak (0-17 th)",
+    "elderly_count": "Lansia (60+ th)",
+    "pregnant_count": "Ibu Hamil",
+    "disability_count": "Disabilitas",
+}
+
+_SANITATION_KEYWORDS = ("sanitasi", "toilet", "mck", "disinfektan", "sabun")
+_WATER_KEYWORDS = ("air bersih", "air minum")
+
+
+def _event_shelters(event):
+    filters = [["disaster_event", "=", event]]
+    or_filters = [["posko_type", "=", "shelter"], ["rn_fn_shelter", "=", 1]]
+    return frappe.get_all(
+        "RN Posko",
+        filters=filters,
+        or_filters=or_filters,
+        fields=["name", "title", "posko_type", "address", "city_name"],
+        limit_page_length=500,
+    )
+
+
+def _drill(title, sub, href):
+    return {"title": title, "sub": sub, "href": href}
+
+
+@frappe.whitelist(allow_guest=True)
+def shelter_board(disaster_event=None):
+    """Shelter & Akomodasi overview (matches the DMS mock-up), guest read-only.
+
+    Cross-shelter dashboard for one disaster event: KPI totals + drill
+    items, Daftar Shelter, Kapasitas & Okupansi donut, Kebutuhan Dasar
+    (keyword-matched against open RN Shelter Need, not a fixed catalog with
+    invented thresholds), Kelompok Rentan, Check-in/Check-out hari ini
+    (real RN Shelter Household rows), Peringatan Keselamatan (overcapacity +
+    critical needs — no safety/sanitation status field exists on RN Shelter
+    Occupancy yet, so nothing is fabricated there) and the evidence strip.
+    "Akomodasi Relawan/Petugas" and literal toilet/water-point counts from
+    the mock-up have no backing doctype — honestly omitted rather than
+    invented (see HANDOVER.md).
+    """
+    event = resolve_disaster_event(disaster_event) or disaster_event
+
+    shelters = _event_shelters(event)
+    posko_names = [s.name for s in shelters]
+    posko_by_name = {s.name: s for s in shelters}
+
+    if not posko_names:
+        return {
+            "disaster_event": event,
+            "generated_at": now_datetime(),
+            "totals": {}, "kpi_items": {}, "daftar_shelter": [],
+            "kapasitas_okupansi": {}, "kebutuhan_dasar": [],
+            "kelompok_rentan": [], "checkin_checkout": {},
+            "peringatan": [], "bukti": [], "bukti_total": 0,
+        }
+
+    latest = _latest_occupancies(posko_names)
+    latest_by_posko = {}
+    for row in latest:
+        # one row per posko (first shelter_name encountered, i.e. most
+        # recently observed thanks to _latest_occupancies' ordering)
+        latest_by_posko.setdefault(row.posko, row)
+
+    total_penghuni = 0
+    kapasitas_maksimal = 0
+    overcapacity_rows = []
+    vulnerable_totals = defaultdict(int)
+    vulnerable_by_shelter = defaultdict(lambda: defaultdict(int))
+    daftar_shelter = []
+
+    for posko in posko_names:
+        row = latest_by_posko.get(posko)
+        p = posko_by_name[posko]
+        cap = cint(row.capacity_total) if row else 0
+        cur = cint(row.current_occupancy) if row else 0
+        total_penghuni += cur
+        kapasitas_maksimal += cap
+        pct = round(cur * 100 / cap, 1) if cap else None
+        over = bool(cap and cur > cap)
+        if over:
+            overcapacity_rows.append({
+                "posko": posko, "title": p.title, "capacity_total": cap,
+                "current_occupancy": cur, "occupancy_percent": pct,
+            })
+
+        for field, label in _VULNERABLE_LABELS.items():
+            v = cint(row.get(field)) if row else 0
+            vulnerable_totals[field] += v
+            vulnerable_by_shelter[field][posko] = v
+
+        daftar_shelter.append({
+            "posko": posko,
+            "title": p.title,
+            "lokasi": p.city_name or p.address or "-",
+            "penghuni": cur,
+            "kapasitas": cap,
+            "okupansi_pct": pct,
+            "status": "overcapacity" if over else "aman",
+            "href": "shelter-detail.html?id=" + posko + "&event=" + (event or ""),
+        })
+
+    daftar_shelter.sort(key=lambda r: -(r["okupansi_pct"] or 0))
+
+    kelompok_rentan_total = sum(vulnerable_totals.values())
+
+    # Open shelter needs, keyword-matched to the basic-need catalog.
+    open_needs = frappe.get_all(
+        "RN Shelter Need",
+        filters={"posko": ["in", posko_names], "need_status": ["in", ["open", "partially_met"]]},
+        fields=["name", "posko", "item_name", "priority", "quantity_needed", "unit"],
+        limit_page_length=1000,
+    )
+    urgent_terms = {"critical", "urgent"}
+
+    kebutuhan_dasar = []
+    for label, keywords in _BASIC_NEED_CATALOG:
+        matches = [n for n in open_needs if any(k in (n.item_name or "").lower() for k in keywords)]
+        kritis = any(str(n.priority).lower() in urgent_terms for n in matches)
+        kebutuhan_dasar.append({
+            "label": label,
+            "status": "kritis" if kritis else ("perlu" if matches else "cukup"),
+            "open_count": len(matches),
+        })
+
+    air_bersih_kritis = sum(
+        1 for posko in posko_names
+        if any(
+            n.posko == posko and str(n.priority).lower() in urgent_terms
+            and any(k in (n.item_name or "").lower() for k in _WATER_KEYWORDS)
+            for n in open_needs
+        )
+    )
+    sanitasi_kritis = sum(
+        1 for posko in posko_names
+        if any(
+            n.posko == posko and str(n.priority).lower() in urgent_terms
+            and any(k in (n.item_name or "").lower() for k in _SANITATION_KEYWORDS)
+            for n in open_needs
+        )
+    )
+
+    # Kelompok Rentan table: category -> total, %, shelter with the most.
+    kelompok_rentan = []
+    for field, label in _VULNERABLE_LABELS.items():
+        total = vulnerable_totals[field]
+        top_posko = max(vulnerable_by_shelter[field], key=lambda k: vulnerable_by_shelter[field][k], default=None)
+        kelompok_rentan.append({
+            "label": label,
+            "jumlah": total,
+            "pct": round(100.0 * total / total_penghuni, 1) if total_penghuni else 0,
+            "lokasi_terbanyak": posko_by_name[top_posko].title if top_posko and vulnerable_by_shelter[field][top_posko] else "-",
+        })
+    kelompok_rentan.sort(key=lambda r: -r["jumlah"])
+
+    # Check-in / check-out hari ini (real RN Shelter Household rows).
+    today = getdate()
+    households = frappe.get_all(
+        "RN Shelter Household",
+        filters={"posko": ["in", posko_names]},
+        fields=["name", "posko", "household_code", "members_count", "household_status",
+                "check_in_at", "moved_at", "checked_out_at"],
+        limit_page_length=2000,
+    )
+    checkin_today = [h for h in households if h.check_in_at and getdate(h.check_in_at) == today]
+    checkout_today = [h for h in households if h.checked_out_at and getdate(h.checked_out_at) == today]
+    moved_today = [h for h in households if h.moved_at and getdate(h.moved_at) == today]
+
+    checkin_checkout = {
+        "checkin_people": sum(cint(h.members_count) for h in checkin_today),
+        "checkin_households": len(checkin_today),
+        "checkout_people": sum(cint(h.members_count) for h in checkout_today),
+        "checkout_households": len(checkout_today),
+        "moved_people": sum(cint(h.members_count) for h in moved_today),
+        "moved_households": len(moved_today),
+    }
+
+    # Peringatan Keselamatan: overcapacity + critical open needs (only real,
+    # derivable signals — no fabricated safety/sanitation status).
+    peringatan = []
+    for r in overcapacity_rows:
+        peringatan.append({
+            "title": r["title"],
+            "sub": f"Kapasitas melebihi 100% (+{r['current_occupancy'] - r['capacity_total']} orang)",
+            "href": "shelter-detail.html?id=" + r["posko"] + "&event=" + (event or ""),
+            "level": "critical",
+        })
+    for n in open_needs:
+        if str(n.priority).lower() == "critical":
+            p = posko_by_name.get(n.posko)
+            peringatan.append({
+                "title": (p.title if p else n.posko) + " — " + n.item_name,
+                "sub": "Kebutuhan kritis terbuka",
+                "href": "shelter-detail.html?id=" + n.posko + "&event=" + (event or ""),
+                "level": "critical",
+            })
+    peringatan.sort(key=lambda r: 0 if r.get("level") == "critical" else 1)
+
+    # Evidence strip, same unified feed as other posko pages.
+    from rescue_net.api_control_centre import event_evidence
+    bukti = []
+    try:
+        for row in event_evidence(event, limit=80):
+            if row.get("posko") in posko_names or row.get("linked_object_id") in posko_names:
+                bukti.append(row)
+        bukti.sort(key=lambda r: str(r.get("created_at") or r.get("creation") or ""), reverse=True)
+        bukti = bukti[:8]
+    except Exception:
+        bukti = []
+
+    return {
+        "disaster_event": event,
+        "generated_at": now_datetime(),
+        "totals": {
+            "total_penghuni": total_penghuni,
+            "kapasitas_maksimal": kapasitas_maksimal,
+            "overcapacity": len(overcapacity_rows),
+            "kelompok_rentan": kelompok_rentan_total,
+            "air_bersih_kritis": air_bersih_kritis,
+            "sanitasi_kritis": sanitasi_kritis,
+        },
+        "kpi_items": {
+            "shelter_items": [
+                _drill(s["title"], f"{s['penghuni']}/{s['kapasitas']} · {s['status']}", s["href"])
+                for s in daftar_shelter
+            ],
+            "overcapacity_items": [
+                _drill(r["title"], f"{r['current_occupancy']}/{r['capacity_total']} ({r['occupancy_percent']}%)",
+                       "shelter-detail.html?id=" + r["posko"] + "&event=" + (event or ""))
+                for r in overcapacity_rows
+            ],
+            "air_bersih_items": [
+                _drill(posko_by_name[n.posko].title, n.item_name + " · kritis",
+                       "shelter-detail.html?id=" + n.posko + "&event=" + (event or ""))
+                for n in open_needs
+                if str(n.priority).lower() in urgent_terms
+                and any(k in (n.item_name or "").lower() for k in _WATER_KEYWORDS)
+            ],
+            "sanitasi_items": [
+                _drill(posko_by_name[n.posko].title, n.item_name + " · kritis",
+                       "shelter-detail.html?id=" + n.posko + "&event=" + (event or ""))
+                for n in open_needs
+                if str(n.priority).lower() in urgent_terms
+                and any(k in (n.item_name or "").lower() for k in _SANITATION_KEYWORDS)
+            ],
+        },
+        "daftar_shelter": daftar_shelter,
+        "kapasitas_okupansi": {
+            "terisi": total_penghuni,
+            "tersedia": max(0, kapasitas_maksimal - total_penghuni),
+            "kapasitas_max": kapasitas_maksimal,
+            "pct": round(100.0 * total_penghuni / kapasitas_maksimal, 1) if kapasitas_maksimal else 0,
+        },
+        "kebutuhan_dasar": kebutuhan_dasar,
+        "kelompok_rentan": kelompok_rentan,
+        "checkin_checkout": checkin_checkout,
+        "peringatan": peringatan,
+        "bukti": bukti,
+        "bukti_total": len(bukti),
     }

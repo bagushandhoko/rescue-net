@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | Shelter Detail</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <title>Rescue-Net | Shelter & Akomodasi</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=shelter-20260902">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -50,40 +50,129 @@
 
   <main class="main">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Shelter</div>
+      <div class="rn-page-mobile-title">Shelter & Akomodasi</div>
 
       <div>
         <p class="eyebrow">Temporary Accommodation</p>
-        <h2 id="shelterTitle">Shelter</h2>
-        <p class="subtitle" id="shelterSubtitle">Loading...</p>
-        <p class="subtitle" id="shelterStatus">Ready.</p>
+        <h2>Shelter & Akomodasi</h2>
+        <p class="subtitle">Kelola tempat pengungsian sementara dan akomodasi bagi penyintas dan relawan.</p>
+        <p class="subtitle" id="shelterStatus">Memuat…</p>
       </div>
-      <div class="status-pill">Shelter · Occupancy</div>
+      <div class="status-pill" id="shelterUpdated">Shelter · Occupancy</div>
     </header>
 
-    <section class="kpi-grid">
-      <div class="kpi-card danger"><span>Capacity</span><strong id="kpiCapacity">0</strong><small>total</small></div>
-      <div class="kpi-card"><span>Occupancy</span><strong id="kpiOccupancy">0</strong><small>current</small></div>
-      <div class="kpi-card warning"><span>Families</span><strong id="kpiFamilies">0</strong><small>families</small></div>
-      <div class="kpi-card"><span>Needs</span><strong id="kpiNeeds">0</strong><small>open needs</small></div>
+    <section class="kpi-grid rn-sh-kpi">
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="shelter">
+        <span>Total Penghuni</span><strong id="kpiPenghuni">-</strong><small>seluruh shelter</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="shelter">
+        <span>Kapasitas Maksimal</span><strong id="kpiKapasitas">-</strong><small>total kapasitas</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="overcapacity">
+        <span>Overcapacity</span><strong id="kpiOvercapacity">-</strong><small>shelter melebihi kapasitas</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="shelter">
+        <span>Kelompok Rentan</span><strong id="kpiRentan">-</strong><small>bayi/anak/lansia/bumil/disabilitas</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="air_bersih">
+        <span>Air Bersih Kritis</span><strong id="kpiAirKritis">-</strong><small>shelter</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="sanitasi">
+        <span>Sanitasi Kritis</span><strong id="kpiSanitasiKritis">-</strong><small>shelter</small>
+      </button>
     </section>
 
-    <section class="content-grid">
+    <section class="content-grid rn-sh-row-a">
       <div class="panel">
         <div class="panel-header">
-          <div>
-            <h3>Shelter Occupancy</h3>
-            <p>Data kapasitas dan penghuni shelter.</p>
-          </div>
+          <div><h3>Daftar Shelter</h3></div>
+          <a class="rn-seeall" href="war-room.html?event=event-sim-001">Lihat Peta →</a>
         </div>
-        <div class="event-list" id="shelterOccupancies"></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Nama Shelter</th><th>Lokasi</th><th>Penghuni</th><th>Kapasitas</th><th>Okupansi</th><th>Status</th></tr></thead>
+            <tbody id="daftarShelterBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="rn-table-foot">
+          <span id="daftarShelterShown">—</span>
+        </div>
       </div>
 
-      <aside class="panel summary">
-        <h3>Record Occupancy</h3>
-        <p class="subtitle">Catat kondisi hunian shelter.</p>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Kapasitas & Okupansi</h3></div></div>
+        <div class="rn-donut-wrap">
+          <div class="rn-donut" id="okupansiDonut"><div class="rn-donut-center"><strong id="okupansiPct">0%</strong><small>okupansi total</small></div></div>
+          <ul class="rn-donut-legend" id="okupansiLegend"></ul>
+        </div>
+      </div>
 
-        <form class="rn-form" id="occupancyForm">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Kebutuhan Dasar</h3></div></div>
+        <div class="event-list rn-sh-kebutuhan" id="kebutuhanDasar"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-sh-row-a">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Akomodasi Relawan / Petugas</h3></div>
+        </div>
+        <p class="rn-muted rn-sh-gap-note">Belum ada data terpisah untuk akomodasi relawan/petugas (belum ada doctype khusus — beda dari shelter penyintas di atas). Akan ditambahkan bila modul Relawan sudah mencatat lokasi menginap.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Sanitasi & Air</h3></div></div>
+        <div class="rn-sh-sanitasi" id="sanitasiAir"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Check-in / Check-out <small class="rn-muted">Hari ini</small></h3></div></div>
+        <div class="rn-sh-checkinout" id="checkinOut"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-dp-grid3">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Kelompok Rentan</h3></div></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Kelompok</th><th>Jumlah</th><th>%</th><th>Lokasi Terbanyak</th></tr></thead>
+            <tbody id="kelompokRentanBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Peringatan Keselamatan</h3></div></div>
+        <div class="event-list" id="peringatanList"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Dokumentasi & Bukti</h3></div>
+          <a class="rn-seeall" href="#" id="evidenceSeeAll">Lihat Semua →</a>
+        </div>
+        <div class="rn-dp-evidence-strip" id="buktiGrid"><p class="rn-muted">Memuat…</p></div>
+      </div>
+    </section>
+
+    <details class="panel rn-input-drawer" id="occupancyPanel">
+      <summary>
+        <h3>Shelter Occupancy (Riwayat per Posko) <span class="chip" id="occLegacyCount">0</span></h3>
+        <p>Data kapasitas dan penghuni shelter (posko terpilih via <code>?id=</code>).</p>
+      </summary>
+      <div class="event-list" id="shelterOccupancies"></div>
+    </details>
+
+    <details class="panel create-panel rn-input-drawer">
+      <summary>
+        <h3>Record Occupancy</h3>
+        <p>Catat kondisi hunian shelter.</p>
+      </summary>
+
+      <form class="rn-form" id="occupancyForm">
+        <div class="form-grid">
           <label>Shelter Posko ID
             <input name="posko_id" value="posko-shelter-melati" required>
           </label>
@@ -123,84 +212,83 @@
           <label>Notes
             <input name="notes" value="Shelter aktif, butuh air dan selimut.">
           </label>
-
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Save Occupancy</button>
-            <button class="btn" type="button" id="refreshShelter">Refresh</button>
-          </div>
-        </form>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Shelter Needs</h3>
-            <p>Kebutuhan shelter untuk penghuni.</p>
-          </div>
         </div>
-        <div class="event-list" id="shelterNeeds"></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Add Shelter Need</h3>
-        <form class="rn-form" id="needForm">
-          <label>Item Name
-            <input name="item_name" value="Selimut" required>
-          </label>
-          <label>Quantity Needed
-            <input name="quantity_needed" type="number" value="150" required>
-          </label>
-          <label>Unit
-            <input name="unit" value="pcs" required>
-          </label>
-          <label>Priority
-            <select name="priority">
-              <option value="normal">normal</option>
-              <option value="urgent">urgent</option>
-              <option value="critical">critical</option>
-            </select>
-          </label>
-          <label>Needed Before
-            <input name="needed_before" value="Besok pagi">
-          </label>
-          <label>Notes
-            <input name="notes" value="Untuk anak-anak dan lansia.">
-          </label>
-
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Save Shelter Need</button>
-          </div>
-        </form>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Shelter Stock</h3>
-            <p>Barang yang tersedia di shelter.</p>
-          </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Save Occupancy</button>
+          <button class="btn" type="button" id="refreshShelter">Refresh</button>
         </div>
-        <div class="event-list" id="shelterStock"></div>
-      </div>
+      </form>
+    </details>
 
-      <aside class="panel summary">
-        <h3>Distribution Flows</h3>
-        <p class="subtitle">Distribusi yang menuju shelter.</p>
-        <div class="event-list" id="shelterFlows"></div>
-      </aside>
-    </section>
+    <details class="panel rn-input-drawer">
+      <summary>
+        <h3>Shelter Needs (Riwayat)</h3>
+        <p>Kebutuhan shelter untuk penghuni.</p>
+      </summary>
+      <div class="content-grid">
+        <div>
+          <div class="event-list" id="shelterNeeds"></div>
+        </div>
+        <aside>
+          <h4>Add Shelter Need</h4>
+          <form class="rn-form" id="needForm">
+            <label>Item Name
+              <input name="item_name" value="Selimut" required>
+            </label>
+            <label>Quantity Needed
+              <input name="quantity_needed" type="number" value="150" required>
+            </label>
+            <label>Unit
+              <input name="unit" value="pcs" required>
+            </label>
+            <label>Priority
+              <select name="priority">
+                <option value="normal">normal</option>
+                <option value="urgent">urgent</option>
+                <option value="critical">critical</option>
+              </select>
+            </label>
+            <label>Needed Before
+              <input name="needed_before" value="Besok pagi">
+            </label>
+            <label>Notes
+              <input name="notes" value="Untuk anak-anak dan lansia.">
+            </label>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Save Shelter Need</button>
+            </div>
+          </form>
+        </aside>
+      </div>
+    </details>
+
+    <details class="panel rn-input-drawer">
+      <summary>
+        <h3>Shelter Stock & Distribution Flows (Riwayat)</h3>
+      </summary>
+      <div class="content-grid">
+        <div><h4>Shelter Stock</h4><div class="event-list" id="shelterStock"></div></div>
+        <div><h4>Distribution Flows</h4><div class="event-list" id="shelterFlows"></div></div>
+      </div>
+    </details>
   </main>
 </div>
 
+<div id="shelterDrill" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="shelterDrillTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="shelterDrillTitle">-</h3><p id="shelterDrillSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body" id="shelterDrillBody"></div>
+  </div>
+</div>
+
 <script src="../assets/js/rn-frappe-client.js?v=frappe-batch-a-1"></script>
-<script src="../assets/js/shelter-detail.js?v=frappe-batch-a-1"></script>
+<script src="../assets/js/shelter-detail.js?v=shelter-20260902"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
-<script src="../assets/js/dms-inline.js?v=domain-p1-1"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>

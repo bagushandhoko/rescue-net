@@ -195,6 +195,67 @@ here). Owner decisions this pass: **fix as we go** (report per page), and
     alongside the real "Unggah Foto" tile — swaps automatically for real thumbs
     once evidence exists for the posko.
 
+- **Shelter & Akomodasi (`pages/shelter-detail.html` + `assets/js/shelter-detail.js`)
+  — BUILT & DEPLOYED (2026-09-02), step 2 of the 12-step order.** Mock-up is a
+  **cross-shelter overview**, unlike the old page which was single-posko
+  detail — so the new dashboard is always the cross-shelter view for the
+  active `?event=`, and the old single-posko form/lists stay in `<details>`
+  scoped to `?id=` as before (additive, both modes coexist on one page).
+  6 KPI tiles (Total Penghuni / Kapasitas Maksimal / Overcapacity / Kelompok
+  Rentan / Air Bersih Kritis / Sanitasi Kritis, all clickable → `.rn-ba-modal`
+  drill), Daftar Shelter table (row click → that shelter's `posko-detail`-style
+  link), Kapasitas & Okupansi `.rn-donut`, Kebutuhan Dasar (5-category catalog
+  keyword-matched against open `RN Shelter Need`, not invented thresholds),
+  Kelompok Rentan table (from latest `RN Shelter Occupancy` per shelter),
+  Check-in/Check-out Hari Ini (real `RN Shelter Household` rows), Peringatan
+  Keselamatan (overcapacity + critical open needs), Dokumentasi & Bukti
+  (unified evidence feed, placeholder tiles when empty — same pattern as
+  Dapur Umum).
+  - **Backend:** new guest endpoint `rescue_net.api_shelter.shelter_board
+    (disaster_event)` in `api_shelter.py`. Two mock-up panels have **no
+    backing doctype and were honestly omitted/adapted, not fabricated**:
+    "Akomodasi Relawan/Petugas" (volunteer/officer lodging isn't tracked
+    anywhere — empty-state note explaining why) and literal "Toilet/MCK
+    Tersedia N / Titik Air N" counts (no physical-asset inventory doctype —
+    "Sanitasi & Air" instead shows count of open critical sanitation/water
+    `RN Shelter Need` records, which *is* real). Also found mid-build: the
+    HTML form for Record Occupancy has always collected `sanitation_status`/
+    `water_status`/`electricity_status`/`safety_status`, but
+    `create_occupancy()` never accepted or persisted them (not in the
+    `RN Shelter Occupancy` doctype at all) — pre-existing gap from before
+    this session, left as-is (out of scope for a layout pass; would need a
+    schema change). Noted here so it isn't mistaken for new breakage.
+  - **Fixed the same guest-whitelist bug as Dapur Umum**, in two files this
+    time: `api_shelter.dashboard` and `api_logistics.dashboard` (both feed
+    this page's legacy per-posko panels) were login-only, 403ing for guests.
+    Now `allow_guest=True` + `rn_actor(required=False)`, manager allow-list
+    only gates authenticated actors. `api_logistics._accessible_poskos` also
+    had a latent `actor.name` crash for `actor=None` (no `if not actor`
+    guard) — fixed alongside. Confirmed with the user before applying (same
+    as the Dapur Umum precedent).
+  - **Removed `dms-inline.js` from this page** — found it auto-injecting a
+    broken "Registrasi Pengungsi" panel (`rnFetch is not defined`: dead
+    pre-Frappe-migration code hitting a retired FastAPI `/dms-gap/` route
+    that was never ported, landing right above the new dashboard). Confirmed
+    `posko-logistik.html` already dropped this same script during its own
+    rebuild — consistent precedent. The feature it tried to provide
+    (evacuee/family registration) is already covered by real, working
+    `RN Shelter Household` data in the new Check-in/Check-out panel, so
+    nothing functional was actually lost. `donor-program.html` still has the
+    same dead include — untouched (out of scope today).
+  - **Seed enrichment (posko-sim-shelter):** fresh `RN Shelter Occupancy`
+    snapshot pushed to 215/200 (a real overcapacity example to show the
+    alert/status), 5 `RN Shelter Household` check-in/moved/checked-out rows
+    dated today, 2 more `RN Shelter Need` (Air Bersih, Sanitasi — both
+    critical) so "Kebutuhan Dasar" has more than one category open. The
+    event-sim-001 overview also picks up `SIM-NS-POSKO-WARGA`'s existing
+    merged-function shelter data (1200/1400) with no seeding needed.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-shelter.js`. Verified: all 6
+    KPIs correct, all 4 drills open with real items, table/donut/panels
+    render, only pre-existing `session_info` 403 remains.
+  - Cache-busters: `style.css`/`shelter-detail.js` → `?v=shelter-20260902`.
+
 ## System snapshot
 
 - **Stack:** Frappe / MariaDB is the system of record. Site `osiun.localhost` in

@@ -62,7 +62,7 @@ def _accessible_poskos(actor):
             )
         )
 
-    if actor.name:
+    if actor and actor.name:
         result.update(
             frappe.get_all(
                 "RN Posko Assignment",
@@ -129,15 +129,18 @@ def _class_fields(prefix=""):
     ]
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def dashboard(posko=None):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
-    actor = rn_actor()
+    actor = rn_actor(required=False)
     allowed = _accessible_poskos(actor)
 
     if posko:
-        if posko not in allowed:
+        # Guests reading a specific posko get a public read-only view of
+        # that one posko; the manager allow-list only gates authenticated
+        # actors (same guest-read model used by the other *_board endpoints).
+        if actor and posko not in allowed:
             frappe.throw(
                 "Anda tidak memiliki akses ke Posko ini",
                 frappe.PermissionError,

@@ -311,7 +311,8 @@ Batch by kesiapan backend & kemiripan (pakai komponen bagian 3):
 
 1. ✅ **Dapur Umum** — DONE 2026-09-02 (`kitchen_board` guest endpoint + `dashboard`
    guest-fix). Lihat `HANDOVER.md`.
-2. **Shelter & Akomodasi** — mirip Dapur Umum, `api_shelter` sudah ada.
+2. ✅ **Shelter & Akomodasi** — DONE 2026-09-02 (`shelter_board` guest endpoint +
+   `api_shelter.dashboard`/`api_logistics.dashboard` guest-fix). Lihat `HANDOVER.md`.
 3. **Manajemen Relawan** — `api_volunteer` sudah ada (`volunteer_count` baru dipakai).
 4. **Manajemen Distribusi** — banyak potongan sudah ada di `_drill_flows` /
    `logistik_incoming`.
@@ -345,7 +346,7 @@ Tiap endpoint dashboard mengembalikan, selain `totals` + data panel:
 ## 7. Checklist backend endpoint (guest, read-only, satu payload `{totals, <kpi>_items, ...panel}`)
 
 - [x] `api_kitchen.kitchen_board(posko, disaster_event)` — DONE 2026-09-02; `dashboard` juga dibuat `allow_guest`
-- [ ] `api_shelter.shelter_board(disaster_event)` — agregat lintas shelter
+- [x] `api_shelter.shelter_board(disaster_event)` — DONE 2026-09-02; `dashboard`/`api_logistics.dashboard` juga dibuat `allow_guest`
 - [ ] `api_volunteer.volunteer_board(disaster_event)`
 - [ ] `api_control_centre.distribusi_board(disaster_event)`
 - [ ] `api_control_centre.evidence_board(disaster_event)` + perluas `event_evidence`

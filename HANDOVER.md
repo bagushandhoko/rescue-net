@@ -821,6 +821,58 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
 - Pre-existing uncommitted frontend↔Frappe rewiring (~30 `assets/js/*.js`, most
   `api_*.py`) predates this program — being carried along in the same commits.
 
+- **Verification & Approval (`pages/verification-approval.html` +
+  `assets/js/verification-approval.js`) — BUILT & DEPLOYED (2026-09-02),
+  step 6 of the 12-step order.** 6 clickable KPIs (User/Organisasi/Posko/
+  Needs/Expense/Evidence Pending), a tabbed Antrian Verifikasi (paginated,
+  click a row to select), Detail Item (real fields per kind, evidence
+  thumbnails via `event_evidence`, real Trust Level/Verifier Terpercaya for
+  Organisasi/Posko which already carry those fields — no fabricated numeric
+  score for kinds that don't), a simplified-but-real 3-step Alur Persetujuan
+  + Jejak Audit timeline (derived from the record's own creation/modified
+  timestamps — the mock-up's 4-stage multi-reviewer flow doesn't exist in
+  the data model, so it wasn't invented), and a Tindakan bar with 4 real
+  write actions. Old "Trusted Verifier Network" panels (a genuinely distinct
+  concept — identity/membership endorsement, not data approval) kept intact
+  in `<details>`, untouched.
+  - **Backend:** new module in `api_verification.py`: `approval_queue`,
+    `approval_item_detail` (both guest), `approval_action` (login required).
+    The queue aggregates 6 kinds against real doctypes: User (`RN User
+    Account.role_request_status == "pending"` — literal match only; empty/
+    None means "never requested a role", not "awaiting review", unlike
+    every other kind where empty means self-reported/unverified — this
+    distinction caused a real bug during testing, see below), Organisasi
+    (`RN Organization.verification_status`), Posko (`RN Posko`, event-
+    scoped), Needs (`RN Logistic Need` + `RN Shelter Need`, event-scoped via
+    posko since Shelter Need has no `disaster_event` column of its own),
+    Expense (`RN Distribution Flow` rows that actually have
+    `estimated_cost`/`actual_cost` set — real field reuse, not a new
+    doctype; empty for event-sim-001, honestly 0), Evidence (reuses
+    `event_evidence()`, pending status).
+  - **`approval_action`** actually changes data: approve/reject/
+    request_revision/escalate set the right status field per kind
+    (`role_request_status` for User, `verification_status` for the rest);
+    approving a User additionally grants `doc.role = doc.requested_role` —
+    completing the gap `api_auth.register()`'s own docstring flagged
+    ("parks role as pending... does not grant it") that nothing else in the
+    app had implemented yet. Escalate bumps `urgency`/`priority` to
+    `critical` where the doctype has one. **"Merge" is deliberately not
+    implemented** — safely deduplicating two records needs a target-picker +
+    reconciliation flow this pass didn't have scope for; the UI says so
+    instead of a decorative button.
+  - **Bug fix while building this (real, worth remembering):** initial
+    version counted 23 "User Pending" because it reused the same
+    `PENDING_TERMS = {"pending","self_reported","",None}` set used for every
+    other kind — but empty `role_request_status` is the default/normal state
+    for an account that never asked for a role change, not a pending
+    request. Fixed to match `"pending"` literally for the `user` kind only.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-verif.js` (desktop + 390px
+    mobile). Verified: all 6 KPIs correct (0/1/2/15/0/2), tab filter + row
+    select + detail fetch work, guest write shows a graceful login-required
+    message, mobile viewport exactly contained.
+  - Cache-busters: `style.css`/`verification-approval.js` → `?v=verif-20260902`.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

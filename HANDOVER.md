@@ -256,6 +256,55 @@ here). Owner decisions this pass: **fix as we go** (report per page), and
     render, only pre-existing `session_info` 403 remains.
   - Cache-busters: `style.css`/`shelter-detail.js` → `?v=shelter-20260902`.
 
+- **Manajemen Relawan (`pages/management-relawan.html` + `assets/js/relawan.js`)
+  — BUILT & DEPLOYED (2026-09-02), step 3 of the 12-step order.** Event-wide
+  dashboard: 5 clickable KPIs (Relawan Terdaftar / Available Hari Ini / Sedang
+  Bertugas / Butuh Penugasan / Fatigue Risk), Daftar Relawan table with
+  live client-side search, Filter Keterampilan (bar-chart-style skill
+  breakdown), Papan Penugasan, Jenis Relawan (4 tiles), evidence-free per
+  the mock-up. Old panels (Ringkasan/raw Daftar Relawan list/Assignments +
+  both forms) kept in `<details>`.
+  - **Backend:** new guest endpoint `rescue_net.api_volunteer.volunteer_board
+    (disaster_event)`. Adaptations forced by the real schema (documented in
+    the function docstring, not silently faked):
+    - No "Organisasi" field on `RN Volunteer Profile` — joined via
+      `user_account` → `RN Organization Membership` → `RN Organization.title`;
+      shows "-" when a profile has no linked user account (true for most
+      self-reported sim volunteers).
+    - "Filter Keterampilan" / "Jenis Relawan" categories are keyword buckets
+      over real `main_skill`/`skill_tags` text (Medis/Evakuasi/Search & Found/
+      Pickup & Transport/Dapur & Logistik/Komunikasi/Shelter), not the
+      mock-up's exact fixed category set — our skill values don't carry those
+      labels.
+    - "Papan Penugasan" = assignments still `planned` (created but not yet
+      accepted by the assignee). The schema binds one `RN Volunteer
+      Assignment` to exactly one `volunteer` at creation time — there is no
+      "open task needing N relawan" concept to draw an unfilled-slot board
+      from, so this is honestly relabelled as "menunggu konfirmasi: <nama>"
+      rather than faking an "Isi Penugasan" call-to-action.
+    - "Fatigue Risk" = real signal: assignments `checked_in`/`in_progress`
+      running ≥ `FATIGUE_HOURS_THRESHOLD` (12h) since `checked_in_at`.
+    - "Akomodasi & Keselamatan" panel has no backing doctype — same
+      documented gap as Shelter's "Akomodasi Relawan/Petugas"; empty-state
+      note points back to that.
+  - **Fixed the same guest-whitelist bug** in `api_volunteer.dashboard`
+    (login-only → 403 for guests on this public page's legacy panels). Now
+    `allow_guest=True` + `rn_actor(required=False)`; manager gate only
+    applies to authenticated actors. Confirmed with the user first (3rd
+    occurrence of this exact fix — Dapur Umum, Shelter, now Relawan).
+  - **Seed enrichment:** 2 new `RN Volunteer Profile` (Rina Kartika —
+    Medis/Triage, Yusuf Hidayat — Search & Found/K9 Handler, both
+    `available`) + 2 `RN Volunteer Assignment` in `planned` status so
+    "Butuh Penugasan"/"Papan Penugasan" aren't empty. event-sim-001 already
+    had 6 profiles + 5 `in_progress` assignments (the LD2–LD6 Landrover set,
+    checked in 2026-08-26 — now ~161h ago, which is why Fatigue Risk shows 5).
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-relawan.js`. Verified: all 5
+    KPIs correct, all 5 drills open with real items, search filter works,
+    skill bars/tiles/papan render, only pre-existing 403s remain
+    (`session_info` for guests + a role-gated form check, both unrelated).
+  - Cache-busters: `style.css`/`relawan.js` → `?v=relawan-20260902`.
+
 ## System snapshot
 
 - **Stack:** Frappe / MariaDB is the system of record. Site `osiun.localhost` in

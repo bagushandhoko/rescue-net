@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | Relawan</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <title>Rescue-Net | Manajemen Relawan</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=relawan-20260902">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -50,34 +50,96 @@
 
   <main class="main">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Relawan</div>
+      <div class="rn-page-mobile-title">Manajemen Relawan</div>
 
       <div>
         <p class="eyebrow">Volunteer Management</p>
-        <h2>Relawan</h2>
-        <p class="subtitle">Pendaftaran relawan, skill, availability, dan assignment ke posko/tugas.</p>
-        <p class="subtitle" id="relawanStatus" data-relawan-status>Ready.</p>
+        <h2>Manajemen Relawan</h2>
+        <p class="subtitle">Kelola relawan, keterampilan, dan penugasan secara real-time.</p>
+        <p class="subtitle" id="relawanStatus" data-relawan-status>Memuat…</p>
       </div>
-      <div class="status-pill">Live API</div>
+      <div class="status-pill" id="relawanUpdated">Relawan · Live</div>
     </header>
 
-    <section class="content-grid">
+    <section class="kpi-grid rn-rw-kpi">
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="terdaftar">
+        <span>Relawan Terdaftar</span><strong id="kpiTerdaftar">-</strong><small>total tercatat</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="available">
+        <span>Available Hari Ini</span><strong id="kpiAvailable">-</strong><small>siap ditugaskan</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="bertugas">
+        <span>Sedang Bertugas</span><strong id="kpiBertugas">-</strong><small>assignment aktif</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="butuh">
+        <span>Butuh Penugasan</span><strong id="kpiButuh">-</strong><small>menunggu konfirmasi</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="fatigue">
+        <span>Fatigue Risk</span><strong id="kpiFatigue">-</strong><small>&gt; 12 jam nonstop</small>
+      </button>
+    </section>
+
+    <section class="content-grid rn-rw-row2">
       <div class="panel">
         <div class="panel-header">
-          <div>
-            <h3>Ringkasan Relawan</h3>
-            <p>Status relawan dan assignment.</p>
-          </div>
-          <button class="btn" id="refreshRelawan" data-refresh-relawan>Refresh</button>
+          <div><h3>Daftar Relawan</h3></div>
         </div>
-        <div class="summary-list" id="relawanSummary" data-relawan-summary>
-          <div><span>Status</span><b>Loading</b></div>
+        <div class="rn-rw-search">
+          <input type="search" id="relawanSearch" placeholder="Cari nama, organisasi, atau skill…">
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Nama</th><th>Organisasi</th><th>Skill</th><th>Lokasi</th><th>Durasi</th><th>Status</th></tr></thead>
+            <tbody id="daftarRelawanBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="rn-table-foot">
+          <span id="daftarRelawanShown">—</span>
         </div>
       </div>
 
-      <aside class="panel summary">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Filter Keterampilan</h3></div></div>
+        <div class="rn-rw-skill-list" id="filterKeterampilan"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-sh-row-a">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Papan Penugasan <span class="chip" id="papanCount">0</span></h3></div>
+        </div>
+        <div class="event-list" id="papanPenugasan"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Jenis Relawan</h3></div></div>
+        <div class="rn-rw-jenis" id="jenisRelawan"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Akomodasi & Keselamatan</h3></div></div>
+        <p class="rn-muted rn-sh-gap-note">Belum ada data terpisah untuk akomodasi/keselamatan relawan (belum ada doctype khusus — lihat catatan yang sama di halaman Shelter). Akan ditambahkan bila modulnya sudah mencatat data ini.</p>
+      </div>
+    </section>
+
+    <details class="panel rn-input-drawer" id="relawanSummaryPanel">
+      <summary>
+        <h3>Ringkasan Relawan (Riwayat)</h3>
+        <p>Status relawan dan assignment (login-scoped).</p>
+      </summary>
+      <div class="summary-list" id="relawanSummary" data-relawan-summary></div>
+      <h4>Daftar Relawan (mentah)</h4>
+      <div class="event-list" id="relawanList" data-relawan-list></div>
+    </details>
+
+    <details class="panel create-panel rn-input-drawer">
+      <summary>
         <h3>Tambah Relawan</h3>
-        <form class="rn-form" id="relawanForm" data-create-relawan>
+        <p>Daftarkan relawan baru langsung ke database.</p>
+      </summary>
+      <form class="rn-form" id="relawanForm" data-create-relawan>
+        <div class="form-grid">
           <label>Nama Relawan
             <input name="volunteer_name" value="Relawan Motor Trail" required>
           </label>
@@ -103,70 +165,74 @@
           <label>Notes
             <input name="notes" value="Siap bantu distribusi ke titik sulit.">
           </label>
+        </div>
+        <div class="form-actions">
           <button class="btn primary" data-requires-role-action="create_volunteer_assignment" type="submit">Save Relawan</button>
-        </form>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Daftar Relawan</h3>
-            <p>Relawan aktif untuk event bencana ini.</p>
-          </div>
+          <button class="btn" type="button" id="refreshRelawan" data-refresh-relawan>Refresh</button>
         </div>
-        <div class="event-list" id="relawanList" data-relawan-list></div>
-      </div>
+      </form>
+    </details>
 
-      <aside class="panel summary">
-        <h3>Assign Relawan</h3>
-        <form class="rn-form" id="assignmentForm" data-create-relawan-assignment>
-          <label>Volunteer
-            <select name="volunteer_id" required></select>
-          </label>
-          <label>Assigned To Type
-            <select name="assigned_to_type">
-              <option value="posko">posko</option>
-              <option value="distribution_flow">distribution_flow</option>
-              <option value="search_found">search_found</option>
-              <option value="medical">medical</option>
-              <option value="shelter">shelter</option>
-            </select>
-          </label>
-          <label>Assigned To ID
-            <input name="assigned_to_id" value="posko-logistik-aceh" required>
-          </label>
-          <label>Task Name
-            <input name="task_name" value="Distribusi last-mile ke posko terpencil" required>
-          </label>
-          <label>Task Description
-            <input name="task_description" value="Bantu antar air mineral dan bahan dapur umum.">
-          </label>
-          <label>Priority
-            <select name="priority">
-              <option value="normal">normal</option>
-              <option value="urgent">urgent</option>
-              <option value="critical">critical</option>
-            </select>
-          </label>
-          <button class="btn primary" data-requires-role-action="create_volunteer_assignment" type="submit">Save Assignment</button>
-        </form>
-      </aside>
-    </section>
-
-    <section class="panel create-panel">
-      <div class="panel-header">
+    <details class="panel rn-input-drawer">
+      <summary>
+        <h3>Assign Relawan & Assignments (Riwayat)</h3>
+      </summary>
+      <div class="content-grid">
         <div>
-          <h3>Assignments</h3>
-          <p>Daftar tugas relawan.</p>
+          <h4>Assignments</h4>
+          <div class="event-list" id="relawanAssignments" data-relawan-assignments></div>
         </div>
+        <aside>
+          <h4>Assign Relawan</h4>
+          <form class="rn-form" id="assignmentForm" data-create-relawan-assignment>
+            <label>Volunteer
+              <select name="volunteer_id" required></select>
+            </label>
+            <label>Assigned To Type
+              <select name="assigned_to_type">
+                <option value="posko">posko</option>
+                <option value="distribution_flow">distribution_flow</option>
+                <option value="search_found">search_found</option>
+                <option value="medical">medical</option>
+                <option value="shelter">shelter</option>
+              </select>
+            </label>
+            <label>Assigned To ID
+              <input name="assigned_to_id" value="posko-logistik-aceh" required>
+            </label>
+            <label>Task Name
+              <input name="task_name" value="Distribusi last-mile ke posko terpencil" required>
+            </label>
+            <label>Task Description
+              <input name="task_description" value="Bantu antar air mineral dan bahan dapur umum.">
+            </label>
+            <label>Priority
+              <select name="priority">
+                <option value="normal">normal</option>
+                <option value="urgent">urgent</option>
+                <option value="critical">critical</option>
+              </select>
+            </label>
+            <button class="btn primary" data-requires-role-action="create_volunteer_assignment" type="submit">Save Assignment</button>
+          </form>
+        </aside>
       </div>
-      <div class="event-list" id="relawanAssignments" data-relawan-assignments></div>
-    </section>
+    </details>
   </main>
 </div>
-<script src="../assets/js/relawan.js?v=frappe-batch-b-1"></script>
+
+<div id="relawanDrill" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="relawanDrillTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="relawanDrillTitle">-</h3><p id="relawanDrillSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body" id="relawanDrillBody"></div>
+  </div>
+</div>
+
+<script src="../assets/js/relawan.js?v=relawan-20260902"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-frappe-client.js?v=frappe-group-f-1"></script>
 <script src="../assets/js/rn-sync-engine.js?v=frappe-group-f-1"></script>

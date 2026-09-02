@@ -761,11 +761,11 @@ def add_evidence(
     }
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def dashboard(posko=None):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
-    actor = rn_actor()
+    actor = rn_actor(required=False)
 
     role = _role(actor)
 
@@ -835,7 +835,7 @@ def dashboard(posko=None):
             "assignments": assignments,
         }
 
-    if not _is_manager(actor):
+    if actor and not _is_manager(actor):
         frappe.throw(
             "Akses Volunteer Operations ditolak",
             frappe.PermissionError,
@@ -851,7 +851,10 @@ def dashboard(posko=None):
     ]
 
     if posko:
-        if posko not in allowed:
+        # Guests reading a specific posko get a public read-only view of
+        # that one posko; the manager allow-list only gates authenticated
+        # actors (same guest-read model as volunteer_board).
+        if actor and posko not in allowed:
             frappe.throw(
                 "Akses Posko ditolak",
                 frappe.PermissionError,
@@ -1029,4 +1032,200 @@ def control_centre_volunteers():
             "agregat; nama dan kontak relawan "
             "tidak diekspos."
         ),
+    }
+
+
+_SKILL_CATALOG = [
+    ("Medis", ("medis", "medical", "triase", "triage", "perawat", "dokter", "ispa")),
+    ("Evakuasi", ("evakuasi", "evacuation", "rescue", "assessment")),
+    ("Search & Found", ("search", "found", "pencarian", "sar")),
+    ("Pickup & Transport", ("transport", "pickup", "4x4", "driver", "sopir", "distribution", "distribusi")),
+    ("Dapur & Logistik", ("dapur", "kitchen", "logistik", "logistics", "gudang")),
+    ("Komunikasi", ("komunikasi", "radio", "data lapangan", "dokumentasi")),
+    ("Shelter", ("shelter", "pengungsian")),
+]
+
+FATIGUE_HOURS_THRESHOLD = 12
+
+
+def _skill_text(profile):
+    return (str(profile.main_skill or "") + " " + str(profile.skill_tags or "")).lower()
+
+
+def _skill_buckets(profiles):
+    counts = defaultdict(int)
+    for p in profiles:
+        text = _skill_text(p)
+        matched = False
+        for label, keywords in _SKILL_CATALOG:
+            if any(k in text for k in keywords):
+                counts[label] += 1
+                matched = True
+        if not matched and text.strip():
+            counts["Lainnya"] += 1
+    return counts
+
+
+def _org_titles_by_user():
+    """user_account -> organization title, via RN Organization Membership."""
+    memberships = frappe.get_all(
+        "RN Organization Membership",
+        filters={"status": "approved"},
+        fields=["user_account", "organization"],
+        limit_page_length=5000,
+    )
+    org_ids = {m.organization for m in memberships if m.organization}
+    org_titles = {}
+    if org_ids:
+        for row in frappe.get_all(
+            "RN Organization", filters={"name": ["in", list(org_ids)]},
+            fields=["name", "title"], limit_page_length=len(org_ids),
+        ):
+            org_titles[row.name] = row.title
+    out = {}
+    for m in memberships:
+        if m.user_account and m.organization in org_titles:
+            out[m.user_account] = org_titles[m.organization]
+    return out
+
+
+def _drill(title, sub, href):
+    return {"title": title, "sub": sub, "href": href}
+
+
+@frappe.whitelist(allow_guest=True)
+def volunteer_board(disaster_event=None):
+    """Manajemen Relawan dashboard (matches the DMS mock-up), guest read-only.
+
+    Cross-volunteer overview for one disaster event: KPI totals + drill
+    items, Daftar Relawan, Filter Keterampilan / Jenis Relawan (keyword
+    buckets over real main_skill/skill_tags — not the mock-up's exact
+    categories, since our data doesn't carry those labels), Papan Penugasan
+    (assignments still "planned" — awaiting the assignee's acceptance; this
+    schema binds one assignment to one volunteer at creation, so there is no
+    "open slot needing N relawan" concept to draw from), and Fatigue Risk
+    (checked-in/in-progress assignments running longer than
+    FATIGUE_HOURS_THRESHOLD). "Akomodasi & Keselamatan" has no backing
+    doctype (same gap as Shelter's "Akomodasi Relawan/Petugas") — honestly
+    omitted.
+    """
+    event = resolve_disaster_event(disaster_event) or disaster_event
+
+    profiles = frappe.get_all(
+        "RN Volunteer Profile",
+        filters={"disaster_event": event} if event else {},
+        fields=["name", "volunteer_name", "contact", "main_skill", "skill_tags",
+                "availability_status", "duration_available", "current_location",
+                "assigned_posko", "user_account", "verification_status"],
+        order_by="availability_status asc, volunteer_name asc",
+        limit_page_length=2000,
+    )
+    profile_names = [p.name for p in profiles]
+
+    assignments = frappe.get_all(
+        "RN Volunteer Assignment",
+        filters={"disaster_event": event} if event else {},
+        fields=["name", "volunteer", "posko", "assignment_type", "task_title",
+                "priority", "assignment_status", "shift_start", "checked_in_at"],
+        order_by="creation desc",
+        limit_page_length=2000,
+    )
+
+    posko_names = list({p.assigned_posko for p in profiles if p.assigned_posko} |
+                        {a.posko for a in assignments if a.posko})
+    posko_titles = {}
+    if posko_names:
+        for row in frappe.get_all("RN Posko", filters={"name": ["in", posko_names]},
+                                   fields=["name", "title"], limit_page_length=len(posko_names)):
+            posko_titles[row.name] = row.title
+
+    org_by_user = _org_titles_by_user()
+
+    now = now_datetime()
+
+    available = [p for p in profiles if p.availability_status == "available"]
+    sedang_bertugas = [p for p in profiles if p.availability_status == "assigned"]
+    planned_assignments = [a for a in assignments if a.assignment_status == "planned"]
+
+    fatigue = []
+    for a in assignments:
+        if a.assignment_status in ("checked_in", "in_progress") and a.checked_in_at:
+            hours = (now - a.checked_in_at).total_seconds() / 3600.0
+            if hours >= FATIGUE_HOURS_THRESHOLD:
+                fatigue.append((a, hours))
+
+    daftar_relawan = []
+    for p in profiles:
+        skills = [s.strip() for s in (str(p.main_skill or "")).split(",") if s.strip()]
+        skills += [s.strip() for s in (str(p.skill_tags or "")).split(",") if s.strip() and s.strip() not in skills]
+        daftar_relawan.append({
+            "name": p.name,
+            "volunteer_name": p.volunteer_name,
+            "organisasi": org_by_user.get(p.user_account) or "-",
+            "skills": skills[:4],
+            "lokasi": p.current_location or posko_titles.get(p.assigned_posko) or "-",
+            "durasi": p.duration_available or "-",
+            "status": p.availability_status,
+            "href": None,
+        })
+
+    skill_counts = _skill_buckets(profiles)
+    filter_keterampilan = [
+        {"label": label, "count": skill_counts.get(label, 0)}
+        for label, _ in _SKILL_CATALOG
+        if skill_counts.get(label, 0) > 0
+    ]
+    filter_keterampilan.sort(key=lambda r: -r["count"])
+    jenis_relawan = filter_keterampilan[:4]
+
+    papan_penugasan = [
+        {
+            "task_title": a.task_title,
+            "posko": posko_titles.get(a.posko) or a.posko,
+            "priority": a.priority,
+            "volunteer_name": next((p.volunteer_name for p in profiles if p.name == a.volunteer), a.volunteer),
+            "href": "posko-detail.html?id=" + (a.posko or "") + "&event=" + (event or ""),
+        }
+        for a in planned_assignments
+    ]
+
+    return {
+        "disaster_event": event,
+        "generated_at": now,
+        "totals": {
+            "terdaftar": len(profiles),
+            "available_hari_ini": len(available),
+            "sedang_bertugas": len(sedang_bertugas),
+            "butuh_penugasan": len(planned_assignments),
+            "fatigue_risk": len(fatigue),
+        },
+        "kpi_items": {
+            "terdaftar_items": [
+                _drill(p.volunteer_name, (org_by_user.get(p.user_account) or p.main_skill or "-"), None)
+                for p in profiles[:30]
+            ],
+            "available_items": [
+                _drill(p.volunteer_name, p.main_skill or "-", None) for p in available[:30]
+            ],
+            "bertugas_items": [
+                _drill(p.volunteer_name, "Bertugas di " + (posko_titles.get(p.assigned_posko) or "-"), None)
+                for p in sedang_bertugas[:30]
+            ],
+            "butuh_items": [
+                _drill(a["task_title"], a["posko"] + " · " + a["priority"], a["href"])
+                for a in papan_penugasan
+            ],
+            "fatigue_items": [
+                _drill(
+                    next((p.volunteer_name for p in profiles if p.name == a.volunteer), a.volunteer),
+                    f"Bertugas {round(hours)} jam nonstop di {posko_titles.get(a.posko) or a.posko}",
+                    None,
+                )
+                for a, hours in fatigue
+            ],
+        },
+        "daftar_relawan": daftar_relawan,
+        "filter_keterampilan": filter_keterampilan,
+        "jenis_relawan": jenis_relawan,
+        "papan_penugasan": papan_penugasan,
     }

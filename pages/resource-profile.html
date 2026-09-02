@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Profil Sumber Daya</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <link rel="stylesheet" href="../assets/css/style.css?v=resprofile-20260902">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -12,12 +12,13 @@
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark"><img src="../assets/img/rn-logo.png" alt="Rescue-Net"></div>
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
       <div>
         <h1>Rescue-Net</h1>
         <p>Disaster Management System</p>
       </div>
     </div>
+
     <nav>
 <a href="map.html?event=event-sim-001">Map</a>
       <a href="organisasi-posko.html">Organisasi & Posko</a>
@@ -46,58 +47,205 @@
 
   <main class="main">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Resource Profile</div>
+    <div class="rn-page-mobile-title">Profil Sumber Daya</div>
 
       <div>
-        <p class="eyebrow">RESOURCE PROFILE</p>
+        <p class="eyebrow">Resource Profile</p>
         <h2>Profil Sumber Daya</h2>
-        <p class="subtitle">Ringkasan sumber daya organisasi, posko, relawan, alat, dan kapasitas operasional dalam satu bencana.</p>
-        <p class="subtitle" id="resourceStatus" data-rn-sync-status>Loading...</p>
+        <p class="subtitle">Kelola dan perbarui informasi profil, kemampuan, fasilitas, dan dukungan yang tersedia.</p>
+        <p class="subtitle" id="resourceStatus">Memuat…</p>
       </div>
+      <div class="status-pill" id="resourceUpdated">Profil · Live</div>
+    </header>
+
+    <section class="kpi-grid rn-pr-chips">
+      <div class="kpi-card rn-pr-chip-card"><span>Peran Utama</span><b id="chipPeran">-</b><small id="chipPeranSub"></small></div>
+      <div class="kpi-card rn-pr-chip-card"><span>Tingkat Kepercayaan</span><b id="chipTrust">-</b><small>Verifikasi profil</small></div>
+      <div class="kpi-card rn-pr-chip-card"><span>Email</span><b id="chipEmailLabel">-</b><small id="chipEmail"></small></div>
+      <div class="kpi-card rn-pr-chip-card"><span>HP</span><b id="chipPhoneLabel">-</b><small id="chipPhone"></small></div>
+      <div class="kpi-card rn-pr-chip-card"><span>ID</span><b id="chipIdLabel">-</b><small>KTP/identitas relawan</small></div>
+    </section>
+
+    <section class="panel">
+      <div class="rn-pr-card">
+        <div class="rn-pr-avatar" id="profileAvatar">-</div>
+        <div class="rn-pr-card-main">
+          <div class="rn-pr-name-row"><h3 id="profileName">-</h3><span class="chip ok" id="profileAktif">Aktif</span></div>
+          <p class="rn-pr-role" id="profileRoleOrg">-</p>
+          <div class="rn-pr-meta">
+            <span id="profileLocation">-</span>
+            <span id="profileEmailLine">-</span>
+            <span id="profilePhoneLine">-</span>
+          </div>
+        </div>
+        <div class="rn-pr-about">
+          <p id="profileAbout">-</p>
+          <span class="rn-pr-joined" id="profileJoined"></span>
+        </div>
+        <button class="btn rn-pr-edit-btn" id="editProfilBtn" type="button">✎ Edit Profil</button>
+      </div>
+      <form class="rn-pr-edit-form" id="editProfilForm">
+        <label>Lokasi<input name="current_location" placeholder="Kota, Provinsi"></label>
+        <label>Tentang Saya<textarea name="notes" rows="3" placeholder="Ceritakan pengalaman & fokus Anda"></textarea></label>
+        <div class="rn-pr-add-actions">
+          <button class="btn primary" type="submit">Simpan Perubahan</button>
+          <button class="btn" type="button" id="editProfilCancel">Batal</button>
+        </div>
+        <span class="rn-pr-add-msg" id="editProfilMsg"></span>
+      </form>
+    </section>
+
+    <section class="content-grid rn-pr-grid3">
+      <div class="panel">
+        <h3>Keahlian / Skill</h3>
+        <div class="rn-pr-list" id="skillList"></div>
+        <button class="rn-pr-add-btn" data-toggle="skillForm" type="button">+ Tambah Keahlian</button>
+        <form class="rn-pr-add-form" id="skillForm">
+          <input name="label" placeholder="Nama keahlian (mis. Operator Radio HF)" required>
+          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan</button></div>
+          <span class="rn-pr-add-msg"></span>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>Kendaraan</h3>
+        <div class="rn-pr-list" id="kendaraanList"></div>
+        <button class="rn-pr-add-btn" data-toggle="kendaraanForm" type="button">+ Tambah Kendaraan</button>
+        <form class="rn-pr-add-form" id="kendaraanForm" data-category="kendaraan" data-rtype="vehicle">
+          <input name="resource_name" placeholder="Nama kendaraan (mis. Pickup 4x4)" required>
+          <input name="capacity_description" placeholder="Detail (mis. Toyota Hilux 2018)">
+          <input name="current_location" placeholder="Lokasi saat ini">
+          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan</button></div>
+          <span class="rn-pr-add-msg"></span>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>Fasilitas</h3>
+        <div class="rn-pr-list" id="fasilitasList"></div>
+        <button class="rn-pr-add-btn" data-toggle="fasilitasForm" type="button">+ Tambah Fasilitas</button>
+        <form class="rn-pr-add-form" id="fasilitasForm" data-category="fasilitas" data-rtype="facility">
+          <input name="resource_name" placeholder="Nama fasilitas (mis. Gudang Kecil)" required>
+          <input name="capacity_description" placeholder="Detail (mis. Kapasitas 50 m²)">
+          <input name="current_location" placeholder="Lokasi saat ini">
+          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan</button></div>
+          <span class="rn-pr-add-msg"></span>
+        </form>
+      </div>
+    </section>
+
+    <section class="content-grid rn-pr-grid4">
+      <div class="panel">
+        <h3>Bantuan Barang Tersedia</h3>
+        <div class="rn-pr-list" id="barangList"></div>
+        <button class="rn-pr-add-btn" data-toggle="barangForm" type="button">+ Tambah Barang</button>
+        <form class="rn-pr-add-form" id="barangForm" data-category="barang_bantuan" data-rtype="consumable">
+          <input name="resource_name" placeholder="Nama barang (mis. Air Mineral)" required>
+          <input name="quantity" type="number" placeholder="Jumlah" value="1">
+          <input name="unit" placeholder="Satuan (mis. botol)">
+          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan</button></div>
+          <span class="rn-pr-add-msg"></span>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>Wilayah Layanan</h3>
+        <div class="rn-pr-list" id="wilayahList"></div>
+        <button class="rn-pr-add-btn" data-toggle="wilayahForm" type="button">+ Tambah Wilayah</button>
+        <form class="rn-pr-add-form" id="wilayahForm">
+          <input name="area" placeholder="Nama area (mis. Jakarta Selatan)" required>
+          <select name="peran">
+            <option value="utama">Area utama</option>
+            <option value="pendukung">Area pendukung</option>
+          </select>
+          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan</button></div>
+          <span class="rn-pr-add-msg"></span>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>Waktu Ketersediaan</h3>
+        <div class="rn-pr-list" id="jadwalList"></div>
+        <button class="rn-pr-add-btn" data-toggle="jadwalForm" type="button">+ Atur Jadwal</button>
+        <form class="rn-pr-add-form" id="jadwalForm">
+          <input name="hari" placeholder="Hari (mis. Senin - Jumat)" required>
+          <input name="jam" placeholder="Jam (mis. 08:00 - 20:00)" required>
+          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan</button></div>
+          <span class="rn-pr-add-msg"></span>
+        </form>
+      </div>
+
+      <div class="panel">
+        <h3>Kebutuhan Support</h3>
+        <div class="rn-pr-list" id="kebutuhanList"></div>
+        <button class="rn-pr-add-btn" data-toggle="kebutuhanForm" type="button">+ Ajukan Kebutuhan</button>
+        <form class="rn-pr-add-form" id="kebutuhanForm">
+          <input name="tool_name" placeholder="Kebutuhan (mis. BBM, Tenda)" required>
+          <input name="needed_for" placeholder="Untuk keperluan apa">
+          <select name="priority">
+            <option value="normal">Normal</option>
+            <option value="urgent">Urgent</option>
+            <option value="critical">Kritis</option>
+          </select>
+          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan</button></div>
+          <span class="rn-pr-add-msg"></span>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel rn-pr-footer">
+      <span class="rn-muted" id="resourceLastUpdated">-</span>
+    </section>
+
+    <details class="panel rn-input-drawer">
+      <summary>
+        <h3>Direktori Sumber Daya Lama (Organizations / Posko / Volunteers / Tools)</h3>
+      </summary>
+
       <div class="form-actions">
         <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
         <button class="btn primary" id="refreshResource">Refresh</button>
       </div>
-    </header>
 
-    <section class="kpi-grid">
-      <div class="kpi-card"><span>Organizations</span><strong id="kpiOrg">0</strong><small>registered</small></div>
-      <div class="kpi-card"><span>Posko</span><strong id="kpiPosko">0</strong><small>active nodes</small></div>
-      <div class="kpi-card warning"><span>Volunteers</span><strong id="kpiVolunteer">0</strong><small>available</small></div>
-      <div class="kpi-card danger"><span>Resources</span><strong id="kpiResource">0</strong><small>tools/assets</small></div>
-    </section>
+      <section class="kpi-grid">
+        <div class="kpi-card"><span>Organizations</span><strong id="kpiOrg">0</strong><small>registered</small></div>
+        <div class="kpi-card"><span>Posko</span><strong id="kpiPosko">0</strong><small>active nodes</small></div>
+        <div class="kpi-card warning"><span>Volunteers</span><strong id="kpiVolunteer">0</strong><small>available</small></div>
+        <div class="kpi-card danger"><span>Resources</span><strong id="kpiResource">0</strong><small>tools/assets</small></div>
+      </section>
 
-    <section class="content-grid">
-      <div class="panel">
-        <h3>Organizations</h3>
-        <div class="event-list" id="organizationList"></div>
+      <div class="content-grid">
+        <div class="panel">
+          <h3>Organizations</h3>
+          <div class="event-list" id="organizationList"></div>
+        </div>
+
+        <aside class="panel">
+          <h3>Posko & Nodes</h3>
+          <div class="event-list" id="poskoList"></div>
+        </aside>
       </div>
 
-      <aside class="panel">
-        <h3>Posko & Nodes</h3>
-        <div class="event-list" id="poskoList"></div>
-      </aside>
-    </section>
+      <div class="content-grid">
+        <div class="panel">
+          <h3>Volunteers</h3>
+          <div class="event-list" id="volunteerList"></div>
+        </div>
 
-    <section class="content-grid">
-      <div class="panel">
-        <h3>Volunteers</h3>
-        <div class="event-list" id="volunteerList"></div>
+        <aside class="panel">
+          <h3>Tools / Shared Resources</h3>
+          <div class="event-list" id="resourceList"></div>
+        </aside>
       </div>
-
-      <aside class="panel">
-        <h3>Tools / Shared Resources</h3>
-        <div class="event-list" id="resourceList"></div>
-      </aside>
-    </section>
+    </details>
   </main>
 </div>
-<script src="../assets/js/resource-profile.js?v=frappe-batch-b-1"></script>
+<script src="../assets/js/resource-profile.js?v=resprofile-20260902"></script>
 <script src="../assets/js/rn-frappe-client.js?v=frappe-group-f-1"></script>
 <script src="../assets/js/rn-sync-engine.js?v=frappe-group-f-1"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=navfix-20260902"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
 </body>
 </html>

@@ -1,0 +1,175 @@
+/* =========================================================
+   Standalone Public Header styling for pages that don't load
+   the main style.css (currently: war-room.html / Control Centre).
+   Extracted verbatim from style.css's .rn-public-header block so
+   rn-public-header.js renders identically everywhere.
+   ========================================================= */
+
+.rn-public-header {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 42px;
+  background:
+    linear-gradient(180deg, rgba(255,246,240,.98), rgba(255,232,219,.96));
+  border-bottom: 1px solid rgba(104,64,45,.12);
+  box-shadow: 0 14px 34px rgba(145,84,54,.08);
+  position: sticky;
+  top: 0;
+  z-index: 400;
+}
+
+.rn-public-brand {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.rn-public-brand img {
+  width: 54px;
+  height: 54px;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 20px rgba(145,84,54,.18));
+}
+
+.rn-public-links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+
+.rn-public-links a {
+  min-height: auto;
+  padding: 9px 10px;
+  border-radius: 10px;
+  color: #40312b;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.rn-public-links a:hover,
+.rn-public-login {
+  background: rgba(255,255,255,.52);
+  border: 1px solid rgba(232,117,88,.22);
+}
+
+.rn-public-toggle {
+  display: none;
+  width: 46px;
+  height: 46px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.rn-public-toggle span {
+  display: block;
+  width: 31px;
+  height: 3px;
+  margin: 4px 0;
+  border-radius: 999px;
+  background: #40312b;
+}
+
+/* Shared disaster-event picker in the public header */
+.rn-event-picker {
+  display: inline-flex;
+  align-items: center;
+}
+
+.rn-event-picker label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rn-event-picker label > span {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #8a5a45;
+}
+
+.rn-event-picker select {
+  max-width: 260px;
+  min-height: 38px;
+  padding: 6px 30px 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(232,117,88,.35);
+  background: rgba(255,255,255,.72);
+  color: #40312b;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rn-event-picker select:focus-visible {
+  outline: 2px solid rgba(232,117,88,.55);
+  outline-offset: 1px;
+}
+
+@media (max-width: 900px) {
+  .rn-public-header {
+    min-height: 64px;
+    grid-template-columns: auto 1fr auto;
+    padding: 7px 20px;
+  }
+
+  .rn-public-brand img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .rn-public-toggle {
+    display: block;
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .rn-event-picker {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .rn-event-picker label {
+    width: 100%;
+  }
+
+  .rn-event-picker select {
+    flex: 1;
+    max-width: none;
+  }
+
+  .rn-public-links {
+    display: none;
+  }
+
+  .rn-public-header.is-open .rn-public-links {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    padding-top: 8px;
+  }
+
+  .rn-public-header.is-open .rn-public-links a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 40px;
+    border: 1px solid rgba(104,64,45,.14);
+    background: rgba(255,255,255,.70);
+    text-align: center;
+    font-size: 12px;
+  }
+}

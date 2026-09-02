@@ -5146,3 +5146,55 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-rp-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rn-rp-row { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ============================================================
+   Manajemen Alat Kerja — pages/alat-kerja.html
+   ============================================================ */
+.rn-ak-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.rn-ak-row2 { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
+.rn-ak-row3 { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+
+.rn-ak-cat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rn-ak-cat-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel2); }
+.rn-ak-cat-tile-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.rn-ak-cat-tile-head b { font-size: 13px; }
+.rn-ak-cat-tile-head strong { font-size: 20px; }
+.rn-ak-cat-legend { display: flex; flex-wrap: wrap; gap: 6px; font-size: 10px; color: var(--muted); }
+.rn-ak-cat-legend span { display: inline-flex; align-items: center; gap: 3px; }
+.rn-ak-cat-legend i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.rn-ak-dot-ready { background: #2f9e59; }
+.rn-ak-dot-assigned { background: #3b82c4; }
+.rn-ak-dot-maintenance { background: #d9a441; }
+.rn-ak-dot-critical { background: #d84545; }
+
+.rn-ak-op-list { display: flex; flex-direction: column; gap: 8px; }
+.rn-ak-op-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); font-size: 12px; }
+.rn-ak-op-row b { display: block; font-size: 13px; }
+.rn-ak-op-row small { color: var(--muted); }
+
+.rn-ak-match-row { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; background: var(--panel2); }
+.rn-ak-match-row:last-child { margin-bottom: 0; }
+.rn-ak-match-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rn-ak-match-head b { font-size: 13px; }
+.rn-ak-match-cand { margin-top: 4px; font-size: 11px; color: var(--muted); }
+.rn-ak-match-cand.ok { color: #2f9e59; }
+
+.rn-ak-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.rn-ak-summary-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel2); text-align: center; }
+.rn-ak-summary-tile span { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.rn-ak-summary-tile b { display: block; font-size: 20px; margin-top: 4px; }
+
+.rn-ak-qr-note { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px dashed var(--line); border-radius: 10px; background: var(--panel2); font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+
+@media (max-width: 1100px) {
+  .rn-ak-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rn-ak-row2 { grid-template-columns: minmax(0, 1fr); }
+  .rn-ak-row3 { grid-template-columns: minmax(0, 1fr); }
+  .rn-ak-cat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-ak-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .rn-ak-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-ak-cat-grid { grid-template-columns: minmax(0, 1fr); }
+  .rn-ak-summary { grid-template-columns: minmax(0, 1fr); }
+}

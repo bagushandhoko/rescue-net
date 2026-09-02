@@ -968,6 +968,71 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
     `laporan-masyarakat.html`/`mockup.html` (no sidebar `<nav>` at all —
     different page types) were correctly left untouched.
 
+- **Manajemen Alat Kerja (`pages/alat-kerja.html` + `assets/js/
+  alat-kerja.js`) — BUILT & DEPLOYED (2026-09-02), step 8/12.** 6 KPIs (Alat
+  Tersedia/Kebutuhan Alat/Operator Aktif/Dispatch Berjalan/BBM Kritis/Alat
+  Rusak) with drill modal, Inventari Alat per Kategori (6 tiles: Ekskavator/
+  Genset/Pompa Air/Forklift/Chainsaw/Perahu Karet, each with a Ready/
+  Assigned/Maintenance/Critical breakdown from real `availability_status`),
+  Operator & Tenaga Teknis (from `RN Work Tool Deployment.operator_name`),
+  Matching Kebutuhan Alat (open requests ranked by priority, each showing
+  real candidate-resource count/name), Jadwal Dispatch Alat table, Lokasi
+  Kerja & Produktivitas (completion-rate progress bar per destination),
+  BBM & Support Operasional, QR/Asset Tracking (honest static lookup table —
+  no camera scanner exists, said so on the page instead of faking it), and
+  Hambatan Alat Kerja + Ringkasan Hari Ini. Old "Buat Request Alat Kerja" +
+  "Daftar Request Alat Kerja" kept working, moved into `<details
+  class="rn-input-drawer">`.
+  - **Backend:** new guest endpoint `api_resource_tools.tools_board
+    (disaster_event)` → `{totals, kpi_items, categories, operators, matches,
+    dispatch, sites, fuel, blockers, summary, asset_registry}`. PIC name/
+    phone are never included (same privacy discipline as the existing
+    `dashboard()`/`restricted_resource()`). Fixed the same latent guest-
+    whitelist bug found on every prior page's legacy `dashboard()` —
+    `api_resource_tools.dashboard()` was `@frappe.whitelist()` (login-only,
+    threw a raw 403 for anonymous visitors); changed to `allow_guest=True` +
+    `rn_actor(required=False)`, confirmed with the user first per the
+    established pattern. Ownership-scoped visibility (`_visible_resource`/
+    `_visible_request`) is untouched, so a guest still sees an empty list
+    there by design — that's what the new `tools_board` is for.
+  - **Data gap found and filled (per "kalau kamu menemukan menu atau fungsi
+    yang nggak ada di existing, laporkan dan lengkapi"):** `RN Resource
+    Profile`/`RN Work Tool Request`/`RN Work Tool Deployment` existed with a
+    full field model but were essentially empty for `event-sim-001` (3
+    Resource Profiles system-wide, 0 tagged to any event, 0 requests, 0
+    deployments) — the mockup's whole page would have been empty states.
+    Seeded real rows instead of fabricating payload data: 30 `RN Resource
+    Profile` (5 units × 6 categories, spread across available/limited/
+    maintenance/unavailable so every legend bucket and KPI has a genuine
+    non-zero count), 9 `RN Work Tool Request` (priority/status mix, Aceh
+    Barat locations consistent with `event-sim-001`'s existing narrative), 5
+    `RN Work Tool Deployment` (operator name/skill, 2 dispatched today so
+    "Dispatch Selesai"/"Jam Operasional" in Ringkasan Hari Ini are non-zero),
+    3 `RN Stock Observation` (Solar/Bensin Pertalite/Oli at Posko BNPB
+    Meulaboh — Bensin and Oli seeded intentionally low so "BBM Kritis" KPI
+    has real matches). Owners: `organizations:org-bpbd-aceh` and
+    `organizations:org-sim-tni` (both pre-existing, event-appropriate orgs).
+    Ran `_refresh_request_status` after seeding deployments so
+    `request_status` reflects real fulfillment state rather than staying
+    "requested".
+  - **"Ringkasan Hari Ini" fields are honestly derived, not fabricated:**
+    Penggunaan % = active deployments ÷ total resources; Jam Operasional =
+    sum of `completed_at − deployed_at` for today's completed deployments;
+    Dispatch Selesai = today's completed-deployment count; Kerusakan Baru =
+    resources in maintenance/unavailable whose `modified` date is today.
+    Note: because all seed data was created in one session today, Kerusakan
+    Baru currently reads as "all damaged equipment" rather than "newly
+    damaged today" — an artifact of a freshly-seeded demo (same as every
+    other page's "hari ini" stats), not a bug in the derivation.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-alatkerja.js` (desktop 1440px
+    + 390px mobile). Verified: all 6 KPIs non-zero and correct, 6 category
+    tiles, 5 operators, 4 open matches, 5 dispatch rows, 5 site rows, 3 fuel
+    rows, 30-row asset registry, 12 blockers, drill modal opens with real
+    items, legacy request-list panel now renders (previously hit the raw
+    403), zero horizontal overflow at 390px.
+  - Cache-buster: `style.css`/`alat-kerja.js` → `?v=alatkerja-20260902`.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

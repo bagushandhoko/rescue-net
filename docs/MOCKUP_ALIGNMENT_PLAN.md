@@ -167,19 +167,36 @@ Mockup: `manajemen relawan.png`
   `{totals, volunteers, skills, assignments, accommodation}`. Sumber:
   `RN Volunteer`, `RN Volunteer Assignment`, `RN Volunteer Skill`.
 
-### 4.6 Manajemen Alat Kerja — `pages/alat-kerja.html` + `assets/js/*` (baru `alat-kerja.js`)
+### 4.6 ✅ Manajemen Alat Kerja — `pages/alat-kerja.html` + `assets/js/alat-kerja.js` — DONE 2026-09-02
 Mockup: `manajemen alat kerja.png`
-- **PERTAHANKAN:** form "Buat Request Alat Kerja" + "Daftar Request Alat Kerja".
-- **TAMBAH:** 6 KPI (Alat Tersedia / Kebutuhan Alat / Operator Aktif / Dispatch
-  Berjalan / BBM Kritis / Alat Rusak); **Inventari Alat per Kategori** (6 tile:
-  Ekskavator / Genset / Pompa Air / Forklift / Chainsaw / Perahu Karet, N tersedia
-  + legend Ready/Assigned/Maintenance/Critical); **Operator & Tenaga Teknis** list;
-  **Matching Kebutuhan Alat** ranked; **Jadwal Dispatch Alat**; **Lokasi Kerja &
-  Produktivitas** (progress bar); **BBM & Support Operasional** (Solar/Bensin/Oli);
-  **QR / Asset Tracking**; **Hambatan Alat Kerja** + **Ringkasan** (Penggunaan 86%
-  / Jam Operasional / Dispatch Selesai / Kerusakan Baru).
+- **PERTAHANKAN:** form "Buat Request Alat Kerja" + "Daftar Request Alat Kerja"
+  (dipindah ke `<details class="rn-input-drawer">`, tetap fungsional).
+- **TAMBAH (semua real data, bukan dekorasi):** 6 KPI (Alat Tersedia / Kebutuhan
+  Alat / Operator Aktif / Dispatch Berjalan / BBM Kritis / Alat Rusak) dengan
+  drill modal; **Inventari Alat per Kategori** (6 tile: Ekskavator / Genset /
+  Pompa Air / Forklift / Chainsaw / Perahu Karet + legend Ready/Assigned/
+  Maintenance/Critical dari `RN Resource Profile.availability_status`);
+  **Operator & Tenaga Teknis** dari `RN Work Tool Deployment.operator_name`;
+  **Matching Kebutuhan Alat** ranked by priority dengan kandidat alat available;
+  **Jadwal Dispatch Alat**; **Lokasi Kerja & Produktivitas** (completion-rate
+  bar per `destination_location`); **BBM & Support Operasional** (Solar/Bensin/
+  Oli via keyword match ke `RN Stock Observation`, sama pola dengan Dapur
+  Umum's `gas_bbm`); **QR / Asset Tracking** (honest static: tiap Resource
+  Profile record punya Kode Aset (`name`), tabel lookup manual — TIDAK ada
+  scanner kamera beneran, dicatat sebagai keterbatasan); **Hambatan Alat
+  Kerja** (request critical/urgent belum matched + BBM kritis + alat rusak) +
+  **Ringkasan Hari Ini** (Penggunaan % / Jam Operasional / Dispatch Selesai /
+  Kerusakan Baru — semua derived dari deployment/resource timestamps hari ini).
 - **BACKEND:** `api_resource_tools.tools_board(disaster_event)` guest →
-  `{totals, categories, operators, matches, dispatch, sites, fuel, blockers}`.
+  `{totals, kpi_items, categories, operators, matches, dispatch, sites, fuel,
+  blockers, summary, asset_registry}`. Legacy `dashboard()` diperbaiki jadi
+  `allow_guest=True` + `rn_actor(required=False)` (konsisten dengan fix di
+  kitchen/shelter/logistics/volunteer) — PIC tetap disembunyikan dari guest.
+- **SEED:** data event-sim-001 sebelumnya kosong (0 Resource Profile bertag
+  event, 0 Request, 0 Deployment) — diseed 30 Resource Profile (5 per kategori
+  × 6 kategori, status tersebar Ready/Assigned/Maintenance/Critical), 9 Work
+  Tool Request (mix priority/status), 5 Work Tool Deployment (operator +
+  jadwal hari ini), 3 Stock Observation BBM/Oli di Posko BNPB Meulaboh.
 
 ### 4.7 Dapur Umum — `pages/dapur-umum.html` + `assets/js/dapur-umum.js`
 Mockup: `dapur umum.png` · (dashboard call `api_kitchen.dashboard` sekarang **error
@@ -326,7 +343,10 @@ Batch by kesiapan backend & kemiripan (pakai komponen bagian 3):
    not implemented). Lihat `HANDOVER.md`.
 7. ✅ **Organisasi & Posko** + **Registrasi & Verifikasi Posko** (halaman
    baru) — DONE 2026-09-02, keduanya. Lihat `HANDOVER.md`.
-8. **Manajemen Alat Kerja** — `api_resource_tools`.
+8. ✅ **Manajemen Alat Kerja** — DONE 2026-09-02 (`tools_board` guest endpoint;
+   6 kategori alat + 30 Resource Profile, 9 Work Tool Request, 5 Work Tool
+   Deployment, 3 Stock Observation BBM diseed untuk event-sim-001; legacy
+   `dashboard()` diperbaiki guest-access). Lihat `HANDOVER.md`.
 9. **Profil Sumber Daya** — `api_resource_tools`.
 10. **Program Khusus** — gabung `api_recovery` / `api_donor_program`.
 11. **Alat Komunikasi** (halaman baru) — perlu doctype/seed, paling banyak kerja baru.
@@ -358,7 +378,7 @@ Tiap endpoint dashboard mengembalikan, selain `totals` + data panel:
 - [x] `api_control_centre.evidence_board(disaster_event)` + perluas `event_evidence` — DONE 2026-09-02
 - [x] `api_verification.approval_queue(disaster_event)` + `approval_item_detail` — DONE 2026-09-02, + real `approval_action` write endpoint
 - [x] `api_control_centre.org_posko_board(disaster_event)` + `posko_verification_checklist` — DONE 2026-09-02
-- [ ] `api_resource_tools.tools_board(disaster_event)`
+- [x] `api_resource_tools.tools_board(disaster_event)`
 - [ ] `api_resource_tools.resource_profile(target)`
 - [ ] `program_board(disaster_event)` + `program_detail(program)`
 - [ ] `comms_board(disaster_event)` (+ doctype/seed alat komunikasi)

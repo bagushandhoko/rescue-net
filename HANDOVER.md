@@ -931,6 +931,43 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
     `api_control_centre.posko_verification_checklist` (5 real filled-field
     checks) and `posko_registry_board` (KPIs + Daftar Posko table).
 
+- **Registrasi & Verifikasi Posko (`pages/registrasi-posko.html` +
+  `assets/js/registrasi-posko.js`) — NEW PAGE, BUILT & DEPLOYED
+  (2026-09-02), completes step 7/12.** 4 KPIs (Posko Aktif/Pending
+  Verification/Official Verified/Community Verified), a full posko
+  registration form (writes via the extended `create_posko`, login
+  required), a real "Status Verifikasi Posko" checklist (5 items, each a
+  literal filled-field check — Email/No HP/Identitas PIC/Lokasi/Trusted
+  Verifier), Tindakan (Ajukan Verifikasi → `submit_posko_verification`,
+  Hapus Posko → `delete_posko` with a confirm dialog, Simpan Draft →
+  informational only since every posko is already a live draft from
+  creation), and a searchable paginated Daftar Posko table. Editing an
+  existing posko's full field set from the table isn't wired (would need a
+  richer "get full posko" read than `posko_verification_checklist`
+  returns) — selecting a row drives the checklist/actions panel, which is
+  the mock-up's actual emphasis; the form stays create-focused. Linked into
+  every other page's sidebar (see below).
+  - Also added a small global `.btn:disabled { opacity:.45; cursor:not-
+    allowed; }` to `style.css` — there was no disabled-button styling
+    anywhere in the app before, so the new disabled Approve/Ajukan/etc.
+    buttons on this page (and Verification & Approval's action bar) looked
+    identical to enabled ones despite correctly blocking clicks.
+  - Deployed to `osiun-frappe-backend`. Playwright `/volume1/docker/
+    osiun-playwright-check/rn-regposko.js` (desktop + 390px mobile).
+    Verified: KPIs correct, row select → real checklist + correctly
+    disabled/enabled actions, guest form submit shows graceful login
+    message, mobile viewport contained.
+  - Cache-buster: `style.css`/`registrasi-posko.js` → `?v=regposko-20260902`.
+  - **Rolled the "Registrasi & Verifikasi Posko" sidebar link out to every
+    other page** (24 files via a Python regex insert after the "Organisasi
+    & Posko" line; 2 more — `bencana-aktif.html`/`posko-logistik.html` —
+    needed a second pass since they spell it `Organisasi &amp; Posko`
+    (HTML entity) instead of a literal `&`, which the first regex missed).
+    `control-centre-v4.html` (deprecated, superseded by `war-room.html`,
+    already on the "no mockup" leave-as-is list) and
+    `laporan-masyarakat.html`/`mockup.html` (no sidebar `<nav>` at all —
+    different page types) were correctly left untouched.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

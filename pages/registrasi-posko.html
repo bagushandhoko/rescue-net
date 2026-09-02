@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Registrasi & Verifikasi Posko</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=regposko-20260902">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a class="active" href="registrasi-posko.html?event=event-sim-001">Registrasi & Verifikasi Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Registrasi & Verifikasi Posko</div>
+
+      <div>
+        <p class="eyebrow">Posko Registry</p>
+        <h2>Registrasi & Verifikasi Posko</h2>
+        <p class="subtitle">Daftarkan posko baru dan verifikasi untuk memastikan kredibilitas dan keamanan.</p>
+        <p class="subtitle" id="regStatus">Memuat…</p>
+      </div>
+      <div class="status-pill" id="regUpdated">Posko · Live</div>
+    </header>
+
+    <section class="kpi-grid rn-rp-kpi">
+      <div class="kpi-card"><span>Posko Aktif</span><strong id="kpiAktif">-</strong><small>operasional</small></div>
+      <div class="kpi-card warning"><span>Pending Verification</span><strong id="kpiPending">-</strong><small>menunggu review</small></div>
+      <div class="kpi-card"><span>Official Verified</span><strong id="kpiOfficial">-</strong><small>terverifikasi resmi</small></div>
+      <div class="kpi-card"><span>Community Verified</span><strong id="kpiCommunity">-</strong><small>terverifikasi komunitas</small></div>
+    </section>
+
+    <section class="content-grid rn-rp-row">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Form Registrasi / Edit Posko</h3></div>
+        </div>
+        <form class="rn-form" id="regForm">
+          <input type="hidden" name="posko_id" value="">
+          <div class="form-grid">
+            <label>Nama Posko *<input name="title" required></label>
+            <label>Jenis Posko *
+              <select name="posko_type" required>
+                <option value="logistics">Posko Logistik</option>
+                <option value="shelter">Shelter</option>
+                <option value="kitchen">Dapur Umum</option>
+                <option value="medical">Posko Medis</option>
+                <option value="field_assessment">Field Assessment</option>
+                <option value="transport">Transport</option>
+                <option value="collection_hub">Collection Hub</option>
+              </select>
+            </label>
+            <label>Event Bencana *<input name="disaster_event" value="event-sim-001" required></label>
+            <label>Lokasi GPS * (lat, lng)<input name="latlng" placeholder="-6.228889, 106.871111"></label>
+            <label class="rn-rp-full">Alamat Lengkap *<input name="address" required></label>
+            <label>Nama Lengkap PIC *<input name="officer_in_charge_name" required></label>
+            <label>Jabatan *<input name="officer_in_charge_role" placeholder="Koordinator Posko"></label>
+            <label>Kontak PIC *<input name="officer_in_charge_phone" required></label>
+            <label>Email PIC *<input name="officer_in_charge_email" type="email" required></label>
+            <label>Kontak Darurat (Opsional)<input name="emergency_contact"></label>
+            <label>Kapasitas (Orang) *<input name="rn_beneficiary_count" type="number" min="0"></label>
+            <label class="rn-rp-full">Fasilitas Tersedia * <small class="rn-muted">(pisahkan dengan koma)</small>
+              <input name="facilities" placeholder="Logistik, Makanan, Air Bersih, Medis">
+            </label>
+            <label>Visibility *
+              <select name="public_detail">
+                <option value="public">Publik (Dapat dilihat semua orang)</option>
+                <option value="inherit">Mengikuti kebijakan organisasi</option>
+                <option value="private">Privat (Terbatas)</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan Posko</button>
+            <button class="btn" type="button" id="regResetBtn">Reset</button>
+            <span class="form-message" id="regFormMsg"></span>
+          </div>
+        </form>
+      </div>
+
+      <aside class="panel">
+        <div class="panel-header"><div><h3>Status Verifikasi Posko <span class="chip" id="checklistStatusChip">-</span></h3></div></div>
+        <ul class="rn-rp-checklist" id="checklistList"><li class="rn-muted">Pilih atau simpan posko untuk melihat status.</li></ul>
+        <p class="rn-muted rn-rp-note" id="checklistNote"></p>
+
+        <h3 class="rn-sub-h">Tindakan</h3>
+        <div class="rn-rp-actions">
+          <button class="btn primary" id="submitVerifBtn" type="button" disabled>Ajukan Verifikasi</button>
+          <button class="btn" id="saveDraftBtn" type="button" disabled>Simpan Draft</button>
+          <button class="btn danger" id="deletePoskoBtn" type="button" disabled>Hapus Posko</button>
+        </div>
+        <p class="rn-muted" id="actionMsg2"></p>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div><h3>Daftar Posko</h3></div>
+        <input type="search" id="poskoSearch" placeholder="Cari posko…" class="rn-rp-search">
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table">
+          <thead><tr><th>Nama Posko</th><th>Jenis</th><th>Lokasi</th><th>PIC</th><th>Kapasitas</th><th>Status Verifikasi</th><th>Terakhir Diperbarui</th></tr></thead>
+          <tbody id="registryBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="rn-table-foot"><span id="registryShown">—</span><div class="rn-ev-pager" id="registryPager"></div></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=poskofn-20260831"></script>
+<script src="../assets/js/registrasi-posko.js?v=regposko-20260902"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

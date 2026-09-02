@@ -519,6 +519,12 @@ h4 {
   box-shadow: 0 14px 30px rgba(232,117,88,.20);
 }
 
+.btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 /* IMAGE PAGES */
 .image-board {
   display: grid;
@@ -5117,4 +5123,26 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 @media (max-width: 1100px) {
   .rn-op-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rn-op-row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================
+   Registrasi & Verifikasi Posko — pages/registrasi-posko.html
+   ============================================================ */
+.rn-rp-kpi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rn-rp-row { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+.rn-rp-full { grid-column: 1 / -1; }
+.rn-rp-search { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); font-size: 13px; min-width: 200px; }
+
+.rn-rp-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rn-rp-checklist li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.rn-rp-checklist li.is-done { color: #2f9e59; }
+.rn-rp-checklist li small { margin-left: auto; color: var(--muted); font-size: 11px; }
+.rn-rp-note { margin-top: 10px; }
+
+.rn-rp-actions { display: flex; flex-direction: column; gap: 8px; }
+.btn.danger { background: rgba(216,69,69,.1); color: #c23a3a; border-color: rgba(216,69,69,.3); }
+
+@media (max-width: 1100px) {
+  .rn-rp-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-rp-row { grid-template-columns: minmax(0, 1fr); }
 }

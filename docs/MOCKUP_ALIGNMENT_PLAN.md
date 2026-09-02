@@ -324,8 +324,8 @@ Batch by kesiapan backend & kemiripan (pakai komponen bagian 3):
 6. ✅ **Verification & Approval** — DONE 2026-09-02 (`approval_queue` +
    `approval_item_detail` + real write `approval_action`; "Merge" intentionally
    not implemented). Lihat `HANDOVER.md`.
-7. 🟡 **Organisasi & Posko** ✅ DONE 2026-09-02 + **Registrasi & Verifikasi
-   Posko** (halaman baru) — backend done, frontend in progress. Lihat `HANDOVER.md`.
+7. ✅ **Organisasi & Posko** + **Registrasi & Verifikasi Posko** (halaman
+   baru) — DONE 2026-09-02, keduanya. Lihat `HANDOVER.md`.
 8. **Manajemen Alat Kerja** — `api_resource_tools`.
 9. **Profil Sumber Daya** — `api_resource_tools`.
 10. **Program Khusus** — gabung `api_recovery` / `api_donor_program`.

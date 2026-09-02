@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Alat Kerja</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a class="active" href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">Alat Kerja</div>
+
+      <div>
+        <p class="eyebrow">Work Tools / Heavy Equipment</p>
+        <h2>Alat Kerja</h2>
+        <p class="subtitle">Permintaan alat kerja, operator skill, lokasi, dan prioritas kebutuhan.</p>
+        <p class="subtitle" id="workToolStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Live API</div>
+    </header>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Ringkasan Alat Kerja</h3>
+            <p>Permintaan alat kerja aktif untuk event bencana.</p>
+          </div>
+          <button class="btn" id="refreshWorkTools">Refresh</button>
+        </div>
+
+        <div class="summary-list" id="workToolSummary">
+          <div><span>Status</span><b>Loading</b></div>
+        </div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Buat Request Alat Kerja</h3>
+
+        <form class="rn-form" id="workToolForm">
+          <label>Requested By Type
+            <select name="requested_by_type">
+              <option value="posko">posko</option>
+              <option value="organization">organization</option>
+              <option value="community_group">community_group</option>
+            </select>
+          </label>
+
+          <label>Requested By ID
+            <input name="requested_by_id" value="posko-logistik-aceh">
+          </label>
+
+          <label>Nama Alat
+            <input name="tool_name" value="Excavator" required>
+          </label>
+
+          <label>Jenis Alat
+            <input name="tool_type" value="heavy_equipment">
+          </label>
+
+          <label>Jumlah
+            <input name="quantity" type="number" value="1">
+          </label>
+
+          <label>Unit
+            <input name="unit" value="unit">
+          </label>
+
+          <label>Lokasi Kebutuhan
+            <input name="location" value="Jalur longsor Aceh Barat">
+          </label>
+
+          <label>Needed For
+            <input name="needed_for" value="Membuka akses jalan tertutup longsor 200 meter">
+          </label>
+
+          <label>Priority
+            <select name="priority">
+              <option value="normal">normal</option>
+              <option value="urgent">urgent</option>
+              <option value="critical">critical</option>
+            </select>
+          </label>
+
+          <label>Required Operator Skill
+            <input name="required_operator_skill" value="operator excavator">
+          </label>
+
+          <label>Notes
+            <input name="notes" value="Butuh operator dan BBM operasional.">
+          </label>
+
+          <button class="btn primary" data-requires-role-action="create_work_tool" type="submit">Save Request</button>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Daftar Request Alat Kerja</h3>
+          <p>Kebutuhan alat kerja dan heavy equipment.</p>
+        </div>
+      </div>
+      <div class="event-list" id="workToolRequests"></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=frappe-batch-b-1"></script>
+<script src="../assets/js/alat-kerja.js?v=frappe-batch-b-1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

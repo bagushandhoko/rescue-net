@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Posko Logistik</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=logistik-mockup-20260901c">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a class="active" href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search &amp; Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar rn-logistik-topbar">
+      <div class="rn-page-mobile-title">Posko Logistik</div>
+
+      <div>
+        <p class="eyebrow">Field Needs &amp; Stock Intelligence</p>
+        <h2>Posko Logistik</h2>
+        <p class="subtitle">
+          Pantau stok, kebutuhan, dan pergerakan bantuan secara real-time.
+        </p>
+      </div>
+
+      <div class="rn-logistik-controls">
+        <label class="rn-inline-select">
+          <span>Posko</span>
+          <select id="logistikPoskoSelect"><option>Memuat…</option></select>
+        </label>
+        <label class="rn-inline-select">
+          <span>Kategori</span>
+          <select id="logistikKategori"><option value="">Semua Kategori</option></select>
+        </label>
+        <span class="status-pill" id="logistikUpdated">Terakhir diperbarui —</span>
+      </div>
+    </header>
+
+    <div id="logistikShareBanner" class="rn-share-banner" hidden></div>
+    <div id="logistikRoleBanner" class="rn-role-banner" hidden></div>
+
+    <section class="kpi-grid">
+      <div class="kpi-card" id="kpiJiwaCard">
+        <span>Jiwa Dilayani <button type="button" id="kpiJiwaEdit" class="rn-kpi-edit" title="Ubah jumlah jiwa dilayani">✎</button></span>
+        <strong id="kpiJiwa">-</strong>
+        <small id="kpiJiwaHint">jumlah korban dilayani posko</small>
+      </div>
+      <div class="kpi-card warning" id="kpiStokCard">
+        <span>Stok Menipis</span>
+        <strong id="kpiStok">-</strong>
+        <small id="kpiStokHint">item habis &lt; 3 hari</small>
+      </div>
+      <div class="kpi-card danger" id="kpiKritisCard">
+        <span>Kebutuhan Kritis</span>
+        <strong id="kpiKritis">-</strong>
+        <small id="kpiKritisHint">prioritas tertinggi</small>
+      </div>
+      <div class="kpi-card" id="kpiMenujuCard">
+        <span>Bantuan Menuju Posko</span>
+        <strong id="kpiMenuju">-</strong>
+        <small id="kpiMenujuHint">pengiriman masuk (OTW)</small>
+      </div>
+    </section>
+
+    <section class="content-grid rn-logistik-grid">
+      <div class="rn-logistik-col">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Kebutuhan Mendesak <span class="chip danger" id="urgentNeedsCount">0 item</span></h3>
+            <p>Item paling mendesak: stok tersedia, kekurangan (gap), estimasi habis, dan batas waktu tiba.</p>
+          </div>
+        </div>
+
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Stok Tersedia</th>
+                <th>Gap (Kekurangan)</th>
+                <th>Estimasi Habis</th>
+                <th>Waktu Harus Tiba</th>
+                <th>Prioritas</th>
+              </tr>
+            </thead>
+            <tbody id="urgentNeedsBody">
+              <tr><td colspan="6">Memuat…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rn-table-foot">
+          <span id="urgentNeedsShown">—</span>
+          <a class="btn ghost" id="urgentNeedsMore" href="#">Lihat Semua Kebutuhan</a>
+        </div>
+      </div>
+
+      <section class="panel" id="publicShipPanel" hidden>
+        <div class="panel-header">
+          <div>
+            <h3>Kiriman Masyarakat <span class="chip" id="publicShipCount">0</span></h3>
+            <p>Bantuan langsung dari warga / posko pengumpul — tanpa kartu stok, bisa sekali atau berkali-kali kirim.</p>
+          </div>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Pengirim</th><th>Item</th><th>Jumlah</th><th>Gelombang</th><th>Status</th></tr></thead>
+            <tbody id="publicShipBody"><tr><td colspan="5">—</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Barang Masuk / Keluar</h3>
+            <p>Pergerakan logistik dari &amp; menuju posko ini.</p>
+          </div>
+          <div class="rn-tabs" role="tablist">
+            <button class="rn-tab is-active" id="movTabMasuk" type="button">Masuk</button>
+            <button class="rn-tab" id="movTabKeluar" type="button">Keluar</button>
+          </div>
+        </div>
+
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead>
+              <tr>
+                <th id="movWhoHead">Dari</th>
+                <th>Item</th>
+                <th>Jumlah</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="movBody">
+              <tr><td colspan="4">Memuat…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      </div><!-- /.rn-logistik-col -->
+
+      <aside class="panel summary">
+        <div class="panel-header">
+          <div><h3>Asal &amp; Trace Logistik</h3><p>Pengiriman terdekat menuju posko.</p></div>
+        </div>
+        <div id="traceCard" class="rn-trace">Memuat…</div>
+
+        <h3 class="rn-sub-h rn-sub-h-row">
+          Bukti Kondisi &amp; Lapangan
+          <a class="rn-seeall" id="buktiSeeAll" href="#">Lihat Semua</a>
+        </h3>
+        <div class="rn-upload-grid" id="buktiTiles">
+          <a class="rn-upload-tile" id="uploadStok" href="#">
+            <b>Kondisi Stok</b><span>Unggah Foto</span>
+          </a>
+          <a class="rn-upload-tile" id="uploadPosko" href="#">
+            <b>Kondisi Posko</b><span>Unggah Foto</span>
+          </a>
+        </div>
+        <div class="rn-bukti-grid" id="buktiGrid"><p class="rn-muted">Memuat…</p></div>
+        <p class="rn-muted" id="buktiMeta"></p>
+
+        <h3 class="rn-sub-h">Konversi &amp; Volume</h3>
+        <div class="rn-conv" id="conversionBody"></div>
+      </aside>
+    </section>
+
+    <details class="panel rn-input-drawer rn-stockcards-panel" id="stockCardsPanel">
+      <summary>
+        <h3>Kartu Stok Rinci <span class="chip" id="stockCardsCount">0 item</span></h3>
+        <p>Per item: stok ada, masuk/keluar 7 hari, OTW, kebutuhan, gap, laju konsumsi &amp; estimasi habis (stok ÷ laju).</p>
+      </summary>
+
+      <div class="rn-table-wrap">
+        <table class="rn-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Stok Ada</th>
+              <th>Masuk 7h</th>
+              <th>Keluar 7h</th>
+              <th>OTW</th>
+              <th>Kebutuhan</th>
+              <th>Gap</th>
+              <th>Laju/hari</th>
+              <th>Estimasi Habis</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="stockCardsBody">
+            <tr><td colspan="10">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rn-table-foot">
+        <span id="stockCardsShown">—</span>
+        <a class="btn ghost" id="stockCardsMore" href="#">Buka Posko Detail</a>
+      </div>
+    </details>
+
+    <details class="panel create-panel rn-input-drawer">
+      <summary>
+        <h3>Tambah Data Logistik</h3>
+        <p>Input kebutuhan lapangan &amp; bantuan tersedia — langsung ke database.</p>
+      </summary>
+
+      <form class="rn-form" data-rn-create-logistic-need>
+        <h4>Tambah Kebutuhan Logistik</h4>
+        <div class="form-grid">
+          <label>Disaster Event ID<input name="disaster_event_id" required></label>
+          <label>Posko / Node ID<input name="node_id"></label>
+          <label>Item Dibutuhkan<input name="item_name" placeholder="Air Minum / Beras / Obat" required></label>
+          <label>Jumlah<input name="quantity_needed" type="number" step="0.01" placeholder="2500" required></label>
+          <label>Satuan<input name="unit" placeholder="liter / kg / dus / pcs" required></label>
+          <label>Prioritas
+            <select name="priority">
+              <option value="normal">normal</option>
+              <option value="urgent">urgent</option>
+              <option value="critical">critical</option>
+            </select>
+          </label>
+          <label>Harus Tiba Sebelum<input name="needed_before" placeholder="Hari ini 18:00"></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Kebutuhan</button>
+          <span class="form-message" data-rn-logistic-message></span>
+        </div>
+      </form>
+
+      <form class="rn-form" data-rn-create-aid-offer>
+        <h4>Tambah Bantuan Tersedia</h4>
+        <div class="form-grid">
+          <label>Disaster Event ID<input name="disaster_event_id" required></label>
+          <label>Nama Donatur / Sumber<input name="donor_name" placeholder="PT Sumber Air Baik" required></label>
+          <label>Item Bantuan<input name="item_name" placeholder="Air Mineral / Beras / Selimut" required></label>
+          <label>Jumlah<input name="quantity" type="number" step="0.01" placeholder="1000" required></label>
+          <label>Satuan<input name="unit" placeholder="dus / kg / pcs" required></label>
+          <label>Lokasi Pickup<input name="pickup_location" placeholder="Gudang / alamat donor" required></label>
+          <label>Siap Diambil<input name="ready_at" placeholder="Hari ini 15:00"></label>
+          <label>No. Batch<input name="batch_no"></label>
+          <label>Expiry Date<input name="expiry_date" type="date"><small>Kosongkan kalau tidak ada expiry.</small></label>
+          <label>Status
+            <select name="status">
+              <option value="available">available</option>
+              <option value="need_pickup">need_pickup</option>
+              <option value="reserved">reserved</option>
+              <option value="in_transit">in_transit</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Bantuan</button>
+          <span class="form-message" data-rn-aid-message></span>
+        </div>
+      </form>
+    </details>
+
+    <div class="rn-page-status" data-rn-logistik-status></div>
+  </main>
+</div>
+
+<div id="buktiModal" class="rn-bukti-modal" hidden>
+  <button type="button" id="buktiModalClose" class="rn-bukti-modal-close" aria-label="Tutup bukti">×</button>
+  <div class="rn-bukti-modal-card">
+    <div class="rn-bukti-modal-image"><img id="buktiModalImg" src="" alt="Bukti lapangan"></div>
+    <div class="rn-bukti-modal-body">
+      <span class="rn-bukti-badge">Bukti Simulasi</span>
+      <h3 id="buktiModalTitle">-</h3>
+      <p id="buktiModalLoc" class="rn-bukti-modal-loc">-</p>
+      <p id="buktiModalDesc">-</p>
+      <dl class="rn-bukti-modal-meta">
+        <div><dt>Jenis</dt><dd id="buktiModalType">-</dd></div>
+        <div><dt>Pelapor / Pengunggah</dt><dd id="buktiModalReporter">-</dd></div>
+        <div><dt>Status</dt><dd id="buktiModalStatus">-</dd></div>
+        <div><dt>Waktu</dt><dd id="buktiModalTime">-</dd></div>
+      </dl>
+      <a id="buktiModalOpen" class="btn ghost mini" href="#" target="_blank" rel="noopener">Buka gambar penuh ↗</a>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=logistik-dms-20260831"></script>
+<script src="../assets/js/logistik.js?v=logistik-mockup-20260901c"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

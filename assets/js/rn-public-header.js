@@ -6,6 +6,7 @@
     { label: "About Us", href: `${prefix}index.html#tentang` },
     { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` },
     { label: "Home", href: `${prefix}index.html` },
+    { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
     { label: "Control Centre", href: `${prefix}pages/war-room.html?event=event-sim-001` },
     { label: "Data Konsolidasi", href: `${prefix}pages/data-consolidation.html?event=event-sim-001` },
     { label: "Download", href: `${prefix}../rescue-net-app/download.html` },

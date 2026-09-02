@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Verification Approval</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a class="active" href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">Verification</div>
+
+      <div>
+        <p class="eyebrow">Verification & Approval</p>
+        <h2>Verification Approval</h2>
+        <p class="subtitle">Verifikasi organisasi, posko, relawan, bantuan, alat kerja, dan data sensitif.</p>
+        <p class="subtitle" id="verificationStatus">Ready.</p>
+      </div>
+      <div class="status-pill">Live API</div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Verification Summary</h3>
+          <p>Ringkasan objek yang perlu dipantau dan diverifikasi.</p>
+        </div>
+        <button class="btn" id="refreshVerification">Refresh</button>
+      </div>
+      <div class="summary-list" id="verificationSummary">
+        <div><span>Status</span><b>Loading</b></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Verifier Requests</h3>
+            <p>Permintaan verifikasi identitas/keanggotaan. Ini tidak otomatis memverifikasi laporan atau kebutuhan.</p>
+          </div>
+        </div>
+        <div class="event-list" id="trustedVerifierRequests"></div>
+      </div>
+      <div class="panel">
+        <h3>Endorsements</h3>
+        <div class="event-list" id="trustedEndorsements"></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Verifier Registry</h3>
+            <p>Calon verifikator harus disetujui dan diberi scope sebelum boleh memberikan endorsement.</p>
+          </div>
+        </div>
+        <form class="rn-form" id="verifierRegistrationForm">
+          <div class="form-grid">
+            <label>Nama<input name="display_name" required></label>
+            <label>Jenis
+              <select name="verifier_type">
+                <option value="community">Community</option>
+                <option value="organization">Organization</option>
+                <option value="government">Government</option>
+                <option value="public_figure">Public Figure</option>
+                <option value="rn_admin">RN Admin</option>
+              </select>
+            </label>
+            <label>Jabatan/peran<input name="position_title" placeholder="Ketua RW / BPBD / Koordinator"></label>
+            <label>Nomor HP<input name="phone"></label>
+            <label>Email<input name="email" type="email"></label>
+            <label>Deskripsi peran<input name="public_role_description"></label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="submit">Daftar Calon Verifikator</button></div>
+        </form>
+        <div class="event-list" id="trustedVerifierRegistry"></div>
+      </div>
+      <div class="panel">
+        <h3>Revoked & Suspicious Activity</h3>
+        <div class="event-list" id="revokedVerifications"></div>
+      </div>
+    </section>
+
+    <section class="panel" id="tokenVerificationPanel" hidden>
+      <div class="panel-header">
+        <div>
+          <h3>Respons Permintaan Verifikasi</h3>
+          <p>Nyatakan hubungan dan pilih keputusan. Persetujuan hanya berlaku untuk scope yang diminta.</p>
+        </div>
+      </div>
+      <form class="rn-form" id="tokenVerificationForm">
+        <div class="form-grid">
+          <label>Verifier ID terdaftar<input name="verifier_id" placeholder="verifier-..."></label>
+          <label>Nama verifikator<input name="verifier_display_name" required></label>
+          <label>Peran<input name="verifier_role" placeholder="Ketua RW / Koordinator / BPBD"></label>
+          <label>Keputusan
+            <select name="decision">
+              <option value="approved">Saya mengenal dan membenarkan identitas ini</option>
+              <option value="needs_correction">Saya mengenal, data perlu dikoreksi</option>
+              <option value="not_known">Saya tidak mengenal</option>
+              <option value="rejected">Saya menolak memverifikasi</option>
+            </select>
+          </label>
+          <label>Pernyataan<textarea name="statement" rows="3"></textarea></label>
+          <label>Catatan koreksi<textarea name="correction_note" rows="3"></textarea></label>
+        </div>
+        <div class="form-actions"><button class="btn primary" type="submit">Kirim Keputusan</button></div>
+      </form>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Organizations</h3>
+        <div class="event-list" id="verifyOrganizations"></div>
+      </div>
+      <div class="panel">
+        <h3>Poskos</h3>
+        <div class="event-list" id="verifyPoskos"></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Volunteers</h3>
+        <div class="event-list" id="verifyVolunteers"></div>
+      </div>
+      <div class="panel">
+        <h3>Aid Offers</h3>
+        <div class="event-list" id="verifyAidOffers"></div>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Work Tool Requests</h3>
+        <div class="event-list" id="verifyWorkTools"></div>
+      </div>
+      <div class="panel">
+        <h3>Verification Actions</h3>
+        <div class="event-list" id="verificationActions"></div>
+      </div>
+    </section>
+  </main>
+</div>
+<script src="../assets/js/rn-frappe-client.js?v=frappe-group-e-1"></script>
+<script src="../assets/js/verification-approval.js?v=frappe-group-e-1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

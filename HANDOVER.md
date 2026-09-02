@@ -4,9 +4,129 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-08-31 (posko function model)_
+_Last updated: 2026-09-01 (mockup-alignment pass: welcome polish; auth.html rebuilt + api_auth.register DEPLOYED; NEW pages/bencana-aktif.html + active_disasters_board endpoint DEPLOYED & Playwright-verified)_
 
 ---
+
+## Mockup-alignment pass (2026-09-01, in progress)
+
+Pass to match each `pages/*.html` to its `assets/img/mockup/*.png` + the DMS
+spec (`blueprint/DISASTER MANAGEMENT SYSTEM.docx.pdf` — only extractable text;
+`blueprint/dms.pdf`/`dms (2).pdf` are image-only, no text layer, cannot render
+here). Owner decisions this pass: **fix as we go** (report per page), and
+**keep the dev sidebar** (the full page-link list) for now — so "match mockup"
+= match the **content area**, not the chrome. Pre-pass backup:
+`_archive/mockup-align-20260901-190457/` (pages/, index.html, style.css, js/).
+
+- **Welcome (`index.html`) — DONE (polish).** Added "Pelajari lebih lanjut →"
+  on every role card, icons on the two secondary hero CTAs, icons on the 4
+  footer items (+ `.role-more` / CTA-icon CSS). Deviations left as-is: KPI has
+  no "delta dari kemarin" (needs yesterday snapshot); the "Bencana Aktif + Live
+  Summary" section is extra vs the mockup (kept — functional).
+
+- **Login & Registrasi (`pages/auth.html`) — REBUILT, DEPLOYED (2026-09-01).** Was a
+  dev console (Demo Login buttons / Role Matrix / Access Model). Now matches
+  `assets/img/mockup/login & registrasi.png`: tabbed Masuk/Daftar card
+  (`.rn-auth-*` CSS block appended to `style.css`), password show/hide, live
+  password-rule checklist, "+62" phone prefix, role radios + rail role-cards
+  that cross-fill, trust rail ("Aman, Terpercaya…" 3 rows + 4 role cards),
+  bottom 4-point trust bar, "Lanjut dengan Google" button (points at Frappe
+  `login_via_google` — only works if Google social login is configured), and a
+  "Sesi Aktif" panel shown when already logged in.
+  - **Frontend:** `pages/auth.html` main area replaced; `assets/js/auth.js`
+    fully rewritten (IIFE; nothing global). Cache-busters: `auth.html` →
+    `style.css?v=authredesign-20260901`, `auth.js`/`rn-frappe-client.js`
+    `?v=authredesign-20260901`. Frontend is served straight from
+    `/volume1/web/rescue-net/` so these are already live.
+  - **Backend (DEPLOYED 2026-09-01, verified live over guest HTTP):** new
+    `rescue_net.api_auth.register` (`allow_guest=True`, rate-limited 6/hour by
+    email). NOTE: this Frappe (15.113.4) does **not** export `frappe.rate_limit`
+    — had to `from frappe.rate_limiter import rate_limit` and use `@rate_limit(...)`.
+    Container backup `api_auth.py.bak-20260901-191829-register`.
+    Creates a Frappe **Website User** (`new_password` sets the pw) + an
+    **RN User Account** (`frappe_user`, `email`, `phone`, `role=""`,
+    `requested_role=<relawan|donatur|organisasi|petugas_posko>`,
+    `role_request_status="pending"`, `status="pending_verification"`). Empty
+    `role` → `_effective_role` resolves to `viewer` (read-only) until the
+    existing verification-approval flow grants the requested role. Rolls back +
+    logs on RN User Account failure. Password rule: ≥8 chars, ≥1 uppercase,
+    ≥1 digit (mirrored client-side).
+  - **DEPLOY:** apps dir is bind-mounted (`/volume1/docker/osiun-frappe-shadow/apps/rescue_net`
+    → `/home/frappe/frappe-bench/apps/rescue_net` in `osiun-frappe-backend`).
+    `admin` cannot write that shadow dir (owned uid 1000) and non-docker `sudo`
+    has no TTY. **Working method:** pipe the file through docker exec as frappe —
+    `sudo docker exec osiun-frappe-backend cp -a <CPATH>/f.py <CPATH>/f.py.bak-$(date +%Y%m%d-%H%M%S)`
+    then `cat <repo>/f.py | sudo docker exec -i osiun-frappe-backend sh -c 'cat > <CPATH>/f.py'`,
+    verify md5 host==container, then `sudo docker restart osiun-frappe-backend`
+    (ping 502 for ~10s, then 200). CPATH = `/home/frappe/frappe-bench/apps/rescue_net/rescue_net`.
+  - **TEST after deploy:** guest `POST
+    /rescue-net-frappe/api/method/rescue_net.api_auth.register`
+    with `full_name,email,password,phone,role` → `{ok:true,...}`; then the
+    Daftar tab should auto-login and redirect; weak password → 417 with the
+    Indonesian rule message; duplicate email → "Email sudah terdaftar".
+
+- **Bencana Aktif (`pages/bencana-aktif.html` + `assets/js/bencana-aktif.js`) — BUILT & DEPLOYED (2026-09-01).**
+  Matches `assets/img/mockup/bencana aktif.png` content area: 4 KPI tiles
+  (Bencana Aktif / Jiwa Berisiko / Kebutuhan Kritis / Distribusi Terhambat,
+  rolled up across all active events), left "Daftar Bencana Aktif" `rn-table`
+  with **expandable per-region (kabupaten/kota) child rows** (status pill
+  Kritis/Siaga/Waspada, jiwa, kebutuhan kritis, distribusi, terakhir diperbarui),
+  client-side search + pagination (page size 3) + "Buka Semua"; right rail
+  "Ringkasan Bencana" (selected event: id, updated, 4 stat boxes) + "Isu Kritis
+  Teratas" list + "Buka Control Centre" / "Lihat Detail". Row click selects →
+  updates the rail.
+  - **Backend:** new guest endpoint
+    `rescue_net.api_control_centre.active_disasters_board(limit=60)` — appended to
+    `api_control_centre.py` (helpers `_ba_*`, consts `_SIT_*`/`_SEV_STATUS`).
+    Per active `RN Disaster Event`: pulls its `RN Posko` / `RN Logistic Need` /
+    `RN Distribution Flow`, groups poskos by `city_name` (→ province → "Wilayah
+    lain"), region status = worst `operational_status`, kebutuhan kritis = open
+    needs with urgency critical/urgent/high, distribusi terhambat = flows in
+    `_DRILL_BLOCKED_FLOW`. Deployed to `osiun-frappe-backend` + restarted;
+    container backup `api_control_centre.py.bak-20260901-<ts>-bencanaboard`.
+    Verified live over guest HTTP (6 active events) and Playwright
+    (`/volume1/docker/osiun-playwright-check/rn-bencana-aktif.js`, run with
+    `--add-host=host.docker.internal:host-gateway`; cold worker needs ~15 s).
+  - **KPI tiles are clickable (2026-09-01b)** — each `<button class="kpi-card
+    rn-kpi-btn" data-kpi>` opens a drill-down modal (`#baDrill` / `.rn-ba-modal`):
+    Bencana Aktif → table of all events (row → select + scroll); Jiwa Berisiko →
+    per-event region breakdown + "Buka Control Centre"; Kebutuhan Kritis → all
+    open critical/urgent needs grouped by event, each row deep-links
+    `posko-logistik.html?id=<posko>&event=<ev>&penuhi=<item>`; Distribusi
+    Terhambat → blocked flows (honest empty-state when 0). "Isu Kritis Teratas"
+    rail items are links too. Endpoint `active_disasters_board` enriched to return
+    `kebutuhan_items` / `distribusi_items` / `posko_kritis_items` (each with
+    `href`) + `totals.posko_kritis`. Deployed; container backup
+    `api_control_centre.py.bak-20260901-*-bakpi`. Cache-buster on the page's
+    css/js bumped to `?v=bencana-20260901b`.
+  - Accepted deviations vs mockup (same as welcome page): KPI tiles have no
+    sparkline / "N dari kemarin" delta (no yesterday snapshot); KPI icon glyphs
+    omitted (matches the app's plain `.kpi-card`). Data is thin for real events
+    (Longsor Bogor / banjir sumatar / Luwu have 0 poskos) — honest, reflects DB.
+  - **Menu access:** `assets/js/rn-public-header.js` `links[]` now has a
+    "Bencana Aktif" entry (after Home) → shows in the shared top header on all
+    28 sub-pages; cache-buster on `rn-public-header.js` bumped
+    `?v=eventpicker-20260831` → `?v=bencana-20260901` across `pages/*.html` (sed,
+    28 files). `index.html` "Bencana Aktif" embed header also links it
+    ("Semua Bencana Aktif"); the new page's own sidebar `<nav>` has the entry.
+    Other pages' LEFT sidebars get it during their rebuild.
+  - CSS: `.rn-ba-*` block appended to `style.css`; cache-buster
+    `?v=bencana-20260901` on the new page's css/js tags.
+- **Remaining pages — comparison DONE, plan written: `docs/MOCKUP_ALIGNMENT_PLAN.md`
+  (2026-09-01).** All 12 remaining pages (organisasi-posko, verification-approval,
+  management-distribusi, dapur-umum, shelter-detail, search-found, program-khusus,
+  management-relawan, alat-kerja, resource-profile, evidence) + 2 NEW pages
+  (`registrasi-posko.html`, `alat-komunikasi.html`) are the same gap: existing =
+  English dev-shell (input form + empty table, some endpoints not `allow_guest` /
+  missing, e.g. `api_kitchen.dashboard is not whitelisted`); mockup = Indonesian
+  KPI dashboard (4–6 tiles + 4–10 data panels + right detail rail). Plan doc has
+  per-page KEEP / ADD / BACKEND, shared components to build once, a guest-endpoint
+  checklist, and a suggested 12-step order (Dapur Umum first — same pattern as the
+  finished Posko Logistik). **Rule from owner: additive only — never remove an
+  existing menu/form/table that the mockup omits; move it into a `<details>`, keep
+  it.** Pages with no mockup (ai-*, sync-console, data-consolidation, map,
+  disaster-detail, contact-directory, kirim/edit-bantuan, laporan-masyarakat,
+  recovery, donor-program, posko-detail, posko-medis-detail) are left as-is.
 
 ## System snapshot
 
@@ -30,7 +150,56 @@ user input" data. Working the pages one at a time.
 
 ### DONE
 
+- **Posko Logistik (`pages/posko-logistik.html` + `assets/js/logistik.js`) — mockup pass (2026-09-01)**
+  - Layout reflowed to `assets/img/mockup/posko logistik.png`: left column =
+    Kebutuhan Mendesak (new, bound to `logistik_board.urgent_needs`, columns =
+    Item / Stok Tersedia / Gap (Kekurangan) / Estimasi Habis / Waktu Harus Tiba /
+    Prioritas) → Kiriman Masyarakat → Barang Masuk/Keluar; right rail = Asal &
+    Trace → **Bukti Kondisi & Lapangan** → Konversi & Volume. Old 10-col stock
+    table moved to a collapsible **Kartu Stok Rinci** panel (keeps operator
+    Penuhi / OTW actions). New topbar **Kategori** filter (`itemCategory()` keyword
+    buckets) narrows both the Kebutuhan Mendesak and Kartu Stok Rinci tables.
+  - **KPI cards now clickable** (`wireKpiCards`): Jiwa Dilayani → posko-detail;
+    Stok Menipis → opens Kartu Stok Rinci; Kebutuhan Kritis → scrolls to
+    Kebutuhan Mendesak; Bantuan Menuju Posko → OTW drawer (all incoming).
+    `kpiJiwaEdit` ✎ now `stopPropagation`s.
+  - **Bukti with photos, like Control Centre:** `logistik_board` returns `bukti`
+    / `bukti_total` / `bukti_last_at` — `event_evidence(posko.disaster_event)`
+    narrowed to rows naming this posko (`posko`==name, `linked_object_id`==name,
+    or posko title inside `location_text`). Frontend `renderEvidence` splits by
+    caption tag: `[Kondisi Stok]` / `[Kondisi Posko]` fill the two named tiles
+    (thumbnail + "Diperbarui …", click → modal); the rest go to a general
+    thumbnail grid; empty categories fall back to an "unggah foto" link
+    (`evidence.html?…&kind=stok|posko`). `openBuktiModal` mirrors CC
+    `openEvidenceModal` (enlarged photo, caption, lokasi, jenis / pelapor·role /
+    status / waktu, "Buka gambar penuh"); `[..]` prefix stripped in display.
+  - **Seed:** 9 `RN Community Report` (+ `RN Community Report Evidence` child,
+    `file_url` = `/rescue-net/assets/img/demo-landrover/evidence/*.jpg?ev=<id>`,
+    `uploader_user` set) for `SIM-NS-POSKO-WARGA`, `SIM-LOG-GUDANG-JOGJA`,
+    `posko_nodes:posko-sim-logistik` — 3 each: `*-STOK` (`[Kondisi Stok]`),
+    `*-POSKO` (`[Kondisi Posko]`), `*-1` (general). legacy_id `SIM-LOG-BUKTI-*`,
+    re-runnable (deletes prior `SIM-LOG-BUKTI-%` evidence children first).
+    `?ev=` query keeps `event_evidence`'s URL-dedup from collapsing reused images.
+    Side effect: these also appear in the CC "Bukti Lapangan" feed for
+    `event-sim-001` (genuine logistics field evidence — intended).
+  - `api_control_centre.py` deployed to `osiun-frappe-backend` + restarted;
+    `logistik_board` bukti verified live over guest HTTP. Playwright-checked via
+    `http://host.docker.internal/rescue-net/` (`rn-logistik-mockup.js`,
+    `rn-logistik-bukti.js`).
+
 - **Control Centre (`pages/war-room.html` + `assets/js/rn-control-centre-final.js`)**
+  - Drill-down item rows: whole row is now the link to `posko-detail.html`
+    (removed the "Lanjut →" pill); `.cc-drill-item.is-link` hover + `→` affordance.
+  - **"Kebutuhan Kritis" item cells clickable** (`.cc-need-item` → `openNeedPoskoDrill`):
+    reuses the drill modal to show every posko with an open need for that item,
+    from the guest `logistik_open_needs` feed (the SAME "papan kebutuhan" an
+    outside / collector posko uses to choose an aid destination). Each posko card:
+    priority, area, Butuh/Realisasi/Gap, jiwa, progress bar, and actions —
+    **Jadikan tujuan bantuan →** `posko-logistik.html?id=<posko>&penuhi=<item>`
+    (logistik.js boot reads `?penuhi=` → auto-opens the Penuhi drawer with Item +
+    Satuan prefilled), plus *Lihat posko logistik* and *Donasi publik*
+    (`kirim-bantuan.html`). Frontend-only; `logistik_open_needs` already
+    `allow_guest=True`. Playwright: `rn-cc-needdrill.js`.
   - Map: posko coordinates corrected — no marker sits in open water (earlier bug).
   - "Kebutuhan Kritis" table shows real Butuh / Realisasi / Progress% / Gap
     (patch: `api_ai._enrich_needs` surfaces `realized_quantity`/`gap` from
@@ -201,14 +370,19 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
 ### NEXT
 
 - Merged-posko function switcher is now a sidebar top group and shows on all
-  unified-nav pages — DONE. Remaining polish: on `posko-logistik.html` the
-  posko can also be changed via the `#logistikPoskoSelect` dropdown; the
-  sidebar group only reflects the URL `?id=`, so switching via the dropdown
-  doesn't refresh it. Have `logistik.js` push the new id into the URL
-  (`history.replaceState`) and re-call `mountPoskoFunctionGroup`, or just
-  reload with `?id=`.
-- `api_ai._build_context` summary has no `volunteer_count` → the "Relawan"
-  module tile always shows 0 (1-line fix pending).
+  unified-nav pages — DONE. The dropdown-refresh polish is also DONE:
+  `logistik.js` `loadBoard()` already `history.replaceState`s the picked
+  `?id=` and calls `window.rnRefreshPoskoFunctionGroup()`
+  (`rn-navigation-v2.js:363`), which re-runs `mountPoskoFunctionGroup`.
+- `api_ai._build_context` volunteer count — **DONE + DEPLOYED (2026-09-01).**
+  `_build_context` now fetches `volunteers = _rows("RN Volunteer Assignment",
+  …, 200)` and `summary` emits `volunteer_count` + `volunteer_assignment_count`
+  (= `len(volunteers)`). Frontend `rn-control-centre-final.js:1790` reads
+  `s.volunteer_count` → the "Relawan" module tile now shows the real count.
+  Deployed to `osiun-frappe-backend` + restarted; container backup
+  `api_ai.py.bak-20260901-155253-volcount`. Verified live over guest HTTP:
+  `public_context` summary → `volunteer_count = 5` for both `event-sim-001`
+  and `event-karhutla-kalbar-2026`.
 - General page-by-page sweep: many pages still hardcode `event-aceh-2025` and
   target the retired FastAPI/PG.
 

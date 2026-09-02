@@ -1,9 +1,25 @@
+import re
+
 import frappe
+from frappe.rate_limiter import rate_limit
 
 from rescue_net.access_policy import (
     rn_actor,
     is_system_manager,
 )
+
+
+# Public self-registration. A new account is always created with an
+# empty effective `role` (so `_effective_role` resolves to "viewer",
+# read-only) and the chosen role parked in `requested_role` /
+# `role_request_status = "pending"` for the existing
+# verification-approval flow to grant.
+PUBLIC_SIGNUP_ROLES = {
+    "relawan": "volunteer",
+    "donatur": "viewer",
+    "organisasi": "viewer",
+    "petugas_posko": "viewer",
+}
 
 
 ROLE_MATRIX = [
@@ -314,4 +330,110 @@ def session_info():
             data["can_verify"],
         "can_view_sensitive":
             data["can_view_sensitive"],
+    }
+
+
+def _check_password_strength(password):
+    if len(password or "") < 8:
+        frappe.throw("Password minimal 8 karakter.")
+
+    if not re.search(r"[A-Z]", password):
+        frappe.throw("Password harus mengandung minimal 1 huruf besar.")
+
+    if not re.search(r"[0-9]", password):
+        frappe.throw("Password harus mengandung minimal 1 angka.")
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(key="email", limit=6, seconds=60 * 60)
+def register(
+    full_name=None,
+    email=None,
+    phone=None,
+    password=None,
+    role=None,
+):
+    """Public self-service signup used by pages/auth.html (Daftar tab).
+
+    Creates a Frappe Website User + an RN User Account with the chosen
+    role parked as a pending request. Does not grant any operational
+    role by itself.
+    """
+    full_name = (full_name or "").strip()
+    email = (email or "").strip().lower()
+    phone = (phone or "").strip() or None
+    role_key = (role or "relawan").strip().lower()
+
+    if not full_name or not email or not password:
+        frappe.throw("Nama lengkap, email, dan password wajib diisi.")
+
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        frappe.throw("Format email tidak valid.")
+
+    _check_password_strength(password)
+
+    if role_key not in PUBLIC_SIGNUP_ROLES:
+        role_key = "relawan"
+
+    if frappe.db.exists("User", email):
+        frappe.throw("Email sudah terdaftar. Silakan masuk.")
+
+    parts = full_name.split(" ", 1)
+    first_name = parts[0]
+    last_name = parts[1] if len(parts) > 1 else ""
+
+    user = frappe.get_doc(
+        {
+            "doctype": "User",
+            "email": email,
+            "first_name": first_name,
+            "last_name": last_name,
+            "mobile_no": phone,
+            "send_welcome_email": 0,
+            "user_type": "Website User",
+            "new_password": password,
+        }
+    )
+    user.flags.ignore_permissions = True
+    user.insert(ignore_permissions=True)
+
+    try:
+        account = frappe.get_doc(
+            {
+                "doctype": "RN User Account",
+                "frappe_user": user.name,
+                "title": full_name,
+                "username": email.split("@")[0],
+                "email": email,
+                "phone": phone,
+                "role": "",
+                "requested_role": role_key,
+                "role_request_status": "pending",
+                "status": "pending_verification",
+            }
+        )
+        account.flags.ignore_permissions = True
+        account.insert(ignore_permissions=True)
+    except Exception:
+        frappe.db.rollback()
+        frappe.log_error(
+            frappe.get_traceback(),
+            "rescue_net.api_auth.register",
+        )
+        frappe.throw(
+            "Pendaftaran gagal saat membuat profil Rescue-Net. "
+            "Silakan coba lagi."
+        )
+
+    frappe.db.commit()
+
+    return {
+        "ok": True,
+        "email": email,
+        "requested_role": role_key,
+        "role_request_status": "pending",
+        "message": (
+            "Akun dibuat. Anda bisa langsung masuk; "
+            "peran " + role_key + " menunggu verifikasi."
+        ),
     }

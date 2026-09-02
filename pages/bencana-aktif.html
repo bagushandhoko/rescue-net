@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Bencana Aktif</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=bencana-20260901b">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=bencana-20260901" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=bencana-20260901" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a class="active" href="bencana-aktif.html">Bencana Aktif</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search &amp; Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar rn-ba-topbar">
+      <div class="rn-page-mobile-title">Bencana Aktif</div>
+
+      <div>
+        <p class="eyebrow">Pantauan Nasional</p>
+        <h2>Bencana Aktif</h2>
+        <p class="subtitle">
+          Pantau dan kelola bencana yang sedang berlangsung secara real-time.
+        </p>
+      </div>
+
+      <div class="rn-ba-controls">
+        <label class="rn-ba-search">
+          <span class="rn-ba-search-ic" aria-hidden="true">⌕</span>
+          <input type="search" id="baSearch" placeholder="Cari bencana, lokasi, atau ID…">
+        </label>
+        <span class="status-pill" id="baUpdated">Memuat…</span>
+      </div>
+    </header>
+
+    <section class="kpi-grid">
+      <button class="kpi-card danger rn-kpi-btn" type="button" data-kpi="bencana">
+        <span>Bencana Aktif</span>
+        <strong data-k="bencana_aktif">–</strong>
+        <small>sedang berlangsung · lihat daftar</small>
+      </button>
+      <button class="kpi-card warning rn-kpi-btn" type="button" data-kpi="jiwa">
+        <span>Jiwa Berisiko</span>
+        <strong data-k="jiwa_berisiko">–</strong>
+        <small>total jiwa dilayani posko · rincian wilayah</small>
+      </button>
+      <button class="kpi-card danger rn-kpi-btn" type="button" data-kpi="kebutuhan">
+        <span>Kebutuhan Kritis</span>
+        <strong data-k="kebutuhan_kritis">–</strong>
+        <small>kebutuhan prioritas belum terpenuhi · lihat item</small>
+      </button>
+      <button class="kpi-card rn-kpi-btn" type="button" data-kpi="distribusi">
+        <span>Distribusi Terhambat</span>
+        <strong data-k="distribusi_terhambat">–</strong>
+        <small>pengiriman tertahan / menunggu · lihat item</small>
+      </button>
+    </section>
+
+    <section class="content-grid rn-ba-grid">
+      <div class="panel rn-ba-list-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Daftar Bencana Aktif <span class="chip" id="baCount">0</span></h3>
+            <p>Klik satu bencana untuk melihat rincian per wilayah dan ringkasannya.</p>
+          </div>
+          <div class="rn-ba-list-actions">
+            <button class="btn ghost mini" id="baExpandAll" type="button">Buka Semua</button>
+          </div>
+        </div>
+
+        <div class="rn-table-wrap">
+          <table class="rn-table rn-ba-table">
+            <thead>
+              <tr>
+                <th>Bencana &amp; Lokasi</th>
+                <th>Status</th>
+                <th>Jiwa Berisiko</th>
+                <th>Kebutuhan Kritis</th>
+                <th>Distribusi</th>
+                <th>Terakhir Diperbarui</th>
+              </tr>
+            </thead>
+            <tbody id="baTableBody">
+              <tr><td colspan="6">Memuat…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="rn-table-foot">
+          <span id="baShown">—</span>
+          <div class="rn-ba-pager" id="baPager"></div>
+        </div>
+      </div>
+
+      <aside class="panel summary rn-ba-summary">
+        <div class="panel-header">
+          <div><h3>Ringkasan Bencana</h3></div>
+          <span class="chip danger" id="baSummaryStatus" hidden>–</span>
+        </div>
+
+        <div id="baSummaryCard" class="rn-ba-sumcard">
+          <p class="rn-muted">Pilih bencana dari daftar.</p>
+        </div>
+
+        <h3 class="rn-sub-h">Isu Kritis Teratas</h3>
+        <div id="baIsuList" class="rn-ba-isu"><p class="rn-muted">—</p></div>
+
+        <div class="rn-ba-sum-actions">
+          <a class="btn primary" id="baOpenWarRoom" href="#">Buka Control Centre ↗</a>
+          <a class="btn ghost" id="baOpenDetail" href="#">Lihat Detail</a>
+        </div>
+      </aside>
+    </section>
+
+    <div class="rn-page-status" id="baStatus"></div>
+  </main>
+</div>
+
+<div id="baDrill" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="baDrillTitle">
+    <div class="rn-ba-modal-head">
+      <h3 id="baDrillTitle">–</h3>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <p class="rn-muted" id="baDrillSub"></p>
+    <div class="rn-ba-modal-body" id="baDrillBody"></div>
+  </div>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=bencana-20260901b"></script>
+<script src="../assets/js/bencana-aktif.js?v=bencana-20260901b"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

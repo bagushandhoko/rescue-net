@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Data Konsolidasi</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a class="active" href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="laporan-masyarakat.html">Laporan Masyarakat</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">Data Konsolidasi</div>
+
+      <div>
+        <p class="eyebrow">Location & Entity Resolution</p>
+        <h2>Data Konsolidasi</h2>
+        <p class="subtitle">
+          Mencegah angka menyesatkan akibat posko ganda, laporan agregat provinsi,
+          atau kebutuhan yang dilaporkan beberapa sumber untuk kelompok penerima yang sama.
+        </p>
+        <p class="subtitle">
+          Referensi wilayah resmi dapat memakai portal <a href="https://data.go.id" target="_blank" rel="noopener">data.go.id</a>
+          bila dataset tersedia. Ini opsi, bukan syarat tunggal; GPS, titik maps, atau wilayah resmi sampai desa tetap valid.
+        </p>
+        <p class="subtitle" data-consolidation-status>Loading...</p>
+      </div>
+      <div class="form-actions">
+        <button class="btn" type="button" data-check-duplicates>Check Duplicate</button>
+        <button class="btn" type="button" data-check-community-duplicates>Check Community Reports</button>
+        <button class="btn primary" type="button" data-rebuild-consolidated>Rebuild Consolidated Needs</button>
+      </div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Raw Reports</span><strong data-raw-reports>0</strong><small>laporan mentah</small></div>
+      <div class="kpi-card"><span>Consolidated Needs</span><strong data-consolidated-count>0</strong><small>draft final kebutuhan</small></div>
+      <div class="kpi-card warning"><span>Duplicate Candidates</span><strong data-duplicate-count>0</strong><small>perlu review</small></div>
+      <div class="kpi-card danger"><span>Location Review</span><strong data-location-review-count>0</strong><small>butuh titik/akurasi</small></div>
+    </section>
+
+    <section class="kpi-grid">
+      <div class="kpi-card warning"><span>Aggregate Reports</span><strong data-aggregate-count>0</strong><small>jangan dijumlahkan otomatis</small></div>
+      <div class="kpi-card"><span>Rule</span><strong>MAX</strong><small>safe first pass, bukan SUM</small></div>
+      <div class="kpi-card"><span>Granularity</span><strong>GPS</strong><small>desa/point diprioritaskan</small></div>
+      <div class="kpi-card"><span>AI Guard</span><strong>WARN</strong><small>raw overlap diberi warning</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Rollup Nasional / Range View</h3>
+            <p>Angka nasional memakai penjumlahan dari consolidated detail. Setiap detail tetap memakai angka terbesar per posko saat ada overlap.</p>
+          </div>
+        </div>
+        <div class="event-list" data-national-rollup></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Trace Detail</h3>
+        <p class="subtitle">Klik angka nasional secara operasional harus bisa ditelusuri sampai posko/desa dan sumber raw report.</p>
+        <div class="event-list" data-rollup-trace></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Raw Reports Queue</h3>
+            <p>Laporan mentah dari masyarakat dan posko. Level provinsi/kabupaten menjadi konteks agregat, bukan angka final.</p>
+          </div>
+        </div>
+        <div class="event-list" data-raw-report-queue></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Duplicate Need Candidates</h3>
+            <p>Raw reports yang kemungkinan sama tidak dijumlahkan sampai operator memutuskan.</p>
+          </div>
+        </div>
+        <div class="event-list" data-duplicate-candidates></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Operational Area Warnings</h3>
+        <p class="subtitle">Organisasi level provinsi harus punya child area/posko sebelum dipakai untuk distribusi desa.</p>
+        <div class="event-list" data-operational-areas></div>
+      </aside>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Consolidated Needs</h3>
+            <p>Kebutuhan draft yang dibangun dari raw reports dengan metode aman.</p>
+          </div>
+        </div>
+        <div class="event-list" data-consolidated-needs></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Beneficiary Groups</h3>
+        <p class="subtitle">Kelompok penerima membantu membedakan duplikat vs saling melengkapi.</p>
+        <div class="event-list" data-beneficiary-groups></div>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Evidence & Camera Rules</h3>
+          <p>Aturan bukti untuk menaikkan data mentah menjadi fakta operasional. Data sensitif tidak ditampilkan publik.</p>
+        </div>
+      </div>
+      <div class="event-list" data-evidence-requirements></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
+<script src="../assets/js/rn-frappe-client.js?v=frappe-group-e-1"></script>
+<script src="../assets/js/data-consolidation.js?v=frappe-group-e-1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>
+

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Auth, Registration & Verification</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <link rel="stylesheet" href="../assets/css/style.css?v=authredesign-20260901">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -50,124 +50,164 @@
 
   <main class="main">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Login</div>
+    <div class="rn-page-mobile-title">Masuk &amp; Registrasi</div>
 
       <div>
-        <p class="eyebrow">Access, Registration & Verification Portal</p>
-        <h2>Auth & Role</h2>
-        <p class="subtitle">Login role prototype, pendaftaran organisasi/posko, donor, dan verifikasi berada dalam satu portal akses.</p>
-        <p class="subtitle" id="authStatus">Ready.</p>
+        <p class="eyebrow">Portal Akses Rescue-Net</p>
+        <h2>Masuk &amp; Registrasi</h2>
+        <p class="subtitle">Akses platform Rescue-Net untuk terhubung, berbagi, dan menolong lebih cepat.</p>
+        <p class="subtitle" id="authStatus" role="status" aria-live="polite">Siap.</p>
       </div>
-      <button class="btn" id="logoutBtn">Logout Local</button>
+      <button class="btn" id="logoutBtn" hidden>Keluar</button>
     </header>
 
-    <section class="content-grid">
-      <div class="panel">
-        <h3>Current Session</h3>
-        <div class="summary-list" id="currentUser">
-          <div><span>Status</span><b>Loading</b></div>
-        </div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Demo Login</h3>
-        <p class="subtitle">Prototype role session. Production nanti pakai auth beneran.</p>
-        <div class="form-actions">
-          <button class="btn primary" data-demo-login="command">Command Center</button>
-          <button class="btn" data-demo-login="posko-logistik">Posko Logistik</button>
-          <button class="btn" data-demo-login="medical">Medical</button>
-          <button class="btn" data-demo-login="shelter">Shelter</button>
-          <button class="btn" data-demo-login="donor">Donor</button>
-          <button class="btn" data-demo-login="volunteer">Volunteer</button>
-        </div>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <h3>Registration & Onboarding</h3>
-        <p class="subtitle">Gunakan menu ini untuk pendaftaran/operasional yang sudah live.</p>
-
-        <div class="event-list">
-          <article class="event-card">
-            <div class="event-main">
-              <div>
-                <h4>Daftar / Kelola Organisasi & Posko</h4>
-                <p>Pendaftaran organisasi, posko, node type, lokasi, verifikasi awal, dan status operasional.</p>
-              </div>
-              <div class="chips">
-                <a class="btn primary" href="organisasi-posko.html">Open</a>
-              </div>
-            </div>
-          </article>
-
-          <article class="event-card">
-            <div class="event-main">
-              <div>
-                <h4>Verification Approval</h4>
-                <p>Verifikasi organisasi, posko, relawan, bantuan donor, alat kerja, dan laporan sensitif.</p>
-              </div>
-              <div class="chips">
-                <a class="btn primary" href="verification-approval.html">Open</a>
-              </div>
-            </div>
-          </article>
-
-          <article class="event-card">
-            <div class="event-main">
-              <div>
-                <h4>Kirim Bantuan Donor</h4>
-                <p>Form publik untuk donor mengirim bantuan, pickup location, target posko, dan kontak donor.</p>
-              </div>
-              <div class="chips">
-                <a class="btn primary" href="kirim-bantuan.html">Open</a>
-              </div>
-            </div>
-          </article>
-
-          <article class="event-card">
-            <div class="event-main">
-              <div>
-                <h4>Donor Program / Transparency</h4>
-                <p>Program donasi, target, realisasi, evidence, dan kontak PIC program.</p>
-              </div>
-              <div class="chips">
-                <a class="btn primary" href="donor-program.html">Open</a>
-              </div>
-            </div>
-          </article>
-        </div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Access Model</h3>
-        <div class="summary-list">
-          <div><span>Command Center</span><b>Verify & Monitor</b></div>
-          <div><span>Posko Operator</span><b>Stock & Distribution</b></div>
-          <div><span>Medical</span><b>Medical Cases</b></div>
-          <div><span>Shelter</span><b>Occupancy & Needs</b></div>
-          <div><span>Donor</span><b>Aid & Program</b></div>
-          <div><span>Volunteer</span><b>Assignment</b></div>
-        </div>
-      </aside>
-    </section>
-
-    <section class="panel create-panel">
+    <!-- Sudah login: ringkasan sesi -->
+    <section class="panel create-panel" id="sessionPanel" hidden>
       <div class="panel-header">
         <div>
-          <h3>Role Matrix</h3>
-          <p>Daftar role dan scope awal.</p>
+          <h3>Sesi Aktif</h3>
+          <p>Anda sudah masuk ke Rescue-Net.</p>
+        </div>
+        <div class="chips">
+          <a class="btn primary" href="../index.html">Buka Beranda</a>
+          <a class="btn" href="war-room.html?event=event-sim-001">Control Centre</a>
+          <button class="btn" type="button" id="sessionLogout">Keluar</button>
         </div>
       </div>
-      <div class="event-list" id="roleList"></div>
+      <div class="summary-list" id="currentUser"></div>
     </section>
+
+    <!-- Belum login: kartu Masuk / Daftar + rail kepercayaan -->
+    <section class="rn-auth-grid" id="authGrid">
+      <div class="panel rn-auth-card">
+        <div class="rn-auth-tabs" role="tablist">
+          <button class="rn-auth-tab is-active" type="button" role="tab" data-auth-tab="login" aria-selected="true">
+            <i aria-hidden="true">&#128100;</i> Masuk
+          </button>
+          <button class="rn-auth-tab" type="button" role="tab" data-auth-tab="register" aria-selected="false">
+            <i aria-hidden="true">&#10133;</i> Daftar
+          </button>
+        </div>
+
+        <!-- MASUK -->
+        <form class="rn-form rn-auth-form" id="loginForm" data-auth-pane="login" novalidate>
+          <label>Email
+            <input name="email" type="email" autocomplete="username" placeholder="nama@contoh.com" required>
+          </label>
+
+          <label>Password
+            <span class="rn-auth-label-row">
+              <span></span>
+              <a href="#" id="forgotLink" class="rn-auth-mini-link">Lupa password?</a>
+            </span>
+            <span class="rn-auth-pw">
+              <input name="password" type="password" autocomplete="current-password" placeholder="Masukkan password" required>
+              <button type="button" class="rn-auth-pw-toggle" aria-label="Tampilkan password">&#128065;</button>
+            </span>
+          </label>
+
+          <label class="rn-auth-check">
+            <input type="checkbox" name="remember" checked> Ingat saya
+          </label>
+
+          <button class="btn primary rn-auth-submit" type="submit">Masuk <span aria-hidden="true">&#8594;</span></button>
+
+          <div class="rn-auth-divider"><span>atau lanjut dengan</span></div>
+          <a class="btn rn-auth-google" href="/rescue-net-frappe/api/method/frappe.integrations.oauth2_logins.login_via_google?state=auth" id="googleLoginBtn">
+            <span class="rn-auth-g">G</span> Lanjut dengan Google
+          </a>
+
+          <p class="rn-auth-switch">Belum punya akun? <button type="button" class="rn-auth-mini-link" data-auth-tab="register">Daftar sekarang</button></p>
+          <span class="form-message" id="loginMessage" role="alert"></span>
+        </form>
+
+        <!-- DAFTAR -->
+        <form class="rn-form rn-auth-form" id="registerForm" data-auth-pane="register" hidden novalidate>
+          <label>Nama Lengkap
+            <input name="full_name" type="text" autocomplete="name" placeholder="Masukkan nama lengkap" required>
+          </label>
+
+          <label>Email
+            <input name="email" type="email" autocomplete="email" placeholder="nama@contoh.com" required>
+          </label>
+
+          <label>Nomor HP
+            <span class="rn-auth-phone">
+              <span class="rn-auth-phone-cc">+62</span>
+              <input name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="812 3456 7890">
+            </span>
+          </label>
+
+          <label>Password
+            <span class="rn-auth-pw">
+              <input name="password" type="password" autocomplete="new-password" placeholder="Buat password (min. 8 karakter)" required>
+              <button type="button" class="rn-auth-pw-toggle" aria-label="Tampilkan password">&#128065;</button>
+            </span>
+          </label>
+
+          <ul class="rn-auth-rules" id="pwRules">
+            <li data-rule="len"><i aria-hidden="true">&#9675;</i> Minimal 8 karakter</li>
+            <li data-rule="upper"><i aria-hidden="true">&#9675;</i> Minimal 1 huruf besar</li>
+            <li data-rule="digit"><i aria-hidden="true">&#9675;</i> Minimal 1 angka</li>
+          </ul>
+
+          <fieldset class="rn-auth-roles">
+            <legend>Pilih peran Anda</legend>
+            <label><input type="radio" name="role" value="relawan" checked> Relawan</label>
+            <label><input type="radio" name="role" value="donatur"> Donatur</label>
+            <label><input type="radio" name="role" value="organisasi"> Organisasi</label>
+            <label><input type="radio" name="role" value="petugas_posko"> Petugas Posko</label>
+          </fieldset>
+
+          <button class="btn primary rn-auth-submit" type="submit">Daftar <span aria-hidden="true">&#8594;</span></button>
+
+          <div class="rn-auth-divider"><span>atau lanjut dengan</span></div>
+          <a class="btn rn-auth-google" href="/rescue-net-frappe/api/method/frappe.integrations.oauth2_logins.login_via_google?state=auth">
+            <span class="rn-auth-g">G</span> Lanjut dengan Google
+          </a>
+
+          <p class="rn-auth-switch">Sudah punya akun? <button type="button" class="rn-auth-mini-link" data-auth-tab="login">Masuk di sini</button></p>
+          <span class="form-message" id="registerMessage" role="alert"></span>
+        </form>
+      </div>
+
+      <aside class="rn-auth-rail">
+        <div class="panel">
+          <h3>Aman, Terpercaya, Siap Membantu</h3>
+          <p class="subtitle">Rescue-Net melindungi data Anda dan memastikan setiap aksi di platform ini membawa dampak nyata.</p>
+          <div class="rn-auth-trust">
+            <div><i aria-hidden="true">&#9993;</i><div><b>Verifikasi Email</b><span>Pastikan email Anda aktif untuk komunikasi penting.</span></div><span class="chip ok">Terverifikasi</span></div>
+            <div><i aria-hidden="true">&#128241;</i><div><b>OTP HP</b><span>Kode OTP memastikan nomor Anda benar dan aman.</span></div><span class="chip ok">Terverifikasi</span></div>
+            <div><i aria-hidden="true">&#128737;</i><div><b>Google Verified</b><span>Login dengan Google menambah lapisan keamanan akun Anda.</span></div><span class="chip ok">Terverifikasi</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Bergabung sesuai peran Anda</h3>
+          <p class="subtitle">Pilih peran yang paling sesuai untuk pengalaman terbaik.</p>
+          <div class="rn-auth-rolecards">
+            <button type="button" class="rn-auth-rolecard" data-pick-role="relawan"><i aria-hidden="true">&#129309;</i><b>Relawan</b><span>Bantu dalam aksi kemanusiaan</span></button>
+            <button type="button" class="rn-auth-rolecard" data-pick-role="donatur"><i aria-hidden="true">&#128149;</i><b>Donatur</b><span>Salurkan bantuan untuk yang membutuhkan</span></button>
+            <button type="button" class="rn-auth-rolecard" data-pick-role="organisasi"><i aria-hidden="true">&#127970;</i><b>Organisasi</b><span>Kelola tim dan program bantuan</span></button>
+            <button type="button" class="rn-auth-rolecard" data-pick-role="petugas_posko"><i aria-hidden="true">&#127957;</i><b>Petugas Posko</b><span>Kelola data dan laporan di lapangan</span></button>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <footer class="rn-auth-footer">
+      <div><i aria-hidden="true">&#128274;</i><div><b>Data Anda Aman</b><span>Kami menggunakan enkripsi dan standar keamanan tinggi.</span></div></div>
+      <div><i aria-hidden="true">&#9200;</i><div><b>Aksi Cepat &amp; Terkoordinasi</b><span>Informasi real-time untuk respons yang lebih efektif.</span></div></div>
+      <div><i aria-hidden="true">&#128269;</i><div><b>Transparan &amp; Akuntabel</b><span>Setiap bantuan tercatat dan dapat dilacak.</span></div></div>
+      <div><i aria-hidden="true">&#128101;</i><div><b>Bersama Lebih Kuat</b><span>Satu jaringan, banyak kebaikan.</span></div></div>
+    </footer>
   </main>
 </div>
 
-<script src="../assets/js/rn-frappe-client.js?v=frappe-group-f-1"></script>
-<script src="../assets/js/auth.js?v=frappe-group-f-1"></script>
+<script src="../assets/js/rn-frappe-client.js?v=authredesign-20260901"></script>
+<script src="../assets/js/auth.js?v=authredesign-20260901"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
-<script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
 <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=drawer-1"></script>

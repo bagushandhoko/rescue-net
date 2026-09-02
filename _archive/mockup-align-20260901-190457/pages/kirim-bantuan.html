@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Kirim Bantuan</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a class="active" href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">Kirim Bantuan</div>
+
+      <div>
+        <p class="eyebrow">Public Aid Offer</p>
+        <h2>Saya Ingin Kirim Bantuan</h2>
+        <p class="subtitle">
+          Untuk donatur personal, tidak perlu registrasi. Isi data bantuan, pilih perlu pickup atau antar sendiri ke posko.
+        </p>
+      </div>
+      <div class="status-pill">Tanpa Registrasi</div>
+    </header>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Form Bantuan Cepat</h3>
+            <p>Data ini akan masuk ke Management Distribusi dan Posko Logistik.</p>
+          </div>
+        </div>
+
+        <form class="rn-form" data-public-aid-form>
+          <div class="form-grid">
+            <label>
+              Disaster Event ID
+              <input name="disaster_event_id" value="event-aceh-2025" required>
+            </label>
+
+            <label>
+              Nama Donatur
+              <input name="donor_name" placeholder="Nama pribadi / komunitas kecil" required>
+            </label>
+
+            <label>
+              HP / WhatsApp
+              <input name="donor_contact" placeholder="0812xxxx" required>
+            </label>
+
+            <label>
+              Item Bantuan
+              <input name="item_name" placeholder="Air mineral / beras / selimut" required>
+            </label>
+
+            <label>
+              Jumlah
+              <input name="quantity" type="number" step="0.01" placeholder="50" required>
+            </label>
+
+            <label>
+              Satuan
+              <input name="unit" placeholder="dus / kg / pcs" required>
+            </label>
+
+            <label>
+              Lokasi Barang / Pickup
+              <input name="pickup_location" placeholder="Depok / alamat donor" required>
+            </label>
+
+            <label>
+              Kapan Siap
+              <input name="ready_at" placeholder="Hari ini 15:00">
+            </label>
+
+            <label>
+              Cara Pengiriman
+              <select name="delivery_mode">
+                <option value="need_pickup">Saya butuh dijemput</option>
+                <option value="self_deliver_to_posko">Saya antar sendiri ke posko</option>
+                <option value="drop_to_collection_point">Saya drop ke titik pengumpulan</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="form-grid" data-self-deliver-fields style="display:none; margin-top:12px;">
+            <label>
+              Posko Tujuan ID
+              <input name="target_node_id" value="posko-logistik-aceh">
+            </label>
+
+            <label>
+              Nama Posko Tujuan
+              <input name="target_node_name" value="Posko Logistik Aceh Barat Utama">
+            </label>
+
+            <label>
+              Perkiraan Sampai Posko
+              <input name="expected_arrival_at" placeholder="Besok 18:00">
+            </label>
+          </div>
+
+          <label style="display:grid;gap:7px;margin-top:12px;">
+            Catatan
+            <input name="notes" placeholder="Kondisi barang, kemasan, kontak tambahan, dll.">
+          </label>
+
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Kirim Data Bantuan</button>
+          </div>
+        </form>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Setelah Submit</h3>
+        <div class="summary-list">
+          <div><span>Kode Bantuan</span><b>muncul di layar</b></div>
+          <div><span>Kode Edit</span><b>simpan/screenshot</b></div>
+          <div><span>Pickup</span><b>masuk distribusi</b></div>
+          <div><span>Antar sendiri</span><b>incoming posko</b></div>
+        </div>
+
+        <p class="subtitle">
+          Untuk prototype, kode edit tampil di layar. Versi operasional bisa memakai SMS, email, WhatsApp API, atau operator posko.
+        </p>
+      </aside>
+    </section>
+
+    <section data-public-aid-result></section>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=frappe-public-aid-1"></script>
+<script src="../assets/js/public-aid.js?v=frappe-public-aid-1"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

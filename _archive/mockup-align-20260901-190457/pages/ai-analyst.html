@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | AI Analyst</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><img src="../assets/img/rn-logo.png" alt="Rescue-Net"></div>
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="../index.html">Active Disasters</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi & Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search & Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="kirim-bantuan.html">Kirim Bantuan</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a class="active" href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+    <div class="rn-page-mobile-title">AI Analyst</div>
+
+      <div>
+        <p class="eyebrow">RESCUE-NET INTELLIGENCE LAYER</p>
+        <h2>AI Situation Analyst</h2>
+        <p class="subtitle">Analisis situasi bencana berdasarkan data RN: logistik, stok, dapur, medis, shelter, search found, program khusus, dan distribusi.</p>
+        <p class="subtitle" id="aiStatus" data-rn-sync-status>Loading...</p>
+      </div>
+      <div class="form-actions">
+        <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
+        <button class="btn primary" id="refreshAiContext">Refresh Context</button>
+      </div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Posko</span><strong id="aiKpiPosko">0</strong><small>nodes</small></div>
+      <div class="kpi-card warning"><span>Open Needs</span><strong id="aiKpiNeeds">0</strong><small>logistic + shelter</small></div>
+      <div class="kpi-card danger"><span>Alerts</span><strong id="aiKpiAlerts">0</strong><small>risks</small></div>
+      <div class="kpi-card"><span>Programs</span><strong id="aiKpiPrograms">0</strong><small>special programs</small></div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel">
+        <h3>Alerts</h3>
+        <div class="event-list" id="aiAlerts"></div>
+      </div>
+
+      <aside class="panel">
+        <h3>Recommendations</h3>
+        <div class="event-list" id="aiRecommendations"></div>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <h3>Ask AI / Briefing</h3>
+      <form class="rn-form" id="aiAskForm">
+        <label>User ID
+          <input name="user_id" value="user-demo-001">
+        </label>
+        <label>Pertanyaan
+          <textarea name="question" rows="4">Berikan ringkasan situasi, prioritas logistik, shelter, medis, search found, dan program khusus untuk 24 jam ke depan.</textarea>
+        </label>
+        <button class="btn primary" type="submit">Ask AI</button>
+      </form>
+      <div class="event-card" style="margin-top:16px;">
+        <h4>AI Answer</h4>
+        <p id="aiAnswer">Belum ada jawaban.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Sources</h3>
+      <div class="event-list" id="aiSources"></div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/ai-analyst.js?v=ai-analyst-1"></script>
+<script src="../assets/js/rn-frappe-client.js?v=frappe-group-f-1"></script>
+<script src="../assets/js/rn-sync-engine.js?v=frappe-group-f-1"></script>
+<script src="../assets/js/rn-public-header.js?v=eventpicker-20260831"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=poskofn-20260831c"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

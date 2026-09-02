@@ -1045,6 +1045,36 @@ def logistik_board(posko, disaster_event=None):
 
     is_collector = bool(posko_out.get("is_collector"))
 
+    # Field evidence tied to this posko — same unified feed the Control Centre
+    # "Bukti Lapangan" panel uses, narrowed to records that name this posko
+    # (posko link, linked object, or the posko title inside location_text).
+    bukti = []
+    bukti_last_at = None
+    try:
+        ev_event = (
+            frappe.db.get_value("RN Posko", name, "disaster_event")
+            or disaster_event
+        )
+        ptitle = str(posko_out.get("title") or "").lower().strip()
+        for row in event_evidence(ev_event, limit=80):
+            loc = str(row.get("location_text") or "").lower()
+            hit = (
+                row.get("posko") == name
+                or row.get("linked_object_id") == name
+                or (ptitle and len(ptitle) > 4 and ptitle in loc)
+            )
+            if hit:
+                bukti.append(row)
+        bukti.sort(
+            key=lambda r: str(r.get("created_at") or r.get("creation") or ""),
+            reverse=True,
+        )
+        bukti = bukti[:8]
+        if bukti:
+            bukti_last_at = bukti[0].get("created_at") or bukti[0].get("creation")
+    except Exception:
+        bukti = []
+
     return {
         "posko": posko_out,
         "organization": base["organization"],
@@ -1071,6 +1101,9 @@ def logistik_board(posko, disaster_event=None):
         "public_shipments": _public_shipments(name) if full else [],
         "trace": trace,
         "conversions": _LOGISTIK_CONVERSIONS,
+        "bukti": bukti,
+        "bukti_total": len(bukti),
+        "bukti_last_at": bukti_last_at,
     }
 
 
@@ -2290,4 +2323,293 @@ def public_dashboard(
                 )
                 else None
             ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Bencana Aktif dashboard (pages/bencana-aktif.html)
+# ---------------------------------------------------------------------------
+
+_SIT_RANK = {"safe": 0, "warning": 1, "critical": 2}
+_SIT_STATUS = {"safe": "Waspada", "warning": "Siaga", "critical": "Kritis"}
+_SEV_STATUS = {
+    "critical": "Kritis", "urgent": "Siaga", "high": "Siaga",
+    "warning": "Siaga", "normal": "Waspada", "low": "Waspada", "": "Waspada",
+}
+_OPS_CRITICAL = {"critical", "overload", "emergency", "danger"}
+_OPS_WARNING = {"urgent", "warning", "affected", "disrupted"}
+_CRIT_URGENCY = {"critical", "urgent", "high"}
+_CLOSED_NEED = {"fulfilled", "closed", "cancelled", "met", "done"}
+
+
+def _ba_region_key(posko):
+    return (
+        (posko.get("city_name") or "").strip()
+        or (posko.get("province_name") or "").strip()
+        or "Wilayah lain"
+    )
+
+
+def _ba_situation(value):
+    v = str(value or "").lower()
+    if v in _OPS_CRITICAL:
+        return "critical"
+    if v in _OPS_WARNING:
+        return "warning"
+    return "safe"
+
+
+def _ba_max_dt(a, b):
+    if b is None:
+        return a
+    if a is None:
+        return b
+    try:
+        return a if a >= b else b
+    except TypeError:
+        return a
+
+
+def _ba_iso(v):
+    if not v:
+        return None
+    try:
+        return frappe.utils.get_datetime(v).isoformat()
+    except Exception:
+        return str(v)
+
+
+def _ba_dominant_area(poskos):
+    from collections import Counter
+
+    counter = Counter(
+        (p.get("city_name") or p.get("province_name") or "").strip()
+        for p in poskos
+        if (p.get("city_name") or p.get("province_name"))
+    )
+    return counter.most_common(1)[0][0] if counter else None
+
+
+@frappe.whitelist(allow_guest=True)
+def active_disasters_board(limit=60):
+    """Public 'Bencana Aktif' dashboard feed: every active RN Disaster Event
+    with a per-region (kabupaten/kota) breakdown, rolled-up KPI totals, and a
+    short 'isu kritis teratas' list per event. Read-only, guest-safe."""
+    events = frappe.get_all(
+        "RN Disaster Event",
+        filters={"event_status": "active"},
+        fields=_sf("RN Disaster Event", [
+            "name", "legacy_id", "title", "severity", "event_status",
+            "started_at", "location_summary", "modified",
+        ]),
+        order_by="started_at desc",
+        limit_page_length=int(limit),
+    )
+
+    posko_cols = cols("RN Posko")
+    need_cols = cols("RN Logistic Need")
+    flow_cols = cols("RN Distribution Flow")
+
+    out_events = []
+    tot_jiwa = tot_krit = tot_hambat = tot_pkritis = 0
+
+    for ev in events:
+        event_id = ev["name"]
+
+        poskos = frappe.get_all(
+            "RN Posko",
+            filters=event_filters(posko_cols, event_id),
+            fields=_sf("RN Posko", [
+                "name", "title", "city_name", "province_name", "address",
+                "posko_type", "operational_status", "organization",
+                "rn_beneficiary_count", "rn_fn_shelter", "modified",
+            ]),
+            limit_page_length=500,
+        )
+        needs = frappe.get_all(
+            "RN Logistic Need",
+            filters=event_filters(need_cols, event_id),
+            fields=_sf("RN Logistic Need", [
+                "name", "item_name", "urgency", "need_status", "posko", "modified",
+            ]),
+            limit_page_length=500,
+        )
+        flows = frappe.get_all(
+            "RN Distribution Flow",
+            filters=event_filters(flow_cols, event_id),
+            fields=_sf("RN Distribution Flow", [
+                "name", "item_name", "flow_status", "destination_posko", "modified",
+            ]),
+            limit_page_length=500,
+        )
+
+        posko_region = {p["name"]: _ba_region_key(p) for p in poskos}
+        posko_title = {p["name"]: (p.get("title") or p["name"]) for p in poskos}
+
+        crit_needs = [
+            n for n in needs
+            if str(n.get("urgency") or "").lower() in _CRIT_URGENCY
+            and str(n.get("need_status") or "open").lower() not in _CLOSED_NEED
+        ]
+        blocked_flows = [
+            f for f in flows
+            if str(f.get("flow_status") or "").lower() in _DRILL_BLOCKED_FLOW
+        ]
+
+        short_ev = str(ev["name"]).replace("disaster_events:", "")
+
+        kebutuhan_items = [
+            {
+                "item": n.get("item_name") or "Kebutuhan logistik",
+                "urgency": str(n.get("urgency") or "").lower(),
+                "posko": n.get("posko"),
+                "posko_title": posko_title.get(n.get("posko")) or n.get("posko") or "-",
+                "region": posko_region.get(n.get("posko")) or "Lintas wilayah",
+                "href": (
+                    "posko-logistik.html?id="
+                    + str(n.get("posko") or "").replace("posko_nodes:", "")
+                    + "&event=" + short_ev
+                    + "&penuhi=" + (n.get("item_name") or "")
+                ) if n.get("posko") else ("war-room.html?event=" + short_ev),
+            }
+            for n in sorted(
+                crit_needs,
+                key=lambda n: 0
+                if str(n.get("urgency") or "").lower() == "critical" else 1,
+            )
+        ]
+        distribusi_items = [
+            {
+                "item": f.get("item_name") or "Distribusi",
+                "status": str(f.get("flow_status") or "").lower(),
+                "posko": f.get("destination_posko"),
+                "posko_title": posko_title.get(f.get("destination_posko"))
+                or f.get("destination_posko") or "-",
+                "region": posko_region.get(f.get("destination_posko")) or "Lintas wilayah",
+                "href": "management-distribusi.html?event=" + short_ev,
+            }
+            for f in blocked_flows
+        ]
+        posko_kritis_items = [
+            {
+                "posko": p["name"],
+                "posko_title": p.get("title") or p["name"],
+                "region": posko_region[p["name"]],
+                "type": p.get("posko_type"),
+                "href": (
+                    "posko-detail.html?id="
+                    + str(p["name"]).replace("posko_nodes:", "")
+                    + "&event=" + short_ev
+                ),
+            }
+            for p in poskos
+            if _ba_situation(p.get("operational_status")) == "critical"
+        ]
+
+        jiwa = sum(int(_num(p.get("rn_beneficiary_count"))) for p in poskos)
+        pengungsi = sum(
+            int(_num(p.get("rn_beneficiary_count")))
+            for p in poskos
+            if p.get("rn_fn_shelter")
+            or str(p.get("posko_type") or "").lower() == "shelter"
+        )
+
+        regions = {}
+        for p in poskos:
+            key = posko_region[p["name"]]
+            row = regions.setdefault(key, {
+                "name": key, "jiwa_berisiko": 0, "kebutuhan_kritis": 0,
+                "distribusi": 0, "situation": "safe", "posko_count": 0,
+                "last_updated": None,
+            })
+            row["posko_count"] += 1
+            row["jiwa_berisiko"] += int(_num(p.get("rn_beneficiary_count")))
+            sit = _ba_situation(p.get("operational_status"))
+            if _SIT_RANK[sit] > _SIT_RANK[row["situation"]]:
+                row["situation"] = sit
+            row["last_updated"] = _ba_max_dt(row["last_updated"], p.get("modified"))
+
+        for n in crit_needs:
+            key = posko_region.get(n.get("posko"))
+            if key in regions:
+                regions[key]["kebutuhan_kritis"] += 1
+                regions[key]["last_updated"] = _ba_max_dt(
+                    regions[key]["last_updated"], n.get("modified"))
+        for f in flows:
+            key = posko_region.get(f.get("destination_posko"))
+            if key in regions:
+                regions[key]["distribusi"] += 1
+
+        region_rows = sorted(
+            regions.values(),
+            key=lambda r: (-_SIT_RANK[r["situation"]], -r["jiwa_berisiko"]),
+        )
+        for row in region_rows:
+            row["status_label"] = _SIT_STATUS[row["situation"]]
+            row["last_updated"] = _ba_iso(row["last_updated"])
+
+        isu = []
+        for it in kebutuhan_items[:6]:
+            isu.append({
+                "kind": "kebutuhan",
+                "title": it["item"],
+                "detail": it["region"],
+                "level": "Sangat Tinggi" if it["urgency"] == "critical" else "Tinggi",
+                "href": it["href"],
+            })
+        for it in posko_kritis_items:
+            isu.append({
+                "kind": "posko",
+                "title": it["posko_title"] + " berstatus kritis",
+                "detail": it["region"],
+                "level": "Sangat Tinggi",
+                "href": it["href"],
+            })
+        isu = isu[:6]
+
+        last_updated = ev.get("modified")
+        for coll in (poskos, needs, flows):
+            for row in coll:
+                last_updated = _ba_max_dt(last_updated, row.get("modified"))
+
+        sev = str(ev.get("severity") or "normal").lower()
+        out_events.append({
+            "id": ev.get("legacy_id") or ev["name"],
+            "event_id": ev["name"],
+            "name": ev.get("title") or ev["name"],
+            "location": ev.get("location_summary")
+            or _ba_dominant_area(poskos) or "Indonesia",
+            "severity": sev,
+            "status_label": _SEV_STATUS.get(sev, "Waspada"),
+            "started_at": _ba_iso(ev.get("started_at")),
+            "last_updated": _ba_iso(last_updated),
+            "jiwa_berisiko": jiwa,
+            "pengungsi": pengungsi,
+            "kebutuhan_kritis": len(crit_needs),
+            "distribusi_terhambat": len(blocked_flows),
+            "distribusi_total": len(flows),
+            "posko_count": len(poskos),
+            "posko_kritis": len(posko_kritis_items),
+            "regions": region_rows,
+            "isu_kritis": isu,
+            "kebutuhan_items": kebutuhan_items,
+            "distribusi_items": distribusi_items,
+            "posko_kritis_items": posko_kritis_items,
+        })
+
+        tot_jiwa += jiwa
+        tot_krit += len(crit_needs)
+        tot_hambat += len(blocked_flows)
+        tot_pkritis += len(posko_kritis_items)
+
+    return {
+        "generated_at": _ba_iso(frappe.utils.now_datetime()),
+        "totals": {
+            "bencana_aktif": len(out_events),
+            "jiwa_berisiko": tot_jiwa,
+            "kebutuhan_kritis": tot_krit,
+            "distribusi_terhambat": tot_hambat,
+            "posko_kritis": tot_pkritis,
+        },
+        "events": out_events,
     }

@@ -781,6 +781,17 @@ def _build_context(disaster_event_id, public=False):
         50,
     )
 
+    volunteers = _rows(
+        "RN Volunteer Assignment",
+        resolved_event,
+        [
+            "status",
+            "assignment_type",
+            "posko",
+        ],
+        200,
+    )
+
     shelter_occ = _rows(
         "RN Shelter Occupancy",
         resolved_event,
@@ -916,6 +927,10 @@ def _build_context(disaster_event_id, public=False):
             len(flows),
         "medical_case_count":
             len(medical),
+        "volunteer_count":
+            len(volunteers),
+        "volunteer_assignment_count":
+            len(volunteers),
         "shelter_occupancy_count":
             len(shelter_occ),
         "shelter_need_count":

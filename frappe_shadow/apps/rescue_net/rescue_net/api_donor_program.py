@@ -1,7 +1,9 @@
+from collections import defaultdict
+
 import frappe
 from rescue_net.reference_resolver import resolve_disaster_event
 
-from frappe.utils import flt, now_datetime
+from frappe.utils import flt, now_datetime, nowdate
 
 from rescue_net.api_kitchen import (
     rn_actor,
@@ -1184,4 +1186,228 @@ def get_special_program(
             dict(x)
             for x in updates
         ],
+    }
+
+
+# ===== PROGRAM KHUSUS BOARD (guest, matches the DMS mock-up) =====
+
+_PROGRAM_TYPE_LABELS = {
+    "special_program": "Program Khusus",
+    "energy_support": "Energi & Penerangan",
+    "water_sanitation": "Air & Sanitasi",
+    "shelter": "Shelter",
+    "health": "Kesehatan",
+    "nutrition": "Pangan & Gizi",
+    "logistics": "Logistik & Pangan",
+    "education": "Pendidikan",
+    "psychosocial": "Psikososial",
+    "livelihood": "Pemulihan Ekonomi",
+    "wildlife": "Satwa & Lingkungan",
+}
+
+_PRIORITY_CRITICAL = {"critical", "urgent", "high", "tinggi", "darurat"}
+
+
+def _program_type_label(value):
+    if not value:
+        return "Lainnya"
+    return _PROGRAM_TYPE_LABELS.get(value, value.replace("_", " ").title())
+
+
+def _pk_drill(title, sub, href=""):
+    return {"title": title, "sub": sub, "href": href}
+
+
+@frappe.whitelist(allow_guest=True)
+def program_board(disaster_event=None):
+    """Program Khusus dashboard (matches the DMS mock-up), guest read-only.
+
+    Shows every public RN Donor Program for the event regardless of
+    program_type (program_type is just a category label, e.g.
+    energy_support/water_sanitation/health — "special_program" was only
+    ever the create-form's default value, not a real scoping filter).
+    """
+    event = resolve_disaster_event(disaster_event)
+
+    filters = {"public_visibility": "summary_public"}
+    if event:
+        filters["disaster_event"] = event
+
+    rows = frappe.get_all(
+        "RN Donor Program",
+        filters=filters,
+        fields=SPECIAL_PROGRAM_FIELDS,
+        order_by="creation desc",
+        limit_page_length=1000,
+        ignore_permissions=True,
+    )
+
+    names = [r.name for r in rows]
+    updates = frappe.get_all(
+        "RN Donor Program Update",
+        filters={"program": ["in", names], "public_visibility": "summary_public"},
+        fields=["program", "progress_percent", "update_type", "observed_at", "creation"],
+        order_by="creation desc",
+        limit_page_length=3000,
+    ) if names else []
+
+    updates_by_program = defaultdict(list)
+    for u in updates:
+        updates_by_program[u.program].append(u)
+
+    today = nowdate()
+    programs = []
+    for r in rows:
+        prog_updates = updates_by_program.get(r.name, [])
+        if prog_updates:
+            progress = flt(prog_updates[0].progress_percent)
+        elif flt(r.target_amount) > 0:
+            progress = round(min(100.0, 100.0 * flt(r.current_amount) / flt(r.target_amount)), 1)
+        else:
+            progress = 0.0
+
+        location = r.target_location or r.location or "-"
+        is_late = bool(
+            r.status == "active"
+            and r.end_date
+            and str(r.end_date) < str(today)
+        )
+
+        programs.append({
+            "name": r.name,
+            "program_name": r.program_name,
+            "category": _program_type_label(r.program_type),
+            "location": location,
+            "status": r.status,
+            "priority": r.priority,
+            "progress_percent": progress,
+            "target_description": r.target_description,
+            "target_beneficiaries": r.target_beneficiaries,
+            "budget_target": flt(r.budget_target),
+            "budget_received": flt(r.budget_received),
+            "budget_spent": flt(r.budget_spent),
+            "start_date": r.start_date,
+            "end_date": r.end_date,
+            "update_count": len(prog_updates),
+            "is_late": is_late,
+        })
+
+    active = [p for p in programs if p["status"] == "active"]
+    critical = [
+        p for p in programs
+        if (p["priority"] or "").lower() in _PRIORITY_CRITICAL and p["status"] != "completed"
+    ]
+    completed = [p for p in programs if p["status"] == "completed"]
+    late = [p for p in programs if p["is_late"]]
+    underserved_locations = {
+        p["location"] for p in active
+        if p["update_count"] == 0 and p["location"] != "-"
+    }
+    needs_support = [
+        p for p in active
+        if (p["priority"] or "").lower() in _PRIORITY_CRITICAL and p["progress_percent"] < 50
+    ]
+
+    totals = {
+        "program_aktif": len(active),
+        "program_critical": len(critical),
+        "program_selesai": len(completed),
+        "milestone_terlambat": len(late),
+        "lokasi_belum_terlayani": len(underserved_locations),
+        "butuh_support": len(needs_support),
+    }
+
+    kpi_items = {
+        "program_aktif_items": [
+            _pk_drill(p["program_name"], p["category"] + " · " + p["location"]) for p in active
+        ],
+        "program_critical_items": [
+            _pk_drill(p["program_name"], p["location"] + " · prioritas " + (p["priority"] or "-"))
+            for p in critical
+        ],
+        "program_selesai_items": [
+            _pk_drill(p["program_name"], p["location"]) for p in completed
+        ],
+        "milestone_terlambat_items": [
+            _pk_drill(p["program_name"], "Target selesai " + str(p["end_date"])) for p in late
+        ],
+        "lokasi_belum_terlayani_items": [
+            _pk_drill(loc, "Belum ada update program") for loc in underserved_locations
+        ],
+        "butuh_support_items": [
+            _pk_drill(p["program_name"], f"Progress {p['progress_percent']}% · prioritas {p['priority'] or '-'}")
+            for p in needs_support
+        ],
+    }
+
+    return {
+        "disaster_event": event,
+        "generated_at": now_datetime(),
+        "totals": totals,
+        "kpi_items": kpi_items,
+        "programs": programs,
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def program_detail(program):
+    row = frappe.db.get_value(
+        "RN Donor Program", program, SPECIAL_PROGRAM_FIELDS, as_dict=True,
+    )
+
+    if not row or row.public_visibility != "summary_public":
+        frappe.throw("Program tidak ditemukan atau tidak publik", frappe.DoesNotExistError)
+
+    updates = frappe.get_all(
+        "RN Donor Program Update",
+        filters={"program": program, "public_visibility": "summary_public"},
+        fields=UPDATE_FIELDS,
+        order_by="creation desc",
+        limit_page_length=500,
+    )
+
+    if updates:
+        progress = flt(updates[0].progress_percent)
+    elif flt(row.target_amount) > 0:
+        progress = round(min(100.0, 100.0 * flt(row.current_amount) / flt(row.target_amount)), 1)
+    else:
+        progress = 0.0
+
+    bukti = []
+    try:
+        from rescue_net.api_control_centre import event_evidence
+
+        title_l = (row.program_name or "").lower()
+        loc_l = (row.target_location or row.location or "").lower()
+
+        for ev in event_evidence(row.disaster_event, limit=150):
+            loc = str(ev.get("location_text") or "").lower()
+            hit = (
+                (title_l and len(title_l) > 4 and title_l in loc)
+                or (loc_l and len(loc_l) > 3 and loc_l in loc)
+            )
+            if hit:
+                bukti.append(ev)
+
+        bukti.sort(
+            key=lambda r: str(r.get("created_at") or r.get("creation") or ""),
+            reverse=True,
+        )
+        bukti = bukti[:8]
+    except Exception:
+        bukti = []
+
+    return {
+        "program": {
+            **dict(row),
+            "category": _program_type_label(row.program_type),
+            "progress_percent": progress,
+        },
+        "updates": [dict(u) for u in updates],
+        "bukti": bukti,
+        "note": (
+            "Rencana Kerja/Dokumen tidak dimodelkan sebagai daftar rinci "
+            "terpisah — gunakan Anggaran (target/diterima/terpakai) dan "
+            "Riwayat Update sebagai sumber kebenaran progres program."
+        ),
     }

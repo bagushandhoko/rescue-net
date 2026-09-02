@@ -1220,6 +1220,77 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
     errors.
   - Cache-buster: `style.css`/`alat-kerja.js` → `?v=alatkerja-20260902b`.
 
+- **Public header redesigned (2026-09-02, "renggang, kaya web amatiran"):**
+  the header worked correctly but looked unprofessional — 68px tall, two
+  wrapped rows, 20px gaps, a lone logo with no wordmark, "Login/registrasi"
+  as a bare unstyled link, a 260px-wide event-picker select. Redesigned for
+  density: added a "Rescue-Net" wordmark next to the logo; pulled the login
+  link out of the nav-links row into its own grid cell as a solid coral CTA
+  button; tightened link padding/font/gaps and switched centered→left-
+  aligned so all 9 links fit one row at common desktop widths (measured via
+  Playwright: natural nowrap width 924px→779px vs 806px available column,
+  down from the original 947px overflow bug fixed earlier); shrunk the
+  event-picker (260px/38px→200px/32px) and header height (68px→56px, with
+  the `.sidebar`/`.app-shell` top-offset calc()s updated to match). Mirrored
+  into `rn-public-header-standalone.css` for Control Centre. This is a
+  judgment-call redesign (not a bug fix) — if the owner wants further
+  tightening or a different visual direction, expect another round.
+
+- **Program Khusus (`pages/program-khusus.html` + `assets/js/
+  program-khusus.js`) — BUILT & DEPLOYED (2026-09-02), step 10/12.** 6 KPIs
+  (Program Aktif/Critical/Selesai/Milestone Terlambat/Lokasi Belum
+  Terlayani/Butuh Support) with drill modal, Daftar Program list (tabs
+  Semua/Aktif/Critical/Selesai, progress bars) driving a detail panel with
+  Ringkasan/Anggaran/Riwayat tabs. Old "Buat Program"/"Update Progress"
+  forms preserved in `<details>`.
+  - **Backend:** new guest endpoints `api_donor_program.program_board`/
+    `program_detail`. Key discovery: `program_type == "special_program"`
+    was never a real scoping filter — it was only ever the create-form's
+    default value; real seeded programs use domain-specific types
+    (nutrition/education/psychosocial/energy_support/health/
+    water_sanitation). Dropped that filter entirely — the board now shows
+    every public `RN Donor Program` regardless of type, using
+    `program_type` purely as a display category label.
+  - **Honest deviations from the mock-up** (documented in the plan doc, not
+    silently dropped): "Rencana Kerja"/"Dokumen"/"Catatan" as separate
+    tabs, a "Lokasi Implementasi" mini-map, and "Verifikasi Output" were
+    NOT built — no per-line rencana-kerja/dokumen data or per-program
+    coordinates exist in the data model, and Anggaran + Riwayat Update
+    already serve as an honest progress source of truth. The 4 mock-up
+    "Support" cards (Logistik/Distribusi/Relawan/Alat Kerja) are real
+    deep-links to the relevant module pages, not a fabricated "Butuh
+    Support" status/quantity — no relational field ties a Donor Program to
+    a specific need in another module, so faking that status would have
+    been invented data.
+  - **KPIs are honestly derived, not fabricated:** "Milestone Terlambat" =
+    active programs whose real `end_date` has already passed; "Lokasi
+    Belum Terlayani" = distinct locations among active programs with zero
+    updates; "Butuh Support" = active + high/critical priority + progress
+    <50%, all from real fields. `progress_percent` uses the latest real
+    Update's value when one exists, else derives from
+    `current_amount/target_amount` — never fabricated.
+  - **Data was thin, enriched rather than invented:** the 4 existing
+    event-sim-001 `RN Donor Program` rows had zero budget/date/officer
+    fields and 3 had never received an Update — filled in budget_target/
+    received/spent, start/end dates, officer_in_charge, and added a real
+    Update per program using each program's own existing
+    current_amount/target_amount ratio (not arbitrary numbers). Added 2
+    more programs (Toilet Portable Darurat [active, 45%], Pos Kesehatan
+    Keliling [completed, 100%]) to round out the KPI/filter demo (one late
+    milestone, one completed example, etc.).
+  - Fixing the same recurring guest-whitelist bug on the legacy panel's
+    `context()` endpoint was offered and the owner declined this time
+    ("Jangan, biarkan") — legacy drawer still shows a 403 for guests,
+    left as-is; the new `program_board`/`program_detail` guest endpoints
+    are unaffected and fully functional.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted.
+    Playwright `/volume1/docker/osiun-playwright-check/rn-progkhusus.js`:
+    6 KPIs correct, 6 program cards, filter tabs work, card selection
+    swaps detail panel, Anggaran/Riwayat tabs render real data, KPI drill
+    modal works, zero mobile overflow, zero console errors (aside from the
+    intentionally-left-alone legacy 403).
+  - Cache-buster: `style.css`/`program-khusus.js` → `?v=progkhusus-20260902`.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

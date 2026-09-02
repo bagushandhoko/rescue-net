@@ -263,21 +263,34 @@ Mockup: `search & found.png`
 - **BACKEND:** `api_search_found.search_board(disaster_event)` guest →
   `{totals, matches, reunifications, identification_stats, claims, evidence}`.
 
-### 4.10 Program Khusus — `pages/program-khusus.html` + `assets/js/*` (baru `program-khusus.js`)
+### 4.10 ✅ Program Khusus — `pages/program-khusus.html` + `assets/js/program-khusus.js` — DONE 2026-09-02
 Mockup: `program khusus.png`
 - **PERTAHANKAN:** "Daftar Program", form "Buat Program", form "Update Progress
-  Program".
-- **TAMBAH:** 6 KPI (Program Aktif / Critical / Selesai / Milestone Terlambat /
-  Lokasi Belum Terlayani / Butuh Support Distribusi); kiri **Daftar Program** kartu
-  (image + nama + kategori + lokasi + progress) + tab Semua/Aktif/Critical/Selesai;
-  tengah **detail program terpilih** (header + Overall Progress + Target/Tercapai +
-  tab Ringkasan / Rencana Kerja / Anggaran / Dokumen / Catatan / Riwayat →
-  Target & Milestone, Lokasi Implementasi mini-map, Kebutuhan Program, 4 kartu
-  Support (Logistik/Distribusi/Relawan/Alat Kerja) + Ajukan Support, Progress
-  Lapangan, Evidence Program, Verifikasi Output).
-- **BACKEND:** `api_control_centre` / `api_recovery` → `program_board(disaster_event)`
-  + `program_detail(program)` guest. Sumber: `RN Donor Program`, `RN Action Plan`,
-  `RN Recovery Project`.
+  Program" — moved into `<details class="rn-input-drawer">`, kept fully working.
+- **TAMBAH (real data):** 6 KPI (Program Aktif / Critical / Selesai / Milestone
+  Terlambat / Lokasi Belum Terlayani / Butuh Support) with drill modal; kiri
+  **Daftar Program** kartu (nama + kategori + lokasi + progress bar) + tab
+  Semua/Aktif/Critical/Selesai; kanan **detail program terpilih** (header +
+  Overall Progress + Target/Tercapai + tab **Ringkasan** (deskripsi, PJ,
+  periode, sasaran, Evidence Program strip, 4 kartu Support dengan deep-link
+  ke modul terkait) / **Anggaran** (target/diterima/terpakai) / **Riwayat**
+  (real `RN Donor Program Update` timeline)).
+- **Deviasi jujur dari mock-up:** "Rencana Kerja"/"Dokumen"/"Catatan" sebagai
+  tab terpisah, "Lokasi Implementasi" mini-map, dan "Verifikasi Output" TIDAK
+  dibangun — tidak ada data rinci per-baris (rencana kerja/dokumen) atau
+  koordinat per-program di model data; Anggaran + Riwayat Update sudah jadi
+  sumber kebenaran progres yang jujur. 4 kartu Support (Logistik/Distribusi/
+  Relawan/Alat Kerja) adalah deep-link nyata ke modul terkait, BUKAN status
+  "Butuh Support"/kuantitas fabrikasi — tidak ada field relasional yang
+  menghubungkan program ke kebutuhan spesifik modul lain di data model saat
+  ini.
+- **BACKEND:** `api_donor_program.program_board(disaster_event)` +
+  `program_detail(program)`, keduanya guest. Sumber: `RN Donor Program` (field
+  `program_type` dipakai sebagai label kategori — bukan filter, "special_program"
+  ternyata cuma default form lama, bukan flag scoping nyata) + `RN Donor
+  Program Update`. Evidence Program pakai `event_evidence()` yang sama
+  (dicocokkan by nama program/lokasi ke `location_text`, pola sama dengan
+  Dapur Umum/Posko Logistik).
 
 ### 4.11 ✅ Profil Sumber Daya — `pages/resource-profile.html` + `assets/js/resource-profile.js` — DONE 2026-09-02
 Mockup: `Profil Sumber Daya.png` — turned out to be a **personal volunteer/
@@ -391,7 +404,9 @@ Batch by kesiapan backend & kemiripan (pakai komponen bagian 3):
    endpoint; turned out to be a personal volunteer profile, not a directory —
    old directory kept in `<details>`; 2 new RN Volunteer Profile fields). Lihat
    `HANDOVER.md`.
-10. **Program Khusus** — gabung `api_recovery` / `api_donor_program`.
+10. ✅ **Program Khusus** — DONE 2026-09-02 (`api_donor_program.program_board`/
+    `program_detail` guest; program_type dipakai sebagai kategori, bukan filter).
+    Lihat `HANDOVER.md`.
 11. **Alat Komunikasi** (halaman baru) — perlu doctype/seed, paling banyak kerja baru.
 12. **Pass responsif HP** — setelah semua halaman di atas jadi.
 
@@ -423,5 +438,5 @@ Tiap endpoint dashboard mengembalikan, selain `totals` + data panel:
 - [x] `api_control_centre.org_posko_board(disaster_event)` + `posko_verification_checklist` — DONE 2026-09-02
 - [x] `api_resource_tools.tools_board(disaster_event)`
 - [x] `api_resource_tools.resource_profile_board(user_account)`
-- [ ] `program_board(disaster_event)` + `program_detail(program)`
+- [x] `program_board(disaster_event)` + `program_detail(program)`
 - [ ] `comms_board(disaster_event)` (+ doctype/seed alat komunikasi)

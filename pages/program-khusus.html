@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
-  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=progkhusus-20260902">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navfix-20260902" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand">
-      <div class="brand-mark"><img src="../assets/img/rn-logo.png" alt="Rescue-Net"></div>
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
       <div>
         <h1>Rescue-Net</h1>
         <p>Disaster Management System</p>
@@ -50,96 +50,205 @@
     <div class="rn-page-mobile-title">Program Khusus</div>
 
       <div>
-        <p class="eyebrow">DONOR & SPECIAL PROGRAM</p>
+        <p class="eyebrow">Donor & Special Program</p>
         <h2>Program Khusus</h2>
-        <p class="subtitle">Kelola program bantuan khusus: PLTS, air bersih, obat, dapur umum, infrastruktur darurat, dan program donor.</p>
-        <p class="subtitle" id="programStatus" data-rn-sync-status>Loading...</p>
+        <p class="subtitle">Pantau implementasi proyek & program bantuan dari perencanaan hingga verifikasi output.</p>
+        <p class="subtitle" id="programStatus">Memuat…</p>
       </div>
+      <div class="status-pill" id="programUpdated">Program · Live</div>
+    </header>
+
+    <section class="kpi-grid rn-pk-kpi">
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="program_aktif">
+        <span>Program Aktif</span><strong id="kpiAktif">-</strong><small>berjalan</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="program_critical">
+        <span>Program Critical</span><strong id="kpiCritical">-</strong><small>prioritas tinggi</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="program_selesai">
+        <span>Program Selesai</span><strong id="kpiSelesai">-</strong><small>tuntas</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="milestone_terlambat">
+        <span>Milestone Terlambat</span><strong id="kpiTerlambat">-</strong><small>lewat target selesai</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="lokasi_belum_terlayani">
+        <span>Lokasi Belum Terlayani</span><strong id="kpiLokasi">-</strong><small>belum ada update</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="butuh_support">
+        <span>Butuh Support</span><strong id="kpiSupport">-</strong><small>prioritas tinggi, progress rendah</small>
+      </button>
+    </section>
+
+    <section class="content-grid rn-pk-row">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Daftar Program</h3><p>Program bantuan khusus per bencana.</p></div>
+        </div>
+        <div class="rn-tabs rn-pk-filter-tabs" id="programTabs">
+          <button class="rn-tab is-active" data-filter="semua" type="button">Semua</button>
+          <button class="rn-tab" data-filter="aktif" type="button">Aktif</button>
+          <button class="rn-tab" data-filter="critical" type="button">Critical</button>
+          <button class="rn-tab" data-filter="selesai" type="button">Selesai</button>
+        </div>
+        <div class="rn-pk-list" id="programList"></div>
+      </div>
+
+      <div class="panel" id="programDetailPanel">
+        <div id="detailEmpty" class="rn-muted">Pilih program dari daftar untuk melihat detail.</div>
+        <div id="detailBody" hidden>
+          <div class="rn-pk-detail-head">
+            <h3 id="detailName">-</h3>
+            <span class="chip" id="detailStatus"></span>
+          </div>
+          <div class="rn-pk-detail-meta" id="detailMeta"></div>
+
+          <div class="rn-pk-progress-row">
+            <div class="rn-pk-progress-pct" id="detailProgressPct">0%</div>
+            <div class="rn-pk-progress-bar-wrap">
+              <div class="rn-pk-progress-bar"><div id="detailProgressBar" style="width:0%"></div></div>
+              <div class="rn-pk-bar-label"><span>Target: <b id="detailTarget">-</b></span><span>Tercapai: <b id="detailCurrent">-</b></span></div>
+            </div>
+          </div>
+
+          <div class="rn-tabs rn-pk-detail-tabs" id="detailTabs">
+            <button class="rn-tab is-active" data-tab="ringkasan" type="button">Ringkasan</button>
+            <button class="rn-tab" data-tab="anggaran" type="button">Anggaran</button>
+            <button class="rn-tab" data-tab="riwayat" type="button">Riwayat</button>
+          </div>
+
+          <div id="tabRingkasan">
+            <p id="detailDescription" class="rn-muted"></p>
+            <div class="rn-dp-target">
+              <div><span>Penanggung Jawab</span><b id="detailOfficer">-</b><small id="detailOfficerPhone"></small></div>
+              <div><span>Periode</span><b id="detailPeriod">-</b></div>
+              <div><span>Sasaran</span><b id="detailBeneficiaries">-</b></div>
+            </div>
+            <h4 style="margin-top:16px;">Evidence Program</h4>
+            <div class="rn-bukti-grid" id="detailEvidence"></div>
+            <div class="rn-pk-support-grid">
+              <div class="rn-pk-support-tile"><b>Support Logistik</b><a href="posko-logistik.html">Ajukan Support →</a></div>
+              <div class="rn-pk-support-tile"><b>Support Distribusi</b><a href="management-distribusi.html">Ajukan Support →</a></div>
+              <div class="rn-pk-support-tile"><b>Support Relawan</b><a href="management-relawan.html">Ajukan Support →</a></div>
+              <div class="rn-pk-support-tile"><b>Support Alat Kerja</b><a href="alat-kerja.html">Ajukan Support →</a></div>
+            </div>
+          </div>
+
+          <div id="tabAnggaran" hidden>
+            <div class="rn-pk-budget-grid">
+              <div class="rn-pk-budget-tile"><span>Target Anggaran</span><b id="budgetTarget">-</b></div>
+              <div class="rn-pk-budget-tile"><span>Diterima</span><b id="budgetReceived">-</b></div>
+              <div class="rn-pk-budget-tile"><span>Terpakai</span><b id="budgetSpent">-</b></div>
+            </div>
+            <p class="rn-muted">Anggaran dicatat per program dari donasi/alokasi yang diterima; belum ada rincian per-baris belanja terpisah.</p>
+          </div>
+
+          <div id="tabRiwayat" hidden>
+            <div class="event-list" id="detailUpdates"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <details class="panel rn-input-drawer">
+      <summary><h3>Buat Program & Update Progress (Form Lama)</h3></summary>
+
       <div class="form-actions">
         <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
         <button class="btn primary" type="button" id="refreshPrograms">Refresh</button>
       </div>
-    </header>
 
-    <section class="kpi-grid">
-      <div class="kpi-card"><span>Programs</span><strong id="kpiPrograms">0</strong><small>active/scheduled</small></div>
-      <div class="kpi-card warning"><span>Target</span><strong id="kpiBudgetTarget">0</strong><small>target/current value</small></div>
-      <div class="kpi-card"><span>Current</span><strong id="kpiBudgetReceived">0</strong><small>current amount</small></div>
-      <div class="kpi-card danger"><span>Updates</span><strong id="kpiUpdates">0</strong><small>progress records</small></div>
-    </section>
+      <section class="kpi-grid">
+        <div class="kpi-card"><span>Programs</span><strong id="kpiPrograms">0</strong><small>active/scheduled</small></div>
+        <div class="kpi-card warning"><span>Target</span><strong id="kpiBudgetTarget">0</strong><small>target/current value</small></div>
+        <div class="kpi-card"><span>Current</span><strong id="kpiBudgetReceived">0</strong><small>current amount</small></div>
+        <div class="kpi-card danger"><span>Updates</span><strong id="kpiUpdates">0</strong><small>progress records</small></div>
+      </section>
 
-    <section class="content-grid">
-      <div class="panel">
+      <section class="content-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Daftar Program</h3>
+              <p>Program bantuan khusus per bencana.</p>
+            </div>
+          </div>
+          <div class="event-list" id="programListLegacy"></div>
+        </div>
+
+        <aside class="panel">
+          <h3>Buat Program</h3>
+          <form class="rn-form" id="programForm">
+            <label>Nama Program
+              <input name="program_name" value="Program PLTS Darurat untuk Posko Gelap" required>
+            </label>
+            <label>Jenis Program
+              <input name="program_type" value="energy_support">
+            </label>
+            <label>Owner ID
+              <input name="owner_id" value="org-sim-bpbd">
+            </label>
+            <label>Target Lokasi
+              <input name="target_description" value="Shelter Simulasi dan Dapur Umum">
+            </label>
+            <label>Target Amount
+              <input name="target_amount" type="number" value="50000000">
+            </label>
+            <label>Catatan
+              <textarea name="notes" rows="4">Pengadaan panel surya portable, lampu, power station, dan instalasi darurat.</textarea>
+            </label>
+            <button class="btn primary" type="submit">Simpan Program</button>
+          </form>
+        </aside>
+      </section>
+
+      <section class="panel">
         <div class="panel-header">
           <div>
-            <h3>Daftar Program</h3>
-            <p>Program bantuan khusus per bencana.</p>
+            <h3>Update Progress Program</h3>
+            <p>Catat progress, pengeluaran, dan evidence program.</p>
           </div>
         </div>
-        <div class="event-list" id="programList"></div>
-      </div>
 
-      <aside class="panel">
-        <h3>Buat Program</h3>
-        <form class="rn-form" id="programForm">
-          <label>Nama Program
-            <input name="program_name" value="Program PLTS Darurat untuk Posko Gelap" required>
+        <form class="rn-form" id="programUpdateForm">
+          <div class="form-grid">
+            <label>Program ID
+              <input name="program_id" value="donorprog-4b09d6e78dbb" required>
+            </label>
+            <label>Progress %
+              <input name="progress_percent" type="number" value="25">
+            </label>
+            <label>Amount Spent
+              <input name="amount_spent" type="number" value="5000000">
+            </label>
+            <label>Update Type
+              <input name="update_type" value="progress">
+            </label>
+          </div>
+          <label>Judul Update
+            <input name="update_title" value="Pembelian power station tahap 1" required>
           </label>
-          <label>Jenis Program
-            <input name="program_type" value="energy_support">
+          <label>Catatan Update
+            <textarea name="update_notes" rows="3">Dana digunakan untuk membeli 2 unit power station dan lampu darurat untuk shelter.</textarea>
           </label>
-          <label>Owner ID
-            <input name="owner_id" value="org-sim-bpbd">
-          </label>
-          <label>Target Lokasi
-            <input name="target_description" value="Shelter Simulasi dan Dapur Umum">
-          </label>
-          <label>Target Amount
-            <input name="target_amount" type="number" value="50000000">
-          </label>
-          <label>Catatan
-            <textarea name="notes" rows="4">Pengadaan panel surya portable, lampu, power station, dan instalasi darurat.</textarea>
-          </label>
-          <button class="btn primary" type="submit">Simpan Program</button>
+          <button class="btn primary" type="submit">Simpan Update</button>
         </form>
-      </aside>
-    </section>
-
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <h3>Update Progress Program</h3>
-          <p>Catat progress, pengeluaran, dan evidence program.</p>
-        </div>
-      </div>
-
-      <form class="rn-form" id="programUpdateForm">
-        <div class="form-grid">
-          <label>Program ID
-            <input name="program_id" value="donorprog-4b09d6e78dbb" required>
-          </label>
-          <label>Progress %
-            <input name="progress_percent" type="number" value="25">
-          </label>
-          <label>Amount Spent
-            <input name="amount_spent" type="number" value="5000000">
-          </label>
-          <label>Update Type
-            <input name="update_type" value="progress">
-          </label>
-        </div>
-        <label>Judul Update
-          <input name="update_title" value="Pembelian power station tahap 1" required>
-        </label>
-        <label>Catatan Update
-          <textarea name="update_notes" rows="3">Dana digunakan untuk membeli 2 unit power station dan lampu darurat untuk shelter.</textarea>
-        </label>
-        <button class="btn primary" type="submit">Simpan Update</button>
-      </form>
-    </section>
+      </section>
+    </details>
   </main>
 </div>
-<script src="../assets/js/program-khusus.js?v=frappe-batch-b-1"></script>
+
+<div id="programDrill" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="programDrillTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="programDrillTitle">-</h3><p id="programDrillSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body" id="programDrillBody"></div>
+  </div>
+</div>
+
+<script src="../assets/js/program-khusus.js?v=progkhusus-20260902"></script>
 <script src="../assets/js/rn-frappe-client.js?v=frappe-group-f-1"></script>
 <script src="../assets/js/rn-sync-engine.js?v=frappe-group-f-1"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>

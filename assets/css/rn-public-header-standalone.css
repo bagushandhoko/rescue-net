@@ -214,3 +214,11 @@
     display: block;
   }
 }
+
+/* Control Centre has its own native disaster-event selector
+   (#activeEventSelect, wired to rn-control-centre-final.js) further down
+   in .cc-header -- the shared top-bar picker here would just be a second,
+   disconnected copy of the same control. Hide it on this page only. */
+.rn-event-picker {
+  display: none;
+}

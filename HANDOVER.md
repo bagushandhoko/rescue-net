@@ -113,20 +113,73 @@ here). Owner decisions this pass: **fix as we go** (report per page), and
   - CSS: `.rn-ba-*` block appended to `style.css`; cache-buster
     `?v=bencana-20260901` on the new page's css/js tags.
 - **Remaining pages — comparison DONE, plan written: `docs/MOCKUP_ALIGNMENT_PLAN.md`
-  (2026-09-01).** All 12 remaining pages (organisasi-posko, verification-approval,
-  management-distribusi, dapur-umum, shelter-detail, search-found, program-khusus,
+  (2026-09-01).** 11 pages left (organisasi-posko, verification-approval,
+  management-distribusi, shelter-detail, search-found, program-khusus,
   management-relawan, alat-kerja, resource-profile, evidence) + 2 NEW pages
   (`registrasi-posko.html`, `alat-komunikasi.html`) are the same gap: existing =
   English dev-shell (input form + empty table, some endpoints not `allow_guest` /
-  missing, e.g. `api_kitchen.dashboard is not whitelisted`); mockup = Indonesian
-  KPI dashboard (4–6 tiles + 4–10 data panels + right detail rail). Plan doc has
-  per-page KEEP / ADD / BACKEND, shared components to build once, a guest-endpoint
-  checklist, and a suggested 12-step order (Dapur Umum first — same pattern as the
-  finished Posko Logistik). **Rule from owner: additive only — never remove an
-  existing menu/form/table that the mockup omits; move it into a `<details>`, keep
-  it.** Pages with no mockup (ai-*, sync-console, data-consolidation, map,
-  disaster-detail, contact-directory, kirim/edit-bantuan, laporan-masyarakat,
-  recovery, donor-program, posko-detail, posko-medis-detail) are left as-is.
+  missing); mockup = Indonesian KPI dashboard (4–6 tiles + 4–10 data panels +
+  right detail rail). Plan doc has per-page KEEP / ADD / BACKEND, shared
+  components to build once, a guest-endpoint checklist, and a suggested 12-step
+  order. **Rule from owner: additive only — never remove an existing menu/form/
+  table that the mockup omits; move it into a `<details>`, keep it.** Pages with
+  no mockup (ai-*, sync-console, data-consolidation, map, disaster-detail,
+  contact-directory, kirim/edit-bantuan, laporan-masyarakat, recovery,
+  donor-program, posko-detail, posko-medis-detail) are left as-is.
+- **Dapur Umum (`pages/dapur-umum.html` + `assets/js/dapur-umum.js`) — BUILT &
+  DEPLOYED (2026-09-02), step 1 of the 12-step order.** Matches
+  `assets/img/mockup/dapur umum.png`: 6 KPI tiles (Jiwa Dilayani / Kapasitas
+  Porsi per Hari / Produksi Hari Ini / Gap Porsi / Bahan Kritis / Distribusi
+  Hari Ini, all clickable → `.rn-ba-modal` drill reused from Bencana Aktif),
+  Target Layanan, a `.rn-donut` (new shared CSS component — CSS
+  `conic-gradient` ring + legend, no chart library) breakdown of today's
+  production by status, Stok Bahan Dapur table, Kebutuhan Bahan Kritis cards,
+  Jadwal Masak + Distribusi Makanan Hari Ini (both **derived from real
+  `RN Kitchen Production` rows**, not a separate schedule doctype — grouped by
+  today's date, status mapped prepared→Menunggu/Siap Kirim,
+  dispatched→Proses/Dalam Perjalanan, distributed→Selesai/Terkirim), Relawan
+  Dapur (`RN Volunteer Profile.assigned_posko`), Status Gas/BBM (stock items
+  keyword-matched: gas/lpg/solar/bensin/bbm/genset/elpiji), Evidence Foto Dapur
+  (same unified `event_evidence` feed as Posko Logistik, narrowed to this
+  posko). Old form + 3 raw list panels (Kitchen Stock riwayat / Meal
+  Productions / Stock Movements / Record Meal Production) kept, moved into
+  `<details>` per the additive-only rule.
+  - **Backend:** new guest endpoint `rescue_net.api_kitchen.kitchen_board(posko,
+    disaster_event)` — one payload: `totals` + `kpi_items` (each KPI's
+    underlying list with `href`), `target_layanan`, `produksi_donut`,
+    `stok_bahan`, `kebutuhan_kritis`, `jadwal_masak`,
+    `distribusi_hari_ini_list`, `relawan_dapur`, `gas_bbm`, `bukti`. Stock
+    status (`aman`/`waspada`/`kritis`) is `available/basis` ratio via the
+    existing `_stock_state()` helper — honest given there's no "kebutuhan"
+    doctype for kitchen ingredients (no invented thresholds). "Kapasitas Porsi
+    / Hari" = historical daily-total peak across all of this posko's
+    productions (no capacity field on `RN Posko`) — an accepted data-thin
+    deviation, documented same as Bencana Aktif/Welcome.
+  - **Fixed pre-existing bug:** `rescue_net.api_kitchen.dashboard` was
+    `@frappe.whitelist()` (login-only) so the page's guest legacy panels 403'd
+    with "not whitelisted" — the exact bug this plan flagged. Now
+    `allow_guest=True` + `rn_actor(required=False)`; the manager allow-list
+    (`_allowed_poskos`) only gates *authenticated* actors — a guest requesting
+    one explicit `posko` gets a public read of that posko only (same guest-read
+    model as `kitchen_board`/`logistik_board`). Confirmed with the user before
+    applying (loosening an auth check).
+  - **Seed enrichment (posko-sim-dapur):** backfilled `production_time` on 2
+    pre-existing productions that had it null (also fixed in `kitchen_board`
+    with a `creation`-timestamp fallback so future null-time rows don't zero
+    out "hari ini" data), added 2 more productions (dispatched + distributed,
+    different hours today), `rn_beneficiary_count=380`, 2 stock observations
+    (Beras 40kg, Gas LPG 12kg 1 tabung), 1 `RN Volunteer Profile` assigned to
+    the posko. Script + container backups:
+    `api_kitchen.py.bak-20260902-*-kitchenboard` /
+    `-guestdash`.
+  - Deployed to `osiun-frappe-backend` (md5 verified) + restarted. Playwright
+    `/volume1/docker/osiun-playwright-check/rn-dapur-umum.js` (cold worker can
+    exceed 25s on this endpoint — it unions several doctypes incl.
+    `event_evidence`; a second run after warm-up renders fine). Verified: all 6
+    KPIs correct, all 6 drills open with real items, donut/tables/relawan/fuel
+    render, only pre-existing (unrelated) console noise is `session_info` 403
+    for guests (shared `session-role.js` behaviour on every page).
+  - Cache-busters: `style.css`/`dapur-umum.js` → `?v=dapur-20260902`.
 
 ## System snapshot
 

@@ -4766,3 +4766,70 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-ba-ditem b { font-size: 13px; }
 .rn-ba-ditem small { display: block; font-size: 11px; color: var(--muted); }
 .rn-ba-ditem-go { color: var(--muted); }
+
+/* ============================================================
+   Shared: .rn-donut (SVG-free CSS conic-gradient ring + legend)
+   Reused by any mockup-alignment page needing a donut breakdown
+   (Dapur Umum "Produksi Makanan", Shelter "Kapasitas & Okupansi",
+   Search & Found "Status Identifikasi", Verification trust/risk).
+   ============================================================ */
+.rn-donut-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.rn-donut {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: conic-gradient(#e5e0da 0% 100%);
+}
+.rn-donut::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  background: var(--panel, #fff);
+}
+.rn-donut-center {
+  position: absolute;
+  inset: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 1;
+}
+.rn-donut-center strong { font-size: 20px; line-height: 1; color: #2d211b; }
+.rn-donut-center small { font-size: 11px; color: var(--muted); }
+.rn-donut-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; flex: 1 1 160px; min-width: 160px; }
+.rn-donut-legend li { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.rn-donut-legend li b { margin-left: auto; }
+.rn-donut-legend li small { color: var(--muted); }
+.rn-donut-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+
+/* ============================================================
+   Dapur Umum — pages/dapur-umum.html
+   ============================================================ */
+.rn-dp-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.rn-dp-grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rn-dp-grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.rn-dp-target { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.rn-dp-target > div { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.rn-dp-target span { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.rn-dp-target b { display: block; font-size: 20px; margin-top: 4px; }
+.rn-dp-target small { color: var(--muted); font-size: 11px; }
+.rn-dp-target-modal { margin-top: 4px; }
+.rn-dp-relawan-foot { margin-top: 8px; font-size: 12px; }
+.rn-dp-fuel { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.rn-dp-fuel-card { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel2); display: flex; flex-direction: column; gap: 4px; }
+.rn-dp-fuel-card span { font-size: 12px; color: var(--muted); }
+.rn-dp-fuel-card b { font-size: 18px; }
+
+@media (max-width: 1100px) {
+  .rn-dp-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rn-dp-grid3, .rn-dp-grid2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .rn-dp-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-dp-target { grid-template-columns: 1fr; }
+}

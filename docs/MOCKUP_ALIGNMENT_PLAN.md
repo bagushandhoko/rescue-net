@@ -309,8 +309,8 @@ sidebar → drawer `rn-mobile-drawer.js`). Bukan halaman baru.
 
 Batch by kesiapan backend & kemiripan (pakai komponen bagian 3):
 
-1. **Dapur Umum** — perbaikan `api_kitchen` (bug `not whitelisted`) + pola sama
-   persis dengan Posko Logistik yang sudah jadi. *Quick win.*
+1. ✅ **Dapur Umum** — DONE 2026-09-02 (`kitchen_board` guest endpoint + `dashboard`
+   guest-fix). Lihat `HANDOVER.md`.
 2. **Shelter & Akomodasi** — mirip Dapur Umum, `api_shelter` sudah ada.
 3. **Manajemen Relawan** — `api_volunteer` sudah ada (`volunteer_count` baru dipakai).
 4. **Manajemen Distribusi** — banyak potongan sudah ada di `_drill_flows` /
@@ -344,7 +344,7 @@ Tiap endpoint dashboard mengembalikan, selain `totals` + data panel:
 
 ## 7. Checklist backend endpoint (guest, read-only, satu payload `{totals, <kpi>_items, ...panel}`)
 
-- [ ] `api_kitchen.kitchen_board(posko, disaster_event)` — ganti `dashboard` yg error
+- [x] `api_kitchen.kitchen_board(posko, disaster_event)` — DONE 2026-09-02; `dashboard` juga dibuat `allow_guest`
 - [ ] `api_shelter.shelter_board(disaster_event)` — agregat lintas shelter
 - [ ] `api_volunteer.volunteer_board(disaster_event)`
 - [ ] `api_control_centre.distribusi_board(disaster_event)`

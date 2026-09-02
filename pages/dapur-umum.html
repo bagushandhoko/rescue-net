@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Dapur Umum</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskofn-20260831">
+  <link rel="stylesheet" href="../assets/css/style.css?v=dapur-20260902">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -50,40 +50,133 @@
 
   <main class="main">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Dapur Umum</div>
+      <div class="rn-page-mobile-title">Dapur Umum</div>
 
       <div>
         <p class="eyebrow">Kitchen / Meal Production</p>
         <h2 id="kitchenTitle">Dapur Umum</h2>
-        <p class="subtitle" id="kitchenSubtitle">Loading...</p>
-        <p class="subtitle" id="kitchenStatus">Ready.</p>
+        <p class="subtitle">Kelola produksi dan distribusi makanan untuk memenuhi kebutuhan pengungsi.</p>
+        <p class="subtitle" id="kitchenStatus">Memuat…</p>
       </div>
-      <div class="status-pill">Kitchen · Live Stock</div>
+      <div class="status-pill" id="kitchenUpdated">Kitchen · Live Stock</div>
     </header>
 
-    <section class="kpi-grid">
-      <div class="kpi-card danger"><span>Posko</span><strong id="kpiPosko">-</strong><small>kitchen node</small></div>
-      <div class="kpi-card"><span>Stock Items</span><strong id="kpiStock">0</strong><small>available items</small></div>
-      <div class="kpi-card warning"><span>Meals</span><strong id="kpiMeals">0</strong><small>productions</small></div>
-      <div class="kpi-card"><span>Last Update</span><strong id="kpiUpdate">-</strong><small>server time</small></div>
+    <section class="kpi-grid rn-dp-kpi">
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="jiwa">
+        <span>Jiwa Dilayani</span><strong id="kpiJiwa">-</strong><small>total penerima manfaat</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="kapasitas">
+        <span>Kapasitas Porsi / Hari</span><strong id="kpiKapasitas">-</strong><small>puncak historis</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="produksi">
+        <span>Produksi Hari Ini</span><strong id="kpiProduksi">-</strong><small>porsi</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="gap">
+        <span>Gap Porsi</span><strong id="kpiGap">-</strong><small id="kpiGapHint">dari kapasitas</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="bahan">
+        <span>Bahan Kritis</span><strong id="kpiBahan">-</strong><small>perlu perhatian</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="distribusi">
+        <span>Distribusi Hari Ini</span><strong id="kpiDistribusi">-</strong><small>porsi dikirim</small>
+      </button>
     </section>
 
-    <section class="content-grid">
+    <section class="content-grid rn-dp-grid3">
       <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Kitchen Stock</h3>
-            <p>Saldo bahan dan barang yang tersedia di dapur umum.</p>
-          </div>
+        <div class="panel-header"><div><h3>Target Layanan</h3></div></div>
+        <div class="rn-dp-target">
+          <div><span>Total Target</span><b id="targetTotal">-</b><small>porsi / hari</small></div>
+          <div><span>Target Jiwa</span><b id="targetJiwa">-</b><small>jiwa</small></div>
+          <div><span>Rasio</span><b id="targetRasio">-</b></div>
         </div>
-        <div class="event-list" id="kitchenStock"></div>
       </div>
 
-      <aside class="panel summary">
-        <h3>Record Meal Production</h3>
-        <p class="subtitle">Catat produksi makanan dan otomatis kurangi stok bahan.</p>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Produksi Makanan Hari Ini</h3></div></div>
+        <div class="rn-donut-wrap">
+          <div class="rn-donut" id="produksiDonut"><div class="rn-donut-center"><strong id="donutTotal">0</strong><small>porsi</small></div></div>
+          <ul class="rn-donut-legend" id="produksiLegend"></ul>
+        </div>
+      </div>
 
-        <form class="rn-form" id="mealForm">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Stok Bahan Dapur</h3></div>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Bahan Baku</th><th>Stok</th><th>Satuan</th><th>Status</th></tr></thead>
+            <tbody id="stokBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Kebutuhan Bahan Kritis</h3></div></div>
+        <div class="event-list" id="kebutuhanKritis"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-dp-grid3">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Jadwal Masak</h3></div></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Waktu</th><th>Menu</th><th>Porsi</th><th>Status</th></tr></thead>
+            <tbody id="jadwalBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Distribusi Makanan Hari Ini</h3></div></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Tujuan</th><th>Waktu Kirim</th><th>Porsi</th><th>Status</th></tr></thead>
+            <tbody id="distribusiBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Relawan Dapur <span class="chip" id="relawanCount">0</span></h3></div></div>
+        <div class="event-list" id="relawanList"></div>
+        <p class="rn-muted rn-dp-relawan-foot" id="relawanFoot"></p>
+      </div>
+    </section>
+
+    <section class="content-grid rn-dp-grid2">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Evidence Foto Dapur</h3></div>
+          <a class="rn-seeall" href="#" id="evidenceSeeAll">Tambah Bukti →</a>
+        </div>
+        <div class="rn-bukti-grid" id="buktiGrid"><p class="rn-muted">Memuat…</p></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Status Gas / BBM</h3></div></div>
+        <div class="rn-dp-fuel" id="fuelGrid"><p class="rn-muted">Belum ada data gas/BBM tercatat.</p></div>
+      </div>
+    </section>
+
+    <details class="panel rn-input-drawer" id="stockPanel">
+      <summary>
+        <h3>Kitchen Stock (Riwayat) <span class="chip" id="stockLegacyCount">0</span></h3>
+        <p>Saldo bahan dan barang yang tersedia di dapur umum.</p>
+      </summary>
+      <div class="event-list" id="kitchenStock"></div>
+    </details>
+
+    <details class="panel create-panel rn-input-drawer">
+      <summary>
+        <h3>Record Meal Production</h3>
+        <p>Catat produksi makanan dan otomatis kurangi stok bahan.</p>
+      </summary>
+
+      <form class="rn-form" id="mealForm">
+        <div class="form-grid">
           <label>Kitchen Posko ID
             <input name="posko_id" value="posko-dapur-melati" required>
           </label>
@@ -99,9 +192,6 @@
           <label>Target Distribution Location
             <input name="target_distribution_location" value="Shelter warga Gang Melati">
           </label>
-
-          <hr>
-
           <label>Ingredient Item
             <input name="ingredient_item_name" value="Air Mineral" required>
           </label>
@@ -114,37 +204,41 @@
           <label>Notes
             <input name="notes" value="Produksi makanan dari dapur umum.">
           </label>
-
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Save Meal Production</button>
-            <button class="btn" type="button" id="refreshKitchen">Refresh</button>
-          </div>
-        </form>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Meal Productions</h3>
-            <p>Riwayat produksi makanan dapur umum.</p>
-          </div>
         </div>
-        <div class="event-list" id="mealProductions"></div>
-      </div>
 
-      <aside class="panel summary">
-        <h3>Stock Movements</h3>
-        <p class="subtitle">Pergerakan stok dapur, termasuk penggunaan bahan.</p>
-        <div class="event-list" id="kitchenMovements"></div>
-      </aside>
-    </section>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Save Meal Production</button>
+          <button class="btn" type="button" id="refreshKitchen">Refresh</button>
+        </div>
+      </form>
+    </details>
+
+    <details class="panel rn-input-drawer">
+      <summary>
+        <h3>Meal Productions &amp; Stock Movements (Riwayat Mentah)</h3>
+        <p>Data mentah di balik dashboard di atas.</p>
+      </summary>
+      <div class="content-grid">
+        <div><h4>Meal Productions</h4><div class="event-list" id="mealProductions"></div></div>
+        <div><h4>Stock Movements</h4><div class="event-list" id="kitchenMovements"></div></div>
+      </div>
+    </details>
   </main>
 </div>
 
+<div id="kitchenDrill" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="kitchenDrillTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="kitchenDrillTitle">-</h3><p id="kitchenDrillSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body" id="kitchenDrillBody"></div>
+  </div>
+</div>
+
 <script src="../assets/js/rn-frappe-client.js?v=frappe-client-403fix-1"></script>
-<script src="../assets/js/dapur-umum.js?v=frappe-kitchen-3"></script>
+<script src="../assets/js/dapur-umum.js?v=dapur-20260902"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

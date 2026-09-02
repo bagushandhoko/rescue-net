@@ -8,6 +8,7 @@ from frappe.utils import (
     cint,
     flt,
     get_datetime,
+    getdate,
     now_datetime,
 )
 
@@ -730,16 +731,19 @@ def add_evidence(
     }
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def dashboard(posko=None):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
-    actor = rn_actor()
+    actor = rn_actor(required=False)
 
     allowed = _allowed_poskos(actor)
 
     if posko:
-        if posko not in allowed:
+        # Guests reading a specific posko get a public read-only view of
+        # that one posko (same guest-read model as kitchen_board); the
+        # manager allow-list only gates authenticated actors.
+        if actor and posko not in allowed:
             frappe.throw(
                 "Akses Dapur Umum ditolak",
                 frappe.PermissionError,
@@ -961,4 +965,293 @@ def control_centre_kitchen():
             "RN Stock Observation tetap snapshot. "
             "Kitchen usage adalah consumption event terpisah."
         ),
+    }
+
+
+_GAS_BBM_KEYWORDS = ("gas", "lpg", "solar", "bensin", "bbm", "genset", "elpiji")
+
+
+def _stock_status(available, basis):
+    if available is None:
+        return "tidak diketahui"
+    if available <= 0:
+        return "kritis"
+    if basis:
+        ratio = available / basis
+        if ratio < 0.34:
+            return "kritis"
+        if ratio < 0.6:
+            return "waspada"
+    return "aman"
+
+
+def _drill(title, sub, href):
+    return {"title": title, "sub": sub, "href": href}
+
+
+@frappe.whitelist(allow_guest=True)
+def kitchen_board(posko=None, disaster_event=None):
+    """Dapur Umum dashboard (matches the DMS mock-up), guest read-only.
+
+    One payload: KPI totals + `<kpi>_items` drill lists, Target Layanan,
+    the production donut, the ingredient stock table, today's cook
+    schedule + distribution derived from real RN Kitchen Production rows,
+    Relawan Dapur (RN Volunteer Profile.assigned_posko), Gas/BBM stock
+    filtered by item-name keyword, and the shared evidence strip.
+    """
+    from rescue_net.api_control_centre import (
+        _num,
+        _posko_beneficiary,
+        event_evidence,
+    )
+
+    posko = resolve_posko(posko)
+    if not posko or not frappe.db.exists("RN Posko", posko):
+        frappe.throw("Posko dapur tidak ditemukan")
+
+    posko_row = frappe.db.get_value(
+        "RN Posko",
+        posko,
+        [
+            "name", "title", "posko_type", "operational_status",
+            "address", "disaster_event",
+        ],
+        as_dict=True,
+    ) or {}
+
+    event = resolve_disaster_event(
+        disaster_event or posko_row.get("disaster_event")
+    )
+
+    bene = _posko_beneficiary(posko)
+    jiwa = bene["count"]
+
+    productions = frappe.get_all(
+        "RN Kitchen Production",
+        filters={"posko": posko},
+        fields=[
+            "name", "meal_name", "portions", "production_time",
+            "target_distribution_location", "production_status",
+            "dispatched_at", "distributed_at", "notes", "creation",
+        ],
+        order_by="production_time desc",
+        limit_page_length=1000,
+    )
+
+    today = getdate()
+    for p in productions:
+        p.effective_time = p.production_time or p.get("creation")
+    daily_totals = defaultdict(int)
+    for p in productions:
+        if p.effective_time:
+            daily_totals[getdate(p.effective_time)] += cint(p.portions)
+
+    today_rows = [
+        p for p in productions
+        if p.effective_time and getdate(p.effective_time) == today
+    ]
+    produksi_hari_ini = sum(cint(p.portions) for p in today_rows)
+    kapasitas_porsi_hari = max(daily_totals.values()) if daily_totals else produksi_hari_ini
+    gap_porsi = max(0, kapasitas_porsi_hari - produksi_hari_ini)
+
+    distribusi_rows = [
+        p for p in today_rows
+        if p.production_status in ("dispatched", "distributed")
+    ]
+    distribusi_hari_ini = sum(cint(p.portions) for p in distribusi_rows)
+
+    status_label = {
+        "prepared": "Siap Kirim",
+        "dispatched": "Dalam Perjalanan",
+        "distributed": "Terkirim",
+    }
+
+    jadwal_masak = [
+        {
+            "time": str(p.effective_time)[11:16] if p.effective_time else "-",
+            "meal_name": p.meal_name,
+            "portions": cint(p.portions),
+            "status": p.production_status,
+            "status_label": (
+                "Selesai" if p.production_status == "distributed"
+                else "Proses" if p.production_status == "dispatched"
+                else "Menunggu"
+            ),
+            "href": "evidence.html?event=" + (event or "") +
+                    "&object_type=meal_production&object_id=" + p.name,
+        }
+        for p in sorted(today_rows, key=lambda r: str(r.effective_time or ""))
+    ]
+
+    distribusi_list = [
+        {
+            "tujuan": p.target_distribution_location or "-",
+            "waktu": str(p.dispatched_at or p.distributed_at or p.effective_time or "")[11:16],
+            "porsi": cint(p.portions),
+            "status": p.production_status,
+            "status_label": status_label.get(p.production_status, p.production_status),
+            "href": "evidence.html?event=" + (event or "") +
+                    "&object_type=meal_production&object_id=" + p.name,
+        }
+        for p in sorted(today_rows, key=lambda r: str(r.effective_time or ""))
+    ]
+
+    # Produksi donut: capacity split by today's production status.
+    prepared_qty = sum(cint(p.portions) for p in today_rows if p.production_status == "prepared")
+    dispatched_qty = sum(cint(p.portions) for p in today_rows if p.production_status == "dispatched")
+    distributed_qty = sum(cint(p.portions) for p in today_rows if p.production_status == "distributed")
+    sisa_kapasitas = max(0, kapasitas_porsi_hari - produksi_hari_ini)
+    donut_total = max(kapasitas_porsi_hari, produksi_hari_ini, 1)
+
+    def _pct(v):
+        return round(100.0 * v / donut_total, 1)
+
+    produksi_donut = {
+        "total": produksi_hari_ini,
+        "kapasitas": kapasitas_porsi_hari,
+        "segments": [
+            {"key": "distributed", "label": "Terkirim", "value": distributed_qty, "pct": _pct(distributed_qty)},
+            {"key": "dispatched", "label": "Dalam Perjalanan", "value": dispatched_qty, "pct": _pct(dispatched_qty)},
+            {"key": "prepared", "label": "Siap Kirim", "value": prepared_qty, "pct": _pct(prepared_qty)},
+            {"key": "remaining", "label": "Sisa Kapasitas", "value": sisa_kapasitas, "pct": _pct(sisa_kapasitas)},
+        ],
+    }
+
+    # Stock summary (dedup latest observation per item), reusing effective
+    # available quantity via _stock_state (strict=False -> honest "-" when
+    # basis unknown instead of throwing).
+    observations = frappe.get_all(
+        "RN Stock Observation",
+        filters={"posko": posko, "stock_state": "available"},
+        fields=["name", "item_name", "unit", "observed_at", "creation"],
+        order_by="observed_at desc, creation desc",
+        limit_page_length=500,
+    )
+    seen = set()
+    stok_bahan = []
+    for row in observations:
+        key = (row.item_name, row.unit or "")
+        if key in seen:
+            continue
+        seen.add(key)
+        state = _stock_state(posko, row.item_name, row.unit, strict=False)
+        available = state["available_quantity"] if state else None
+        basis = state["basis_quantity"] if state else None
+        stok_bahan.append({
+            "item_name": row.item_name,
+            "unit": row.unit,
+            "stok": available,
+            "status": _stock_status(available, basis),
+            "observed_at": row.observed_at,
+        })
+
+    kebutuhan_kritis = [s for s in stok_bahan if s["status"] in ("kritis", "waspada")]
+    gas_bbm = [
+        s for s in stok_bahan
+        if any(k in (s["item_name"] or "").lower() for k in _GAS_BBM_KEYWORDS)
+    ]
+
+    # Relawan dapur: volunteers assigned straight to this posko.
+    volunteers = frappe.get_all(
+        "RN Volunteer Profile",
+        filters={"assigned_posko": posko},
+        fields=["name", "volunteer_name", "main_skill", "availability_status"],
+        limit_page_length=200,
+    )
+    vol_status_label = {
+        "available": "Aktif", "assigned": "Aktif",
+        "limited": "Istirahat", "unavailable": "Tidak Aktif",
+    }
+    relawan_list = [
+        {
+            "name": v.volunteer_name or v.name,
+            "role": v.main_skill or "-",
+            "status": v.availability_status,
+            "status_label": vol_status_label.get(v.availability_status, "-"),
+        }
+        for v in volunteers
+    ]
+    relawan_dapur = {
+        "total": len(relawan_list),
+        "aktif": sum(1 for v in relawan_list if v["status_label"] == "Aktif"),
+        "istirahat": sum(1 for v in relawan_list if v["status_label"] == "Istirahat"),
+        "tidak_aktif": sum(1 for v in relawan_list if v["status_label"] == "Tidak Aktif"),
+        "list": relawan_list,
+    }
+
+    # Evidence strip — same unified feed as Control Centre / Posko Logistik,
+    # narrowed to this posko.
+    bukti = []
+    bukti_last_at = None
+    try:
+        title_l = str(posko_row.get("title") or "").lower().strip()
+        for row in event_evidence(event, limit=80):
+            loc = str(row.get("location_text") or "").lower()
+            hit = (
+                row.get("posko") == posko
+                or row.get("linked_object_id") == posko
+                or (title_l and len(title_l) > 4 and title_l in loc)
+            )
+            if hit:
+                bukti.append(row)
+        bukti.sort(
+            key=lambda r: str(r.get("created_at") or r.get("creation") or ""),
+            reverse=True,
+        )
+        bukti = bukti[:8]
+        if bukti:
+            bukti_last_at = bukti[0].get("created_at") or bukti[0].get("creation")
+    except Exception:
+        bukti = []
+
+    return {
+        "posko": posko_row,
+        "disaster_event": event,
+        "generated_at": now_datetime(),
+        "totals": {
+            "jiwa_dilayani": jiwa,
+            "kapasitas_porsi_hari": kapasitas_porsi_hari,
+            "produksi_hari_ini": produksi_hari_ini,
+            "gap_porsi": gap_porsi,
+            "bahan_kritis": len(kebutuhan_kritis),
+            "distribusi_hari_ini": distribusi_hari_ini,
+        },
+        "kpi_items": {
+            "jiwa_dilayani_items": [
+                _drill(posko_row.get("title") or posko, f"{jiwa} jiwa dilayani",
+                       "posko-detail.html?id=" + posko + "&event=" + (event or "")),
+            ],
+            "produksi_hari_ini_items": [
+                _drill(p.meal_name, f"{cint(p.portions)} porsi · {status_label.get(p.production_status, p.production_status)}",
+                       "evidence.html?event=" + (event or "") + "&object_type=meal_production&object_id=" + p.name)
+                for p in today_rows
+            ],
+            "bahan_kritis_items": [
+                _drill(s["item_name"], f"Stok {s['stok']} {s['unit']} · {s['status']}",
+                       "posko-logistik.html?id=" + posko + "&event=" + (event or ""))
+                for s in kebutuhan_kritis
+            ],
+            "distribusi_hari_ini_items": [
+                _drill(d["tujuan"], f"{d['porsi']} porsi · {d['status_label']}", d["href"])
+                for d in distribusi_list
+            ],
+        },
+        "target_layanan": {
+            "total_target": kapasitas_porsi_hari,
+            "target_jiwa": jiwa,
+            "rasio_label": (
+                f"1 porsi : {round(jiwa / kapasitas_porsi_hari, 2)} jiwa"
+                if kapasitas_porsi_hari and jiwa else "-"
+            ),
+        },
+        "produksi_donut": produksi_donut,
+        "stok_bahan": stok_bahan,
+        "kebutuhan_kritis": kebutuhan_kritis,
+        "jadwal_masak": jadwal_masak,
+        "distribusi_hari_ini_list": distribusi_list,
+        "relawan_dapur": relawan_dapur,
+        "gas_bbm": gas_bbm,
+        "bukti": bukti,
+        "bukti_total": len(bukti),
+        "bukti_last_at": bukti_last_at,
     }

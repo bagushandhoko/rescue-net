@@ -309,9 +309,13 @@
     var real = rows
       .map(function (r) {
         var url = r.evidence_url || r.file_url || "";
+        var cap = String(r.evidence_caption || r.caption || r.title || "Bukti dapur umum")
+          .replace(/^\s*\[[^\]]+\]\s*/, "");
+        var meta = [r.location_text, r.reporter_name || r.uploader].filter(Boolean).join(" · ");
         return (
-          '<a class="rn-bukti-thumb" href="' + esc(url) + '" target="_blank" rel="noopener">' +
-          '<img src="' + esc(url) + '" alt="Bukti dapur" loading="lazy"></a>'
+          '<a class="rn-bukti-thumb" href="' + esc(url) + '" target="_blank" rel="noopener"' +
+          ' data-caption="' + esc(cap) + '" data-meta="' + esc(meta) + '">' +
+          '<img src="' + esc(url) + '" alt="' + esc(cap) + '" loading="lazy"></a>'
         );
       })
       .join("");

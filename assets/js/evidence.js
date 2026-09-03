@@ -140,9 +140,14 @@
         var geo = (r.latitude && r.longitude && (Math.abs(r.latitude) > 0.0001 || Math.abs(r.longitude) > 0.0001))
           ? '<small class="rn-ev-geo">📍 ' + r.latitude.toFixed(4) + ", " + r.longitude.toFixed(4) + "</small>"
           : "";
+        var cap = String(r.evidence_caption || r.caption || r.title || "Evidence").replace(/^\s*\[[^\]]+\]\s*/, "");
+        var meta = [r.location_text || r.posko, r.uploader].filter(Boolean).join(" · ");
+        var lbAttr = r.mime === "image"
+          ? ' data-caption="' + esc(cap) + '" data-meta="' + esc(meta) + '"'
+          : ' data-no-lightbox';
         return (
           "<tr>" +
-          '<td><a class="rn-ev-cell" href="' + esc(url) + '" target="_blank" rel="noopener">' +
+          '<td><a class="rn-ev-cell" href="' + esc(url) + '" target="_blank" rel="noopener"' + lbAttr + ">" +
           '<span class="rn-ev-thumb">' + thumb + "</span>" +
           "<span><b>" + esc(r.title || "Evidence") + "</b><small>" + esc(filename(url)) + "</small>" + geo + "</span>" +
           "</a></td>" +

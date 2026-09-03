@@ -93,6 +93,31 @@ errors across every rebuilt page). 20/22 clean. Two fixes (`0-…` commit):
 - Deliberately left (owner "Jangan, biarkan"): `api_donor_program.context`
   403 in the Program Khusus legacy drawer; `api_sync.pull` 403 polling.
 
+## Shared evidence lightbox (2026-09-03)
+
+Owner: evidence photos should enlarge in-page like the Control Centre "Bukti
+Lapangan" modal, not open in a new tab. Dapur Umum / Shelter / Evidence
+Center thumbnails were plain `target="_blank"` links.
+
+- NEW `assets/js/rn-lightbox.js` + `assets/css/rn-lightbox.css` — one shared
+  click-to-enlarge overlay (image + caption + meta + "buka di tab baru" +
+  ←/→ within a group + ESC/backdrop close). Auto-binds by capture-phase
+  click delegation on `a.rn-bukti-thumb`, `a.rn-ev-cell`,
+  `.rn-dp-evidence-strip a`, `[data-rn-lightbox]`, `img[data-zoomable]`;
+  also `window.RNLightbox.open({src,caption,meta})`. Skips non-image hrefs
+  and `[data-no-lightbox]`.
+- Wired into `dapur-umum.html` / `shelter-detail.html` / `evidence.html`
+  (css `?v=lb-2`, js `?v=lb-2`); their `renderBukti`/row builders now emit
+  `data-caption` + `data-meta` from the evidence row (caption stripped of a
+  leading `[tag]`), and evidence.js marks non-image rows `data-no-lightbox`.
+  JS cache-busters: dapur `?v=dapur-20260903c`, shelter
+  `?v=shelter-20260903c`, evidence `?v=evidence-20260903c`.
+- Control Centre (`evidenceModal`) and Posko Logistik (`buktiModal`) keep
+  their own richer bespoke modals — not touched.
+- Verified Playwright `rn-lightbox.js`: all 3 pages open the overlay with the
+  enlarged image loaded + caption; nav arrows only when >1 photo; ESC closes;
+  0 console errors.
+
 ## Distribusi booking UX pass (2026-09-03) — DONE & DEPLOYED
 
 Owner feedback on the armada booking:

@@ -1,0 +1,39 @@
+/* rn-lightbox.js — shared evidence photo enlarger */
+.rn-lb { position: fixed; inset: 0; z-index: 4000; display: flex; align-items: center; justify-content: center; }
+.rn-lb[hidden] { display: none !important; }
+.rn-lb-backdrop { position: absolute; inset: 0; background: rgba(17, 12, 10, .82); backdrop-filter: blur(2px); }
+.rn-lb-card {
+  position: relative; z-index: 1; width: min(92vw, 960px); max-height: 92vh;
+  background: #fff; border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column; box-shadow: 0 24px 70px rgba(0, 0, 0, .45);
+}
+.rn-lb-stage { background: #100c0a; display: flex; align-items: center; justify-content: center; min-height: 200px; max-height: 72vh; }
+.rn-lb-img { max-width: 100%; max-height: 72vh; display: block; object-fit: contain; }
+.rn-lb-bar { padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.rn-lb-cap { font-weight: 800; font-size: 14px; flex: 1 1 auto; min-width: 0; color: #241a15; }
+.rn-lb-meta { font-size: 12px; color: #8a7d76; }
+.rn-lb-open { font-size: 12px; font-weight: 700; color: #c2410c; text-decoration: none; white-space: nowrap; }
+.rn-lb-open:hover { text-decoration: underline; }
+.rn-lb-close {
+  position: absolute; top: 8px; right: 10px; z-index: 2;
+  width: 34px; height: 34px; border-radius: 999px; border: 0; cursor: pointer;
+  background: rgba(255, 255, 255, .9); color: #241a15; font-size: 22px; line-height: 1;
+}
+.rn-lb-close:hover { background: #fff; }
+.rn-lb-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 40px; height: 40px; border-radius: 999px; border: 0; cursor: pointer;
+  background: rgba(255, 255, 255, .85); color: #241a15; font-size: 26px; line-height: 1;
+}
+.rn-lb-nav:hover { background: #fff; }
+.rn-lb-prev { left: 10px; }
+.rn-lb-next { right: 10px; }
+.rn-lb-nav[hidden] { display: none; }
+
+/* make evidence thumbnails read as clickable */
+a.rn-bukti-thumb, a.rn-ev-cell, .rn-dp-evidence-strip a, .rn-evidence-strip a { cursor: zoom-in; }
+
+@media (max-width: 640px) {
+  .rn-lb-card { width: 96vw; }
+  .rn-lb-nav { width: 34px; height: 34px; font-size: 22px; }
+}

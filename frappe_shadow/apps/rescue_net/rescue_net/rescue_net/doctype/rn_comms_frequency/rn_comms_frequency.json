@@ -1,0 +1,80 @@
+{
+  "doctype": "DocType",
+  "name": "RN Comms Frequency",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "band_label",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event",
+      "reqd": 1
+    },
+    {
+      "fieldname": "band_label",
+      "label": "Label Kanal",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "description": "mis. VHF Primary, Jaringan Seluler (Telkomsel)"
+    },
+    {
+      "fieldname": "network_type",
+      "label": "Jenis Jaringan",
+      "fieldtype": "Select",
+      "options": "vhf\nuhf\nhf\nseluler\nstarlink\nvsat\nlainnya",
+      "default": "vhf",
+      "reqd": 1
+    },
+    {
+      "fieldname": "frequency_value",
+      "label": "Frekuensi",
+      "fieldtype": "Data",
+      "description": "mis. 146.020 MHz"
+    },
+    {
+      "fieldname": "provider",
+      "label": "Operator / Penyedia",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "baik\nsibuk\nlemah\ndown",
+      "default": "baik"
+    },
+    {
+      "fieldname": "load_pct",
+      "label": "Beban (%)",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

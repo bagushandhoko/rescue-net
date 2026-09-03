@@ -1,0 +1,107 @@
+{
+  "doctype": "DocType",
+  "name": "RN Comms Device",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "device_name",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event",
+      "reqd": 1
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko"
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Select",
+      "options": "organization\nposko\nexternal",
+      "default": "organization"
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "device_name",
+      "label": "Nama Alat",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "category",
+      "label": "Kategori",
+      "fieldtype": "Select",
+      "options": "ht\nrepeater\ntelepon_satelit\nstarlink\nvsat\nrouter_4g5g\nantena_mast",
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "active\nspare\ninactive\nneeds_attention",
+      "default": "active"
+    },
+    {
+      "fieldname": "battery_pct",
+      "label": "Baterai (%)",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "frequency_channel",
+      "label": "Frekuensi / Channel",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "current_location",
+      "label": "Lokasi Saat Ini",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

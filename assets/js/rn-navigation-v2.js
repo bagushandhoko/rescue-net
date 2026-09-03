@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.0.3",
+    version: "2.0.4",
 
     posko: [
       {
@@ -32,6 +32,10 @@
       {
         label: "Posko Alat Kerja",
         href: "alat-kerja.html?event=event-sim-001"
+      },
+      {
+        label: "Posko Alat Komunikasi",
+        href: "alat-komunikasi.html?event=event-sim-001"
       },
       {
         label: "Posko Medis",

@@ -4,9 +4,53 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-03 (Manajemen Distribusi: "Armada Distribusi Posko — Koordinasi Penyerahan" — 5 new RN Transport Space fields + form + panel + update endpoint, DEPLOYED & Playwright-verified)_
+_Last updated: 2026-09-03 (Step 11/12 Alat Komunikasi NEW PAGE + 3 comms doctypes + api_comms DEPLOYED & Playwright-verified; earlier: Armada Distribusi Posko koordinasi-penyerahan)_
 
 ---
+
+## Step 11/12 — Alat Komunikasi (NEW PAGE) — DONE & DEPLOYED (2026-09-03)
+
+`pages/alat-komunikasi.html` + `assets/js/alat-komunikasi.js` — matches
+`assets/img/mockup/alat komunikasi.png`. 6 KPI (Alat Komunikasi Aktif / Posko
+Tidak Terhubung / Repeater Aktif / Internet Darurat Dibutuhkan / Operator Radio
+Dibutuhkan / Baterai Kritis, all clickable → `#komDrill` modal), Inventari Alat
+Komunikasi table (Kategori/Total/Aktif/Cadangan/Tidak Aktif/Perlu Perhatian +
+total footer, tab Semua/Perlu Perhatian), Operator Radio list (+ Tambah
+Operator), Konektivitas Posko (legend Terhubung/Lemah/Tidak Terhubung/Belum
+Terdata + posko table + Lihat Peta), Status Daya & Baterai (bar per unit,
+lowest first), Status Frekuensi & Jaringan table, Peringatan Konektivitas
+`.event-card` list. Plus 3 collapsed create forms (device / operator / freq).
+
+- **3 new DocTypes** (`bench migrate` OK): `RN Comms Device` (existed
+  half-built — kept), `RN Comms Operator`, `RN Comms Frequency`. Minimal JSON
+  shape like every other doctype in the app.
+- **2 RN Posko Custom Fields** (via seed script, no migrate):
+  `rn_comms_status` (connected/weak/disconnected), `rn_comms_last_contact`.
+- **`api_comms.py` (NEW):** `comms_board(disaster_event)` guest — one payload
+  (totals + kpi_items + inventory + inventory_total + konektivitas + operators
+  + daya_baterai + frekuensi + peringatan). Connectivity = explicit posko flag,
+  else derived from that posko's device rows; poskos with neither → **"Belum
+  Terdata"** (NOT counted as an outage, so KPIs stay realistic). Battery skips
+  mains-only categories (antena_mast/vsat) and Int-NULL→0 phantom rows. Writes
+  (login): `create_comms_device` / `update_comms_device` /
+  `create_comms_operator` / `create_comms_frequency` / `set_posko_comms_status`.
+- **Nav:** `rn-navigation-v2.js` CONFIG.version 2.0.3→**2.0.4** + new
+  "Posko Alat Komunikasi" entry in `CONFIG.posko`; cache-buster
+  `navfix-20260902`/`warroom-navfix-20260902`/`poskofn-20260831` →
+  **`navcomms-20260903`** on `rn-navigation-v2.{js,css}` across all `pages/*.html`
+  + `index.html`.
+- **Deploy:** api_comms.py + 3 doctype dirs piped to `osiun-frappe-backend`
+  (md5 verified) → `bench migrate` (exit 0) → restart. Seed
+  `scratchpad/seed_comms.py` (idempotent): custom fields + 17 devices + 7
+  operators + 11 frequencies for event-sim-001 & karhutla + 7 posko
+  connectivity flags.
+- **Verified:** guest HTTP `comms_board` sim-001 → KPI 9/1/1/1/0/2, konektivitas
+  2/1/1/14-belum-terdata; Playwright `rn-komunikasi.js` — 6 KPI, 7 inv rows +
+  footer, 5 operators, 18 conn rows, 10 battery, 8 freq, 5 alerts, drill opens,
+  Perlu Perhatian tab filters to 3, operator form opens, 0 mobile overflow,
+  only the pre-existing guest `session_info` 403.
+- **Left:** Step 12 (final mobile/HP pass). `contact-directory.html` untouched
+  (separate concern — it's a contact list, not comms-equipment).
 
 ## Armada Distribusi Posko — koordinasi penyerahan (2026-09-03) — DONE & DEPLOYED
 

@@ -5383,3 +5383,56 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-pr-grid3 { grid-template-columns: minmax(0, 1fr); }
   .rn-pr-grid4 { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ============================================================
+   Alat Komunikasi — pages/alat-komunikasi.html
+   ============================================================ */
+.rn-kom-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.rn-kom-row1 { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
+.rn-kom-row2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+
+.rn-kom-op-list { display: flex; flex-direction: column; }
+.rn-kom-op-row {
+  display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 10px;
+  align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--line);
+}
+.rn-kom-op-row:last-child { border-bottom: 0; }
+.rn-kom-op-id b { display: block; font-size: 13px; }
+.rn-kom-op-id small { color: var(--muted); font-size: 11px; }
+.rn-kom-op-ch { font-size: 11px; font-weight: 800; color: #8a5a45; background: var(--panel2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px; }
+
+.rn-kom-conn-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.rn-kom-conn-pill { font-size: 11px; font-weight: 700; border-radius: 999px; padding: 3px 10px; border: 1px solid var(--line); }
+.rn-kom-conn-pill b { font-weight: 900; margin-right: 4px; }
+.rn-kom-conn-pill.ok { background: rgba(46,160,102,.12); color: #1f7a4d; border-color: rgba(46,160,102,.3); }
+.rn-kom-conn-pill.warn { background: rgba(224,153,0,.14); color: #9a6b00; border-color: rgba(224,153,0,.32); }
+.rn-kom-conn-pill.bad { background: rgba(216,69,69,.12); color: #b23; border-color: rgba(216,69,69,.3); }
+
+.rn-kom-batt-list { display: flex; flex-direction: column; }
+.rn-kom-batt-row {
+  display: grid; grid-template-columns: minmax(0,1fr) 120px 46px; gap: 10px;
+  align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--line);
+}
+.rn-kom-batt-row:last-child { border-bottom: 0; }
+.rn-kom-batt-id b { display: block; font-size: 13px; }
+.rn-kom-batt-id small { color: var(--muted); font-size: 11px; }
+.rn-kom-batt-bar { position: relative; height: 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); overflow: hidden; }
+.rn-kom-batt-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: #2ea066; }
+.rn-kom-batt-bar i.warn { background: #e09900; }
+.rn-kom-batt-bar i.bad { background: #d84545; }
+.rn-kom-batt-pct { font-size: 12px; font-weight: 800; text-align: right; }
+.rn-kom-batt-pct.warn { color: #9a6b00; }
+.rn-kom-batt-pct.bad { color: #b23; }
+
+.rn-kom-footnote { font-size: 11px; margin: 4px 2px 0; }
+
+@media (max-width: 1100px) {
+  .rn-kom-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rn-kom-row1, .rn-kom-row2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .rn-kom-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-kom-batt-row { grid-template-columns: minmax(0,1fr) 80px 40px; }
+  .rn-kom-op-row { grid-template-columns: minmax(0,1fr) auto; }
+  .rn-kom-op-ch { display: none; }
+}

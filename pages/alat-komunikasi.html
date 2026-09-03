@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Alat Komunikasi</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=komunikasi-20260903">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navcomms-20260903" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="registrasi-posko.html?event=event-sim-001">Registrasi &amp; Verifikasi Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search &amp; Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a class="active" href="alat-komunikasi.html?event=event-sim-001">Alat Komunikasi</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Alat Komunikasi</div>
+
+      <div>
+        <p class="eyebrow">Communications Equipment</p>
+        <h2>Alat Komunikasi</h2>
+        <p class="subtitle">Kelola inventaris, konektivitas posko, operator radio, daya baterai, dan status frekuensi jaringan.</p>
+        <p class="subtitle" id="komStatus">Memuat…</p>
+      </div>
+      <div class="status-pill" id="komUpdated">Alat Komunikasi · Live</div>
+    </header>
+
+    <section class="kpi-grid rn-kom-kpi">
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="alat_aktif">
+        <span>Alat Komunikasi Aktif</span><strong id="kpiAlatAktif">-</strong><small>siap dipakai</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="posko_tidak_terhubung">
+        <span>Posko Tidak Terhubung</span><strong id="kpiPoskoOffline">-</strong><small>tanpa sinyal</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="repeater_aktif">
+        <span>Repeater Aktif</span><strong id="kpiRepeater">-</strong><small>penguat sinyal</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="internet_darurat">
+        <span>Internet Darurat Dibutuhkan</span><strong id="kpiInternet">-</strong><small>posko</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="operator_dibutuhkan">
+        <span>Operator Radio Dibutuhkan</span><strong id="kpiOperatorNeed">-</strong><small>estimasi kekurangan</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="baterai_kritis">
+        <span>Baterai Kritis</span><strong id="kpiBateraiKritis">-</strong><small>unit &lt; 20%</small>
+      </button>
+    </section>
+
+    <section class="content-grid rn-kom-row1">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Inventari Alat Komunikasi</h3><p>Status alat per kategori.</p></div>
+          <div class="rn-tabs" id="invTabs" role="tablist">
+            <button class="rn-tab is-active" data-inv="semua" type="button">Semua Kategori</button>
+            <button class="rn-tab" data-inv="perhatian" type="button">Perlu Perhatian</button>
+          </div>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Kategori</th><th>Total</th><th>Aktif</th><th>Cadangan</th><th>Tidak Aktif</th><th>Perlu Perhatian</th></tr></thead>
+            <tbody id="invBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+            <tfoot id="invFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="panel-header">
+          <div><h3>Operator Radio</h3></div>
+          <button class="btn primary mini" type="button" id="opAddBtn">+ Tambah Operator</button>
+        </div>
+        <div class="rn-kom-op-list" id="operatorList"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid rn-kom-row2">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Konektivitas Posko</h3><p>Status hubungan tiap posko dengan pusat komando.</p></div>
+          <a class="btn mini" href="map.html?event=event-sim-001" id="mapLink">Lihat Peta</a>
+        </div>
+        <div class="rn-kom-conn-legend" id="connLegend"></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Posko</th><th>Status</th><th>Kontak Terakhir</th></tr></thead>
+            <tbody id="connBody"><tr><td colspan="3">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="panel-header"><div><h3>Peringatan Konektivitas</h3></div></div>
+        <div class="event-list" id="alertList"></div>
+      </aside>
+    </section>
+
+    <section class="content-grid rn-kom-row2">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Status Daya &amp; Baterai</h3><p>Unit dengan baterai terendah lebih dulu.</p></div>
+        </div>
+        <div class="rn-kom-batt-list" id="battList"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Status Frekuensi &amp; Jaringan</h3></div></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Kanal</th><th>Frekuensi / Penyedia</th><th>Status</th></tr></thead>
+            <tbody id="freqBody"><tr><td colspan="3">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <p class="rn-muted rn-kom-footnote" id="komFootnote"></p>
+
+    <details class="panel create-panel rn-input-drawer" id="deviceForm">
+      <summary>
+        <h3>Tambah / Perbarui Alat Komunikasi</h3>
+        <p>Alat milik posko, organisasi, TNI/Polri, atau relawan. Perlu login.</p>
+      </summary>
+      <form class="rn-form" data-create-device>
+        <div class="form-grid">
+          <label>Disaster Event ID <input name="disaster_event" value="event-sim-001" required></label>
+          <label>Posko <input name="posko" placeholder="posko-sim-logistik"></label>
+          <label>Nama Alat <input name="device_name" placeholder="HT Unit-045" required></label>
+          <label>Kategori
+            <select name="category" required>
+              <option value="ht">Handy Talky (HT)</option>
+              <option value="repeater">Repeater Radio</option>
+              <option value="telepon_satelit">Telepon Satelit</option>
+              <option value="starlink">Starlink Terminal</option>
+              <option value="vsat">VSAT Terminal</option>
+              <option value="router_4g5g">Router 4G/5G</option>
+              <option value="antena_mast">Antena / Mast</option>
+            </select>
+          </label>
+          <label>Status
+            <select name="status">
+              <option value="active">Aktif</option>
+              <option value="spare">Cadangan</option>
+              <option value="inactive">Tidak Aktif</option>
+              <option value="needs_attention">Perlu Perhatian</option>
+            </select>
+          </label>
+          <label>Baterai (%) <input name="battery_pct" type="number" min="0" max="100" placeholder="82"></label>
+          <label>Frekuensi / Channel <input name="frequency_channel" placeholder="146.020 MHz / CH 01"></label>
+          <label>Lokasi Saat Ini <input name="current_location" placeholder="Posko RW 04 Kampung Melayu"></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Alat</button>
+          <span class="form-message" data-device-message></span>
+        </div>
+      </form>
+    </details>
+
+    <details class="panel create-panel rn-input-drawer" id="operatorForm">
+      <summary>
+        <h3>Tambah Operator Radio</h3>
+        <p>Operator / koordinator radio yang bertugas untuk event ini. Perlu login.</p>
+      </summary>
+      <form class="rn-form" data-create-operator>
+        <div class="form-grid">
+          <label>Disaster Event ID <input name="disaster_event" value="event-sim-001" required></label>
+          <label>Nama Operator <input name="operator_name" placeholder="Andi Pratama" required></label>
+          <label>Peran
+            <select name="role">
+              <option value="operator">Operator</option>
+              <option value="koordinator_radio">Koordinator Radio</option>
+              <option value="teknisi">Teknisi</option>
+            </select>
+          </label>
+          <label>Channel <input name="channel" placeholder="CH 01"></label>
+          <label>Status
+            <select name="status">
+              <option value="siaga">Siaga</option>
+              <option value="online">Online</option>
+              <option value="istirahat">Istirahat</option>
+              <option value="offline">Offline</option>
+            </select>
+          </label>
+          <label>Posko <input name="posko" placeholder="posko-sim-logistik"></label>
+          <label>No. Kontak <input name="contact_phone" placeholder="0812-xxxx-xxxx"></label>
+          <label>Keahlian <input name="skills" placeholder="Radio VHF, antena lapangan"></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Operator</button>
+          <span class="form-message" data-operator-message></span>
+        </div>
+      </form>
+    </details>
+
+    <details class="panel create-panel rn-input-drawer" id="freqForm">
+      <summary>
+        <h3>Tambah Kanal Frekuensi / Jaringan</h3>
+      </summary>
+      <form class="rn-form" data-create-freq>
+        <div class="form-grid">
+          <label>Disaster Event ID <input name="disaster_event" value="event-sim-001" required></label>
+          <label>Label Kanal <input name="band_label" placeholder="VHF Primary" required></label>
+          <label>Jenis Jaringan
+            <select name="network_type" required>
+              <option value="vhf">VHF</option>
+              <option value="uhf">UHF</option>
+              <option value="hf">HF</option>
+              <option value="seluler">Seluler</option>
+              <option value="starlink">Starlink</option>
+              <option value="vsat">VSAT</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+          </label>
+          <label>Frekuensi <input name="frequency_value" placeholder="146.020 MHz"></label>
+          <label>Operator / Penyedia <input name="provider" placeholder="Telkomsel"></label>
+          <label>Status
+            <select name="status">
+              <option value="baik">Baik</option>
+              <option value="sibuk">Sibuk</option>
+              <option value="lemah">Lemah</option>
+              <option value="down">Terputus</option>
+            </select>
+          </label>
+          <label>Beban (%) <input name="load_pct" type="number" min="0" max="100" placeholder="68"></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Kanal</button>
+          <span class="form-message" data-freq-message></span>
+        </div>
+      </form>
+    </details>
+  </main>
+</div>
+
+<div id="komDrill" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="komDrillTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="komDrillTitle">-</h3><p id="komDrillSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body" id="komDrillBody"></div>
+  </div>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=frappe-batch-b-1"></script>
+<script src="../assets/js/alat-komunikasi.js?v=komunikasi-20260903"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navcomms-20260903"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

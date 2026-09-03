@@ -52,6 +52,7 @@ def _classify(doc, raw):
 
 VALID_STATES = {
     "planned",
+    "pickup_claimed",
     "assigned_pickup",
     "dispatched",
     "in_transit",

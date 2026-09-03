@@ -66,7 +66,7 @@ function renderCreateSuccess(
   const offers = data.aid_offers || (data.aid_offer ? [{ aid_offer: data.aid_offer, offer_status: data.offer_status }] : []);
   const rows = offers.map(o => `
         <div>
-          <span>${safe(o.item || "Aid Offer")}${o.quantity ? " — " + safe(o.quantity) + " " + safe(o.unit || "") : ""}</span>
+          <span>${safe(o.item || "Aid Offer")}${o.quantity ? " — " + safe(o.quantity) + " " + safe(o.unit || "") : ""}${o.ready_at ? " · siap: " + safe(o.ready_at) : ""}</span>
           <strong>${safe(o.aid_offer)} · ${safe(o.offer_status)}</strong>
         </div>`).join("");
   result.innerHTML = `
@@ -105,7 +105,7 @@ function initAidItems(form) {
   function addRow(preset) {
     const node = tpl.content.firstElementChild.cloneNode(true);
     if (preset) {
-      ["item_name", "quantity", "unit"].forEach(k => {
+      ["item_name", "quantity", "unit", "ready_at"].forEach(k => {
         const i = node.querySelector('[data-f="' + k + '"]');
         if (i && preset[k] != null) i.value = preset[k];
       });
@@ -133,11 +133,15 @@ function initAidItems(form) {
   form.__collectAidItems = function () {
     const out = [];
     rowsEl.querySelectorAll(".rn-aid-row").forEach(r => {
-      const item = (r.querySelector('[data-f="item_name"]').value || "").trim();
-      const qty = (r.querySelector('[data-f="quantity"]').value || "").trim();
-      const unit = (r.querySelector('[data-f="unit"]').value || "").trim();
+      const g = k => (r.querySelector('[data-f="' + k + '"]').value || "").trim();
+      const item = g("item_name");
       if (!item) return;
-      out.push({ item_text: item, quantity: qty ? Number(qty) : null, unit: unit || null });
+      out.push({
+        item_text: item,
+        quantity: g("quantity") ? Number(g("quantity")) : null,
+        unit: g("unit") || null,
+        ready_at: g("ready_at") || null,
+      });
     });
     return out;
   };

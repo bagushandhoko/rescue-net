@@ -873,6 +873,97 @@ def assign_pickup_volunteer(transport_space, volunteer_profile=None, volunteer_n
     return {"transport": doc.name, "pickup_volunteer": doc.pickup_volunteer}
 
 
+def _posko_is_active_pickup(posko):
+    """A Posko Distribusi is 'aktif pickup' if it has at least one armada
+    whose service_mode is courier_pickup or both; otherwise it is 'pasif —
+    hanya menyediakan space'."""
+    modes = frappe.get_all(
+        "RN Transport Space",
+        filters={"coordination_posko": posko},
+        pluck="service_mode",
+    )
+    return any((m or "both") in ("courier_pickup", "both") for m in modes)
+
+
+@frappe.whitelist()
+def claim_aid_pickup(transporter_posko, aid_offer, destination_posko,
+                     eta=None, note=None):
+    """An *active* Posko Distribusi (motor pick-up, Land Rover club, …) claims
+    an open aid offer for pickup and commits to delivering it to a chosen
+    posko. Creates an RN Distribution Flow (status `pickup_claimed`) linking
+    the offer → destination, so the offer shows "Akan Dijemput oleh <posko>"
+    on Manajemen Distribusi / Posko Logistik instead of sitting unmatched."""
+    actor = rn_actor()
+    transporter_posko = resolve_posko(transporter_posko)
+    destination_posko = resolve_posko(destination_posko)
+
+    if not _can_contribute(actor, transporter_posko):
+        frappe.throw(
+            "Anda bukan petugas / anggota posko distribusi ini.",
+            frappe.PermissionError,
+        )
+    if not _posko_is_active_pickup(transporter_posko):
+        frappe.throw(
+            "Posko ini pasif (hanya menyediakan space). Daftarkan armada "
+            "bermode kurir dulu untuk bisa menjemput bantuan."
+        )
+
+    offer = frappe.get_doc("RN Aid Offer", aid_offer)
+    if str(offer.offer_status or "").lower() in (
+        "pickup_claimed", "assigned_pickup", "in_transit", "delivered",
+        "received", "received_verified", "stock_transferred", "cancelled",
+    ):
+        frappe.throw(f"Bantuan ini sudah berstatus '{offer.offer_status}'.")
+
+    existing = frappe.get_all(
+        "RN Distribution Flow",
+        filters={"aid_offer": aid_offer,
+                 "flow_status": ["not in", ["cancelled", "rejected"]]},
+        limit_page_length=1,
+    )
+    if existing:
+        frappe.throw("Bantuan ini sudah punya alur distribusi.")
+
+    posko_title = frappe.db.get_value("RN Posko", transporter_posko, "title") or transporter_posko
+
+    flow = frappe.new_doc("RN Distribution Flow")
+    flow.title = ((offer.item_name or offer.raw_item_text or "Bantuan")
+                  + " — dijemput " + posko_title)
+    flow.disaster_event = offer.disaster_event
+    flow.aid_offer = aid_offer
+    flow.destination_posko = destination_posko
+    flow.item_name = offer.item_name or offer.raw_item_text
+    if offer.quantity is not None:
+        flow.quantity = offer.quantity
+    flow.unit = offer.unit
+    flow.quantity_mode = offer.quantity_mode or "unknown"
+    flow.transport_provider = posko_title
+    flow.transport_type = "darat"
+    flow.flow_status = "pickup_claimed"
+    if eta:
+        flow.eta_final = eta
+    flow.notes = ("Dijemput oleh " + posko_title
+                  + (" — " + note if note else ""))
+    for f in ("observed_at", "source_updated_at"):
+        if hasattr(flow, f) and not flow.get(f):
+            flow.set(f, now_datetime())
+    flow.insert(ignore_permissions=True)
+
+    offer.offer_status = "pickup_claimed"
+    offer.notes = ((offer.notes + " | ") if offer.notes else "") + \
+        "Akan dijemput oleh " + posko_title + " → " + \
+        (frappe.db.get_value("RN Posko", destination_posko, "title") or destination_posko)
+    offer.save(ignore_permissions=True)
+
+    return {
+        "flow": flow.name,
+        "aid_offer": aid_offer,
+        "offer_status": offer.offer_status,
+        "transporter": posko_title,
+        "destination_posko": destination_posko,
+    }
+
+
 @frappe.whitelist()
 def create_flow(
     destination_posko,
@@ -1805,7 +1896,9 @@ def create_user_aid_offer_multi(
     """One "Kirim Bantuan" submission carrying several barang. Creates one
     RN Aid Offer per item (the whole app models an aid offer as one
     item/qty/unit), sharing the donor + delivery details. `items_json` is a
-    list of {item_text, quantity, unit, quantity_mode?}."""
+    list of {item_text, quantity, unit, quantity_mode?, ready_at?}. Each item
+    may have its own `ready_at` (barang bisa siap di waktu berbeda); rows
+    without one fall back to the shared `ready_at`."""
     import json
 
     try:
@@ -1839,7 +1932,7 @@ def create_user_aid_offer_multi(
             handling_mode=handling_mode,
             target_posko=target_posko,
             pickup_location=pickup_location,
-            ready_at=ready_at,
+            ready_at=(str(row.get("ready_at")).strip() if row.get("ready_at") else None) or ready_at,
             donor_contact=donor_contact,
             notes=shared_notes,
         )
@@ -1849,6 +1942,7 @@ def create_user_aid_offer_multi(
             "item": it,
             "quantity": row.get("quantity"),
             "unit": row.get("unit"),
+            "ready_at": (str(row.get("ready_at")).strip() if row.get("ready_at") else None) or ready_at,
             "offer_status": res["offer_status"],
         })
 

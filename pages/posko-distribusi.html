@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Distribusi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskodist-20260903">
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskodist-20260903b">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navdist-20260903" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -59,6 +59,7 @@
         <label class="rn-pd-selector">Posko
           <select id="poskoSelect"></select>
         </label>
+        <span class="chip" id="pdModeBadge" hidden></span>
         <div class="status-pill" id="pdUpdated">Posko Distribusi · Live</div>
       </div>
     </header>
@@ -98,6 +99,29 @@
         <div class="rn-table-foot"><span id="armadaShown">—</span></div>
       </div>
     </section>
+
+    <section class="content-grid rn-md-wide" id="pickupQueueSection" hidden>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Antrean Pickup Bantuan <small class="rn-muted">— Pickup Aktif</small></h3>
+            <p>Bantuan yang butuh dijemput. Ambil, pilih posko tujuan pengantaran, dan bantuan akan tampil "Akan Dijemput oleh posko ini" di Manajemen Distribusi &amp; Posko Logistik.</p>
+          </div>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr>
+              <th>Barang</th><th>Jumlah</th><th>Donatur</th><th>Lokasi Jemput</th>
+              <th>Siap</th><th>Antar ke Posko</th><th>Aksi</th>
+            </tr></thead>
+            <tbody id="pickupQueueBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="rn-table-foot"><span id="pickupQueueShown">—</span></div>
+      </div>
+    </section>
+
+    <p class="rn-muted rn-md-xref" id="pdPassiveNote" hidden>Posko ini <b>pasif</b> — hanya menyediakan ruang muat (space). Untuk bisa menjemput bantuan, daftarkan armada bermode <b>Kurir Jemput-Antar</b> / <b>Space + Kurir</b>.</p>
 
     <section class="content-grid rn-md-wide">
       <div class="panel">
@@ -206,7 +230,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=frappe-batch-a-1"></script>
-<script src="../assets/js/posko-distribusi.js?v=poskodist-20260903"></script>
+<script src="../assets/js/posko-distribusi.js?v=poskodist-20260903b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

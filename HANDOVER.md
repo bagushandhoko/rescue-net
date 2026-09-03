@@ -165,6 +165,40 @@ else passed on the first real assertion; earlier "failures" in the run log
 were test-script bugs (json.dumps of datetimes, wrong kwarg names, a phone
 string with letters).
 
+## Aid pickup: per-item ready-at + active/passive Posko Distribusi (2026-09-03)
+
+Owner: item list needs a per-item "kapan siap" (siap bisa beda-beda); an
+*active* transporter posko (motor pick-up, Land Rover club) can **book to
+pick up** an aid offer and choose which posko it delivers to; passive poskos
+only provide space.
+
+- **`create_user_aid_offer_multi`**: each `items_json` row may carry its own
+  `ready_at` (falls back to the shared one). `kirim-bantuan.html` item row
+  gained a "Siap" field (`?v=aidmulti-20260903b`).
+- **`RN Distribution Flow`**: `VALID_STATES` += `pickup_claimed` (doctype .py,
+  cp + restart).
+- **`api_logistics.claim_aid_pickup(transporter_posko, aid_offer,
+  destination_posko, eta?, note?)`** (login, `_can_contribute` on the
+  transporter posko + `_posko_is_active_pickup` check): creates an
+  RN Distribution Flow (`flow_status=pickup_claimed`, `transport_provider` =
+  posko title, `title` set) linking offer→destination; sets the aid offer
+  `offer_status=pickup_claimed` + a "Akan dijemput oleh X → Y" note; rejects
+  a second claim.
+- **`api_control_centre`**: `_DISTRIBUSI_STATUS_LABEL["pickup_claimed"] =
+  "Akan Dijemput"`, added to `_INTRANSIT_STATES` (NOT `_DRILL_BLOCKED_FLOW`,
+  so it does NOT count in "Distribusi Terhambat"). `posko_distribusi_board`
+  now returns `is_active_pickup` / `pickup_mode_label`, `pickup_queue` (open
+  aid offers needing pickup, minus already-flowed), `destination_options`
+  (event poskos, non-transport).
+- **`posko-distribusi.html` / `.js` (`?v=poskodist-20260903b`)**: header
+  "Pickup Aktif" / "Pasif — Hanya Sediakan Space" badge; new "Antrean Pickup
+  Bantuan" panel (active poskos only) — per row a destination `<select>` +
+  "Ambil & Antar" → `claim_aid_pickup`; passive poskos see a note instead.
+- Verified console: per-item ready_at stored, active/passive badge, queue
+  gated, claim → "Akan Dijemput" in Alur (not in Terhambat KPI), leaves
+  queue, dup-claim rejected. Playwright: both pages render, 12 claim rows,
+  0 errors.
+
 ## Icon set (STARTED, not wired) — `assets/js/rn-icons.js`
 
 Owner chose "full SVG icon set (menu + KPI)". `rn-icons.js` is committed but

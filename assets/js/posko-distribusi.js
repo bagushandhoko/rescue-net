@@ -282,11 +282,87 @@
       ? "Catatan: posko ini bukan bertipe ‘transport’ di registrasi posko — armada tetap bisa dikelola, tapi sebaiknya set Jenis Posko = Transport."
       : "";
 
+    var badge = $("#pdModeBadge");
+    if (badge && data.posko) {
+      badge.hidden = false;
+      badge.textContent = data.pickup_mode_label || (data.is_active_pickup ? "Pickup Aktif" : "Pasif");
+      badge.className = "chip " + (data.is_active_pickup ? "ok" : "");
+    } else if (badge) { badge.hidden = true; }
+
+    var qSec = $("#pickupQueueSection"), pNote = $("#pdPassiveNote");
+    if (data.posko && data.is_active_pickup) {
+      if (qSec) qSec.hidden = false;
+      if (pNote) pNote.hidden = true;
+    } else {
+      if (qSec) qSec.hidden = true;
+      if (pNote) pNote.hidden = !data.posko;
+    }
+
     renderSelector(data.transporter_poskos || [], data.posko || "");
     renderKpi(data.totals || {}, data.posko_info);
     renderArmada(data.armada || []);
     renderBookings(data.booking_inbox || []);
+    renderPickupQueue(data.pickup_queue || [], data.destination_options || []);
     renderRelawan(data.relawan_candidates || []);
+  }
+
+  function renderPickupQueue(list, dests) {
+    var body = $("#pickupQueueBody"), shown = $("#pickupQueueShown");
+    if (!body) return;
+    if (!list.length) {
+      body.innerHTML = '<tr><td colspan="7"><em class="rn-muted">Tidak ada bantuan yang menunggu dijemput saat ini.</em></td></tr>';
+      if (shown) shown.textContent = "0 antre";
+      return;
+    }
+    var opts = (dests || []).map(function (d) {
+      return '<option value="' + esc(d.id) + '">' + esc(d.title) + (d.city ? " — " + esc(d.city) : "") + "</option>";
+    }).join("");
+    body.innerHTML = list.map(function (r) {
+      var sel = '<select class="rn-pd-dest" data-offer="' + esc(r.aid_offer) + '">' +
+        '<option value="">— pilih posko —</option>' + opts + "</select>";
+      return (
+        "<tr>" +
+        "<td><b>" + esc(r.item) + "</b><small class=\"rn-muted\">" + esc(r.aid_offer) + "</small></td>" +
+        "<td>" + fmt(r.quantity) + " " + esc(r.unit) + "</td>" +
+        "<td>" + esc(r.donor) + (r.donor_contact ? "<small class=\"rn-muted\">" + tel(r.donor_contact) + "</small>" : "") + "</td>" +
+        "<td>" + esc(r.pickup_location) + "</td>" +
+        "<td>" + esc(r.ready_at) + "</td>" +
+        "<td>" + sel + "</td>" +
+        '<td><button type="button" class="btn primary mini rn-pd-claim" data-offer="' + esc(r.aid_offer) + '">Ambil &amp; Antar</button>' +
+        '<span class="rn-pd-bk-msg" data-msg="' + esc(r.aid_offer) + '"></span></td>' +
+        "</tr>"
+      );
+    }).join("");
+    // prefill suggested destination
+    list.forEach(function (r) {
+      if (r.suggested_destination) {
+        var s = body.querySelector('.rn-pd-dest[data-offer="' + CSS.escape(r.aid_offer) + '"]');
+        if (s && [].some.call(s.options, function (o) { return o.value === r.suggested_destination; })) {
+          s.value = r.suggested_destination;
+        }
+      }
+    });
+    body.querySelectorAll(".rn-pd-claim").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var offer = btn.getAttribute("data-offer");
+        var sel = body.querySelector('.rn-pd-dest[data-offer="' + CSS.escape(offer) + '"]');
+        var msg = body.querySelector('[data-msg="' + CSS.escape(offer) + '"]');
+        var dest = sel && sel.value;
+        if (!dest) { if (msg) msg.textContent = " pilih posko tujuan dulu"; return; }
+        if (msg) msg.textContent = " memproses…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_logistics.claim_aid_pickup",
+            { transporter_posko: getPosko(), aid_offer: offer, destination_posko: dest },
+            { method: "POST" });
+          if (msg) msg.textContent = " diambil ✓";
+          await load();
+        } catch (err) {
+          var m = (err && err.message) || String(err);
+          if (msg) msg.textContent = " gagal: " + m + (/login|permission|akses/i.test(m) ? " (perlu login)" : "");
+        }
+      });
+    });
+    if (shown) shown.textContent = "Menampilkan " + list.length + " bantuan menunggu jemput";
   }
 
   document.addEventListener("DOMContentLoaded", function () {

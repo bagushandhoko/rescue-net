@@ -1364,7 +1364,7 @@ _RECEIVED_STATES = {
     "received", "received_verified", "arrived", "arrived_at_posko",
     "stock_transferred", "completed", "closed",
 }
-_INTRANSIT_STATES = {"dispatched", "in_transit", "on_the_way", "assigned_pickup"}
+_INTRANSIT_STATES = {"dispatched", "in_transit", "on_the_way", "assigned_pickup", "pickup_claimed"}
 
 
 def _stock_cards(name):
@@ -2754,6 +2754,7 @@ def active_disasters_board(limit=60):
 
 _DISTRIBUSI_STATUS_LABEL = {
     "planned": "Direncanakan",
+    "pickup_claimed": "Akan Dijemput",
     "assigned_pickup": "Menunggu Pickup",
     "dispatched": "Dalam Perjalanan",
     "in_transit": "Dalam Perjalanan",
@@ -3402,12 +3403,74 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         tp_rows = frappe.get_all("RN Posko", filters=tp_filter,
                                  fields=["name", "title", "city_name"], limit_page_length=200)
 
+    # ---- aktif pickup vs pasif (hanya sediakan space) ----
+    is_active_pickup = any(
+        (t.service_mode or "both") in ("courier_pickup", "both") for t in transports
+    )
+    pickup_mode_label = "Pickup Aktif" if is_active_pickup else "Pasif — Hanya Sediakan Space"
+
+    # ---- pickup queue: open aid offers needing pickup, not yet claimed ----
+    pickup_queue = []
+    dest_options = []
+    if event:
+        off_filter = event_filters(cols("RN Aid Offer"), event)
+        offers_all = frappe.get_all(
+            "RN Aid Offer", filters=off_filter,
+            fields=_sf("RN Aid Offer", [
+                "name", "item_name", "raw_item_text", "quantity", "unit",
+                "offer_status", "handling_mode", "donor_name", "donor_contact",
+                "pickup_location", "ready_at", "target_posko",
+            ]),
+            order_by="creation desc", limit_page_length=500,
+        )
+        flow_off_ids = set(frappe.get_all(
+            "RN Distribution Flow",
+            filters={"aid_offer": ["!=", ""], "flow_status": ["not in", ["cancelled", "rejected"]]},
+            pluck="aid_offer",
+        ))
+        _OPEN_OFFER = {"", "available", "need_pickup", "pending", "self_reported"}
+        for o in offers_all:
+            st = str(o.offer_status or "").lower()
+            if o.name in flow_off_ids:
+                continue
+            if st not in _OPEN_OFFER:
+                continue
+            if (o.handling_mode or "").lower() not in ("need_pickup", "", "active_booking") \
+               and st != "need_pickup":
+                continue
+            pickup_queue.append({
+                "aid_offer": o.name,
+                "item": o.item_name or o.raw_item_text or "-",
+                "quantity": o.quantity,
+                "unit": o.unit or "",
+                "donor": o.donor_name or "-",
+                "donor_contact": o.donor_contact or "",
+                "pickup_location": o.pickup_location or "-",
+                "ready_at": o.ready_at or "-",
+                "suggested_destination": o.target_posko or "",
+            })
+
+        dest_rows = frappe.get_all(
+            "RN Posko",
+            or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
+            fields=["name", "title", "posko_type", "city_name"],
+            limit_page_length=300,
+        )
+        dest_options = [
+            {"id": r.name, "title": r.title or r.name,
+             "type": r.posko_type or "", "city": r.get("city_name") or ""}
+            for r in dest_rows
+            if (r.posko_type or "").lower() != "transport"
+        ]
+
     return {
         "disaster_event": event,
         "generated_at": frappe.utils.now_datetime(),
         "posko": posko,
         "posko_info": posko_row,
         "is_transport_posko": bool(posko_row and (posko_row.get("posko_type") or "").lower() == "transport"),
+        "is_active_pickup": is_active_pickup,
+        "pickup_mode_label": pickup_mode_label,
         "totals": {
             "armada_count": len(armada),
             "kapasitas_total_kg": round(tot_kg, 1),
@@ -3417,9 +3480,12 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "kapasitas_tersedia_kg": round(max(0.0, tot_kg - used_kg), 1),
             "booking_menunggu": sum(1 for b in bookings if b.status == "requested"),
             "booking_terkonfirmasi": sum(1 for b in bookings if b.status == "confirmed"),
+            "pickup_queue": len(pickup_queue),
         },
         "armada": armada,
         "booking_inbox": inbox,
+        "pickup_queue": pickup_queue,
+        "destination_options": dest_options,
         "relawan_candidates": relawan_candidates,
         "transporter_poskos": [
             {"id": r.name, "title": r.title, "city": r.get("city_name") or ""}

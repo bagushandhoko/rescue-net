@@ -118,6 +118,32 @@ Center thumbnails were plain `target="_blank"` links.
   enlarged image loaded + caption; nav arrows only when >1 photo; ESC closes;
   0 console errors.
 
+## Kirim Bantuan — multi-item per submission (2026-09-03)
+
+Owner: "buat item barang bisa tidak satu barang". `kirim-bantuan.html` had a
+single Item/Jumlah/Satuan trio.
+
+- **`kirim-bantuan.html`**: those 3 fields replaced with a repeatable
+  `.rn-aid-items` block — a `<template data-aid-row-tpl>` row (item / jumlah /
+  satuan / ✕), "＋ Tambah item" button; last row's delete is disabled.
+  `?v=aidmulti-20260903` on style.css + public-aid.js.
+- **`public-aid.js`**: `initAidItems(form)` manages the rows and exposes
+  `form.__collectAidItems()` / `__resetAidItems()`. Submit now collects the
+  array, validates each row has qty+unit, and calls the new
+  `create_user_aid_offer_multi`. `renderCreateSuccess` lists every created
+  Aid Offer ID + item.
+- **Backend `api_logistics.create_user_aid_offer_multi`** (login, same gate
+  as the single version): takes `items_json` (list of {item_text, quantity,
+  unit, quantity_mode?}) + shared donor/delivery fields; loops
+  `create_user_aid_offer` → one `RN Aid Offer` per item (the app models an
+  offer as one item/qty/unit); blank rows skipped; ≤30 rows; returns
+  `{aid_offers:[…], count, handling_mode, target_posko}`. Deployed to
+  `osiun-frappe-backend` (restart, no migrate).
+- Verified: console `create_user_aid_offer_multi` → 3 offers from one call
+  (blank row skipped), shared donor/notes; Playwright — add/remove rows,
+  `__collectAidItems` returns the array, delete disabled at 1 row, 0
+  overflow / errors.
+
 ## Distribusi booking UX pass (2026-09-03) — DONE & DEPLOYED
 
 Owner feedback on the armada booking:

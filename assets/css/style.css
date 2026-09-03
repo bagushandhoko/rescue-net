@@ -5508,3 +5508,20 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-pd-kpi { grid-template-columns: minmax(0, 1fr); }
   .rn-pd-selector select { max-width: 100%; }
 }
+
+/* Kirim Bantuan — repeatable item rows */
+.rn-aid-items { margin-top: 14px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--panel2); }
+.rn-aid-items-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.rn-aid-items-head h4 { margin: 0; font-size: 13px; }
+.rn-aid-items-head .btn.mini { padding: 5px 12px; font-size: 12px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+.rn-aid-row { display: grid; grid-template-columns: 1.6fr .7fr .8fr auto; gap: 10px; align-items: end; margin-bottom: 8px; }
+.rn-aid-row:last-child { margin-bottom: 0; }
+.rn-aid-row label { display: grid; gap: 6px; font-size: 12px; font-weight: 750; color: var(--muted); }
+.rn-aid-row input { min-height: 40px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font: inherit; background: #fff; }
+.rn-aid-row-del { height: 40px; width: 40px; border-radius: 10px; border: 1px solid var(--line); background: #fff; color: #b23; cursor: pointer; font-size: 15px; }
+.rn-aid-row-del:disabled { opacity: .35; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .rn-aid-row { grid-template-columns: 1fr 1fr; }
+  .rn-aid-row label:first-child { grid-column: 1 / -1; }
+  .rn-aid-row-del { width: 100%; }
+}

@@ -1790,6 +1790,81 @@ def create_user_aid_offer(
 
 
 @frappe.whitelist()
+def create_user_aid_offer_multi(
+    disaster_event,
+    donor_name,
+    items_json,
+    handling_mode="need_pickup",
+    target_posko=None,
+    pickup_location=None,
+    ready_at=None,
+    donor_contact=None,
+    notes=None,
+    expected_arrival_at=None,
+):
+    """One "Kirim Bantuan" submission carrying several barang. Creates one
+    RN Aid Offer per item (the whole app models an aid offer as one
+    item/qty/unit), sharing the donor + delivery details. `items_json` is a
+    list of {item_text, quantity, unit, quantity_mode?}."""
+    import json
+
+    try:
+        items = json.loads(items_json) if isinstance(items_json, str) else items_json
+    except Exception:
+        frappe.throw("Format daftar barang tidak valid.")
+
+    if not isinstance(items, list) or not items:
+        frappe.throw("Tambahkan minimal satu barang bantuan.")
+    if len(items) > 30:
+        frappe.throw("Maksimal 30 baris barang per pengiriman.")
+
+    shared_notes = notes
+    if expected_arrival_at:
+        shared_notes = ((notes + " | ") if notes else "") + "Perkiraan sampai posko: " + str(expected_arrival_at)
+
+    created = []
+    first = None
+    for row in items:
+        row = row or {}
+        it = str(row.get("item_text") or "").strip()
+        if not it:
+            continue
+        res = create_user_aid_offer(
+            disaster_event=disaster_event,
+            donor_name=donor_name,
+            item_text=it,
+            quantity=row.get("quantity"),
+            unit=row.get("unit"),
+            quantity_mode=row.get("quantity_mode") or "exact",
+            handling_mode=handling_mode,
+            target_posko=target_posko,
+            pickup_location=pickup_location,
+            ready_at=ready_at,
+            donor_contact=donor_contact,
+            notes=shared_notes,
+        )
+        first = first or res
+        created.append({
+            "aid_offer": res["aid_offer"],
+            "item": it,
+            "quantity": row.get("quantity"),
+            "unit": row.get("unit"),
+            "offer_status": res["offer_status"],
+        })
+
+    if not created:
+        frappe.throw("Tidak ada barang valid untuk disimpan.")
+
+    return {
+        "aid_offers": created,
+        "count": len(created),
+        "donor_name": donor_name,
+        "handling_mode": first["handling_mode"],
+        "target_posko": first["target_posko"],
+    }
+
+
+@frappe.whitelist()
 def update_user_aid_offer(
     aid_offer,
     item_text=None,

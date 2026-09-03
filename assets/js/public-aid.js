@@ -63,50 +63,88 @@ function renderCreateSuccess(
   result,
   data
 ) {
+  const offers = data.aid_offers || (data.aid_offer ? [{ aid_offer: data.aid_offer, offer_status: data.offer_status }] : []);
+  const rows = offers.map(o => `
+        <div>
+          <span>${safe(o.item || "Aid Offer")}${o.quantity ? " — " + safe(o.quantity) + " " + safe(o.unit || "") : ""}</span>
+          <strong>${safe(o.aid_offer)} · ${safe(o.offer_status)}</strong>
+        </div>`).join("");
   result.innerHTML = `
     <div class="success-box">
-      <h3>Bantuan berhasil dicatat</h3>
+      <h3>Bantuan berhasil dicatat${offers.length > 1 ? " (" + offers.length + " item)" : ""}</h3>
 
-      <p>
-        Bantuan sekarang terhubung dengan
-        akun Rescue-Net yang sedang login.
-      </p>
+      <p>Tiap item menjadi satu Aid Offer yang bisa dipantau di Manajemen Distribusi &amp; Posko Logistik.</p>
 
       <div class="code-grid">
-        <div>
-          <span>Aid Offer ID</span>
-          <strong>${safe(data.aid_offer)}</strong>
-        </div>
-
-        <div>
-          <span>Status</span>
-          <strong>${safe(data.offer_status)}</strong>
-        </div>
-
+        ${rows}
         <div>
           <span>Handling</span>
           <strong>${safe(data.handling_mode)}</strong>
         </div>
-
         <div>
           <span>Target Posko</span>
           <strong>${safe(data.target_posko)}</strong>
         </div>
       </div>
 
-      <p class="subtitle">
-        Edit berikutnya menggunakan session login,
-        bukan kode edit legacy.
-      </p>
+      <p class="subtitle">Simpan Aid Offer ID di atas untuk mengedit lewat "Edit Bantuan Saya".</p>
 
-      <a
-        class="btn primary"
-        href="edit-bantuan.html"
-      >
-        Edit Bantuan Saya
-      </a>
+      <a class="btn primary" href="edit-bantuan.html">Edit Bantuan Saya</a>
     </div>
   `;
+}
+
+
+/* ---------- repeatable item rows ---------- */
+function initAidItems(form) {
+  const wrap = form.querySelector("[data-aid-items]");
+  if (!wrap) return;
+  const rowsEl = wrap.querySelector("[data-aid-rows]");
+  const tpl = wrap.querySelector("[data-aid-row-tpl]");
+
+  function addRow(preset) {
+    const node = tpl.content.firstElementChild.cloneNode(true);
+    if (preset) {
+      ["item_name", "quantity", "unit"].forEach(k => {
+        const i = node.querySelector('[data-f="' + k + '"]');
+        if (i && preset[k] != null) i.value = preset[k];
+      });
+    }
+    node.querySelector("[data-del-item]").addEventListener("click", () => {
+      if (rowsEl.querySelectorAll(".rn-aid-row").length > 1) node.remove();
+      else clearRow(node);
+      syncDelState();
+    });
+    rowsEl.appendChild(node);
+    syncDelState();
+    return node;
+  }
+  function clearRow(node) {
+    node.querySelectorAll("input").forEach(i => { i.value = ""; });
+  }
+  function syncDelState() {
+    const only = rowsEl.querySelectorAll(".rn-aid-row").length <= 1;
+    rowsEl.querySelectorAll("[data-del-item]").forEach(b => { b.disabled = only; });
+  }
+
+  wrap.querySelector("[data-add-item]").addEventListener("click", () => addRow());
+  if (!rowsEl.querySelector(".rn-aid-row")) addRow();
+
+  form.__collectAidItems = function () {
+    const out = [];
+    rowsEl.querySelectorAll(".rn-aid-row").forEach(r => {
+      const item = (r.querySelector('[data-f="item_name"]').value || "").trim();
+      const qty = (r.querySelector('[data-f="quantity"]').value || "").trim();
+      const unit = (r.querySelector('[data-f="unit"]').value || "").trim();
+      if (!item) return;
+      out.push({ item_text: item, quantity: qty ? Number(qty) : null, unit: unit || null });
+    });
+    return out;
+  };
+  form.__resetAidItems = function () {
+    rowsEl.innerHTML = "";
+    addRow();
+  };
 }
 
 
@@ -124,6 +162,7 @@ function setupPublicAidForm() {
   if (!form) return;
 
   setupDeliveryModeToggle(form);
+  initAidItems(form);
 
   form.addEventListener(
     "submit",
@@ -163,87 +202,61 @@ function setupPublicAidForm() {
       const donorContact =
         form.donor_contact.value.trim();
 
-      const itemText =
-        form.item_name.value.trim();
+      const items = form.__collectAidItems
+        ? form.__collectAidItems()
+        : [];
 
-      const quantity =
-        Number(
-          form.quantity.value || 0
-        );
-
-      const unit =
-        form.unit.value.trim();
-
-      if (
-        !donorName ||
-        !donorContact ||
-        !itemText ||
-        !quantity ||
-        !unit
-      ) {
+      if (!donorName || !donorContact || !items.length) {
         result.innerHTML =
           `<div class="alert danger">` +
-          `Lengkapi nama, HP, item, jumlah, ` +
-          `dan satuan.` +
+          `Lengkapi nama, HP, dan minimal satu item barang.` +
           `</div>`;
+        return;
+      }
 
+      const incomplete = items.find(it => !it.quantity || !it.unit);
+      if (incomplete) {
+        result.innerHTML =
+          `<div class="alert danger">` +
+          `Lengkapi jumlah &amp; satuan untuk "${safe(incomplete.item_text)}".` +
+          `</div>`;
         return;
       }
 
       try {
         result.innerHTML =
           `<div class="alert neutral">` +
-          `Menyimpan bantuan ke Frappe...` +
+          `Menyimpan ${items.length} item bantuan ke Frappe...` +
           `</div>`;
 
         const data =
           await RN_FRAPPE.call(
             "rescue_net.api_logistics." +
-            "create_user_aid_offer",
+            "create_user_aid_offer_multi",
             {
               disaster_event:
-                form.disaster_event_id
-                  .value
-                  .trim(),
+                form.disaster_event_id.value.trim(),
 
-              donor_name:
-                donorName,
+              donor_name: donorName,
+              donor_contact: donorContact,
 
-              donor_contact:
-                donorContact,
+              items_json: JSON.stringify(items),
 
-              item_text:
-                itemText,
-
-              quantity,
-
-              unit,
-
-              quantity_mode:
-                "exact",
-
-              handling_mode:
-                handlingMode,
-
-              target_posko:
-                targetPosko,
+              handling_mode: handlingMode,
+              target_posko: targetPosko,
 
               pickup_location:
-                form.pickup_location
-                  .value
-                  .trim() ||
-                null,
+                form.pickup_location.value.trim() || null,
 
               ready_at:
-                form.ready_at
-                  .value
-                  .trim() ||
-                null,
+                form.ready_at.value.trim() || null,
+
+              expected_arrival_at:
+                (form.expected_arrival_at &&
+                  form.expected_arrival_at.value.trim()) || null,
 
               notes:
-                form.notes.value
-                  .trim() ||
-                null
+                form.notes.value.trim() || null
             },
             {
               method: "POST"
@@ -256,6 +269,7 @@ function setupPublicAidForm() {
         );
 
         form.reset();
+        if (form.__resetAidItems) form.__resetAidItems();
 
         if (
           form.disaster_event_id

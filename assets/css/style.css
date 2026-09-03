@@ -5020,6 +5020,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-md-ref-list code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; }
 
 /* Armada Distribusi — space/booking + kurir pickup */
+.rn-md-wide { grid-template-columns: minmax(0, 1fr); }
 .rn-md-armada-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
 .rn-md-armada-table td small { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
 .rn-md-cap { min-width: 150px; }
@@ -5048,6 +5049,14 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-md-radio { display: flex; align-items: center; gap: 6px; flex-direction: row; font-weight: 600; font-size: 13px; }
 .rn-md-radio input { width: auto; min-height: 0; }
 .rn-md-radio.is-disabled { opacity: .45; }
+
+.rn-md-detail { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 18px; }
+.rn-md-dl { display: flex; flex-direction: column; padding: 5px 0; border-bottom: 1px solid var(--line); }
+.rn-md-dl span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.rn-md-dl b { font-size: 13px; }
+.rn-md-detail-h { margin: 14px 0 6px; font-size: 13px; }
+.rn-md-detail-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+@media (max-width: 640px) { .rn-md-detail { grid-template-columns: minmax(0, 1fr); } }
 
 .rn-md-pm { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
 .rn-md-pm-head { font-size: 13px; }

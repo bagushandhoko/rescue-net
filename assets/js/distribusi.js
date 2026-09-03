@@ -244,7 +244,7 @@
             ? '<span class="rn-muted">—</span>'
             : '<span class="chip warning">belum ada</span>');
       html +=
-        '<tr class="rn-ba-row" data-href="' + esc(r.href) + '" title="Buka posko penyedia">' +
+        '<tr class="rn-ba-row" data-armada="' + esc(r.id) + '" title="Lihat detail penyedia transport">' +
         "<td><b>" + esc(r.provider) + "</b>" +
           (r.catatan ? '<small class="rn-muted">' + esc(r.catatan) + "</small>" : "") + "</td>" +
         "<td>" + esc(r.posko) + "</td>" +
@@ -264,10 +264,10 @@
       }
     });
     body.innerHTML = html;
-    body.querySelectorAll("tr.rn-ba-row[data-href]").forEach(function (tr) {
+    body.querySelectorAll("tr.rn-ba-row[data-armada]").forEach(function (tr) {
       tr.addEventListener("click", function (e) {
         if (e.target.closest("a,button")) return;
-        window.location.href = tr.getAttribute("data-href");
+        openArmadaDetail(tr.getAttribute("data-armada"));
       });
     });
     body.querySelectorAll(".rn-md-book-btn").forEach(function (btn) {
@@ -277,6 +277,61 @@
       });
     });
     if (shown) shown.textContent = "Menampilkan " + rows.length + " armada";
+  }
+
+  function armadaDetailHtml(r) {
+    function row(k, v) { return v && v !== "-" ? '<div class="rn-md-dl"><span>' + esc(k) + "</span><b>" + v + "</b></div>" : ""; }
+    var telK = r.kontak && r.kontak !== "-" ? telLink(r.kontak) : "";
+    var bk = (r.bookings || []).map(function (b) {
+      var cls = b.status === "confirmed" ? "ok" : "warning";
+      return (
+        '<div class="rn-md-bk"><div class="rn-md-bk-main"><b>' + esc(b.cargo) + "</b> " + esc(b.qty || "") +
+        '<small class="rn-muted"> · ' + esc(b.delivery_label) +
+        (b.requested_window ? " · " + esc(b.requested_window) : "") + "</small></div>" +
+        '<div class="rn-md-bk-contacts"><span>Pensuplai: <b>' + esc(b.booker) + "</b>" +
+        (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
+        (b.supplier_contact_phone ? " · " + telLink(b.supplier_contact_phone) : "") + "</span></div>" +
+        '<div class="rn-md-bk-meta"><span class="chip ' + cls + '">' + esc(b.status_label) + "</span>" +
+        '<code class="rn-md-bk-id">' + esc(b.id) + "</code></div></div>"
+      );
+    }).join("") || '<p class="rn-muted">Belum ada booking pada armada ini.</p>';
+
+    return (
+      '<div class="rn-md-detail">' +
+      row("Penyedia / armada", esc(r.provider)) +
+      row("Posko pengelola", esc(r.posko)) +
+      row("Jenis", esc(r.jenis)) +
+      row("Mode layanan", esc(r.service_mode_label)) +
+      row("Kebijakan booking", r.booking_policy === "open" ? "Langsung terkonfirmasi" : "Konfirmasi PIN koordinator") +
+      row("Kapasitas total", esc(r.kapasitas)) +
+      row("Sisa kapasitas", fmt(r.kapasitas_tersedia_kg) + " kg" + (r.kapasitas_total_m3 ? " · " + fmt(r.kapasitas_tersedia_m3) + " m³" : "")) +
+      row("Jadwal", esc(r.berangkat) + " → " + esc(r.eta)) +
+      row("Lokasi saat ini", esc(r.lokasi_saat_ini)) +
+      row("Rute", esc(r.rute)) +
+      row("Titik serah terima", esc(r.lokasi_serah_terima)) +
+      row("Narahubung transporter", esc(r.narahubung) + (telK ? " · " + telK : "")) +
+      row("Relawan pickup", esc(r.pickup_volunteer_name || "-")) +
+      (r.catatan ? row("Catatan", esc(r.catatan)) : "") +
+      "</div>" +
+      '<h4 class="rn-md-detail-h">Booking masuk</h4>' +
+      '<div class="rn-md-bk-list">' + bk + "</div>" +
+      '<div class="rn-md-detail-actions">' +
+      '<button type="button" class="btn primary mini" id="drillBookBtn" data-space="' + esc(r.id) + '">Booking di armada ini</button>' +
+      (r.href ? '<a class="rn-md-armada-link" href="' + esc(r.href) + '">Buka posko pengelola →</a>' : "") +
+      "</div>"
+    );
+  }
+
+  function openArmadaDetail(id) {
+    var r = ((BOARD_CACHE && BOARD_CACHE.armada_posko) || []).filter(function (a) { return a.id === id; })[0];
+    if (!r) return;
+    $("#distribusiDrillTitle").textContent = r.provider;
+    $("#distribusiDrillSub").textContent = r.posko + " · " + r.service_mode_label;
+    $("#distribusiDrillBody").innerHTML = armadaDetailHtml(r);
+    var bb = $("#drillBookBtn");
+    if (bb) bb.addEventListener("click", function () { closeDrill(); openBookingForm(r.id); });
+    $("#distribusiDrill").hidden = false;
+    document.body.style.overflow = "hidden";
   }
 
   function renderPickupMatches(rows) {

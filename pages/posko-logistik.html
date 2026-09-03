@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Logistik</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=logistik-mockup-20260901c">
+  <link rel="stylesheet" href="../assets/css/style.css?v=logistik-mockup-20260903d">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navdist-20260903" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -201,6 +201,25 @@
       </aside>
     </section>
 
+    <section class="panel" id="itemGroupPanel">
+      <div class="panel-header">
+        <div>
+          <h3>Kelompok Barang <small class="rn-muted">(Normalisasi AI)</small></h3>
+          <p>Barang sejenis dari banyak posko digabung ke satu kelompok + satuan kanonik. Total menampilkan <b>kuantitas akurat</b> + <b>perkiraan AI</b>. Klik baris untuk rincian &amp; koreksi (ubah satuan/kemasan, pindah kelompok, jadikan satu).</p>
+        </div>
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table">
+          <thead><tr>
+            <th>Kelompok</th><th>Satuan</th><th>Kuantitas Akurat</th><th>Perkiraan AI</th>
+            <th>Total</th><th>Catatan / Sebaran</th><th>Review</th>
+          </tr></thead>
+          <tbody data-ig-body><tr><td colspan="7">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="rn-muted" data-ig-note style="font-size:11px;margin-top:8px;"></p>
+    </section>
+
     <details class="panel rn-input-drawer rn-stockcards-panel" id="stockCardsPanel">
       <summary>
         <h3>Kartu Stok Rinci <span class="chip" id="stockCardsCount">0 item</span></h3>
@@ -318,6 +337,7 @@
 
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/logistik.js?v=logistik-mockup-20260901c"></script>
+<script src="../assets/js/rn-item-groups.js?v=itemgroups-20260903b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

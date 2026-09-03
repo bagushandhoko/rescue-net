@@ -254,6 +254,43 @@ nggak?". Findings + fixes:
   the `RN Normalization Rule` DocType (config-driven, `normalization_registry`
   already reads it) as more real vocabulary appears.
 
+### Kelompok Barang panel + posko-side correction (2026-09-03)
+
+Owner: a group's total must show **kuantitas akurat + perkiraan AI**,
+clickable to detail, correctable by the receiving posko (ubah kemasan /
+jadikan satu).
+
+- **`api_logistics` (3 guest/login endpoints):**
+  - `item_groups(disaster_event, posko?, kinds?)` — rolls up RN Aid Offer +
+    RN Logistic Need + RN Stock Observation by `(canonical_group,
+    normalize_unit(unit))`. Each group: `qty_exact` (mode=exact/unknown),
+    `qty_estimated` (mid of range / estimated rows), `est_range`,
+    `estimate_note`, `member_count`, `needs_review` (status=suggested),
+    `posko_spread`, `source`.
+  - `item_group_members(group, disaster_event, unit?, posko?)` — the member
+    records with full normalisation detail for the drill.
+  - `correct_item_normalization(doctype, name, canonical_group?,
+    canonical_item?, unit?, quantity?, quantity_mode?, note?, also_apply?)`
+    — login, `_can_contribute` on the record's posko. Sets
+    `normalization_status=accepted` / `source=manual`. `also_apply` = JSON
+    list of {doctype,name} → "jadikan satu" in one approval.
+- **NEW `assets/js/rn-item-groups.js`** (self-contained widget, mounts into
+  `#itemGroupPanel`, injects its own `#rnIgModal`): table with Kuantitas
+  Akurat / Perkiraan AI / Total columns; row → drill modal listing members
+  with a per-member "Koreksi" form (satuan/kemasan, pindah kelompok, tandai
+  akurat) + a "Jadikan Satu" merge bar.
+- **`posko-logistik.html`**: new visible "Kelompok Barang (Normalisasi AI)"
+  panel before "Kartu Stok Rinci"; loads `rn-item-groups.js`
+  (`?v=itemgroups-20260903b`), css `?v=logistik-mockup-20260903d`. Widget is
+  posko-scoped via `?id=`.
+- Seeded 2 estimate/range needs (`E2E-EST-1` "Air mineral ~500 dus",
+  `E2E-RNG-1` "Beras 200-300 karung") so the akurat-vs-perkiraan split is
+  visible.
+- Verified: console `correct_item_normalization` (unit→karton, group move,
+  mode→exact, status→accepted) + merge (`also_apply` 3 rows) + revert;
+  Playwright — panel renders posko-scoped groups, drill opens (7 members,
+  merge bar, correction form toggles), 0 errors.
+
 ## Icon set (STARTED, not wired) — `assets/js/rn-icons.js`
 
 Owner chose "full SVG icon set (menu + KPI)". `rn-icons.js` is committed but

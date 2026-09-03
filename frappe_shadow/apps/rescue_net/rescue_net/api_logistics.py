@@ -2494,3 +2494,268 @@ def receive_flow_and_update_stock(
         "destination_posko":
             destination,
     }
+
+
+# ============================================================
+# AI item normalisation — grouped view (exact qty + AI estimate),
+# drill to members, and posko-side correction (ubah kemasan /
+# jadikan satu). classify_text() = deterministic keyword rules
+# stored as a SUGGESTION; a posko accepts/overrides it here.
+# ============================================================
+
+_ITEM_GROUP_DOCTYPES = {
+    "offer": ("RN Aid Offer", "target_posko", "item_name"),
+    "need": ("RN Logistic Need", "posko", "item_name"),
+    "stock": ("RN Stock Observation", "posko", "item_name"),
+}
+
+
+def _split_qty(row):
+    """Return (exact, est_mid, est_min, est_max, is_estimate) for one row."""
+    q = flt(row.get("quantity")) if row.get("quantity") not in (None, "") else 0.0
+    lo = flt(row.get("quantity_min")) if row.get("quantity_min") not in (None, "") else None
+    hi = flt(row.get("quantity_max")) if row.get("quantity_max") not in (None, "") else None
+    mode = str(row.get("quantity_mode") or "").lower()
+
+    if mode == "range" and (lo is not None or hi is not None):
+        lo = lo if lo is not None else (hi or 0.0)
+        hi = hi if hi is not None else lo
+        return 0.0, round((lo + hi) / 2.0, 2), lo, hi, True
+    if mode in ("estimated", "estimate", "perkiraan"):
+        base = q if q else (round(((lo or 0) + (hi or 0)) / 2.0, 2) if (lo or hi) else 0.0)
+        return 0.0, base, (lo if lo is not None else base), (hi if hi is not None else base), True
+    # exact / unknown / blank -> treat the number as accurate
+    return q, 0.0, q, q, False
+
+
+@frappe.whitelist(allow_guest=True)
+def item_groups(disaster_event=None, posko=None, kinds=None):
+    """Canonical rollup of aid offers + needs + stock by
+    (canonical_group, normalize_unit(unit)). Each group carries the
+    ACCURATE quantity and the AI-ESTIMATED quantity separately."""
+    from rescue_net.intelligence.normalization import normalize_unit
+
+    event = resolve_disaster_event(disaster_event) if disaster_event else None
+    posko = resolve_posko(posko) if posko else None
+    want = {k.strip() for k in (kinds or "offer,need,stock").split(",") if k.strip()}
+
+    _F = [
+        "name", "item_name", "raw_item_text", "quantity", "unit",
+        "quantity_mode", "quantity_min", "quantity_max", "estimate_text",
+        "canonical_group", "canonical_item", "canonical_category",
+        "normalization_source", "normalization_confidence",
+        "normalization_status",
+    ]
+
+    groups = {}
+    for kind, (dt, posko_field, _name_field) in _ITEM_GROUP_DOCTYPES.items():
+        if kind not in want:
+            continue
+        filt = {}
+        if event:
+            filt["disaster_event"] = event
+        if posko:
+            filt[posko_field] = posko
+        rows = frappe.get_all(dt, filters=filt,
+                              fields=_F + [posko_field], limit_page_length=5000)
+        for r in rows:
+            gkey = (r.get("canonical_group") or r.get("canonical_item")
+                    or (r.get("item_name") or r.get("raw_item_text") or "Lainnya"))
+            unit = normalize_unit(r.get("unit"))
+            key = (gkey, unit)
+            g = groups.setdefault(key, {
+                "group": gkey, "unit": unit,
+                "category": r.get("canonical_category"),
+                "qty_exact": 0.0, "qty_estimated": 0.0,
+                "est_min": 0.0, "est_max": 0.0,
+                "member_count": 0, "estimate_member_count": 0,
+                "needs_review": 0, "poskos": set(), "sources": set(),
+                "kinds": set(), "estimate_notes": [],
+                "classified": bool(r.get("canonical_group")),
+            })
+            ex, mid, lo, hi, is_est = _split_qty(r)
+            g["qty_exact"] += ex
+            g["qty_estimated"] += mid
+            g["est_min"] += lo or 0.0
+            g["est_max"] += hi or 0.0
+            g["member_count"] += 1
+            if is_est:
+                g["estimate_member_count"] += 1
+                if r.get("estimate_text"):
+                    g["estimate_notes"].append(str(r["estimate_text"])[:80])
+            if (r.get("normalization_status") or "suggested") == "suggested":
+                g["needs_review"] += 1
+            p = r.get(posko_field)
+            if p:
+                g["poskos"].add(p)
+            g["sources"].add(r.get("normalization_source") or "rule")
+            g["kinds"].add(kind)
+            if r.get("canonical_group"):
+                g["classified"] = True
+
+    out = []
+    for g in groups.values():
+        src = ("manual" if "manual" in g["sources"]
+               else "ai" if "ai" in g["sources"]
+               else "rule" if "rule" in g["sources"] else "tidak_diketahui")
+        out.append({
+            "group": g["group"],
+            "unit": g["unit"],
+            "category": g["category"],
+            "qty_exact": round(g["qty_exact"], 1),
+            "qty_estimated": round(g["qty_estimated"], 1),
+            "qty_total": round(g["qty_exact"] + g["qty_estimated"], 1),
+            "est_range": ([round(g["est_min"], 1), round(g["est_max"], 1)]
+                          if g["estimate_member_count"] else None),
+            "estimate_note": " · ".join(g["estimate_notes"][:3]),
+            "member_count": g["member_count"],
+            "estimate_member_count": g["estimate_member_count"],
+            "needs_review": g["needs_review"],
+            "posko_spread": len(g["poskos"]),
+            "kinds": sorted(g["kinds"]),
+            "source": src,
+            "classified": g["classified"],
+        })
+    out.sort(key=lambda x: (-x["member_count"], x["group"]))
+    return {
+        "disaster_event": event, "posko": posko,
+        "generated_at": now_datetime(),
+        "groups": out,
+        "method_note": (
+            "Pengelompokan pakai aturan kata kunci (classify_text) — bukan "
+            "AI black-box. 'Kuantitas Akurat' = input mode exact; 'Perkiraan "
+            "AI' = rata-rata dari input range/estimasi. Posko penerima bisa "
+            "koreksi (ubah satuan/kelompok) via tombol Koreksi di detail."
+        ),
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def item_group_members(group, disaster_event=None, unit=None, posko=None,
+                       kinds=None):
+    from rescue_net.intelligence.normalization import normalize_unit
+
+    event = resolve_disaster_event(disaster_event) if disaster_event else None
+    posko = resolve_posko(posko) if posko else None
+    want = {k.strip() for k in (kinds or "offer,need,stock").split(",") if k.strip()}
+    unit_c = normalize_unit(unit) if unit else None
+
+    _F = [
+        "name", "item_name", "raw_item_text", "quantity", "unit",
+        "quantity_mode", "quantity_min", "quantity_max", "estimate_text",
+        "canonical_group", "canonical_item", "normalization_source",
+        "normalization_confidence", "normalization_status", "observed_at",
+    ]
+    members = []
+    for kind, (dt, posko_field, _nf) in _ITEM_GROUP_DOCTYPES.items():
+        if kind not in want:
+            continue
+        filt = {}
+        if event:
+            filt["disaster_event"] = event
+        if posko:
+            filt[posko_field] = posko
+        for r in frappe.get_all(dt, filters=filt, fields=_F + [posko_field],
+                                limit_page_length=5000):
+            gkey = (r.get("canonical_group") or r.get("canonical_item")
+                    or (r.get("item_name") or r.get("raw_item_text") or "Lainnya"))
+            if gkey != group:
+                continue
+            if unit_c and normalize_unit(r.get("unit")) != unit_c:
+                continue
+            ex, mid, lo, hi, is_est = _split_qty(r)
+            p = r.get(posko_field)
+            members.append({
+                "doctype": dt, "name": r["name"], "kind": kind,
+                "posko": p,
+                "posko_title": (frappe.db.get_value("RN Posko", p, "title") if p else "-"),
+                "item_name": r.get("item_name") or r.get("raw_item_text") or "-",
+                "raw_text": r.get("raw_item_text") or r.get("item_name") or "",
+                "quantity": r.get("quantity"),
+                "unit": r.get("unit") or "",
+                "unit_canonical": normalize_unit(r.get("unit")),
+                "quantity_mode": r.get("quantity_mode") or "unknown",
+                "quantity_min": r.get("quantity_min"),
+                "quantity_max": r.get("quantity_max"),
+                "estimate_text": r.get("estimate_text") or "",
+                "is_estimate": is_est,
+                "qty_exact": round(ex, 2),
+                "qty_estimated": round(mid, 2),
+                "canonical_group": r.get("canonical_group") or "",
+                "canonical_item": r.get("canonical_item") or "",
+                "normalization_source": r.get("normalization_source") or "rule",
+                "normalization_confidence": r.get("normalization_confidence"),
+                "normalization_status": r.get("normalization_status") or "suggested",
+                "observed_at": r.get("observed_at"),
+            })
+    members.sort(key=lambda m: str(m["observed_at"] or ""), reverse=True)
+    return {"group": group, "unit": unit_c, "members": members}
+
+
+@frappe.whitelist()
+def correct_item_normalization(doctype, name, canonical_group=None,
+                               canonical_item=None, unit=None, quantity=None,
+                               quantity_mode=None, note=None, also_apply=None):
+    """Posko-side correction of an item's normalisation: change the
+    packaging/unit, move it to another group, mark the quantity accurate, or
+    merge several rows into one group ("jadikan satu" via `also_apply`).
+    Marks the row(s) normalization_status=accepted / source=manual.
+    `also_apply` = JSON list of {"doctype","name"} to receive the same
+    canonical_group / canonical_item / unit in one approval."""
+    import json as _json
+
+    if doctype not in {v[0] for v in _ITEM_GROUP_DOCTYPES.values()}:
+        frappe.throw("Doctype tidak didukung untuk koreksi normalisasi.")
+
+    actor = rn_actor()
+
+    def _posko_of(dt, nm):
+        pf = next(v[1] for v in _ITEM_GROUP_DOCTYPES.values() if v[0] == dt)
+        return frappe.db.get_value(dt, nm, pf)
+
+    def _apply(dt, nm, is_primary):
+        posko = _posko_of(dt, nm)
+        if posko and not _can_contribute(actor, resolve_posko(posko)):
+            frappe.throw(
+                f"Anda tidak berhak mengoreksi item milik posko {posko}.",
+                frappe.PermissionError,
+            )
+        d = frappe.get_doc(dt, nm)
+        if canonical_group is not None:
+            d.canonical_group = canonical_group or None
+        if canonical_item is not None:
+            d.canonical_item = canonical_item or None
+        if is_primary:
+            if unit is not None:
+                d.unit = unit or None
+            if quantity not in (None, ""):
+                d.quantity = flt(quantity)
+            if quantity_mode:
+                d.quantity_mode = quantity_mode
+        d.normalization_source = "manual"
+        d.normalization_status = "accepted"
+        if note and hasattr(d, "notes"):
+            d.notes = ((d.notes + " | ") if d.notes else "") + "Koreksi normalisasi: " + note
+        d.save(ignore_permissions=True)
+        return d.name
+
+    changed = [_apply(doctype, name, True)]
+
+    extras = also_apply
+    if isinstance(extras, str):
+        try:
+            extras = _json.loads(extras)
+        except Exception:
+            extras = []
+    for e in (extras or []):
+        edt = (e or {}).get("doctype")
+        enm = (e or {}).get("name")
+        if edt in {v[0] for v in _ITEM_GROUP_DOCTYPES.values()} and enm:
+            changed.append(_apply(edt, enm, False))
+
+    return {
+        "updated": changed,
+        "count": len(changed),
+        "canonical_group": canonical_group,
+        "canonical_item": canonical_item,
+    }

@@ -93,10 +93,17 @@
           ? JSON.parse(text)
           : {};
     } catch (_) {
-      throw new Error(
-        "Frappe returned non-JSON: " +
-        text.slice(0, 500)
+      // an HTML body here = the reverse proxy served an error page
+      // (502/504 while the backend restarts, or a gateway timeout).
+      var looksHtml = /^\s*<(?:!doctype|html)/i.test(text || "");
+      var e = new Error(
+        looksHtml
+          ? "Server sedang tidak tersedia (mungkin sedang restart). Coba lagi sebentar."
+          : "Frappe returned non-JSON: " + (text || "").slice(0, 300)
       );
+      e.status = response.status;
+      e.transient = looksHtml;
+      throw e;
     }
 
     if (response.status === 401) {

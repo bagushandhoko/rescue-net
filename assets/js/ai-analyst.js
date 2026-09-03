@@ -52,14 +52,22 @@ async function frappeCall(method, args = {}, write = false) {
   }
 
   const res = await fetch(url, options);
-  const data = await res.json().catch(() => ({}));
+  const raw = await res.text();
+  let data = {};
+  try { data = raw ? JSON.parse(raw) : {}; } catch (_) {
+    if (/^\s*<(?:!doctype|html)/i.test(raw || "")) {
+      const e = new Error("Server sedang tidak tersedia (mungkin restart). Coba lagi sebentar.");
+      e.transient = true;
+      throw e;
+    }
+  }
 
   if (!res.ok) {
-    throw new Error(
-      data.message ||
-      data.exception ||
-      `Frappe API error ${res.status}`
-    );
+    const clean = String(data.message || data.exception || ("Frappe API error " + res.status))
+      .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const e = new Error(res.status === 403 ? "Perlu login untuk fitur ini." : clean);
+    e.status = res.status;
+    throw e;
   }
 
   return Object.prototype.hasOwnProperty.call(data, "message")
@@ -151,12 +159,12 @@ function renderResourceRecoverySources(resources, recoveryProjects) {
 
 async function loadAiContext() {
   const eventId = getEventId();
-  setText("aiStatus", "Loading AI context...");
+  setText("aiStatus", "Memuat konteks AI…");
 
-  await ensureSession();
-
+  // public_context is guest-safe (aggregate only); the "Tanya AI" form still
+  // requires login. Don't gate the whole dashboard on a session.
   const ctx = await frappeCall(
-    "rescue_net.api_ai.context",
+    "rescue_net.api_ai.public_context",
     {
       disaster_event_id: eventId
     }

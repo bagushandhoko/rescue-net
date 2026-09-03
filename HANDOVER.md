@@ -199,6 +199,29 @@ only provide space.
   queue, dup-claim rejected. Playwright: both pages render, 12 claim rows,
   0 errors.
 
+## AI Analyst page fixed for guests + friendly proxy-error message (2026-09-03)
+
+Owner hit "Sync failed: Frappe returned non-JSON: <!DOCTYPE html>…" on the AI
+page. Two causes: (1) they loaded it during one of this session's backend
+restarts → 502 → the Synology reverse-proxy HTML error page; (2) the page ran
+`rn-sync-engine.js` (offline field-queue) which calls login-only
+`api_sync.pull` → 403 shown raw, and `ai-analyst.js` called login-only
+`api_ai.context` → whole dashboard broke for guests.
+
+- **`rn-frappe-client.js` + `rn-sync-engine.js` (`?v=nonjson-20260903`, all
+  pages):** a non-JSON body that starts with `<!doctype`/`<html>` now throws
+  "Server sedang tidak tersedia (mungkin restart). Coba lagi sebentar." with
+  `err.transient=true`; the sync engine shows a calm "Sync ditunda…" for
+  transient / 502-504 instead of dumping HTML.
+- **`ai-analyst.js` (`?v=ai-guestfix-20260903`):** `loadAiContext` now calls
+  guest-safe `api_ai.public_context` (not `api_ai.context`) and no longer
+  gates on `ensureSession()`; `frappeCall` strips HTML tags from error
+  bodies and maps 403 → "Perlu login untuk fitur ini."; the "Tanya AI" form
+  still needs login. **Removed `rn-sync-engine.js` from `ai-analyst.html`** —
+  it is a read-only analysis dashboard, nothing to queue.
+- Verified Playwright (guest): AI page loads context (Posko 18 / Needs 31,
+  15 recommendations, 11 sources), `RNSync` not loaded, 0 console errors.
+
 ## Icon set (STARTED, not wired) — `assets/js/rn-icons.js`
 
 Owner chose "full SVG icon set (menu + KPI)". `rn-icons.js` is committed but

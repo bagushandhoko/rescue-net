@@ -265,7 +265,11 @@ async function rnTriggerSync(reason = "manual") {
     }));
 
   } catch (err) {
-    rnSyncStatus(`Sync failed: ${err.message}`);
+    if (err && (err.transient || [502, 503, 504].indexOf(err.status) !== -1)) {
+      rnSyncStatus("Sync ditunda — server sedang tidak tersedia. Akan dicoba otomatis.");
+    } else {
+      rnSyncStatus(`Sync failed: ${err.message}`);
+    }
   } finally {
     RN_SYNC_RUNNING = false;
   }

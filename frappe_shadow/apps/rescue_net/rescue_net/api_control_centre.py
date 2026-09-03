@@ -3849,3 +3849,186 @@ def posko_registry_board(disaster_event=None, limit=200):
         },
         "poskos": posko_list,
     }
+
+
+# ---------------------------------------------------------------------------
+# Koordinasi Internal Organisasi
+#
+# A logged-in organisation member (e.g. someone in "Komunitas Landrover")
+# is a contributor to his OWN posko and a viewer of everyone else's. This
+# board gives him exactly that scope:
+#   - my_posko            : his assigned posko, editable
+#   - my_org_poskos       : the rest of his organisation's poskos, read-only
+#   - open_external_poskos : other orgs' poskos that share full detail, read-only
+# The complete cross-organisation picture stays on the Control Centre page.
+# ---------------------------------------------------------------------------
+
+_ORG_BRAND_ACCENT = {
+    "SIM-LR-ORG": "#2f6f3e",              # Komunitas Landrover — green
+    "organizations:org-landrover": "#2f6f3e",
+}
+
+
+def _org_brand(org):
+    """Light per-organisation skin for the internal-coordination view.
+
+    No dedicated brand fields exist on RN Organization yet, so the accent
+    is a small known map with a deterministic hue fallback derived from the
+    org name — stable per org, never random.
+    """
+    if not org:
+        return {"title": "Organisasi", "accent": "#3355aa", "initial": "?"}
+
+    name = org.get("name") or ""
+    accent = _ORG_BRAND_ACCENT.get(name)
+    if not accent:
+        h = 0
+        for ch in name:
+            h = (h * 31 + ord(ch)) & 0xFFFFFFFF
+        accent = "hsl(%d, 45%%, 38%%)" % (h % 360)
+
+    title = (org.get("title") or name or "Organisasi").replace("[SIMULASI] ", "").strip()
+    return {
+        "title": title,
+        "accent": accent,
+        "organization_type": org.get("organization_type") or "",
+        "initial": (title[:1] or "?").upper(),
+    }
+
+
+def _operate_href(posko_row, event):
+    """Route a posko to its operational workspace by type."""
+    pid = posko_row.get("name")
+    ev = event or posko_row.get("disaster_event") or ""
+    ptype = str(posko_row.get("posko_type") or "").lower()
+    page = {
+        "logistics": "posko-logistik.html",
+        "collection_hub": "posko-logistik.html",
+        "transport": "posko-distribusi.html",
+        "medical": "posko-medis-detail.html",
+        "shelter": "shelter-detail.html",
+        "kitchen": "dapur-umum.html",
+    }.get(ptype, "posko-detail.html")
+    return page + "?id=" + pid + "&event=" + ev
+
+
+@frappe.whitelist(allow_guest=True)
+def my_org_coordination(disaster_event=None):
+    """Internal-organisation coordination board for a logged-in org member."""
+    from urllib.parse import quote as _urlquote
+
+    from rescue_net.access_policy import rn_actor, can_manage_posko
+    from rescue_net.visibility import effective_posko_share
+
+    event = canonical_event(disaster_event) if disaster_event else None
+    cc_href = "war-room.html?event=" + (event or "")
+
+    actor = rn_actor(required=False)
+    if not actor or not actor.get("name"):
+        return {
+            "logged_in": bool(actor),
+            "is_org_member": False,
+            "disaster_event": event,
+            "control_centre_href": cc_href,
+            "login_href": "auth.html?next=" + _urlquote(
+                "koordinasi-organisasi.html" + (("?event=" + event) if event else "")
+            ),
+        }
+
+    org_name = actor.get("organization")
+    my_posko_name = actor.get("posko")
+
+    org = None
+    if org_name:
+        org = frappe.db.get_value(
+            "RN Organization", org_name,
+            ["name", "title", "organization_type", "control_centre_share",
+             "privacy_mode", "allow_posko_public_choice"],
+            as_dict=True,
+        )
+
+    posko_fields = ["name", "title", "organization", "posko_type",
+                    "operational_status", "city_name", "disaster_event",
+                    "public_detail"]
+
+    def _card(p, can_edit):
+        share = effective_posko_share(p.get("name"), actor)
+        return {
+            "name": p.get("name"),
+            "title": (p.get("title") or "").replace("[SIMULASI] ", "").strip(),
+            "posko_type": p.get("posko_type"),
+            "operational_status": p.get("operational_status") or "normal",
+            "organization": p.get("organization"),
+            "city_name": p.get("city_name") or "-",
+            "disaster_event": p.get("disaster_event"),
+            "share_mode": share["mode"],
+            "share_reason": share["reason"],
+            "can_edit": bool(can_edit),
+            "detail_href": "posko-detail.html?id=" + p.get("name")
+                           + "&event=" + (event or p.get("disaster_event") or ""),
+            "operate_href": _operate_href(p, event),
+        }
+
+    # --- my organisation's poskos -----------------------------------------
+    my_posko = None
+    my_org_poskos = []
+    if org_name:
+        of = {"organization": org_name}
+        if event:
+            of["disaster_event"] = event
+        rows = frappe.get_all("RN Posko", filters=of, fields=posko_fields,
+                              order_by="title asc", limit_page_length=300)
+        for p in rows:
+            card = _card(p, can_manage_posko(actor, p.get("name")))
+            if my_posko_name and p.get("name") == my_posko_name:
+                my_posko = card
+            else:
+                my_org_poskos.append(card)
+
+    # assigned posko might sit under another event / not match the filter
+    if my_posko is None and my_posko_name:
+        p = frappe.db.get_value("RN Posko", my_posko_name,
+                                posko_fields, as_dict=True)
+        if p:
+            my_posko = _card(p, can_manage_posko(actor, my_posko_name))
+
+    # --- other orgs' poskos that share full detail -----------------------
+    ef = {"disaster_event": event} if event else {}
+    ext_rows = frappe.get_all("RN Posko", filters=ef, fields=posko_fields,
+                              limit_page_length=800)
+    open_external = []
+    for p in ext_rows:
+        if org_name and p.get("organization") == org_name:
+            continue
+        if p.get("name") == my_posko_name:
+            continue
+        if effective_posko_share(p.get("name"), actor)["mode"] != "full":
+            continue
+        open_external.append(_card(p, False))
+    open_external.sort(key=lambda c: (c["organization"] or "", c["title"] or ""))
+
+    org_count = len(my_org_poskos) + (1 if my_posko else 0)
+    return {
+        "logged_in": True,
+        "is_org_member": bool(org_name),
+        "disaster_event": event,
+        "generated_at": frappe.utils.now_datetime(),
+        "actor": {
+            "user_account": actor.get("name"),
+            "role": actor.get("role"),
+            "organization": org_name,
+            "posko": my_posko_name,
+        },
+        "organization": org,
+        "brand": _org_brand(org),
+        "my_posko": my_posko,
+        "my_org_poskos": my_org_poskos,
+        "open_external_poskos": open_external,
+        "totals": {
+            "org_posko_count": org_count,
+            "open_external_count": len(open_external),
+            "editable_count": (1 if (my_posko and my_posko["can_edit"]) else 0)
+                              + sum(1 for c in my_org_poskos if c["can_edit"]),
+        },
+        "control_centre_href": cc_href,
+    }

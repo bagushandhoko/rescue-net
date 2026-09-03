@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Koordinasi Internal Organisasi</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskodist-20260903b">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navorg-20260903" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <style>
+    /* Koordinasi Internal Organisasi — scoped, org-branded accent */
+    .ko-shell { --ko-accent: #3355aa; }
+    .ko-head-band { border-left: 4px solid var(--ko-accent); padding-left: 12px; }
+    .ko-org-initial {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border-radius: 9px; margin-right: 8px;
+      background: var(--ko-accent); color: #fff; font-weight: 700; font-size: 15px;
+      vertical-align: middle;
+    }
+    .ko-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .ko-posko-card {
+      border: 1px solid var(--line); border-radius: 12px; padding: 12px 13px;
+      background: var(--panel2); display: flex; flex-direction: column; gap: 7px;
+    }
+    .ko-posko-card.is-mine { border-color: var(--ko-accent); box-shadow: 0 0 0 1px var(--ko-accent) inset; }
+    .ko-posko-card h4 { margin: 0; font-size: 14px; line-height: 1.3; }
+    .ko-posko-meta { color: var(--muted); font-size: 12px; }
+    .ko-posko-card .rn-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .ko-tag {
+      font-size: 10.5px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted);
+    }
+    .ko-tag.edit { background: var(--ko-accent); border-color: var(--ko-accent); color: #fff; }
+    .ko-tag.view { background: transparent; }
+    .ko-tag.full { color: var(--green); border-color: rgba(47,155,104,.4); }
+    .ko-tag.summary { color: var(--yellow); border-color: rgba(184,137,24,.4); }
+    .ko-card-actions { margin-top: auto; display: flex; gap: 7px; padding-top: 4px; }
+    .ko-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+    .ko-notice {
+      border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px;
+      background: var(--panel2); max-width: 640px;
+    }
+    .ko-cc-cta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+  </style>
+</head>
+<body>
+<div class="app-shell ko-shell" id="koShell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="registrasi-posko.html?event=event-sim-001">Registrasi &amp; Verifikasi Posko</a>
+      <a class="active" href="koordinasi-organisasi.html?event=event-sim-001">Koordinasi Organisasi</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Manajemen Distribusi</a>
+      <a href="posko-distribusi.html?event=event-sim-001">Posko Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search &amp; Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="alat-komunikasi.html?event=event-sim-001">Alat Komunikasi</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Koordinasi Organisasi</div>
+      <div class="ko-head-band" id="koHeadBand">
+        <p class="eyebrow">Koordinasi Internal Organisasi</p>
+        <h2 id="koTitle"><span class="ko-org-initial" id="koInitial" hidden></span><span id="koTitleText">Koordinasi Organisasi</span></h2>
+        <p class="subtitle">Halaman kerja internal untuk anggota organisasi: <b>posko Anda</b> bisa dikelola, posko rekan se-organisasi dan posko organisasi lain yang terbuka <b>hanya bisa dilihat</b>. Untuk gambaran lengkap lintas organisasi, buka Control Centre.</p>
+        <p class="subtitle" id="koStatus">Memuat…</p>
+      </div>
+      <div>
+        <a class="btn ghost mini" id="koCcLink" href="war-room.html?event=event-sim-001">Buka Control Centre →</a>
+        <div class="status-pill" id="koUpdated">Koordinasi Organisasi</div>
+      </div>
+    </header>
+
+    <section id="koNoticeWrap" hidden>
+      <div class="ko-notice">
+        <h3 id="koNoticeTitle">Masuk sebagai anggota organisasi</h3>
+        <p id="koNoticeText" class="rn-muted"></p>
+        <div class="ko-cc-cta">
+          <a class="btn primary mini" id="koLoginBtn" href="auth.html">Masuk</a>
+          <a class="btn ghost mini" id="koNoticeCc" href="war-room.html?event=event-sim-001">Lihat Control Centre</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-wide" id="koMyPoskoSection" hidden>
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Posko Saya</h3><p>Posko yang Anda kelola langsung. Perubahan data, catatan, dan input hanya di sini.</p></div>
+        </div>
+        <div id="koMyPosko"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-wide" id="koOrgSection" hidden>
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3 id="koOrgSectionTitle">Posko Organisasi</h3><p>Posko rekan se-organisasi. Hanya-lihat — buka detail untuk koordinasi.</p></div>
+          <span class="chip neutral" id="koOrgCount">—</span>
+        </div>
+        <div class="ko-card-grid" id="koOrgPoskos"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-wide" id="koExtSection" hidden>
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Posko Organisasi Lain (Terbuka)</h3><p>Posko organisasi lain yang membuka detail koordinasinya untuk bencana ini. Hanya-lihat.</p></div>
+          <span class="chip neutral" id="koExtCount">—</span>
+        </div>
+        <div class="ko-card-grid" id="koExtPoskos"></div>
+      </div>
+    </section>
+
+    <p class="rn-muted rn-md-xref" id="koFootNote" hidden>
+      Gambaran lengkap lintas organisasi (semua posko, KPI, bukti lapangan) ada di
+      <a id="koFootCc" href="war-room.html?event=event-sim-001">halaman Control Centre</a>.
+    </p>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
+<script src="../assets/js/koordinasi-organisasi.js?v=koordorg-20260903"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navorg-20260903"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

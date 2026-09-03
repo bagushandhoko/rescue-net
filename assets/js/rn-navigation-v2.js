@@ -2,12 +2,16 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.0.5",
+    version: "2.0.6",
 
     posko: [
       {
         label: "Dashboard Posko",
         href: "organisasi-posko.html"
+      },
+      {
+        label: "Koordinasi Organisasi",
+        href: "koordinasi-organisasi.html?event=event-sim-001"
       },
       {
         label: "Registrasi & Verifikasi Posko",

@@ -4,61 +4,76 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-03 (IN FLIGHT: org-member login = internal-coordination role model — see next section)_
+_Last updated: 2026-09-03 (Koordinasi Internal Organisasi — phase 1 page DONE & DEPLOYED)_
 
 ---
 
-## IN FLIGHT / NEXT — Org-member login = "koordinasi internal organisasi" (owner brief 2026-09-03)
+## Koordinasi Internal Organisasi — org-member workspace (2026-09-03) — PHASE 1 DONE & DEPLOYED
 
-**Not started. Requirement captured, not yet designed/built.** Owner's words:
-"jika login sbg member organisasi, spt Land Rover Club, seharusnya yang tampil
-posko dia [sendiri], dia sendiri yang [me]rubah — bukan posko-posko member lain.
-Dia lebih ke viewer / pengguna: yang tampil ke dia = posko member [se-organisasi]
-dan posko organisasi lain yang open. Kalau mau lihat lengkap, dari halaman
-Control Centre. Jadi terasa sebagai koordinasi internal organisasi."
+Owner brief: "jika login sbg member organisasi, spt Land Rover Club, seharusnya
+yang tampil posko dia [sendiri], dia sendiri yang [me]rubah — bukan posko member
+lain. Dia lebih ke viewer: yang tampil = posko member se-organisasi + posko org
+lain yang open. Kalau mau lengkap, dari Control Centre. Jadi terasa sebagai
+koordinasi internal organisasi." + "malahan bisa halaman seakan design Landrover".
 
-**Intended model for a logged-in org member (e.g. member of "Land Rover Club"):**
-1. Landing / default scope = **his own posko** (his `approved_posko_assignment`),
-   editable — create/record/edit forms shown only there.
-2. **Other poskos in his own org** → visible but **read-only** (viewer). He does
-   NOT edit sibling members' poskos.
-3. **Other organisations' poskos that are "open"** (`control_centre_share =
-   full_authorized`, or posko `public_detail = public`) → visible, read-only.
-   Closed orgs → summary only / hidden, same as guest.
-4. The member page = **internal-org coordination surface** (my posko + my org's
-   poskos + open external poskos). The **full cross-org picture stays on the
-   Control Centre page**, not here.
+**Finding (verified by logging in as `ld2.demo@rescue-net.local`):** the backend
+permission model already does exactly this — `can_manage_posko(actor, posko)` is
+true only for the member's own assigned posko, false for siblings/externals;
+`effective_posko_share` already returns full for own-org + open externals,
+summary for closed. **The gap was purely a missing member-facing surface** — the
+existing posko pages just take `?id=` / a free switcher and never key off "who am
+I logged in as".
 
-**Infra that already exists (reuse, don't rebuild):**
-- `access_policy.py`: `rn_actor`, `approved_member(user_account, org)`,
-  `approved_posko_assignment(user_account, posko)`, `can_manage_posko(actor,
-  posko)`, `can_manage_organization`.
-- `visibility.py`: `effective_posko_share(posko, actor)` → `full` | `summary`
-  (owner/member/assignment → full; else posko `public_detail`; else org
-  `control_centre_share`).
-- Register flow sets empty `role` → `_effective_role` = `viewer` (read-only)
-  until verification approval.
-- `api_control_centre.event_poskos(disaster_event)` (guest) = flat posko list
-  with `share_mode`.
+**Built — phase 1 (a dedicated page, not surgery on the 3 posko pages):**
+- **NEW `api_control_centre.my_org_coordination(disaster_event=None)`**
+  (`allow_guest=True`; guests get `{logged_in:false, login_href, control_centre_href}`).
+  For a logged-in `RN User Account`: `my_posko` (own assignment, `can_edit=true`),
+  `my_org_poskos[]` (rest of the actor's org, `can_edit=false`),
+  `open_external_poskos[]` (other orgs' poskos where `effective_posko_share=="full"`,
+  event-scoped, `can_edit=false`). Each card carries `share_mode`, `operate_href`
+  (routed by posko_type → posko-logistik / posko-distribusi / posko-medis-detail /
+  shelter-detail / dapur-umum / posko-detail), `detail_href`. Plus `brand`
+  = light per-org skin: `{title, accent, initial}` — `_ORG_BRAND_ACCENT` map
+  (SIM-LR-ORG → green `#2f6f3e`) + deterministic HSL hue fallback from the org
+  name (no new DB fields / migrate). Helpers `_org_brand`, `_operate_href`.
+  `can_edit` is strictly `can_manage_posko(actor, posko)` — a coordinator with
+  no posko (LD1) edits nothing, pure viewer, exactly per "dia lebih ke viewer".
+- **NEW `pages/koordinasi-organisasi.html` + `assets/js/koordinasi-organisasi.js`**
+  (`?v=koordorg-20260903`). Org-branded header (accent CSS var + initial badge),
+  status line, 3 sections: **Posko Saya** (own posko card + "Kelola Posko" →
+  operate_href; empty-state for no-posko coordinators), **Posko <Org>**
+  (siblings, read-only cards, "Hanya-lihat" + share badge + "Lihat detail"),
+  **Posko Organisasi Lain (Terbuka)** (open externals, read-only). Prominent
+  "Buka Control Centre →" in the header + footer note. Not-logged-in / not-a-member
+  states show a notice with login + Control Centre links. Scoped `<style>` block,
+  no shared style.css change.
+- **Nav:** `rn-navigation-v2.js` 2.0.5→**2.0.6**, added "Koordinasi Organisasi"
+  to the Posko group. Cache-buster `navdist-20260903` →
+  **`navorg-20260903`** on `rn-navigation-v2.{js,css}` across all 32 pages.
+- **Deploy:** `api_control_centre.py` cp→container + restart (502→200 ~30s,
+  container backup `api_control_centre.py.bak-<ts>-orgcoord`). Frontend served
+  straight from `/volume1/web/rescue-net/` = already live.
+- **Verified:** guest → `{logged_in:false}` clean. Real login as LD2
+  (`logistics_operator`, posko `SIM-LR-POSKO-LD2`) → my_posko LD2 `can_edit:true`,
+  4 sibling LR poskos `can_edit:false`, 3 open externals (Gudang Jogja / BNPB /
+  Warga, all `full_authorized`). LD1 (`community_coordinator`, no posko) →
+  `editable_count:0`. Playwright as LD2: green skin, all sections render,
+  0 edit tags on siblings, 0 console errors.
+- **Demo passwords set** (were unset): `ld1.demo@rescue-net.local` /
+  `ld2.demo@rescue-net.local` → `LandRover2026!` (sim `.demo` accounts).
 
-**Gap (likely all frontend + one endpoint):**
-- Need an endpoint like `my_org_coordination(disaster_event)` (login required):
-  returns `{my_posko, my_org_poskos[], open_external_poskos[]}` each tagged
-  `can_edit` (true only for `my_posko` / poskos the actor can_manage) and
-  `share_mode`.
-- `pages/posko-distribusi.html`, `pages/posko-logistik.html`, `posko-detail.html`:
-  when logged in as an org member, default `?id=` to the member's own posko,
-  hide the free posko switcher (or make it a read-only "lihat posko lain"
-  picker), and hide every create/record/edit form unless
-  `can_edit` for the shown posko. Add a clear "untuk gambaran lengkap lintas
-  organisasi, buka Control Centre" link.
-- Decide: is this one shared "Posko Saya / Koordinasi Organisasi" page, or the
-  behaviour layered onto each existing posko page? (Owner leans: layered — "yang
-  tampil posko dia".)
-
-**Open questions for owner:** (a) a member with NO posko assignment — landing =
-their org's posko list, read-only? (b) `petugas_posko` vs plain `organisasi`
-member — same view or does petugas get edit on all of the org's poskos?
+**Phase 2 (not done — layering + polish):**
+- Layer the same `can_edit` gate onto `posko-distribusi.html` /
+  `posko-logistik.html` / `posko-detail.html` themselves: when the viewer is an
+  org member, default `?id=` to their own posko and hide create/record/edit
+  forms unless `can_manage_posko` for the shown posko.
+- Real per-org brand fields on `RN Organization` (`brand_logo`, `brand_color`)
+  instead of the accent map/hash; org logo in the header.
+- `RN Posko Assignment`-based multi-posko members (currently only the direct
+  `RN User Account.posko` is treated as "mine"; approved assignments already
+  count in `can_manage_posko` but aren't listed as a separate "my poskos" set).
+- Owner call: should `community_coordinator` (LD1) get edit on all of the org's
+  poskos, or stay pure-viewer? Phase 1 = pure viewer.
 
 ---
 

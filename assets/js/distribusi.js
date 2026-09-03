@@ -194,17 +194,36 @@
     );
   }
 
+  function telLink(v) {
+    return v ? '<a href="tel:' + esc(String(v).replace(/[^0-9+]/g, "")) + '">' + esc(v) + "</a>" : "";
+  }
+
   function bookingsHtml(r) {
     if (!r.bookings || !r.bookings.length) return "";
-    return '<div class="rn-md-bk-list">' + r.bookings.map(function (b) {
-      var cls = b.status === "confirmed" ? "ok" : "warning";
-      return (
-        '<div class="rn-md-bk"><span><b>' + esc(b.cargo) + "</b> " + esc(b.qty || "") +
-        '<small class="rn-muted"> · ' + esc(b.booker) + (b.dropoff ? " → " + esc(b.dropoff) : "") + "</small></span>" +
-        '<span class="chip ' + cls + '">' + esc(b.status_label) + "</span>" +
-        '<code class="rn-md-bk-id">' + esc(b.id) + "</code></div>"
-      );
-    }).join("") + "</div>";
+    var transporter = r.transporter_contact_person || r.pickup_volunteer_name || r.narahubung;
+    var transporterTel = r.transporter_contact_phone || r.kontak;
+    return (
+      '<div class="rn-md-bk-list"><div class="rn-md-bk-hd">Booking masuk — data & kontak untuk follow-up posko distribusi</div>' +
+      r.bookings.map(function (b) {
+        var cls = b.status === "confirmed" ? "ok" : "warning";
+        return (
+          '<div class="rn-md-bk">' +
+          '<div class="rn-md-bk-main"><b>' + esc(b.cargo) + "</b> " + esc(b.qty || "") +
+            (b.requested_window ? ' <small class="rn-muted">· waktu: ' + esc(b.requested_window) + "</small>" : "") +
+            '<small class="rn-muted"> · ' + esc(b.delivery_label) + "</small></div>" +
+          '<div class="rn-md-bk-contacts">' +
+            '<span>Pensuplai: <b>' + esc(b.booker) + "</b>" +
+              (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
+              (b.supplier_contact_phone ? " · " + telLink(b.supplier_contact_phone) : "") + "</span>" +
+            '<span>Transporter: <b>' + esc(transporter || "-") + "</b>" +
+              (transporterTel && transporterTel !== "-" ? " · " + telLink(transporterTel) : "") + "</span>" +
+          "</div>" +
+          '<div class="rn-md-bk-meta"><span class="chip ' + cls + '">' + esc(b.status_label) + "</span>" +
+            '<code class="rn-md-bk-id">' + esc(b.id) + "</code></div>" +
+          "</div>"
+        );
+      }).join("") + "</div>"
+    );
   }
 
   function renderArmada(rows) {
@@ -218,16 +237,14 @@
     }
     var html = "";
     rows.forEach(function (r) {
-      var kontak = r.kontak && r.kontak !== "-"
-        ? '<a href="tel:' + esc(String(r.kontak).replace(/[^0-9+]/g, "")) + '">' + esc(r.kontak) + "</a>"
-        : "";
+      var kontak = r.kontak && r.kontak !== "-" ? telLink(r.kontak) : "";
       var relawan = r.pickup_volunteer_name
         ? esc(r.pickup_volunteer_name)
         : (r.service_mode === "space_only"
             ? '<span class="rn-muted">—</span>'
             : '<span class="chip warning">belum ada</span>');
       html +=
-        "<tr>" +
+        '<tr class="rn-ba-row" data-href="' + esc(r.href) + '" title="Buka posko penyedia">' +
         "<td><b>" + esc(r.provider) + "</b>" +
           (r.catatan ? '<small class="rn-muted">' + esc(r.catatan) + "</small>" : "") + "</td>" +
         "<td>" + esc(r.posko) + "</td>" +
@@ -240,16 +257,24 @@
         "<td>" + relawan + "</td>" +
         '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status_label) + "</span>" +
           (r.bookings_count ? '<small class="rn-muted">' + fmt(r.bookings_count) + " booking</small>" : "") + "</td>" +
-        '<td><button type="button" class="btn mini rn-md-book-btn" data-space="' + esc(r.id) + '">Booking</button>' +
-          '<a class="rn-md-armada-link" href="' + esc(r.href) + '">detail →</a></td>' +
+        '<td><button type="button" class="btn primary mini rn-md-book-btn" data-space="' + esc(r.id) + '">Booking</button></td>' +
         "</tr>";
       if (r.bookings && r.bookings.length) {
         html += '<tr class="rn-md-bk-row"><td colspan="9">' + bookingsHtml(r) + "</td></tr>";
       }
     });
     body.innerHTML = html;
+    body.querySelectorAll("tr.rn-ba-row[data-href]").forEach(function (tr) {
+      tr.addEventListener("click", function (e) {
+        if (e.target.closest("a,button")) return;
+        window.location.href = tr.getAttribute("data-href");
+      });
+    });
     body.querySelectorAll(".rn-md-book-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () { openBookingForm(btn.getAttribute("data-space")); });
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openBookingForm(btn.getAttribute("data-space"));
+      });
     });
     if (shown) shown.textContent = "Menampilkan " + rows.length + " armada";
   }
@@ -325,8 +350,50 @@
   function openBookingForm(spaceId) {
     var det = $("#bookingForm");
     if (!det) return;
+    var form = det.querySelector("form");
+    var armada = ((BOARD_CACHE && BOARD_CACHE.armada_posko) || []).filter(function (a) { return a.id === spaceId; })[0];
+
     var inp = det.querySelector('[name="transport_space"]');
-    if (inp && spaceId) inp.value = spaceId;
+    if (inp) inp.value = spaceId || "";
+
+    var ctx = $("#bookingContext");
+    if (ctx) {
+      if (armada) {
+        ctx.hidden = false;
+        ctx.innerHTML =
+          "<b>Posko penyedia transport: " + esc(armada.posko) + "</b>" +
+          '<span>Armada: ' + esc(armada.provider) + " · " + esc(armada.service_mode_label) + "</span>" +
+          '<span>Jadwal: ' + esc(armada.berangkat) + " → " + esc(armada.eta) + "</span>" +
+          '<span>Sisa kapasitas: ' + fmt(armada.kapasitas_tersedia_kg) + " kg" +
+            (armada.kapasitas_total_m3 ? " · " + fmt(armada.kapasitas_tersedia_m3) + " m³" : "") + "</span>" +
+          '<span>Titik serah terima: ' + esc(armada.lokasi_serah_terima) + " · " + esc(armada.narahubung) +
+            (armada.kontak && armada.kontak !== "-" ? " (" + esc(armada.kontak) + ")" : "") + "</span>" +
+          (armada.booking_policy === "open"
+            ? '<span class="rn-md-bkctx-note">Booking langsung terkonfirmasi.</span>'
+            : '<span class="rn-md-bkctx-note">Booking menunggu konfirmasi PIN oleh koordinator posko.</span>');
+      } else {
+        ctx.hidden = true;
+      }
+    }
+
+    if (form && armada) {
+      var win = form.querySelector('[name="requested_window"]');
+      if (win && !win.value) win.value = "Ikut jadwal armada (" + armada.berangkat + " → " + armada.eta + ")";
+      var drop = form.querySelector('[name="dropoff_location"]');
+      if (drop && !drop.value && armada.lokasi_serah_terima && armada.lokasi_serah_terima !== "-") {
+        drop.value = armada.lokasi_serah_terima;
+      }
+      var useT = form.querySelector('[name="delivery_method"][value="use_transporter"]');
+      var selfD = form.querySelector('[name="delivery_method"][value="self_deliver"]');
+      var spaceOnly = armada.service_mode === "space_only";
+      if (useT) {
+        useT.disabled = spaceOnly;
+        useT.closest(".rn-md-radio").classList.toggle("is-disabled", spaceOnly);
+      }
+      if (spaceOnly && selfD) selfD.checked = true;
+      else if (!spaceOnly && useT) useT.checked = true;
+    }
+
     det.open = true;
     det.scrollIntoView({ behavior: "smooth", block: "center" });
     var cargo = det.querySelector('[name="cargo_desc"]');
@@ -342,6 +409,7 @@
       var payload = {};
       [].forEach.call(form.elements, function (el) {
         if (!el.name) return;
+        if ((el.type === "radio" || el.type === "checkbox") && !el.checked) return;
         var v = el.value == null ? "" : String(el.value).trim();
         if (v !== "") payload[el.name] = v;
       });

@@ -60,6 +60,20 @@
       "fieldtype": "Data"
     },
     {
+      "fieldname": "delivery_method",
+      "label": "Metode Pengantaran",
+      "fieldtype": "Select",
+      "options": "use_transporter\nself_deliver",
+      "default": "use_transporter",
+      "description": "use_transporter = pakai kurir/transporter posko; self_deliver = pemesan antar sendiri ke titik jemput."
+    },
+    {
+      "fieldname": "requested_window",
+      "label": "Waktu Diminta",
+      "fieldtype": "Data",
+      "description": "Preferensi waktu jemput/berangkat dari pemesan."
+    },
+    {
       "fieldname": "qty_weight_kg",
       "label": "Berat (kg)",
       "fieldtype": "Float"

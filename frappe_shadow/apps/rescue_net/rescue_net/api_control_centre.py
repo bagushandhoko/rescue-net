@@ -2845,6 +2845,7 @@ def distribusi_board(disaster_event=None):
                 "qty_volume_m3", "status", "booker_name", "booked_by_type",
                 "pickup_location", "dropoff_location", "contact_person",
                 "contact_phone", "verification_pin", "requested_at",
+                "delivery_method", "requested_window",
             ]),
             order_by="creation desc", limit_page_length=1000,
         ):
@@ -3073,6 +3074,10 @@ def distribusi_board(disaster_event=None):
         "requested": "Menunggu Konfirmasi", "confirmed": "Terkonfirmasi",
         "rejected": "Ditolak", "cancelled": "Dibatalkan", "completed": "Selesai",
     }
+    _DELIVERY_LABEL = {
+        "use_transporter": "Pakai transporter posko",
+        "self_deliver": "Antar sendiri ke titik jemput",
+    }
 
     def _fmt_dt(v):
         if not v:
@@ -3136,6 +3141,9 @@ def distribusi_board(disaster_event=None):
             "status_label": _ARMADA_STATUS_LABEL.get(t.get("transport_status"), t.get("transport_status") or "-"),
             "pickup_volunteer": t.get("pickup_volunteer") or "",
             "pickup_volunteer_name": t.get("pickup_volunteer_name") or "",
+            # transporter-side follow-up contact (for the coordinating posko)
+            "transporter_contact_person": t.get("handover_contact_person") or "",
+            "transporter_contact_phone": t.get("handover_contact_phone") or "",
             "bookings_count": sum(1 for b in bks if b.status in ("requested", "confirmed")),
             "bookings": [
                 {
@@ -3149,6 +3157,12 @@ def distribusi_board(disaster_event=None):
                     "booker": b.booker_name or b.booked_by_type or "-",
                     "pickup": b.pickup_location or "",
                     "dropoff": b.dropoff_location or "",
+                    "delivery_method": b.get("delivery_method") or "use_transporter",
+                    "delivery_label": _DELIVERY_LABEL.get(b.get("delivery_method"), "Pakai transporter posko"),
+                    "requested_window": b.get("requested_window") or "",
+                    # supplier-side follow-up contact (for the coordinating posko)
+                    "supplier_contact_person": b.contact_person or "",
+                    "supplier_contact_phone": b.contact_phone or "",
                 }
                 for b in bks if b.status in ("requested", "confirmed")
             ],

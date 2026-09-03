@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Manajemen Distribusi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=distribusi-20260903b">
+  <link rel="stylesheet" href="../assets/css/style.css?v=distribusi-20260903c">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navcomms-20260903" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -289,18 +289,26 @@
     <details class="panel create-panel rn-input-drawer" id="bookingForm">
       <summary>
         <h3>Booking Ruang Armada</h3>
-        <p>Pesan sebagian kapasitas armada untuk muatan Anda. Space yang di-booking akan diblok dari kapasitas tersedia. Perlu login.</p>
+        <p>Pesan kapasitas pada armada milik posko penyedia transport. Pilih waktu, space yang dipakai, dan cara pengantaran. Space yang di-booking diblok dari kapasitas tersedia. Perlu login.</p>
       </summary>
+      <div class="rn-md-bkctx" id="bookingContext" hidden></div>
       <form class="rn-form" data-create-booking>
+        <input type="hidden" name="transport_space">
         <div class="form-grid">
-          <label>ID Armada <input name="transport_space" placeholder="rn-transport-… / SIM-ARMADA-DARAT-1" required></label>
+          <label>Waktu Diminta <input name="requested_window" placeholder="mis. jemput hari ini 15:00 / ikut jadwal armada"></label>
           <label>Barang / Muatan <input name="cargo_desc" placeholder="50 dus mie instan + 20 karung beras"></label>
-          <label>Berat (kg) <input name="qty_weight_kg" type="number" step="0.01" placeholder="600"></label>
-          <label>Volume (m³) <input name="qty_volume_m3" type="number" step="0.01" placeholder="3"></label>
+          <label>Space — Berat (kg) <input name="qty_weight_kg" type="number" step="0.01" placeholder="600"></label>
+          <label>Space — Volume (m³) <input name="qty_volume_m3" type="number" step="0.01" placeholder="3"></label>
+          <label class="rn-form-wide">Metode Pengantaran
+            <span class="rn-md-radio-row">
+              <label class="rn-md-radio"><input type="radio" name="delivery_method" value="use_transporter" checked> Pakai transporter / kurir posko</label>
+              <label class="rn-md-radio"><input type="radio" name="delivery_method" value="self_deliver"> Antar sendiri ke titik jemput</label>
+            </span>
+          </label>
           <label>Lokasi Jemput <input name="pickup_location" placeholder="Gudang Donatur, Jl. …"></label>
           <label>Lokasi Antar <input name="dropoff_location" placeholder="Posko Logistik Kubu Raya"></label>
-          <label>Narahubung <input name="contact_person" placeholder="Sari (PIC muatan)"></label>
-          <label>No. Kontak <input name="contact_phone" placeholder="0812-…"></label>
+          <label>Kontak Person Pemesan <input name="contact_person" placeholder="Sari (PIC muatan)"></label>
+          <label>No. Kontak Pemesan <input name="contact_phone" placeholder="0812-…"></label>
           <label>Aid Offer ID (opsional) <input name="aid_offer" placeholder="aid-…"></label>
           <label>Need ID (opsional) <input name="logistic_need" placeholder="need-…"></label>
         </div>
@@ -308,6 +316,7 @@
           <button class="btn primary" type="submit">Ajukan Booking</button>
           <span class="form-message" data-booking-message></span>
         </div>
+        <p class="rn-muted">Kontak person pemesan &amp; narahubung transporter akan tampil di sisi posko distribusi untuk di-follow-up.</p>
       </form>
     </details>
 
@@ -384,7 +393,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=frappe-batch-a-1"></script>
-<script src="../assets/js/distribusi.js?v=distribusi-20260903b"></script>
+<script src="../assets/js/distribusi.js?v=distribusi-20260903c"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-resource-booking.js?v=booking-sync-1"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>

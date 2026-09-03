@@ -685,14 +685,28 @@ def book_transport_space(
     booked_by_type="posko",
     booked_by_id=None,
     notes=None,
+    delivery_method="use_transporter",
+    requested_window=None,
 ):
     """Reserve space on an armada. Any logged-in RN actor may request one.
     If the armada's `booking_policy` is `open` the booking is confirmed
     immediately (and blocks capacity); otherwise it is `requested` and a
     verification PIN is returned for the coordinator to confirm with (DMS
-    blueprint: "notifikasi pin untuk verifikasi ketika akan pake")."""
+    blueprint: "notifikasi pin untuk verifikasi ketika akan pake").
+
+    `delivery_method`: `use_transporter` (the armada's posko courier picks the
+    cargo up) or `self_deliver` (the booker brings it to the pickup point).
+    `use_transporter` is only valid on a courier-capable armada."""
     actor = rn_actor()
     space = frappe.get_doc("RN Transport Space", transport_space)
+
+    if delivery_method not in ("use_transporter", "self_deliver"):
+        delivery_method = "use_transporter"
+    if delivery_method == "use_transporter" and (space.service_mode or "both") == "space_only":
+        frappe.throw(
+            "Armada ini hanya menyediakan space (bukan kurir). Pilih 'antar sendiri' "
+            "atau pesan armada bermode kurir."
+        )
 
     w = flt(qty_weight_kg) if qty_weight_kg not in (None, "") else 0.0
     v = flt(qty_volume_m3) if qty_volume_m3 not in (None, "") else 0.0
@@ -731,6 +745,8 @@ def book_transport_space(
     doc.dropoff_location = dropoff_location
     doc.contact_person = contact_person
     doc.contact_phone = contact_phone
+    doc.delivery_method = delivery_method
+    doc.requested_window = requested_window
     doc.notes = notes
     doc.verification_pin = pin
     doc.status = "confirmed" if policy == "open" else "requested"

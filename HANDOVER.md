@@ -4,9 +4,59 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-03 (Manajemen Distribusi armada rework: bookable space + RN Transport Booking + PIN confirm + service_mode + relawan-pickup matching, DEPLOYED & Playwright-verified; earlier same day: Alat Komunikasi page; Armada koordinasi-penyerahan)_
+_Last updated: 2026-09-03 (Distribusi booking UX pass: row→posko penyedia, scoped booking drawer w/ slot+space+delivery-method, follow-up contacts for pensuplai & transporter; Step 12 mobile sweep clean)_
 
 ---
+
+## Distribusi booking UX pass (2026-09-03) — DONE & DEPLOYED
+
+Owner feedback on the armada booking:
+1. whole armada row = link to the **posko penyedia transport** (drop the
+   separate "detail →" link);
+2. clicking **Booking** opens a form **scoped to that posko's armada** — pick
+   the **waktu**, the **space** used, and **antar sendiri vs pakai transporter
+   posko**;
+3. after booking, the **posko distribusi side has the data + a contact person
+   to follow up** — both the *pensuplai* (booker) and the *transporter*.
+
+- **`RN Transport Booking` +2 fields** (migrated): `delivery_method`
+  (use_transporter / self_deliver), `requested_window` (Data).
+- **`api_logistics.book_transport_space`:** takes `delivery_method` +
+  `requested_window`; rejects `use_transporter` on a `space_only` armada.
+- **`api_control_centre.distribusi_board`:** armada rows now also expose
+  `transporter_contact_person/phone`; each `bookings[]` row carries
+  `delivery_method(+label)`, `requested_window`, and
+  `supplier_contact_person/phone` — so the coordinating posko has both
+  follow-up contacts.
+- **Frontend (`?v=distribusi-20260903c`):** armada `<tr>` is now
+  `rn-ba-row` → `posko-detail.html?id=<coordination_posko>` (Booking button
+  `stopPropagation`s). Booking drawer: `#bookingContext` header (posko
+  penyedia, armada+mode, jadwal, sisa kapasitas, titik serah terima),
+  `transport_space` is a locked hidden input, `requested_window` +
+  `dropoff_location` prefilled from the armada, `delivery_method` radios
+  (use_transporter disabled + self_deliver auto-checked when the armada is
+  `space_only`). Bookings sub-row redesigned to a 3-col layout showing
+  Pensuplai contact + Transporter contact + status/id. Radio-safe form
+  serializer (skips unchecked radios).
+- **Verified:** guest HTTP — SIM-BOOK-1 "Pakai transporter posko", SIM-BOOK-2
+  "Antar sendiri", each with supplier contact; armada carries transporter
+  contact. Playwright `rn-booking-ux.js` — 6 clickable rows, no detail link,
+  drawer context + prefills + locked space, `space_only` disables
+  use_transporter, row click → posko-detail. (Console noise: pre-existing
+  `session-role.js` guest fetch failure, unrelated.)
+
+## Step 12 — mobile/HP responsive pass — VERIFIED CLEAN (2026-09-03)
+
+Playwright `rn-mobile-sweep.js` (17 rebuilt pages × {390px, 360px} = 34
+checks): **0 horizontal overflow, 0 JS errors**. `rn-mobile-ux.js` sample:
+KPI grid collapses to 2 columns at 390px, sidebar out of flow + hamburger
+present, every `.rn-table-wrap` scrolls (no clipping). The global fix from
+earlier steps (`.content-grid > *, .kpi-grid > * { min-width:0 }` +
+`minmax(0,1fr)` breakpoints) covers it; the two new pieces this session were
+built with `minmax(0,1fr)` breakpoints from the start. The HP mockup's
+bottom-tab-bar was **not** added — the app's established mobile pattern is the
+`rn-mobile-drawer.js` hamburger drawer, which already serves navigation; a
+bottom nav would touch all 28 pages for no functional gain.
 
 ## Manajemen Distribusi — armada jadi bookable + kurir pickup (2026-09-03) — DONE & DEPLOYED
 

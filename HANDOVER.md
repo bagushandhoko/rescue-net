@@ -40,10 +40,17 @@ Owner feedback on the armada booking:
   serializer (skips unchecked radios).
 - **Verified:** guest HTTP — SIM-BOOK-1 "Pakai transporter posko", SIM-BOOK-2
   "Antar sendiri", each with supplier contact; armada carries transporter
-  contact. Playwright `rn-booking-ux.js` — 6 clickable rows, no detail link,
-  drawer context + prefills + locked space, `space_only` disables
-  use_transporter, row click → posko-detail. (Console noise: pre-existing
-  `session-role.js` guest fetch failure, unrelated.)
+  contact. Playwright `rn-booking-ux.js` / `rn-armada3.js`.
+- **Follow-up fix (`beee112`, `?v=distribusi-20260903d`):** armada row click
+  was going to `posko-detail` of the coordination posko (read as "dumped into
+  Posko Logistik"). Now it opens an **armada detail modal** (reuses
+  `#distribusiDrill`) — penyedia/posko pengelola/mode/kebijakan/kapasitas
+  total+sisa/jadwal/lokasi/rute/serah terima+narahubung/relawan/booking masuk
+  with supplier contacts — plus a "Booking di armada ini" button and a
+  secondary "Buka posko pengelola →" link. Also: the Armada + Pencocokan
+  Relawan Pickup sections were `.content-grid` (1fr + 370px rail) so a lone
+  panel used ~70% width — added `.rn-md-wide` (single column) so the panel
+  fills the content area. 0 overflow at 1440/390/360px.
 
 ## Step 12 — mobile/HP responsive pass — VERIFIED CLEAN (2026-09-03)
 

@@ -4,7 +4,61 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-03 (SPLIT: Manajemen Distribusi restored to mock-up-exact; NEW pages/posko-distribusi.html = transport-provider posko workspace — armada/space/booking moved there)_
+_Last updated: 2026-09-03 (IN FLIGHT: org-member login = internal-coordination role model — see next section)_
+
+---
+
+## IN FLIGHT / NEXT — Org-member login = "koordinasi internal organisasi" (owner brief 2026-09-03)
+
+**Not started. Requirement captured, not yet designed/built.** Owner's words:
+"jika login sbg member organisasi, spt Land Rover Club, seharusnya yang tampil
+posko dia [sendiri], dia sendiri yang [me]rubah — bukan posko-posko member lain.
+Dia lebih ke viewer / pengguna: yang tampil ke dia = posko member [se-organisasi]
+dan posko organisasi lain yang open. Kalau mau lihat lengkap, dari halaman
+Control Centre. Jadi terasa sebagai koordinasi internal organisasi."
+
+**Intended model for a logged-in org member (e.g. member of "Land Rover Club"):**
+1. Landing / default scope = **his own posko** (his `approved_posko_assignment`),
+   editable — create/record/edit forms shown only there.
+2. **Other poskos in his own org** → visible but **read-only** (viewer). He does
+   NOT edit sibling members' poskos.
+3. **Other organisations' poskos that are "open"** (`control_centre_share =
+   full_authorized`, or posko `public_detail = public`) → visible, read-only.
+   Closed orgs → summary only / hidden, same as guest.
+4. The member page = **internal-org coordination surface** (my posko + my org's
+   poskos + open external poskos). The **full cross-org picture stays on the
+   Control Centre page**, not here.
+
+**Infra that already exists (reuse, don't rebuild):**
+- `access_policy.py`: `rn_actor`, `approved_member(user_account, org)`,
+  `approved_posko_assignment(user_account, posko)`, `can_manage_posko(actor,
+  posko)`, `can_manage_organization`.
+- `visibility.py`: `effective_posko_share(posko, actor)` → `full` | `summary`
+  (owner/member/assignment → full; else posko `public_detail`; else org
+  `control_centre_share`).
+- Register flow sets empty `role` → `_effective_role` = `viewer` (read-only)
+  until verification approval.
+- `api_control_centre.event_poskos(disaster_event)` (guest) = flat posko list
+  with `share_mode`.
+
+**Gap (likely all frontend + one endpoint):**
+- Need an endpoint like `my_org_coordination(disaster_event)` (login required):
+  returns `{my_posko, my_org_poskos[], open_external_poskos[]}` each tagged
+  `can_edit` (true only for `my_posko` / poskos the actor can_manage) and
+  `share_mode`.
+- `pages/posko-distribusi.html`, `pages/posko-logistik.html`, `posko-detail.html`:
+  when logged in as an org member, default `?id=` to the member's own posko,
+  hide the free posko switcher (or make it a read-only "lihat posko lain"
+  picker), and hide every create/record/edit form unless
+  `can_edit` for the shown posko. Add a clear "untuk gambaran lengkap lintas
+  organisasi, buka Control Centre" link.
+- Decide: is this one shared "Posko Saya / Koordinasi Organisasi" page, or the
+  behaviour layered onto each existing posko page? (Owner leans: layered — "yang
+  tampil posko dia".)
+
+**Open questions for owner:** (a) a member with NO posko assignment — landing =
+their org's posko list, read-only? (b) `petugas_posko` vs plain `organisasi`
+member — same view or does petugas get edit on all of the org's poskos?
 
 ---
 

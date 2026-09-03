@@ -144,6 +144,38 @@ single Item/Jumlah/Satuan trio.
   `__collectAidItems` returns the array, delete disabled at 1 row, 0
   overflow / errors.
 
+## End-to-end simulation run (2026-09-03) — 8 scenarios
+
+Scripts: `scratchpad/e2e_final.py` (data flows) + `osiun-playwright-check/
+rn-e2e-ui.js` (guest reads, mobile, images).
+
+| # | scenario | result |
+|---|---|---|
+| 1 | donatur → posko: multi-item aid → boards → `auto_match_distribution` | PASS — 2 RN Aid Offer, boards load, auto-match created 3 RN Distribution Flow |
+| 2 | transporter: book space → PIN confirm → capacity blocked | PASS — held 1200 kg → confirmed → MD "Blocked" donut = 5 m³ → PD inbox → cancel frees |
+| 3 | cross-role: register → approval → role granted | PASS — pending/no-role → `approval_action(kind=user, name, action=approve)` → role=relawan, status approved |
+| 4 | connectivity crisis: posko `disconnected` → comms KPI + alert | PASS — Posko Tidak Terhubung KPI +1, posko in Peringatan Konektivitas (restored after) |
+| 5 | evidence consistency + broken images | PASS after fix — Control Centre evidence ⊆ Evidence Center ⊇ posko bukti; **found & fixed 4 DB rows** (`SIM-LR-RPT-TRANSPORT/-SAMATIGA/-WOYLA/-KAWAY`) pointing at non-existent `evidence/{transport,woyla,kaway,samatiga}.jpg` → repointed to real evidence photos (data fix, no repo change — `scratchpad/fix_ev_imgs.py`). Now 0 broken images on any page. |
+| 6 | multi-event isolation sim-001 vs karhutla | PASS — armada sets disjoint (9 vs 1), comms poskos disjoint (18 vs 9), `kpi_drilldown(kebutuhan)` groups differ (6 vs 4) |
+| 7 | mobile 390px on 6 flow pages | PASS — 0 horizontal overflow, 0 JS errors |
+| 8 | guest read vs write | PASS — 11 board endpoints return 200 for guest; `book_transport_space` / `confirm_transport_booking` / `create_user_aid_offer` / `approval_action` all reject guest |
+
+Only real defect surfaced was #5's stale image paths (fixed). Everything
+else passed on the first real assertion; earlier "failures" in the run log
+were test-script bugs (json.dumps of datetimes, wrong kwarg names, a phone
+string with letters).
+
+## Icon set (STARTED, not wired) — `assets/js/rn-icons.js`
+
+Owner chose "full SVG icon set (menu + KPI)". `rn-icons.js` is committed but
+**not loaded anywhere yet** — a dependency-free inline-SVG registry
+(`window.RNIcon(name)`, auto-fills `[data-icon]`, `rn:icons-refresh` event,
+~40 Lucide-style 24px stroke icons + alias table for module/KPI names).
+Next: bump `rn-navigation-v2.js` (add `icon` per CONFIG entry + render in
+`linkHtml`/group summary, version 2.0.5→2.0.6, cache-buster), load
+`rn-icons.js` before it on all pages, then add `data-icon="…"` to every
+`.kpi-card` across the rebuilt pages.
+
 ## Distribusi booking UX pass (2026-09-03) — DONE & DEPLOYED
 
 Owner feedback on the armada booking:

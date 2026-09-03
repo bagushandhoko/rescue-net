@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Manajemen Distribusi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=distribusi-20260903e">
+  <link rel="stylesheet" href="../assets/css/style.css?v=distribusi-20260903f">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navdist-20260903" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -60,6 +60,20 @@
       </div>
       <div class="status-pill" id="distribusiUpdated">Distribusi · Live</div>
     </header>
+
+    <div class="rn-md-toolbar">
+      <input type="search" id="distribusiSearch" placeholder="Cari kebutuhan, bantuan, lokasi, atau kode…" aria-label="Cari distribusi">
+      <select id="distribusiFilter" aria-label="Filter status distribusi">
+        <option value="">Semua status</option>
+        <option value="planned">Direncanakan</option>
+        <option value="assigned_pickup">Assigned Pickup</option>
+        <option value="in_transit">Dalam Perjalanan</option>
+        <option value="arrived_at_posko">Tiba di Posko</option>
+        <option value="received">Diterima</option>
+        <option value="cancelled">Dibatalkan</option>
+      </select>
+      <button class="btn primary" type="button" id="buatDistribusiBtn">+ Buat Distribusi</button>
+    </div>
 
     <section class="kpi-grid rn-md-kpi">
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="transport">
@@ -199,9 +213,9 @@
       </div>
     </details>
 
-    <details class="panel rn-input-drawer">
+    <details class="panel rn-input-drawer" id="flowDrawer">
       <summary>
-        <h3>Transport Space Tersedia &amp; Buat Distribution Flow (Riwayat)</h3>
+        <h3>Transport Space Tersedia &amp; Buat Distribution Flow</h3>
       </summary>
       <div class="content-grid">
         <div>
@@ -253,7 +267,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=frappe-batch-a-1"></script>
-<script src="../assets/js/distribusi.js?v=distribusi-20260903e"></script>
+<script src="../assets/js/distribusi.js?v=distribusi-20260903f"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-resource-booking.js?v=booking-sync-1"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>

@@ -162,10 +162,26 @@
     });
   }
 
-  function renderAlur(rows) {
+  var ALUR_ALL = [];
+
+  function applyAlurFilter() {
+    var q = ($("#distribusiSearch") && $("#distribusiSearch").value || "").trim().toLowerCase();
+    var st = ($("#distribusiFilter") && $("#distribusiFilter").value || "");
+    var rows = ALUR_ALL.filter(function (r) {
+      if (st && String(r.status || "") !== st) return false;
+      if (!q) return true;
+      return [r.id, r.kebutuhan, r.bantuan, r.pickup_oleh, r.transportasi, r.rute, r.status_label, r.trace]
+        .join(" ").toLowerCase().indexOf(q) !== -1;
+    });
+    renderAlur(rows, ALUR_ALL.length);
+  }
+
+  function renderAlur(rows, totalCount) {
     var body = $("#alurBody");
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="9"><em class="rn-muted">Belum ada distribution flow untuk event ini.</em></td></tr>';
+      body.innerHTML = '<tr><td colspan="9"><em class="rn-muted">' +
+        (totalCount ? "Tidak ada distribusi yang cocok dengan pencarian/filter." : "Belum ada distribution flow untuk event ini.") +
+        "</em></td></tr>";
       $("#alurShown").textContent = "0 distribusi";
       return;
     }
@@ -182,7 +198,9 @@
     body.querySelectorAll("tr[data-href]").forEach(function (tr) {
       tr.addEventListener("click", function () { window.location.href = tr.getAttribute("data-href"); });
     });
-    $("#alurShown").textContent = "Menampilkan " + rows.length + " distribusi";
+    $("#alurShown").textContent = totalCount && totalCount !== rows.length
+      ? "Menampilkan " + rows.length + " dari " + totalCount + " distribusi"
+      : "Menampilkan " + rows.length + " distribusi";
   }
 
   function renderPeringatan(rows) {
@@ -240,7 +258,8 @@
     renderKpi(data.totals || {});
     renderMatchingBoard(data.matching_board || {});
     renderTransportTab(data.ruang_transportasi.by_type);
-    renderAlur(data.alur_distribusi || []);
+    ALUR_ALL = data.alur_distribusi || [];
+    applyAlurFilter();
     renderPeringatan(data.peringatan || []);
     renderConversions(data.conversions || []);
     $("#matchedTodayLabel").textContent = fmt(data.matched_today) + " distribusi berhasil dicocokkan hari ini";
@@ -255,6 +274,21 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
     setupTransportTabs();
     setupAutoMatch();
+
+    var search = $("#distribusiSearch");
+    if (search) search.addEventListener("input", applyAlurFilter);
+    var filter = $("#distribusiFilter");
+    if (filter) filter.addEventListener("change", applyAlurFilter);
+    var buat = $("#buatDistribusiBtn");
+    var flowDrawer = $("#flowDrawer");
+    if (buat && flowDrawer) {
+      buat.addEventListener("click", function () {
+        flowDrawer.open = true;
+        flowDrawer.scrollIntoView({ behavior: "smooth", block: "center" });
+        var f = flowDrawer.querySelector('[data-create-flow] input, [data-create-flow] select');
+        if (f) setTimeout(function () { f.focus(); }, 300);
+      });
+    }
 
     loadBoard().catch(function (err) { console.error("[distribusi board]", err); });
   });

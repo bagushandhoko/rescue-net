@@ -5022,6 +5022,11 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 /* Armada Distribusi — space/booking + kurir pickup */
 .rn-md-wide { grid-template-columns: minmax(0, 1fr); }
 .rn-md-xref { font-size: 12px; margin: -6px 0 2px; }
+.rn-md-toolbar { display: flex; gap: 10px; align-items: center; margin: 0 0 4px; flex-wrap: wrap; }
+.rn-md-toolbar input[type="search"] { flex: 1 1 260px; min-width: 200px; min-height: 40px; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font: inherit; background: #fff; }
+.rn-md-toolbar select { min-height: 40px; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font: inherit; background: #fff; }
+.rn-md-toolbar .btn { white-space: nowrap; border: 0; cursor: pointer; }
+@media (max-width: 640px) { .rn-md-toolbar .btn { flex: 1 1 100%; } }
 .rn-md-armada-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
 .rn-md-armada-table td small { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
 .rn-md-cap { min-width: 150px; }

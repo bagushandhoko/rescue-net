@@ -79,6 +79,9 @@ class RNLogisticNeed(Document):
         if self.quantity_mode == "unknown" and self.quantity:
             self.quantity_mode = "exact"
 
+        from rescue_net.intelligence.packaging import enrich_document
+        enrich_document(self)
+
         if not self.observed_at:
             self.observed_at = now_datetime()
 

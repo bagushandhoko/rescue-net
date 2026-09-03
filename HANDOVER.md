@@ -8,6 +8,158 @@ _Last updated: 2026-09-03 (SPLIT: Manajemen Distribusi restored to mock-up-exact
 
 ---
 
+## Konversi kuantitas — sebar ke Control Centre + Kelompok Alat (2026-09-03) — DONE & DEPLOYED
+
+Owner: "perubahan tampilan baris item sudah di semua halaman?" → propagasi
+3‑bucket (Terukur/Perkiraan AI/Belum Terukur) + satuan dasar ke surface lain.
+
+- **NEW `packaging.bucket_quantity(...)`** — helper bucketing bersama; dipakai
+  `api_logistics._row_base_split` (kini wrapper tipis), `api_intelligence._group_rows`,
+  `api_resource_tools.tools_board`. `stored=<row>` → percaya field konversi
+  tersimpan; `stored=None` → hitung `resolve_base_quantity` on the fly
+  (RN Community Need tak menyimpan field itu). `_raw_split()` port dari
+  `_split_qty`. Step **4b** baru di `resolve_base_quantity`: counter generik
+  ("unit"/"pcs"/"buah") tanpa sinyal kemasan → `direct/ok` bila item tak punya
+  satuan dasar lain (mis. "5 ekskavator" = terukur), tetap `needs_review` bila
+  item ingin satuan lain ("100 bh" Air Minum → liter). `_BASE_ALIAS` += unit→pcs.
+- **`api_intelligence._group_rows` (Control Centre consolidation):** key kini
+  `(event, wilayah, canonical_group, base_unit)`. Tiap grup +`base_unit`,
+  `qty_measurable`, `qty_estimated`, `qty_total`, `unmeasurable_count`. Sumber:
+  RN Community Need (dihitung on the fly). Field `estimate_min/max` + `units` lama
+  tetap. Dipakai Frappe `www/data-consolidation.html` (kartu diupdate: baris
+  "Konsolidasi (satu satuan dasar)" + "Estimasi aman (satuan asli)").
+- **`api_resource_tools.tools_board` (Kelompok Alat):** tiap grup +`base_breakdown`
+  `[{base_unit, measurable, estimated}]` + `unmeasurable_count`. `unit_breakdown`
+  lama tetap. `alat-kerja.js` (`?v=alatkerja-20260903a`) — kolom total pakai
+  base_breakdown (±prefix utk perkiraan) + chip "N belum terukur".
+- **Deploy:** packaging.py, api_logistics.py, api_intelligence.py,
+  api_resource_tools.py, www/data-consolidation.html → container, restart
+  (502→200 ~15s). Frontend alat-kerja.{js,html} in-place.
+- **Verified:** Kelompok Alat sim: Ekskavator/Chainsaw/Forklift/Pompa/Perahu =
+  5 pcs **measurable** (dulu semua estimated), Genset 5 pcs + 2 set, belum=0.
+  `control_centre_summary` shape OK (data RN Community Need tipis di site ini,
+  cuma 1 baris). `item_groups` regresi 0 (Air Minum 122.209,92 L sama).
+- **Fragmentasi "Air Bersih*" di Control Centre — FIXED (2026-09-03).** Baris
+  "Air Bersih" / "Air Bersih Siap Distribusi" / "Air Bersih (mobil tangki/
+  tandon)" tampil terpisah karena `canonical_group` NULL (dibuat sebelum rule
+  registry aktif) → `item_groups`/`_group_rows` fallback ke `raw_item_text`
+  sebagai nama grup. Fix: (a) rule "Air Bersih" +alias ("air bersih siap
+  distribusi", "tandon air", "tangki air", "air tangki", "water tank") di DB
+  live + `normalization_defaults.py`; (b) `scratchpad/reclassify_null_groups.py`
+  (ran) — re-`classify_text` semua baris canonical_group kosong di RN Aid Offer/
+  Logistic Need/Stock Observation (non-manual), set canonical_* + re-`enrich_document`.
+  Hasil: 5 baris di-reclassify → "Air Bersih · liter" jadi 1 baris 2.570.000 L.
+  Sisa "still_unmatched" = teks bebas non-air, wajar.
+- **Keputusan owner (2026-09-03): "Air Minum" ≠ "Air Bersih" — tetap 2 grup
+  terpisah.** Air layak konsumsi vs air MCK/sanitasi = kebutuhan operasional
+  beda (sumber/urgensi/penanganan). Tidak digabung. Fragmentasi di atas beda
+  soal (bug klasifikasi, bukan kebijakan grup).
+- **TIDAK disentuh (sengaja, dilaporkan ke owner):**
+  - `stock_summary` di war-room.js / dapur-umum.js / rn-control-centre-v4.js —
+    baca `ctx.stock_summary` shape **legacy provisional** (`item_name`,
+    `current_quantity`) yang beda dari `control_centre_logistics.available_stock`
+    (`canonical_group`, `exact_total`); kode sendiri bertanda "backend nanti
+    menyediakan…". Butuh perbaikan kontrak dulu (utang migrasi FE), bukan
+    tempat menambah base_quantity.
+  - `control_centre_logistics.available_stock` — **tak ada konsumen FE** sama
+    sekali. Enhance = no-op sampai ada yang render.
+  - "Kartu Stok Rinci" (`logistik.js` stock_cards) — ledger **per-item** dengan
+    laju konsumsi + estimasi habis; sengaja granular di satuan asli posko,
+    bukan surface konsolidasi.
+  - `pages/data-consolidation.html` — pakai `api_frontend_bridge` (list flat
+    per-baris, `quantity_final`/`quantity_unit` belum diwire), bukan
+    `control_centre_summary`. Setengah-migrasi.
+
+## Normalisasi AI — registry wiring fix (2026-09-03) — DONE & DEPLOYED
+
+Owner: "ai untuk grouping item sejenis + satuan bermacam-macam" harus **fleksibel
+tapi reliable** — bukan DB rigid. Aturan editable (`RN Normalization Rule`, Desk)
+harus dikonsultasi di **semua** jalur, bukan cuma hook insert.
+
+- **Bug:** `api_intelligence.py` + `api_resource_tools.py` meng-import
+  `classify_text` langsung dari `intelligence.normalization` (built-in RULES saja),
+  jadi endpoint `suggest_need` / `control_centre_summary` grouping + fallback
+  "Kelompok Alat" **mengabaikan** `RN Normalization Rule`. Hook insert doctype
+  (aid_offer/logistic_need/community_need/stock_observation/distribution_flow)
+  sudah benar (pakai `normalization_registry`).
+- **Fix:** kedua file kini import `classify_text` dari
+  `rescue_net.intelligence.normalization_registry` (built-in + DB rules,
+  priority-ranked). `normalize_unit` tetap dari `.normalization` (registry tak
+  membungkusnya).
+- **Perf:** `normalization_registry._enabled_rules()` mem-memo daftar rule di
+  `frappe.local` (reset per request) — `classify_text` dipanggil dalam loop oleh
+  `item_groups` / `tools_board`, sebelumnya 1 query per baris.
+- **Deploy:** `api_intelligence.py`, `api_resource_tools.py`,
+  `intelligence/normalization_registry.py` (cp via docker exec, md5 host==container,
+  `ast.parse` OK) → `docker restart osiun-frappe-backend` (502→200 ~24s). Backup
+  `*.bak-<ts>-regfix` di container.
+- **Verified:** `classify_text("pertalite 5 liter")` (alias hanya ada di DB rule
+  "BBM", tak ada di built-in) → `canonical_group=Bahan Bakar`,
+  `normalization_rule=BBM`, `matched_alias=pertalite`. `tools_board` guest 200,
+  `control_centre_summary` 403 (butuh auth, wajar).
+## Konversi kuantitas lintas kemasan (2026-09-03) — DONE & DEPLOYED
+
+Owner: normalisasi tak boleh DB rigid (melibatkan awam) — RN lewat aturan
+deterministik menyederhanakan + mengkonversi "mie instan dus isi 24 bh" /
+"2 karung kecil" / "1 tas kresek" / "aqua gelas 100 bh" / "air mineral 2 dus" /
+"5 botol" → satu kelompok + **satu satuan dasar terukur** (liter/kg/bungkus),
+dengan tingkat keandalan yang jujur.
+
+- **NEW `intelligence/packaging.py`:** `parse_packaging(text)` (regex murni, tanpa
+  DB) mengekstrak `outer_quantity` ("2 dus"→2), `content_quantity` ("100 bh"→100),
+  `form_unit` (kata bentuk-produk: gelas/botol/dus…), `pack_size` ("isi 24"→24),
+  `pack_certainty` (explicit/constant/**unmeasurable**). `resolve_base_quantity()`
+  memilih berjenjang: isi eksplisit → satuan == base unit item (direct) → tabel
+  `RN Unit Conversion` → satuan dasar dikenal (direct) → paket luar tanpa faktor
+  (needs_review) → heuristik. `unmeasurable` untuk "karung kecil"/"tas kresek"/
+  "seadanya". Base unit pakai `_canon_base()` (ruang terpisah dari
+  `normalize_unit()` yang melipat "bungkus"→"sachet").
+- **NEW DocType `RN Unit Conversion`** (editable Desk, System Manager):
+  scope_type canonical_item|canonical_group|global, from_unit→to_base_unit,
+  factor, certainty standar|perkiraan (perkiraan → hasil ditandai needs_review),
+  priority. Seed `setup/unit_conversion_defaults.py` = **21 baris** (Air Minum
+  Kemasan gelas/botol/dus/karton/galon/jerigen→liter; Mie Instan dus/karton/pak/
+  renceng→bungkus; Beras karung/sak/liter→kg; Minyak Goreng dus/jerigen/botol→
+  liter; group-level Air Minum/Bahan Pangan; global lusin/kodi/gross→pcs).
+- **+5 field × 3 DocType** (RN Aid Offer / Logistic Need / Stock Observation):
+  `base_quantity`, `base_unit`, `pack_size`, `conversion_source`
+  (none/explicit/table/direct/heuristic/manual), `conversion_status`
+  (ok/needs_review/unmeasurable). Diisi di `before_insert` via
+  `packaging.enrich_document(doc)` (tak menimpa nilai manual).
+- **+2 normalization rule** (Mie Instan, Minyak Goreng) supaya konversi bisa
+  menyasar `canonical_item`.
+- **`api_logistics.py`:** `_row_base_split()` = 3 ember (TERUKUR = konversi
+  dipercaya & bukan estimasi; PERKIRAAN AI = konversi kabur / input estimasi;
+  BELUM TERUKUR = tanpa angka / kemasan tidak baku). `item_groups` sekarang
+  di-key `(canonical_group, base_unit)` → satu baris per kelompok, output
+  `qty_measurable` / `qty_estimated` / `qty_total` / `unmeasurable_count` /
+  `conversion_review` (+ alias lama `qty_exact`/`estimate_member_count` untuk
+  cache frontend). `item_group_members` +field konversi + `measured_bucket`.
+  `correct_item_normalization` +arg `base_quantity` / `base_unit` / `pack_size`:
+  isi eksplisit → base = qty×pack_size; base_quantity manual → apa adanya;
+  else → `resolve_base_quantity` ulang. Semua → conversion_source=manual.
+- **`hooks.py`:** `after_install` + **NEW `after_migrate`** menjalankan kedua
+  installer (idempotent).
+- **Frontend:** `assets/js/rn-item-groups.js` (`?v=itemgroups-20260903c`) — kolom
+  Terukur / Perkiraan AI / Total / Belum Terukur; drill menamp: input asli,
+  isi/kemasan, kuantitas dasar, badge konversi; form Koreksi +field "Isi per
+  kemasan" & "Kuantitas dasar". `pages/posko-logistik.html` header + deskripsi.
+- **Deploy:** 14 file backend cp→container, `bench --site osiun.localhost migrate`
+  (buat tabel RN Unit Conversion + 15 kolom, after_migrate seed OK), restart
+  (502→200 ~15s). Backfill `scratchpad/backfill_base_quantity.py` → 29 Aid Offer
+  + 37 Logistic Need + 43 Stock Observation di-enrich.
+- **Verified:** 10 kalimat awam parser+resolver (mie dus isi 24→24 bungkus;
+  karung kecil / tas kresek / seadanya → unmeasurable; aqua gelas 100→24 L;
+  2 dus→11.52 L; 3 karung beras→75 kg; 2 jerigen migor→36 L; 5 dus isi 10
+  strip→50). `item_groups` guest 200: "Air Minum" 21 anggota → 1 baris
+  122.209,92 liter (semua perkiraan, conv?=21). `correct_item_normalization`
+  pack_size=24: 160→96 bungkus, source=manual/ok/accepted. Drill Bahan Pangan/kg
+  → Beras direct/terukur.
+- **Catatan:** faktor dus/karung sengaja `perkiraan` → masuk kolom "Perkiraan
+  AI", bukan "Terukur", sampai koordinator set `standar` di Desk atau posko
+  koreksi. Bare "air" (tanpa "minum"/"mineral") masih tak terklasifikasi —
+  di luar scope ini.
+
 ## Manajemen Distribusi ↔ Posko Distribusi split (2026-09-03) — DONE & DEPLOYED
 
 Owner: keep **Manajemen Distribusi** data+layout **persis mock-up**

@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("list").innerHTML =
         data.groups.map(g => `
           <div class="rn-card">
-            <h4>${g.canonical_group}</h4>
+            <h4>${g.canonical_group} <small>· ${g.base_unit || ""}</small></h4>
 
             <div>${g.area}</div>
 
@@ -69,7 +69,15 @@ document.addEventListener("DOMContentLoaded", async () => {
             </div>
 
             <p>
-              Estimasi aman:
+              Konsolidasi (satu satuan dasar):
+              <b>Terukur ${g.qty_measurable || 0} ${g.base_unit || ""}</b>
+              ${g.qty_estimated ? " · Perkiraan AI " + g.qty_estimated + " " + (g.base_unit || "") : ""}
+              ${g.unmeasurable_count ? " · " + g.unmeasurable_count + " belum terukur" : ""}
+              → total ${g.qty_total || 0} ${g.base_unit || ""}
+            </p>
+
+            <p class="rn-meta">
+              Estimasi aman (satuan asli):
               ${
                 g.estimate_min === null
                 ? "belum cukup data kuantitatif"

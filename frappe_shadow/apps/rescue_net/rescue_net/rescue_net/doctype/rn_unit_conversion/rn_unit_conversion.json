@@ -1,0 +1,106 @@
+{
+  "doctype": "DocType",
+  "name": "RN Unit Conversion",
+  "module": "Rescue Net",
+  "custom": 0,
+  "autoname": "field:conversion_name",
+  "title_field": "conversion_name",
+  "track_changes": 1,
+  "search_fields": "canonical_item,canonical_group,from_unit,to_base_unit",
+  "sort_field": "priority",
+  "sort_order": "DESC",
+  "fields": [
+    {
+      "fieldname": "conversion_name",
+      "label": "Conversion Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "enabled",
+      "label": "Enabled",
+      "fieldtype": "Check",
+      "default": "1",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "scope_type",
+      "label": "Scope",
+      "fieldtype": "Select",
+      "options": "canonical_item\ncanonical_group\nglobal",
+      "default": "canonical_item",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "canonical_item paling spesifik dan menang atas canonical_group, lalu global."
+    },
+    {
+      "fieldname": "canonical_item",
+      "label": "Canonical Item",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "description": "Diisi saat scope = canonical_item. Harus sama persis dengan canonical_item hasil normalisasi."
+    },
+    {
+      "fieldname": "canonical_group",
+      "label": "Canonical Group",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "description": "Diisi saat scope = canonical_group."
+    },
+    {
+      "fieldname": "from_unit",
+      "label": "From Unit (kemasan)",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Satuan kemasan sumber, mis. dus / karung / gelas / jerigen. Dilipat lewat normalize_unit()."
+    },
+    {
+      "fieldname": "to_base_unit",
+      "label": "To Base Unit",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "Satuan dasar terukur, mis. liter / kg / bungkus / pcs."
+    },
+    {
+      "fieldname": "factor",
+      "label": "Factor",
+      "fieldtype": "Float",
+      "reqd": 1,
+      "in_list_view": 1,
+      "description": "1 <from_unit> = <factor> <to_base_unit>. Contoh: 1 dus air = 5.76 liter."
+    },
+    {
+      "fieldname": "certainty",
+      "label": "Certainty",
+      "fieldtype": "Select",
+      "options": "standar\nperkiraan",
+      "default": "standar",
+      "description": "perkiraan -> hasil konversi ditandai needs_review di panel."
+    },
+    {
+      "fieldname": "priority",
+      "label": "Priority",
+      "fieldtype": "Int",
+      "default": "100",
+      "description": "Angka lebih besar diprioritaskan saat beberapa aturan cocok."
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

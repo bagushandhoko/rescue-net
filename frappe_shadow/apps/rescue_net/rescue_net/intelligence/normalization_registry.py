@@ -35,17 +35,19 @@ def _matches(text, alias, mode):
     )
 
 
-def _configured_match(raw):
-    if not frappe.db.exists(
-        "DocType",
-        "RN Normalization Rule",
-    ):
-        return None
+def _enabled_rules():
+    """Enabled RN Normalization Rule rows, fetched once per request.
 
-    text = _normalize(raw)
+    classify_text() is called in a loop by the grouping report endpoints
+    (item_groups, tools_board), so the rule list is memoised on frappe.local
+    (reset every request) instead of hitting the DB per row."""
+    cached = getattr(frappe.local, "_rn_norm_rules", None)
+    if cached is not None:
+        return cached
 
-    if not text:
-        return None
+    if not frappe.db.exists("DocType", "RN Normalization Rule"):
+        frappe.local._rn_norm_rules = []
+        return []
 
     rules = frappe.get_all(
         "RN Normalization Rule",
@@ -63,6 +65,17 @@ def _configured_match(raw):
         order_by="priority desc, modified desc",
         limit_page_length=2000,
     )
+    frappe.local._rn_norm_rules = rules
+    return rules
+
+
+def _configured_match(raw):
+    text = _normalize(raw)
+
+    if not text:
+        return None
+
+    rules = _enabled_rules()
 
     winner = None
 

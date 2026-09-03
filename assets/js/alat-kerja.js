@@ -203,9 +203,19 @@
       return;
     }
     el.innerHTML = groups.map(function (g) {
-      var totalCol = g.same_unit
-        ? fmt(g.total_qty) + " " + esc((g.unit_breakdown[0] || {}).unit || "")
-        : g.unit_breakdown.map(function (u) { return '<span class="rn-ak-unit-chip">' + fmt(u.qty) + " " + esc(u.unit) + "</span>"; }).join("");
+      var bb = g.base_breakdown || [];
+      var totalCol = bb.length
+        ? bb.map(function (b) {
+            var q = (b.measurable || 0) + (b.estimated || 0);
+            var approx = b.estimated && !b.measurable;
+            return '<span class="rn-ak-unit-chip"' + (approx ? ' title="perkiraan"' : "") + ">" +
+              (approx ? "±" : "") + fmt(q) + " " + esc(b.base_unit || "") + "</span>";
+          }).join("")
+        : (g.same_unit
+            ? fmt(g.total_qty) + " " + esc((g.unit_breakdown[0] || {}).unit || "")
+            : g.unit_breakdown.map(function (u) { return '<span class="rn-ak-unit-chip">' + fmt(u.qty) + " " + esc(u.unit) + "</span>"; }).join(""));
+      if (g.unmeasurable_count)
+        totalCol += ' <span class="chip warning">' + fmt(g.unmeasurable_count) + " belum terukur</span>";
       var sourceLabel = g.source === "manual" ? "Manual" : g.source === "ai" ? "AI" : g.source === "rule" ? "Aturan" : "-";
       return (
         '<div class="rn-ak-group-row"><b>' + esc(g.group) + "</b>" +

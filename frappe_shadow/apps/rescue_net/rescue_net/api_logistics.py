@@ -2511,7 +2511,8 @@ _ITEM_GROUP_DOCTYPES = {
 
 
 def _split_qty(row):
-    """Return (exact, est_mid, est_min, est_max, is_estimate) for one row."""
+    """Return (exact, est_mid, est_min, est_max, is_estimate) for one row,
+    in the row's OWN unit (pre-conversion)."""
     q = flt(row.get("quantity")) if row.get("quantity") not in (None, "") else 0.0
     lo = flt(row.get("quantity_min")) if row.get("quantity_min") not in (None, "") else None
     hi = flt(row.get("quantity_max")) if row.get("quantity_max") not in (None, "") else None
@@ -2528,11 +2529,33 @@ def _split_qty(row):
     return q, 0.0, q, q, False
 
 
+def _row_base_split(row):
+    """Bucket one row's quantity for the grouped view.
+
+    Thin wrapper over rescue_net.intelligence.packaging.bucket_quantity — the
+    same helper the Control Centre consolidation (api_intelligence._group_rows)
+    and Kelompok Alat (api_resource_tools) use, so all consolidated views agree.
+    Returns (measurable, estimated, unmeasurable_flag, base_unit)."""
+    from rescue_net.intelligence.packaging import bucket_quantity
+
+    b = bucket_quantity(
+        row.get("canonical_item"), row.get("canonical_group"),
+        row.get("quantity"), row.get("unit"),
+        row.get("quantity_mode"), row.get("quantity_min"),
+        row.get("quantity_max"),
+        row.get("raw_item_text") or row.get("item_name") or "",
+        stored=row,
+    )
+    return b["measurable"], b["estimated"], b["unmeasurable"], b["base_unit"]
+
+
 @frappe.whitelist(allow_guest=True)
 def item_groups(disaster_event=None, posko=None, kinds=None):
     """Canonical rollup of aid offers + needs + stock by
-    (canonical_group, normalize_unit(unit)). Each group carries the
-    ACCURATE quantity and the AI-ESTIMATED quantity separately."""
+    (canonical_group, base_unit). Each group carries three honest numbers:
+    kuantitas TERUKUR (trusted conversion), PERKIRAAN AI (fuzzy conversion or
+    estimate input), and a count of rows that are BELUM TERUKUR (no usable
+    number / kemasan tidak baku)."""
     from rescue_net.intelligence.normalization import normalize_unit
 
     event = resolve_disaster_event(disaster_event) if disaster_event else None
@@ -2545,6 +2568,8 @@ def item_groups(disaster_event=None, posko=None, kinds=None):
         "canonical_group", "canonical_item", "canonical_category",
         "normalization_source", "normalization_confidence",
         "normalization_status",
+        "base_quantity", "base_unit", "pack_size",
+        "conversion_source", "conversion_status",
     ]
 
     groups = {}
@@ -2561,34 +2586,42 @@ def item_groups(disaster_event=None, posko=None, kinds=None):
         for r in rows:
             gkey = (r.get("canonical_group") or r.get("canonical_item")
                     or (r.get("item_name") or r.get("raw_item_text") or "Lainnya"))
-            unit = normalize_unit(r.get("unit"))
-            key = (gkey, unit)
+            meas, est, unmeas, base_unit = _row_base_split(r)
+            key = (gkey, base_unit)
             g = groups.setdefault(key, {
-                "group": gkey, "unit": unit,
+                "group": gkey, "unit": base_unit,
                 "category": r.get("canonical_category"),
-                "qty_exact": 0.0, "qty_estimated": 0.0,
-                "est_min": 0.0, "est_max": 0.0,
-                "member_count": 0, "estimate_member_count": 0,
-                "needs_review": 0, "poskos": set(), "sources": set(),
+                "qty_measurable": 0.0, "qty_estimated": 0.0,
+                "member_count": 0, "measurable_member_count": 0,
+                "estimated_member_count": 0, "unmeasurable_count": 0,
+                "needs_review": 0, "conversion_review": 0,
+                "poskos": set(), "sources": set(), "conv_sources": set(),
                 "kinds": set(), "estimate_notes": [],
                 "classified": bool(r.get("canonical_group")),
             })
-            ex, mid, lo, hi, is_est = _split_qty(r)
-            g["qty_exact"] += ex
-            g["qty_estimated"] += mid
-            g["est_min"] += lo or 0.0
-            g["est_max"] += hi or 0.0
+            g["qty_measurable"] += meas
+            g["qty_estimated"] += est
             g["member_count"] += 1
-            if is_est:
-                g["estimate_member_count"] += 1
+            if unmeas:
+                g["unmeasurable_count"] += 1
+                if r.get("estimate_text") or r.get("raw_item_text"):
+                    g["estimate_notes"].append(
+                        str(r.get("estimate_text") or r.get("raw_item_text"))[:80])
+            elif meas:
+                g["measurable_member_count"] += 1
+            elif est:
+                g["estimated_member_count"] += 1
                 if r.get("estimate_text"):
                     g["estimate_notes"].append(str(r["estimate_text"])[:80])
             if (r.get("normalization_status") or "suggested") == "suggested":
                 g["needs_review"] += 1
+            if str(r.get("conversion_status") or "ok").lower() == "needs_review":
+                g["conversion_review"] += 1
             p = r.get(posko_field)
             if p:
                 g["poskos"].add(p)
             g["sources"].add(r.get("normalization_source") or "rule")
+            g["conv_sources"].add(r.get("conversion_source") or "none")
             g["kinds"].add(kind)
             if r.get("canonical_group"):
                 g["classified"] = True
@@ -2598,23 +2631,32 @@ def item_groups(disaster_event=None, posko=None, kinds=None):
         src = ("manual" if "manual" in g["sources"]
                else "ai" if "ai" in g["sources"]
                else "rule" if "rule" in g["sources"] else "tidak_diketahui")
+        measurable = round(g["qty_measurable"], 2)
+        estimated = round(g["qty_estimated"], 2)
         out.append({
             "group": g["group"],
             "unit": g["unit"],
+            "base_unit": g["unit"],
             "category": g["category"],
-            "qty_exact": round(g["qty_exact"], 1),
-            "qty_estimated": round(g["qty_estimated"], 1),
-            "qty_total": round(g["qty_exact"] + g["qty_estimated"], 1),
-            "est_range": ([round(g["est_min"], 1), round(g["est_max"], 1)]
-                          if g["estimate_member_count"] else None),
+            "qty_measurable": measurable,
+            "qty_estimated": estimated,
+            "qty_total": round(measurable + estimated, 2),
+            "unmeasurable_count": g["unmeasurable_count"],
             "estimate_note": " · ".join(g["estimate_notes"][:3]),
             "member_count": g["member_count"],
-            "estimate_member_count": g["estimate_member_count"],
+            "measurable_member_count": g["measurable_member_count"],
+            "estimated_member_count": g["estimated_member_count"],
             "needs_review": g["needs_review"],
+            "conversion_review": g["conversion_review"],
             "posko_spread": len(g["poskos"]),
             "kinds": sorted(g["kinds"]),
             "source": src,
+            "conversion_sources": sorted(s for s in g["conv_sources"] if s and s != "none"),
             "classified": g["classified"],
+            # --- back-compat aliases for older cached frontend ---
+            "qty_exact": measurable,
+            "estimate_member_count": g["estimated_member_count"],
+            "est_range": None,
         })
     out.sort(key=lambda x: (-x["member_count"], x["group"]))
     return {
@@ -2622,10 +2664,13 @@ def item_groups(disaster_event=None, posko=None, kinds=None):
         "generated_at": now_datetime(),
         "groups": out,
         "method_note": (
-            "Pengelompokan pakai aturan kata kunci (classify_text) — bukan "
-            "AI black-box. 'Kuantitas Akurat' = input mode exact; 'Perkiraan "
-            "AI' = rata-rata dari input range/estimasi. Posko penerima bisa "
-            "koreksi (ubah satuan/kelompok) via tombol Koreksi di detail."
+            "Pengelompokan + konversi pakai aturan deterministik "
+            "(classify_text + RN Unit Conversion) — bukan AI black-box. "
+            "'Terukur' = konversi tepat (isi eksplisit / tabel standar / satuan "
+            "dasar). 'Perkiraan AI' = konversi perkiraan atau input estimasi. "
+            "'Belum terukur' = tanpa angka jelas / kemasan tidak baku "
+            "(mis. 'karung kecil', 'tas kresek'). Posko penerima bisa koreksi "
+            "(ubah satuan/kemasan/isi per dus) via tombol Koreksi di detail."
         ),
     }
 
@@ -2645,6 +2690,8 @@ def item_group_members(group, disaster_event=None, unit=None, posko=None,
         "quantity_mode", "quantity_min", "quantity_max", "estimate_text",
         "canonical_group", "canonical_item", "normalization_source",
         "normalization_confidence", "normalization_status", "observed_at",
+        "base_quantity", "base_unit", "pack_size",
+        "conversion_source", "conversion_status",
     ]
     members = []
     for kind, (dt, posko_field, _nf) in _ITEM_GROUP_DOCTYPES.items():
@@ -2661,9 +2708,11 @@ def item_group_members(group, disaster_event=None, unit=None, posko=None,
                     or (r.get("item_name") or r.get("raw_item_text") or "Lainnya"))
             if gkey != group:
                 continue
-            if unit_c and normalize_unit(r.get("unit")) != unit_c:
+            row_base_unit = r.get("base_unit") or normalize_unit(r.get("unit"))
+            if unit_c and row_base_unit != unit_c:
                 continue
             ex, mid, lo, hi, is_est = _split_qty(r)
+            meas, est, unmeas, _bu = _row_base_split(r)
             p = r.get(posko_field)
             members.append({
                 "doctype": dt, "name": r["name"], "kind": kind,
@@ -2681,6 +2730,15 @@ def item_group_members(group, disaster_event=None, unit=None, posko=None,
                 "is_estimate": is_est,
                 "qty_exact": round(ex, 2),
                 "qty_estimated": round(mid, 2),
+                "base_quantity": r.get("base_quantity"),
+                "base_unit": row_base_unit,
+                "pack_size": r.get("pack_size"),
+                "conversion_source": r.get("conversion_source") or "none",
+                "conversion_status": r.get("conversion_status") or "ok",
+                "measured_bucket": ("belum_terukur" if unmeas
+                                    else "terukur" if meas else "perkiraan"),
+                "base_measurable": round(meas, 2),
+                "base_estimated": round(est, 2),
                 "canonical_group": r.get("canonical_group") or "",
                 "canonical_item": r.get("canonical_item") or "",
                 "normalization_source": r.get("normalization_source") or "rule",
@@ -2695,14 +2753,30 @@ def item_group_members(group, disaster_event=None, unit=None, posko=None,
 @frappe.whitelist()
 def correct_item_normalization(doctype, name, canonical_group=None,
                                canonical_item=None, unit=None, quantity=None,
-                               quantity_mode=None, note=None, also_apply=None):
+                               quantity_mode=None, note=None, also_apply=None,
+                               base_quantity=None, base_unit=None,
+                               pack_size=None):
     """Posko-side correction of an item's normalisation: change the
-    packaging/unit, move it to another group, mark the quantity accurate, or
-    merge several rows into one group ("jadikan satu" via `also_apply`).
+    packaging/unit, move it to another group, mark the quantity accurate,
+    fix the measured base quantity / isi-per-kemasan, or merge several rows
+    into one group ("jadikan satu" via `also_apply`).
     Marks the row(s) normalization_status=accepted / source=manual.
+
+    Base quantity handling on the primary row:
+      - explicit `base_quantity` (+ optional `base_unit`)  -> stored as-is,
+        conversion_source=manual, conversion_status=ok;
+      - `pack_size` given (isi per kemasan)                -> base = qty * pack_size;
+      - otherwise                                          -> recomputed from
+        the (possibly updated) unit/quantity via the RN Unit Conversion table.
     `also_apply` = JSON list of {"doctype","name"} to receive the same
     canonical_group / canonical_item / unit in one approval."""
     import json as _json
+
+    from rescue_net.intelligence.packaging import (
+        parse_packaging,
+        resolve_base_quantity,
+        _base_unit_for,
+    )
 
     if doctype not in {v[0] for v in _ITEM_GROUP_DOCTYPES.values()}:
         frappe.throw("Doctype tidak didukung untuk koreksi normalisasi.")
@@ -2712,6 +2786,41 @@ def correct_item_normalization(doctype, name, canonical_group=None,
     def _posko_of(dt, nm):
         pf = next(v[1] for v in _ITEM_GROUP_DOCTYPES.values() if v[0] == dt)
         return frappe.db.get_value(dt, nm, pf)
+
+    def _recompute_base(d):
+        """Refresh base_quantity/base_unit/pack_size/conversion_* on the primary
+        row after a manual correction."""
+        if base_quantity not in (None, ""):
+            d.base_quantity = flt(base_quantity)
+            d.base_unit = (base_unit or d.base_unit
+                           or _base_unit_for(d.canonical_item, d.canonical_group))
+            if pack_size not in (None, ""):
+                d.pack_size = flt(pack_size)
+            d.conversion_source = "manual"
+            d.conversion_status = "ok"
+            return
+        if pack_size not in (None, ""):
+            ps = flt(pack_size)
+            qty = flt(d.quantity) or (parse_packaging(
+                d.raw_item_text or d.item_name or "")["parsed_quantity"] or 0)
+            d.pack_size = ps
+            d.base_quantity = round(qty * ps, 3) if qty else None
+            d.base_unit = (base_unit or d.base_unit
+                           or _base_unit_for(d.canonical_item, d.canonical_group))
+            d.conversion_source = "manual"
+            d.conversion_status = "ok"
+            return
+        # no explicit base input -> recompute from the current unit/quantity
+        res = resolve_base_quantity(
+            d.canonical_item, d.canonical_group, d.quantity, d.unit,
+            d.quantity_mode, d.raw_item_text or d.item_name or "",
+        )
+        d.base_quantity = res["base_quantity"]
+        d.base_unit = res["base_unit"] or d.base_unit
+        if res["pack_size"] is not None:
+            d.pack_size = res["pack_size"]
+        d.conversion_source = res["conversion_source"]
+        d.conversion_status = res["conversion_status"]
 
     def _apply(dt, nm, is_primary):
         posko = _posko_of(dt, nm)
@@ -2732,6 +2841,7 @@ def correct_item_normalization(doctype, name, canonical_group=None,
                 d.quantity = flt(quantity)
             if quantity_mode:
                 d.quantity_mode = quantity_mode
+            _recompute_base(d)
         d.normalization_source = "manual"
         d.normalization_status = "accepted"
         if note and hasattr(d, "notes"):

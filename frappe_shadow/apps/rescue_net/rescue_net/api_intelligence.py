@@ -7,7 +7,10 @@ from rescue_net.access_policy import (
     rn_actor,
 )
 from rescue_net.intelligence.freshness import freshness
-from rescue_net.intelligence.normalization import classify_text
+# Registry = built-in keyword rules + editable RN Normalization Rule records
+# (Frappe Desk). Import from here, never straight from `.normalization`, so the
+# field-configurable aliases/priorities are always consulted.
+from rescue_net.intelligence.normalization_registry import classify_text
 
 
 def _can_edit_need(actor, need):
@@ -149,6 +152,8 @@ def _source_area(report):
 
 
 def _group_rows(rows):
+    from rescue_net.intelligence.packaging import bucket_quantity
+
     grouped = defaultdict(list)
 
     for row in rows:
@@ -161,14 +166,24 @@ def _group_rows(rows):
             or "Belum Dikelompokkan"
         )
 
+        # base unit is computed on the fly — RN Community Need does not persist
+        # the conversion_* fields, so pass stored=None.
+        bkt = bucket_quantity(
+            row.canonical_item, row.canonical_group,
+            row.quantity, row.unit, row.quantity_mode,
+            row.quantity_min, row.quantity_max,
+            row.raw_need_text or "", stored=None,
+        )
+
         key = (
             row.disaster_event or "no-event",
             area["admin_area_id"] or area["area"],
             group_name,
+            bkt["base_unit"] or "unit",
         )
 
         grouped[key].append(
-            (row, area)
+            (row, area, bkt)
         )
 
     output = []
@@ -182,8 +197,11 @@ def _group_rows(rows):
         freshness_rows = []
         verified_count = 0
         norm_scores = []
+        qty_measurable = 0.0
+        qty_estimated = 0.0
+        unmeasurable_count = 0
 
-        for row, area in members:
+        for row, area, bkt in members:
             source_identity = (
                 row.community_owner
                 or row.requester_user
@@ -195,6 +213,10 @@ def _group_rows(rows):
                 organizations.add(
                     row.community_owner
                 )
+
+            qty_measurable += bkt["measurable"]
+            qty_estimated += bkt["estimated"]
+            unmeasurable_count += bkt["unmeasurable"]
 
             if row.unit:
                 units.add(row.unit)
@@ -284,7 +306,7 @@ def _group_rows(rows):
             newest = max(times)
             oldest = min(times)
 
-        row0, area0 = members[0]
+        row0, area0, _bkt0 = members[0]
 
         output.append({
             "group_key": "|".join(str(x) for x in key),
@@ -299,6 +321,7 @@ def _group_rows(rows):
                 or "Belum Dikelompokkan"
             ),
             "canonical_item": row0.canonical_item,
+            "base_unit": key[3],
             "source_count": total,
             "independent_source_count": len(source_ids),
             "organization_count": len(organizations),
@@ -306,6 +329,11 @@ def _group_rows(rows):
             "estimate_method": "MAX_OVERLAP_SAFE",
             "estimate_min": estimate_min,
             "estimate_max": estimate_max,
+            # consolidated in ONE base unit, honest 3-way split
+            "qty_measurable": round(qty_measurable, 2),
+            "qty_estimated": round(qty_estimated, 2),
+            "qty_total": round(qty_measurable + qty_estimated, 2),
+            "unmeasurable_count": unmeasurable_count,
             "fresh_count": fresh_count,
             "stale_count": stale_count,
             "newest_update": newest,

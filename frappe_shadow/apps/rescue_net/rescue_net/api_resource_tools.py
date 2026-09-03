@@ -3,7 +3,10 @@ from collections import defaultdict
 
 import frappe
 from rescue_net.reference_resolver import resolve_disaster_event
-from rescue_net.intelligence.normalization import classify_text, normalize_unit
+from rescue_net.intelligence.normalization import normalize_unit
+# classify_text via the registry so the live "Kelompok Alat" fallback honours
+# the editable RN Normalization Rule records, same as the record-insert hooks.
+from rescue_net.intelligence.normalization_registry import classify_text
 from frappe.utils import (
     flt,
     get_datetime,
@@ -1569,10 +1572,14 @@ def tools_board(disaster_event=None):
     # Observation elsewhere in the app, honestly labelled "rule"/"ai" per
     # normalization_source (this app never claims a black-box "AI" call —
     # the rules are deterministic keyword matches).
+    from rescue_net.intelligence.packaging import bucket_quantity
+
     equip_groups = defaultdict(lambda: {
         "total_qty": 0.0, "unit_breakdown": defaultdict(float),
         "locations": set(), "confidence_scores": [], "sources": set(),
         "item_count": 0, "category": None,
+        "base_breakdown": defaultdict(lambda: {"measurable": 0.0, "estimated": 0.0}),
+        "unmeasurable_count": 0,
     })
     for r in resources:
         if r.canonical_group:
@@ -1591,6 +1598,18 @@ def tools_board(disaster_event=None):
         g["category"] = cat_label
         g["total_qty"] += flt(r.quantity)
         g["unit_breakdown"][normalize_unit(r.unit)] += flt(r.quantity)
+
+        bkt = bucket_quantity(
+            r.canonical_item, r.canonical_group, r.quantity, r.unit,
+            None, None, None, r.resource_name or "", stored=None,
+        )
+        if bkt["unmeasurable"]:
+            g["unmeasurable_count"] += 1
+        else:
+            bb = g["base_breakdown"][bkt["base_unit"] or normalize_unit(r.unit) or "unit"]
+            bb["measurable"] += bkt["measurable"]
+            bb["estimated"] += bkt["estimated"]
+
         if r.current_location:
             g["locations"].add(r.current_location)
         if confidence:
@@ -1601,6 +1620,13 @@ def tools_board(disaster_event=None):
     groups = []
     for group_key, g in equip_groups.items():
         same_unit = len(g["unit_breakdown"]) == 1
+        base_breakdown = [
+            {"base_unit": bu, "measurable": round(v["measurable"], 1),
+             "estimated": round(v["estimated"], 1)}
+            for bu, v in sorted(
+                g["base_breakdown"].items(),
+                key=lambda kv: -(kv[1]["measurable"] + kv[1]["estimated"]))
+        ]
         groups.append({
             "group": group_key,
             "category": g["category"],
@@ -1609,6 +1635,8 @@ def tools_board(disaster_event=None):
             "unit_breakdown": [
                 {"unit": u, "qty": round(q, 1)} for u, q in g["unit_breakdown"].items()
             ],
+            "base_breakdown": base_breakdown,
+            "unmeasurable_count": g["unmeasurable_count"],
             "same_unit": same_unit,
             "posko_spread": len(g["locations"]),
             "avg_confidence": (

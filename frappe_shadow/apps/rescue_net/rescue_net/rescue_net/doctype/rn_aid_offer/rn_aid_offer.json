@@ -162,6 +162,38 @@
    "default": "suggested"
   },
   {
+   "fieldname": "base_quantity",
+   "label": "Base Quantity",
+   "fieldtype": "Float",
+   "description": "Kuantitas terukur setelah konversi kemasan (mis. 96 liter dari '2 dus')."
+  },
+  {
+   "fieldname": "base_unit",
+   "label": "Base Unit",
+   "fieldtype": "Data",
+   "description": "Satuan dasar untuk base_quantity, mis. liter / kg / bungkus."
+  },
+  {
+   "fieldname": "pack_size",
+   "label": "Pack Size",
+   "fieldtype": "Float",
+   "description": "Isi per kemasan bila diketahui (dari 'isi 24' atau tabel konversi)."
+  },
+  {
+   "fieldname": "conversion_source",
+   "label": "Conversion Source",
+   "fieldtype": "Select",
+   "options": "none\nexplicit\ntable\ndirect\nheuristic\nmanual",
+   "default": "none"
+  },
+  {
+   "fieldname": "conversion_status",
+   "label": "Conversion Status",
+   "fieldtype": "Select",
+   "options": "ok\nneeds_review\nunmeasurable",
+   "default": "ok"
+  },
+  {
    "fieldname": "observed_at",
    "label": "Observed At",
    "fieldtype": "Datetime"

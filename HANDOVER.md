@@ -57,6 +57,18 @@ registrasi-posko): bisa Garuda, kapal TNI AL, motor pick-up, Land Rover club.
   poskos; Playwright `rn-dist-split.js` — MD has no armada panel + donut
   legend Tersedia/Terpakai/Blocked; PD KPI/tables/modal/switcher/mobile all
   OK, 0 JS errors.
+- **Follow-ups (`0c47a20`):** MD header toolbar per mock-up — search box
+  (filters Alur Distribusi rows), status filter select, "+ Buat Distribusi"
+  button → opens the Buat Distribution Flow drawer (`#flowDrawer`). Alur rows
+  cached in `ALUR_ALL`, re-rendered via `applyAlurFilter()`.
+  `?v=distribusi-20260903f`.
+- **E2E booking chain verified (`scratchpad/e2e_booking2.py`):** book (normal
+  user) → `requested` + PIN, capacity soft-held (200000→198500 kg avail);
+  confirm (System Manager / coordinator) with PIN → `confirmed`, held→used,
+  `capacity_committed_*` recomputed; both boards reflect it (PD inbox
+  "Terkonfirmasi", MD Ruang Transportasi LAUT `blocked_m3` = booking volume);
+  a non-coordinator user gets PermissionError on confirm (gate works);
+  cancel + delete restores capacity cleanly.
 
 ## Distribusi booking UX pass (2026-09-03) — DONE & DEPLOYED
 

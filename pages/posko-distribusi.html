@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Posko Distribusi</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskodist-20260903">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navdist-20260903" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="registrasi-posko.html?event=event-sim-001">Registrasi &amp; Verifikasi Posko</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Manajemen Distribusi</a>
+      <a class="active" href="posko-distribusi.html?event=event-sim-001">Posko Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search &amp; Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="alat-komunikasi.html?event=event-sim-001">Alat Komunikasi</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Posko Distribusi</div>
+      <div>
+        <p class="eyebrow">Transport Provider / Penyedia Angkutan</p>
+        <h2>Posko Distribusi</h2>
+        <p class="subtitle">Posko penyedia alat transport &amp; ruang muat — bisa Garuda, kapal TNI AL, motor pick-up, atau rombongan Land Rover club yang berangkat ke daerah bencana. Daftarkan armada, kelola space &amp; jadwal, terima &amp; konfirmasi booking.</p>
+        <p class="subtitle" id="pdStatus">Memuat…</p>
+      </div>
+      <div class="rn-pd-head-right">
+        <label class="rn-pd-selector">Posko
+          <select id="poskoSelect"></select>
+        </label>
+        <div class="status-pill" id="pdUpdated">Posko Distribusi · Live</div>
+      </div>
+    </header>
+
+    <p class="rn-muted rn-md-xref" id="pdTypeNote"></p>
+
+    <section class="kpi-grid rn-pd-kpi">
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="armada">
+        <span>Armada Terdaftar</span><strong id="kpiArmada">-</strong><small>unit transport</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="kapasitas">
+        <span>Kapasitas Total</span><strong id="kpiKapasitas">-</strong><small>kg keseluruhan</small>
+      </button>
+      <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="terpakai">
+        <span>Kapasitas Terpakai</span><strong id="kpiTerpakai">-</strong><small>booking + blocked</small>
+      </button>
+      <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="menunggu">
+        <span>Booking Menunggu</span><strong id="kpiMenunggu">-</strong><small>perlu konfirmasi PIN</small>
+      </button>
+    </section>
+
+    <section class="content-grid rn-md-wide">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Armada Terdaftar</h3><p>Alat transport &amp; ruang muat yang disediakan posko ini. Klik baris untuk detail &amp; booking masuk.</p></div>
+          <button class="btn primary mini" type="button" id="armadaAddBtn">+ Daftarkan Armada</button>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table rn-md-armada-table">
+            <thead><tr>
+              <th>Armada / Penyedia</th><th>Jenis</th><th>Mode</th><th>Kapasitas Ruang</th>
+              <th>Berangkat → Tiba</th><th>Relawan Pickup</th><th>Status</th><th>Booking</th>
+            </tr></thead>
+            <tbody id="armadaBody"><tr><td colspan="8">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="rn-table-foot"><span id="armadaShown">—</span></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-wide">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Booking Masuk</h3><p>Permintaan ruang dari posko / donatur / organisasi. Konfirmasi dengan PIN dari pemesan, atau tolak.</p></div>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr>
+              <th>Barang / Muatan</th><th>Space</th><th>Metode</th><th>Pemesan &amp; Kontak</th>
+              <th>Waktu</th><th>Status</th><th>Aksi</th>
+            </tr></thead>
+            <tbody id="bookingBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-row2">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Relawan Pickup</h3><p>Relawan distribusi yang bisa ditugaskan sebagai kurir jemput untuk armada.</p></div></div>
+        <div id="relawanList"></div>
+        <form class="rn-form rn-pd-assign" data-assign-form>
+          <div class="form-grid">
+            <label>ID Armada <input name="transport_space" placeholder="rn-transport-… / SIM-ARMADA-…" required></label>
+            <label>ID Relawan (Volunteer Profile) <input name="volunteer_profile" placeholder="kosongkan untuk lepas"></label>
+          </div>
+          <div class="form-actions">
+            <button class="btn primary mini" type="submit">Tugaskan / Lepas Relawan</button>
+            <span class="form-message" data-assign-message></span>
+          </div>
+        </form>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Panduan Penyedia Transport</h3></div></div>
+        <ul class="rn-md-ref-list">
+          <li>Isi <b>kapasitas</b> berat (kg) &amp; volume (m³) armada secara jujur — booking terkonfirmasi akan memblok kapasitas.</li>
+          <li><b>Mode layanan</b>: <i>Penyedia Space</i> (hanya ruang) atau <i>Kurir Jemput-Antar</i> (ambil + antar).</li>
+          <li><b>Kebijakan booking</b>: <i>PIN</i> (Anda konfirmasi manual) atau <i>Terbuka</i> (langsung terkonfirmasi).</li>
+          <li>Perbarui <b>jadwal berangkat / ETA</b> dan status saat armada bergerak.</li>
+        </ul>
+      </div>
+    </section>
+
+    <details class="panel create-panel rn-input-drawer" id="armadaForm">
+      <summary>
+        <h3>Daftarkan Armada</h3>
+        <p>Kendaraan darat, kapal, atau pesawat milik posko ini / mitra. Perlu login sebagai petugas / anggota posko.</p>
+      </summary>
+      <form class="rn-form" data-create-armada>
+        <div class="form-grid">
+          <label>Disaster Event ID <input name="disaster_event" value="event-sim-001" required></label>
+          <label>Armada / Penyedia <input name="provider_name" placeholder="Garuda Cargo GA-1204 / KRI Teluk / Motor Pelajar" required></label>
+          <label>Jenis
+            <select name="transport_type" required>
+              <option value="darat">Darat</option>
+              <option value="laut">Laut</option>
+              <option value="udara">Udara</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+          </label>
+          <label>Mode Layanan
+            <select name="service_mode">
+              <option value="both">Space + Kurir (jemput-antar)</option>
+              <option value="space_only">Hanya Penyedia Space</option>
+              <option value="courier_pickup">Kurir Jemput-Antar</option>
+            </select>
+          </label>
+          <label>Kebijakan Booking
+            <select name="booking_policy">
+              <option value="pin_verify">Konfirmasi PIN oleh posko</option>
+              <option value="open">Langsung terkonfirmasi</option>
+            </select>
+          </label>
+          <label>Asal <input name="route_origin" placeholder="Bandara Cut Nyak Dhien"></label>
+          <label>Tujuan <input name="route_destination" placeholder="Posko Logistik Meulaboh"></label>
+          <label>Kapasitas KG <input name="capacity_weight_kg" type="number" step="0.01" placeholder="12000"></label>
+          <label>Kapasitas M3 <input name="capacity_volume_m3" type="number" step="0.01" placeholder="60"></label>
+          <label>Waktu Berangkat <input name="departure_at" type="datetime-local"></label>
+          <label>Estimasi Tiba <input name="eta_at" type="datetime-local"></label>
+          <label>Lokasi Saat Ini <input name="current_location" placeholder="Staging apron bandara"></label>
+          <label>Lokasi Serah Terima <input name="handover_location" placeholder="Apron / dermaga / halaman posko"></label>
+          <label>Narahubung <input name="handover_contact_person" placeholder="Kapten Ops"></label>
+          <label>No. Kontak <input name="handover_contact_phone" placeholder="0812-…"></label>
+          <label class="rn-form-wide">Catatan <textarea name="coordination_notes" rows="2" placeholder="Slot terbang tergantung cuaca; koordinasi 2 jam sebelum."></textarea></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Armada</button>
+          <span class="form-message" data-armada-message></span>
+        </div>
+      </form>
+    </details>
+  </main>
+</div>
+
+<div id="pdDrill" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="pdDrillTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="pdDrillTitle">-</h3><p id="pdDrillSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body" id="pdDrillBody"></div>
+  </div>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=frappe-batch-a-1"></script>
+<script src="../assets/js/posko-distribusi.js?v=poskodist-20260903"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navdist-20260903"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

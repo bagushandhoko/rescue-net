@@ -2880,16 +2880,27 @@ def distribusi_board(disaster_event=None):
     # ---- capacity utilisation (overall + per transport_type) ----
     UTILISED_STATES = {"reserved", "assigned", "in_transit", "arrived", "completed"}
 
+    def _blocked_m3_for(t):
+        """Booked (confirmed + requested) volume on this armada that is not yet
+        reflected in transport_status — the mock-up's donut "Blocked" segment."""
+        bks = _bookings_by_space.get(t.get("name"), [])
+        return sum(_num(b.qty_volume_m3) for b in bks
+                   if b.status in ("confirmed", "requested"))
+
     def _cap_bucket(rows):
         total_kg = sum(_num(t.capacity_weight_kg) for t in rows)
         used_kg = sum(_num(t.capacity_weight_kg) for t in rows if t.transport_status in UTILISED_STATES)
         pct = round(100.0 * used_kg / total_kg, 1) if total_kg else 0
+        blocked_m3 = round(sum(_blocked_m3_for(t) for t in rows), 1)
+        terpakai_m3 = round(sum(_num(t.capacity_volume_m3) for t in rows
+                                if t.transport_status in UTILISED_STATES), 1)
+        total_m3 = round(sum(_num(t.capacity_volume_m3) for t in rows), 1)
         return {
-            "tersedia_m3": round(sum(_num(t.capacity_volume_m3) for t in rows
-                                      if t.transport_status == "available"), 1),
-            "terpakai_m3": round(sum(_num(t.capacity_volume_m3) for t in rows
-                                      if t.transport_status in UTILISED_STATES), 1),
-            "total_m3": round(sum(_num(t.capacity_volume_m3) for t in rows), 1),
+            "tersedia_m3": round(max(0.0, sum(_num(t.capacity_volume_m3) for t in rows
+                                      if t.transport_status == "available") - blocked_m3), 1),
+            "terpakai_m3": terpakai_m3,
+            "blocked_m3": blocked_m3,
+            "total_m3": total_m3,
             "pct": pct,
             "units": [
                 {
@@ -3201,6 +3212,219 @@ def distribusi_board(disaster_event=None):
         "alur_distribusi": alur_distribusi,
         "peringatan": peringatan,
         "conversions": _LOGISTIK_CONVERSIONS,
+    }
+
+
+_SERVICE_MODE_LABEL = {
+    "space_only": "Penyedia Space", "courier_pickup": "Kurir Jemput-Antar",
+    "both": "Space + Kurir",
+}
+_ARMADA_STATUS_LABEL = {
+    "available": "Tersedia", "reserved": "Dipesan", "assigned": "Ditugaskan",
+    "in_transit": "Dalam Perjalanan", "arrived": "Tiba",
+    "completed": "Selesai", "cancelled": "Dibatalkan",
+}
+_BOOKING_STATUS_LABEL = {
+    "requested": "Menunggu Konfirmasi", "confirmed": "Terkonfirmasi",
+    "rejected": "Ditolak", "cancelled": "Dibatalkan", "completed": "Selesai",
+}
+_DELIVERY_LABEL = {
+    "use_transporter": "Pakai transporter posko",
+    "self_deliver": "Antar sendiri ke titik jemput",
+}
+
+
+@frappe.whitelist(allow_guest=True)
+def posko_distribusi_board(posko=None, disaster_event=None):
+    """Workspace for a Posko Distribusi (posko_type='transport') — the party
+    that provides transport equipment + space: bisa Garuda, kapal TNI AL,
+    motor pick-up, atau rombongan Land Rover club yang berangkat ke lokasi
+    bencana. Lists the armada it registered (RN Transport Space), the booking
+    inbox on those armada, capacity rollup, and relawan-pickup candidates.
+
+    Separate from `distribusi_board` (that one stays the coordination
+    dashboard matching the Manajemen Distribusi mock-up).
+    """
+    event = canonical_event(disaster_event) if disaster_event else None
+    posko = _resolve_posko(posko) if posko else None
+
+    posko_row = None
+    if posko:
+        posko_row = frappe.db.get_value(
+            "RN Posko", posko,
+            ["name", "title", "posko_type", "organization", "operational_status",
+             "officer_in_charge_name", "emergency_contact", "city_name"],
+            as_dict=True,
+        )
+
+    tfilter = {}
+    if posko:
+        tfilter["coordination_posko"] = posko
+    elif event:
+        tfilter = event_filters(cols("RN Transport Space"), event)
+
+    transports = frappe.get_all(
+        "RN Transport Space", filters=tfilter,
+        fields=_sf("RN Transport Space", [
+            "name", "provider_name", "transport_type", "transport_status",
+            "capacity_weight_kg", "capacity_volume_m3", "route_origin",
+            "route_destination", "coordination_posko", "disaster_event",
+            "departure_time", "eta", "departure_at", "eta_at", "service_mode",
+            "booking_policy", "current_location", "handover_location",
+            "handover_contact_person", "handover_contact_phone",
+            "coordination_notes", "pickup_volunteer", "pickup_volunteer_name",
+        ]),
+        order_by="modified desc", limit_page_length=200,
+    )
+    tnames = [t.name for t in transports]
+
+    bookings = []
+    if tnames and frappe.db.exists("DocType", "RN Transport Booking"):
+        bookings = frappe.get_all(
+            "RN Transport Booking",
+            filters={"transport_space": ["in", tnames]},
+            fields=_sf("RN Transport Booking", [
+                "name", "transport_space", "cargo_desc", "qty_weight_kg",
+                "qty_volume_m3", "status", "booker_name", "booked_by_type",
+                "pickup_location", "dropoff_location", "contact_person",
+                "contact_phone", "verification_pin", "requested_at",
+                "confirmed_at", "delivery_method", "requested_window",
+                "logistic_need", "aid_offer",
+            ]),
+            order_by="creation desc", limit_page_length=1000,
+        )
+    bk_by_space = {}
+    for b in bookings:
+        bk_by_space.setdefault(b.transport_space, []).append(b)
+
+    def _dt(v):
+        s = str(v or "")
+        return s[:16].replace("T", " ") if len(s) >= 16 else s
+
+    armada = []
+    tot_kg = tot_m3 = used_kg = used_m3 = 0.0
+    for t in transports:
+        cap_kg = _num(t.capacity_weight_kg)
+        cap_m3 = _num(t.capacity_volume_m3)
+        mine = bk_by_space.get(t.name, [])
+        c_kg = sum(_num(b.qty_weight_kg) for b in mine if b.status == "confirmed")
+        c_m3 = sum(_num(b.qty_volume_m3) for b in mine if b.status == "confirmed")
+        h_kg = sum(_num(b.qty_weight_kg) for b in mine if b.status == "requested")
+        h_m3 = sum(_num(b.qty_volume_m3) for b in mine if b.status == "requested")
+        tot_kg += cap_kg
+        tot_m3 += cap_m3
+        used_kg += c_kg + h_kg
+        used_m3 += c_m3 + h_m3
+        smode = t.service_mode or "both"
+        armada.append({
+            "id": t.name,
+            "provider": t.provider_name or "-",
+            "jenis": t.transport_type or "-",
+            "service_mode": smode,
+            "service_mode_label": _SERVICE_MODE_LABEL.get(smode, smode),
+            "booking_policy": t.booking_policy or "pin_verify",
+            "status": t.transport_status or "-",
+            "status_label": _ARMADA_STATUS_LABEL.get(t.transport_status, t.transport_status or "-"),
+            "kapasitas_total_kg": cap_kg, "kapasitas_total_m3": cap_m3,
+            "kapasitas_terpakai_kg": round(c_kg + h_kg, 1),
+            "kapasitas_tersedia_kg": round(max(0.0, cap_kg - c_kg - h_kg), 1),
+            "kapasitas_tersedia_m3": round(max(0.0, cap_m3 - c_m3 - h_m3), 1),
+            "kapasitas_pct": round(100.0 * (c_kg + h_kg) / cap_kg) if cap_kg else 0,
+            "berangkat": _dt(t.departure_at) or (t.departure_time or "-"),
+            "eta": _dt(t.eta_at) or (t.eta or "-"),
+            "current_location": t.current_location or "-",
+            "rute": (t.route_origin or "-") + " → " + (t.route_destination or "-"),
+            "handover_location": t.handover_location or "-",
+            "handover_contact_person": t.handover_contact_person or "-",
+            "handover_contact_phone": t.handover_contact_phone or "-",
+            "coordination_notes": t.coordination_notes or "",
+            "pickup_volunteer": t.pickup_volunteer or "",
+            "pickup_volunteer_name": t.pickup_volunteer_name or "",
+            "bookings_count": sum(1 for b in mine if b.status in ("requested", "confirmed")),
+        })
+
+    inbox = []
+    for b in bookings:
+        t = next((x for x in transports if x.name == b.transport_space), None)
+        inbox.append({
+            "id": b.name,
+            "armada": (t.provider_name if t else b.transport_space),
+            "armada_id": b.transport_space,
+            "cargo": b.cargo_desc or "-",
+            "qty_kg": _num(b.qty_weight_kg), "qty_m3": _num(b.qty_volume_m3),
+            "status": b.status,
+            "status_label": _BOOKING_STATUS_LABEL.get(b.status, b.status),
+            "delivery_method": b.get("delivery_method") or "use_transporter",
+            "delivery_label": _DELIVERY_LABEL.get(b.get("delivery_method"), "Pakai transporter posko"),
+            "requested_window": b.get("requested_window") or "",
+            "booker": b.booker_name or b.booked_by_type or "-",
+            "supplier_contact_person": b.contact_person or "",
+            "supplier_contact_phone": b.contact_phone or "",
+            "pickup": b.pickup_location or "",
+            "dropoff": b.dropoff_location or "",
+            "verification_pin": b.verification_pin or "",
+            "requested_at": _dt(b.requested_at),
+        })
+
+    # relawan pickup candidates (distribution assignments at this posko / event)
+    va_filter = {"assignment_type": "distribution"}
+    if event:
+        va_filter["disaster_event"] = event
+    vas = frappe.get_all(
+        "RN Volunteer Assignment", filters=va_filter,
+        fields=["name", "volunteer", "posko", "task_title", "assignment_status"],
+        limit_page_length=200,
+    )
+    if posko:
+        vas = [v for v in vas if (not v.posko) or v.posko == posko]
+    vnames = {v.volunteer for v in vas if v.volunteer}
+    vtitle = {}
+    if vnames:
+        vtitle = {r.name: r.volunteer_name for r in frappe.get_all(
+            "RN Volunteer Profile", filters={"name": ["in", list(vnames)]},
+            fields=["name", "volunteer_name"], limit_page_length=len(vnames))}
+    relawan_candidates = [
+        {"id": v.volunteer, "name": vtitle.get(v.volunteer, v.volunteer),
+         "task": v.task_title or "Distribusi", "status": v.assignment_status}
+        for v in vas if v.volunteer
+    ]
+
+    # other transporter poskos for the switcher
+    tp_filter = {"posko_type": "transport"}
+    if event:
+        tp_rows = frappe.get_all(
+            "RN Posko",
+            or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
+            filters=tp_filter, fields=["name", "title", "city_name"],
+            limit_page_length=200,
+        )
+    else:
+        tp_rows = frappe.get_all("RN Posko", filters=tp_filter,
+                                 fields=["name", "title", "city_name"], limit_page_length=200)
+
+    return {
+        "disaster_event": event,
+        "generated_at": frappe.utils.now_datetime(),
+        "posko": posko,
+        "posko_info": posko_row,
+        "is_transport_posko": bool(posko_row and (posko_row.get("posko_type") or "").lower() == "transport"),
+        "totals": {
+            "armada_count": len(armada),
+            "kapasitas_total_kg": round(tot_kg, 1),
+            "kapasitas_total_m3": round(tot_m3, 1),
+            "kapasitas_terpakai_kg": round(used_kg, 1),
+            "kapasitas_terpakai_m3": round(used_m3, 1),
+            "kapasitas_tersedia_kg": round(max(0.0, tot_kg - used_kg), 1),
+            "booking_menunggu": sum(1 for b in bookings if b.status == "requested"),
+            "booking_terkonfirmasi": sum(1 for b in bookings if b.status == "confirmed"),
+        },
+        "armada": armada,
+        "booking_inbox": inbox,
+        "relawan_candidates": relawan_candidates,
+        "transporter_poskos": [
+            {"id": r.name, "title": r.title, "city": r.get("city_name") or ""}
+            for r in tp_rows
+        ],
     }
 
 

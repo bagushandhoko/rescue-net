@@ -126,13 +126,19 @@
 
   function renderTransportTab(byType) {
     var bucket = byType[activeTransportTab];
+    var total = bucket.total_m3 || 0;
     var pct = bucket.pct || 0;
+    var blocked = bucket.blocked_m3 || 0;
+    var usedPct = total ? Math.round(100 * bucket.terpakai_m3 / total) : 0;
+    var blkPct = total ? Math.round(100 * blocked / total) : 0;
     $("#transportPct").textContent = pct + "%";
-    $("#transportM3").textContent = fmt(bucket.terpakai_m3) + "/" + fmt(bucket.total_m3) + " m³";
-    $("#transportDonut").style.background = "conic-gradient(#e8835d 0% " + pct + "%, #e5e0da " + pct + "% 100%)";
+    $("#transportM3").textContent = fmt(bucket.terpakai_m3) + "/" + fmt(total) + " m³";
+    $("#transportDonut").style.background =
+      "conic-gradient(#e8835d 0% " + usedPct + "%, #e0a300 " + usedPct + "% " + (usedPct + blkPct) + "%, #e5e0da " + (usedPct + blkPct) + "% 100%)";
     $("#transportLegend").innerHTML =
       '<li><span class="rn-donut-dot" style="background:#3b82c4"></span><span>Tersedia</span><b>' + fmt(bucket.tersedia_m3) + ' m³</b></li>' +
-      '<li><span class="rn-donut-dot" style="background:#e8835d"></span><span>Terpakai</span><b>' + fmt(bucket.terpakai_m3) + ' m³</b></li>';
+      '<li><span class="rn-donut-dot" style="background:#e8835d"></span><span>Terpakai</span><b>' + fmt(bucket.terpakai_m3) + ' m³</b></li>' +
+      '<li><span class="rn-donut-dot" style="background:#e0a300"></span><span>Blocked</span><b>' + fmt(blocked) + ' m³</b></li>';
 
     var body = $("#transportUnitBody");
     body.innerHTML = bucket.units.length
@@ -177,181 +183,6 @@
       tr.addEventListener("click", function () { window.location.href = tr.getAttribute("data-href"); });
     });
     $("#alurShown").textContent = "Menampilkan " + rows.length + " distribusi";
-  }
-
-  var MODE_CHIP = { space_only: "", courier_pickup: "warning", both: "ok" };
-
-  function capMeterHtml(r) {
-    if (!r.kapasitas_total_kg && !r.kapasitas_total_m3) return esc(r.kapasitas);
-    var pct = Math.min(100, Math.max(0, r.kapasitas_pct || 0));
-    var cls = pct >= 90 ? "bad" : (pct >= 60 ? "warn" : "ok");
-    return (
-      '<div class="rn-md-cap">' +
-      '<div class="rn-md-cap-bar"><i class="' + cls + '" style="width:' + pct + '%"></i></div>' +
-      '<small>Tersedia ' + fmt(r.kapasitas_tersedia_kg) + " kg" +
-      (r.kapasitas_total_m3 ? " · " + fmt(r.kapasitas_tersedia_m3) + " m³" : "") +
-      " / total " + esc(r.kapasitas) + "</small></div>"
-    );
-  }
-
-  function telLink(v) {
-    return v ? '<a href="tel:' + esc(String(v).replace(/[^0-9+]/g, "")) + '">' + esc(v) + "</a>" : "";
-  }
-
-  function bookingsHtml(r) {
-    if (!r.bookings || !r.bookings.length) return "";
-    var transporter = r.transporter_contact_person || r.pickup_volunteer_name || r.narahubung;
-    var transporterTel = r.transporter_contact_phone || r.kontak;
-    return (
-      '<div class="rn-md-bk-list"><div class="rn-md-bk-hd">Booking masuk — data & kontak untuk follow-up posko distribusi</div>' +
-      r.bookings.map(function (b) {
-        var cls = b.status === "confirmed" ? "ok" : "warning";
-        return (
-          '<div class="rn-md-bk">' +
-          '<div class="rn-md-bk-main"><b>' + esc(b.cargo) + "</b> " + esc(b.qty || "") +
-            (b.requested_window ? ' <small class="rn-muted">· waktu: ' + esc(b.requested_window) + "</small>" : "") +
-            '<small class="rn-muted"> · ' + esc(b.delivery_label) + "</small></div>" +
-          '<div class="rn-md-bk-contacts">' +
-            '<span>Pensuplai: <b>' + esc(b.booker) + "</b>" +
-              (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
-              (b.supplier_contact_phone ? " · " + telLink(b.supplier_contact_phone) : "") + "</span>" +
-            '<span>Transporter: <b>' + esc(transporter || "-") + "</b>" +
-              (transporterTel && transporterTel !== "-" ? " · " + telLink(transporterTel) : "") + "</span>" +
-          "</div>" +
-          '<div class="rn-md-bk-meta"><span class="chip ' + cls + '">' + esc(b.status_label) + "</span>" +
-            '<code class="rn-md-bk-id">' + esc(b.id) + "</code></div>" +
-          "</div>"
-        );
-      }).join("") + "</div>"
-    );
-  }
-
-  function renderArmada(rows) {
-    var body = $("#armadaBody");
-    var shown = $("#armadaShown");
-    if (!body) return;
-    if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="9"><em class="rn-muted">Belum ada armada distribusi didaftarkan untuk event ini. Gunakan "Daftarkan Armada".</em></td></tr>';
-      if (shown) shown.textContent = "0 armada";
-      return;
-    }
-    var html = "";
-    rows.forEach(function (r) {
-      var kontak = r.kontak && r.kontak !== "-" ? telLink(r.kontak) : "";
-      var relawan = r.pickup_volunteer_name
-        ? esc(r.pickup_volunteer_name)
-        : (r.service_mode === "space_only"
-            ? '<span class="rn-muted">—</span>'
-            : '<span class="chip warning">belum ada</span>');
-      html +=
-        '<tr class="rn-ba-row" data-armada="' + esc(r.id) + '" title="Lihat detail penyedia transport">' +
-        "<td><b>" + esc(r.provider) + "</b>" +
-          (r.catatan ? '<small class="rn-muted">' + esc(r.catatan) + "</small>" : "") + "</td>" +
-        "<td>" + esc(r.posko) + "</td>" +
-        '<td><span class="chip ' + (MODE_CHIP[r.service_mode] || "") + '">' + esc(r.service_mode_label) + "</span>" +
-          (r.booking_policy === "open" ? '<small class="rn-muted">booking terbuka</small>' : '<small class="rn-muted">PIN</small>') + "</td>" +
-        "<td>" + capMeterHtml(r) + "</td>" +
-        "<td>" + esc(r.berangkat) + '<small class="rn-muted">→ ' + esc(r.eta) + "</small></td>" +
-        "<td>" + esc(r.lokasi_serah_terima) + '<small class="rn-muted">' + esc(r.narahubung) +
-          (kontak ? " · " + kontak : "") + "</small></td>" +
-        "<td>" + relawan + "</td>" +
-        '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status_label) + "</span>" +
-          (r.bookings_count ? '<small class="rn-muted">' + fmt(r.bookings_count) + " booking</small>" : "") + "</td>" +
-        '<td><button type="button" class="btn primary mini rn-md-book-btn" data-space="' + esc(r.id) + '">Booking</button></td>' +
-        "</tr>";
-      if (r.bookings && r.bookings.length) {
-        html += '<tr class="rn-md-bk-row"><td colspan="9">' + bookingsHtml(r) + "</td></tr>";
-      }
-    });
-    body.innerHTML = html;
-    body.querySelectorAll("tr.rn-ba-row[data-armada]").forEach(function (tr) {
-      tr.addEventListener("click", function (e) {
-        if (e.target.closest("a,button")) return;
-        openArmadaDetail(tr.getAttribute("data-armada"));
-      });
-    });
-    body.querySelectorAll(".rn-md-book-btn").forEach(function (btn) {
-      btn.addEventListener("click", function (e) {
-        e.stopPropagation();
-        openBookingForm(btn.getAttribute("data-space"));
-      });
-    });
-    if (shown) shown.textContent = "Menampilkan " + rows.length + " armada";
-  }
-
-  function armadaDetailHtml(r) {
-    function row(k, v) { return v && v !== "-" ? '<div class="rn-md-dl"><span>' + esc(k) + "</span><b>" + v + "</b></div>" : ""; }
-    var telK = r.kontak && r.kontak !== "-" ? telLink(r.kontak) : "";
-    var bk = (r.bookings || []).map(function (b) {
-      var cls = b.status === "confirmed" ? "ok" : "warning";
-      return (
-        '<div class="rn-md-bk"><div class="rn-md-bk-main"><b>' + esc(b.cargo) + "</b> " + esc(b.qty || "") +
-        '<small class="rn-muted"> · ' + esc(b.delivery_label) +
-        (b.requested_window ? " · " + esc(b.requested_window) : "") + "</small></div>" +
-        '<div class="rn-md-bk-contacts"><span>Pensuplai: <b>' + esc(b.booker) + "</b>" +
-        (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
-        (b.supplier_contact_phone ? " · " + telLink(b.supplier_contact_phone) : "") + "</span></div>" +
-        '<div class="rn-md-bk-meta"><span class="chip ' + cls + '">' + esc(b.status_label) + "</span>" +
-        '<code class="rn-md-bk-id">' + esc(b.id) + "</code></div></div>"
-      );
-    }).join("") || '<p class="rn-muted">Belum ada booking pada armada ini.</p>';
-
-    return (
-      '<div class="rn-md-detail">' +
-      row("Penyedia / armada", esc(r.provider)) +
-      row("Posko pengelola", esc(r.posko)) +
-      row("Jenis", esc(r.jenis)) +
-      row("Mode layanan", esc(r.service_mode_label)) +
-      row("Kebijakan booking", r.booking_policy === "open" ? "Langsung terkonfirmasi" : "Konfirmasi PIN koordinator") +
-      row("Kapasitas total", esc(r.kapasitas)) +
-      row("Sisa kapasitas", fmt(r.kapasitas_tersedia_kg) + " kg" + (r.kapasitas_total_m3 ? " · " + fmt(r.kapasitas_tersedia_m3) + " m³" : "")) +
-      row("Jadwal", esc(r.berangkat) + " → " + esc(r.eta)) +
-      row("Lokasi saat ini", esc(r.lokasi_saat_ini)) +
-      row("Rute", esc(r.rute)) +
-      row("Titik serah terima", esc(r.lokasi_serah_terima)) +
-      row("Narahubung transporter", esc(r.narahubung) + (telK ? " · " + telK : "")) +
-      row("Relawan pickup", esc(r.pickup_volunteer_name || "-")) +
-      (r.catatan ? row("Catatan", esc(r.catatan)) : "") +
-      "</div>" +
-      '<h4 class="rn-md-detail-h">Booking masuk</h4>' +
-      '<div class="rn-md-bk-list">' + bk + "</div>" +
-      '<div class="rn-md-detail-actions">' +
-      '<button type="button" class="btn primary mini" id="drillBookBtn" data-space="' + esc(r.id) + '">Booking di armada ini</button>' +
-      (r.href ? '<a class="rn-md-armada-link" href="' + esc(r.href) + '">Buka posko pengelola →</a>' : "") +
-      "</div>"
-    );
-  }
-
-  function openArmadaDetail(id) {
-    var r = ((BOARD_CACHE && BOARD_CACHE.armada_posko) || []).filter(function (a) { return a.id === id; })[0];
-    if (!r) return;
-    $("#distribusiDrillTitle").textContent = r.provider;
-    $("#distribusiDrillSub").textContent = r.posko + " · " + r.service_mode_label;
-    $("#distribusiDrillBody").innerHTML = armadaDetailHtml(r);
-    var bb = $("#drillBookBtn");
-    if (bb) bb.addEventListener("click", function () { closeDrill(); openBookingForm(r.id); });
-    $("#distribusiDrill").hidden = false;
-    document.body.style.overflow = "hidden";
-  }
-
-  function renderPickupMatches(rows) {
-    var el = $("#pickupMatchList");
-    if (!el) return;
-    if (!rows || !rows.length) {
-      el.innerHTML = '<p class="rn-muted">Semua armada kurir sudah punya relawan pickup, atau belum ada armada bermode kurir.</p>';
-      return;
-    }
-    el.innerHTML = rows.map(function (m) {
-      var cands = m.candidates && m.candidates.length
-        ? m.candidates.map(function (c) { return '<span class="chip">' + esc(c.name) + "</span>"; }).join(" ")
-        : '<span class="rn-muted">Belum ada relawan distribusi di posko ini</span>';
-      return (
-        '<div class="rn-md-pm"><div class="rn-md-pm-head"><b>' + esc(m.armada) + "</b>" +
-        '<small class="rn-muted"> · ' + esc(m.posko) + " · " + fmt(m.open_need_count) + " kebutuhan terbuka</small></div>" +
-        '<div class="rn-md-pm-cands">' + cands + "</div>" +
-        '<a class="rn-md-armada-link" href="' + esc(m.href) + '">Kelola relawan →</a></div>'
-      );
-    }).join("");
   }
 
   function renderPeringatan(rows) {
@@ -400,93 +231,6 @@
     });
   }
 
-  window.__distribusiReloadBoard = function () { return loadBoard(); };
-
-  function openBookingForm(spaceId) {
-    var det = $("#bookingForm");
-    if (!det) return;
-    var form = det.querySelector("form");
-    var armada = ((BOARD_CACHE && BOARD_CACHE.armada_posko) || []).filter(function (a) { return a.id === spaceId; })[0];
-
-    var inp = det.querySelector('[name="transport_space"]');
-    if (inp) inp.value = spaceId || "";
-
-    var ctx = $("#bookingContext");
-    if (ctx) {
-      if (armada) {
-        ctx.hidden = false;
-        ctx.innerHTML =
-          "<b>Posko penyedia transport: " + esc(armada.posko) + "</b>" +
-          '<span>Armada: ' + esc(armada.provider) + " · " + esc(armada.service_mode_label) + "</span>" +
-          '<span>Jadwal: ' + esc(armada.berangkat) + " → " + esc(armada.eta) + "</span>" +
-          '<span>Sisa kapasitas: ' + fmt(armada.kapasitas_tersedia_kg) + " kg" +
-            (armada.kapasitas_total_m3 ? " · " + fmt(armada.kapasitas_tersedia_m3) + " m³" : "") + "</span>" +
-          '<span>Titik serah terima: ' + esc(armada.lokasi_serah_terima) + " · " + esc(armada.narahubung) +
-            (armada.kontak && armada.kontak !== "-" ? " (" + esc(armada.kontak) + ")" : "") + "</span>" +
-          (armada.booking_policy === "open"
-            ? '<span class="rn-md-bkctx-note">Booking langsung terkonfirmasi.</span>'
-            : '<span class="rn-md-bkctx-note">Booking menunggu konfirmasi PIN oleh koordinator posko.</span>');
-      } else {
-        ctx.hidden = true;
-      }
-    }
-
-    if (form && armada) {
-      var win = form.querySelector('[name="requested_window"]');
-      if (win && !win.value) win.value = "Ikut jadwal armada (" + armada.berangkat + " → " + armada.eta + ")";
-      var drop = form.querySelector('[name="dropoff_location"]');
-      if (drop && !drop.value && armada.lokasi_serah_terima && armada.lokasi_serah_terima !== "-") {
-        drop.value = armada.lokasi_serah_terima;
-      }
-      var useT = form.querySelector('[name="delivery_method"][value="use_transporter"]');
-      var selfD = form.querySelector('[name="delivery_method"][value="self_deliver"]');
-      var spaceOnly = armada.service_mode === "space_only";
-      if (useT) {
-        useT.disabled = spaceOnly;
-        useT.closest(".rn-md-radio").classList.toggle("is-disabled", spaceOnly);
-      }
-      if (spaceOnly && selfD) selfD.checked = true;
-      else if (!spaceOnly && useT) useT.checked = true;
-    }
-
-    det.open = true;
-    det.scrollIntoView({ behavior: "smooth", block: "center" });
-    var cargo = det.querySelector('[name="cargo_desc"]');
-    if (cargo) setTimeout(function () { cargo.focus(); }, 300);
-  }
-
-  function setupPostForm(sel, method, msgSel, opts) {
-    opts = opts || {};
-    var form = $(sel);
-    if (!form) return;
-    var msg = $(msgSel);
-    async function submit(extra) {
-      var payload = {};
-      [].forEach.call(form.elements, function (el) {
-        if (!el.name) return;
-        if ((el.type === "radio" || el.type === "checkbox") && !el.checked) return;
-        var v = el.value == null ? "" : String(el.value).trim();
-        if (v !== "") payload[el.name] = v;
-      });
-      Object.keys(extra || {}).forEach(function (k) { payload[k] = extra[k]; });
-      if (msg) msg.textContent = "Memproses…";
-      try {
-        var res = await window.RN_FRAPPE.call(method(payload), payload, { method: "POST" });
-        if (msg) msg.textContent = (opts.done ? opts.done(res) : "Berhasil.");
-        if (!opts.keep) form.reset();
-        await loadBoard();
-      } catch (err) {
-        var m = (err && err.message) || String(err);
-        if (msg) msg.textContent = "Gagal: " + m + (/login|permission|akses|whitelist/i.test(m) ? " (perlu login)" : "");
-      }
-    }
-    form.addEventListener("submit", function (e) { e.preventDefault(); submit(); });
-    form.querySelectorAll("[data-act]").forEach(function (b) {
-      if (b.type === "submit") return;
-      b.addEventListener("click", function () { submit({ __act: b.getAttribute("data-act") }); });
-    });
-  }
-
   async function loadBoard() {
     var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: getEventId() });
     BOARD_CACHE = data;
@@ -496,8 +240,6 @@
     renderKpi(data.totals || {});
     renderMatchingBoard(data.matching_board || {});
     renderTransportTab(data.ruang_transportasi.by_type);
-    renderArmada(data.armada_posko || []);
-    renderPickupMatches(data.pickup_matches || []);
     renderAlur(data.alur_distribusi || []);
     renderPeringatan(data.peringatan || []);
     renderConversions(data.conversions || []);
@@ -513,38 +255,6 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
     setupTransportTabs();
     setupAutoMatch();
-
-    function wireOpen(btnSel, detSel, focusSel) {
-      var btn = $(btnSel), det = $(detSel);
-      if (!btn || !det) return;
-      btn.addEventListener("click", function () {
-        det.open = true;
-        det.scrollIntoView({ behavior: "smooth", block: "center" });
-        var f = det.querySelector(focusSel);
-        if (f) setTimeout(function () { f.focus(); }, 300);
-      });
-    }
-    wireOpen("#armadaAddBtn", "#armadaForm", 'input[name="provider_name"]');
-    wireOpen("#bookingConfirmBtn", "#bookingConfirmForm", 'input[name="booking"]');
-
-    setupPostForm("[data-create-booking]", function () {
-      return "rescue_net.api_logistics.book_transport_space";
-    }, "[data-booking-message]", {
-      done: function (res) {
-        return res && res.verification_pin
-          ? "Booking diajukan. PIN untuk koordinator: " + res.verification_pin
-          : "Booking dibuat & terkonfirmasi.";
-      },
-    });
-
-    setupPostForm("[data-confirm-booking]", function (p) {
-      return p.__act === "reject"
-        ? "rescue_net.api_logistics.reject_transport_booking"
-        : "rescue_net.api_logistics.confirm_transport_booking";
-    }, "[data-confirm-message]", {
-      keep: true,
-      done: function (res) { return "Status booking: " + (res && res.status || "-"); },
-    });
 
     loadBoard().catch(function (err) { console.error("[distribusi board]", err); });
   });

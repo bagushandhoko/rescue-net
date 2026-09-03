@@ -5021,6 +5021,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 
 /* Armada Distribusi — space/booking + kurir pickup */
 .rn-md-wide { grid-template-columns: minmax(0, 1fr); }
+.rn-md-xref { font-size: 12px; margin: -6px 0 2px; }
 .rn-md-armada-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
 .rn-md-armada-table td small { display: block; font-size: 10px; color: var(--muted); margin-top: 2px; }
 .rn-md-cap { min-width: 150px; }
@@ -5479,4 +5480,26 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-kom-batt-row { grid-template-columns: minmax(0,1fr) 80px 40px; }
   .rn-kom-op-row { grid-template-columns: minmax(0,1fr) auto; }
   .rn-kom-op-ch { display: none; }
+}
+
+/* ============================================================
+   Posko Distribusi — pages/posko-distribusi.html
+   ============================================================ */
+.rn-pd-kpi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rn-pd-head-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.rn-pd-selector { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.rn-pd-selector select { min-height: 34px; padding: 4px 8px; border-radius: 10px; border: 1px solid var(--line); background: #fff; max-width: 320px; }
+.rn-pd-assign { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.rn-pd-bk-act { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.rn-pd-pin { width: 74px; min-height: 32px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.rn-pd-bk-act .btn.mini { padding: 4px 10px; font-size: 11px; }
+.rn-pd-bk-msg { font-size: 11px; color: var(--muted); }
+
+@media (max-width: 1100px) {
+  .rn-pd-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rn-pd-head-right { align-items: flex-start; }
+}
+@media (max-width: 640px) {
+  .rn-pd-kpi { grid-template-columns: minmax(0, 1fr); }
+  .rn-pd-selector select { max-width: 100%; }
 }

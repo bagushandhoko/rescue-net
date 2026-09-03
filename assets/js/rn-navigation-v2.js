@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.0.4",
+    version: "2.0.5",
 
     posko: [
       {
@@ -23,7 +23,7 @@
       },
       {
         label: "Posko Distribusi",
-        href: "management-distribusi.html"
+        href: "posko-distribusi.html?event=event-sim-001"
       },
       {
         label: "Posko Relawan",
@@ -64,6 +64,10 @@
     ],
 
     modules: [
+      {
+        label: "Manajemen Distribusi",
+        href: "management-distribusi.html"
+      },
       {
         label: "Map",
         href: "map.html?event=event-sim-001"

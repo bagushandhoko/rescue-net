@@ -4,9 +4,59 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-03 (Distribusi booking UX pass: row→posko penyedia, scoped booking drawer w/ slot+space+delivery-method, follow-up contacts for pensuplai & transporter; Step 12 mobile sweep clean)_
+_Last updated: 2026-09-03 (SPLIT: Manajemen Distribusi restored to mock-up-exact; NEW pages/posko-distribusi.html = transport-provider posko workspace — armada/space/booking moved there)_
 
 ---
+
+## Manajemen Distribusi ↔ Posko Distribusi split (2026-09-03) — DONE & DEPLOYED
+
+Owner: keep **Manajemen Distribusi** data+layout **persis mock-up**
+(`manajemen distribusi.png`) = the coordination dashboard. Move the
+armada/space/booking registration to a separate **Posko Distribusi** =
+the transport-provider posko (`posko_type='transport'` — already an option in
+registrasi-posko): bisa Garuda, kapal TNI AL, motor pick-up, Land Rover club.
+
+- **`pages/management-distribusi.html` reverted to mock-up-exact:** removed the
+  "Armada Distribusi Posko" panel, "Pencocokan Relawan Pickup" panel, and the
+  3 drawers (`#armadaForm` / `#bookingForm` / `#bookingConfirmForm`). Left: 6
+  KPI, Papan Pencocokan, **Ruang Transportasi** (donut legend now
+  **Tersedia / Terpakai / Blocked** per the mock-up — `_cap_bucket` gained
+  `blocked_m3` = confirmed+requested booking volume, donut is a 3-stop
+  conic-gradient), Alur Distribusi, Peringatan, Pedoman/Panduan/Trace, + the
+  pre-existing `<details>` history drawers. One-line xref → posko-distribusi.
+  `distribusi.js` stripped of all armada/booking code. `?v=distribusi-20260903e`.
+- **NEW `pages/posko-distribusi.html` + `assets/js/posko-distribusi.js`:**
+  transport-provider workspace, scoped `?id=<posko>&event=`. Posko switcher
+  (from `transporter_poskos`), 4 KPI (Armada Terdaftar / Kapasitas Total /
+  Kapasitas Terpakai / Booking Menunggu), **Armada Terdaftar** table (row →
+  `#pdDrill` detail modal with booking inbox for that armada), **Booking
+  Masuk** table with inline **Konfirmasi (PIN) / Tolak** per requested row,
+  **Relawan Pickup** panel + assign/unassign form, `<details>` **Daftarkan
+  Armada** form (`create_transport_space`, `coordination_posko` = current
+  posko). `?v=poskodist-20260903`.
+- **Backend:** NEW `api_control_centre.posko_distribusi_board(posko,
+  disaster_event)` guest — posko_info + `is_transport_posko` + armada[] (with
+  capacity block) + booking_inbox[] (contacts + PIN) + relawan_candidates[] +
+  totals + transporter_poskos[]. Deployed to `osiun-frappe-backend` + restart
+  (no migrate). Write endpoints reuse the existing
+  `create_transport_space` / `confirm_`/`reject_transport_booking` /
+  `assign_pickup_volunteer`.
+- **Nav:** `rn-navigation-v2.js` 2.0.4→**2.0.5**; `CONFIG.posko` "Posko
+  Distribusi" now → `posko-distribusi.html`; `CONFIG.modules` gained
+  "Manajemen Distribusi". Cache-buster `navcomms-20260903` →
+  **`navdist-20260903`** on `rn-navigation-v2.{js,css}` across all pages.
+- **Seed `scratchpad/seed_poskodist.py` (ran):** every `RN Transport Space`
+  reassigned to a transporter posko by provider keyword
+  (Garuda/TNI-AU→`SIM-NS-POSKO-GARUDA`, TNI-AL/KRI/Ro-Ro→
+  `SIM-NS-POSKO-TNIAL-SHIP`, pickup/motor/truk→`SIM-NS-POSKO-PELAJAR`, Land
+  Rover→`SIM-LR-POSKO-LD3`, heli→`KH-POSKO-HELIBASE`) + 3 vivid new armada
+  (Garuda 737F, KRI Teluk Bintuni LST, LRCI konvoi 8-unit) + 1 booking
+  (SIM-BOOK-GRD-1). The old SIM-ARMADA-* bookings follow their
+  `transport_space` link.
+- **Verified:** guest HTTP `posko_distribusi_board` for all 4 sim transporter
+  poskos; Playwright `rn-dist-split.js` — MD has no armada panel + donut
+  legend Tersedia/Terpakai/Blocked; PD KPI/tables/modal/switcher/mobile all
+  OK, 0 JS errors.
 
 ## Distribusi booking UX pass (2026-09-03) — DONE & DEPLOYED
 

@@ -3872,15 +3872,15 @@ _ORG_BRAND_ACCENT = {
 def _org_brand(org):
     """Light per-organisation skin for the internal-coordination view.
 
-    No dedicated brand fields exist on RN Organization yet, so the accent
-    is a small known map with a deterministic hue fallback derived from the
-    org name — stable per org, never random.
+    Prefers the org's own `brand_color` / `brand_logo` (editable in Desk);
+    falls back to a small known-accent map, then to a deterministic hue
+    derived from the org name — stable per org, never random.
     """
     if not org:
-        return {"title": "Organisasi", "accent": "#3355aa", "initial": "?"}
+        return {"title": "Organisasi", "accent": "#3355aa", "initial": "?", "logo": None}
 
     name = org.get("name") or ""
-    accent = _ORG_BRAND_ACCENT.get(name)
+    accent = (org.get("brand_color") or "").strip() or _ORG_BRAND_ACCENT.get(name)
     if not accent:
         h = 0
         for ch in name:
@@ -3891,9 +3891,118 @@ def _org_brand(org):
     return {
         "title": title,
         "accent": accent,
+        "logo": (org.get("brand_logo") or "").strip() or None,
         "organization_type": org.get("organization_type") or "",
         "initial": (title[:1] or "?").upper(),
     }
+
+
+_ORG_BRAND_FIELDS = [
+    "name", "title", "organization_type", "control_centre_share",
+    "privacy_mode", "allow_posko_public_choice", "brand_color", "brand_logo",
+]
+
+
+def _org_brand_row(org_name):
+    if not org_name:
+        return None
+    try:
+        return frappe.db.get_value(
+            "RN Organization", org_name, _ORG_BRAND_FIELDS, as_dict=True
+        )
+    except Exception:
+        # brand_* columns may not exist yet (pre-migrate) — degrade gracefully
+        return frappe.db.get_value(
+            "RN Organization", org_name,
+            [f for f in _ORG_BRAND_FIELDS if not f.startswith("brand_")],
+            as_dict=True,
+        )
+
+
+def _my_posko_names(actor):
+    """Poskos the actor may manage: direct RN User Account.posko + approved
+    RN Posko Assignment rows."""
+    names = set()
+    if actor.get("posko"):
+        names.add(actor["posko"])
+    try:
+        for a in frappe.get_all(
+            "RN Posko Assignment",
+            filters={"user_account": actor.get("name"), "status": "approved"},
+            fields=["posko"], limit_page_length=0,
+        ):
+            if a.get("posko"):
+                names.add(a["posko"])
+    except Exception:
+        pass
+    return names
+
+
+@frappe.whitelist(allow_guest=True)
+def posko_edit_scope(posko=None, disaster_event=None):
+    """Tell a posko operational page how to scope itself for the viewer.
+
+    Guests / non-members / System Managers / operators of the shown posko are
+    left unrestricted (`can_edit_current: true`). A logged-in org member who
+    does NOT manage the shown posko gets `can_edit_current: false` so the page
+    hides its create/record forms and shows a read-only banner; `my_poskos` /
+    `primary_posko` drive the "default to my own posko" redirect.
+    """
+    from rescue_net.access_policy import rn_actor, can_manage_posko, is_system_manager
+
+    event = canonical_event(disaster_event) if disaster_event else None
+    posko = _resolve_posko(posko) if posko else None
+
+    out = {
+        "logged_in": False,
+        "is_org_member": False,
+        "is_system_manager": False,
+        "current_posko": posko,
+        "can_edit_current": True,
+        "my_poskos": [],
+        "primary_posko": None,
+        "brand": None,
+        "coordination_href": "koordinasi-organisasi.html?event=" + (event or ""),
+        "control_centre_href": "war-room.html?event=" + (event or ""),
+    }
+
+    actor = rn_actor(required=False)
+    if not actor:
+        return out
+    out["logged_in"] = True
+
+    if actor.get("role") == "system_manager" or is_system_manager():
+        out["is_system_manager"] = True
+        return out
+
+    org_name = actor.get("organization")
+    out["is_org_member"] = bool(org_name)
+    if not org_name:
+        return out  # logged-in donor / volunteer etc. — not scoped here
+
+    out["brand"] = _org_brand(_org_brand_row(org_name))
+
+    names = _my_posko_names(actor)
+    if names:
+        rows = frappe.get_all(
+            "RN Posko", filters={"name": ["in", list(names)]},
+            fields=["name", "title", "posko_type", "disaster_event"],
+            limit_page_length=50,
+        )
+        out["my_poskos"] = [{
+            "name": r.name,
+            "title": (r.title or "").replace("[SIMULASI] ", "").strip(),
+            "posko_type": r.posko_type,
+            "operate_href": _operate_href(r, event),
+        } for r in rows]
+    out["primary_posko"] = actor.get("posko") or (
+        out["my_poskos"][0]["name"] if out["my_poskos"] else None
+    )
+
+    if posko:
+        out["can_edit_current"] = bool(can_manage_posko(actor, posko))
+
+    return out
 
 
 def _operate_href(posko_row, event):
@@ -3938,14 +4047,7 @@ def my_org_coordination(disaster_event=None):
     org_name = actor.get("organization")
     my_posko_name = actor.get("posko")
 
-    org = None
-    if org_name:
-        org = frappe.db.get_value(
-            "RN Organization", org_name,
-            ["name", "title", "organization_type", "control_centre_share",
-             "privacy_mode", "allow_posko_public_choice"],
-            as_dict=True,
-        )
+    org = _org_brand_row(org_name) if org_name else None
 
     posko_fields = ["name", "title", "organization", "posko_type",
                     "operational_status", "city_name", "disaster_event",

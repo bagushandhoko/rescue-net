@@ -1,159 +1,171 @@
 {
-  "doctype": "DocType",
-  "name": "RN Organization",
-  "module": "Rescue Net",
-  "custom": 0,
-  "is_submittable": 0,
-  "title_field": "title",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data",
-      "default": "rescue-net-fastapi"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Select",
-      "options": "Shadow Imported\nValidated\nNeeds Review",
-      "default": "Shadow Imported"
-    },
-    {
-      "fieldname": "title",
-      "label": "Organization Name",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "organization_type",
-      "label": "Organization Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "verification_status",
-      "label": "Verification Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "contact_summary",
-      "label": "Contact Summary",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    },
-    {
-      "fieldname": "trust_level",
-      "label": "Trust Level",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "status",
-      "label": "Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "owner_type",
-      "label": "Owner Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "owner_id",
-      "label": "Owner ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "visibility_scope",
-      "label": "Visibility Scope",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "access_policy",
-      "label": "Access Policy",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "contact_person",
-      "label": "Contact Person",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "notes",
-      "label": "Notes",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "identity_verification_status",
-      "label": "Identity Verification Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "identity_verified_by",
-      "label": "Identity Verified By",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "identity_verified_at",
-      "label": "Identity Verified At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "trusted_verifier_count",
-      "label": "Trusted Verifier Count",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "public_verified_badge",
-      "label": "Public Verified Badge",
-      "fieldtype": "Check"
-    },
-    {
-      "fieldname": "privacy_mode",
-      "label": "Privacy Mode",
-      "fieldtype": "Select",
-      "options": "closed\nopen",
-      "default": "closed"
-    },
-    {
-      "fieldname": "allow_posko_public_choice",
-      "label": "Allow Posko Public Choice",
-      "fieldtype": "Check",
-      "default": "0"
-    },
-    {
-      "fieldname": "control_centre_share",
-      "label": "Control Centre Share",
-      "fieldtype": "Select",
-      "options": "aggregate\nfull_authorized",
-      "default": "aggregate"
-    },
-    {
-      "fieldname": "public_activity_summary",
-      "label": "Public Activity Summary",
-      "fieldtype": "Check",
-      "default": "0"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 0,
-      "cancel": 0,
-      "amend": 0
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Organization",
+ "module": "Rescue Net",
+ "custom": 0,
+ "is_submittable": 0,
+ "title_field": "title",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "legacy_source",
+   "label": "Legacy Source",
+   "fieldtype": "Data",
+   "default": "rescue-net-fastapi"
+  },
+  {
+   "fieldname": "migration_status",
+   "label": "Migration Status",
+   "fieldtype": "Select",
+   "options": "Shadow Imported\nValidated\nNeeds Review",
+   "default": "Shadow Imported"
+  },
+  {
+   "fieldname": "title",
+   "label": "Organization Name",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "organization_type",
+   "label": "Organization Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verification Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "contact_summary",
+   "label": "Contact Summary",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "trust_level",
+   "label": "Trust Level",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "owner_type",
+   "label": "Owner Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "owner_id",
+   "label": "Owner ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "visibility_scope",
+   "label": "Visibility Scope",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "access_policy",
+   "label": "Access Policy",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "contact_person",
+   "label": "Contact Person",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "notes",
+   "label": "Notes",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "identity_verification_status",
+   "label": "Identity Verification Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "identity_verified_by",
+   "label": "Identity Verified By",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "identity_verified_at",
+   "label": "Identity Verified At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "trusted_verifier_count",
+   "label": "Trusted Verifier Count",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "public_verified_badge",
+   "label": "Public Verified Badge",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "privacy_mode",
+   "label": "Privacy Mode",
+   "fieldtype": "Select",
+   "options": "closed\nopen",
+   "default": "closed"
+  },
+  {
+   "fieldname": "allow_posko_public_choice",
+   "label": "Allow Posko Public Choice",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "control_centre_share",
+   "label": "Control Centre Share",
+   "fieldtype": "Select",
+   "options": "aggregate\nfull_authorized",
+   "default": "aggregate"
+  },
+  {
+   "fieldname": "public_activity_summary",
+   "label": "Public Activity Summary",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "brand_color",
+   "label": "Brand Color",
+   "fieldtype": "Data",
+   "description": "Hex accent (mis. #2f6f3e) untuk halaman Koordinasi Organisasi anggota."
+  },
+  {
+   "fieldname": "brand_logo",
+   "label": "Brand Logo",
+   "fieldtype": "Attach Image",
+   "description": "Logo kecil organisasi, tampil di header Koordinasi Organisasi."
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 0,
+   "cancel": 0,
+   "amend": 0
+  }
+ ]
 }

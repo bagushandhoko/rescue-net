@@ -4,11 +4,11 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-03 (Koordinasi Internal Organisasi — phase 1 page DONE & DEPLOYED)_
+_Last updated: 2026-09-03 (Koordinasi Internal Organisasi — phase 1 + phase 2 DONE & DEPLOYED)_
 
 ---
 
-## Koordinasi Internal Organisasi — org-member workspace (2026-09-03) — PHASE 1 DONE & DEPLOYED
+## Koordinasi Internal Organisasi — org-member workspace (2026-09-03) — PHASE 1 + 2 DONE & DEPLOYED
 
 Owner brief: "jika login sbg member organisasi, spt Land Rover Club, seharusnya
 yang tampil posko dia [sendiri], dia sendiri yang [me]rubah — bukan posko member
@@ -62,18 +62,50 @@ I logged in as".
 - **Demo passwords set** (were unset): `ld1.demo@rescue-net.local` /
   `ld2.demo@rescue-net.local` → `LandRover2026!` (sim `.demo` accounts).
 
-**Phase 2 (not done — layering + polish):**
-- Layer the same `can_edit` gate onto `posko-distribusi.html` /
-  `posko-logistik.html` / `posko-detail.html` themselves: when the viewer is an
-  org member, default `?id=` to their own posko and hide create/record/edit
-  forms unless `can_manage_posko` for the shown posko.
-- Real per-org brand fields on `RN Organization` (`brand_logo`, `brand_color`)
-  instead of the accent map/hash; org logo in the header.
-- `RN Posko Assignment`-based multi-posko members (currently only the direct
-  `RN User Account.posko` is treated as "mine"; approved assignments already
-  count in `can_manage_posko` but aren't listed as a separate "my poskos" set).
+**Built — phase 2 (layering onto the real posko pages + brand fields):**
+- **NEW `api_control_centre.posko_edit_scope(posko=None, disaster_event=None)`**
+  (`allow_guest=True`). Returns `{logged_in, is_org_member, is_system_manager,
+  can_edit_current, my_poskos[], primary_posko, brand, coordination_href,
+  control_centre_href}`. `can_edit_current` = `can_manage_posko(actor, posko)`;
+  left `true` for guests / non-members / System Managers / the real operator so
+  existing flows are untouched. `my_poskos` = direct `RN User Account.posko` +
+  approved `RN Posko Assignment` rows (new helper `_my_posko_names`).
+- **NEW `assets/js/rn-posko-scope.js`** (`?v=poskoscope-20260903`), included on
+  `posko-logistik.html` / `posko-distribusi.html` / `posko-detail.html` right
+  after `rn-frappe-client.js`. For a logged-in org member only:
+  (a) no `?id=` in the URL → `location.replace` to `?id=<primary_posko>` (default
+  to my own posko); (b) `?id=` is a posko he does not manage → read-only mode:
+  hides `.panel.create-panel` / create-form drawers (keeps read-only
+  `rn-stockcards-panel`), injects a "Hanya-lihat" banner with links to *his*
+  posko + Koordinasi Organisasi + Control Centre. Sweeps a few times so
+  late-rendered forms are caught too. Guests / non-members / SM / real operators:
+  script no-ops.
+- **`RN Organization` + `brand_color` (Data) + `brand_logo` (Attach Image)** —
+  editable in Desk. `_org_brand()` now prefers these, then the `_ORG_BRAND_ACCENT`
+  map, then the HSL hue. `my_org_coordination` + `posko_edit_scope` return
+  `brand.logo`; `koordinasi-organisasi.js` (`?v=koordorg-20260903b`) renders the
+  logo in the header badge when set.
+- **Deploy:** `api_control_centre.py` + `rn_organization.json` cp→container,
+  `bench --site osiun.localhost migrate` (adds the 2 columns, after_migrate
+  clean), restart (502→200 ~33s, backup `api_control_centre.py.bak-<ts>-scope`).
+  Frontend served from disk.
+- **Verified (authenticated curl as LD2):** `posko_edit_scope` — guest →
+  `can_edit_current:true` (no-op); own posko LD2 → `true`; sibling LD4 →
+  `false` + `primary_posko:SIM-LR-POSKO-LD2`; no posko → `primary_posko` set for
+  the redirect. Browser-level E2E of the read-only overlay / redirect: Playwright
+  runs kept timing out because the NAS was at load-avg ~10 (repeated 1.6 GB
+  playwright container starts) — direct curl shows the pages + endpoint healthy
+  and fast; **re-run `/volume1/docker/osiun-playwright-check/rn-poskoscope2.js`
+  when load is lower to capture the screenshot.**
+
+**Phase 3 / open (not done):**
 - Owner call: should `community_coordinator` (LD1) get edit on all of the org's
-  poskos, or stay pure-viewer? Phase 1 = pure viewer.
+  poskos, or stay pure-viewer? Phases 1-2 = pure viewer.
+- `posko-medis-detail.html` / `shelter-detail.html` / `dapur-umum.html` don't
+  include `rn-posko-scope.js` yet (only the 3 done). Add if the same gating is
+  wanted there.
+- Populate `brand_color` / `brand_logo` for the demo orgs (currently only the
+  hard-coded map entry for SIM-LR-ORG).
 
 ---
 

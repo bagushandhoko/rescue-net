@@ -70,7 +70,17 @@
     var shell = $("#koShell");
     if (shell && brand.accent) shell.style.setProperty("--ko-accent", brand.accent);
     var initial = $("#koInitial");
-    if (initial && brand.initial) { initial.textContent = brand.initial; initial.hidden = false; }
+    if (initial) {
+      if (brand.logo) {
+        initial.innerHTML = '<img src="' + esc(brand.logo) + '" alt="" '
+          + 'style="width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+        initial.style.background = "transparent";
+        initial.hidden = false;
+      } else if (brand.initial) {
+        initial.textContent = brand.initial;
+        initial.hidden = false;
+      }
+    }
     if (brand.title) {
       $("#koTitleText").textContent = brand.title;
       document.title = "Rescue-Net | Koordinasi " + brand.title;

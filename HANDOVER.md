@@ -4,9 +4,64 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-03 (Step 11/12 Alat Komunikasi NEW PAGE + 3 comms doctypes + api_comms DEPLOYED & Playwright-verified; earlier: Armada Distribusi Posko koordinasi-penyerahan)_
+_Last updated: 2026-09-03 (Manajemen Distribusi armada rework: bookable space + RN Transport Booking + PIN confirm + service_mode + relawan-pickup matching, DEPLOYED & Playwright-verified; earlier same day: Alat Komunikasi page; Armada koordinasi-penyerahan)_
 
 ---
+
+## Manajemen Distribusi — armada jadi bookable + kurir pickup (2026-09-03) — DONE & DEPLOYED
+
+Owner follow-up: the armada list must sit **directly under the KPIs**, and
+space/waktu must be **real DB fields** (selectable / bookable / blocking
+available capacity), tied to **relawan-transport pickup matching** — "di
+distribusi ini adalah penyedia space sekaligus antarkan barang, ada yang
+sifatnya spt kurir pick up".
+
+- **`RN Transport Space` +9 fields** (migrated): `departure_at` / `eta_at`
+  (Datetime — the old `departure_time`/`eta` Data stay as freeform fallback),
+  `service_mode` (space_only / courier_pickup / both), `booking_policy`
+  (pin_verify / open), `capacity_committed_kg` / `_m3` (read-only, recomputed),
+  `pickup_volunteer` (Link RN Volunteer Profile) + `pickup_volunteer_name`.
+- **NEW DocType `RN Transport Booking`** (migrated): transport_space + cargo +
+  qty_weight_kg/qty_volume_m3 + pickup/dropoff + contact + status
+  (requested/confirmed/rejected/cancelled/completed) + verification_pin +
+  timestamps. Confirmed bookings block capacity; requested ones soft-hold it.
+- **`api_logistics.py`:** `create_transport_space`/`update_transport_space`
+  extended (service_mode, booking_policy, departure_at, eta_at). NEW
+  `book_transport_space` (any login — checks available capacity, open policy →
+  auto-confirm, else returns a 4-digit PIN), `confirm_transport_booking`
+  (coordinator + PIN), `reject_transport_booking`, `cancel_transport_booking`
+  (booker or coordinator — frees blocked space), `assign_pickup_volunteer`
+  (coordinator links a relawan as courier). Helpers `_transport_capacity`,
+  `_recompute_transport_committed`.
+- **`api_control_centre.distribusi_board`:** transports query + the new fields;
+  fetches `RN Transport Booking`. `armada_posko[]` rows now carry
+  `service_mode(_label)`, `booking_policy`, capacity block
+  (`kapasitas_total_kg/m3`, `kapasitas_tersedia_kg/m3`, `kapasitas_pct`),
+  `pickup_volunteer_name`, `bookings_count`, `bookings[]`. NEW top-level
+  `pickup_matches[]` — courier-capable armada with no volunteer + candidate
+  relawan (distribution assignments at the same posko) + open-need count.
+- **Frontend** (`management-distribusi.html` / `distribusi.js` / `style.css`,
+  `?v=distribusi-20260903b`): the **Armada Distribusi Posko** panel moved to
+  directly under the KPI grid; table reworked to Mode badge / capacity meter
+  (tersedia vs total, blocked space shaded) / Berangkat→Tiba / Serah Terima+
+  Narahubung / Relawan Pickup / Status+booking count / **Booking** button;
+  confirmed+requested bookings render as an expandable sub-row. New
+  "Pencocokan Relawan Pickup" panel from `pickup_matches`. New drawers:
+  **Booking Ruang Armada** (`book_transport_space`, shows returned PIN) and
+  **Konfirmasi / Tolak Booking** (`confirm_`/`reject_transport_booking`).
+  Register-armada form: Berangkat/ETA → `datetime-local`, + Mode Layanan &
+  Kebijakan Booking selects.
+- **Deploy:** 3 files + new doctype dir → `osiun-frappe-backend` (md5
+  verified) → `bench migrate` (exit 0) → restart. Seed
+  `scratchpad/seed_booking.py`: structured schedule + service_mode on the 3
+  SIM/KH armada, 2 `RN Transport Booking` (SIM-BOOK-1 confirmed, SIM-BOOK-2
+  requested) on SIM-ARMADA-DARAT-1, 1 relawan pickup assigned.
+- **Verified:** guest HTTP — SIM-ARMADA-DARAT-1 shows tersedia 3050/4000 kg
+  (450 confirmed + 500 held blocked), 2 bookings, relawan "Yusuf Hidayat",
+  4 pickup_matches. Playwright `rn-armada2.js` — armada panel is section #2
+  (right under KPIs), 6 cap bars, 18 mode chips, 6 booking buttons, booking
+  drawer prefills the space id, confirm drawer opens, register form has the 4
+  new inputs, 0 mobile overflow, only the pre-existing guest 403.
 
 ## Step 11/12 — Alat Komunikasi (NEW PAGE) — DONE & DEPLOYED (2026-09-03)
 

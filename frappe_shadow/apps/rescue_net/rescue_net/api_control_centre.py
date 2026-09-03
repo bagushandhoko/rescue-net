@@ -2826,10 +2826,29 @@ def distribusi_board(disaster_event=None):
             "route_destination", "observed_at", "coordination_posko",
             "departure_time", "eta", "current_location", "handover_location",
             "handover_contact_person", "handover_contact_phone",
-            "coordination_notes",
+            "coordination_notes", "departure_at", "eta_at", "service_mode",
+            "booking_policy", "capacity_committed_kg", "capacity_committed_m3",
+            "pickup_volunteer", "pickup_volunteer_name",
         ]),
         limit_page_length=200,
     )
+
+    # confirmed/requested bookings that block armada capacity
+    _tspace_names = [t.get("name") for t in transports]
+    _bookings_by_space = {}
+    if _tspace_names and frappe.db.exists("DocType", "RN Transport Booking"):
+        for bk in frappe.get_all(
+            "RN Transport Booking",
+            filters={"transport_space": ["in", _tspace_names]},
+            fields=_sf("RN Transport Booking", [
+                "name", "transport_space", "cargo_desc", "qty_weight_kg",
+                "qty_volume_m3", "status", "booker_name", "booked_by_type",
+                "pickup_location", "dropoff_location", "contact_person",
+                "contact_phone", "verification_pin", "requested_at",
+            ]),
+            order_by="creation desc", limit_page_length=1000,
+        ):
+            _bookings_by_space.setdefault(bk.transport_space, []).append(bk)
 
     need_filter = event_filters(cols("RN Logistic Need"), event) if event else {}
     needs = frappe.get_all(
@@ -3040,42 +3059,120 @@ def distribusi_board(disaster_event=None):
                 "href": None,
             })
 
-    # ---- Armada Distribusi Posko — koordinasi penyerahan ----
+    # ---- Armada Distribusi Posko — koordinasi penyerahan + booking ----
     _ARMADA_STATUS_LABEL = {
         "available": "Tersedia", "reserved": "Dipesan", "assigned": "Ditugaskan",
         "in_transit": "Dalam Perjalanan", "arrived": "Tiba",
         "completed": "Selesai", "cancelled": "Dibatalkan",
     }
+    _SERVICE_MODE_LABEL = {
+        "space_only": "Penyedia Space", "courier_pickup": "Kurir Jemput-Antar",
+        "both": "Space + Kurir",
+    }
+    _BOOKING_STATUS_LABEL = {
+        "requested": "Menunggu Konfirmasi", "confirmed": "Terkonfirmasi",
+        "rejected": "Ditolak", "cancelled": "Dibatalkan", "completed": "Selesai",
+    }
+
+    def _fmt_dt(v):
+        if not v:
+            return ""
+        s = str(v)
+        return s[:16].replace("T", " ") if len(s) >= 16 else s
+
     armada_posko = []
+    pickup_matches = []
     for t in sorted(
         transports,
-        key=lambda r: str(r.get("observed_at") or ""),
+        key=lambda r: str(r.get("departure_at") or r.get("observed_at") or ""),
         reverse=True,
     ):
+        cap_kg = _num(t.get("capacity_weight_kg"))
+        cap_m3 = _num(t.get("capacity_volume_m3"))
+        bks = _bookings_by_space.get(t.get("name"), [])
+        used_kg = sum(_num(b.qty_weight_kg) for b in bks if b.status == "confirmed")
+        used_m3 = sum(_num(b.qty_volume_m3) for b in bks if b.status == "confirmed")
+        held_kg = sum(_num(b.qty_weight_kg) for b in bks if b.status == "requested")
+        held_m3 = sum(_num(b.qty_volume_m3) for b in bks if b.status == "requested")
+        avail_kg = max(0.0, cap_kg - used_kg - held_kg)
+        avail_m3 = max(0.0, cap_m3 - used_m3 - held_m3)
+        pct_kg = round(100.0 * (used_kg + held_kg) / cap_kg) if cap_kg else 0
+
         cap_bits = []
-        if _num(t.get("capacity_weight_kg")):
-            cap_bits.append(f"{_qty_fmt(t.get('capacity_weight_kg'))} kg")
-        if _num(t.get("capacity_volume_m3")):
-            cap_bits.append(f"{_qty_fmt(t.get('capacity_volume_m3'))} m³")
+        if cap_kg:
+            cap_bits.append(f"{_qty_fmt(cap_kg)} kg")
+        if cap_m3:
+            cap_bits.append(f"{_qty_fmt(cap_m3)} m³")
+
+        smode = t.get("service_mode") or "both"
+        berangkat = _fmt_dt(t.get("departure_at")) or (t.get("departure_time") or "-")
+        eta_v = _fmt_dt(t.get("eta_at")) or (t.get("eta") or "-")
+
         armada_posko.append({
             "id": t.get("name"),
             "provider": t.get("provider_name") or "-",
             "posko": posko_titles.get(t.get("coordination_posko")) or "-",
             "posko_id": t.get("coordination_posko") or "",
             "jenis": t.get("transport_type") or "-",
+            "service_mode": smode,
+            "service_mode_label": _SERVICE_MODE_LABEL.get(smode, smode),
+            "booking_policy": t.get("booking_policy") or "pin_verify",
             "kapasitas": " · ".join(cap_bits) or "-",
+            "kapasitas_total_kg": cap_kg,
+            "kapasitas_total_m3": cap_m3,
+            "kapasitas_terpakai_kg": round(used_kg + held_kg, 1),
+            "kapasitas_tersedia_kg": round(avail_kg, 1),
+            "kapasitas_tersedia_m3": round(avail_m3, 1),
+            "kapasitas_pct": pct_kg,
             "lokasi_saat_ini": t.get("current_location") or "-",
             "rute": (t.get("route_origin") or "-") + " → " + (t.get("route_destination") or "-"),
-            "berangkat": t.get("departure_time") or "-",
-            "eta": t.get("eta") or "-",
+            "berangkat": berangkat,
+            "eta": eta_v,
             "lokasi_serah_terima": t.get("handover_location") or "-",
             "narahubung": t.get("handover_contact_person") or "-",
             "kontak": t.get("handover_contact_phone") or "-",
             "catatan": t.get("coordination_notes") or "",
             "status": t.get("transport_status") or "-",
             "status_label": _ARMADA_STATUS_LABEL.get(t.get("transport_status"), t.get("transport_status") or "-"),
+            "pickup_volunteer": t.get("pickup_volunteer") or "",
+            "pickup_volunteer_name": t.get("pickup_volunteer_name") or "",
+            "bookings_count": sum(1 for b in bks if b.status in ("requested", "confirmed")),
+            "bookings": [
+                {
+                    "id": b.name,
+                    "cargo": b.cargo_desc or "-",
+                    "qty": (f"{_qty_fmt(b.qty_weight_kg)} kg" if _num(b.qty_weight_kg) else "")
+                           + ((" · " if _num(b.qty_weight_kg) and _num(b.qty_volume_m3) else "")
+                              + (f"{_qty_fmt(b.qty_volume_m3)} m³" if _num(b.qty_volume_m3) else "")),
+                    "status": b.status,
+                    "status_label": _BOOKING_STATUS_LABEL.get(b.status, b.status),
+                    "booker": b.booker_name or b.booked_by_type or "-",
+                    "pickup": b.pickup_location or "",
+                    "dropoff": b.dropoff_location or "",
+                }
+                for b in bks if b.status in ("requested", "confirmed")
+            ],
             "href": "posko-detail.html?id=" + (t.get("coordination_posko") or "") + "&event=" + (event or ""),
         })
+
+        # relawan-pickup matching: courier-capable armada with no volunteer yet
+        if smode in ("courier_pickup", "both") and not t.get("pickup_volunteer"):
+            cands = [
+                {"name": vol_titles.get(v.volunteer, v.volunteer), "task": v.task_title or "Distribusi"}
+                for v in pickup_volunteers
+                if (not v.posko) or v.posko == t.get("coordination_posko")
+            ][:5]
+            open_need_here = sum(
+                1 for n in unmatched_needs if n.posko == t.get("coordination_posko")
+            )
+            pickup_matches.append({
+                "armada_id": t.get("name"),
+                "armada": t.get("provider_name") or "-",
+                "posko": posko_titles.get(t.get("coordination_posko")) or "-",
+                "candidates": cands,
+                "open_need_count": open_need_here,
+                "href": "management-relawan.html?event=" + (event or ""),
+            })
 
     return {
         "disaster_event": event,
@@ -3086,6 +3183,7 @@ def distribusi_board(disaster_event=None):
         "matched_today": matched_today,
         "ruang_transportasi": {"overall": overall_cap, "by_type": by_type},
         "armada_posko": armada_posko,
+        "pickup_matches": pickup_matches,
         "alur_distribusi": alur_distribusi,
         "peringatan": peringatan,
         "conversions": _LOGISTIK_CONVERSIONS,

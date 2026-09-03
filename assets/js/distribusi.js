@@ -179,46 +179,99 @@
     $("#alurShown").textContent = "Menampilkan " + rows.length + " distribusi";
   }
 
+  var MODE_CHIP = { space_only: "", courier_pickup: "warning", both: "ok" };
+
+  function capMeterHtml(r) {
+    if (!r.kapasitas_total_kg && !r.kapasitas_total_m3) return esc(r.kapasitas);
+    var pct = Math.min(100, Math.max(0, r.kapasitas_pct || 0));
+    var cls = pct >= 90 ? "bad" : (pct >= 60 ? "warn" : "ok");
+    return (
+      '<div class="rn-md-cap">' +
+      '<div class="rn-md-cap-bar"><i class="' + cls + '" style="width:' + pct + '%"></i></div>' +
+      '<small>Tersedia ' + fmt(r.kapasitas_tersedia_kg) + " kg" +
+      (r.kapasitas_total_m3 ? " · " + fmt(r.kapasitas_tersedia_m3) + " m³" : "") +
+      " / total " + esc(r.kapasitas) + "</small></div>"
+    );
+  }
+
+  function bookingsHtml(r) {
+    if (!r.bookings || !r.bookings.length) return "";
+    return '<div class="rn-md-bk-list">' + r.bookings.map(function (b) {
+      var cls = b.status === "confirmed" ? "ok" : "warning";
+      return (
+        '<div class="rn-md-bk"><span><b>' + esc(b.cargo) + "</b> " + esc(b.qty || "") +
+        '<small class="rn-muted"> · ' + esc(b.booker) + (b.dropoff ? " → " + esc(b.dropoff) : "") + "</small></span>" +
+        '<span class="chip ' + cls + '">' + esc(b.status_label) + "</span>" +
+        '<code class="rn-md-bk-id">' + esc(b.id) + "</code></div>"
+      );
+    }).join("") + "</div>";
+  }
+
   function renderArmada(rows) {
     var body = $("#armadaBody");
     var shown = $("#armadaShown");
     if (!body) return;
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="11"><em class="rn-muted">Belum ada armada distribusi didaftarkan untuk event ini. Gunakan "Daftarkan Armada".</em></td></tr>';
+      body.innerHTML = '<tr><td colspan="9"><em class="rn-muted">Belum ada armada distribusi didaftarkan untuk event ini. Gunakan "Daftarkan Armada".</em></td></tr>';
       if (shown) shown.textContent = "0 armada";
       return;
     }
-    body.innerHTML = rows.map(function (r) {
+    var html = "";
+    rows.forEach(function (r) {
       var kontak = r.kontak && r.kontak !== "-"
         ? '<a href="tel:' + esc(String(r.kontak).replace(/[^0-9+]/g, "")) + '">' + esc(r.kontak) + "</a>"
-        : '<span class="rn-muted">-</span>';
-      var tr_ = r.href
-        ? '<tr class="rn-ba-row" data-href="' + esc(r.href) + '">'
-        : "<tr>";
-      return (
-        tr_ +
+        : "";
+      var relawan = r.pickup_volunteer_name
+        ? esc(r.pickup_volunteer_name)
+        : (r.service_mode === "space_only"
+            ? '<span class="rn-muted">—</span>'
+            : '<span class="chip warning">belum ada</span>');
+      html +=
+        "<tr>" +
         "<td><b>" + esc(r.provider) + "</b>" +
           (r.catatan ? '<small class="rn-muted">' + esc(r.catatan) + "</small>" : "") + "</td>" +
         "<td>" + esc(r.posko) + "</td>" +
-        "<td>" + esc(r.jenis) + "</td>" +
-        "<td>" + esc(r.kapasitas) + "</td>" +
-        "<td>" + esc(r.lokasi_saat_ini) + "</td>" +
-        "<td>" + esc(r.berangkat) + "</td>" +
-        "<td>" + esc(r.eta) + "</td>" +
-        "<td>" + esc(r.lokasi_serah_terima) + "</td>" +
-        "<td>" + esc(r.narahubung) + "</td>" +
-        "<td>" + kontak + "</td>" +
-        '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status_label) + "</span></td>" +
-        "</tr>"
-      );
-    }).join("");
-    body.querySelectorAll("tr[data-href]").forEach(function (tr) {
-      tr.addEventListener("click", function (e) {
-        if (e.target.closest("a")) return;
-        window.location.href = tr.getAttribute("data-href");
-      });
+        '<td><span class="chip ' + (MODE_CHIP[r.service_mode] || "") + '">' + esc(r.service_mode_label) + "</span>" +
+          (r.booking_policy === "open" ? '<small class="rn-muted">booking terbuka</small>' : '<small class="rn-muted">PIN</small>') + "</td>" +
+        "<td>" + capMeterHtml(r) + "</td>" +
+        "<td>" + esc(r.berangkat) + '<small class="rn-muted">→ ' + esc(r.eta) + "</small></td>" +
+        "<td>" + esc(r.lokasi_serah_terima) + '<small class="rn-muted">' + esc(r.narahubung) +
+          (kontak ? " · " + kontak : "") + "</small></td>" +
+        "<td>" + relawan + "</td>" +
+        '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status_label) + "</span>" +
+          (r.bookings_count ? '<small class="rn-muted">' + fmt(r.bookings_count) + " booking</small>" : "") + "</td>" +
+        '<td><button type="button" class="btn mini rn-md-book-btn" data-space="' + esc(r.id) + '">Booking</button>' +
+          '<a class="rn-md-armada-link" href="' + esc(r.href) + '">detail →</a></td>' +
+        "</tr>";
+      if (r.bookings && r.bookings.length) {
+        html += '<tr class="rn-md-bk-row"><td colspan="9">' + bookingsHtml(r) + "</td></tr>";
+      }
+    });
+    body.innerHTML = html;
+    body.querySelectorAll(".rn-md-book-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () { openBookingForm(btn.getAttribute("data-space")); });
     });
     if (shown) shown.textContent = "Menampilkan " + rows.length + " armada";
+  }
+
+  function renderPickupMatches(rows) {
+    var el = $("#pickupMatchList");
+    if (!el) return;
+    if (!rows || !rows.length) {
+      el.innerHTML = '<p class="rn-muted">Semua armada kurir sudah punya relawan pickup, atau belum ada armada bermode kurir.</p>';
+      return;
+    }
+    el.innerHTML = rows.map(function (m) {
+      var cands = m.candidates && m.candidates.length
+        ? m.candidates.map(function (c) { return '<span class="chip">' + esc(c.name) + "</span>"; }).join(" ")
+        : '<span class="rn-muted">Belum ada relawan distribusi di posko ini</span>';
+      return (
+        '<div class="rn-md-pm"><div class="rn-md-pm-head"><b>' + esc(m.armada) + "</b>" +
+        '<small class="rn-muted"> · ' + esc(m.posko) + " · " + fmt(m.open_need_count) + " kebutuhan terbuka</small></div>" +
+        '<div class="rn-md-pm-cands">' + cands + "</div>" +
+        '<a class="rn-md-armada-link" href="' + esc(m.href) + '">Kelola relawan →</a></div>'
+      );
+    }).join("");
   }
 
   function renderPeringatan(rows) {
@@ -269,6 +322,48 @@
 
   window.__distribusiReloadBoard = function () { return loadBoard(); };
 
+  function openBookingForm(spaceId) {
+    var det = $("#bookingForm");
+    if (!det) return;
+    var inp = det.querySelector('[name="transport_space"]');
+    if (inp && spaceId) inp.value = spaceId;
+    det.open = true;
+    det.scrollIntoView({ behavior: "smooth", block: "center" });
+    var cargo = det.querySelector('[name="cargo_desc"]');
+    if (cargo) setTimeout(function () { cargo.focus(); }, 300);
+  }
+
+  function setupPostForm(sel, method, msgSel, opts) {
+    opts = opts || {};
+    var form = $(sel);
+    if (!form) return;
+    var msg = $(msgSel);
+    async function submit(extra) {
+      var payload = {};
+      [].forEach.call(form.elements, function (el) {
+        if (!el.name) return;
+        var v = el.value == null ? "" : String(el.value).trim();
+        if (v !== "") payload[el.name] = v;
+      });
+      Object.keys(extra || {}).forEach(function (k) { payload[k] = extra[k]; });
+      if (msg) msg.textContent = "Memproses…";
+      try {
+        var res = await window.RN_FRAPPE.call(method(payload), payload, { method: "POST" });
+        if (msg) msg.textContent = (opts.done ? opts.done(res) : "Berhasil.");
+        if (!opts.keep) form.reset();
+        await loadBoard();
+      } catch (err) {
+        var m = (err && err.message) || String(err);
+        if (msg) msg.textContent = "Gagal: " + m + (/login|permission|akses|whitelist/i.test(m) ? " (perlu login)" : "");
+      }
+    }
+    form.addEventListener("submit", function (e) { e.preventDefault(); submit(); });
+    form.querySelectorAll("[data-act]").forEach(function (b) {
+      if (b.type === "submit") return;
+      b.addEventListener("click", function () { submit({ __act: b.getAttribute("data-act") }); });
+    });
+  }
+
   async function loadBoard() {
     var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: getEventId() });
     BOARD_CACHE = data;
@@ -279,6 +374,7 @@
     renderMatchingBoard(data.matching_board || {});
     renderTransportTab(data.ruang_transportasi.by_type);
     renderArmada(data.armada_posko || []);
+    renderPickupMatches(data.pickup_matches || []);
     renderAlur(data.alur_distribusi || []);
     renderPeringatan(data.peringatan || []);
     renderConversions(data.conversions || []);
@@ -295,16 +391,37 @@
     setupTransportTabs();
     setupAutoMatch();
 
-    var armadaBtn = $("#armadaAddBtn");
-    var armadaForm = $("#armadaForm");
-    if (armadaBtn && armadaForm) {
-      armadaBtn.addEventListener("click", function () {
-        armadaForm.open = true;
-        armadaForm.scrollIntoView({ behavior: "smooth", block: "center" });
-        var first = armadaForm.querySelector('input[name="provider_name"]');
-        if (first) setTimeout(function () { first.focus(); }, 300);
+    function wireOpen(btnSel, detSel, focusSel) {
+      var btn = $(btnSel), det = $(detSel);
+      if (!btn || !det) return;
+      btn.addEventListener("click", function () {
+        det.open = true;
+        det.scrollIntoView({ behavior: "smooth", block: "center" });
+        var f = det.querySelector(focusSel);
+        if (f) setTimeout(function () { f.focus(); }, 300);
       });
     }
+    wireOpen("#armadaAddBtn", "#armadaForm", 'input[name="provider_name"]');
+    wireOpen("#bookingConfirmBtn", "#bookingConfirmForm", 'input[name="booking"]');
+
+    setupPostForm("[data-create-booking]", function () {
+      return "rescue_net.api_logistics.book_transport_space";
+    }, "[data-booking-message]", {
+      done: function (res) {
+        return res && res.verification_pin
+          ? "Booking diajukan. PIN untuk koordinator: " + res.verification_pin
+          : "Booking dibuat & terkonfirmasi.";
+      },
+    });
+
+    setupPostForm("[data-confirm-booking]", function (p) {
+      return p.__act === "reject"
+        ? "rescue_net.api_logistics.reject_transport_booking"
+        : "rescue_net.api_logistics.confirm_transport_booking";
+    }, "[data-confirm-message]", {
+      keep: true,
+      done: function (res) { return "Status booking: " + (res && res.status || "-"); },
+    });
 
     loadBoard().catch(function (err) { console.error("[distribusi board]", err); });
   });
@@ -658,8 +775,10 @@ function setupTransportForm() {
             capacity_volume_m3:
               Number(form.capacity_volume_m3.value || 0),
 
-            departure_time: field("departure_time"),
-            eta: field("eta"),
+            departure_at: field("departure_at").replace("T", " "),
+            eta_at: field("eta_at").replace("T", " "),
+            service_mode: field("service_mode"),
+            booking_policy: field("booking_policy"),
             current_location: field("current_location"),
             handover_location: field("handover_location"),
             handover_contact_person: field("handover_contact_person"),

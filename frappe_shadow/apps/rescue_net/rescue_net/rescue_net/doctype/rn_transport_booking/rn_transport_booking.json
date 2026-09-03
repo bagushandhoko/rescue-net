@@ -1,0 +1,141 @@
+{
+  "doctype": "DocType",
+  "name": "RN Transport Booking",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "cargo_desc",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "transport_space",
+      "label": "Armada / Transport Space",
+      "fieldtype": "Link",
+      "options": "RN Transport Space",
+      "reqd": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "booked_by_type",
+      "label": "Pemesan",
+      "fieldtype": "Select",
+      "options": "posko\norganization\nindividu\nrelawan",
+      "default": "posko"
+    },
+    {
+      "fieldname": "booked_by_id",
+      "label": "ID Pemesan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "booker_name",
+      "label": "Nama Pemesan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "aid_offer",
+      "label": "Aid Offer",
+      "fieldtype": "Link",
+      "options": "RN Aid Offer"
+    },
+    {
+      "fieldname": "logistic_need",
+      "label": "Logistic Need",
+      "fieldtype": "Link",
+      "options": "RN Logistic Need"
+    },
+    {
+      "fieldname": "cargo_desc",
+      "label": "Barang / Muatan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "qty_weight_kg",
+      "label": "Berat (kg)",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "qty_volume_m3",
+      "label": "Volume (m3)",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "pickup_location",
+      "label": "Lokasi Jemput",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "dropoff_location",
+      "label": "Lokasi Antar",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "contact_person",
+      "label": "Narahubung",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "contact_phone",
+      "label": "No. Kontak",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "requested\nconfirmed\nrejected\ncancelled\ncompleted",
+      "default": "requested"
+    },
+    {
+      "fieldname": "verification_pin",
+      "label": "PIN Verifikasi",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "reject_reason",
+      "label": "Alasan Ditolak",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "requested_at",
+      "label": "Diminta",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "confirmed_at",
+      "label": "Dikonfirmasi",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

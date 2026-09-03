@@ -482,6 +482,10 @@ def create_transport_space(
     handover_contact_phone=None,
     coordination_notes=None,
     disaster_event=None,
+    departure_at=None,
+    eta_at=None,
+    service_mode=None,
+    booking_policy=None,
 ):
     """Register an armada distribusi (kendaraan darat / kapal / pesawat) a
     posko puts on offer. Besides capacity + jadwal (berangkat / ETA) the
@@ -490,6 +494,11 @@ def create_transport_space(
     coordinate the serah-terima (`handover_contact_person` /
     `handover_contact_phone`). Matches the DMS blueprint's Management
     Distribusi: "Link dengan pihak lain, kapasitas, pihak yang dihubungi".
+
+    `service_mode` (space_only / courier_pickup / both) says whether the
+    armada only lends space or also does the pickup+delivery (kurir).
+    `departure_at` / `eta_at` are real Datetime so the slot can be booked,
+    and confirmed bookings block capacity via `capacity_committed_*`.
     """
     # RN_CANONICAL_REF coordination_posko = resolve_posko(coordination_posko)
     coordination_posko = resolve_posko(coordination_posko)
@@ -517,6 +526,14 @@ def create_transport_space(
 
     doc.departure_time = departure_time
     doc.eta = eta
+    if departure_at:
+        doc.departure_at = departure_at
+    if eta_at:
+        doc.eta_at = eta_at
+    if service_mode in ("space_only", "courier_pickup", "both"):
+        doc.service_mode = service_mode
+    if booking_policy in ("pin_verify", "open"):
+        doc.booking_policy = booking_policy
     doc.current_location = current_location
     doc.handover_location = handover_location
     doc.handover_contact_person = handover_contact_person
@@ -546,6 +563,10 @@ def update_transport_space(
     current_location=None,
     departure_time=None,
     eta=None,
+    departure_at=None,
+    eta_at=None,
+    service_mode=None,
+    booking_policy=None,
     handover_location=None,
     handover_contact_person=None,
     handover_contact_phone=None,
@@ -572,10 +593,19 @@ def update_transport_space(
             frappe.throw("Status armada tidak valid")
         doc.transport_status = transport_status
 
+    if service_mode and service_mode not in ("space_only", "courier_pickup", "both"):
+        frappe.throw("Mode layanan tidak valid")
+    if booking_policy and booking_policy not in ("pin_verify", "open"):
+        frappe.throw("Kebijakan booking tidak valid")
+
     for field, value in (
         ("current_location", current_location),
         ("departure_time", departure_time),
         ("eta", eta),
+        ("departure_at", departure_at),
+        ("eta_at", eta_at),
+        ("service_mode", service_mode),
+        ("booking_policy", booking_policy),
         ("handover_location", handover_location),
         ("handover_contact_person", handover_contact_person),
         ("handover_contact_phone", handover_contact_phone),
@@ -591,6 +621,240 @@ def update_transport_space(
         "transport": doc.name,
         "transport_status": doc.transport_status,
     }
+
+
+# --- Transport booking / space blocking + relawan-pickup matching -----------
+
+_BOOKING_HOLD_STATES = {"requested", "confirmed"}
+
+
+def _transport_capacity(space):
+    """Return capacity + committed (confirmed) + held (requested) + available
+    for one RN Transport Space doc/dict."""
+    cap_kg = flt(space.get("capacity_weight_kg"))
+    cap_m3 = flt(space.get("capacity_volume_m3"))
+
+    agg = frappe.get_all(
+        "RN Transport Booking",
+        filters={"transport_space": space.get("name"),
+                 "status": ["in", list(_BOOKING_HOLD_STATES)]},
+        fields=["status", "qty_weight_kg", "qty_volume_m3"],
+        limit_page_length=500,
+    )
+    used_kg = sum(flt(b.qty_weight_kg) for b in agg if b.status == "confirmed")
+    used_m3 = sum(flt(b.qty_volume_m3) for b in agg if b.status == "confirmed")
+    held_kg = sum(flt(b.qty_weight_kg) for b in agg if b.status == "requested")
+    held_m3 = sum(flt(b.qty_volume_m3) for b in agg if b.status == "requested")
+
+    avail_kg = max(0.0, cap_kg - used_kg - held_kg)
+    avail_m3 = max(0.0, cap_m3 - used_m3 - held_m3)
+    pct = round(100.0 * used_kg / cap_kg, 1) if cap_kg else 0
+    return {
+        "cap_kg": cap_kg, "cap_m3": cap_m3,
+        "used_kg": used_kg, "used_m3": used_m3,
+        "held_kg": held_kg, "held_m3": held_m3,
+        "avail_kg": avail_kg, "avail_m3": avail_m3,
+        "pct": pct, "booking_count": len(agg),
+    }
+
+
+def _recompute_transport_committed(space_name):
+    rows = frappe.get_all(
+        "RN Transport Booking",
+        filters={"transport_space": space_name, "status": "confirmed"},
+        fields=["qty_weight_kg", "qty_volume_m3"], limit_page_length=500,
+    )
+    frappe.db.set_value("RN Transport Space", space_name, {
+        "capacity_committed_kg": sum(flt(r.qty_weight_kg) for r in rows),
+        "capacity_committed_m3": sum(flt(r.qty_volume_m3) for r in rows),
+    }, update_modified=False)
+
+
+@frappe.whitelist()
+def book_transport_space(
+    transport_space,
+    cargo_desc=None,
+    qty_weight_kg=None,
+    qty_volume_m3=None,
+    pickup_location=None,
+    dropoff_location=None,
+    contact_person=None,
+    contact_phone=None,
+    aid_offer=None,
+    logistic_need=None,
+    booked_by_type="posko",
+    booked_by_id=None,
+    notes=None,
+):
+    """Reserve space on an armada. Any logged-in RN actor may request one.
+    If the armada's `booking_policy` is `open` the booking is confirmed
+    immediately (and blocks capacity); otherwise it is `requested` and a
+    verification PIN is returned for the coordinator to confirm with (DMS
+    blueprint: "notifikasi pin untuk verifikasi ketika akan pake")."""
+    actor = rn_actor()
+    space = frappe.get_doc("RN Transport Space", transport_space)
+
+    w = flt(qty_weight_kg) if qty_weight_kg not in (None, "") else 0.0
+    v = flt(qty_volume_m3) if qty_volume_m3 not in (None, "") else 0.0
+    if w <= 0 and v <= 0:
+        frappe.throw("Isi berat (kg) atau volume (m3) muatan.")
+
+    cap = _transport_capacity(space.as_dict())
+    if space.capacity_weight_kg and w > cap["avail_kg"] + 0.001:
+        frappe.throw(
+            f"Kapasitas berat tidak cukup: sisa {cap['avail_kg']:.0f} kg, diminta {w:.0f} kg."
+        )
+    if space.capacity_volume_m3 and v > cap["avail_m3"] + 0.001:
+        frappe.throw(
+            f"Kapasitas volume tidak cukup: sisa {cap['avail_m3']:.1f} m3, diminta {v:.1f} m3."
+        )
+
+    policy = space.booking_policy or "pin_verify"
+    pin = None
+    if policy != "open":
+        import random
+        pin = "%04d" % random.randint(1000, 9999)
+
+    doc = frappe.new_doc("RN Transport Booking")
+    doc.transport_space = space.name
+    doc.disaster_event = space.disaster_event
+    doc.booked_by_type = booked_by_type if booked_by_type in (
+        "posko", "organization", "individu", "relawan") else "posko"
+    doc.booked_by_id = booked_by_id
+    doc.booker_name = _actor_display_name(actor)
+    doc.aid_offer = aid_offer or None
+    doc.logistic_need = logistic_need or None
+    doc.cargo_desc = cargo_desc
+    doc.qty_weight_kg = w
+    doc.qty_volume_m3 = v
+    doc.pickup_location = pickup_location
+    doc.dropoff_location = dropoff_location
+    doc.contact_person = contact_person
+    doc.contact_phone = contact_phone
+    doc.notes = notes
+    doc.verification_pin = pin
+    doc.status = "confirmed" if policy == "open" else "requested"
+    if doc.status == "confirmed":
+        doc.confirmed_at = now_datetime()
+    doc.created_by_user = actor.name if actor else None
+    doc.insert(ignore_permissions=True)
+
+    if doc.status == "confirmed":
+        _recompute_transport_committed(space.name)
+
+    return {
+        "booking": doc.name,
+        "status": doc.status,
+        "verification_pin": pin,
+        "policy": policy,
+    }
+
+
+def _actor_display_name(actor):
+    if not actor:
+        return "Tamu"
+    fu = actor.get("frappe_user") if hasattr(actor, "get") else None
+    if fu:
+        full = frappe.db.get_value("User", fu, "full_name")
+        if full:
+            return full
+        return fu
+    return actor.get("name") or "Aktor"
+
+
+def _can_manage_booking(actor, booking):
+    space = frappe.get_value(
+        "RN Transport Space", booking.transport_space, "coordination_posko"
+    )
+    return bool(space and _can_contribute(actor, space))
+
+
+@frappe.whitelist()
+def confirm_transport_booking(booking, pin=None):
+    """Coordinator of the armada's posko confirms a `requested` booking. When
+    the armada's policy is `pin_verify` the PIN must match."""
+    actor = rn_actor()
+    doc = frappe.get_doc("RN Transport Booking", booking)
+    if not _can_manage_booking(actor, doc):
+        frappe.throw("Hanya koordinator posko armada yang dapat mengonfirmasi.",
+                     frappe.PermissionError)
+    if doc.status != "requested":
+        frappe.throw(f"Booking sudah berstatus '{doc.status}'.")
+
+    space = frappe.get_doc("RN Transport Space", doc.transport_space)
+    policy = space.booking_policy or "pin_verify"
+    if policy == "pin_verify":
+        if not pin or str(pin).strip().upper() != (doc.verification_pin or ""):
+            frappe.throw("PIN verifikasi salah.")
+
+    # capacity was reserved as "held" at request time; confirming just moves
+    # the same qty from held -> used, so no extra capacity check is needed.
+    doc.status = "confirmed"
+    doc.confirmed_at = now_datetime()
+    doc.save(ignore_permissions=True)
+    _recompute_transport_committed(space.name)
+    return {"booking": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def reject_transport_booking(booking, reason=None):
+    actor = rn_actor()
+    doc = frappe.get_doc("RN Transport Booking", booking)
+    if not _can_manage_booking(actor, doc):
+        frappe.throw("Hanya koordinator posko armada yang dapat menolak.",
+                     frappe.PermissionError)
+    if doc.status not in ("requested", "confirmed"):
+        frappe.throw(f"Booking sudah berstatus '{doc.status}'.")
+    was_confirmed = doc.status == "confirmed"
+    doc.status = "rejected"
+    doc.reject_reason = reason
+    doc.save(ignore_permissions=True)
+    if was_confirmed:
+        _recompute_transport_committed(doc.transport_space)
+    return {"booking": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def cancel_transport_booking(booking):
+    """Booker (or the armada coordinator) cancels. Frees any blocked space."""
+    actor = rn_actor()
+    doc = frappe.get_doc("RN Transport Booking", booking)
+    is_booker = actor and doc.created_by_user and actor.name == doc.created_by_user
+    if not is_booker and not _can_manage_booking(actor, doc):
+        frappe.throw("Anda tidak dapat membatalkan booking ini.",
+                     frappe.PermissionError)
+    if doc.status not in ("requested", "confirmed"):
+        frappe.throw(f"Booking sudah berstatus '{doc.status}'.")
+    was_confirmed = doc.status == "confirmed"
+    doc.status = "cancelled"
+    doc.save(ignore_permissions=True)
+    if was_confirmed:
+        _recompute_transport_committed(doc.transport_space)
+    return {"booking": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def assign_pickup_volunteer(transport_space, volunteer_profile=None, volunteer_name=None):
+    """Link a relawan (RN Volunteer Profile) as the pickup courier for an
+    armada — the "kurir pick up" side of Manajemen Distribusi. Pass an empty
+    `volunteer_profile` to clear the assignment."""
+    actor = rn_actor()
+    doc = frappe.get_doc("RN Transport Space", transport_space)
+    if not _can_contribute(actor, doc.coordination_posko):
+        frappe.throw("Hanya koordinator posko armada yang dapat menugaskan relawan.",
+                     frappe.PermissionError)
+    if volunteer_profile:
+        vp = frappe.get_value("RN Volunteer Profile", volunteer_profile,
+                              ["name", "volunteer_name"], as_dict=True)
+        if not vp:
+            frappe.throw("Relawan tidak ditemukan.")
+        doc.pickup_volunteer = vp.name
+        doc.pickup_volunteer_name = volunteer_name or vp.volunteer_name
+    else:
+        doc.pickup_volunteer = None
+        doc.pickup_volunteer_name = None
+    doc.save(ignore_permissions=True)
+    return {"transport": doc.name, "pickup_volunteer": doc.pickup_volunteer}
 
 
 @frappe.whitelist()

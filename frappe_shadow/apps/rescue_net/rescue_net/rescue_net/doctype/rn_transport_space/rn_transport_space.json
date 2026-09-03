@@ -79,12 +79,62 @@
   },
   {
    "fieldname": "departure_time",
-   "label": "Berangkat",
+   "label": "Berangkat (teks)",
    "fieldtype": "Data"
   },
   {
    "fieldname": "eta",
-   "label": "ETA",
+   "label": "ETA (teks)",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "departure_at",
+   "label": "Waktu Berangkat",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "eta_at",
+   "label": "Estimasi Tiba",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "service_mode",
+   "label": "Mode Layanan",
+   "fieldtype": "Select",
+   "options": "space_only\ncourier_pickup\nboth",
+   "default": "both",
+   "description": "space_only = hanya menyediakan ruang; courier_pickup = jemput + antar barang; both = keduanya."
+  },
+  {
+   "fieldname": "booking_policy",
+   "label": "Kebijakan Booking",
+   "fieldtype": "Select",
+   "options": "pin_verify\nopen",
+   "default": "pin_verify",
+   "description": "pin_verify = booking harus dikonfirmasi koordinator dengan PIN; open = langsung terkonfirmasi."
+  },
+  {
+   "fieldname": "capacity_committed_kg",
+   "label": "Kapasitas Terpakai KG",
+   "fieldtype": "Float",
+   "read_only": 1,
+   "description": "Total berat booking terkonfirmasi (dihitung otomatis)."
+  },
+  {
+   "fieldname": "capacity_committed_m3",
+   "label": "Kapasitas Terpakai M3",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pickup_volunteer",
+   "label": "Relawan Pickup",
+   "fieldtype": "Link",
+   "options": "RN Volunteer Profile"
+  },
+  {
+   "fieldname": "pickup_volunteer_name",
+   "label": "Nama Relawan Pickup",
    "fieldtype": "Data"
   },
   {

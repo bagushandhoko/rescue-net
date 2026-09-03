@@ -18,8 +18,8 @@ RULES = [
         "group": "Air Minum",
         "item": "Air Minum Kemasan",
         "terms": [
-            "air mineral", "air minum", "aqua",
-            "air kemasan", "air botol"
+            "air mineral", "air minum", "aqua", "amdk",
+            "air kemasan", "air botol", "air galon", "le minerale"
         ],
     },
     {
@@ -28,8 +28,8 @@ RULES = [
         "group": "Makanan Siap Saji",
         "item": "Makanan Siap Saji",
         "terms": [
-            "nasi bungkus", "makanan siap saji",
-            "makanan matang", "makanan siap makan"
+            "nasi bungkus", "nasi kotak", "nasi box", "makanan siap saji",
+            "makanan matang", "makanan siap makan", "lauk pauk", "rendang kaleng"
         ],
     },
     {
@@ -38,8 +38,9 @@ RULES = [
         "group": "Bahan Pangan",
         "item": "Bahan Pangan",
         "terms": [
-            "beras", "mie instan", "mi instan",
-            "sembako", "bahan pangan"
+            "beras", "mie instan", "mi instan", "indomie", "mie", "sarden",
+            "sarden kaleng", "kornet", "susu", "susu bubuk", "gula", "minyak goreng",
+            "sembako", "bahan pangan", "biskuit", "abon"
         ],
     },
     {
@@ -48,8 +49,9 @@ RULES = [
         "group": "Obat & Perbekalan Medis",
         "item": "Perbekalan Medis",
         "terms": [
-            "obat", "perban", "infus", "masker medis",
-            "alat kesehatan", "alkes"
+            "obat", "obat-obatan", "paracetamol", "parasetamol", "antibiotik",
+            "perban", "kasa", "infus", "cairan infus", "masker medis", "masker bedah",
+            "alat kesehatan", "alkes", "vitamin", "oralit", "antiseptik", "betadine"
         ],
     },
     {
@@ -58,7 +60,7 @@ RULES = [
         "group": "Perlengkapan Pengungsian",
         "item": "Perlengkapan Shelter",
         "terms": [
-            "tenda", "selimut", "matras",
+            "tenda", "selimut", "matras", "tikar", "sleeping bag", "kasur lipat",
             "terpal", "shelter"
         ],
     },
@@ -193,6 +195,64 @@ ESTIMATE_TERMS = [
     "kurang lebih", "lebih kurang", "±",
     "perkiraan", "estimasi"
 ]
+
+
+# --- unit normalisation ------------------------------------------------------
+# Fold the many raw ways people write a unit into one canonical token, so
+# "dus" / "Dus" / "kardus" / "box" / "karton" all roll up together in a
+# group's unit breakdown. Deterministic keyword map — no black-box AI.
+_UNIT_SYNONYMS = {
+    "pcs": ["pcs", "pc", "piece", "pieces", "buah", "bh", "unit", "units",
+            "biji", "keping"],
+    "dus": ["dus", "dos", "box", "boxes", "kardus", "karton", "carton",
+            "kartun", "ctn"],
+    "kg": ["kg", "kgs", "kilogram", "kilo", "kilos", "kg."],
+    "gram": ["gram", "gr", "grm", "g"],
+    "ton": ["ton", "tonne", "tonnes", "mt"],
+    "liter": ["liter", "litre", "litres", "ltr", "lt", "l", "ltrs"],
+    "ml": ["ml", "mililiter", "milliliter", "cc"],
+    "karung": ["karung", "sak", "zak", "sack", "goni"],
+    "sachet": ["sachet", "saset", "bungkus", "kantong", "kantung", "pouch"],
+    "paket": ["paket", "pak", "pack", "packs", "package", "bundel", "bundle"],
+    "botol": ["botol", "btl", "bottle", "bottles"],
+    "galon": ["galon", "gallon", "gln"],
+    "jerigen": ["jerigen", "jerrycan", "jrgn"],
+    "tablet": ["tablet", "tab", "tabs", "kaplet", "kapsul", "pil", "strip",
+               "blister"],
+    "ampul": ["ampul", "ampoule", "vial", "flakon"],
+    "roll": ["roll", "rol", "gulung", "rll"],
+    "lembar": ["lembar", "lbr", "sheet", "sheets", "helai"],
+    "pasang": ["pasang", "psg", "pair", "pairs"],
+    "set": ["set", "sets", "rangkaian"],
+    "orang": ["orang", "org", "jiwa", "pax", "personil", "personel"],
+    "rit": ["rit", "trip", "ritase"],
+    "drum": ["drum", "drm"],
+    "tabung": ["tabung", "tbg", "cylinder"],
+    "meter": ["meter", "m", "mtr", "metre"],
+    "m3": ["m3", "m³", "meter kubik", "kubik", "cbm"],
+    "porsi": ["porsi", "portion", "serving", "servings"],
+}
+_UNIT_LOOKUP = {}
+for _canon, _alts in _UNIT_SYNONYMS.items():
+    for _a in _alts:
+        _UNIT_LOOKUP[_a] = _canon
+
+
+def normalize_unit(unit):
+    """Canonical form of a raw unit string ('Kardus' -> 'dus', 'KG' -> 'kg').
+    Unknown units are lower-cased + trimmed but kept as-is."""
+    if not unit:
+        return "unit"
+    u = re.sub(r"[^\w²³]+", " ", str(unit).strip().lower())
+    u = re.sub(r"\s+", " ", u).strip()
+    if not u:
+        return "unit"
+    if u in _UNIT_LOOKUP:
+        return _UNIT_LOOKUP[u]
+    if u.endswith("s") and u[:-1] in _UNIT_LOOKUP:
+        return _UNIT_LOOKUP[u[:-1]]
+    first = u.split(" ")[0]
+    return _UNIT_LOOKUP.get(first, u)
 
 
 def classify_text(text):

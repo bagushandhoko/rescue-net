@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import frappe
 from rescue_net.reference_resolver import resolve_disaster_event
-from rescue_net.intelligence.normalization import classify_text
+from rescue_net.intelligence.normalization import classify_text, normalize_unit
 from frappe.utils import (
     flt,
     get_datetime,
@@ -1590,7 +1590,7 @@ def tools_board(disaster_event=None):
         g = equip_groups[group_key]
         g["category"] = cat_label
         g["total_qty"] += flt(r.quantity)
-        g["unit_breakdown"][r.unit or "unit"] += flt(r.quantity)
+        g["unit_breakdown"][normalize_unit(r.unit)] += flt(r.quantity)
         if r.current_location:
             g["locations"].add(r.current_location)
         if confidence:

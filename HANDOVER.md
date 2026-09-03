@@ -222,6 +222,38 @@ restarts → 502 → the Synology reverse-proxy HTML error page; (2) the page ra
 - Verified Playwright (guest): AI page loads context (Posko 18 / Needs 31,
   15 recommendations, 11 sources), `RNSync` not loaded, 0 console errors.
 
+## AI item/unit grouping — checked + improved (2026-09-03)
+
+Owner asked "ai untuk mengroupkan satuan dan item2 yang sejenis, jalan
+nggak?". Findings + fixes:
+
+- **Item grouping WORKED** (rule-based `classify_text()` — deterministic
+  keyword map, honestly labelled "rule", not a black-box AI). Visible live in
+  Alat Kerja → "Kelompok Alat (Normalisasi AI Lintas Posko)"
+  (`tools_board.groups`). Term lists were thin — **added ~30 terms**
+  (AMDK / le minerale / indomie / mie / sarden / kornet / susu / biskuit /
+  nasi kotak / paracetamol / oralit / antiseptik / vitamin / popok /
+  pembalut / tikar / sleeping bag …).
+- **Unit normalisation was MISSING entirely** — "dus"/"Dus"/"kardus"/"box"/
+  "karton" were 5 separate rows. Added `normalization.normalize_unit()` +
+  `_UNIT_SYNONYMS` map (dus·kg·pcs·liter·karung·paket·botol·tablet·set·… ~25
+  canonical units, case-folded, plural-trimmed). Applied in
+  `api_resource_tools.tools_board` unit_breakdown and
+  `api_logistics` stock_summary grouping keys.
+- **Coverage was ~0 on seed data** — `RN Aid Offer`/`RN Logistic Need`
+  `before_insert` classifies only non-legacy rows, and every demo row has a
+  `legacy_id` → never classified. Backfilled via
+  `scratchpad/backfill_canon.py` (`classify_text` over existing rows):
+  RN Aid Offer canonical_group **1/29 → 19/29**, RN Logistic Need +24,
+  RN Stock Observation +1. Grouped view now shows e.g. "Air Minum — 10 offers
+  [3653 dus]", "Bahan Pangan — 5 [3025 kg · 1850 paket · 100 karung]".
+- Deployed (normalization.py + api_resource_tools.py + api_logistics.py, cp +
+  restart, no migrate). Verified console + Playwright (Kelompok Alat panel: 8
+  groups, units folded "unit"→"pcs").
+- Still `— (belum)` for rare/brand terms — expand `RULES` term lists or use
+  the `RN Normalization Rule` DocType (config-driven, `normalization_registry`
+  already reads it) as more real vocabulary appears.
+
 ## Icon set (STARTED, not wired) — `assets/js/rn-icons.js`
 
 Owner chose "full SVG icon set (menu + KPI)". `rn-icons.js` is committed but

@@ -13,6 +13,7 @@ from rescue_net.access_policy import (
     rn_actor,
 )
 from rescue_net.intelligence.freshness import freshness
+from rescue_net.intelligence.normalization import normalize_unit
 
 
 OPERATOR_ROLES = {
@@ -1427,7 +1428,7 @@ def control_centre_logistics():
     latest = {}
     for row in rows:
         group = row.canonical_group or row.canonical_item or "Belum Dikelompokkan"
-        key = (row.posko, group, row.unit or "")
+        key = (row.posko, group, normalize_unit(row.unit))
         if key not in latest:
             latest[key] = row
 
@@ -1435,7 +1436,7 @@ def control_centre_logistics():
 
     for row in latest.values():
         group = row.canonical_group or row.canonical_item or "Belum Dikelompokkan"
-        grouped[(group, row.unit or "")].append(row)
+        grouped[(group, normalize_unit(row.unit))].append(row)
 
     stock_summary = []
 

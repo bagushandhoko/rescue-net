@@ -29,12 +29,27 @@ async function rnFetch(path, options = {}) {
     url.pathname === "/disasters"
     && method === "GET"
   ) {
-    return await RN_FRAPPE.call(
+    // compat.api.disasters returns { mode, cutover_allowed, disasters: [...] }
+    // with canonical field names — unwrap + normalise to the shape the
+    // welcome page renderers expect.
+    const raw = await RN_FRAPPE.call(
       "rescue_net.compat.api.disasters",
-      {
-        limit: 100
-      }
+      { limit: 100 }
     );
+    const list = Array.isArray(raw)
+      ? raw
+      : (raw && raw.disasters) || [];
+    return list.map(function (d) {
+      return {
+        id: d.legacy_id || d.name,
+        name: d.title || d.name,
+        location: d.location_summary || d.location || "-",
+        severity: d.severity || "active",
+        status: d.event_status || d.status || "active",
+        disaster_type:
+          d.disaster_type || d.hazard_type || d.category || "bencana"
+      };
+    });
   }
 
   if (
@@ -66,8 +81,10 @@ async function rnFetch(path, options = {}) {
         )
       );
 
+    // public_context: guest-safe aggregate (welcome-page live summary works
+    // logged-out). api_ai.context is login-only.
     return await RN_FRAPPE.call(
-      "rescue_net.api_ai.context",
+      "rescue_net.api_ai.public_context",
       {
         disaster_event_id:
           eventId

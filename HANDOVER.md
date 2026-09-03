@@ -70,6 +70,29 @@ registrasi-posko): bisa Garuda, kapal TNI AL, motor pick-up, Land Rover club.
   a non-coordinator user gets PermissionError on confirm (gate works);
   cancel + delete restores capacity cleanly.
 
+## Full-app health sweep (2026-09-03) — 22 pages, 2 real bugs found + fixed
+
+Playwright `rn-health-sweep.js` (guest load + data-presence + console/HTTP
+errors across every rebuilt page). 20/22 clean. Two fixes (`0-…` commit):
+- **Broken image** `assets/img/demo-landrover/evidence/logistik.jpg` (404) —
+  one DB row `RN Community Report SIM-LR-RPT-LOGISTIK` had that path in its
+  `legacy_payload.evidence.image`; the file never existed. Repointed to the
+  real `evidence/pnbp_posko_logistik.jpg` via `frappe.db.set_value` (data
+  fix, not a repo change).
+- **Welcome page live summary + Bencana Aktif list broken for guests
+  (`assets/js/api.js`, `?v=pubctx-20260903b`):** (a) `/ai/context/` route
+  called login-only `rescue_net.api_ai.context` → switched to guest
+  `api_ai.public_context` (no auth loosening — public_context was already
+  `allow_guest`); (b) `/disasters` mapping returned
+  `compat.api.disasters`'s wrapper `{mode, cutover_allowed, disasters:[…]}`
+  as-is, so `disasters.filter/.map` threw — now unwraps `.disasters` and
+  normalises canonical field names (`legacy_id`→`id`, `title`→`name`,
+  `location_summary`→`location`, `event_status`→`status`). Verified guest:
+  6 active disasters / "3 critical" / 18 posko / 8 needs / 7 volunteers, 6
+  disaster cards, **0 console errors**.
+- Deliberately left (owner "Jangan, biarkan"): `api_donor_program.context`
+  403 in the Program Khusus legacy drawer; `api_sync.pull` 403 polling.
+
 ## Distribusi booking UX pass (2026-09-03) — DONE & DEPLOYED
 
 Owner feedback on the armada booking:

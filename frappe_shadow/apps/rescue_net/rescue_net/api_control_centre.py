@@ -2820,9 +2820,14 @@ def distribusi_board(disaster_event=None):
     transport_filter = event_filters(cols("RN Transport Space"), event) if event else {}
     transports = frappe.get_all(
         "RN Transport Space", filters=transport_filter,
-        fields=["name", "provider_name", "transport_type", "transport_status",
-                "capacity_weight_kg", "capacity_volume_m3", "route_origin",
-                "route_destination", "observed_at"],
+        fields=_sf("RN Transport Space", [
+            "name", "provider_name", "transport_type", "transport_status",
+            "capacity_weight_kg", "capacity_volume_m3", "route_origin",
+            "route_destination", "observed_at", "coordination_posko",
+            "departure_time", "eta", "current_location", "handover_location",
+            "handover_contact_person", "handover_contact_phone",
+            "coordination_notes",
+        ]),
         limit_page_length=200,
     )
 
@@ -2845,6 +2850,7 @@ def distribusi_board(disaster_event=None):
     posko_names = (
         {f.source_posko for f in flows} | {f.destination_posko for f in flows}
         | {n.posko for n in needs} | {o.target_posko for o in offers}
+        | {t.get("coordination_posko") for t in transports}
     )
     posko_titles = _distribusi_posko_titles(posko_names)
 
@@ -2871,6 +2877,11 @@ def distribusi_board(disaster_event=None):
                     "capacity_m3": _num(t.capacity_volume_m3),
                     "route": (t.route_origin or "-") + " → " + (t.route_destination or "-"),
                     "status": t.transport_status,
+                    "berangkat": t.get("departure_time") or "-",
+                    "eta": t.get("eta") or "-",
+                    "lokasi_serah_terima": t.get("handover_location") or "-",
+                    "narahubung": t.get("handover_contact_person") or "-",
+                    "kontak": t.get("handover_contact_phone") or "-",
                     "pct": round(100.0 * _num(t.capacity_weight_kg) /
                                   (_num(t.capacity_weight_kg) or 1), 0) if t.transport_status in UTILISED_STATES else 0,
                 }
@@ -2967,9 +2978,13 @@ def distribusi_board(disaster_event=None):
         "transportasi": {
             "total": sum(1 for t in transports if t.transport_status == "available"),
             "items": [
-                {"title": t.provider_name, "sub": t.transport_type + " · " + (t.route_origin or "-") + " → " + (t.route_destination or "-"),
-                 "href": None}
-                for t in transports if t.transport_status == "available"
+                {"title": t.get("provider_name"),
+                 "sub": (t.get("transport_type") or "-") + " · "
+                        + (t.get("current_location") or t.get("route_origin") or "-")
+                        + (" · ☎ " + t.get("handover_contact_phone") if t.get("handover_contact_phone") else ""),
+                 "href": ("posko-detail.html?id=" + t.get("coordination_posko") + "&event=" + (event or ""))
+                         if t.get("coordination_posko") else None}
+                for t in transports if t.get("transport_status") == "available"
             ][:6],
         },
     }
@@ -3025,6 +3040,43 @@ def distribusi_board(disaster_event=None):
                 "href": None,
             })
 
+    # ---- Armada Distribusi Posko — koordinasi penyerahan ----
+    _ARMADA_STATUS_LABEL = {
+        "available": "Tersedia", "reserved": "Dipesan", "assigned": "Ditugaskan",
+        "in_transit": "Dalam Perjalanan", "arrived": "Tiba",
+        "completed": "Selesai", "cancelled": "Dibatalkan",
+    }
+    armada_posko = []
+    for t in sorted(
+        transports,
+        key=lambda r: str(r.get("observed_at") or ""),
+        reverse=True,
+    ):
+        cap_bits = []
+        if _num(t.get("capacity_weight_kg")):
+            cap_bits.append(f"{_qty_fmt(t.get('capacity_weight_kg'))} kg")
+        if _num(t.get("capacity_volume_m3")):
+            cap_bits.append(f"{_qty_fmt(t.get('capacity_volume_m3'))} m³")
+        armada_posko.append({
+            "id": t.get("name"),
+            "provider": t.get("provider_name") or "-",
+            "posko": posko_titles.get(t.get("coordination_posko")) or "-",
+            "posko_id": t.get("coordination_posko") or "",
+            "jenis": t.get("transport_type") or "-",
+            "kapasitas": " · ".join(cap_bits) or "-",
+            "lokasi_saat_ini": t.get("current_location") or "-",
+            "rute": (t.get("route_origin") or "-") + " → " + (t.get("route_destination") or "-"),
+            "berangkat": t.get("departure_time") or "-",
+            "eta": t.get("eta") or "-",
+            "lokasi_serah_terima": t.get("handover_location") or "-",
+            "narahubung": t.get("handover_contact_person") or "-",
+            "kontak": t.get("handover_contact_phone") or "-",
+            "catatan": t.get("coordination_notes") or "",
+            "status": t.get("transport_status") or "-",
+            "status_label": _ARMADA_STATUS_LABEL.get(t.get("transport_status"), t.get("transport_status") or "-"),
+            "href": "posko-detail.html?id=" + (t.get("coordination_posko") or "") + "&event=" + (event or ""),
+        })
+
     return {
         "disaster_event": event,
         "generated_at": now,
@@ -3033,6 +3085,7 @@ def distribusi_board(disaster_event=None):
         "matching_board": matching_board,
         "matched_today": matched_today,
         "ruang_transportasi": {"overall": overall_cap, "by_type": by_type},
+        "armada_posko": armada_posko,
         "alur_distribusi": alur_distribusi,
         "peringatan": peringatan,
         "conversions": _LOGISTIK_CONVERSIONS,

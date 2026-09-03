@@ -4,9 +4,62 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-01 (mockup-alignment pass: welcome polish; auth.html rebuilt + api_auth.register DEPLOYED; NEW pages/bencana-aktif.html + active_disasters_board endpoint DEPLOYED & Playwright-verified)_
+_Last updated: 2026-09-03 (Manajemen Distribusi: "Armada Distribusi Posko — Koordinasi Penyerahan" — 5 new RN Transport Space fields + form + panel + update endpoint, DEPLOYED & Playwright-verified)_
 
 ---
+
+## Armada Distribusi Posko — koordinasi penyerahan (2026-09-03) — DONE & DEPLOYED
+
+Owner ask (per `blueprint/DISASTER MANAGEMENT SYSTEM (1).docx` → *Management
+Distribusi*: "Link dengan pihak lain, kapasitas, pihak yang dihubungi"): let a
+posko register its **armada distribusi** (kendaraan darat / kapal / pesawat)
+with capacity, jadwal berangkat + ETA, current location, handover point, and a
+contact number for koordinasi penyerahan.
+
+- **DocType — `RN Transport Space` gained 5 fields** (`rn_transport_space.json`,
+  `bench migrate` run OK): `current_location`, `handover_location`,
+  `handover_contact_person`, `handover_contact_phone` (Data), `coordination_notes`
+  (Small Text). Container backups `*.bak-20260903-*-armada`.
+- **Backend `api_logistics.py`:** `create_transport_space` extended with those 5
+  kwargs + `disaster_event` (was never linking the event before — new records
+  now set `disaster_event`, falling back to `disaster_event_legacy_id`). NEW
+  `update_transport_space(transport_space, …)` — login + `_can_contribute`
+  gated, patches only the fields passed (status / lokasi / jadwal / handover /
+  contact / notes) so a posko keeps the record current as the trip runs.
+- **Backend `api_control_centre.distribusi_board`:** transports query switched to
+  `_sf(...)` + the new fields + `coordination_posko`/`departure_time`/`eta`. New
+  return key **`armada_posko[]`** (provider, posko title, jenis, kapasitas,
+  lokasi_saat_ini, rute, berangkat, eta, lokasi_serah_terima, narahubung,
+  kontak, catatan, status/status_label, href → posko-detail). `matching_board.
+  transportasi` items now show current location + ☎ + deep-link to the
+  coordinating posko; `ruang_transportasi…units` carry berangkat/eta/handover/
+  kontak too.
+- **Frontend `management-distribusi.html` + `distribusi.js` + `style.css`
+  (`?v=distribusi-20260903`):** new always-visible panel **"Armada Distribusi
+  Posko — Koordinasi Penyerahan"** (11-col table, `renderArmada`, tel: links,
+  row → posko-detail) above "Alur Distribusi"; the old "Tambah Transport Space"
+  `<details>` rebuilt as **"Daftarkan Armada Distribusi"** — adds Posko
+  Koordinator + Jenis `<select>` + Lokasi Saat Ini / Lokasi Serah Terima /
+  Narahubung / No. Kontak Koordinasi Penyerahan / Catatan; "+ Daftarkan Armada"
+  button on the panel opens+focuses it; save now also refreshes the board via
+  `window.__distribusiReloadBoard`. Added global `.rn-form textarea` /
+  `.rn-form-wide` CSS (were unstyled app-wide).
+- **Deploy:** 3 files piped to `osiun-frappe-backend` (md5 verified) → `bench
+  migrate` (exit 0, `after_migrate` hooks clean) → `docker restart`.
+- **Seed `scratchpad/seed_armada.py` (ran):** backfilled all 6 existing
+  RN Transport Space rows with handover contact/location; added 3 posko-
+  registered armada — `SIM-ARMADA-DARAT-1` / `SIM-ARMADA-LAUT-1`
+  (`posko-sim-logistik`, event-sim-001) + `KH-ARMADA-UDARA-1`
+  (`KH-POSKO-KOMANDO`, karhutla). (`disaster_event` on the 3 new rows had to be
+  set directly to `disaster_events:event-*` — the script's legacy-id lookup
+  missed the `disaster_events:` prefix.)
+- **Verified:** guest HTTP `distribusi_board` → `armada_posko` = 6 (sim-001) / 1
+  (karhutla) with all coordination fields; Playwright `rn-armada.js` — 6 rows,
+  tel: links, register form opens with 15 fields, 0 mobile overflow, only the
+  pre-existing guest `session_info` 403 in console.
+- **Not done:** no UI yet for `update_transport_space` (endpoint only); Step 11
+  Alat Komunikasi still pending (half-built `rn_comms_device` doctype untracked
+  in the tree, `rn_comms_frequency`/`rn_comms_operator` are empty dirs).
 
 ## Mockup-alignment pass (2026-09-01, in progress)
 

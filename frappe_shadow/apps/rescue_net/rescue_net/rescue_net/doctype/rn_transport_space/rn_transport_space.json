@@ -88,6 +88,33 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "current_location",
+   "label": "Lokasi Saat Ini",
+   "fieldtype": "Data",
+   "description": "Keberadaan armada saat ini (kota / titik kumpul / koordinat)."
+  },
+  {
+   "fieldname": "handover_location",
+   "label": "Lokasi Serah Terima",
+   "fieldtype": "Data",
+   "description": "Titik penyerahan barang ke posko tujuan."
+  },
+  {
+   "fieldname": "handover_contact_person",
+   "label": "Narahubung Koordinasi",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "handover_contact_phone",
+   "label": "No. Kontak Koordinasi Penyerahan",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "coordination_notes",
+   "label": "Catatan Koordinasi Penyerahan",
+   "fieldtype": "Small Text"
+  },
+  {
    "fieldname": "transport_status",
    "label": "Status",
    "fieldtype": "Select",

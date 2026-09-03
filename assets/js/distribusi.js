@@ -179,6 +179,48 @@
     $("#alurShown").textContent = "Menampilkan " + rows.length + " distribusi";
   }
 
+  function renderArmada(rows) {
+    var body = $("#armadaBody");
+    var shown = $("#armadaShown");
+    if (!body) return;
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="11"><em class="rn-muted">Belum ada armada distribusi didaftarkan untuk event ini. Gunakan "Daftarkan Armada".</em></td></tr>';
+      if (shown) shown.textContent = "0 armada";
+      return;
+    }
+    body.innerHTML = rows.map(function (r) {
+      var kontak = r.kontak && r.kontak !== "-"
+        ? '<a href="tel:' + esc(String(r.kontak).replace(/[^0-9+]/g, "")) + '">' + esc(r.kontak) + "</a>"
+        : '<span class="rn-muted">-</span>';
+      var tr_ = r.href
+        ? '<tr class="rn-ba-row" data-href="' + esc(r.href) + '">'
+        : "<tr>";
+      return (
+        tr_ +
+        "<td><b>" + esc(r.provider) + "</b>" +
+          (r.catatan ? '<small class="rn-muted">' + esc(r.catatan) + "</small>" : "") + "</td>" +
+        "<td>" + esc(r.posko) + "</td>" +
+        "<td>" + esc(r.jenis) + "</td>" +
+        "<td>" + esc(r.kapasitas) + "</td>" +
+        "<td>" + esc(r.lokasi_saat_ini) + "</td>" +
+        "<td>" + esc(r.berangkat) + "</td>" +
+        "<td>" + esc(r.eta) + "</td>" +
+        "<td>" + esc(r.lokasi_serah_terima) + "</td>" +
+        "<td>" + esc(r.narahubung) + "</td>" +
+        "<td>" + kontak + "</td>" +
+        '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status_label) + "</span></td>" +
+        "</tr>"
+      );
+    }).join("");
+    body.querySelectorAll("tr[data-href]").forEach(function (tr) {
+      tr.addEventListener("click", function (e) {
+        if (e.target.closest("a")) return;
+        window.location.href = tr.getAttribute("data-href");
+      });
+    });
+    if (shown) shown.textContent = "Menampilkan " + rows.length + " armada";
+  }
+
   function renderPeringatan(rows) {
     var el = $("#peringatanList");
     if (!rows.length) {
@@ -225,6 +267,8 @@
     });
   }
 
+  window.__distribusiReloadBoard = function () { return loadBoard(); };
+
   async function loadBoard() {
     var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: getEventId() });
     BOARD_CACHE = data;
@@ -234,6 +278,7 @@
     renderKpi(data.totals || {});
     renderMatchingBoard(data.matching_board || {});
     renderTransportTab(data.ruang_transportasi.by_type);
+    renderArmada(data.armada_posko || []);
     renderAlur(data.alur_distribusi || []);
     renderPeringatan(data.peringatan || []);
     renderConversions(data.conversions || []);
@@ -249,6 +294,18 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
     setupTransportTabs();
     setupAutoMatch();
+
+    var armadaBtn = $("#armadaAddBtn");
+    var armadaForm = $("#armadaForm");
+    if (armadaBtn && armadaForm) {
+      armadaBtn.addEventListener("click", function () {
+        armadaForm.open = true;
+        armadaForm.scrollIntoView({ behavior: "smooth", block: "center" });
+        var first = armadaForm.querySelector('input[name="provider_name"]');
+        if (first) setTimeout(function () { first.focus(); }, 300);
+      });
+    }
+
     loadBoard().catch(function (err) { console.error("[distribusi board]", err); });
   });
 })();
@@ -453,7 +510,16 @@ async function loadTransportSpaces() {
                   Kapasitas:
                   ${safe(t.capacity_weight_kg)} kg
                   · ${safe(t.capacity_volume_m3)} m³
+                  · Berangkat: ${safe(t.departure_time)}
                   · ETA: ${safe(t.eta)}
+                </p>
+                <p>
+                  Lokasi kini: ${safe(t.current_location)}
+                  · Serah terima: ${safe(t.handover_location)}
+                </p>
+                <p>
+                  Koordinasi: ${safe(t.handover_contact_person)}
+                  ${t.handover_contact_phone ? "· ☎ " + safe(t.handover_contact_phone) : ""}
                 </p>
               </div>
               <div class="chips">
@@ -570,39 +636,35 @@ function setupTransportForm() {
             "Menyimpan transport...";
         }
 
+        const field = (n) => (form[n] && form[n].value ? form[n].value.trim() : "");
+
         await RN_FRAPPE.call(
           "rescue_net.api_logistics.create_transport_space",
           {
             coordination_posko:
-              getDistributionPosko(),
+              field("coordination_posko") || getDistributionPosko(),
 
-            provider_name:
-              form.provider_name.value.trim(),
+            disaster_event:
+              field("disaster_event_id") || null,
 
-            transport_type:
-              form.transport_type.value.trim(),
-
-            route_origin:
-              form.route_origin.value.trim(),
-
-            route_destination:
-              form.route_destination.value.trim(),
+            provider_name: field("provider_name"),
+            transport_type: field("transport_type"),
+            route_origin: field("route_origin"),
+            route_destination: field("route_destination"),
 
             capacity_weight_kg:
-              Number(
-                form.capacity_weight_kg.value || 0
-              ),
+              Number(form.capacity_weight_kg.value || 0),
 
             capacity_volume_m3:
-              Number(
-                form.capacity_volume_m3.value || 0
-              ),
+              Number(form.capacity_volume_m3.value || 0),
 
-            departure_time:
-              form.departure_time.value.trim(),
-
-            eta:
-              form.eta.value.trim()
+            departure_time: field("departure_time"),
+            eta: field("eta"),
+            current_location: field("current_location"),
+            handover_location: field("handover_location"),
+            handover_contact_person: field("handover_contact_person"),
+            handover_contact_phone: field("handover_contact_phone"),
+            coordination_notes: field("coordination_notes")
           },
           {
             method: "POST"
@@ -613,10 +675,14 @@ function setupTransportForm() {
 
         if (msg) {
           msg.textContent =
-            "Transport berhasil disimpan.";
+            "Armada berhasil disimpan.";
         }
+        form.reset();
 
         await loadTransportSpaces();
+        if (typeof window.__distribusiReloadBoard === "function") {
+          try { await window.__distribusiReloadBoard(); } catch (e) {}
+        }
 
       } catch (err) {
         if (msg) {

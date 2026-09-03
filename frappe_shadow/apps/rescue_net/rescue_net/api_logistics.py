@@ -232,6 +232,9 @@ def dashboard(posko=None):
             "route_origin","route_destination",
             "capacity_weight_kg","capacity_volume_m3",
             "departure_time","eta","transport_status",
+            "current_location","handover_location",
+            "handover_contact_person","handover_contact_phone",
+            "coordination_notes",
             "verification_status","observed_at",
             "source_updated_at","freshness_policy_minutes",
             "modified",
@@ -473,7 +476,21 @@ def create_transport_space(
     capacity_volume_m3=None,
     departure_time=None,
     eta=None,
+    current_location=None,
+    handover_location=None,
+    handover_contact_person=None,
+    handover_contact_phone=None,
+    coordination_notes=None,
+    disaster_event=None,
 ):
+    """Register an armada distribusi (kendaraan darat / kapal / pesawat) a
+    posko puts on offer. Besides capacity + jadwal (berangkat / ETA) the
+    posko records where the armada is now (`current_location`), where the
+    barang will be handed over (`handover_location`), and who to call to
+    coordinate the serah-terima (`handover_contact_person` /
+    `handover_contact_phone`). Matches the DMS blueprint's Management
+    Distribusi: "Link dengan pihak lain, kapasitas, pihak yang dihubungi".
+    """
     # RN_CANONICAL_REF coordination_posko = resolve_posko(coordination_posko)
     coordination_posko = resolve_posko(coordination_posko)
     actor = rn_actor()
@@ -500,6 +517,18 @@ def create_transport_space(
 
     doc.departure_time = departure_time
     doc.eta = eta
+    doc.current_location = current_location
+    doc.handover_location = handover_location
+    doc.handover_contact_person = handover_contact_person
+    doc.handover_contact_phone = handover_contact_phone
+    doc.coordination_notes = coordination_notes
+
+    if disaster_event:
+        try:
+            doc.disaster_event = resolve_disaster_event(disaster_event)
+        except Exception:
+            doc.disaster_event_legacy_id = disaster_event
+
     doc.transport_status = "available"
     doc.insert(ignore_permissions=True)
 
@@ -507,6 +536,60 @@ def create_transport_space(
         "transport": doc.name,
         "transport_status": doc.transport_status,
         "provider_name": doc.provider_name,
+    }
+
+
+@frappe.whitelist()
+def update_transport_space(
+    transport_space,
+    transport_status=None,
+    current_location=None,
+    departure_time=None,
+    eta=None,
+    handover_location=None,
+    handover_contact_person=None,
+    handover_contact_phone=None,
+    coordination_notes=None,
+):
+    """Let the coordinating posko keep an armada record current as the trip
+    progresses (status, keberadaan, jam berangkat/ETA, titik & narahubung
+    serah-terima). Only fields that are passed are changed."""
+    doc = frappe.get_doc("RN Transport Space", transport_space)
+    actor = rn_actor()
+
+    if not _can_contribute(actor, doc.coordination_posko):
+        frappe.throw(
+            "Anda tidak dapat memperbarui armada untuk Posko ini",
+            frappe.PermissionError,
+        )
+
+    valid_status = {
+        "available", "reserved", "assigned",
+        "in_transit", "arrived", "completed", "cancelled",
+    }
+    if transport_status:
+        if transport_status not in valid_status:
+            frappe.throw("Status armada tidak valid")
+        doc.transport_status = transport_status
+
+    for field, value in (
+        ("current_location", current_location),
+        ("departure_time", departure_time),
+        ("eta", eta),
+        ("handover_location", handover_location),
+        ("handover_contact_person", handover_contact_person),
+        ("handover_contact_phone", handover_contact_phone),
+        ("coordination_notes", coordination_notes),
+    ):
+        if value is not None:
+            doc.set(field, value)
+
+    doc.observed_at = now_datetime()
+    doc.save(ignore_permissions=True)
+
+    return {
+        "transport": doc.name,
+        "transport_status": doc.transport_status,
     }
 
 

@@ -1,0 +1,27 @@
+{
+  "doctype": "DocType",
+  "name": "RN AI Usage Log",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "fields": [
+    { "fieldname": "owner_type", "label": "Owner Type", "fieldtype": "Select", "options": "user\norganization", "default": "user", "in_list_view": 1 },
+    { "fieldname": "owner_id", "label": "Owner ID", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "user_id", "label": "Asked By (user)", "fieldtype": "Data" },
+    { "fieldname": "key_source", "label": "Key Source", "fieldtype": "Select", "options": "user\norganization", "default": "user" },
+    { "fieldname": "provider", "label": "Provider", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "model_name", "label": "Model", "fieldtype": "Data" },
+    { "fieldname": "disaster_event", "label": "Disaster Event", "fieldtype": "Data" },
+    { "fieldname": "question_chars", "label": "Question Chars", "fieldtype": "Int" },
+    { "fieldname": "answer_chars", "label": "Answer Chars", "fieldtype": "Int" },
+    { "fieldname": "prompt_tokens", "label": "Prompt Tokens", "fieldtype": "Int" },
+    { "fieldname": "completion_tokens", "label": "Completion Tokens", "fieldtype": "Int" },
+    { "fieldname": "total_tokens", "label": "Total Tokens", "fieldtype": "Int", "in_list_view": 1 },
+    { "fieldname": "outcome", "label": "Outcome", "fieldtype": "Select", "options": "ok\nerror\nauth_error", "default": "ok", "in_list_view": 1 },
+    { "fieldname": "error_note", "label": "Error Note", "fieldtype": "Data" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1 }
+  ]
+}

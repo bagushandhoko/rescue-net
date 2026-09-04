@@ -186,6 +186,87 @@ async function deleteKey() {
   statusMsg("AI key deleted.");
 }
 
+/* ---- Uji Koneksi (personal) ---- */
+async function testKey() {
+  const session = await ensureSession();
+  const form = getForm();
+  const el = document.getElementById("testKeyMsg");
+  el.textContent = "Menguji…";
+  const r = await frappeCall("rescue_net.api_ai.test_ai_key",
+    { user_id: session.user, provider: form.provider.value }, true);
+  el.textContent = (r.ok ? "✓ " : "✗ ") + (r.message || "");
+}
+
+/* ---- Org key section ---- */
+function orgId() {
+  return (RN_FRAPPE_SESSION && RN_FRAPPE_SESSION.organization_id) || "";
+}
+function renderOrgStatus(d) {
+  const el = document.getElementById("orgKeyStatus");
+  if (!d || !d.key_exists) {
+    el.innerHTML = `<div><span>Organisasi</span><b>${orgId() || "-"}</b></div>` +
+      `<div><span>Kunci</span><b>Belum diatur</b></div>`;
+    return;
+  }
+  const s = d.setting || {};
+  el.innerHTML = `<div><span>Organisasi</span><b>${s.organization_id}</b></div>` +
+    `<div><span>Provider</span><b>${s.provider}</b></div>` +
+    `<div><span>Model</span><b>${s.model_name}</b></div>` +
+    `<div><span>Masked</span><b>${d.masked_key}</b></div>` +
+    `<div><span>Status</span><b>${s.status}</b></div>`;
+}
+async function orgCheck() {
+  if (!orgId()) return;
+  const d = await frappeCall("rescue_net.api_ai.get_org_key_status",
+    { organization_id: orgId(), provider: "openai" });
+  renderOrgStatus(d);
+}
+async function orgSave(e) {
+  e.preventDefault();
+  const f = document.getElementById("orgKeyForm");
+  document.getElementById("orgKeyMsg").textContent = "Menyimpan…";
+  await frappeCall("rescue_net.api_ai.save_org_key", {
+    organization_id: orgId(), provider: f.provider.value,
+    model_name: f.model_name.value, api_key: f.api_key.value.trim(),
+    api_key_label: f.api_key_label.value.trim(),
+  }, true);
+  f.api_key.value = "";
+  document.getElementById("orgKeyMsg").textContent = "Tersimpan terenkripsi.";
+  await orgCheck();
+}
+async function orgTest() {
+  document.getElementById("orgKeyMsg").textContent = "Menguji…";
+  const r = await frappeCall("rescue_net.api_ai.test_ai_key",
+    { organization_id: orgId(), provider: "openai" }, true);
+  document.getElementById("orgKeyMsg").textContent = (r.ok ? "✓ " : "✗ ") + (r.message || "");
+}
+async function orgDelete() {
+  if (!confirm("Hapus kunci AI organisasi " + orgId() + "?")) return;
+  await frappeCall("rescue_net.api_ai.delete_org_key",
+    { organization_id: orgId(), provider: "openai" }, true);
+  await orgCheck();
+}
+
+/* ---- Usage summary ---- */
+function renderUsage(u, scope) {
+  const el = document.getElementById("aiUsage");
+  el.innerHTML =
+    `<div><span>Cakupan</span><b>${scope}</b></div>` +
+    `<div><span>Panggilan (${u.days} hari)</span><b>${u.calls}</b></div>` +
+    `<div><span>Berhasil / Error</span><b>${u.ok} / ${u.errors}</b></div>` +
+    `<div><span>Total token</span><b>${(u.total_tokens || 0).toLocaleString("id-ID")}</b></div>` +
+    `<div><span>Sumber kunci (user / org)</span><b>${u.by_key_source.user} / ${u.by_key_source.organization}</b></div>`;
+}
+async function usageUser() {
+  const s = await ensureSession();
+  const u = await frappeCall("rescue_net.api_ai.ai_usage_summary", { user_id: s.user, days: 30 });
+  renderUsage(u, "Pemakaian Anda");
+}
+async function usageOrg() {
+  const u = await frappeCall("rescue_net.api_ai.ai_usage_summary", { organization_id: orgId(), days: 30 });
+  renderUsage(u, "Organisasi " + orgId());
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const form = getForm();
   form.addEventListener("submit", saveKey);
@@ -193,10 +274,32 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("checkKeyBtn").addEventListener("click", () => {
     checkKeyStatus().catch(err => statusMsg(err.message));
   });
-
+  document.getElementById("testKeyBtn").addEventListener("click", () => {
+    testKey().catch(err => { document.getElementById("testKeyMsg").textContent = "✗ " + err.message; });
+  });
   document.getElementById("deleteKeyBtn").addEventListener("click", () => {
     deleteKey().catch(err => statusMsg(err.message));
   });
+  document.getElementById("usageUserBtn").addEventListener("click", () => {
+    usageUser().catch(err => statusMsg(err.message));
+  });
+
+  ensureSession().then(() => {
+    if (orgId()) {
+      document.getElementById("orgKeySection").hidden = false;
+      document.getElementById("usageOrgBtn").hidden = false;
+      const f = document.getElementById("orgKeyForm");
+      if (f.organization_id) f.organization_id.value = orgId();
+      f.addEventListener("submit", e => orgSave(e).catch(err => {
+        document.getElementById("orgKeyMsg").textContent = "✗ " + err.message;
+      }));
+      document.getElementById("orgCheckBtn").addEventListener("click", () => orgCheck().catch(e => {}));
+      document.getElementById("orgTestBtn").addEventListener("click", () => orgTest().catch(e => {}));
+      document.getElementById("orgDeleteBtn").addEventListener("click", () => orgDelete().catch(e => {}));
+      document.getElementById("usageOrgBtn").addEventListener("click", () => usageOrg().catch(e => statusMsg(e.message)));
+      orgCheck().catch(e => {});
+    }
+  }).catch(() => {});
 
   checkKeyStatus().catch(err => statusMsg(err.message));
 });

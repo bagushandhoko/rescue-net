@@ -73,12 +73,14 @@
 
         <div class="form-actions">
           <button class="btn" type="button" id="checkKeyBtn">Check Key Status</button>
+          <button class="btn" type="button" id="testKeyBtn">Uji Koneksi</button>
           <button class="btn" type="button" id="deleteKeyBtn">Delete Key</button>
         </div>
+        <p class="subtitle" id="testKeyMsg"></p>
       </div>
 
       <aside class="panel summary">
-        <h3>Save AI Key</h3>
+        <h3>Save AI Key (Personal)</h3>
         <p class="subtitle">Gunakan key dummy untuk test. Jangan taruh key asli di GitHub atau chat.</p>
 
         <form class="rn-form" id="aiKeyForm">
@@ -119,6 +121,45 @@
       </aside>
     </section>
 
+    <section class="content-grid" id="orgKeySection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Kunci AI Organisasi</h3><p>Dipakai anggota organisasi yang belum punya kunci pribadi.</p></div></div>
+        <div class="summary-list" id="orgKeyStatus"><div><span>Status</span><b>—</b></div></div>
+        <div class="form-actions">
+          <button class="btn" type="button" id="orgCheckBtn">Cek Status</button>
+          <button class="btn" type="button" id="orgTestBtn">Uji Koneksi</button>
+          <button class="btn" type="button" id="orgDeleteBtn">Hapus Kunci Org</button>
+        </div>
+        <p class="subtitle" id="orgKeyMsg"></p>
+      </div>
+      <aside class="panel summary">
+        <h3>Simpan Kunci AI Organisasi</h3>
+        <form class="rn-form" id="orgKeyForm">
+          <label>Organization ID<input name="organization_id" readonly></label>
+          <label>Provider<select name="provider"><option value="openai">openai</option></select></label>
+          <label>Model
+            <select name="model_name">
+              <option value="gpt-4o-mini">gpt-4o-mini</option>
+              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+              <option value="gpt-4.1">gpt-4.1</option>
+            </select>
+          </label>
+          <label>API Key<input name="api_key" type="password" placeholder="Paste API key" required></label>
+          <label>Label<input name="api_key_label" value="Org Key"></label>
+          <div class="form-actions"><button class="btn primary" type="submit">Simpan Kunci Org</button></div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><div><h3>Pemakaian AI (30 hari)</h3><p>Log jumlah panggilan &amp; token — tanpa isi pertanyaan/jawaban, tanpa secret.</p></div></div>
+      <div class="summary-list" id="aiUsage"><div><span>—</span><b>belum dimuat</b></div></div>
+      <div class="form-actions">
+        <button class="btn" type="button" id="usageUserBtn">Pemakaian Saya</button>
+        <button class="btn" type="button" id="usageOrgBtn" hidden>Pemakaian Organisasi</button>
+      </div>
+    </section>
+
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
@@ -157,7 +198,7 @@
   </main>
 </div>
 
-<script src="../assets/js/ai-settings.js?v=byok-1"></script>
+<script src="../assets/js/ai-settings.js?v=byok-org-20260904"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

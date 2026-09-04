@@ -59,7 +59,8 @@
       "</div>" +
       "<h4>" + esc(c.title) + "</h4>" +
       '<div class="ko-posko-meta">' + esc(typeLabel(c.posko_type)) + " · " + esc(c.city_name || "-") + "</div>" +
-      '<div class="rn-row">' + statusChip(c.operational_status) + "</div>" +
+      '<div class="rn-row">' + statusChip(c.operational_status) +
+        (window.RNVerifBadge ? window.RNVerifBadge.html(c.verification_status, c.trusted_verifier_count) : "") + "</div>" +
       '<div class="ko-card-actions">' + actions.join("") + "</div>" +
       "</article>"
     );

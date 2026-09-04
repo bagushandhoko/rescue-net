@@ -65,7 +65,9 @@
           '<tr class="rn-ba-row' + (isSel ? " is-selected" : "") + '" data-name="' + esc(r.name) + '">' +
           "<td><b>" + esc(r.title) + "</b></td><td>" + esc(r.jenis || "-") + "</td><td>" + esc(r.lokasi) + "</td>" +
           "<td>" + esc(r.pic) + "</td><td>" + fmt(r.kapasitas) + "</td>" +
-          '<td><span class="chip ' + statusPillClass(r.status_verifikasi) + '">' + esc(statusLabel(r.status_verifikasi)) + "</span></td>" +
+          "<td>" + (window.RNVerifBadge
+            ? window.RNVerifBadge.html(r.status_verifikasi, r.trusted_verifier_count)
+            : '<span class="chip ' + statusPillClass(r.status_verifikasi) + '">' + esc(statusLabel(r.status_verifikasi)) + "</span>") + "</td>" +
           "<td>" + fmtTime(r.terakhir_diperbarui) + "</td></tr>"
         );
       }).join("");
@@ -100,6 +102,7 @@
     $("#submitVerifBtn").disabled = !(data.ready_to_submit && (data.verification_status === "self_reported" || data.verification_status === "needs_correction"));
     $("#saveDraftBtn").disabled = false;
     $("#deletePoskoBtn").disabled = false;
+    if ($("#requestVerifierBtn")) $("#requestVerifierBtn").disabled = false;
   }
 
   async function selectPosko(name) {
@@ -147,6 +150,21 @@
 
     $("#saveDraftBtn").addEventListener("click", function () {
       $("#actionMsg2").textContent = "Draft sudah otomatis tersimpan sejak posko dibuat (status self_reported).";
+    });
+
+    var rvb = $("#requestVerifierBtn");
+    if (rvb) rvb.addEventListener("click", async function () {
+      if (!state.selected) return;
+      var msg = $("#verifReqMsg");
+      msg.textContent = "Mengirim permintaan…";
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_verifier.request_posko_verification",
+          { posko: state.selected, method: $("#verifMethod").value }, { method: "POST" });
+        msg.textContent = "Terkirim (wilayah: " + (r.wilayah || "-") + "). Verifikator wilayah akan melihatnya di kotak masuk mereka.";
+      } catch (err) {
+        var m = (err && err.message) || String(err);
+        msg.textContent = "Gagal: " + m + (/login|permission|akses|pengelola/i.test(m) ? " (perlu login sebagai pengelola posko)" : "");
+      }
     });
   }
 

@@ -125,6 +125,18 @@
           <button class="btn danger" id="deletePoskoBtn" type="button" disabled>Hapus Posko</button>
         </div>
         <p class="rn-muted" id="actionMsg2"></p>
+
+        <h3 class="rn-sub-h">Verifikasi oleh Verifikator Wilayah</h3>
+        <p class="rn-muted rn-rp-note">Posko independen jadi kredibel bila di-endorse verifikator di wilayahnya (lurah / polsek / tokoh publik) — lewat kunjungan langsung atau rekomendasi jaringan.</p>
+        <div class="rn-rp-actions">
+          <select id="verifMethod">
+            <option value="site_visit">Kunjungan langsung</option>
+            <option value="network_vouch">Rekomendasi jaringan</option>
+          </select>
+          <button class="btn" id="requestVerifierBtn" type="button" disabled>Minta Verifikasi Wilayah</button>
+          <a class="btn ghost" href="verifikator.html">Buka Jaringan Verifikator →</a>
+        </div>
+        <p class="rn-muted" id="verifReqMsg"></p>
       </aside>
     </section>
 
@@ -145,7 +157,8 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
-<script src="../assets/js/registrasi-posko.js?v=regposko-20260902"></script>
+<script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
+<script src="../assets/js/registrasi-posko.js?v=vbadge-20260904"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

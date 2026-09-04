@@ -95,9 +95,8 @@ def _mk_request(cfg):
     if not frappe.db.exists("RN Posko", posko):
         return "skip"
     if frappe.db.exists("RN Verification Request",
-                        {"object_type": "posko", "object_id": posko,
-                         "status": ["in", ["pending", "accepted"]]}):
-        return "skip"
+                        {"object_type": "posko", "object_id": posko}):
+        return "skip"  # any request (incl. completed) — don't re-seed
     verifier = _get_verifier_by_title(cfg["verifier_title"]) if cfg.get("verifier_title") else None
     doc = frappe.new_doc("RN Verification Request")
     title_posko = frappe.db.get_value("RN Posko", posko, "title") or posko

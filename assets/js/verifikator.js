@@ -119,25 +119,24 @@
     var d;
     try { d = await call("my_verification_requests"); } catch (e) { return; }
     var reqs = (d && d.requests) || [];
+    var poskos = (d && d.my_poskos) || [];
     var sel = $("#vfRequestForm [name=posko]");
-    var poskoIds = [];
-    reqs.forEach(function (r) { if (poskoIds.indexOf(r.object_id) === -1) poskoIds.push(r.object_id); });
-    // also let the operator pick a posko even with no prior request: use request rows' poskos
-    var seen = {};
+
     sel.innerHTML = "";
-    reqs.forEach(function (r) {
-      if (seen[r.object_id]) return; seen[r.object_id] = 1;
+    poskos.forEach(function (p) {
       var o = document.createElement("option");
-      o.value = r.object_id; o.textContent = r.posko_title || r.object_id;
+      o.value = p.name;
+      o.textContent = (p.title || p.name) + " · " + (p.verification_status || "self_reported") +
+        (p.trusted_verifier_count ? " (" + p.trusted_verifier_count + " verifikator)" : "");
       sel.appendChild(o);
     });
     if (!sel.children.length) {
-      sel.innerHTML = '<option value="">(tidak ada posko yang Anda kelola / minta verifikasi lewat halaman posko)</option>';
+      sel.innerHTML = '<option value="">(Anda tidak mengelola posko mana pun)</option>';
     }
     $("#vfMyRequests").innerHTML = reqs.length
       ? reqs.map(function (r) { return reqCard(r); }).join("")
-      : '<p class="vf-empty">Belum ada permintaan verifikasi.</p>';
-    $("#vfMyPoskoSection").hidden = reqs.length === 0 && sel.children.length === 0;
+      : '<p class="vf-empty">Belum ada permintaan verifikasi untuk posko Anda.</p>';
+    $("#vfMyPoskoSection").hidden = (poskos.length === 0 && reqs.length === 0);
   }
 
   function wireRequestForm() {

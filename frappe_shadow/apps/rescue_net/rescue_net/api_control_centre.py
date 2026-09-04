@@ -835,7 +835,7 @@ def posko_detail(posko, disaster_event=None):
             "name", "legacy_id", "title", "posko_type", "organization",
             "address", "province_name", "city_name", "district_name",
             "latitude", "longitude", "operational_status",
-            "verification_status", "public_detail",
+            "verification_status", "trusted_verifier_count", "public_detail",
             "officer_in_charge_name", "officer_in_charge_phone",
             "officer_in_charge_role", "disaster_event",
         ],
@@ -3808,7 +3808,8 @@ def posko_registry_board(disaster_event=None, limit=200):
         "RN Posko", filters=filters,
         fields=["name", "title", "posko_type", "address", "city_name",
                 "officer_in_charge_name", "rn_beneficiary_count",
-                "verification_status", "operational_status", "modified"],
+                "verification_status", "trusted_verifier_count",
+                "operational_status", "modified"],
         order_by="modified desc", limit_page_length=int(limit),
     )
 
@@ -3824,6 +3825,7 @@ def posko_registry_board(disaster_event=None, limit=200):
         "pic": r.officer_in_charge_name or "-",
         "kapasitas": _cap(r),
         "status_verifikasi": r.verification_status or "self_reported",
+        "trusted_verifier_count": r.trusted_verifier_count or 0,
         "terakhir_diperbarui": r.modified,
         "href": "registrasi-posko.html?id=" + r.name + "&event=" + (event or ""),
     } for r in rows]
@@ -4051,7 +4053,7 @@ def my_org_coordination(disaster_event=None):
 
     posko_fields = ["name", "title", "organization", "posko_type",
                     "operational_status", "city_name", "disaster_event",
-                    "public_detail"]
+                    "public_detail", "verification_status", "trusted_verifier_count"]
 
     def _card(p, can_edit):
         share = effective_posko_share(p.get("name"), actor)
@@ -4063,6 +4065,8 @@ def my_org_coordination(disaster_event=None):
             "organization": p.get("organization"),
             "city_name": p.get("city_name") or "-",
             "disaster_event": p.get("disaster_event"),
+            "verification_status": p.get("verification_status") or "self_reported",
+            "trusted_verifier_count": p.get("trusted_verifier_count") or 0,
             "share_mode": share["mode"],
             "share_reason": share["reason"],
             "can_edit": bool(can_edit),

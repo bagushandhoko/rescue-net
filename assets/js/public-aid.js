@@ -163,6 +163,24 @@ function initAidItems(form) {
 }
 
 
+async function populateDisasterPicker(form) {
+  const sel = form.querySelector("[data-disaster-picker]");
+  if (!sel || !window.RN_FRAPPE) return;
+  const preset = new URLSearchParams(location.search).get("event");
+  try {
+    const rows = await RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters", {});
+    if (Array.isArray(rows) && rows.length) {
+      sel.innerHTML = rows.map(d => {
+        const id = d.id || d.legacy_id || d.name;
+        return `<option value="${safe(id)}">${safe(d.title || id)}${d.severity ? " — " + safe(d.severity) : ""}</option>`;
+      }).join("");
+      if (preset) sel.value = preset;
+      if (!sel.value) sel.selectedIndex = 0;
+    }
+  } catch (e) { /* keep the fallback option */ }
+}
+
+
 function setupPublicAidForm() {
   const form =
     document.querySelector(
@@ -176,6 +194,7 @@ function setupPublicAidForm() {
 
   if (!form) return;
 
+  populateDisasterPicker(form);
   setupDeliveryModeToggle(form);
   initAidItems(form);
 

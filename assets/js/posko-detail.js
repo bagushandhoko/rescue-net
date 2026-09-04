@@ -35,6 +35,51 @@ function rowId(row) {
 }
 
 
+const METHOD_LABEL_VF = {
+  site_visit: "kunjungan langsung",
+  network_vouch: "rekomendasi jaringan",
+  document_review: "telaah dokumen",
+};
+
+async function renderVerifPanel(poskoName) {
+  const el = document.getElementById("poskoVerifPanel");
+  if (!el || !poskoName) return;
+  let d;
+  try {
+    d = await RN_FRAPPE.call(
+      "rescue_net.api_verifier.posko_verification_public",
+      { posko: poskoName }
+    );
+  } catch (e) { el.hidden = true; return; }
+  if (!d || !d.found) { el.hidden = true; return; }
+
+  const badge = window.RNVerifBadge
+    ? window.RNVerifBadge.html(d.verification_status, d.trusted_verifier_count)
+    : safe(d.verification_status);
+  const ends = d.endorsements || [];
+  const list = ends.length
+    ? ends.map(e => `
+        <div class="rn-vf-end">
+          <b>${safe(e.verifier)}</b> <span class="rn-muted">(${safe(e.role)})</span>
+          — ${safe(METHOD_LABEL_VF[e.method] || e.method)}
+          ${e.vouched_via ? `· via ${safe(e.vouched_via)}` : ""}
+          ${e.verified_at ? `· ${String(e.verified_at).slice(0, 10)}` : ""}
+          ${e.statement ? `<div class="rn-muted">"${safe(e.statement)}"</div>` : ""}
+        </div>`).join("")
+    : `<p class="rn-muted">Belum ada endorsement verifikator.
+       <a href="verifikator.html">Minta verifikasi ke verifikator wilayah →</a></p>`;
+
+  el.innerHTML = `
+    <div class="panel-header">
+      <div><h3>Kredibilitas &amp; Verifikasi</h3>
+      <p>Endorsement dari jaringan verifikator wilayah (lurah / polsek / tokoh publik).</p></div>
+      ${badge}
+    </div>
+    <div class="rn-vf-ends">${list}</div>`;
+  el.hidden = false;
+}
+
+
 function setStatus(msg) {
   const el =
     document.getElementById(
@@ -95,10 +140,12 @@ function renderOverview(ctx) {
   }
 
   if (subtitle) {
-    subtitle.textContent =
+    const vb = window.RNVerifBadge
+      ? window.RNVerifBadge.html(posko.verification_status, posko.trusted_verifier_count)
+      : safe(posko.verification_status);
+    subtitle.innerHTML =
       `${safe(posko.posko_type)} · ` +
-      `${safe(posko.operational_status)} · ` +
-      `${safe(posko.verification_status)}`;
+      `${safe(posko.operational_status)} &nbsp; ${vb}`;
   }
 
   const overview =
@@ -134,11 +181,13 @@ function renderOverview(ctx) {
       </div>
 
       <div>
-        <span>Verification</span>
-        <b>${safe(posko.verification_status)}</b>
+        <span>Level Verifikasi</span>
+        <b>${window.RNVerifBadge ? window.RNVerifBadge.html(posko.verification_status, posko.trusted_verifier_count) : safe(posko.verification_status)}</b>
       </div>
     `;
   }
+
+  renderVerifPanel(posko.name);
 
   const values = {
     kpiRole:

@@ -284,15 +284,34 @@ def request_posko_verification(posko, verifier=None, method="site_visit", note=N
 
 @frappe.whitelist()
 def my_verification_requests():
-    """Verification requests for poskos the caller manages."""
+    """Verification requests for poskos the caller manages + the list of
+    poskos they manage (so the request form can offer a first request)."""
     actor = _actor()
     from rescue_net.api_control_centre import _my_posko_names
-    names = list(_my_posko_names(actor)) if not is_system_manager() else None
+    sm = is_system_manager()
+    names = list(_my_posko_names(actor)) if not sm else None
+
+    my_poskos = []
+    if names:
+        for p in frappe.get_all(
+            "RN Posko", filters={"name": ["in", names]},
+            fields=["name", "title", "verification_status", "trusted_verifier_count",
+                    "city_name", "district_name"],
+            limit_page_length=100,
+        ):
+            my_poskos.append(p)
+    elif sm:
+        my_poskos = frappe.get_all(
+            "RN Posko",
+            fields=["name", "title", "verification_status", "trusted_verifier_count",
+                    "city_name", "district_name"],
+            order_by="modified desc", limit_page_length=200,
+        )
 
     filters = {"object_type": "posko"}
     if names is not None:
         if not names:
-            return {"requests": []}
+            return {"requests": [], "my_poskos": []}
         filters["object_id"] = ["in", names]
 
     rows = frappe.get_all(
@@ -305,7 +324,7 @@ def my_verification_requests():
         r["posko_title"] = frappe.db.get_value("RN Posko", r.object_id, "title")
         if r.verifier:
             r["verifier_title"] = frappe.db.get_value("RN Verifier Profile", r.verifier, "title")
-    return {"requests": rows}
+    return {"requests": rows, "my_poskos": my_poskos}
 
 
 # --- verifier acts -------------------------------------------------------

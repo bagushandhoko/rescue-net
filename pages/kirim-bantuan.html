@@ -71,8 +71,10 @@
         <form class="rn-form" data-public-aid-form>
           <div class="form-grid">
             <label>
-              Disaster Event ID
-              <input name="disaster_event_id" value="event-sim-001" required>
+              Pilih Bencana
+              <select name="disaster_event_id" required data-disaster-picker>
+                <option value="event-sim-001">Memuat daftar bencana…</option>
+              </select>
             </label>
 
             <label>
@@ -170,7 +172,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
-<script src="../assets/js/public-aid.js?v=guestaid-20260904"></script>
+<script src="../assets/js/public-aid.js?v=guestaid-20260904b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>

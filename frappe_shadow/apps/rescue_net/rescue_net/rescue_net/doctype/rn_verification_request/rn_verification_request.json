@@ -1,0 +1,26 @@
+{
+  "doctype": "DocType",
+  "name": "RN Verification Request",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "legacy_id", "label": "Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "title", "label": "Judul", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "object_type", "label": "Jenis Objek", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "object_id", "label": "ID Objek", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "requested_by", "label": "Diminta Oleh", "fieldtype": "Link", "options": "RN User Account" },
+    { "fieldname": "verifier", "label": "Verifikator Tujuan", "fieldtype": "Link", "options": "RN Verifier Profile" },
+    { "fieldname": "method", "label": "Metode", "fieldtype": "Select",
+      "options": "site_visit\nnetwork_vouch", "default": "site_visit", "in_list_view": 1 },
+    { "fieldname": "wilayah", "label": "Wilayah", "fieldtype": "Data" },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Select",
+      "options": "pending\naccepted\ncompleted\nrejected\ncancelled", "default": "pending", "in_list_view": 1 },
+    { "fieldname": "notes", "label": "Catatan", "fieldtype": "Small Text" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1 }
+  ]
+}

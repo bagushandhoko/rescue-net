@@ -1,0 +1,35 @@
+{
+  "doctype": "DocType",
+  "name": "RN Verifier Profile",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "legacy_id", "label": "Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "title", "label": "Nama Verifikator", "fieldtype": "Data", "reqd": 1, "in_list_view": 1 },
+    { "fieldname": "user", "label": "User Account", "fieldtype": "Link", "options": "RN User Account" },
+    { "fieldname": "verifier_type", "label": "Jenis Verifikator", "fieldtype": "Select",
+      "options": "government\ncommunity_leader\nreligious_leader\nprofessional\npublic_figure\nother", "in_list_view": 1 },
+    { "fieldname": "organization", "label": "Organisasi", "fieldtype": "Link", "options": "RN Organization" },
+    { "fieldname": "position_title", "label": "Jabatan / Peran Publik", "fieldtype": "Data" },
+    { "fieldname": "public_role_description", "label": "Deskripsi Peran Publik", "fieldtype": "Small Text" },
+    { "fieldname": "wilayah", "label": "Wilayah Layanan", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "phone", "label": "HP / WhatsApp", "fieldtype": "Data" },
+    { "fieldname": "email", "label": "Email", "fieldtype": "Data" },
+    { "fieldname": "verifier_status", "label": "Status Verifikator", "fieldtype": "Select",
+      "options": "pending\nactive\nsuspended\nrevoked", "default": "pending", "in_list_view": 1 },
+    { "fieldname": "trust_level", "label": "Trust Level", "fieldtype": "Int", "default": "0" },
+    { "fieldname": "sponsor_verifier", "label": "Diusulkan Oleh (Verifikator)", "fieldtype": "Link", "options": "RN Verifier Profile" },
+    { "fieldname": "identity_verification_status", "label": "Status Verifikasi Identitas", "fieldtype": "Data" },
+    { "fieldname": "endorsement_count", "label": "Jumlah Endorsement Diberikan", "fieldtype": "Int", "default": "0" },
+    { "fieldname": "suspicious_activity_count", "label": "Aktivitas Mencurigakan", "fieldtype": "Int", "default": "0" },
+    { "fieldname": "approved_by", "label": "Disetujui Oleh", "fieldtype": "Data" },
+    { "fieldname": "approved_at", "label": "Disetujui Pada", "fieldtype": "Datetime" },
+    { "fieldname": "notes", "label": "Catatan", "fieldtype": "Small Text" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1 }
+  ]
+}

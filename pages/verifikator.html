@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Jaringan Verifikator</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=verifikator-20260904">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navverif-20260904" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <style>
+    .vf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .vf-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 13px; background: var(--panel2); }
+    .vf-card h4 { margin: 0 0 4px; font-size: 14px; }
+    .vf-meta { color: var(--muted); font-size: 12px; }
+    .vf-chip { display:inline-block; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+      padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }
+    .vf-chip.gov { color:#1f5fa8; border-color:#1f5fa8; }
+    .vf-chip.active { color:#2f9e59; border-color:#2f9e59; }
+    .vf-chip.pending { color:#b88918; border-color:#b88918; }
+    .vf-actions { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .vf-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div><h1>Rescue-Net</h1><p>Disaster Management System</p></div>
+    </div>
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="registrasi-posko.html?event=event-sim-001">Registrasi &amp; Verifikasi Posko</a>
+      <a class="active" href="verifikator.html">Jaringan Verifikator</a>
+      <a href="koordinasi-organisasi.html?event=event-sim-001">Koordinasi Organisasi</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Manajemen Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search &amp; Found</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Jaringan Verifikator</div>
+      <div>
+        <p class="eyebrow">Kredibilitas Posko Independen</p>
+        <h2>Jaringan Verifikator</h2>
+        <p class="subtitle">Posko warga / independen jadi kredibel lewat endorsement verifikator di wilayahnya — pemerintah (lurah, polsek) atau tokoh publik yang bersedia. Verifikasi via kunjungan langsung atau rekomendasi jaringan (member-get-member).</p>
+        <p class="subtitle" id="vfStatus">Memuat…</p>
+      </div>
+      <div class="status-pill" id="vfRole">—</div>
+    </header>
+
+    <section class="content-grid rn-md-wide" id="vfInboxSection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Kotak Masuk Verifikator</h3><p id="vfInboxSub">Permintaan verifikasi yang ditujukan ke Anda + permintaan terbuka di wilayah Anda.</p></div><span class="chip neutral" id="vfInboxCount">—</span></div>
+        <div id="vfInbox"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-wide" id="vfMyPoskoSection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Verifikasi Posko Saya</h3><p>Status permintaan verifikasi untuk posko yang Anda kelola.</p></div></div>
+        <form class="rn-form" id="vfRequestForm" style="margin-bottom:12px">
+          <div class="form-grid">
+            <label>Posko
+              <select name="posko" required></select>
+            </label>
+            <label>Verifikator (opsional — kosong = terbuka utk wilayah)
+              <select name="verifier"><option value="">— terbuka untuk wilayah —</option></select>
+            </label>
+            <label>Metode
+              <select name="method">
+                <option value="site_visit">Kunjungan langsung</option>
+                <option value="network_vouch">Rekomendasi jaringan (member-get-member)</option>
+              </select>
+            </label>
+            <label>Catatan<input name="note" placeholder="Alamat, kontak, waktu bisa dikunjungi…"></label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="submit">Minta Verifikasi</button><span class="rn-muted" data-req-msg></span></div>
+        </form>
+        <div id="vfMyRequests"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-wide" id="vfApproveSection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Permohonan Jadi Verifikator</h3><p>System Manager atau verifikator senior (trust ≥ 2) menyetujui.</p></div><span class="chip neutral" id="vfPendingCount">—</span></div>
+        <div id="vfPending"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-wide">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Direktori Verifikator</h3><p>Cari verifikator aktif per wilayah.</p></div>
+          <input id="vfSearch" placeholder="Cari wilayah… (mis. Aceh Barat)" style="max-width:220px">
+        </div>
+        <div class="vf-grid" id="vfDirectory"></div>
+      </div>
+    </section>
+
+    <section class="content-grid rn-md-wide" id="vfApplySection">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Jadi Verifikator</h3><p>Untuk pemerintah setempat atau tokoh publik yang bersedia memverifikasi posko di wilayahnya.</p></div></div>
+        <form class="rn-form" id="vfApplyForm">
+          <div class="form-grid">
+            <label>Nama / Sebutan<input name="display_name" required placeholder="Keuchik Gampong X / Kapolsek Y"></label>
+            <label>Jenis
+              <select name="verifier_type">
+                <option value="government">Pemerintah (lurah/desa/polsek/camat)</option>
+                <option value="community_leader">Tokoh masyarakat</option>
+                <option value="religious_leader">Tokoh agama</option>
+                <option value="professional">Profesional (dokter/insinyur/…)</option>
+                <option value="public_figure">Tokoh publik lain</option>
+              </select>
+            </label>
+            <label>Jabatan / Peran Publik<input name="position_title" placeholder="Keuchik, Kapolsek, Ketua RW…"></label>
+            <label>Wilayah Layanan<input name="wilayah" required placeholder="Kelurahan/Kecamatan, Kota"></label>
+            <label>HP / WhatsApp<input name="phone"></label>
+            <label>Email<input name="email"></label>
+          </div>
+          <label style="display:grid;gap:6px;margin-top:10px">Deskripsi peran<input name="public_role_description" placeholder="mis. Kepala pemerintahan gampong; verifikasi keberadaan posko warga"></label>
+          <label style="display:grid;gap:6px;margin-top:10px">Direkomendasikan oleh verifikator (opsional)
+            <select name="sponsor_verifier"><option value="">— tidak ada —</option></select>
+          </label>
+          <div class="form-actions"><button class="btn primary" type="submit">Ajukan</button><span class="rn-muted" data-apply-msg></span></div>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
+<script src="../assets/js/verifikator.js?v=verifikator-20260904"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navverif-20260904"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

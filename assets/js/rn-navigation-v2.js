@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.0.6",
+    version: "2.0.7",
 
     posko: [
       {
@@ -95,6 +95,10 @@
       {
         label: "Verification",
         href: "verification-approval.html"
+      },
+      {
+        label: "Jaringan Verifikator",
+        href: "verifikator.html"
       },
       {
         label: "AI Analyst",

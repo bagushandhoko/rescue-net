@@ -1,0 +1,25 @@
+{
+  "doctype": "DocType",
+  "name": "RN Verification Action",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "legacy_id", "label": "Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "title", "label": "Judul", "fieldtype": "Data" },
+    { "fieldname": "disaster_event", "label": "Disaster Event", "fieldtype": "Data" },
+    { "fieldname": "object_type", "label": "Jenis Objek", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "object_id", "label": "ID Objek", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "action_type", "label": "Aksi", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "verification_status", "label": "Status Verifikasi", "fieldtype": "Data" },
+    { "fieldname": "trust_level", "label": "Trust Level", "fieldtype": "Data" },
+    { "fieldname": "reviewed_by", "label": "Oleh", "fieldtype": "Data" },
+    { "fieldname": "reviewer_role", "label": "Peran", "fieldtype": "Data" },
+    { "fieldname": "review_notes", "label": "Catatan", "fieldtype": "Small Text" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1 }
+  ]
+}

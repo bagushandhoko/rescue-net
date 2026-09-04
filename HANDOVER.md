@@ -4,7 +4,7 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-04 (blueprint gap-closure: guest aid + edit code, club membership + HQ approval — DONE; external verifier network — in progress)_
+_Last updated: 2026-09-04 (blueprint gap-closure: guest aid + edit code, club membership + HQ approval, external verifier network — ALL DONE & DEPLOYED)_
 
 ---
 
@@ -81,18 +81,79 @@ and no approval surface.
   `verified_member_of: ['Komunitas Landrover']`. Playwright as LD1 → member
   section + admin panel render, 0 console errors.
 
-### Gap 9 — External verifier network (lurah / polsek / public figure) — IN PROGRESS
+### Gap 9 — External verifier network (lurah / polsek / tokoh publik) — DONE & DEPLOYED
 
-Independent / warga poskos become credible when an external **verifier**
-(government or a willing public figure, scoped to a wilayah) endorses them —
-either by site visit or a "member-get-member" network vouch. Legacy doctypes
-`RN Verifier Profile` / `RN Verification Request` / `RN Verification Endorsement`
-/ `RN Verification Action` exist in the DB (0 rows, not in the repo). Being built
-next: repo doctype JSON + `api_verifier.py` (apply-as-verifier, verifier
-directory by wilayah, posko → request verification from a wilayah verifier,
-verifier inbox, endorse by site_visit / network_vouch → bumps
-`RN Posko.trusted_verifier_count` / `verification_status`), a `verifikator.html`
-surface, and seed data.
+Owner: an **independent / warga posko** becomes credible when a **verifier in its
+wilayah** endorses it. A verifier is government OR a willing public figure.
+Verification is by **site visit** or a **"member-get-member" network vouch**
+("via kenalan dia"). A verifier is onboarded by System Manager OR vouched in by a
+senior verifier (trust ≥ 2). "Setiap posko bisa ajukan verifikasi ke verifikator
+di wilayahnya."
+
+- **4 DocTypes brought into the repo** (were DB-only from the FastAPI migration,
+  0 rows): `RN Verifier Profile` (+ `wilayah`, `sponsor_verifier`,
+  `endorsement_count`), `RN Verification Request` (+ `verifier`, `method`,
+  `wilayah`), `RN Verification Endorsement` (+ `method`
+  site_visit/network_vouch/document_review, `vouched_via`), `RN Verification
+  Action` (audit). Minimal JSON — migrate adds the new columns, legacy columns
+  left untouched.
+- **`api_verifier.py` (NEW):**
+  - `apply_as_verifier(display_name, verifier_type, wilayah, position_title?,
+    public_role_description?, phone?, email?, sponsor_verifier?)` — anyone
+    logged-in applies; status `pending`.
+  - `verifier_directory(wilayah?, status="active")` — `allow_guest`; wilayah is
+    a loose token match (kelurahan ⊂ kecamatan ⊂ kota).
+  - `approve_verifier(verifier, action, trust_level?, note?)` — System Manager or
+    a `trust_level>=2` active verifier (becomes `sponsor_verifier`, sponsee
+    starts one trust level below).
+  - `request_posko_verification(posko, verifier?, method, note?)` — the posko's
+    manager asks; `verifier` optional (empty = open request for the wilayah);
+    wilayah derived from the posko's village/district/city.
+  - `my_verification_requests()` — requests for poskos the caller manages.
+  - `verifier_inbox()` — direct requests + open requests matching the verifier's
+    wilayah.
+  - `endorse_posko(request?/posko?, method, statement?, vouched_via?,
+    verification_level?)` — active verifier only; `network_vouch` requires
+    `vouched_via`. Recomputes `RN Posko.trusted_verifier_count` +
+    `verification_status`: ≥1 active endorsement → `community_verified`; a
+    government verifier (trust ≥ 2) or ≥2 endorsements → `official_verified`.
+    Writes an `RN Verification Action` audit row; bumps the verifier's
+    `endorsement_count`.
+  - `revoke_endorsement(endorsement, reason?)` — verifier or SM; recomputes
+    credibility (can drop back to `self_reported`).
+  - `posko_verification_public(posko)` — `allow_guest` credibility panel
+    (status, count, endorser names / method / statement).
+- **`setup/verifier_defaults.py`** (hooks after_install/after_migrate,
+  idempotent) — 3 active verifiers (Keuchik Johan Pahlawan gov/trust2 linked to
+  `admin.osiun@gmail.com`; Kapolsek Kaway XVI gov/trust2; Tgk. Imam Meulaboh
+  religious/trust1), 1 pending (Ketua Karang Taruna Samatiga, sponsored by the
+  Keuchik, linked to yusuf.hidayat), + 2 verification requests (SIM-NS-POSKO-WARGA
+  → Keuchik site_visit; SIM-NS-POSKO-PELAJAR → open network_vouch). 6 rows first run.
+- **Frontend:** NEW `pages/verifikator.html` + `assets/js/verifikator.js`
+  (`?v=verifikator-20260904`) — role-aware: **verifier inbox** (endorse w/
+  site_visit or network_vouch + vouched_via + statement), **"Verifikasi Posko
+  Saya"** (request form, pick a wilayah verifier or open), **approval queue** for
+  SM / senior verifiers, a **wilayah-searchable directory**, and a **"Jadi
+  Verifikator"** apply form (with optional sponsor). Nav
+  `rn-navigation-v2.js` 2.0.6→**2.0.7** + "Jaringan Verifikator" entry;
+  cache-buster `navorg-20260903` → **`navverif-20260904`** on
+  `rn-navigation-v2.{js,css}` across 33 pages.
+- **Deploy:** api_verifier.py + hooks.py + verifier_defaults.py + 4 doctype dirs
+  → `osiun-frappe-backend`; `bench migrate` (4 doctypes + new columns +
+  verifier seed 6 rows) + restart. Frontend from disk.
+- **Verified:** guest `verifier_directory` → 3 active, wilayah=Kaway → 1;
+  `bench console` as the Keuchik → `verifier_inbox` (1 direct + 1 wilayah-open),
+  `endorse_posko` from the request → endorsement active, request→completed,
+  `SIM-NS-POSKO-WARGA` `trusted_verifier_count 1` + `verification_status
+  official_verified` (gov path); `posko_verification_public` shows the endorser +
+  statement; LD3 (no verifier profile) blocked from `endorse_posko`. Playwright
+  guest load of `verifikator.html` → directory 3 cards, wilayah filter works,
+  apply form + sponsor dropdown populated, 0 console errors.
+
+**Note (infra, not code):** during this work the Tailscale **Funnel** (public
+`osiun.tail251e1e.ts.net`) went unreachable (`000`); the backend + app serve
+fine on `http://localhost/rescue-net{,-frappe}/`. If the public host is still
+down, it's the Funnel, not Rescue-Net.
 
 ---
 

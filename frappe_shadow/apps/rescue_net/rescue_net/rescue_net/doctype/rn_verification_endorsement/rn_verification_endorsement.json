@@ -1,0 +1,36 @@
+{
+  "doctype": "DocType",
+  "name": "RN Verification Endorsement",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "legacy_id", "label": "Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "title", "label": "Judul", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "request", "label": "Permintaan", "fieldtype": "Link", "options": "RN Verification Request" },
+    { "fieldname": "target_type", "label": "Jenis Target", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "target_id", "label": "ID Target", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "verifier", "label": "Verifikator", "fieldtype": "Link", "options": "RN Verifier Profile" },
+    { "fieldname": "verifier_display_name", "label": "Nama Verifikator", "fieldtype": "Data" },
+    { "fieldname": "verifier_role", "label": "Peran Verifikator", "fieldtype": "Data" },
+    { "fieldname": "method", "label": "Metode Verifikasi", "fieldtype": "Select",
+      "options": "site_visit\nnetwork_vouch\ndocument_review", "default": "site_visit", "in_list_view": 1 },
+    { "fieldname": "vouched_via", "label": "Direkomendasikan Via (member-get-member)", "fieldtype": "Data" },
+    { "fieldname": "verification_scope", "label": "Cakupan", "fieldtype": "Data" },
+    { "fieldname": "verification_level", "label": "Tingkat Verifikasi", "fieldtype": "Int", "default": "1" },
+    { "fieldname": "statement", "label": "Pernyataan Verifikator", "fieldtype": "Small Text" },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Select",
+      "options": "active\nrevoked\nexpired", "default": "active", "in_list_view": 1 },
+    { "fieldname": "visible_on_profile", "label": "Tampil di Profil Publik", "fieldtype": "Check", "default": "1" },
+    { "fieldname": "verified_at", "label": "Diverifikasi Pada", "fieldtype": "Datetime" },
+    { "fieldname": "expires_at", "label": "Kedaluwarsa Pada", "fieldtype": "Datetime" },
+    { "fieldname": "revoked_at", "label": "Dicabut Pada", "fieldtype": "Datetime" },
+    { "fieldname": "revoked_by", "label": "Dicabut Oleh", "fieldtype": "Data" },
+    { "fieldname": "revoke_reason", "label": "Alasan Pencabutan", "fieldtype": "Small Text" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1 }
+  ]
+}

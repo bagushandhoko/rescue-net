@@ -13,6 +13,7 @@ after_install = [
     "rescue_net.setup.unit_conversion_defaults.install_defaults",
     "rescue_net.setup.org_brand_defaults.install_defaults",
     "rescue_net.setup.membership_defaults.install_defaults",
+    "rescue_net.setup.verifier_defaults.install_defaults",
 ]
 
 # Re-seed the editable rule tables after every migrate. All installers are
@@ -23,4 +24,5 @@ after_migrate = [
     "rescue_net.setup.unit_conversion_defaults.install_defaults",
     "rescue_net.setup.org_brand_defaults.install_defaults",
     "rescue_net.setup.membership_defaults.install_defaults",
+    "rescue_net.setup.verifier_defaults.install_defaults",
 ]

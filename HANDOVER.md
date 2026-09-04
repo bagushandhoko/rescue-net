@@ -4,7 +4,90 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-04 (blueprint gap-closure: guest aid + edit code, club membership + HQ approval, external verifier network — ALL DONE & DEPLOYED)_
+_Last updated: 2026-09-04 (post-gap batch A/B/C: verif-badge everywhere, data-consolidation rollup, Perencanaan Pengungsi + Masukan Masyarakat + Tender/RAB modules, BYOK org keys, Peta Nasional — ALL DONE & DEPLOYED)_
+
+---
+
+## Post-gap batch — A + B + C11/C13 (2026-09-04) — DONE & DEPLOYED
+
+Owner: after the 3 blueprint gaps, "di setiap posko ada tanda level verifikasi";
+"lanjutkan A dan B, untuk c nomer 11 dan 13".
+
+### A — verif-badge everywhere + verifier UX (commit `f4a8ea8`)
+- **NEW `assets/js/rn-verif-badge.js`** (`?v=vbadge-20260904`) — one shared
+  `RNVerifBadge.html(status, count)` badge + CSS `.rn-vbadge--{self,warn,pend,comm,org,off}`.
+  Wired: posko-detail (subtitle + overview + a new **"Kredibilitas & Verifikasi"**
+  panel from `api_verifier.posko_verification_public`), registrasi-posko Daftar
+  Posko table, koordinasi-organisasi posko cards. `posko_detail` /
+  `posko_registry_board` / `my_org_coordination` now return `trusted_verifier_count`.
+- `verifikator.js` request form lists the operator's **managed poskos**
+  (`my_verification_requests` → `my_poskos`), so a first request is possible.
+- `registrasi-posko` — new **"Minta Verifikasi Wilayah"** (site_visit /
+  network_vouch → `request_posko_verification`) + link to verifikator.html.
+- `kirim-bantuan` — hardcoded `disaster_event_id` textbox → **"Pilih Bencana"**
+  `<select>` from `api_ai.public_active_disasters`.
+- Demo endorsement committed: `SIM-NS-POSKO-WARGA` = `official_verified` (1 verifier).
+
+### B5 — data-consolidation rollup panels (commit `ce882c0`)
+`/national-rollup` was a dead `consolidation_summary` (counts-only) map → always
+empty. Now `api_intelligence.control_centre_summary` (the honest 3-bucket
+consolidation). `renderNationalRollup` = per canonical-group×base-unit
+(terukur / perkiraan AI / belum terukur); `renderRollupTrace` = "mana yang perlu
+ditinjau". `?v=datacons-20260904b`. + MOCKUP_ALIGNMENT_PLAN comms_board checkbox
+ticked (12/12 done).
+
+### B6 — Perencanaan Pengungsi + Masukan Masyarakat (commit `9b71142`)
+Two blueprint Rehabilitation modules with no backing.
+- **`RN Displacement Plan`** + `api_displacement.py` (`displacement_board` guest,
+  `create_/update_displacement_plan`) + `pages/perencanaan-pengungsi.html`.
+  KK/kelompok, asal, in_camp, health_status healthy/needs_care/orphan/mixed,
+  plan_type return_home/relocate/undecided, est biaya kembali + bantuan awal,
+  dukungan diperlukan. Rollup kembali vs relokasi + estimasi dana total.
+- **`RN Community Feedback`** + `api_forum.py` (`feedback_threads` guest +
+  category filter, `post_feedback` / `upvote_feedback` guest no-account,
+  `respond_feedback` operator) + `pages/masukan-masyarakat.html` (tabs, upvote,
+  reply, tanggapan resmi).
+- `setup/rehab_forum_defaults.py` (hooks) — 4 plans + 3 threads.
+- Nav 2.0.7→2.0.8 + 2 entries. **6 new doctype controllers** added (these +
+  the 4 verifier doctypes) so a fresh install imports them.
+
+### B7 — Tender / RAB (commit `470f54d`)
+`RN Procurement Tender` + `RN Tender Bid` + `api_tender.py` (`tender_board` guest
+w/ open/RAB-total/bids KPI; `tender_detail` guest w/ bidder contacts **masked**
+unless owner; `create_tender` / `update_tender_status` login; `submit_bid`
+allow_guest, only while open + before `bidding_closes_at`; `set_bid_status` —
+"awarded" flips tender + rejects the rest). `pages/pengadaan-tender.html` — list,
+download RAB link, inline "Ajukan Penawaran" (no account), owner "Tetapkan
+pemenang". `setup/tender_defaults.py` — 2 tenders + 5 bids. Nav 2.0.8→2.0.9.
+
+### C11 — BYOK AI organisation keys + usage log (commit `2fa008a`)
+- `api_ai.py`: `save_org_key` / `get_org_key_status` / `delete_org_key` (gated
+  `can_manage_organization`), `test_ai_key` (tiny provider call, user OR org
+  scope, never returns the key), `ai_usage_summary` (30-day call/token counts).
+  **`_resolve_ai_key`** = personal key first, then the asker's approved-org key;
+  `ask()` uses it and writes an **`RN AI Usage Log`** row per call (counts only,
+  no question/answer text, no secret) on success + every failure.
+- `ai-settings.html/.js` (`?v=byok-org-20260904`) — "Uji Koneksi", a "Kunci AI
+  Organisasi" section (org admins), "Pemakaian AI (30 hari)" panel.
+- Verified (bench console as SIM-LR-ORG owner): save→saved (`****ghij`);
+  `_resolve_ai_key` for a member w/o personal key → `organization / SIM-LR-ORG`;
+  `test_ai_key` fake key → "Kunci ditolak (401)"; non-owner blocked.
+
+### C13 — Peta Nasional / GIS rollup (commit `1fa77c6`)
+`api_gis.national_situation(active_only)` guest — per-province rollup across ALL
+active disasters (posko count, verified/official, distinct events + max severity,
+jiwa, open needs, cities drill) + `points[]` = every posko w/ coords.
+`pages/peta-nasional.html` + `peta-nasional.js` — KPI, a **Leaflet + OSM** map
+(vendored) with severity-coloured circleMarkers + verif-badge popups + province
+filter, and a province rollup table. Nav 2.0.9→**2.1.0** + "Peta Nasional".
+Verified: guest → 3 provinces + "Belum Terdata", 31 posko, 6 disasters, 4.980
+jiwa, 36 needs; Playwright → 21 OSM tiles + 31 markers, 0 console errors.
+
+**Deploy notes this batch:** container `docker cp` lands files mode `000`/`044`
+even after `chown frappe` — must `docker exec -u root … chmod 0644` every copied
+`.py`/`.json`/doctype file or `bench migrate` reports the DocType JSON "missing"
+and a fresh DocType's controller import fails (`ModuleNotFoundError`). Nav
+cache-buster walked `navorg`→`navverif`→`navrehab`→`navtender`→`navgis`-20260904.
 
 ---
 

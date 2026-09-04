@@ -439,4 +439,4 @@ Tiap endpoint dashboard mengembalikan, selain `totals` + data panel:
 - [x] `api_resource_tools.tools_board(disaster_event)`
 - [x] `api_resource_tools.resource_profile_board(user_account)`
 - [x] `program_board(disaster_event)` + `program_detail(program)`
-- [ ] `comms_board(disaster_event)` (+ doctype/seed alat komunikasi)
+- [x] `comms_board(disaster_event)` (+ doctype/seed alat komunikasi) — DONE 2026-09-03 (Step 11/12; api_comms.py + 3 doctypes + seed_comms.py; pages/alat-komunikasi.html). Semua 12 langkah roadmap selesai.

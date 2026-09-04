@@ -83,22 +83,18 @@ async function rnFetch(path, options = {}) {
     url.pathname ===
       "/data-consolidation/national-rollup"
   ) {
-    const summary =
+    // Real consolidated rollup: canonical-group x base-unit with the
+    // 3-bucket honest split (terukur / perkiraan / belum terukur).
+    const ccs =
       await RN_FRAPPE.call(
-        "rescue_net.api_frontend_bridge."
-        + "consolidation_summary",
-        {
-          disaster_event:
-            eventId
-        }
+        "rescue_net.api_intelligence.control_centre_summary",
+        {}
       );
-
     return {
-      disaster_event_id:
-        eventId,
-      summary,
-      national_rollup:
-        summary
+      disaster_event_id: eventId,
+      groups: (ccs && ccs.groups) || [],
+      raw_need_count: (ccs && ccs.raw_need_count) || 0,
+      warning: ccs && ccs.warning
     };
   }
 
@@ -305,69 +301,62 @@ function formatQty(value) {
   return Number.isInteger(num) ? String(num) : num.toFixed(2);
 }
 
+// Real consolidated rollup from api_intelligence.control_centre_summary:
+// one row per (canonical_group, base_unit) with the honest 3-bucket split.
 function renderNationalRollup(payload) {
   const target = document.querySelector("[data-national-rollup]");
   if (!target) return;
-  const rows = payload?.national_rollup || [];
-  target.innerHTML = rows.length ? rows.map(row => {
-    const warning = row.duplicate_warning_count > 0;
-    const chip = warning ? `<span class="chip warning">${row.duplicate_warning_count} overlap</span>` : '<span class="chip success">baseline detail</span>';
+  const groups = (payload?.groups || [])
+    .slice()
+    .sort((a, b) => (b.qty_total || 0) - (a.qty_total || 0));
+  target.innerHTML = groups.length ? groups.map(g => {
+    const unit = safe(g.base_unit, "");
+    const est = Number(g.qty_estimated || 0) > 0;
+    const um = Number(g.unmeasurable_count || 0) > 0;
     return `
       <article class="event-card">
         <div class="event-main">
           <div>
-            <h4>${safe(row.item_name)} | ${formatQty(row.baseline_quantity)} ${safe(row.quantity_unit, "")}</h4>
+            <h4>${safe(g.canonical_group || g.canonical_item)} | ${formatQty(g.qty_total)} ${unit}</h4>
             <p>
-              Range: ${formatQty(row.range_min)}-${formatQty(row.range_max)} ${safe(row.quantity_unit, "")}<br>
-              Detail: ${row.detail_count || 0} posko/area | Sources: ${row.source_count || 0}<br>
-              ${row.operator_note || ""}
+              Terukur: <b>${formatQty(g.qty_measurable)}</b> ${unit} ·
+              Perkiraan AI: <b>${formatQty(g.qty_estimated)}</b> ${unit}<br>
+              ${g.source_count != null ? `${g.source_count} laporan digabung` : ""}${g.organization_count > 1 ? ` · ${g.organization_count} organisasi` : ""}${um ? ` · ${g.unmeasurable_count} belum terukur` : ""}
             </p>
           </div>
           <div class="chips">
-            <span class="chip neutral">${safe(row.need_type)}</span>
-            ${chip}
+            ${um ? `<span class="chip warning">${g.unmeasurable_count} belum terukur</span>`
+                 : (est ? '<span class="chip neutral">ada perkiraan</span>'
+                        : '<span class="chip success">terukur penuh</span>')}
           </div>
         </div>
       </article>
     `;
-  }).join("") : card("Belum ada rollup nasional", "Klik Rebuild Consolidated Needs lalu muat ulang data konsolidasi.", "empty");
+  }).join("") : card("Belum ada kebutuhan terkonsolidasi", "Belum ada RN Community Need aktif untuk dikonsolidasikan.", "empty");
 }
 
+// "Trace": the same groups ordered by what still needs review (belum terukur,
+// lalu perkiraan terbesar) — an honest "mana yang perlu ditinjau" list.
 function renderRollupTrace(payload) {
   const target = document.querySelector("[data-rollup-trace]");
   if (!target) return;
-  const details = payload?.detail_rows || [];
-  const aggregate = payload?.aggregate_context || [];
-  const rows = details.slice(0, 12).map(row => {
-    const trace = row.trace || {};
-    const place = [trace.village, trace.district, trace.city, trace.province].filter(Boolean).join(", ") || trace.area_level || "lokasi belum rinci";
-    const warning = row.duplicate_warning_count > 0;
-    return `
-      <article class="event-card">
-        <div class="event-main">
-          <div>
-            <h4>${safe(row.item_name)} | ${formatQty(row.quantity_final)} ${safe(row.quantity_unit, "")}</h4>
-            <p>${place}<br>${safe(trace.posko_name)} | ${safe(trace.posko_id, "area report")}</p>
-            <small>Sources: ${(trace.source_ids || []).join(", ") || "n/a"}</small>
-          </div>
-          <div class="chips">
-            <span class="chip ${warning ? "warning" : "success"}">${warning ? "ada overlap" : "detail"}</span>
-            <span class="chip neutral">${safe(trace.area_level)}</span>
-          </div>
-        </div>
-      </article>
-    `;
-  });
-  const aggregateRows = aggregate.slice(0, 6).map(row => {
-    const trace = row.trace || {};
-    const place = [trace.district, trace.city, trace.province].filter(Boolean).join(", ") || trace.area_level || "area agregat";
+  const groups = (payload?.groups || [])
+    .slice()
+    .sort((a, b) =>
+      (b.unmeasurable_count || 0) - (a.unmeasurable_count || 0) ||
+      (b.qty_estimated || 0) - (a.qty_estimated || 0));
+  const needsReview = groups.filter(g =>
+    Number(g.unmeasurable_count || 0) > 0 || Number(g.qty_estimated || 0) > 0);
+  target.innerHTML = needsReview.length ? needsReview.slice(0, 15).map(g => {
+    const unit = safe(g.base_unit, "");
     return card(
-      `${safe(row.item_name)} | konteks agregat`,
-      `${place}<br>${row.sop_note || "Jangan masuk angka final sebelum dipecah ke posko/desa."}`,
-      "aggregate context"
+      `${safe(g.canonical_group || g.canonical_item)} | perlu ditinjau`,
+      `Perkiraan AI ${formatQty(g.qty_estimated)} ${unit}` +
+      (g.unmeasurable_count ? ` · ${g.unmeasurable_count} entri tanpa angka baku` : "") +
+      `<br>Terukur pasti: ${formatQty(g.qty_measurable)} ${unit}`,
+      g.unmeasurable_count ? "belum terukur" : "perkiraan"
     );
-  });
-  target.innerHTML = rows.concat(aggregateRows).join("") || card("Belum ada trace", "Trace akan muncul setelah consolidated needs tersedia.", "empty");
+  }).join("") : card("Semua terukur", "Tidak ada kelompok kebutuhan yang perlu ditinjau — semua sudah punya angka baku.", "ok");
 }
 
 function renderAreas(rows) {

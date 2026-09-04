@@ -32,30 +32,44 @@
     });
   }
 
+  function hideOne(host) {
+    if (host && !host.dataset.rnScopeHidden) {
+      host.dataset.rnScopeHidden = "1";
+      host.hidden = true;
+      return true;
+    }
+    return false;
+  }
+
   function hideEditForms() {
     var sels = [
       ".panel.create-panel",
-      ".rn-input-drawer",
       "[data-rn-create-logistic-need]",
       "[data-rn-create-aid-offer]",
       "[data-create-armada]",
       "[data-assign-form]",
       "[data-armada-add-btn]",
       "#armadaForm", "#armadaAddBtn",
-      "#stockForm", "#transferForm"
+      "#stockForm", "#transferForm",
+      // posko-medis-detail / shelter-detail / dapur-umum record forms
+      "#caseForm", "#supplyUseForm", "#occupancyForm", "#needForm", "#mealForm"
     ];
     var seen = 0;
     sels.forEach(function (sel) {
       document.querySelectorAll(sel).forEach(function (el) {
         // keep read-only drawers that only display data
         if (el.classList.contains("rn-stockcards-panel")) return;
-        var host = el.closest(".panel") && !el.classList.contains("panel")
-          ? el.closest(".panel") : el;
-        if (host && !host.dataset.rnScopeHidden) {
-          host.dataset.rnScopeHidden = "1";
-          host.hidden = true;
-          seen++;
+        var host;
+        if (el.tagName === "FORM") {
+          // a record form living inside a mixed "Riwayat" drawer: hide just the
+          // form (or its <aside> wrapper), never the whole drawer, so the
+          // read-only history stays visible.
+          host = el.closest("aside") || el.closest(".panel.create-panel") || el;
+        } else {
+          host = el.closest(".panel") && !el.classList.contains("panel")
+            ? el.closest(".panel") : el;
         }
+        if (hideOne(host)) seen++;
       });
     });
     return seen;
@@ -111,8 +125,12 @@
     if (!scope || !scope.logged_in || !scope.is_org_member) return;
     if (scope.is_system_manager) return;
 
-    // 1. no posko chosen yet -> default to the member's own posko
-    if (!pid && scope.primary_posko) {
+    // 1. no posko chosen yet -> default to the member's own posko.
+    //    Only on the generic posko workspaces; the type-specific detail pages
+    //    (medis / shelter / dapur) keep whatever ?id= the nav gave them so a
+    //    logistics operator is not bounced onto a medical posko with no data.
+    var REDIRECT_PAGES = /\/(posko-logistik|posko-distribusi|posko-detail)\.html$/;
+    if (!pid && scope.primary_posko && REDIRECT_PAGES.test(location.pathname)) {
       var u = new URLSearchParams(location.search);
       u.set("id", scope.primary_posko);
       if (!u.get("event")) u.set("event", ev);

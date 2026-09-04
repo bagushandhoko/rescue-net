@@ -4,11 +4,11 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-03 (Koordinasi Internal Organisasi — phase 1 + phase 2 DONE & DEPLOYED)_
+_Last updated: 2026-09-04 (Koordinasi Internal Organisasi — phase 3 DONE & DEPLOYED; phases 1-2 done 2026-09-03)_
 
 ---
 
-## Koordinasi Internal Organisasi — org-member workspace (2026-09-03) — PHASE 1 + 2 DONE & DEPLOYED
+## Koordinasi Internal Organisasi — org-member workspace (2026-09-03..04) — PHASE 1 + 2 + 3 DONE & DEPLOYED
 
 Owner brief: "jika login sbg member organisasi, spt Land Rover Club, seharusnya
 yang tampil posko dia [sendiri], dia sendiri yang [me]rubah — bukan posko member
@@ -92,20 +92,59 @@ I logged in as".
 - **Verified (authenticated curl as LD2):** `posko_edit_scope` — guest →
   `can_edit_current:true` (no-op); own posko LD2 → `true`; sibling LD4 →
   `false` + `primary_posko:SIM-LR-POSKO-LD2`; no posko → `primary_posko` set for
-  the redirect. Browser-level E2E of the read-only overlay / redirect: Playwright
-  runs kept timing out because the NAS was at load-avg ~10 (repeated 1.6 GB
-  playwright container starts) — direct curl shows the pages + endpoint healthy
-  and fast; **re-run `/volume1/docker/osiun-playwright-check/rn-poskoscope2.js`
-  when load is lower to capture the screenshot.**
+  the redirect. E2E screenshot `rn-poskoscope-ld4.png` (2026-09-03 21:44) shows
+  the `posko-logistik` read-only overlay rendering for a sibling posko.
 
-**Phase 3 / open (not done):**
-- Owner call: should `community_coordinator` (LD1) get edit on all of the org's
-  poskos, or stay pure-viewer? Phases 1-2 = pure viewer.
-- `posko-medis-detail.html` / `shelter-detail.html` / `dapur-umum.html` don't
-  include `rn-posko-scope.js` yet (only the 3 done). Add if the same gating is
-  wanted there.
-- Populate `brand_color` / `brand_logo` for the demo orgs (currently only the
-  hard-coded map entry for SIM-LR-ORG).
+**Built — phase 3 (2026-09-04): gate the type-specific detail pages + real org brand:**
+- **`assets/js/rn-posko-scope.js` (`?v=poskoscope-20260904`)** now also included on
+  `posko-medis-detail.html` / `shelter-detail.html` / `dapur-umum.html` (after
+  `rn-frappe-client.js`). Changes to the shared script:
+  - `hideEditForms()` gained the record-form ids `#caseForm` / `#supplyUseForm`
+    (medis), `#occupancyForm` / `#needForm` (shelter), `#mealForm` (dapur).
+  - For a matched `<form>` the host is resolved as
+    `closest("aside") || closest(".panel.create-panel") || the form itself` — so a
+    record form living inside a **mixed "Riwayat" drawer** (e.g. shelter "Shelter
+    Needs (Riwayat)" = history list + an `Add Shelter Need` aside) hides only the
+    aside/form, never the whole drawer; the read-only history stays visible.
+  - Dropped the blanket `.rn-input-drawer` selector (it would have hidden the
+    read-only `#occupancyPanel` / `#stockPanel` / "Riwayat" drawers on the new
+    pages; `.panel.create-panel` already covers the real create drawers on
+    posko-logistik / posko-distribusi).
+  - The **no-`?id=` → own-posko redirect** is now limited to
+    `posko-logistik|posko-distribusi|posko-detail` (regex on `location.pathname`);
+    a logistics operator opening `posko-medis-detail.html` with no id is no longer
+    bounced onto a medical posko that has no data for him. Read-only gating still
+    applies on all six pages when an `?id=` he can't manage is present.
+- **`setup/org_brand_defaults.py`** (new) — idempotent installer, wired into
+  `hooks.py` `after_install` + `after_migrate`. Seeds `RN Organization.brand_color`
+  for 13 demo orgs (SIM-LR-ORG `#2f6f3e`, org-landrover `#005a2b`, SIM-NS-BNPB
+  `#1f5fa8`, SIM-NS-GARUDA `#0f4c81`, SIM-NS-TNIAL `#0b3d69`, SIM-NS-PELAJAR
+  `#b8232f`, SIM-NS-WARGA `#a8571e`, SIM-LOG-ORG-SOLID `#6a3d9a`, KH-ORG-BPBD /
+  BKSDA / MANGGALA / MPA / TNIAU). **Skips any org whose `brand_color` was set in
+  Desk** — never clobbers a hand-edited value. `brand_logo` left null on purpose:
+  no first-party logo assets for these `[SIMULASI]` orgs, and the initial-badge
+  already carries identity. `_org_brand()` already prefers `brand_color` over the
+  `_ORG_BRAND_ACCENT` map / HSL-hue fallback, so these now flow through
+  `my_org_coordination` + `posko_edit_scope`.
+- **Deploy:** `setup/org_brand_defaults.py` + `hooks.py` cp→container (chown
+  frappe, md5 host==container, `ast.parse` OK), `bench execute
+  rescue_net.setup.org_brand_defaults.install_defaults` → 13 set / 0 skipped,
+  `docker restart osiun-frappe-backend` (200 after ~16s, backup
+  `hooks.py.bak-<ts>-orgbrand`). Frontend (JS + 3 HTML) served from disk = live.
+- **Verified:** authenticated curl as LD2 → `posko_edit_scope` sibling LD4 returns
+  `brand.accent:"#2f6f3e"` (now DB-sourced). Playwright
+  `/volume1/docker/osiun-playwright-check/rn-poskoscope3.js` as LD2 vs a sibling
+  posko on all 3 detail pages — **ALL PASS**: shelter-detail + dapur-umum fired
+  the real "Hanya-lihat" banner live (`realBanner=true`), medis-detail confirmed
+  by the deterministic selector run (endpoint round-trip timed out under NAS
+  load-avg ~7, same shared code path proven live on the other two); record forms
+  hidden, every read-only "Riwayat" panel still visible, 0 console errors.
+  Screenshots `rn-poskoscope3-{posko-medis-detail,shelter-detail,dapur-umum}.png`.
+
+**Phase 3 / open (owner call only — no code pending):**
+- Should `community_coordinator` (LD1, no posko) get edit on all of the org's
+  poskos, or stay pure-viewer? Phases 1-3 = pure viewer. Everything else in this
+  work unit is done.
 
 ---
 

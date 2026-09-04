@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Pengadaan &amp; Tender</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=tender-20260904">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navtender-20260904" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <style>
+    .td-card { border: 1px solid var(--line); border-radius: 12px; padding: 13px 15px; margin-bottom: 12px; background: var(--panel2); }
+    .td-card h4 { margin: 0 0 4px; font-size: 15px; }
+    .td-meta { color: var(--muted); font-size: 12px; }
+    .td-bids { margin-top: 10px; }
+    .td-bid { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px dashed var(--line); padding: 6px 0; font-size: 13px; }
+    .td-bid b { min-width: 120px; }
+    .td-actions { margin-top: 10px; display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div><h1>Rescue-Net</h1><p>Disaster Management System</p></div>
+    </div>
+    <nav>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a class="active" href="pengadaan-tender.html?event=event-sim-001">Pengadaan &amp; Tender</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Pengadaan &amp; Tender</div>
+      <div>
+        <p class="eyebrow">Management Donation · Tender / RAB</p>
+        <h2>Pengadaan &amp; Tender</h2>
+        <p class="subtitle">Pekerjaan pembangunan yang didanai donasi ditenderkan secara terbuka: RAB / B&amp;Q bisa diunduh, siapa pun bisa mengajukan penawaran sampai batas waktu, penyelenggara menetapkan pemenang.</p>
+        <p class="subtitle" id="tdStatus">Memuat…</p>
+      </div>
+      <div class="status-pill" id="tdCount">—</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>Tender</span><strong id="kpiTotal">-</strong><small>seluruh</small></div>
+      <div class="kpi-card"><span>Terbuka</span><strong id="kpiOpen">-</strong><small>menerima penawaran</small></div>
+      <div class="kpi-card"><span>Nilai RAB</span><strong id="kpiRab">-</strong><small>total (Rp)</small></div>
+      <div class="kpi-card"><span>Penawaran Masuk</span><strong id="kpiBids">-</strong><small>seluruh tender</small></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><div><h3>Daftar Tender</h3><p>Klik "Ajukan Penawaran" untuk menawar. Klik nilai RAB untuk mengunduh dokumen.</p></div></div>
+      <div id="tdList"></div>
+    </section>
+
+    <details class="panel create-panel">
+      <summary><h3>Buat Tender Baru</h3><p>Perlu login (organisasi penyelenggara / koordinator).</p></summary>
+      <form class="rn-form" id="tdForm">
+        <div class="form-grid">
+          <label>Disaster Event<input name="disaster_event" value="event-sim-001" required></label>
+          <label>Judul Pekerjaan<input name="title" required placeholder="Rehabilitasi 2 ruang kelas SD 3 Samatiga"></label>
+          <label>Lokasi<input name="location" placeholder="Samatiga, Aceh Barat"></label>
+          <label>Nilai RAB / HPS (Rp)<input name="rab_total" type="number" min="0" value="0"></label>
+          <label>URL Dokumen RAB / B&amp;Q<input name="rab_document_url" placeholder="https://…/rab-sd3.pdf"></label>
+          <label>Program Donasi (opsional)<input name="donor_program" placeholder="RN Donor Program id"></label>
+          <label>Batas Akhir Penawaran<input name="bidding_closes_at" type="datetime-local" required></label>
+          <label>Narahubung<input name="contact_person"></label>
+          <label>Kontak<input name="contact_phone"></label>
+        </div>
+        <label style="display:grid;gap:6px;margin-top:10px">Lingkup Pekerjaan<textarea name="scope_description" rows="2"></textarea></label>
+        <div class="form-actions"><button class="btn primary" type="submit">Buat Tender</button><span class="rn-muted" data-td-msg></span></div>
+      </form>
+    </details>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
+<script src="../assets/js/pengadaan-tender.js?v=tender-20260904"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navtender-20260904"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

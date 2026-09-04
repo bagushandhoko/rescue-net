@@ -1,0 +1,32 @@
+{
+  "doctype": "DocType",
+  "name": "RN Procurement Tender",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "legacy_id", "label": "Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "title", "label": "Judul Pekerjaan", "fieldtype": "Data", "reqd": 1, "in_list_view": 1 },
+    { "fieldname": "disaster_event", "label": "Disaster Event", "fieldtype": "Link", "options": "RN Disaster Event" },
+    { "fieldname": "disaster_event_legacy_id", "label": "Disaster Event Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "donor_program", "label": "Program Donasi", "fieldtype": "Link", "options": "RN Donor Program" },
+    { "fieldname": "organization", "label": "Organisasi Penyelenggara", "fieldtype": "Link", "options": "RN Organization" },
+    { "fieldname": "scope_description", "label": "Lingkup Pekerjaan", "fieldtype": "Text" },
+    { "fieldname": "location", "label": "Lokasi", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "rab_total", "label": "Nilai RAB / HPS (Rp)", "fieldtype": "Float", "in_list_view": 1 },
+    { "fieldname": "rab_document_url", "label": "Dokumen RAB / B&Q (URL)", "fieldtype": "Data" },
+    { "fieldname": "bidding_opens_at", "label": "Buka Penawaran", "fieldtype": "Datetime" },
+    { "fieldname": "bidding_closes_at", "label": "Batas Akhir Penawaran", "fieldtype": "Datetime", "in_list_view": 1 },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Select",
+      "options": "draft\nopen\nevaluation\nawarded\ncancelled", "default": "draft", "in_list_view": 1 },
+    { "fieldname": "awarded_bid", "label": "Penawaran Pemenang", "fieldtype": "Link", "options": "RN Tender Bid" },
+    { "fieldname": "contact_person", "label": "Narahubung", "fieldtype": "Data" },
+    { "fieldname": "contact_phone", "label": "Kontak", "fieldtype": "Data" },
+    { "fieldname": "notes", "label": "Catatan", "fieldtype": "Small Text" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1 }
+  ]
+}

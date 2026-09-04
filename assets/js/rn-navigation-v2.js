@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.0.8",
+    version: "2.0.9",
 
     posko: [
       {
@@ -95,6 +95,10 @@
       {
         label: "Donor Program",
         href: "donor-program.html"
+      },
+      {
+        label: "Pengadaan & Tender",
+        href: "pengadaan-tender.html?event=event-sim-001"
       },
       {
         label: "Verification",

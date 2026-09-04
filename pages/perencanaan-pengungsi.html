@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Perencanaan Pengungsi</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=pengungsi-20260904">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navrehab-20260904" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div><h1>Rescue-Net</h1><p>Disaster Management System</p></div>
+    </div>
+    <nav>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a class="active" href="perencanaan-pengungsi.html?event=event-sim-001">Perencanaan Pengungsi</a>
+      <a href="masukan-masyarakat.html?event=event-sim-001">Masukan Masyarakat</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Perencanaan Pengungsi</div>
+      <div>
+        <p class="eyebrow">Rehabilitation · Displacement Person</p>
+        <h2>Perencanaan Pengungsi</h2>
+        <p class="subtitle">Rencana penanganan pengungsi ke depan: kembali ke asal atau relokasi, dengan estimasi dana &amp; dukungan yang diperlukan. Termasuk pendataan pengungsi non-camp. Bahan masukan bagi pengambil kebijakan.</p>
+        <p class="subtitle" id="dpStatus">Memuat…</p>
+      </div>
+      <div class="status-pill" id="dpUpdated">Perencanaan</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card"><span>KK Terdata</span><strong id="kpiKK">-</strong><small>rencana penanganan</small></div>
+      <div class="kpi-card"><span>Jiwa</span><strong id="kpiJiwa">-</strong><small>total pengungsi terencana</small></div>
+      <div class="kpi-card warning"><span>Non-Camp</span><strong id="kpiNonCamp">-</strong><small>berserakan / tanpa shelter</small></div>
+      <div class="kpi-card danger"><span>Yatim / Perlu Perawatan</span><strong id="kpiRentan">-</strong><small>KK</small></div>
+      <div class="kpi-card"><span>Estimasi Dana</span><strong id="kpiDana">-</strong><small>biaya kembali + bangun hidup</small></div>
+    </section>
+
+    <section class="content-grid rn-md-wide">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Rencana per KK / Kelompok</h3><p>Klik baris untuk detail. Rollup rencana di kanan.</p></div><span class="chip neutral" id="dpCount">—</span></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Kode / Asal</th><th>Lokasi Kini</th><th>Jiwa</th><th>Kondisi</th><th>Rencana</th><th>Est. Dana (Rp)</th><th>Status</th></tr></thead>
+            <tbody id="dpBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><div><h3>Rollup Rencana</h3></div></div>
+        <div class="summary-list" id="dpRollup"></div>
+      </div>
+    </section>
+
+    <details class="panel create-panel">
+      <summary><h3>Tambah / Perbarui Rencana KK</h3><p>Perlu login (operator shelter / koordinator).</p></summary>
+      <form class="rn-form" id="dpForm">
+        <div class="form-grid">
+          <label>Disaster Event<input name="disaster_event" value="event-sim-001" required></label>
+          <label>Kode KK / Kelompok<input name="household_code" placeholder="KK-SMT-014"></label>
+          <label>Daerah Asal<input name="origin_area" placeholder="Desa Suak Ribee" required></label>
+          <label>Lokasi Saat Ini<input name="current_location" placeholder="Shelter Samatiga / rumah kerabat"></label>
+          <label>Jumlah Jiwa<input name="people_count" type="number" min="0" value="4" required></label>
+          <label>Kelompok Rentan<input name="vulnerable_count" type="number" min="0" value="1"></label>
+          <label>Di Camp/Shelter?
+            <select name="in_camp"><option value="1">Ya</option><option value="0">Tidak (non-camp)</option></select>
+          </label>
+          <label>Kondisi Kesehatan
+            <select name="health_status">
+              <option value="healthy">Sehat</option>
+              <option value="needs_care">Perlu perawatan</option>
+              <option value="orphan">Yatim piatu</option>
+              <option value="mixed">Campuran</option>
+            </select>
+          </label>
+          <label>Rencana
+            <select name="plan_type">
+              <option value="undecided">Belum diputuskan</option>
+              <option value="return_home">Kembali ke asal</option>
+              <option value="relocate">Relokasi</option>
+            </select>
+          </label>
+          <label>Estimasi Biaya Kembali (Rp)<input name="est_return_cost" type="number" min="0" value="0"></label>
+          <label>Estimasi Bantuan Awal (Rp)<input name="est_rebuild_support" type="number" min="0" value="0"></label>
+        </div>
+        <label style="display:grid;gap:6px;margin-top:10px">Dukungan Diperlukan<input name="support_needed" placeholder="perbaikan sekolah, akses jalan ke desa, modal usaha…"></label>
+        <label style="display:grid;gap:6px;margin-top:10px">Catatan<input name="notes"></label>
+        <div class="form-actions"><button class="btn primary" type="submit">Simpan Rencana</button><span class="rn-muted" data-dp-msg></span></div>
+      </form>
+    </details>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
+<script src="../assets/js/perencanaan-pengungsi.js?v=pengungsi-20260904"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navrehab-20260904"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

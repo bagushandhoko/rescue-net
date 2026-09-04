@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.0.7",
+    version: "2.0.8",
 
     posko: [
       {
@@ -64,6 +64,10 @@
       {
         label: "Posko Recovery",
         href: "recovery-reconstruction.html?event=event-sim-001"
+      },
+      {
+        label: "Perencanaan Pengungsi",
+        href: "perencanaan-pengungsi.html?event=event-sim-001"
       }
     ],
 
@@ -99,6 +103,10 @@
       {
         label: "Jaringan Verifikator",
         href: "verifikator.html"
+      },
+      {
+        label: "Masukan Masyarakat",
+        href: "masukan-masyarakat.html?event=event-sim-001"
       },
       {
         label: "AI Analyst",

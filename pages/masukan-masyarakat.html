@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Masukan Masyarakat</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=masukan-20260904">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navrehab-20260904" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <style>
+    .mf-thread { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; background: var(--panel2); }
+    .mf-thread h4 { margin: 0 0 4px; font-size: 14px; }
+    .mf-meta { color: var(--muted); font-size: 12px; }
+    .mf-body { margin: 6px 0; font-size: 13px; white-space: pre-wrap; }
+    .mf-resp { border-left: 3px solid var(--green, #2f9b68); padding: 6px 10px; margin-top: 8px; background: rgba(47,155,104,.08); font-size: 13px; border-radius: 0 8px 8px 0; }
+    .mf-reply { border-left: 2px solid var(--line2); padding: 5px 10px; margin: 6px 0 0 12px; font-size: 12.5px; }
+    .mf-actions { margin-top: 8px; display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+    .mf-cat { display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase; padding:2px 7px; border-radius:999px; border:1px solid var(--line2); color: var(--muted); }
+    .mf-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .mf-tabs button.is-active { background: var(--accent, #e87558); color: #fff; border-color: transparent; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div><h1>Rescue-Net</h1><p>Disaster Management System</p></div>
+    </div>
+    <nav>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="bencana-aktif.html?event=event-sim-001">Bencana Aktif</a>
+      <a href="perencanaan-pengungsi.html?event=event-sim-001">Perencanaan Pengungsi</a>
+      <a class="active" href="masukan-masyarakat.html?event=event-sim-001">Masukan Masyarakat</a>
+      <a href="laporan-masyarakat.html?event=event-sim-001">Laporan Masyarakat</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Masukan Masyarakat</div>
+      <div>
+        <p class="eyebrow">Forum Masukan</p>
+        <h2>Masukan Masyarakat</h2>
+        <p class="subtitle">Forum usul, keluhan, informasi, dan pertanyaan warga seputar penanganan bencana. Bisa posting tanpa akun. Operator / koordinator memberi tanggapan resmi.</p>
+        <p class="subtitle" id="mfStatus">Memuat…</p>
+      </div>
+      <div class="status-pill" id="mfCount">—</div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div><h3>Diskusi</h3></div>
+        <div class="mf-tabs" id="mfTabs">
+          <button type="button" data-cat="" class="btn mini is-active">Semua</button>
+          <button type="button" data-cat="usul" class="btn mini">Usul</button>
+          <button type="button" data-cat="keluhan" class="btn mini">Keluhan</button>
+          <button type="button" data-cat="informasi" class="btn mini">Informasi</button>
+          <button type="button" data-cat="pertanyaan" class="btn mini">Pertanyaan</button>
+        </div>
+      </div>
+      <div id="mfThreads"></div>
+    </section>
+
+    <details class="panel create-panel" open>
+      <summary><h3>Kirim Masukan</h3><p>Tanpa akun. Isi topik, kategori, dan pesan Anda.</p></summary>
+      <form class="rn-form" id="mfForm">
+        <div class="form-grid">
+          <label>Disaster Event<input name="disaster_event" value="event-sim-001" required></label>
+          <label>Kategori
+            <select name="category">
+              <option value="usul">Usul / saran</option>
+              <option value="keluhan">Keluhan</option>
+              <option value="informasi">Informasi</option>
+              <option value="pertanyaan">Pertanyaan</option>
+            </select>
+          </label>
+          <label>Topik<input name="topic" required placeholder="Distribusi belum merata di RW 04"></label>
+          <label>Nama (opsional)<input name="author_name" placeholder="Warga"></label>
+          <label>Wilayah (opsional)<input name="wilayah" placeholder="Kelurahan / Kecamatan"></label>
+          <label>Kontak (opsional)<input name="author_contact"></label>
+        </div>
+        <label style="display:grid;gap:6px;margin-top:10px">Pesan<textarea name="body" rows="3" required></textarea></label>
+        <div class="form-actions"><button class="btn primary" type="submit">Kirim</button><span class="rn-muted" data-mf-msg></span></div>
+      </form>
+    </details>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
+<script src="../assets/js/masukan-masyarakat.js?v=masukan-20260904"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navrehab-20260904"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

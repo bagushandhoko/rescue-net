@@ -1,0 +1,36 @@
+{
+  "doctype": "DocType",
+  "name": "RN Displacement Plan",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "legacy_id", "label": "Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "title", "label": "Judul", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "disaster_event", "label": "Disaster Event", "fieldtype": "Link", "options": "RN Disaster Event" },
+    { "fieldname": "disaster_event_legacy_id", "label": "Disaster Event Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "household_code", "label": "Kode KK / Kelompok", "fieldtype": "Data" },
+    { "fieldname": "origin_area", "label": "Daerah Asal", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "current_location", "label": "Lokasi Saat Ini", "fieldtype": "Data" },
+    { "fieldname": "in_camp", "label": "Di Camp/Shelter", "fieldtype": "Check", "default": "1" },
+    { "fieldname": "posko", "label": "Shelter / Posko", "fieldtype": "Link", "options": "RN Posko" },
+    { "fieldname": "people_count", "label": "Jumlah Jiwa", "fieldtype": "Int", "in_list_view": 1 },
+    { "fieldname": "vulnerable_count", "label": "Kelompok Rentan", "fieldtype": "Int" },
+    { "fieldname": "health_status", "label": "Kondisi Kesehatan", "fieldtype": "Select",
+      "options": "healthy\nneeds_care\norphan\nmixed", "default": "healthy", "in_list_view": 1 },
+    { "fieldname": "plan_type", "label": "Rencana", "fieldtype": "Select",
+      "options": "undecided\nreturn_home\nrelocate", "default": "undecided", "in_list_view": 1 },
+    { "fieldname": "est_return_cost", "label": "Estimasi Biaya Kembali (Rp)", "fieldtype": "Float" },
+    { "fieldname": "est_rebuild_support", "label": "Estimasi Bantuan Awal Bangun Hidup (Rp)", "fieldtype": "Float" },
+    { "fieldname": "support_needed", "label": "Dukungan Diperlukan", "fieldtype": "Small Text" },
+    { "fieldname": "supporting_org", "label": "Organisasi Pendukung", "fieldtype": "Link", "options": "RN Organization" },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Select",
+      "options": "draft\nproposed\napproved\nin_progress\ndone", "default": "draft", "in_list_view": 1 },
+    { "fieldname": "notes", "label": "Catatan", "fieldtype": "Small Text" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1 }
+  ]
+}

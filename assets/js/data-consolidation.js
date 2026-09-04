@@ -226,27 +226,30 @@ function renderRawReports(rows) {
       row.city_name,
       row.province_name
     ].filter(Boolean).join(", ") || row.location_text || "Belum ada lokasi rinci";
+    // consolidation_raw_reports == api_frontend_bridge.community_reports:
+    // rows are RN Community Report (report_type / affected_people_count /
+    // consolidation_status / area_level), not the old flat "raw report" shape.
+    const rid = row.id || row.name || row.legacy_id;
+    const people = row.affected_people_count;
     return `
       <article class="event-card">
         <div class="event-main">
           <div>
-            <h4>${safe(row.source_type)}: ${safe(row.title)}</h4>
-            <p>${locationLine}<br>${safe(row.need_text || row.description, "")}</p>
-            <small>${safe(row.data_type)} | qty: ${safe(row.quantity_value, 0)} ${safe(row.quantity_unit, "")}</small>
+            <h4>${safe(row.report_type, "laporan")}: ${safe(row.title)}</h4>
+            <p>${locationLine}<br>${safe(row.description, "")}</p>
+            <small>${safe(row.report_type, "-")}${people != null && people !== "" ? ` | ${people} jiwa terdampak` : ""}${row.trust_score != null ? ` | trust ${row.trust_score}` : ""}</small>
           </div>
           <div class="chips">
-            ${statusChip(row.location_status)}
             ${statusChip(row.consolidation_status)}
+            ${statusChip(row.verification_status)}
             ${isAggregate ? '<span class="chip warning">aggregate context</span>' : '<span class="chip success">detail candidate</span>'}
           </div>
         </div>
-        ${row.source_type === "community_report" ? `
-          <div class="community-report-actions">
-            <button class="btn" type="button" data-community-consolidation="${row.id}" data-status="needs_location_review">Review Lokasi</button>
-            <button class="btn" type="button" data-community-consolidation="${row.id}" data-status="excluded_aggregate">Tandai Agregat</button>
-            <button class="btn primary" type="button" data-community-consolidation="${row.id}" data-status="verified_unique">Verified Unique</button>
-          </div>
-        ` : ""}
+        <div class="community-report-actions">
+          <button class="btn" type="button" data-community-consolidation="${rid}" data-status="needs_location_review">Review Lokasi</button>
+          <button class="btn" type="button" data-community-consolidation="${rid}" data-status="excluded_aggregate">Tandai Agregat</button>
+          <button class="btn primary" type="button" data-community-consolidation="${rid}" data-status="verified_unique">Verified Unique</button>
+        </div>
       </article>
     `;
   }).join("") : card("Belum ada raw report", "Laporan mentah akan muncul di sini sebelum menjadi angka final.", "empty");
@@ -276,11 +279,25 @@ function renderDuplicates(rows) {
 function renderConsolidated(rows) {
   const target = document.querySelector("[data-consolidated-needs]");
   if (!target) return;
-  target.innerHTML = rows.length ? rows.map(row => card(
-    `${row.item_name} | ${row.quantity_final} ${row.quantity_unit}`,
-    `Method: ${row.merge_method} | Confidence: ${row.confidence_level} | Sources: ${row.source_count}<br>Status: ${row.status}`,
-    row.status
-  )).join("") : card("Belum ada consolidated needs", "Klik Rebuild untuk membuat draft kebutuhan terkonsolidasi dari raw logistic needs.", "empty");
+  // consolidated_needs returns raw RN Community/Logistic Need rows
+  // (quantity / unit / canonical_group), not a merged draft with
+  // quantity_final / merge_method — fall back to the real fields.
+  target.innerHTML = rows.length ? rows.map(row => {
+    const qty = row.quantity_final != null ? row.quantity_final : row.quantity;
+    const unit = row.quantity_unit || row.unit || "";
+    const name = row.item_name || row.canonical_group || row.title || "Kebutuhan";
+    const meta = [
+      row.source_type ? `Sumber: ${row.source_type}` : null,
+      row.canonical_group ? `Kelompok: ${row.canonical_group}` : null,
+      row.merge_method ? `Metode: ${row.merge_method}` : null,
+      row.source_count != null ? `Sumber: ${row.source_count}` : null,
+    ].filter(Boolean).join(" | ");
+    return card(
+      `${name} | ${formatQty(qty)} ${unit}`,
+      `${meta}${meta ? "<br>" : ""}Status: ${safe(row.status, "-")}`,
+      row.status
+    );
+  }).join("") : card("Belum ada consolidated needs", "Klik Rebuild untuk membuat draft kebutuhan terkonsolidasi dari raw logistic needs.", "empty");
 }
 
 function formatQty(value) {
@@ -356,11 +373,17 @@ function renderRollupTrace(payload) {
 function renderAreas(rows) {
   const target = document.querySelector("[data-operational-areas]");
   if (!target) return;
-  target.innerHTML = rows.length ? rows.map(row => card(
-    `${row.owner_type} | ${row.owner_id}`,
-    `Level: ${row.area_level} | Verification: ${row.verification_status}<br>${row.coverage_description || "Belum ada deskripsi cakupan detail."}`,
-    row.area_level
-  )).join("") : card("Belum ada operational area", "Tambahkan area kerja agar organisasi provinsi tidak dianggap mewakili semua desa.", "empty");
+  // consolidation_auxiliary.operational_areas: distinct posko place tuples
+  // { province_name, city_name, district_name, village_name, area_level }.
+  target.innerHTML = rows.length ? rows.map(row => {
+    const place = [row.village_name, row.district_name, row.city_name, row.province_name]
+      .filter(Boolean).join(", ") || "Lokasi belum rinci";
+    return card(
+      place,
+      `Level area: ${safe(row.area_level, "-")}`,
+      row.area_level
+    );
+  }).join("") : card("Belum ada operational area", "Tambahkan area kerja agar organisasi provinsi tidak dianggap mewakili semua desa.", "empty");
 }
 
 function renderBeneficiaryGroups(rows) {
@@ -409,11 +432,21 @@ async function loadDataConsolidation() {
       rnFetch("/data-consolidation/evidence-requirements")
     ]);
 
-    setText("[data-raw-reports]", summary.raw_reports_total || summary.raw_logistic_reports || 0);
-    setText("[data-consolidated-count]", summary.consolidated_needs || 0);
-    setText("[data-duplicate-count]", summary.duplicate_candidates || 0);
-    setText("[data-location-review-count]", summary.location_review_needed || 0);
-    setText("[data-aggregate-count]", summary.aggregate_reports || 0);
+    // consolidation_summary only returns *_count totals; derive the tiles the
+    // page actually shows from the lists we just fetched.
+    const rawList = rawReports || [];
+    const AGG_LEVELS = ["province", "city", "district"];
+    const reviewCount = rawList.filter(r =>
+      ["needs_location_review", "not_ready_no_location", "not_ready_admin_only"].includes(r.consolidation_status)
+    ).length;
+    const aggCount = rawList.filter(r =>
+      r.is_aggregate || r.consolidation_status === "excluded_aggregate" || AGG_LEVELS.includes(r.area_level)
+    ).length;
+    setText("[data-raw-reports]", rawList.length);
+    setText("[data-consolidated-count]", (consolidated || []).length);
+    setText("[data-duplicate-count]", (duplicates || []).length);
+    setText("[data-location-review-count]", reviewCount);
+    setText("[data-aggregate-count]", aggCount);
 
     renderRawReports(rawReports);
     renderDuplicates(duplicates);

@@ -220,7 +220,10 @@
   });
 })();
 
-const DISASTER_ID = "event-aceh-2025";
+const DISASTER_ID =
+  new URLSearchParams(location.search).get("event") ||
+  (function () { try { return localStorage.getItem("rn_active_event"); } catch (e) { return null; } })() ||
+  "event-sim-001";
 
 let VERIFY_CONTEXT = null;
 

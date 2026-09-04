@@ -24,7 +24,7 @@ function rnGetDeviceId() {
   return id;
 }
 
-function rnGetEventId(defaultEventId = "event-aceh-2025") {
+function rnGetEventId(defaultEventId = "event-sim-001") {
   const params = new URLSearchParams(window.location.search);
   return params.get("event") || params.get("id") || defaultEventId;
 }

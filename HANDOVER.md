@@ -4,7 +4,84 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-04 (LD1 coordinator edit rights + FE stock_summary contract + Step 12/12 mobile pass — all DONE & DEPLOYED)_
+_Last updated: 2026-09-04 (batch 2: event-aceh-2025 default cleanup + update_transport_space UI + data-consolidation re-wire — DONE)_
+
+---
+
+## Loose-ends batch 2 (2026-09-04) — DONE (frontend only, served from disk)
+
+Owner: "kerjakan semua" on the three next loose ends. No backend / no deploy —
+every endpoint used already existed.
+
+### 1. Stale `event-aceh-2025` default → active event
+
+Several still-legacy files defaulted to the near-empty `event-aceh-2025` when no
+`?event=` was present → blank dashboards. Now default to the active event
+(`?event=` / `localStorage.rn_active_event` / `"event-sim-001"`), matching every
+rebuilt page.
+- **JS:** `contact-directory.js` + `verification-approval.js` (`DISASTER_ID` now
+  reads the query param + `rn_active_event`), `search-found.js` +
+  `disaster-detail.js` (`getDisasterId` fallback `event-sim-001`; disaster-detail
+  also accepts `?event=`), `rn-sync-engine.js` (`rnGetEventId` default),
+  `sync-console.js` (2 spots).
+- **HTML form prefills** `value="event-aceh-2025"` → `"event-sim-001"`:
+  `evidence.html`, `management-distribusi.html`, `organisasi-posko.html`,
+  `kirim-bantuan.html`, `search-found.html`, `sync-console.html`.
+- Cache-busters bumped: `…?v=eventfix-20260904` on contact-directory /
+  disaster-detail / search-found / sync-console / rn-sync-engine (5 pages),
+  `verif-20260904` on verification-approval.
+- **Verified (Playwright):** all four affected pages load with 0 console errors.
+- Left on purpose: `pages/_static_archive/disaster-ecosystem.html` (archive).
+
+### 2. `update_transport_space` — now has a UI
+
+`api_logistics.update_transport_space` existed (login-required) with no
+frontend. Added a **"Perbarui armada"** `<details>` form inside the Posko
+Distribusi armada-detail modal (`#pdArmadaEditForm`), prefilled from the board
+row: status / mode layanan / kebijakan booking / lokasi saat ini / jam berangkat
++ ETA (`datetime-local`) / titik + narahubung + no. kontak serah terima /
+catatan. Submit → `update_transport_space`, then `closeDrill()` + `load()`.
+Board `"-"` placeholders are stripped before prefill; `"YYYY-MM-DD HH:MM"` →
+`datetime-local` value. `assets/js/posko-distribusi.js` `?v=poskodist-20260904`
++ new `.rn-pd-edit` CSS block in `style.css` (page style.css buster bumped too).
+**Verified (Playwright):** drill opens, edit form renders with all 10 fields, 0
+console errors.
+
+### 3. `pages/data-consolidation.html` — partial re-wire (bounded, not a full rebuild)
+
+This page was written against the FastAPI response shape; the Frappe
+`api_frontend_bridge.*` endpoints return different shapes, so most panels showed
+0 / "undefined". Bounded fixes in `assets/js/data-consolidation.js`
+(`?v=datacons-20260904`):
+- **KPI tiles** — `consolidation_summary` only returns `*_count` totals, so the
+  5 tiles (`raw_reports_total` / `consolidated_needs` / … keys that don't exist)
+  always read 0. Now derived from the lists actually fetched: raw =
+  `rawReports.length`, consolidated = `consolidated.length`, duplicates =
+  `duplicates.length`, review/aggregate = counts over `rawReports`
+  `consolidation_status` / `area_level`.
+- **`renderRawReports`** — rows are `RN Community Report`
+  (`report_type` / `affected_people_count` / `consolidation_status` /
+  `verification_status`), not the old flat shape. Fixed field names; the
+  "Review Lokasi / Tandai Agregat / Verified Unique" buttons (gated on a
+  non-existent `source_type === "community_report"`, so never rendered) now
+  always render for these rows.
+- **`renderConsolidated`** — `consolidated_needs` returns raw
+  `RN Community/Logistic Need` rows → fall back
+  `quantity_final ?? quantity`, `quantity_unit ?? unit`,
+  `item_name || canonical_group`; `safe()`-guard the merge metadata.
+- **`renderAreas`** — `operational_areas` rows are place tuples
+  (`province/city/district/village_name`, `area_level`), not
+  `owner_type` / `owner_id` / `verification_status` → render a location line +
+  area level.
+- **Verified (Playwright, logged in as LD2):** status "Loaded", KPIs
+  26 / 25 / 0 / 0 / 0, 26 raw cards + 78 action buttons, 25 consolidated cards,
+  **no "undefined" on the page**, 0 console errors.
+- **Still legacy / not touched (needs its own session):** the national-rollup
+  and rollup-trace panels are fed by `/national-rollup` → `consolidation_summary`
+  which has no rollup data, so they show honest empty-states; `duplicate_candidates`
+  / `consolidation_auxiliary` beneficiary-groups + evidence-requirements return
+  `[]` by design. A real "consolidated needs" surface = migrate this page to
+  `control_centre_summary` `item_groups` (3-bucket) — separate work unit.
 
 ---
 

@@ -31,6 +31,32 @@
 
   var MODE_CHIP = { space_only: "", courier_pickup: "warning", both: "ok" };
 
+  var ARMADA_STATUS = [
+    ["available", "Tersedia"], ["reserved", "Dipesan"], ["assigned", "Ditugaskan"],
+    ["in_transit", "Dalam Perjalanan"], ["arrived", "Tiba"],
+    ["completed", "Selesai"], ["cancelled", "Dibatalkan"],
+  ];
+  var SERVICE_MODE = [
+    ["space_only", "Penyedia Space"], ["courier_pickup", "Kurir Jemput-Antar"],
+    ["both", "Space + Kurir"],
+  ];
+  var BOOKING_POLICY = [
+    ["pin_verify", "Konfirmasi PIN posko"], ["open", "Langsung terkonfirmasi"],
+  ];
+
+  // board sends "-" for empty fields; don't feed that back into a form
+  function clean(v) { return (!v || v === "-") ? "" : String(v); }
+  // "YYYY-MM-DD HH:MM" -> "YYYY-MM-DDTHH:MM" for <input type=datetime-local>
+  function toLocalDT(v) {
+    var s = clean(v);
+    return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(s) ? s.slice(0, 16).replace(" ", "T") : "";
+  }
+  function optionList(pairs, current) {
+    return pairs.map(function (p) {
+      return '<option value="' + p[0] + '"' + (p[0] === current ? " selected" : "") + ">" + esc(p[1]) + "</option>";
+    }).join("");
+  }
+
   /* ---------- selector ---------- */
   function renderSelector(list, current) {
     var sel = $("#poskoSelect");
@@ -132,9 +158,67 @@
       row("Narahubung", esc(a.handover_contact_person) + (a.handover_contact_phone && a.handover_contact_phone !== "-" ? " · " + tel(a.handover_contact_phone) : "")) +
       row("Relawan pickup", esc(a.pickup_volunteer_name || "-")) +
       "</div>" +
+      armadaEditForm(a) +
       '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>";
+    wireArmadaEdit(a.id);
     $("#pdDrill").hidden = false;
     document.body.style.overflow = "hidden";
+  }
+
+  function armadaEditForm(a) {
+    return (
+      '<details class="rn-pd-edit"><summary>Perbarui armada</summary>' +
+      '<form class="rn-form" id="pdArmadaEditForm">' +
+      '<div class="form-grid">' +
+      '<label>Status<select name="transport_status">' + optionList(ARMADA_STATUS, a.status) + "</select></label>" +
+      '<label>Mode layanan<select name="service_mode">' + optionList(SERVICE_MODE, a.service_mode) + "</select></label>" +
+      '<label>Kebijakan booking<select name="booking_policy">' + optionList(BOOKING_POLICY, a.booking_policy) + "</select></label>" +
+      '<label>Lokasi saat ini<input name="current_location" value="' + esc(clean(a.current_location)) + '"></label>' +
+      '<label>Jam berangkat<input type="datetime-local" name="departure_at" value="' + esc(toLocalDT(a.berangkat)) + '"></label>' +
+      '<label>ETA<input type="datetime-local" name="eta_at" value="' + esc(toLocalDT(a.eta)) + '"></label>' +
+      '<label>Titik serah terima<input name="handover_location" value="' + esc(clean(a.handover_location)) + '"></label>' +
+      '<label>Narahubung<input name="handover_contact_person" value="' + esc(clean(a.handover_contact_person)) + '"></label>' +
+      '<label>No. kontak serah terima<input name="handover_contact_phone" value="' + esc(clean(a.handover_contact_phone)) + '"></label>' +
+      "</div>" +
+      '<label>Catatan koordinasi<textarea name="coordination_notes" rows="2">' + esc(clean(a.coordination_notes)) + "</textarea></label>" +
+      '<div class="form-actions"><button class="btn primary" type="submit">Simpan Perubahan</button>' +
+      '<span class="rn-pd-bk-msg" data-armada-edit-msg></span></div>' +
+      "</form></details>"
+    );
+  }
+
+  function wireArmadaEdit(id) {
+    var form = $("#pdArmadaEditForm");
+    if (!form) return;
+    var msg = form.querySelector("[data-armada-edit-msg]");
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var v = function (n) { return form[n] ? String(form[n].value).trim() : ""; };
+      var payload = {
+        transport_space: id,
+        transport_status: v("transport_status"),
+        service_mode: v("service_mode"),
+        booking_policy: v("booking_policy"),
+        current_location: v("current_location"),
+        handover_location: v("handover_location"),
+        handover_contact_person: v("handover_contact_person"),
+        handover_contact_phone: v("handover_contact_phone"),
+        coordination_notes: v("coordination_notes"),
+      };
+      var d1 = v("departure_at"), e1 = v("eta_at");
+      if (d1) payload.departure_at = d1.replace("T", " ");
+      if (e1) payload.eta_at = e1.replace("T", " ");
+      if (msg) msg.textContent = " menyimpan…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_logistics.update_transport_space", payload, { method: "POST" });
+        if (msg) msg.textContent = " tersimpan ✓";
+        closeDrill();
+        await load();
+      } catch (err) {
+        var m = (err && err.message) || String(err);
+        if (msg) msg.textContent = " gagal: " + m + (/login|permission|akses/i.test(m) ? " (perlu login)" : "");
+      }
+    });
   }
   function closeDrill() { $("#pdDrill").hidden = true; document.body.style.overflow = ""; }
 

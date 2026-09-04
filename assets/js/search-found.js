@@ -19,7 +19,7 @@ function getDisasterId() {
 
   return (
     params.get("event") ||
-    "event-aceh-2025"
+    "event-sim-001"
   );
 }
 

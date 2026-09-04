@@ -1,6 +1,6 @@
 function getDisasterId() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("id") || "event-aceh-2025";
+  return params.get("id") || params.get("event") || "event-sim-001";
 }
 
 

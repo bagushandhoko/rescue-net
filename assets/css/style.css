@@ -5068,6 +5068,12 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-md-detail-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
 @media (max-width: 640px) { .rn-md-detail { grid-template-columns: minmax(0, 1fr); } }
 
+/* "Perbarui armada" editor inside the Posko Distribusi armada-detail modal */
+.rn-pd-edit { margin: 14px 0 4px; border: 1px solid var(--line); border-radius: 12px; padding: 4px 12px; background: var(--panel2); }
+.rn-pd-edit > summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 8px 0; }
+.rn-pd-edit[open] > summary { margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.rn-pd-edit .rn-form { padding-bottom: 10px; }
+
 .rn-md-pm { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
 .rn-md-pm-head { font-size: 13px; }
 .rn-md-pm-cands { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 6px; }

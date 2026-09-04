@@ -382,7 +382,7 @@ async function syncPull() {
     || (
       window.RNSync
         ? window.RNSync.getEventId()
-        : "event-aceh-2025"
+        : "event-sim-001"
     );
 
   if (input && disasterId) {
@@ -725,7 +725,7 @@ document.addEventListener("DOMContentLoaded", () => {
       || (
         window.RNSync
           ? window.RNSync.getEventId()
-          : "event-aceh-2025"
+          : "event-sim-001"
       )
     );
   }

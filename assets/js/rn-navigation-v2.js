@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.0.9",
+    version: "2.1.0",
 
     posko: [
       {
@@ -79,6 +79,10 @@
       {
         label: "Map",
         href: "map.html?event=event-sim-001"
+      },
+      {
+        label: "Peta Nasional",
+        href: "peta-nasional.html"
       },
       {
         label: "Organisasi",

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Peta Nasional</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=petanas-20260904">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css" />
+  <style>
+    #pnMap { height: 460px; border-radius: 12px; border: 1px solid var(--line); }
+    .pn-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .pn-dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div><h1>Rescue-Net</h1><p>Disaster Management System</p></div>
+    </div>
+    <nav>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="bencana-aktif.html?event=event-sim-001">Bencana Aktif</a>
+      <a class="active" href="peta-nasional.html">Peta Nasional</a>
+      <a href="map.html?event=event-sim-001">Peta Situasi (per bencana)</a>
+      <a href="data-consolidation.html?event=event-sim-001">Data Konsolidasi</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Peta Nasional</div>
+      <div>
+        <p class="eyebrow">GIS · National Mapping</p>
+        <h2>Peta Nasional</h2>
+        <p class="subtitle">Gambaran geospasial lintas seluruh bencana aktif, digabung per provinsi. Titik = posko (warna = tingkat keparahan bencananya).</p>
+        <p class="subtitle" id="pnStatus">Memuat…</p>
+      </div>
+      <div class="status-pill" id="pnUpdated">Nasional</div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="kpi-card danger"><span>Provinsi Terdampak</span><strong id="kpiProv">-</strong><small>ada posko aktif</small></div>
+      <div class="kpi-card"><span>Total Posko</span><strong id="kpiPosko">-</strong><small>lintas bencana</small></div>
+      <div class="kpi-card"><span>Terverifikasi</span><strong id="kpiVerif">-</strong><small>komunitas / resmi</small></div>
+      <div class="kpi-card warning"><span>Bencana Aktif</span><strong id="kpiBencana">-</strong><small>disaster event</small></div>
+      <div class="kpi-card"><span>Jiwa Dilayani</span><strong id="kpiJiwa">-</strong><small>estimasi</small></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><div><h3>Sebaran Posko</h3></div><label style="font-size:13px">Provinsi <select id="pnProvFilter"><option value="">Semua</option></select></label></div>
+      <div id="pnMap"></div>
+      <div class="pn-legend">
+        <span><span class="pn-dot" style="background:#c0392b"></span>critical</span>
+        <span><span class="pn-dot" style="background:#d8862f"></span>urgent</span>
+        <span><span class="pn-dot" style="background:#3b82c4"></span>normal</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header"><div><h3>Rollup per Provinsi</h3></div></div>
+      <div class="rn-table-wrap">
+        <table class="rn-table">
+          <thead><tr><th>Provinsi</th><th>Severity</th><th>Bencana</th><th>Posko</th><th>Terverifikasi</th><th>Kebutuhan Terbuka</th><th>Jiwa</th></tr></thead>
+          <tbody id="pnBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/vendor/leaflet/leaflet.js"></script>
+<script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
+<script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
+<script src="../assets/js/peta-nasional.js?v=petanas-20260904"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
+<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navgis-20260904"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

@@ -4,7 +4,95 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-04 (batch 2: event-aceh-2025 default cleanup + update_transport_space UI + data-consolidation re-wire — DONE)_
+_Last updated: 2026-09-04 (blueprint gap-closure: guest aid + edit code, club membership + HQ approval — DONE; external verifier network — in progress)_
+
+---
+
+## Blueprint gap-closure (2026-09-04) — closing 3 vision gaps
+
+Owner audit vs `docs/BLUEPRINT.md`: RN mostly matches the "open + closed-org
+coordination, auto-consolidation, AI item grouping" vision; 3 gaps found and
+being closed.
+
+### Gap 6 — Guest ("Donatur Cepat") aid submission + Aid ID + Kode Edit — DONE & DEPLOYED
+
+Blueprint: "Donatur Cepat / Personal Guest — tidak perlu registrasi" + Aid ID +
+Kode Edit (edit via HP + code). Was login-only.
+
+- **`RN Aid Offer` +3 fields** (`bench migrate`): `submitted_channel`
+  (account/guest, default account), `guest_batch` (Data), `edit_code_hash`
+  (Data, hidden — only the SHA-256 hash of the code is stored).
+- **`api_logistics.py` — 3 new `allow_guest=True` endpoints:**
+  `submit_guest_aid_offer_multi(disaster_event, donor_name, donor_contact,
+  items_json, handling_mode, target_posko?, pickup_location?, ready_at?, notes?)`
+  → one RN Aid Offer per item, all sharing one `guest_batch` + one 8-char
+  `edit_code` (returned once, `_guest_code_hash` = `sha256("rn-guest-aid:"+CODE)`);
+  `get_guest_aid_offer(aid_offer, edit_code, donor_contact?)` → current values +
+  batch siblings; `edit_guest_aid_offer(aid_offer, edit_code, donor_contact?,
+  item_text?/quantity?/unit?/pickup_location?/ready_at?/notes?/cancel?)`. All
+  verify the code hash; `donor_contact` (HP) must also match if supplied.
+  `target_posko` (optional) must be a `public_posko_allowed` + `public_participation`
+  + `accept_goods` posko. Normalization runs on insert as usual (canonical_group,
+  base_quantity).
+- **Frontend:** `public-aid.js` (`?v=guestaid-20260904`) — `kirim-bantuan.html`
+  submit now calls `submit_guest_aid_offer_multi` (no login); success box shows
+  **Aid ID + Kode Edit** in a "simpan sekarang, ditampilkan sekali" warning box.
+  `edit-bantuan.html` rebuilt for the guest flow: Aid ID + Kode Edit + HP →
+  "Muat data bantuan" (`get_guest_aid_offer`, prefills the form + lists batch
+  siblings) → edit or **Batalkan bantuan** checkbox (`edit_guest_aid_offer`).
+  Deep-link `edit-bantuan.html?aid=<id>` from the success box.
+- **Verified:** guest HTTP — submit 2 items (Air mineral→Air Minum, Beras→Bahan
+  Pangan) with `edit_code`; get with right code+HP OK; wrong code / wrong HP →
+  `PermissionError`; edit qty 10→18; cancel → `offer_status=cancelled`.
+  Playwright end-to-end on `kirim-bantuan.html` → success box shows the code,
+  then `edit-bantuan.html` loads + prefills "Selimut". Test rows deleted.
+
+### Gap 8 — Club membership + HQ (pusat) approval — DONE & DEPLOYED
+
+Blueprint: "anggota club bisa di verifikasi oleh pusatnya". The
+`RN Organization Membership` doctype + `request_membership` existed but had 1 row
+and no approval surface.
+
+- **`RN Organization Membership` +3 fields** (`bench migrate`): `member_verified`
+  (Check — HQ attests the member's identity is real), `verified_at` (Datetime),
+  `decision_note` (Small Text).
+- **`api_community_cluster.py` — new endpoints:** `org_membership_admin(organization?)`
+  (join-request queue + member roster for orgs the caller owns — `_owns_org` =
+  `can_manage_organization`); `decide_membership(membership, action, member_verified?,
+  note?)` (approve / reject / revoke; approve+`member_verified` stamps
+  `verified_at`); `set_member_verified(membership, verified)` (toggle the HQ
+  attestation on an approved member); `my_memberships()` (caller's own
+  memberships + `verified_member_of`).
+- **`setup/membership_defaults.py`** (new, wired into `hooks.py`
+  after_install/after_migrate, idempotent): seeds owner + member rows for
+  SIM-LR-ORG (LD1 owner; LD2..LD6 members, LD2/LD4 `member_verified`),
+  SIM-NS-BNPB, KH-ORG-BPBD, plus a few **pending** join requests (yusuf.hidayat +
+  dwi_bagus → SIM-LR-ORG; KH-USER-GAMBUT → KH-ORG-BPBD). 15 rows on first run.
+- **Frontend:** `koordinasi-organisasi.html` / `.js` (`?v=koordorg-20260904b`) —
+  new **"Keanggotaan Organisasi"** section: for an org owner, pending requests
+  with Setujui / Tolak (+ "identitas terverifikasi pusat" checkbox) and a member
+  roster with Verifikasi identitas / Keluarkan; for a plain member, their own
+  membership status line. `organisasi-posko.html` / `org-posko.js`
+  (`?v=orgposko-20260904`) — an **"Ajukan Keanggotaan"** button per org card
+  (`request_membership`).
+- **Verified:** `bench console` as LD1 → `org_membership_admin` `is_org_admin:true`,
+  2 pending / 6 members; `decide_membership(approve, member_verified=1)` →
+  `approved` + `member_verified:true`; `my_memberships` as LD2 →
+  `verified_member_of: ['Komunitas Landrover']`. Playwright as LD1 → member
+  section + admin panel render, 0 console errors.
+
+### Gap 9 — External verifier network (lurah / polsek / public figure) — IN PROGRESS
+
+Independent / warga poskos become credible when an external **verifier**
+(government or a willing public figure, scoped to a wilayah) endorses them —
+either by site visit or a "member-get-member" network vouch. Legacy doctypes
+`RN Verifier Profile` / `RN Verification Request` / `RN Verification Endorsement`
+/ `RN Verification Action` exist in the DB (0 rows, not in the repo). Being built
+next: repo doctype JSON + `api_verifier.py` (apply-as-verifier, verifier
+directory by wilayah, posko → request verification from a wilayah verifier,
+verifier inbox, endorse by site_visit / network_vouch → bumps
+`RN Posko.trusted_verifier_count` / `verification_status`), a `verifikator.html`
+surface, and seed data.
 
 ---
 

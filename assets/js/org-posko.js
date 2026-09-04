@@ -335,7 +335,9 @@ function renderOrganizations(items) {
 
           `ID: ${safe(o.name)}<br>` +
           `Type: ${safe(o.organization_type)}<br>` +
-          `Contact: ${safe(o.contact_person)}`,
+          `Contact: ${safe(o.contact_person)}` +
+          `<br><button type="button" class="btn ghost mini" data-join-org="${safe(o.name)}" style="margin-top:6px">Ajukan Keanggotaan</button>` +
+          `<span class="rn-muted" data-join-msg="${safe(o.name)}"></span>`,
 
           o.verification_status ||
           o.status
@@ -346,6 +348,25 @@ function renderOrganizations(items) {
           "empty"
         );
 }
+
+document.addEventListener("click", async function (e) {
+  const btn = e.target.closest("[data-join-org]");
+  if (!btn) return;
+  const org = btn.getAttribute("data-join-org");
+  const msg = document.querySelector(`[data-join-msg="${CSS.escape(org)}"]`);
+  if (msg) msg.textContent = " memproses…";
+  try {
+    const r = await window.RN_FRAPPE.call(
+      "rescue_net.api_community_cluster.request_membership",
+      { organization: org }, { method: "POST" }
+    );
+    if (msg) msg.textContent = " status: " + ((r && r.status) || "terkirim");
+    btn.disabled = true;
+  } catch (err) {
+    const m = (err && err.message) || String(err);
+    if (msg) msg.textContent = " gagal: " + m + (/login|masuk/i.test(m) ? " (masuk dulu)" : "");
+  }
+});
 
 
 function renderPoskos(items) {

@@ -109,6 +109,207 @@ def request_membership(organization):
     return {"name": membership.name, "status": membership.status}
 
 
+# ============================================================
+# Club membership + HQ (pusat) approval — an org's owner/admin reviews join
+# requests and can attest that the member's identity is real ("diverifikasi
+# oleh pusatnya"). Approved membership by a credible org = the member carries
+# that org's trust.
+# ============================================================
+
+def _owns_org(actor, organization):
+    from rescue_net.access_policy import can_manage_organization
+    return bool(actor and organization and can_manage_organization(actor, organization))
+
+
+def _owned_org_names(actor):
+    if not actor or not actor.get("name"):
+        return []
+    rows = frappe.get_all(
+        "RN Organization Membership",
+        filters={"user_account": actor.name, "membership_role": "owner",
+                 "status": "approved"},
+        fields=["organization"], limit_page_length=200,
+    )
+    return sorted({r.organization for r in rows if r.organization})
+
+
+@frappe.whitelist()
+def org_membership_admin(organization=None):
+    """Join-request + member roster for the org(s) the caller owns."""
+    actor = _actor()
+    from rescue_net.access_policy import is_system_manager
+
+    if organization:
+        if not (is_system_manager() or _owns_org(actor, organization)):
+            frappe.throw("Anda bukan pengelola organisasi ini", frappe.PermissionError)
+        orgs = [organization]
+    else:
+        orgs = _owned_org_names(actor)
+
+    if not orgs:
+        return {"is_org_admin": False, "organizations": [], "memberships": []}
+
+    rows = frappe.get_all(
+        "RN Organization Membership",
+        filters={"organization": ["in", orgs]},
+        fields=["name", "user_account", "organization", "membership_role",
+                "status", "member_verified", "requested_at", "approved_at",
+                "approved_by", "verified_at", "decision_note"],
+        order_by="requested_at desc, creation desc",
+        limit_page_length=1000,
+    )
+
+    uids = sorted({r.user_account for r in rows if r.user_account})
+    udet = {}
+    if uids:
+        for u in frappe.get_all(
+            "RN User Account", filters={"name": ["in", uids]},
+            fields=["name", "username", "email", "phone", "role", "organization"],
+            limit_page_length=len(uids),
+        ):
+            udet[u.name] = u
+
+    org_titles = {o.name: o.title for o in frappe.get_all(
+        "RN Organization", filters={"name": ["in", orgs]},
+        fields=["name", "title"], limit_page_length=len(orgs))}
+
+    out = []
+    for r in rows:
+        u = udet.get(r.user_account) or {}
+        out.append({
+            "name": r.name,
+            "user_account": r.user_account,
+            "user_name": (u.get("username") or r.user_account),
+            "user_email": u.get("email"),
+            "user_phone": u.get("phone"),
+            "user_role": u.get("role"),
+            "organization": r.organization,
+            "organization_title": org_titles.get(r.organization, r.organization),
+            "membership_role": r.membership_role,
+            "status": r.status,
+            "member_verified": bool(r.member_verified),
+            "requested_at": r.requested_at,
+            "approved_at": r.approved_at,
+            "verified_at": r.verified_at,
+            "decision_note": r.decision_note,
+        })
+
+    return {
+        "is_org_admin": True,
+        "organizations": [{"name": n, "title": org_titles.get(n, n)} for n in orgs],
+        "memberships": out,
+        "pending_count": sum(1 for m in out if m["status"] == "pending"),
+        "member_count": sum(1 for m in out if m["status"] == "approved"),
+    }
+
+
+@frappe.whitelist()
+def decide_membership(membership, action, member_verified=None, note=None):
+    """Org owner approves / rejects a join request, and may attest that the
+    member's identity is verified by the club HQ."""
+    actor = _actor()
+    from rescue_net.access_policy import is_system_manager
+
+    doc = frappe.get_doc("RN Organization Membership", membership)
+
+    if not (is_system_manager() or _owns_org(actor, doc.organization)):
+        frappe.throw("Anda bukan pengelola organisasi ini", frappe.PermissionError)
+
+    action = str(action or "").strip().lower()
+    if action not in ("approve", "reject", "revoke"):
+        frappe.throw("Aksi tidak valid (approve/reject/revoke)")
+
+    if doc.membership_role == "owner" and action in ("reject", "revoke"):
+        frappe.throw("Owner organisasi tidak bisa ditolak/dicabut di sini")
+
+    if action == "approve":
+        doc.status = "approved"
+        doc.approved_at = now_datetime()
+        doc.approved_by = actor.name
+    elif action == "reject":
+        doc.status = "rejected"
+    else:  # revoke
+        doc.status = "revoked"
+
+    want_verified = str(member_verified).lower() in ("1", "true", "yes") if member_verified is not None else None
+    if action == "approve" and want_verified:
+        doc.member_verified = 1
+        doc.verified_at = now_datetime()
+    elif action in ("reject", "revoke"):
+        doc.member_verified = 0
+        doc.verified_at = None
+
+    if note is not None:
+        doc.decision_note = str(note)[:500]
+
+    doc.save(ignore_permissions=True)
+
+    return {
+        "membership": doc.name,
+        "status": doc.status,
+        "member_verified": bool(doc.member_verified),
+    }
+
+
+@frappe.whitelist()
+def set_member_verified(membership, verified=1):
+    """Toggle the HQ identity attestation on an already-approved member."""
+    actor = _actor()
+    from rescue_net.access_policy import is_system_manager
+
+    doc = frappe.get_doc("RN Organization Membership", membership)
+    if not (is_system_manager() or _owns_org(actor, doc.organization)):
+        frappe.throw("Anda bukan pengelola organisasi ini", frappe.PermissionError)
+    if doc.status != "approved":
+        frappe.throw("Hanya anggota yang sudah disetujui yang bisa diverifikasi")
+
+    on = str(verified).lower() in ("1", "true", "yes")
+    doc.member_verified = 1 if on else 0
+    doc.verified_at = now_datetime() if on else None
+    doc.save(ignore_permissions=True)
+    return {"membership": doc.name, "member_verified": bool(doc.member_verified)}
+
+
+@frappe.whitelist()
+def my_memberships():
+    """The caller's own club memberships + which orgs they can still join."""
+    actor = _actor()
+
+    mine = frappe.get_all(
+        "RN Organization Membership",
+        filters={"user_account": actor.name},
+        fields=["name", "organization", "membership_role", "status",
+                "member_verified", "requested_at", "approved_at"],
+        order_by="creation desc", limit_page_length=200,
+    )
+    org_names = sorted({m.organization for m in mine if m.organization})
+    otitle = {}
+    overif = {}
+    if org_names:
+        for o in frappe.get_all(
+            "RN Organization", filters={"name": ["in", org_names]},
+            fields=["name", "title", "verification_status", "trust_level"],
+            limit_page_length=len(org_names),
+        ):
+            otitle[o.name] = o.title
+            overif[o.name] = {"verification_status": o.verification_status,
+                              "trust_level": o.trust_level}
+
+    for m in mine:
+        m["organization_title"] = otitle.get(m.organization, m.organization)
+        m["organization_trust"] = overif.get(m.organization, {})
+        m["member_verified"] = bool(m.member_verified)
+
+    return {
+        "user_account": actor.name,
+        "memberships": mine,
+        "verified_member_of": [
+            m["organization_title"] for m in mine
+            if m["status"] == "approved" and m["member_verified"]
+        ],
+    }
+
+
 @frappe.whitelist()
 def list_poskos():
     _actor()

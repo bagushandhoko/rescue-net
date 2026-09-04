@@ -63,6 +63,21 @@
       "options": "RN User Account"
     },
     {
+      "fieldname": "member_verified",
+      "label": "Member Identity Verified by HQ",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "verified_at",
+      "label": "Verified At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "decision_note",
+      "label": "Decision Note",
+      "fieldtype": "Small Text"
+    },
+    {
       "fieldname": "legacy_payload",
       "label": "Legacy Payload",
       "fieldtype": "Code",

@@ -69,11 +69,24 @@ function renderCreateSuccess(
           <span>${safe(o.item || "Aid Offer")}${o.quantity ? " — " + safe(o.quantity) + " " + safe(o.unit || "") : ""}${o.ready_at ? " · siap: " + safe(o.ready_at) : ""}</span>
           <strong>${safe(o.aid_offer)} · ${safe(o.offer_status)}</strong>
         </div>`).join("");
+  const firstId = offers.length ? safe(offers[0].aid_offer) : "";
+  const editCode = safe(data.edit_code || "");
   result.innerHTML = `
     <div class="success-box">
       <h3>Bantuan berhasil dicatat${offers.length > 1 ? " (" + offers.length + " item)" : ""}</h3>
 
       <p>Tiap item menjadi satu Aid Offer yang bisa dipantau di Manajemen Distribusi &amp; Posko Logistik.</p>
+
+      ${editCode ? `
+      <div class="alert warning" style="margin:10px 0">
+        <b>Simpan sekarang — Kode Edit hanya ditampilkan sekali:</b>
+        <div class="code-grid" style="margin-top:8px">
+          <div><span>Aid ID</span><strong>${firstId}</strong></div>
+          <div><span>Kode Edit</span><strong style="letter-spacing:2px">${editCode}</strong></div>
+          <div><span>HP terdaftar</span><strong>${safe(data.donor_name)}</strong></div>
+        </div>
+        <p class="subtitle" style="margin-top:6px">Edit / batalkan bantuan nanti pakai <b>Aid ID + Kode Edit + nomor HP</b> yang sama. Tanpa akun.</p>
+      </div>` : ""}
 
       <div class="code-grid">
         ${rows}
@@ -83,13 +96,11 @@ function renderCreateSuccess(
         </div>
         <div>
           <span>Target Posko</span>
-          <strong>${safe(data.target_posko)}</strong>
+          <strong>${safe(data.target_posko) || "—"}</strong>
         </div>
       </div>
 
-      <p class="subtitle">Simpan Aid Offer ID di atas untuk mengedit lewat "Edit Bantuan Saya".</p>
-
-      <a class="btn primary" href="edit-bantuan.html">Edit Bantuan Saya</a>
+      <a class="btn primary" href="edit-bantuan.html?aid=${encodeURIComponent(firstId)}">Edit / Batalkan Bantuan</a>
     </div>
   `;
 }
@@ -233,10 +244,15 @@ function setupPublicAidForm() {
           `Menyimpan ${items.length} item bantuan ke Frappe...` +
           `</div>`;
 
+        const notesRaw = form.notes.value.trim();
+        const arrival = (form.expected_arrival_at && form.expected_arrival_at.value.trim()) || "";
+        const notesOut = [notesRaw, arrival ? ("Perkiraan sampai posko: " + arrival) : ""]
+          .filter(Boolean).join(" | ") || null;
+
         const data =
           await RN_FRAPPE.call(
             "rescue_net.api_logistics." +
-            "create_user_aid_offer_multi",
+            "submit_guest_aid_offer_multi",
             {
               disaster_event:
                 form.disaster_event_id.value.trim(),
@@ -246,7 +262,8 @@ function setupPublicAidForm() {
 
               items_json: JSON.stringify(items),
 
-              handling_mode: handlingMode,
+              handling_mode:
+                deliveryMode === "need_pickup" ? "need_pickup" : "self_deliver",
               target_posko: targetPosko,
 
               pickup_location:
@@ -255,12 +272,7 @@ function setupPublicAidForm() {
               ready_at:
                 form.ready_at.value.trim() || null,
 
-              expected_arrival_at:
-                (form.expected_arrival_at &&
-                  form.expected_arrival_at.value.trim()) || null,
-
-              notes:
-                form.notes.value.trim() || null
+              notes: notesOut
             },
             {
               method: "POST"
@@ -305,156 +317,108 @@ function setupPublicAidForm() {
 
 
 function setupEditAidForm() {
-  const form =
-    document.querySelector(
-      "[data-edit-aid-form]"
-    );
-
-  const result =
-    document.querySelector(
-      "[data-edit-aid-result]"
-    );
-
+  const form = document.querySelector("[data-edit-aid-form]");
+  const result = document.querySelector("[data-edit-aid-result]");
   if (!form) return;
 
-  setupDeliveryModeToggle(form);
+  const fields = form.querySelector("[data-edit-fields]");
+  const loadBtn = form.querySelector("[data-load-aid]");
 
-  form.addEventListener(
-    "submit",
-    async e => {
+  // pre-fill Aid ID from ?aid= (link from the submit success box)
+  try {
+    const qa = new URLSearchParams(location.search).get("aid");
+    if (qa) form.aid_offer_id.value = qa;
+  } catch (e) {}
+
+  function creds() {
+    return {
+      aid_offer: form.aid_offer_id.value.trim(),
+      edit_code: form.edit_code.value.trim(),
+      donor_contact: form.donor_contact.value.trim(),
+    };
+  }
+
+  async function loadAid() {
+    const c = creds();
+    if (!c.aid_offer || !c.edit_code || !c.donor_contact) {
+      result.innerHTML = `<div class="alert danger">Isi Aid ID, Kode Edit, dan HP.</div>`;
+      return;
+    }
+    result.innerHTML = `<div class="alert neutral">Memuat…</div>`;
+    try {
+      const d = await RN_FRAPPE.call(
+        "rescue_net.api_logistics.get_guest_aid_offer", c, { method: "POST" }
+      );
+      form.item_name.value = d.item_name || "";
+      form.quantity.value = d.quantity != null ? d.quantity : "";
+      form.unit.value = d.unit || "";
+      form.pickup_location.value = d.pickup_location || "";
+      form.ready_at.value = d.ready_at || "";
+      form.notes.value = d.notes || "";
+      form.cancel.checked = false;
+      fields.hidden = false;
+      const sib = (d.batch_items || []).map(b =>
+        `<div><span>${safe(b.item_name)}</span><strong>${safe(b.name)} · ${safe(b.offer_status)}</strong></div>`
+      ).join("");
+      result.innerHTML = `
+        <div class="alert neutral">
+          Bantuan dimuat: <b>${safe(d.item_name)}</b> · ${safe(d.offer_status)}
+          ${d.canonical_group ? ` · kelompok: ${safe(d.canonical_group)}` : ""}
+        </div>
+        ${sib ? `<div class="panel" style="margin-top:8px"><h4>Item lain di pengiriman yang sama</h4><div class="code-grid">${sib}</div><p class="subtitle">Kode Edit yang sama berlaku untuk semua. Ubah satu per satu lewat Aid ID masing-masing.</p></div>` : ""}
+      `;
+    } catch (err) {
+      fields.hidden = true;
+      result.innerHTML = `<div class="alert danger">${safe(err.message)}</div>`;
+    }
+  }
+
+  if (loadBtn) loadBtn.addEventListener("click", loadAid);
+
+  form.addEventListener("submit", async e => {
       e.preventDefault();
-
       if (!window.RN_FRAPPE) {
-        result.innerHTML =
-          `<div class="alert danger">` +
-          `Frappe client tidak tersedia.` +
-          `</div>`;
-
+        result.innerHTML = `<div class="alert danger">Frappe client tidak tersedia.</div>`;
         return;
       }
-
-      const aidId =
-        form.aid_offer_id.value
-          .trim();
-
-      if (!aidId) {
-        result.innerHTML =
-          `<div class="alert danger">` +
-          `Aid Offer ID wajib diisi.` +
-          `</div>`;
-
+      const c = creds();
+      if (!c.aid_offer || !c.edit_code || !c.donor_contact) {
+        result.innerHTML = `<div class="alert danger">Isi Aid ID, Kode Edit, dan HP lalu klik Muat dulu.</div>`;
         return;
       }
-
-      const deliveryMode =
-        form.delivery_mode.value;
-
-      const handlingMode =
-        mapDeliveryMode(
-          deliveryMode
-        );
-
-      const targetPosko =
-        deliveryMode ===
-        "self_deliver_to_posko"
-          ? (
-              form.target_node_id.value
-                .trim() ||
-              null
-            )
-          : null;
-
+      const cancel = form.cancel && form.cancel.checked;
       try {
-        result.innerHTML =
-          `<div class="alert neutral">` +
-          `Mengupdate bantuan...` +
-          `</div>`;
-
-        const data =
-          await RN_FRAPPE.call(
-            "rescue_net.api_logistics." +
-            "update_user_aid_offer",
+        result.innerHTML = `<div class="alert neutral">${cancel ? "Membatalkan" : "Menyimpan"} bantuan…</div>`;
+        const data = await RN_FRAPPE.call(
+            "rescue_net.api_logistics.edit_guest_aid_offer",
             {
-              aid_offer:
-                aidId,
-
-              item_text:
-                form.item_name.value
-                  .trim() ||
-                null,
-
-              quantity:
-                form.quantity.value
-                  ? Number(
-                      form.quantity.value
-                    )
-                  : null,
-
-              unit:
-                form.unit.value
-                  .trim() ||
-                null,
-
-              handling_mode:
-                handlingMode,
-
-              target_posko:
-                targetPosko,
-
-              pickup_location:
-                form.pickup_location
-                  .value
-                  .trim() ||
-                null,
-
-              ready_at:
-                form.ready_at.value
-                  .trim() ||
-                null,
-
-              notes:
-                form.notes.value
-                  .trim() ||
-                null
+              aid_offer: c.aid_offer,
+              edit_code: c.edit_code,
+              donor_contact: c.donor_contact,
+              cancel: cancel ? 1 : 0,
+              item_text: form.item_name.value.trim() || null,
+              quantity: form.quantity.value ? Number(form.quantity.value) : null,
+              unit: form.unit.value.trim() || null,
+              pickup_location: form.pickup_location.value.trim() || null,
+              ready_at: form.ready_at.value.trim() || null,
+              notes: form.notes.value.trim() || null,
             },
-            {
-              method: "POST"
-            }
+            { method: "POST" }
           );
 
         result.innerHTML = `
           <div class="success-box">
-            <h3>Bantuan berhasil diupdate</h3>
-
+            <h3>${cancel ? "Bantuan dibatalkan" : "Bantuan berhasil diupdate"}</h3>
             <div class="code-grid">
-              <div>
-                <span>Aid Offer</span>
-                <strong>${safe(data.aid_offer)}</strong>
-              </div>
-
-              <div>
-                <span>Status</span>
-                <strong>${safe(data.offer_status)}</strong>
-              </div>
-
-              <div>
-                <span>Handling</span>
-                <strong>${safe(data.handling_mode)}</strong>
-              </div>
-
-              <div>
-                <span>Target Posko</span>
-                <strong>${safe(data.target_posko)}</strong>
-              </div>
+              <div><span>Aid ID</span><strong>${safe(data.aid_offer)}</strong></div>
+              <div><span>Status</span><strong>${safe(data.offer_status)}</strong></div>
+              ${data.item_name ? `<div><span>Item</span><strong>${safe(data.item_name)}${data.quantity ? " — " + safe(data.quantity) + " " + safe(data.unit || "") : ""}</strong></div>` : ""}
+              ${data.canonical_group ? `<div><span>Kelompok</span><strong>${safe(data.canonical_group)}</strong></div>` : ""}
             </div>
           </div>
         `;
-
       } catch (err) {
-        result.innerHTML =
-          `<div class="alert danger">` +
-          `${safe(err.message)}` +
-          `</div>`;
+        result.innerHTML = `<div class="alert danger">${safe(err.message)}</div>`;
       }
     }
   );

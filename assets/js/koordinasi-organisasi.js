@@ -168,10 +168,112 @@
     $("#koFootNote").hidden = false;
   }
 
+  function fmtDate(s) {
+    if (!s) return "-";
+    return String(s).slice(0, 16).replace("T", " ");
+  }
+
+  async function loadMembers() {
+    var sec = $("#koMemberSection"), admin = $("#koMemberAdmin"), self = $("#koMemberSelf");
+    var mine = { memberships: [] };
+    try { mine = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.my_memberships"); } catch (e) {}
+    var adminData = { is_org_admin: false, memberships: [] };
+    try { adminData = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.org_membership_admin"); } catch (e) {}
+
+    // ---- self: the caller's own membership status ----
+    var ms = (mine && mine.memberships) || [];
+    if (ms.length) {
+      self.innerHTML = '<p class="rn-muted" style="margin:4px 0 8px">Keanggotaan Anda:</p>' +
+        ms.map(function (m) {
+          var badge = m.status === "approved"
+            ? '<span class="ko-tag full">Anggota' + (m.member_verified ? " · terverifikasi pusat" : "") + "</span>"
+            : '<span class="ko-tag summary">' + esc(m.status) + "</span>";
+          return '<div class="rn-row" style="padding:4px 0">' + badge +
+            " <b>" + esc(m.organization_title) + "</b> <span class=\"rn-muted\">(" + esc(m.membership_role) + ")</span></div>";
+        }).join("");
+    } else {
+      self.innerHTML = '<p class="ko-empty">Anda belum tergabung sebagai anggota organisasi mana pun. ' +
+        'Ajukan lewat halaman <a href="organisasi-posko.html">Organisasi &amp; Posko</a>.</p>';
+    }
+
+    // ---- admin: pending requests + roster for orgs the caller owns ----
+    if (adminData && adminData.is_org_admin) {
+      admin.hidden = false;
+      var all = adminData.memberships || [];
+      var pending = all.filter(function (m) { return m.status === "pending"; });
+      var roster = all.filter(function (m) { return m.status === "approved"; });
+      $("#koMemberCount").textContent = pending.length + " menunggu · " + roster.length + " anggota";
+
+      $("#koMemberPending").innerHTML = pending.length ? pending.map(function (m) {
+        return '<article class="ko-posko-card" data-mid="' + esc(m.name) + '">' +
+          "<h4>" + esc(m.user_name) + "</h4>" +
+          '<div class="ko-posko-meta">' + esc(m.user_email || m.user_phone || "-") +
+          " · minta " + fmtDate(m.requested_at) + " · " + esc(m.organization_title) + "</div>" +
+          '<label class="rn-row" style="font-size:12px"><input type="checkbox" class="koVerifyChk"> Identitas terverifikasi pusat</label>' +
+          '<div class="ko-card-actions">' +
+          '<button type="button" class="btn primary mini" data-act="approve">Setujui</button>' +
+          '<button type="button" class="btn ghost mini" data-act="reject">Tolak</button>' +
+          '<span class="rn-muted koMsg"></span></div></article>';
+      }).join("") : '<p class="ko-empty">Tidak ada permohonan menunggu.</p>';
+
+      $("#koMemberRoster").innerHTML = roster.length ? '<div class="ko-card-grid">' + roster.map(function (m) {
+        var vtag = m.member_verified
+          ? '<span class="ko-tag full">Terverifikasi pusat</span>'
+          : '<span class="ko-tag view">Belum diverifikasi</span>';
+        return '<article class="ko-posko-card" data-mid="' + esc(m.name) + '">' +
+          '<div class="rn-row">' + vtag + (m.membership_role === "owner" ? '<span class="ko-tag edit">Owner</span>' : "") + "</div>" +
+          "<h4>" + esc(m.user_name) + "</h4>" +
+          '<div class="ko-posko-meta">' + esc(m.user_email || m.user_phone || "-") + " · " + esc(m.organization_title) + "</div>" +
+          (m.membership_role === "owner" ? "" :
+            '<div class="ko-card-actions">' +
+            '<button type="button" class="btn ghost mini" data-act="toggle-verify">' +
+            (m.member_verified ? "Cabut verifikasi" : "Verifikasi identitas") + "</button>" +
+            '<button type="button" class="btn ghost mini" data-act="revoke">Keluarkan</button>' +
+            '<span class="rn-muted koMsg"></span></div>') +
+          "</article>";
+      }).join("") + "</div>" : '<p class="ko-empty">Belum ada anggota disetujui.</p>';
+
+      wireMemberActions();
+    } else {
+      admin.hidden = true;
+      $("#koMemberCount").textContent = ms.length + " keanggotaan";
+    }
+    sec.hidden = false;
+  }
+
+  function wireMemberActions() {
+    document.querySelectorAll("#koMemberAdmin [data-act]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var card = btn.closest("[data-mid]");
+        var mid = card.getAttribute("data-mid");
+        var act = btn.getAttribute("data-act");
+        var msg = card.querySelector(".koMsg");
+        var chk = card.querySelector(".koVerifyChk");
+        if (msg) msg.textContent = " memproses…";
+        try {
+          if (act === "toggle-verify") {
+            var on = /Verifikasi identitas/.test(btn.textContent);
+            await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_member_verified",
+              { membership: mid, verified: on ? 1 : 0 }, { method: "POST" });
+          } else {
+            await window.RN_FRAPPE.call("rescue_net.api_community_cluster.decide_membership",
+              { membership: mid, action: act, member_verified: (chk && chk.checked) ? 1 : 0 },
+              { method: "POST" });
+          }
+          await loadMembers();
+        } catch (err) {
+          var m = (err && err.message) || String(err);
+          if (msg) msg.textContent = " gagal: " + m;
+        }
+      });
+    });
+  }
+
   async function load() {
     try {
       var d = await window.RN_FRAPPE.call(BOARD, { disaster_event: getEvent() });
       render(d || {});
+      if (d && d.logged_in) loadMembers();
     } catch (err) {
       console.error("[koordinasi organisasi]", err);
       $("#koStatus").textContent = "Gagal memuat data koordinasi organisasi.";

@@ -2157,6 +2157,227 @@ def update_user_aid_offer(
             doc.source_updated_at,
     }
 
+
+# ============================================================
+# Guest ("Donatur Cepat") aid submission — no account, per blueprint
+# "Donatur Cepat / Personal Guest: tidak perlu registrasi". The submitter
+# gets an Aid ID + a one-time Edit Code shown once; only a SHA-256 hash of
+# the code is stored. Later edits go through HP (donor_contact) + Aid ID +
+# Edit Code. A multi-item submission shares one code + one guest_batch.
+# ============================================================
+
+import hashlib as _hashlib
+
+_GUEST_AID_FIELDS = (
+    "name", "item_name", "raw_item_text", "quantity", "unit", "quantity_mode",
+    "pickup_location", "ready_at", "notes", "offer_status", "handling_mode",
+    "donor_name", "donor_contact", "target_posko", "disaster_event",
+    "guest_batch", "submitted_channel", "canonical_group", "base_quantity",
+    "base_unit", "conversion_status",
+)
+
+
+def _guest_code_hash(code):
+    return _hashlib.sha256(
+        ("rn-guest-aid:" + str(code or "").strip().upper()).encode("utf-8")
+    ).hexdigest()
+
+
+def _norm_contact(v):
+    return "".join(ch for ch in str(v or "") if ch.isdigit())
+
+
+def _load_guest_offer(aid_offer, edit_code, donor_contact=None):
+    doc = frappe.get_doc("RN Aid Offer", aid_offer)
+    if (doc.get("submitted_channel") or "account") != "guest" or not doc.get("edit_code_hash"):
+        frappe.throw("Bantuan ini tidak dikelola lewat Kode Edit.", frappe.PermissionError)
+    if _guest_code_hash(edit_code) != doc.edit_code_hash:
+        frappe.throw("Aid ID atau Kode Edit salah.", frappe.PermissionError)
+    if donor_contact and _norm_contact(donor_contact) and _norm_contact(donor_contact) != _norm_contact(doc.donor_contact):
+        frappe.throw("Nomor HP tidak cocok dengan data bantuan ini.", frappe.PermissionError)
+    return doc
+
+
+@frappe.whitelist(allow_guest=True)
+def submit_guest_aid_offer_multi(
+    disaster_event,
+    donor_name,
+    donor_contact,
+    items_json,
+    handling_mode="need_pickup",
+    target_posko=None,
+    pickup_location=None,
+    ready_at=None,
+    notes=None,
+):
+    """One guest "Kirim Bantuan" carrying several barang, no account needed.
+    Returns the Aid IDs plus ONE Edit Code (shown once) covering all rows."""
+    import json as _json
+
+    donor_name = str(donor_name or "").strip()
+    donor_contact = str(donor_contact or "").strip()
+    if not donor_name:
+        frappe.throw("Nama donatur wajib diisi.")
+    if len(_norm_contact(donor_contact)) < 7:
+        frappe.throw("Nomor HP/WhatsApp wajib diisi (untuk edit bantuan nanti).")
+
+    try:
+        items = _json.loads(items_json) if isinstance(items_json, str) else items_json
+    except Exception:
+        frappe.throw("Format daftar barang tidak valid.")
+    if not isinstance(items, list) or not items:
+        frappe.throw("Tambahkan minimal satu barang bantuan.")
+    if len(items) > 30:
+        frappe.throw("Maksimal 30 baris barang per pengiriman.")
+
+    event = _resolve_user_aid_event(disaster_event)
+    if not event:
+        frappe.throw("Disaster Event tidak ditemukan: " + str(disaster_event))
+
+    posko = _resolve_user_aid_posko(target_posko) if target_posko else None
+    if target_posko and not posko:
+        frappe.throw("Posko tidak ditemukan: " + str(target_posko))
+    if posko:
+        allowed = (
+            public_posko_allowed(posko)
+            and cint(frappe.db.get_value("RN Posko", posko, "public_participation") or 0)
+            and cint(frappe.db.get_value("RN Posko", posko, "accept_goods") or 0)
+        )
+        if not allowed:
+            frappe.throw("Posko ini tidak membuka penerimaan bantuan publik.", frappe.PermissionError)
+
+    handling_mode = "need_pickup" if handling_mode not in ("need_pickup", "self_deliver") else handling_mode
+    code = frappe.utils.random_string(8).upper().replace("O", "A").replace("0", "9").replace("I", "K").replace("L", "M")
+    code_hash = _guest_code_hash(code)
+    batch = "guest-" + frappe.generate_hash(length=10)
+
+    created = []
+    for row in items:
+        row = row or {}
+        it = str(row.get("item_text") or "").strip()
+        if not it:
+            continue
+        qraw = row.get("quantity")
+        qty = flt(qraw) if qraw not in (None, "") else None
+        if qty is not None and qty <= 0:
+            frappe.throw('Jumlah untuk "%s" harus lebih dari 0.' % it)
+
+        doc = frappe.new_doc("RN Aid Offer")
+        doc.title = f"{it} - {donor_name}"
+        doc.disaster_event = event
+        doc.target_posko = posko
+        doc.donor_user = None
+        doc.donor_name = donor_name
+        doc.donor_contact = donor_contact
+        doc.item_name = it
+        doc.raw_item_text = it
+        if qty is not None:
+            doc.quantity = qty
+        doc.unit = row.get("unit")
+        doc.quantity_mode = row.get("quantity_mode") or "exact"
+        doc.pickup_location = pickup_location
+        doc.ready_at = (str(row.get("ready_at")).strip() if row.get("ready_at") else None) or ready_at
+        doc.notes = notes
+        doc.handling_mode = "need_pickup"
+        doc.offer_status = "need_pickup" if handling_mode == "need_pickup" else "available"
+        doc.submitted_channel = "guest"
+        doc.guest_batch = batch
+        doc.edit_code_hash = code_hash
+        doc.verification_status = "self_reported"
+        now = now_datetime()
+        doc.observed_at = now
+        doc.source_updated_at = now
+        doc.insert(ignore_permissions=True)
+        created.append({
+            "aid_offer": doc.name, "item": it,
+            "quantity": doc.quantity, "unit": doc.unit,
+            "canonical_group": doc.get("canonical_group"),
+        })
+
+    if not created:
+        frappe.throw("Tidak ada barang valid untuk disimpan.")
+
+    return {
+        "aid_offers": created,
+        "count": len(created),
+        "guest_batch": batch,
+        "edit_code": code,          # shown once, never stored in the clear
+        "donor_name": donor_name,
+        "handling_mode": handling_mode,
+        "target_posko": posko,
+        "notice": "Simpan Aid ID + Kode Edit ini. Kode hanya ditampilkan sekali.",
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def get_guest_aid_offer(aid_offer, edit_code, donor_contact=None):
+    """Fetch one guest offer (+ its batch siblings) for the edit form."""
+    doc = _load_guest_offer(aid_offer, edit_code, donor_contact)
+    out = {k: doc.get(k) for k in _GUEST_AID_FIELDS}
+    siblings = []
+    if doc.get("guest_batch"):
+        for r in frappe.get_all(
+            "RN Aid Offer",
+            filters={"guest_batch": doc.guest_batch},
+            fields=["name", "item_name", "quantity", "unit", "offer_status", "canonical_group"],
+            order_by="creation asc", limit_page_length=50,
+        ):
+            siblings.append(r)
+    out["batch_items"] = siblings
+    return out
+
+
+@frappe.whitelist(allow_guest=True)
+def edit_guest_aid_offer(
+    aid_offer,
+    edit_code,
+    donor_contact=None,
+    item_text=None,
+    quantity=None,
+    unit=None,
+    pickup_location=None,
+    ready_at=None,
+    notes=None,
+    cancel=None,
+):
+    """Edit / cancel one guest aid offer using Aid ID + Edit Code (+ HP)."""
+    doc = _load_guest_offer(aid_offer, edit_code, donor_contact)
+
+    if str(cancel).lower() in ("1", "true", "yes"):
+        doc.offer_status = "cancelled"
+        doc.source_updated_at = now_datetime()
+        doc.save(ignore_permissions=True)
+        return {"aid_offer": doc.name, "offer_status": doc.offer_status}
+
+    if item_text is not None and str(item_text).strip():
+        doc.item_name = str(item_text).strip()
+        doc.raw_item_text = doc.item_name
+    if quantity not in (None, ""):
+        q = flt(quantity)
+        if q <= 0:
+            frappe.throw("Jumlah bantuan harus lebih dari 0.")
+        doc.quantity = q
+    if unit is not None:
+        doc.unit = unit
+    if pickup_location is not None:
+        doc.pickup_location = pickup_location
+    if ready_at is not None:
+        doc.ready_at = ready_at
+    if notes is not None:
+        doc.notes = notes
+
+    doc.source_updated_at = now_datetime()
+    doc.save(ignore_permissions=True)
+    return {
+        "aid_offer": doc.name,
+        "item_name": doc.item_name,
+        "quantity": doc.quantity,
+        "unit": doc.unit,
+        "offer_status": doc.offer_status,
+        "canonical_group": doc.get("canonical_group"),
+    }
+
+
 @frappe.whitelist()
 def my_aid_offers(
     limit=100,

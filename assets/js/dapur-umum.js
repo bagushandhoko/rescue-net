@@ -403,8 +403,16 @@
     el.innerHTML = items.length
       ? items
           .map(function (s) {
-            var qty = s.current_quantity ?? s.quantity ?? s.effective_quantity ?? 0;
-            return card(safe(s.item_name), "Current stock: <b>" + safe(qty) + "</b> " + safe(s.unit), safe(s.unit));
+            // api_kitchen.dashboard sends effective_available (stock left after
+            // kitchen usage) + snapshot_quantity (last observation). The older
+            // current_quantity / effective_quantity names never shipped.
+            var qty = s.effective_available ?? s.snapshot_quantity
+              ?? s.current_quantity ?? s.quantity ?? s.effective_quantity ?? 0;
+            var extra = (s.effective_available != null && s.snapshot_quantity != null
+              && s.effective_available !== s.snapshot_quantity)
+              ? " <small class=\"subtitle\">(snapshot " + safe(s.snapshot_quantity) + ")</small>"
+              : "";
+            return card(safe(s.item_name), "Current stock: <b>" + safe(qty) + "</b> " + safe(s.unit) + extra, safe(s.unit));
           })
           .join("")
       : card("Belum ada stok", "Transfer bahan dari Posko Logistik dulu.", "empty");

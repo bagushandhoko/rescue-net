@@ -136,6 +136,10 @@
     var myWrap = $("#koMyPosko");
     if (d.my_posko) {
       myWrap.innerHTML = '<div class="ko-card-grid">' + card(d.my_posko, { mine: true }) + "</div>";
+    } else if ((t.editable_count || 0) > 0) {
+      myWrap.innerHTML =
+        '<p class="ko-empty">Anda koordinator organisasi — tidak memegang satu posko tertentu, '
+        + "tapi bisa mengelola semua posko organisasi di bawah ini.</p>";
     } else {
       myWrap.innerHTML =
         '<p class="ko-empty">Anda tidak memegang posko tertentu (mis. koordinator organisasi). '

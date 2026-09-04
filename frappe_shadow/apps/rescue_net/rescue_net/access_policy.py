@@ -116,6 +116,41 @@ def can_manage_organization(actor, organization):
     )
 
 
+# Roles that coordinate an organisation's whole response instead of running a
+# single posko. A coordinator has no posko of their own but edits every posko
+# their organisation runs (owner decision 2026-09-04 — "Koordinasi Internal
+# Organisasi" phase 3 open item).
+ORG_COORDINATOR_ROLES = {"community_coordinator"}
+
+
+def is_org_coordinator(actor):
+    return bool(
+        actor
+        and actor.name
+        and (actor.get("role") if hasattr(actor, "get") else getattr(actor, "role", None))
+        in ORG_COORDINATOR_ROLES
+    )
+
+
+def can_coordinate_posko(actor, posko):
+    """True when `actor` is an org-level coordinator and `posko` belongs to the
+    actor's own organisation."""
+    if not is_org_coordinator(actor):
+        return False
+
+    actor_org = (
+        actor.get("organization") if hasattr(actor, "get")
+        else getattr(actor, "organization", None)
+    )
+
+    if not actor_org or not posko:
+        return False
+
+    posko_org = frappe.db.get_value("RN Posko", posko, "organization")
+
+    return bool(posko_org) and posko_org == actor_org
+
+
 def can_manage_posko(actor, posko):
     if is_system_manager():
         return True
@@ -123,10 +158,10 @@ def can_manage_posko(actor, posko):
     if not actor or not actor.name:
         return False
 
-    return approved_posko_assignment(
-        actor.name,
-        posko,
-    )
+    if approved_posko_assignment(actor.name, posko):
+        return True
+
+    return can_coordinate_posko(actor, posko)
 
 
 def public_posko_allowed(posko_name):

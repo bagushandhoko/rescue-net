@@ -269,11 +269,16 @@ function renderStockWatch(ctx) {
       safe(n.priority)
     ));
 
+  // api_ai.public_context sends raw RN Stock Observation rows:
+  // { item_name, quantity, unit, posko, observed_at }. The `posko_id` /
+  // `current_quantity` names were a never-shipped provisional contract.
+  const stockQty = s => s.quantity ?? s.exact_total ?? s.current_quantity ?? 0;
+  const stockPosko = s => s.posko || s.posko_id || "";
   const stock = (ctx.stock_summary || [])
     .slice(0, 6)
     .map(s => card(
-      `${safe(s.item_name)} • ${safe(s.posko_id)}`,
-      `Saldo: ${safe(s.current_quantity)} ${safe(s.unit)}`,
+      `${safe(s.canonical_group || s.item_name)} • ${safe(stockPosko(s))}`,
+      `Saldo: ${safe(stockQty(s))} ${safe(s.unit)}`,
       "stock"
     ));
 
@@ -289,10 +294,13 @@ function renderCriticalNeedsTable(ctx) {
   const body = document.getElementById("criticalNeedsBody");
   if (!body) return;
 
+  // Keyed by item_name to match logistic_needs rows (which carry no
+  // canonical_group in the AI context payload).
   const stockByItem = {};
   (ctx.stock_summary || []).forEach(s => {
-    const key = (s.item_name || "").toLowerCase();
-    stockByItem[key] = (stockByItem[key] || 0) + Number(s.current_quantity || 0);
+    const key = (s.item_name || s.canonical_group || "").toLowerCase();
+    const qty = s.quantity ?? s.exact_total ?? s.current_quantity ?? 0;
+    stockByItem[key] = (stockByItem[key] || 0) + Number(qty || 0);
   });
 
   const priorityRank = { critical: 0, urgent: 1, high: 1, normal: 2, low: 3 };

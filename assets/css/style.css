@@ -219,6 +219,10 @@ h4 {
   display: block;
   color: var(--muted);
   font-size: 13px;
+  /* long slash-lists / IDs in a caption ("bayi/anak/lansia/bumil/disabilitas")
+     must wrap, not set the card's min-content width and push a multi-column
+     KPI grid wider than a phone viewport. */
+  overflow-wrap: anywhere;
 }
 
 .kpi-card strong {

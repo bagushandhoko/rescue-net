@@ -4,7 +4,93 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-04 (Koordinasi Internal Organisasi — phase 3 DONE & DEPLOYED; phases 1-2 done 2026-09-03)_
+_Last updated: 2026-09-04 (LD1 coordinator edit rights + FE stock_summary contract + Step 12/12 mobile pass — all DONE & DEPLOYED)_
+
+---
+
+## Three-item cleanup batch (2026-09-04) — DONE & DEPLOYED
+
+Owner: "kerjakan semua" on the three remaining loose ends.
+
+### 1. LD1 coordinator edit rights — the phase-3 open item, now decided: coordinator CAN edit
+
+`community_coordinator` (LD1, no posko of their own) now has edit rights on
+**every posko owned by their own organisation** (was pure-viewer through phases
+1-3).
+
+- **`access_policy.py`:** new `ORG_COORDINATOR_ROLES = {"community_coordinator"}`,
+  `is_org_coordinator(actor)`, `can_coordinate_posko(actor, posko)` (true iff the
+  actor is an org coordinator **and** `RN Posko.organization == actor.organization`).
+  `can_manage_posko()` now returns true when `approved_posko_assignment(...)` OR
+  `can_coordinate_posko(...)`. Every write guard (`api_logistics` / `api_medical`
+  / `api_shelter` / `api_kitchen` / `api_volunteer` / `api_posko_contact` /
+  `api_privacy` / `api_search_found` / `api_resource_tools`) picks this up
+  automatically — a coordinator can now create/edit records for any sibling posko.
+- **`my_org_coordination` / `posko_edit_scope`** already thread `can_manage_posko`
+  per card → LD1's sibling cards now come back `can_edit:true`,
+  `editable_count:5`, `can_edit_current:true`. No endpoint change.
+- **`assets/js/koordinasi-organisasi.js` (`?v=koordorg-20260904`):** the
+  no-`my_posko` empty state now branches on `editable_count>0` → shows
+  "Anda koordinator organisasi — … bisa mengelola semua posko organisasi di
+  bawah ini." (was always the pure-viewer text). The `card()` helper already
+  renders "Kelola Posko" + "Bisa dikelola" when `can_edit` is true.
+- **`rn-posko-scope.js` unchanged:** a coordinator opening
+  `posko-logistik.html?id=<sibling>` now gets `can_edit_current:true` → no
+  read-only overlay, forms visible. `primary_posko` stays null (no own posko) so
+  the no-`?id=` redirect simply doesn't fire for them.
+- **Deploy:** `access_policy.py` cp→`osiun-frappe-backend` (md5 host==container,
+  `ast.parse` OK, backup `access_policy.py.bak-20260904-coordedit`), restart
+  (502→200 ~10s). Frontend from disk.
+- **Verified (`bench console` as each user + Playwright as LD1):** LD1 →
+  `can_manage_posko` true for all 5 SIM-LR poskos, **false** for other-org poskos
+  (`SIM-NS-*`, `posko-sim-dapur`); `my_org_coordination` `editable_count:5`, 5×
+  "Kelola Posko" buttons, 0 "Hanya-lihat" tags on siblings, 3 open externals
+  still `extEditTags:0`; 0 console errors. **Regression:** LD2
+  (`logistics_operator`) still edits only its own posko, `false` on all siblings.
+
+### 2. FE stock_summary contract — one real bug (dapur-umum), two dead files
+
+Investigated the "legacy provisional shape" note. Findings:
+- **`war-room.js` and `rn-control-centre-v4.js` are DEAD** — referenced only under
+  `backup/`. The live Control Centre / war-room page both load
+  `rn-control-centre-final.js`, which builds its critical-needs table from
+  `logistic_needs.realized_quantity` and **never joins `stock_summary`** — so
+  there is no live shape bug there.
+- **`dapur-umum.js` `renderLegacyStock` WAS broken:** read
+  `s.current_quantity ?? s.quantity ?? s.effective_quantity` but
+  `api_kitchen.dashboard` sends `effective_available` (stock left after kitchen
+  usage) + `snapshot_quantity` → the panel always showed **0**. Fixed to
+  `s.effective_available ?? s.snapshot_quantity ?? …`, plus a
+  "(snapshot N)" annotation when the two differ. `?v=dapur-20260904`.
+  Verified against live `api_kitchen.dashboard?posko=posko-sim-dapur`
+  (Gas LPG 1 tabung / Beras 40 kg / Air Mineral 2 dus — all now render).
+- **`war-room.js` + `rn-control-centre-v4.js`** also aligned (`quantity ??
+  exact_total ?? current_quantity`, group-key `canonical_group || item_name`)
+  so if either is ever revived it matches the real `api_ai` / `available_stock`
+  payloads. No deploy needed — dead code + FE-from-disk.
+- **Not touched (still deliberate):** `control_centre_logistics.available_stock`
+  has no FE consumer; the war-room "Kebutuhan Kritis" item↔stock join keys on
+  `item_name` because `api_ai` `logistic_needs` rows carry no `canonical_group`.
+
+### 3. Step 12/12 — mobile / HP pass — DONE (roadmap complete)
+
+`osiun-playwright-check/rn-mobile-step12.js` — horizontal-overflow + page-error
+sweep across **all 35 pages × {390, 360}px** (70 checks).
+
+- **69/70 clean.** The one miss: `shelter-detail.html` overflowed at both widths
+  (`docW 404 vs vw 390`). Cause: the 6-tile `.rn-sh-kpi` grid — the caption
+  `<small>bayi/anak/lansia/bumil/disabilitas</small>` is one unbreakable token
+  (`/` is not a CSS break opportunity) so it set each KPI card's min-content
+  width and forced the grid — and the page — past the viewport, even at the
+  2-column ≤640px breakpoint.
+- **Fix — `assets/css/style.css`:** `overflow-wrap: anywhere` added to
+  `.kpi-card span, .kpi-card small`. Global + safe (only lets long
+  slash-lists / IDs / URLs in a KPI caption wrap). `shelter-detail.html`
+  style.css buster → `?v=shelter-20260904`.
+- **Re-verified:** shelter-detail `docScrollW == vw` at 390 **and** 360; full
+  re-sweep 69/70 again (the 1 = a transient 45s nav timeout on
+  `ai-settings.html` at 390 under NAS load — `ok` at 360 and on the first run,
+  not a layout defect).
 
 ---
 
@@ -141,10 +227,10 @@ I logged in as".
   hidden, every read-only "Riwayat" panel still visible, 0 console errors.
   Screenshots `rn-poskoscope3-{posko-medis-detail,shelter-detail,dapur-umum}.png`.
 
-**Phase 3 / open (owner call only — no code pending):**
-- Should `community_coordinator` (LD1, no posko) get edit on all of the org's
-  poskos, or stay pure-viewer? Phases 1-3 = pure viewer. Everything else in this
-  work unit is done.
+**Phase 3 / open item — RESOLVED 2026-09-04:** `community_coordinator` (LD1, no
+posko) now gets edit on **all of their own org's** poskos (not other orgs').
+Implemented in `access_policy.can_coordinate_posko` — see "Three-item cleanup
+batch (2026-09-04)" at the top of this file. This work unit is fully done.
 
 ---
 

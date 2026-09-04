@@ -685,9 +685,10 @@ function renderCriticalNeeds(ctx) {
       )
       +
       Number(
-        row.current_quantity
-        || row.quantity
-        || 0
+        row.quantity
+        ?? row.exact_total
+        ?? row.current_quantity
+        ?? 0
       );
   }
 
@@ -1008,9 +1009,10 @@ function renderModules(ctx) {
       (sum, row) =>
         sum
         + Number(
-          row.current_quantity
-          || row.quantity
-          || 0
+          row.quantity
+          ?? row.exact_total
+          ?? row.current_quantity
+          ?? 0
         ),
       0
     );

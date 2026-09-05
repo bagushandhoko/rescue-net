@@ -1251,7 +1251,11 @@ def _public_shipments(name):
     ])
     out = []
     for o in frappe.get_all(
-        "RN Aid Offer", filters={"target_posko": name},
+        "RN Aid Offer",
+        filters={
+            "target_posko": name,
+            "offer_status": ["not in", ["received", "received_verified", "cancelled"]],
+        },
         fields=fields, order_by="creation desc", limit_page_length=100,
     ):
         wave = None

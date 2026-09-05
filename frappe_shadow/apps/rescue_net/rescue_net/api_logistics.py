@@ -2717,6 +2717,154 @@ def receive_flow_and_update_stock(
     }
 
 
+_AID_OFFER_UNRECEIVABLE_STATUSES = {"received", "received_verified", "cancelled"}
+
+
+@frappe.whitelist()
+def receive_aid_offer_and_update_stock(
+    aid_offer,
+    received_quantity=None,
+    received_unit=None,
+    receipt_note=None,
+):
+    """
+    Mark a direct-to-posko RN Aid Offer ("Kiriman Masyarakat" — a
+    community/donor shipment that never went through the Distribution
+    Flow matching engine) as received, and fold it into the destination
+    posko's RN Stock Observation, mirroring
+    receive_flow_and_update_stock's stock-merge logic.
+    """
+    actor = rn_actor()
+
+    locked_offer = frappe.db.sql(
+        """
+        SELECT name
+        FROM `tabRN Aid Offer`
+        WHERE name=%s
+        FOR UPDATE
+        """,
+        (aid_offer,),
+        as_dict=True,
+    )
+    if not locked_offer:
+        frappe.throw("Aid Offer tidak ditemukan")
+
+    doc = frappe.get_doc("RN Aid Offer", aid_offer)
+
+    destination = doc.target_posko
+    if not destination:
+        frappe.throw(
+            "Aid Offer ini tidak menuju satu Posko spesifik "
+            "(bukan kiriman langsung)"
+        )
+
+    if not _can_operate(actor, destination):
+        frappe.throw(
+            "Anda tidak dapat menerima kiriman ini",
+            frappe.PermissionError,
+        )
+
+    current_status = str(doc.offer_status or "").lower()
+    if current_status in _AID_OFFER_UNRECEIVABLE_STATUSES:
+        frappe.throw(
+            f"Kiriman ini sudah berstatus '{doc.offer_status}'."
+        )
+
+    qty = flt(received_quantity) if received_quantity not in (None, "") else flt(doc.quantity)
+    if qty <= 0:
+        frappe.throw("Jumlah diterima harus lebih dari 0")
+
+    unit = (received_unit or doc.unit or "").strip()
+    if not unit:
+        frappe.throw("Unit penerimaan wajib tersedia")
+
+    item_name = (doc.item_name or "").strip()
+    if not item_name:
+        frappe.throw("Item Aid Offer tidak tersedia")
+
+    # Coarse lock on destination Posko serializes stock updates even
+    # when no previous observation exists yet.
+    frappe.db.sql(
+        """
+        SELECT name
+        FROM `tabRN Posko`
+        WHERE name=%s
+        FOR UPDATE
+        """,
+        (destination,),
+    )
+
+    latest = frappe.db.sql(
+        """
+        SELECT name, quantity, unit, quantity_mode
+        FROM `tabRN Stock Observation`
+        WHERE posko=%s AND item_name=%s
+        ORDER BY observed_at DESC, creation DESC
+        LIMIT 1
+        FOR UPDATE
+        """,
+        (destination, item_name),
+        as_dict=True,
+    )
+
+    previous_quantity = 0.0
+    if latest:
+        prev = latest[0]
+
+        previous_unit = (prev.unit or "").strip()
+        if previous_unit and previous_unit != unit:
+            frappe.throw(
+                "Unit stok terakhir berbeda: "
+                f"{previous_unit} != {unit}. "
+                "Normalisasi unit diperlukan sebelum penerimaan."
+            )
+
+        previous_mode = prev.quantity_mode or "unknown"
+        if previous_mode != "exact" and prev.quantity not in (None, ""):
+            frappe.throw(
+                "Stok terakhir bukan quantity exact. Verifikasi stok "
+                "terlebih dahulu sebelum menerima kiriman ini."
+            )
+
+        previous_quantity = flt(prev.quantity or 0)
+
+    doc.offer_status = "received"
+    doc.save(ignore_permissions=True)
+
+    now = now_datetime()
+
+    stock = frappe.new_doc("RN Stock Observation")
+    stock.title = f"{item_name} - receipt"
+    stock.disaster_event = doc.disaster_event
+    stock.posko = destination
+    stock.item_name = item_name
+    stock.raw_item_text = item_name
+    stock.quantity = previous_quantity + qty
+    stock.quantity_mode = "exact"
+    stock.unit = unit
+    stock.stock_state = "available"
+    stock.notes = (
+        f"Diterima dari kiriman masyarakat {doc.donor_name or 'donatur'} "
+        f"({aid_offer}). Diterima {qty} {unit}. "
+        f"Stok sebelumnya {previous_quantity} {unit}."
+        + (f" Catatan: {receipt_note}" if receipt_note else "")
+    )
+    stock.observed_at = now
+    stock.source_updated_at = now
+    stock.insert(ignore_permissions=True)
+
+    return {
+        "aid_offer": doc.name,
+        "offer_status": doc.offer_status,
+        "stock_observation": stock.name,
+        "previous_quantity": previous_quantity,
+        "received_quantity": qty,
+        "current_quantity": stock.quantity,
+        "unit": unit,
+        "destination_posko": destination,
+    }
+
+
 # ============================================================
 # AI item normalisation — grouped view (exact qty + AI estimate),
 # drill to members, and posko-side correction (ubah kemasan /

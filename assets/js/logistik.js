@@ -181,6 +181,15 @@ function renderRoleBanner(b) {
   }
 }
 
+function isLoggedIn() {
+  try {
+    const u = window.RN_SESSION && window.RN_SESSION.getUser();
+    return !!(u && (u.user_id || u.username || u.user || u.email));
+  } catch (e) {
+    return false;
+  }
+}
+
 function renderPublicShipments(b) {
   const panel = document.getElementById("publicShipPanel");
   const body = document.getElementById("publicShipBody");
@@ -189,6 +198,7 @@ function renderPublicShipments(b) {
   if (!panel || !body) return;
   if (!rows.length) { panel.hidden = true; return; }
   if (cnt) cnt.textContent = rows.length;
+  const loggedIn = isLoggedIn();
   body.innerHTML = rows.map(s => `
     <tr>
       <td><b>${safe(s.donor_name)}</b></td>
@@ -196,8 +206,29 @@ function renderPublicShipments(b) {
       <td>${fmt(s.quantity)} ${safe(s.unit)}</td>
       <td>${s.wave ? "Gel. " + s.wave : (safe(s.ready_at) || "—")}</td>
       <td>${statusChip(s.status)}</td>
+      <td>${loggedIn
+        ? `<button type="button" class="btn ghost mini" data-receive-ship="${s.id}">Terima</button>`
+        : `<span class="rn-muted" style="font-size:11px">Login untuk terima</span>`}</td>
     </tr>`).join("");
   panel.hidden = false;
+
+  body.querySelectorAll("[data-receive-ship]").forEach(btn =>
+    btn.addEventListener("click", () => receivePublicShipment(btn.dataset.receiveShip))
+  );
+}
+
+async function receivePublicShipment(aidOffer) {
+  if (!confirm("Tandai kiriman ini sudah diterima dan masukkan ke stok?")) return;
+  try {
+    await RN_FRAPPE.call(
+      "rescue_net.api_logistics.receive_aid_offer_and_update_stock",
+      { aid_offer: aidOffer },
+      { method: "POST" }
+    );
+    await loadBoard();
+  } catch (err) {
+    alert("Gagal menerima kiriman: " + (err && err.message || err));
+  }
 }
 
 function renderKpi(b) {
@@ -270,6 +301,9 @@ function habisDot(txt) {
 }
 
 function renderUrgentNeeds(b) {
+  const addBtn = document.getElementById("btnOpenAddNeed");
+  if (addBtn) addBtn.hidden = !isLoggedIn();
+
   const body = document.getElementById("urgentNeedsBody");
   const all = b.urgent_needs || [];
   const rows = KATEGORI ? all.filter(r => itemCategory(r.item_name) === KATEGORI) : all;

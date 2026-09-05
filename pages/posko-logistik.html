@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Logistik</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=kpifix2-20260905">
+  <link rel="stylesheet" href="../assets/css/style.css?v=addneedmodal-20260905">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -108,6 +108,7 @@
             <h3>Kebutuhan Mendesak <span class="chip danger" id="urgentNeedsCount">0 item</span></h3>
             <p>Item paling mendesak: stok tersedia, kekurangan (gap), estimasi habis, dan batas waktu tiba.</p>
           </div>
+          <button class="btn primary mini" id="btnOpenAddNeed" type="button">+ Tambah</button>
         </div>
 
         <div class="rn-table-wrap">
@@ -260,35 +261,11 @@
 
     <details class="panel create-panel rn-input-drawer">
       <summary>
-        <h3>Tambah Data Logistik</h3>
-        <p>Input kebutuhan lapangan &amp; bantuan tersedia — langsung ke database.</p>
+        <h3>Tambah Bantuan Tersedia</h3>
+        <p>Catat donasi / bantuan yang siap dikirim — langsung ke database. (Tambah kebutuhan ada di tombol "+ Tambah" pada panel Kebutuhan Mendesak di atas.)</p>
       </summary>
 
-      <form class="rn-form" data-rn-create-logistic-need>
-        <h4>Tambah Kebutuhan Logistik</h4>
-        <div class="form-grid">
-          <label>Disaster Event ID<input name="disaster_event_id" required></label>
-          <label>Posko / Node ID<input name="node_id"></label>
-          <label>Item Dibutuhkan<input name="item_name" placeholder="Air Minum / Beras / Obat" required></label>
-          <label>Jumlah<input name="quantity_needed" type="number" step="0.01" placeholder="2500" required></label>
-          <label>Satuan<input name="unit" placeholder="liter / kg / dus / pcs" required></label>
-          <label>Prioritas
-            <select name="priority">
-              <option value="normal">normal</option>
-              <option value="urgent">urgent</option>
-              <option value="critical">critical</option>
-            </select>
-          </label>
-          <label>Harus Tiba Sebelum<input name="needed_before" placeholder="Hari ini 18:00"></label>
-        </div>
-        <div class="form-actions">
-          <button class="btn primary" type="submit">Simpan Kebutuhan</button>
-          <span class="form-message" data-rn-logistic-message></span>
-        </div>
-      </form>
-
       <form class="rn-form" data-rn-create-aid-offer>
-        <h4>Tambah Bantuan Tersedia</h4>
         <div class="form-grid">
           <label>Disaster Event ID<input name="disaster_event_id" required></label>
           <label>Nama Donatur / Sumber<input name="donor_name" placeholder="PT Sumber Air Baik" required></label>
@@ -319,6 +296,37 @@
   </main>
 </div>
 
+<div id="addNeedModal" class="rn-add-modal" hidden>
+  <div class="rn-add-modal-backdrop" data-close></div>
+  <div class="rn-add-modal-card" role="dialog" aria-modal="true" aria-labelledby="addNeedModalTitle">
+    <div class="rn-add-modal-head">
+      <h3 id="addNeedModalTitle">Tambah Kebutuhan Logistik</h3>
+      <button type="button" class="rn-add-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <form class="rn-form" data-rn-create-logistic-need>
+      <div class="form-grid">
+        <label>Disaster Event ID<input name="disaster_event_id" required></label>
+        <label>Posko / Node ID<input name="node_id"></label>
+        <label>Item Dibutuhkan<input name="item_name" placeholder="Air Minum / Beras / Obat" required></label>
+        <label>Jumlah<input name="quantity_needed" type="number" step="0.01" placeholder="2500" required></label>
+        <label>Satuan<input name="unit" placeholder="liter / kg / dus / pcs" required></label>
+        <label>Prioritas
+          <select name="priority">
+            <option value="normal">normal</option>
+            <option value="urgent">urgent</option>
+            <option value="critical">critical</option>
+          </select>
+        </label>
+        <label>Harus Tiba Sebelum<input name="needed_before" placeholder="Hari ini 18:00"></label>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" type="submit">Simpan Kebutuhan</button>
+        <span class="form-message" data-rn-logistic-message></span>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div id="buktiModal" class="rn-bukti-modal" hidden>
   <button type="button" id="buktiModalClose" class="rn-bukti-modal-close" aria-label="Tutup bukti">×</button>
   <div class="rn-bukti-modal-card">
@@ -342,7 +350,7 @@
 <script src="../assets/js/rn-icons.js?v=editicon-20260905"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
-<script src="../assets/js/logistik.js?v=logistik-mockup-20260905b"></script>
+<script src="../assets/js/logistik.js?v=addneedmodal-20260905"></script>
 <script src="../assets/js/rn-item-groups.js?v=itemgroups-20260903c"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>

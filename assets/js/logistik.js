@@ -865,9 +865,34 @@ function setupLogisticNeedForm() {
       if (msg) msg.textContent = "Kebutuhan tersimpan.";
       form.reset();
       await loadBoard();
+      closeAddNeedModal();
     } catch (err) {
       if (msg) msg.textContent = err.message;
     }
+  });
+}
+
+function openAddNeedModal() {
+  const modal = document.getElementById("addNeedModal");
+  if (!modal) return;
+  modal.hidden = false;
+  modal.querySelector("[name='item_name']")?.focus();
+}
+
+function closeAddNeedModal() {
+  const modal = document.getElementById("addNeedModal");
+  if (modal) modal.hidden = true;
+}
+
+function setupAddNeedModal() {
+  const modal = document.getElementById("addNeedModal");
+  if (!modal) return;
+  document.getElementById("btnOpenAddNeed")?.addEventListener("click", openAddNeedModal);
+  modal.querySelectorAll("[data-close]").forEach(el =>
+    el.addEventListener("click", closeAddNeedModal)
+  );
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && !modal.hidden) closeAddNeedModal();
   });
 }
 
@@ -947,6 +972,7 @@ async function boot() {
 
   setupLogisticNeedForm();
   setupAidOfferForm();
+  setupAddNeedModal();
 
   try {
     await loadPoskoOptions();

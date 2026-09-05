@@ -4926,6 +4926,52 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-ba-isu-item.is-link { text-decoration: none; color: inherit; cursor: pointer; }
 .rn-ba-isu-item.is-link:hover { border-color: var(--peach2); background: rgba(232,131,93,.06); }
 
+/* Generic small "add" modal (e.g. quick-add forms opened from a panel header) */
+.rn-add-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.rn-add-modal[hidden] { display: none; }
+.rn-add-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 33, 27, .55);
+}
+.rn-add-modal-card {
+  position: relative;
+  background: var(--panel2);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  width: min(560px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 20px 22px 24px;
+}
+.rn-add-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.rn-add-modal-head h3 { margin: 0; }
+.rn-add-modal-close {
+  border: 0;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--muted);
+}
+.rn-add-modal-close:hover { color: var(--red); }
+.rn-add-modal .form-grid { grid-template-columns: 1fr 1fr; }
+.rn-add-modal .form-actions { margin-top: 4px; }
+
 /* KPI drill-down modal */
 .rn-ba-modal {
   position: fixed;

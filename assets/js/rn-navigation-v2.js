@@ -289,9 +289,16 @@
     nav.setAttribute("data-rn-navigation-version", CONFIG.version);
     nav.setAttribute("aria-label", "Navigasi operasional Rescue-Net");
 
+    // If the current page isn't itself a member of either group (e.g. Control
+    // Centre, Map), neither would auto-open, leaving the sidebar visually
+    // empty below two collapsed headers. Default "Modul" open in that case.
+    const anyMatch =
+      CONFIG.posko.some(item => isActive(item.href)) ||
+      CONFIG.modules.some(item => isActive(item.href));
+
     nav.innerHTML =
       groupHtml("Posko", CONFIG.posko, "posko") +
-      groupHtml("Modul", CONFIG.modules, "modul");
+      groupHtml("Modul", CONFIG.modules, "modul", !anyMatch);
 
     wireAccordion(nav);
     if (window.RNIconFill) window.RNIconFill(nav);

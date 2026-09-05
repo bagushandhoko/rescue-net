@@ -1,10 +1,12 @@
-/* Posko Logistik dashboard — matches the DMS mock-up.
-   Data from rescue_net.api_control_centre.logistik_board (guest, visibility-gated).
-   The two create forms (collapsed drawer) still hit the login-scoped
-   api_logistics.* endpoints for operators. */
+/* Posko Logistik — management console (login/authorized-operator actions
+   for this posko). The read-only "kondisi posko" info (KPI, Kebutuhan
+   Mendesak, Kiriman Masyarakat, Barang Masuk/Keluar) lives on
+   posko-detail.html via rn-logistik-info.js instead — both pull from the
+   same guest rescue_net.api_control_centre.logistik_board RPC.
+   Action gating uses board.detail_allowed (org-sharing/role based), not a
+   plain "is anyone logged in" check. */
 
 let LOGISTIK_BOARD = null;
-let MOV_TAB = "masuk";
 let KATEGORI = "";
 
 /* Coarse item categories so the "Kategori" filter in the topbar can narrow
@@ -38,16 +40,6 @@ function fmtWhen(v) {
   if (!v) return "-";
   const s = String(v).replace("T", " ");
   return s.slice(0, 16);
-}
-
-function priorityChip(priority) {
-  const p = String(priority || "").toLowerCase();
-  let cls = "neutral";
-  let label = priority || "normal";
-  if (p === "critical") { cls = "danger"; label = "Sangat Tinggi"; }
-  else if (p === "urgent" || p === "high") { cls = "warning"; label = "Tinggi"; }
-  else if (p === "normal") { label = "Sedang"; }
-  return `<span class="chip ${cls}">${safe(label)}</span>`;
 }
 
 function statusChip(status) {
@@ -181,34 +173,23 @@ function renderRoleBanner(b) {
   }
 }
 
-function isLoggedIn() {
-  try {
-    const u = window.RN_SESSION && window.RN_SESSION.getUser();
-    return !!(u && (u.user_id || u.username || u.user || u.email));
-  } catch (e) {
-    return false;
-  }
-}
-
+/* Compact management view of pending community shipments — the full,
+   read-only "Kiriman Masyarakat" table (incl. non-actionable statuses)
+   lives on posko-detail.html via rn-logistik-info.js instead. */
 function renderPublicShipments(b) {
   const panel = document.getElementById("publicShipPanel");
   const body = document.getElementById("publicShipBody");
   const cnt = document.getElementById("publicShipCount");
   const rows = b.public_shipments || [];
   if (!panel || !body) return;
-  if (!rows.length) { panel.hidden = true; return; }
+  if (!b.detail_allowed || !rows.length) { panel.hidden = true; return; }
   if (cnt) cnt.textContent = rows.length;
-  const loggedIn = isLoggedIn();
   body.innerHTML = rows.map(s => `
     <tr>
-      <td><b>${safe(s.donor_name)}</b></td>
-      <td>${safe(s.item_name)}</td>
+      <td><b>${safe(s.item_name)}</b></td>
       <td>${fmt(s.quantity)} ${safe(s.unit)}</td>
-      <td>${s.wave ? "Gel. " + s.wave : (safe(s.ready_at) || "—")}</td>
-      <td>${statusChip(s.status)}</td>
-      <td>${loggedIn
-        ? `<button type="button" class="btn ghost mini" data-receive-ship="${s.id}">Terima</button>`
-        : `<span class="rn-muted" style="font-size:11px">Login untuk terima</span>`}</td>
+      <td>${safe(s.donor_name)}</td>
+      <td><button type="button" class="btn ghost mini" data-receive-ship="${s.id}">Terima</button></td>
     </tr>`).join("");
   panel.hidden = false;
 
@@ -231,29 +212,19 @@ async function receivePublicShipment(aidOffer) {
   }
 }
 
-function renderKpi(b) {
-  const k = b.kpi || {};
-  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  const collector = !!b.is_collector;
-  const jiwaCard = document.getElementById("kpiJiwaCard");
-  const jiwaEdit = document.getElementById("kpiJiwaEdit");
-  if (jiwaCard) jiwaCard.querySelector("span:not(.kpi-icon)").firstChild.textContent =
-    collector ? "Peran Posko " : "Jiwa Dilayani ";
-  if (jiwaEdit) jiwaEdit.style.display = collector ? "none" : "";
-  set("kpiJiwa", collector ? "Pengumpul" : fmt(k.jiwa_dilayani || 0));
-  set("kpiStok", fmt(k.stok_menipis || 0));
-  set("kpiKritis", fmt(k.kebutuhan_kritis || 0));
-  set("kpiMenuju", fmt(k.bantuan_menuju || 0));
-  const h = document.getElementById("kpiKritisHint");
-  if (h) h.textContent = `${fmt(k.kebutuhan_terbuka || 0)} kebutuhan terbuka`;
-  const hs = document.getElementById("kpiStokHint");
-  if (hs) hs.textContent = `${fmt(k.stok_item || 0)} item stok tercatat`;
-  const jn = document.getElementById("kpiJiwaHint");
-  if (jn) {
-    jn.textContent = collector
-      ? "posko pengumpul di daerah aman"
-      : ((b.posko && b.posko.beneficiary_note) || "jumlah korban dilayani posko");
+function renderManageAccess(b) {
+  const allowed = !!b.detail_allowed;
+  const noAccess = document.getElementById("logistikNoAccess");
+  if (noAccess) {
+    noAccess.hidden = allowed;
+    const a = document.getElementById("logistikNoAccessLink");
+    if (a) a.href = `posko-detail.html?id=${encodeURIComponent(poskoParam())}&event=${encodeURIComponent(eventParam())}`;
   }
+  const needPanel = document.getElementById("manageNeedPanel");
+  if (needPanel) needPanel.hidden = !allowed;
+
+  const jiwaPanel = document.getElementById("jiwaDilayaniPanel");
+  if (jiwaPanel) jiwaPanel.hidden = !allowed || !!b.is_collector;
 }
 
 function habisChip(days) {
@@ -276,76 +247,6 @@ function renderKategoriOptions(b) {
   sel.innerHTML =
     `<option value="">Semua Kategori</option>` +
     cats.map(c => `<option value="${c}"${c === cur ? " selected" : ""}>${c}</option>`).join("");
-}
-
-function etaChip(txt) {
-  const s = String(txt || "").trim();
-  if (!s || s === "-") return `<span class="rn-muted">—</span>`;
-  const cls = /jam|hari ini|hr ini|<\s*24/i.test(s) ? "warning" : "neutral";
-  return `<span class="chip ${cls}">${safe(s)}</span>`;
-}
-
-function habisDot(txt) {
-  const s = String(txt || "").trim();
-  if (!s || s === "-") return `<span class="rn-muted">—</span>`;
-  const m = s.match(/(\d+(?:[.,]\d+)?)\s*(jam|hari)/i);
-  let cls = "mid";
-  if (m) {
-    const n = parseFloat(m[1].replace(",", "."));
-    const isJam = /jam/i.test(m[2]);
-    if (isJam || (!isJam && n < 3)) cls = "hi";
-    else if (!isJam && n < 7) cls = "mid";
-    else cls = "lo";
-  }
-  return `<span class="rn-habis"><i class="rn-habis-dot ${cls}"></i>${safe(s)}</span>`;
-}
-
-function renderUrgentNeeds(b) {
-  const addBtn = document.getElementById("btnOpenAddNeed");
-  if (addBtn) addBtn.hidden = !isLoggedIn();
-
-  const body = document.getElementById("urgentNeedsBody");
-  const all = b.urgent_needs || [];
-  const rows = KATEGORI ? all.filter(r => itemCategory(r.item_name) === KATEGORI) : all;
-  const total = b.urgent_needs_total || all.length;
-
-  const cnt = document.getElementById("urgentNeedsCount");
-  if (cnt) cnt.textContent = `${total} item`;
-
-  const shown = document.getElementById("urgentNeedsShown");
-  if (shown) {
-    shown.textContent = KATEGORI
-      ? `Menampilkan ${rows.length} dari ${total} item · ${KATEGORI}`
-      : `Menampilkan ${Math.min(all.length, total)} dari ${total} item`;
-  }
-
-  const more = document.getElementById("urgentNeedsMore");
-  if (more) more.href =
-    `posko-detail.html?id=${encodeURIComponent(poskoParam())}&event=${encodeURIComponent(eventParam())}`;
-
-  if (!body) return;
-  if (!rows.length) {
-    body.innerHTML = `<tr><td colspan="6" class="rn-muted">${
-      KATEGORI ? `Tidak ada kebutuhan mendesak untuk kategori "${safe(KATEGORI)}".`
-               : "Tidak ada kebutuhan mendesak yang tercatat."
-    }</td></tr>`;
-    return;
-  }
-  body.innerHTML = rows.map(r => `
-    <tr>
-      <td><b>${safe(r.item_name)}</b> <small>${safe(r.unit)}</small></td>
-      <td>${fmt(r.stok_tersedia)} ${safe(r.unit)}</td>
-      <td class="rn-gap">${r.gap ? fmt(r.gap) + " " + safe(r.unit) : "—"}</td>
-      <td>${habisDot(r.estimasi_habis)}</td>
-      <td>${etaChip(r.waktu_harus_tiba)}</td>
-      <td>${priorityChip(r.priority)}</td>
-    </tr>
-  `).join("");
-
-  if (!b.detail_allowed) {
-    body.insertAdjacentHTML("beforeend",
-      `<tr><td colspan="6" class="rn-muted">Ringkasan koordinasi — login sebagai operator posko untuk daftar penuh.</td></tr>`);
-  }
 }
 
 function renderStockCards(b) {
@@ -529,26 +430,6 @@ async function editBeneficiary() {
   }
 }
 
-function renderMovements(b) {
-  const body = document.getElementById("movBody");
-  const head = document.getElementById("movWhoHead");
-  const rows = MOV_TAB === "masuk" ? (b.movements_in || []) : (b.movements_out || []);
-  const whoKey = MOV_TAB === "masuk" ? "dari" : "tujuan";
-  if (head) head.textContent = MOV_TAB === "masuk" ? "Dari" : "Tujuan";
-
-  if (!body) return;
-  body.innerHTML = rows.length
-    ? rows.map(m => `
-        <tr>
-          <td>${safe(m[whoKey])}</td>
-          <td>${safe(m.item_name)}</td>
-          <td>${fmt(m.quantity)} ${safe(m.unit)}</td>
-          <td>${statusChip(m.status)}</td>
-        </tr>
-      `).join("")
-    : `<tr><td colspan="4">Belum ada pergerakan ${MOV_TAB}.</td></tr>`;
-}
-
 function renderTrace(b) {
   const el = document.getElementById("traceCard");
   if (!el) return;
@@ -728,63 +609,6 @@ function closeBuktiModal() {
 
 /* ---------- KPI cards → jump to the data behind each figure ---------- */
 
-function makeKpiClickable(el, handler, hint) {
-  if (!el || el.dataset.wired) return;
-  el.dataset.wired = "1";
-  el.classList.add("is-clickable");
-  el.setAttribute("role", "button");
-  el.setAttribute("tabindex", "0");
-  if (hint) el.title = hint;
-  el.addEventListener("click", handler);
-  el.addEventListener("keydown", e => {
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handler(); }
-  });
-}
-
-function flash(el) {
-  if (!el) return;
-  el.classList.remove("rn-flash");
-  void el.offsetWidth;
-  el.classList.add("rn-flash");
-}
-
-function scrollToPanel(sel) {
-  const el = document.querySelector(sel);
-  if (el) { el.scrollIntoView({ behavior: "smooth", block: "center" }); flash(el.closest(".panel") || el); }
-}
-
-function wireKpiCards(b) {
-  makeKpiClickable(
-    document.getElementById("kpiJiwaCard"),
-    () => {
-      location.href =
-        `posko-detail.html?id=${encodeURIComponent(poskoParam())}&event=${encodeURIComponent(eventParam())}`;
-    },
-    "Buka detail posko — data jiwa dilayani"
-  );
-
-  makeKpiClickable(
-    document.getElementById("kpiStokCard"),
-    () => {
-      const p = document.getElementById("stockCardsPanel");
-      if (p) { p.open = true; p.scrollIntoView({ behavior: "smooth", block: "start" }); flash(p); }
-    },
-    "Lihat Kartu Stok Rinci — item yang menipis"
-  );
-
-  makeKpiClickable(
-    document.getElementById("kpiKritisCard"),
-    () => scrollToPanel("#urgentNeedsBody"),
-    "Lihat tabel Kebutuhan Mendesak"
-  );
-
-  makeKpiClickable(
-    document.getElementById("kpiMenujuCard"),
-    () => openIncomingDrawer(null),
-    "Lihat semua bantuan yang sedang menuju posko (OTW)"
-  );
-}
-
 function wireUploadLinks() {
   const ev = encodeURIComponent(eventParam());
   const pk = encodeURIComponent(poskoParam());
@@ -824,17 +648,14 @@ async function loadBoard() {
 
     renderShareBanner(b);
     renderRoleBanner(b);
-    renderKpi(b);
+    renderManageAccess(b);
     renderKategoriOptions(b);
-    renderUrgentNeeds(b);
     renderStockCards(b);
     renderPublicShipments(b);
-    renderMovements(b);
     renderTrace(b);
     renderConversions(b);
     renderEvidence(b);
     wireUploadLinks();
-    wireKpiCards(b);
 
     const upd = document.getElementById("logistikUpdated");
     if (upd) {
@@ -970,30 +791,11 @@ async function boot() {
     return;
   }
 
-  document.getElementById("movTabMasuk")?.addEventListener("click", () => {
-    MOV_TAB = "masuk";
-    document.getElementById("movTabMasuk").classList.add("is-active");
-    document.getElementById("movTabKeluar").classList.remove("is-active");
-    if (LOGISTIK_BOARD) renderMovements(LOGISTIK_BOARD);
-  });
-  document.getElementById("movTabKeluar")?.addEventListener("click", () => {
-    MOV_TAB = "keluar";
-    document.getElementById("movTabKeluar").classList.add("is-active");
-    document.getElementById("movTabMasuk").classList.remove("is-active");
-    if (LOGISTIK_BOARD) renderMovements(LOGISTIK_BOARD);
-  });
-
-  document.getElementById("kpiJiwaEdit")?.addEventListener("click", e => {
-    e.stopPropagation();
-    editBeneficiary();
-  });
+  document.getElementById("btnEditJiwa")?.addEventListener("click", editBeneficiary);
 
   document.getElementById("logistikKategori")?.addEventListener("change", e => {
     KATEGORI = e.target.value || "";
-    if (LOGISTIK_BOARD) {
-      renderUrgentNeeds(LOGISTIK_BOARD);
-      renderStockCards(LOGISTIK_BOARD);
-    }
+    if (LOGISTIK_BOARD) renderStockCards(LOGISTIK_BOARD);
   });
 
   document.getElementById("buktiModalClose")?.addEventListener("click", closeBuktiModal);

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Detail</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=revert-20260905">
+  <link rel="stylesheet" href="../assets/css/style.css?v=logistiksplit-20260905">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -66,6 +66,111 @@
       <div class="kpi-card warning"><span class="kpi-icon" data-icon="box"></span><span>Stock Items</span><strong id="kpiStock">0</strong><small>summary rows</small></div>
       <div class="kpi-card"><span class="kpi-icon" data-icon="truck"></span><span>Flows</span><strong id="kpiFlows">0</strong><small>distribution</small></div>
     </section>
+
+    <h3 class="rn-sub-h">Kondisi Logistik</h3>
+
+    <section class="kpi-grid">
+      <div class="kpi-card" id="kpiJiwaCard">
+        <span class="kpi-icon" data-icon="users"></span>
+        <span>Jiwa Dilayani</span>
+        <strong id="kpiJiwa">-</strong>
+        <small id="kpiJiwaHint">jumlah korban dilayani posko</small>
+      </div>
+      <div class="kpi-card warning" id="kpiStokCard">
+        <span class="kpi-icon" data-icon="box"></span>
+        <span>Stok Menipis</span>
+        <strong id="kpiStok">-</strong>
+        <small id="kpiStokHint">item habis &lt; 3 hari</small>
+      </div>
+      <div class="kpi-card danger" id="kpiKritisCard">
+        <span class="kpi-icon" data-icon="alert-circle"></span>
+        <span>Kebutuhan Kritis</span>
+        <strong id="kpiKritis">-</strong>
+        <small id="kpiKritisHint">prioritas tertinggi</small>
+      </div>
+      <div class="kpi-card" id="kpiMenujuCard">
+        <span class="kpi-icon" data-icon="truck"></span>
+        <span>Bantuan Menuju Posko</span>
+        <strong id="kpiMenuju">-</strong>
+        <small id="kpiMenujuHint">pengiriman masuk (OTW)</small>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Kebutuhan Mendesak <span class="chip danger" id="urgentNeedsCount">0 item</span></h3>
+          <p>Item paling mendesak: stok tersedia, kekurangan (gap), estimasi habis, dan batas waktu tiba.</p>
+        </div>
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Stok Tersedia</th>
+              <th>Gap (Kekurangan)</th>
+              <th>Estimasi Habis</th>
+              <th>Waktu Harus Tiba</th>
+              <th>Prioritas</th>
+            </tr>
+          </thead>
+          <tbody id="urgentNeedsBody">
+            <tr><td colspan="6">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="rn-table-foot">
+        <span id="urgentNeedsShown">—</span>
+      </div>
+    </section>
+
+    <section class="panel" id="publicShipInfoPanel" hidden>
+      <div class="panel-header">
+        <div>
+          <h3>Kiriman Masyarakat <span class="chip" id="publicShipInfoCount">0</span></h3>
+          <p>Bantuan langsung dari warga / posko pengumpul — tanpa kartu stok, bisa sekali atau berkali-kali kirim.</p>
+        </div>
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table">
+          <thead><tr><th>Pengirim</th><th>Item</th><th>Jumlah</th><th>Gelombang</th><th>Status</th></tr></thead>
+          <tbody id="publicShipInfoBody"><tr><td colspan="5">—</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Barang Masuk / Keluar</h3>
+          <p>Pergerakan logistik dari &amp; menuju posko ini.</p>
+        </div>
+        <div class="rn-tabs" role="tablist">
+          <button class="rn-tab is-active" id="movTabMasuk" type="button">Masuk</button>
+          <button class="rn-tab" id="movTabKeluar" type="button">Keluar</button>
+        </div>
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table">
+          <thead>
+            <tr>
+              <th id="movWhoHead">Dari</th>
+              <th>Item</th>
+              <th>Jumlah</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="movBody">
+            <tr><td colspan="4">Memuat…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="rn-page-status" id="logistikManageLink" hidden>
+      <a class="btn ghost" id="logistikManageLinkHref" href="#">Kelola Logistik Posko Ini →</a>
+    </p>
 
     <section class="panel" id="poskoSummaryPanel" hidden>
       <div class="panel-header">
@@ -197,7 +302,8 @@
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
-<script src="../assets/js/posko-detail.js?v=vbadge-20260904"></script>
+<script src="../assets/js/rn-logistik-info.js?v=logistiksplit-20260905"></script>
+<script src="../assets/js/posko-detail.js?v=logistiksplit-20260905"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

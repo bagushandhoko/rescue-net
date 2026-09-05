@@ -499,6 +499,32 @@ async function loadPosko() {
     document.getElementById("stockForm").closest(".panel");
   if (stockPanel) stockPanel.hidden = !canEdit;
 
+  const manageLink = document.getElementById("logistikManageLink");
+  if (manageLink) {
+    manageLink.hidden = !canEdit;
+    const a = document.getElementById("logistikManageLinkHref");
+    if (a) {
+      a.href = `posko-logistik.html?id=${encodeURIComponent(getPoskoId())}&event=${encodeURIComponent(currentEventParam())}`;
+    }
+  }
+
+  try {
+    const logBoard = await RN_FRAPPE.call(
+      "rescue_net.api_control_centre.logistik_board",
+      { posko: getPoskoId(), disaster_event: currentEventParam() }
+    );
+    if (window.RNLogistikInfo) {
+      RNLogistikInfo.renderKpi(logBoard);
+      RNLogistikInfo.renderUrgentNeeds(logBoard);
+      RNLogistikInfo.renderPublicShipmentsInfo(logBoard);
+      RNLogistikInfo.renderMovements(logBoard);
+      RNLogistikInfo.wireMovementsTabs(() => logBoard);
+    }
+  } catch (e) {
+    // Kondisi Logistik is supplementary info — a failure here shouldn't
+    // block the rest of Posko Detail from rendering.
+  }
+
   const d = res.detail || {};
 
   const ctx = {

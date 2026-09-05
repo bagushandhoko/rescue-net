@@ -109,6 +109,12 @@ function renderStock(items) {
         );
 }
 
+const MEDICAL_LOGIN_NOTICE = card(
+  "Login diperlukan",
+  "Data medis (kasus, pemakaian obat/alat) hanya untuk pengguna yang sudah login.",
+  "empty"
+);
+
 function renderCases(items) {
   const el =
     document.getElementById(
@@ -116,6 +122,11 @@ function renderCases(items) {
     );
 
   if (!el) return;
+
+  if (items === null) {
+    el.innerHTML = MEDICAL_LOGIN_NOTICE;
+    return;
+  }
 
   el.innerHTML =
     items.length
@@ -151,6 +162,11 @@ function renderUses(items) {
     );
 
   if (!el) return;
+
+  if (items === null) {
+    el.innerHTML = MEDICAL_LOGIN_NOTICE;
+    return;
+  }
 
   el.innerHTML =
     items.length
@@ -192,6 +208,30 @@ function renderMovements() {
     );
 }
 
+// api_medical.dashboard is actor-gated (rn_actor()) and returns PII
+// (officer_in_charge_phone) — it's not meant to be guest-accessible like
+// api_logistics.dashboard. Fail it gracefully to null instead of letting
+// it abort the whole Promise.all and strand the page on "Loading...".
+async function fetchMedicalOrLocked(poskoId) {
+  try {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_medical.dashboard",
+      {
+        posko: poskoId
+      }
+    );
+  } catch (err) {
+    if (
+      err &&
+      (err.status === 403 ||
+        /permission|not permitted|login|not whitelisted/i.test(err.message || ""))
+    ) {
+      return null;
+    }
+    throw err;
+  }
+}
+
 async function loadMedical() {
   const poskoId =
     getMedicalPoskoId();
@@ -204,12 +244,7 @@ async function loadMedical() {
     medical,
     logistics
   ] = await Promise.all([
-    RN_FRAPPE.call(
-      "rescue_net.api_medical.dashboard",
-      {
-        posko: poskoId
-      }
-    ),
+    fetchMedicalOrLocked(poskoId),
 
     RN_FRAPPE.call(
       "rescue_net.api_logistics.dashboard",
@@ -219,8 +254,10 @@ async function loadMedical() {
     )
   ]);
 
+  const medicalLocked = medical === null;
+
   const posko =
-    medical.poskos?.[0] ||
+    medical?.poskos?.[0] ||
     logistics.poskos?.[0] ||
     {
       name: poskoId
@@ -229,11 +266,11 @@ async function loadMedical() {
   const ctx = {
     posko,
     cases:
-      medical.cases || [],
+      medicalLocked ? null : (medical.cases || []),
     supply_uses:
-      medical.supply_uses || [],
+      medicalLocked ? null : (medical.supply_uses || []),
     evacuations:
-      medical.evacuations || [],
+      medicalLocked ? null : (medical.evacuations || []),
     stocks:
       logistics.stocks || []
   };

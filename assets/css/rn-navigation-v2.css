@@ -78,12 +78,37 @@
 }
 
 .rn-nav-v2-link {
-  display: block;
+  display: flex;
+  align-items: center;
   min-height: 42px;
   padding: 10px 14px;
   border-radius: 8px;
   color: inherit;
   text-decoration: none;
+}
+
+.rn-nav-v2-icon {
+  display: inline-flex;
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-right: 10px;
+  opacity: .8;
+}
+
+.rn-nav-v2-icon svg,
+.rn-nav-v2-icon .rn-ic {
+  width: 17px;
+  height: 17px;
+}
+
+.rn-nav-v2-link.active .rn-nav-v2-icon,
+.rn-nav-v2-link[aria-current="page"] .rn-nav-v2-icon {
+  opacity: 1;
+}
+
+.rn-nav-v2-label {
+  min-width: 0;
 }
 
 .rn-nav-v2-child {

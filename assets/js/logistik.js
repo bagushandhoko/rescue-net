@@ -67,13 +67,25 @@ function eventParam() {
   return String(ev || "event-sim-001").replace(/^disaster_events:/, "");
 }
 
+// The <select> starts out with a literal "Memuat…" placeholder <option> (no
+// value attribute, so .value falls back to its text). If that ever leaks
+// into poskoParam() — e.g. the posko-list call failed before the select was
+// populated — it must never be treated as a real posko id, and must never
+// get written back into the URL (loadBoard() does that via replaceState),
+// or the page gets permanently stuck on a bogus ?id= that can never resolve.
+const POSKO_PLACEHOLDER = "Memuat…";
+
 function poskoParam() {
   const p = new URLSearchParams(location.search);
   const sel = document.getElementById("logistikPoskoSelect");
+  // Clean each candidate individually (not the final result) so a bad
+  // placeholder in the URL still falls through to a real value from the
+  // select, instead of short-circuiting the whole lookup to "".
+  const clean = v => (v && v !== POSKO_PLACEHOLDER ? v : "");
   return (
-    p.get("id") ||
-    p.get("posko") ||
-    (sel && sel.value) ||
+    clean(p.get("id")) ||
+    clean(p.get("posko")) ||
+    clean(sel && sel.value) ||
     ""
   );
 }
@@ -91,14 +103,17 @@ async function loadPoskoOptions() {
   if (!sel) return;
 
   let points = [];
-  try {
-    const res = await RN_FRAPPE.call(
-      "rescue_net.api_control_centre.event_poskos",
-      { disaster_event: eventParam() }
-    );
-    points = Array.isArray(res) ? res : (res.points || []);
-  } catch (e) {
-    points = [];
+  for (let attempt = 0; attempt < 2 && !points.length; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 800));
+    try {
+      const res = await RN_FRAPPE.call(
+        "rescue_net.api_control_centre.event_poskos",
+        { disaster_event: eventParam() }
+      );
+      points = Array.isArray(res) ? res : (res.points || []);
+    } catch (e) {
+      points = [];
+    }
   }
 
   if (!points.length) {
@@ -191,7 +206,7 @@ function renderKpi(b) {
   const collector = !!b.is_collector;
   const jiwaCard = document.getElementById("kpiJiwaCard");
   const jiwaEdit = document.getElementById("kpiJiwaEdit");
-  if (jiwaCard) jiwaCard.querySelector("span").firstChild.textContent =
+  if (jiwaCard) jiwaCard.querySelector("span:not(.kpi-icon)").firstChild.textContent =
     collector ? "Peran Posko " : "Jiwa Dilayani ";
   if (jiwaEdit) jiwaEdit.style.display = collector ? "none" : "";
   set("kpiJiwa", collector ? "Pengumpul" : fmt(k.jiwa_dilayani || 0));
@@ -508,10 +523,23 @@ function renderTrace(b) {
     el.innerHTML = `<p class="rn-muted">Belum ada pengiriman menuju posko.</p>`;
     return;
   }
-  const steps = ["Gudang", "Sortir", "Perjalanan", "Tiba"];
-  const dots = steps
-    .map((s, i) => `<span class="rn-trace-dot${(i + 1) <= t.step ? " is-done" : ""}">${s}</span>`)
-    .join("<i></i>");
+  const steps = [
+    { label: "Gudang", icon: "home" },
+    { label: "Sortir", icon: "package" },
+    { label: "Perjalanan", icon: "truck" },
+    { label: "Tiba", icon: "map-pin" },
+  ];
+  const nodes = steps
+    .map((s, i) => {
+      const n = i + 1;
+      const nodeCls = n < t.step ? " is-done" : n === t.step ? " is-current" : "";
+      const node = `<span class="rn-trace-node${nodeCls}" title="${safe(s.label)}"><span class="rn-trace-icon" data-icon="${s.icon}"></span></span>`;
+      // the segment BEFORE this node (none before the first) is filled once
+      // the walk has reached this node.
+      const seg = i === 0 ? "" : `<i class="rn-trace-seg${n <= t.step ? " is-done" : ""}"></i>`;
+      return seg + node;
+    })
+    .join("");
   el.innerHTML = `
     <div class="rn-trace-line">
       <span>Dari</span><b>${safe(t.dari)}</b>
@@ -525,8 +553,9 @@ function renderTrace(b) {
     <div class="rn-trace-line">
       <span>Status</span>${statusChip(t.status)}
     </div>
-    <div class="rn-trace-steps">${dots}</div>
+    <div class="rn-trace-steps">${nodes}</div>
   `;
+  if (window.RNIconFill) window.RNIconFill(el);
 }
 
 function renderConversions(b) {

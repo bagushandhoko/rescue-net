@@ -24,6 +24,7 @@
     map: '<path d="m9 4-6 2.5v13.5L9 17.5m0-13.5 6 2.5m-6-2.5v13.5m6-11 6-2.5v13.5L15 20m0-13.5v13.5m0 0-6-2.5"/>',
     building: '<rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M9 7h1.5M13.5 7H15M9 11h1.5M13.5 11H15M9 15h1.5M13.5 15H15M10 21v-3h4v3"/>',
     "clipboard-check": '<rect x="6" y="4" width="12" height="17" rx="1.5"/><path d="M9 4V3h6v1"/><path d="m9 13 2 2 4-4"/>',
+    edit: '<path d="m16.5 3.5 4 4L8 20H4v-4Z"/><path d="m14.5 5.5 4 4"/>',
     package: '<path d="M12 3 3.5 7.5v9L12 21l8.5-4.5v-9Z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
     box: '<rect x="4" y="6" width="16" height="14" rx="1.5"/><path d="M4 10h16M9.5 6V4h5v2"/>',
     truck: '<path d="M2 6.5h11v9H2Z"/><path d="M13 9.5h4l3 3v3h-7Z"/><circle cx="6.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/>',

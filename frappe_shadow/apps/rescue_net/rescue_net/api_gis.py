@@ -88,6 +88,7 @@ def national_situation(active_only=1):
                 "trusted_verifier_count": p.trusted_verifier_count or 0,
                 "severity": sev or "normal",
                 "event": de.get(ev, {}).get("title") if ev else None,
+                "event_id": ev,
             })
 
     provinces = []

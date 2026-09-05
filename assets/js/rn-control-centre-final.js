@@ -1104,6 +1104,43 @@ function renderKpi(
 }
 
 
+// National logistics networks legitimately include far-away nodes (e.g. a
+// collection hub in Yogyakarta feeding an Aceh disaster) — every marker
+// still belongs on the map, but auto-zooming the initial view to fit a
+// node 1000+ km away turns "situational awareness map" into a useless
+// whole-country view. Fit the initial view to the local disaster cluster
+// only (median-based, robust to one or two distant outliers); outliers
+// still get their own marker and are reachable by panning/zooming out.
+const CC_LOCAL_CLUSTER_RADIUS_KM = 150;
+
+function _haversineKm(a, b) {
+  const R = 6371;
+  const dLat = (b[0] - a[0]) * Math.PI / 180;
+  const dLng = (b[1] - a[1]) * Math.PI / 180;
+  const la1 = a[0] * Math.PI / 180;
+  const la2 = b[0] * Math.PI / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function _localClusterBounds(allBounds) {
+  if (allBounds.length <= 1) return allBounds;
+
+  const lats = allBounds.map(p => p[0]).slice().sort((a, b) => a - b);
+  const lngs = allBounds.map(p => p[1]).slice().sort((a, b) => a - b);
+  const mid = Math.floor(lats.length / 2);
+  const median = [lats[mid], lngs[mid]];
+
+  const local = allBounds.filter(
+    p => _haversineKm(p, median) <= CC_LOCAL_CLUSTER_RADIUS_KM
+  );
+
+  // Guard: if the median itself was near an outlier cluster (e.g. exactly
+  // half the poskos are a distant hub), fall back to showing everything
+  // rather than silently hiding the majority of real markers.
+  return local.length >= allBounds.length / 2 ? local : allBounds;
+}
+
 function renderMap(
   dashboard
 ) {
@@ -1324,7 +1361,7 @@ function renderMap(
 
   if (bounds.length) {
     mapInstance.fitBounds(
-      bounds,
+      _localClusterBounds(bounds),
       {
         padding:
           [20,20],

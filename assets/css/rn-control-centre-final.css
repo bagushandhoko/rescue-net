@@ -126,6 +126,28 @@ body {
   font-weight: 700;
 }
 
+.cc-nav-icon {
+  display: inline-flex;
+  flex: none;
+
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+
+  color: currentColor;
+  opacity: .75;
+}
+
+.cc-nav-icon svg,
+.cc-nav-icon .rn-ic {
+  width: 16px;
+  height: 16px;
+}
+
+.cc-sidebar nav a.active .cc-nav-icon {
+  opacity: 1;
+}
+
 .cc-system {
   margin-top: auto;
 
@@ -392,8 +414,6 @@ body {
 /* KPI */
 
 .cc-kpis {
-  height: 74px;
-
   margin-bottom: 7px;
 
   display: grid;
@@ -407,28 +427,34 @@ body {
 .cc-kpis article {
   min-width: 0;
 
-  padding: 8px;
+  padding: 12px;
 
   position: relative;
 
   border:
     1px solid var(--line);
 
-  border-radius: 10px;
+  border-radius: 14px;
 
   background: white;
 }
 
 .cc-kpi-icon {
-  width: 22px;
-  height: 22px;
+  width: 38px;
+  height: 38px;
 
   display: grid;
   place-items: center;
 
-  border-radius: 50%;
+  margin-bottom: 8px;
 
-  font-size: 10px;
+  border-radius: 11px;
+}
+
+.cc-kpi-icon svg,
+.cc-kpi-icon .rn-ic {
+  width: 20px;
+  height: 20px;
 }
 
 .cc-kpi-icon.red {
@@ -447,34 +473,30 @@ body {
 }
 
 .cc-kpis small {
-  position: absolute;
+  display: block;
 
-  top: 9px;
-  left: 36px;
-
-  font-size: 7px;
+  font-size: 10px;
   font-weight: 600;
+  color: var(--muted);
 }
 
 .cc-kpis strong {
-  position: absolute;
+  display: block;
 
-  left: 9px;
-  bottom: 17px;
+  margin-top: 4px;
 
-  font-size: 16px;
+  font-size: 20px;
+  line-height: 1.15;
 }
 
 .cc-kpis em {
-  position: absolute;
+  display: block;
 
-  right: 8px;
-  bottom: 7px;
+  margin-top: 3px;
 
-  color: var(--muted);
-
-  font-size: 6px;
+  font-size: 10px;
   font-style: normal;
+  color: var(--muted);
 }
 
 

@@ -34,16 +34,16 @@
     </div>
 
     <nav>
-      <a class="active">▦ Control Centre</a>
-      <a href="map.html">⌖ Situasi & Peta</a>
-      <a href="organisasi-posko.html">⌂ Posko</a>
-      <a href="posko-logistik.html">□ Logistik</a>
-      <a href="management-distribusi.html">⇄ Distribusi</a>
-      <a href="posko-medis-detail.html">♡ Medis</a>
-      <a href="management-relawan.html">♙ Relawan</a>
-      <a href="kirim-bantuan.html">◇ Donasi</a>
-      <a href="program-khusus.html">▤ Program</a>
-      <a href="search-found.html">⌕ Search & Found</a>
+      <a class="active"><span class="cc-nav-icon" data-icon="control-centre"></span> Control Centre</a>
+      <a href="map.html"><span class="cc-nav-icon" data-icon="map"></span> Situasi & Peta</a>
+      <a href="organisasi-posko.html"><span class="cc-nav-icon" data-icon="posko"></span> Posko</a>
+      <a href="posko-logistik.html"><span class="cc-nav-icon" data-icon="logistik"></span> Logistik</a>
+      <a href="management-distribusi.html"><span class="cc-nav-icon" data-icon="distribusi"></span> Distribusi</a>
+      <a href="posko-medis-detail.html"><span class="cc-nav-icon" data-icon="medis"></span> Medis</a>
+      <a href="management-relawan.html"><span class="cc-nav-icon" data-icon="relawan"></span> Relawan</a>
+      <a href="kirim-bantuan.html"><span class="cc-nav-icon" data-icon="donasi"></span> Donasi</a>
+      <a href="program-khusus.html"><span class="cc-nav-icon" data-icon="program"></span> Program</a>
+      <a href="search-found.html"><span class="cc-nav-icon" data-icon="search-found"></span> Search & Found</a>
     </nav>
 
     <div class="cc-system">
@@ -183,42 +183,42 @@
     <section class="cc-kpis">
 
       <article>
-        <span class="cc-kpi-icon red">♙</span>
+        <span class="cc-kpi-icon red" data-icon="users"></span>
         <small>Jiwa Berisiko</small>
         <strong id="kpiRisk">-</strong>
         <em>Live</em>
       </article>
 
       <article>
-        <span class="cc-kpi-icon red">⌂</span>
+        <span class="cc-kpi-icon red" data-icon="map-pin"></span>
         <small>Posko Kritis</small>
         <strong id="kpiPoskoCritical">-</strong>
         <em>Live</em>
       </article>
 
       <article>
-        <span class="cc-kpi-icon green">⇄</span>
+        <span class="cc-kpi-icon green" data-icon="truck"></span>
         <small>Bantuan Mengalir</small>
         <strong id="kpiAidFlow">-</strong>
         <em>Live</em>
       </article>
 
       <article>
-        <span class="cc-kpi-icon orange">⌁</span>
+        <span class="cc-kpi-icon orange" data-icon="alert-circle"></span>
         <small>Distribusi Terhambat</small>
         <strong id="kpiBlockedDistribution">-</strong>
         <em>Live</em>
       </article>
 
       <article>
-        <span class="cc-kpi-icon red">♡</span>
+        <span class="cc-kpi-icon red" data-icon="cross"></span>
         <small>Medis Overload</small>
         <strong id="kpiMedicalOverload">-</strong>
         <em>Live</em>
       </article>
 
       <article>
-        <span class="cc-kpi-icon orange">◇</span>
+        <span class="cc-kpi-icon orange" data-icon="gift"></span>
         <small>Donasi Menumpuk</small>
         <strong id="kpiDonation">-</strong>
         <em>Live</em>
@@ -312,7 +312,7 @@
     <section class="cc-modules">
 
       <article>
-        <b>□ Logistik</b>
+        <b>Logistik</b>
         <strong id="moduleLogisticsValue">-</strong>
         <span id="moduleLogisticsDetail">-</span>
         <div class="cc-mini-chart" id="chartLogistics"></div>
@@ -320,7 +320,7 @@
       </article>
 
       <article>
-        <b>⇄ Distribusi</b>
+        <b>Distribusi</b>
         <strong id="moduleDistributionValue">-</strong>
         <span id="moduleDistributionDetail">-</span>
         <div class="cc-mini-chart" id="chartDistribution"></div>
@@ -328,7 +328,7 @@
       </article>
 
       <article>
-        <b>♡ Medis</b>
+        <b>Medis</b>
         <strong id="moduleMedicalValue">-</strong>
         <span id="moduleMedicalDetail">-</span>
         <div class="cc-mini-chart" id="chartMedical"></div>
@@ -336,7 +336,7 @@
       </article>
 
       <article>
-        <b>♙ Relawan</b>
+        <b>Relawan</b>
         <strong id="moduleVolunteerValue">-</strong>
         <span id="moduleVolunteerDetail">-</span>
         <div class="cc-mini-chart" id="chartVolunteer"></div>
@@ -344,7 +344,7 @@
       </article>
 
       <article>
-        <b>▤ Program</b>
+        <b>Program</b>
         <strong id="moduleProgramValue">-</strong>
         <span id="moduleProgramDetail">-</span>
         <div class="cc-mini-chart" id="chartProgram"></div>
@@ -352,7 +352,7 @@
       </article>
 
       <article>
-        <b>⌕ Search & Found</b>
+        <b>Search & Found</b>
         <strong id="moduleSearchValue">-</strong>
         <span id="moduleSearchDetail">-</span>
         <div class="cc-mini-chart" id="chartSearch"></div>
@@ -404,6 +404,10 @@
 
 <script
   src="../assets/vendor/leaflet/leaflet.js"
+></script>
+
+<script
+  src="../assets/js/rn-icons.js?v=kpiicon-20260904"
 ></script>
 
 <script

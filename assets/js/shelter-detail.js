@@ -180,17 +180,30 @@
     $("#daftarShelterShown").textContent = "Menampilkan " + rows.length + " dari " + rows.length + " shelter";
   }
 
+  function kebutuhanIcon(label) {
+    var l = String(label || "").toLowerCase();
+    if (/makan|pangan/.test(l)) return "utensils";
+    if (/air/.test(l)) return "droplet";
+    if (/sanitasi|toilet|mck/.test(l)) return "droplet";
+    if (/selimut/.test(l)) return "box";
+    if (/bayi|balita/.test(l)) return "hand-heart";
+    return "box";
+  }
+
   function renderKebutuhanDasar(rows) {
     var el = $("#kebutuhanDasar");
     el.innerHTML = rows
       .map(function (r) {
         return (
-          '<article class="event-card"><div class="event-main"><div><h4>' + esc(r.label) + "</h4>" +
+          '<article class="event-card"><div class="event-main"><div><h4>' +
+          '<span class="rn-sh-need-icon" data-icon="' + kebutuhanIcon(r.label) + '"></span>' +
+          esc(r.label) + "</h4>" +
           (r.open_count ? "<p>" + r.open_count + " kebutuhan terbuka</p>" : "<p>Tidak ada kebutuhan terbuka</p>") + "</div>" +
           '<div class="chips"><span class="chip ' + statusPillClass(r.status) + '">' + esc(statusLabel(r.status)) + "</span></div></div></article>"
         );
       })
       .join("");
+    document.dispatchEvent(new CustomEvent("rn:icons-refresh"));
   }
 
   function renderAkomodasiRelawan(rows) {

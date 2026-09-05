@@ -42,9 +42,9 @@
     $("#profileAktif").textContent = identity.aktif ? "Aktif" : "Tidak Aktif";
     $("#profileAktif").className = "chip " + (identity.aktif ? "ok" : "");
     $("#profileRoleOrg").textContent = (identity.role || "-") + (identity.organization ? " — " + identity.organization : "");
-    $("#profileLocation").textContent = "📍 " + (identity.location || "-");
-    $("#profileEmailLine").textContent = identity.email ? "✉ " + identity.email : "";
-    $("#profilePhoneLine").textContent = identity.phone ? "📞 " + identity.phone : "";
+    $("#profileLocation").innerHTML = '<span class="rn-inline-icon" data-icon="map-pin"></span>' + esc(identity.location || "-");
+    $("#profileEmailLine").textContent = identity.email || "";
+    $("#profilePhoneLine").textContent = identity.phone || "";
     $("#profileAbout").textContent = identity.about || "-";
     $("#profileJoined").textContent = identity.joined_at ? "Bergabung sejak " + shortDate(identity.joined_at) : "";
     var editForm = $("#editProfilForm");
@@ -52,36 +52,52 @@
     editForm.notes.value = identity.about === "-" ? "" : (identity.about || "");
   }
 
-  function itemRow(title, sub, chipLabel) {
+  function itemRow(title, sub, chipLabel, icon) {
     return (
-      '<div class="rn-pr-item"><span><b>' + esc(title) + "</b><small>" + esc(sub || "") + "</small></span>" +
+      '<div class="rn-pr-item">' +
+      '<span class="rn-pr-item-main">' +
+      (icon ? '<span class="rn-pr-item-icon" data-icon="' + icon + '"></span>' : "") +
+      "<span><b>" + esc(title) + "</b><small>" + esc(sub || "") + "</small></span>" +
+      "</span>" +
       (chipLabel ? '<span class="chip">' + esc(chipLabel) + "</span>" : "") + "</div>"
     );
+  }
+
+  function skillIcon(label) {
+    var l = String(label || "").toLowerCase();
+    if (/driver|kendara|motor|mobil|truk/.test(l)) return "truck";
+    if (/radio|komunikasi/.test(l)) return "radio";
+    if (/perawat|medis|kesehatan|p3k|pertolongan/.test(l)) return "cross";
+    if (/dapur|masak|logistik pangan/.test(l)) return "pot";
+    return "wrench";
   }
 
   function renderSkills(skills) {
     var el = $("#skillList");
     el.innerHTML = skills.length
-      ? skills.map(function (s) { return itemRow(s.label, "", s.status_label); }).join("")
+      ? skills.map(function (s) { return itemRow(s.label, "", s.status_label, skillIcon(s.label)); }).join("")
       : '<p class="rn-muted">Belum ada keahlian tercatat.</p>';
+    document.dispatchEvent(new CustomEvent("rn:icons-refresh"));
   }
 
-  function renderResourceList(elId, rows) {
+  function renderResourceList(elId, rows, icon) {
     var el = $(elId);
     el.innerHTML = rows.length
       ? rows.map(function (r) {
           var sub = [r.capacity_description, r.current_location].filter(Boolean).join(" · ");
           var qty = (r.quantity && r.quantity != 1) ? (r.quantity + " " + (r.unit || "")) : "";
-          return itemRow(r.resource_name + (qty ? " · " + qty : ""), sub, r.availability_status === "available" ? "Tersedia" : r.availability_status);
+          return itemRow(r.resource_name + (qty ? " · " + qty : ""), sub, r.availability_status === "available" ? "Tersedia" : r.availability_status, icon);
         }).join("")
       : '<p class="rn-muted">Belum ada data.</p>';
+    document.dispatchEvent(new CustomEvent("rn:icons-refresh"));
   }
 
-  function renderLines(elId, lines) {
+  function renderLines(elId, lines, icon) {
     var el = $(elId);
     el.innerHTML = lines.length
-      ? lines.map(function (l) { return itemRow(l, ""); }).join("")
+      ? lines.map(function (l) { return itemRow(l, "", "", icon); }).join("")
       : '<p class="rn-muted">Belum ada data.</p>';
+    document.dispatchEvent(new CustomEvent("rn:icons-refresh"));
   }
 
   var PRIORITY_LABEL = { normal: "Normal", urgent: "Urgent", critical: "Kritis" };
@@ -89,9 +105,10 @@
     var el = $("#kebutuhanList");
     el.innerHTML = rows.length
       ? rows.map(function (r) {
-          return itemRow(r.tool_name, r.needed_for || "", r.request_status === "requested" ? "Dibutuhkan" : r.request_status);
+          return itemRow(r.tool_name, r.needed_for || "", r.request_status === "requested" ? "Dibutuhkan" : r.request_status, "wrench");
         }).join("")
       : '<p class="rn-muted">Belum ada kebutuhan diajukan.</p>';
+    document.dispatchEvent(new CustomEvent("rn:icons-refresh"));
   }
 
   function toggleForm(formId) {
@@ -285,11 +302,11 @@
     renderChips(data.chips || {});
     renderIdentity(data.identity || {});
     renderSkills(data.skills || []);
-    renderResourceList("#kendaraanList", data.kendaraan || []);
-    renderResourceList("#fasilitasList", data.fasilitas || []);
-    renderResourceList("#barangList", data.barang_bantuan || []);
-    renderLines("#wilayahList", data.service_areas || []);
-    renderLines("#jadwalList", data.schedule || []);
+    renderResourceList("#kendaraanList", data.kendaraan || [], "truck");
+    renderResourceList("#fasilitasList", data.fasilitas || [], "building");
+    renderResourceList("#barangList", data.barang_bantuan || [], "box");
+    renderLines("#wilayahList", data.service_areas || [], "map-pin");
+    renderLines("#jadwalList", data.schedule || [], "clock");
     renderNeeds(data.support_needs || []);
   }
 

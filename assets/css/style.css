@@ -123,6 +123,28 @@ nav a.active {
   color: #2d211b;
 }
 
+.nav-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 11px;
+  opacity: .8;
+}
+
+.nav-icon svg,
+.nav-icon .rn-ic {
+  width: 18px;
+  height: 18px;
+}
+
+nav a.active .nav-icon,
+nav a:hover .nav-icon {
+  opacity: 1;
+}
+
 /* MAIN */
 .main {
   padding: 26px 30px 34px;
@@ -195,6 +217,10 @@ h4 {
 
 .kpi-card {
   position: relative;
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  align-items: center;
+  column-gap: 12px;
   min-height: 128px;
   background:
     linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,248,243,.88));
@@ -204,14 +230,42 @@ h4 {
   box-shadow: 0 20px 50px rgba(145,84,54,.11);
 }
 
-.kpi-card::before {
-  content: "";
-  display: block;
-  width: 34px;
-  height: 34px;
-  margin-bottom: 10px;
+/* icon chip sits beside the title on row 1 (mock-up composition), not
+   stacked above it — a bare 12%-opacity chip on a near-white card was
+   effectively invisible, so the default (non-status) chip also gets a
+   stronger tint here. */
+.kpi-icon {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
   border-radius: 12px;
-  background: rgba(230,95,60,.12);
+  background: rgba(230,95,60,.16);
+  color: #c9502f;
+}
+
+.kpi-icon svg,
+.kpi-icon .rn-ic {
+  width: 22px;
+  height: 22px;
+}
+
+.kpi-card:not(:has(.kpi-icon))::before {
+  content: "";
+  grid-column: 1;
+  grid-row: 1;
+  display: block;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(230,95,60,.16);
+}
+
+.kpi-card > span:not(.kpi-icon) {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 .kpi-card span,
@@ -226,12 +280,17 @@ h4 {
 }
 
 .kpi-card strong {
+  grid-column: 1 / -1;
   display: block;
   margin: 10px 0 8px;
   font-size: 34px;
   line-height: 1;
   letter-spacing: -.05em;
   color: #2d211b;
+}
+
+.kpi-card small {
+  grid-column: 1 / -1;
 }
 
 .kpi-card.danger {
@@ -241,6 +300,7 @@ h4 {
 
 .kpi-card.danger::before { background: rgba(216,69,69,.16); }
 .kpi-card.danger strong { color: #c23a3a; }
+.kpi-card.danger .kpi-icon { background: rgba(216,69,69,.16); color: #c23a3a; }
 
 .kpi-card.warning {
   border-color: rgba(221,138,47,.28);
@@ -249,6 +309,7 @@ h4 {
 
 .kpi-card.warning::before { background: rgba(221,138,47,.18); }
 .kpi-card.warning strong { color: #b0741f; }
+.kpi-card.warning .kpi-icon { background: rgba(221,138,47,.18); color: #b0741f; }
 
 .kpi-card.good {
   border-color: rgba(63,143,101,.25);
@@ -257,6 +318,7 @@ h4 {
 
 .kpi-card.good::before { background: rgba(63,143,101,.16); }
 .kpi-card.good strong { color: #2f8a5c; }
+.kpi-card.good .kpi-icon { background: rgba(63,143,101,.16); color: #2f8a5c; }
 
 /* RN TABLE (used for critical-needs style panels) */
 .rn-table-wrap {
@@ -723,8 +785,12 @@ body.home-page {
 
 .welcome-badge i {
   font-style: normal;
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
   color: #2f8b61;
 }
+.welcome-badge i svg, .welcome-badge i .rn-ic { width: 15px; height: 15px; }
 
 .welcome-badge.badge-top {
   top: 8%;
@@ -777,9 +843,10 @@ body.home-page {
   color: #ef5c45;
   font-style: normal;
   font-weight: 900;
-  font-size: 19px;
   border: 1px solid rgba(232,117,88,.18);
 }
+.metric-icon svg, .metric-icon .rn-ic,
+.role-icon svg, .role-icon .rn-ic { width: 22px; height: 22px; }
 
 .welcome-kpi:nth-child(3) .metric-icon,
 .role-card:nth-child(2) .role-icon,
@@ -858,8 +925,14 @@ body.home-page {
 .welcome-cta .btn i,
 .welcome-footer b i {
   font-style: normal;
+  display: inline-flex;
+  width: 15px;
+  height: 15px;
   margin-right: 6px;
+  vertical-align: -3px;
 }
+.welcome-cta .btn i svg, .welcome-cta .btn i .rn-ic,
+.welcome-footer b i svg, .welcome-footer b i .rn-ic { width: 15px; height: 15px; }
 
 .welcome-live-grid {
   padding: 0 56px 44px;
@@ -2460,9 +2533,16 @@ html.rn-external-access body:not(.mockup-viewer) .main {
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .kpi-card {
+    grid-template-columns: 34px 1fr;
     min-height: 98px;
     padding: 13px;
     border-radius: 16px;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .kpi-icon,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .kpi-card:not(:has(.kpi-icon))::before {
+    width: 34px;
+    height: 34px;
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .content-grid,
@@ -3423,10 +3503,17 @@ body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .rn-public-header + .
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .panel,
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .event-card,
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .kpi-card {
+    grid-template-columns: 34px 1fr !important;
     min-width: 0 !important;
     max-width: 100% !important;
     border-radius: 16px !important;
     padding: 14px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .kpi-icon,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .kpi-card:not(:has(.kpi-icon))::before {
+    width: 34px !important;
+    height: 34px !important;
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .panel.large {
@@ -4132,10 +4219,26 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-trace { border: 1px solid rgba(120,80,60,.14); border-radius: 12px; padding: 14px; background: #fff8f4; }
 .rn-trace-line { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 12.5px; }
 .rn-trace-line span { color: #8c827c; }
-.rn-trace-steps { display: flex; align-items: center; margin-top: 12px; }
-.rn-trace-steps i { flex: 1; height: 2px; background: rgba(120,80,60,.2); }
-.rn-trace-dot { font-size: 10px; font-weight: 800; color: #9a8f88; white-space: nowrap; }
-.rn-trace-dot.is-done { color: #1c5b34; }
+.rn-trace-steps { display: flex; align-items: center; margin-top: 14px; }
+.rn-trace-seg { flex: 1; height: 2px; background: rgba(120,80,60,.2); }
+.rn-trace-seg.is-done { background: #e8573f; }
+.rn-trace-node {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(120,80,60,.1);
+  color: #9a8f88;
+}
+.rn-trace-node.is-done { background: rgba(63,143,101,.16); color: #2f8a5c; }
+.rn-trace-node.is-current {
+  background: #e8573f;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(232,87,63,.18);
+}
+.rn-trace-icon svg { width: 14px; height: 14px; }
 
 .rn-upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .rn-upload-tile { display: flex; flex-direction: column; gap: 4px; padding: 14px; border: 1px dashed rgba(232,117,88,.45); border-radius: 12px; text-decoration: none; color: #40312b; background: #fff; }
@@ -4161,7 +4264,21 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 }
 
 /* Posko Logistik — kartu stok extras + drawer */
-.rn-kpi-edit { border:0; background:rgba(232,117,88,.15); color:#c0392b; border-radius:6px; font-size:11px; padding:1px 6px; cursor:pointer; margin-left:6px; }
+.rn-kpi-edit {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  background: rgba(232,117,88,.15);
+  color: #c0392b;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.rn-kpi-edit svg { width: 11px; height: 11px; }
 .btn.mini { min-height:auto; padding:5px 10px; font-size:11px; }
 .rn-table .rn-in { color:#1c5b34; }
 .rn-table .rn-table .rn-out, .rn-table .rn-out { color:#c0392b; }
@@ -4194,6 +4311,15 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-check input { width:auto; }
 
 /* ===== Posko Logistik — mockup pass: clickable KPIs, bukti photos ===== */
+/* "Bantuan Menuju Posko" uses a green icon chip in the mock-up (truck =
+   incoming aid, positive), but its big number stays plain dark text there —
+   unlike .kpi-card.good, which also recolors <strong>. Scope the accent to
+   just the icon so the number doesn't turn green. */
+#kpiMenujuCard .kpi-icon,
+#kpiMenujuCard:not(:has(.kpi-icon))::before {
+  background: rgba(63,143,101,.16);
+  color: #2f8a5c;
+}
 .kpi-card.is-clickable { cursor:pointer; transition:transform .12s ease, box-shadow .12s ease; }
 .kpi-card.is-clickable:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(120,80,60,.16); }
 .kpi-card.is-clickable:focus-visible { outline:2px solid #e87558; outline-offset:2px; }
@@ -4510,14 +4636,15 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 }
 .rn-auth-trust i {
   font-style: normal;
-  font-size: 18px;
   display: grid;
   place-items: center;
   width: 34px;
   height: 34px;
   border-radius: 10px;
   background: rgba(232,117,88,.14);
+  color: #c9502f;
 }
+.rn-auth-trust i svg, .rn-auth-trust i .rn-ic { width: 18px; height: 18px; }
 .rn-auth-trust b { display: block; font-size: 13px; }
 .rn-auth-trust span:not(.chip) { color: var(--muted); font-size: 12px; }
 
@@ -4546,8 +4673,16 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 }
 .rn-auth-rolecard i {
   font-style: normal;
-  font-size: 18px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 4px;
+  border-radius: 10px;
+  background: rgba(232,117,88,.14);
+  color: #c9502f;
 }
+.rn-auth-rolecard i svg, .rn-auth-rolecard i .rn-ic { width: 18px; height: 18px; }
 .rn-auth-rolecard b { font-size: 13px; }
 .rn-auth-rolecard span { color: var(--muted); font-size: 11.5px; line-height: 1.35; }
 .rn-auth-rolecard.is-active {
@@ -4571,14 +4706,15 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 }
 .rn-auth-footer i {
   font-style: normal;
-  font-size: 16px;
   display: grid;
   place-items: center;
   width: 30px;
   height: 30px;
   border-radius: 9px;
   background: rgba(232,117,88,.14);
+  color: #c9502f;
 }
+.rn-auth-footer i svg, .rn-auth-footer i .rn-ic { width: 16px; height: 16px; }
 .rn-auth-footer b { display: block; font-size: 12.5px; }
 .rn-auth-footer span { color: var(--muted); font-size: 11.5px; }
 
@@ -4969,6 +5105,13 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-sh-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .rn-sh-row-a { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); }
 .rn-sh-kebutuhan .event-card { padding: 10px 12px; }
+.rn-sh-kebutuhan h4 { display: flex; align-items: center; gap: 8px; }
+.rn-sh-need-icon {
+  display: grid; place-items: center; flex: none;
+  width: 26px; height: 26px; border-radius: 8px;
+  background: rgba(230,95,60,.12); color: #c9502f;
+}
+.rn-sh-need-icon svg, .rn-sh-need-icon .rn-ic { width: 14px; height: 14px; }
 .rn-sh-gap-note { font-size: 12px; line-height: 1.5; margin-top: 8px; }
 
 .rn-sh-sanitasi-row, .rn-sh-checkinout-row {
@@ -5205,6 +5348,8 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   border-radius: 14px; font-weight: 700;
 }
 .rn-va-action small { font-weight: 400; opacity: .85; }
+.rn-va-action-icon { display: inline-flex; width: 20px; height: 20px; }
+.rn-va-action-icon svg, .rn-va-action-icon .rn-ic { width: 20px; height: 20px; }
 .rn-va-action.ok { background: rgba(47,158,89,.12); color: #2f9e59; border-color: rgba(47,158,89,.3); }
 .rn-va-action.danger { background: rgba(216,69,69,.12); color: #c23a3a; border-color: rgba(216,69,69,.3); }
 .rn-va-action.warning { background: rgba(221,138,47,.14); color: #b0741f; border-color: rgba(221,138,47,.3); }
@@ -5271,6 +5416,9 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-rp-checklist li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
 .rn-rp-checklist li.is-done { color: #2f9e59; }
 .rn-rp-checklist li small { margin-left: auto; color: var(--muted); font-size: 11px; }
+.rn-rp-check-icon { display: inline-flex; flex: none; width: 16px; height: 16px; color: var(--orange, #dd8a2f); }
+.rn-rp-check-icon.done { color: #2f9e59; }
+.rn-rp-check-icon svg, .rn-rp-check-icon .rn-ic { width: 16px; height: 16px; }
 .rn-rp-note { margin-top: 10px; }
 
 .rn-rp-actions { display: flex; flex-direction: column; gap: 8px; }
@@ -5394,6 +5542,12 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-pk-support-tile { border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: var(--panel2); text-align: center; }
 .rn-pk-support-tile b { display: block; font-size: 12px; margin-bottom: 6px; }
 .rn-pk-support-tile a { display: block; font-size: 11px; }
+.rn-pk-support-icon {
+  display: grid; place-items: center; margin: 0 auto 6px;
+  width: 30px; height: 30px; border-radius: 9px;
+  background: rgba(230,95,60,.12); color: #c9502f;
+}
+.rn-pk-support-icon svg, .rn-pk-support-icon .rn-ic { width: 16px; height: 16px; }
 
 @media (max-width: 1100px) {
   .rn-pk-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -5441,6 +5595,15 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 }
 .rn-pr-item b { display: block; font-size: 13px; }
 .rn-pr-item small { color: var(--muted); }
+.rn-pr-item-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rn-pr-item-icon {
+  flex: none; display: grid; place-items: center;
+  width: 30px; height: 30px; border-radius: 9px;
+  background: rgba(230,95,60,.12); color: #c9502f;
+}
+.rn-pr-item-icon svg, .rn-pr-item-icon .rn-ic { width: 16px; height: 16px; }
+.rn-inline-icon { display: inline-flex; vertical-align: -3px; width: 14px; height: 14px; margin-right: 5px; color: var(--muted); }
+.rn-inline-icon svg, .rn-inline-icon .rn-ic { width: 14px; height: 14px; }
 .rn-pr-add-btn { width: 100%; background: none; border: 1px dashed var(--line); border-radius: 10px; padding: 8px; font-size: 12px; color: var(--muted); cursor: pointer; }
 .rn-pr-add-btn:hover { border-color: var(--coral, #e8835d); color: var(--coral, #e8835d); }
 .rn-pr-add-form { display: none; flex-direction: column; gap: 6px; margin-top: 8px; }

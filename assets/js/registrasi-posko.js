@@ -92,9 +92,12 @@
     $("#checklistStatusChip").textContent = statusLabel(data.verification_status);
     $("#checklistStatusChip").className = "chip " + statusPillClass(data.verification_status);
     $("#checklistList").innerHTML = data.items.map(function (it) {
-      return '<li class="' + (it.done ? "is-done" : "") + '"><span>' + (it.done ? "✓" : "○") + "</span>" + esc(CHECKLIST_LABELS[it.key] || it.key) +
+      return '<li class="' + (it.done ? "is-done" : "") + '">' +
+        '<span class="rn-rp-check-icon' + (it.done ? " done" : "") + '" data-icon="' + (it.done ? "check-circle" : "clock") + '"></span>' +
+        esc(CHECKLIST_LABELS[it.key] || it.key) +
         (it.value ? "<small>" + esc(it.value) + "</small>" : "") + "</li>";
     }).join("");
+    document.dispatchEvent(new CustomEvent("rn:icons-refresh"));
     $("#checklistNote").textContent = data.ready_to_submit
       ? "Siap diajukan untuk verifikasi."
       : "Lengkapi Email, No HP, Identitas PIC, dan Lokasi sebelum mengajukan verifikasi.";

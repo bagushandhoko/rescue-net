@@ -7,130 +7,156 @@
     posko: [
       {
         label: "Dashboard Posko",
-        href: "organisasi-posko.html"
+        href: "organisasi-posko.html",
+        icon: "organisasi"
       },
       {
         label: "Koordinasi Organisasi",
-        href: "koordinasi-organisasi.html?event=event-sim-001"
+        href: "koordinasi-organisasi.html?event=event-sim-001",
+        icon: "organisasi"
       },
       {
         label: "Registrasi & Verifikasi Posko",
-        href: "registrasi-posko.html?event=event-sim-001"
+        href: "registrasi-posko.html?event=event-sim-001",
+        icon: "registrasi-posko"
       },
       {
         label: "Posko Detail",
-        href: "posko-detail.html?id=posko-sim-logistik"
+        href: "posko-detail.html?id=posko-sim-logistik",
+        icon: "posko"
       },
       {
         label: "Posko Logistik",
-        href: "posko-logistik.html"
+        href: "posko-logistik.html",
+        icon: "logistik"
       },
       {
         label: "Posko Distribusi",
-        href: "posko-distribusi.html?event=event-sim-001"
+        href: "posko-distribusi.html?event=event-sim-001",
+        icon: "posko-distribusi"
       },
       {
         label: "Posko Relawan",
-        href: "management-relawan.html"
+        href: "management-relawan.html",
+        icon: "relawan"
       },
       {
         label: "Posko Alat Kerja",
-        href: "alat-kerja.html?event=event-sim-001"
+        href: "alat-kerja.html?event=event-sim-001",
+        icon: "alat-kerja"
       },
       {
         label: "Posko Alat Komunikasi",
-        href: "alat-komunikasi.html?event=event-sim-001"
+        href: "alat-komunikasi.html?event=event-sim-001",
+        icon: "komunikasi"
       },
       {
         label: "Posko Medis",
-        href: "posko-medis-detail.html?id=posko-sim-medis"
+        href: "posko-medis-detail.html?id=posko-sim-medis",
+        icon: "medis"
       },
       {
         label: "Posko Shelter",
-        href: "shelter-detail.html?id=posko-sim-shelter"
+        href: "shelter-detail.html?id=posko-sim-shelter",
+        icon: "shelter"
       },
       {
         label: "Posko Dapur Umum",
-        href: "dapur-umum.html?id=posko-sim-dapur"
+        href: "dapur-umum.html?id=posko-sim-dapur",
+        icon: "dapur"
       },
       {
         label: "Posko Resource",
-        href: "resource-profile.html?event=event-sim-001"
+        href: "resource-profile.html?event=event-sim-001",
+        icon: "resource"
       },
       {
         label: "Posko Evidence",
-        href: "evidence.html?event=event-sim-001"
+        href: "evidence.html?event=event-sim-001",
+        icon: "evidence"
       },
       {
         label: "Posko Recovery",
-        href: "recovery-reconstruction.html?event=event-sim-001"
+        href: "recovery-reconstruction.html?event=event-sim-001",
+        icon: "recovery"
       },
       {
         label: "Perencanaan Pengungsi",
-        href: "perencanaan-pengungsi.html?event=event-sim-001"
+        href: "perencanaan-pengungsi.html?event=event-sim-001",
+        icon: "clipboard-check"
       }
     ],
 
     modules: [
       {
         label: "Manajemen Distribusi",
-        href: "management-distribusi.html"
-      },
-      {
-        label: "Map",
-        href: "map.html?event=event-sim-001"
+        href: "management-distribusi.html",
+        icon: "distribusi"
       },
       {
         label: "Peta Nasional",
-        href: "peta-nasional.html"
+        href: "peta-nasional.html",
+        icon: "map"
       },
       {
         label: "Organisasi",
-        href: "organisasi-posko.html"
+        href: "organisasi-posko.html",
+        icon: "organisasi"
       },
       {
         label: "Search & Found",
-        href: "search-found.html"
+        href: "search-found.html",
+        icon: "search-found"
       },
       {
         label: "Program Khusus",
-        href: "program-khusus.html"
+        href: "program-khusus.html",
+        icon: "program"
       },
       {
         label: "Donor Program",
-        href: "donor-program.html"
+        href: "donor-program.html",
+        icon: "donor"
       },
       {
         label: "Pengadaan & Tender",
-        href: "pengadaan-tender.html?event=event-sim-001"
+        href: "pengadaan-tender.html?event=event-sim-001",
+        icon: "scale"
       },
       {
         label: "Verification",
-        href: "verification-approval.html"
+        href: "verification-approval.html",
+        icon: "verification"
       },
       {
         label: "Jaringan Verifikator",
-        href: "verifikator.html"
+        href: "verifikator.html",
+        icon: "id-card"
       },
       {
         label: "Masukan Masyarakat",
-        href: "masukan-masyarakat.html?event=event-sim-001"
+        href: "masukan-masyarakat.html?event=event-sim-001",
+        icon: "hand-heart"
       },
       {
         label: "AI Analyst",
-        href: "ai-analyst.html?event=event-sim-001"
+        href: "ai-analyst.html?event=event-sim-001",
+        icon: "ai-analyst"
       },
       {
         label: "AI Settings",
-        href: "ai-settings.html"
+        href: "ai-settings.html",
+        icon: "ai-settings"
       },
       {
         label: "Sync Console",
-        href: "sync-console.html"
+        href: "sync-console.html",
+        icon: "sync"
       },
       {
         label: "Contact Directory",
-        href: "contact-directory.html"
+        href: "contact-directory.html",
+        icon: "contact-directory"
       }
     ]
   };
@@ -182,12 +208,16 @@
       active ? "active" : ""
     ].filter(Boolean).join(" ");
 
+    const icon = item.icon
+      ? `<span class="rn-nav-v2-icon" data-icon="${escapeHtml(item.icon)}"></span>`
+      : "";
+
     return `
       <a
         class="${classes}"
         href="${escapeHtml(item.href)}"
         ${active ? 'aria-current="page"' : ""}
-      >${escapeHtml(item.label)}</a>
+      >${icon}<span class="rn-nav-v2-label">${escapeHtml(item.label)}</span></a>
     `;
   }
 
@@ -264,14 +294,15 @@
       groupHtml("Modul", CONFIG.modules, "modul");
 
     wireAccordion(nav);
+    if (window.RNIconFill) window.RNIconFill(nav);
   }
 
   /* ---- Top group: function switcher for a merged posko ---- */
 
   const FN_PAGES = {
-    logistics: { label: "Logistik", href: "posko-logistik.html" },
-    shelter: { label: "Shelter", href: "shelter-detail.html" },
-    kitchen: { label: "Dapur Umum", href: "dapur-umum.html" }
+    logistics: { label: "Logistik", href: "posko-logistik.html", icon: "logistik" },
+    shelter: { label: "Shelter", href: "shelter-detail.html", icon: "shelter" },
+    kitchen: { label: "Dapur Umum", href: "dapur-umum.html", icon: "dapur" }
   };
 
   function urlParam(names) {
@@ -330,7 +361,8 @@
 
     const items = fns.map(f => ({
       label: FN_PAGES[f].label,
-      href: FN_PAGES[f].href + q(poskoId)
+      href: FN_PAGES[f].href + q(poskoId),
+      icon: FN_PAGES[f].icon
     }));
 
     let title = (info.title || poskoId).replace(/^\[SIMULASI\]\s*/i, "");
@@ -343,6 +375,7 @@
       groupHtml("Posko: " + title, items, "posko-fn", true)
     );
     wireAccordion(nav);
+    if (window.RNIconFill) window.RNIconFill(nav);
 
     // The active function's page is current — keep only this group open.
     Array.from(nav.querySelectorAll(".rn-nav-v2-group")).forEach(g => {

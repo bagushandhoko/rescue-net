@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Auth, Registration & Verification</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=authredesign-20260901">
+  <link rel="stylesheet" href="../assets/css/style.css?v=revert-20260905">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -172,9 +172,9 @@
           <h3>Aman, Terpercaya, Siap Membantu</h3>
           <p class="subtitle">Rescue-Net melindungi data Anda dan memastikan setiap aksi di platform ini membawa dampak nyata.</p>
           <div class="rn-auth-trust">
-            <div><i aria-hidden="true">&#9993;</i><div><b>Verifikasi Email</b><span>Pastikan email Anda aktif untuk komunikasi penting.</span></div><span class="chip ok">Terverifikasi</span></div>
-            <div><i aria-hidden="true">&#128241;</i><div><b>OTP HP</b><span>Kode OTP memastikan nomor Anda benar dan aman.</span></div><span class="chip ok">Terverifikasi</span></div>
-            <div><i aria-hidden="true">&#128737;</i><div><b>Google Verified</b><span>Login dengan Google menambah lapisan keamanan akun Anda.</span></div><span class="chip ok">Terverifikasi</span></div>
+            <div><i aria-hidden="true" data-icon="check-circle"></i><div><b>Verifikasi Email</b><span>Pastikan email Anda aktif untuk komunikasi penting.</span></div><span class="chip ok">Terverifikasi</span></div>
+            <div><i aria-hidden="true" data-icon="radio"></i><div><b>OTP HP</b><span>Kode OTP memastikan nomor Anda benar dan aman.</span></div><span class="chip ok">Terverifikasi</span></div>
+            <div><i aria-hidden="true" data-icon="shield-check"></i><div><b>Google Verified</b><span>Login dengan Google menambah lapisan keamanan akun Anda.</span></div><span class="chip ok">Terverifikasi</span></div>
           </div>
         </div>
 
@@ -182,20 +182,20 @@
           <h3>Bergabung sesuai peran Anda</h3>
           <p class="subtitle">Pilih peran yang paling sesuai untuk pengalaman terbaik.</p>
           <div class="rn-auth-rolecards">
-            <button type="button" class="rn-auth-rolecard" data-pick-role="relawan"><i aria-hidden="true">&#129309;</i><b>Relawan</b><span>Bantu dalam aksi kemanusiaan</span></button>
-            <button type="button" class="rn-auth-rolecard" data-pick-role="donatur"><i aria-hidden="true">&#128149;</i><b>Donatur</b><span>Salurkan bantuan untuk yang membutuhkan</span></button>
-            <button type="button" class="rn-auth-rolecard" data-pick-role="organisasi"><i aria-hidden="true">&#127970;</i><b>Organisasi</b><span>Kelola tim dan program bantuan</span></button>
-            <button type="button" class="rn-auth-rolecard" data-pick-role="petugas_posko"><i aria-hidden="true">&#127957;</i><b>Petugas Posko</b><span>Kelola data dan laporan di lapangan</span></button>
+            <button type="button" class="rn-auth-rolecard" data-pick-role="relawan"><i aria-hidden="true" data-icon="hand-heart"></i><b>Relawan</b><span>Bantu dalam aksi kemanusiaan</span></button>
+            <button type="button" class="rn-auth-rolecard" data-pick-role="donatur"><i aria-hidden="true" data-icon="heart"></i><b>Donatur</b><span>Salurkan bantuan untuk yang membutuhkan</span></button>
+            <button type="button" class="rn-auth-rolecard" data-pick-role="organisasi"><i aria-hidden="true" data-icon="building"></i><b>Organisasi</b><span>Kelola tim dan program bantuan</span></button>
+            <button type="button" class="rn-auth-rolecard" data-pick-role="petugas_posko"><i aria-hidden="true" data-icon="tent"></i><b>Petugas Posko</b><span>Kelola data dan laporan di lapangan</span></button>
           </div>
         </div>
       </aside>
     </section>
 
     <footer class="rn-auth-footer">
-      <div><i aria-hidden="true">&#128274;</i><div><b>Data Anda Aman</b><span>Kami menggunakan enkripsi dan standar keamanan tinggi.</span></div></div>
-      <div><i aria-hidden="true">&#9200;</i><div><b>Aksi Cepat &amp; Terkoordinasi</b><span>Informasi real-time untuk respons yang lebih efektif.</span></div></div>
-      <div><i aria-hidden="true">&#128269;</i><div><b>Transparan &amp; Akuntabel</b><span>Setiap bantuan tercatat dan dapat dilacak.</span></div></div>
-      <div><i aria-hidden="true">&#128101;</i><div><b>Bersama Lebih Kuat</b><span>Satu jaringan, banyak kebaikan.</span></div></div>
+      <div><i aria-hidden="true" data-icon="shield-check"></i><div><b>Data Anda Aman</b><span>Kami menggunakan enkripsi dan standar keamanan tinggi.</span></div></div>
+      <div><i aria-hidden="true" data-icon="clock"></i><div><b>Aksi Cepat &amp; Terkoordinasi</b><span>Informasi real-time untuk respons yang lebih efektif.</span></div></div>
+      <div><i aria-hidden="true" data-icon="search"></i><div><b>Transparan &amp; Akuntabel</b><span>Setiap bantuan tercatat dan dapat dilacak.</span></div></div>
+      <div><i aria-hidden="true" data-icon="users"></i><div><b>Bersama Lebih Kuat</b><span>Satu jaringan, banyak kebaikan.</span></div></div>
     </footer>
   </main>
 </div>
@@ -204,7 +204,9 @@
 <script src="../assets/js/auth.js?v=authredesign-20260901"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
-<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
+<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+
 <script src="../assets/js/rn-navigation-v2.js?v=navgis-20260904"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=drawer-1"></script>
 </body>

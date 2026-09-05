@@ -52,25 +52,42 @@
     // Domain w=1366,dpr=1 dibuat seperti lokal w=1821,dpr=.75.
     // 1366 / 1821 ≈ 0.75. Di layar HP/mobile, biarkan CSS responsif
     // (@media max-width:900px) yang mengatur, jangan dipaksa zoom.
+    //
+    // 2026-09-05: briefly removed this, reasoning the mock-ups must be
+    // designed at raw 1:1 CSS scale — that was WRONG. Owner confirmed
+    // removing it made every page look visibly worse / more amateurish
+    // (menu + text proportions), meaning the component CSS in this file
+    // was actually tuned against the zoomed-down look this whole time.
+    // Restored as-is. Do not remove again without a verified, approved
+    // side-by-side comparison — a "should be 1:1" theory is not enough.
     if (!isMockup && !isLocal && isDesktopViewport && appShell) {
-      document.body.style.overflowX = "auto";
+      // Use clientWidth/clientHeight (post-scrollbar) instead of vw/vh units.
+      // vw includes the vertical scrollbar's own width in most browsers, so
+      // "133.333vw" ends up a few px wider than the actually-visible area
+      // once a page is tall enough to show a scrollbar — after the 0.75
+      // zoom that residual sliver still overflows, producing a persistent
+      // horizontal scrollbar. Pixel math against clientWidth is exact.
+      const zoomedW = document.documentElement.clientWidth / 0.75;
+      const zoomedH = document.documentElement.clientHeight / 0.75;
+
+      document.body.style.overflowX = "hidden";
       appShell.style.zoom = "0.75";
-      appShell.style.width = "133.333vw";
-      appShell.style.minWidth = "133.333vw";
-      appShell.style.minHeight = "133.333vh";
+      appShell.style.width = zoomedW + "px";
+      appShell.style.minWidth = zoomedW + "px";
+      appShell.style.minHeight = zoomedH + "px";
 
       const sidebar = document.querySelector(".sidebar");
       const main = document.querySelector(".main");
 
       if (sidebar) {
-        sidebar.style.height = "133.333vh";
-        sidebar.style.minHeight = "133.333vh";
-        sidebar.style.maxHeight = "133.333vh";
+        sidebar.style.height = zoomedH + "px";
+        sidebar.style.minHeight = zoomedH + "px";
+        sidebar.style.maxHeight = zoomedH + "px";
         sidebar.style.overflowY = "auto";
       }
 
       if (main) {
-        main.style.minHeight = "133.333vh";
+        main.style.minHeight = zoomedH + "px";
       }
     }
 

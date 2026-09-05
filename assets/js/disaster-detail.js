@@ -118,8 +118,11 @@ async function rnFetch(path, options = {}) {
         )
       );
 
+    // public_context: guest-safe scrubbed aggregate. api_ai.context is
+    // login-only and 403s for guests — this page must work logged-out
+    // (same fix as the identical route in api.js for the Home page).
     return await RN_FRAPPE.call(
-      "rescue_net.api_ai.context",
+      "rescue_net.api_ai.public_context",
       {
         disaster_event_id:
           eventId
@@ -204,9 +207,12 @@ function renderOverview(disaster) {
   `;
 }
 
+const LOGIN_NOTICE = `<article class="event-card"><h4>Login diperlukan</h4><p>Data ini hanya untuk pengguna yang sudah login.</p></article>`;
+
 function renderMembers(items) {
   const target = document.querySelector("[data-eco-members]");
   if (!target) return;
+  if (items === null) { target.innerHTML = LOGIN_NOTICE; return; }
 
   target.innerHTML = items.length ? items.map(m => `
     <article class="event-card">
@@ -228,6 +234,7 @@ function renderMembers(items) {
 function renderResources(items) {
   const target = document.querySelector("[data-eco-resources]");
   if (!target) return;
+  if (items === null) { target.innerHTML = LOGIN_NOTICE; return; }
 
   target.innerHTML = items.length ? items.map(r => `
     <article class="event-card">
@@ -251,6 +258,7 @@ function renderResources(items) {
 function renderRequests(items) {
   const target = document.querySelector("[data-eco-requests]");
   if (!target) return;
+  if (items === null) { target.innerHTML = LOGIN_NOTICE; return; }
 
   target.innerHTML = items.length ? items.map(r => `
     <article class="event-card">
@@ -287,6 +295,30 @@ function renderAISummary(summary) {
   `;
 }
 
+// Ecosystem members/resources/requests/assignments are deliberately
+// login-gated server-side (_actor() in api_frontend_bridge.py throws for
+// guests) — that's by design, not a missing-whitelist bug. A guest must
+// still see the page's public overview (title, AI summary), so each gated
+// call is fetched independently and a 403/permission failure resolves to
+// `null` ("locked") instead of aborting the whole Promise.all — a real,
+// unexpected error still surfaces normally.
+function isLoginRequiredError(err) {
+  return (
+    err &&
+    (err.status === 403 ||
+      /permission|not permitted|login/i.test(err.message || ""))
+  );
+}
+
+async function fetchOrLocked(path) {
+  try {
+    return await rnFetch(path);
+  } catch (err) {
+    if (isLoginRequiredError(err)) return null;
+    throw err;
+  }
+}
+
 async function loadDisasterDetail() {
   const disasterId = getDisasterId();
   const status = document.querySelector("[data-detail-status]");
@@ -296,14 +328,16 @@ async function loadDisasterDetail() {
 
     const [disasters, members, resources, requests, assignments, aiContext] = await Promise.all([
       rnFetch("/disasters"),
-      rnFetch(`/ecosystem-members/${disasterId}`),
-      rnFetch(`/resources/${disasterId}`),
-      rnFetch("/resource-requests"),
-      rnFetch("/resource-assignments"),
+      fetchOrLocked(`/ecosystem-members/${disasterId}`),
+      fetchOrLocked(`/resources/${disasterId}`),
+      fetchOrLocked("/resource-requests"),
+      fetchOrLocked("/resource-assignments"),
       rnFetch(`/ai/context/${disasterId}`)
     ]);
 
-    const disaster = disasters.find(d => d.id === disasterId) || aiContext.disaster || { id: disasterId };
+    // rescue_net.compat.api.disasters wraps rows under a "disasters" key
+    // (legacy shadow-cutover response shape), it's not a bare array.
+    const disaster = (disasters.disasters || []).find(d => d.id === disasterId) || aiContext.disaster || { id: disasterId };
 
     document.querySelector("[data-disaster-title]").textContent = disaster.name || disasterId;
     document.querySelector("[data-disaster-subtitle]").textContent =
@@ -315,9 +349,9 @@ async function loadDisasterDetail() {
     const requestsKpi = document.querySelector("[data-kpi-requests]");
 
     if (severity) severity.textContent = safe(disaster.severity);
-    if (membersKpi) membersKpi.textContent = members.length;
-    if (resourcesKpi) resourcesKpi.textContent = resources.length;
-    if (requestsKpi) requestsKpi.textContent = requests.length;
+    if (membersKpi) membersKpi.textContent = members ? members.length : "Login";
+    if (resourcesKpi) resourcesKpi.textContent = resources ? resources.length : "Login";
+    if (requestsKpi) requestsKpi.textContent = requests ? requests.length : "Login";
 
     renderOverview(disaster);
     renderMembers(members);
@@ -326,10 +360,16 @@ async function loadDisasterDetail() {
     renderAssignments(assignments);
     renderAISummary(aiContext.summary || {});
 
-    if (status) status.textContent = `Loaded ecosystem for ${disasterId}.`;
+    if (status) {
+      status.textContent = (members === null || resources === null || requests === null || assignments === null)
+        ? "Login untuk melihat detail ecosystem (anggota, resource, permintaan)."
+        : `Loaded ecosystem for ${disasterId}.`;
+    }
 
   } catch (err) {
-    if (status) status.textContent = err.message;
+    if (status) status.textContent = isLoginRequiredError(err)
+      ? "Login diperlukan untuk memuat halaman ini."
+      : err.message;
   }
 }
 
@@ -337,6 +377,7 @@ async function loadDisasterDetail() {
 function renderAssignments(items) {
   const target = document.querySelector("[data-eco-assignments]");
   if (!target) return;
+  if (items === null) { target.innerHTML = LOGIN_NOTICE; return; }
 
   target.innerHTML = items.length ? items.map(a => `
     <article class="event-card">

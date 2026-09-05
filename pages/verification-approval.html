@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Verification & Approval</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=verif-20260902">
+  <link rel="stylesheet" href="../assets/css/style.css?v=revert-20260905">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -60,22 +60,22 @@
 
     <section class="kpi-grid rn-va-kpi">
       <button type="button" class="kpi-card rn-kpi-btn" data-kind="user">
-        <span>User Pending</span><strong id="kpiUser">-</strong><small>menunggu review</small>
+        <span class="kpi-icon" data-icon="user"></span><span>User Pending</span><strong id="kpiUser">-</strong><small>menunggu review</small>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kind="organisasi">
-        <span>Organisasi Pending</span><strong id="kpiOrg">-</strong><small>menunggu review</small>
+        <span class="kpi-icon" data-icon="building"></span><span>Organisasi Pending</span><strong id="kpiOrg">-</strong><small>menunggu review</small>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kind="posko">
-        <span>Posko Pending</span><strong id="kpiPosko">-</strong><small>menunggu review</small>
+        <span class="kpi-icon" data-icon="map-pin"></span><span>Posko Pending</span><strong id="kpiPosko">-</strong><small>menunggu review</small>
       </button>
       <button type="button" class="kpi-card warning rn-kpi-btn" data-kind="needs">
-        <span>Needs Pending</span><strong id="kpiNeeds">-</strong><small>menunggu review</small>
+        <span class="kpi-icon" data-icon="alert-circle"></span><span>Needs Pending</span><strong id="kpiNeeds">-</strong><small>menunggu review</small>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kind="expense">
-        <span>Expense Pending</span><strong id="kpiExpense">-</strong><small>menunggu review</small>
+        <span class="kpi-icon" data-icon="scale"></span><span>Expense Pending</span><strong id="kpiExpense">-</strong><small>menunggu review</small>
       </button>
       <button type="button" class="kpi-card danger rn-kpi-btn" data-kind="evidence">
-        <span>Evidence Pending</span><strong id="kpiEvidence">-</strong><small>menunggu review</small>
+        <span class="kpi-icon" data-icon="camera"></span><span>Evidence Pending</span><strong id="kpiEvidence">-</strong><small>menunggu review</small>
       </button>
     </section>
 
@@ -119,10 +119,10 @@
     <section class="panel rn-va-actionbar">
       <div class="panel-header"><div><h3>Tindakan</h3><p id="actionHint" class="rn-muted">Pilih item dari Antrian Verifikasi untuk mengaktifkan tindakan.</p></div></div>
       <div class="rn-va-actions">
-        <button type="button" class="btn rn-va-action ok" data-action="approve" disabled>✓ Approve<small>Setujui &amp; verifikasi</small></button>
-        <button type="button" class="btn rn-va-action danger" data-action="reject" disabled>✕ Reject<small>Tolak item</small></button>
-        <button type="button" class="btn rn-va-action warning" data-action="request_revision" disabled>✎ Request Revision<small>Minta perbaikan</small></button>
-        <button type="button" class="btn rn-va-action" data-action="escalate" disabled>↗ Escalate<small>Naikkan prioritas</small></button>
+        <button type="button" class="btn rn-va-action ok" data-action="approve" disabled><span class="rn-va-action-icon" data-icon="check-circle"></span>Approve<small>Setujui &amp; verifikasi</small></button>
+        <button type="button" class="btn rn-va-action danger" data-action="reject" disabled><span class="rn-va-action-icon" data-icon="alert-circle"></span>Reject<small>Tolak item</small></button>
+        <button type="button" class="btn rn-va-action warning" data-action="request_revision" disabled><span class="rn-va-action-icon" data-icon="refresh"></span>Request Revision<small>Minta perbaikan</small></button>
+        <button type="button" class="btn rn-va-action" data-action="escalate" disabled><span class="rn-va-action-icon" data-icon="trending-up"></span>Escalate<small>Naikkan prioritas</small></button>
       </div>
       <p class="rn-muted rn-va-merge-note">"Merge" (gabungkan data duplikat) belum tersedia — butuh alur pemilihan target &amp; rekonsiliasi data tersendiri agar aman.</p>
       <p class="rn-muted" id="actionMsg"></p>
@@ -248,11 +248,12 @@
   </main>
 </div>
 
+<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/verification-approval.js?v=verif-20260904"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
-<script src="../assets/js/rn-layout-mode.js?v=fix-20260820b"></script>
+<script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=navgis-20260904"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
 </body>

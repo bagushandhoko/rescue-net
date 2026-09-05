@@ -4762,7 +4762,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   width: 100%;
 }
 
-.rn-ba-grid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); align-items: stretch; }
+.rn-ba-grid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); align-items: start; }
 .rn-ba-list-panel { display: flex; flex-direction: column; }
 .rn-ba-list-panel .rn-table-wrap { flex: 1 1 auto; }
 .rn-ba-list-panel .rn-table-foot { margin-top: auto; }

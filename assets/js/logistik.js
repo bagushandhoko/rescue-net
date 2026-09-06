@@ -234,30 +234,39 @@ async function receivePublicShipment(aidOffer) {
    everyone. An operator of THIS posko (b.can_manage) gets inline edit on
    top: "+ Tambah" on Kebutuhan Mendesak, "Ubah" on the Jiwa Dilayani KPI,
    "Terima" on Kiriman Masyarakat rows, plus the deeper operator panels
-   (Kartu Stok Rinci, Kelompok Barang, Tambah Bantuan). Non-operators see
-   none of that and a one-line "login untuk mencatat" hint. */
+   (Kartu Stok Rinci, Kelompok Barang). A member of ANOTHER org whose posko
+   opened participation (b.can_coordinate) gets ONLY "Tambah Bantuan
+   Tersedia" (record aid bound for this posko). Everyone else: read-only + a
+   one-line hint. */
 function renderManageAccess(b) {
   const canManage = !!b.can_manage;
+  const canCoordinate = !!b.can_coordinate;
   const isCollector = !!b.is_collector;
 
   const noAccess = document.getElementById("logistikNoAccess");
   if (noAccess) {
-    noAccess.hidden = canManage;
+    noAccess.hidden = canManage || canCoordinate;
     const a = document.getElementById("logistikNoAccessLink");
     if (a) a.href = `auth.html?next=${encodeURIComponent(location.pathname + location.search)}`;
   }
 
-  // inline edit affordances on the dashboard
+  // inline edit affordances on the dashboard (operator of THIS posko only)
   const addNeed = document.getElementById("btnOpenAddNeed");
   if (addNeed) addNeed.hidden = !canManage;
   const editJiwa = document.getElementById("btnEditJiwa");
   if (editJiwa) editJiwa.hidden = !canManage || isCollector;
 
-  // deeper operator-only panels
-  ["itemGroupPanel", "stockCardsPanel", "aidOfferPanel"].forEach(id => {
+  // deeper operator-only analytics panels
+  ["itemGroupPanel", "stockCardsPanel"].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.hidden = !canManage;
   });
+
+  // "Tambah Bantuan Tersedia" — operator OR cross-org coordinator
+  const aid = document.getElementById("aidOfferPanel");
+  if (aid) aid.hidden = !(canManage || canCoordinate);
+  const aidNote = document.getElementById("aidCoordNote");
+  if (aidNote) aidNote.hidden = !(canCoordinate && !canManage);
 }
 
 function habisChip(days) {

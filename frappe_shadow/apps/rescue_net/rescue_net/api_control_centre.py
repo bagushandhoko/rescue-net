@@ -964,14 +964,21 @@ def posko_detail(posko, disaster_event=None):
     logged_in = bool(actor)
     can_manage = share.get("reason") in _POSKO_OWNER_REASONS
     # coordinate = send goods to another org's posko that opened itself up.
-    # Mirrors api_logistics.create_aid_offer's public_ok test so the form is
-    # only offered when a submit would actually succeed.
+    # Mirrors api_logistics.create_aid_offer's public_ok EXACTLY
+    # (public_posko_allowed + public_participation + accept_goods) so the
+    # "Tambah Bantuan" form is only offered when a submit would succeed.
     can_coordinate = bool(
         logged_in
         and not can_manage
         and p.get("public_participation")
         and p.get("accept_goods")
     )
+    if can_coordinate:
+        try:
+            from rescue_net.access_policy import public_posko_allowed
+            can_coordinate = bool(public_posko_allowed(name))
+        except Exception:
+            can_coordinate = False
 
     # ---- needs ----------------------------------------------------------
     need_rows = frappe.get_all(
@@ -4142,8 +4149,16 @@ def posko_edit_scope(posko=None, disaster_event=None):
                 "RN Posko", posko, ["public_participation", "accept_goods"]
             ) or (0, 0)
             # a member of another org may still send goods to a posko that
-            # opened participation — the page keeps just that one form
-            out["can_coordinate_current"] = bool(pp and ag)
+            # opened participation — the page keeps just that one form.
+            # Same gate as api_logistics.create_aid_offer's public_ok.
+            coord = bool(pp and ag)
+            if coord:
+                try:
+                    from rescue_net.access_policy import public_posko_allowed
+                    coord = bool(public_posko_allowed(posko))
+                except Exception:
+                    coord = False
+            out["can_coordinate_current"] = coord
 
     return out
 

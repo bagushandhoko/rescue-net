@@ -60,7 +60,28 @@ row opens a detail drawer (with "Penuhi kebutuhan ini" → `openFulfill` only
 when `can_manage`). `style.css` `.rn-kpi-clickable` hover + `#urgentNeedsBody`
 row hover.
 
-**Follow-up 2 (`<next>`):** owner — the KPI drill "hanya tampil 2, tidak
+**Follow-up 3 (`<next>`):** aid form wired for `can_coordinate`.
+`logistik.js renderManageAccess` now shows `#aidOfferPanel` (+ new
+`#aidCoordNote`) on `can_manage || can_coordinate`; `itemGroupPanel` /
+`stockCardsPanel` stay `can_manage`-only. `rn-posko-scope.js applyReadOnly`
+now passes `scope.can_coordinate_current` into `hideEditForms(keepCoord)`
+so the sweep spares `#aidOfferPanel`. Backend: `logistik_board.can_coordinate`
+and `posko_edit_scope.can_coordinate_current` tightened to mirror
+`api_logistics.create_aid_offer`'s `public_ok` EXACTLY — now also require
+`access_policy.public_posko_allowed(posko)` (org `privacy_mode=open` +
+`allow_posko_public_choice` + posko `public_detail=public`), on top of
+`public_participation` + `accept_goods`, so the form only shows when a
+submit will succeed. **Demo seed:** `SIM-NS-POSKO-WARGA` set
+`public_participation=1, accept_goods=1, public_detail=public` +
+`SIM-NS-WARGA` org `privacy_mode=open, allow_posko_public_choice=1` (via
+bench console) — a genuine "warga posko opens itself for cross-org aid"
+case. Verified: LD2 (Komunitas Landrover, non-member) on WARGA →
+`can_coordinate:true`, `#aidOfferPanel` visible + survives the scope.js
+timer, operator panels + "+ Tambah" hidden, green "Koordinasi" banner,
+0 console errors. Cache-busters `logistikmock-20260906f` /
+`poskoscope-20260906d`.
+
+**Follow-up 2 (`9db44ec` + `5b0ad21`):** owner — the KPI drill "hanya tampil 2, tidak
 keliatan dari posko mana, harusnya bisa ditrace … sdh pernah dibuat". The
 first cut sliced the single-posko `LOGISTIK_BOARD`; now `openLogistikDrill`
 calls the shared **`api_control_centre.kpi_drilldown`** (guest) — the same

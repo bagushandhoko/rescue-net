@@ -117,12 +117,13 @@
   }
 
   function applyReadOnly(scope) {
+    var keepCoord = !!scope.can_coordinate_current;
     banner(scope);
-    hideEditForms();
+    hideEditForms(keepCoord);
     // page JS may render forms after us — sweep again a couple of times
     var tries = 0;
     var iv = setInterval(function () {
-      hideEditForms();
+      hideEditForms(keepCoord);
       if (++tries >= 6) clearInterval(iv);
     }, 800);
   }

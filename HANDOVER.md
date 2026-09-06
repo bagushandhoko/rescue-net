@@ -34,6 +34,28 @@ One consistent model across `logistik_board`, `posko_distribusi_board`,
   `#aidOfferPanel` when `can_coordinate_current`, and the banner relabels
   "Hanya-lihat" → "Koordinasi".
 
+### Collected-stock dispatch chain (2026-09-06, `c437e3b`) — DONE & DEPLOYED
+Owner: on Posko Logistik after login a collector posko should see its stock,
+click an item → where it came from, then a "kirim kemana" link — straight to
+a receiver posko OR routed via a transport posko (kapal TNI AL / Land Rover),
+that choice a pull-down; and another transport posko can book it.
+- `api_control_centre.logistik_stock_sources(posko, item)` — "asal item"
+  (received aid offers + arrived flows). `logistik_dispatch_options(
+  disaster_event, source_posko)` — receiver poskos + available armada.
+- `api_logistics.create_flow` now sets `disaster_event`; NEW
+  `claim_distribution_flow(flow, transport_space)`.
+- `posko_distribusi_board.pickup_queue` also lists unassigned outgoing
+  `RN Distribution Flow` (`kind:"flow"`), matched by event or by
+  source/destination posko in the event.
+- `logistik.js`: Kartu Stok item name → "Asal item" drawer; "Kirim" button
+  (`can_manage`) → `openDispatch()` (qty · Tujuan `<select>` · Lewat
+  `<select>` = "Langsung / cari transporter" OR an armada) → `create_flow`.
+- `posko-distribusi.js`: `renderPickupQueue` `kind:"flow"` rows → armada
+  `<select>` + "Booking" → `claim_distribution_flow`.
+- `?v=dispatch-20260906`. Backend e2e verified (create_flow no-transport →
+  pickup_queue kind:flow → claim → assigned_pickup + Land Rover provider,
+  row leaves queue). Browser DOM not re-verified (container↔host net down).
+
 ### Bug + layout sweep (2026-09-06) — DONE & DEPLOYED
 - `3fbc90a` / `eb4b4ce` — `quantity_mode:"known"` → `"exact"` (logistik ×2,
   shelter ×1): every "+ Tambah Kebutuhan" / "Tambah Bantuan" / shelter-need

@@ -1076,6 +1076,23 @@ def _drill(title, sub, href):
     return {"title": title, "sub": sub, "href": href}
 
 
+def _bare(v):
+    """Drop the legacy 'posko_nodes:' / 'disaster_events:' docname prefix so
+    it never leaks into a link the browser navigates to."""
+    v = str(v or "")
+    for pre in ("posko_nodes:", "disaster_events:"):
+        if v.startswith(pre):
+            return v[len(pre):]
+    return v
+
+
+def _shelter_href(posko, event):
+    # link every shelter row to the canonical posko detail page (same as the
+    # rest of the app) — shelter-detail.html has no per-posko view, only the
+    # event-wide overview, so ?id= there looked like it did nothing.
+    return "posko-detail.html?id=" + _bare(posko) + "&event=" + _bare(event or "")
+
+
 @frappe.whitelist(allow_guest=True)
 def shelter_board(disaster_event=None):
     """Shelter & Akomodasi overview (matches the DMS mock-up), guest read-only.
@@ -1150,7 +1167,7 @@ def shelter_board(disaster_event=None):
             "kapasitas": cap,
             "okupansi_pct": pct,
             "status": "overcapacity" if over else "aman",
-            "href": "shelter-detail.html?id=" + posko + "&event=" + (event or ""),
+            "href": _shelter_href(posko, event),
         })
 
     daftar_shelter.sort(key=lambda r: -(r["okupansi_pct"] or 0))
@@ -1235,7 +1252,7 @@ def shelter_board(disaster_event=None):
         peringatan.append({
             "title": r["title"],
             "sub": f"Kapasitas melebihi 100% (+{r['current_occupancy'] - r['capacity_total']} orang)",
-            "href": "shelter-detail.html?id=" + r["posko"] + "&event=" + (event or ""),
+            "href": _shelter_href(r["posko"], event),
             "level": "critical",
         })
     for n in open_needs:
@@ -1244,7 +1261,7 @@ def shelter_board(disaster_event=None):
             peringatan.append({
                 "title": (p.title if p else n.posko) + " — " + n.item_name,
                 "sub": "Kebutuhan kritis terbuka",
-                "href": "shelter-detail.html?id=" + n.posko + "&event=" + (event or ""),
+                "href": _shelter_href(n.posko, event),
                 "level": "critical",
             })
     peringatan.sort(key=lambda r: 0 if r.get("level") == "critical" else 1)
@@ -1279,19 +1296,19 @@ def shelter_board(disaster_event=None):
             ],
             "overcapacity_items": [
                 _drill(r["title"], f"{r['current_occupancy']}/{r['capacity_total']} ({r['occupancy_percent']}%)",
-                       "shelter-detail.html?id=" + r["posko"] + "&event=" + (event or ""))
+                       _shelter_href(r["posko"], event))
                 for r in overcapacity_rows
             ],
             "air_bersih_items": [
                 _drill(posko_by_name[n.posko].title, n.item_name + " · kritis",
-                       "shelter-detail.html?id=" + n.posko + "&event=" + (event or ""))
+                       _shelter_href(n.posko, event))
                 for n in open_needs
                 if str(n.priority).lower() in urgent_terms
                 and any(k in (n.item_name or "").lower() for k in _WATER_KEYWORDS)
             ],
             "sanitasi_items": [
                 _drill(posko_by_name[n.posko].title, n.item_name + " · kritis",
-                       "shelter-detail.html?id=" + n.posko + "&event=" + (event or ""))
+                       _shelter_href(n.posko, event))
                 for n in open_needs
                 if str(n.priority).lower() in urgent_terms
                 and any(k in (n.item_name or "").lower() for k in _SANITATION_KEYWORDS)

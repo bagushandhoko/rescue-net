@@ -7,6 +7,7 @@
    plain "is anyone logged in" check. */
 
 let LOGISTIK_BOARD = null;
+let NEEDS_DRILL = null;   // kpi_drilldown("kebutuhan") for this event (cross-posko)
 let KATEGORI = "";
 
 /* Coarse item categories so the "Kategori" filter in the topbar can narrow
@@ -489,6 +490,75 @@ function drillGroupsHtml(data) {
   }).join("");
 }
 
+/* "Kebutuhan Mendesak" table = cross-posko board from kpi_drilldown, gated
+   by the visibility model (open orgs → item rows w/ posko link; closed orgs
+   → one summary row). Falls back to this posko's own list if the drill
+   call failed. */
+const _PRI_RANK = p => (/crit|darurat/i.test(p) ? 0 : /urgent|segera/i.test(p) ? 1 : /high|tinggi/i.test(p) ? 2 : 3);
+
+function renderNeedsBoard(data, board) {
+  const body = document.getElementById("urgentNeedsBody");
+  const cnt = document.getElementById("urgentNeedsCount");
+  const shown = document.getElementById("urgentNeedsShown");
+  if (!body) return;
+  const ev = eventParam();
+
+  if (!data || !data.groups) {                     // fallback: single posko
+    if (window.RNLogistikInfo) RNLogistikInfo.renderUrgentNeeds(board || {});
+    return;
+  }
+
+  const open = [];
+  let hiddenRows = 0, hiddenOrgs = 0;
+  (data.groups || []).forEach(g => {
+    if (g.share_mode === "full") (g.items || []).forEach(it => open.push(it));
+    else { hiddenRows += g.count || g.hidden_count || 0; hiddenOrgs += 1; }
+  });
+  open.sort((a, b) =>
+    _PRI_RANK(a.priority) - _PRI_RANK(b.priority) || num(b.gap) - num(a.gap));
+
+  if (cnt) cnt.textContent = `${fmt(data.total || open.length)} item`;
+  if (shown) shown.textContent =
+    `${fmt(open.length)} tampil${hiddenRows ? ` · ${fmt(hiddenRows)} dari ${hiddenOrgs} organisasi tertutup (ringkasan)` : ""}`;
+
+  // keep the "Kebutuhan Kritis" KPI in step with this cross-posko board
+  const crit = open.filter(it => _PRI_RANK(it.priority) <= 1).length;
+  const kk = document.getElementById("kpiKritis");
+  if (kk) kk.textContent = fmt(crit) + (hiddenRows ? ` (+${fmt(hiddenRows)})` : "");
+  const kkh = document.getElementById("kpiKritisHint");
+  if (kkh) kkh.textContent = `dari ${fmt(data.total || 0)} kebutuhan di ${fmt(
+    (data.groups || []).reduce((s, g) => s + (g.posko_count || 0), 0))} posko`;
+
+  if (!open.length && !hiddenRows) {
+    body.innerHTML = `<tr><td colspan="6" class="rn-muted">Tidak ada kebutuhan terbuka.</td></tr>`;
+    return;
+  }
+  body.innerHTML =
+    open.map(it => {
+      const href = it.posko
+        ? `posko-detail.html?id=${encodeURIComponent(it.posko)}&event=${encodeURIComponent(ev)}`
+        : "";
+      const pri = String(it.priority || "").toLowerCase();
+      const priCls = /crit|darurat/.test(pri) ? "danger" : /urgent|high|tinggi|segera/.test(pri) ? "warning" : "neutral";
+      return `<tr>
+        <td><b>${safe(it.title)}</b></td>
+        <td>${href
+          ? `<a href="${href}">${safe(it.posko_title || it.posko)}</a>`
+          : safe(it.posko_title || it.posko || "-")}
+          <small class="rn-muted">${safe(it.organization_title)}</small></td>
+        <td>${fmt(it.quantity)} ${safe(it.unit)}</td>
+        <td class="rn-gap">${it.gap ? fmt(it.gap) + " " + safe(it.unit) : "—"}</td>
+        <td>${safe(it.when) || "—"}</td>
+        <td><span class="chip ${priCls}">${safe(it.priority || "normal")}</span></td>
+      </tr>`;
+    }).join("") +
+    (hiddenRows
+      ? `<tr class="rn-needs-hidden"><td colspan="6" class="rn-muted">
+           🔒 ${fmt(hiddenRows)} kebutuhan di ${fmt(hiddenOrgs)} organisasi yang menutup koordinasi detail — hanya ringkasan.
+         </td></tr>`
+      : "");
+}
+
 async function openLogistikDrill(kpi) {
   const b = LOGISTIK_BOARD || {};
 
@@ -510,7 +580,8 @@ async function openLogistikDrill(kpi) {
   };
   showDrawer(titles[kpi], `<p class="rn-muted">Memuat rincian…</p>`);
   try {
-    const data = await RN_FRAPPE.call(
+    // "kritis" reuses the board already fetched for the Kebutuhan Mendesak table
+    const data = (kpi === "kritis" && NEEDS_DRILL) ? NEEDS_DRILL : await RN_FRAPPE.call(
       "rescue_net.api_control_centre.kpi_drilldown",
       { disaster_event: eventParam(), dimension: dim }
     );
@@ -751,20 +822,25 @@ async function loadBoard() {
 
   setStatus("Memuat data logistik…");
   try {
-    const b = await RN_FRAPPE.call(
-      "rescue_net.api_control_centre.logistik_board",
-      { posko, disaster_event: eventParam() }
-    );
+    const [b, needs] = await Promise.all([
+      RN_FRAPPE.call("rescue_net.api_control_centre.logistik_board",
+        { posko, disaster_event: eventParam() }),
+      RN_FRAPPE.call("rescue_net.api_control_centre.kpi_drilldown",
+        { disaster_event: eventParam(), dimension: "kebutuhan" }).catch(() => null),
+    ]);
     LOGISTIK_BOARD = b;
+    NEEDS_DRILL = needs;
 
     renderShareBanner(b);
     renderRoleBanner(b);
     // read-only "Kondisi Logistik" dashboard (mockup) — shared renderers
     if (window.RNLogistikInfo) {
       RNLogistikInfo.renderKpi(b);
-      RNLogistikInfo.renderUrgentNeeds(b);
       RNLogistikInfo.renderMovements(b);
     }
+    // "Kebutuhan Mendesak" = cross-posko board (all poskos this event),
+    // gated by the visibility model; falls back to this posko's list.
+    renderNeedsBoard(needs, b);
     renderManageAccess(b);      // toggles the operator inline actions on top
     renderKategoriOptions(b);
     renderStockCards(b);
@@ -924,28 +1000,6 @@ async function boot() {
     });
   });
 
-  // Kebutuhan Mendesak row → detail drawer (delegated; body re-renders)
-  document.getElementById("urgentNeedsBody")?.addEventListener("click", e => {
-    const tr = e.target.closest("tr");
-    if (!tr || !tr.querySelector("td b")) return;
-    const b = LOGISTIK_BOARD || {};
-    const name = tr.querySelector("td b").textContent.trim();
-    const n = (b.urgent_needs || []).find(x => (x.item_name || "").trim() === name);
-    if (!n) return;
-    showDrawer(`Kebutuhan — ${name}`, `
-      <div class="rn-trace-line"><span>Stok tersedia</span><b>${fmt(n.stok_tersedia)} ${safe(n.unit)}</b></div>
-      <div class="rn-trace-line"><span>Kekurangan (gap)</span><b>${n.gap ? fmt(n.gap) + " " + safe(n.unit) : "—"}</b></div>
-      <div class="rn-trace-line"><span>Estimasi habis</span><b>${safe(n.estimasi_habis)}</b></div>
-      <div class="rn-trace-line"><span>Waktu harus tiba</span><b>${safe(n.waktu_harus_tiba)}</b></div>
-      <div class="rn-trace-line"><span>Prioritas</span><b>${safe(n.priority)}</b></div>
-      ${(LOGISTIK_BOARD && LOGISTIK_BOARD.can_manage)
-        ? `<div class="form-actions"><button class="btn primary" type="button" id="drillPenuhi">Penuhi kebutuhan ini</button></div>`
-        : ""}`);
-    document.getElementById("drillPenuhi")?.addEventListener("click", () => {
-      hideDrawer();
-      openFulfill(name, n.unit || "");
-    });
-  });
 
   document.getElementById("logistikKategori")?.addEventListener("change", e => {
     KATEGORI = e.target.value || "";

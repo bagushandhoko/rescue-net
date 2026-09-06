@@ -249,7 +249,8 @@ h4 {
   transform: translateY(-2px);
   box-shadow: 0 26px 60px rgba(145,84,54,.18);
 }
-#urgentNeedsBody tr:hover { background: rgba(232,117,88,.06); cursor: pointer; }
+#urgentNeedsBody a { color: var(--peach2); font-weight: 700; }
+#urgentNeedsBody .rn-needs-hidden td { background: rgba(255,248,243,.7); font-size: 12px; }
 
 /* cross-posko KPI drill (posko-logistik openLogistikDrill) */
 .rn-drill-group { border: 1px solid var(--line); border-radius: 12px; margin: 10px 0; overflow: hidden; }

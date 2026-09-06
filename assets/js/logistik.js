@@ -315,10 +315,11 @@ function renderStockCards(b) {
     body.innerHTML = `<tr><td colspan="10" class="rn-muted">Tidak ada kartu stok untuk kategori "${safe(KATEGORI)}".</td></tr>`;
     return;
   }
+  const canManage = !!b.can_manage;
   body.innerHTML = cards.length
     ? cards.map(c => `
         <tr>
-          <td><b>${safe(c.item)}</b> <small>${safe(c.unit)}</small></td>
+          <td><a href="#" class="rn-stok-src" data-item="${encodeURIComponent(c.item)}"><b>${safe(c.item)}</b></a> <small>${safe(c.unit)}</small></td>
           <td>${fmt(c.stok_ada)}</td>
           <td class="rn-in">${c.masuk_7h ? "+" + fmt(c.masuk_7h) : "—"}</td>
           <td class="rn-out">${c.keluar_7h ? "−" + fmt(c.keluar_7h) : "—"}</td>
@@ -335,7 +336,10 @@ function renderStockCards(b) {
               ? `<br><small>+OTW: ${fmt(c.estimasi_habis_dengan_otw_hari)} h</small>`
               : ""
           }</td>
-          <td><button class="btn ghost mini rn-penuhi" data-item="${encodeURIComponent(c.item)}" data-unit="${encodeURIComponent(c.unit || "")}">Penuhi</button></td>
+          <td>
+            <button class="btn ghost mini rn-penuhi" data-item="${encodeURIComponent(c.item)}" data-unit="${encodeURIComponent(c.unit || "")}">Penuhi</button>
+            ${canManage ? `<button class="btn primary mini rn-kirim" data-item="${encodeURIComponent(c.item)}" data-unit="${encodeURIComponent(c.unit || "")}" data-stok="${safe(c.stok_ada)}">Kirim</button>` : ""}
+          </td>
         </tr>
       `).join("")
     : `<tr><td colspan="10">Belum ada kartu stok.</td></tr>`;
@@ -346,11 +350,117 @@ function renderStockCards(b) {
       openIncomingDrawer(decodeURIComponent(a.dataset.item));
     });
   });
+  body.querySelectorAll(".rn-stok-src").forEach(a => {
+    a.addEventListener("click", e => {
+      e.preventDefault();
+      openStockSources(decodeURIComponent(a.dataset.item));
+    });
+  });
   body.querySelectorAll(".rn-penuhi").forEach(btn => {
     btn.addEventListener("click", () => openFulfill(
       decodeURIComponent(btn.dataset.item),
       decodeURIComponent(btn.dataset.unit || "")
     ));
+  });
+  body.querySelectorAll(".rn-kirim").forEach(btn => {
+    btn.addEventListener("click", () => openDispatch(
+      decodeURIComponent(btn.dataset.item),
+      decodeURIComponent(btn.dataset.unit || ""),
+      btn.dataset.stok
+    ));
+  });
+}
+
+/* "Asal item" — where the stock for this item came from (donations +
+   arrived kiriman from other poskos). */
+async function openStockSources(item) {
+  showDrawer(`Asal item — ${item}`, `<p class="rn-muted">Memuat…</p>`);
+  try {
+    const r = await RN_FRAPPE.call(
+      "rescue_net.api_control_centre.logistik_stock_sources",
+      { posko: poskoParam(), item }
+    );
+    const rows = (r && r.sources) || [];
+    showDrawer(`Asal item — ${item}`, rows.length
+      ? `<div class="rn-drawer-list">${rows.map(s => `
+          <div class="rn-drawer-row">
+            <div>
+              <b>${safe(s.from)}</b> · ${fmt(s.quantity)} ${safe(s.unit)}
+              <br><small>${safe(s.kind)} · ${s.received ? "diterima" : safe(s.status)} · ${safe(s.at)}</small>
+            </div>
+          </div>`).join("")}</div>`
+      : `<p class="rn-muted">Belum ada catatan asal untuk item ini.</p>`);
+  } catch (e) {
+    showDrawer(`Asal item — ${item}`, `<p class="rn-muted">Gagal memuat: ${safe(e && e.message || e)}</p>`);
+  }
+}
+
+/* "Kirim stok" — dispatch this posko's stock to a receiver posko, optionally
+   routed through a transport posko's armada (RN Transport Space). Backend:
+   api_logistics.create_flow. If "Lewat" is left "Langsung — cari transporter",
+   no armada is set and the flow shows up in Posko Distribusi's pickup queue
+   for any transport posko to claim. */
+async function openDispatch(item, unit, stok) {
+  showDrawer(`Kirim stok — ${item}`, `<p class="rn-muted">Memuat pilihan…</p>`);
+  let opt;
+  try {
+    opt = await RN_FRAPPE.call(
+      "rescue_net.api_control_centre.logistik_dispatch_options",
+      { disaster_event: eventParam(), source_posko: poskoParam() }
+    );
+  } catch (e) {
+    showDrawer(`Kirim stok — ${item}`, `<p class="rn-muted">Gagal: ${safe(e && e.message || e)}</p>`);
+    return;
+  }
+  const dests = (opt && opt.destinations) || [];
+  const armada = (opt && opt.armada) || [];
+  const html = `
+    <form id="dispatchForm" class="rn-form">
+      <p class="rn-muted">Stok tersedia: <b>${fmt(stok)} ${safe(unit)}</b></p>
+      <label>Item<input value="${safe(item)}" readonly></label>
+      <label>Jumlah dikirim<input name="quantity" type="number" step="0.01" required></label>
+      <label>Satuan<input name="unit" value="${safe(unit)}"></label>
+      <label>Tujuan (posko penerima)
+        <select name="destination_posko" required>
+          <option value="">— pilih posko tujuan —</option>
+          ${dests.map(d => `<option value="${safe(d.id)}">${safe(d.title)}${d.city ? " — " + safe(d.city) : ""}${d.role === "receiver" ? " · penerima" : ""}${d.jiwa ? " · " + fmt(d.jiwa) + " jiwa" : ""}</option>`).join("")}
+        </select>
+      </label>
+      <label>Lewat
+        <select name="transport_space">
+          <option value="">Langsung / cari transporter (masuk antrean Posko Distribusi)</option>
+          ${armada.map(a => `<option value="${safe(a.id)}">${safe(a.provider)} (${safe(a.jenis)}) · ${safe(a.posko_title)} · ${fmt(a.kapasitas_kg)} kg · brk ${safe(a.berangkat)}</option>`).join("")}
+        </select>
+      </label>
+      <label>Catatan<input name="note" placeholder="opsional"></label>
+      <div class="form-actions">
+        <button class="btn primary" type="submit">Kirim</button>
+        <span class="form-message" id="dispatchMsg"></span>
+      </div>
+    </form>`;
+  showDrawer(`Kirim stok — ${item}`, html);
+  const form = document.getElementById("dispatchForm");
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const msg = document.getElementById("dispatchMsg");
+    msg.textContent = "Mengirim…";
+    try {
+      const r = await RN_FRAPPE.call("rescue_net.api_logistics.create_flow", {
+        destination_posko: form.destination_posko.value,
+        item_text: item,
+        quantity: Number(form.quantity.value || 0),
+        unit: form.unit.value.trim(),
+        quantity_mode: "exact",
+        source_posko: poskoParam(),
+        transport_space: form.transport_space.value || undefined,
+      }, { method: "POST" });
+      msg.textContent = form.transport_space.value
+        ? "Terkirim — armada ditugaskan."
+        : "Terkirim — menunggu transporter di antrean Posko Distribusi.";
+      setTimeout(() => { hideDrawer(); loadBoard(); }, 1400);
+    } catch (err) {
+      msg.textContent = (err && err.message) || String(err);
+    }
   });
 }
 

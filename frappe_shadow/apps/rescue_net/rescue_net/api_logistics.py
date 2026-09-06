@@ -966,6 +966,53 @@ def claim_aid_pickup(transporter_posko, aid_offer, destination_posko,
 
 
 @frappe.whitelist()
+def claim_distribution_flow(flow, transport_space=None, eta=None, note=None):
+    """A Posko Distribusi operator claims an outgoing RN Distribution Flow
+    that has no transporter yet (a collector posko dispatched stock and left
+    "lewat" empty) and commits one of their armada to carry it. Mirrors
+    claim_aid_pickup but for a flow. Any transport posko may claim — that's
+    how "posko distribusi temennya" books it."""
+    actor = rn_actor()
+    doc = frappe.get_doc("RN Distribution Flow", flow)
+
+    if doc.transport_space:
+        frappe.throw("Alur ini sudah punya armada.")
+    if str(doc.flow_status or "").lower() in (
+        "in_transit", "arrived_at_posko", "arrived", "received", "cancelled",
+    ):
+        frappe.throw(f"Alur ini sudah berstatus '{doc.flow_status}'.")
+
+    coord_posko = None
+    if transport_space:
+        space = frappe.get_doc("RN Transport Space", transport_space)
+        coord_posko = space.coordination_posko
+        if not _can_contribute(actor, coord_posko):
+            frappe.throw(
+                "Anda bukan petugas / anggota posko distribusi armada ini.",
+                frappe.PermissionError,
+            )
+        doc.transport_space = space.name
+        doc.transport_provider = space.provider_name or coord_posko
+        doc.transport_type = space.transport_type or doc.transport_type
+    else:
+        frappe.throw("Pilih armada untuk mengangkut alur ini.")
+
+    doc.flow_status = "assigned_pickup"
+    if eta:
+        doc.eta_final = eta
+    if hasattr(doc, "assigned_pickup_at"):
+        doc.assigned_pickup_at = now_datetime()
+    doc.save(ignore_permissions=True)
+
+    return {
+        "flow": doc.name,
+        "flow_status": doc.flow_status,
+        "transport_space": doc.transport_space,
+        "transport_provider": doc.transport_provider,
+    }
+
+
+@frappe.whitelist()
 def create_flow(
     destination_posko,
     item_text,
@@ -1087,6 +1134,11 @@ def create_flow(
     doc.title = item_text
     doc.destination_posko = destination_posko
     doc.source_posko = source_posko
+    # event-scope the flow so it shows on the event dashboards / pickup queue
+    doc.disaster_event = (
+        frappe.db.get_value("RN Posko", source_posko, "disaster_event")
+        or frappe.db.get_value("RN Posko", destination_posko, "disaster_event")
+    )
     doc.item_name = item_text
     doc.raw_item_text = item_text
 

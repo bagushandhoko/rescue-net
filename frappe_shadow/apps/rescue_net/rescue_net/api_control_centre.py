@@ -1674,6 +1674,135 @@ def logistik_incoming(posko, disaster_event=None):
 
 
 @frappe.whitelist(allow_guest=True)
+def logistik_stock_sources(posko, item=None):
+    """"Asal item" — where the stock at this posko for `item` came from:
+    received aid offers (donations / community shipments) + arrived
+    distribution flows from other poskos."""
+    name = _resolve_posko(posko)
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+    want = _norm_item(item) if item else None
+
+    out = []
+    for o in frappe.get_all(
+        "RN Aid Offer",
+        filters={"target_posko": name},
+        fields=_sf("RN Aid Offer", [
+            "name", "item_name", "raw_item_text", "canonical_item", "quantity",
+            "unit", "donor_name", "offer_status", "creation", "modified",
+        ]),
+        order_by="modified desc", limit_page_length=300,
+    ):
+        it = o.get("item_name") or o.get("raw_item_text")
+        if want and _norm_item(o.get("canonical_item") or it) != want:
+            continue
+        st = str(o.get("offer_status") or "").lower()
+        out.append({
+            "kind": "donasi",
+            "item": it,
+            "from": o.get("donor_name") or "Donatur",
+            "quantity": _num(o.get("quantity")),
+            "unit": o.get("unit") or "",
+            "status": st,
+            "received": st in ("received", "received_verified"),
+            "at": str(o.get("modified") or o.get("creation") or "")[:16],
+        })
+
+    for f in frappe.get_all(
+        "RN Distribution Flow",
+        filters={"destination_posko": name},
+        fields=_sf("RN Distribution Flow", [
+            "name", "item_name", "raw_item_text", "canonical_item", "quantity",
+            "received_quantity", "unit", "source_posko", "flow_status",
+            "received_at", "modified",
+        ]),
+        order_by="modified desc", limit_page_length=300,
+    ):
+        it = f.get("item_name") or f.get("raw_item_text")
+        if want and _norm_item(f.get("canonical_item") or it) != want:
+            continue
+        src = f.get("source_posko")
+        src_title = (
+            frappe.db.get_value("RN Posko", src, "title") or src
+        ) if src else "-"
+        st = str(f.get("flow_status") or "").lower()
+        out.append({
+            "kind": "kiriman posko",
+            "item": it,
+            "from": src_title,
+            "quantity": _num(f.get("received_quantity") or f.get("quantity")),
+            "unit": f.get("unit") or "",
+            "status": st,
+            "received": st in ("received", "arrived_at_posko", "arrived"),
+            "at": str(f.get("received_at") or f.get("modified") or "")[:16],
+        })
+
+    out.sort(key=lambda r: r.get("at") or "", reverse=True)
+    return {"posko": name, "item": item, "sources": out}
+
+
+@frappe.whitelist(allow_guest=True)
+def logistik_dispatch_options(disaster_event, source_posko=None):
+    """Choices for the "Kirim stok" form on Posko Logistik:
+      destinations = receiver poskos of this event (not transport, not self)
+      armada       = available RN Transport Space (route the shipment through
+                     a kapal TNI AL / Land Rover club / … instead of direct)."""
+    event = canonical_event(disaster_event) if disaster_event else None
+    src = _resolve_posko(source_posko) if source_posko else None
+
+    prow = frappe.get_all(
+        "RN Posko",
+        or_filters={"disaster_event": event, "disaster_event_legacy_id": event}
+        if event else None,
+        fields=["name", "title", "posko_type", "city_name", "rn_logistics_role",
+                "rn_beneficiary_count"],
+        limit_page_length=500,
+    )
+    destinations = [
+        {
+            "id": p.name,
+            "title": (p.title or "").replace("[SIMULASI] ", "").strip() or p.name,
+            "city": p.get("city_name") or "",
+            "role": p.get("rn_logistics_role") or "",
+            "jiwa": _num(p.get("rn_beneficiary_count")),
+        }
+        for p in prow
+        if p.name != src and (p.posko_type or "").lower() != "transport"
+    ]
+    destinations.sort(key=lambda d: (d["role"] != "receiver", -d["jiwa"], d["title"]))
+
+    trow = frappe.get_all(
+        "RN Transport Space",
+        filters=event_filters(cols("RN Transport Space"), event) if event else {},
+        fields=_sf("RN Transport Space", [
+            "name", "provider_name", "transport_type", "transport_status",
+            "capacity_weight_kg", "capacity_volume_m3", "coordination_posko",
+            "departure_at", "eta_at", "departure_time", "eta", "service_mode",
+        ]),
+        order_by="modified desc", limit_page_length=200,
+    )
+    armada = []
+    for t in trow:
+        if (t.transport_status or "") in ("completed", "cancelled"):
+            continue
+        posko_title = (
+            frappe.db.get_value("RN Posko", t.coordination_posko, "title")
+            or t.coordination_posko or "-"
+        )
+        armada.append({
+            "id": t.name,
+            "provider": t.provider_name or "-",
+            "jenis": t.transport_type or "-",
+            "posko_title": (posko_title or "").replace("[SIMULASI] ", "").strip(),
+            "kapasitas_kg": _num(t.capacity_weight_kg),
+            "berangkat": (str(t.departure_at or "")[:16] or t.departure_time or "-"),
+            "eta": (str(t.eta_at or "")[:16] or t.eta or "-"),
+        })
+
+    return {"destinations": destinations, "armada": armada}
+
+
+@frappe.whitelist(allow_guest=True)
 def logistik_open_needs(disaster_event, limit=200):
     """Public 'papan kebutuhan' - open logistic needs across every posko of
     an event, each with the serving posko's beneficiary count and fulfilment
@@ -3572,6 +3701,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                and st != "need_pickup":
                 continue
             pickup_queue.append({
+                "kind": "aid_offer",
                 "aid_offer": o.name,
                 "item": o.item_name or o.raw_item_text or "-",
                 "quantity": o.quantity,
@@ -3581,6 +3711,65 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "pickup_location": o.pickup_location or "-",
                 "ready_at": o.ready_at or "-",
                 "suggested_destination": o.target_posko or "",
+            })
+
+        # outgoing distribution flows a collector posko dispatched WITHOUT a
+        # transporter ("lewat" left empty) — any transport posko can claim one.
+        _evp = set(_event_posko_names(event) or [])
+        _flow_rows = frappe.get_all(
+            "RN Distribution Flow",
+            filters={"transport_space": ["in", ["", None]]},
+            or_filters=(
+                {"disaster_event": event, "disaster_event_legacy_id": event}
+                if event else None
+            ),
+            fields=_sf("RN Distribution Flow", [
+                "name", "item_name", "raw_item_text", "quantity", "unit",
+                "source_posko", "destination_posko", "flow_status",
+                "transport_space", "eta_final", "disaster_event",
+            ]),
+            order_by="modified desc", limit_page_length=400,
+        )
+        # + flows whose posko belongs to this event (legacy rows w/o disaster_event)
+        if _evp:
+            _seen = {r.name for r in _flow_rows}
+            for fr in frappe.get_all(
+                "RN Distribution Flow",
+                filters={"transport_space": ["in", ["", None]]},
+                or_filters=[
+                    ["source_posko", "in", list(_evp)],
+                    ["destination_posko", "in", list(_evp)],
+                ],
+                fields=_sf("RN Distribution Flow", [
+                    "name", "item_name", "raw_item_text", "quantity", "unit",
+                    "source_posko", "destination_posko", "flow_status",
+                    "transport_space", "eta_final", "disaster_event",
+                ]),
+                order_by="modified desc", limit_page_length=400,
+            ):
+                if fr.name not in _seen:
+                    _flow_rows.append(fr)
+        for fr in _flow_rows:
+            if fr.get("transport_space"):
+                continue
+            if str(fr.get("flow_status") or "").lower() not in (
+                "", "created", "pending", "planned", "needs_transport",
+                "awaiting_transport", "requested",
+            ):
+                continue
+            src_t = frappe.db.get_value("RN Posko", fr.source_posko, "title") if fr.source_posko else None
+            pickup_queue.append({
+                "kind": "flow",
+                "flow": fr.name,
+                "aid_offer": fr.name,  # reused as the row key on the frontend
+                "item": fr.item_name or fr.raw_item_text or "-",
+                "quantity": fr.quantity,
+                "unit": fr.unit or "",
+                "donor": (src_t or fr.source_posko or "Posko pengumpul"),
+                "donor_contact": "",
+                "pickup_location": (src_t or fr.source_posko or "-"),
+                "ready_at": fr.get("eta_final") or "-",
+                "suggested_destination": fr.destination_posko or "",
             })
 
         dest_rows = frappe.get_all(

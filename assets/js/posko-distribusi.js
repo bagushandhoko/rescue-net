@@ -521,19 +521,42 @@
       if (shown) shown.textContent = "0 antre";
       return;
     }
-    var opts = (dests || []).map(function (d) {
+    var destOpts = (dests || []).map(function (d) {
       return '<option value="' + esc(d.id) + '">' + esc(d.title) + (d.city ? " — " + esc(d.city) : "") + "</option>";
     }).join("");
+    // this transport posko's own armada (for claiming an outgoing flow)
+    var armadaOpts = ((CACHE && CACHE.armada) || []).filter(function (a) {
+      return (a.status || "") !== "completed" && (a.status || "") !== "cancelled";
+    }).map(function (a) {
+      return '<option value="' + esc(a.id) + '">' + esc(a.provider) + " · " + esc(a.jenis) +
+        " · sisa " + fmt(a.kapasitas_tersedia_kg) + " kg</option>";
+    }).join("");
+
     body.innerHTML = list.map(function (r) {
-      var claimCells = canManage
-        ? '<td><select class="rn-pd-dest" data-offer="' + esc(r.aid_offer) + '">' +
-            '<option value="">— pilih posko —</option>' + opts + "</select></td>" +
-          '<td><button type="button" class="btn primary mini rn-pd-claim" data-offer="' + esc(r.aid_offer) + '">Ambil &amp; Antar</button>' +
-          '<span class="rn-pd-bk-msg" data-msg="' + esc(r.aid_offer) + '"></span></td>'
-        : "";
+      var key = esc(r.aid_offer);
+      var isFlow = r.kind === "flow";
+      var claimCells = "";
+      if (canManage) {
+        if (isFlow) {
+          // destination already chosen by the collector posko — assign one of
+          // OUR armada. api_logistics.claim_distribution_flow.
+          claimCells =
+            '<td><select class="rn-pd-arm" data-flow="' + key + '">' +
+              '<option value="">— pilih armada —</option>' + armadaOpts + "</select></td>" +
+            '<td><button type="button" class="btn primary mini rn-pd-claimflow" data-flow="' + key + '">Booking</button>' +
+            '<span class="rn-pd-bk-msg" data-msg="' + key + '"></span></td>';
+        } else {
+          claimCells =
+            '<td><select class="rn-pd-dest" data-offer="' + key + '">' +
+              '<option value="">— pilih posko —</option>' + destOpts + "</select></td>" +
+            '<td><button type="button" class="btn primary mini rn-pd-claim" data-offer="' + key + '">Ambil &amp; Antar</button>' +
+            '<span class="rn-pd-bk-msg" data-msg="' + key + '"></span></td>';
+        }
+      }
       return (
         "<tr>" +
-        "<td><b>" + esc(r.item) + "</b><small class=\"rn-muted\">" + esc(r.aid_offer) + "</small></td>" +
+        '<td><b>' + esc(r.item) + '</b><small class="rn-muted">' +
+          (isFlow ? "alur distribusi" : esc(r.aid_offer)) + "</small></td>" +
         "<td>" + fmt(r.quantity) + " " + esc(r.unit) + "</td>" +
         "<td>" + esc(r.donor) + (r.donor_contact ? "<small class=\"rn-muted\">" + tel(r.donor_contact) + "</small>" : "") + "</td>" +
         "<td>" + esc(r.pickup_location) + "</td>" +
@@ -542,15 +565,17 @@
         "</tr>"
       );
     }).join("");
-    // prefill suggested destination
+
+    // prefill suggested destination (aid-offer rows only)
     list.forEach(function (r) {
-      if (r.suggested_destination) {
+      if (r.kind !== "flow" && r.suggested_destination) {
         var s = body.querySelector('.rn-pd-dest[data-offer="' + CSS.escape(r.aid_offer) + '"]');
         if (s && [].some.call(s.options, function (o) { return o.value === r.suggested_destination; })) {
           s.value = r.suggested_destination;
         }
       }
     });
+
     body.querySelectorAll(".rn-pd-claim").forEach(function (btn) {
       btn.addEventListener("click", async function () {
         var offer = btn.getAttribute("data-offer");
@@ -564,6 +589,26 @@
             { transporter_posko: getPosko(), aid_offer: offer, destination_posko: dest },
             { method: "POST" });
           if (msg) msg.textContent = " diambil ✓";
+          await load();
+        } catch (err) {
+          var m = (err && err.message) || String(err);
+          if (msg) msg.textContent = " gagal: " + m + (/login|permission|akses/i.test(m) ? " (perlu login)" : "");
+        }
+      });
+    });
+
+    body.querySelectorAll(".rn-pd-claimflow").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var flow = btn.getAttribute("data-flow");
+        var sel = body.querySelector('.rn-pd-arm[data-flow="' + CSS.escape(flow) + '"]');
+        var msg = body.querySelector('[data-msg="' + CSS.escape(flow) + '"]');
+        var arm = sel && sel.value;
+        if (!arm) { if (msg) msg.textContent = " pilih armada dulu"; return; }
+        if (msg) msg.textContent = " memproses…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_logistics.claim_distribution_flow",
+            { flow: flow, transport_space: arm }, { method: "POST" });
+          if (msg) msg.textContent = " dibooking ✓";
           await load();
         } catch (err) {
           var m = (err && err.message) || String(err);

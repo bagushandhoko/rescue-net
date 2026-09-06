@@ -344,14 +344,19 @@ function chipClass(status) {
 }
 
 async function dashboard() {
-  const ctx =
-    await RN_FRAPPE.call(
+  // Feeds the legacy per-posko <details> panels only — the mockup board is
+  // loaded separately (loadBoard → distribusi_board, guest). api_logistics.
+  // dashboard 403s for a logged-in user who doesn't manage the fallback
+  // posko; degrade to an empty ctx instead of rejecting the init chain.
+  let ctx = {};
+  try {
+    ctx = await RN_FRAPPE.call(
       "rescue_net.api_logistics.dashboard",
-      {
-        posko:
-          getDistributionPosko()
-      }
+      { posko: getDistributionPosko() }
     );
+  } catch (e) {
+    ctx = { poskos: [], needs: [], stocks: [], flows: [], transport_spaces: [], aid_offers: [] };
+  }
 
   DISTRIBUTION_CACHE = ctx;
 

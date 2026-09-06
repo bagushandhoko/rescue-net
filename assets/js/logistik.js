@@ -913,7 +913,7 @@ function setupLogisticNeedForm() {
           item_text: form.item_name.value.trim(),
           quantity: Number(form.quantity_needed.value || 0),
           unit: form.unit.value.trim(),
-          quantity_mode: "known",
+          quantity_mode: "exact",
           urgency: form.priority.value,
           needed_before: form.needed_before.value.trim()
         },
@@ -970,7 +970,7 @@ function setupAidOfferForm() {
           item_text: form.item_name.value.trim(),
           quantity: Number(form.quantity.value || 0),
           unit: form.unit.value.trim(),
-          quantity_mode: "known",
+          quantity_mode: "exact",
           pickup_location: form.pickup_location.value.trim()
         },
         { method: "POST" }

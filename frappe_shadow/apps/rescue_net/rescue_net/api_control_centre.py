@@ -4083,13 +4083,16 @@ def _my_posko_names(actor):
 def posko_edit_scope(posko=None, disaster_event=None):
     """Tell a posko operational page how to scope itself for the viewer.
 
-    Guests / non-members / System Managers / operators of the shown posko are
-    left unrestricted (`can_edit_current: true`). A logged-in org member who
-    does NOT manage the shown posko gets `can_edit_current: false` so the page
-    hides its create/record forms and shows a read-only banner; `my_poskos` /
-    `primary_posko` drive the "default to my own posko" redirect.
+    Guests / non-members / System Managers / operators OR APPROVED MEMBERS of
+    the shown posko's org are left unrestricted (`can_edit_current: true` —
+    same bar as `logistik_board.can_manage` and `api_logistics._can_contribute`,
+    which let an approved org member write). A logged-in org member viewing
+    ANOTHER org's posko gets `can_edit_current: false` so the page hides its
+    create/record forms and shows a read-only banner (relabelled "Koordinasi"
+    when `can_coordinate_current`); `my_poskos` / `primary_posko` drive the
+    "default to my own posko" redirect.
     """
-    from rescue_net.access_policy import rn_actor, can_manage_posko, is_system_manager
+    from rescue_net.access_policy import rn_actor, is_system_manager
 
     event = canonical_event(disaster_event) if disaster_event else None
     posko = _resolve_posko(posko) if posko else None
@@ -4142,7 +4145,9 @@ def posko_edit_scope(posko=None, disaster_event=None):
     )
 
     if posko:
-        can_mng = bool(can_manage_posko(actor, posko))
+        # align with logistik_board.can_manage (share reason ∈ owner set,
+        # incl. plain org membership) — the write endpoints already allow it
+        _, can_mng, _ = _posko_actor_flags(posko, actor)
         out["can_edit_current"] = can_mng
         if not can_mng:
             pp, ag = frappe.db.get_value(

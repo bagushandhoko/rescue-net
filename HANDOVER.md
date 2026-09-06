@@ -60,7 +60,23 @@ row opens a detail drawer (with "Penuhi kebutuhan ini" → `openFulfill` only
 when `can_manage`). `style.css` `.rn-kpi-clickable` hover + `#urgentNeedsBody`
 row hover.
 
-**Follow-up 3 (`<next>`):** aid form wired for `can_coordinate`.
+**Follow-up 4 (`<next>`):** `posko_edit_scope.can_edit_current` now aligned
+with `logistik_board.can_manage`. It used `can_manage_posko()` (operator /
+posko-assignment / `community_coordinator` role only) → a plain approved
+org member viewing an OWN-org posko they don't personally operate got
+`can_edit_current:false` → `rn-posko-scope.js` showed a "Hanya-lihat"
+banner and hid the forms, **even though `_can_contribute` / the write
+endpoints actually let them write**. Now `posko_edit_scope` uses
+`_posko_actor_flags(posko, actor)` (share reason ∈ `_POSKO_OWNER_REASONS`,
+incl. `org_member`) — same bar as `logistik_board.can_manage`. Verified
+4 cases ALIGNED: own-org non-operated / own-org operated →
+`can_edit_current == can_manage == true` (no banner, full operator
+controls); other-org open → both false + `can_coordinate_current:true`;
+other-org closed → both false. `can_coordinate_current` logic unchanged
+(still the `create_aid_offer` public_ok mirror). Backend only, no
+cache-buster.
+
+**Follow-up 3 (`08fe2b9`):** aid form wired for `can_coordinate`.
 `logistik.js renderManageAccess` now shows `#aidOfferPanel` (+ new
 `#aidCoordNote`) on `can_manage || can_coordinate`; `itemGroupPanel` /
 `stockCardsPanel` stay `can_manage`-only. `rn-posko-scope.js applyReadOnly`

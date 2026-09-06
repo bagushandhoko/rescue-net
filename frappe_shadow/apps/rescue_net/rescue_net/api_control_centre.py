@@ -804,12 +804,54 @@ def _sf(doctype, wanted):
     return [f for f in wanted if f == "name" or f in valid]
 
 
+def _poskos_viewer_context():
+    """Who is asking for the posko list — lets the selector on operational
+    pages group "my organisation's poskos" vs "other (national) poskos".
+
+    Kept deliberately small: org docname + title, and the set of poskos the
+    viewer may actually operate. Guests get logged_in=False / org=None and
+    the frontend falls back to a single flat list."""
+    try:
+        from rescue_net.access_policy import rn_actor
+        actor = rn_actor(required=False)
+    except Exception:
+        actor = None
+
+    if not actor:
+        return {"logged_in": False, "org": None, "org_title": None, "manages": []}
+
+    org_name = actor.get("organization")
+    org_title = None
+    if org_name:
+        org_title = (
+            frappe.db.get_value("RN Organization", org_name, "title") or org_name
+        )
+
+    try:
+        manages = sorted(_my_posko_names(actor))
+    except Exception:
+        manages = []
+
+    return {
+        "logged_in": True,
+        "org": org_name,
+        "org_title": org_title,
+        "manages": manages,
+    }
+
+
 @frappe.whitelist(allow_guest=True)
 def event_poskos(disaster_event):
-    """Flat posko list for an event, each tagged with Control Centre
-    sharing mode. Used by the Kelompok & Posko list to badge + link
-    every posko across all organisations."""
-    return map_points(canonical_event(disaster_event))
+    """Posko list for an event, each tagged with Control Centre sharing
+    mode, plus a small `viewer` block so operational-page selectors can
+    group "my organisation" vs "national" poskos.
+
+    Returns {"points": [...], "viewer": {...}}. Existing callers already
+    unwrap `res.points` when the response is not a bare list."""
+    return {
+        "points": map_points(canonical_event(disaster_event)),
+        "viewer": _poskos_viewer_context(),
+    }
 
 
 @frappe.whitelist(allow_guest=True)

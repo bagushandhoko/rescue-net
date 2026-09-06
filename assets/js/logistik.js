@@ -94,7 +94,7 @@ async function loadPoskoOptions() {
   const sel = document.getElementById("logistikPoskoSelect");
   if (!sel) return;
 
-  let points = [];
+  let points = [], viewer = {};
   for (let attempt = 0; attempt < 2 && !points.length; attempt++) {
     if (attempt > 0) await new Promise(r => setTimeout(r, 800));
     try {
@@ -103,6 +103,7 @@ async function loadPoskoOptions() {
         { disaster_event: eventParam() }
       );
       points = Array.isArray(res) ? res : (res.points || []);
+      viewer = (res && res.viewer) || {};
     } catch (e) {
       points = [];
     }
@@ -113,25 +114,36 @@ async function loadPoskoOptions() {
     return;
   }
 
-  // logistics-type poskos first
-  points.sort((a, b) => {
-    const la = /logist|gudang|warehouse/i.test(a.posko_type || "") ? 0 : 1;
-    const lb = /logist|gudang|warehouse/i.test(b.posko_type || "") ? 0 : 1;
-    return la - lb;
+  if (!window.RNPoskoPicker) {
+    // fallback: flat list (shared picker script failed to load)
+    const want = poskoParam();
+    sel.innerHTML = points
+      .map(pt => {
+        const id = pt.posko_id || pt.id || pt.name;
+        return `<option value="${id}"${id === want ? " selected" : ""}>${safe(pt.name)}</option>`;
+      })
+      .join("");
+    if (!want && sel.options.length) sel.selectedIndex = 0;
+    sel.addEventListener("change", () => loadBoard());
+    return;
+  }
+
+  window.RNPoskoPicker.mount({
+    selectEl: sel,
+    scopeHostEl: document.getElementById("logistikPoskoScope"),
+    points,
+    viewer,
+    current: poskoParam(),
+    storageKey: "rn_logistik_posko_national",
+    // logistics-type poskos first, within each group
+    sortFn: (a, b) => {
+      const la = /logist|gudang|warehouse/i.test(a.posko_type || "") ? 0 : 1;
+      const lb = /logist|gudang|warehouse/i.test(b.posko_type || "") ? 0 : 1;
+      return la - lb;
+    },
+    labelFn: pt => pt.name || pt.title || "",
+    onChange: () => loadBoard(),
   });
-
-  const want = poskoParam();
-  sel.innerHTML = points
-    .map(pt => {
-      const id = pt.posko_id || pt.id || pt.name;
-      const selAttr = id === want ? " selected" : "";
-      return `<option value="${id}"${selAttr}>${safe(pt.name)}</option>`;
-    })
-    .join("");
-
-  if (!want && sel.options.length) sel.selectedIndex = 0;
-
-  sel.addEventListener("change", () => loadBoard());
 }
 
 

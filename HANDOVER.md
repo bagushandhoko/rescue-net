@@ -4,7 +4,54 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-04 (post-gap batch A/B/C: verif-badge everywhere, data-consolidation rollup, Perencanaan Pengungsi + Masukan Masyarakat + Tender/RAB modules, BYOK org keys, Peta Nasional — ALL DONE & DEPLOYED)_
+_Last updated: 2026-09-06 (shared posko selector: "my organisation" vs "national" grouped picker on Posko Logistik — DONE & DEPLOYED)_
+
+---
+
+## Shared posko selector — org vs national grouping (2026-09-06) — DONE & DEPLOYED
+
+Owner: "teruskan" on the in-flight posko-selector refactor. The topbar posko
+`<select>` on operational pages was a single flat list of every posko for the
+event, so an org member scrolled past every other organisation's poskos to reach
+their own.
+
+- **NEW `assets/js/rn-posko-picker.js`** (`?v=poskopicker-20260906`) —
+  `RNPoskoPicker.mount({ selectEl, scopeHostEl, points, viewer, current,
+  storageKey, sortFn, labelFn, onChange })`. One `<select>`, behaviour by viewer:
+  - **guest / non-org user** → one flat list (unchanged; these viewers are
+    read-only anyway via `rn-posko-scope.js`).
+  - **logged-in org member** (`viewer.org` set) → `<optgroup>` "Posko organisasi
+    saya" only, plus a **"Posko nasional"** checkbox (state in `localStorage`,
+    per-page `storageKey`) that adds a second group "Posko lain (nasional ·
+    detail publik)" = every OTHER org's posko whose Control Centre detail is
+    public (`point.detail_allowed`). Own-org group always on top.
+  - the currently-selected posko (`?id=`) is always kept listed even when it
+    falls outside the visible groups (own "Posko dipilih" group), so a deep link
+    to another org's posko never breaks; the live selection is tracked so a
+    toggle re-render doesn't snap back to `?id=`.
+- **`api_control_centre.event_poskos`** now returns
+  `{"points": [...], "viewer": {logged_in, org, org_title, manages}}` instead of
+  a bare list (new `_poskos_viewer_context()` helper — org docname/title +
+  `_my_posko_names`). Backward-compatible: `org-posko.js` already did
+  `Array.isArray(res) ? res : (res.points || …)`.
+- **`logistik.js`** (`?v=poskopicker-20260906`) `loadPoskoOptions()` reads
+  `res.viewer`, mounts the shared picker (logistics-type poskos sorted first
+  within each group), and keeps a flat-list fallback if the picker script fails
+  to load. `pages/posko-logistik.html` — new `<span id="logistikPoskoScope">`
+  host + script tag; `style.css` (`?v=poskopicker-20260906`) `.rn-posko-scope-toggle`.
+- **Verified:** `event_poskos` live over HTTP returns the `{points, viewer}`
+  shape (guest → `logged_in:false`); Playwright guest load of posko-logistik →
+  18 options, flat, no toggle, first posko auto-selected, no picker errors;
+  17-case Node unit test of `mount()` (guest flat / org grouped / toggle ON adds
+  national group with only `detail_allowed` poskos / closed posko hidden /
+  deep-linked national posko preserved + selected / localStorage persist).
+
+**Next (not started):** `posko-distribusi.html` — the file header lists it as the
+second consumer, but its selector is fed by
+`posko_distribusi_board.transporter_poskos` (id/title/city only, no
+`organization`/`detail_allowed`) and `renderSelector` navigates rather than
+re-fetches, so wiring the shared picker there needs a backend change to that
+board + its own test pass.
 
 ---
 

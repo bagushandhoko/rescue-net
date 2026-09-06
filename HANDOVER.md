@@ -55,12 +55,22 @@ Same 3-level model as Posko Logistik, applied to `posko-distribusi.html`.
 
 **Follow-up (`1d98459`):** the rebuilt dashboard had lost its click-through
 ("kok nggak bisa di klik detail nya"). Restored: the 4 KPI tiles
-(`data-kpi` + `role=button`) open an in-page drill drawer built from
-`LOGISTIK_BOARD` (Jiwa note / low-or-gap stock cards / critical needs / OTW
-flows — no extra RPC), and a Kebutuhan Mendesak row opens a detail drawer
-(with "Penuhi kebutuhan ini" → `openFulfill` only when `can_manage`).
-`style.css` `.rn-kpi-clickable` hover + `#urgentNeedsBody` row hover.
-Cache-buster `?v=logistikmock-20260906b`.
+(`data-kpi` + `role=button`) open a drill drawer, and a Kebutuhan Mendesak
+row opens a detail drawer (with "Penuhi kebutuhan ini" → `openFulfill` only
+when `can_manage`). `style.css` `.rn-kpi-clickable` hover + `#urgentNeedsBody`
+row hover.
+
+**Follow-up 2 (`<next>`):** owner — the KPI drill "hanya tampil 2, tidak
+keliatan dari posko mana, harusnya bisa ditrace … sdh pernah dibuat". The
+first cut sliced the single-posko `LOGISTIK_BOARD`; now `openLogistikDrill`
+calls the shared **`api_control_centre.kpi_drilldown`** (guest) — the same
+board Control Centre uses. `kritis→kebutuhan`, `stok→stok`, `menuju→distribusi`;
+`jiwa` stays a local note. `drillGroupsHtml()` renders it grouped by org:
+open orgs list item rows (each `📍 posko · 🏢 org →` linking to
+`posko-detail.html` for the full trace), closed orgs show a summary +
+"N baris disembunyikan". Verified: "Kebutuhan Kritis" → 29 rows / 7 orgs
+(3 open w/ 16 links, 4 summary, 13 hidden). `style.css` `.rn-drill-*`.
+Cache-buster `?v=logistikmock-20260906c`.
 
 
 Owner: the greyed-out console from the previous pass was "ngarang layout".

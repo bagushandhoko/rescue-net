@@ -443,14 +443,54 @@ function hideDrawer() {
   if (d) d.classList.remove("is-open");
 }
 
-/* KPI tile → drill-down list, built from the board already in memory
-   (no extra RPC). App-wide rule: every KPI opens the underlying items. */
-function openLogistikDrill(kpi) {
+/* KPI tile → cross-posko drill-down. Uses the shared
+   rescue_net.api_control_centre.kpi_drilldown (guest) so it lists EVERY
+   posko's rows for that dimension, grouped by organisation and gated by
+   the visibility model: open orgs show item rows (each linking to
+   posko-detail.html for the full trace), closed orgs show a summary +
+   "N baris disembunyikan". Same board Control Centre uses. */
+const LOGISTIK_KPI_DIM = { kritis: "kebutuhan", stok: "stok", menuju: "distribusi" };
+
+function drillGroupsHtml(data) {
+  const groups = (data && data.groups) || [];
+  if (!groups.length) return `<p class="rn-muted">Tidak ada data untuk seluruh posko pada bencana ini.</p>`;
+  const ev = eventParam();
+  const item = it => {
+    const posko = it.posko_title || it.posko || "";
+    const href = it.posko
+      ? `posko-detail.html?id=${encodeURIComponent(it.posko)}&event=${encodeURIComponent(ev)}`
+      : "";
+    const line = `
+      <div class="rn-drill-item-main"><b>${safe(it.title || it.item_name)}</b>
+        ${it.priority ? `<span class="chip ${/crit|urgent|high|tinggi|darurat/i.test(it.priority) ? "danger" : "warning"}">${safe(it.priority)}</span>` : ""}
+        ${it.gap ? `<span class="rn-muted">gap ${fmt(it.gap)} ${safe(it.unit || "")}</span>` : (it.quantity ? `<span class="rn-muted">${fmt(it.quantity)} ${safe(it.unit || "")}</span>` : "")}
+      </div>
+      <div class="rn-muted">📍 ${safe(posko)} · 🏢 ${safe(it.organization_title || "-")}${href ? ' <span class="rn-drill-go">→</span>' : ""}</div>`;
+    return href
+      ? `<a class="rn-drill-item is-link" href="${href}">${line}</a>`
+      : `<div class="rn-drill-item">${line}</div>`;
+  };
+  return groups.map(g => {
+    const open = g.share_mode === "full";
+    const body = open
+      ? (g.items && g.items.length ? g.items.map(item).join("") : `<p class="rn-muted">Tidak ada baris.</p>`)
+      : `<p class="rn-drill-locked">Organisasi ini menutup koordinasi detail — ringkasan saja${
+          g.hidden_count ? ` (${fmt(g.hidden_count)} baris disembunyikan)` : ""}.</p>`;
+    return `
+      <section class="rn-drill-group ${open ? "is-open" : "is-closed"}">
+        <header class="rn-drill-group-head">
+          <b>${safe(g.organization_title || "Tanpa organisasi")}</b>
+          <span class="chip ${open ? "good" : ""}">${open ? "detail terbuka" : "ringkasan"}</span>
+          <span class="rn-muted">${fmt(g.count)} baris · ${fmt(g.posko_count)} posko${
+            g.total_gap ? ` · gap ${fmt(g.total_gap)}` : ""}</span>
+        </header>
+        <div class="rn-drill-group-body">${body}</div>
+      </section>`;
+  }).join("");
+}
+
+async function openLogistikDrill(kpi) {
   const b = LOGISTIK_BOARD || {};
-  const rowsHtml = (items, cols) => items.length
-    ? `<table class="rn-table"><thead><tr>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr></thead>
-       <tbody>${items.map(r => `<tr>${cols.map(c => `<td>${c[1](r)}</td>`).join("")}</tr>`).join("")}</tbody></table>`
-    : `<p class="rn-muted">Tidak ada data.</p>`;
 
   if (kpi === "jiwa") {
     const p = b.posko || {};
@@ -460,35 +500,25 @@ function openLogistikDrill(kpi) {
       ${p.beneficiary_updated_at ? `<p class="rn-muted">Diperbarui ${fmtWhen(p.beneficiary_updated_at)}</p>` : ""}`);
     return;
   }
-  if (kpi === "stok") {
-    const low = (b.stock_cards || []).filter(c =>
-      (c.estimasi_habis_hari != null && c.estimasi_habis_hari < 7) || num(c.gap) > 0);
-    showDrawer("Stok Menipis / Perlu Pengadaan", rowsHtml(
-      low.length ? low : (b.stock_cards || []),
-      [["Item", c => `<b>${safe(c.item)}</b>`],
-       ["Stok", c => `${fmt(c.stok_ada)} ${safe(c.unit)}`],
-       ["Gap", c => c.gap ? fmt(c.gap) + " " + safe(c.unit) : "—"],
-       ["Estimasi Habis", c => habisChip(c.estimasi_habis_hari)]]));
-    return;
-  }
-  if (kpi === "kritis") {
-    const needs = (b.urgent_needs || []).filter(n =>
-      /crit|urgent|high/i.test(n.priority || "")) ;
-    showDrawer("Kebutuhan Kritis", rowsHtml(
-      needs.length ? needs : (b.urgent_needs || []),
-      [["Item", n => `<b>${safe(n.item_name)}</b>`],
-       ["Stok Tersedia", n => `${fmt(n.stok_tersedia)} ${safe(n.unit)}`],
-       ["Gap", n => n.gap ? fmt(n.gap) + " " + safe(n.unit) : "—"],
-       ["Waktu Harus Tiba", n => safe(n.waktu_harus_tiba)],
-       ["Prioritas", n => safe(n.priority)]]));
-    return;
-  }
-  if (kpi === "menuju") {
-    showDrawer("Bantuan Menuju Posko (OTW)", rowsHtml(b.incoming || [],
-      [["Dari", f => `<b>${safe(f.source_posko)}</b>`],
-       ["Item", f => `${safe(f.item_name)} — ${fmt(f.quantity)} ${safe(f.unit)}`],
-       ["Status", f => statusChip(f.flow_status)],
-       ["ETA", f => fmtWhen(f.eta_final)]]));
+
+  const dim = LOGISTIK_KPI_DIM[kpi];
+  if (!dim) return;
+  const titles = {
+    kritis: "Kebutuhan Lapangan — Semua Posko",
+    stok: "Stok Barang — Semua Posko",
+    menuju: "Alur Distribusi Bantuan — Semua Posko",
+  };
+  showDrawer(titles[kpi], `<p class="rn-muted">Memuat rincian…</p>`);
+  try {
+    const data = await RN_FRAPPE.call(
+      "rescue_net.api_control_centre.kpi_drilldown",
+      { disaster_event: eventParam(), dimension: dim }
+    );
+    const head = `<p class="rn-muted">${fmt(data.total || 0)} baris di ${fmt(data.org_count || 0)} organisasi` +
+      `${data.hidden_total ? ` · ${fmt(data.hidden_total)} disembunyikan (organisasi tertutup)` : ""}.</p>`;
+    showDrawer(data.title || titles[kpi], head + drillGroupsHtml(data));
+  } catch (e) {
+    showDrawer(titles[kpi], `<p class="rn-muted">Gagal memuat: ${safe(e && e.message || e)}</p>`);
   }
 }
 

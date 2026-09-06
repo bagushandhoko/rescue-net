@@ -251,6 +251,23 @@ h4 {
 }
 #urgentNeedsBody tr:hover { background: rgba(232,117,88,.06); cursor: pointer; }
 
+/* cross-posko KPI drill (posko-logistik openLogistikDrill) */
+.rn-drill-group { border: 1px solid var(--line); border-radius: 12px; margin: 10px 0; overflow: hidden; }
+.rn-drill-group.is-closed { opacity: .82; }
+.rn-drill-group-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  padding: 9px 12px; background: rgba(255,248,243,.9); font-size: 13px;
+}
+.rn-drill-group-body { padding: 6px 8px; display: grid; gap: 6px; }
+.rn-drill-item, a.rn-drill-item {
+  display: block; padding: 8px 10px; border-radius: 9px;
+  background: #fff; border: 1px solid var(--line); text-decoration: none; color: inherit;
+}
+a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3; }
+.rn-drill-item-main { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; }
+.rn-drill-go { color: var(--peach2); font-weight: 800; }
+.rn-drill-locked { margin: 4px 6px; font-size: 12px; color: #8a5a45; }
+
 /* icon chip sits beside the title on row 1 (mock-up composition), not
    stacked above it — a bare 12%-opacity chip on a near-white card was
    effectively invisible, so the default (non-status) chip also gets a

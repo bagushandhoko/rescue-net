@@ -84,6 +84,7 @@ def map_points(event):
         "lng",
         "organization",
         "public_detail",
+        "public_participation",
         "rn_fn_logistics",
         "rn_fn_shelter",
         "rn_fn_kitchen",
@@ -234,6 +235,9 @@ def map_points(event):
             "organization":
                 row.get("organization"),
 
+            "public_participation":
+                bool(row.get("public_participation")),
+
             "functions":
                 _fn.get(
                     row.get("name"), {}
@@ -277,6 +281,7 @@ def _annotate_share_mode(points):
     except Exception:
         actor = None
 
+    logged_in = bool(actor)
     for point in points:
         posko_name = point.get("posko_id")
 
@@ -287,6 +292,9 @@ def _annotate_share_mode(points):
 
         point["share_mode"] = info.get("mode", "summary")
         point["detail_allowed"] = point["share_mode"] == "full"
+        # a logged-in user may coordinate with (book / send aid to) any posko
+        # that opened itself up, even one from another organisation
+        point["can_coordinate"] = logged_in and bool(point.get("public_participation"))
 
 
 def reports(event):
@@ -878,6 +886,7 @@ def posko_detail(posko, disaster_event=None):
             "address", "province_name", "city_name", "district_name",
             "latitude", "longitude", "operational_status",
             "verification_status", "trusted_verifier_count", "public_detail",
+            "public_participation",
             "officer_in_charge_name", "officer_in_charge_phone",
             "officer_in_charge_role", "disaster_event",
         ],
@@ -905,8 +914,25 @@ def posko_detail(posko, disaster_event=None):
         share = effective_posko_share(name, actor)
     except Exception:
         share = {"mode": "summary", "reason": "visibility_unavailable"}
+        actor = None
 
     full = share.get("mode") == "full"
+
+    # Three access levels, not two:
+    #   guest / logged-out         -> view only (can_manage=can_coordinate=False)
+    #   operator / member of posko -> full management (can_manage=True)
+    #   any logged-in user + posko.public_participation
+    #                              -> coordinate only: book / send aid to it,
+    #                                 never edit its internal needs / stock
+    _OWNER_REASONS = {
+        "system_manager", "posko_operator", "org_member",
+        "posko_assignment", "org_membership",
+    }
+    logged_in = bool(actor)
+    can_manage = share.get("reason") in _OWNER_REASONS
+    can_coordinate = bool(
+        logged_in and not can_manage and p.get("public_participation")
+    )
 
     # ---- needs ----------------------------------------------------------
     need_rows = frappe.get_all(
@@ -1046,6 +1072,10 @@ def posko_detail(posko, disaster_event=None):
         "share_mode": share.get("mode", "summary"),
         "detail_allowed": full,
         "share_reason": share.get("reason"),
+        "logged_in": logged_in,
+        "can_manage": can_manage,
+        "can_coordinate": can_coordinate,
+        "public_participation": bool(p.get("public_participation")),
         "summary": summary,
     }
 
@@ -1255,6 +1285,10 @@ def logistik_board(posko, disaster_event=None):
         "organization": base["organization"],
         "share_mode": base["share_mode"],
         "detail_allowed": full,
+        "logged_in": base.get("logged_in", False),
+        "can_manage": base.get("can_manage", False),
+        "can_coordinate": base.get("can_coordinate", False),
+        "public_participation": base.get("public_participation", False),
         "is_collector": is_collector,
         "logistics_role": posko_out.get("logistics_role"),
         "functions": posko_out.get("functions", []),

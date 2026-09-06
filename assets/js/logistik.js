@@ -130,11 +130,9 @@ async function loadPoskoOptions() {
 
   window.RNPoskoPicker.mount({
     selectEl: sel,
-    scopeHostEl: document.getElementById("logistikPoskoScope"),
     points,
     viewer,
     current: poskoParam(),
-    storageKey: "rn_logistik_posko_national",
     // logistics-type poskos first, within each group
     sortFn: (a, b) => {
       const la = /logist|gudang|warehouse/i.test(a.posko_type || "") ? 0 : 1;
@@ -194,7 +192,7 @@ function renderPublicShipments(b) {
   const cnt = document.getElementById("publicShipCount");
   const rows = b.public_shipments || [];
   if (!panel || !body) return;
-  if (!b.detail_allowed || !rows.length) { panel.hidden = true; return; }
+  if (!b.can_manage || !rows.length) { panel.hidden = true; return; }
   if (cnt) cnt.textContent = rows.length;
   body.innerHTML = rows.map(s => `
     <tr>
@@ -224,19 +222,30 @@ async function receivePublicShipment(aidOffer) {
   }
 }
 
+/* Input gating (see rn-posko-picker.js for the matching selector levels):
+     guest / not logged in        -> no forms at all
+     can_manage (operator/member of THIS posko) -> every form
+   A logged-in member looking at ANOTHER org's open posko (b.can_coordinate)
+   gets no forms here yet — coordination write-paths (send aid / booking) are
+   the next slice, together with posko-distribusi. */
 function renderManageAccess(b) {
-  const allowed = !!b.detail_allowed;
+  const canManage = !!b.can_manage;
+
   const noAccess = document.getElementById("logistikNoAccess");
   if (noAccess) {
-    noAccess.hidden = allowed;
+    noAccess.hidden = canManage;
     const a = document.getElementById("logistikNoAccessLink");
     if (a) a.href = `posko-detail.html?id=${encodeURIComponent(poskoParam())}&event=${encodeURIComponent(eventParam())}`;
   }
+
   const needPanel = document.getElementById("manageNeedPanel");
-  if (needPanel) needPanel.hidden = !allowed;
+  if (needPanel) needPanel.hidden = !canManage;
 
   const jiwaPanel = document.getElementById("jiwaDilayaniPanel");
-  if (jiwaPanel) jiwaPanel.hidden = !allowed || !!b.is_collector;
+  if (jiwaPanel) jiwaPanel.hidden = !canManage || !!b.is_collector;
+
+  const aidPanel = document.getElementById("aidOfferPanel");
+  if (aidPanel) aidPanel.hidden = !canManage;
 }
 
 function habisChip(days) {

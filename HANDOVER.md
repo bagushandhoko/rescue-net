@@ -4,54 +4,80 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-06 (shared posko selector: "my organisation" vs "national" grouped picker on Posko Logistik — DONE & DEPLOYED)_
+_Last updated: 2026-09-06 (posko selector + input gating: 3 access levels — guest view-only / member-manages-own / member-coordinates-open — on Posko Logistik; commits 1faea9f + <next>)_
 
 ---
 
-## Shared posko selector — org vs national grouping (2026-09-06) — DONE & DEPLOYED
+## Posko selector + input gating — 3 access levels (2026-09-06) — DONE & DEPLOYED
 
-Owner: "teruskan" on the in-flight posko-selector refactor. The topbar posko
-`<select>` on operational pages was a single flat list of every posko for the
-event, so an org member scrolled past every other organisation's poskos to reach
-their own.
+Owner: the operational pages did not tell "umum" (not logged in) from "login"
+apart. Correct model (owner, verbatim intent):
 
-- **NEW `assets/js/rn-posko-picker.js`** (`?v=poskopicker-20260906`) —
-  `RNPoskoPicker.mount({ selectEl, scopeHostEl, points, viewer, current,
-  storageKey, sortFn, labelFn, onChange })`. One `<select>`, behaviour by viewer:
-  - **guest / non-org user** → one flat list (unchanged; these viewers are
-    read-only anyway via `rn-posko-scope.js`).
-  - **logged-in org member** (`viewer.org` set) → `<optgroup>` "Posko organisasi
-    saya" only, plus a **"Posko nasional"** checkbox (state in `localStorage`,
-    per-page `storageKey`) that adds a second group "Posko lain (nasional ·
-    detail publik)" = every OTHER org's posko whose Control Centre detail is
-    public (`point.detail_allowed`). Own-org group always on top.
-  - the currently-selected posko (`?id=`) is always kept listed even when it
-    falls outside the visible groups (own "Posko dipilih" group), so a deep link
-    to another org's posko never breaks; the live selection is tracked so a
-    toggle re-render doesn't snap back to `?id=`.
-- **`api_control_centre.event_poskos`** now returns
-  `{"points": [...], "viewer": {logged_in, org, org_title, manages}}` instead of
-  a bare list (new `_poskos_viewer_context()` helper — org docname/title +
-  `_my_posko_names`). Backward-compatible: `org-posko.js` already did
-  `Array.isArray(res) ? res : (res.points || …)`.
-- **`logistik.js`** (`?v=poskopicker-20260906`) `loadPoskoOptions()` reads
-  `res.viewer`, mounts the shared picker (logistics-type poskos sorted first
-  within each group), and keeps a flat-list fallback if the picker script fails
-  to load. `pages/posko-logistik.html` — new `<span id="logistikPoskoScope">`
-  host + script tag; `style.css` (`?v=poskopicker-20260906`) `.rn-posko-scope-toggle`.
-- **Verified:** `event_poskos` live over HTTP returns the `{points, viewer}`
-  shape (guest → `logged_in:false`); Playwright guest load of posko-logistik →
-  18 options, flat, no toggle, first posko auto-selected, no picker errors;
-  17-case Node unit test of `mount()` (guest flat / org grouped / toggle ON adds
-  national group with only `detail_allowed` poskos / closed posko hidden /
-  deep-linked national posko preserved + selected / localStorage persist).
+1. **Not logged in** — the national posko list like before, **view only, zero
+   add/input forms**. National coordination transparency.
+2. **Logged in, own posko** — full management: tambah kebutuhan, catat stok,
+   terima kiriman, ubah jiwa.
+3. **Logged in, ANOTHER org's posko that opened participation**
+   (`RN Posko.public_participation`) — may **coordinate** (booking transport /
+   send aid) but **never** edit that posko's internal needs/stock. Non-open
+   poskos of other orgs are simply not in the operational picker.
 
-**Next (not started):** `posko-distribusi.html` — the file header lists it as the
-second consumer, but its selector is fed by
-`posko_distribusi_board.transporter_poskos` (id/title/city only, no
-`organization`/`detail_allowed`) and `renderSelector` navigates rather than
-re-fetches, so wiring the shared picker there needs a backend change to that
-board + its own test pass.
+### Selector — `assets/js/rn-posko-picker.js` (`?v=poskopicker-20260906b`)
+`RNPoskoPicker.mount({ selectEl, points, viewer, current, sortFn, labelFn,
+onChange })`. One `<select>`:
+- guest / non-org viewer → one flat list of every posko (unchanged).
+- logged-in org member → `<optgroup>` **"Posko organisasi saya"** (own-org) +
+  **"Posko lain — terbuka untuk koordinasi"** (other org **and**
+  `point.public_participation`). Always both, **no toggle** (the earlier
+  "Posko nasional" checkbox + localStorage was removed). Own group on top.
+- the `?id=` posko is always kept selectable even outside both groups
+  (own "Posko dipilih" group) so a deep link never breaks.
+
+### Backend — `api_control_centre.py` (deployed via `docker cp` + chown/chmod + restart)
+- `map_points()` each point now also carries `public_participation` +
+  `can_coordinate` (= logged-in AND public_participation).
+- `event_poskos` still returns `{points, viewer}` (from commit 1faea9f).
+- `posko_detail()` / `logistik_board()` now return **`logged_in`**,
+  **`can_manage`** (share reason ∈ {system_manager, posko_operator, org_member,
+  posko_assignment, org_membership}), **`can_coordinate`** (logged-in, not
+  manager, posko `public_participation`), `public_participation`.
+  `detail_allowed` (view gating) is unchanged and still separate.
+
+### Frontend — `logistik.js` (`?v=poskopicker-20260906b`)
+- `renderManageAccess()` now gates every input panel on **`b.can_manage`** (was
+  `b.detail_allowed`, which was true for guests on a `full_authorized`-org posko
+  → they saw forms whose submit then 403'd). `renderPublicShipments()` likewise.
+- `pages/posko-logistik.html` — the always-open "Tambah Bantuan Tersedia"
+  `<details>` got `id="aidOfferPanel" hidden`; all 4 input panels now start
+  `hidden` and are only revealed by `renderManageAccess` → **guest = no forms by
+  construction**. Removed the dead `#logistikPoskoScope` span; `style.css`
+  dropped `.rn-posko-scope-toggle`.
+
+### Verified
+- Live HTTP (guest): `event_poskos` points carry `public_participation` +
+  `can_coordinate`; `logistik_board` for `SIM-NS-POSKO-WARGA` (a
+  `detail_allowed:true` posko) → `logged_in:false, can_manage:false,
+  can_coordinate:false` — the exact old bug case now safe.
+- Playwright guest load of posko-logistik → selector flat, 18 options, no
+  optgroups, all 4 input panels hidden, 0 picker console errors. (Full board
+  load in the Playwright container is flaky — funnel 403 / hang, unrelated —
+  but panels default `hidden` so a stalled board leaves the page safe.)
+- 18-case Node unit test of `mount()` — guest flat; member two groups;
+  open-others = other-org ∧ public_participation; internal-only excluded; own
+  posko not duplicated; deep-link to open / to neither-group both preserved;
+  empty own-org shows a disabled placeholder.
+
+**Next (Phase 2, not started):**
+1. **Coordination write-paths.** `renderManageAccess` no longer shows anything
+   for `can_coordinate` (the aid form would be re-hidden by
+   `rn-posko-scope.js`'s timer anyway). To let a member send aid to another
+   org's open posko, `posko_edit_scope` needs `can_coordinate_current` and
+   `rn-posko-scope.js hideEditForms()` must spare `[data-rn-create-aid-offer]`.
+2. **`posko-distribusi.html`** — wire the shared picker + split armada
+   management (`can_manage`) vs booking (`can_coordinate`). Its selector is fed
+   by `posko_distribusi_board.transporter_poskos` (id/title/city only) and
+   `renderSelector` navigates rather than re-fetches, so the board needs
+   `organization` + `public_participation` + a `viewer` block first.
 
 ---
 

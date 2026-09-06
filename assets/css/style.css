@@ -4196,17 +4196,6 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   max-width: 320px;
 }
 
-/* "Posko nasional" toggle beside a grouped posko selector (rn-posko-picker.js) */
-.rn-posko-scope-host:empty { display: none; }
-.rn-posko-scope-toggle {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 12px; font-weight: 800; color: #8a5a45;
-  padding: 6px 10px; border-radius: 999px;
-  border: 1px solid rgba(232,117,88,.35); background: #fff;
-  cursor: pointer; user-select: none;
-}
-.rn-posko-scope-toggle input { accent-color: #e87558; margin: 0; }
-
 .rn-logistik-grid { align-items: start; }
 .rn-logistik-col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 

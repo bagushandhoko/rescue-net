@@ -4,7 +4,63 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-06 (Posko Logistik → mockup dashboard + clickable KPIs; Posko Distribusi → shared picker + 3-level access + "Pesan Slot"; commits 1faea9f, 0e46bbd, 2c16f6c, 0ab55c9, 1d98459, <next>)_
+_Last updated: 2026-09-06 (3-level posko-access model — guest view-only / member manages own-org / cross-org coordinator — **PHASE 2 COMPLETE** on Posko Logistik + Posko Distribusi; commits 1faea9f · 0e46bbd · 2c16f6c · 0ab55c9 · 1d98459 · 9a0e62b · 9db44ec · 5b0ad21 · 08fe2b9 · c28724c)_
+
+---
+
+## 3-level posko-access model — PHASE 2 COMPLETE (2026-09-06)
+
+One consistent model across `logistik_board`, `posko_distribusi_board`,
+`posko_edit_scope` and `rn-posko-scope.js`:
+
+| viewer | flag | can do (Posko Logistik / Posko Distribusi) |
+|---|---|---|
+| not logged in | — | **view only**, every input control hidden |
+| logged-in, **operator or approved member of the posko's org** | `can_manage` | full: +Tambah kebutuhan, Ubah jiwa, Terima kiriman, Kartu Stok / Kelompok Barang panels · daftarkan/perbarui armada, konfirmasi/tolak booking, tugaskan relawan, klaim pickup |
+| logged-in, **member of another org, posko opened participation** | `can_coordinate` | **coordinate only**: "Tambah Bantuan Tersedia" (send aid) · "Pesan Slot" on an armada. Never edits that posko's internal data |
+
+- `can_manage` = `effective_posko_share` reason ∈ `_POSKO_OWNER_REASONS`
+  (`system_manager` / `posko_operator` / `org_member` / `posko_assignment` /
+  `org_membership`) — helper `_posko_actor_flags(posko, actor)`.
+- `can_coordinate` (Logistik) mirrors `api_logistics.create_aid_offer`'s
+  `public_ok` EXACTLY: `public_posko_allowed(posko)` (org `privacy_mode=open`
+  + `allow_posko_public_choice` + posko `public_detail=public`) ∧
+  `public_participation` ∧ `accept_goods`. Distribusi booking only needs
+  `public_participation` (any logged-in user may `book_transport_space`).
+- `posko_edit_scope.can_edit_current` == `can_manage`;
+  `.can_coordinate_current` == the Logistik `can_coordinate` gate.
+  `rn-posko-scope.js`: read-only banner + `hideEditForms()` only fire when
+  `can_edit_current === false`; `hideEditForms(keepCoordination)` spares
+  `#aidOfferPanel` when `can_coordinate_current`, and the banner relabels
+  "Hanya-lihat" → "Koordinasi".
+
+**Phase 2 checklist — all DONE & DEPLOYED:**
+1. `08fe2b9` — Logistik "Tambah Bantuan Tersedia" enabled for `can_coordinate`
+   viewers; `can_coordinate` tightened to the exact `create_aid_offer` gate;
+   demo seed on `SIM-NS-POSKO-WARGA` (+ `SIM-NS-WARGA` org) so the case is
+   testable.
+2. `9a0e62b` — `posko-distribusi.html` wired to `RNPoskoPicker` + 3-level
+   access; NEW "Pesan Slot" booking form in the armada drill for
+   `can_coordinate`.
+3. `c28724c` — `posko_edit_scope.can_edit_current` realigned to `can_manage`
+   (was `can_manage_posko()` = assignment/coordinator-role only, so a plain
+   org member wrongly got a read-only banner on their own org's posko).
+
+**Verified (Playwright, LD2 = Komunitas Landrover member):** own-org
+non-operated posko (`SIM-LR-POSKO-LD6`) → `can_edit_current == can_manage ==
+true`, no scope banner, all operator controls; other-org open
+(`SIM-NS-POSKO-WARGA`) → both `can_manage:false`, `can_coordinate:true`,
+`#aidOfferPanel` + `#aidCoordNote` visible & survive the scope.js timer,
+green "Koordinasi" banner; other-org closed (`SIM-NS-POSKO-BNPB`) → all
+false. Guest → dashboard only, 0 forms. 0 console errors in every case.
+
+**Open (not blocking, low priority):**
+- `posko-distribusi.html` `can_coordinate` "Pesan Slot" path is code-complete
+  but not browser-verified (no sim transport posko has `public_participation`
+  for a non-member session — SIM-LR poskos are all Komunitas Landrover).
+- Posko Distribusi still English-shell-ish vs a dedicated mockup (there is
+  none — `manajemen distribusi.png` is the coordination page); layout polish
+  optional.
 
 ---
 
@@ -60,7 +116,7 @@ row opens a detail drawer (with "Penuhi kebutuhan ini" → `openFulfill` only
 when `can_manage`). `style.css` `.rn-kpi-clickable` hover + `#urgentNeedsBody`
 row hover.
 
-**Follow-up 4 (`<next>`):** `posko_edit_scope.can_edit_current` now aligned
+**Follow-up 4 (`c28724c`):** `posko_edit_scope.can_edit_current` now aligned
 with `logistik_board.can_manage`. It used `can_manage_posko()` (operator /
 posko-assignment / `community_coordinator` role only) → a plain approved
 org member viewing an OWN-org posko they don't personally operate got
@@ -158,15 +214,9 @@ rewritten for the mockup's `publicShipInfoPanel` (5 cols + optional Aksi).
   column, and the three operator panels all visible; no "Mode lihat" hint;
   selector shows the "Posko organisasi saya" group.
 
-**Next (Phase 2, still open):**
-1. Align `posko_edit_scope.can_edit_current` (uses `can_manage_posko`) with
-   `logistik_board.can_manage` (uses the share-reason set incl. `org_member`) —
-   an org member currently gets the operator controls but also the
-   `rn-posko-scope.js` "Koordinasi" read-only banner.
-2. Surface the aid form to a pure `can_coordinate` viewer (backend + scope.js
-   ready; `logistik.js` still gates `#aidOfferPanel` on `can_manage` only).
-3. `posko-distribusi.html` — shared picker + `can_manage` (armada) vs
-   `can_coordinate` (booking); its board returns id/title/city only.
+**Phase 2 — all DONE** (`c28724c` align `can_edit_current`; `08fe2b9` aid form
+for `can_coordinate`; `9a0e62b` posko-distribusi picker + Pesan Slot). See the
+"3-level posko-access model — PHASE 2 COMPLETE" section at the top of this file.
 
 ---
 
@@ -242,17 +292,17 @@ onChange })`. One `<select>`:
 - Playwright-container ↔ funnel is flaky (intermittent 403 / DNS); verify
   backend via `sudo docker exec osiun-frappe-backend curl -s http://localhost:8000/api/method/…`.
 
-**Next (Phase 2, not started):**
-1. **Coordination write-paths, frontend.** Backend + `rn-posko-scope.js` are
-   ready (`can_coordinate` / `can_coordinate_current`). `logistik.js` still
-   doesn't surface the aid form to a `can_coordinate` viewer — wire
-   `renderManageAccess` to enable `#aidOfferPanel`'s controls when
-   `b.can_coordinate`, and confirm `create_aid_offer` succeeds end-to-end.
-2. **`posko-distribusi.html`** — wire the shared picker + split armada
-   management (`can_manage`) vs booking (`can_coordinate`). Its selector is fed
-   by `posko_distribusi_board.transporter_poskos` (id/title/city only) and
-   `renderSelector` navigates rather than re-fetches, so the board needs
-   `organization` + `public_participation` + a `viewer` block first.
+**Phase 2 — DONE (see "3-level posko-access model — PHASE 2 COMPLETE" at the
+top of this file for the consolidated state):**
+1. ✅ `08fe2b9` — `logistik.js renderManageAccess` surfaces `#aidOfferPanel`
+   (+ `#aidCoordNote`) for `can_coordinate`; `can_coordinate` tightened to the
+   exact `create_aid_offer` `public_ok` gate; demo seed on `SIM-NS-POSKO-WARGA`.
+2. ✅ `9a0e62b` — `posko-distribusi.html` on `RNPoskoPicker` + 3-level access;
+   NEW "Pesan Slot" booking form (`book_transport_space`) in the armada drill
+   for `can_coordinate`. `posko_distribusi_board` returns `viewer` +
+   `logged_in`/`can_manage`/`can_coordinate`; `transporter_poskos` carry
+   `organization` + `public_participation`.
+3. ✅ `c28724c` — `posko_edit_scope.can_edit_current` realigned to `can_manage`.
 
 ---
 

@@ -21,6 +21,11 @@
 
 * { box-sizing: border-box; }
 
+/* the `hidden` attribute must beat .btn's explicit `display` (equal
+   specificity → author rule would otherwise win and leave it visible).
+   Scoped to buttons that opt in with the attribute — not a global rule. */
+button[hidden], a.btn[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   min-height: 100%;
@@ -228,6 +233,14 @@ h4 {
   border-radius: 22px;
   padding: 18px;
   box-shadow: 0 20px 50px rgba(145,84,54,.11);
+}
+
+/* inline "Ubah" on the Jiwa Dilayani KPI (operator only, posko-logistik) */
+.rn-kpi-edit {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
 }
 
 /* icon chip sits beside the title on row 1 (mock-up composition), not

@@ -4,7 +4,69 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-06 (posko selector + input gating: 3 access levels on Posko Logistik — guest sees the full page but every input control is disabled; commits 1faea9f, 0e46bbd, <next>)_
+_Last updated: 2026-09-06 (Posko Logistik rebuilt to the mockup: guest = read-only "Kondisi Logistik" dashboard, operator = same + inline edit; commits 1faea9f, 0e46bbd, 2c16f6c, <next>)_
+
+---
+
+## Posko Logistik → mockup dashboard, guest read-only / operator inline-edit (2026-09-06) — DONE & DEPLOYED
+
+Owner: the greyed-out console from the previous pass was "ngarang layout".
+`posko-logistik.html` must follow **`assets/img/mockup/posko logistik.png`** —
+a read-only monitoring dashboard — for a NOT-logged-in viewer; the logged-in
+"Posko Logistik" is the same layout **plus inline edit** (owner answers:
+"Betul, itu view tanpa login" / "Dashboard mockup + edit inline" / "Pakai ulang
+renderer itu").
+
+### `pages/posko-logistik.html` — restructured `<main>` (`?v=logistikmock-20260906`)
+Mockup order now: 4 KPI tiles (`kpi-grid`: Jiwa Dilayani / Stok Menipis /
+Kebutuhan Kritis / Bantuan Menuju Posko) → content-grid { **Kebutuhan Mendesak**
+table, **Kiriman Masyarakat** table, **Barang Masuk / Keluar** (Masuk/Keluar
+tabs) | aside: Asal & Trace, Bukti Kondisi, Konversi & Volume }. Removed the
+console-only panels `manageNeedPanel` / `jiwaDilayaniPanel` / `publicShipPanel`.
+`itemGroupPanel` (Kelompok Barang/Normalisasi AI), `stockCardsPanel` (Kartu Stok
+Rinci) and `aidOfferPanel` (Tambah Bantuan) kept but **`hidden`** — operator only.
+`#btnOpenAddNeed` moved into the Kebutuhan Mendesak header, `#btnEditJiwa` onto
+the Jiwa KPI card, both `hidden` by default.
+
+### `assets/js/rn-logistik-info.js` — now also loaded on posko-logistik.html
+The read-only KPI / Kebutuhan Mendesak / Barang Masuk-Keluar renderers built for
+posko-detail.html (`RNLogistikInfo.renderKpi` / `renderUrgentNeeds` /
+`renderMovements` / `wireMovementsTabs`) are reused verbatim — no duplicate code.
+Same `logistik_board` RPC feeds both pages.
+
+### `assets/js/logistik.js` (`?v=logistikmock-20260906`)
+`loadBoard()` calls the `RNLogistikInfo` renderers for the dashboard, then
+`renderManageAccess(b)` which toggles the operator layer purely on
+**`b.can_manage`**: shows `#btnOpenAddNeed`, `#btnEditJiwa`, `#itemGroupPanel`,
+`#stockCardsPanel`, `#aidOfferPanel`, and adds the "Terima" column to Kiriman
+Masyarakat. Non-operator → clean read-only dashboard + a calm one-liner
+("Mode lihat — login sebagai operator …", link → `auth.html`). `renderPublicShipments`
+rewritten for the mockup's `publicShipInfoPanel` (5 cols + optional Aksi).
+
+### `assets/css/style.css` (`?v=logistikmock-20260906`)
+- `button[hidden], a.btn[hidden] { display:none !important }` — `.btn`'s explicit
+  `display` has equal specificity to `[hidden]` and was winning, so `hidden`
+  buttons stayed visible. Scoped to buttons, not a global `[hidden]` rule.
+- `.rn-kpi-edit` — absolute top-right, for the "Ubah" on the Jiwa KPI card.
+
+### Verified (Playwright, host.docker.internal)
+- **Guest** `SIM-NS-POSKO-WARGA`: KPI 1.200 / 0 / 2 / 2; Kebutuhan Mendesak 2
+  rows; Kiriman Masyarakat 6 rows; Barang Masuk/Keluar 2 rows; Trace + 3 Bukti +
+  5 Konversi rows. `#btnOpenAddNeed` / `#btnEditJiwa` computed `display:none`;
+  itemGroup / stockCards / aidOffer hidden. Screenshot matches the mockup shape.
+- **Operator** (member sid, `SIM-LR-POSKO-LD4`): "+ Tambah", "Ubah", "Terima"
+  column, and the three operator panels all visible; no "Mode lihat" hint;
+  selector shows the "Posko organisasi saya" group.
+
+**Next (Phase 2, still open):**
+1. Align `posko_edit_scope.can_edit_current` (uses `can_manage_posko`) with
+   `logistik_board.can_manage` (uses the share-reason set incl. `org_member`) —
+   an org member currently gets the operator controls but also the
+   `rn-posko-scope.js` "Koordinasi" read-only banner.
+2. Surface the aid form to a pure `can_coordinate` viewer (backend + scope.js
+   ready; `logistik.js` still gates `#aidOfferPanel` on `can_manage` only).
+3. `posko-distribusi.html` — shared picker + `can_manage` (armada) vs
+   `can_coordinate` (booking); its board returns id/title/city only.
 
 ---
 

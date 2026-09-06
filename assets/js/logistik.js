@@ -183,28 +183,34 @@ function renderRoleBanner(b) {
   }
 }
 
-/* Compact management view of pending community shipments — the full,
-   read-only "Kiriman Masyarakat" table (incl. non-actionable statuses)
-   lives on posko-detail.html via rn-logistik-info.js instead. */
+/* "Kiriman Masyarakat" — read-only for everyone (mockup); an operator
+   (can_manage) additionally gets a "Terima" action column. Panel is hidden
+   when the posko exposes no detail or has nothing pending. */
 function renderPublicShipments(b) {
-  const panel = document.getElementById("publicShipPanel");
-  const body = document.getElementById("publicShipBody");
-  const cnt = document.getElementById("publicShipCount");
+  const panel = document.getElementById("publicShipInfoPanel");
+  const body = document.getElementById("publicShipInfoBody");
+  const cnt = document.getElementById("publicShipInfoCount");
+  const aksiHead = document.querySelector("#publicShipInfoPanel .rn-col-aksi");
   const rows = b.public_shipments || [];
   if (!panel || !body) return;
   if (!b.detail_allowed || !rows.length) { panel.hidden = true; return; }
   const canManage = !!b.can_manage;
   if (cnt) cnt.textContent = rows.length;
+  if (aksiHead) aksiHead.hidden = !canManage;
   body.innerHTML = rows.map(s => `
     <tr>
-      <td><b>${safe(s.item_name)}</b></td>
+      <td><b>${safe(s.donor_name)}</b></td>
+      <td>${safe(s.item_name)}</td>
       <td>${fmt(s.quantity)} ${safe(s.unit)}</td>
-      <td>${safe(s.donor_name)}</td>
-      <td><button type="button" class="btn ghost mini" data-receive-ship="${s.id}"${canManage ? "" : " disabled"}>Terima</button></td>
+      <td>${s.wave ? "Gel. " + s.wave : (safe(s.ready_at) || "—")}</td>
+      <td>${statusChip(s.status)}</td>
+      ${canManage
+        ? `<td><button type="button" class="btn ghost mini" data-receive-ship="${s.id}">Terima</button></td>`
+        : ""}
     </tr>`).join("");
   panel.hidden = false;
 
-  body.querySelectorAll("[data-receive-ship]:not([disabled])").forEach(btn =>
+  body.querySelectorAll("[data-receive-ship]").forEach(btn =>
     btn.addEventListener("click", () => receivePublicShipment(btn.dataset.receiveShip))
   );
 }
@@ -223,52 +229,33 @@ async function receivePublicShipment(aidOffer) {
   }
 }
 
-/* Visibility of the read-only + management panels.
-   - detail_allowed (org opened coordination, or operator/member) -> the
-     panels render; this is what a guest on a fully-open posko has always
-     seen, so the page is never gutted.
-   - can_manage (operator / member of THIS posko) -> the input CONTROLS
-     inside the panels are live. For everyone else they are disabled with a
-     "login sebagai operator" hint, so "tanpa login, add & input tidak ada"
-     without hiding the panel and leaving an empty column. */
+/* The page is the read-only "Kondisi Logistik" dashboard (mockup) for
+   everyone. An operator of THIS posko (b.can_manage) gets inline edit on
+   top: "+ Tambah" on Kebutuhan Mendesak, "Ubah" on the Jiwa Dilayani KPI,
+   "Terima" on Kiriman Masyarakat rows, plus the deeper operator panels
+   (Kartu Stok Rinci, Kelompok Barang, Tambah Bantuan). Non-operators see
+   none of that and a one-line "login untuk mencatat" hint. */
 function renderManageAccess(b) {
-  const allowed = !!b.detail_allowed;
   const canManage = !!b.can_manage;
+  const isCollector = !!b.is_collector;
 
   const noAccess = document.getElementById("logistikNoAccess");
   if (noAccess) {
-    noAccess.hidden = allowed;
+    noAccess.hidden = canManage;
     const a = document.getElementById("logistikNoAccessLink");
-    if (a) a.href = `posko-detail.html?id=${encodeURIComponent(poskoParam())}&event=${encodeURIComponent(eventParam())}`;
+    if (a) a.href = `auth.html?next=${encodeURIComponent(location.pathname + location.search)}`;
   }
 
-  const needPanel = document.getElementById("manageNeedPanel");
-  if (needPanel) needPanel.hidden = !allowed;
+  // inline edit affordances on the dashboard
+  const addNeed = document.getElementById("btnOpenAddNeed");
+  if (addNeed) addNeed.hidden = !canManage;
+  const editJiwa = document.getElementById("btnEditJiwa");
+  if (editJiwa) editJiwa.hidden = !canManage || isCollector;
 
-  const jiwaPanel = document.getElementById("jiwaDilayaniPanel");
-  if (jiwaPanel) jiwaPanel.hidden = !allowed || !!b.is_collector;
-
-  const aidPanel = document.getElementById("aidOfferPanel");
-  if (aidPanel) aidPanel.hidden = !allowed;
-
-  // gate just the write affordances on real management rights
-  setManageControls(canManage);
-}
-
-/* Disable (not hide) every input control on the page for a non-manager, and
-   drop a one-line hint. Keeps the layout identical to a manager's view. */
-function setManageControls(canManage) {
-  const ctrls = [
-    "#btnOpenAddNeed", "#btnEditJiwa",
-    "[data-rn-create-aid-offer] button[type=submit]",
-    "[data-rn-create-aid-offer] input",
-    "[data-rn-create-aid-offer] select",
-  ];
-  document.querySelectorAll(ctrls.join(",")).forEach(el => {
-    el.disabled = !canManage;
-  });
-  document.querySelectorAll("#aidOfferPanel [data-rn-aid-message]").forEach(el => {
-    if (!canManage) el.textContent = "Login sebagai operator posko ini untuk mencatat bantuan.";
+  // deeper operator-only panels
+  ["itemGroupPanel", "stockCardsPanel", "aidOfferPanel"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = !canManage;
   });
 }
 
@@ -693,7 +680,13 @@ async function loadBoard() {
 
     renderShareBanner(b);
     renderRoleBanner(b);
-    renderManageAccess(b);
+    // read-only "Kondisi Logistik" dashboard (mockup) — shared renderers
+    if (window.RNLogistikInfo) {
+      RNLogistikInfo.renderKpi(b);
+      RNLogistikInfo.renderUrgentNeeds(b);
+      RNLogistikInfo.renderMovements(b);
+    }
+    renderManageAccess(b);      // toggles the operator inline actions on top
     renderKategoriOptions(b);
     renderStockCards(b);
     renderPublicShipments(b);
@@ -837,6 +830,8 @@ async function boot() {
   }
 
   document.getElementById("btnEditJiwa")?.addEventListener("click", editBeneficiary);
+
+  if (window.RNLogistikInfo) RNLogistikInfo.wireMovementsTabs(() => LOGISTIK_BOARD);
 
   document.getElementById("logistikKategori")?.addEventListener("change", e => {
     KATEGORI = e.target.value || "";

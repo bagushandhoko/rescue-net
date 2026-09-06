@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Logistik</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskopicker-20260906c">
+  <link rel="stylesheet" href="../assets/css/style.css?v=logistikmock-20260906">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -74,46 +74,97 @@
     <div id="logistikRoleBanner" class="rn-role-banner" hidden></div>
 
     <p class="rn-page-status" id="logistikNoAccess" hidden>
-      Halaman ini untuk pengelola posko (butuh login &amp; wewenang atas posko ini).
-      Lihat kondisi posko di <a id="logistikNoAccessLink" href="#">Posko Detail →</a>
+      Mode lihat — <a id="logistikNoAccessLink" href="#">login</a> sebagai operator posko ini
+      untuk mencatat kebutuhan, jiwa &amp; bantuan.
     </p>
+
+    <!-- Kondisi Logistik — read-only dashboard (mockup: posko logistik.png).
+         Operator inline actions are toggled on by logistik.js/can_manage. -->
+    <section class="kpi-grid rn-logistik-kpi">
+      <div class="kpi-card" id="kpiJiwaCard">
+        <span class="kpi-icon" data-icon="users"></span>
+        <span>Jiwa Dilayani</span>
+        <strong id="kpiJiwa">-</strong>
+        <small id="kpiJiwaHint">jumlah korban dilayani posko</small>
+        <button class="btn ghost mini rn-kpi-edit" id="btnEditJiwa" type="button" hidden>Ubah</button>
+      </div>
+      <div class="kpi-card warning" id="kpiStokCard">
+        <span class="kpi-icon" data-icon="box"></span>
+        <span>Stok Menipis</span>
+        <strong id="kpiStok">-</strong>
+        <small id="kpiStokHint">item stok tercatat</small>
+      </div>
+      <div class="kpi-card danger" id="kpiKritisCard">
+        <span class="kpi-icon" data-icon="alert-circle"></span>
+        <span>Kebutuhan Kritis</span>
+        <strong id="kpiKritis">-</strong>
+        <small id="kpiKritisHint">prioritas tertinggi</small>
+      </div>
+      <div class="kpi-card" id="kpiMenujuCard">
+        <span class="kpi-icon" data-icon="truck"></span>
+        <span>Bantuan Menuju Posko</span>
+        <strong id="kpiMenuju">-</strong>
+        <small id="kpiMenujuHint">pengiriman masuk (OTW)</small>
+      </div>
+    </section>
 
     <section class="content-grid rn-logistik-grid">
       <div class="rn-logistik-col">
-      <section class="panel" id="manageNeedPanel" hidden>
+
+      <section class="panel">
         <div class="panel-header">
           <div>
-            <h3>Tambah Kebutuhan Logistik</h3>
-            <p>Catat item yang dibutuhkan posko ini — langsung masuk ke papan Kebutuhan Mendesak.</p>
+            <h3>Kebutuhan Mendesak <span class="chip danger" id="urgentNeedsCount">0 item</span></h3>
+            <p>Item paling mendesak: stok tersedia, kekurangan (gap), estimasi habis, dan batas waktu tiba.</p>
           </div>
-          <button class="btn primary mini" id="btnOpenAddNeed" type="button">+ Tambah</button>
+          <button class="btn primary mini" id="btnOpenAddNeed" type="button" hidden>+ Tambah</button>
         </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr>
+              <th>Item</th><th>Stok Tersedia</th><th>Gap (Kekurangan)</th>
+              <th>Estimasi Habis</th><th>Waktu Harus Tiba</th><th>Prioritas</th>
+            </tr></thead>
+            <tbody id="urgentNeedsBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="rn-table-foot"><span id="urgentNeedsShown">—</span></div>
       </section>
 
-      <section class="panel" id="jiwaDilayaniPanel" hidden>
+      <section class="panel" id="publicShipInfoPanel" hidden>
         <div class="panel-header">
           <div>
-            <h3>Jiwa Dilayani</h3>
-            <p>Jumlah korban yang dilayani posko ini saat ini.</p>
-          </div>
-          <button class="btn ghost mini" id="btnEditJiwa" type="button">Ubah Jumlah</button>
-        </div>
-      </section>
-
-      <section class="panel" id="publicShipPanel" hidden>
-        <div class="panel-header">
-          <div>
-            <h3>Kiriman Masuk — Perlu Diproses <span class="chip" id="publicShipCount">0</span></h3>
-            <p>Kiriman langsung dari warga/posko pengumpul yang belum diterima ke stok.</p>
+            <h3>Kiriman Masyarakat <span class="chip" id="publicShipInfoCount">0</span></h3>
+            <p>Bantuan langsung dari warga / posko pengumpul — belum masuk ke stok.</p>
           </div>
         </div>
         <div class="rn-table-wrap">
           <table class="rn-table">
-            <thead><tr><th>Item</th><th>Jumlah</th><th>Donatur</th><th>Aksi</th></tr></thead>
-            <tbody id="publicShipBody"><tr><td colspan="4">—</td></tr></tbody>
+            <thead><tr>
+              <th>Pengirim</th><th>Item</th><th>Jumlah</th><th>Gelombang</th><th>Status</th>
+              <th class="rn-col-aksi" hidden>Aksi</th>
+            </tr></thead>
+            <tbody id="publicShipInfoBody"><tr><td colspan="6">—</td></tr></tbody>
           </table>
         </div>
       </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div><h3>Barang Masuk / Keluar</h3><p>Pergerakan logistik dari &amp; menuju posko ini.</p></div>
+          <div class="rn-tabs" role="tablist">
+            <button class="rn-tab is-active" id="movTabMasuk" type="button">Masuk</button>
+            <button class="rn-tab" id="movTabKeluar" type="button">Keluar</button>
+          </div>
+        </div>
+        <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th id="movWhoHead">Dari</th><th>Item</th><th>Jumlah</th><th>Status</th></tr></thead>
+            <tbody id="movBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
       </div><!-- /.rn-logistik-col -->
 
       <aside class="panel summary">
@@ -142,7 +193,7 @@
       </aside>
     </section>
 
-    <section class="panel" id="itemGroupPanel">
+    <section class="panel" id="itemGroupPanel" hidden>
       <div class="panel-header">
         <div>
           <h3>Kelompok Barang <small class="rn-muted">(Normalisasi AI)</small></h3>
@@ -161,7 +212,7 @@
       <p class="rn-muted" data-ig-note style="font-size:11px;margin-top:8px;"></p>
     </section>
 
-    <details class="panel rn-input-drawer rn-stockcards-panel" id="stockCardsPanel">
+    <details class="panel rn-input-drawer rn-stockcards-panel" id="stockCardsPanel" hidden>
       <summary>
         <h3>Kartu Stok Rinci <span class="chip" id="stockCardsCount">0 item</span></h3>
         <p>Per item: stok ada, masuk/keluar 7 hari, OTW, kebutuhan, gap, laju konsumsi &amp; estimasi habis (stok ÷ laju).</p>
@@ -195,7 +246,7 @@
       </div>
     </details>
 
-    <details class="panel create-panel rn-input-drawer" id="aidOfferPanel">
+    <details class="panel create-panel rn-input-drawer" id="aidOfferPanel" hidden>
       <summary>
         <h3>Tambah Bantuan Tersedia</h3>
         <p>Catat donasi / bantuan yang siap dikirim — langsung ke database. (Tambah kebutuhan ada di tombol "+ Tambah" pada panel Kebutuhan Mendesak di atas.)</p>
@@ -287,7 +338,8 @@
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260906c"></script>
 <script src="../assets/js/rn-posko-picker.js?v=poskopicker-20260906c"></script>
-<script src="../assets/js/logistik.js?v=poskopicker-20260906c"></script>
+<script src="../assets/js/rn-logistik-info.js?v=logistikmock-20260906"></script>
+<script src="../assets/js/logistik.js?v=logistikmock-20260906"></script>
 <script src="../assets/js/rn-item-groups.js?v=itemgroups-20260903c"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>

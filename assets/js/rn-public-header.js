@@ -144,6 +144,57 @@
     button.setAttribute("aria-expanded", "false");
   }
 
+  function readCookie(name) {
+    const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    try { return m ? decodeURIComponent(m[1]) : ""; } catch (e) { return m ? m[1] : ""; }
+  }
+
+  // Login pill by default; after login → "👤 <nama>" + a Logout link.
+  async function buildAuthArea(header) {
+    const toggle = header.querySelector(".rn-public-toggle");
+
+    const loginEl = document.createElement("a");
+    loginEl.className = LOGIN_LINK.className;
+    loginEl.href = LOGIN_LINK.href;
+    loginEl.textContent = LOGIN_LINK.label;
+    header.insertBefore(loginEl, toggle);
+
+    let sess = null;
+    try {
+      const res = await fetch(
+        RN_API + "rescue_net.api_auth.session_info",
+        { credentials: "include" }
+      );
+      if (res.ok) sess = ((await res.json()) || {}).message || null;
+    } catch (e) { /* offline → keep the Login pill */ }
+
+    if (!sess || !sess.user || sess.user === "Guest") return;
+
+    const name = sess.full_name || readCookie("full_name") || sess.user;
+
+    const userEl = document.createElement("span");
+    userEl.className = "rn-public-user";
+    userEl.title = sess.user + (sess.role ? " · " + sess.role : "");
+    userEl.textContent = "👤 " + name;
+
+    const logoutEl = document.createElement("a");
+    logoutEl.className = "rn-public-login rn-public-logout";
+    logoutEl.href = "#";
+    logoutEl.textContent = "Logout";
+    logoutEl.addEventListener("click", async (e) => {
+      e.preventDefault();
+      logoutEl.textContent = "Keluar…";
+      try {
+        await fetch(RN_API + "logout", { method: "POST", credentials: "include" });
+      } catch (err) {}
+      try { localStorage.removeItem("RN_USER"); } catch (err) {}
+      location.reload();
+    });
+
+    loginEl.replaceWith(userEl);
+    header.insertBefore(logoutEl, toggle);
+  }
+
   function buildHeader() {
     if (
       isHome ||
@@ -169,12 +220,7 @@
     document.body.insertBefore(header, document.body.firstChild);
 
     buildEventPicker(header);
-
-    const loginEl = document.createElement("a");
-    loginEl.className = LOGIN_LINK.className;
-    loginEl.href = LOGIN_LINK.href;
-    loginEl.textContent = LOGIN_LINK.label;
-    header.insertBefore(loginEl, header.querySelector(".rn-public-toggle"));
+    buildAuthArea(header);
 
     const button = header.querySelector(".rn-public-toggle");
     button.addEventListener("click", () => {

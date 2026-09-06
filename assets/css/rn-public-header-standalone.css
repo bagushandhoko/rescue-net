@@ -87,6 +87,23 @@
   background: #d96f49;
 }
 
+.rn-public-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #c9502f;
+  white-space: nowrap;
+}
+.rn-public-login.rn-public-logout {
+  background: #fff;
+  color: #c9502f !important;
+  border-color: rgba(232, 117, 88, .45);
+}
+.rn-public-login.rn-public-logout:hover { background: #fff2ec; }
+
 .rn-public-toggle {
   display: none;
   width: 40px;

@@ -308,12 +308,21 @@ def me():
     }
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def session_info():
+    # guest-safe: the public header / auth.js loadSession() poll this on every
+    # page load — return a plain Guest marker instead of a 403.
+    if frappe.session.user in (None, "", "Guest"):
+        return {"user": "Guest"}
+
     data = me()
 
     return {
         "user": data["frappe_user"],
+        "full_name": (
+            frappe.db.get_value("User", data["frappe_user"], "full_name")
+            or data["frappe_user"]
+        ),
         "rn_user_account": data["id"],
         "role": data["role"],
         "requested_role":

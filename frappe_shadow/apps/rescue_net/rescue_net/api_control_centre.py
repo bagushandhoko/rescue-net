@@ -281,7 +281,6 @@ def _annotate_share_mode(points):
     except Exception:
         actor = None
 
-    logged_in = bool(actor)
     for point in points:
         posko_name = point.get("posko_id")
 
@@ -292,9 +291,10 @@ def _annotate_share_mode(points):
 
         point["share_mode"] = info.get("mode", "summary")
         point["detail_allowed"] = point["share_mode"] == "full"
-        # a logged-in user may coordinate with (book / send aid to) any posko
-        # that opened itself up, even one from another organisation
-        point["can_coordinate"] = logged_in and bool(point.get("public_participation"))
+        # point["public_participation"] (from map_points) is the generic
+        # "this posko opened itself to outside coordination" flag the shared
+        # selector groups on; each operational board decides what specifically
+        # an outsider may then do (send goods, book transport, …).
 
 
 def reports(event):
@@ -886,7 +886,7 @@ def posko_detail(posko, disaster_event=None):
             "address", "province_name", "city_name", "district_name",
             "latitude", "longitude", "operational_status",
             "verification_status", "trusted_verifier_count", "public_detail",
-            "public_participation",
+            "public_participation", "accept_goods",
             "officer_in_charge_name", "officer_in_charge_phone",
             "officer_in_charge_role", "disaster_event",
         ],
@@ -930,8 +930,14 @@ def posko_detail(posko, disaster_event=None):
     }
     logged_in = bool(actor)
     can_manage = share.get("reason") in _OWNER_REASONS
+    # coordinate = send goods to another org's posko that opened itself up.
+    # Mirrors api_logistics.create_aid_offer's public_ok test so the form is
+    # only offered when a submit would actually succeed.
     can_coordinate = bool(
-        logged_in and not can_manage and p.get("public_participation")
+        logged_in
+        and not can_manage
+        and p.get("public_participation")
+        and p.get("accept_goods")
     )
 
     # ---- needs ----------------------------------------------------------
@@ -4041,6 +4047,7 @@ def posko_edit_scope(posko=None, disaster_event=None):
         "is_system_manager": False,
         "current_posko": posko,
         "can_edit_current": True,
+        "can_coordinate_current": False,
         "my_poskos": [],
         "primary_posko": None,
         "brand": None,
@@ -4082,7 +4089,15 @@ def posko_edit_scope(posko=None, disaster_event=None):
     )
 
     if posko:
-        out["can_edit_current"] = bool(can_manage_posko(actor, posko))
+        can_mng = bool(can_manage_posko(actor, posko))
+        out["can_edit_current"] = can_mng
+        if not can_mng:
+            pp, ag = frappe.db.get_value(
+                "RN Posko", posko, ["public_participation", "accept_goods"]
+            ) or (0, 0)
+            # a member of another org may still send goods to a posko that
+            # opened participation — the page keeps just that one form
+            out["can_coordinate_current"] = bool(pp and ag)
 
     return out
 

@@ -192,18 +192,19 @@ function renderPublicShipments(b) {
   const cnt = document.getElementById("publicShipCount");
   const rows = b.public_shipments || [];
   if (!panel || !body) return;
-  if (!b.can_manage || !rows.length) { panel.hidden = true; return; }
+  if (!b.detail_allowed || !rows.length) { panel.hidden = true; return; }
+  const canManage = !!b.can_manage;
   if (cnt) cnt.textContent = rows.length;
   body.innerHTML = rows.map(s => `
     <tr>
       <td><b>${safe(s.item_name)}</b></td>
       <td>${fmt(s.quantity)} ${safe(s.unit)}</td>
       <td>${safe(s.donor_name)}</td>
-      <td><button type="button" class="btn ghost mini" data-receive-ship="${s.id}">Terima</button></td>
+      <td><button type="button" class="btn ghost mini" data-receive-ship="${s.id}"${canManage ? "" : " disabled"}>Terima</button></td>
     </tr>`).join("");
   panel.hidden = false;
 
-  body.querySelectorAll("[data-receive-ship]").forEach(btn =>
+  body.querySelectorAll("[data-receive-ship]:not([disabled])").forEach(btn =>
     btn.addEventListener("click", () => receivePublicShipment(btn.dataset.receiveShip))
   );
 }
@@ -222,30 +223,53 @@ async function receivePublicShipment(aidOffer) {
   }
 }
 
-/* Input gating (see rn-posko-picker.js for the matching selector levels):
-     guest / not logged in        -> no forms at all
-     can_manage (operator/member of THIS posko) -> every form
-   A logged-in member looking at ANOTHER org's open posko (b.can_coordinate)
-   gets no forms here yet — coordination write-paths (send aid / booking) are
-   the next slice, together with posko-distribusi. */
+/* Visibility of the read-only + management panels.
+   - detail_allowed (org opened coordination, or operator/member) -> the
+     panels render; this is what a guest on a fully-open posko has always
+     seen, so the page is never gutted.
+   - can_manage (operator / member of THIS posko) -> the input CONTROLS
+     inside the panels are live. For everyone else they are disabled with a
+     "login sebagai operator" hint, so "tanpa login, add & input tidak ada"
+     without hiding the panel and leaving an empty column. */
 function renderManageAccess(b) {
+  const allowed = !!b.detail_allowed;
   const canManage = !!b.can_manage;
 
   const noAccess = document.getElementById("logistikNoAccess");
   if (noAccess) {
-    noAccess.hidden = canManage;
+    noAccess.hidden = allowed;
     const a = document.getElementById("logistikNoAccessLink");
     if (a) a.href = `posko-detail.html?id=${encodeURIComponent(poskoParam())}&event=${encodeURIComponent(eventParam())}`;
   }
 
   const needPanel = document.getElementById("manageNeedPanel");
-  if (needPanel) needPanel.hidden = !canManage;
+  if (needPanel) needPanel.hidden = !allowed;
 
   const jiwaPanel = document.getElementById("jiwaDilayaniPanel");
-  if (jiwaPanel) jiwaPanel.hidden = !canManage || !!b.is_collector;
+  if (jiwaPanel) jiwaPanel.hidden = !allowed || !!b.is_collector;
 
   const aidPanel = document.getElementById("aidOfferPanel");
-  if (aidPanel) aidPanel.hidden = !canManage;
+  if (aidPanel) aidPanel.hidden = !allowed;
+
+  // gate just the write affordances on real management rights
+  setManageControls(canManage);
+}
+
+/* Disable (not hide) every input control on the page for a non-manager, and
+   drop a one-line hint. Keeps the layout identical to a manager's view. */
+function setManageControls(canManage) {
+  const ctrls = [
+    "#btnOpenAddNeed", "#btnEditJiwa",
+    "[data-rn-create-aid-offer] button[type=submit]",
+    "[data-rn-create-aid-offer] input",
+    "[data-rn-create-aid-offer] select",
+  ];
+  document.querySelectorAll(ctrls.join(",")).forEach(el => {
+    el.disabled = !canManage;
+  });
+  document.querySelectorAll("#aidOfferPanel [data-rn-aid-message]").forEach(el => {
+    if (!canManage) el.textContent = "Login sebagai operator posko ini untuk mencatat bantuan.";
+  });
 }
 
 function habisChip(days) {

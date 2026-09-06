@@ -41,7 +41,15 @@
     return false;
   }
 
-  function hideEditForms() {
+  // When the posko opened cross-org participation, a non-manager member may
+  // still SEND AID to it — keep just that one form (+ its wrapper) visible.
+  function isCoordinationForm(el) {
+    return el.id === "aidOfferPanel" ||
+      (el.closest && el.closest("#aidOfferPanel")) ||
+      (el.matches && el.matches("[data-rn-create-aid-offer]"));
+  }
+
+  function hideEditForms(keepCoordination) {
     var sels = [
       ".panel.create-panel",
       "[data-rn-create-logistic-need]",
@@ -59,6 +67,7 @@
       document.querySelectorAll(sel).forEach(function (el) {
         // keep read-only drawers that only display data
         if (el.classList.contains("rn-stockcards-panel")) return;
+        if (keepCoordination && isCoordinationForm(el)) return;
         var host;
         if (el.tagName === "FORM") {
           // a record form living inside a mixed "Riwayat" drawer: hide just the
@@ -88,10 +97,15 @@
       "background:rgba(255,255,255,.75)", "font-size:13px", "color:#3a2c22",
       "display:flex", "gap:10px", "align-items:center", "flex-wrap:wrap"
     ].join(";"));
+    var coord = !!scope.can_coordinate_current;
     b.innerHTML =
-      '<b style="color:' + esc(accent) + '">Hanya-lihat</b>' +
+      '<b style="color:' + esc(accent) + '">' +
+        (coord ? "Koordinasi" : "Hanya-lihat") + "</b>" +
       "<span>Anda melihat posko ini sebagai koordinasi lintas organisasi. " +
-      "Input &amp; perubahan data hanya di posko Anda sendiri.</span>" +
+      (coord
+        ? "Anda boleh mengirim bantuan ke posko ini; perubahan data internal hanya di posko Anda sendiri."
+        : "Input &amp; perubahan data hanya di posko Anda sendiri.") +
+      "</span>" +
       (mine
         ? '<a class="btn primary mini" href="' + esc(mine.operate_href) + '">Ke posko saya</a>'
         : "") +

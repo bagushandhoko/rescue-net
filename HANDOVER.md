@@ -4,7 +4,7 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-06 (posko selector + input gating: 3 access levels — guest view-only / member-manages-own / member-coordinates-open — on Posko Logistik; commits 1faea9f + <next>)_
+_Last updated: 2026-09-06 (posko selector + input gating: 3 access levels on Posko Logistik — guest sees the full page but every input control is disabled; commits 1faea9f, 0e46bbd, <next>)_
 
 ---
 
@@ -34,45 +34,58 @@ onChange })`. One `<select>`:
   (own "Posko dipilih" group) so a deep link never breaks.
 
 ### Backend — `api_control_centre.py` (deployed via `docker cp` + chown/chmod + restart)
-- `map_points()` each point now also carries `public_participation` +
-  `can_coordinate` (= logged-in AND public_participation).
-- `event_poskos` still returns `{points, viewer}` (from commit 1faea9f).
+- `map_points()` each point now carries `public_participation` (the generic
+  "opened to outside coordination" flag the selector groups on).
+- `event_poskos` returns `{points, viewer}` (from commit 1faea9f).
 - `posko_detail()` / `logistik_board()` now return **`logged_in`**,
   **`can_manage`** (share reason ∈ {system_manager, posko_operator, org_member,
-  posko_assignment, org_membership}), **`can_coordinate`** (logged-in, not
-  manager, posko `public_participation`), `public_participation`.
-  `detail_allowed` (view gating) is unchanged and still separate.
+  posko_assignment, org_membership}), **`can_coordinate`** (logged-in ∧ not
+  manager ∧ posko `public_participation` ∧ `accept_goods` — mirrors
+  `api_logistics.create_aid_offer`'s `public_ok`), `public_participation`.
+  `detail_allowed` (view gating) unchanged and separate.
+- `posko_edit_scope()` now also returns **`can_coordinate_current`**
+  (`public_participation` ∧ `accept_goods` on a posko the member does NOT
+  manage).
 
-### Frontend — `logistik.js` (`?v=poskopicker-20260906b`)
-- `renderManageAccess()` now gates every input panel on **`b.can_manage`** (was
-  `b.detail_allowed`, which was true for guests on a `full_authorized`-org posko
-  → they saw forms whose submit then 403'd). `renderPublicShipments()` likewise.
-- `pages/posko-logistik.html` — the always-open "Tambah Bantuan Tersedia"
-  `<details>` got `id="aidOfferPanel" hidden`; all 4 input panels now start
-  `hidden` and are only revealed by `renderManageAccess` → **guest = no forms by
-  construction**. Removed the dead `#logistikPoskoScope` span; `style.css`
-  dropped `.rn-posko-scope-toggle`.
+### Frontend — `logistik.js` / `rn-posko-scope.js` / `posko-logistik.html` (`?v=…906c`)
+- **First pass hid the input panels for guests → owner: "kenapa posko logistik
+  jadi kosong, seharusnya tampil spt sebelumnya".** Reverted: `renderManageAccess()`
+  keeps `b.detail_allowed` for panel *visibility* (page looks exactly as before)
+  and new `setManageControls(b.can_manage)` **disables (not hides)** every write
+  control for a non-manager — `#btnOpenAddNeed`, `#btnEditJiwa`, the
+  `[data-rn-create-aid-offer]` submit + inputs + selects (with a
+  "Login sebagai operator…" hint), and the per-row "Terima" buttons in
+  `renderPublicShipments()`. So a guest sees the full populated page with every
+  input dead ("tanpa login, add & input tidak ada" without an empty column).
+- `rn-posko-scope.js` (`?v=poskoscope-20260906c`) — `hideEditForms(keepCoordination)`:
+  when `scope.can_coordinate_current`, spares `#aidOfferPanel` /
+  `[data-rn-create-aid-offer]` so a member of another org may still record aid
+  bound for an open posko; read-only banner switches its label to "Koordinasi".
+- `posko-logistik.html` — `#aidOfferPanel` id kept (no `hidden`); dead
+  `#logistikPoskoScope` span removed; `style.css` dropped `.rn-posko-scope-toggle`.
 
 ### Verified
-- Live HTTP (guest): `event_poskos` points carry `public_participation` +
-  `can_coordinate`; `logistik_board` for `SIM-NS-POSKO-WARGA` (a
-  `detail_allowed:true` posko) → `logged_in:false, can_manage:false,
-  can_coordinate:false` — the exact old bug case now safe.
-- Playwright guest load of posko-logistik → selector flat, 18 options, no
-  optgroups, all 4 input panels hidden, 0 picker console errors. (Full board
-  load in the Playwright container is flaky — funnel 403 / hang, unrelated —
-  but panels default `hidden` so a stalled board leaves the page safe.)
-- 18-case Node unit test of `mount()` — guest flat; member two groups;
-  open-others = other-org ∧ public_participation; internal-only excluded; own
-  posko not duplicated; deep-link to open / to neither-group both preserved;
-  empty own-org shows a disabled placeholder.
+- Backend live (guest, via container localhost): `logistik_board` for
+  `SIM-NS-POSKO-WARGA` → `logged_in:false, can_manage:false, can_coordinate:false,
+  detail_allowed:true`; `posko_edit_scope` → `can_coordinate_current:false` (new
+  field, no error); `event_poskos` → 18 points w/ `public_participation`.
+- Playwright guest load of posko-logistik → **no** "butuh login" banner;
+  Tambah Kebutuhan / Jiwa Dilayani / Kiriman Masuk / Tambah Bantuan panels all
+  visible; `#btnOpenAddNeed`, `#btnEditJiwa`, aid submit + all aid inputs
+  `disabled`; Kartu Stok 7 rows, Kelompok Barang 5 rows, selector 18 opts.
+  Screenshot confirms the page is full again.
+- 18-case Node unit test of `mount()` (guest flat / member two groups /
+  open-others = other-org ∧ public_participation / deep-link preservation /
+  empty own-org placeholder).
+- Playwright-container ↔ funnel is flaky (intermittent 403 / DNS); verify
+  backend via `sudo docker exec osiun-frappe-backend curl -s http://localhost:8000/api/method/…`.
 
 **Next (Phase 2, not started):**
-1. **Coordination write-paths.** `renderManageAccess` no longer shows anything
-   for `can_coordinate` (the aid form would be re-hidden by
-   `rn-posko-scope.js`'s timer anyway). To let a member send aid to another
-   org's open posko, `posko_edit_scope` needs `can_coordinate_current` and
-   `rn-posko-scope.js hideEditForms()` must spare `[data-rn-create-aid-offer]`.
+1. **Coordination write-paths, frontend.** Backend + `rn-posko-scope.js` are
+   ready (`can_coordinate` / `can_coordinate_current`). `logistik.js` still
+   doesn't surface the aid form to a `can_coordinate` viewer — wire
+   `renderManageAccess` to enable `#aidOfferPanel`'s controls when
+   `b.can_coordinate`, and confirm `create_aid_offer` succeeds end-to-end.
 2. **`posko-distribusi.html`** — wire the shared picker + split armada
    management (`can_manage`) vs booking (`can_coordinate`). Its selector is fed
    by `posko_distribusi_board.transporter_poskos` (id/title/city only) and

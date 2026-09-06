@@ -489,8 +489,18 @@
     if (addBtn) addBtn.hidden = !manage;
     var addForm = $("#armadaForm");
     if (addForm) addForm.hidden = !manage;
-    var assignForm = $("[data-assign-form]");
-    if (assignForm) assignForm.hidden = !manage;
+
+    // "Relawan Pickup" is operator tooling — hide the whole panel for
+    // non-managers and let "Panduan" span the row.
+    var relawanPanel = $("#pdRelawanPanel");
+    if (relawanPanel) relawanPanel.hidden = !manage;
+    var row2 = $("#pdRow2");
+    if (row2) row2.classList.toggle("rn-md-row2--solo", !manage);
+
+    // the pickup-queue claim columns only mean something to a manager
+    document.querySelectorAll("#pickupQueueSection .pd-claim-col").forEach(function (th) {
+      th.hidden = !manage;
+    });
 
     var hint = $("#pdNoManage");
     if (hint) {
@@ -504,22 +514,23 @@
   function renderPickupQueue(list, dests) {
     var body = $("#pickupQueueBody"), shown = $("#pickupQueueShown");
     if (!body) return;
+    var canManage = !!(CACHE && CACHE.can_manage);
+    var cols = canManage ? 7 : 5;
     if (!list.length) {
-      body.innerHTML = '<tr><td colspan="7"><em class="rn-muted">Tidak ada bantuan yang menunggu dijemput saat ini.</em></td></tr>';
+      body.innerHTML = '<tr><td colspan="' + cols + '"><em class="rn-muted">Tidak ada bantuan yang menunggu dijemput saat ini.</em></td></tr>';
       if (shown) shown.textContent = "0 antre";
       return;
     }
-    var canManage = !!(CACHE && CACHE.can_manage);
     var opts = (dests || []).map(function (d) {
       return '<option value="' + esc(d.id) + '">' + esc(d.title) + (d.city ? " — " + esc(d.city) : "") + "</option>";
     }).join("");
     body.innerHTML = list.map(function (r) {
-      var act = canManage
-        ? '<select class="rn-pd-dest" data-offer="' + esc(r.aid_offer) + '">' +
-            '<option value="">— pilih posko —</option>' + opts + "</select>" +
-          '<button type="button" class="btn primary mini rn-pd-claim" data-offer="' + esc(r.aid_offer) + '">Ambil &amp; Antar</button>' +
-          '<span class="rn-pd-bk-msg" data-msg="' + esc(r.aid_offer) + '"></span>'
-        : '<span class="rn-muted">—</span>';
+      var claimCells = canManage
+        ? '<td><select class="rn-pd-dest" data-offer="' + esc(r.aid_offer) + '">' +
+            '<option value="">— pilih posko —</option>' + opts + "</select></td>" +
+          '<td><button type="button" class="btn primary mini rn-pd-claim" data-offer="' + esc(r.aid_offer) + '">Ambil &amp; Antar</button>' +
+          '<span class="rn-pd-bk-msg" data-msg="' + esc(r.aid_offer) + '"></span></td>'
+        : "";
       return (
         "<tr>" +
         "<td><b>" + esc(r.item) + "</b><small class=\"rn-muted\">" + esc(r.aid_offer) + "</small></td>" +
@@ -527,7 +538,7 @@
         "<td>" + esc(r.donor) + (r.donor_contact ? "<small class=\"rn-muted\">" + tel(r.donor_contact) + "</small>" : "") + "</td>" +
         "<td>" + esc(r.pickup_location) + "</td>" +
         "<td>" + esc(r.ready_at) + "</td>" +
-        '<td colspan="2">' + act + "</td>" +
+        claimCells +
         "</tr>"
       );
     }).join("");

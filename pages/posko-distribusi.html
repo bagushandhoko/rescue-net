@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Distribusi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskodist-20260906">
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskodist-20260906b">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -47,7 +47,7 @@
   </aside>
 
   <main class="main">
-    <header class="topbar">
+    <header class="topbar rn-logistik-topbar">
       <div class="rn-page-mobile-title">Posko Distribusi</div>
       <div>
         <p class="eyebrow">Transport Provider / Penyedia Angkutan</p>
@@ -55,12 +55,13 @@
         <p class="subtitle">Posko penyedia alat transport &amp; ruang muat — bisa Garuda, kapal TNI AL, motor pick-up, atau rombongan Land Rover club yang berangkat ke daerah bencana. Daftarkan armada, kelola space &amp; jadwal, terima &amp; konfirmasi booking.</p>
         <p class="subtitle" id="pdStatus">Memuat…</p>
       </div>
-      <div class="rn-pd-head-right">
-        <label class="rn-pd-selector">Posko
+      <div class="rn-logistik-controls">
+        <label class="rn-inline-select">
+          <span>Posko</span>
           <select id="poskoSelect"></select>
         </label>
         <span class="chip" id="pdModeBadge" hidden></span>
-        <div class="status-pill" id="pdUpdated">Posko Distribusi · Live</div>
+        <span class="status-pill" id="pdUpdated">Posko Distribusi · Live</span>
       </div>
     </header>
 
@@ -113,9 +114,11 @@
           <table class="rn-table">
             <thead><tr>
               <th>Barang</th><th>Jumlah</th><th>Donatur</th><th>Lokasi Jemput</th>
-              <th>Siap</th><th>Antar ke Posko</th><th>Aksi</th>
+              <th>Siap</th>
+              <th class="pd-claim-col" hidden>Antar ke Posko</th>
+              <th class="pd-claim-col" hidden>Aksi</th>
             </tr></thead>
-            <tbody id="pickupQueueBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+            <tbody id="pickupQueueBody"><tr><td colspan="5">Memuat…</td></tr></tbody>
           </table>
         </div>
         <div class="rn-table-foot"><span id="pickupQueueShown">—</span></div>
@@ -141,8 +144,8 @@
       </div>
     </section>
 
-    <section class="content-grid rn-md-row2">
-      <div class="panel">
+    <section class="content-grid rn-md-row2" id="pdRow2">
+      <div class="panel" id="pdRelawanPanel">
         <div class="panel-header"><div><h3>Relawan Pickup</h3><p>Relawan distribusi yang bisa ditugaskan sebagai kurir jemput untuk armada.</p></div></div>
         <div id="relawanList"></div>
         <form class="rn-form rn-pd-assign" data-assign-form>
@@ -234,7 +237,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260906d"></script>
 <script src="../assets/js/rn-posko-picker.js?v=poskopicker-20260906c"></script>
-<script src="../assets/js/posko-distribusi.js?v=poskodist-20260906"></script>
+<script src="../assets/js/posko-distribusi.js?v=poskodist-20260906b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -5259,6 +5259,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
    ============================================================ */
 .rn-md-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .rn-md-row2 { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+.rn-md-row2--solo { grid-template-columns: minmax(0, 1fr); }
 
 .rn-md-board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
 .rn-md-board-col { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 120px; }

@@ -34,6 +34,37 @@ One consistent model across `logistik_board`, `posko_distribusi_board`,
   `#aidOfferPanel` when `can_coordinate_current`, and the banner relabels
   "Hanya-lihat" → "Koordinasi".
 
+### Bug + layout sweep (2026-09-06) — DONE & DEPLOYED
+- `3fbc90a` / `eb4b4ce` — `quantity_mode:"known"` → `"exact"` (logistik ×2,
+  shelter ×1): every "+ Tambah Kebutuhan" / "Tambah Bantuan" / shelter-need
+  submit 417'd on `ValidationError` (field only allows exact/estimated/range/
+  unknown). Found by the cross-org aid e2e.
+- `349575b` — `program-khusus.html`: legacy `loadPrograms()` let
+  `api_donor_program.context` (login-only) throw for guests → console error
+  on every guest visit. Now caught; the legacy `<details>` directory shows a
+  "login untuk direktori lengkap" hint. Modern guest board unaffected.
+- `4b80cd3` — `management-distribusi.html`: legacy `distribusi.js dashboard()`
+  → `api_logistics.dashboard` for the hardcoded fallback posko threw
+  "Anda tidak memiliki akses ke Posko ini" for logged-in non-managers. Now
+  catches → empty ctx. Modern `distribusi_board` (guest) is separate.
+- `765f3f6` — Shelter "Daftar Shelter" rows linked to
+  `shelter-detail.html?id=<docname>` — but that page has NO per-posko view
+  (event-wide overview only) so a click just reloaded the same dashboard, and
+  older docnames leaked the `posko_nodes:` / `disaster_events:` prefix into
+  the URL. New `_shelter_href()` strips the prefix (`_bare`) and points every
+  row + KPI drill item at `posko-detail.html?id=<bare>&event=<bare>`.
+  (Owner: "klik shelter over capacity tidak ke detail, kembali ke halaman yg
+  sama".) Verified: click now navigates to `posko-detail.html`.
+- `db83951` — `posko-distribusi.html` layout: topbar now uses the shared
+  `rn-logistik-topbar`/`rn-logistik-controls`/`rn-inline-select` pattern (one
+  clean wrapping row, no cramped stack colliding with the Login pill); the
+  "Relawan Pickup" panel + the "Antrean Pickup" claim columns are hidden for
+  non-managers (`#pdRelawanPanel`, `.pd-claim-col`, `.rn-md-row2--solo`) so
+  guests don't see an empty panel + two dead columns.
+
+Health sweep (guest 22 pages + logged-in 14 pages): otherwise 0 console
+errors / broken pages.
+
 **E2E verified (`3fbc90a`, Playwright):** LD2 (Komunitas Landrover member,
 NOT a member of `SIM-NS-WARGA`) opens `posko-logistik.html?id=SIM-NS-POSKO-WARGA`
 → `can_coordinate:true`, `#aidOfferPanel`+`#aidCoordNote` shown, `+Tambah` /

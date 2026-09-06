@@ -294,22 +294,38 @@ async function loadPrograms() {
   const eventId =
     getEventId();
 
-  const ctx =
-    await RN_FRAPPE.call(
-      "rescue_net.api_donor_program.context",
-      {
-        disaster_event:
-          eventId
-      }
-    );
-
-  const programs =
-    ctx.programs || [];
-
   const target =
     document.getElementById(
       "programListLegacy"
     );
+
+  // api_donor_program.context is login-only (it carries create-form context).
+  // The modern board (loadBoard → program_board, guest-allowed) is the real
+  // list; this legacy <details> directory just degrades to a hint for guests.
+  let ctx;
+  try {
+    ctx =
+      await RN_FRAPPE.call(
+        "rescue_net.api_donor_program.context",
+        {
+          disaster_event:
+            eventId
+        }
+      );
+  } catch (e) {
+    if (target) {
+      target.innerHTML = `
+        <article class="event-card">
+          <h4>Login untuk direktori lengkap</h4>
+          <p>Daftar program di atas tetap tampil untuk umum.
+             Masuk sebagai pengelola untuk direktori &amp; form program.</p>
+        </article>`;
+    }
+    return;
+  }
+
+  const programs =
+    ctx.programs || [];
 
   if (target) {
     target.innerHTML =

@@ -442,7 +442,7 @@
       await window.RN_FRAPPE.call("rescue_net.api_shelter.create_need", {
         posko: getShelterPoskoId(),
         item_name: form.item_name.value.trim(),
-        quantity_mode: "known",
+        quantity_mode: "exact",
         quantity_needed: Number(form.quantity_needed.value || 0),
         unit: form.unit.value.trim(),
         priority: form.priority.value,

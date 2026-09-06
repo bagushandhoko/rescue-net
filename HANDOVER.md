@@ -4,11 +4,64 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-06 (Posko Logistik rebuilt to the mockup: guest = read-only "Kondisi Logistik" dashboard, operator = same + inline edit; commits 1faea9f, 0e46bbd, 2c16f6c, <next>)_
+_Last updated: 2026-09-06 (Posko Logistik → mockup dashboard + clickable KPIs; Posko Distribusi → shared picker + 3-level access + "Pesan Slot"; commits 1faea9f, 0e46bbd, 2c16f6c, 0ab55c9, 1d98459, <next>)_
+
+---
+
+## Posko Distribusi — shared picker + 3-level access + booking (2026-09-06) — DONE & DEPLOYED
+
+Same 3-level model as Posko Logistik, applied to `posko-distribusi.html`.
+
+### Backend — `api_control_centre.py` (deployed)
+- NEW `_posko_actor_flags(posko)` → `(logged_in, can_manage, can_coordinate)`
+  (module-level `_POSKO_OWNER_REASONS`; `posko_detail()` reuses the set).
+- `posko_distribusi_board()` now returns `viewer` + `logged_in`/`can_manage`/
+  `can_coordinate`, and `transporter_poskos` carry `organization` +
+  `public_participation`.
+
+### Frontend — `posko-distribusi.js` / `.html` (`?v=poskodist-20260906`)
+- selector → `RNPoskoPicker.mount()` (org member: "Posko organisasi saya" +
+  "Posko lain — terbuka untuk koordinasi"; guest: flat). Falls back to the
+  old flat `<select>` if the picker script is missing. Still navigates (full
+  reload) on change.
+- `applyAccess(data)` — `can_manage` gates `#armadaAddBtn`, `#armadaForm`
+  (Daftarkan Armada), `[data-assign-form]` (Tugaskan Relawan); `renderBookings`
+  only draws the Konfirmasi/Tolak PIN box for a manager; `renderPickupQueue`
+  only draws the destination select + "Ambil & Antar" for a manager (else "—").
+  `#pdNoManage` shows a calm one-liner ("Mode lihat…" / "Anda bukan pengelola…
+  bisa memesan slot").
+- NEW **`bookingForm(a)` / `wireBookingForm(a)`** in the armada drill modal,
+  shown when `data.can_coordinate` → `api_logistics.book_transport_space`
+  (any logged-in user; returns a PIN unless the armada's policy is `open`).
+  The armada "Perbarui armada" edit `<details>` now only renders for
+  `can_manage`.
+- `rn-posko-picker.js` + `rn-posko-scope.js` (`poskoscope-20260906c`) added to
+  the page; `style.css` bumped `?v=poskodist-20260906`.
+
+### Verified (Playwright, host.docker.internal)
+- **Guest** `SIM-LR-POSKO-LD3`: selector flat (4 opts); "+ Daftarkan Armada",
+  Daftarkan Armada form, Tugaskan Relawan form all `display:none`; pickup
+  queue 12 rows with "—" in the action column; "Mode lihat…" hint. 0 armada
+  create/booking affordances.
+- **Operator** (member sid, same posko): selector shows "Posko organisasi
+  saya"; add button + both forms `display:block`; 12 claim buttons; no hint.
+- `can_coordinate` "Pesan Slot" path is code-complete but not browser-verified
+  (needs a logged-in non-member session on a `public_participation` transport
+  posko).
 
 ---
 
 ## Posko Logistik → mockup dashboard, guest read-only / operator inline-edit (2026-09-06) — DONE & DEPLOYED
+
+**Follow-up (`1d98459`):** the rebuilt dashboard had lost its click-through
+("kok nggak bisa di klik detail nya"). Restored: the 4 KPI tiles
+(`data-kpi` + `role=button`) open an in-page drill drawer built from
+`LOGISTIK_BOARD` (Jiwa note / low-or-gap stock cards / critical needs / OTW
+flows — no extra RPC), and a Kebutuhan Mendesak row opens a detail drawer
+(with "Penuhi kebutuhan ini" → `openFulfill` only when `can_manage`).
+`style.css` `.rn-kpi-clickable` hover + `#urgentNeedsBody` row hover.
+Cache-buster `?v=logistikmock-20260906b`.
+
 
 Owner: the greyed-out console from the previous pass was "ngarang layout".
 `posko-logistik.html` must follow **`assets/img/mockup/posko logistik.png`** —

@@ -243,6 +243,14 @@ h4 {
   z-index: 1;
 }
 
+/* KPI tile that opens a drill-down */
+.rn-kpi-clickable { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+.rn-kpi-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 26px 60px rgba(145,84,54,.18);
+}
+#urgentNeedsBody tr:hover { background: rgba(232,117,88,.06); cursor: pointer; }
+
 /* icon chip sits beside the title on row 1 (mock-up composition), not
    stacked above it — a bare 12%-opacity chip on a near-white card was
    effectively invisible, so the default (non-status) chip also gets a

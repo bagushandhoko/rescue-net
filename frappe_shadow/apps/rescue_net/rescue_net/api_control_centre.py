@@ -812,6 +812,43 @@ def _sf(doctype, wanted):
     return [f for f in wanted if f == "name" or f in valid]
 
 
+# share-reasons that mean the viewer OWNS/operates the posko (vs merely
+# being allowed to see its detail). Used by every operational page to tell
+# "manage" from "coordinate/view".
+_POSKO_OWNER_REASONS = {
+    "system_manager", "posko_operator", "org_member",
+    "posko_assignment", "org_membership",
+}
+
+
+def _posko_actor_flags(posko_name, actor="__unset__"):
+    """(logged_in, can_manage, can_coordinate) for an operational posko page.
+
+    manage      -> operator / assigned / member of the posko's org
+    coordinate  -> any other logged-in user, when the posko opened
+                   `public_participation` (book a transport slot, send aid…)
+    Server-side write endpoints still enforce their own checks; this only
+    drives which controls the page shows."""
+    if actor == "__unset__":
+        try:
+            from rescue_net.access_policy import rn_actor
+            actor = rn_actor(required=False)
+        except Exception:
+            actor = None
+    logged_in = bool(actor)
+    if not posko_name:
+        return logged_in, False, False
+    try:
+        from rescue_net.visibility import effective_posko_share
+        reason = effective_posko_share(posko_name, actor).get("reason")
+    except Exception:
+        reason = None
+    can_manage = reason in _POSKO_OWNER_REASONS
+    pp = frappe.db.get_value("RN Posko", posko_name, "public_participation")
+    can_coordinate = bool(logged_in and not can_manage and pp)
+    return logged_in, can_manage, can_coordinate
+
+
 def _poskos_viewer_context():
     """Who is asking for the posko list — lets the selector on operational
     pages group "my organisation's poskos" vs "other (national) poskos".
@@ -924,12 +961,8 @@ def posko_detail(posko, disaster_event=None):
     #   any logged-in user + posko.public_participation
     #                              -> coordinate only: book / send aid to it,
     #                                 never edit its internal needs / stock
-    _OWNER_REASONS = {
-        "system_manager", "posko_operator", "org_member",
-        "posko_assignment", "org_membership",
-    }
     logged_in = bool(actor)
-    can_manage = share.get("reason") in _OWNER_REASONS
+    can_manage = share.get("reason") in _POSKO_OWNER_REASONS
     # coordinate = send goods to another org's posko that opened itself up.
     # Mirrors api_logistics.create_aid_offer's public_ok test so the form is
     # only offered when a submit would actually succeed.
@@ -3335,6 +3368,11 @@ def posko_distribusi_board(posko=None, disaster_event=None):
     event = canonical_event(disaster_event) if disaster_event else None
     posko = _resolve_posko(posko) if posko else None
 
+    # (logged_in, can_manage, can_coordinate) — drives which controls the page
+    # shows: manage = daftarkan/perbarui armada, konfirmasi booking, tugaskan
+    # relawan; coordinate = pesan slot pada armada posko lain yang terbuka.
+    _di_flags = _posko_actor_flags(posko)
+
     posko_row = None
     if posko:
         posko_row = frappe.db.get_value(
@@ -3476,18 +3514,20 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         for v in vas if v.volunteer
     ]
 
-    # other transporter poskos for the switcher
+    # other transporter poskos for the switcher (shared grouped picker needs
+    # organization + public_participation to build "my org" vs "open" groups)
     tp_filter = {"posko_type": "transport"}
+    _tp_fields = ["name", "title", "city_name", "organization", "public_participation"]
     if event:
         tp_rows = frappe.get_all(
             "RN Posko",
             or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
-            filters=tp_filter, fields=["name", "title", "city_name"],
+            filters=tp_filter, fields=_tp_fields,
             limit_page_length=200,
         )
     else:
         tp_rows = frappe.get_all("RN Posko", filters=tp_filter,
-                                 fields=["name", "title", "city_name"], limit_page_length=200)
+                                 fields=_tp_fields, limit_page_length=200)
 
     # ---- aktif pickup vs pasif (hanya sediakan space) ----
     is_active_pickup = any(
@@ -3574,9 +3614,15 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         "destination_options": dest_options,
         "relawan_candidates": relawan_candidates,
         "transporter_poskos": [
-            {"id": r.name, "title": r.title, "city": r.get("city_name") or ""}
+            {"id": r.name, "title": r.title, "city": r.get("city_name") or "",
+             "organization": r.get("organization"),
+             "public_participation": bool(r.get("public_participation"))}
             for r in tp_rows
         ],
+        "viewer": _poskos_viewer_context(),
+        "logged_in": _di_flags[0],
+        "can_manage": _di_flags[1],
+        "can_coordinate": _di_flags[2],
     }
 
 

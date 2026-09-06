@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Posko Logistik</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=logistikmock-20260906">
+  <link rel="stylesheet" href="../assets/css/style.css?v=logistikmock-20260906b">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -81,26 +81,26 @@
     <!-- Kondisi Logistik — read-only dashboard (mockup: posko logistik.png).
          Operator inline actions are toggled on by logistik.js/can_manage. -->
     <section class="kpi-grid rn-logistik-kpi">
-      <div class="kpi-card" id="kpiJiwaCard">
+      <div class="kpi-card rn-kpi-clickable" id="kpiJiwaCard" data-kpi="jiwa" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="users"></span>
         <span>Jiwa Dilayani</span>
         <strong id="kpiJiwa">-</strong>
         <small id="kpiJiwaHint">jumlah korban dilayani posko</small>
         <button class="btn ghost mini rn-kpi-edit" id="btnEditJiwa" type="button" hidden>Ubah</button>
       </div>
-      <div class="kpi-card warning" id="kpiStokCard">
+      <div class="kpi-card warning rn-kpi-clickable" id="kpiStokCard" data-kpi="stok" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="box"></span>
         <span>Stok Menipis</span>
         <strong id="kpiStok">-</strong>
         <small id="kpiStokHint">item stok tercatat</small>
       </div>
-      <div class="kpi-card danger" id="kpiKritisCard">
+      <div class="kpi-card danger rn-kpi-clickable" id="kpiKritisCard" data-kpi="kritis" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="alert-circle"></span>
         <span>Kebutuhan Kritis</span>
         <strong id="kpiKritis">-</strong>
         <small id="kpiKritisHint">prioritas tertinggi</small>
       </div>
-      <div class="kpi-card" id="kpiMenujuCard">
+      <div class="kpi-card rn-kpi-clickable" id="kpiMenujuCard" data-kpi="menuju" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="truck"></span>
         <span>Bantuan Menuju Posko</span>
         <strong id="kpiMenuju">-</strong>
@@ -338,8 +338,8 @@
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260906c"></script>
 <script src="../assets/js/rn-posko-picker.js?v=poskopicker-20260906c"></script>
-<script src="../assets/js/rn-logistik-info.js?v=logistikmock-20260906"></script>
-<script src="../assets/js/logistik.js?v=logistikmock-20260906"></script>
+<script src="../assets/js/rn-logistik-info.js?v=logistikmock-20260906b"></script>
+<script src="../assets/js/logistik.js?v=logistikmock-20260906b"></script>
 <script src="../assets/js/rn-item-groups.js?v=itemgroups-20260903c"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=bencana-20260901"></script>

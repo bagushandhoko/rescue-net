@@ -443,6 +443,55 @@ function hideDrawer() {
   if (d) d.classList.remove("is-open");
 }
 
+/* KPI tile → drill-down list, built from the board already in memory
+   (no extra RPC). App-wide rule: every KPI opens the underlying items. */
+function openLogistikDrill(kpi) {
+  const b = LOGISTIK_BOARD || {};
+  const rowsHtml = (items, cols) => items.length
+    ? `<table class="rn-table"><thead><tr>${cols.map(c => `<th>${c[0]}</th>`).join("")}</tr></thead>
+       <tbody>${items.map(r => `<tr>${cols.map(c => `<td>${c[1](r)}</td>`).join("")}</tr>`).join("")}</tbody></table>`
+    : `<p class="rn-muted">Tidak ada data.</p>`;
+
+  if (kpi === "jiwa") {
+    const p = b.posko || {};
+    showDrawer("Jiwa Dilayani", `
+      <p><b>${fmt(b.kpi && b.kpi.jiwa_dilayani || 0)}</b> jiwa dilayani posko ini.</p>
+      <p class="rn-muted">${safe(p.beneficiary_note)}</p>
+      ${p.beneficiary_updated_at ? `<p class="rn-muted">Diperbarui ${fmtWhen(p.beneficiary_updated_at)}</p>` : ""}`);
+    return;
+  }
+  if (kpi === "stok") {
+    const low = (b.stock_cards || []).filter(c =>
+      (c.estimasi_habis_hari != null && c.estimasi_habis_hari < 7) || num(c.gap) > 0);
+    showDrawer("Stok Menipis / Perlu Pengadaan", rowsHtml(
+      low.length ? low : (b.stock_cards || []),
+      [["Item", c => `<b>${safe(c.item)}</b>`],
+       ["Stok", c => `${fmt(c.stok_ada)} ${safe(c.unit)}`],
+       ["Gap", c => c.gap ? fmt(c.gap) + " " + safe(c.unit) : "—"],
+       ["Estimasi Habis", c => habisChip(c.estimasi_habis_hari)]]));
+    return;
+  }
+  if (kpi === "kritis") {
+    const needs = (b.urgent_needs || []).filter(n =>
+      /crit|urgent|high/i.test(n.priority || "")) ;
+    showDrawer("Kebutuhan Kritis", rowsHtml(
+      needs.length ? needs : (b.urgent_needs || []),
+      [["Item", n => `<b>${safe(n.item_name)}</b>`],
+       ["Stok Tersedia", n => `${fmt(n.stok_tersedia)} ${safe(n.unit)}`],
+       ["Gap", n => n.gap ? fmt(n.gap) + " " + safe(n.unit) : "—"],
+       ["Waktu Harus Tiba", n => safe(n.waktu_harus_tiba)],
+       ["Prioritas", n => safe(n.priority)]]));
+    return;
+  }
+  if (kpi === "menuju") {
+    showDrawer("Bantuan Menuju Posko (OTW)", rowsHtml(b.incoming || [],
+      [["Dari", f => `<b>${safe(f.source_posko)}</b>`],
+       ["Item", f => `${safe(f.item_name)} — ${fmt(f.quantity)} ${safe(f.unit)}`],
+       ["Status", f => statusChip(f.flow_status)],
+       ["ETA", f => fmtWhen(f.eta_final)]]));
+  }
+}
+
 async function editBeneficiary() {
   const posko = poskoParam();
   const cur = (LOGISTIK_BOARD && LOGISTIK_BOARD.posko && LOGISTIK_BOARD.posko.beneficiary_count) || 0;
@@ -832,6 +881,41 @@ async function boot() {
   document.getElementById("btnEditJiwa")?.addEventListener("click", editBeneficiary);
 
   if (window.RNLogistikInfo) RNLogistikInfo.wireMovementsTabs(() => LOGISTIK_BOARD);
+
+  // KPI tiles → drill-down (delegated; tiles never re-render)
+  document.querySelectorAll(".kpi-card[data-kpi]").forEach(card => {
+    const open = () => openLogistikDrill(card.dataset.kpi);
+    card.addEventListener("click", e => {
+      if (e.target.closest("#btnEditJiwa")) return;   // the "Ubah" button
+      open();
+    });
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+    });
+  });
+
+  // Kebutuhan Mendesak row → detail drawer (delegated; body re-renders)
+  document.getElementById("urgentNeedsBody")?.addEventListener("click", e => {
+    const tr = e.target.closest("tr");
+    if (!tr || !tr.querySelector("td b")) return;
+    const b = LOGISTIK_BOARD || {};
+    const name = tr.querySelector("td b").textContent.trim();
+    const n = (b.urgent_needs || []).find(x => (x.item_name || "").trim() === name);
+    if (!n) return;
+    showDrawer(`Kebutuhan — ${name}`, `
+      <div class="rn-trace-line"><span>Stok tersedia</span><b>${fmt(n.stok_tersedia)} ${safe(n.unit)}</b></div>
+      <div class="rn-trace-line"><span>Kekurangan (gap)</span><b>${n.gap ? fmt(n.gap) + " " + safe(n.unit) : "—"}</b></div>
+      <div class="rn-trace-line"><span>Estimasi habis</span><b>${safe(n.estimasi_habis)}</b></div>
+      <div class="rn-trace-line"><span>Waktu harus tiba</span><b>${safe(n.waktu_harus_tiba)}</b></div>
+      <div class="rn-trace-line"><span>Prioritas</span><b>${safe(n.priority)}</b></div>
+      ${(LOGISTIK_BOARD && LOGISTIK_BOARD.can_manage)
+        ? `<div class="form-actions"><button class="btn primary" type="button" id="drillPenuhi">Penuhi kebutuhan ini</button></div>`
+        : ""}`);
+    document.getElementById("drillPenuhi")?.addEventListener("click", () => {
+      hideDrawer();
+      openFulfill(name, n.unit || "");
+    });
+  });
 
   document.getElementById("logistikKategori")?.addEventListener("change", e => {
     KATEGORI = e.target.value || "";

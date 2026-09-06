@@ -34,6 +34,19 @@ One consistent model across `logistik_board`, `posko_distribusi_board`,
   `#aidOfferPanel` when `can_coordinate_current`, and the banner relabels
   "Hanya-lihat" → "Koordinasi".
 
+**E2E verified (`3fbc90a`, Playwright):** LD2 (Komunitas Landrover member,
+NOT a member of `SIM-NS-WARGA`) opens `posko-logistik.html?id=SIM-NS-POSKO-WARGA`
+→ `can_coordinate:true`, `#aidOfferPanel`+`#aidCoordNote` shown, `+Tambah` /
+operator panels hidden, "Koordinasi" banner. Fills + submits "Tambah Bantuan
+Tersedia" (500 dus Air Mineral) → **"Bantuan tersimpan."**; `logistik_board`
+`public_shipments` 6→7, the new `RN Aid Offer` targets WARGA and renders in
+its "Kiriman Masyarakat" table (donor "Komunitas Landrover — bantuan lintas
+organisasi (simulasi)"), where a WARGA operator can "Terima" it into stock.
+**Bug found + fixed en route:** `logistik.js` sent `quantity_mode:"known"`
+(invalid — doctype allows `exact|estimated|range|unknown`) on both
+`create_need` and `create_aid_offer` → every submit 417'd. Now `"exact"`.
+`shelter-detail.js:445` still has the same `"known"` bug (untouched).
+
 **Phase 2 checklist — all DONE & DEPLOYED:**
 1. `08fe2b9` — Logistik "Tambah Bantuan Tersedia" enabled for `can_coordinate`
    viewers; `can_coordinate` tightened to the exact `create_aid_offer` gate;

@@ -3010,7 +3010,7 @@ def active_disasters_board(limit=60):
 _DISTRIBUSI_STATUS_LABEL = {
     "planned": "Direncanakan",
     "pickup_claimed": "Akan Dijemput",
-    "assigned_pickup": "Menunggu Pickup",
+    "assigned_pickup": "Menunggu Jemput",
     "dispatched": "Dalam Perjalanan",
     "in_transit": "Dalam Perjalanan",
     "arrived": "Tiba di Tujuan",
@@ -3334,8 +3334,8 @@ def distribusi_board(disaster_event=None):
         "completed": "Selesai", "cancelled": "Dibatalkan",
     }
     _SERVICE_MODE_LABEL = {
-        "space_only": "Penyedia Space", "courier_pickup": "Kurir Jemput-Antar",
-        "both": "Space + Kurir",
+        "space_only": "Penyedia Ruang Muat", "courier_pickup": "Kurir Jemput-Antar",
+        "both": "Ruang Muat + Kurir",
     }
     _BOOKING_STATUS_LABEL = {
         "requested": "Menunggu Konfirmasi", "confirmed": "Terkonfirmasi",
@@ -3472,8 +3472,8 @@ def distribusi_board(disaster_event=None):
 
 
 _SERVICE_MODE_LABEL = {
-    "space_only": "Penyedia Space", "courier_pickup": "Kurir Jemput-Antar",
-    "both": "Space + Kurir",
+    "space_only": "Penyedia Ruang Muat", "courier_pickup": "Kurir Jemput-Antar",
+    "both": "Ruang Muat + Kurir",
 }
 _ARMADA_STATUS_LABEL = {
     "available": "Tersedia", "reserved": "Dipesan", "assigned": "Ditugaskan",
@@ -3665,11 +3665,11 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         tp_rows = frappe.get_all("RN Posko", filters=tp_filter,
                                  fields=_tp_fields, limit_page_length=200)
 
-    # ---- aktif pickup vs pasif (hanya sediakan space) ----
+    # ---- jemput aktif vs pasif (hanya sediakan ruang muat) ----
     is_active_pickup = any(
         (t.service_mode or "both") in ("courier_pickup", "both") for t in transports
     )
-    pickup_mode_label = "Pickup Aktif" if is_active_pickup else "Pasif — Hanya Sediakan Space"
+    pickup_mode_label = "Jemput Aktif" if is_active_pickup else "Pasif — hanya menyediakan ruang muat"
 
     # ---- pickup queue: open aid offers needing pickup, not yet claimed ----
     pickup_queue = []

@@ -37,8 +37,8 @@
     ["completed", "Selesai"], ["cancelled", "Dibatalkan"],
   ];
   var SERVICE_MODE = [
-    ["space_only", "Penyedia Space"], ["courier_pickup", "Kurir Jemput-Antar"],
-    ["both", "Space + Kurir"],
+    ["space_only", "Penyedia Ruang Muat"], ["courier_pickup", "Kurir Jemput-Antar"],
+    ["both", "Ruang Muat + Kurir"],
   ];
   var BOOKING_POLICY = [
     ["pin_verify", "Konfirmasi PIN posko"], ["open", "Langsung terkonfirmasi"],
@@ -181,7 +181,7 @@
       row("Rute", esc(a.rute)) +
       row("Titik serah terima", esc(a.handover_location)) +
       row("Narahubung", esc(a.handover_contact_person) + (a.handover_contact_phone && a.handover_contact_phone !== "-" ? " · " + tel(a.handover_contact_phone) : "")) +
-      row("Relawan pickup", esc(a.pickup_volunteer_name || "-")) +
+      row("Relawan jemput", esc(a.pickup_volunteer_name || "-")) +
       "</div>" +
       ((CACHE && CACHE.can_manage) ? armadaEditForm(a) : "") +
       ((CACHE && CACHE.can_coordinate) ? bookingForm(a) : "") +
@@ -455,7 +455,7 @@
     var badge = $("#pdModeBadge");
     if (badge && data.posko) {
       badge.hidden = false;
-      badge.textContent = data.pickup_mode_label || (data.is_active_pickup ? "Pickup Aktif" : "Pasif");
+      badge.textContent = data.pickup_mode_label || (data.is_active_pickup ? "Jemput Aktif" : "Pasif");
       badge.className = "chip " + (data.is_active_pickup ? "ok" : "");
     } else if (badge) { badge.hidden = true; }
 

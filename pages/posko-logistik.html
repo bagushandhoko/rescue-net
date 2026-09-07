@@ -50,7 +50,7 @@
       <div class="rn-page-mobile-title">Posko Logistik</div>
 
       <div>
-        <p class="eyebrow">Field Needs &amp; Stock Intelligence</p>
+        <p class="eyebrow">Kebutuhan Lapangan &amp; Intelijen Stok</p>
         <h2>Posko Logistik</h2>
         <p class="subtitle">
           Pantau stok, kebutuhan, dan pergerakan bantuan secara real-time.
@@ -255,7 +255,6 @@
 
       <form class="rn-form" data-rn-create-aid-offer>
         <div class="form-grid">
-          <label>Disaster Event ID<input name="disaster_event_id" required></label>
           <label>Nama Donatur / Sumber<input name="donor_name" placeholder="PT Sumber Air Baik" required></label>
           <label>Item Bantuan<input name="item_name" placeholder="Air Mineral / Beras / Selimut" required></label>
           <label>Jumlah<input name="quantity" type="number" step="0.01" placeholder="1000" required></label>
@@ -263,7 +262,7 @@
           <label>Lokasi Pickup<input name="pickup_location" placeholder="Gudang / alamat donor" required></label>
           <label>Siap Diambil<input name="ready_at" placeholder="Hari ini 15:00"></label>
           <label>No. Batch<input name="batch_no"></label>
-          <label>Expiry Date<input name="expiry_date" type="date"><small>Kosongkan kalau tidak ada expiry.</small></label>
+          <label>Tanggal Kedaluwarsa<input name="expiry_date" type="date"><small>Kosongkan kalau tidak ada masa kedaluwarsa.</small></label>
           <label>Status
             <select name="status">
               <option value="available">available</option>
@@ -293,8 +292,7 @@
     </div>
     <form class="rn-form" data-rn-create-logistic-need>
       <div class="form-grid">
-        <label>Disaster Event ID<input name="disaster_event_id" required></label>
-        <label>Posko / Node ID<input name="node_id"></label>
+        <label>Posko<input name="node_id" placeholder="otomatis dari posko terpilih"></label>
         <label>Item Dibutuhkan<input name="item_name" placeholder="Air Minum / Beras / Obat" required></label>
         <label>Jumlah<input name="quantity_needed" type="number" step="0.01" placeholder="2500" required></label>
         <label>Satuan<input name="unit" placeholder="liter / kg / dus / pcs" required></label>

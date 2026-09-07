@@ -4,11 +4,61 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-07 (collected-stock dispatch chain — **browser DOM
-verified** end-to-end via Playwright: Kartu Stok "Asal item" + "Kirim" →
-`create_flow` on Posko Logistik, and `kind:flow` "Booking" → `claim_
-distribution_flow` on Posko Distribusi. Prev: 3-level posko-access model
-PHASE 2 COMPLETE; commits 1faea9f · … · c28724c · c437e3b · 53176cf)_
+_Last updated: 2026-09-07 (Posko Distribusi + Posko Logistik **Indonesian
+tidy pass** — dropped bilingual/English eyebrows, "Disaster Event ID" dead
+fields, "Space"/"Pickup"/"blocked" shell wording. Earlier today: collected-
+stock dispatch chain browser-DOM verified via Playwright. Prev: 3-level
+posko-access model PHASE 2 COMPLETE; commits … c437e3b · 53176cf · f1283c3)_
+
+---
+
+## Posko Distribusi / Logistik — Indonesian tidy pass (2026-09-07) — FE DEPLOYED, BE PENDING
+
+Owner: "teruskan rapikan halaman". Page-local wording cleanup, no behaviour change.
+
+**`pages/posko-distribusi.html` + `assets/js/posko-distribusi.js`
+(`?v=tidy-20260907`) — done, deployed (served from disk):**
+- eyebrow "Transport Provider / Penyedia Angkutan" → "Penyedia Angkutan".
+- KPI: "kg keseluruhan" → "kg seluruh armada"; "booking + blocked" →
+  "booking + terblokir".
+- pickup-queue h3 "Antrean Pickup Bantuan — Pickup Aktif" → "Antrean Jemput
+  Bantuan — mode jemput aktif".
+- "Daftarkan Armada" form: removed the exposed `Disaster Event ID` input
+  (`create_transport_space` already falls back to `getEvent()` from the URL);
+  "Kapasitas KG / M3" → "Kapasitas Berat (kg) / Volume (m³)".
+- "Space" wording → "Ruang Muat" everywhere (subtitle, `pdPassiveNote`,
+  Booking Masuk `<th>`, Relawan panel h3 "Relawan Pickup" → "Relawan Jemput",
+  Panduan list, service-mode `<option>` labels — values unchanged).
+- JS: `SERVICE_MODE` select labels, armada-drill "Relawan pickup" row label,
+  `pdModeBadge` fallback "Pickup Aktif" → "Jemput Aktif".
+
+**`pages/posko-logistik.html` — done, deployed (served from disk):**
+- eyebrow "Field Needs & Stock Intelligence" → "Kebutuhan Lapangan &
+  Intelijen Stok".
+- removed BOTH dead `Disaster Event ID` inputs (aid-offer form + add-need
+  modal — neither is sent on submit; `logistik.js` prefill selector just
+  finds nothing now).
+- "Expiry Date" → "Tanggal Kedaluwarsa"; "Posko / Node ID" → "Posko".
+
+**`api_control_centre.py` — edited in repo, NOT yet deployed** (the
+`docker exec … cat > CPATH/api_control_centre.py` deploy step is blocked by
+the Claude Code DB/host classifier this session — a human/teammate must run
+it). Changes: `pickup_mode_label` "Pickup Aktif" → "Jemput Aktif" /
+"Pasif — Hanya Sediakan Space" → "Pasif — hanya menyediakan ruang muat";
+`_SERVICE_MODE_LABEL` ×2 "Penyedia Space"/"Space + Kurir" → "Penyedia Ruang
+Muat"/"Ruang Muat + Kurir"; `_DISTRIBUSI_STATUS_LABEL` "assigned_pickup"
+"Menunggu Pickup" → "Menunggu Jemput". Until deployed, the armada MODE chip
++ mode badge on Posko Distribusi still read the old English-ish strings.
+**Deploy:** backup + `cat repo/api_control_centre.py | sudo docker exec -i
+osiun-frappe-backend sh -c 'cat > /home/frappe/frappe-bench/apps/rescue_net/
+rescue_net/api_control_centre.py'`, md5 host==container, `sudo docker
+restart osiun-frappe-backend` (502 ~10s → 200).
+
+**Verified (Playwright, 1440px):** `posko-distribusi.html` as ld1 (manager)
++ guest and `posko-logistik.html` as ld2 (manager) — 0 console errors; no
+"Disaster Event ID", no English eyebrow, no "booking + blocked", no
+"Expiry Date" in the rendered `<main>`. ("Pickup Aktif" badge string still
+present pending the BE deploy above.)
 
 ---
 

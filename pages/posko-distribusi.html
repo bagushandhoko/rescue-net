@@ -50,9 +50,9 @@
     <header class="topbar rn-logistik-topbar">
       <div class="rn-page-mobile-title">Posko Distribusi</div>
       <div>
-        <p class="eyebrow">Transport Provider / Penyedia Angkutan</p>
+        <p class="eyebrow">Penyedia Angkutan</p>
         <h2>Posko Distribusi</h2>
-        <p class="subtitle">Posko penyedia alat transport &amp; ruang muat — bisa Garuda, kapal TNI AL, motor pick-up, atau rombongan Land Rover club yang berangkat ke daerah bencana. Daftarkan armada, kelola space &amp; jadwal, terima &amp; konfirmasi booking.</p>
+        <p class="subtitle">Posko penyedia alat transport &amp; ruang muat — bisa Garuda, kapal TNI AL, motor pick-up, atau rombongan Land Rover club yang berangkat ke daerah bencana. Daftarkan armada, kelola ruang muat &amp; jadwal, terima &amp; konfirmasi booking.</p>
         <p class="subtitle" id="pdStatus">Memuat…</p>
       </div>
       <div class="rn-logistik-controls">
@@ -73,10 +73,10 @@
         <span class="kpi-icon" data-icon="truck"></span><span>Armada Terdaftar</span><strong id="kpiArmada">-</strong><small>unit transport</small>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="kapasitas">
-        <span class="kpi-icon" data-icon="gauge"></span><span>Kapasitas Total</span><strong id="kpiKapasitas">-</strong><small>kg keseluruhan</small>
+        <span class="kpi-icon" data-icon="gauge"></span><span>Kapasitas Total</span><strong id="kpiKapasitas">-</strong><small>kg seluruh armada</small>
       </button>
       <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="terpakai">
-        <span class="kpi-icon" data-icon="layers"></span><span>Kapasitas Terpakai</span><strong id="kpiTerpakai">-</strong><small>booking + blocked</small>
+        <span class="kpi-icon" data-icon="layers"></span><span>Kapasitas Terpakai</span><strong id="kpiTerpakai">-</strong><small>booking + terblokir</small>
       </button>
       <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="menunggu">
         <span class="kpi-icon" data-icon="clock"></span><span>Booking Menunggu</span><strong id="kpiMenunggu">-</strong><small>perlu konfirmasi PIN</small>
@@ -93,7 +93,7 @@
           <table class="rn-table rn-md-armada-table">
             <thead><tr>
               <th>Armada / Penyedia</th><th>Jenis</th><th>Mode</th><th>Kapasitas Ruang</th>
-              <th>Berangkat → Tiba</th><th>Relawan Pickup</th><th>Status</th><th>Booking</th>
+              <th>Berangkat → Tiba</th><th>Relawan Jemput</th><th>Status</th><th>Booking</th>
             </tr></thead>
             <tbody id="armadaBody"><tr><td colspan="8">Memuat…</td></tr></tbody>
           </table>
@@ -106,7 +106,7 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>Antrean Pickup Bantuan <small class="rn-muted">— Pickup Aktif</small></h3>
+            <h3>Antrean Jemput Bantuan <small class="rn-muted">— mode jemput aktif</small></h3>
             <p>Bantuan yang butuh dijemput. Ambil, pilih posko tujuan pengantaran, dan bantuan akan tampil "Akan Dijemput oleh posko ini" di Manajemen Distribusi &amp; Posko Logistik.</p>
           </div>
         </div>
@@ -125,7 +125,7 @@
       </div>
     </section>
 
-    <p class="rn-muted rn-md-xref" id="pdPassiveNote" hidden>Posko ini <b>pasif</b> — hanya menyediakan ruang muat (space). Untuk bisa menjemput bantuan, daftarkan armada bermode <b>Kurir Jemput-Antar</b> / <b>Space + Kurir</b>.</p>
+    <p class="rn-muted rn-md-xref" id="pdPassiveNote" hidden>Posko ini <b>pasif</b> — hanya menyediakan ruang muat. Untuk bisa menjemput bantuan, daftarkan armada bermode <b>Kurir Jemput-Antar</b> / <b>Ruang Muat + Kurir</b>.</p>
 
     <section class="content-grid rn-md-wide">
       <div class="panel">
@@ -135,7 +135,7 @@
         <div class="rn-table-wrap">
           <table class="rn-table">
             <thead><tr>
-              <th>Barang / Muatan</th><th>Space</th><th>Metode</th><th>Pemesan &amp; Kontak</th>
+              <th>Barang / Muatan</th><th>Ruang Muat</th><th>Metode</th><th>Pemesan &amp; Kontak</th>
               <th>Waktu</th><th>Status</th><th>Aksi</th>
             </tr></thead>
             <tbody id="bookingBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
@@ -146,7 +146,7 @@
 
     <section class="content-grid rn-md-row2" id="pdRow2">
       <div class="panel" id="pdRelawanPanel">
-        <div class="panel-header"><div><h3>Relawan Pickup</h3><p>Relawan distribusi yang bisa ditugaskan sebagai kurir jemput untuk armada.</p></div></div>
+        <div class="panel-header"><div><h3>Relawan Jemput</h3><p>Relawan distribusi yang bisa ditugaskan sebagai kurir jemput untuk armada.</p></div></div>
         <div id="relawanList"></div>
         <form class="rn-form rn-pd-assign" data-assign-form>
           <div class="form-grid">
@@ -164,7 +164,7 @@
         <div class="panel-header"><div><h3>Panduan Penyedia Transport</h3></div></div>
         <ul class="rn-md-ref-list">
           <li>Isi <b>kapasitas</b> berat (kg) &amp; volume (m³) armada secara jujur — booking terkonfirmasi akan memblok kapasitas.</li>
-          <li><b>Mode layanan</b>: <i>Penyedia Space</i> (hanya ruang) atau <i>Kurir Jemput-Antar</i> (ambil + antar).</li>
+          <li><b>Mode layanan</b>: <i>Penyedia Ruang Muat</i> (hanya ruang) atau <i>Kurir Jemput-Antar</i> (ambil + antar).</li>
           <li><b>Kebijakan booking</b>: <i>PIN</i> (Anda konfirmasi manual) atau <i>Terbuka</i> (langsung terkonfirmasi).</li>
           <li>Perbarui <b>jadwal berangkat / ETA</b> dan status saat armada bergerak.</li>
         </ul>
@@ -178,7 +178,6 @@
       </summary>
       <form class="rn-form" data-create-armada>
         <div class="form-grid">
-          <label>Disaster Event ID <input name="disaster_event" value="event-sim-001" required></label>
           <label>Armada / Penyedia <input name="provider_name" placeholder="Garuda Cargo GA-1204 / KRI Teluk / Motor Pelajar" required></label>
           <label>Jenis
             <select name="transport_type" required>
@@ -190,8 +189,8 @@
           </label>
           <label>Mode Layanan
             <select name="service_mode">
-              <option value="both">Space + Kurir (jemput-antar)</option>
-              <option value="space_only">Hanya Penyedia Space</option>
+              <option value="both">Ruang Muat + Kurir (jemput-antar)</option>
+              <option value="space_only">Hanya Penyedia Ruang Muat</option>
               <option value="courier_pickup">Kurir Jemput-Antar</option>
             </select>
           </label>
@@ -203,8 +202,8 @@
           </label>
           <label>Asal <input name="route_origin" placeholder="Bandara Cut Nyak Dhien"></label>
           <label>Tujuan <input name="route_destination" placeholder="Posko Logistik Meulaboh"></label>
-          <label>Kapasitas KG <input name="capacity_weight_kg" type="number" step="0.01" placeholder="12000"></label>
-          <label>Kapasitas M3 <input name="capacity_volume_m3" type="number" step="0.01" placeholder="60"></label>
+          <label>Kapasitas Berat (kg) <input name="capacity_weight_kg" type="number" step="0.01" placeholder="12000"></label>
+          <label>Kapasitas Volume (m³) <input name="capacity_volume_m3" type="number" step="0.01" placeholder="60"></label>
           <label>Waktu Berangkat <input name="departure_at" type="datetime-local"></label>
           <label>Estimasi Tiba <input name="eta_at" type="datetime-local"></label>
           <label>Lokasi Saat Ini <input name="current_location" placeholder="Staging apron bandara"></label>
@@ -237,7 +236,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260906d"></script>
 <script src="../assets/js/rn-posko-picker.js?v=poskopicker-20260906c"></script>
-<script src="../assets/js/posko-distribusi.js?v=dispatch-20260906"></script>
+<script src="../assets/js/posko-distribusi.js?v=tidy-20260907"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=authpill-20260906"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -4,7 +4,11 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-06 (3-level posko-access model — guest view-only / member manages own-org / cross-org coordinator — **PHASE 2 COMPLETE** on Posko Logistik + Posko Distribusi; commits 1faea9f · 0e46bbd · 2c16f6c · 0ab55c9 · 1d98459 · 9a0e62b · 9db44ec · 5b0ad21 · 08fe2b9 · c28724c)_
+_Last updated: 2026-09-07 (collected-stock dispatch chain — **browser DOM
+verified** end-to-end via Playwright: Kartu Stok "Asal item" + "Kirim" →
+`create_flow` on Posko Logistik, and `kind:flow` "Booking" → `claim_
+distribution_flow` on Posko Distribusi. Prev: 3-level posko-access model
+PHASE 2 COMPLETE; commits 1faea9f · … · c28724c · c437e3b · 53176cf)_
 
 ---
 
@@ -54,7 +58,25 @@ that choice a pull-down; and another transport posko can book it.
   `<select>` + "Booking" → `claim_distribution_flow`.
 - `?v=dispatch-20260906`. Backend e2e verified (create_flow no-transport →
   pickup_queue kind:flow → claim → assigned_pickup + Land Rover provider,
-  row leaves queue). Browser DOM not re-verified (container↔host net down).
+  row leaves queue).
+- **Browser DOM verified 2026-09-07** (Playwright, `mcr.microsoft.com/
+  playwright:v1.56.1-noble`, sid cookie; `osiun-playwright-check/
+  rn-dispatch-chain.js`). **Part A** as `ld2.demo` on `SIM-LR-POSKO-LD2`:
+  stock panel un-hidden (8 kartu stok), every row has `a.rn-stok-src` +
+  `button.rn-kirim`; item name → "Asal item — Air Mineral 600 ml" drawer
+  ("Belum ada catatan asal…"); "Kirim" → "Kirim stok" drawer with
+  `#dispatchForm`, Tujuan `<select>` 14 opts (13 dests, e.g. "…BNPB Meulaboh
+  — Aceh Barat · penerima · 3.400 jiwa"), Lewat `<select>` 10 opts (9 armada
+  + "Langsung"); submit qty 5 → **"Terkirim — menunggu transporter di antrean
+  Posko Distribusi."** **Part B** as `ld1.demo` on `SIM-LR-POSKO-LD3`
+  (transport posko): pickup queue shows the `kind:flow` row with armada
+  `<select>` + "Booking"; pick `SIM-ARMADA-LROVER-1` → **"dibooking ✓"**;
+  backend confirms `rn-flow-807f7c53386c36a236bf` → `assigned_pickup`,
+  provider "Land Rover Club Indonesia — Konvoi 8 unit". 0 console errors.
+  _Leftover sim rows: 3 test `RN Distribution Flow` (title "Air Mineral 600
+  ml", src `SIM-LR-POSKO-LD2` → `SIM-NS-POSKO-BNPB`, qty 5, creation
+  2026-09-07 19:33/19:34/19:37) — harmless; delete was blocked by the DB
+  classifier._
 
 ### Bug + layout sweep (2026-09-06) — DONE & DEPLOYED
 - `3fbc90a` / `eb4b4ce` — `quantity_mode:"known"` → `"exact"` (logistik ×2,

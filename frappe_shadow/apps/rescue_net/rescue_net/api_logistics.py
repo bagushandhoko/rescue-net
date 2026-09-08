@@ -2454,6 +2454,224 @@ def edit_guest_aid_offer(
     }
 
 
+# --- Guest (no-account) transport-space booking, managed via a Kode Edit -----
+
+_GUEST_BOOKING_STATUS_LABEL = {
+    "requested": "Menunggu Konfirmasi", "confirmed": "Terkonfirmasi",
+    "rejected": "Ditolak", "cancelled": "Dibatalkan", "completed": "Selesai",
+}
+
+
+def _guest_booking_code_hash(code):
+    return _hashlib.sha256(
+        ("rn-guest-transport-booking:" + str(code or "").strip().upper()).encode("utf-8")
+    ).hexdigest()
+
+
+def _new_guest_code():
+    return (frappe.utils.random_string(8).upper()
+            .replace("O", "A").replace("0", "9").replace("I", "K").replace("L", "M"))
+
+
+def _load_guest_booking(booking, edit_code, contact_phone=None):
+    doc = frappe.get_doc("RN Transport Booking", booking)
+    if (doc.get("submitted_channel") or "account") != "guest" or not doc.get("edit_code_hash"):
+        frappe.throw("Booking ini tidak dikelola lewat Kode Edit.", frappe.PermissionError)
+    if _guest_booking_code_hash(edit_code) != doc.edit_code_hash:
+        frappe.throw("Booking ID atau Kode Edit salah.", frappe.PermissionError)
+    if contact_phone and _norm_contact(contact_phone) \
+       and _norm_contact(contact_phone) != _norm_contact(doc.contact_phone):
+        frappe.throw("Nomor HP tidak cocok dengan booking ini.", frappe.PermissionError)
+    return doc
+
+
+def _guest_booking_view(doc):
+    sp = frappe.db.get_value(
+        "RN Transport Space", doc.transport_space,
+        ["provider_name", "transport_type", "booking_policy", "coordination_posko"],
+        as_dict=True,
+    ) or {}
+    return {
+        "booking": doc.name,
+        "status": doc.status,
+        "status_label": _GUEST_BOOKING_STATUS_LABEL.get(doc.status, doc.status),
+        "armada": sp.get("provider_name") or doc.transport_space,
+        "armada_type": sp.get("transport_type") or "",
+        "cargo_desc": doc.cargo_desc or "",
+        "qty_weight_kg": flt(doc.qty_weight_kg),
+        "qty_volume_m3": flt(doc.qty_volume_m3),
+        "delivery_method": doc.delivery_method or "self_deliver",
+        "pickup_location": doc.pickup_location or "",
+        "dropoff_location": doc.dropoff_location or "",
+        "requested_window": doc.requested_window or "",
+        "verification_pin": doc.verification_pin or "",
+        "contact_person": doc.contact_person or "",
+        "contact_phone": doc.contact_phone or "",
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def book_transport_space_public(
+    transport_space,
+    contact_person,
+    contact_phone,
+    cargo_desc=None,
+    qty_weight_kg=None,
+    qty_volume_m3=None,
+    pickup_location=None,
+    dropoff_location=None,
+    requested_window=None,
+    delivery_method="self_deliver",
+):
+    """Warga tanpa akun memesan ruang muat / titip barang ke posko transport
+    yang membuka partisipasi publik. Mengembalikan Kode Edit (sekali tampil)
+    untuk lacak / ubah / batalkan booking — pola sama dengan guest aid."""
+    name = str(contact_person or "").strip()
+    phone = str(contact_phone or "").strip()
+    if not name:
+        frappe.throw("Nama pemesan wajib diisi.")
+    if len(_norm_contact(phone)) < 7:
+        frappe.throw("Nomor HP/WhatsApp wajib diisi (untuk lacak / ubah booking nanti).")
+
+    space = frappe.get_doc("RN Transport Space", transport_space)
+    posko = space.coordination_posko
+    allowed = bool(
+        posko
+        and cint(frappe.db.get_value("RN Posko", posko, "public_participation") or 0)
+        and public_posko_allowed(posko)
+    )
+    if not allowed:
+        frappe.throw(
+            "Posko transport ini tidak membuka pemesanan ruang muat untuk publik.",
+            frappe.PermissionError,
+        )
+
+    if delivery_method not in ("use_transporter", "self_deliver"):
+        delivery_method = "self_deliver"
+    if delivery_method == "use_transporter" and (space.service_mode or "both") == "space_only":
+        frappe.throw(
+            "Armada ini hanya menyediakan ruang muat (bukan kurir). Pilih 'antar sendiri'."
+        )
+
+    w = flt(qty_weight_kg) if qty_weight_kg not in (None, "") else 0.0
+    v = flt(qty_volume_m3) if qty_volume_m3 not in (None, "") else 0.0
+    if w <= 0 and v <= 0:
+        frappe.throw("Isi berat (kg) atau volume (m3) muatan.")
+
+    cap = _transport_capacity(space.as_dict())
+    if space.capacity_weight_kg and w > cap["avail_kg"] + 0.001:
+        frappe.throw(f"Ruang tidak cukup: sisa {cap['avail_kg']:.0f} kg, diminta {w:.0f} kg.")
+    if space.capacity_volume_m3 and v > cap["avail_m3"] + 0.001:
+        frappe.throw(f"Ruang tidak cukup: sisa {cap['avail_m3']:.1f} m3, diminta {v:.1f} m3.")
+
+    policy = space.booking_policy or "pin_verify"
+    pin = None
+    if policy != "open":
+        import random
+        pin = "%04d" % random.randint(1000, 9999)
+
+    code = _new_guest_code()
+
+    doc = frappe.new_doc("RN Transport Booking")
+    doc.transport_space = space.name
+    doc.disaster_event = space.disaster_event
+    doc.booked_by_type = "individu"
+    doc.booker_name = name + " (tamu)"
+    doc.cargo_desc = cargo_desc
+    doc.qty_weight_kg = w
+    doc.qty_volume_m3 = v
+    doc.pickup_location = pickup_location
+    doc.dropoff_location = dropoff_location
+    doc.contact_person = name
+    doc.contact_phone = phone
+    doc.delivery_method = delivery_method
+    doc.requested_window = requested_window
+    doc.verification_pin = pin
+    doc.submitted_channel = "guest"
+    doc.edit_code_hash = _guest_booking_code_hash(code)
+    doc.status = "confirmed" if policy == "open" else "requested"
+    if doc.status == "confirmed":
+        doc.confirmed_at = now_datetime()
+    doc.insert(ignore_permissions=True)
+
+    if doc.status == "confirmed":
+        _recompute_transport_committed(space.name)
+
+    return {
+        "booking": doc.name,
+        "status": doc.status,
+        "status_label": _GUEST_BOOKING_STATUS_LABEL.get(doc.status, doc.status),
+        "verification_pin": pin,
+        "edit_code": code,          # shown once, never stored in the clear
+        "policy": policy,
+        "notice": "Simpan Booking ID + Kode Edit ini. Kode hanya ditampilkan sekali.",
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+def get_public_transport_booking(booking, edit_code, contact_phone=None):
+    """Lacak status booking tamu dengan Booking ID + Kode Edit (+ HP opsional)."""
+    return _guest_booking_view(_load_guest_booking(booking, edit_code, contact_phone))
+
+
+@frappe.whitelist(allow_guest=True)
+def update_public_transport_booking(
+    booking,
+    edit_code,
+    contact_phone=None,
+    cargo_desc=None,
+    qty_weight_kg=None,
+    qty_volume_m3=None,
+    pickup_location=None,
+    dropoff_location=None,
+    requested_window=None,
+    cancel=None,
+):
+    """Ubah / batalkan booking tamu selama masih 'requested' / 'confirmed'."""
+    doc = _load_guest_booking(booking, edit_code, contact_phone)
+    if doc.status not in ("requested", "confirmed"):
+        frappe.throw("Booking berstatus '%s' tidak bisa diubah." % doc.status)
+
+    if str(cancel).lower() in ("1", "true", "yes"):
+        doc.status = "cancelled"
+        doc.reject_reason = "Dibatalkan oleh pemesan (tamu)"
+        doc.save(ignore_permissions=True)
+        _recompute_transport_committed(doc.transport_space)
+        return {"booking": doc.name, "status": "cancelled", "status_label": "Dibatalkan"}
+
+    space = frappe.get_doc("RN Transport Space", doc.transport_space)
+    new_w = flt(qty_weight_kg) if qty_weight_kg not in (None, "") else flt(doc.qty_weight_kg)
+    new_v = flt(qty_volume_m3) if qty_volume_m3 not in (None, "") else flt(doc.qty_volume_m3)
+    if new_w <= 0 and new_v <= 0:
+        frappe.throw("Isi berat (kg) atau volume (m3) muatan.")
+
+    cap = _transport_capacity(space.as_dict())
+    # add this booking's own current hold back before the check
+    avail_kg = cap["avail_kg"] + flt(doc.qty_weight_kg)
+    avail_m3 = cap["avail_m3"] + flt(doc.qty_volume_m3)
+    if space.capacity_weight_kg and new_w > avail_kg + 0.001:
+        frappe.throw(f"Ruang tidak cukup: sisa {avail_kg:.0f} kg.")
+    if space.capacity_volume_m3 and new_v > avail_m3 + 0.001:
+        frappe.throw(f"Ruang tidak cukup: sisa {avail_m3:.1f} m3.")
+
+    for field, val in (
+        ("cargo_desc", cargo_desc),
+        ("pickup_location", pickup_location),
+        ("dropoff_location", dropoff_location),
+        ("requested_window", requested_window),
+    ):
+        if val is not None:
+            doc.set(field, val)
+    if qty_weight_kg not in (None, ""):
+        doc.qty_weight_kg = new_w
+    if qty_volume_m3 not in (None, ""):
+        doc.qty_volume_m3 = new_v
+    doc.save(ignore_permissions=True)
+    if doc.status == "confirmed":
+        _recompute_transport_committed(doc.transport_space)
+    return _guest_booking_view(doc)
+
+
 @frappe.whitelist()
 def my_aid_offers(
     limit=100,

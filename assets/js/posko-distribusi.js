@@ -214,15 +214,18 @@
       ((CACHE && CACHE.can_manage) ? armadaEditForm(a) : "") +
       ((CACHE && CACHE.can_coordinate) ? bookingForm(a) : "") +
       ((CACHE && !CACHE.can_coordinate && !CACHE.can_manage)
-        ? '<p class="rn-muted rn-md-detail-note">' +
-          (CACHE.logged_in
-            ? "Posko ini belum membuka pemesanan ruang muat untuk pihak luar."
-            : "Login sebagai posko pengantar atau warga untuk memesan ruang muat di armada ini.") +
-          "</p>"
+        ? (CACHE.public_ok
+            ? publicBookingForm(a)
+            : '<p class="rn-muted rn-md-detail-note">' +
+              (CACHE.logged_in
+                ? "Posko ini belum membuka pemesanan ruang muat untuk pihak luar."
+                : "Login sebagai posko pengantar untuk memesan — atau, bila posko ini membuka partisipasi publik, warga bisa memesan tanpa akun.") +
+              "</p>")
         : "") +
       '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>";
     if (CACHE && CACHE.can_manage) wireArmadaEdit(a.id);
     if (CACHE && CACHE.can_coordinate) wireBookingForm(a);
+    if (CACHE && !CACHE.can_coordinate && !CACHE.can_manage && CACHE.public_ok) wirePublicBookingForm(a);
     $("#pdDrill").hidden = false;
     document.body.style.overflow = "hidden";
   }
@@ -289,6 +292,166 @@
       } catch (err) {
         var m = (err && err.message) || String(err);
         if (msg) msg.textContent = " gagal: " + m + (/login|permission|akses/i.test(m) ? " (perlu login)" : "");
+      }
+    });
+  }
+
+  /* Public (no-account) booking — shown only when CACHE.public_ok.
+     api_logistics.book_transport_space_public -> returns a Kode Edit. */
+  function publicBookingForm(a) {
+    var courierOk = (a.service_mode || "both") !== "space_only";
+    return (
+      '<details class="rn-pd-edit" open><summary>Pesan ruang muat tanpa akun (warga)</summary>' +
+      '<form class="rn-form" id="pdPublicBookForm">' +
+      '<div class="form-grid">' +
+      '<label>Nama Anda<input name="contact_person" placeholder="Nama lengkap" required></label>' +
+      '<label>No. HP / WhatsApp<input name="contact_phone" placeholder="0812-…" required></label>' +
+      '<label>Muatan<input name="cargo_desc" placeholder="Beras 20 karung / Air mineral" required></label>' +
+      '<label>Berat (kg)<input name="qty_weight_kg" type="number" step="0.01" placeholder="100"></label>' +
+      '<label>Volume (m³)<input name="qty_volume_m3" type="number" step="0.01" placeholder="0.5"></label>' +
+      '<label>Cara antar<select name="delivery_method">' +
+        (courierOk ? '<option value="use_transporter">Dijemput kurir armada</option>' : "") +
+        '<option value="self_deliver">Antar sendiri ke titik jemput</option></select></label>' +
+      '<label>Lokasi barang<input name="pickup_location" placeholder="Rumah / gudang / alamat"></label>' +
+      '<label>Tujuan / dropoff<input name="dropoff_location" placeholder="Posko tujuan"></label>' +
+      '<label>Perkiraan waktu<input name="requested_window" placeholder="Besok pagi"></label>' +
+      "</div>" +
+      '<div class="form-actions"><button class="btn primary" type="submit">Pesan (tanpa akun)</button>' +
+      '<span class="rn-pd-bk-msg" data-pub-msg></span></div>' +
+      '<p class="rn-muted rn-pd-code" data-pub-code hidden></p>' +
+      "</form></details>"
+    );
+  }
+
+  function wirePublicBookingForm(a) {
+    var form = $("#pdPublicBookForm");
+    if (!form) return;
+    var msg = form.querySelector("[data-pub-msg]");
+    var codeBox = form.querySelector("[data-pub-code]");
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var v = function (n) { return form[n] ? String(form[n].value).trim() : ""; };
+      if (msg) msg.textContent = " memesan…";
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_transport_space_public", {
+          transport_space: a.id,
+          contact_person: v("contact_person"),
+          contact_phone: v("contact_phone"),
+          cargo_desc: v("cargo_desc"),
+          qty_weight_kg: Number(form.qty_weight_kg.value || 0),
+          qty_volume_m3: Number(form.qty_volume_m3.value || 0),
+          delivery_method: v("delivery_method") || "self_deliver",
+          pickup_location: v("pickup_location"),
+          dropoff_location: v("dropoff_location"),
+          requested_window: v("requested_window"),
+        }, { method: "POST" });
+        if (msg) msg.textContent = " terkirim ✓";
+        if (codeBox) {
+          codeBox.hidden = false;
+          codeBox.innerHTML =
+            "<b>Simpan kode ini</b> untuk melacak / mengubah booking (lihat panel " +
+            "“Lacak / Ubah Booking Tamu”):<br>Booking ID: <code>" + esc(r.booking) +
+            "</code><br>Kode Edit: <code>" + esc(r.edit_code) + "</code>" +
+            (r.verification_pin ? "<br>PIN untuk posko: <code>" + esc(r.verification_pin) + "</code>" : "") +
+            "<br><small>Kode Edit hanya ditampilkan sekali.</small>";
+        }
+        form.reset();
+        await load();
+      } catch (err) {
+        if (msg) msg.textContent = " gagal: " + ((err && err.message) || String(err));
+      }
+    });
+  }
+
+  /* "Lacak / Ubah Booking Tamu" drawer (page-level, not per-armada). */
+  function wireGuestTrack() {
+    var form = $("#pdGuestTrackForm");
+    if (!form) return;
+    var msg = form.querySelector("[data-gt-msg]");
+    var out = $("#pdGuestTrackResult");
+    var current = null;
+
+    function creds() {
+      return {
+        booking: form.booking.value.trim(),
+        edit_code: form.edit_code.value.trim(),
+        contact_phone: form.contact_phone.value.trim(),
+      };
+    }
+
+    function wireEdit() {
+      var ef = $("#pdGuestEditForm");
+      if (!ef) return;
+      var em = ef.querySelector("[data-ge-msg]");
+      ef.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        em.textContent = " menyimpan…";
+        try {
+          var p = creds();
+          p.cargo_desc = ef.cargo_desc.value.trim();
+          p.qty_weight_kg = Number(ef.qty_weight_kg.value || 0);
+          p.qty_volume_m3 = Number(ef.qty_volume_m3.value || 0);
+          p.pickup_location = ef.pickup_location.value.trim();
+          p.dropoff_location = ef.dropoff_location.value.trim();
+          p.requested_window = ef.requested_window.value.trim();
+          var r = await window.RN_FRAPPE.call(
+            "rescue_net.api_logistics.update_public_transport_booking", p, { method: "POST" });
+          em.textContent = " tersimpan ✓";
+          render(r);
+          await load();
+        } catch (err) { em.textContent = " gagal: " + ((err && err.message) || err); }
+      });
+      var cancelBtn = $("#pdGuestCancelBtn");
+      if (cancelBtn) cancelBtn.addEventListener("click", async function () {
+        if (!window.confirm("Batalkan booking ini?")) return;
+        em.textContent = " membatalkan…";
+        try {
+          var p = creds(); p.cancel = 1;
+          var r = await window.RN_FRAPPE.call(
+            "rescue_net.api_logistics.update_public_transport_booking", p, { method: "POST" });
+          render(r);
+          await load();
+        } catch (err) { em.textContent = " gagal: " + ((err && err.message) || err); }
+      });
+    }
+
+    function render(b) {
+      current = b;
+      out.hidden = false;
+      var editable = b.status === "requested" || b.status === "confirmed";
+      out.innerHTML =
+        '<div class="rn-md-detail">' +
+        '<div class="rn-md-dl"><span>Armada</span><b>' + esc(b.armada) + "</b></div>" +
+        '<div class="rn-md-dl"><span>Status</span><b>' + esc(b.status_label) + "</b></div>" +
+        (b.verification_pin ? '<div class="rn-md-dl"><span>PIN posko</span><b>' + esc(b.verification_pin) + "</b></div>" : "") +
+        "</div>" +
+        (editable
+          ? '<form class="rn-form" id="pdGuestEditForm"><div class="form-grid">' +
+            '<label>Muatan<input name="cargo_desc" value="' + esc(b.cargo_desc) + '"></label>' +
+            '<label>Berat (kg)<input name="qty_weight_kg" type="number" step="0.01" value="' + esc(b.qty_weight_kg || "") + '"></label>' +
+            '<label>Volume (m³)<input name="qty_volume_m3" type="number" step="0.01" value="' + esc(b.qty_volume_m3 || "") + '"></label>' +
+            '<label>Lokasi barang<input name="pickup_location" value="' + esc(b.pickup_location) + '"></label>' +
+            '<label>Tujuan<input name="dropoff_location" value="' + esc(b.dropoff_location) + '"></label>' +
+            '<label>Perkiraan waktu<input name="requested_window" value="' + esc(b.requested_window) + '"></label>' +
+            "</div><div class=\"form-actions\">" +
+            '<button class="btn primary" type="submit">Simpan Perubahan</button>' +
+            '<button class="btn" type="button" id="pdGuestCancelBtn">Batalkan Booking</button>' +
+            '<span class="rn-pd-bk-msg" data-ge-msg></span></div></form>'
+          : '<p class="rn-muted">Booking sudah ' + esc(b.status_label) + " — tidak bisa diubah.</p>");
+      if (editable) wireEdit();
+    }
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      msg.textContent = "mengecek…";
+      try {
+        var b = await window.RN_FRAPPE.call(
+          "rescue_net.api_logistics.get_public_transport_booking", creds());
+        msg.textContent = "";
+        render(b);
+      } catch (err) {
+        msg.textContent = "gagal: " + ((err && err.message) || err);
+        out.hidden = true;
       }
     });
   }
@@ -378,7 +541,8 @@
         "<tr><td><b>" + esc(b.cargo) + "</b><small class=\"rn-muted\">" + esc(b.armada) + "</small></td>" +
         "<td>" + fmt(b.qty_kg) + " kg" + (b.qty_m3 ? " · " + fmt(b.qty_m3) + " m³" : "") + "</td>" +
         "<td>" + esc(b.delivery_label) + "</td>" +
-        "<td>" + esc(b.booker) + (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
+        "<td>" + esc(b.booker) + (b.is_guest ? ' <span class="chip">tamu</span>' : "") +
+          (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
           "<small class=\"rn-muted\">" + tel(b.supplier_contact_phone) + "</small></td>" +
         "<td>" + esc(b.requested_window || b.requested_at || "-") + "</td>" +
         '<td><span class="chip ' + statusChip(b.status) + '">' + esc(b.status_label) + "</span></td>" +
@@ -693,6 +857,7 @@
     }
     wireArmadaForm();
     wireAssignForm();
+    wireGuestTrack();
     load().catch(function (err) {
       console.error("[posko distribusi]", err);
       $("#pdStatus").textContent = "Gagal memuat: " + (err && err.message || err);

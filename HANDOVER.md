@@ -124,7 +124,18 @@ SENDIRI / DITAWARKAN UNTUK UMUM 2.000 kg / SISA 320 kg; Booking Masuk table
 5 rows (2 Menunggu Konfirmasi, 3 Terkonfirmasi) with pemesan + kontak.
 Board totals: terpakai 3.660 kg, tersedia 740 kg, menunggu 2, terkonfirmasi 3.
 
-### Part D-2 — no-login public booking + Kode Edit — IN PROGRESS
+### Part D-2 — no-login public booking + Kode Edit — BUILT (commit `PENDING`), needs deploy + column migrate
+Code done & syntax-checked; **not yet deployed**. BE files to `docker cp`:
+`api_logistics.py`, `api_control_centre.py`,
+`rn_transport_booking/rn_transport_booking.json`; then restart; then the
+user runs `bench --site osiun.localhost execute rescue_net._migrate_tb.run`
+(staged module = `frappe.reload_doctype("RN Transport Booking")` to create
+`submitted_channel` + `edit_code_hash` columns). Board doesn't break pre-
+migrate (`_sf` drops the unknown column; guest bookings are inert until the
+hash column exists). FE `?v=` `ownload-20260908` → `guestbook-20260908`.
+Original plan below.
+
+
 A member of the public with no account can book space / titip barang to a
 transport posko whose `public_participation` is on. Mirrors the guest-aid
 Kode Edit flow ([[rescue-net-blueprint-gaps]], `_guest_code_hash` /

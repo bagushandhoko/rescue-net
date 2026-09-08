@@ -3509,6 +3509,19 @@ def posko_distribusi_board(posko=None, disaster_event=None):
     # relawan; coordinate = pesan slot pada armada posko lain yang terbuka.
     _di_flags = _posko_actor_flags(posko)
 
+    # can a warga with no account book space here? (transport posko opened
+    # public participation and its org privacy allows public detail)
+    public_ok = False
+    if posko:
+        try:
+            from rescue_net.access_policy import public_posko_allowed
+            public_ok = bool(
+                frappe.db.get_value("RN Posko", posko, "public_participation")
+                and public_posko_allowed(posko)
+            )
+        except Exception:
+            public_ok = bool(frappe.db.get_value("RN Posko", posko, "public_participation"))
+
     posko_row = None
     if posko:
         posko_row = frappe.db.get_value(
@@ -3552,7 +3565,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "pickup_location", "dropoff_location", "contact_person",
                 "contact_phone", "verification_pin", "requested_at",
                 "confirmed_at", "delivery_method", "requested_window",
-                "logistic_need", "aid_offer",
+                "logistic_need", "aid_offer", "submitted_channel",
             ]),
             order_by="creation desc", limit_page_length=1000,
         )
@@ -3629,6 +3642,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "delivery_method": b.get("delivery_method") or "use_transporter",
             "delivery_label": _DELIVERY_LABEL.get(b.get("delivery_method"), "Pakai transporter posko"),
             "requested_window": b.get("requested_window") or "",
+            "is_guest": (b.get("submitted_channel") == "guest"),
             "booker": b.booker_name or b.booked_by_type or "-",
             "supplier_contact_person": b.contact_person or "",
             "supplier_contact_phone": b.contact_phone or "",
@@ -3830,6 +3844,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         "logged_in": _di_flags[0],
         "can_manage": _di_flags[1],
         "can_coordinate": _di_flags[2],
+        "public_ok": public_ok,
     }
 
 

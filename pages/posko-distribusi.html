@@ -222,6 +222,25 @@
         </div>
       </form>
     </details>
+
+    <details class="panel rn-input-drawer" id="guestTrackDrawer">
+      <summary>
+        <h3>Lacak / Ubah Booking Tamu</h3>
+        <p>Punya Kode Edit dari pemesanan ruang muat tanpa akun? Cek status, ubah muatan, atau batalkan di sini.</p>
+      </summary>
+      <form class="rn-form" id="pdGuestTrackForm">
+        <div class="form-grid">
+          <label>Booking ID <input name="booking" placeholder="rn-transport-booking-…" required></label>
+          <label>Kode Edit <input name="edit_code" placeholder="8 karakter" required></label>
+          <label>No. HP (opsional) <input name="contact_phone" placeholder="0812-…"></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Cek Booking</button>
+          <span class="form-message" data-gt-msg></span>
+        </div>
+      </form>
+      <div id="pdGuestTrackResult" hidden></div>
+    </details>
   </main>
 </div>
 
@@ -240,7 +259,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260906d"></script>
 <script src="../assets/js/rn-posko-picker.js?v=poskopicker-20260906c"></script>
-<script src="../assets/js/posko-distribusi.js?v=ownload-20260908"></script>
+<script src="../assets/js/posko-distribusi.js?v=guestbook-20260908"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=authpill-20260906"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

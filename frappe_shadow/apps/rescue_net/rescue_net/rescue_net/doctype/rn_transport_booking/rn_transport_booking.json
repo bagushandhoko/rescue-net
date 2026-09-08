@@ -137,6 +137,19 @@
       "fieldtype": "Small Text"
     },
     {
+      "fieldname": "submitted_channel",
+      "label": "Submitted Channel",
+      "fieldtype": "Data",
+      "default": "account",
+      "description": "account = dipesan lewat akun; guest = pemesan tamu tanpa akun, dikelola lewat Kode Edit."
+    },
+    {
+      "fieldname": "edit_code_hash",
+      "label": "Edit Code Hash",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
       "fieldname": "created_by_user",
       "label": "Created By",
       "fieldtype": "Link",

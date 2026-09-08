@@ -4,18 +4,25 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-08 (**Org hierarki + merger + kunci AI org**: `RN
-Organization.parent_organization` + new `RN Org Merge Request` doctype;
-create-org "bagian dari organisasi" selector; Koordinasi Organisasi gains an
-"Organisasi Saya" section (hierarki + kirim/putus permintaan merger + org
-BYOK AI-key form). FE live on save; BE `api_community_cluster.py` + the 2
-doctypes need `docker cp` + **`bench migrate`**. ALSO this session: **QR
-pelacakan logistik** — `api_control_centre.flow_trace` + public
-`pages/lacak-logistik.html` + vendored `qrcode.min.js`, Manajemen Distribusi
-trace codes click-to-QR + printable label (commit `d15fe51`). AND the still-
-pending **WhatsApp-send** commit `88ee9ad`. All three deploy via
-`scripts/deploy-wa-and-flowtrace.sh <site>`. Prev: Posko Distribusi Land
-Rover A–D-2 `0a3ef6c` `0cd03ff` `1fb79ef`)_
+_Last updated: 2026-09-08 (**ALL THREE DEPLOYED to `osiun.localhost` +
+migrated + restarted + smoke-checked** — commits `88ee9ad` `d15fe51`
+`2956329` `b0973ab`:
+(1) **WhatsApp-send** — `RN Notification Setting`/`Log` created, `global`
+simulasi row seeded (this had SILENTLY never deployed in the earlier session
+— see below).
+(2) **QR pelacakan logistik** — `api_control_centre.flow_trace` live +
+`pages/lacak-logistik.html` + vendored `qrcode.min.js`; Manajemen Distribusi
+trace codes are click-to-QR + printable label.
+(3) **Org "satu komando"** — `RN Organization.parent_organization` col +
+`RN Org Merge Request` audit doctype (`attached/detached`); `set_org_parent`
+(no-approval: induk pulls a chapter, or a chapter breaks away — one write);
+create-org "bagian dari organisasi" selector; Koordinasi Organisasi
+"Organisasi Saya" section + org BYOK AI-key form. 0 orgs currently have a
+parent.
+**Deploy gotcha fixed:** `docker cp` of a dir on this NAS lands it
+`d--------- 1024:users` → `frappe` can't read → `bench migrate` silently
+skips it. `scripts/deploy-wa-and-flowtrace.sh` step 2b now chowns/chmods.
+Prev: Posko Distribusi Land Rover A–D-2 `0a3ef6c` `0cd03ff` `1fb79ef`)_
 
 **Still needs a repro:** user's "config for org/koordinasi shows empty now" —
 said "kerjakan semua" without detail; not diagnosed. Check
@@ -23,7 +30,7 @@ said "kerjakan semua" without detail; not diagnosed. Check
 
 ---
 
-## QR pelacakan logistik — flow_trace + lacak-logistik.html (2026-09-08) — FE LIVE, BE NEEDS DEPLOY (no migrate)
+## QR pelacakan logistik — flow_trace + lacak-logistik.html (2026-09-08) — DEPLOYED & VERIFIED (flow_trace live on osiun.localhost)
 
 Owner: "selesaikan … qr code" — a scannable trace on each distribution flow.
 
@@ -55,17 +62,21 @@ Owner: "selesaikan … qr code" — a scannable trace on each distribution flow.
   (davidshimjs, MIT), md5 `517b55d3688ce9ef1085a3d9632bcb97`, loaded before
   `distribusi.js`. Project convention is local vendoring (cf. leaflet); no
   CDN.
-- **Verify:** `node -c` clean (3 JS), `py_compile` clean. NOT deployed / NOT
-  browser-checked (headless Chromium on the NAS still missing
-  `libatk-1.0.so.0`).
-- **Deploy:** `sh scripts/deploy-wa-and-flowtrace.sh <site>` — `docker cp`
-  `api_control_centre.py` (+ the WA-notify files) + `bench migrate` (only the
+- **Verify:** `node -c` + `py_compile` clean. **DEPLOYED 2026-09-08** —
+  `api_control_centre.py` cp'd + restarted on `osiun.localhost`; `flow_trace`
+  curl returns the app JSON `DoesNotExistError` ("Kiriman tidak ditemukan")
+  for a bogus id, not a 500. **Not browser-checked** (headless Chromium on
+  the NAS missing `libatk-1.0.so.0`) — try `pages/lacak-logistik.html?flow=
+  SIM-LR-FLOW-01`.
+- **Deploy (for future changes):** `sh scripts/deploy-wa-and-flowtrace.sh
+  <site>` — `docker cp` `api_control_centre.py` (+ the WA-notify files) +
+  step 2b perms fix + `bench migrate` (only the
   WA doctypes need it; flow_trace alone would just need cp+restart) +
   restart + smoke checks.
 
 ---
 
-## Organisasi — hierarki "satu komando" + kunci AI org di menu Koordinasi (2026-09-08) — DEPLOYED (migrate done); rework NEEDS RE-DEPLOY
+## Organisasi — hierarki "satu komando" + kunci AI org di menu Koordinasi (2026-09-08) — DEPLOYED & MIGRATED (no-approval model, commit `b0973ab`)
 
 Owner: "waktu create bisa memilih untuk jadi bagian existing organisasi …
 bisa meminta existing organisasi untuk bergabung merger … di sini juga ada
@@ -115,16 +126,30 @@ Nothing absorbed/deleted — only `RN Organization.parent_organization`.
   …` the copied paths, then migrate. First deploy hit this for BOTH the WA
   doctypes and the org ones; resolved 2026-09-08, doctypes + column now
   confirmed present, `flow_trace` live, notif `global` row seeded.
-- **Still needs re-deploy:** the no-approval rework above (`set_org_parent`,
-  removed endpoints, `attached/detached` options, FE `?v` bump).
+- **Deployed 2026-09-08** (twice — first the approval model, then the
+  no-approval rework `b0973ab`): `api_community_cluster.py` + doctype cp'd,
+  perms fixed, `bench migrate` ×N, restart. Verified: `parent_organization`
+  col present, `RN Org Merge Request` status options include
+  `attached/detached`, `org_coordination()` returns the new shape with no
+  error, `_org_descendants` runs. **NOT browser-checked** (need a real
+  org-owner login). 0 orgs have a parent set.
 - **Still open:** the "config shows empty now" report — no repro given.
 
 ---
 
-## WhatsApp send — gateway + dispatcher + posko wiring (2026-09-08) — CODE DONE, NEEDS CONTAINER DEPLOY
+## WhatsApp send — gateway + dispatcher + posko wiring (2026-09-08) — DEPLOYED 2026-09-08 (see note)
 
 Owner: "setting rn bisa kirim wa". Before this, `notify_whatsapp_enabled` +
 `notify_whatsapp_numbers` were only *stored* — nothing sent.
+
+> **Deploy note:** commit `88ee9ad` shipped code only; the earlier session's
+> `docker cp` left the doctype dirs unreadable by `frappe` (`d--------- 1024:
+> users`), so `bench migrate` silently skipped them and this was NEVER
+> actually live until 2026-09-08's re-deploy via
+> `scripts/deploy-wa-and-flowtrace.sh` (step 2b chown/chmod). Now:
+> `RN Notification Setting` + `RN Notification Log` exist, `global` simulasi
+> row seeded (`enabled=0`). Real provider send still untested (needs a token
+> + a test from `notifikasi-settings.html`).
 
 **New doctypes** (`rescue_net/doctype/`):
 - `RN Notification Setting` — gateway config, one row per `scope`

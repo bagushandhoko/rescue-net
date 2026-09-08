@@ -67,8 +67,23 @@ left as-is (cross-page concern, matches earlier passes).
   Pemilik/Target Dana/ID Program/Progres %/Dana Terpakai/Jenis Pembaruan;
   "Update Progress Program" → "Pembaruan Progres Program".
 
-Not yet browser-verified (pure text swap, low risk). No `?v=` bumps needed —
-no asset files changed.
+**Follow-up `acf34a0`** — `management-distribusi.html` "Simpan Flow" button +
+3 user-facing `distribusi.js` strings ("Menyimpan flow…", "Distribution Flow
+berhasil disimpan.", "Belum ada distribution flow…") → "alur distribusi".
+`distribusi.js ?v=` bumped `distribusi-20260906` → `distribusi-20260908`
+(only `management-distribusi.html` includes it).
+
+**Browser-verified 2026-09-08** (Playwright `v1.56.1-noble`, 1440×1400,
+`osiun-playwright-check/rn-tidy4-verify.js` → `shots-tidy4/`). All 4 pages
+render, **0 console errors**, **0 English leftovers** from a ~50-string scan
+of `<main>` with every `<details>` force-opened. `management-distribusi` +
+`program-khusus` + `posko-detail` show their create/legacy forms un-gated so
+the translated `<label>`s are confirmed on-screen. Notes: the stale sim SIDs
+meant every case ran effectively as guest (`logged_in_ui:false`);
+`posko-detail-guest` only failed on a fullPage-screenshot timeout (tall page,
+`console_errors:[]`); `program-khusus-guest` logs 2× 403 on resource load —
+pre-existing, documented under commit `349575b` (legacy `api_donor_program.
+context` is login-only), not caused by this text pass.
 
 ---
 

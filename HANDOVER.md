@@ -124,16 +124,19 @@ SENDIRI / DITAWARKAN UNTUK UMUM 2.000 kg / SISA 320 kg; Booking Masuk table
 5 rows (2 Menunggu Konfirmasi, 3 Terkonfirmasi) with pemesan + kontak.
 Board totals: terpakai 3.660 kg, tersedia 740 kg, menunggu 2, terkonfirmasi 3.
 
-### Part D-2 — no-login public booking + Kode Edit — BUILT (commit `PENDING`), needs deploy + column migrate
-Code done & syntax-checked; **not yet deployed**. BE files to `docker cp`:
-`api_logistics.py`, `api_control_centre.py`,
-`rn_transport_booking/rn_transport_booking.json`; then restart; then the
-user runs `bench --site osiun.localhost execute rescue_net._migrate_tb.run`
-(staged module = `frappe.reload_doctype("RN Transport Booking")` to create
-`submitted_channel` + `edit_code_hash` columns). Board doesn't break pre-
-migrate (`_sf` drops the unknown column; guest bookings are inert until the
-hash column exists). FE `?v=` `ownload-20260908` → `guestbook-20260908`.
-Original plan below.
+### Part D-2 — no-login public booking + Kode Edit — BUILT + BE DEPLOYED (commit `1fb79ef`); column migrate pending
+FE live (pushed). BE `docker cp`'d + restarted (ping 200, board unbroken,
+`public_ok:true` for LD3): `api_logistics.py` `6bfbf24f…`,
+`api_control_centre.py` `54f525f0…`, `rn_transport_booking.json`
+`4098edde…`. **Remaining:** user runs
+`sudo docker exec osiun-frappe-backend bench --site osiun.localhost execute
+rescue_net._migrate_tb.run` (staged module =
+`frappe.reload_doctype("RN Transport Booking")` → creates
+`submitted_channel` + `edit_code_hash` columns), then delete
+`apps/rescue_net/rescue_net/_migrate_tb.py` from the container. Until then
+`book_transport_space_public` inserts a booking but the guest hash isn't
+persisted so `_load_guest_booking` rejects it — feature inert, not broken.
+FE `?v=` `ownload-20260908` → `guestbook-20260908`. Original plan below.
 
 
 A member of the public with no account can book space / titip barang to a

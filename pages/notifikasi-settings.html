@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Notifikasi WhatsApp</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=hdrtidy-20260908">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a class="active" href="notifikasi-settings.html">Notifikasi WhatsApp</a>
+      <a href="sync-console.html?event=event-sim-001">Sync Console</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Notifikasi WhatsApp</div>
+      <div>
+        <p class="eyebrow">Gateway · System Manager</p>
+        <h2>Notifikasi WhatsApp</h2>
+        <p class="subtitle">
+          Atur gateway pengirim WhatsApp Rescue-Net. Selama provider masih
+          <b>simulasi</b>, setiap kiriman hanya dicatat di <code>RN Notification Log</code>
+          (status <code>simulated</code>) dan tidak benar-benar keluar.
+        </p>
+        <p class="subtitle" id="nsStatus">Memuat…</p>
+      </div>
+      <div class="status-pill">Token disimpan terenkripsi</div>
+    </header>
+
+    <section class="content-grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Konfigurasi saat ini</h3>
+            <p>Resolusi: posko → organisasi → global → simulasi.</p>
+          </div>
+        </div>
+        <div class="summary-list" id="nsCurrent">
+          <div><span>Status</span><b>belum dimuat</b></div>
+        </div>
+        <div class="form-actions">
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:13px">Scope
+            <input id="nsScope" value="global" placeholder="global | &lt;org id&gt; | &lt;nama posko&gt;">
+          </label>
+          <button class="btn" type="button" id="nsReload">Muat ulang</button>
+        </div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Simpan gateway</h3>
+        <p class="subtitle">Token hanya ditulis kalau kolomnya diisi. Kosongkan untuk menyimpan token lama.</p>
+        <form class="rn-form" id="nsForm">
+          <label>Provider
+            <select name="provider">
+              <option value="simulasi">simulasi (catat saja, tidak kirim)</option>
+              <option value="fonnte">fonnte</option>
+              <option value="wablas">wablas</option>
+              <option value="twilio">twilio</option>
+              <option value="meta_cloud">meta_cloud (WA Business Cloud API)</option>
+            </select>
+          </label>
+          <label style="flex-direction:row;align-items:center;gap:8px">
+            <input type="checkbox" name="enabled" style="width:auto"> Aktifkan pengiriman nyata
+          </label>
+          <label>API Base URL (opsional)
+            <input name="api_base" placeholder="kosong = endpoint default provider">
+          </label>
+          <label>API Token / Key
+            <input name="api_token" type="password" placeholder="tempel token gateway">
+          </label>
+          <label>Sender ID / Nomor
+            <input name="sender_id" placeholder="Twilio: whatsapp:+1... · Meta: phone_number_id · Fonnte/Wablas: kosong">
+          </label>
+          <label>Catatan
+            <input name="note" placeholder="mis. akun Fonnte tim logistik">
+          </label>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan</button>
+          </div>
+        </form>
+      </aside>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Kirim tes</h3>
+          <p>Memakai scope di atas. Hasil tercatat di <code>RN Notification Log</code>.</p>
+        </div>
+      </div>
+      <div class="form-actions">
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:13px">Nomor tujuan
+          <input id="nsTestTo" placeholder="0812xxxxxxx">
+        </label>
+        <button class="btn" type="button" id="nsTestBtn">Kirim tes WhatsApp</button>
+      </div>
+      <p class="subtitle" id="nsTestMsg"></p>
+    </section>
+
+    <section class="panel create-panel">
+      <div class="panel-header">
+        <div>
+          <h3>Cara kerja</h3>
+          <p>Ringkasan alur notifikasi.</p>
+        </div>
+      </div>
+      <div class="event-list">
+        <article class="event-card"><div class="event-main"><div>
+          <h4>Sumber nomor</h4>
+          <p>Notifikasi posko dikirim ke nomor pada panel <b>Pengaturan Posko →
+          Notifikasi WhatsApp</b> (toggle + daftar nomor), bukan ke HP pribadi
+          siapa pun. Pengirimnya adalah gateway yang diatur di halaman ini.</p>
+        </div><div class="chips"><span class="chip neutral">per-posko</span></div></div></article>
+        <article class="event-card"><div class="event-main"><div>
+          <h4>Pemicu otomatis</h4>
+          <p>Saat ini: perubahan status operasional posko. Pemicu lain
+          ditambahkan lewat <code>api_notify.notify_posko(...)</code>.</p>
+        </div><div class="chips"><span class="chip warning">status posko</span></div></div></article>
+        <article class="event-card"><div class="event-main"><div>
+          <h4>Keamanan</h4>
+          <p>Token gateway disimpan sebagai <code>Password</code> terenkripsi
+          Frappe, tidak pernah dikirim balik ke browser (hanya 4 digit terakhir).</p>
+        </div><div class="chips"><span class="chip">owner_only</span></div></div></article>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/notifikasi-settings.js?v=wa-20260908"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>
+<script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
+<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=navgis-20260904"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

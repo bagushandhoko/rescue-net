@@ -127,6 +127,17 @@
         esc(v(p.notify_whatsapp_numbers)) + "</textarea></label>" +
       "</div>" +
 
+      '<div class="rn-ps-grid">' +
+      '<label class="wide">Kirim pesan sekarang ke nomor di atas' +
+        '<textarea id="rnPsBroadcast" placeholder="mis. Beras 50 karung tiba di posko pukul 14.00. Butuh 4 relawan bongkar."></textarea></label>' +
+      '<div class="wide" style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<button type="button" class="rn-ps-cancel" id="rnPsBroadcastBtn">Kirim WhatsApp</button>' +
+        '<button type="button" class="rn-ps-cancel" id="rnPsLogBtn">Lihat log kiriman</button>' +
+        '<span class="rn-ps-msg" id="rnPsWaMsg"></span>' +
+      "</div>" +
+      '<div class="wide" id="rnPsLog" style="grid-column:1/-1;font-size:12px;color:#5b4a3d"></div>' +
+      "</div>" +
+
       '<div class="rn-ps-sec">Data Lain</div>' +
       '<div class="rn-ps-grid">' +
       '<label>Jumlah jiwa dilayani<input type="number" name="rn_beneficiary_count" value="' + esc(v(p.rn_beneficiary_count)) + '"></label>' +
@@ -184,6 +195,47 @@
       } catch (err) {
         msg.textContent = "Gagal: " + ((err && err.message) || err);
       }
+    });
+
+    var bBtn = ov.querySelector("#rnPsBroadcastBtn");
+    if (bBtn) bBtn.addEventListener("click", async function () {
+      var box = ov.querySelector("#rnPsBroadcast");
+      var m = ov.querySelector("#rnPsWaMsg");
+      var text = String(box && box.value || "").trim();
+      if (!text) { m.textContent = "Isi pesan dulu."; return; }
+      m.textContent = "Mengirim…";
+      try {
+        var r = await window.RN_FRAPPE.call(
+          "rescue_net.api_notify.posko_broadcast_whatsapp",
+          { posko: POSKO, message: text }, { method: "POST" });
+        if (r && r.status === "skipped") {
+          m.textContent = "Tidak terkirim: " + (r.reason || "notifikasi nonaktif / tidak ada nomor") +
+            ". Aktifkan toggle & isi nomor, lalu Simpan dulu.";
+        } else {
+          var st = ((r && r.results) || []).map(function (x) { return x.status; }).join(", ");
+          m.textContent = "Terkirim ke " + ((r && r.count) || 0) + " nomor" + (st ? " (" + st + ")" : "") + ".";
+          if (box) box.value = "";
+        }
+      } catch (e) { m.textContent = "Gagal: " + ((e && e.message) || e); }
+    });
+
+    var lBtn = ov.querySelector("#rnPsLogBtn");
+    if (lBtn) lBtn.addEventListener("click", async function () {
+      var wrap = ov.querySelector("#rnPsLog");
+      wrap.textContent = "Memuat…";
+      try {
+        var r = await window.RN_FRAPPE.call(
+          "rescue_net.api_notify.posko_notification_log", { posko: POSKO, limit: 15 });
+        var rows = (r && r.rows) || [];
+        if (!rows.length) { wrap.textContent = "Belum ada kiriman."; return; }
+        wrap.innerHTML = rows.map(function (x) {
+          return '<div style="padding:4px 0;border-top:1px solid rgba(0,0,0,.08)">' +
+            esc(x.sent_at || x.creation || "") + " — " + esc(x.to_number || "") +
+            " · <b>" + esc(x.status) + "</b>" + (x.provider ? " (" + esc(x.provider) + ")" : "") +
+            (x.error ? " · " + esc(x.error) : "") +
+            '<br><span style="color:#7a6a5c">' + esc(String(x.body || "").slice(0, 120)) + "</span></div>";
+        }).join("");
+      } catch (e) { wrap.textContent = "Gagal: " + ((e && e.message) || e); }
     });
 
     document.body.appendChild(ov);

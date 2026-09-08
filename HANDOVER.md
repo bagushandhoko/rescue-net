@@ -19,6 +19,86 @@ posko/warga, no-login path) not started. Prev: Indonesian tidy pass 4 pages
 
 ---
 
+## WhatsApp send — gateway + dispatcher + posko wiring (2026-09-08) — CODE DONE, NEEDS CONTAINER DEPLOY
+
+Owner: "setting rn bisa kirim wa". Before this, `notify_whatsapp_enabled` +
+`notify_whatsapp_numbers` were only *stored* — nothing sent.
+
+**New doctypes** (`rescue_net/doctype/`):
+- `RN Notification Setting` — gateway config, one row per `scope`
+  (`global` | `<organization id>` | `<posko name>`). Fields: `provider`
+  (Select `simulasi|fonnte|wablas|twilio|meta_cloud`), `enabled` (Check),
+  `api_base`, `api_token` (Password), `api_token_last4` (RO), `sender_id`,
+  `note`, `status`. `autoname: hash`, `scope` unique.
+- `RN Notification Log` — outbox; every `send_whatsapp()` writes one row
+  (`status ∈ queued|sent|failed|simulated`, `to_number`, `body`,
+  `context_type/id`, `event_key`, `provider`, `provider_message_id`, `error`,
+  `sent_at`). `autoname: hash`.
+
+**New module `api_notify.py`**:
+- `_norm_msisdn` (`0812…`→`62812…`), `_split_numbers` (comma/newline/`;`/`/`).
+- `_resolve_setting(scope, posko)` — walks posko → its org → scope → global →
+  built-in `simulasi`.
+- `send_whatsapp(to, body, *, context_type, context_id, event_key, scope,
+  posko)` — **never raises**; always logs. `live = provider has adapter AND
+  enabled AND token` else `status=simulated` (logged, not sent).
+- Provider adapters: Fonnte, Wablas, Twilio (`api_token="ACxxx:auth"`,
+  `sender_id="whatsapp:+…"`), Meta Cloud (`sender_id=phone_number_id`). Each
+  catches its own network errors → `(ok, msg_id, err)`.
+- `notify_posko(posko, body, event_key)` — reads the posko notify fields,
+  fans out; `status=skipped` when disabled / no numbers.
+- Whitelisted: `get_notification_setting` / `save_notification_setting` /
+  `send_test_whatsapp` (**System Manager only**); `posko_broadcast_whatsapp`
+  / `posko_notification_log` (reuse `_can_edit_posko` gate).
+
+**Wiring** — `api_community_cluster.update_posko`: captures `old_status`, and
+after save, on an `operational_status` change calls
+`api_notify.notify_posko(..., "posko_status_change")` in a try/except
+(`frappe.log_error` on failure). This is the only automatic trigger so far.
+
+**Seed** — `setup/notification_defaults.install_defaults` creates the
+`global` row (`provider=simulasi`, `enabled=0`) if missing; added to
+`hooks.after_install` + `after_migrate` (idempotent, never overwrites).
+
+**Frontend**:
+- NEW `pages/notifikasi-settings.html` + `assets/js/notifikasi-settings.js`
+  (`?v=wa-20260908`) — System-Manager gateway config: current-config panel,
+  save form (token only written when field non-empty), "Kirim tes" button,
+  scope input. Linked from `ai-settings.html` sidebar.
+- `rn-posko-settings.js` (`?v=wa-20260908` on the 6 posko pages) — the
+  "Notifikasi WhatsApp" modal section gains **Kirim pesan sekarang**
+  (textarea → `posko_broadcast_whatsapp`) and **Lihat log kiriman**
+  (→ `posko_notification_log`).
+
+**Verify** — `python -m py_compile` clean on all BE files, JSON valid,
+`node -c` clean on both JS files. **NOT deployed, NOT run, NOT browser-checked
+this session.**
+
+### DEPLOY (user runs — container `osiun-frappe-backend`)
+```
+# from repo root
+C=osiun-frappe-backend
+A=/volume1/web/rescue-net/frappe_shadow/apps/rescue_net/rescue_net
+docker cp $A/api_notify.py                $C:/home/frappe/frappe-bench/apps/rescue_net/rescue_net/api_notify.py
+docker cp $A/api_community_cluster.py     $C:/home/frappe/frappe-bench/apps/rescue_net/rescue_net/api_community_cluster.py
+docker cp $A/hooks.py                     $C:/home/frappe/frappe-bench/apps/rescue_net/rescue_net/hooks.py
+docker cp $A/setup/notification_defaults.py $C:/home/frappe/frappe-bench/apps/rescue_net/rescue_net/setup/notification_defaults.py
+docker cp $A/rescue_net/doctype/rn_notification_setting $C:/home/frappe/frappe-bench/apps/rescue_net/rescue_net/rescue_net/doctype/
+docker cp $A/rescue_net/doctype/rn_notification_log     $C:/home/frappe/frappe-bench/apps/rescue_net/rescue_net/rescue_net/doctype/
+docker exec $C bash -lc "cd /home/frappe/frappe-bench && bench --site <site> migrate"
+#   (migrate creates both doctypes + runs after_migrate seed). If you prefer no full migrate:
+#   bench --site <site> execute frappe.reload_doctype --args \"['RN Notification Setting']\"
+#   bench --site <site> execute frappe.reload_doctype --args \"['RN Notification Log']\"
+#   bench --site <site> execute rescue_net.setup.notification_defaults.install_defaults
+docker restart $C
+```
+Then: open `pages/notifikasi-settings.html` as System Manager → leave provider
+`simulasi` → "Kirim tes" should return `status: simulated` + a row in
+`RN Notification Log`. For real sends: pick a provider, paste token, tick
+Aktifkan, Simpan, test again.
+
+---
+
 ## Public header — Logout + ⚙ Pengaturan alignment (2026-09-08) — DONE (frontend, live on save)
 
 Owner: "nggak rapi pengaturan menu2 diatas, log out dan pengaturan."

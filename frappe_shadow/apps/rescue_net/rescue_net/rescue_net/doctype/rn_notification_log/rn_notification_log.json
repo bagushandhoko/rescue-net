@@ -1,0 +1,109 @@
+{
+  "doctype": "DocType",
+  "name": "RN Notification Log",
+  "module": "Rescue Net",
+  "autoname": "hash",
+  "track_changes": 0,
+  "field_order": [
+    "channel",
+    "to_number",
+    "body",
+    "context_type",
+    "context_id",
+    "event_key",
+    "scope",
+    "provider",
+    "status",
+    "provider_message_id",
+    "error",
+    "sent_at",
+    "created_by_user_id"
+  ],
+  "fields": [
+    {
+      "fieldname": "channel",
+      "label": "Channel",
+      "fieldtype": "Data",
+      "default": "whatsapp",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "to_number",
+      "label": "To",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "body",
+      "label": "Body",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "context_type",
+      "label": "Context Type",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "context_id",
+      "label": "Context ID",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "event_key",
+      "label": "Event Key",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "scope",
+      "label": "Scope",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "provider",
+      "label": "Provider",
+      "fieldtype": "Data",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "queued\nsent\nfailed\nsimulated",
+      "default": "queued",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "provider_message_id",
+      "label": "Provider Message ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "error",
+      "label": "Error",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "sent_at",
+      "label": "Sent At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "created_by_user_id",
+      "label": "Created By",
+      "fieldtype": "Data",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

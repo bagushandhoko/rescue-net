@@ -435,6 +435,8 @@ def update_posko(
     if not _can_edit_posko(actor, doc):
         frappe.throw("Akses edit posko ditolak", frappe.PermissionError)
 
+    old_status = doc.operational_status
+
     for field, value in (
         ("title", title), ("posko_type", posko_type), ("address", address),
         ("operational_status", operational_status),
@@ -469,6 +471,21 @@ def update_posko(
         doc.active_until = active_until or None
 
     doc.save(ignore_permissions=True)
+
+    # WhatsApp notify on an operational-status change (best-effort; a gateway
+    # that is not configured just logs a 'simulated' row).
+    if operational_status and operational_status != old_status:
+        try:
+            from rescue_net import api_notify
+
+            api_notify.notify_posko(
+                doc.name,
+                "Status posko %s: %s -> %s."
+                % (doc.title or doc.name, old_status or "-", operational_status),
+                "posko_status_change",
+            )
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), "notify_posko status change")
 
     return {"posko": doc.name, "modified": doc.modified}
 

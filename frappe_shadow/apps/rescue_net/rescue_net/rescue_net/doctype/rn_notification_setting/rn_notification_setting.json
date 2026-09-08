@@ -1,0 +1,112 @@
+{
+  "doctype": "DocType",
+  "name": "RN Notification Setting",
+  "module": "Rescue Net",
+  "custom": 0,
+  "autoname": "hash",
+  "track_changes": 1,
+  "field_order": [
+    "scope",
+    "channel",
+    "provider",
+    "enabled",
+    "api_base",
+    "api_token",
+    "api_token_last4",
+    "sender_id",
+    "note",
+    "status",
+    "created_by_user_id",
+    "updated_by_user_id"
+  ],
+  "fields": [
+    {
+      "fieldname": "scope",
+      "label": "Scope",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1,
+      "description": "global | <organization id> | <posko name>"
+    },
+    {
+      "fieldname": "channel",
+      "label": "Channel",
+      "fieldtype": "Data",
+      "default": "whatsapp"
+    },
+    {
+      "fieldname": "provider",
+      "label": "Provider",
+      "fieldtype": "Select",
+      "options": "simulasi\nfonnte\nwablas\ntwilio\nmeta_cloud",
+      "default": "simulasi",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "enabled",
+      "label": "Enabled",
+      "fieldtype": "Check",
+      "default": 0,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "api_base",
+      "label": "API Base URL",
+      "fieldtype": "Data",
+      "description": "Blank = provider default endpoint"
+    },
+    {
+      "fieldname": "api_token",
+      "label": "API Token / Key",
+      "fieldtype": "Password",
+      "description": "Twilio: 'ACxxxx:auth_token'. Fonnte/Wablas: device token. Meta: permanent access token."
+    },
+    {
+      "fieldname": "api_token_last4",
+      "label": "Token Last 4",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "sender_id",
+      "label": "Sender ID / Number",
+      "fieldtype": "Data",
+      "description": "Twilio: 'whatsapp:+14155238886'. Meta: phone_number_id. Fonnte/Wablas: leave blank."
+    },
+    {
+      "fieldname": "note",
+      "label": "Note",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "active\ndeleted",
+      "default": "active"
+    },
+    {
+      "fieldname": "created_by_user_id",
+      "label": "Created By",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "updated_by_user_id",
+      "label": "Updated By",
+      "fieldtype": "Data",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

@@ -4,15 +4,15 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-08 (**Posko Distribusi — Land Rover follow-up A–D**:
-A maps-link, B seed+hint, C muatan-sendiri model, D-1 pemesan-atas-nama —
-all DONE, live, browser-verified, seed executed (commits `0a3ef6c` `0cd03ff`
-… `d380f68`). **D-2 (no-login public booking + Kode Edit) — IN PROGRESS**,
-see its section below. Older: A+B first landed as `0a3ef6c` — posko coords
-in `posko_distribusi_board`, `#pdStatus` + armada-drill location rows link to
-Google Maps, 3-way login hint. **Note:** seeding needs the user to run
-`docker exec … bench` (classifier denies it + `allow_guest` endpoint writes
-for this session); script was staged at container `/tmp/seed_lr_
+_Last updated: 2026-09-08 (**Posko Distribusi — Land Rover follow-up A–D-2 ALL
+DONE**: A maps-link, B seed+hint, C muatan-sendiri model, D-1 pemesan-atas-
+nama, D-2 no-login public booking + Kode Edit — all live, BE deployed, seed +
+column migrates run, browser + curl verified (commits `0a3ef6c` `0cd03ff`
+`1fb79ef` + docs). **Note:** DB writes (seed / `reload_doctype`) need the
+user to run `docker exec … bench execute <module>` — classifier denies it +
+`allow_guest` endpoint file writes for this session; the modules were
+`docker cp`'d then deleted. Script had also been staged at
+`/tmp/seed_lr_
 bookings.py`, user must run it. Parts C (own-cargo model) + D (booked_by_type
 posko/warga, no-login path) not started. Prev: Indonesian tidy pass 4 pages
 `a3eb7d3`)_
@@ -124,19 +124,32 @@ SENDIRI / DITAWARKAN UNTUK UMUM 2.000 kg / SISA 320 kg; Booking Masuk table
 5 rows (2 Menunggu Konfirmasi, 3 Terkonfirmasi) with pemesan + kontak.
 Board totals: terpakai 3.660 kg, tersedia 740 kg, menunggu 2, terkonfirmasi 3.
 
-### Part D-2 — no-login public booking + Kode Edit — BUILT + BE DEPLOYED (commit `1fb79ef`); column migrate pending
-FE live (pushed). BE `docker cp`'d + restarted (ping 200, board unbroken,
-`public_ok:true` for LD3): `api_logistics.py` `6bfbf24f…`,
-`api_control_centre.py` `54f525f0…`, `rn_transport_booking.json`
-`4098edde…`. **Remaining:** user runs
-`sudo docker exec osiun-frappe-backend bench --site osiun.localhost execute
-rescue_net._migrate_tb.run` (staged module =
-`frappe.reload_doctype("RN Transport Booking")` → creates
-`submitted_channel` + `edit_code_hash` columns), then delete
-`apps/rescue_net/rescue_net/_migrate_tb.py` from the container. Until then
-`book_transport_space_public` inserts a booking but the guest hash isn't
-persisted so `_load_guest_booking` rejects it — feature inert, not broken.
-FE `?v=` `ownload-20260908` → `guestbook-20260908`. Original plan below.
+### Part D-2 — no-login public booking + Kode Edit — DONE, DEPLOYED, VERIFIED (commit `1fb79ef`)
+FE live. BE `docker cp`'d + restarted: `api_logistics.py` `6bfbf24f…`,
+`api_control_centre.py` `54f525f0…`, `rn_transport_booking.json` `4098edde…`.
+Column migrate **run** (`rescue_net._migrate_tb.run` →
+`frappe.reload_doctype`): `submitted_channel` + `edit_code_hash` columns
+confirmed present; `_migrate_tb.py` deleted from the container.
+FE `?v=` `ownload-20260908` → `guestbook-20260908`.
+
+**Backend e2e (curl, no auth)** — `book_transport_space_public` on
+`SIM-ARMADA-LROVER-1` (open policy) → `confirmed`, returned
+`edit_code` `QNVMVNW3`; `get_public_transport_booking` (correct code) → full
+view; wrong code → "Booking ID atau Kode Edit salah."; wrong phone →
+"Nomor HP tidak cocok dengan booking ini."; `update_public_transport_booking`
+→ cargo/qty changed; `cancel=1` → `cancelled`. Capacity gate fires (both LD3
+armada are m³-full from the seed — a weight-only booking went through).
+_Leftover sim row: 1 `cancelled` guest booking
+`rn-transport-booking-e2b2d243d8657e63f24f` ("Beras 8 karung (diubah tamu)",
+Budi Santoso) — harmless test data; DB delete is classifier-blocked._
+
+**Browser (Playwright, guest, `osiun-playwright-check/rn-pd-d2.js`)** — 0
+console errors; armada drill shows the "Pesan ruang muat tanpa akun (warga)"
+form (9 fields); "Lacak / Ubah Booking Tamu" drawer resolves a code and shows
+"Booking sudah Dibatalkan — tidak bisa diubah" for the cancelled row; the
+Booking Masuk table shows the "tamu" chip.
+
+**All of A–D-2 complete.** Original D-2 plan retained below for reference.
 
 
 A member of the public with no account can book space / titip barang to a

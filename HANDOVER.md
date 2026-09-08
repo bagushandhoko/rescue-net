@@ -151,6 +151,24 @@ Booking Masuk table shows the "tamu" chip.
 
 **All of A–D-2 complete.** Original D-2 plan retained below for reference.
 
+### Full E2E (2026-09-08) — PASSED
+**Guest browser flow** (`osiun-playwright-check/rn-pd-e2e.js`, 7 steps, 0
+console errors): board maps-link (`maps?q=4.2194,96.2512`) · KPI hint
+"muatan sendiri + booking" · Konvoi drill shows "Muatan sendiri" 400 kg +
+"Ditawarkan untuk umum" 2.000 kg + location rows as Maps links · guest sees
+the public booking form (no login note) · submit → Booking ID + Kode Edit
+shown · track drawer resolves it (status Terkonfirmasi) · edit cargo+qty →
+server re-render confirms · row appears in Booking Masuk with the "tamu" chip
+· cancel via drawer.
+**Manager side** (`bench execute` as Administrator): guest booking on the
+`pin_verify` armada → `requested` + PIN; wrong PIN → "PIN verifikasi salah.";
+correct PIN → `confirmed`; `reject_transport_booking` → `rejected`. (The
+bench run errored on a cosmetic post-assert line so its transaction rolled
+back — nothing persisted, assertions had already passed.)
+**Cleanup**: all E2E test bookings deleted, every `_*.py` helper removed from
+the container, backend restarted. Board back to the seeded baseline (5 inbox
+rows, 2 menunggu / 3 terkonfirmasi, capacity model intact).
+
 
 A member of the public with no account can book space / titip barang to a
 transport posko whose `public_participation` is on. Mirrors the guest-aid

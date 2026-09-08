@@ -4,14 +4,15 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-08 (**Posko Distribusi — Land Rover follow-up, Part A+B**:
-lokasi → Google Maps link (posko coords now in `posko_distribusi_board`;
-`#pdStatus` + armada-drill location rows link out), booking hint made 3-way +
-armada-drill note explaining why no "pesan slot" form. FE `0a3ef6c` pushed &
-live; BE `api_control_centre.py` `docker cp`'d into `osiun-frappe-backend` +
-restarted (ping 200, `posko_info` returns `latitude/longitude`). Browser-
-verified. **Blocked:** seeding example external bookings — classifier denies
-`docker exec … bench console`; script staged at container `/tmp/seed_lr_
+_Last updated: 2026-09-08 (**Posko Distribusi — Land Rover follow-up A–D**:
+A maps-link, B seed+hint, C muatan-sendiri model, D-1 pemesan-atas-nama —
+all DONE, live, browser-verified, seed executed (commits `0a3ef6c` `0cd03ff`
+… `d380f68`). **D-2 (no-login public booking + Kode Edit) — IN PROGRESS**,
+see its section below. Older: A+B first landed as `0a3ef6c` — posko coords
+in `posko_distribusi_board`, `#pdStatus` + armada-drill location rows link to
+Google Maps, 3-way login hint. **Note:** seeding needs the user to run
+`docker exec … bench` (classifier denies it + `allow_guest` endpoint writes
+for this session); script was staged at container `/tmp/seed_lr_
 bookings.py`, user must run it. Parts C (own-cargo model) + D (booked_by_type
 posko/warga, no-login path) not started. Prev: Indonesian tidy pass 4 pages
 `a3eb7d3`)_
@@ -123,15 +124,52 @@ SENDIRI / DITAWARKAN UNTUK UMUM 2.000 kg / SISA 320 kg; Booking Masuk table
 5 rows (2 Menunggu Konfirmasi, 3 Terkonfirmasi) with pemesan + kontak.
 Board totals: terpakai 3.660 kg, tersedia 740 kg, menunggu 2, terkonfirmasi 3.
 
-### Part D-2 — no-login public booking (NOT started)
-A member of the public with no account should be able to book space / send
-goods to a transport posko. Plan: `@frappe.whitelist(allow_guest=True)`
-`book_transport_space_public(...)` (rate-limited, captcha-less but requires
-name + phone), returns a **Kode Edit** like the guest-aid flow
-([[rescue-net-blueprint-gaps]]); a public "lacak/ubah booking" view keyed by
-that code; the Posko Distribusi inbox already shows `booked_by_type` so guest
-rows just need a "tamu" badge. Gate: only when the transport posko's
-`public_participation` is on. Not yet built.
+### Part D-2 — no-login public booking + Kode Edit — IN PROGRESS
+A member of the public with no account can book space / titip barang to a
+transport posko whose `public_participation` is on. Mirrors the guest-aid
+Kode Edit flow ([[rescue-net-blueprint-gaps]], `_guest_code_hash` /
+`submit_guest_aid_offer_multi` in `api_logistics.py` ~L2245-2430).
+
+**Doctype** — `RN Transport Booking` +2 fields: `submitted_channel`
+(Data, default `account`) and `edit_code_hash` (Data, read_only). Needs
+`frappe.reload_doctype` (same migration route as Part C's seed).
+
+**Backend** (`api_logistics.py`, all `allow_guest=True`):
+- `_guest_booking_code_hash(code)` — sha256 `"rn-guest-transport-booking:"` +
+  code.
+- `book_transport_space_public(transport_space, contact_person,
+  contact_phone, cargo_desc, qty_weight_kg, qty_volume_m3, pickup_location,
+  dropoff_location, requested_window, delivery_method="self_deliver")` —
+  gate = `public_participation` ∧ `public_posko_allowed(coordination_posko)`;
+  requires name + ≥7-digit phone; same capacity check + PIN logic as
+  `book_transport_space`; `booked_by_type="individu"`,
+  `booker_name = name + " (tamu)"`, `submitted_channel="guest"`,
+  `edit_code_hash` set. Returns `{booking, status, verification_pin,
+  edit_code}` (code shown once).
+- `_load_guest_booking(booking, edit_code, contact_phone=None)` — channel +
+  hash (+ optional phone) check.
+- `get_public_transport_booking(booking, edit_code, contact_phone=None)`.
+- `update_public_transport_booking(booking, edit_code, contact_phone=None,
+  …fields…, cancel=None)` — edit while `requested`/`confirmed`, or cancel;
+  capacity re-check adding back this row's current hold.
+
+**Frontend** (`posko-distribusi.js` + `posko-distribusi.html`):
+- board `posko_distribusi_board` returns `public_ok` (transport posko
+  `public_participation`).
+- armada drill: when `!can_coordinate ∧ !can_manage ∧ public_ok` → render a
+  **public booking form** (name, phone, cargo, kg/m³, cara antar, lokasi,
+  dropoff, waktu) instead of the "login dulu" note; on success show Booking
+  ID + Kode Edit + PIN with "simpan kode ini".
+- new "Lacak / ubah booking tamu" drawer: Booking ID + Kode Edit (+ phone) →
+  `get_public_transport_booking` → detail + edit fields + "Simpan" /
+  "Batalkan".
+- inbox rows get an `is_guest` "tamu" chip (`submitted_channel` added to the
+  board's booking `_sf` list).
+
+Deploy = `docker cp` (`api_logistics.py`, `rn_transport_booking.json`,
+`api_control_centre.py`) + restart + a one-liner
+`bench execute … reload_doctype`-style step (user runs it, classifier blocks
+`bench` for the session).
 
 ---
 

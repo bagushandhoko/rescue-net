@@ -30,6 +30,36 @@ said "kerjakan semua" without detail; not diagnosed. Check
 
 ---
 
+## Form fixes — DB-reference dropdowns + GPS picker (2026-09-08) — FE LIVE (no deploy)
+
+Owner: "pilihan bencana belum pull-down menu dari database bencana … lokasi
+GPS kasih pilihan lokasi saat ini / maps / manual … pilihan input yang ke
+existing database, ya jadikan drop down."
+
+- **Event Bencana → `<select>`** from `rescue_net.api_ai.public_active_
+  disasters` (guest, already live): `registrasi-posko.html` (`disaster_event`,
+  `?v` registrasi-posko.js `geopick-20260908`), `organisasi-posko.html`
+  "Tambah Posko" (`disaster_event_id`, `?v` org-posko.js `eventdd-20260908`),
+  `management-distribusi.html` "Buat Alur Distribusi" (`disaster_event_id`,
+  `?v` distribusi.js `eventdd-20260908`). Option `value` = `ev.id` (may carry
+  the `disaster_events:` prefix — `resolve_disaster_event` handles it either
+  way). Pre-selects the URL `?event=`; adds it as a "(dari tautan)" option if
+  not in the active list; plain fallback option if the API is down. Helpers:
+  `populateDisasterEvents()` / `fillDisasterEventSelect()` /
+  `fillFlowDisasterEvents()`.
+- **Lokasi GPS (registrasi-posko)** — manual "lat, lng" input kept, plus
+  "📍 Lokasi saat ini" (`navigator.geolocation.getCurrentPosition`) and
+  "🗺️ Pilih di peta" (vendored Leaflet — `assets/vendor/leaflet/` css+js
+  added to the page; click or drag a CSS `divIcon` marker → fills the input;
+  no marker-image dependency). Map lazy-inits on first open +
+  `invalidateSize()`; the map button hides itself if `L` is undefined.
+- **Not converted** (needs per-event filtered pickers — separate task):
+  management-distribusi create-flow `need_id` / `aid_offer_id` /
+  `transport_space_id` / `destination_node_id`.
+- FE only, `node -c` clean. Not browser-checked. Commits `03cf04d` `aa7ca5b`.
+
+---
+
 ## QR pelacakan logistik — flow_trace + lacak-logistik.html (2026-09-08) — DEPLOYED & VERIFIED (flow_trace live on osiun.localhost)
 
 Owner: "selesaikan … qr code" — a scannable trace on each distribution flow.

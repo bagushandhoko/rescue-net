@@ -2915,10 +2915,10 @@ html.rn-external-access body:not(.mockup-viewer) .main {
 /* Global public header shown above operational pages. */
 .rn-public-header {
   min-height: 56px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px 18px;
+  gap: 6px 16px;
   padding: 0 24px;
   background: #fffaf6;
   border-bottom: 1px solid rgba(104,64,45,.10);
@@ -2926,6 +2926,22 @@ html.rn-external-access body:not(.mockup-viewer) .main {
   top: 0;
   z-index: 40;
 }
+
+/* Right-side cluster: event picker + auth (name / Login / Logout) + posko ⚙.
+   One flex box so the items never wrap out of alignment, and `order` keeps a
+   stable left→right sequence no matter which script injects its item first. */
+.rn-public-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  margin-left: auto;
+}
+.rn-public-actions > .rn-event-picker    { order: 1; }
+.rn-public-actions > .rn-public-user     { order: 2; }
+.rn-public-actions > #rnPoskoSettingsBtn { order: 3; }
+.rn-public-actions > .rn-public-login    { order: 4; }
+.rn-public-actions > .rn-public-logout   { order: 5; }
 
 .rn-public-brand {
   display: inline-flex;
@@ -2956,6 +2972,7 @@ html.rn-external-access body:not(.mockup-viewer) .main {
   align-items: center;
   gap: 0;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .rn-public-links a {
@@ -3107,8 +3124,8 @@ body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
 @media (max-width: 900px) {
   .rn-public-header {
     min-height: 64px;
-    grid-template-columns: auto 1fr auto;
     padding: 7px 20px;
+    row-gap: 8px;
   }
 
   .rn-public-brand img {
@@ -3118,13 +3135,20 @@ body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
 
   .rn-public-toggle {
     display: block;
-    grid-column: 3;
-    grid-row: 1;
+    order: 1;
+    margin-left: auto;
+  }
+
+  /* auth cluster drops to its own full-width row under the brand */
+  .rn-public-actions {
+    order: 5;
+    flex-basis: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
   }
 
   .rn-event-picker {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    width: 100%;
   }
 
   .rn-event-picker label {
@@ -3138,11 +3162,11 @@ body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
 
   .rn-public-links {
     display: none;
+    flex-basis: 100%;
   }
 
   .rn-public-header.is-open .rn-public-links {
-    grid-column: 1 / -1;
-    grid-row: 3;
+    order: 10;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
@@ -3159,18 +3183,6 @@ body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {
     background: rgba(255,255,255,.70);
     text-align: center;
     font-size: 12px;
-  }
-
-  .rn-public-login {
-    display: none;
-    grid-column: 1 / -1;
-    grid-row: 4;
-    text-align: center;
-    margin-top: 8px;
-  }
-
-  .rn-public-header.is-open .rn-public-login {
-    display: block;
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .sidebar {

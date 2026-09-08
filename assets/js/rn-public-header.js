@@ -93,8 +93,8 @@
       </label>
     `;
 
-    const toggle = header.querySelector(".rn-public-toggle");
-    header.insertBefore(wrap, toggle);
+    const actions = header.querySelector(".rn-public-actions") || header;
+    actions.appendChild(wrap);
 
     const select = wrap.querySelector("select");
 
@@ -151,13 +151,13 @@
 
   // Login pill by default; after login → "👤 <nama>" + a Logout link.
   async function buildAuthArea(header) {
-    const toggle = header.querySelector(".rn-public-toggle");
+    const actions = header.querySelector(".rn-public-actions") || header;
 
     const loginEl = document.createElement("a");
     loginEl.className = LOGIN_LINK.className;
     loginEl.href = LOGIN_LINK.href;
     loginEl.textContent = LOGIN_LINK.label;
-    header.insertBefore(loginEl, toggle);
+    actions.appendChild(loginEl);
 
     let sess = null;
     try {
@@ -192,7 +192,7 @@
     });
 
     loginEl.replaceWith(userEl);
-    header.insertBefore(logoutEl, toggle);
+    actions.appendChild(logoutEl);
   }
 
   function buildHeader() {
@@ -212,6 +212,7 @@
       <nav class="rn-public-links" aria-label="Rescue-Net public navigation">
         ${links.map(link => `<a class="${link.className || ""}" href="${link.href}">${link.label}</a>`).join("")}
       </nav>
+      <div class="rn-public-actions"></div>
       <button class="rn-public-toggle" type="button" aria-label="Buka menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>

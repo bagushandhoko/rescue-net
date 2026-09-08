@@ -194,29 +194,27 @@
   function mountButton(p) {
     if (document.getElementById("rnPoskoSettingsBtn")) return;
     styleOnce();
-    // sits in the public header, right beside the Logout link
+    // Lives in the public header's right-side action cluster. CSS `order`
+    // (see .rn-public-actions in style.css) keeps it just before Logout
+    // regardless of which script's item lands in the DOM first.
     var btn = el('<a href="#" id="rnPoskoSettingsBtn" class="rn-public-login" ' +
       'title="Ubah data posko ini">⚙ Pengaturan</a>');
     btn.addEventListener("click", function (e) { e.preventDefault(); openModal(p); });
 
     var tries = 0;
     (function place() {
-      var hdr = document.querySelector(".rn-public-header");
-      var logout = hdr && hdr.querySelector(".rn-public-logout");
-      if (logout) { logout.parentNode.insertBefore(btn, logout); return; }
+      if (document.getElementById("rnPoskoSettingsBtn")) return;
+      var actions = document.querySelector(".rn-public-header .rn-public-actions");
+      if (actions) { actions.appendChild(btn); return; }
       if (++tries <= 24) { setTimeout(place, 250); return; }
-      // no Logout showed up (header missing, or auth pill not rendered) —
-      // fall back to the page's own topbar so the button is still reachable.
+      // no public header on this page — fall back to the page's own topbar
       btn.classList.add("rn-ps-btn");
       var host =
-        (hdr && hdr.querySelector(".rn-public-toggle") && hdr) ||
         document.querySelector("header.topbar .rn-logistik-controls") ||
         document.querySelector("header.topbar") ||
         document.querySelector(".topbar") ||
         document.querySelector("main.main") || document.body;
-      if (host.classList && host.classList.contains("rn-public-header")) {
-        host.insertBefore(btn, host.querySelector(".rn-public-toggle"));
-      } else if (host.classList && host.classList.contains("main")) {
+      if (host.classList && host.classList.contains("main")) {
         btn.style.margin = "8px 0"; host.insertBefore(btn, host.firstChild);
       } else {
         host.appendChild(btn);

@@ -19,6 +19,42 @@ posko/warga, no-login path) not started. Prev: Indonesian tidy pass 4 pages
 
 ---
 
+## Public header — Logout + ⚙ Pengaturan alignment (2026-09-08) — DONE (frontend, live on save)
+
+Owner: "nggak rapi pengaturan menu2 diatas, log out dan pengaturan."
+
+**Cause** — `.rn-public-header` was a fixed 5-column CSS grid
+(`auto minmax(0,1fr) auto auto auto`). When logged-in on a posko page the
+children after the nav were 5 (event-picker, 👤 name, ⚙ Pengaturan, Logout,
+hamburger) for only 3 `auto` slots → the extras wrapped to an implicit second
+row, misaligned. `⚙ Pengaturan` was also injected async by
+`rn-posko-settings.js` polling ~6 s for the Logout link, so its position was
+timing-dependent (fell back to the page topbar when it missed).
+
+**Fix** (frontend only):
+- `rn-public-header.js` — header template now carries an empty
+  `<div class="rn-public-actions">`; `buildEventPicker` + `buildAuthArea`
+  append their items into it instead of `header.insertBefore(x, toggle)`.
+- `rn-posko-settings.js` `mountButton` — appends `#rnPoskoSettingsBtn` into
+  `.rn-public-actions` (short poll for the container only; topbar fallback
+  kept for pages with no public header). No more Logout polling.
+- `style.css` + `rn-public-header-standalone.css` — `.rn-public-header`
+  grid → `flex; flex-wrap:wrap`; `.rn-public-links{flex:1 1 auto}`; new
+  `.rn-public-actions{display:flex;margin-left:auto;gap:8px 10px}` with
+  `order:` on children (picker 1 · name 2 · ⚙ 3 · Login 4 · Logout 5) so DOM
+  insertion timing no longer affects visual order. `@media(max-width:900px)`
+  reworked off grid-column/grid-row onto flex (`.rn-public-actions` drops to
+  its own full-width row under the brand).
+- `?v=` bumped to `hdrtidy-20260908` on all 76 `rn-public-header.js` refs,
+  `style.css`, `rn-posko-settings.js`, and war-room's standalone header CSS.
+
+**Verify** — CSS braces balanced, `node -c` clean on both JS files, DOM/order
+trace by hand. **No live browser check this session** (headless Chromium on
+the NAS is missing `libatk-1.0.so.0`); needs a real logged-in posko-page
+look on deploy.
+
+---
+
 ## Posko Distribusi — Land Rover follow-up (2026-09-08, in flight)
 
 User ask: (1) posko location should be a direct Maps link, coord captured at

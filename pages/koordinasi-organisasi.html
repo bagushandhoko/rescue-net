@@ -138,6 +138,63 @@
       </div>
     </section>
 
+    <section class="content-grid rn-md-wide" id="koOrgAdminSection" hidden>
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Organisasi Saya</h3><p>Hierarki organisasi, permintaan merger (jadi anak dari organisasi lain), dan kunci AI organisasi.</p></div>
+          <span class="chip neutral" id="koOrgAdminCount">—</span>
+        </div>
+
+        <h4 class="rn-md-detail-h">Hierarki</h4>
+        <div id="koOrgHierarchy"></div>
+
+        <h4 class="rn-md-detail-h">Ajukan merger — organisasi saya jadi anak dari…</h4>
+        <form class="rn-form" id="koMergeForm" autocomplete="off">
+          <label>Organisasi saya
+            <select name="requester_organization" id="koMergeRequester"></select>
+          </label>
+          <label>Jadi anak dari (organisasi tujuan)
+            <select name="target_organization" id="koMergeTarget"><option value="">— pilih —</option></select>
+          </label>
+          <label>Catatan (opsional)<input name="note" placeholder="Alasan / konteks merger"></label>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Kirim Permintaan Merger</button>
+            <span class="form-message" id="koMergeMsg"></span>
+          </div>
+        </form>
+
+        <h4 class="rn-md-detail-h">Permintaan masuk (menunggu keputusan saya)</h4>
+        <div id="koMergeIncoming"></div>
+
+        <h4 class="rn-md-detail-h">Permintaan yang saya kirim</h4>
+        <div id="koMergeOutgoing"></div>
+
+        <h4 class="rn-md-detail-h">Kunci AI Organisasi (BYOK)</h4>
+        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Kunci disimpan terenkripsi di server — halaman ini hanya menampilkan status &amp; 4 digit terakhir. AI organisasi ini memakai kunci tersebut.</p>
+        <form class="rn-form" id="koAiKeyForm" autocomplete="off">
+          <label>Organisasi
+            <select name="organization_id" id="koAiKeyOrg"></select>
+          </label>
+          <div class="form-grid">
+            <label>Provider
+              <select name="provider" id="koAiKeyProvider">
+                <option value="openai">openai</option>
+                <option value="anthropic">anthropic</option>
+              </select>
+            </label>
+            <label>Label (opsional)<input name="api_key_label" placeholder="mis. Kunci utama"></label>
+          </div>
+          <p class="rn-muted" id="koAiKeyStatus" style="font-size:12px;margin:2px 0">—</p>
+          <label>API key<input name="api_key" type="password" placeholder="Tempel kunci baru untuk menyimpan / mengganti"></label>
+          <div class="form-actions">
+            <button class="btn primary" type="submit">Simpan Kunci</button>
+            <button class="btn ghost" type="button" id="koAiKeyDelete">Hapus Kunci</button>
+            <span class="form-message" id="koAiKeyMsg"></span>
+          </div>
+        </form>
+      </div>
+    </section>
+
     <section class="content-grid rn-md-wide" id="koMemberSection" hidden>
       <div class="panel">
         <div class="panel-header">
@@ -163,7 +220,7 @@
 
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
-<script src="../assets/js/koordinasi-organisasi.js?v=koordorg-20260904c"></script>
+<script src="../assets/js/koordinasi-organisasi.js?v=orgadmin-20260908"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

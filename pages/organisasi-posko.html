@@ -96,7 +96,10 @@
               <label>Nama Kelompok<input name="name" placeholder="Contoh: Komunitas Rescue Lokal" required></label>
               <label>Jenis Kelompok<input name="organization_type" placeholder="government / ngo / community" required></label>
             </div>
-            <p class="subtitle">Kelompok baru selalu dibuat dengan status <b>pending</b> dan trust level <b>unverified</b>.</p>
+            <label>Bagian dari organisasi (opsional)
+              <select name="parent_organization"><option value="">Berdiri sendiri (bukan sub-organisasi)</option></select>
+            </label>
+            <p class="subtitle">Kelompok baru selalu dibuat dengan status <b>pending</b> dan trust level <b>unverified</b>. Kalau ini cabang/sub dari organisasi yang sudah ada, pilih induknya. Kalau awalnya berdiri sendiri, gabung belakangan lewat <b>permintaan merger</b> di halaman Koordinasi Organisasi.</p>
             <div class="form-actions">
               <button class="btn primary" type="submit">Simpan Kelompok</button>
               <span class="form-message" data-rn-org-message></span>

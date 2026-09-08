@@ -335,6 +335,9 @@ function renderOrganizations(items) {
 
           `ID: ${safe(o.name)}<br>` +
           `Type: ${safe(o.organization_type)}<br>` +
+          (o.parent_organization
+            ? `Induk: ${safe(o.parent_organization)}<br>`
+            : "") +
           `Contact: ${safe(o.contact_person)}` +
           `<br><button type="button" class="btn ghost mini" data-join-org="${safe(o.name)}" style="margin-top:6px">Ajukan Keanggotaan</button>` +
           `<span class="rn-muted" data-join-msg="${safe(o.name)}"></span>`,
@@ -459,6 +462,24 @@ function fillOrganizationSelect(items) {
         ${safe(o.title || o.name)}
       </option>
     `).join("");
+
+  const parentSelect =
+    document.querySelector(
+      '[data-rn-create-org] [name="parent_organization"]'
+    );
+
+  if (
+    parentSelect &&
+    parentSelect.tagName === "SELECT"
+  ) {
+    parentSelect.innerHTML =
+      `<option value="">Berdiri sendiri (bukan sub-organisasi)</option>` +
+      items.map(o => `
+        <option value="${safe(o.name)}">
+          ${safe(o.title || o.name)}
+        </option>
+      `).join("");
+  }
 }
 
 
@@ -635,6 +656,12 @@ function setupOrganizationForm() {
 
           notes:
             form.notes
+              ?.value
+              ?.trim() ||
+            null,
+
+          parent_organization:
+            form.parent_organization
               ?.value
               ?.trim() ||
             null

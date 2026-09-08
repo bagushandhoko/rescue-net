@@ -270,11 +270,201 @@
     });
   }
 
+  /* ---------- Organisasi Saya: hierarki + merger + kunci AI ---------- */
+  var ORG_ADMIN = null;
+
+  function mergeReqCard(r, kind) {
+    var acts = "";
+    if (r.status === "pending" && kind === "incoming") {
+      acts =
+        '<button type="button" class="btn primary mini" data-merge-act="approve" data-merge-id="' + esc(r.name) + '">Setujui (jadikan anak)</button>' +
+        '<button type="button" class="btn ghost mini" data-merge-act="reject" data-merge-id="' + esc(r.name) + '">Tolak</button>';
+    } else if (r.status === "pending" && kind === "outgoing") {
+      acts = '<button type="button" class="btn ghost mini" data-merge-act="withdraw" data-merge-id="' + esc(r.name) + '">Tarik</button>';
+    }
+    var line = kind === "incoming"
+      ? esc(r.requester_title) + " → minta jadi anak dari <b>" + esc(r.target_title) + "</b>"
+      : "<b>" + esc(r.requester_title) + "</b> → minta jadi anak dari " + esc(r.target_title);
+    return '<article class="ko-posko-card">' +
+      '<div class="ko-posko-meta">' + line + "</div>" +
+      '<div class="ko-posko-meta">status: ' + esc(r.status) +
+        (r.note ? " · catatan: " + esc(r.note) : "") +
+        (r.decision_note ? " · keputusan: " + esc(r.decision_note) : "") + "</div>" +
+      (acts ? '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + acts + '<span class="koMergeMsg rn-muted"></span></div>' : "") +
+      "</article>";
+  }
+
+  function renderOrgAdmin(d) {
+    ORG_ADMIN = d;
+    var sec = $("#koOrgAdminSection");
+    if (!sec) return;
+    if (!d || !d.is_org_admin || !(d.organizations || []).length) { sec.hidden = true; return; }
+    sec.hidden = false;
+
+    $("#koOrgAdminCount").textContent = d.organizations.length + " organisasi";
+
+    $("#koOrgHierarchy").innerHTML = d.organizations.map(function (o) {
+      var kids = (o.children || []).length
+        ? "<ul>" + o.children.map(function (c) { return "<li>" + esc(c.title) + ' <span class="rn-muted">(' + esc(c.status) + ")</span></li>"; }).join("") + "</ul>"
+        : '<div class="rn-muted">Belum ada sub-organisasi.</div>';
+      return '<article class="ko-posko-card">' +
+        "<h4>" + esc(o.title) + "</h4>" +
+        '<div class="ko-posko-meta">' + esc(o.organization_type || "-") + " · " + esc(o.status || "-") +
+          (o.parent_title ? " · induk: <b>" + esc(o.parent_title) + "</b>" : " · tidak punya induk") + "</div>" +
+        '<div class="ko-posko-meta">Sub-organisasi:</div>' + kids +
+        "</article>";
+    }).join("");
+
+    var reqOpts = d.organizations.map(function (o) {
+      return '<option value="' + esc(o.name) + '">' + esc(o.title) + "</option>";
+    }).join("");
+    $("#koMergeRequester").innerHTML = reqOpts;
+    $("#koAiKeyOrg").innerHTML = reqOpts;
+
+    fillMergeTargets();
+
+    $("#koMergeIncoming").innerHTML = (d.incoming_requests || []).length
+      ? d.incoming_requests.map(function (r) { return mergeReqCard(r, "incoming"); }).join("")
+      : '<div class="rn-muted">Tidak ada permintaan masuk.</div>';
+    $("#koMergeOutgoing").innerHTML = (d.outgoing_requests || []).length
+      ? d.outgoing_requests.map(function (r) { return mergeReqCard(r, "outgoing"); }).join("")
+      : '<div class="rn-muted">Belum ada permintaan dikirim.</div>';
+
+    wireOrgAdminActions();
+    refreshAiKeyStatus();
+  }
+
+  async function fillMergeTargets() {
+    var sel = $("#koMergeTarget");
+    if (!sel || !ORG_ADMIN) return;
+    var mine = {};
+    (ORG_ADMIN.organizations || []).forEach(function (o) { mine[o.name] = 1; });
+    var all = [];
+    try { all = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.list_organizations"); } catch (e) {}
+    var opts = ['<option value="">— pilih —</option>'];
+    (all || []).forEach(function (o) {
+      if (mine[o.name]) return;
+      opts.push('<option value="' + esc(o.name) + '">' + esc(o.title || o.name) + "</option>");
+    });
+    sel.innerHTML = opts.join("");
+  }
+
+  async function refreshAiKeyStatus() {
+    var orgEl = $("#koAiKeyOrg"), provEl = $("#koAiKeyProvider"), el = $("#koAiKeyStatus");
+    if (!orgEl || !el) return;
+    var org = orgEl.value, provider = (provEl && provEl.value) || "openai";
+    if (!org) { el.textContent = "—"; return; }
+    el.textContent = "memeriksa…";
+    try {
+      var r = await window.RN_FRAPPE.call("rescue_net.api_ai.get_org_key_status",
+        { organization_id: org, provider: provider });
+      el.textContent = r && r.key_exists
+        ? "Kunci aktif: " + (r.masked_key || "****") +
+          (r.setting && r.setting.api_key_label ? " (" + r.setting.api_key_label + ")" : "")
+        : "Belum ada kunci untuk provider ini.";
+    } catch (err) {
+      el.textContent = "status tidak tersedia: " + ((err && err.message) || err);
+    }
+  }
+
+  function wireOrgAdminActions() {
+    document.querySelectorAll("#koOrgAdminSection [data-merge-act]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var id = btn.getAttribute("data-merge-id");
+        var act = btn.getAttribute("data-merge-act");
+        var msg = btn.parentElement.querySelector(".koMergeMsg");
+        if (msg) msg.textContent = " memproses…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_community_cluster.decide_org_merge",
+            { merge_request: id, action: act }, { method: "POST" });
+          await loadOrgAdmin();
+        } catch (err) {
+          if (msg) msg.textContent = " gagal: " + ((err && err.message) || err);
+        }
+      });
+    });
+  }
+
+  async function loadOrgAdmin() {
+    var d = null;
+    try { d = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.org_coordination"); } catch (e) {}
+    renderOrgAdmin(d || {});
+  }
+
+  var _orgAdminFormsWired = false;
+  function initOrgAdminForms() {
+    if (_orgAdminFormsWired) return;
+    _orgAdminFormsWired = true;
+
+    var mf = $("#koMergeForm");
+    if (mf) mf.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var msg = $("#koMergeMsg");
+      var target = $("#koMergeTarget").value;
+      if (!target) { msg.textContent = "Pilih organisasi tujuan."; return; }
+      msg.textContent = "mengirim…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_community_cluster.request_org_merge", {
+          requester_organization: $("#koMergeRequester").value,
+          target_organization: target,
+          note: (mf.note.value || "").trim() || null,
+        }, { method: "POST" });
+        msg.textContent = "Terkirim — menunggu keputusan organisasi tujuan.";
+        mf.note.value = "";
+        await loadOrgAdmin();
+      } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }
+    });
+
+    var kf = $("#koAiKeyForm");
+    if (kf) kf.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var msg = $("#koAiKeyMsg");
+      var key = (kf.api_key.value || "").trim();
+      if (key.length < 20) { msg.textContent = "Kunci terlalu pendek."; return; }
+      msg.textContent = "menyimpan…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_ai.save_org_key", {
+          organization_id: $("#koAiKeyOrg").value,
+          api_key: key,
+          provider: $("#koAiKeyProvider").value || "openai",
+          api_key_label: (kf.api_key_label.value || "").trim() || null,
+        }, { method: "POST" });
+        msg.textContent = "Tersimpan (terenkripsi di server).";
+        kf.api_key.value = "";
+        refreshAiKeyStatus();
+      } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }
+    });
+
+    var del = $("#koAiKeyDelete");
+    if (del) del.addEventListener("click", async function () {
+      var msg = $("#koAiKeyMsg");
+      if (!window.confirm("Hapus kunci AI untuk organisasi + provider ini?")) return;
+      msg.textContent = "menghapus…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_ai.delete_org_key", {
+          organization_id: $("#koAiKeyOrg").value,
+          provider: $("#koAiKeyProvider").value || "openai",
+        }, { method: "POST" });
+        msg.textContent = "Terhapus.";
+        refreshAiKeyStatus();
+      } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }
+    });
+
+    ["#koAiKeyOrg", "#koAiKeyProvider"].forEach(function (s) {
+      var el = $(s);
+      if (el) el.addEventListener("change", refreshAiKeyStatus);
+    });
+  }
+
   async function load() {
     try {
       var d = await window.RN_FRAPPE.call(BOARD, { disaster_event: getEvent() });
       render(d || {});
-      if (d && d.logged_in) loadMembers();
+      if (d && d.logged_in) {
+        loadMembers();
+        initOrgAdminForms();
+        loadOrgAdmin();
+      }
     } catch (err) {
       console.error("[koordinasi organisasi]", err);
       $("#koStatus").textContent = "Gagal memuat data koordinasi organisasi.";

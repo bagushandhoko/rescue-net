@@ -1,0 +1,87 @@
+{
+ "doctype": "DocType",
+ "name": "RN Org Merge Request",
+ "module": "Rescue Net",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "requester_organization",
+  "target_organization",
+  "status",
+  "note",
+  "requested_by",
+  "requested_at",
+  "decided_by",
+  "decided_at",
+  "decision_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "requester_organization",
+   "label": "Requester Organization",
+   "fieldtype": "Link",
+   "options": "RN Organization",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "target_organization",
+   "label": "Target (Parent) Organization",
+   "fieldtype": "Link",
+   "options": "RN Organization",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "pending\napproved\nrejected\nwithdrawn",
+   "default": "pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "note",
+   "label": "Note",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "requested_by",
+   "label": "Requested By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "requested_at",
+   "label": "Requested At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "label": "Decided By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Decided At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decision_note",
+   "label": "Decision Note",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

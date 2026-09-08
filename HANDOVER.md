@@ -4,24 +4,22 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-08 (**QR pelacakan logistik**: new guest endpoint
-`api_control_centre.flow_trace` + public `pages/lacak-logistik.html` +
-vendored `assets/vendor/qrcode/qrcode.min.js`; Manajemen Distribusi trace
-codes are now click-to-QR with a printable label. FE live on save, BE
-(`api_control_centre.py`) needs `docker cp` + restart — no migrate.
-`scripts/deploy-wa-and-flowtrace.sh` deploys this **and** the still-pending
-WhatsApp-send commit `88ee9ad` in one pass. Prev: Posko Distribusi Land Rover
-A–D-2 `0a3ef6c` `0cd03ff` `1fb79ef`)_
+_Last updated: 2026-09-08 (**Org hierarki + merger + kunci AI org**: `RN
+Organization.parent_organization` + new `RN Org Merge Request` doctype;
+create-org "bagian dari organisasi" selector; Koordinasi Organisasi gains an
+"Organisasi Saya" section (hierarki + kirim/putus permintaan merger + org
+BYOK AI-key form). FE live on save; BE `api_community_cluster.py` + the 2
+doctypes need `docker cp` + **`bench migrate`**. ALSO this session: **QR
+pelacakan logistik** — `api_control_centre.flow_trace` + public
+`pages/lacak-logistik.html` + vendored `qrcode.min.js`, Manajemen Distribusi
+trace codes click-to-QR + printable label (commit `d15fe51`). AND the still-
+pending **WhatsApp-send** commit `88ee9ad`. All three deploy via
+`scripts/deploy-wa-and-flowtrace.sh <site>`. Prev: Posko Distribusi Land
+Rover A–D-2 `0a3ef6c` `0cd03ff` `1fb79ef`)_
 
-**Also open / requested this session (not started):** org & koordinasi —
-(a) at org-create, choose to be a **child of an existing org** (first org
-created ≠ induk); (b) an **org→org merge request** flow when two orgs each
-started independently; (c) surface the **org-scoped AI BYOK key** UI in the
-koordinasi menu (backend `api_ai.save_org_key/get_org_key_status/
-delete_org_key` already exists; `RN Organization` has NO `parent_organization`
-field yet and there is NO merge doctype — both need a migrate). User also
-reports something they configured for org/koordinasi "shows empty now" —
-needs a repro.
+**Still needs a repro:** user's "config for org/koordinasi shows empty now" —
+said "kerjakan semua" without detail; not diagnosed. Check
+`my_org_coordination` / `org_membership_admin` after deploy.
 
 ---
 
@@ -64,6 +62,62 @@ Owner: "selesaikan … qr code" — a scannable trace on each distribution flow.
   `api_control_centre.py` (+ the WA-notify files) + `bench migrate` (only the
   WA doctypes need it; flow_trace alone would just need cp+restart) +
   restart + smoke checks.
+
+---
+
+## Organisasi — hierarki + permintaan merger + kunci AI org di menu Koordinasi (2026-09-08) — FE LIVE, BE NEEDS DEPLOY + MIGRATE
+
+Owner: "waktu create bisa memilih untuk jadi bagian existing organisasi …
+bisa meminta existing organisasi untuk bergabung merger … di sini juga ada
+untuk masukkan secret key AI, ai di organisasi ini pakai itu." Merge
+semantics chosen by user: **"jadi anak (hierarki)"** — approving sets the
+child's `parent_organization`; both orgs stay, nothing absorbed/deleted.
+
+- **Doctype** — `RN Organization` +1 field `parent_organization` (Link → RN
+  Organization). NEW doctype **`RN Org Merge Request`** (`autoname: hash`):
+  `requester_organization`, `target_organization`, `status`
+  (pending/approved/rejected/withdrawn), `note`, `requested_by/at`,
+  `decided_by/at`, `decision_note`. **Both need `bench migrate`.**
+- **BE `api_community_cluster.py`:**
+  - `create_organization(…, parent_organization=None)` — validates it exists,
+    sets it. `list_organizations` now returns `parent_organization`.
+  - NEW `org_coordination()` — one payload for the panel: the caller's owned
+    orgs each with `parent_title` + `children[]`, plus `incoming_requests`
+    (target = my org) and `outgoing_requests` (requester = my org).
+  - NEW `request_org_merge(requester, target, note)` — requester-owner only;
+    guards self/missing/duplicate-pending/cycle (target must not be a
+    descendant of requester).
+  - NEW `decide_org_merge(merge_request, action, decision_note)` —
+    `approve`/`reject` by **target** owner, `withdraw` by **requester**
+    owner. Approve: cycle re-check → set `parent_organization` → auto-reject
+    the requester's other pending requests (one parent).
+  - Org-scoped AI BYOK already existed (`api_ai.save_org_key` /
+    `get_org_key_status` / `delete_org_key`, `_assert_org_admin`,
+    `RN AI User Setting` keyed `org:<id>|<provider>`) — only the UI was
+    missing.
+- **FE:**
+  - `pages/organisasi-posko.html` + `assets/js/org-posko.js` — create-org
+    form gains a **"Bagian dari organisasi (opsional)"** `<select>`
+    (`name="parent_organization"`, filled from `list_organizations`), sent to
+    `create_organization`; org cards show `Induk:` when set.
+  - `pages/koordinasi-organisasi.html` + `assets/js/koordinasi-organisasi.js`
+    (`?v=koordorg-20260904c → orgadmin-20260908`) — NEW section
+    **"Organisasi Saya"** (`#koOrgAdminSection`, shown when
+    `org_coordination.is_org_admin`): hierarchy cards, a **merge-request
+    form** (my org → jadi anak dari target), **incoming** list with
+    Setujui/Tolak, **outgoing** list with Tarik, and a **"Kunci AI
+    Organisasi (BYOK)"** form (status via `get_org_key_status`, save via
+    `save_org_key`, `delete_org_key`; password field, masked status only).
+- **Verify:** `py_compile` + `node -c` clean. NOT deployed / NOT
+  browser-checked. Deploy = same `scripts/deploy-wa-and-flowtrace.sh` (now
+  also copies `rn_organization` + `rn_org_merge_request` doctype dirs; the
+  `bench migrate` step creates the field + doctype).
+- **Note:** `list_organizations` now requests `parent_organization`, so the
+  BE **must** be deployed *with* the migrate — a cp without migrate breaks
+  that endpoint until the column exists.
+- **Still open:** the "config shows empty now" report — user said "kerjakan
+  semua" without a repro; not diagnosed. Watch `my_org_coordination` /
+  `org_membership_admin` after deploy.
 
 ---
 

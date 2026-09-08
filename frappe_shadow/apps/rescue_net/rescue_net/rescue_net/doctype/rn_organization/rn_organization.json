@@ -154,6 +154,13 @@
    "label": "Brand Logo",
    "fieldtype": "Attach Image",
    "description": "Logo kecil organisasi, tampil di header Koordinasi Organisasi."
+  },
+  {
+   "fieldname": "parent_organization",
+   "label": "Parent Organization",
+   "fieldtype": "Link",
+   "options": "RN Organization",
+   "description": "Induk organisasi. Diisi saat dibuat sebagai sub-organisasi, atau lewat persetujuan permintaan merger."
   }
  ],
  "permissions": [

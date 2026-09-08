@@ -42,7 +42,7 @@ def list_organizations():
         "RN Organization",
         fields=[
             "name","title","organization_type","status",
-            "trust_level","verification_status"
+            "trust_level","verification_status","parent_organization"
         ],
         order_by="title asc",
         limit_page_length=500,
@@ -51,8 +51,15 @@ def list_organizations():
 
 @frappe.whitelist()
 def create_organization(title, organization_type="community",
-                        contact_person=None, notes=None):
+                        contact_person=None, notes=None,
+                        parent_organization=None):
     actor = _actor()
+
+    parent_organization = (parent_organization or "").strip() or None
+    if parent_organization and not frappe.db.exists(
+        "RN Organization", parent_organization
+    ):
+        frappe.throw("Organisasi induk tidak ditemukan.")
 
     org = frappe.new_doc("RN Organization")
     org.title = title
@@ -63,6 +70,7 @@ def create_organization(title, organization_type="community",
     org.identity_verification_status = "unverified"
     org.contact_person = contact_person
     org.notes = notes
+    org.parent_organization = parent_organization
     org.insert(ignore_permissions=True)
 
     membership = frappe.new_doc("RN Organization Membership")
@@ -81,6 +89,7 @@ def create_organization(title, organization_type="community",
         "membership": membership.name,
         "status": org.status,
         "trust_level": org.trust_level,
+        "parent_organization": org.parent_organization,
     }
 
 
@@ -107,6 +116,240 @@ def request_membership(organization):
     membership.insert(ignore_permissions=True)
 
     return {"name": membership.name, "status": membership.status}
+
+
+# ============================================================
+# Organisation hierarchy + merge requests.
+# The org created first is NOT automatically the induk. An org can be made a
+# sub-org at creation (parent_organization), or two orgs that each started on
+# their own can be linked later: the child's owner sends an "RN Org Merge
+# Request", the TARGET (parent) org's owner approves, and on approval the
+# child's `parent_organization` is set. "Jadi anak (hierarki)" — both orgs
+# stay; nothing is absorbed or deleted.
+# ============================================================
+
+_ORG_MERGE_FIELDS = [
+    "name", "requester_organization", "target_organization", "status",
+    "note", "requested_by", "requested_at", "decided_by", "decided_at",
+    "decision_note",
+]
+
+
+def _org_titles(names):
+    names = sorted({n for n in names if n})
+    if not names:
+        return {}
+    return {
+        r.name: r.title
+        for r in frappe.get_all(
+            "RN Organization", filters={"name": ["in", names]},
+            fields=["name", "title"], limit_page_length=len(names),
+        )
+    }
+
+
+def _merge_row(r, titles):
+    return {
+        "name": r.name,
+        "requester_organization": r.requester_organization,
+        "requester_title": titles.get(r.requester_organization, r.requester_organization),
+        "target_organization": r.target_organization,
+        "target_title": titles.get(r.target_organization, r.target_organization),
+        "status": r.status,
+        "note": r.note,
+        "requested_by": r.requested_by,
+        "requested_at": r.requested_at,
+        "decided_by": r.decided_by,
+        "decided_at": r.decided_at,
+        "decision_note": r.decision_note,
+    }
+
+
+@frappe.whitelist()
+def org_coordination():
+    """One payload for the "Organisasi Saya" panel on Koordinasi Organisasi:
+    the org(s) the caller owns, each with its parent + direct children, plus
+    the merge requests it sent and received."""
+    actor = _actor()
+    from rescue_net.access_policy import is_system_manager
+
+    owned = _owned_org_names(actor)
+    if not owned:
+        return {"is_org_admin": False, "organizations": [],
+                "incoming_requests": [], "outgoing_requests": []}
+
+    org_rows = frappe.get_all(
+        "RN Organization", filters={"name": ["in", owned]},
+        fields=["name", "title", "organization_type", "status", "trust_level",
+                "verification_status", "parent_organization"],
+        limit_page_length=len(owned),
+    )
+
+    children = frappe.get_all(
+        "RN Organization", filters={"parent_organization": ["in", owned]},
+        fields=["name", "title", "parent_organization", "status"],
+        order_by="title asc", limit_page_length=500,
+    )
+    children_by_parent = {}
+    for c in children:
+        children_by_parent.setdefault(c.parent_organization, []).append(
+            {"name": c.name, "title": c.title, "status": c.status}
+        )
+
+    incoming = frappe.get_all(
+        "RN Org Merge Request",
+        filters={"target_organization": ["in", owned]},
+        fields=_ORG_MERGE_FIELDS, order_by="requested_at desc",
+        limit_page_length=500,
+    )
+    outgoing = frappe.get_all(
+        "RN Org Merge Request",
+        filters={"requester_organization": ["in", owned]},
+        fields=_ORG_MERGE_FIELDS, order_by="requested_at desc",
+        limit_page_length=500,
+    )
+
+    titles = _org_titles(
+        owned
+        + [r.parent_organization for r in org_rows]
+        + [r.requester_organization for r in incoming]
+        + [r.target_organization for r in incoming]
+        + [r.requester_organization for r in outgoing]
+        + [r.target_organization for r in outgoing]
+    )
+
+    orgs = [{
+        "name": o.name,
+        "title": o.title,
+        "organization_type": o.organization_type,
+        "status": o.status,
+        "trust_level": o.trust_level,
+        "verification_status": o.verification_status,
+        "parent_organization": o.parent_organization,
+        "parent_title": titles.get(o.parent_organization) if o.parent_organization else None,
+        "children": children_by_parent.get(o.name, []),
+    } for o in org_rows]
+
+    return {
+        "is_org_admin": True,
+        "is_system_manager": bool(is_system_manager()),
+        "organizations": orgs,
+        "incoming_requests": [_merge_row(r, titles) for r in incoming],
+        "outgoing_requests": [_merge_row(r, titles) for r in outgoing],
+    }
+
+
+@frappe.whitelist()
+def request_org_merge(requester_organization, target_organization, note=None):
+    """The child org's owner asks `target_organization` to become its parent."""
+    actor = _actor()
+
+    requester_organization = (requester_organization or "").strip()
+    target_organization = (target_organization or "").strip()
+
+    if not requester_organization or not target_organization:
+        frappe.throw("Organisasi peminta dan tujuan wajib diisi.")
+    if requester_organization == target_organization:
+        frappe.throw("Organisasi tidak bisa merger dengan dirinya sendiri.")
+    if not frappe.db.exists("RN Organization", target_organization):
+        frappe.throw("Organisasi tujuan tidak ditemukan.")
+    if not _owns_org(actor, requester_organization):
+        frappe.throw("Anda bukan pengelola organisasi peminta.",
+                     frappe.PermissionError)
+
+    cur_parent = frappe.db.get_value(
+        "RN Organization", requester_organization, "parent_organization"
+    )
+    if cur_parent == target_organization:
+        frappe.throw("Organisasi ini sudah menjadi anak dari organisasi tujuan.")
+
+    # cycle guard — target must not already be a descendant of requester
+    hop, seen = target_organization, set()
+    while hop and hop not in seen:
+        seen.add(hop)
+        if hop == requester_organization:
+            frappe.throw("Tidak bisa: organisasi tujuan berada di bawah organisasi peminta.")
+        hop = frappe.db.get_value("RN Organization", hop, "parent_organization")
+
+    existing = frappe.db.get_value(
+        "RN Org Merge Request",
+        {"requester_organization": requester_organization,
+         "target_organization": target_organization, "status": "pending"},
+        "name",
+    )
+    if existing:
+        return {"name": existing, "status": "pending", "already": True}
+
+    doc = frappe.new_doc("RN Org Merge Request")
+    doc.requester_organization = requester_organization
+    doc.target_organization = target_organization
+    doc.note = note
+    doc.status = "pending"
+    doc.requested_by = actor.name
+    doc.requested_at = now_datetime()
+    doc.insert(ignore_permissions=True)
+
+    return {"name": doc.name, "status": doc.status}
+
+
+@frappe.whitelist()
+def decide_org_merge(merge_request, action, decision_note=None):
+    """`action` = approve | reject  (by the TARGET org's owner)
+                | withdraw           (by the REQUESTER org's owner)."""
+    actor = _actor()
+    action = (action or "").strip().lower()
+    if action not in ("approve", "reject", "withdraw"):
+        frappe.throw("Aksi tidak dikenal.")
+
+    doc = frappe.get_doc("RN Org Merge Request", merge_request)
+    if doc.status != "pending":
+        frappe.throw(f"Permintaan sudah {doc.status}.")
+
+    if action == "withdraw":
+        if not _owns_org(actor, doc.requester_organization):
+            frappe.throw("Hanya pengelola organisasi peminta yang bisa menarik permintaan.",
+                         frappe.PermissionError)
+        doc.status = "withdrawn"
+    else:
+        if not _owns_org(actor, doc.target_organization):
+            frappe.throw("Hanya pengelola organisasi tujuan yang bisa memutuskan.",
+                         frappe.PermissionError)
+        doc.status = "approved" if action == "approve" else "rejected"
+        if action == "approve":
+            # cycle re-check (state may have shifted since the request)
+            hop, seen = doc.target_organization, set()
+            while hop and hop not in seen:
+                seen.add(hop)
+                if hop == doc.requester_organization:
+                    frappe.throw("Tidak bisa: organisasi tujuan berada di bawah organisasi peminta.")
+                hop = frappe.db.get_value("RN Organization", hop, "parent_organization")
+
+            frappe.db.set_value(
+                "RN Organization", doc.requester_organization,
+                "parent_organization", doc.target_organization,
+            )
+            # a child has one parent — supersede other pending requests from
+            # the same requester
+            for other in frappe.get_all(
+                "RN Org Merge Request",
+                filters={"requester_organization": doc.requester_organization,
+                         "status": "pending", "name": ["!=", doc.name]},
+                pluck="name",
+            ):
+                frappe.db.set_value("RN Org Merge Request", other, {
+                    "status": "rejected",
+                    "decision_note": "Otomatis: organisasi peminta sudah bergabung ke induk lain.",
+                    "decided_at": now_datetime(),
+                })
+
+    doc.decided_by = actor.name
+    doc.decided_at = now_datetime()
+    doc.decision_note = decision_note
+    doc.save(ignore_permissions=True)
+
+    return {"name": doc.name, "status": doc.status,
+            "requester_organization": doc.requester_organization,
+            "target_organization": doc.target_organization}
 
 
 # ============================================================

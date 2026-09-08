@@ -9,6 +9,16 @@
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css" />
   <style>
+    /* size fields to their content instead of a rigid 4-col grid */
+    #regForm .form-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); align-items: start; }
+    #regForm .form-grid > label,
+    #regForm .form-grid > div,
+    #regForm .form-grid > fieldset { min-width: 0; }
+    #regForm .rn-rp-wide { grid-column: span 2; min-width: 0; }
+    @media (max-width: 620px) { #regForm .rn-rp-wide { grid-column: 1 / -1; } }
+    #regForm .rn-fn-picker { display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center; }
+    #regForm .rn-fn-picker legend { flex-basis: 100%; margin-bottom: 2px; }
+    #regForm .rn-fn-picker .rn-check { margin: 0; }
     .rn-geo-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
     .rn-geo-actions .btn { padding: 5px 10px; font-size: 12px; }
     #regMapWrap { margin-top: 6px; }
@@ -82,7 +92,7 @@
           <input type="hidden" name="posko_id" value="">
           <div class="form-grid">
             <label>Nama Posko *<input name="title" required></label>
-            <label>Jenis Posko *
+            <label>Jenis Posko (utama) *
               <select name="posko_type" required>
                 <option value="logistics">Posko Logistik</option>
                 <option value="shelter">Shelter</option>
@@ -91,6 +101,19 @@
                 <option value="field_assessment">Field Assessment</option>
                 <option value="transport">Transport</option>
                 <option value="collection_hub">Collection Hub</option>
+              </select>
+            </label>
+            <fieldset class="rn-fn-picker rn-rp-full">
+              <legend>Fungsi posko (boleh &gt; 1 dalam satu posko)</legend>
+              <label class="rn-check"><input type="checkbox" name="fn_logistics"> Logistik</label>
+              <label class="rn-check"><input type="checkbox" name="fn_shelter"> Shelter</label>
+              <label class="rn-check"><input type="checkbox" name="fn_kitchen"> Dapur Umum</label>
+            </fieldset>
+            <label>Peran Logistik
+              <select name="logistics_role">
+                <option value="">— (bukan posko logistik)</option>
+                <option value="collector">Pengumpul</option>
+                <option value="receiver">Penerima</option>
               </select>
             </label>
             <label>Event Bencana *
@@ -110,10 +133,10 @@
               <div id="regMapWrap" hidden><div id="regMap"></div></div>
             </div>
             <label class="rn-rp-full">Alamat Lengkap *<input name="address" required></label>
-            <label>Nama Lengkap PIC *<input name="officer_in_charge_name" required></label>
+            <label class="rn-rp-wide">Nama Lengkap PIC *<input name="officer_in_charge_name" required></label>
             <label>Jabatan *<input name="officer_in_charge_role" placeholder="Koordinator Posko"></label>
-            <label>Kontak PIC *<input name="officer_in_charge_phone" required></label>
-            <label>Email PIC *<input name="officer_in_charge_email" type="email" required></label>
+            <label>Kontak PIC *<input name="officer_in_charge_phone" inputmode="tel" placeholder="08xxxxxxxxxx" required></label>
+            <label class="rn-rp-wide">Email PIC *<input name="officer_in_charge_email" type="email" placeholder="nama@organisasi.or.id" required></label>
             <label>Kontak Darurat (Opsional)<input name="emergency_contact"></label>
             <label>Kapasitas (Orang) *<input name="rn_beneficiary_count" type="number" min="0"></label>
             <label class="rn-rp-full">Fasilitas Tersedia * <small class="rn-muted">(pisahkan dengan koma)</small>
@@ -182,7 +205,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
-<script src="../assets/js/registrasi-posko.js?v=geopick-20260908"></script>
+<script src="../assets/js/registrasi-posko.js?v=poskofn-20260908"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

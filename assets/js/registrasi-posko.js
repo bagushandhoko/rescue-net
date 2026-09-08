@@ -309,7 +309,30 @@
           rn_beneficiary_count: fd.get("rn_beneficiary_count"),
           public_detail: fd.get("public_detail"),
         }, { method: "POST" });
-        msg.textContent = "Posko tersimpan: " + res.posko;
+
+        // fungsi posko (boleh > 1): checkbox + fallback ke jenis utama
+        var functions = [];
+        if (form.fn_logistics && form.fn_logistics.checked) functions.push("logistics");
+        if (form.fn_shelter && form.fn_shelter.checked) functions.push("shelter");
+        if (form.fn_kitchen && form.fn_kitchen.checked) functions.push("kitchen");
+        var primary = fd.get("posko_type");
+        if (!functions.length && ["logistics", "shelter", "kitchen"].indexOf(primary) !== -1) {
+          functions.push(primary);
+        }
+        if (functions.length || fd.get("logistics_role")) {
+          try {
+            await window.RN_FRAPPE.call("rescue_net.api_control_centre.set_posko_functions", {
+              posko: res.posko,
+              functions: JSON.stringify(functions),
+              logistics_role: fd.get("logistics_role") || "",
+            }, { method: "POST" });
+          } catch (fe) {
+            msg.textContent = "Posko dibuat, tapi gagal set fungsi: " + (fe && fe.message || fe);
+          }
+        }
+
+        msg.textContent = "Posko tersimpan: " + res.posko +
+          (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "");
         form.reset();
         await loadRegistry();
         await selectPosko(res.posko);

@@ -218,7 +218,7 @@ Deploy = `docker cp` (`api_logistics.py`, `rn_transport_booking.json`,
 
 ---
 
-## "Pengaturan Posko" — shared per-posko settings panel (2026-09-08) — BUILT, needs deploy + migrate
+## "Pengaturan Posko" — shared per-posko settings panel (2026-09-08) — DONE, DEPLOYED, VERIFIED (commit `8d648e1` + follow-up)
 
 Owner: "di setiap posko jika login harusnya ada menu setting" — nama, lokasi,
 periode aktif, PIC + kontak (HP/WA), notifikasi WhatsApp, dan data posko lain.
@@ -253,9 +253,23 @@ posko-distribusi, posko-logistik.
 only the config (`notify_whatsapp_enabled` + numbers) is captured. Sending is
 a separate integration.
 
-**TODO:** `docker cp` `api_community_cluster.py` + `rn_posko.json`, restart,
-run `bench execute rescue_net._migrate_posko.run`, browser-verify as a posko
-manager.
+**Deploy + verify (2026-09-08):** `api_community_cluster.py` + `rn_posko.json`
+`docker cp`'d + restarted; `frappe.reload_doctype("RN Posko")` run — all 5
+new columns confirmed present. Follow-up: `get_posko_settings` made
+`allow_guest=True` (returns `{can_edit:False, posko:None}` for guests) so the
+shared JS calls it unconditionally without a 403 — redeployed.
+- **Backend E2E** (bench, as Administrator `can_edit:True`): `get_posko_
+  settings` → `update_posko` (status→standby, active_from/until, WA, notify
+  toggle, multi-numbers, notes) → re-read persists → restored to original.
+- **Guest browser** (`osiun-playwright-check/rn-posko-settings-check.js`, 3
+  posko pages): no "⚙ Pengaturan Posko" button, **0 console errors**.
+- **Modal** (`ps-harness.js` — real `rn-posko-settings.js` + mocked
+  `RN_FRAPPE`, `can_edit:true`): button mounts, modal has all sections
+  (periode aktif, PIC WhatsApp, WA-notif toggle + multi-number box), form
+  prefills from payload, submit calls `update_posko` with the edited values;
+  0 console errors. Screenshot `shots-tidy4/pengaturan-posko-modal.png`.
+- No valid posko-manager session cookie available this session, so the
+  logged-in button was proven via the mock harness rather than a live login.
 
 ---
 

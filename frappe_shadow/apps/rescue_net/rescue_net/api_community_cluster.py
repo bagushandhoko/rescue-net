@@ -473,11 +473,15 @@ def update_posko(
     return {"posko": doc.name, "modified": doc.modified}
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def get_posko_settings(posko):
     """Prefill payload + edit gate for the shared "Pengaturan Posko" panel on
-    a posko workspace page. Mirrors `update_posko`'s `_can_edit_posko` gate."""
-    actor = _actor()
+    a posko workspace page. Mirrors `update_posko`'s `_can_edit_posko` gate.
+    Guest-safe: returns `{can_edit: False}` without a 403 so the shared JS can
+    call it unconditionally."""
+    actor = rn_actor(required=False)
+    if not actor:
+        return {"can_edit": False, "posko": None}
     doc = frappe.get_doc("RN Posko", posko)
     fields = [
         "name", "title", "posko_type", "operational_status", "address",

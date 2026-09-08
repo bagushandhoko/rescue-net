@@ -3514,7 +3514,8 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         posko_row = frappe.db.get_value(
             "RN Posko", posko,
             ["name", "title", "posko_type", "organization", "operational_status",
-             "officer_in_charge_name", "emergency_contact", "city_name"],
+             "officer_in_charge_name", "emergency_contact", "city_name",
+             "latitude", "longitude"],
             as_dict=True,
         )
 

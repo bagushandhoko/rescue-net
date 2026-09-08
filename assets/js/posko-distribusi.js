@@ -21,6 +21,20 @@
   function getEvent() { return qs.get("event") || "event-sim-001"; }
   function getPosko() { return qs.get("id") || qs.get("posko") || ""; }
   function tel(v) { return v && v !== "-" ? '<a href="tel:' + esc(String(v).replace(/[^0-9+]/g, "")) + '">' + esc(v) + "</a>" : "-"; }
+
+  /* Google Maps link: prefer lat/lng, fall back to a text search. */
+  function mapsUrl(lat, lng, text) {
+    var a = parseFloat(lat), o = parseFloat(lng);
+    if (isFinite(a) && isFinite(o)) return "https://www.google.com/maps?q=" + a + "," + o;
+    var q = String(text == null ? "" : text).trim();
+    return (q && q !== "-") ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q) : "";
+  }
+  function mapsLink(text, lat, lng) {
+    var u = mapsUrl(lat, lng, text);
+    var t = String(text == null ? "" : text).trim();
+    if (!u) return esc(t || "-");
+    return '<a href="' + u + '" target="_blank" rel="noopener">' + esc(t || "Lihat di peta") + " ↗</a>";
+  }
   function statusChip(s) {
     var l = String(s || "").toLowerCase();
     if (l === "confirmed" || l === "available" || l === "arrived") return "ok";
@@ -177,14 +191,21 @@
       row("Kapasitas total", fmt(a.kapasitas_total_kg) + " kg" + (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_total_m3) + " m³" : "")) +
       row("Sisa kapasitas", fmt(a.kapasitas_tersedia_kg) + " kg" + (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_tersedia_m3) + " m³" : "")) +
       row("Jadwal", esc(a.berangkat) + " → " + esc(a.eta)) +
-      row("Lokasi saat ini", esc(a.current_location)) +
+      row("Lokasi saat ini", mapsLink(a.current_location)) +
       row("Rute", esc(a.rute)) +
-      row("Titik serah terima", esc(a.handover_location)) +
+      row("Titik serah terima", mapsLink(a.handover_location)) +
       row("Narahubung", esc(a.handover_contact_person) + (a.handover_contact_phone && a.handover_contact_phone !== "-" ? " · " + tel(a.handover_contact_phone) : "")) +
       row("Relawan jemput", esc(a.pickup_volunteer_name || "-")) +
       "</div>" +
       ((CACHE && CACHE.can_manage) ? armadaEditForm(a) : "") +
       ((CACHE && CACHE.can_coordinate) ? bookingForm(a) : "") +
+      ((CACHE && !CACHE.can_coordinate && !CACHE.can_manage)
+        ? '<p class="rn-muted rn-md-detail-note">' +
+          (CACHE.logged_in
+            ? "Posko ini belum membuka pemesanan ruang muat untuk pihak luar."
+            : "Login sebagai posko pengantar atau warga untuk memesan ruang muat di armada ini.") +
+          "</p>"
+        : "") +
       '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>";
     if (CACHE && CACHE.can_manage) wireArmadaEdit(a.id);
     if (CACHE && CACHE.can_coordinate) wireBookingForm(a);
@@ -445,9 +466,15 @@
     CACHE = data;
     var t = String(data.generated_at || "").slice(11, 16);
     $("#pdUpdated").textContent = "Posko Distribusi · " + (t || "-");
-    $("#pdStatus").textContent = data.posko_info
-      ? "Posko: " + (data.posko_info.title || data.posko) + " · PIC: " + (data.posko_info.officer_in_charge_name || "-")
-      : "Belum ada posko dipilih.";
+    if (data.posko_info) {
+      var _pi = data.posko_info;
+      var _loc = mapsUrl(_pi.latitude, _pi.longitude, _pi.city_name);
+      $("#pdStatus").innerHTML =
+        "Posko: " + esc(_pi.title || data.posko) + " · PIC: " + esc(_pi.officer_in_charge_name || "-") +
+        (_loc ? ' · <a href="' + _loc + '" target="_blank" rel="noopener">📍 Lokasi di peta ↗</a>' : "");
+    } else {
+      $("#pdStatus").textContent = "Belum ada posko dipilih.";
+    }
     $("#pdTypeNote").textContent = data.posko && !data.is_transport_posko
       ? "Catatan: posko ini bukan bertipe ‘transport’ di registrasi posko — armada tetap bisa dikelola, tapi sebaiknya set Jenis Posko = Transport."
       : "";
@@ -506,8 +533,10 @@
     if (hint) {
       hint.hidden = manage || !data.posko;
       hint.textContent = data.can_coordinate
-        ? "Anda bukan pengelola posko ini — Anda bisa memesan slot pada armada, tapi tidak mengelola armada / booking."
-        : "Mode lihat. Login sebagai petugas / anggota posko ini untuk mengelola armada & booking.";
+        ? "Anda bukan pengelola posko ini — Anda bisa memesan ruang muat pada armada (buka detail armada), tapi tidak mengelola armada / booking."
+        : (data.logged_in
+          ? "Mode lihat. Posko ini belum membuka pemesanan ruang muat untuk pihak luar; login sebagai petugas / anggota posko ini untuk mengelola."
+          : "Mode lihat. Login untuk memesan ruang muat (sebagai posko pengantar atau warga) atau untuk mengelola armada & booking.");
     }
   }
 

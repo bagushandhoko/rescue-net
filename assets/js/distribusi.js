@@ -180,7 +180,7 @@
     var body = $("#alurBody");
     if (!rows.length) {
       body.innerHTML = '<tr><td colspan="9"><em class="rn-muted">' +
-        (totalCount ? "Tidak ada distribusi yang cocok dengan pencarian/filter." : "Belum ada distribution flow untuk event ini.") +
+        (totalCount ? "Tidak ada distribusi yang cocok dengan pencarian/filter." : "Belum ada alur distribusi untuk event ini.") +
         "</em></td></tr>";
       $("#alurShown").textContent = "0 distribusi";
       return;
@@ -761,7 +761,7 @@ function setupFlowForm() {
 
         if (msg) {
           msg.textContent =
-            "Menyimpan flow...";
+            "Menyimpan alur distribusi...";
         }
 
         await RN_FRAPPE.call(
@@ -804,7 +804,7 @@ function setupFlowForm() {
 
         if (msg) {
           msg.textContent =
-            "Distribution Flow berhasil disimpan.";
+            "Alur distribusi berhasil disimpan.";
         }
 
         await loadDistributionFlows();

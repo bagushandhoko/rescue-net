@@ -46,6 +46,24 @@ $DOCKER cp "$SRC/rescue_net/doctype/rn_organization"       "$C:$DST/rescue_net/d
 $DOCKER cp "$SRC/rescue_net/doctype/rn_org_merge_request"  "$C:$DST/rescue_net/doctype/"
 
 echo
+echo "2b. Fix ownership/perms — docker cp lands dirs as d--------- 1024:users on"
+echo "    this NAS, which the frappe user can't read (bench migrate then SILENTLY"
+echo "    skips the doctype, and after_migrate hooks PermissionError)."
+$DOCKER exec -u root "$C" bash -lc "
+  cd '$DST' &&
+  chown -R frappe:frappe api_notify.py api_community_cluster.py api_control_centre.py \
+    hooks.py setup/notification_defaults.py \
+    rescue_net/doctype/rn_notification_setting rescue_net/doctype/rn_notification_log \
+    rescue_net/doctype/rn_organization rescue_net/doctype/rn_org_merge_request &&
+  chmod -R u+rwX,go+rX api_notify.py api_community_cluster.py api_control_centre.py \
+    hooks.py setup/notification_defaults.py \
+    rescue_net/doctype/rn_notification_setting rescue_net/doctype/rn_notification_log \
+    rescue_net/doctype/rn_organization rescue_net/doctype/rn_org_merge_request &&
+  echo '   perms fixed' &&
+  ( find . -name '*.py' ! -perm -004 -o -name '*.json' ! -perm -004 ) | sed 's/^/   still-unreadable: /' || true
+"
+
+echo
 echo "3. Resolve site"
 if [ -z "$SITE" ]; then
   SITE="$($DOCKER exec "$C" sh -lc 'cat /home/frappe/frappe-bench/sites/currentsite.txt 2>/dev/null' | tr -d '[:space:]')"

@@ -65,59 +65,59 @@ Owner: "selesaikan … qr code" — a scannable trace on each distribution flow.
 
 ---
 
-## Organisasi — hierarki + permintaan merger + kunci AI org di menu Koordinasi (2026-09-08) — FE LIVE, BE NEEDS DEPLOY + MIGRATE
+## Organisasi — hierarki "satu komando" + kunci AI org di menu Koordinasi (2026-09-08) — DEPLOYED (migrate done); rework NEEDS RE-DEPLOY
 
 Owner: "waktu create bisa memilih untuk jadi bagian existing organisasi …
 bisa meminta existing organisasi untuk bergabung merger … di sini juga ada
-untuk masukkan secret key AI, ai di organisasi ini pakai itu." Merge
-semantics chosen by user: **"jadi anak (hierarki)"** — approving sets the
-child's `parent_organization`; both orgs stay, nothing absorbed/deleted.
+untuk masukkan secret key AI." **Model (revised, final)**: *"induk yang minta
+tapi TANPA persetujuan; PMI daerah bisa saja berdiri sendiri."* → no approval
+step. `set_org_parent` in one write; the **parent**'s owner can pull any org
+under it, and any **child**'s owner can set/clear its own parent (break away).
+Nothing absorbed/deleted — only `RN Organization.parent_organization`.
 
-- **Doctype** — `RN Organization` +1 field `parent_organization` (Link → RN
-  Organization). NEW doctype **`RN Org Merge Request`** (`autoname: hash`):
-  `requester_organization`, `target_organization`, `status`
-  (pending/approved/rejected/withdrawn), `note`, `requested_by/at`,
-  `decided_by/at`, `decision_note`. **Both need `bench migrate`.**
+- **Doctype** — `RN Organization` +`parent_organization` (Link → RN
+  Organization). `RN Org Merge Request` is now just an **audit log**:
+  `status` gains `attached` / `detached` (kept the old options too); a row is
+  written per hierarchy change (requester_organization = parent,
+  target_organization = child, requested_by/at = who/when). **`bench
+  migrate`** — the `parent_organization` col + base doctype were created in
+  the first deploy; the `attached/detached` Select options need one more
+  migrate.
 - **BE `api_community_cluster.py`:**
-  - `create_organization(…, parent_organization=None)` — validates it exists,
-    sets it. `list_organizations` now returns `parent_organization`.
-  - NEW `org_coordination()` — one payload for the panel: the caller's owned
-    orgs each with `parent_title` + `children[]`, plus `incoming_requests`
-    (target = my org) and `outgoing_requests` (requester = my org).
-  - NEW `request_org_merge(requester, target, note)` — requester-owner only;
-    guards self/missing/duplicate-pending/cycle (target must not be a
-    descendant of requester).
-  - NEW `decide_org_merge(merge_request, action, decision_note)` —
-    `approve`/`reject` by **target** owner, `withdraw` by **requester**
-    owner. Approve: cycle re-check → set `parent_organization` → auto-reject
-    the requester's other pending requests (one parent).
+  - `create_organization(…, parent_organization=None)`; `list_organizations`
+    returns `parent_organization`.
+  - `org_coordination()` — owned orgs (parent_title + children[]), `all_orgs`
+    (flat {name,title,parent_organization} for the pickers), `owned` list,
+    and `hierarchy_log` (last 50 attach/detach rows touching my orgs).
+  - `set_org_parent(organization, parent_organization=None, note=None)` —
+    the ONE write. Permission: system manager OR owns `organization` OR owns
+    the new `parent_organization`. Cycle-guarded via `_org_descendants`.
+    Writes the audit row. **`request_org_merge` / `decide_org_merge`
+    removed.**
   - Org-scoped AI BYOK already existed (`api_ai.save_org_key` /
-    `get_org_key_status` / `delete_org_key`, `_assert_org_admin`,
-    `RN AI User Setting` keyed `org:<id>|<provider>`) — only the UI was
-    missing.
+    `get_org_key_status` / `delete_org_key`) — only the UI was missing.
 - **FE:**
-  - `pages/organisasi-posko.html` + `assets/js/org-posko.js` — create-org
-    form gains a **"Bagian dari organisasi (opsional)"** `<select>`
-    (`name="parent_organization"`, filled from `list_organizations`), sent to
-    `create_organization`; org cards show `Induk:` when set.
-  - `pages/koordinasi-organisasi.html` + `assets/js/koordinasi-organisasi.js`
-    (`?v=koordorg-20260904c → orgadmin-20260908`) — NEW section
-    **"Organisasi Saya"** (`#koOrgAdminSection`, shown when
-    `org_coordination.is_org_admin`): hierarchy cards, a **merge-request
-    form** (my org → jadi anak dari target), **incoming** list with
-    Setujui/Tolak, **outgoing** list with Tarik, and a **"Kunci AI
-    Organisasi (BYOK)"** form (status via `get_org_key_status`, save via
-    `save_org_key`, `delete_org_key`; password field, masked status only).
-- **Verify:** `py_compile` + `node -c` clean. NOT deployed / NOT
-  browser-checked. Deploy = same `scripts/deploy-wa-and-flowtrace.sh` (now
-  also copies `rn_organization` + `rn_org_merge_request` doctype dirs; the
-  `bench migrate` step creates the field + doctype).
-- **Note:** `list_organizations` now requests `parent_organization`, so the
-  BE **must** be deployed *with* the migrate — a cp without migrate breaks
-  that endpoint until the column exists.
-- **Still open:** the "config shows empty now" report — user said "kerjakan
-  semua" without a repro; not diagnosed. Watch `my_org_coordination` /
-  `org_membership_admin` after deploy.
+  - `organisasi-posko.html` + `org-posko.js` — create-org "Bagian dari
+    organisasi (opsional)" select → `create_organization`; org cards show
+    `Induk:`.
+  - `koordinasi-organisasi.html` + `.js` (`?v=orgadmin-20260908b`) — section
+    **"Organisasi Saya"**: per-owned-org card with an "Ubah induk" select +
+    "Terapkan" + "Lepaskan (berdiri sendiri)"; a **"Tarik organisasi jadi
+    anak"** form (induk = my org, child = any other org); **"Riwayat
+    perubahan hierarki"** from `hierarchy_log`; and the **"Kunci AI
+    Organisasi (BYOK)"** form (`get_org_key_status` / `save_org_key` /
+    `delete_org_key`, masked status only).
+- **Deploy note (learned the hard way):** `docker cp` of a *directory* onto
+  this NAS lands it `d---------` owned `1024:users` → the `frappe` user can't
+  read it and `bench migrate` **silently skips** it (and `after_migrate`
+  hooks `PermissionError` on any cp'd `.py`). Fix: after every cp,
+  `docker exec -u root <C> chown -R frappe:frappe … && chmod -R u+rwX,go+rX
+  …` the copied paths, then migrate. First deploy hit this for BOTH the WA
+  doctypes and the org ones; resolved 2026-09-08, doctypes + column now
+  confirmed present, `flow_trace` live, notif `global` row seeded.
+- **Still needs re-deploy:** the no-approval rework above (`set_org_parent`,
+  removed endpoints, `attached/detached` options, FE `?v` bump).
+- **Still open:** the "config shows empty now" report — no repro given.
 
 ---
 

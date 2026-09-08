@@ -36,8 +36,8 @@
    "fieldname": "status",
    "label": "Status",
    "fieldtype": "Select",
-   "options": "pending\napproved\nrejected\nwithdrawn",
-   "default": "pending",
+   "options": "pending\napproved\nrejected\nwithdrawn\nattached\ndetached",
+   "default": "attached",
    "in_list_view": 1
   },
   {

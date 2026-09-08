@@ -141,33 +141,31 @@
     <section class="content-grid rn-md-wide" id="koOrgAdminSection" hidden>
       <div class="panel">
         <div class="panel-header">
-          <div><h3>Organisasi Saya</h3><p>Hierarki organisasi, permintaan merger (jadi anak dari organisasi lain), dan kunci AI organisasi.</p></div>
+          <div><h3>Organisasi Saya</h3><p>Hierarki "satu komando": tarik organisasi lain jadi anak (tanpa perlu persetujuannya), atau lepaskan supaya berdiri sendiri. Plus kunci AI organisasi.</p></div>
           <span class="chip neutral" id="koOrgAdminCount">—</span>
         </div>
 
-        <h4 class="rn-md-detail-h">Hierarki</h4>
+        <h4 class="rn-md-detail-h">Hierarki &amp; kelola induk</h4>
         <div id="koOrgHierarchy"></div>
 
-        <h4 class="rn-md-detail-h">Ajukan merger — organisasi saya jadi anak dari…</h4>
-        <form class="rn-form" id="koMergeForm" autocomplete="off">
-          <label>Organisasi saya
-            <select name="requester_organization" id="koMergeRequester"></select>
+        <h4 class="rn-md-detail-h">Tarik organisasi jadi anak</h4>
+        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Mis. PMI Pusat menarik PMI daerah yang tadinya berdiri sendiri. Tidak butuh persetujuan organisasi tujuan; pengelolanya tetap bisa melepaskan diri.</p>
+        <form class="rn-form" id="koAttachForm" autocomplete="off">
+          <label>Induk (organisasi saya)
+            <select name="parent_organization" id="koAttachParent"></select>
           </label>
-          <label>Jadi anak dari (organisasi tujuan)
-            <select name="target_organization" id="koMergeTarget"><option value="">— pilih —</option></select>
+          <label>Organisasi yang ditarik jadi anak
+            <select name="organization" id="koAttachChild"><option value="">— pilih —</option></select>
           </label>
-          <label>Catatan (opsional)<input name="note" placeholder="Alasan / konteks merger"></label>
+          <label>Catatan (opsional)<input name="note" placeholder="Alasan / dasar penggabungan"></label>
           <div class="form-actions">
-            <button class="btn primary" type="submit">Kirim Permintaan Merger</button>
-            <span class="form-message" id="koMergeMsg"></span>
+            <button class="btn primary" type="submit">Jadikan Anak</button>
+            <span class="form-message" id="koAttachMsg"></span>
           </div>
         </form>
 
-        <h4 class="rn-md-detail-h">Permintaan masuk (menunggu keputusan saya)</h4>
-        <div id="koMergeIncoming"></div>
-
-        <h4 class="rn-md-detail-h">Permintaan yang saya kirim</h4>
-        <div id="koMergeOutgoing"></div>
+        <h4 class="rn-md-detail-h">Riwayat perubahan hierarki</h4>
+        <div id="koHierLog"></div>
 
         <h4 class="rn-md-detail-h">Kunci AI Organisasi (BYOK)</h4>
         <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Kunci disimpan terenkripsi di server — halaman ini hanya menampilkan status &amp; 4 digit terakhir. AI organisasi ini memakai kunci tersebut.</p>
@@ -220,7 +218,7 @@
 
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
-<script src="../assets/js/koordinasi-organisasi.js?v=orgadmin-20260908"></script>
+<script src="../assets/js/koordinasi-organisasi.js?v=orgadmin-20260908b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

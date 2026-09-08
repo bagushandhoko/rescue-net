@@ -270,28 +270,57 @@
     });
   }
 
-  /* ---------- Organisasi Saya: hierarki + merger + kunci AI ---------- */
+  /* ---------- Organisasi Saya: hierarki "satu komando" + kunci AI ---------- */
   var ORG_ADMIN = null;
 
-  function mergeReqCard(r, kind) {
-    var acts = "";
-    if (r.status === "pending" && kind === "incoming") {
-      acts =
-        '<button type="button" class="btn primary mini" data-merge-act="approve" data-merge-id="' + esc(r.name) + '">Setujui (jadikan anak)</button>' +
-        '<button type="button" class="btn ghost mini" data-merge-act="reject" data-merge-id="' + esc(r.name) + '">Tolak</button>';
-    } else if (r.status === "pending" && kind === "outgoing") {
-      acts = '<button type="button" class="btn ghost mini" data-merge-act="withdraw" data-merge-id="' + esc(r.name) + '">Tarik</button>';
-    }
-    var line = kind === "incoming"
-      ? esc(r.requester_title) + " → minta jadi anak dari <b>" + esc(r.target_title) + "</b>"
-      : "<b>" + esc(r.requester_title) + "</b> → minta jadi anak dari " + esc(r.target_title);
-    return '<article class="ko-posko-card">' +
-      '<div class="ko-posko-meta">' + line + "</div>" +
-      '<div class="ko-posko-meta">status: ' + esc(r.status) +
-        (r.note ? " · catatan: " + esc(r.note) : "") +
-        (r.decision_note ? " · keputusan: " + esc(r.decision_note) : "") + "</div>" +
-      (acts ? '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + acts + '<span class="koMergeMsg rn-muted"></span></div>' : "") +
+  function fmtDateTime(s) {
+    if (!s) return "";
+    var d = new Date(String(s).replace(" ", "T"));
+    return isNaN(d.getTime()) ? String(s) : d.toLocaleString("id-ID",
+      { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function orgHierCard(o, ownedSet) {
+    var kids = (o.children || []).length
+      ? "<ul>" + o.children.map(function (c) { return "<li>" + esc(c.title) + "</li>"; }).join("") + "</ul>"
+      : '<div class="rn-muted">Belum ada sub-organisasi.</div>';
+
+    // "pindah induk" select — every org except this one and its descendants;
+    // server rejects cycles anyway, this just trims the obvious ones.
+    var opts = ['<option value="">— tidak punya induk (berdiri sendiri) —</option>'];
+    (ORG_ADMIN.all_orgs || []).forEach(function (a) {
+      if (a.name === o.name) return;
+      var sel = a.name === o.parent_organization ? " selected" : "";
+      opts.push('<option value="' + esc(a.name) + '"' + sel + ">" + esc(a.title) + "</option>");
+    });
+
+    return '<article class="ko-posko-card" data-org="' + esc(o.name) + '">' +
+      "<h4>" + esc(o.title) + "</h4>" +
+      '<div class="ko-posko-meta">' +
+        (o.parent_title ? "induk: <b>" + esc(o.parent_title) + "</b>" : "tidak punya induk (berdiri sendiri)") +
+      "</div>" +
+      '<div class="ko-posko-meta" style="margin-top:6px">Sub-organisasi:</div>' + kids +
+      '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
+        '<label class="rn-muted" style="font-size:12px">Ubah induk: ' +
+          '<select class="koSetParent">' + opts.join("") + "</select></label>" +
+        '<button type="button" class="btn ghost mini koApplyParent">Terapkan</button>' +
+        (o.parent_organization
+          ? '<button type="button" class="btn ghost mini koDetach">Lepaskan (berdiri sendiri)</button>'
+          : "") +
+        '<span class="koOrgMsg rn-muted" style="font-size:12px"></span>' +
+      "</div>" +
       "</article>";
+  }
+
+  function hierLogRow(r) {
+    var verb = r.action === "attached"
+      ? "→ dijadikan anak dari"
+      : "dilepas dari";
+    return '<div class="ko-posko-meta">' +
+      esc(fmtDateTime(r.at)) + " — <b>" + esc(r.child_title) + "</b> " + verb +
+      " <b>" + esc(r.parent_title) + "</b>" +
+      (r.note ? ' <span class="rn-muted">· ' + esc(r.note) + "</span>" : "") +
+      "</div>";
   }
 
   function renderOrgAdmin(d) {
@@ -301,52 +330,47 @@
     if (!d || !d.is_org_admin || !(d.organizations || []).length) { sec.hidden = true; return; }
     sec.hidden = false;
 
+    var ownedSet = {};
+    (d.owned || []).forEach(function (n) { ownedSet[n] = 1; });
+
     $("#koOrgAdminCount").textContent = d.organizations.length + " organisasi";
 
-    $("#koOrgHierarchy").innerHTML = d.organizations.map(function (o) {
-      var kids = (o.children || []).length
-        ? "<ul>" + o.children.map(function (c) { return "<li>" + esc(c.title) + ' <span class="rn-muted">(' + esc(c.status) + ")</span></li>"; }).join("") + "</ul>"
-        : '<div class="rn-muted">Belum ada sub-organisasi.</div>';
-      return '<article class="ko-posko-card">' +
-        "<h4>" + esc(o.title) + "</h4>" +
-        '<div class="ko-posko-meta">' + esc(o.organization_type || "-") + " · " + esc(o.status || "-") +
-          (o.parent_title ? " · induk: <b>" + esc(o.parent_title) + "</b>" : " · tidak punya induk") + "</div>" +
-        '<div class="ko-posko-meta">Sub-organisasi:</div>' + kids +
-        "</article>";
-    }).join("");
+    $("#koOrgHierarchy").innerHTML =
+      d.organizations.map(function (o) { return orgHierCard(o, ownedSet); }).join("");
 
-    var reqOpts = d.organizations.map(function (o) {
+    var myOpts = d.organizations.map(function (o) {
       return '<option value="' + esc(o.name) + '">' + esc(o.title) + "</option>";
     }).join("");
-    $("#koMergeRequester").innerHTML = reqOpts;
-    $("#koAiKeyOrg").innerHTML = reqOpts;
+    $("#koAttachParent").innerHTML = myOpts;
+    $("#koAiKeyOrg").innerHTML = myOpts;
 
-    fillMergeTargets();
+    // child picker: every org that is not one of mine
+    var childOpts = ['<option value="">— pilih —</option>'];
+    (d.all_orgs || []).forEach(function (a) {
+      if (ownedSet[a.name]) return;
+      childOpts.push('<option value="' + esc(a.name) + '">' + esc(a.title) +
+        (a.parent_organization ? " (kini anak dari lain)" : "") + "</option>");
+    });
+    $("#koAttachChild").innerHTML = childOpts.join("");
 
-    $("#koMergeIncoming").innerHTML = (d.incoming_requests || []).length
-      ? d.incoming_requests.map(function (r) { return mergeReqCard(r, "incoming"); }).join("")
-      : '<div class="rn-muted">Tidak ada permintaan masuk.</div>';
-    $("#koMergeOutgoing").innerHTML = (d.outgoing_requests || []).length
-      ? d.outgoing_requests.map(function (r) { return mergeReqCard(r, "outgoing"); }).join("")
-      : '<div class="rn-muted">Belum ada permintaan dikirim.</div>';
+    $("#koHierLog").innerHTML = (d.hierarchy_log || []).length
+      ? d.hierarchy_log.map(hierLogRow).join("")
+      : '<div class="rn-muted">Belum ada perubahan hierarki.</div>';
 
     wireOrgAdminActions();
     refreshAiKeyStatus();
   }
 
-  async function fillMergeTargets() {
-    var sel = $("#koMergeTarget");
-    if (!sel || !ORG_ADMIN) return;
-    var mine = {};
-    (ORG_ADMIN.organizations || []).forEach(function (o) { mine[o.name] = 1; });
-    var all = [];
-    try { all = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.list_organizations"); } catch (e) {}
-    var opts = ['<option value="">— pilih —</option>'];
-    (all || []).forEach(function (o) {
-      if (mine[o.name]) return;
-      opts.push('<option value="' + esc(o.name) + '">' + esc(o.title || o.name) + "</option>");
-    });
-    sel.innerHTML = opts.join("");
+  async function setParent(organization, parent, note, msgEl) {
+    if (msgEl) msgEl.textContent = " memproses…";
+    try {
+      await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_org_parent",
+        { organization: organization, parent_organization: parent || "", note: note || null },
+        { method: "POST" });
+      await loadOrgAdmin();
+    } catch (err) {
+      if (msgEl) msgEl.textContent = " gagal: " + ((err && err.message) || err);
+    }
   }
 
   async function refreshAiKeyStatus() {
@@ -368,19 +392,16 @@
   }
 
   function wireOrgAdminActions() {
-    document.querySelectorAll("#koOrgAdminSection [data-merge-act]").forEach(function (btn) {
-      btn.addEventListener("click", async function () {
-        var id = btn.getAttribute("data-merge-id");
-        var act = btn.getAttribute("data-merge-act");
-        var msg = btn.parentElement.querySelector(".koMergeMsg");
-        if (msg) msg.textContent = " memproses…";
-        try {
-          await window.RN_FRAPPE.call("rescue_net.api_community_cluster.decide_org_merge",
-            { merge_request: id, action: act }, { method: "POST" });
-          await loadOrgAdmin();
-        } catch (err) {
-          if (msg) msg.textContent = " gagal: " + ((err && err.message) || err);
-        }
+    document.querySelectorAll("#koOrgHierarchy [data-org]").forEach(function (cardEl) {
+      var org = cardEl.getAttribute("data-org");
+      var msg = cardEl.querySelector(".koOrgMsg");
+      var apply = cardEl.querySelector(".koApplyParent");
+      var detach = cardEl.querySelector(".koDetach");
+      if (apply) apply.addEventListener("click", function () {
+        setParent(org, cardEl.querySelector(".koSetParent").value, null, msg);
+      });
+      if (detach) detach.addEventListener("click", function () {
+        if (window.confirm("Lepaskan organisasi ini dari induknya?")) setParent(org, "", null, msg);
       });
     });
   }
@@ -396,21 +417,23 @@
     if (_orgAdminFormsWired) return;
     _orgAdminFormsWired = true;
 
-    var mf = $("#koMergeForm");
-    if (mf) mf.addEventListener("submit", async function (e) {
+    var af = $("#koAttachForm");
+    if (af) af.addEventListener("submit", async function (e) {
       e.preventDefault();
-      var msg = $("#koMergeMsg");
-      var target = $("#koMergeTarget").value;
-      if (!target) { msg.textContent = "Pilih organisasi tujuan."; return; }
-      msg.textContent = "mengirim…";
+      var msg = $("#koAttachMsg");
+      var child = $("#koAttachChild").value;
+      var parent = $("#koAttachParent").value;
+      if (!child) { msg.textContent = "Pilih organisasi yang ditarik."; return; }
+      if (!parent) { msg.textContent = "Pilih induk."; return; }
+      msg.textContent = "memproses…";
       try {
-        await window.RN_FRAPPE.call("rescue_net.api_community_cluster.request_org_merge", {
-          requester_organization: $("#koMergeRequester").value,
-          target_organization: target,
-          note: (mf.note.value || "").trim() || null,
+        await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_org_parent", {
+          organization: child,
+          parent_organization: parent,
+          note: (af.note.value || "").trim() || null,
         }, { method: "POST" });
-        msg.textContent = "Terkirim — menunggu keputusan organisasi tujuan.";
-        mf.note.value = "";
+        msg.textContent = "Berhasil — sekarang jadi anak.";
+        af.note.value = "";
         await loadOrgAdmin();
       } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }
     });

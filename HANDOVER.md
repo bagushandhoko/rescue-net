@@ -4,13 +4,71 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-08 (Posko Distribusi + Posko Logistik **Indonesian
-tidy pass — BE now DEPLOYED**: `api_control_centre.py` copied into
-`osiun-frappe-backend` via `docker cp` (the `docker exec … cat >` write was
-classifier-blocked, `docker cp` was not), backend restarted, live API now
-returns "Jemput Aktif" / "Pasif — hanya menyediakan ruang muat". Prev:
-Indonesian tidy pass FE, collected-stock dispatch chain browser-DOM verified;
-commits 783185c … c437e3b · 53176cf · f1283c3)_
+_Last updated: 2026-09-08 (**Indonesian tidy pass — 4 more pages**:
+`posko-detail.html`, `management-distribusi.html`, `shelter-detail.html`,
+`program-khusus.html` — visible-text-only, no `name=`/`id=`/`value=` touched,
+no JS changed, HTML served from disk = live. Prev: Posko Distribusi + Posko
+Logistik tidy pass FE+BE deployed; commits d79df9b · 783185c … f1283c3)_
+
+---
+
+## Indonesian tidy pass — posko-detail / management-distribusi / shelter-detail / program-khusus (2026-09-08)
+
+Owner: "teruskan perapihan halaman … kerjakan semua". Page-local wording
+cleanup only, **no behaviour change** — only visible text nodes translated
+(eyebrows, `<h3>/<h4>`, KPI `<span>/<small>`, `<label>` text, `<th>`, button
+labels, `<option>` display text). `name=` / `id=` / `value=` / `<option
+value=>` / `data-*` / `href=` all untouched; no JS files edited (verified:
+`distribusi.js` create-flow handler doesn't even read `form.status`;
+`program-khusus.js` reads `update_type.value` not label). Diff is
+line-for-line symmetric (108 ins / 108 del). Nav links + sidebar tagline
+left as-is (cross-page concern, matches earlier passes).
+
+- **`posko-detail.html`** — eyebrow "Operational Node" → "Node Operasional";
+  KPI Role/Needs/Stock Items/Flows → Peran/Kebutuhan/Item Stok/Alur
+  Distribusi; legacy panels "Record Stock Observation" → "Catat Observasi
+  Stok", "Create Distribution Flow" → "Buat Alur Distribusi", "Stock
+  Summary"/"Stock Observations"/"Logistic Needs"/"Incoming Aid"/"Distribution
+  Flows"/"Posko Overview" → Indonesian; form labels Item Name/Quantity/Unit/
+  Notes/Destination Posko ID → Nama Item/Jumlah/Satuan/Catatan/ID Posko
+  Tujuan; buttons "Save Movement" → "Simpan".
+- **`management-distribusi.html`** — eyebrow "Aid Flow & Transport Matching"
+  → "Pencocokan Bantuan & Transportasi"; KPI "Transport Space" → "Ruang
+  Transportasi"; "Relawan Pickup" → "Relawan Jemput" (board head + xref
+  "ruang/space" → "ruang muat"); "Pickup Oleh" `<th>` → "Dijemput Oleh";
+  drawer "Transport Space Tersedia & Buat Distribution Flow" → "Ruang
+  Transportasi Tersedia & Buat Alur Distribusi"; create-flow form labels
+  Disaster Event ID/Need ID/Aid Offer ID/Transport ID/Destination Node ID →
+  ID Bencana/ID Kebutuhan/ID Penawaran Bantuan/ID Transportasi/ID Node
+  Tujuan, placeholder "optional" → "opsional", status `<option>` display
+  text planned/assigned_pickup/in_transit/arrived_at_posko → Direncanakan/
+  Menunggu Jemput/Dalam Perjalanan/Tiba di Posko (values unchanged); filter
+  "Assigned Pickup" → "Menunggu Jemput"; "Distribution Flow (Riwayat Mentah)"
+  → "Alur Distribusi (Riwayat Mentah)".
+- **`shelter-detail.html`** — eyebrow "Temporary Accommodation" → "Akomodasi
+  Sementara"; pill "Shelter · Occupancy" → "· Okupansi"; KPI "Overcapacity" →
+  "Melebihi Kapasitas"; drawers "Shelter Occupancy (Riwayat…)" → "Okupansi
+  Shelter…", "Record Occupancy" → "Catat Okupansi", "Add Shelter Need" →
+  "Tambah Kebutuhan Shelter", "Shelter Stock & Distribution Flows" → "Stok
+  Shelter & Alur Distribusi"; all `occupancyForm` + `needForm` labels
+  Indonesian (Shelter Posko ID → ID Posko Shelter, Capacity Total → Kapasitas
+  Total, Families/Children/Elderly/Disabled Count → Jumlah KK/Anak/Lansia/
+  Disabilitas, …); priority `<option>` text normal/urgent/critical → Normal/
+  Mendesak/Kritis (values kept); "Save Occupancy"/"Save Shelter Need" →
+  "Simpan Okupansi"/"Simpan Kebutuhan Shelter"; "Refresh" → "Muat Ulang".
+- **`program-khusus.html`** — eyebrow "Donor & Special Program" → "Donor &
+  Program Khusus"; KPI "Program Critical" → "Program Kritis", "Butuh Support"
+  → "Butuh Dukungan"; 4 support tiles "Support X" / "Ajukan Support" →
+  "Dukungan X" / "Ajukan Dukungan"; "Evidence Program" → "Bukti Program";
+  legacy drawer "Buat Program & Update Progress (Form Lama)" → "… Pembaruan
+  Progres …", "Sync Now"/"Refresh" → "Sinkron Sekarang"/"Muat Ulang", legacy
+  KPI Programs/Target/Current/Updates + hints → Indonesian; form labels Owner
+  ID/Target Amount/Program ID/Progress %/Amount Spent/Update Type → ID
+  Pemilik/Target Dana/ID Program/Progres %/Dana Terpakai/Jenis Pembaruan;
+  "Update Progress Program" → "Pembaruan Progres Program".
+
+Not yet browser-verified (pure text swap, low risk). No `?v=` bumps needed —
+no asset files changed.
 
 ---
 

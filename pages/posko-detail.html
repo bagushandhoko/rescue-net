@@ -50,21 +50,21 @@
     <div class="rn-page-mobile-title">Posko Detail</div>
 
       <div>
-        <p class="eyebrow">Operational Node</p>
+        <p class="eyebrow">Node Operasional</p>
         <h2 id="poskoTitle">Loading posko...</h2>
         <p class="subtitle" id="poskoSubtitle">Loading...</p>
         <p class="subtitle" id="poskoStatus">Ready.</p>
       </div>
-      <div class="status-pill">Posko Detail · Live Stock</div>
+      <div class="status-pill">Posko Detail · Stok Langsung</div>
     </header>
 
     <div id="poskoShareBanner" class="rn-share-banner" hidden></div>
 
     <section class="kpi-grid">
-      <div class="kpi-card danger"><span class="kpi-icon" data-icon="id-card"></span><span>Role</span><strong id="kpiRole">-</strong><small>node type</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="alert-circle"></span><span>Needs</span><strong id="kpiNeeds">0</strong><small>open needs</small></div>
-      <div class="kpi-card warning"><span class="kpi-icon" data-icon="box"></span><span>Stock Items</span><strong id="kpiStock">0</strong><small>summary rows</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="truck"></span><span>Flows</span><strong id="kpiFlows">0</strong><small>distribution</small></div>
+      <div class="kpi-card danger"><span class="kpi-icon" data-icon="id-card"></span><span>Peran</span><strong id="kpiRole">-</strong><small>jenis node</small></div>
+      <div class="kpi-card"><span class="kpi-icon" data-icon="alert-circle"></span><span>Kebutuhan</span><strong id="kpiNeeds">0</strong><small>kebutuhan terbuka</small></div>
+      <div class="kpi-card warning"><span class="kpi-icon" data-icon="box"></span><span>Item Stok</span><strong id="kpiStock">0</strong><small>baris ringkasan</small></div>
+      <div class="kpi-card"><span class="kpi-icon" data-icon="truck"></span><span>Alur Distribusi</span><strong id="kpiFlows">0</strong><small>distribusi</small></div>
     </section>
 
     <h3 class="rn-sub-h">Kondisi Logistik</h3>
@@ -188,7 +188,7 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>Posko Overview</h3>
+            <h3>Profil Posko</h3>
             <p>Identitas posko, organisasi, dan status operasional.</p>
           </div>
         </div>
@@ -196,24 +196,24 @@
       </div>
 
       <aside class="panel summary">
-        <h3>Record Stock Observation</h3>
+        <h3>Catat Observasi Stok</h3>
         <p class="subtitle">Catat snapshot stok aktual Posko.</p>
 
         <form class="rn-form" id="stockForm">
-          <label>Item Name
+          <label>Nama Item
             <input name="item_name" value="Air Mineral" required>
           </label>
-          <label>Quantity
+          <label>Jumlah
             <input name="quantity" type="number" value="10" required>
           </label>
-          <label>Unit
+          <label>Satuan
             <input name="unit" value="dus" required>
           </label>
-          <label>Notes
+          <label>Catatan
             <input name="notes" value="Catatan stok dari posko.">
           </label>
           <div class="form-actions">
-            <button class="btn primary" type="submit">Save Movement</button>
+            <button class="btn primary" type="submit">Simpan</button>
           </div>
         </form>
       </aside>
@@ -223,15 +223,15 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>Stock Summary</h3>
-            <p>Snapshot stok terbaru dari RN Stock Observation.</p>
+            <h3>Ringkasan Stok</h3>
+            <p>Snapshot stok terbaru dari observasi stok.</p>
           </div>
         </div>
         <div class="event-list" id="stockSummary"></div>
       </div>
 
       <aside class="panel summary">
-        <h3>Stock Observations</h3>
+        <h3>Observasi Stok</h3>
         <div class="event-list" id="stockMovements"></div>
       </aside>
     </section>
@@ -239,32 +239,32 @@
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
-          <h3>Create Distribution Flow</h3>
-          <p>Buat Distribution Flow dari Posko ini ke Posko tujuan.</p>
+          <h3>Buat Alur Distribusi</h3>
+          <p>Buat alur distribusi dari posko ini ke posko tujuan.</p>
         </div>
       </div>
 
       <form class="rn-form" id="transferForm">
         <div class="form-grid">
-          <label>Destination Posko ID
+          <label>ID Posko Tujuan
             <input name="destination_posko_id" value="posko-dapur-melati" required>
           </label>
-          <label>Item Name
+          <label>Nama Item
             <input name="item_name" value="Air Mineral" required>
           </label>
-          <label>Quantity
+          <label>Jumlah
             <input name="quantity" type="number" value="5" required>
           </label>
-          <label>Unit
+          <label>Satuan
             <input name="unit" value="dus" required>
           </label>
-          <label>Notes
+          <label>Catatan
             <input name="notes" value="Transfer stok dari posko logistik.">
           </label>
         </div>
 
         <div class="form-actions">
-          <button class="btn primary" type="submit">Create Distribution Flow</button>
+          <button class="btn primary" type="submit">Buat Alur Distribusi</button>
         </div>
       </form>
     </section>
@@ -273,7 +273,7 @@
       <div class="panel">
         <div class="panel-header">
           <div>
-            <h3>Logistic Needs</h3>
+            <h3>Kebutuhan Logistik</h3>
             <p>Kebutuhan aktif yang terkait dengan posko ini.</p>
           </div>
         </div>
@@ -281,7 +281,7 @@
       </div>
 
       <aside class="panel summary">
-        <h3>Incoming Aid</h3>
+        <h3>Bantuan Masuk</h3>
         <div class="event-list" id="incomingAid"></div>
       </aside>
     </section>
@@ -289,7 +289,7 @@
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
-          <h3>Distribution Flows</h3>
+          <h3>Alur Distribusi</h3>
           <p>Distribusi yang menuju posko ini.</p>
         </div>
       </div>

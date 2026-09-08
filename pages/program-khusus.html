@@ -50,7 +50,7 @@
     <div class="rn-page-mobile-title">Program Khusus</div>
 
       <div>
-        <p class="eyebrow">Donor & Special Program</p>
+        <p class="eyebrow">Donor & Program Khusus</p>
         <h2>Program Khusus</h2>
         <p class="subtitle">Pantau implementasi proyek & program bantuan dari perencanaan hingga verifikasi output.</p>
         <p class="subtitle" id="programStatus">Memuat…</p>
@@ -63,7 +63,7 @@
         <span class="kpi-icon" data-icon="gift"></span><span>Program Aktif</span><strong id="kpiAktif">-</strong><small>berjalan</small>
       </button>
       <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="program_critical">
-        <span class="kpi-icon" data-icon="alert-triangle"></span><span>Program Critical</span><strong id="kpiCritical">-</strong><small>prioritas tinggi</small>
+        <span class="kpi-icon" data-icon="alert-triangle"></span><span>Program Kritis</span><strong id="kpiCritical">-</strong><small>prioritas tinggi</small>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="program_selesai">
         <span class="kpi-icon" data-icon="check-circle"></span><span>Program Selesai</span><strong id="kpiSelesai">-</strong><small>tuntas</small>
@@ -75,7 +75,7 @@
         <span class="kpi-icon" data-icon="map-pin"></span><span>Lokasi Belum Terlayani</span><strong id="kpiLokasi">-</strong><small>belum ada update</small>
       </button>
       <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="butuh_support">
-        <span class="kpi-icon" data-icon="hand-heart"></span><span>Butuh Support</span><strong id="kpiSupport">-</strong><small>prioritas tinggi, progress rendah</small>
+        <span class="kpi-icon" data-icon="hand-heart"></span><span>Butuh Dukungan</span><strong id="kpiSupport">-</strong><small>prioritas tinggi, progres rendah</small>
       </button>
     </section>
 
@@ -123,13 +123,13 @@
               <div><span>Periode</span><b id="detailPeriod">-</b></div>
               <div><span>Sasaran</span><b id="detailBeneficiaries">-</b></div>
             </div>
-            <h4 style="margin-top:16px;">Evidence Program</h4>
+            <h4 style="margin-top:16px;">Bukti Program</h4>
             <div class="rn-bukti-grid" id="detailEvidence"></div>
             <div class="rn-pk-support-grid">
-              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="package"></span><b>Support Logistik</b><a href="posko-logistik.html">Ajukan Support →</a></div>
-              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="truck"></span><b>Support Distribusi</b><a href="management-distribusi.html">Ajukan Support →</a></div>
-              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="users"></span><b>Support Relawan</b><a href="management-relawan.html">Ajukan Support →</a></div>
-              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="wrench"></span><b>Support Alat Kerja</b><a href="alat-kerja.html">Ajukan Support →</a></div>
+              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="package"></span><b>Dukungan Logistik</b><a href="posko-logistik.html">Ajukan Dukungan →</a></div>
+              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="truck"></span><b>Dukungan Distribusi</b><a href="management-distribusi.html">Ajukan Dukungan →</a></div>
+              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="users"></span><b>Dukungan Relawan</b><a href="management-relawan.html">Ajukan Dukungan →</a></div>
+              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="wrench"></span><b>Dukungan Alat Kerja</b><a href="alat-kerja.html">Ajukan Dukungan →</a></div>
             </div>
           </div>
 
@@ -150,18 +150,18 @@
     </section>
 
     <details class="panel rn-input-drawer">
-      <summary><h3>Buat Program & Update Progress (Form Lama)</h3></summary>
+      <summary><h3>Buat Program & Pembaruan Progres (Form Lama)</h3></summary>
 
       <div class="form-actions">
-        <button class="btn" type="button" data-rn-sync-now>Sync Now</button>
-        <button class="btn primary" type="button" id="refreshPrograms">Refresh</button>
+        <button class="btn" type="button" data-rn-sync-now>Sinkron Sekarang</button>
+        <button class="btn primary" type="button" id="refreshPrograms">Muat Ulang</button>
       </div>
 
       <section class="kpi-grid">
-        <div class="kpi-card"><span class="kpi-icon" data-icon="gift"></span><span>Programs</span><strong id="kpiPrograms">0</strong><small>active/scheduled</small></div>
-        <div class="kpi-card warning"><span class="kpi-icon" data-icon="target"></span><span>Target</span><strong id="kpiBudgetTarget">0</strong><small>target/current value</small></div>
-        <div class="kpi-card"><span class="kpi-icon" data-icon="trending-up"></span><span>Current</span><strong id="kpiBudgetReceived">0</strong><small>current amount</small></div>
-        <div class="kpi-card danger"><span class="kpi-icon" data-icon="refresh"></span><span>Updates</span><strong id="kpiUpdates">0</strong><small>progress records</small></div>
+        <div class="kpi-card"><span class="kpi-icon" data-icon="gift"></span><span>Program</span><strong id="kpiPrograms">0</strong><small>aktif/terjadwal</small></div>
+        <div class="kpi-card warning"><span class="kpi-icon" data-icon="target"></span><span>Target</span><strong id="kpiBudgetTarget">0</strong><small>nilai target/kini</small></div>
+        <div class="kpi-card"><span class="kpi-icon" data-icon="trending-up"></span><span>Kini</span><strong id="kpiBudgetReceived">0</strong><small>jumlah kini</small></div>
+        <div class="kpi-card danger"><span class="kpi-icon" data-icon="refresh"></span><span>Pembaruan</span><strong id="kpiUpdates">0</strong><small>catatan progres</small></div>
       </section>
 
       <section class="content-grid">
@@ -184,13 +184,13 @@
             <label>Jenis Program
               <input name="program_type" value="energy_support">
             </label>
-            <label>Owner ID
+            <label>ID Pemilik
               <input name="owner_id" value="org-sim-bpbd">
             </label>
             <label>Target Lokasi
               <input name="target_description" value="Shelter Simulasi dan Dapur Umum">
             </label>
-            <label>Target Amount
+            <label>Target Dana
               <input name="target_amount" type="number" value="50000000">
             </label>
             <label>Catatan
@@ -204,23 +204,23 @@
       <section class="panel">
         <div class="panel-header">
           <div>
-            <h3>Update Progress Program</h3>
-            <p>Catat progress, pengeluaran, dan evidence program.</p>
+            <h3>Pembaruan Progres Program</h3>
+            <p>Catat progres, pengeluaran, dan bukti program.</p>
           </div>
         </div>
 
         <form class="rn-form" id="programUpdateForm">
           <div class="form-grid">
-            <label>Program ID
+            <label>ID Program
               <input name="program_id" value="donorprog-4b09d6e78dbb" required>
             </label>
-            <label>Progress %
+            <label>Progres %
               <input name="progress_percent" type="number" value="25">
             </label>
-            <label>Amount Spent
+            <label>Dana Terpakai
               <input name="amount_spent" type="number" value="5000000">
             </label>
-            <label>Update Type
+            <label>Jenis Pembaruan
               <input name="update_type" value="progress">
             </label>
           </div>

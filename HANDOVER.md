@@ -30,7 +30,7 @@ said "kerjakan semua" without detail; not diagnosed. Check
 
 ---
 
-## Form fixes — DB-reference dropdowns + GPS picker (2026-09-08) — FE LIVE (no deploy)
+## Form fixes — dropdowns, GPS picker, multi-function, org grouping (2026-09-08) — FE LIVE; one small BE deploy done
 
 Owner: "pilihan bencana belum pull-down menu dari database bencana … lokasi
 GPS kasih pilihan lokasi saat ini / maps / manual … pilihan input yang ke
@@ -56,7 +56,25 @@ existing database, ya jadikan drop down."
 - **Not converted** (needs per-event filtered pickers — separate task):
   management-distribusi create-flow `need_id` / `aid_offer_id` /
   `transport_space_id` / `destination_node_id`.
-- FE only, `node -c` clean. Not browser-checked. Commits `03cf04d` `aa7ca5b`.
+- **registrasi-posko field sizing** — the shared `.form-grid` is a rigid
+  4-col (`1.2fr 1fr 1.2fr .8fr`) so Email PIC stayed cramped. Scoped
+  `#regForm .form-grid → repeat(auto-fill, minmax(240px,1fr))`; Nama/Email PIC
+  span 2; Alamat/GPS/Fasilitas/fungsi full-width. (`aa7... ` follow-up
+  `33f7bee`)
+- **registrasi-posko multi-function posko** — added the same "Fungsi posko
+  (boleh > 1)" fieldset as organisasi-posko (`fn_logistics/shelter/kitchen`)
+  + "Peran Logistik"; on submit, after `create_posko`, calls
+  `api_control_centre.set_posko_functions` (already deployed) so a shelter
+  can also be logistik + dapur umum. Commit `33f7bee`.
+- **registrasi-posko list grouped by organisation** — `posko_registry_board`
+  now returns `organization` + `organization_title` per row (**BE deployed**
+  to osiun.localhost, cp+restart, no migrate). `registrasi-posko.js`
+  `applyFilter` sorts by org (real orgs A→Z, "Tanpa organisasi" last) then
+  title + builds `groupCounts`; `renderTable` emits a "🏢 <org> · N posko"
+  header row per group. Commit `6224dc4`.
+- `?v` registrasi-posko.js chain: `geopick → poskofn → orggroup-20260908`.
+- FE `node -c` + BE `py_compile` clean. Not browser-checked. Commits
+  `03cf04d` `aa7ca5b` `33f7bee` `6224dc4`.
 
 ---
 

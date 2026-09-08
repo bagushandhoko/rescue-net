@@ -85,7 +85,11 @@
                 <option value="collection_hub">Collection Hub</option>
               </select>
             </label>
-            <label>Event Bencana *<input name="disaster_event" value="event-sim-001" required></label>
+            <label>Event Bencana *
+              <select name="disaster_event" id="regDisasterEvent" required>
+                <option value="">Memuat daftar bencana…</option>
+              </select>
+            </label>
             <label>Lokasi GPS * (lat, lng)<input name="latlng" placeholder="-6.228889, 106.871111"></label>
             <label class="rn-rp-full">Alamat Lengkap *<input name="address" required></label>
             <label>Nama Lengkap PIC *<input name="officer_in_charge_name" required></label>
@@ -159,7 +163,7 @@
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
-<script src="../assets/js/registrasi-posko.js?v=vbadge-20260904"></script>
+<script src="../assets/js/registrasi-posko.js?v=eventdd-20260908"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

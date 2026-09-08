@@ -171,6 +171,35 @@
     });
   }
 
+  function bareEvent(x) { return String(x || "").replace(/^disaster_events:/, ""); }
+
+  async function populateDisasterEvents() {
+    var sel = document.getElementById("regDisasterEvent");
+    if (!sel) return;
+    var want = getEventId();
+    var list = [];
+    try {
+      list = await window.RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters");
+    } catch (e) { /* keep the fallback option below */ }
+    list = Array.isArray(list) ? list : [];
+
+    var matched = list.some(function (ev) { return bareEvent(ev.id || ev.name) === bareEvent(want); });
+    var opts = list.map(function (ev) {
+      var v = ev.id || ev.name;
+      var label = (ev.title || v) + (ev.severity ? " — " + ev.severity : "");
+      var s = bareEvent(v) === bareEvent(want) ? " selected" : "";
+      return '<option value="' + esc(v) + '"' + s + ">" + esc(label) + "</option>";
+    });
+    if (!matched && want) {
+      opts.unshift('<option value="' + esc(want) + '" selected>' + esc(want) + " (dari tautan)</option>");
+    }
+    if (!opts.length) {
+      var fb = want || "event-sim-001";
+      opts.push('<option value="' + esc(fb) + '" selected>' + esc(fb) + "</option>");
+    }
+    sel.innerHTML = opts.join("");
+  }
+
   function setupForm() {
     var form = $("#regForm");
     $("#regResetBtn").addEventListener("click", function () { form.reset(); });
@@ -221,6 +250,7 @@
     if (!window.RN_FRAPPE) return;
     setupForm();
     setupActions();
+    populateDisasterEvents();
     $("#poskoSearch").addEventListener("input", function (e) { state.query = e.target.value.trim(); applyFilter(); });
 
     loadRegistry()

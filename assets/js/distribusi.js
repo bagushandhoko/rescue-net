@@ -776,6 +776,27 @@ function findReference(
   );
 }
 
+async function fillFlowDisasterEvents() {
+  const sel = document.querySelector('[data-create-flow] [name="disaster_event_id"]');
+  if (!sel || sel.tagName !== "SELECT") return;
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g,
+    c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const bare = x => String(x || "").replace(/^disaster_events:/, "");
+  const want = new URLSearchParams(location.search).get("event") || "event-sim-001";
+  let list = [];
+  try { list = await window.RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters"); } catch (e) {}
+  list = Array.isArray(list) ? list : [];
+  const matched = list.some(ev => bare(ev.id || ev.name) === bare(want));
+  const opts = list.map(ev => {
+    const v = ev.id || ev.name;
+    const s = bare(v) === bare(want) ? " selected" : "";
+    return `<option value="${esc(v)}"${s}>${esc(ev.title || v)}</option>`;
+  });
+  if (!matched && want) opts.unshift(`<option value="${esc(want)}" selected>${esc(want)} (dari tautan)</option>`);
+  if (!opts.length) opts.push(`<option value="${esc(want)}" selected>${esc(want)}</option>`);
+  sel.innerHTML = opts.join("");
+}
+
 function setupFlowForm() {
   const form =
     document.querySelector(
@@ -788,6 +809,7 @@ function setupFlowForm() {
     );
 
   if (!form) return;
+  fillFlowDisasterEvents();
 
   form.addEventListener(
     "submit",

@@ -439,6 +439,37 @@ function renderPoskos(items) {
 }
 
 
+async function fillDisasterEventSelect() {
+  const sel = document.querySelector(
+    '[data-rn-create-posko] [name="disaster_event_id"]'
+  );
+  if (!sel || sel.tagName !== "SELECT") return;
+
+  const bare = x => String(x || "").replace(/^disaster_events:/, "");
+  const want = currentEventParam() || "event-sim-001";
+
+  let list = [];
+  try {
+    list = await RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters");
+  } catch (e) { /* fall through to the plain fallback option */ }
+  list = Array.isArray(list) ? list : [];
+
+  const matched = list.some(ev => bare(ev.id || ev.name) === bare(want));
+  const opts = list.map(ev => {
+    const v = ev.id || ev.name;
+    const s = bare(v) === bare(want) ? " selected" : "";
+    return `<option value="${safe(v)}"${s}>${safe(ev.title || v)}</option>`;
+  });
+  if (!matched && want) {
+    opts.unshift(`<option value="${safe(want)}" selected>${safe(want)} (dari tautan)</option>`);
+  }
+  if (!opts.length) {
+    opts.push(`<option value="${safe(want)}" selected>${safe(want)}</option>`);
+  }
+  sel.innerHTML = opts.join("");
+}
+
+
 function fillOrganizationSelect(items) {
   const select =
     document.querySelector(
@@ -549,6 +580,8 @@ async function loadOrgPosko() {
   fillOrganizationSelect(
     orgRows
   );
+
+  fillDisasterEventSelect();
 
   const orgKpi =
     document.getElementById(

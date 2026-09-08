@@ -200,6 +200,87 @@
     sel.innerHTML = opts.join("");
   }
 
+  /* ---------- Lokasi GPS: lokasi saat ini / pilih di peta / manual ---------- */
+  var GEO = { map: null, marker: null };
+
+  function parseLatlng() {
+    var v = String(($("#regLatlng") && $("#regLatlng").value) || "").split(",");
+    var lat = parseFloat(v[0]), lng = parseFloat(v[1]);
+    return (isFinite(lat) && isFinite(lng)) ? [lat, lng] : null;
+  }
+
+  function setLatlng(lat, lng) {
+    var el = $("#regLatlng");
+    if (el) el.value = Number(lat).toFixed(6) + ", " + Number(lng).toFixed(6);
+    if (GEO.marker) GEO.marker.setLatLng([lat, lng]);
+  }
+
+  function geoMsg(t) { var e = $("#regGeoMsg"); if (e) e.textContent = t ? " " + t : ""; }
+
+  function useCurrentLocation() {
+    if (!navigator.geolocation) { geoMsg("Peramban tidak mendukung geolokasi."); return; }
+    geoMsg("Mengambil lokasi…");
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        setLatlng(pos.coords.latitude, pos.coords.longitude);
+        geoMsg("Lokasi terisi (±" + Math.round(pos.coords.accuracy || 0) + " m).");
+        if (GEO.map) GEO.map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+      },
+      function (err) {
+        geoMsg("Gagal: " + (err && err.message || "izin lokasi ditolak") + ". Pakai peta atau isi manual.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
+  function initGeoMap() {
+    if (GEO.map || typeof L === "undefined") return;
+    var start = parseLatlng() || [-2.5, 118.0];
+    var zoom = parseLatlng() ? 16 : 4;
+    GEO.map = L.map("regMap").setView(start, zoom);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(GEO.map);
+    var icon = L.divIcon({
+      className: "rn-geo-pin",
+      html: '<span style="display:block;width:16px;height:16px;border-radius:50% 50% 50% 0;background:#c0392b;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);transform:rotate(-45deg)"></span>',
+      iconSize: [16, 16], iconAnchor: [8, 16],
+    });
+    GEO.marker = L.marker(start, { draggable: true, icon: icon }).addTo(GEO.map);
+    GEO.marker.on("dragend", function () {
+      var p = GEO.marker.getLatLng();
+      setLatlng(p.lat, p.lng);
+      geoMsg("Titik diperbarui dari peta.");
+    });
+    GEO.map.on("click", function (e) {
+      setLatlng(e.latlng.lat, e.latlng.lng);
+      geoMsg("Titik dipilih dari peta.");
+    });
+  }
+
+  function toggleGeoMap() {
+    var wrap = $("#regMapWrap");
+    if (!wrap) return;
+    if (typeof L === "undefined") { geoMsg("Peta tidak tersedia — pakai lokasi saat ini atau isi manual."); return; }
+    wrap.hidden = !wrap.hidden;
+    if (!wrap.hidden) {
+      initGeoMap();
+      setTimeout(function () {
+        if (GEO.map) GEO.map.invalidateSize();
+        var ll = parseLatlng();
+        if (ll && GEO.map) { GEO.map.setView(ll, 16); GEO.marker.setLatLng(ll); }
+      }, 60);
+    }
+  }
+
+  function setupGeo() {
+    var now = $("#regGeoNow"), pick = $("#regGeoMap");
+    if (now) now.addEventListener("click", useCurrentLocation);
+    if (pick) {
+      if (typeof L === "undefined") pick.hidden = true;
+      else pick.addEventListener("click", toggleGeoMap);
+    }
+  }
+
   function setupForm() {
     var form = $("#regForm");
     $("#regResetBtn").addEventListener("click", function () { form.reset(); });
@@ -250,6 +331,7 @@
     if (!window.RN_FRAPPE) return;
     setupForm();
     setupActions();
+    setupGeo();
     populateDisasterEvents();
     $("#poskoSearch").addEventListener("input", function (e) { state.query = e.target.value.trim(); applyFilter(); });
 

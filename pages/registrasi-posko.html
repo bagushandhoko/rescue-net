@@ -7,6 +7,14 @@
   <link rel="stylesheet" href="../assets/css/style.css?v=hdrtidy-20260908">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css" />
+  <style>
+    .rn-geo-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .rn-geo-actions .btn { padding: 5px 10px; font-size: 12px; }
+    #regMapWrap { margin-top: 6px; }
+    #regMap { height: 260px; border: 1px solid var(--line, #ddd); border-radius: 10px; }
+    #regGeoMsg { font-size: 11.5px; }
+  </style>
 </head>
 <body>
 <div class="app-shell">
@@ -90,7 +98,17 @@
                 <option value="">Memuat daftar bencana…</option>
               </select>
             </label>
-            <label>Lokasi GPS * (lat, lng)<input name="latlng" placeholder="-6.228889, 106.871111"></label>
+            <label class="rn-rp-full">Lokasi GPS * (lat, lng)
+              <input name="latlng" id="regLatlng" placeholder="-6.228889, 106.871111" autocomplete="off">
+            </label>
+            <div class="rn-rp-full">
+              <span class="rn-geo-actions">
+                <button type="button" class="btn" id="regGeoNow">📍 Lokasi saat ini</button>
+                <button type="button" class="btn" id="regGeoMap">🗺️ Pilih di peta</button>
+                <span class="rn-muted" id="regGeoMsg"></span>
+              </span>
+              <div id="regMapWrap" hidden><div id="regMap"></div></div>
+            </div>
             <label class="rn-rp-full">Alamat Lengkap *<input name="address" required></label>
             <label>Nama Lengkap PIC *<input name="officer_in_charge_name" required></label>
             <label>Jabatan *<input name="officer_in_charge_role" placeholder="Koordinator Posko"></label>
@@ -163,7 +181,8 @@
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
-<script src="../assets/js/registrasi-posko.js?v=eventdd-20260908"></script>
+<script src="../assets/vendor/leaflet/leaflet.js"></script>
+<script src="../assets/js/registrasi-posko.js?v=geopick-20260908"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

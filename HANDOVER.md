@@ -4,11 +4,76 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-08 (**Indonesian tidy pass — 4 more pages**:
-`posko-detail.html`, `management-distribusi.html`, `shelter-detail.html`,
-`program-khusus.html` — visible-text-only, no `name=`/`id=`/`value=` touched,
-no JS changed, HTML served from disk = live. Prev: Posko Distribusi + Posko
-Logistik tidy pass FE+BE deployed; commits d79df9b · 783185c … f1283c3)_
+_Last updated: 2026-09-08 (**Posko Distribusi — Land Rover follow-up, Part A+B**:
+lokasi → Google Maps link (posko coords now in `posko_distribusi_board`;
+`#pdStatus` + armada-drill location rows link out), booking hint made 3-way +
+armada-drill note explaining why no "pesan slot" form. FE `0a3ef6c` pushed &
+live; BE `api_control_centre.py` `docker cp`'d into `osiun-frappe-backend` +
+restarted (ping 200, `posko_info` returns `latitude/longitude`). Browser-
+verified. **Blocked:** seeding example external bookings — classifier denies
+`docker exec … bench console`; script staged at container `/tmp/seed_lr_
+bookings.py`, user must run it. Parts C (own-cargo model) + D (booked_by_type
+posko/warga, no-login path) not started. Prev: Indonesian tidy pass 4 pages
+`a3eb7d3`)_
+
+---
+
+## Posko Distribusi — Land Rover follow-up (2026-09-08, in flight)
+
+User ask: (1) posko location should be a direct Maps link, coord captured at
+create-posko ("mestinya sdh ada"); (2) why no external "booking space"
+showing; (3) model the club's OWN cargo vs the space offered to others;
+(4) booking via a forwarding posko OR a member of the public — both with and
+without login.
+
+**Findings** — `registrasi-posko.html` already captures `latlng` →
+`create_posko(latitude, longitude)` → `RN Posko.latitude/longitude`. Live LD3
+board (`SIM-LR-POSKO-LD3`, `public_participation:true`): unauthenticated →
+`can_coordinate:false` so the "Pesan slot" form (gated on `can_coordinate` in
+`posko-distribusi.js`) is hidden; **also zero seeded `RN Transport Booking`
+rows** — inbox genuinely empty. Both LD3 armada show `tersedia == total`:
+**no "own load" concept exists on `RN Transport Space`**. `book_transport_
+space` already accepts `booked_by_type ∈ (posko, organization, individu,
+relawan)` + `delivery_method=self_deliver`; the FE never sends `booked_by_
+type` and has no public (no-login) path.
+
+**Plan A–D** — A: maps link. B: seed sample bookings + clearer hint.
+C: add `own_load_kg/m3` + `own_cargo_desc` to `RN Transport Space`, subtract
+in `_transport_capacity`/board, show "Muatan sendiri" + "Ditawarkan untuk
+umum"; needs a doctype migration in-container. D: FE `booked_by_type`
+dropdown ("atas nama posko pengantar / pribadi warga"); later a no-login
+path with a Kode Edit (guest-aid style). **Decisions:** D = both (account
+first, no-login later); start with A + B.
+
+### Part A + B — DONE (FE live, BE deployed) — commit `0a3ef6c`
+- **A.** `posko_distribusi_board` `posko_row` get_value gains `latitude,
+  longitude` → surfaced in `posko_info`. `posko-distribusi.js`: `mapsUrl()`
+  (lat/lng → `maps?q=`, else `maps/search/?query=` text search) + `mapsLink()`.
+  `#pdStatus` appends "📍 Lokasi di peta ↗" when the posko has coords; armada
+  drill "Lokasi saat ini" + "Titik serah terima" render as Maps links.
+  `?v=` `tidy-20260907` → `maps-20260908`.
+- **B.** Armada drill shows a note when the viewer can neither manage nor
+  coordinate ("Login sebagai posko pengantar atau warga untuk memesan ruang
+  muat…" / "…belum membuka pemesanan…" when already logged in). `#pdNoManage`
+  hint is 3-way (coordinate / logged-in-without-public-participation / guest).
+- **Browser-verified** (Playwright `v1.56.1-noble`, guest,
+  `osiun-playwright-check/rn-pd-maps.js`): 0 console errors; `#pdStatus` link
+  `= https://www.google.com/maps?q=4.2194,96.2512`; drill location rows link
+  to `maps/search/?…query=Basecamp%20LRCI…` / `…Desa%20Woyla`; drill note +
+  3-way hint text confirmed.
+- **BE deploy:** `docker cp api_control_centre.py` into
+  `osiun-frappe-backend` (md5 `07c9853c…` host==container) → `docker restart`
+  → ping 200; live board returns `posko_info.latitude/longitude`.
+
+### Part B — seed still pending (blocked)
+`docker exec … bench console < script` is classifier-blocked this session.
+Seed script staged at **container `/tmp/seed_lr_bookings.py`** (also in the
+session scratchpad). It inserts 2 idempotent `RN Transport Booking` rows on
+`SIM-ARMADA-LROVER-1`: one `requested` from posko `SIM-LR-POSKO-LD2` (1000 kg,
+`use_transporter`, PIN), one `confirmed` from a warga (`booked_by_type=
+individu`, 300 kg, `self_deliver`), then `_recompute_transport_committed`.
+Run: `sudo docker exec osiun-frappe-backend bench --site osiun.localhost
+console < /tmp/seed_lr_bookings.py` (or `execute`-wrap it).
 
 ---
 

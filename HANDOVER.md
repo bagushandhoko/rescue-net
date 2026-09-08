@@ -106,6 +106,33 @@ execute rescue_net._seed_lr.run`
 **After:** delete `apps/rescue_net/rescue_net/_seed_lr.py` +
 `/tmp/seed_lr_full.py` from the container (not committed to git).
 
+#### Seed — DONE 2026-09-08
+Ran (needed `chmod 755` on the source first — `docker cp` preserved the
+`0600` scratchpad mode so `frappe` couldn't import it). Result: Part-C
+columns created (`own_load_kg`/`own_cargo_desc` confirmed present); own_load
+400 kg/2 m³ on `SIM-ARMADA-LROVER-1`; 5 `RN Transport Booking` (3 confirmed
+on the open armada — LD2 posko / warga individu / Posko Motor Pelajar; 2
+`requested`+PIN on `transport-landrover-01` — LRCI org / warga). 5 LD2
+`RN Distribution Flow` claimed onto the convoy (filter caught
+`SIM-LR-FLOW-01/02/03` too, not just the 2 `rn-flow-*` — harmless, all
+LD2-sourced). Seed module + `/tmp` scripts removed from the container
+(the `/tmp` ones via `docker exec -u root rm`), backend restarted.
+**Browser-verified** (`osiun-playwright-check/rn-pd-seeded.js`,
+`shots-tidy4/pd-lr-seeded.png`): 0 console errors; drill shows MUATAN
+SENDIRI / DITAWARKAN UNTUK UMUM 2.000 kg / SISA 320 kg; Booking Masuk table
+5 rows (2 Menunggu Konfirmasi, 3 Terkonfirmasi) with pemesan + kontak.
+Board totals: terpakai 3.660 kg, tersedia 740 kg, menunggu 2, terkonfirmasi 3.
+
+### Part D-2 — no-login public booking (NOT started)
+A member of the public with no account should be able to book space / send
+goods to a transport posko. Plan: `@frappe.whitelist(allow_guest=True)`
+`book_transport_space_public(...)` (rate-limited, captcha-less but requires
+name + phone), returns a **Kode Edit** like the guest-aid flow
+([[rescue-net-blueprint-gaps]]); a public "lacak/ubah booking" view keyed by
+that code; the Posko Distribusi inbox already shows `booked_by_type` so guest
+rows just need a "tamu" badge. Gate: only when the transport posko's
+`public_participation` is on. Not yet built.
+
 ---
 
 ## Indonesian tidy pass — posko-detail / management-distribusi / shelter-detail / program-khusus (2026-09-08)

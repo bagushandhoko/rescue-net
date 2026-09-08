@@ -86,6 +86,30 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "active_from",
+   "label": "Aktif Sejak",
+   "fieldtype": "Date",
+   "description": "Tanggal posko mulai berdiri / beroperasi."
+  },
+  {
+   "fieldname": "active_until",
+   "label": "Rencana Aktif Sampai",
+   "fieldtype": "Date",
+   "description": "Perkiraan tanggal posko dibubarkan / stand-down."
+  },
+  {
+   "fieldname": "notify_whatsapp_enabled",
+   "label": "Notifikasi WhatsApp Aktif",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "notify_whatsapp_numbers",
+   "label": "Nomor WhatsApp Notifikasi",
+   "fieldtype": "Small Text",
+   "description": "Satu atau beberapa nomor (pisah dengan koma / baris baru) — bisa nomor PIC, koordinator, atau keduanya."
+  },
+  {
    "fieldname": "verification_status",
    "label": "Verification Status",
    "fieldtype": "Data"
@@ -118,6 +142,11 @@
   {
    "fieldname": "officer_in_charge_phone",
    "label": "Officer Phone",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "officer_in_charge_whatsapp",
+   "label": "Officer WhatsApp",
    "fieldtype": "Data"
   },
   {

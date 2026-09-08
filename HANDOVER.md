@@ -218,6 +218,47 @@ Deploy = `docker cp` (`api_logistics.py`, `rn_transport_booking.json`,
 
 ---
 
+## "Pengaturan Posko" — shared per-posko settings panel (2026-09-08) — BUILT, needs deploy + migrate
+
+Owner: "di setiap posko jika login harusnya ada menu setting" — nama, lokasi,
+periode aktif, PIC + kontak (HP/WA), notifikasi WhatsApp, dan data posko lain.
+
+**Doctype** — `RN Posko` +6 fields: `active_from` (Date), `active_until`
+(Date), `officer_in_charge_whatsapp` (Data), `notify_whatsapp_enabled`
+(Check), `notify_whatsapp_numbers` (Small Text). Needs
+`frappe.reload_doctype("RN Posko")` (staged `_migrate_posko.run`).
+
+**Backend** (`api_community_cluster.py`):
+- `update_posko` extended: `operational_status`, `active_from`,
+  `active_until`, `officer_in_charge_whatsapp`, `notes`,
+  `notify_whatsapp_enabled`, `notify_whatsapp_numbers` (existing gate
+  `_can_edit_posko` unchanged — system_manager OR `can_manage_posko` OR
+  doc.owner).
+- NEW `get_posko_settings(posko)` — `{can_edit, posko:{…editable fields…}}`
+  for the modal prefill.
+
+**Frontend** — NEW `assets/js/rn-posko-settings.js` (self-contained, inline
+styles, `rn-ps-` namespace). Loads on the 6 posko workspace pages right after
+`rn-posko-scope.js` (`?v=poskosettings-20260908`). Calls `get_posko_settings`;
+if `can_edit`, mounts a **"⚙ Pengaturan Posko"** button in `header.topbar`
+that opens a modal — sections: Identitas (nama, jenis, status operasional),
+Periode Aktif (sejak / sampai), Lokasi (alamat, lat, lng), Penanggung Jawab &
+Kontak (nama, jabatan, HP, WhatsApp, email, kontak darurat), Notifikasi
+WhatsApp (toggle + multi-nomor textarea), Data Lain (jiwa dilayani, detail
+publik, fasilitas, catatan). Saves via `update_posko` → reload.
+Pages wired: dapur-umum, posko-medis-detail, shelter-detail, posko-detail,
+posko-distribusi, posko-logistik.
+
+**Not wired yet:** the actual WhatsApp *send* (Twilio / WA Business API) —
+only the config (`notify_whatsapp_enabled` + numbers) is captured. Sending is
+a separate integration.
+
+**TODO:** `docker cp` `api_community_cluster.py` + `rn_posko.json`, restart,
+run `bench execute rescue_net._migrate_posko.run`, browser-verify as a posko
+manager.
+
+---
+
 ## Indonesian tidy pass — posko-detail / management-distribusi / shelter-detail / program-khusus (2026-09-08)
 
 Owner: "teruskan perapihan halaman … kerjakan semua". Page-local wording

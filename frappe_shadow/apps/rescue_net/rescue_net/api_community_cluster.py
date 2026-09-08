@@ -423,8 +423,11 @@ def update_posko(
     posko, title=None, posko_type=None, address=None, latitude=None, longitude=None,
     officer_in_charge_name=None, officer_in_charge_role=None,
     officer_in_charge_phone=None, officer_in_charge_email=None,
+    officer_in_charge_whatsapp=None,
     emergency_contact=None, facilities=None, rn_beneficiary_count=None,
-    public_detail=None,
+    public_detail=None, operational_status=None,
+    active_from=None, active_until=None, notes=None,
+    notify_whatsapp_enabled=None, notify_whatsapp_numbers=None,
 ):
     actor = _actor()
     doc = frappe.get_doc("RN Posko", posko)
@@ -434,15 +437,22 @@ def update_posko(
 
     for field, value in (
         ("title", title), ("posko_type", posko_type), ("address", address),
+        ("operational_status", operational_status),
         ("officer_in_charge_name", officer_in_charge_name),
         ("officer_in_charge_role", officer_in_charge_role),
         ("officer_in_charge_phone", officer_in_charge_phone),
+        ("officer_in_charge_whatsapp", officer_in_charge_whatsapp),
         ("officer_in_charge_email", officer_in_charge_email),
         ("emergency_contact", emergency_contact),
         ("facilities", facilities),
+        ("notes", notes),
+        ("notify_whatsapp_numbers", notify_whatsapp_numbers),
     ):
         if value is not None:
             setattr(doc, field, value)
+
+    if notify_whatsapp_enabled is not None:
+        doc.notify_whatsapp_enabled = 1 if str(notify_whatsapp_enabled) in ("1", "true", "True", "on", "yes") else 0
 
     if latitude not in (None, ""):
         doc.latitude = float(latitude)
@@ -452,10 +462,39 @@ def update_posko(
         doc.rn_beneficiary_count = int(rn_beneficiary_count)
     if public_detail in ("inherit", "private", "public"):
         doc.public_detail = public_detail
+    # dates: "" clears the field, a value sets it
+    if active_from is not None:
+        doc.active_from = active_from or None
+    if active_until is not None:
+        doc.active_until = active_until or None
 
     doc.save(ignore_permissions=True)
 
     return {"posko": doc.name, "modified": doc.modified}
+
+
+@frappe.whitelist()
+def get_posko_settings(posko):
+    """Prefill payload + edit gate for the shared "Pengaturan Posko" panel on
+    a posko workspace page. Mirrors `update_posko`'s `_can_edit_posko` gate."""
+    actor = _actor()
+    doc = frappe.get_doc("RN Posko", posko)
+    fields = [
+        "name", "title", "posko_type", "operational_status", "address",
+        "latitude", "longitude", "active_from", "active_until",
+        "officer_in_charge_name", "officer_in_charge_role",
+        "officer_in_charge_phone", "officer_in_charge_whatsapp",
+        "officer_in_charge_email", "emergency_contact", "facilities", "notes",
+        "notify_whatsapp_enabled", "notify_whatsapp_numbers",
+        "rn_beneficiary_count", "public_detail", "public_participation",
+        "accept_volunteers", "accept_goods", "accept_donations",
+        "province_name", "city_name", "district_name", "village_name",
+        "organization", "disaster_event", "verification_status",
+    ]
+    return {
+        "can_edit": bool(_can_edit_posko(actor, doc)),
+        "posko": {f: doc.get(f) for f in fields},
+    }
 
 
 @frappe.whitelist()

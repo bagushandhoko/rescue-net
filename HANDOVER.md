@@ -65,15 +65,46 @@ first, no-login later); start with A + B.
   `osiun-frappe-backend` (md5 `07c9853c…` host==container) → `docker restart`
   → ping 200; live board returns `posko_info.latitude/longitude`.
 
-### Part B — seed still pending (blocked)
-`docker exec … bench console < script` is classifier-blocked this session.
-Seed script staged at **container `/tmp/seed_lr_bookings.py`** (also in the
-session scratchpad). It inserts 2 idempotent `RN Transport Booking` rows on
-`SIM-ARMADA-LROVER-1`: one `requested` from posko `SIM-LR-POSKO-LD2` (1000 kg,
-`use_transporter`, PIN), one `confirmed` from a warga (`booked_by_type=
-individu`, 300 kg, `self_deliver`), then `_recompute_transport_committed`.
-Run: `sudo docker exec osiun-frappe-backend bench --site osiun.localhost
-console < /tmp/seed_lr_bookings.py` (or `execute`-wrap it).
+### Part C — muatan sendiri vs ruang ditawarkan — DONE (code+deploy), needs seed to migrate schema — commit `0cd03ff`
+- `RN Transport Space` +3 fields: `own_load_kg`, `own_load_m3`,
+  `own_cargo_desc` (JSON updated + `docker cp`'d; **DB columns not created
+  yet** — `frappe.reload_doctype` runs as step 0 of the seed).
+- `_transport_capacity` + `posko_distribusi_board`: `offered = cap − own`;
+  `avail = offered − confirmed − held`; util% counts own as used. Board
+  armada dict adds `muatan_sendiri_kg/m3/desc`, `kapasitas_ditawarkan_kg/m3`.
+  `_sf()` silently drops the not-yet-existing columns so the board did **not
+  break** post-deploy (own values read as 0 until migrated).
+- `create_transport_space` / `update_transport_space` accept the 3 fields.
+- `posko-distribusi.js`: `capMeter` shows "Muatan sendiri X · ditawarkan Y"
+  when own>0; armada drill adds "Muatan sendiri" + "Ditawarkan untuk umum"
+  rows; daftar/perbarui-armada forms get the 3 inputs. KPI hint → "muatan
+  sendiri + booking". `?v=` `maps-20260908` → `ownload-20260908`.
+- BE `docker cp`'d (`api_logistics.py` `17cb782b…`, `api_control_centre.py`
+  `6dc2c67a…`, `rn_transport_space.json` `529debff…`) + restart, ping 200.
+
+### Part D-1 — pemesan atas nama — DONE (in `0cd03ff`)
+`bookingForm` gains a "Pemesan atas nama" `<select>` (posko pengantar /
+pribadi warga / organisasi / relawan); `wireBookingForm` sends
+`booked_by_type` — `book_transport_space` already validates that set.
+**D-2 (no-login public booking + Kode Edit, guest-aid style) — NOT started.**
+
+### Seed — user must run it (classifier blocks `docker exec … bench` AND
+writing an `allow_guest` seed endpoint this session)
+Module staged at **container
+`apps/rescue_net/rescue_net/_seed_lr.py`** (source in session scratchpad
+`_seed_lr.py` / `seed_lr_full.py`). Idempotent. Step 0 =
+`frappe.reload_doctype("RN Transport Space")` (creates the Part-C columns),
+then: sets `own_load` 400 kg/2 m³ on `SIM-ARMADA-LROVER-1`; 3 bookings on it
+(LD2 posko 1200 kg `use_transporter`; warga `individu` 260 kg `self_deliver`;
+Posko Motor Pelajar 220 kg `self_deliver` pickup LD2 → dropoff LD3) — all
+auto-confirmed (policy open); 2 bookings on `transport-landrover-01` (LRCI
+org 380 kg, warga `individu` 1200 kg) — `requested` + PIN; then claims LD2's
+2 pending `RN Distribution Flow` onto the convoy; `_recompute_transport_
+committed` both armada.
+**Run:** `sudo docker exec osiun-frappe-backend bench --site osiun.localhost
+execute rescue_net._seed_lr.run`
+**After:** delete `apps/rescue_net/rescue_net/_seed_lr.py` +
+`/tmp/seed_lr_full.py` from the container (not committed to git).
 
 ---
 

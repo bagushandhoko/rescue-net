@@ -127,10 +127,14 @@
   function capMeter(a) {
     var pct = Math.min(100, Math.max(0, a.kapasitas_pct || 0));
     var cls = pct >= 90 ? "bad" : (pct >= 60 ? "warn" : "ok");
+    var own = (a.muatan_sendiri_kg || 0) > 0
+      ? '<small class="rn-muted">Muatan sendiri ' + fmt(a.muatan_sendiri_kg) + " kg · ditawarkan " +
+        fmt(a.kapasitas_ditawarkan_kg) + " kg</small>"
+      : "";
     return (
       '<div class="rn-md-cap"><div class="rn-md-cap-bar"><i class="' + cls + '" style="width:' + pct + '%"></i></div>' +
       "<small>Tersedia " + fmt(a.kapasitas_tersedia_kg) + " kg" +
-      (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_tersedia_m3) + " m³" : "") + "</small></div>"
+      (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_tersedia_m3) + " m³" : "") + "</small>" + own + "</div>"
     );
   }
 
@@ -189,6 +193,16 @@
       row("Jenis", esc(a.jenis)) +
       row("Kebijakan booking", a.booking_policy === "open" ? "Langsung terkonfirmasi" : "Konfirmasi PIN posko") +
       row("Kapasitas total", fmt(a.kapasitas_total_kg) + " kg" + (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_total_m3) + " m³" : "")) +
+      ((a.muatan_sendiri_kg || a.muatan_sendiri_m3 || a.muatan_sendiri_desc)
+        ? row("Muatan sendiri",
+            esc(a.muatan_sendiri_desc || "milik penyedia") +
+            ((a.muatan_sendiri_kg || a.muatan_sendiri_m3)
+              ? " · " + fmt(a.muatan_sendiri_kg) + " kg" +
+                (a.muatan_sendiri_m3 ? " · " + fmt(a.muatan_sendiri_m3) + " m³" : "")
+              : "")) +
+          row("Ditawarkan untuk umum", fmt(a.kapasitas_ditawarkan_kg) + " kg" +
+            (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_ditawarkan_m3) + " m³" : ""))
+        : "") +
       row("Sisa kapasitas", fmt(a.kapasitas_tersedia_kg) + " kg" + (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_tersedia_m3) + " m³" : "")) +
       row("Jadwal", esc(a.berangkat) + " → " + esc(a.eta)) +
       row("Lokasi saat ini", mapsLink(a.current_location)) +
@@ -221,6 +235,11 @@
       '<details class="rn-pd-edit" open><summary>Pesan slot pada armada ini</summary>' +
       '<form class="rn-form" id="pdBookForm">' +
       '<div class="form-grid">' +
+      '<label>Pemesan atas nama<select name="booked_by_type">' +
+        '<option value="posko">Posko pengantar / pengumpul</option>' +
+        '<option value="individu">Pribadi / warga</option>' +
+        '<option value="organization">Organisasi</option>' +
+        '<option value="relawan">Relawan</option></select></label>' +
       '<label>Muatan<input name="cargo_desc" placeholder="Beras 40 karung / Air mineral" required></label>' +
       '<label>Berat (kg)<input name="qty_weight_kg" type="number" step="0.01" placeholder="500"></label>' +
       '<label>Volume (m³)<input name="qty_volume_m3" type="number" step="0.01" placeholder="2"></label>' +
@@ -250,6 +269,7 @@
       try {
         var r = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_transport_space", {
           transport_space: a.id,
+          booked_by_type: v("booked_by_type") || "posko",
           cargo_desc: v("cargo_desc"),
           qty_weight_kg: Number(form.qty_weight_kg.value || 0),
           qty_volume_m3: Number(form.qty_volume_m3.value || 0),
@@ -281,6 +301,8 @@
       '<label>Status<select name="transport_status">' + optionList(ARMADA_STATUS, a.status) + "</select></label>" +
       '<label>Mode layanan<select name="service_mode">' + optionList(SERVICE_MODE, a.service_mode) + "</select></label>" +
       '<label>Kebijakan booking<select name="booking_policy">' + optionList(BOOKING_POLICY, a.booking_policy) + "</select></label>" +
+      '<label>Muatan sendiri (kg)<input type="number" step="0.01" name="own_load_kg" value="' + esc(a.muatan_sendiri_kg || "") + '"></label>' +
+      '<label>Muatan sendiri (m³)<input type="number" step="0.01" name="own_load_m3" value="' + esc(a.muatan_sendiri_m3 || "") + '"></label>' +
       '<label>Lokasi saat ini<input name="current_location" value="' + esc(clean(a.current_location)) + '"></label>' +
       '<label>Jam berangkat<input type="datetime-local" name="departure_at" value="' + esc(toLocalDT(a.berangkat)) + '"></label>' +
       '<label>ETA<input type="datetime-local" name="eta_at" value="' + esc(toLocalDT(a.eta)) + '"></label>' +
@@ -288,6 +310,7 @@
       '<label>Narahubung<input name="handover_contact_person" value="' + esc(clean(a.handover_contact_person)) + '"></label>' +
       '<label>No. kontak serah terima<input name="handover_contact_phone" value="' + esc(clean(a.handover_contact_phone)) + '"></label>' +
       "</div>" +
+      '<label>Muatan sendiri (deskripsi)<input name="own_cargo_desc" value="' + esc(clean(a.muatan_sendiri_desc)) + '"></label>' +
       '<label>Catatan koordinasi<textarea name="coordination_notes" rows="2">' + esc(clean(a.coordination_notes)) + "</textarea></label>" +
       '<div class="form-actions"><button class="btn primary" type="submit">Simpan Perubahan</button>' +
       '<span class="rn-pd-bk-msg" data-armada-edit-msg></span></div>' +
@@ -308,6 +331,9 @@
         service_mode: v("service_mode"),
         booking_policy: v("booking_policy"),
         current_location: v("current_location"),
+        own_load_kg: v("own_load_kg"),
+        own_load_m3: v("own_load_m3"),
+        own_cargo_desc: v("own_cargo_desc"),
         handover_location: v("handover_location"),
         handover_contact_person: v("handover_contact_person"),
         handover_contact_phone: v("handover_contact_phone"),
@@ -421,6 +447,9 @@
           route_destination: f("route_destination"),
           capacity_weight_kg: Number(form.capacity_weight_kg.value || 0),
           capacity_volume_m3: Number(form.capacity_volume_m3.value || 0),
+          own_load_kg: Number((form.own_load_kg && form.own_load_kg.value) || 0),
+          own_load_m3: Number((form.own_load_m3 && form.own_load_m3.value) || 0),
+          own_cargo_desc: f("own_cargo_desc"),
           departure_at: f("departure_at").replace("T", " "),
           eta_at: f("eta_at").replace("T", " "),
           current_location: f("current_location"),

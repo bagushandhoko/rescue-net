@@ -3529,7 +3529,8 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         "RN Transport Space", filters=tfilter,
         fields=_sf("RN Transport Space", [
             "name", "provider_name", "transport_type", "transport_status",
-            "capacity_weight_kg", "capacity_volume_m3", "route_origin",
+            "capacity_weight_kg", "capacity_volume_m3",
+            "own_load_kg", "own_load_m3", "own_cargo_desc", "route_origin",
             "route_destination", "coordination_posko", "disaster_event",
             "departure_time", "eta", "departure_at", "eta_at", "service_mode",
             "booking_policy", "current_location", "handover_location",
@@ -3568,6 +3569,11 @@ def posko_distribusi_board(posko=None, disaster_event=None):
     for t in transports:
         cap_kg = _num(t.capacity_weight_kg)
         cap_m3 = _num(t.capacity_volume_m3)
+        own_kg = _num(t.own_load_kg)
+        own_m3 = _num(t.own_load_m3)
+        # space put on offer to other parties = total minus the provider's own load
+        offered_kg = max(0.0, cap_kg - own_kg)
+        offered_m3 = max(0.0, cap_m3 - own_m3)
         mine = bk_by_space.get(t.name, [])
         c_kg = sum(_num(b.qty_weight_kg) for b in mine if b.status == "confirmed")
         c_m3 = sum(_num(b.qty_volume_m3) for b in mine if b.status == "confirmed")
@@ -3575,8 +3581,8 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         h_m3 = sum(_num(b.qty_volume_m3) for b in mine if b.status == "requested")
         tot_kg += cap_kg
         tot_m3 += cap_m3
-        used_kg += c_kg + h_kg
-        used_m3 += c_m3 + h_m3
+        used_kg += own_kg + c_kg + h_kg
+        used_m3 += own_m3 + c_m3 + h_m3
         smode = t.service_mode or "both"
         armada.append({
             "id": t.name,
@@ -3588,10 +3594,14 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "status": t.transport_status or "-",
             "status_label": _ARMADA_STATUS_LABEL.get(t.transport_status, t.transport_status or "-"),
             "kapasitas_total_kg": cap_kg, "kapasitas_total_m3": cap_m3,
+            "muatan_sendiri_kg": round(own_kg, 1), "muatan_sendiri_m3": round(own_m3, 1),
+            "muatan_sendiri_desc": t.own_cargo_desc or "",
+            "kapasitas_ditawarkan_kg": round(offered_kg, 1),
+            "kapasitas_ditawarkan_m3": round(offered_m3, 1),
             "kapasitas_terpakai_kg": round(c_kg + h_kg, 1),
-            "kapasitas_tersedia_kg": round(max(0.0, cap_kg - c_kg - h_kg), 1),
-            "kapasitas_tersedia_m3": round(max(0.0, cap_m3 - c_m3 - h_m3), 1),
-            "kapasitas_pct": round(100.0 * (c_kg + h_kg) / cap_kg) if cap_kg else 0,
+            "kapasitas_tersedia_kg": round(max(0.0, offered_kg - c_kg - h_kg), 1),
+            "kapasitas_tersedia_m3": round(max(0.0, offered_m3 - c_m3 - h_m3), 1),
+            "kapasitas_pct": round(100.0 * (own_kg + c_kg + h_kg) / cap_kg) if cap_kg else 0,
             "berangkat": _dt(t.departure_at) or (t.departure_time or "-"),
             "eta": _dt(t.eta_at) or (t.eta or "-"),
             "current_location": t.current_location or "-",

@@ -76,7 +76,7 @@
         <span class="kpi-icon" data-icon="gauge"></span><span>Kapasitas Total</span><strong id="kpiKapasitas">-</strong><small>kg seluruh armada</small>
       </button>
       <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="terpakai">
-        <span class="kpi-icon" data-icon="layers"></span><span>Kapasitas Terpakai</span><strong id="kpiTerpakai">-</strong><small>booking + terblokir</small>
+        <span class="kpi-icon" data-icon="layers"></span><span>Kapasitas Terpakai</span><strong id="kpiTerpakai">-</strong><small>muatan sendiri + booking</small>
       </button>
       <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="menunggu">
         <span class="kpi-icon" data-icon="clock"></span><span>Booking Menunggu</span><strong id="kpiMenunggu">-</strong><small>perlu konfirmasi PIN</small>
@@ -164,6 +164,7 @@
         <div class="panel-header"><div><h3>Panduan Penyedia Transport</h3></div></div>
         <ul class="rn-md-ref-list">
           <li>Isi <b>kapasitas</b> berat (kg) &amp; volume (m³) armada secara jujur — booking terkonfirmasi akan memblok kapasitas.</li>
+          <li>Punya barang sendiri yang ikut dibawa? Isi <b>Muatan Sendiri</b> — ruang yang ditawarkan ke pihak luar = kapasitas − muatan sendiri.</li>
           <li><b>Mode layanan</b>: <i>Penyedia Ruang Muat</i> (hanya ruang) atau <i>Kurir Jemput-Antar</i> (ambil + antar).</li>
           <li><b>Kebijakan booking</b>: <i>PIN</i> (Anda konfirmasi manual) atau <i>Terbuka</i> (langsung terkonfirmasi).</li>
           <li>Perbarui <b>jadwal berangkat / ETA</b> dan status saat armada bergerak.</li>
@@ -204,6 +205,9 @@
           <label>Tujuan <input name="route_destination" placeholder="Posko Logistik Meulaboh"></label>
           <label>Kapasitas Berat (kg) <input name="capacity_weight_kg" type="number" step="0.01" placeholder="12000"></label>
           <label>Kapasitas Volume (m³) <input name="capacity_volume_m3" type="number" step="0.01" placeholder="60"></label>
+          <label>Muatan Sendiri — Berat (kg) <input name="own_load_kg" type="number" step="0.01" placeholder="0"></label>
+          <label>Muatan Sendiri — Volume (m³) <input name="own_load_m3" type="number" step="0.01" placeholder="0"></label>
+          <label class="rn-form-wide">Muatan Sendiri (deskripsi) <input name="own_cargo_desc" placeholder="Logistik konvoi: BBM, tenda, alat berat ringan — dibawa sendiri"></label>
           <label>Waktu Berangkat <input name="departure_at" type="datetime-local"></label>
           <label>Estimasi Tiba <input name="eta_at" type="datetime-local"></label>
           <label>Lokasi Saat Ini <input name="current_location" placeholder="Staging apron bandara"></label>
@@ -236,7 +240,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260906d"></script>
 <script src="../assets/js/rn-posko-picker.js?v=poskopicker-20260906c"></script>
-<script src="../assets/js/posko-distribusi.js?v=maps-20260908"></script>
+<script src="../assets/js/posko-distribusi.js?v=ownload-20260908"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=authpill-20260906"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

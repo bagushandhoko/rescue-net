@@ -78,6 +78,22 @@
    "fieldtype": "Float"
   },
   {
+   "fieldname": "own_load_kg",
+   "label": "Muatan Sendiri KG",
+   "fieldtype": "Float",
+   "description": "Berat barang milik penyedia sendiri yang ikut dibawa. Kapasitas yang ditawarkan ke pihak luar = Kapasitas KG - Muatan Sendiri KG."
+  },
+  {
+   "fieldname": "own_load_m3",
+   "label": "Muatan Sendiri M3",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "own_cargo_desc",
+   "label": "Muatan Sendiri (deskripsi)",
+   "fieldtype": "Small Text"
+  },
+  {
    "fieldname": "departure_time",
    "label": "Berangkat (teks)",
    "fieldtype": "Data"

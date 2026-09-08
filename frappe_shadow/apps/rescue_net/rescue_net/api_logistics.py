@@ -475,6 +475,9 @@ def create_transport_space(
     route_destination=None,
     capacity_weight_kg=None,
     capacity_volume_m3=None,
+    own_load_kg=None,
+    own_load_m3=None,
+    own_cargo_desc=None,
     departure_time=None,
     eta=None,
     current_location=None,
@@ -525,6 +528,13 @@ def create_transport_space(
     if capacity_volume_m3 not in (None, ""):
         doc.capacity_volume_m3 = flt(capacity_volume_m3)
 
+    if own_load_kg not in (None, ""):
+        doc.own_load_kg = flt(own_load_kg)
+    if own_load_m3 not in (None, ""):
+        doc.own_load_m3 = flt(own_load_m3)
+    if own_cargo_desc is not None:
+        doc.own_cargo_desc = own_cargo_desc
+
     doc.departure_time = departure_time
     doc.eta = eta
     if departure_at:
@@ -568,6 +578,9 @@ def update_transport_space(
     eta_at=None,
     service_mode=None,
     booking_policy=None,
+    own_load_kg=None,
+    own_load_m3=None,
+    own_cargo_desc=None,
     handover_location=None,
     handover_contact_person=None,
     handover_contact_phone=None,
@@ -607,6 +620,9 @@ def update_transport_space(
         ("eta_at", eta_at),
         ("service_mode", service_mode),
         ("booking_policy", booking_policy),
+        ("own_load_kg", flt(own_load_kg) if own_load_kg not in (None, "") else None),
+        ("own_load_m3", flt(own_load_m3) if own_load_m3 not in (None, "") else None),
+        ("own_cargo_desc", own_cargo_desc),
         ("handover_location", handover_location),
         ("handover_contact_person", handover_contact_person),
         ("handover_contact_phone", handover_contact_phone),
@@ -634,6 +650,12 @@ def _transport_capacity(space):
     for one RN Transport Space doc/dict."""
     cap_kg = flt(space.get("capacity_weight_kg"))
     cap_m3 = flt(space.get("capacity_volume_m3"))
+    # capacity the provider keeps for its own cargo — the space offered to
+    # other parties is capacity minus this.
+    own_kg = flt(space.get("own_load_kg"))
+    own_m3 = flt(space.get("own_load_m3"))
+    offered_kg = max(0.0, cap_kg - own_kg)
+    offered_m3 = max(0.0, cap_m3 - own_m3)
 
     agg = frappe.get_all(
         "RN Transport Booking",
@@ -647,11 +669,13 @@ def _transport_capacity(space):
     held_kg = sum(flt(b.qty_weight_kg) for b in agg if b.status == "requested")
     held_m3 = sum(flt(b.qty_volume_m3) for b in agg if b.status == "requested")
 
-    avail_kg = max(0.0, cap_kg - used_kg - held_kg)
-    avail_m3 = max(0.0, cap_m3 - used_m3 - held_m3)
-    pct = round(100.0 * used_kg / cap_kg, 1) if cap_kg else 0
+    avail_kg = max(0.0, offered_kg - used_kg - held_kg)
+    avail_m3 = max(0.0, offered_m3 - used_m3 - held_m3)
+    pct = round(100.0 * (own_kg + used_kg) / cap_kg, 1) if cap_kg else 0
     return {
         "cap_kg": cap_kg, "cap_m3": cap_m3,
+        "own_kg": own_kg, "own_m3": own_m3,
+        "offered_kg": offered_kg, "offered_m3": offered_m3,
         "used_kg": used_kg, "used_m3": used_m3,
         "held_kg": held_kg, "held_m3": held_m3,
         "avail_kg": avail_kg, "avail_m3": avail_m3,

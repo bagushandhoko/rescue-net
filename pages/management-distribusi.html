@@ -7,6 +7,12 @@
   <link rel="stylesheet" href="../assets/css/style.css?v=hdrtidy-20260908">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <style>
+    .rn-lacak-btn { font: inherit; color: var(--blue, #1f6feb); background: none; border: 0;
+      padding: 2px 0; cursor: pointer; white-space: nowrap; }
+    .rn-lacak-btn:hover { text-decoration: underline; }
+    .rn-lacak-btn code { color: inherit; }
+  </style>
 </head>
 <body>
 <div class="app-shell">
@@ -188,11 +194,11 @@
         </div>
       </div>
       <div class="panel">
-        <div class="panel-header"><div><h3>Trace & Barcode</h3></div></div>
+        <div class="panel-header"><div><h3>Trace &amp; QR</h3></div></div>
         <ul class="rn-md-ref-list">
           <li>Setiap flow distribusi punya kode trace unik (kolom "Trace" di Alur Distribusi)</li>
           <li>Format: <code>RN-XXXXXXXX</code>, diturunkan dari ID record — bisa dipakai untuk pelacakan manual</li>
-          <li>Barcode/QR scan belum tersedia (belum ada integrasi scanner)</li>
+          <li>Klik kode trace di tabel Alur Distribusi untuk membuka <b>QR pelacakan</b> — cetak &amp; tempel di paket. Pemindaian membuka <code>lacak-logistik.html</code> tanpa perlu login.</li>
         </ul>
       </div>
     </section>
@@ -266,9 +272,35 @@
   </div>
 </div>
 
+<div id="lacakQrModal" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="lacakQrTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="lacakQrTitle">QR Pelacakan</h3><p id="lacakQrSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body">
+      <div id="lacakQrLabel" style="text-align:center;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;max-width:320px;margin:0 auto;">
+        <div style="font-weight:700;font-size:13px;color:#111;">RESCUE-NET · LACAK LOGISTIK</div>
+        <div id="lacakQrCode" style="display:flex;justify-content:center;margin:10px 0;"></div>
+        <div id="lacakQrTrace" style="font-family:monospace;font-weight:700;font-size:15px;color:#111;letter-spacing:1px;">—</div>
+        <div id="lacakQrRoute" style="font-size:11px;color:#444;margin-top:4px;"></div>
+        <div style="font-size:10px;color:#666;margin-top:6px;">Pindai untuk memantau status kiriman</div>
+      </div>
+      <p class="rn-muted" style="font-size:12px;margin:12px 0 4px;">Tautan:</p>
+      <p style="word-break:break-all;font-size:12px;"><a id="lacakQrLink" href="#" target="_blank" rel="noopener">—</a></p>
+      <div class="form-actions" style="margin-top:10px;">
+        <button type="button" class="btn primary" id="lacakQrPrint">Cetak Label</button>
+        <a class="btn" id="lacakQrOpen" href="#" target="_blank" rel="noopener">Buka Halaman Lacak</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
-<script src="../assets/js/distribusi.js?v=distribusi-20260908"></script>
+<script src="../assets/vendor/qrcode/qrcode.min.js"></script>
+<script src="../assets/js/distribusi.js?v=lacakqr-20260908"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-resource-booking.js?v=booking-sync-1"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>

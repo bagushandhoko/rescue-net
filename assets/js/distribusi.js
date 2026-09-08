@@ -192,11 +192,22 @@
         "<td>" + esc(r.pickup_oleh) + "</td><td>" + esc(r.transportasi) + "</td><td>" + esc(r.rute) + "</td>" +
         "<td>" + esc(r.eta) + "</td>" +
         '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status_label) + "</span></td>" +
-        "<td><code>" + esc(r.trace) + "</code></td></tr>"
+        '<td><button type="button" class="rn-lacak-btn" data-lacak="' + esc(r.id) +
+        '" data-trace="' + esc(r.trace) + '" data-route="' + esc(r.rute) +
+        '" title="Buka QR pelacakan"><code>' + esc(r.trace) + "</code> · QR</button></td></tr>"
       );
     }).join("");
     body.querySelectorAll("tr[data-href]").forEach(function (tr) {
-      tr.addEventListener("click", function () { window.location.href = tr.getAttribute("data-href"); });
+      tr.addEventListener("click", function (e) {
+        if (e.target.closest("[data-lacak]")) return;
+        window.location.href = tr.getAttribute("data-href");
+      });
+    });
+    body.querySelectorAll("[data-lacak]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openLacakQr(btn.getAttribute("data-lacak"), btn.getAttribute("data-trace"), btn.getAttribute("data-route"));
+      });
     });
     $("#alurShown").textContent = totalCount && totalCount !== rows.length
       ? "Menampilkan " + rows.length + " dari " + totalCount + " distribusi"
@@ -249,6 +260,70 @@
     });
   }
 
+  /* ---------- QR pelacakan logistik ---------- */
+  function lacakUrl(flowId) {
+    return location.origin + location.pathname.replace(/[^/]*$/, "") +
+      "lacak-logistik.html?flow=" + encodeURIComponent(flowId);
+  }
+
+  function openLacakQr(flowId, trace, route) {
+    var modal = $("#lacakQrModal");
+    if (!modal) return;
+    var url = lacakUrl(flowId);
+    $("#lacakQrSub").textContent = "Flow " + flowId;
+    $("#lacakQrTrace").textContent = trace || "";
+    $("#lacakQrRoute").textContent = route || "";
+    var link = $("#lacakQrLink");
+    link.textContent = url;
+    link.href = url;
+    $("#lacakQrOpen").href = url;
+
+    var box = $("#lacakQrCode");
+    box.innerHTML = "";
+    if (typeof QRCode === "function") {
+      new QRCode(box, { text: url, width: 176, height: 176, correctLevel: QRCode.CorrectLevel.M });
+    } else {
+      box.innerHTML = '<span class="rn-muted" style="font-size:12px">Pustaka QR gagal dimuat — pakai tautan di bawah.</span>';
+    }
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeLacakQr() {
+    var modal = $("#lacakQrModal");
+    if (modal) modal.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  function printLacakLabel() {
+    var box = $("#lacakQrCode");
+    var canvas = box && box.querySelector("canvas");
+    var img = box && box.querySelector("img");
+    var src = "";
+    try { if (canvas) src = canvas.toDataURL("image/png"); } catch (e) { src = ""; }
+    if (!src && img && img.src) src = img.src;
+
+    var trace = esc($("#lacakQrTrace").textContent || "");
+    var route = esc($("#lacakQrRoute").textContent || "");
+    var link = esc($("#lacakQrLink").textContent || "");
+    var w = window.open("", "_blank", "width=420,height=560");
+    if (!w) return;
+    w.document.write(
+      '<!doctype html><title>Label QR — ' + trace + '</title>' +
+      '<style>body{font-family:system-ui,Segoe UI,Roboto,sans-serif;margin:0;padding:24px;text-align:center}' +
+      'img{width:220px;height:220px}.t{font-family:monospace;font-weight:700;font-size:18px;letter-spacing:1px;margin-top:8px}' +
+      '.r{font-size:12px;color:#444;margin-top:4px}.u{font-size:10px;color:#666;margin-top:8px;word-break:break-all}' +
+      '@media print{@page{margin:8mm}}</style>' +
+      '<div style="font-weight:700;font-size:13px">RESCUE-NET · LACAK LOGISTIK</div>' +
+      (src ? '<div><img src="' + src + '" alt="QR"></div>' : '<p>(QR gagal dirender)</p>') +
+      '<div class="t">' + trace + '</div><div class="r">' + route + '</div>' +
+      '<div class="u">' + link + '</div>'
+    );
+    w.document.close();
+    w.focus();
+    setTimeout(function () { w.print(); }, 300);
+  }
+
   async function loadBoard() {
     var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: getEventId() });
     BOARD_CACHE = data;
@@ -271,7 +346,10 @@
       btn.addEventListener("click", function () { openDrill(btn.getAttribute("data-kpi")); });
     });
     document.querySelectorAll("#distribusiDrill [data-close]").forEach(function (el) { el.addEventListener("click", closeDrill); });
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
+    document.querySelectorAll("#lacakQrModal [data-close]").forEach(function (el) { el.addEventListener("click", closeLacakQr); });
+    var qrPrint = $("#lacakQrPrint");
+    if (qrPrint) qrPrint.addEventListener("click", printLacakLabel);
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") { closeDrill(); closeLacakQr(); } });
     setupTransportTabs();
     setupAutoMatch();
 

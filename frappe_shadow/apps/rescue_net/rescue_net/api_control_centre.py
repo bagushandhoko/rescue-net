@@ -3038,6 +3038,132 @@ def _distribusi_trace(name):
     return "RN-" + str(name or "")[-8:].upper()
 
 
+# Public shipment-tracking timeline. Ordered lifecycle steps + the
+# RN Distribution Flow timestamp field that marks each one reached.
+_FLOW_TRACE_STEPS = [
+    ("planned",         "Direncanakan",       "creation"),
+    ("assigned_pickup", "Menunggu Dijemput",  "assigned_pickup_at"),
+    ("dispatched",      "Berangkat",          "dispatched_at"),
+    ("in_transit",      "Dalam Perjalanan",   "in_transit_at"),
+    ("arrived",         "Tiba di Tujuan",     "arrived_at"),
+    ("received",        "Diterima",           "received_at"),
+]
+
+# Every flow_status value we may store, folded onto a step above.
+_FLOW_STATUS_TO_STEP = {
+    "planned": "planned",
+    "pickup_claimed": "assigned_pickup",
+    "assigned_pickup": "assigned_pickup",
+    "dispatched": "dispatched",
+    "in_transit": "in_transit",
+    "arrived": "arrived",
+    "arrived_at_posko": "arrived",
+    "partially_received": "received",
+    "received": "received",
+    "received_verified": "received",
+    "stock_transferred": "received",
+}
+
+
+def _resolve_flow_by_trace(code):
+    """`RN-XXXXXXXX` (or the bare 8 chars) -> RN Distribution Flow name."""
+    code = str(code or "").strip().upper()
+    if code.startswith("RN-"):
+        code = code[3:]
+    code = code.strip()
+    if not code:
+        return None
+    for r in frappe.get_all(
+        "RN Distribution Flow", fields=["name"],
+        order_by="modified desc", limit_page_length=5000,
+    ):
+        if str(r.name)[-8:].upper() == code:
+            return r.name
+    return None
+
+
+@frappe.whitelist(allow_guest=True)
+def flow_trace(flow=None, trace=None):
+    """Public shipment tracking for ONE RN Distribution Flow, keyed by record
+    name (`flow`) or by its `RN-XXXXXXXX` trace code (`trace`). Guest-safe
+    subset only — item, quantity, the two posko titles, transport label,
+    status and the lifecycle timeline. No user names, no cost, no legacy
+    payload. Backs pages/lacak-logistik.html (opened from a printed QR)."""
+    name = str(flow or "").strip()
+    if not name and trace:
+        name = _resolve_flow_by_trace(trace) or ""
+
+    if not name or not frappe.db.exists("RN Distribution Flow", name):
+        frappe.throw("Kiriman tidak ditemukan.", frappe.DoesNotExistError)
+
+    f = frappe.db.get_value(
+        "RN Distribution Flow", name,
+        _sf("RN Distribution Flow", [
+            "name", "item_name", "raw_item_text", "canonical_item",
+            "quantity", "unit", "quantity_mode", "quantity_min", "quantity_max",
+            "estimate_text", "flow_status", "source_posko", "destination_posko",
+            "eta_final", "transport_provider", "transport_type",
+            "received_quantity", "received_unit", "receipt_note",
+            "creation", "assigned_pickup_at", "dispatched_at", "in_transit_at",
+            "arrived_at", "received_at", "cancelled_at", "modified",
+        ]),
+        as_dict=True,
+    ) or {}
+
+    titles = _distribusi_posko_titles([f.get("source_posko"), f.get("destination_posko")])
+    status = f.get("flow_status") or "planned"
+    cancelled = status == "cancelled"
+
+    step_index = {key: i for i, (key, _, _) in enumerate(_FLOW_TRACE_STEPS)}
+    reached_key = _FLOW_STATUS_TO_STEP.get(status, "planned")
+    reached = step_index.get(reached_key, 0)
+
+    steps = []
+    for i, (key, label, field) in enumerate(_FLOW_TRACE_STEPS):
+        at = f.get(field)
+        done = (not cancelled) and i <= reached
+        steps.append({
+            "key": key,
+            "label": label,
+            "at": str(at) if at else None,
+            "done": done,
+            "current": (not cancelled) and i == reached,
+        })
+
+    if f.get("quantity_mode") == "range" and (f.get("quantity_min") or f.get("quantity_max")):
+        qty_text = f"{_qty_fmt(f.get('quantity_min'))}–{_qty_fmt(f.get('quantity_max'))}"
+    elif f.get("quantity"):
+        qty_text = _qty_fmt(f.get("quantity"))
+    else:
+        qty_text = (f.get("estimate_text") or "").strip()
+
+    return {
+        "trace": _distribusi_trace(f.get("name")),
+        "flow": f.get("name"),
+        "item": (f.get("canonical_item") or f.get("item_name")
+                 or f.get("raw_item_text") or "-"),
+        "quantity_text": (qty_text + " " + (f.get("unit") or "")).strip() or "-",
+        "status": status,
+        "status_label": _DISTRIBUSI_STATUS_LABEL.get(status, status),
+        "cancelled": cancelled,
+        "cancelled_at": str(f.get("cancelled_at")) if f.get("cancelled_at") else None,
+        "source_posko": titles.get(f.get("source_posko")) or "-",
+        "destination_posko": titles.get(f.get("destination_posko")) or "-",
+        "route": ((titles.get(f.get("source_posko")) or "-") + " → "
+                  + (titles.get(f.get("destination_posko")) or "-")),
+        "transport": " · ".join(x for x in [
+            f.get("transport_provider"), f.get("transport_type")] if x) or "-",
+        "eta_final": (f.get("eta_final") or "").strip() or None,
+        "received_text": (
+            (f"{_qty_fmt(f.get('received_quantity'))} {f.get('received_unit') or ''}".strip())
+            if f.get("received_quantity") else None
+        ),
+        "receipt_note": (f.get("receipt_note") or "").strip() or None,
+        "steps": steps,
+        "updated_at": str(f.get("modified")) if f.get("modified") else None,
+    }
+
+
 def _qty_fmt(value):
     v = _num(value)
     if v == int(v):

@@ -4,18 +4,66 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-08 (**Posko Distribusi — Land Rover follow-up A–D-2 ALL
-DONE**: A maps-link, B seed+hint, C muatan-sendiri model, D-1 pemesan-atas-
-nama, D-2 no-login public booking + Kode Edit — all live, BE deployed, seed +
-column migrates run, browser + curl verified (commits `0a3ef6c` `0cd03ff`
-`1fb79ef` + docs). **Note:** DB writes (seed / `reload_doctype`) need the
-user to run `docker exec … bench execute <module>` — classifier denies it +
-`allow_guest` endpoint file writes for this session; the modules were
-`docker cp`'d then deleted. Script had also been staged at
-`/tmp/seed_lr_
-bookings.py`, user must run it. Parts C (own-cargo model) + D (booked_by_type
-posko/warga, no-login path) not started. Prev: Indonesian tidy pass 4 pages
-`a3eb7d3`)_
+_Last updated: 2026-09-08 (**QR pelacakan logistik**: new guest endpoint
+`api_control_centre.flow_trace` + public `pages/lacak-logistik.html` +
+vendored `assets/vendor/qrcode/qrcode.min.js`; Manajemen Distribusi trace
+codes are now click-to-QR with a printable label. FE live on save, BE
+(`api_control_centre.py`) needs `docker cp` + restart — no migrate.
+`scripts/deploy-wa-and-flowtrace.sh` deploys this **and** the still-pending
+WhatsApp-send commit `88ee9ad` in one pass. Prev: Posko Distribusi Land Rover
+A–D-2 `0a3ef6c` `0cd03ff` `1fb79ef`)_
+
+**Also open / requested this session (not started):** org & koordinasi —
+(a) at org-create, choose to be a **child of an existing org** (first org
+created ≠ induk); (b) an **org→org merge request** flow when two orgs each
+started independently; (c) surface the **org-scoped AI BYOK key** UI in the
+koordinasi menu (backend `api_ai.save_org_key/get_org_key_status/
+delete_org_key` already exists; `RN Organization` has NO `parent_organization`
+field yet and there is NO merge doctype — both need a migrate). User also
+reports something they configured for org/koordinasi "shows empty now" —
+needs a repro.
+
+---
+
+## QR pelacakan logistik — flow_trace + lacak-logistik.html (2026-09-08) — FE LIVE, BE NEEDS DEPLOY (no migrate)
+
+Owner: "selesaikan … qr code" — a scannable trace on each distribution flow.
+
+- **BE** `api_control_centre.py`: `flow_trace(flow=None, trace=None)`
+  (`allow_guest=True`) — resolves by record name or `RN-XXXXXXXX` code
+  (`_resolve_flow_by_trace`, scans ≤5000 names, last-8 match). Returns a
+  guest-safe subset only: item, quantity text, the two posko **titles**,
+  route, transport label, status + `status_label`, `cancelled`(+at),
+  `received_text`, `receipt_note`, `updated_at`, and `steps[]` — the 6-step
+  lifecycle (`planned → assigned_pickup → dispatched → in_transit → arrived →
+  received`) each with `{label, at, done, current}`. No user names, no cost,
+  no legacy payload. New module consts `_FLOW_TRACE_STEPS`,
+  `_FLOW_STATUS_TO_STEP` (folds `pickup_claimed`, `arrived_at_posko`,
+  `partially_received`, `received_verified`, `stock_transferred`).
+- **FE** NEW `pages/lacak-logistik.html` + `assets/js/lacak-logistik.js`
+  (`?v=lacakqr-20260908`) — standalone public page (no app-shell), reads
+  `?flow=` or `?trace=`, renders summary card + vertical timeline; light
+  theme tokens (`--bg/--text/--panel2/--muted/--line`). Has a "lacak kode
+  lain" input that reloads with `?trace=`.
+- **FE** `pages/management-distribusi.html` + `assets/js/distribusi.js`
+  (`?v=distribusi-20260908 → lacakqr-20260908`): the Alur Distribusi "Trace"
+  cell is now a button (`.rn-lacak-btn`) → opens `#lacakQrModal` with a
+  rendered QR (`new QRCode`, level M) pointing at
+  `…/lacak-logistik.html?flow=<id>`, the link, "Buka Halaman Lacak", and
+  "Cetak Label" (opens a print window with the QR as a PNG data-URI +
+  trace/route/link). Row-click nav suppressed when the button is hit.
+  "Trace & Barcode" panel copy updated (QR now available).
+- **Vendored** `assets/vendor/qrcode/qrcode.min.js` — qrcodejs 1.0.0
+  (davidshimjs, MIT), md5 `517b55d3688ce9ef1085a3d9632bcb97`, loaded before
+  `distribusi.js`. Project convention is local vendoring (cf. leaflet); no
+  CDN.
+- **Verify:** `node -c` clean (3 JS), `py_compile` clean. NOT deployed / NOT
+  browser-checked (headless Chromium on the NAS still missing
+  `libatk-1.0.so.0`).
+- **Deploy:** `sh scripts/deploy-wa-and-flowtrace.sh <site>` — `docker cp`
+  `api_control_centre.py` (+ the WA-notify files) + `bench migrate` (only the
+  WA doctypes need it; flow_trace alone would just need cp+restart) +
+  restart + smoke checks.
 
 ---
 

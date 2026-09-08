@@ -192,20 +192,36 @@
   }
 
   function mountButton(p) {
+    if (document.getElementById("rnPoskoSettingsBtn")) return;
     styleOnce();
-    var btn = el('<button type="button" class="rn-ps-btn" title="Ubah data posko ini">⚙ Pengaturan Posko</button>');
-    btn.addEventListener("click", function () { openModal(p); });
-    var host =
-      document.querySelector("header.topbar .rn-logistik-controls") ||
-      document.querySelector("header.topbar") ||
-      document.querySelector(".topbar") ||
-      document.querySelector("main.main") || document.body;
-    if (host.classList.contains("main")) {
-      btn.style.margin = "8px 0";
-      host.insertBefore(btn, host.firstChild);
-    } else {
-      host.appendChild(btn);
-    }
+    // sits in the public header, right beside the Logout link
+    var btn = el('<a href="#" id="rnPoskoSettingsBtn" class="rn-public-login" ' +
+      'title="Ubah data posko ini">⚙ Pengaturan</a>');
+    btn.addEventListener("click", function (e) { e.preventDefault(); openModal(p); });
+
+    var tries = 0;
+    (function place() {
+      var hdr = document.querySelector(".rn-public-header");
+      var logout = hdr && hdr.querySelector(".rn-public-logout");
+      if (logout) { logout.parentNode.insertBefore(btn, logout); return; }
+      if (++tries <= 24) { setTimeout(place, 250); return; }
+      // no Logout showed up (header missing, or auth pill not rendered) —
+      // fall back to the page's own topbar so the button is still reachable.
+      btn.classList.add("rn-ps-btn");
+      var host =
+        (hdr && hdr.querySelector(".rn-public-toggle") && hdr) ||
+        document.querySelector("header.topbar .rn-logistik-controls") ||
+        document.querySelector("header.topbar") ||
+        document.querySelector(".topbar") ||
+        document.querySelector("main.main") || document.body;
+      if (host.classList && host.classList.contains("rn-public-header")) {
+        host.insertBefore(btn, host.querySelector(".rn-public-toggle"));
+      } else if (host.classList && host.classList.contains("main")) {
+        btn.style.margin = "8px 0"; host.insertBefore(btn, host.firstChild);
+      } else {
+        host.appendChild(btn);
+      }
+    })();
   }
 
   (async function run() {

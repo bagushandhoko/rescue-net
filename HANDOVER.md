@@ -239,9 +239,12 @@ periode aktif, PIC + kontak (HP/WA), notifikasi WhatsApp, dan data posko lain.
 
 **Frontend** — NEW `assets/js/rn-posko-settings.js` (self-contained, inline
 styles, `rn-ps-` namespace). Loads on the 6 posko workspace pages right after
-`rn-posko-scope.js` (`?v=poskosettings-20260908`). Calls `get_posko_settings`;
-if `can_edit`, mounts a **"⚙ Pengaturan Posko"** button in `header.topbar`
-that opens a modal — sections: Identitas (nama, jenis, status operasional),
+`rn-posko-scope.js` (`?v=poskosettings-20260908b`). Calls `get_posko_settings`;
+if `can_edit`, mounts a **"⚙ Pengaturan"** link (`#rnPoskoSettingsBtn`,
+`.rn-public-login` styling) **inside `.rn-public-header`, immediately before
+the Logout link** (polls up to ~6 s for `.rn-public-logout` since
+`rn-public-header.js` builds the auth pill async; falls back to the page
+topbar if no Logout ever appears). Clicking opens a modal — sections: Identitas (nama, jenis, status operasional),
 Periode Aktif (sejak / sampai), Lokasi (alamat, lat, lng), Penanggung Jawab &
 Kontak (nama, jabatan, HP, WhatsApp, email, kontak darurat), Notifikasi
 WhatsApp (toggle + multi-nomor textarea), Data Lain (jiwa dilayani, detail
@@ -263,11 +266,14 @@ shared JS calls it unconditionally without a 403 — redeployed.
   toggle, multi-numbers, notes) → re-read persists → restored to original.
 - **Guest browser** (`osiun-playwright-check/rn-posko-settings-check.js`, 3
   posko pages): no "⚙ Pengaturan Posko" button, **0 console errors**.
-- **Modal** (`ps-harness.js` — real `rn-posko-settings.js` + mocked
-  `RN_FRAPPE`, `can_edit:true`): button mounts, modal has all sections
-  (periode aktif, PIC WhatsApp, WA-notif toggle + multi-number box), form
-  prefills from payload, submit calls `update_posko` with the edited values;
-  0 console errors. Screenshot `shots-tidy4/pengaturan-posko-modal.png`.
+- **Modal + placement** (`ps-harness.js` — real `rn-posko-settings.js` +
+  mocked `RN_FRAPPE`, `can_edit:true`, harness header with a Logout link):
+  the "⚙ Pengaturan" link mounts inside `.rn-public-header` immediately
+  before `.rn-public-logout`; modal has all sections (periode aktif, PIC
+  WhatsApp, WA-notif toggle + multi-number box); form prefills from payload;
+  submit calls `update_posko` with the edited values; 0 console errors.
+  Screenshots `shots-tidy4/pengaturan-posko-modal.png` +
+  `pengaturan-posko-header.png`.
 - No valid posko-manager session cookie available this session, so the
   logged-in button was proven via the mock harness rather than a live login.
 

@@ -40,10 +40,28 @@
     $("#kpiCommunity").textContent = fmt(t.community_verified);
   }
 
+  var NO_ORG = "Tanpa organisasi";
+
+  function orgLabel(r) { return r.organization_title || (r.organization ? r.organization : NO_ORG); }
+
   function applyFilter() {
     var q = state.query.toLowerCase();
-    state.filtered = !q ? state.rows : state.rows.filter(function (r) {
-      return (r.title + " " + r.lokasi + " " + r.pic).toLowerCase().indexOf(q) !== -1;
+    state.filtered = !q ? state.rows.slice() : state.rows.filter(function (r) {
+      return (r.title + " " + r.lokasi + " " + r.pic + " " + orgLabel(r)).toLowerCase().indexOf(q) !== -1;
+    });
+    // group by organisation: real orgs A→Z first, "Tanpa organisasi" last,
+    // then by posko title within each group.
+    state.filtered.sort(function (a, b) {
+      var la = orgLabel(a), lb = orgLabel(b);
+      var na = la === NO_ORG ? 1 : 0, nb = lb === NO_ORG ? 1 : 0;
+      if (na !== nb) return na - nb;
+      if (la.toLowerCase() !== lb.toLowerCase()) return la.toLowerCase() < lb.toLowerCase() ? -1 : 1;
+      return String(a.title || "").toLowerCase() < String(b.title || "").toLowerCase() ? -1 : 1;
+    });
+    state.groupCounts = {};
+    state.filtered.forEach(function (r) {
+      var k = orgLabel(r);
+      state.groupCounts[k] = (state.groupCounts[k] || 0) + 1;
     });
     state.page = 0;
     renderTable();
@@ -59,18 +77,26 @@
     if (!slice.length) {
       body.innerHTML = '<tr><td colspan="7"><em class="rn-muted">Tidak ada posko.</em></td></tr>';
     } else {
-      body.innerHTML = slice.map(function (r) {
+      var lastOrg = null, html = "";
+      slice.forEach(function (r) {
+        var g = orgLabel(r);
+        if (g !== lastOrg) {
+          lastOrg = g;
+          html +=
+            '<tr class="rn-rp-group"><td colspan="7">🏢 <b>' + esc(g) + "</b>" +
+            ' <span class="rn-muted">· ' + (state.groupCounts[g] || 0) + " posko</span></td></tr>";
+        }
         var isSel = state.selected === r.name;
-        return (
+        html +=
           '<tr class="rn-ba-row' + (isSel ? " is-selected" : "") + '" data-name="' + esc(r.name) + '">' +
           "<td><b>" + esc(r.title) + "</b></td><td>" + esc(r.jenis || "-") + "</td><td>" + esc(r.lokasi) + "</td>" +
           "<td>" + esc(r.pic) + "</td><td>" + fmt(r.kapasitas) + "</td>" +
           "<td>" + (window.RNVerifBadge
             ? window.RNVerifBadge.html(r.status_verifikasi, r.trusted_verifier_count)
             : '<span class="chip ' + statusPillClass(r.status_verifikasi) + '">' + esc(statusLabel(r.status_verifikasi)) + "</span>") + "</td>" +
-          "<td>" + fmtTime(r.terakhir_diperbarui) + "</td></tr>"
-        );
-      }).join("");
+          "<td>" + fmtTime(r.terakhir_diperbarui) + "</td></tr>";
+      });
+      body.innerHTML = html;
     }
     body.querySelectorAll("tr[data-name]").forEach(function (tr) {
       tr.addEventListener("click", function () { selectPosko(tr.getAttribute("data-name")); });

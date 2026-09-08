@@ -4286,12 +4286,23 @@ def posko_registry_board(disaster_event=None, limit=200):
 
     rows = frappe.get_all(
         "RN Posko", filters=filters,
-        fields=["name", "title", "posko_type", "address", "city_name",
-                "officer_in_charge_name", "rn_beneficiary_count",
+        fields=_sf("RN Posko", ["name", "title", "posko_type", "address", "city_name",
+                "organization", "officer_in_charge_name", "rn_beneficiary_count",
                 "verification_status", "trusted_verifier_count",
-                "operational_status", "modified"],
+                "operational_status", "modified"]),
         order_by="modified desc", limit_page_length=int(limit),
     )
+
+    org_titles = {}
+    _org_ids = sorted({r.get("organization") for r in rows if r.get("organization")})
+    if _org_ids:
+        org_titles = {
+            o.name: o.title
+            for o in frappe.get_all(
+                "RN Organization", filters={"name": ["in", _org_ids]},
+                fields=["name", "title"], limit_page_length=len(_org_ids),
+            )
+        }
 
     def _cap(r):
         try:
@@ -4304,6 +4315,8 @@ def posko_registry_board(disaster_event=None, limit=200):
         "lokasi": r.city_name or r.address or "-",
         "pic": r.officer_in_charge_name or "-",
         "kapasitas": _cap(r),
+        "organization": r.get("organization") or None,
+        "organization_title": org_titles.get(r.get("organization")) if r.get("organization") else None,
         "status_verifikasi": r.verification_status or "self_reported",
         "trusted_verifier_count": r.trusted_verifier_count or 0,
         "terakhir_diperbarui": r.modified,

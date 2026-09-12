@@ -139,6 +139,44 @@ def _assert_owner(actor, owner_type, owner_id):
         )
 
 
+_VERIFIED_STATUSES = {"verified", "official_verified", "community_verified"}
+
+
+def _owner_verified(owner_type, owner_id):
+    """Only a verified organization/posko, or a verified individual, may
+    have their donation program/tender appear publicly (owner request:
+    campaign creation itself isn't blocked — an unverified owner's
+    program is just kept off the public list until they clear the
+    SAME verification queue every org/posko/user already goes through,
+    see api_verification.approval_queue)."""
+    if not owner_id:
+        return False
+    if owner_type == "organization":
+        return frappe.db.get_value("RN Organization", owner_id, "verification_status") in _VERIFIED_STATUSES
+    if owner_type == "posko":
+        return frappe.db.get_value("RN Posko", owner_id, "verification_status") in _VERIFIED_STATUSES
+    return False
+
+
+def _actor_verified_person(actor):
+    """A verified individual: either an active registered verifier, or a
+    registrant whose own freely-chosen reference (see api_auth.register /
+    RN User Reference) has actually been confirmed by a reviewer."""
+    if not actor or not getattr(actor, "name", None):
+        return False
+    if frappe.db.exists("RN Verifier Profile", {"user": actor.name, "verifier_status": "active"}):
+        return True
+    if frappe.db.exists("RN User Reference", {"user_account": actor.name, "status": "confirmed"}):
+        return True
+    return False
+
+
+def _campaign_owner_verified(actor, owner_type, owner_id):
+    if owner_type in ("organization", "posko"):
+        return _owner_verified(owner_type, owner_id)
+    return _actor_verified_person(actor)
+
+
 def _program(name):
     row = frappe.db.get_value(
         "RN Donor Program",
@@ -315,6 +353,9 @@ def create_program(
         owner_type,
         owner_id,
     )
+
+    if not _campaign_owner_verified(actor, owner_type, owner_id):
+        public_visibility = "restricted"
 
     program_name = (
         program_name or ""
@@ -856,6 +897,15 @@ def create_special_program(
         owner_id,
     )
 
+    # Only a verified org/posko/person may run a PUBLIC campaign. Creation
+    # itself is never blocked — an unverified owner's program is just kept
+    # off the public donation list until they clear the SAME verification
+    # queue every org/posko/user already goes through
+    # (api_verification.approval_queue), not a separate new flow.
+    owner_verified = _campaign_owner_verified(actor, owner_type, owner_id)
+    if not owner_verified:
+        public_visibility = "restricted"
+
     program_name = (
         program_name or ""
     ).strip()
@@ -1255,6 +1305,19 @@ def program_board(disaster_event=None):
     for u in updates:
         updates_by_program[u.program].append(u)
 
+    # "Project base" vs "cash base": a program that funds a real
+    # RN Procurement Tender (design/RAB/pelaksana, already built for
+    # Pengadaan & Tender) is project-based; everything else is a plain
+    # cash campaign. One donation list (program_donations) works for both.
+    tender_by_program = {}
+    if names:
+        for t in frappe.get_all(
+            "RN Procurement Tender", filters={"donor_program": ["in", names]},
+            fields=["name", "donor_program", "status", "title"],
+            order_by="creation asc", limit_page_length=2000,
+        ):
+            tender_by_program.setdefault(t.donor_program, t)
+
     today = nowdate()
     programs = []
     for r in rows:
@@ -1273,6 +1336,7 @@ def program_board(disaster_event=None):
             and str(r.end_date) < str(today)
         )
 
+        tender = tender_by_program.get(r.name)
         programs.append({
             "name": r.name,
             "program_name": r.program_name,
@@ -1290,6 +1354,9 @@ def program_board(disaster_event=None):
             "end_date": r.end_date,
             "update_count": len(prog_updates),
             "is_late": is_late,
+            "program_kind": "project" if tender else "cash",
+            "tender": tender.name if tender else None,
+            "tender_status": tender.status if tender else None,
         })
 
     active = [p for p in programs if p["status"] == "active"]
@@ -1529,15 +1596,42 @@ def program_detail(program):
     except Exception:
         donations = {"public": [], "total_received": 0, "donor_count": 0, "can_manage": False, "pending": []}
 
+    # Project-based program: the "design/RAB/pelaksana" detail already
+    # modeled on Pengadaan & Tender, shown as part of this same donation
+    # page per owner request instead of a separate disconnected page.
+    project = None
+    tender_row = frappe.db.get_value(
+        "RN Procurement Tender", {"donor_program": program},
+        ["name", "title", "scope_description", "location", "rab_total",
+         "rab_document_url", "bidding_opens_at", "bidding_closes_at",
+         "status", "awarded_bid", "contact_person", "contact_phone"],
+        as_dict=True, order_by="creation asc",
+    )
+    if tender_row:
+        from rescue_net.api_tender import _TENDER_STATUS
+
+        pelaksana = None
+        if tender_row.awarded_bid:
+            pelaksana = frappe.db.get_value(
+                "RN Tender Bid", tender_row.awarded_bid, ["bidder_name", "bidder_org"], as_dict=True,
+            )
+        project = {
+            **dict(tender_row),
+            "status_label": _TENDER_STATUS.get(tender_row.status, tender_row.status),
+            "pelaksana": (pelaksana.bidder_org or pelaksana.bidder_name) if pelaksana else None,
+        }
+
     return {
         "program": {
             **dict(row),
             "category": _program_type_label(row.program_type),
             "progress_percent": progress,
+            "program_kind": "project" if project else "cash",
         },
         "updates": [dict(u) for u in updates],
         "bukti": bukti,
         "donations": donations,
+        "project": project,
         "note": (
             "Rencana Kerja/Dokumen tidak dimodelkan sebagai daftar rinci "
             "terpisah — gunakan Anggaran (target/diterima/terpakai) dan "

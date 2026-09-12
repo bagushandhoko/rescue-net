@@ -144,6 +144,17 @@ def create_tender(disaster_event, title, rab_total=0, scope_description=None,
     if organization and not (is_system_manager() or can_manage_organization(actor, organization)):
         frappe.throw("Anda bukan pengelola organisasi ini.", frappe.PermissionError)
 
+    # Same rule as a cash campaign (api_donor_program.create_special_program):
+    # only a verified organization may actually open real bidding. An
+    # unverified org can still prepare the tender, it just stays `draft`
+    # (never auto-opens) until they clear the same org verification queue
+    # every organization already goes through.
+    org_for_check = organization or actor.get("organization")
+    owner_verified = False
+    if org_for_check:
+        from rescue_net.api_donor_program import _owner_verified
+        owner_verified = _owner_verified("organization", org_for_check)
+
     ev = _event(disaster_event)
     doc = frappe.new_doc("RN Procurement Tender")
     if ev and frappe.db.exists("RN Disaster Event", ev):
@@ -162,9 +173,9 @@ def create_tender(disaster_event, title, rab_total=0, scope_description=None,
     doc.contact_person = contact_person
     doc.contact_phone = contact_phone
     doc.notes = notes
-    doc.status = "open" if bidding_closes_at else "draft"
+    doc.status = "open" if (bidding_closes_at and owner_verified) else "draft"
     doc.insert(ignore_permissions=True)
-    return {"tender": doc.name, "status": doc.status}
+    return {"tender": doc.name, "status": doc.status, "owner_verified": owner_verified}
 
 
 @frappe.whitelist(allow_guest=True)

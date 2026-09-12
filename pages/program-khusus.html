@@ -123,6 +123,19 @@
               <div><span>Periode</span><b id="detailPeriod">-</b></div>
               <div><span>Sasaran</span><b id="detailBeneficiaries">-</b></div>
             </div>
+
+            <div id="detailProject" hidden>
+              <h4 style="margin-top:16px;">Detail Proyek (Project Base)</h4>
+              <p class="rn-muted" id="projectScope"></p>
+              <div class="rn-dp-target">
+                <div><span>RAB</span><b id="projectRab">-</b></div>
+                <div><span>Status Tender</span><b id="projectStatus">-</b></div>
+                <div><span>Pelaksana</span><b id="projectPelaksana">Belum ditetapkan</b></div>
+              </div>
+              <p class="rn-muted" id="projectRabDoc"></p>
+              <a class="btn ghost mini" id="projectTenderLink" href="pengadaan-tender.html" target="_blank" rel="noopener">Lihat Detail Tender & Penawaran →</a>
+            </div>
+
             <h4 style="margin-top:16px;">Bukti Program</h4>
             <div class="rn-bukti-grid" id="detailEvidence"></div>
             <div class="rn-pk-support-grid">
@@ -216,6 +229,7 @@
             <label>Catatan
               <textarea name="notes" rows="4">Pengadaan panel surya portable, lampu, power station, dan instalasi darurat.</textarea>
             </label>
+            <p class="rn-muted" style="font-size:12px">Hanya organisasi/posko yang sudah terverifikasi (lewat Verification &amp; Approval) yang programnya tampil publik di Papan Donasi — kalau ID Pemilik belum terverifikasi, program tetap tersimpan tapi disembunyikan dari publik sampai verifikasinya selesai.</p>
             <button class="btn primary" type="submit">Simpan Program</button>
           </form>
         </aside>
@@ -269,7 +283,7 @@
 </div>
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
-<script src="../assets/js/program-khusus.js?v=donasi-20260912"></script>
+<script src="../assets/js/program-khusus.js?v=tenderintegrasi-20260912"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>

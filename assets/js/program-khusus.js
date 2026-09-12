@@ -86,7 +86,10 @@
       return (
         '<button type="button" class="rn-pk-card' + sel + '" data-program="' + esc(p.name) + '">' +
         '<div class="rn-pk-card-head"><b>' + esc(p.program_name) + '</b><span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></div>" +
-        '<div class="rn-pk-card-meta">' + esc(p.category) + " · " + esc(p.location) + "</div>" +
+        '<div class="rn-pk-card-meta">' +
+          '<span class="chip ' + (p.program_kind === "project" ? "warning" : "neutral") + '" style="margin-right:6px">' +
+          (p.program_kind === "project" ? "Project Base" : "Cash Base") + "</span>" +
+          esc(p.category) + " · " + esc(p.location) + "</div>" +
         '<div class="rn-pk-bar"><div style="width:' + p.progress_percent + '%"></div></div>' +
         '<div class="rn-pk-bar-label"><span>' + p.progress_percent + "%</span></div></button>"
       );
@@ -148,6 +151,21 @@
     }).join("");
   }
 
+  function renderProject(project, eventId) {
+    var wrap = $("#detailProject");
+    if (!project) { wrap.hidden = true; return; }
+    wrap.hidden = false;
+    $("#projectScope").textContent = project.scope_description || "Belum ada uraian lingkup pekerjaan.";
+    $("#projectRab").textContent = rp(project.rab_total);
+    $("#projectStatus").textContent = project.status_label || project.status || "-";
+    $("#projectPelaksana").textContent = project.pelaksana || "Belum ditetapkan";
+    $("#projectRabDoc").textContent = project.rab_document_url ? "" : "Dokumen RAB belum diunggah.";
+    $("#projectRabDoc").innerHTML = project.rab_document_url
+      ? '<a href="' + esc(project.rab_document_url) + '" target="_blank" rel="noopener">Unduh dokumen RAB ↓</a>'
+      : "Dokumen RAB belum diunggah.";
+    $("#projectTenderLink").href = "pengadaan-tender.html?event=" + encodeURIComponent(eventId || "");
+  }
+
   function renderDetail(data) {
     var p = data.program;
     $("#detailEmpty").hidden = true;
@@ -178,6 +196,7 @@
       ? data.bukti.map(evidenceThumb).join("")
       : '<p class="rn-muted" style="grid-column:1/-1;">Belum ada evidence terhubung ke program ini.</p>';
 
+    renderProject(data.project, getEventId2());
     renderUpdates(data.updates || []);
     renderDonations(data.donations || {});
   }

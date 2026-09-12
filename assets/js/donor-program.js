@@ -31,6 +31,22 @@
   var STATUS_LABEL = { planned: "Rencana", active: "Aktif", completed: "Selesai", cancelled: "Dibatalkan" };
   var STATUS_CHIP = { planned: "", active: "ok", completed: "", cancelled: "danger" };
 
+  function programCard(p) {
+    var sel = SELECTED === p.name ? " is-selected" : "";
+    return (
+      '<button type="button" class="rn-pk-card' + sel + '" data-program="' + esc(p.name) + '">' +
+      '<div class="rn-pk-card-head"><b>' + esc(p.program_name) + '</b>' +
+        (p.is_own_hidden ? '<span class="chip danger" style="margin-right:4px">Belum Publik</span>' : "") +
+        '<span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></div>" +
+      '<div class="rn-pk-card-meta">' + esc(p.category) + " · " + esc(p.location) + "</div>" +
+      '<div class="rn-pk-bar"><div style="width:' + p.progress_percent + '%"></div></div>' +
+      '<div class="rn-pk-bar-label"><span>' + p.progress_percent + "%</span></div></button>"
+    );
+  }
+
+  // Grouped by Cash Base / Project Base (a program funding a real
+  // Pengadaan & Tender tender) — easier to scan than one flat mixed list
+  // once there are several of each kind.
   function renderList() {
     var rows = (BOARD_CACHE && BOARD_CACHE.programs) || [];
     var el = $("#donorList");
@@ -38,21 +54,19 @@
       el.innerHTML = '<p class="rn-muted" style="padding:8px;">Belum ada program donasi untuk bencana ini.</p>';
       return;
     }
-    el.innerHTML = rows.map(function (p) {
-      var sel = SELECTED === p.name ? " is-selected" : "";
-      return (
-        '<button type="button" class="rn-pk-card' + sel + '" data-program="' + esc(p.name) + '">' +
-        '<div class="rn-pk-card-head"><b>' + esc(p.program_name) + '</b>' +
-          (p.is_own_hidden ? '<span class="chip danger" style="margin-right:4px">Belum Publik</span>' : "") +
-          '<span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></div>" +
-        '<div class="rn-pk-card-meta">' +
-          '<span class="chip ' + (p.program_kind === "project" ? "warning" : "neutral") + '" style="margin-right:6px">' +
-          (p.program_kind === "project" ? "Project Base" : "Cash Base") + "</span>" +
-          esc(p.category) + " · " + esc(p.location) + "</div>" +
-        '<div class="rn-pk-bar"><div style="width:' + p.progress_percent + '%"></div></div>' +
-        '<div class="rn-pk-bar-label"><span>' + p.progress_percent + "%</span></div></button>"
-      );
-    }).join("");
+    var cash = rows.filter(function (p) { return p.program_kind !== "project"; });
+    var project = rows.filter(function (p) { return p.program_kind === "project"; });
+
+    var html = "";
+    if (cash.length) {
+      html += '<div class="rn-pk-group-head"><span class="chip neutral">Cash Base</span><span class="rn-muted">' + cash.length + " program</span></div>";
+      html += cash.map(programCard).join("");
+    }
+    if (project.length) {
+      html += '<div class="rn-pk-group-head"><span class="chip warning">Project Base</span><span class="rn-muted">' + project.length + " program</span></div>";
+      html += project.map(programCard).join("");
+    }
+    el.innerHTML = html;
 
     el.querySelectorAll("[data-program]").forEach(function (btn) {
       btn.addEventListener("click", function () { selectProgram(btn.getAttribute("data-program")); });

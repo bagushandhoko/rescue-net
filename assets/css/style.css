@@ -5645,6 +5645,8 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-pk-filter-tabs { margin-bottom: 10px; flex-wrap: wrap; }
 
 .rn-pk-list { display: flex; flex-direction: column; gap: 8px; max-height: 720px; overflow-y: auto; }
+.rn-pk-group-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 2px 2px; font-size: 12px; }
+.rn-pk-group-head:not(:first-child) { margin-top: 6px; border-top: 1px solid var(--line); padding-top: 10px; }
 .rn-pk-card { display: block; text-align: left; width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--panel2); cursor: pointer; }
 .rn-pk-card.is-selected { border-color: var(--coral, #e8835d); background: rgba(232,131,93,.08); }
 .rn-pk-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px; }

@@ -253,10 +253,21 @@
     });
   }
 
+  /* ---------- referensi verifikasi (progressive disclosure) ---------- */
+  function wireReferenceToggle() {
+    var chk = document.getElementById("consentVerificationChk");
+    var wrap = document.getElementById("referenceFields");
+    if (!chk || !wrap) return;
+    chk.addEventListener("change", function () {
+      wrap.hidden = !chk.checked;
+    });
+  }
+
   /* ---------- init ---------- */
   async function init() {
     wirePwToggles();
     wireGoogleButtons();
+    wireReferenceToggle();
 
     $all("[data-auth-tab]").forEach(function (el) {
       el.addEventListener("click", function (e) {
@@ -330,6 +341,9 @@
         var role = roleEl ? roleEl.value : "relawan";
         var consentEl = registerForm.querySelector('input[name="consent_verification"]');
         var consentVerification = consentEl && consentEl.checked ? 1 : 0;
+        var referenceName = consentVerification ? (f.reference_name.value || "").trim() : "";
+        var referenceRelation = consentVerification ? (f.reference_relation.value || "").trim() : "";
+        var referenceContact = consentVerification ? (f.reference_contact.value || "").trim() : "";
 
         if (!full_name || !email || !pass) {
           setMessage("registerMessage", "Nama, email, dan password wajib diisi.", true);
@@ -353,7 +367,10 @@
             phone: phone,
             password: pass,
             role: role,
-            consent_verification: consentVerification
+            consent_verification: consentVerification,
+            reference_name: referenceName,
+            reference_relation: referenceRelation,
+            reference_contact: referenceContact
           });
           setMessage("registerMessage", (out && out.message) || "Akun dibuat. Masuk…");
           await login(email, pass);

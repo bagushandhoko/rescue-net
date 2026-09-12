@@ -594,6 +594,19 @@ def approval_item_detail(kind, name):
             "Role Diminta": doc.requested_role, "Email": doc.email, "Phone": doc.phone,
             "Bersedia Diverifikasi": "Ya" if getattr(doc, "consent_verification", 0) else "Tidak",
         }
+        # Free-choice reference (RT/Kepala Sekolah/tokoh dikenal, dst — bukan
+        # dari jaringan verifikator terdaftar) yang dipilih sendiri saat
+        # registrasi, kalau ada.
+        ref = frappe.db.get_value(
+            "RN User Reference", {"user_account": doc.name},
+            ["reference_name", "reference_relation", "reference_contact", "status"],
+            as_dict=True, order_by="creation desc",
+        )
+        if ref:
+            fields["Referensi"] = ref.reference_name + (
+                " (" + ref.reference_relation + ")" if ref.reference_relation else "")
+            fields["Kontak Referensi"] = ref.reference_contact
+            fields["Status Referensi"] = ref.status
     elif kind == "needs":
         fields = {"Item": doc.item_name, "Jumlah": doc.quantity, "Satuan": doc.unit, "Urgensi": doc.urgency}
     elif kind == "expense":
@@ -612,6 +625,31 @@ def approval_item_detail(kind, name):
         "fields": fields, "evidence": evidence, "trust": trust,
         "timeline": _timeline(doc.creation, doc.modified, status),
     }
+
+
+@frappe.whitelist()
+def decide_user_reference(reference, status, note=None):
+    """A reviewer records the outcome of actually contacting a registrant's
+    freely-chosen reference (RT chief, school principal, etc — see
+    api_auth.register). This is a real follow-up action, not a rubber
+    stamp: it does not itself grant the requested role."""
+    actor = rn_actor()
+    if not _can_verify(actor):
+        frappe.throw("Hak verifikasi diperlukan", frappe.PermissionError)
+
+    status = str(status or "").strip().lower()
+    if status not in ("contacted", "confirmed", "declined", "unreachable"):
+        frappe.throw("Status tidak dikenal (contacted/confirmed/declined/unreachable)")
+
+    doc = frappe.get_doc("RN User Reference", reference)
+    doc.status = status
+    if note is not None:
+        doc.notes = str(note)[:500]
+    doc.decided_by = actor.name if actor and getattr(actor, "name", None) else frappe.session.user
+    doc.decided_at = now_datetime()
+    doc.save(ignore_permissions=True)
+
+    return {"reference": doc.name, "status": doc.status}
 
 
 def _timeline(creation, modified, status):

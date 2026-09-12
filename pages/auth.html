@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Auth, Registration & Verification</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=authgooglefix-20260912">
+  <link rel="stylesheet" href="../assets/css/style.css?v=authreference-20260912">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -158,8 +158,28 @@
           </fieldset>
 
           <label class="rn-auth-check">
-            <input type="checkbox" name="consent_verification"> Saya bersedia diverifikasi untuk meningkatkan trust level akun/posko saya
+            <input type="checkbox" name="consent_verification" id="consentVerificationChk"> Saya bersedia diverifikasi untuk meningkatkan trust level akun/posko saya
           </label>
+
+          <div id="referenceFields" class="rn-auth-reference" hidden>
+            <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Pilih bebas siapa saja yang bisa dihubungi untuk memverifikasi Anda — mis. Ketua RT, Kepala Sekolah, atau tokoh masyarakat yang Anda kenal. Ini bukan dari daftar verifikator resmi.</p>
+            <label>Nama referensi
+              <input name="reference_name" type="text" placeholder="Nama lengkap referensi">
+            </label>
+            <label>Hubungan / jabatan referensi
+              <input name="reference_relation" type="text" list="referenceRelationOptions" placeholder="mis. Ketua RT, Kepala Sekolah, tokoh masyarakat">
+              <datalist id="referenceRelationOptions">
+                <option value="Ketua RT">
+                <option value="Ketua RW">
+                <option value="Kepala Sekolah">
+                <option value="Tokoh Masyarakat">
+                <option value="Pemuka Agama">
+              </datalist>
+            </label>
+            <label>Kontak referensi (No HP/Email)
+              <input name="reference_contact" type="text" placeholder="08xx atau email">
+            </label>
+          </div>
 
           <button class="btn primary rn-auth-submit" type="submit">Daftar <span aria-hidden="true">&#8594;</span></button>
 
@@ -198,7 +218,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
-<script src="../assets/js/auth.js?v=googlelayoutfix-20260912"></script>
+<script src="../assets/js/auth.js?v=authreference-20260912"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

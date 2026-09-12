@@ -391,6 +391,9 @@ def register(
     password=None,
     role=None,
     consent_verification=0,
+    reference_name=None,
+    reference_relation=None,
+    reference_contact=None,
 ):
     """Public self-service signup used by pages/auth.html (Daftar tab).
 
@@ -399,12 +402,21 @@ def register(
     role by itself. `consent_verification` is an honest opt-in signal
     (not itself a verification) shown to reviewers in the approval queue
     (`api_verification.approval_item_detail`, kind="user").
+
+    A registrant who opts in may freely name their own reference/character
+    witness (RT chief, school principal, any known public figure — NOT
+    restricted to the pre-registered `RN Verifier Profile` network) as an
+    `RN User Reference` row for a reviewer to actually contact. This is a
+    claim by the registrant, not itself a confirmed verification.
     """
     full_name = (full_name or "").strip()
     email = (email or "").strip().lower()
     phone = (phone or "").strip() or None
     role_key = (role or "relawan").strip().lower()
     consent_verification = 1 if str(consent_verification).lower() in ("1", "true", "yes", "on") else 0
+    reference_name = (reference_name or "").strip() or None
+    reference_relation = (reference_relation or "").strip() or None
+    reference_contact = (reference_contact or "").strip() or None
 
     if not full_name or not email or not password:
         frappe.throw("Nama lengkap, email, dan password wajib diisi.")
@@ -468,6 +480,25 @@ def register(
             "Silakan coba lagi."
         )
 
+    has_reference = bool(consent_verification and reference_name)
+    if has_reference:
+        try:
+            ref = frappe.get_doc({
+                "doctype": "RN User Reference",
+                "user_account": account.name,
+                "reference_name": reference_name,
+                "reference_relation": reference_relation,
+                "reference_contact": reference_contact,
+                "status": "pending",
+            })
+            ref.flags.ignore_permissions = True
+            ref.insert(ignore_permissions=True)
+        except Exception:
+            # Non-fatal: the account itself is already valid. Don't fail
+            # the whole registration over an optional reference note.
+            frappe.log_error(frappe.get_traceback(), "rescue_net.api_auth.register reference")
+            has_reference = False
+
     frappe.db.commit()
 
     return {
@@ -475,6 +506,7 @@ def register(
         "email": email,
         "requested_role": role_key,
         "role_request_status": "pending",
+        "reference_saved": has_reference,
         "message": (
             "Akun dibuat. Anda bisa langsung masuk; "
             "peran " + role_key + " menunggu verifikasi."

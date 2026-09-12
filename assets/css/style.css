@@ -4532,6 +4532,9 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-auth-form { margin-top: 0; display: grid; gap: 14px; }
 .rn-auth-form[hidden] { display: none; }
 
+.rn-auth-reference { display: grid; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2, #f7f5f2); }
+.rn-auth-reference[hidden] { display: none; }
+
 .rn-auth-label-row {
   display: flex;
   justify-content: space-between;

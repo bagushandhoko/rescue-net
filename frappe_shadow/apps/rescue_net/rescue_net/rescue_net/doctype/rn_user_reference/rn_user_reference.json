@@ -1,0 +1,79 @@
+{
+ "doctype": "DocType",
+ "name": "RN User Reference",
+ "module": "Rescue Net",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "user_account",
+  "reference_name",
+  "reference_relation",
+  "reference_contact",
+  "status",
+  "notes",
+  "decided_by",
+  "decided_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "user_account",
+   "label": "User Account",
+   "fieldtype": "Link",
+   "options": "RN User Account",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "reference_name",
+   "label": "Nama Referensi",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "Orang yang dipilih bebas oleh pendaftar sebagai referensi (mis. Ketua RT, Kepala Sekolah, tokoh masyarakat yang dikenal) — bukan verifikator terdaftar."
+  },
+  {
+   "fieldname": "reference_relation",
+   "label": "Hubungan / Jabatan",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reference_contact",
+   "label": "Kontak Referensi",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "pending\ncontacted\nconfirmed\ndeclined\nunreachable",
+   "default": "pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "notes",
+   "label": "Catatan",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "decided_by",
+   "label": "Decided By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Decided At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

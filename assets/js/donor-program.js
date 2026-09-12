@@ -77,6 +77,13 @@
     var wrap = $("#ddProject");
     if (!project) { wrap.hidden = true; return; }
     wrap.hidden = false;
+    var designWrap = $("#ddProjectDesignWrap");
+    if (project.design_image_url) {
+      $("#ddProjectDesignImg").src = project.design_image_url;
+      designWrap.hidden = false;
+    } else {
+      designWrap.hidden = true;
+    }
     $("#ddProjectScope").textContent = project.scope_description || "Belum ada uraian lingkup pekerjaan.";
     $("#ddProjectRab").textContent = rp(project.rab_total);
     $("#ddProjectStatus").textContent = project.status_label || project.status || "-";

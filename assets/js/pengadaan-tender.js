@@ -25,6 +25,9 @@
         esc(t.status_label) + "</span>" +
         (t.is_open ? '<span class="chip neutral">tutup ' + dt(t.bidding_closes_at) + "</span>" : "") + "</div>" +
       "<h4>" + esc(t.title) + "</h4>" +
+      (t.design_image_url
+        ? '<img src="' + esc(t.design_image_url) + '" alt="Gambar desain" style="max-width:100%;border-radius:6px;margin:4px 0;display:block">'
+        : "") +
       '<div class="td-meta">' + esc(t.location || "-") + " · RAB " + rab +
         " · " + (t.bid_count || 0) + " penawaran" +
         (t.lowest_bid ? " · terendah " + rp(t.lowest_bid) : "") + "</div>" +
@@ -139,6 +142,7 @@
           disaster_event: fd.get("disaster_event"), title: fd.get("title"),
           location: fd.get("location") || null, rab_total: fd.get("rab_total") || 0,
           rab_document_url: fd.get("rab_document_url") || null,
+          design_image_url: fd.get("design_image_url") || null,
           donor_program: fd.get("donor_program") || null,
           scope_description: fd.get("scope_description") || null,
           bidding_closes_at: (fd.get("bidding_closes_at") || "").replace("T", " ") || null,

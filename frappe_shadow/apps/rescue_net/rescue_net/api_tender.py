@@ -60,7 +60,7 @@ def tender_board(disaster_event=None, limit=200):
         "RN Procurement Tender",
         or_filters=_event_or_filters(disaster_event, ev),
         fields=["name", "title", "location", "donor_program", "organization",
-                "rab_total", "rab_document_url", "bidding_opens_at",
+                "rab_total", "rab_document_url", "design_image_url", "bidding_opens_at",
                 "bidding_closes_at", "status", "awarded_bid", "scope_description",
                 "modified"],
         order_by="bidding_closes_at asc, modified desc",
@@ -127,9 +127,9 @@ def tender_detail(tender):
     t = frappe.db.get_value(
         "RN Procurement Tender", tender,
         ["name", "title", "location", "scope_description", "donor_program",
-         "organization", "rab_total", "rab_document_url", "bidding_opens_at",
-         "bidding_closes_at", "status", "awarded_bid", "contact_person",
-         "contact_phone", "notes"],
+         "organization", "rab_total", "rab_document_url", "design_image_url",
+         "bidding_opens_at", "bidding_closes_at", "status", "awarded_bid",
+         "contact_person", "contact_phone", "notes"],
         as_dict=True,
     )
     if not t:
@@ -166,7 +166,7 @@ def tender_detail(tender):
 @frappe.whitelist()
 def create_tender(disaster_event, title, rab_total=0, scope_description=None,
                   location=None, donor_program=None, organization=None,
-                  rab_document_url=None, bidding_opens_at=None,
+                  rab_document_url=None, design_image_url=None, bidding_opens_at=None,
                   bidding_closes_at=None, contact_person=None, contact_phone=None,
                   notes=None):
     actor = rn_actor(required=True)
@@ -197,6 +197,7 @@ def create_tender(disaster_event, title, rab_total=0, scope_description=None,
     doc.donor_program = donor_program if donor_program and frappe.db.exists("RN Donor Program", donor_program) else None
     doc.organization = organization if organization and frappe.db.exists("RN Organization", organization) else actor.get("organization")
     doc.rab_document_url = rab_document_url
+    doc.design_image_url = design_image_url
     doc.bidding_opens_at = bidding_opens_at
     doc.bidding_closes_at = bidding_closes_at
     doc.contact_person = contact_person

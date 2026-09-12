@@ -1635,7 +1635,7 @@ def program_detail(program):
     tender_row = frappe.db.get_value(
         "RN Procurement Tender", {"donor_program": program},
         ["name", "title", "scope_description", "location", "rab_total",
-         "rab_document_url", "bidding_opens_at", "bidding_closes_at",
+         "rab_document_url", "design_image_url", "bidding_opens_at", "bidding_closes_at",
          "status", "awarded_bid", "contact_person", "contact_phone"],
         as_dict=True, order_by="creation asc",
     )

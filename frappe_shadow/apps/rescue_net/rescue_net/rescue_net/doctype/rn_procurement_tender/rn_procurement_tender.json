@@ -17,6 +17,8 @@
     { "fieldname": "location", "label": "Lokasi", "fieldtype": "Data", "in_list_view": 1 },
     { "fieldname": "rab_total", "label": "Nilai RAB / HPS (Rp)", "fieldtype": "Float", "in_list_view": 1 },
     { "fieldname": "rab_document_url", "label": "Dokumen RAB / B&Q (URL)", "fieldtype": "Data" },
+    { "fieldname": "design_image_url", "label": "Gambar Desain (URL)", "fieldtype": "Data",
+      "description": "Sketsa/gambar desain pekerjaan yang ditenderkan (denah, ilustrasi, atau foto rencana bangunan)." },
     { "fieldname": "bidding_opens_at", "label": "Buka Penawaran", "fieldtype": "Datetime" },
     { "fieldname": "bidding_closes_at", "label": "Batas Akhir Penawaran", "fieldtype": "Datetime", "in_list_view": 1 },
     { "fieldname": "status", "label": "Status", "fieldtype": "Select",

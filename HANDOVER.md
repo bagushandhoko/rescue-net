@@ -4,6 +4,54 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
+_Last updated: 2026-09-12 (yet later still, commit `8216d5f`) — **the single
+most important finding of this whole session**, found by finally logging in
+as a real user in a real browser (owner explicitly asked for this, after
+several bugs today only ever showed up that way, never via API/bench-console
+testing):
+
+**`access_policy.rn_actor()` — the actor object nearly every endpoint in the
+whole app builds permission/context decisions from — ignored real org/posko
+membership.** It read `organization`/`posko` off `RN User Account`'s own
+direct Link fields, which the real, current account-creation flow
+(`create_organization`) never sets — it only ever inserts an `RN
+Organization Membership` row. Two functions in the SAME file already knew
+this and compensated (`approved_member()`, `approved_posko_assignment()`
+both fall back to the membership/assignment doctype) — `rn_actor()` was the
+one place that never got the same fix. Concrete symptom: Yusuf (real owner
+of BPBD Provinsi Lampung via membership) saw `koordinasi-organisasi.html`
+report "belum terhubung ke organisasi" and all 4 of his OWN org's poskos
+listed as "external" — despite this session's own org/donation features
+having assumed `actor.organization` worked correctly all day.
+
+Fixed by adding the exact same fallback `api_auth._primary_organization()/
+_primary_posko()` already use. Checked all 16 other
+`actor.organization`/`actor.posko` read sites across 8 files — all
+read/additive, no regression risk. Verified with a REAL Frappe session
+cookie in a REAL browser (not a bench-console actor object): the
+pending-approval panel and donation-confirm panel built earlier today both
+work correctly end-to-end once this was fixed — they were never actually
+broken themselves, they just could never be reached by an affected user.
+
+**Lesson for future sessions, worth repeating**: bench-console testing
+constructs a Python actor dict/session state fairly close to the metal —
+it can accidentally paper over exactly this class of bug (a real HTTP
+session behaving differently than a hand-built actor object). When a
+feature touches `rn_actor()`/session/permission logic, a real login + real
+browser click is the only test that actually proves it, and should happen
+before considering the feature done, not as an afterthought.
+
+**Testing environment note**: in this sandbox, Playwright-in-Docker's login
+FORM SUBMIT (`/api/method/login` via the `host.docker.internal` reverse-proxy
+path) hangs/times out specifically for that one endpoint — confirmed NOT an
+app bug (direct curl to the backend container resolves in ~3s). Workaround
+used: curl the real login endpoint directly for a real `sid` cookie, then
+`context.addCookies([...])` it into Playwright before navigating — this
+gives a genuinely real, server-issued session to test against. Also: pages
+can take 8–10s to fully render behind this same proxy path in this sandbox,
+notably longer than the 3–4s that was enough for guest-only checks earlier
+in the day — wait accordingly before asserting on rendered state.
+
 _Last updated: 2026-09-12 (yet later same day, commit `f5a485a`) — owner
 clarified the donation architecture: **`donor-program.html` is the main
 donation landing page**, not `program-khusus.html`. Rebuilt it from

@@ -14,6 +14,17 @@ end-to-end. Not yet real-login-verified: the org AI BYOK key form in
 `koordinasi-organisasi.html` (lower priority — needs a real provider key to
 mean anything), `pengadaan-tender.html`'s bid-submission flow.
 
+**Data-only fix (no code change)**: the Kompas TV / UI demo donation
+programs seeded earlier today only existed under `event-krakatau-2026` —
+`donor-program.html` navigated from the sidebar defaults to `event-sim-001`
+(the site's long-standing main sim), so they were invisible from the
+normal nav path. Added the same two orgs' programs (+ UI's tender) under
+`event-sim-001` too, reusing the same already-verified orgs (verification
+isn't event-scoped, only programs/poskos are — each org just needed one
+more posko under this event to satisfy the ownership check).
+`event-sim-001`'s donor board is now 8 programs (7 cash incl. Kompas TV,
+1 project = UI). Verified via Playwright, guest view, zero console errors.
+
 _Last updated: 2026-09-12 (yet later still, commit `8216d5f`) — **the single
 most important finding of this whole session**, found by finally logging in
 as a real user in a real browser (owner explicitly asked for this, after

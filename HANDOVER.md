@@ -4,7 +4,39 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-12 (later same day) — auth/verification/donation work,
+_Last updated: 2026-09-12 (even later same day) — closed the two "Not
+done / next candidates" gaps from the donation feature below, plus a nav
+restructure, all DEPLOYED to `osiun.localhost` (commits `7d5ce12`
+`4513b94` `96340b8`):
+
+- **Owner can now find/view/publish their own not-yet-verified
+  program** — `program_board` returns the caller's own non-public
+  programs too (`is_own_hidden` flag), `program_detail`'s hard 404 now
+  excepts the actual owner, new `recheck_and_publish(donor_program)`
+  flips it public (and opens any linked draft tender) once verification
+  clears. FE: "Belum Publik" chip + a banner with a "Cek Verifikasi &
+  Publikasikan" button.
+- **`pengadaan-tender.html` (the standalone tender page) now respects
+  the same verification gate** as `program_board` — previously only
+  tenders created going forward were gated, pre-existing ones on an
+  unverified org were still fully public there.
+- **Event picker showed a raw internal slug** (`event-krakatau-2026`)
+  instead of a title when an event wasn't in the "active" list or before
+  the async title fetch resolved — prettified client-side
+  (`rn-public-header.js`) since no guest-safe single-event lookup exists
+  to do it properly.
+- **Nav restructure** (owner ask): Program Khusus / Donor Program /
+  Pengadaan & Tender pulled out of the flat "Modul" list into their own
+  "Donasi & Program Khusus" accordion group in `rn-navigation-v2.js`
+  (`CONFIG.donasi`, reusing the existing generic group-renderer — no new
+  nav UI code needed). "Program Khusus" relabeled "Donasi & Program" in
+  the nav since that page now IS the donation page.
+
+All verified via bench console + Playwright, same pattern as everything
+else in this file. See the section below for the full donation-feature
+narrative this extends.
+
+_Previously updated 2026-09-12 (later same day) — auth/verification/donation work,
 all DEPLOYED + migrated to `osiun.localhost` (commits `39c8747` `be3b03b`
 `e220cc6` `aadb8b9` `ec53274` `019ee9f`):
 

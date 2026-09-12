@@ -10,9 +10,10 @@ real session cookie) — the "Referensi" surfacing built earlier today
 (`RN User Reference` in `approval_item_detail`) renders correctly in the
 live queue detail panel ("Bersedia Diverifikasi: Ya", "Referensi: Ibu Siti
 Rahayu (Ketua RT 03)", contact, status), and clicking **Approve** works
-end-to-end. Not yet real-login-verified: the org AI BYOK key form in
-`koordinasi-organisasi.html` (lower priority — needs a real provider key to
-mean anything), `pengadaan-tender.html`'s bid-submission flow.
+end-to-end. Also verified the org AI BYOK key form (save -> masked
+"****cdef" + encrypted server-side, delete -> cleared) with a real login —
+works correctly. Not yet real-login-verified: `pengadaan-tender.html`'s
+bid-submission flow (lower priority).
 
 **Data-only fix (no code change)**: the Kompas TV / UI demo donation
 programs seeded earlier today only existed under `event-krakatau-2026` —

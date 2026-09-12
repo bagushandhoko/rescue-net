@@ -131,7 +131,16 @@ async function rnFetch(path, options = {}) {
         create_need:
           body.create_need
             ? 1
-            : 0
+            : 0,
+
+        damage_scale_value:
+          body.damage_scale_value ?? null,
+
+        damage_scale_unit:
+          body.damage_scale_unit || null,
+
+        disaster_event:
+          body.disaster_event_id || null
       },
       {
         method: "POST"
@@ -324,6 +333,14 @@ function setupAdminAreaTree(form, updateLocationMessage) {
   });
 }
 
+function predictedNeedsLine(predicted_needs) {
+  if (!predicted_needs || !predicted_needs.length) return "";
+  const list = predicted_needs
+    .map((n) => `${n.predicted_qty} ${safeText(n.unit)} ${safeText(n.label)}${n.per_day ? "/hari" : ""}`)
+    .join(", ");
+  return `<p class="community-report-predicted"><b>Perkiraan kebutuhan (heuristik):</b> ${list}</p>`;
+}
+
 function reportCard(report) {
   const locationStatus = report.location_status || "no_coordinate";
   const consolidationStatus = report.consolidation_status || "not_ready_no_location";
@@ -334,6 +351,7 @@ function reportCard(report) {
           <h4>${safeText(report.title)}</h4>
           <p>${safeText(report.location_text)} | <b>${safeText(report.report_type)}</b> | ${safeText(report.status)}</p>
           <p>${safeText(report.description)}</p>
+          ${predictedNeedsLine(report.predicted_needs)}
           <small>${safeText(report.reporter_role)} | ${trustLabel(report.trust_score || 0)} (${report.trust_score || 0})</small>
         </div>
         <div class="chips">
@@ -459,7 +477,9 @@ function setupCommunityReportForm() {
       urgent_needs: form.urgent_needs.value.trim(),
       evidence_url: form.evidence_url.value.trim(),
       evidence_caption: form.evidence_caption.value.trim(),
-      consent_to_contact: form.consent_to_contact.checked
+      consent_to_contact: form.consent_to_contact.checked,
+      damage_scale_value: numberOrNull(form.damage_scale_value.value),
+      damage_scale_unit: form.damage_scale_unit.value.trim() || null
     };
 
     if (!payload.reporter_name || !payload.title || !payload.description || !payload.location_text) {
@@ -481,7 +501,14 @@ function setupCommunityReportForm() {
       form.reset();
       form.querySelector("input[name='location_input_method'][value='government_area_select']").checked = true;
       updateLocationMessage();
-      if (msg) msg.textContent = `Laporan masuk: ${data.community_report.id}. Lokasi: ${data.community_report.location_status || "no_coordinate"}, konsolidasi: ${data.community_report.consolidation_status || "not_ready_no_location"}.`;
+      let successText = `Laporan masuk: ${data.name}. Status: ${data.status || "submitted"}, koordinat: ${data.has_coordinates ? "ada" : "belum ada"}.`;
+      if (data.predicted_needs && data.predicted_needs.length) {
+        const list = data.predicted_needs
+          .map((n) => `${n.predicted_qty} ${n.unit} ${n.label}${n.per_day ? "/hari" : ""}`)
+          .join(", ");
+        successText += ` Perkiraan kebutuhan (heuristik): ${list}.`;
+      }
+      if (msg) msg.textContent = successText;
       await loadCommunityReports();
     } catch (err) {
       if (msg) msg.textContent = err.message;

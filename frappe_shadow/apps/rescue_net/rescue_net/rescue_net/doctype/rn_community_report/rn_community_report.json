@@ -106,6 +106,18 @@
    "fieldtype": "Small Text"
   },
   {
+   "fieldname": "damage_scale_value",
+   "label": "Perkiraan Skala Kerusakan",
+   "fieldtype": "Float",
+   "description": "Opsional: perkiraan skala kerusakan fisik untuk jalan/akses terputus, mis. 200 (meter). Dipakai untuk prediksi kebutuhan alat/logistik heuristik — bukan pengukuran teknis."
+  },
+  {
+   "fieldname": "damage_scale_unit",
+   "label": "Satuan Skala",
+   "fieldtype": "Data",
+   "description": "mis. meter, km — satuan untuk damage_scale_value."
+  },
+  {
    "fieldname": "location_text",
    "label": "Location Text",
    "fieldtype": "Small Text"

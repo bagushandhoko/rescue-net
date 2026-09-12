@@ -1178,6 +1178,8 @@ def community_reports(
             "longitude",
             "affected_people_count",
             "urgent_needs",
+            "damage_scale_value",
+            "damage_scale_unit",
             "province_name",
             "city_name",
             "district_name",
@@ -1202,6 +1204,8 @@ def community_reports(
         limit_page_length=3000,
     )
 
+    from rescue_net.api_reports import predict_report_needs
+
     result = []
 
     for row in rows:
@@ -1218,6 +1222,12 @@ def community_reports(
 
         item["updated_at"] = (
             item.get("modified")
+        )
+
+        item["predicted_needs"] = predict_report_needs(
+            item.get("report_type"),
+            item.get("damage_scale_value"),
+            item.get("affected_people_count"),
         )
 
         result.append(item)
@@ -1997,6 +2007,9 @@ def submit_community_report_bridge(
     consent_to_contact=0,
     location_input_method=None,
     create_need=0,
+    damage_scale_value=None,
+    damage_scale_unit=None,
+    disaster_event=None,
 ):
     _actor()
 
@@ -2021,6 +2034,9 @@ def submit_community_report_bridge(
         consent_to_contact=consent_to_contact,
         location_input_method=location_input_method,
         create_need=create_need,
+        damage_scale_value=damage_scale_value,
+        damage_scale_unit=damage_scale_unit,
+        disaster_event=disaster_event,
     )
 
 
@@ -2191,6 +2207,9 @@ def submit_community_report_bridge(
     consent_to_contact=0,
     location_input_method=None,
     create_need=0,
+    damage_scale_value=None,
+    damage_scale_unit=None,
+    disaster_event=None,
 ):
     _actor()
 
@@ -2215,6 +2234,9 @@ def submit_community_report_bridge(
         consent_to_contact=consent_to_contact,
         location_input_method=location_input_method,
         create_need=create_need,
+        damage_scale_value=damage_scale_value,
+        damage_scale_unit=damage_scale_unit,
+        disaster_event=disaster_event,
     )
 
 

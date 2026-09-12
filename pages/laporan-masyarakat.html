@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Laporan Masyarakat</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=contentgridfix-20260912">
+  <link rel="stylesheet" href="../assets/css/style.css?v=predictneeds-20260912">
 </head>
 <body class="public-report-page">
   <main class="public-report-shell">
@@ -80,6 +80,20 @@
               <input name="affected_people_count" type="number" min="0" value="0">
             </label>
           </div>
+
+          <div class="form-grid event-form-grid">
+            <label>Perkiraan skala kerusakan (opsional)
+              <input name="damage_scale_value" type="number" min="0" step="any" placeholder="mis. 200">
+            </label>
+            <label>Satuan skala
+              <input name="damage_scale_unit" placeholder="mis. meter (untuk jalan/akses rusak)">
+            </label>
+          </div>
+          <p class="subtitle" style="margin-top:-8px">
+            Tidak wajib diisi. Contoh: jalan rusak/tertutup 200 meter, atau isi "Jumlah terdampak"
+            di atas untuk 100 warga kehilangan rumah — sistem akan memperkirakan kebutuhan alat berat
+            atau logistik (makanan, pakaian, shelter) secara otomatis untuk membantu posko menyiapkan.
+          </p>
 
           <section class="location-input-panel" aria-label="Tentukan lokasi laporan">
             <div class="panel-header">
@@ -225,7 +239,7 @@
 
   <script src="../assets/js/rn-public-header.js?v=eventlabel-20260912"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/community-report.js?v=frappe-group-e-1"></script>
+<script src="../assets/js/community-report.js?v=predictneeds-20260912"></script>
   <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
   <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
 </body>

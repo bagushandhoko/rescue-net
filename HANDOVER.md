@@ -4,9 +4,139 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-12 — two pieces of work, both DEPLOYED + migrated to
-`osiun.localhost` (commits `9cec634` `6bb7af5`, plus `dfb569f`/`6224dc4`/
-`33f7bee` reviewed from the prior session — see below):
+_Last updated: 2026-09-12 (later same day) — auth/verification/donation work,
+all DEPLOYED + migrated to `osiun.localhost` (commits `39c8747` `be3b03b`
+`e220cc6` `aadb8b9` `ec53274` `019ee9f`):
+
+## Auth page: Google login was completely broken, layout decluttered
+
+Owner: "pakai google error, dan ganti logo yang bener2 google" then "yang
+muncul hanya login, registrasi baru muncul saat button registrasi diklik...
+sebagai apa nggak perlu ditampilkan 2 kali."
+
+- **Google login 500'd on every click.** The button linked straight to
+  `frappe.integrations.oauth2_logins.login_via_google` — that's the OAuth
+  **callback** (needs a `code` Google hasn't sent yet), not the entry
+  point. New `rescue_net.api_auth.social_login_url(provider, redirect_to)`
+  builds the real consent-screen URL via Frappe's own
+  `get_oauth2_authorize_url()` (same helper `/login` uses); buttons now
+  fetch it and redirect. Real 4-color Google "G" SVG replacing the flat
+  blue-letter placeholder.
+- **Register form was never actually hidden.** `.rn-auth-form { display:
+  grid }` had no `[hidden]` override (same bug class documented below at
+  larger scale) — both Masuk and Daftar rendered at once regardless of
+  the active tab. Fixed with `.rn-auth-form[hidden] { display: none }`.
+- Removed the aside's "Bergabung sesuai peran Anda" role-card panel — it
+  duplicated the register form's own role fieldset with no added
+  function.
+- **New: registrant can freely name their own verification reference**
+  (owner: "misalnya Ketua RT nya, Kepala Sekolah nya, bahkan orang
+  terkenal... di luar pihak existing yang bersedia jadi verifikator").
+  New `RN User Reference` doctype (name/relation/contact/status,
+  deliberately separate from `RN Verifier Profile` — that assumes the
+  verifier is already a Rescue-Net actor). Progressively disclosed under
+  the "bersedia diverifikasi" checkbox. Surfaces in the existing
+  `approval_item_detail`(kind="user") via the generic fields dict — no
+  new review UI needed. New `decide_user_reference` for a reviewer to
+  record contacted/confirmed/declined/unreachable.
+- **New: role-based post-registration redirect.** Petugas Posko →
+  `registrasi-posko.html` (their whole reason for signing up); Donatur →
+  `program-khusus.html`.
+
+## Org hierarchy approval flow — superseded 2026-09-08's "no approval" model
+
+Owner asked for contact-person verification + a required reject reason on
+every posko/org/induk join-or-merge request — reverses the earlier
+deliberate "satu komando, no approval" design.
+
+- Whichever side did **not** initiate an attach/detach must approve it now
+  (self-approval blocked); a new org claiming a parent at registration
+  also needs that parent's approval instead of linking immediately. Only
+  bypassed when the same actor manages both sides, or a System Manager.
+- `RN Org Merge Request` gained an `action` (attach/detach) field; new
+  `decide_org_link(request, approve|reject|withdraw, note)`.
+  `org_coordination()` returns `pending_requests[]` with both orgs'
+  contact info for mutual verification. `decide_membership` reject/revoke
+  now also require a reason.
+- FE: Koordinasi Organisasi got a "Permintaan Menunggu Persetujuan" panel.
+- **Bug caught before deploy:** the first version always asked the
+  *prospective parent's* owner for consent, even when the parent's own
+  owner was the one initiating (pulling a standalone org in) — in that
+  direction it's the *child's* owner who must consent. Fixed pre-deploy
+  via a bench-console test harness.
+
+## Site-wide security bug: `.content-grid[hidden]` wasn't hiding anything
+
+Found via a full-site UX triage the owner asked for (see below). Same root
+cause as the auth-form bug above, but on the app's single most-used
+dashboard layout class: `.content-grid { display: grid }` had no `[hidden]`
+override, so author CSS beat the `[hidden]` UA default regardless of
+declaration order. Real impact, not theoretical:
+- **koordinasi-organisasi.html**: a guest saw the FULL org-owner console —
+  hierarchy attach/detach form, the pending-approvals panel above, and the
+  org AI BYOK key form.
+- **verifikator.html**: guest saw the verifier inbox + apply-to-verify
+  admin sections.
+Fixed with one rule, `.content-grid[hidden] { display: none }`; verified
+via Playwright (5/5 and 3/5 gated sections respectively now correctly
+`offsetParent: null` for a guest). Also cleaned up `ai-settings.js` /
+`notifikasi-settings.js` throwing the raw Frappe exception string
+(`"frappe.exceptions.PermissionError: <details>..."`) as the user-facing
+error for a guest hitting a login-required endpoint — matched the
+strip-HTML/map-403 pattern `ai-analyst.js` already had.
+
+**UX triage backlog not yet acted on** (full fork report available on
+request, or re-run the same triage prompt): raw-exception dump possibly
+also on `sync-console.html` (couldn't reproduce — may have been a fork
+mis-attribution, worth a fresh look); `resource-profile.html` shows a
+fully-empty profile to guests with no login prompt; `verification-
+approval.html`'s event picker shows the raw internal event id instead of
+a friendly label; `sync-console.html` (a technical debug console) has no
+visual "advanced" signal distinguishing it from ordinary pages.
+
+## Donation feature, built from scratch, then unified with Pengadaan & Tender
+
+Owner: cash donations with an anonymous option, only listed publicly once
+the receiving institution confirms receipt — then, same session: the
+donation page should list BOTH cash-base and project-base (RAB/design/
+pelaksana, i.e. Pengadaan & Tender) campaigns together, and only a
+verified org/person may run one.
+
+- New `RN Cash Donation` doctype + `create_cash_donation`/
+  `program_donations`/`decide_cash_donation` in `api_donor_program.py`.
+  A donation starts `pending`; confirming is the ONLY path onto the
+  public wall (`donor_name` masked to "Donatur Anonim" when chosen) and
+  the only thing that increments the program's real `budget_received`.
+- `RN Procurement Tender.donor_program` already linked a tender to a
+  funding program — unused until now. `program_board` labels each
+  program `program_kind: "cash"` or `"project"` from that link;
+  `program_detail` embeds the tender's scope/RAB/status/pelaksana
+  directly so the FE needs no second call.
+- **Verification gate** (new `_owner_verified`/`_actor_verified_person`/
+  `_campaign_owner_verified` in `api_donor_program.py`): an unverified
+  org/posko/person's program is silently forced to `public_visibility=
+  "restricted"` and their tender to `status="draft"` — creation itself
+  is never blocked, they just clear the SAME `api_verification.
+  approval_queue` every org/posko/user already goes through, no separate
+  new verification flow invented.
+- FE: "Sumbang ke Program Ini" form + "Papan Donasi" + a manager-only
+  "Menunggu Konfirmasi" panel, all inside the Anggaran tab of
+  `program-khusus.html`'s detail panel. "Project Base"/"Cash Base" chip
+  on each card; a "Detail Proyek" block in Ringkasan for project-base
+  programs, linking out to `pengadaan-tender.html` (not deep-linked to
+  the specific tender — that page has no `?tender=` param support yet).
+- Verified end-to-end via bench console + live Playwright checks against
+  a new Krakatau-sim demo: `[SIMULASI] Rehab Jembatan Kalianda` (program)
+  + its linked tender, kept in the sim data (complements the ash-blocked-
+  road work object already there from the earlier Krakatau pass).
+
+**Not done / next candidates:** no UI yet for an org to flip its own
+program's `public_visibility` back to public *after* getting verified
+(currently requires a direct DB write, same as this session's test) — a
+real "recheck & publish" button on program-khusus.html's create/manage
+flow would close that gap. `pengadaan-tender.html` itself doesn't filter
+by owner verification (only newly-created tenders via `create_tender` are
+gated) — pre-existing tenders on unverified orgs would still show there.
 
 ## 1. Org hierarchy attach/detach now needs the other side's approval
 

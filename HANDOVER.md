@@ -4,6 +4,44 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
+_Last updated: 2026-09-12 (later same day, commit `4964b94`)_ — closed out
+the "laporan masyarakat" task (commits `d1c1318` + `4964b94`):
+
+- `RN Community Report` gained two optional fields: `damage_scale_value`
+  (Float) + `damage_scale_unit` (Data) — e.g. "jalan rusak 200 meter" or
+  "100 warga kehilangan rumah" (via existing `affected_people_count`).
+- New `api_reports.predict_report_needs(report_type, damage_scale_value,
+  affected_people_count)` — a **heuristic, not an LLM call** — maps
+  `blocked_access`/`new_hazard` reports to excavator/bulldozer counts (1
+  per ~150-200m), and `shelter_need`/`affected_need_help`/
+  `location_needs_help` reports to per-person logistics (beras, air
+  bersih, selimut, pakaian, tenda keluarga), each with an explicit
+  `basis` string so the number is never presented as unexplained magic.
+  Wired into `submit_community_report()` (returns `predicted_needs` on
+  submit) and into the `community_reports()` list bridge (per-row, for
+  the operator queue). `laporan-masyarakat.html` explains this up front;
+  `community-report.js` renders the predicted line on each queue card.
+- Two incidental bugs fixed in the same pass: (1) `submit_community_report`
+  never threaded `disaster_event` through — every new citizen report was
+  silently invisible to the event-filtered queue (fixed through both
+  `api_frontend_bridge.submit_community_report_bridge` duplicates); (2)
+  `community-report.js`'s submit-success handler read the nonexistent
+  `data.community_report.id` instead of `data.name` (would have thrown on
+  the very success path meant to show the predicted-needs line).
+- **AI Analyst link** (`4964b94`): `api_ai._build_context()` now runs the
+  event's community reports through `predict_report_needs()` and exposes
+  `community_reports_predicted_needs` in both the raw context and the
+  compact payload sent to the LLM, with the system prompt explicit that
+  these are heuristic estimates from *unverified* citizen reports —
+  early signals to flag, never operational fact. Caveat (by design, not
+  a bug): `_rows()`'s existing posko-scoping means this key only
+  populates for global/system-manager-scope actors (Administrator, BNPB,
+  etc.) — identical to how `donor_programs`/`special_programs` context
+  keys already behave, not a new limitation. Verified via bench console
+  (submit as a posko-scoped user, read context as Administrator — the
+  posko-scoped read correctly returned nothing, confirming this is the
+  same existing security behavior rather than a regression).
+
 _Addendum same day, after the `rn_actor()` fix (`8216d5f`)_: continued the
 real-login verification pass onto `verification-approval.html` (as Yusuf,
 real session cookie) — the "Referensi" surfacing built earlier today

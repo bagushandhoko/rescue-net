@@ -179,6 +179,99 @@
       : '<p class="rn-muted" style="grid-column:1/-1;">Belum ada evidence terhubung ke program ini.</p>';
 
     renderUpdates(data.updates || []);
+    renderDonations(data.donations || {});
+  }
+
+  function renderDonations(d) {
+    var wall = $("#donationWall");
+    var pub = d.public || [];
+    wall.innerHTML = pub.length
+      ? pub.map(function (r) {
+          return '<article class="event-card"><div class="event-main"><div>' +
+            "<h4>" + esc(r.donor_name) + "</h4>" +
+            (r.message ? "<p>" + esc(r.message) + "</p>" : "") +
+            '<p class="rn-muted">' + shortDate(r.confirmed_at) + "</p></div>" +
+            '<div class="chips"><span class="chip ok">' + rp(r.amount) + "</span></div>" +
+            "</div></article>";
+        }).join("")
+      : '<p class="rn-muted">Belum ada donasi terkonfirmasi untuk program ini.</p>';
+
+    var pendingSection = $("#donationPendingSection");
+    var pendingList = $("#donationPending");
+    if (d.can_manage) {
+      pendingSection.hidden = false;
+      var pending = d.pending || [];
+      pendingList.innerHTML = pending.length
+        ? pending.map(function (r) {
+            return '<article class="event-card" data-donation="' + esc(r.name) + '"><div class="event-main"><div>' +
+              "<h4>" + esc(r.donor_name) + (r.is_anonymous ? " (ingin anonim di publik)" : "") + "</h4>" +
+              '<p class="rn-muted">Kontak: ' + esc(r.donor_contact || "-") + " · " + shortDate(r.creation) + "</p>" +
+              (r.message ? "<p>" + esc(r.message) + "</p>" : "") +
+              "</div><div class=\"chips\"><span class=\"chip\">" + rp(r.amount) + "</span></div></div>" +
+              '<div class="form-actions">' +
+              '<button type="button" class="btn primary" data-donate-act="confirm">Konfirmasi Diterima</button>' +
+              '<button type="button" class="btn" data-donate-act="reject">Tolak</button>' +
+              '<span class="form-message" data-donate-msg></span></div></article>';
+          }).join("")
+        : '<p class="rn-muted">Tidak ada donasi menunggu konfirmasi.</p>';
+    } else {
+      pendingSection.hidden = true;
+      pendingList.innerHTML = "";
+    }
+  }
+
+  function wireDonationActions() {
+    var form = $("#donateForm");
+    if (form && !form.dataset.wired) {
+      form.dataset.wired = "1";
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var msg = $("#donateMsg");
+        if (!SELECTED) { msg.textContent = "Pilih program dulu."; return; }
+        var amount = Number(form.amount.value || 0);
+        if (!(amount > 0)) { msg.textContent = "Nominal tidak valid."; return; }
+        msg.textContent = "Mengirim…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_donor_program.create_cash_donation", {
+            donor_program: SELECTED,
+            amount: amount,
+            is_anonymous: form.is_anonymous.checked ? 1 : 0,
+            message: (form.message.value || "").trim() || null,
+          }, { method: "POST" });
+          msg.textContent = "Terkirim — menunggu konfirmasi lembaga penerima.";
+          form.reset();
+          await selectProgram(SELECTED);
+        } catch (err) {
+          msg.textContent = "Gagal: " + ((err && err.message) || err) +
+            (/login|permission|akses|diperlukan/i.test(String(err && err.message)) ? " (perlu login sebagai donatur)" : "");
+        }
+      });
+    }
+
+    var pendingList = $("#donationPending");
+    if (pendingList && !pendingList.dataset.wired) {
+      pendingList.dataset.wired = "1";
+      pendingList.addEventListener("click", async function (e) {
+        var btn = e.target.closest("[data-donate-act]");
+        if (!btn) return;
+        var card = btn.closest("[data-donation]");
+        var msg = card.querySelector("[data-donate-msg]");
+        var act = btn.getAttribute("data-donate-act");
+        var note = null;
+        if (act === "reject") {
+          note = window.prompt("Alasan menolak donasi ini (opsional):", "") || null;
+        }
+        msg.textContent = " memproses…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_donor_program.decide_cash_donation", {
+            donation: card.getAttribute("data-donation"), action: act, note: note,
+          }, { method: "POST" });
+          await selectProgram(SELECTED);
+        } catch (err) {
+          msg.textContent = " gagal: " + ((err && err.message) || err);
+        }
+      });
+    }
   }
 
   async function selectProgram(name) {
@@ -215,6 +308,7 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
     setupFilterTabs();
     setupDetailTabs();
+    wireDonationActions();
     loadBoard().catch(function (err) { console.error("[program board]", err); });
   });
 })();

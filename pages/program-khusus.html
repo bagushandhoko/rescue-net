@@ -140,6 +140,26 @@
               <div class="rn-pk-budget-tile"><span>Terpakai</span><b id="budgetSpent">-</b></div>
             </div>
             <p class="rn-muted">Anggaran dicatat per program dari donasi/alokasi yang diterima; belum ada rincian per-baris belanja terpisah.</p>
+
+            <h4 class="rn-md-detail-h">Sumbang ke Program Ini</h4>
+            <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Donasi tercatat "menunggu" sampai lembaga penerima (pengelola program) mengonfirmasi dana benar diterima — baru setelah itu masuk ke Papan Donasi &amp; Anggaran Diterima.</p>
+            <form class="rn-form" id="donateForm" autocomplete="off">
+              <label>Nominal (Rp)<input name="amount" type="number" min="1" step="1000" required placeholder="mis. 100000"></label>
+              <label>Pesan (opsional)<input name="message" placeholder="mis. Semoga bermanfaat"></label>
+              <label class="rn-auth-check"><input type="checkbox" name="is_anonymous"> Tampilkan sebagai donatur anonim di publik</label>
+              <div class="form-actions">
+                <button class="btn primary" type="submit">Kirim Donasi</button>
+                <span class="form-message" id="donateMsg"></span>
+              </div>
+            </form>
+
+            <h4 class="rn-md-detail-h">Papan Donasi (Terkonfirmasi)</h4>
+            <div id="donationWall" class="event-list"><p class="rn-muted">Memuat…</p></div>
+
+            <div id="donationPendingSection" hidden>
+              <h4 class="rn-md-detail-h">Menunggu Konfirmasi Penerimaan</h4>
+              <div id="donationPending" class="event-list"></div>
+            </div>
           </div>
 
           <div id="tabRiwayat" hidden>
@@ -249,7 +269,7 @@
 </div>
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
-<script src="../assets/js/program-khusus.js?v=progkhusus-20260906"></script>
+<script src="../assets/js/program-khusus.js?v=donasi-20260912"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>

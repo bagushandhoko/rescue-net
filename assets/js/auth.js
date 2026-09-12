@@ -42,7 +42,7 @@
   // explicit ?next= (e.g. they were bounced here mid-flow) still wins.
   var ROLE_LANDING_PAGE = {
     petugas_posko: "registrasi-posko.html",
-    donatur: "donor-program.html"
+    donatur: "program-khusus.html"
   };
   function registerLandingTarget(role) {
     try {

@@ -1349,6 +1349,133 @@ def program_board(disaster_event=None):
     }
 
 
+# ============================================================
+# Cash donations to a specific program ("lembaga penerima" = that
+# program's owner). A donor may choose to appear anonymous on the public
+# donation wall; the real identity always stays on record internally for
+# accountability. A donation only counts toward the program's real
+# budget_received (and only shows on the public wall) once the program's
+# own owner actually confirms the money arrived — never on submission.
+# ============================================================
+
+@frappe.whitelist()
+def create_cash_donation(donor_program, amount, is_anonymous=0, message=None,
+                          donor_name=None, donor_contact=None):
+    actor = rn_actor()
+    row = _program(donor_program)
+
+    amount = flt(amount)
+    if amount <= 0:
+        frappe.throw("Nominal donasi harus lebih dari 0.")
+    is_anonymous = 1 if str(is_anonymous).lower() in ("1", "true", "yes", "on") else 0
+
+    acct = None
+    if actor and actor.name:
+        acct = frappe.db.get_value(
+            "RN User Account", actor.name, ["title", "phone", "email"], as_dict=True
+        )
+    name_val = (donor_name or "").strip() or (acct and acct.title) or _actor_name(actor) or "Donatur"
+    contact_val = (donor_contact or "").strip() or (acct and (acct.phone or acct.email)) or None
+
+    doc = frappe.new_doc("RN Cash Donation")
+    doc.disaster_event = row.disaster_event
+    doc.donor_program = donor_program
+    doc.donor_user = actor.name if actor and actor.name else None
+    doc.donor_name = name_val
+    doc.donor_contact = contact_val
+    doc.is_anonymous = is_anonymous
+    doc.amount = amount
+    doc.message = (message or "").strip() or None
+    doc.status = "pending"
+    doc.insert(ignore_permissions=True)
+
+    return {"donation": doc.name, "status": doc.status, "amount": doc.amount}
+
+
+@frappe.whitelist(allow_guest=True)
+def program_donations(donor_program):
+    """Public donation wall (received only, donor masked if anonymous) for
+    one program. If the caller manages that program's owner, also returns
+    the real pending queue for them to confirm/reject."""
+    row = _program(donor_program)
+
+    received = frappe.get_all(
+        "RN Cash Donation",
+        filters={"donor_program": donor_program, "status": "received"},
+        fields=["name", "donor_name", "is_anonymous", "amount", "message", "confirmed_at"],
+        order_by="confirmed_at desc", limit_page_length=200,
+    )
+    public_rows = [{
+        "name": r.name,
+        "donor_name": "Donatur Anonim" if r.is_anonymous else r.donor_name,
+        "amount": flt(r.amount),
+        "message": r.message,
+        "confirmed_at": r.confirmed_at,
+    } for r in received]
+
+    can_manage = False
+    pending = []
+    try:
+        actor = rn_actor(required=False)
+    except Exception:
+        actor = None
+    if actor:
+        try:
+            can_manage = bool(_is_control(actor) or _allowed_owner(actor, row.owner_type, row.owner_id))
+        except Exception:
+            can_manage = False
+    if can_manage:
+        pending = [
+            dict(r) for r in frappe.get_all(
+                "RN Cash Donation",
+                filters={"donor_program": donor_program, "status": "pending"},
+                fields=["name", "donor_name", "donor_contact", "is_anonymous", "amount", "message", "creation"],
+                order_by="creation desc", limit_page_length=200,
+            )
+        ]
+
+    return {
+        "donor_program": donor_program,
+        "public": public_rows,
+        "total_received": sum(flt(r.amount) for r in received),
+        "donor_count": len(public_rows),
+        "can_manage": can_manage,
+        "pending": pending,
+    }
+
+
+@frappe.whitelist()
+def decide_cash_donation(donation, action, note=None):
+    """Program owner confirms money actually arrived, or rejects a bogus
+    pledge. Confirming is the ONLY thing that moves a donation onto the
+    public wall and into the program's real budget_received."""
+    actor = rn_actor()
+    doc = frappe.get_doc("RN Cash Donation", donation)
+    if doc.status != "pending":
+        frappe.throw("Donasi ini sudah diputuskan.")
+
+    row = _program(doc.donor_program)
+    if not (_is_control(actor) or _allowed_owner(actor, row.owner_type, row.owner_id)):
+        frappe.throw("Anda bukan pengelola program/lembaga penerima ini.", frappe.PermissionError)
+
+    action = str(action or "").strip().lower()
+    if action not in ("confirm", "reject"):
+        frappe.throw("Aksi tidak valid (confirm/reject)")
+
+    doc.status = "received" if action == "confirm" else "rejected"
+    doc.confirmed_by = actor.name if actor and getattr(actor, "name", None) else frappe.session.user
+    doc.confirmed_at = now_datetime()
+    if note is not None:
+        doc.confirmation_note = str(note)[:500]
+    doc.save(ignore_permissions=True)
+
+    if action == "confirm":
+        current = flt(frappe.db.get_value("RN Donor Program", doc.donor_program, "budget_received"))
+        frappe.db.set_value("RN Donor Program", doc.donor_program, "budget_received", current + flt(doc.amount))
+
+    return {"donation": doc.name, "status": doc.status}
+
+
 @frappe.whitelist(allow_guest=True)
 def program_detail(program):
     row = frappe.db.get_value(
@@ -1397,6 +1524,11 @@ def program_detail(program):
     except Exception:
         bukti = []
 
+    try:
+        donations = program_donations(program)
+    except Exception:
+        donations = {"public": [], "total_received": 0, "donor_count": 0, "can_manage": False, "pending": []}
+
     return {
         "program": {
             **dict(row),
@@ -1405,6 +1537,7 @@ def program_detail(program):
         },
         "updates": [dict(u) for u in updates],
         "bukti": bukti,
+        "donations": donations,
         "note": (
             "Rencana Kerja/Dokumen tidak dimodelkan sebagai daftar rinci "
             "terpisah — gunakan Anggaran (target/diterima/terpakai) dan "

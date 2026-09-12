@@ -1,0 +1,114 @@
+{
+ "doctype": "DocType",
+ "name": "RN Cash Donation",
+ "module": "Rescue Net",
+ "autoname": "hash",
+ "track_changes": 1,
+ "field_order": [
+  "disaster_event",
+  "donor_program",
+  "donor_user",
+  "donor_name",
+  "donor_contact",
+  "is_anonymous",
+  "amount",
+  "currency",
+  "message",
+  "status",
+  "confirmed_by",
+  "confirmed_at",
+  "confirmation_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "donor_program",
+   "label": "Donor Program",
+   "fieldtype": "Link",
+   "options": "RN Donor Program",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "donor_user",
+   "label": "Donor User Account",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "donor_name",
+   "label": "Nama Donatur",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "description": "Selalu tersimpan untuk akuntabilitas internal, terlepas dari is_anonymous (yang hanya menyembunyikan nama di tampilan publik)."
+  },
+  {
+   "fieldname": "donor_contact",
+   "label": "Kontak Donatur",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "is_anonymous",
+   "label": "Tampilkan Anonim di Publik",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "amount",
+   "label": "Nominal",
+   "fieldtype": "Float",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "currency",
+   "label": "Mata Uang",
+   "fieldtype": "Data",
+   "default": "IDR"
+  },
+  {
+   "fieldname": "message",
+   "label": "Pesan",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "pending\nreceived\nrejected\ncancelled",
+   "default": "pending",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "confirmed_by",
+   "label": "Confirmed By",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmed_at",
+   "label": "Confirmed At",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "confirmation_note",
+   "label": "Confirmation Note",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

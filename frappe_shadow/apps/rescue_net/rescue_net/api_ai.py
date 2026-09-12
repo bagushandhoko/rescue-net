@@ -928,6 +928,28 @@ def _build_context(disaster_event_id, public=False):
 
     _enrich_needs(needs)
 
+    # Laporan Masyarakat yang sudah punya perkiraan skala kerusakan/jumlah
+    # terdampak -> perkiraan kebutuhan heuristik ikut jadi konteks AI
+    # Analyst, supaya jawabannya bisa mempertimbangkan sinyal warga yang
+    # belum sempat diverifikasi manual (owner ask: "link juga ke AI").
+    community_reports_ctx = []
+    try:
+        from rescue_net.api_reports import predict_report_needs
+
+        report_rows = _rows(
+            "RN Community Report", resolved_event,
+            ["title", "report_type", "status", "priority", "location_text",
+             "affected_people_count", "damage_scale_value", "damage_scale_unit"],
+        )
+        for r in report_rows:
+            predicted = predict_report_needs(
+                r.get("report_type"), r.get("damage_scale_value"), r.get("affected_people_count"),
+            )
+            if predicted:
+                community_reports_ctx.append({**r, "predicted_needs": predicted})
+    except Exception:
+        community_reports_ctx = []
+
     offers = _rows(
         "RN Aid Offer",
         resolved_event,
@@ -1340,6 +1362,8 @@ def _build_context(disaster_event_id, public=False):
             program_updates,
         "special_programs":
             special_programs,
+        "community_reports_predicted_needs":
+            community_reports_ctx,
     }
 
 
@@ -1629,6 +1653,11 @@ def ask(
                 "special_programs",
                 [],
             )[:80],
+        "community_reports_predicted_needs":
+            ctx.get(
+                "community_reports_predicted_needs",
+                [],
+            )[:50],
     }
 
     system_prompt = """
@@ -1642,6 +1671,13 @@ Prioritize urgent needs, logistics gaps,
 shelter capacity, medical risk, stock
 shortages, resource availability and
 recovery coordination.
+community_reports_predicted_needs holds
+heuristic equipment/logistics estimates
+computed from unverified citizen reports
+(damage scale or affected-people count) -
+treat these as early, unconfirmed signals
+to flag for follow-up, not as verified
+operational facts.
 """
 
     payload = {

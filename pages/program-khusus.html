@@ -102,6 +102,12 @@
           </div>
           <div class="rn-pk-detail-meta" id="detailMeta"></div>
 
+          <div id="detailNotPublicBanner" class="rn-va-fields" style="border:1px solid var(--yellow, #b88918);border-radius:8px;padding:10px 12px;margin:8px 0;" hidden>
+            <p class="rn-muted" style="margin:0 0 8px">Program ini <b>belum tampil publik</b> karena organisasi/posko/akun pemilik belum terverifikasi. Selesaikan dulu di Verification &amp; Approval, lalu klik tombol ini untuk publikasikan.</p>
+            <button type="button" class="btn primary mini" id="recheckPublishBtn">Cek Verifikasi &amp; Publikasikan</button>
+            <span class="form-message" id="recheckPublishMsg"></span>
+          </div>
+
           <div class="rn-pk-progress-row">
             <div class="rn-pk-progress-pct" id="detailProgressPct">0%</div>
             <div class="rn-pk-progress-bar-wrap">
@@ -283,7 +289,7 @@
 </div>
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
-<script src="../assets/js/program-khusus.js?v=tenderintegrasi-20260912"></script>
+<script src="../assets/js/program-khusus.js?v=recheckpublish-20260912"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>

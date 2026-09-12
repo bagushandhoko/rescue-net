@@ -1292,6 +1292,26 @@ def program_board(disaster_event=None):
         ignore_permissions=True,
     )
 
+    # Also surface the caller's OWN not-yet-public programs (kept off the
+    # public list until their org/posko/account is verified — see
+    # _campaign_owner_verified) so they can find & manage/publish them.
+    own_hidden_names = set()
+    try:
+        actor = rn_actor(required=False)
+    except Exception:
+        actor = None
+    if actor:
+        hidden_filters = {"public_visibility": ["!=", "summary_public"]}
+        if event:
+            hidden_filters["disaster_event"] = event
+        for hr in frappe.get_all(
+            "RN Donor Program", filters=hidden_filters,
+            fields=SPECIAL_PROGRAM_FIELDS, limit_page_length=1000,
+        ):
+            if _allowed_owner(actor, hr.owner_type, hr.owner_id):
+                rows.append(hr)
+                own_hidden_names.add(hr.name)
+
     names = [r.name for r in rows]
     updates = frappe.get_all(
         "RN Donor Program Update",
@@ -1357,6 +1377,7 @@ def program_board(disaster_event=None):
             "program_kind": "project" if tender else "cash",
             "tender": tender.name if tender else None,
             "tender_status": tender.status if tender else None,
+            "is_own_hidden": r.name in own_hidden_names,
         })
 
     active = [p for p in programs if p["status"] == "active"]
@@ -1549,8 +1570,19 @@ def program_detail(program):
         "RN Donor Program", program, SPECIAL_PROGRAM_FIELDS, as_dict=True,
     )
 
-    if not row or row.public_visibility != "summary_public":
-        frappe.throw("Program tidak ditemukan atau tidak publik", frappe.DoesNotExistError)
+    if not row:
+        frappe.throw("Program tidak ditemukan", frappe.DoesNotExistError)
+
+    if row.public_visibility != "summary_public":
+        # Not public yet — still let the owner see their own program (e.g.
+        # to check why it's hidden / recheck verification), everyone else
+        # gets the same not-found response as before.
+        try:
+            actor = rn_actor(required=False)
+        except Exception:
+            actor = None
+        if not (actor and (_is_control(actor) or _allowed_owner(actor, row.owner_type, row.owner_id))):
+            frappe.throw("Program tidak ditemukan atau tidak publik", frappe.DoesNotExistError)
 
     updates = frappe.get_all(
         "RN Donor Program Update",
@@ -1621,6 +1653,13 @@ def program_detail(program):
             "pelaksana": (pelaksana.bidder_org or pelaksana.bidder_name) if pelaksana else None,
         }
 
+    try:
+        detail_actor = rn_actor(required=False)
+    except Exception:
+        detail_actor = None
+    can_manage = bool(detail_actor and (_is_control(detail_actor) or _allowed_owner(detail_actor, row.owner_type, row.owner_id)))
+    owner_verified = _campaign_owner_verified(detail_actor, row.owner_type, row.owner_id) if can_manage else None
+
     return {
         "program": {
             **dict(row),
@@ -1632,9 +1671,42 @@ def program_detail(program):
         "bukti": bukti,
         "donations": donations,
         "project": project,
+        "can_manage": can_manage,
+        "owner_verified": owner_verified,
         "note": (
             "Rencana Kerja/Dokumen tidak dimodelkan sebagai daftar rinci "
             "terpisah — gunakan Anggaran (target/diterima/terpakai) dan "
             "Riwayat Update sebagai sumber kebenaran progres program."
         ),
     }
+
+
+@frappe.whitelist()
+def recheck_and_publish(donor_program):
+    """Owner asks to re-check verification and go public now that they've
+    (hopefully) cleared api_verification.approval_queue — the create_*
+    functions can't do this automatically since verification happens
+    after creation. Also opens any linked tender still stuck in `draft`
+    for the same reason, if it already has real bidding dates."""
+    actor = rn_actor()
+    row = _program(donor_program)
+    _assert_owner(actor, row.owner_type, row.owner_id)
+
+    if not _campaign_owner_verified(actor, row.owner_type, row.owner_id):
+        frappe.throw(
+            "Organisasi/posko/akun Anda belum terverifikasi. "
+            "Selesaikan verifikasi lewat Verification & Approval dulu, baru coba lagi."
+        )
+
+    frappe.db.set_value("RN Donor Program", donor_program, "public_visibility", "summary_public")
+
+    opened = []
+    for t in frappe.get_all(
+        "RN Procurement Tender", filters={"donor_program": donor_program, "status": "draft"},
+        fields=["name", "bidding_closes_at"],
+    ):
+        if t.bidding_closes_at:
+            frappe.db.set_value("RN Procurement Tender", t.name, "status", "open")
+            opened.append(t.name)
+
+    return {"donor_program": donor_program, "public_visibility": "summary_public", "tenders_opened": opened}

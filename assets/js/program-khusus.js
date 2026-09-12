@@ -85,7 +85,9 @@
       var sel = SELECTED === p.name ? " is-selected" : "";
       return (
         '<button type="button" class="rn-pk-card' + sel + '" data-program="' + esc(p.name) + '">' +
-        '<div class="rn-pk-card-head"><b>' + esc(p.program_name) + '</b><span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></div>" +
+        '<div class="rn-pk-card-head"><b>' + esc(p.program_name) + '</b>' +
+          (p.is_own_hidden ? '<span class="chip danger" style="margin-right:4px">Belum Publik</span>' : "") +
+          '<span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></div>" +
         '<div class="rn-pk-card-meta">' +
           '<span class="chip ' + (p.program_kind === "project" ? "warning" : "neutral") + '" style="margin-right:6px">' +
           (p.program_kind === "project" ? "Project Base" : "Cash Base") + "</span>" +
@@ -166,6 +168,32 @@
     $("#projectTenderLink").href = "pengadaan-tender.html?event=" + encodeURIComponent(eventId || "");
   }
 
+  function renderNotPublicBanner(data) {
+    var banner = $("#detailNotPublicBanner");
+    var notPublic = data.can_manage && data.program.public_visibility !== "summary_public";
+    banner.hidden = !notPublic;
+    if (!notPublic) return;
+    var btn = $("#recheckPublishBtn");
+    var msg = $("#recheckPublishMsg");
+    msg.textContent = data.owner_verified === false ? " (belum terverifikasi)" : "";
+    if (!btn.dataset.wired) {
+      btn.dataset.wired = "1";
+      btn.addEventListener("click", async function () {
+        msg.textContent = " memproses…";
+        try {
+          var r = await window.RN_FRAPPE.call("rescue_net.api_donor_program.recheck_and_publish",
+            { donor_program: SELECTED }, { method: "POST" });
+          msg.textContent = " berhasil dipublikasikan" +
+            (r.tenders_opened && r.tenders_opened.length ? " (tender ikut dibuka)" : "") + ".";
+          await selectProgram(SELECTED);
+          await loadBoard();
+        } catch (err) {
+          msg.textContent = " gagal: " + ((err && err.message) || err);
+        }
+      });
+    }
+  }
+
   function renderDetail(data) {
     var p = data.program;
     $("#detailEmpty").hidden = true;
@@ -198,6 +226,7 @@
 
     renderProject(data.project, getEventId2());
     renderUpdates(data.updates || []);
+    renderNotPublicBanner(data);
     renderDonations(data.donations || {});
   }
 

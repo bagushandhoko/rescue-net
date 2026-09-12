@@ -208,7 +208,7 @@
       $("#koMemberPending").innerHTML = pending.length ? pending.map(function (m) {
         return '<article class="ko-posko-card" data-mid="' + esc(m.name) + '">' +
           "<h4>" + esc(m.user_name) + "</h4>" +
-          '<div class="ko-posko-meta">' + esc(m.user_email || m.user_phone || "-") +
+          '<div class="ko-posko-meta">Kontak: ' + esc(m.user_email || "-") + (m.user_phone ? " · " + esc(m.user_phone) : "") +
           " · minta " + fmtDate(m.requested_at) + " · " + esc(m.organization_title) + "</div>" +
           '<label class="rn-row" style="font-size:12px"><input type="checkbox" class="koVerifyChk"> Identitas terverifikasi pusat</label>' +
           '<div class="ko-card-actions">' +
@@ -250,6 +250,12 @@
         var act = btn.getAttribute("data-act");
         var msg = card.querySelector(".koMsg");
         var chk = card.querySelector(".koVerifyChk");
+        var reason = null;
+        if (act === "reject" || act === "revoke") {
+          reason = window.prompt(act === "reject" ? "Alasan menolak permohonan ini:" : "Alasan mengeluarkan anggota ini:", "");
+          if (reason === null) return; // cancelled
+          if (!reason.trim()) { if (msg) msg.textContent = " alasan wajib diisi"; return; }
+        }
         if (msg) msg.textContent = " memproses…";
         try {
           if (act === "toggle-verify") {
@@ -258,7 +264,7 @@
               { membership: mid, verified: on ? 1 : 0 }, { method: "POST" });
           } else {
             await window.RN_FRAPPE.call("rescue_net.api_community_cluster.decide_membership",
-              { membership: mid, action: act, member_verified: (chk && chk.checked) ? 1 : 0 },
+              { membership: mid, action: act, member_verified: (chk && chk.checked) ? 1 : 0, note: reason },
               { method: "POST" });
           }
           await loadMembers();
@@ -303,13 +309,74 @@
       '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
         '<label class="rn-muted" style="font-size:12px">Ubah induk: ' +
           '<select class="koSetParent">' + opts.join("") + "</select></label>" +
-        '<button type="button" class="btn ghost mini koApplyParent">Terapkan</button>' +
+        '<button type="button" class="btn ghost mini koApplyParent">Ajukan</button>' +
         (o.parent_organization
-          ? '<button type="button" class="btn ghost mini koDetach">Lepaskan (berdiri sendiri)</button>'
+          ? '<button type="button" class="btn ghost mini koDetach">Ajukan lepas (berdiri sendiri)</button>'
           : "") +
         '<span class="koOrgMsg rn-muted" style="font-size:12px"></span>' +
       "</div>" +
       "</article>";
+  }
+
+  function contactLine(label, contact) {
+    if (!contact) return "";
+    var bits = [];
+    if (contact.contact_person) bits.push(contact.contact_person);
+    if (contact.contact_summary) bits.push(contact.contact_summary);
+    return '<div class="ko-posko-meta">' + esc(label) + ": " + (bits.length ? esc(bits.join(" · ")) : "belum diisi") + "</div>";
+  }
+
+  function pendingCard(r, ownedSet) {
+    var verb = r.action === "attach" ? "minta jadi anak dari" : "minta lepas dari";
+    var reqBy = r.requested_by_contact
+      ? esc(r.requested_by_contact.username || r.requested_by) + (r.requested_by_contact.email ? " (" + esc(r.requested_by_contact.email) + (r.requested_by_contact.phone ? ", " + esc(r.requested_by_contact.phone) : "") + ")" : "")
+      : esc(r.requested_by || "-");
+    return '<article class="ko-posko-card" data-req="' + esc(r.name) + '" data-decidable="' + (r.can_decide ? "1" : "0") + '">' +
+      '<div class="rn-row">' + (r.can_decide ? '<span class="ko-tag edit">Perlu keputusan Anda</span>' : '<span class="ko-tag view">Menunggu pihak lain</span>') + "</div>" +
+      "<h4>" + esc(r.child_title) + " " + verb + " " + esc(r.parent_title) + "</h4>" +
+      '<div class="ko-posko-meta">Diajukan oleh ' + reqBy + " · " + esc(fmtDateTime(r.requested_at)) + "</div>" +
+      (r.note ? '<div class="ko-posko-meta">Catatan: ' + esc(r.note) + "</div>" : "") +
+      contactLine("Kontak " + r.parent_title, r.parent_contact) +
+      contactLine("Kontak " + r.child_title, r.child_contact) +
+      '<div class="ko-card-actions">' +
+      (r.can_decide
+        ? '<button type="button" class="btn primary mini" data-act="approve">Setujui</button>' +
+          '<button type="button" class="btn ghost mini" data-act="reject">Tolak</button>'
+        : "") +
+      (r.can_withdraw ? '<button type="button" class="btn ghost mini" data-act="withdraw">Batalkan</button>' : "") +
+      '<span class="rn-muted koReqMsg"></span></div></article>';
+  }
+
+  function renderPendingRequests(list) {
+    var wrap = $("#koPendingRequests");
+    if (!wrap) return;
+    wrap.innerHTML = (list && list.length)
+      ? list.map(pendingCard).join("")
+      : '<p class="ko-empty">Tidak ada permintaan hierarki yang menunggu.</p>';
+    wrap.querySelectorAll("[data-req] [data-act]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var card = btn.closest("[data-req]");
+        var reqName = card.getAttribute("data-req");
+        var act = btn.getAttribute("data-act");
+        var msg = card.querySelector(".koReqMsg");
+        var note = null;
+        if (act === "reject") {
+          note = window.prompt("Alasan menolak permintaan ini (wajib):", "");
+          if (note === null) return;
+          if (!note.trim()) { msg.textContent = " alasan wajib diisi"; return; }
+        } else if (act === "withdraw") {
+          if (!window.confirm("Batalkan permintaan ini?")) return;
+        }
+        msg.textContent = " memproses…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_community_cluster.decide_org_link",
+            { request: reqName, action: act, note: note }, { method: "POST" });
+          await loadOrgAdmin();
+        } catch (err) {
+          msg.textContent = " gagal: " + ((err && err.message) || err);
+        }
+      });
+    });
   }
 
   function hierLogRow(r) {
@@ -357,6 +424,7 @@
       ? d.hierarchy_log.map(hierLogRow).join("")
       : '<div class="rn-muted">Belum ada perubahan hierarki.</div>';
 
+    renderPendingRequests(d.pending_requests || []);
     wireOrgAdminActions();
     refreshAiKeyStatus();
   }
@@ -364,9 +432,10 @@
   async function setParent(organization, parent, note, msgEl) {
     if (msgEl) msgEl.textContent = " memproses…";
     try {
-      await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_org_parent",
+      var r = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_org_parent",
         { organization: organization, parent_organization: parent || "", note: note || null },
         { method: "POST" });
+      if (msgEl) msgEl.textContent = r && r.pending ? " diajukan — menunggu persetujuan pihak lain." : " berhasil.";
       await loadOrgAdmin();
     } catch (err) {
       if (msgEl) msgEl.textContent = " gagal: " + ((err && err.message) || err);
@@ -427,12 +496,14 @@
       if (!parent) { msg.textContent = "Pilih induk."; return; }
       msg.textContent = "memproses…";
       try {
-        await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_org_parent", {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_org_parent", {
           organization: child,
           parent_organization: parent,
           note: (af.note.value || "").trim() || null,
         }, { method: "POST" });
-        msg.textContent = "Berhasil — sekarang jadi anak.";
+        msg.textContent = r && r.pending
+          ? "Diajukan — menunggu persetujuan pengelola organisasi tujuan."
+          : "Berhasil — sekarang jadi anak.";
         af.note.value = "";
         await loadOrgAdmin();
       } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }

@@ -141,15 +141,19 @@
     <section class="content-grid rn-md-wide" id="koOrgAdminSection" hidden>
       <div class="panel">
         <div class="panel-header">
-          <div><h3>Organisasi Saya</h3><p>Hierarki "satu komando": tarik organisasi lain jadi anak (tanpa perlu persetujuannya), atau lepaskan supaya berdiri sendiri. Plus kunci AI organisasi.</p></div>
+          <div><h3>Organisasi Saya</h3><p>Hierarki "satu komando": minta gabung/tarik jadi anak, atau lepas jadi berdiri sendiri — pihak yang tidak mengajukan harus menyetujui, dengan data kontak untuk saling verifikasi. Plus kunci AI organisasi.</p></div>
           <span class="chip neutral" id="koOrgAdminCount">—</span>
         </div>
 
         <h4 class="rn-md-detail-h">Hierarki &amp; kelola induk</h4>
         <div id="koOrgHierarchy"></div>
 
+        <h4 class="rn-md-detail-h">Permintaan Menunggu Persetujuan</h4>
+        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Gabung/tarik/lepas hierarki butuh persetujuan pihak yang tidak mengajukan. Kontak person ditampilkan untuk saling verifikasi sebelum diputuskan; menolak wajib disertai alasan.</p>
+        <div id="koPendingRequests"></div>
+
         <h4 class="rn-md-detail-h">Tarik organisasi jadi anak</h4>
-        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Mis. PMI Pusat menarik PMI daerah yang tadinya berdiri sendiri. Tidak butuh persetujuan organisasi tujuan; pengelolanya tetap bisa melepaskan diri.</p>
+        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Mis. PMI Pusat menarik PMI daerah yang tadinya berdiri sendiri. Ini mengajukan permintaan — organisasi tujuan yang harus menyetujui (kecuali Anda juga pengelola organisasi tujuan).</p>
         <form class="rn-form" id="koAttachForm" autocomplete="off">
           <label>Induk (organisasi saya)
             <select name="parent_organization" id="koAttachParent"></select>
@@ -159,7 +163,7 @@
           </label>
           <label>Catatan (opsional)<input name="note" placeholder="Alasan / dasar penggabungan"></label>
           <div class="form-actions">
-            <button class="btn primary" type="submit">Jadikan Anak</button>
+            <button class="btn primary" type="submit">Ajukan Jadikan Anak</button>
             <span class="form-message" id="koAttachMsg"></span>
           </div>
         </form>
@@ -218,7 +222,7 @@
 
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20260904"></script>
-<script src="../assets/js/koordinasi-organisasi.js?v=orgadmin-20260908b"></script>
+<script src="../assets/js/koordinasi-organisasi.js?v=orgapproval-20260912"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hdrtidy-20260908"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

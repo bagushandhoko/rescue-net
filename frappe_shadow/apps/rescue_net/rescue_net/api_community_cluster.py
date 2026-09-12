@@ -70,7 +70,6 @@ def create_organization(title, organization_type="community",
     org.identity_verification_status = "unverified"
     org.contact_person = contact_person
     org.notes = notes
-    org.parent_organization = parent_organization
     org.insert(ignore_permissions=True)
 
     membership = frappe.new_doc("RN Organization Membership")
@@ -83,13 +82,26 @@ def create_organization(title, organization_type="community",
     membership.approved_by = actor.name
     membership.insert(ignore_permissions=True)
 
+    # Claiming a parent at registration is a REQUEST, not a fact — the parent's
+    # own owner must accept it (see set_org_parent below). Only bypassed when
+    # the creator already owns that parent org (e.g. an admin opening a branch
+    # of their own org), in which case it's attached immediately.
+    link_result = None
+    if parent_organization:
+        link_result = set_org_parent(
+            org.name, parent_organization,
+            note="Diajukan saat pendaftaran organisasi baru.",
+        )
 
+    link_pending = bool(link_result and link_result.get("pending"))
     return {
         "organization": org.name,
         "membership": membership.name,
         "status": org.status,
         "trust_level": org.trust_level,
-        "parent_organization": org.parent_organization,
+        "parent_organization": (link_result or {}).get("parent_organization") if not link_pending else None,
+        "parent_link_pending": link_pending,
+        "parent_link_request": (link_result or {}).get("request") if link_pending else None,
     }
 
 
@@ -120,15 +132,24 @@ def request_membership(organization):
 
 # ============================================================
 # Organisation hierarchy ("satu komando").
-# The org created first is NOT automatically the induk. Linking is one write,
-# no approval step (model confirmed by owner — "induk yang minta tapi tanpa
-# persetujuan; PMI daerah bisa saja berdiri sendiri"):
-#   - the PARENT's owner may pull ANY org under it (child consent not needed);
-#   - a CHILD's owner may set or clear its own parent at any time — so a
-#     regional chapter can always break away and stand alone again.
-# Nothing is absorbed or deleted: `RN Organization.parent_organization` is the
-# only field touched. Every change is logged to `RN Org Merge Request`
-# (status `attached` / `detached`) as an audit trail.
+# The org created first is NOT automatically the induk. Linking always
+# touches only `RN Organization.parent_organization`; nothing is absorbed or
+# deleted. Every change (pending, rejected, withdrawn, or executed) is a row
+# on `RN Org Merge Request`, which doubles as the audit trail.
+#
+# Consent model (revised 2026-09-12 — supersedes the earlier "no approval"
+# rule): whichever side did NOT initiate the change must approve it, with
+# real contact-person data shown so both sides can verify who they're
+# dealing with, and a required reason on reject:
+#   - attach: if the CHILD's owner asks to join a parent, the PARENT's owner
+#     must approve/reject. If the PARENT's owner pulls in a standalone org,
+#     the CHILD's owner must approve/reject.
+#   - detach: the CHILD's owner may ask to leave, but the CURRENT parent's
+#     owner must approve/reject (a chapter can no longer just walk out
+#     unilaterally).
+#   - Only when the SAME actor manages both sides (or a System Manager acts)
+#     is the change applied immediately with no pending step — there is
+#     nobody else who needs to consent.
 # ============================================================
 
 _ORG_HIER_LOG_FIELDS = [
@@ -185,22 +206,27 @@ def _org_descendants(root):
 def org_coordination():
     """One payload for the "Organisasi Saya" panel on Koordinasi Organisasi:
     the org(s) the caller owns (each with parent + direct children), a flat
-    {name,title} list of every org for the pickers, and the recent hierarchy
-    change log touching the caller's orgs."""
+    {name,title} list of every org for the pickers, the recent hierarchy
+    change log touching the caller's orgs, and any pending attach/detach
+    requests awaiting a decision (with contact-person data for both sides
+    so the decider can verify who's actually asking)."""
     actor = _actor()
     from rescue_net.access_policy import is_system_manager
 
     owned = _owned_org_names(actor)
     all_orgs = frappe.get_all(
-        "RN Organization", fields=["name", "title", "parent_organization"],
+        "RN Organization",
+        fields=["name", "title", "parent_organization", "contact_person", "organization_type"],
         order_by="title asc", limit_page_length=2000,
     )
     all_orgs_min = [{"name": o.name, "title": o.title or o.name,
-                     "parent_organization": o.parent_organization} for o in all_orgs]
+                     "parent_organization": o.parent_organization,
+                     "contact_person": o.contact_person,
+                     "organization_type": o.organization_type} for o in all_orgs]
 
     if not owned:
         return {"is_org_admin": False, "organizations": [],
-                "all_orgs": all_orgs_min, "hierarchy_log": []}
+                "all_orgs": all_orgs_min, "hierarchy_log": [], "pending_requests": []}
 
     by_name = {o.name: o for o in all_orgs}
     children_by_parent = {}
@@ -219,10 +245,21 @@ def org_coordination():
         fields=_ORG_HIER_LOG_FIELDS, order_by="requested_at desc",
         limit_page_length=50,
     )
+    pending_rows = frappe.get_all(
+        "RN Org Merge Request",
+        filters={"status": "pending"},
+        or_filters={"requester_organization": ["in", owned],
+                    "target_organization": ["in", owned]},
+        fields=["name", "requester_organization", "target_organization", "action",
+                "note", "requested_by", "requested_at"],
+        order_by="requested_at desc", limit_page_length=50,
+    )
     titles = _org_titles(
         [o.name for o in all_orgs]
         + [r.requester_organization for r in log_rows]
         + [r.target_organization for r in log_rows]
+        + [r.requester_organization for r in pending_rows]
+        + [r.target_organization for r in pending_rows]
     )
 
     orgs = []
@@ -245,17 +282,97 @@ def org_coordination():
         "organizations": orgs,
         "all_orgs": all_orgs_min,
         "hierarchy_log": [_hier_log_row(r, titles) for r in log_rows],
+        "pending_requests": _pending_org_link_rows(pending_rows, titles, owned_set, actor),
+    }
+
+
+def _pending_org_link_rows(pending_rows, titles, owned_set, actor):
+    involved = {r.requester_organization for r in pending_rows} | {r.target_organization for r in pending_rows}
+    involved.discard(None)
+    contacts = {}
+    if involved:
+        for o in frappe.get_all(
+            "RN Organization", filters={"name": ["in", list(involved)]},
+            fields=["name", "contact_person", "contact_summary", "organization_type"],
+            limit_page_length=len(involved),
+        ):
+            contacts[o.name] = {"contact_person": o.contact_person,
+                                 "contact_summary": o.contact_summary,
+                                 "organization_type": o.organization_type}
+
+    requesters = sorted({r.requested_by for r in pending_rows if r.requested_by})
+    users = {}
+    if requesters:
+        for u in frappe.get_all(
+            "RN User Account", filters={"name": ["in", requesters]},
+            fields=["name", "username", "email", "phone"], limit_page_length=len(requesters),
+        ):
+            users[u.name] = {"name": u.name, "username": u.username, "email": u.email, "phone": u.phone}
+
+    out = []
+    for r in pending_rows:
+        out.append({
+            "name": r.name,
+            "action": r.action,
+            "parent_organization": r.requester_organization,
+            "parent_title": titles.get(r.requester_organization, r.requester_organization),
+            "parent_contact": contacts.get(r.requester_organization),
+            "child_organization": r.target_organization,
+            "child_title": titles.get(r.target_organization, r.target_organization),
+            "child_contact": contacts.get(r.target_organization),
+            "note": r.note,
+            "requested_by": r.requested_by,
+            "requested_by_contact": users.get(r.requested_by),
+            "requested_at": r.requested_at,
+            "can_decide": (r.requested_by != actor.name) and
+                bool({r.requester_organization, r.target_organization} & owned_set),
+            "can_withdraw": r.requested_by == actor.name,
+        })
+    return out
+
+
+def _apply_org_link(organization, parent_organization, old_parent, note, actor):
+    """Actually write `parent_organization` and log the executed change.
+    Shared by the immediate path in `set_org_parent` and by `decide_org_link`
+    approving a pending request."""
+    frappe.db.set_value(
+        "RN Organization", organization, "parent_organization", parent_organization
+    )
+    log = frappe.new_doc("RN Org Merge Request")
+    log.requester_organization = parent_organization or old_parent or organization
+    log.target_organization = organization
+    log.action = "attach" if parent_organization else "detach"
+    log.note = note
+    log.status = "attached" if parent_organization else "detached"
+    log.requested_by = actor.name
+    log.requested_at = now_datetime()
+    log.decided_by = actor.name
+    log.decided_at = now_datetime()
+    log.insert(ignore_permissions=True)
+    return {
+        "organization": organization,
+        "parent_organization": parent_organization,
+        "previous_parent": old_parent,
+        "action": log.status,
+        "pending": False,
     }
 
 
 @frappe.whitelist()
 def set_org_parent(organization, parent_organization=None, note=None):
     """Attach `organization` under `parent_organization`, or detach it when
-    `parent_organization` is empty. No approval step.
+    `parent_organization` is empty.
 
-    Permission: system manager, OR the caller owns `organization` (set/clear
-    my own parent), OR the caller owns the NEW `parent_organization` (an
-    induk pulling a chapter under it without its consent).
+    Whoever does NOT already manage the "other side" of the change must
+    consent — this call files a pending `RN Org Merge Request` for them to
+    decide via `decide_org_link` instead of writing anything. It only
+    executes immediately when nobody else needs to be asked: a System
+    Manager, or an actor who manages BOTH the org and the other side
+    (current parent for a detach, new parent for an attach).
+
+    Permission to even file/execute: system manager, OR the caller owns
+    `organization`, OR (for an attach) the caller owns the new
+    `parent_organization`.
     """
     actor = _actor()
     from rescue_net.access_policy import is_system_manager
@@ -273,7 +390,8 @@ def set_org_parent(organization, parent_organization=None, note=None):
 
     owns_child = _owns_org(actor, organization)
     owns_parent = bool(parent_organization) and _owns_org(actor, parent_organization)
-    if not (is_system_manager() or owns_child or owns_parent):
+    sysmgr = is_system_manager()
+    if not (sysmgr or owns_child or owns_parent):
         frappe.throw(
             "Anda harus pengelola organisasi ini atau pengelola organisasi induk.",
             frappe.PermissionError,
@@ -290,27 +408,119 @@ def set_org_parent(organization, parent_organization=None, note=None):
     if parent_organization and parent_organization in _org_descendants(organization):
         frappe.throw("Tidak bisa: akan membentuk lingkaran hierarki.")
 
-    frappe.db.set_value(
-        "RN Organization", organization, "parent_organization", parent_organization
+    action = "attach" if parent_organization else "detach"
+    # Whoever does NOT already manage `other_side` is the one who must
+    # consent. For an attach, that's the child unless the actor only owns
+    # the prospective parent (an induk pulling a standalone org) — then it's
+    # the child's owner who must consent instead.
+    if action == "attach":
+        other_side = organization if (owns_parent and not owns_child) else parent_organization
+    else:
+        other_side = old_parent
+
+    if sysmgr or not other_side or _owns_org(actor, other_side):
+        return _apply_org_link(organization, parent_organization, old_parent, note, actor)
+
+    # the other side must consent — reuse an existing pending request instead
+    # of spamming duplicates if one is already awaiting decision.
+    # requester_organization always holds the PARENT slot, target_organization
+    # the CHILD slot (same convention as the executed attached/detached log
+    # rows) — `other_side` above is only used to decide who must approve.
+    parent_slot = parent_organization if action == "attach" else old_parent
+    existing = frappe.db.get_value(
+        "RN Org Merge Request",
+        {"target_organization": organization, "requester_organization": parent_slot,
+         "action": action, "status": "pending"},
+        "name",
     )
+    if existing:
+        return {"organization": organization, "parent_organization": parent_organization,
+                "pending": True, "request": existing, "reused_existing": True}
 
-    log = frappe.new_doc("RN Org Merge Request")
-    log.requester_organization = parent_organization or old_parent or organization
-    log.target_organization = organization
-    log.note = note
-    log.status = "attached" if parent_organization else "detached"
-    log.requested_by = actor.name
-    log.requested_at = now_datetime()
-    log.decided_by = actor.name
-    log.decided_at = now_datetime()
-    log.insert(ignore_permissions=True)
+    req = frappe.new_doc("RN Org Merge Request")
+    req.requester_organization = parent_slot
+    req.target_organization = organization
+    req.action = action
+    req.status = "pending"
+    req.note = note
+    req.requested_by = actor.name
+    req.requested_at = now_datetime()
+    req.insert(ignore_permissions=True)
 
-    return {
-        "organization": organization,
-        "parent_organization": parent_organization,
-        "previous_parent": old_parent,
-        "action": log.status,
-    }
+    return {"organization": organization, "parent_organization": parent_organization,
+            "pending": True, "request": req.name}
+
+
+@frappe.whitelist()
+def decide_org_link(request, action, note=None):
+    """Approve/reject/withdraw a pending attach/detach request from
+    `set_org_parent`. Approve executes the change now; reject requires a
+    reason (`note`, stored as `decision_note`); withdraw lets the original
+    requester cancel before anyone decides."""
+    actor = _actor()
+    from rescue_net.access_policy import is_system_manager
+
+    doc = frappe.get_doc("RN Org Merge Request", request)
+    if doc.status != "pending":
+        frappe.throw("Permintaan ini sudah diputuskan atau dibatalkan.")
+
+    action = str(action or "").strip().lower()
+    if action not in ("approve", "reject", "withdraw"):
+        frappe.throw("Aksi tidak valid (approve/reject/withdraw)")
+
+    sysmgr = is_system_manager()
+
+    if action == "withdraw":
+        if not (sysmgr or actor.name == doc.requested_by):
+            frappe.throw("Hanya pengaju yang bisa membatalkan permintaan ini.", frappe.PermissionError)
+        doc.status = "withdrawn"
+        doc.decided_by = actor.name
+        doc.decided_at = now_datetime()
+        if note is not None:
+            doc.decision_note = str(note)[:500]
+        doc.save(ignore_permissions=True)
+        return {"request": doc.name, "status": doc.status}
+
+    can_decide = sysmgr or _owns_org(actor, doc.requester_organization) or _owns_org(actor, doc.target_organization)
+    if not can_decide:
+        frappe.throw("Anda bukan pengelola organisasi terkait.", frappe.PermissionError)
+    if actor.name == doc.requested_by and not sysmgr:
+        frappe.throw("Anda tidak bisa memutuskan permintaan yang Anda ajukan sendiri — menunggu pihak lain.", frappe.PermissionError)
+
+    if action == "reject":
+        if not note or not str(note).strip():
+            frappe.throw("Alasan penolakan wajib diisi.")
+        doc.status = "rejected"
+        doc.decided_by = actor.name
+        doc.decided_at = now_datetime()
+        doc.decision_note = str(note)[:500]
+        doc.save(ignore_permissions=True)
+        return {"request": doc.name, "status": doc.status}
+
+    # approve -> execute the attach/detach now, guarding against stale state
+    child = doc.target_organization
+    current_parent = frappe.db.get_value("RN Organization", child, "parent_organization")
+    if doc.action == "attach":
+        if current_parent:
+            frappe.throw("Organisasi ini sudah punya induk lain sekarang — permintaan tidak berlaku lagi.")
+        if doc.requester_organization in _org_descendants(child):
+            frappe.throw("Tidak bisa: akan membentuk lingkaran hierarki.")
+        new_parent = doc.requester_organization
+    else:
+        if current_parent != doc.requester_organization:
+            frappe.throw("Status organisasi sudah berubah — permintaan tidak berlaku lagi.")
+        new_parent = None
+
+    frappe.db.set_value("RN Organization", child, "parent_organization", new_parent)
+    doc.status = "attached" if doc.action == "attach" else "detached"
+    doc.decided_by = actor.name
+    doc.decided_at = now_datetime()
+    if note is not None:
+        doc.decision_note = str(note)[:500]
+    doc.save(ignore_permissions=True)
+
+    return {"request": doc.name, "status": doc.status,
+            "organization": child, "parent_organization": new_parent}
 
 
 # ============================================================
@@ -425,6 +635,9 @@ def decide_membership(membership, action, member_verified=None, note=None):
 
     if doc.membership_role == "owner" and action in ("reject", "revoke"):
         frappe.throw("Owner organisasi tidak bisa ditolak/dicabut di sini")
+
+    if action in ("reject", "revoke") and (not note or not str(note).strip()):
+        frappe.throw("Alasan penolakan/pencabutan wajib diisi.")
 
     if action == "approve":
         doc.status = "approved"

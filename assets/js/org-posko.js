@@ -670,7 +670,7 @@ function setupOrganizationForm() {
         "Saving Organization..."
       );
 
-      await RN_FRAPPE.call(
+      const res = await RN_FRAPPE.call(
         "rescue_net.api_community_cluster." +
         "create_organization",
         {
@@ -707,7 +707,9 @@ function setupOrganizationForm() {
       form.reset();
 
       statusMsg(
-        "Organization saved."
+        res && res.parent_link_pending
+          ? "Organisasi tersimpan. Permintaan bergabung ke induk sedang menunggu persetujuan pengelola organisasi induk."
+          : "Organization saved."
       );
 
       await loadOrgPosko();

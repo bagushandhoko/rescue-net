@@ -43,6 +43,30 @@ def rn_actor(required=True):
     if required and not actor:
         frappe.throw("Akun Rescue-Net aktif tidak ditemukan")
 
+    # RN User Account.organization/posko are a legacy direct field that
+    # most real accounts never have set — org/posko affiliation normally
+    # lives on RN Organization Membership / RN Posko Assignment instead
+    # (e.g. every account created via api_community_cluster.
+    # create_organization). approved_member()/approved_posko_assignment()
+    # and api_auth._primary_organization()/_primary_posko() already fall
+    # back to those; rn_actor() didn't, so every caller that reads
+    # actor.organization/actor.posko directly (most of the app) saw None
+    # for an otherwise fully org-affiliated user.
+    if actor and not actor.get("organization"):
+        actor["organization"] = frappe.db.get_value(
+            "RN Organization Membership",
+            {"user_account": actor.name, "status": "approved"},
+            "organization",
+            order_by="creation asc",
+        )
+    if actor and not actor.get("posko"):
+        actor["posko"] = frappe.db.get_value(
+            "RN Posko Assignment",
+            {"user_account": actor.name, "status": "approved"},
+            "posko",
+            order_by="creation asc",
+        )
+
     return actor
 
 

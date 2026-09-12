@@ -15,19 +15,22 @@ def cols(doctype):
 
 
 def canonical_event(value):
-    value = str(
-        value or ""
-    ).strip()
+    """Resolve a disaster-event reference to whatever value is actually
+    stored on `RN Posko.disaster_event` etc. Historically every event was
+    migrated in with its `name` literally prefixed `disaster_events:...`,
+    so this used to just blindly prepend that prefix. A disaster event
+    created directly in Frappe (`frappe.new_doc("RN Disaster Event")`,
+    e.g. via the registration form) has a bare `name`/`legacy_id` instead —
+    blindly prefixing it silently broke every board that filters by event
+    (posko_registry_board and friends all returned zero rows). Delegate to
+    the DB-aware resolver so both old (prefixed) and new (bare) events
+    resolve to their real stored value."""
+    from rescue_net.reference_resolver import resolve_disaster_event
 
-    if value.startswith(
-        "disaster_events:"
-    ):
+    value = str(value or "").strip()
+    if not value:
         return value
-
-    return (
-        "disaster_events:"
-        + value
-    )
+    return resolve_disaster_event(value) or value
 
 
 def first(row, *names):

@@ -7,7 +7,7 @@
 (function () {
   "use strict";
 
-  function $(id) { return document.getElementById(id); }
+  function $(sel) { return document.querySelector(sel); }
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {

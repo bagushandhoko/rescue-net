@@ -342,6 +342,35 @@ def session_info():
     }
 
 
+@frappe.whitelist(allow_guest=True)
+def social_login_url(provider="google", redirect_to=None):
+    """Real Google/other-provider "Login/Daftar" URL for a custom login page
+    like auth.html to redirect to. `frappe.integrations.oauth2_logins.
+    login_via_<provider>` is only the OAuth CALLBACK (it requires a `code`
+    Google hasn't sent yet) — linking a button straight to it always 500s.
+    The actual entry point is Google's own consent screen, built here from
+    the site's configured Social Login Key exactly like Frappe's stock
+    /login page does."""
+    from frappe.utils.oauth import get_oauth2_authorize_url
+
+    provider = (provider or "google").strip().lower()
+    key = frappe.db.get_value(
+        "Social Login Key", provider,
+        ["name", "enable_social_login", "client_id"], as_dict=True,
+    )
+    if not key or not key.enable_social_login or not key.client_id:
+        return {"available": False,
+                "reason": "Login %s belum dikonfigurasi di server." % provider}
+
+    try:
+        url = get_oauth2_authorize_url(provider, redirect_to or "/rescue-net/pages/auth.html")
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "social_login_url")
+        return {"available": False, "reason": "Gagal membangun URL login %s." % provider}
+
+    return {"available": True, "url": url}
+
+
 def _check_password_strength(password):
     if len(password or "") < 8:
         frappe.throw("Password minimal 8 karakter.")
@@ -361,17 +390,21 @@ def register(
     phone=None,
     password=None,
     role=None,
+    consent_verification=0,
 ):
     """Public self-service signup used by pages/auth.html (Daftar tab).
 
     Creates a Frappe Website User + an RN User Account with the chosen
     role parked as a pending request. Does not grant any operational
-    role by itself.
+    role by itself. `consent_verification` is an honest opt-in signal
+    (not itself a verification) shown to reviewers in the approval queue
+    (`api_verification.approval_item_detail`, kind="user").
     """
     full_name = (full_name or "").strip()
     email = (email or "").strip().lower()
     phone = (phone or "").strip() or None
     role_key = (role or "relawan").strip().lower()
+    consent_verification = 1 if str(consent_verification).lower() in ("1", "true", "yes", "on") else 0
 
     if not full_name or not email or not password:
         frappe.throw("Nama lengkap, email, dan password wajib diisi.")
@@ -419,6 +452,7 @@ def register(
                 "requested_role": role_key,
                 "role_request_status": "pending",
                 "status": "pending_verification",
+                "consent_verification": consent_verification,
             }
         )
         account.flags.ignore_permissions = True

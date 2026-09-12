@@ -4530,6 +4530,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 }
 
 .rn-auth-form { margin-top: 0; display: grid; gap: 14px; }
+.rn-auth-form[hidden] { display: none; }
 
 .rn-auth-label-row {
   display: flex;
@@ -4616,14 +4617,13 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-auth-g {
   display: inline-grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #fff;
-  border: 1px solid var(--line);
-  color: #4285f4;
-  font-weight: 900;
-  font-size: 12px;
+  width: 18px;
+  height: 18px;
+}
+.rn-auth-g svg {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .rn-auth-switch {

@@ -590,7 +590,10 @@ def approval_item_detail(kind, name):
         fields = {"Tipe": doc.posko_type, "Alamat": doc.address, "PIC": doc.officer_in_charge_name}
         trust = {"trust_level": None, "trusted_verifier_count": getattr(doc, "trusted_verifier_count", None)}
     elif kind == "user":
-        fields = {"Role Diminta": doc.requested_role, "Email": doc.email, "Phone": doc.phone}
+        fields = {
+            "Role Diminta": doc.requested_role, "Email": doc.email, "Phone": doc.phone,
+            "Bersedia Diverifikasi": "Ya" if getattr(doc, "consent_verification", 0) else "Tidak",
+        }
     elif kind == "needs":
         fields = {"Item": doc.item_name, "Jumlah": doc.quantity, "Satuan": doc.unit, "Urgensi": doc.urgency}
     elif kind == "expense":

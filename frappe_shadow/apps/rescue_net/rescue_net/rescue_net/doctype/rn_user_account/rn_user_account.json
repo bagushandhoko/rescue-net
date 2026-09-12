@@ -97,6 +97,13 @@
       "fieldtype": "Data"
     },
     {
+      "fieldname": "consent_verification",
+      "label": "Bersedia Diverifikasi",
+      "fieldtype": "Check",
+      "default": "0",
+      "description": "Opt-in saat registrasi: pengguna bersedia diverifikasi untuk meningkatkan trust level akun/posko-nya."
+    },
+    {
       "fieldname": "legacy_payload",
       "label": "Legacy Payload",
       "fieldtype": "Code",

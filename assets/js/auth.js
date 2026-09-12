@@ -216,28 +216,52 @@
     });
   }
 
+  /* ---------- Google login/register ---------- */
+  async function goToGoogle(btn) {
+    var original = btn.textContent;
+    try {
+      btn.classList.add("is-disabled");
+      // redirect_to becomes a server-side `Location:` header resolved
+      // against the OAuth callback's own URL, not this page — must be
+      // absolute, not the relative path nextTarget() returns for our own
+      // client-side use.
+      var absoluteNext = new URL(nextTarget(), window.location.href).href;
+      var r = await frappeRequest(
+        "/api/method/rescue_net.api_auth.social_login_url?provider=google&redirect_to=" +
+          encodeURIComponent(absoluteNext)
+      );
+      if (!r || !r.available || !r.url) {
+        statusMsg((r && r.reason) || "Login Google belum tersedia.");
+        btn.classList.remove("is-disabled");
+        return;
+      }
+      window.location.href = r.url;
+    } catch (err) {
+      statusMsg("Gagal membuka login Google: " + cleanServerMessage(err));
+      btn.classList.remove("is-disabled");
+    }
+  }
+
+  function wireGoogleButtons() {
+    ["googleLoginBtn", "googleRegisterBtn"].forEach(function (id) {
+      var btn = document.getElementById(id);
+      if (!btn) return;
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        goToGoogle(btn);
+      });
+    });
+  }
+
   /* ---------- init ---------- */
   async function init() {
     wirePwToggles();
+    wireGoogleButtons();
 
     $all("[data-auth-tab]").forEach(function (el) {
       el.addEventListener("click", function (e) {
         e.preventDefault();
         switchTab(el.getAttribute("data-auth-tab"));
-      });
-    });
-
-    $all("[data-pick-role]").forEach(function (card) {
-      card.addEventListener("click", function () {
-        var role = card.getAttribute("data-pick-role");
-        var radio = document.querySelector(
-          '#registerForm input[name="role"][value="' + role + '"]'
-        );
-        if (radio) radio.checked = true;
-        $all("[data-pick-role]").forEach(function (c) {
-          c.classList.toggle("is-active", c === card);
-        });
-        switchTab("register");
       });
     });
 
@@ -304,6 +328,8 @@
         var pass = f.password.value || "";
         var roleEl = registerForm.querySelector('input[name="role"]:checked');
         var role = roleEl ? roleEl.value : "relawan";
+        var consentEl = registerForm.querySelector('input[name="consent_verification"]');
+        var consentVerification = consentEl && consentEl.checked ? 1 : 0;
 
         if (!full_name || !email || !pass) {
           setMessage("registerMessage", "Nama, email, dan password wajib diisi.", true);
@@ -326,7 +352,8 @@
             email: email,
             phone: phone,
             password: pass,
-            role: role
+            role: role,
+            consent_verification: consentVerification
           });
           setMessage("registerMessage", (out && out.message) || "Akun dibuat. Masuk…");
           await login(email, pass);

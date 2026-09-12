@@ -421,6 +421,16 @@ a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3
   min-width: 0;
 }
 
+/* `.content-grid`'s own `display:grid` otherwise wins over the `[hidden]`
+   attribute (author CSS beats the UA default regardless of order/
+   specificity), so a <section class="content-grid" hidden> meant to be
+   gated behind login/ownership rendered anyway — real instances found on
+   koordinasi-organisasi.html (a guest saw the full org-hierarchy/AI-key
+   admin console) and verifikator.html (guest saw the verifier inbox). */
+.content-grid[hidden] {
+  display: none;
+}
+
 .panel {
   background:
     linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,248,243,.94));

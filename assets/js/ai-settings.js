@@ -46,11 +46,11 @@ async function frappeCall(method, args = {}, write = false) {
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(
-      data.message ||
-      data.exception ||
-      `Frappe API error ${res.status}`
-    );
+    const clean = String(data.message || data.exception || `Frappe API error ${res.status}`)
+      .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    const e = new Error(res.status === 403 ? "Perlu login untuk fitur ini." : clean);
+    e.status = res.status;
+    throw e;
   }
 
   return Object.prototype.hasOwnProperty.call(data, "message")

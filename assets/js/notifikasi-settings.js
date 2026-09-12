@@ -36,7 +36,13 @@
     }
     var res = await fetch(url, opts);
     var data = await res.json().catch(function () { return {}; });
-    if (!res.ok) throw new Error(data.message || data.exception || ("Frappe API error " + res.status));
+    if (!res.ok) {
+      var clean = String(data.message || data.exception || ("Frappe API error " + res.status))
+        .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      var e = new Error(res.status === 403 ? "Perlu login sebagai System Manager untuk fitur ini." : clean);
+      e.status = res.status;
+      throw e;
+    }
     return Object.prototype.hasOwnProperty.call(data, "message") ? data.message : data;
   }
 

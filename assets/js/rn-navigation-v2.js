@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.1.0",
+    version: "2.2.0",
 
     posko: [
       {
@@ -109,21 +109,6 @@
         icon: "search-found"
       },
       {
-        label: "Program Khusus",
-        href: "program-khusus.html",
-        icon: "program"
-      },
-      {
-        label: "Donor Program",
-        href: "donor-program.html",
-        icon: "donor"
-      },
-      {
-        label: "Pengadaan & Tender",
-        href: "pengadaan-tender.html?event=event-sim-001",
-        icon: "scale"
-      },
-      {
         label: "Verification",
         href: "verification-approval.html",
         icon: "verification"
@@ -157,6 +142,28 @@
         label: "Contact Directory",
         href: "contact-directory.html",
         icon: "contact-directory"
+      }
+    ],
+
+    // Donasi & Program Khusus: program-khusus.html is the actual donation
+    // page (cash + project-base campaigns, papan donasi) and links out to
+    // Pengadaan & Tender itself when a program is project-based — grouped
+    // together per owner request instead of 3 separate top-level items.
+    donasi: [
+      {
+        label: "Donasi & Program",
+        href: "program-khusus.html?event=event-sim-001",
+        icon: "program"
+      },
+      {
+        label: "Pengadaan & Tender",
+        href: "pengadaan-tender.html?event=event-sim-001",
+        icon: "scale"
+      },
+      {
+        label: "Donor Program (Lama)",
+        href: "donor-program.html?event=event-sim-001",
+        icon: "donor"
       }
     ]
   };
@@ -294,10 +301,12 @@
     // empty below two collapsed headers. Default "Modul" open in that case.
     const anyMatch =
       CONFIG.posko.some(item => isActive(item.href)) ||
-      CONFIG.modules.some(item => isActive(item.href));
+      CONFIG.modules.some(item => isActive(item.href)) ||
+      CONFIG.donasi.some(item => isActive(item.href));
 
     nav.innerHTML =
       groupHtml("Posko", CONFIG.posko, "posko") +
+      groupHtml("Donasi & Program Khusus", CONFIG.donasi, "donasi") +
       groupHtml("Modul", CONFIG.modules, "modul", !anyMatch);
 
     wireAccordion(nav);

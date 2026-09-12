@@ -53,6 +53,8 @@ def _owns_tender(actor, t):
 
 @frappe.whitelist(allow_guest=True)
 def tender_board(disaster_event=None, limit=200):
+    from rescue_net.api_donor_program import _owner_verified, _is_control, _allowed_owner
+
     ev = _event(disaster_event)
     rows = frappe.get_all(
         "RN Procurement Tender",
@@ -64,6 +66,27 @@ def tender_board(disaster_event=None, limit=200):
         order_by="bidding_closes_at asc, modified desc",
         limit_page_length=cint(limit) or 200,
     )
+
+    # Same verification gate as api_donor_program (create_special_program):
+    # a tender whose organization isn't verified is kept off the public
+    # board too, unless the caller IS that organization's owner (so they
+    # can still find/manage it — same reasoning as program_board). A
+    # tender with no organization on record can't be gated meaningfully
+    # (legacy/migrated data), so it stays visible as before.
+    try:
+        actor = rn_actor(required=False)
+    except Exception:
+        actor = None
+
+    def _visible(r):
+        if not r.organization:
+            return True
+        if _owner_verified("organization", r.organization):
+            return True
+        return bool(actor and (_is_control(actor) or _allowed_owner(actor, "organization", r.organization)))
+
+    rows = [r for r in rows if _visible(r)]
+
     names = [r.name for r in rows]
     bid_count = {}
     low_bid = {}
@@ -114,6 +137,12 @@ def tender_detail(tender):
 
     actor = rn_actor(required=False)
     owner = _owns_tender(actor, t)
+
+    if t.organization and not owner:
+        from rescue_net.api_donor_program import _owner_verified
+
+        if not _owner_verified("organization", t.organization):
+            return {"found": False}
 
     bids = frappe.get_all(
         "RN Tender Bid", filters={"tender": tender},

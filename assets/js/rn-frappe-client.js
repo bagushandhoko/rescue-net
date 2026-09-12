@@ -3,6 +3,17 @@
     location.origin +
     "/rescue-net-frappe/api/method";
 
+  // Frappe's own PermissionError message carries raw HTML meant for its
+  // desk UI (e.g. "frappe.exceptions.PermissionError: <details><summary>
+  // You are not permitted...</summary>Function X is not whitelisted.
+  // </details>") — shown as-is, that's exactly what leaked onto several
+  // guest-facing pages as a big ugly technical dump. Strip it down to
+  // plain text before it ever becomes an Error message.
+  function cleanServerMessage(raw, status) {
+    if (status === 403) return "Perlu login untuk mengakses fitur ini.";
+    return String(raw || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  }
+
   function encodeArgs(args = {}) {
     const params = new URLSearchParams();
 
@@ -136,9 +147,10 @@
     if (response.status === 403) {
       const err =
         new Error(
-          payload.message ||
-          payload.exception ||
-          "Frappe permission denied"
+          cleanServerMessage(
+            payload.message || payload.exception,
+            403
+          ) || "Perlu login untuk mengakses fitur ini."
         );
 
       err.status = 403;
@@ -150,8 +162,10 @@
     if (!response.ok) {
       const err =
         new Error(
-          payload.message ||
-          payload.exception ||
+          cleanServerMessage(
+            payload.message || payload.exception,
+            response.status
+          ) ||
           `Frappe HTTP ${
             response.status
           }`

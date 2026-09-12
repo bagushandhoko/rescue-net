@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Donor Program</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=contentgridfix-20260912">
+  <link rel="stylesheet" href="../assets/css/style.css?v=donorlanding-20260912">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -30,8 +30,9 @@
       <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
       <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
       <a href="search-found.html?event=event-sim-001">Search & Found</a>
-      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
       <a class="active" href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="pengadaan-tender.html?event=event-sim-001">Pengadaan & Tender</a>
       <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
 <a href="management-relawan.html">Relawan</a>
       <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
@@ -50,153 +51,144 @@
     <div class="rn-page-mobile-title">Donor Program</div>
 
       <div>
-        <p class="eyebrow">Donor Program / Transparency</p>
+        <p class="eyebrow">Donasi Rescue-Net</p>
         <h2>Donor Program</h2>
-        <p class="subtitle">Program donasi, target, progres, realisasi penggunaan, evidence, dan kontak PIC.</p>
-        <p class="subtitle" id="donorProgramStatus">Ready.</p>
+        <p class="subtitle">Semua program donasi — sumbangan tunai maupun proyek/pengadaan (RAB, pelaksana) — dalam satu daftar. Pilih program untuk lihat detail, lalu daftar donatur.</p>
+        <p class="subtitle" id="donorStatus">Memuat…</p>
       </div>
-      <button class="btn primary" id="refreshDonorPrograms">Refresh</button>
+      <div class="status-pill" id="donorUpdated">Donor Program · Live</div>
     </header>
 
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <h3>Transparency Summary</h3>
-          <p>Ringkasan program dan realisasi.</p>
+    <section class="content-grid rn-pk-row">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Daftar Program</h3><p>Cash base &amp; project base, semua bencana aktif.</p></div>
         </div>
+        <div class="rn-pk-list" id="donorList"></div>
       </div>
-      <div class="summary-list" id="donorProgramSummary">
-        <div><span>Status</span><b>Loading</b></div>
+
+      <div class="panel" id="donorDetailPanel">
+        <div id="donorDetailEmpty" class="rn-muted">Pilih program dari daftar untuk melihat detail.</div>
+        <div id="donorDetailBody" hidden>
+          <div class="rn-pk-detail-head">
+            <h3 id="ddName">-</h3>
+            <span class="chip" id="ddStatus"></span>
+          </div>
+          <div class="rn-pk-detail-meta" id="ddMeta"></div>
+
+          <div id="ddNotPublicBanner" class="rn-va-fields" style="border:1px solid var(--yellow, #b88918);border-radius:8px;padding:10px 12px;margin:8px 0;" hidden>
+            <p class="rn-muted" style="margin:0 0 8px">Program ini <b>belum tampil publik</b> karena organisasi/posko/akun pemilik belum terverifikasi. Selesaikan dulu di Verification &amp; Approval, lalu klik tombol ini untuk publikasikan.</p>
+            <button type="button" class="btn primary mini" id="ddRecheckBtn">Cek Verifikasi &amp; Publikasikan</button>
+            <span class="form-message" id="ddRecheckMsg"></span>
+          </div>
+
+          <div class="rn-pk-progress-row">
+            <div class="rn-pk-progress-pct" id="ddProgressPct">0%</div>
+            <div class="rn-pk-progress-bar-wrap">
+              <div class="rn-pk-progress-bar"><div id="ddProgressBar" style="width:0%"></div></div>
+              <div class="rn-pk-bar-label"><span>Target: <b id="ddTarget">-</b></span><span>Tercapai: <b id="ddCurrent">-</b></span></div>
+            </div>
+          </div>
+
+          <p id="ddDescription" class="rn-muted"></p>
+          <div class="rn-dp-target">
+            <div><span>Penanggung Jawab</span><b id="ddOfficer">-</b><small id="ddOfficerPhone"></small></div>
+            <div><span>Lokasi</span><b id="ddLocation">-</b></div>
+            <div><span>Sasaran</span><b id="ddBeneficiaries">-</b></div>
+          </div>
+
+          <div id="ddProject" hidden>
+            <h4 style="margin-top:16px;">Detail Proyek (Project Base)</h4>
+            <p class="rn-muted" id="ddProjectScope"></p>
+            <div class="rn-dp-target">
+              <div><span>RAB</span><b id="ddProjectRab">-</b></div>
+              <div><span>Status Tender</span><b id="ddProjectStatus">-</b></div>
+              <div><span>Pelaksana</span><b id="ddProjectPelaksana">Belum ditetapkan</b></div>
+            </div>
+            <p class="rn-muted" id="ddProjectRabDoc"></p>
+            <a class="btn ghost mini" id="ddProjectTenderLink" href="pengadaan-tender.html" target="_blank" rel="noopener">Lihat Detail Tender &amp; Penawaran →</a>
+          </div>
+
+          <h4 style="margin-top:16px;">Anggaran</h4>
+          <div class="rn-pk-budget-grid">
+            <div class="rn-pk-budget-tile"><span>Target</span><b id="ddBudgetTarget">-</b></div>
+            <div class="rn-pk-budget-tile"><span>Diterima</span><b id="ddBudgetReceived">-</b></div>
+            <div class="rn-pk-budget-tile"><span>Terpakai</span><b id="ddBudgetSpent">-</b></div>
+          </div>
+
+          <h4 style="margin-top:16px;">Sumbang ke Program Ini</h4>
+          <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Donasi tercatat "menunggu" sampai lembaga penerima (pengelola program) mengonfirmasi dana benar diterima.</p>
+          <form class="rn-form" id="ddDonateForm" autocomplete="off">
+            <label>Nominal (Rp)<input name="amount" type="number" min="1" step="1000" required placeholder="mis. 100000"></label>
+            <label>Pesan (opsional)<input name="message" placeholder="mis. Semoga bermanfaat"></label>
+            <label class="rn-auth-check"><input type="checkbox" name="is_anonymous"> Tampilkan sebagai donatur anonim di publik</label>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Kirim Donasi</button>
+              <span class="form-message" id="ddDonateMsg"></span>
+            </div>
+          </form>
+
+          <h4 style="margin-top:16px;">Daftar Donatur (Terkonfirmasi)</h4>
+          <div id="ddDonationWall" class="event-list"><p class="rn-muted">Memuat…</p></div>
+
+          <div id="ddPendingSection" hidden>
+            <h4 style="margin-top:16px;">Menunggu Konfirmasi Penerimaan</h4>
+            <div id="ddPending" class="event-list"></div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section class="content-grid">
-      <div class="panel">
-        <h3>Program List</h3>
-        <div class="event-list" id="donorProgramList"></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Buat Program Donasi</h3>
-        <form class="rn-form" id="donorProgramForm">
-          <label>Program Name
-            <input name="program_name" value="Program PLTS Posko Terpencil" required>
-          </label>
-
-          <label>Program Type
-            <input name="program_type" value="energy_support">
-          </label>
-
-          <label>Owner Type
+    <details class="panel rn-input-drawer">
+      <summary><h3>Buat Program Donasi Baru</h3></summary>
+      <p class="rn-muted" style="font-size:12px">Hanya organisasi/posko/akun yang sudah terverifikasi (lewat Verification &amp; Approval) yang programnya tampil publik di daftar ini — kalau belum terverifikasi, program tetap tersimpan tapi disembunyikan dari publik sampai verifikasinya selesai.</p>
+      <form class="rn-form" id="donorCreateForm">
+        <label>Nama Program
+          <input name="program_name" placeholder="mis. Dana Darurat Krakatau — Kompas TV" required>
+        </label>
+        <label>Jenis Program
+          <input name="program_type" placeholder="mis. general_relief, energy_support, infrastructure">
+        </label>
+        <div class="form-grid">
+          <label>Tipe Pemilik
             <select name="owner_type">
               <option value="organization">organization</option>
               <option value="posko">posko</option>
               <option value="community_group">community_group</option>
             </select>
           </label>
-
-          <label>Owner ID
-            <input name="owner_id" value="org-bpbd-aceh">
+          <label>ID Pemilik (Organisasi/Posko)
+            <input name="owner_id" placeholder="nama record organisasi/posko">
           </label>
-
-          <label>Target Description
-            <input name="target_description" value="Pengadaan PLTS kecil untuk posko terpencil dan titik komunikasi.">
-          </label>
-
-          <label>Target Amount
-            <input name="target_amount" type="number" value="25000000">
-          </label>
-
-          <label>Target Unit
-            <input name="target_unit" value="IDR">
-          </label>
-
-          <label>Location
-            <input name="location" value="Aceh Barat">
-          </label>
-
-          <label>PIC / Officer in Charge
-            <input name="contact_person" value="PIC Program Donasi">
-          </label>
-
-          <label>HP PIC
-            <input name="contact_phone" value="081234567899">
-          </label>
-
-          <label>Notes
-            <input name="notes" value="Transparansi progres dan bukti penggunaan wajib diupdate.">
-          </label>
-
-          <button class="btn primary" data-requires-role-action="create_donor_program" type="submit">Save Program</button>
-        </form>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <h3>Tambah Update / Realisasi</h3>
-        <form class="rn-form" id="donorProgramUpdateForm">
-          <label>Program
-            <select name="program_id" required></select>
-          </label>
-
-          <label>Update Title
-            <input name="update_title" value="Pembelian panel surya tahap 1" required>
-          </label>
-
-          <label>Update Type
-            <select name="update_type">
-              <option value="progress">progress</option>
-              <option value="spending">spending</option>
-              <option value="handover">handover</option>
-              <option value="completion">completion</option>
-            </select>
-          </label>
-
-          <label>Amount Used
-            <input name="amount_used" type="number" value="5000000">
-          </label>
-
-          <label>Amount Unit
-            <input name="amount_unit" value="IDR">
-          </label>
-
-          <label>Evidence File ID
-            <input name="evidence_file_id" value="">
-          </label>
-
-          <label>Description
-            <input name="description" value="Dana digunakan untuk pembelian panel dan controller.">
-          </label>
-
-          <button class="btn primary" data-requires-role-action="create_donor_program" type="submit">Save Update</button>
-        </form>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Transparansi Publik</h3>
-        <p class="subtitle">
-          Donatur dapat melihat program, target, kontak PIC, dan update realisasi. Evidence dapat dihubungkan lewat Evidence module.
-        </p>
-        <div class="summary-list">
-          <div><span>Key Rule</span><b>No hidden spending</b></div>
-          <div><span>Evidence</span><b>Required for handover/spending</b></div>
-          <div><span>Contact</span><b>PIC must be reachable</b></div>
         </div>
-      </aside>
-    </section>
+        <label>Deskripsi / Target
+          <textarea name="target_description" rows="3" placeholder="Uraian singkat target program"></textarea>
+        </label>
+        <div class="form-grid">
+          <label>Target Dana (Rp)
+            <input name="budget_target" type="number" value="0">
+          </label>
+          <label>Lokasi
+            <input name="location" placeholder="mis. Kalianda, Lampung Selatan">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Program</button>
+          <span class="form-message" id="donorCreateMsg"></span>
+        </div>
+      </form>
+    </details>
   </main>
 </div>
 
-<script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
-<script src="../assets/js/donor-program.js?v=frappe-donor-program-1"></script>
+<script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+<script src="../assets/js/donor-program.js?v=donorlanding-20260912"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=eventlabel-20260912"></script>
-<script src="../assets/js/dms-inline.js?v=domain-p1-1"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 
-<script src="../assets/js/rn-navigation-v2.js?v=donasimenu-20260912"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=donorlanding-20260912"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
 </body>
 </html>

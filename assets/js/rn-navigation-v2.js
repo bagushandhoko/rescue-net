@@ -2,7 +2,7 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.2.0",
+    version: "2.3.0",
 
     posko: [
       {
@@ -145,15 +145,18 @@
       }
     ],
 
-    // Donasi & Program Khusus: program-khusus.html is the actual donation
-    // page (cash + project-base campaigns, papan donasi) and links out to
-    // Pengadaan & Tender itself when a program is project-based — grouped
-    // together per owner request instead of 3 separate top-level items.
+    // Donasi & Program Khusus: donor-program.html is the main donation
+    // landing (every program, cash + project-base, one list -> click for
+    // detail -> click further for the donor list). program-khusus.html
+    // keeps the fuller KPI/milestone tracking dashboard for the same
+    // underlying data; Pengadaan & Tender is where a project-base
+    // program's RAB/bidding actually lives. Grouped together per owner
+    // request instead of 3 separate top-level items.
     donasi: [
       {
-        label: "Donasi & Program",
-        href: "program-khusus.html?event=event-sim-001",
-        icon: "program"
+        label: "Donor Program",
+        href: "donor-program.html?event=event-sim-001",
+        icon: "donor"
       },
       {
         label: "Pengadaan & Tender",
@@ -161,9 +164,9 @@
         icon: "scale"
       },
       {
-        label: "Donor Program (Lama)",
-        href: "donor-program.html?event=event-sim-001",
-        icon: "donor"
+        label: "Program Khusus (Tracking)",
+        href: "program-khusus.html?event=event-sim-001",
+        icon: "program"
       }
     ]
   };

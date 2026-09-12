@@ -4,6 +4,16 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
+_Addendum same day, after the `rn_actor()` fix (`8216d5f`)_: continued the
+real-login verification pass onto `verification-approval.html` (as Yusuf,
+real session cookie) — the "Referensi" surfacing built earlier today
+(`RN User Reference` in `approval_item_detail`) renders correctly in the
+live queue detail panel ("Bersedia Diverifikasi: Ya", "Referensi: Ibu Siti
+Rahayu (Ketua RT 03)", contact, status), and clicking **Approve** works
+end-to-end. Not yet real-login-verified: the org AI BYOK key form in
+`koordinasi-organisasi.html` (lower priority — needs a real provider key to
+mean anything), `pengadaan-tender.html`'s bid-submission flow.
+
 _Last updated: 2026-09-12 (yet later still, commit `8216d5f`) — **the single
 most important finding of this whole session**, found by finally logging in
 as a real user in a real browser (owner explicitly asked for this, after

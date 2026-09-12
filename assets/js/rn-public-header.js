@@ -26,6 +26,18 @@
     return String(v || "").replace(/^disaster_events:/, "");
   }
 
+  // Best-effort readable label for a raw event id/slug when no real title
+  // is available yet (initial render) or ever (event not in the active
+  // list and no guest-safe single-event lookup exists): "event-krakatau-
+  // 2026" -> "Krakatau 2026".
+  function prettifyEventId(id) {
+    return String(id || "")
+      .replace(/^event[-_]/i, "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\b\w/g, c => c.toUpperCase())
+      .trim() || id;
+  }
+
   function readStoredEvent() {
     try {
       return localStorage.getItem(RN_EVENT_STORE_KEY) || "";
@@ -88,7 +100,7 @@
       <label>
         <span>Bencana</span>
         <select aria-label="Pilih bencana aktif">
-          <option value="${active}">${active}</option>
+          <option value="${active}">${prettifyEventId(active)}</option>
         </select>
       </label>
     `;
@@ -125,11 +137,14 @@
           })
           .join("");
 
-        // active event not in the active list -> keep it as an extra option
+        // active event not in the active list (e.g. not currently marked
+        // "active" status) -> keep it as an extra option. No guest-safe
+        // single-event title lookup exists, so at least don't show the raw
+        // technical slug — "event-krakatau-2026" -> "Krakatau 2026".
         if (![...select.options].some(o => o.value === active)) {
           const opt = document.createElement("option");
           opt.value = active;
-          opt.textContent = active;
+          opt.textContent = prettifyEventId(active);
           opt.selected = true;
           select.insertBefore(opt, select.firstChild);
         }

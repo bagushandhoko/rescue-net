@@ -36,6 +36,23 @@
     return "../index.html";
   }
 
+  // A fresh registrant's very next task depends on their chosen role: a
+  // Petugas Posko exists to register a real posko, a Donatur exists to
+  // give — send them straight there instead of a generic homepage. An
+  // explicit ?next= (e.g. they were bounced here mid-flow) still wins.
+  var ROLE_LANDING_PAGE = {
+    petugas_posko: "registrasi-posko.html",
+    donatur: "donor-program.html"
+  };
+  function registerLandingTarget(role) {
+    try {
+      var raw = new URLSearchParams(location.search).get("next") || "";
+      raw = decodeURIComponent(raw);
+      if (raw && raw.indexOf("//") === -1) return raw;
+    } catch (e) {}
+    return ROLE_LANDING_PAGE[role] || "../index.html";
+  }
+
   /* ---------- Frappe requests ---------- */
   async function frappeRequest(path, options) {
     options = options || {};
@@ -374,7 +391,7 @@
           });
           setMessage("registerMessage", (out && out.message) || "Akun dibuat. Masuk…");
           await login(email, pass);
-          window.location.href = nextTarget();
+          window.location.href = registerLandingTarget(role);
         } catch (err) {
           setMessage("registerMessage", cleanServerMessage(err), true);
           btn.disabled = false;

@@ -4,6 +4,39 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
+_Last updated: 2026-09-12 (yet later same day, commit `f5a485a`) — owner
+clarified the donation architecture: **`donor-program.html` is the main
+donation landing page**, not `program-khusus.html`. Rebuilt it from
+scratch (was a login-only dev-shell dumping a raw Frappe exception at
+every guest — `api_donor_program.context` 403ing — that's the bug report
+that triggered this). New donor-program.html/js: one list of every
+program (cash + project-base, same `program_board` data), click for
+detail (RAB/scope/pelaksana if project-base), click further for the
+donor wall — reuses every guest-safe endpoint built earlier today
+(`program_board`/`program_detail`/`create_cash_donation`/
+`decide_cash_donation`/`recheck_and_publish`), no new backend.
+`program-khusus.html` keeps the fuller KPI/milestone tracking dashboard
+for the same underlying `RN Donor Program` data — different audience
+(program managers, not donors) — now labeled "Program Khusus (Tracking)"
+in the nav, second item under "Donasi & Program Khusus" behind the new
+"Donor Program" landing.
+
+**Also fixed at the root this round**: the shared `rn-frappe-client.js`
+(`window.RN_FRAPPE`, loaded on ~37 pages) had the exact same
+raw-exception-as-error-message bug already patched ad hoc on
+`ai-settings.js`/`notifikasi-settings.js` earlier today — fixed once at
+the source (strip HTML, map HTTP 403 to a plain message) instead of
+patching every caller. `sync-console.html` got a "⚙ HALAMAN TEKNIS" badge
+per the earlier UX triage (cosmetic, cheap).
+
+**If a future session touches donation/program pages**: there are now 3
+related pages sharing one `RN Donor Program` backend —
+`donor-program.html` (donor-facing landing), `program-khusus.html`
+(manager-facing KPI tracking), `pengadaan-tender.html` (RAB/bidding for
+project-base programs). Keep the guest-safe API contract
+(`program_board`/`program_detail`/`program_donations`) the single
+source of truth for all three rather than letting them drift.
+
 _Last updated: 2026-09-12 (even later same day) — closed the two "Not
 done / next candidates" gaps from the donation feature below, plus a nav
 restructure, all DEPLOYED to `osiun.localhost` (commits `7d5ce12`

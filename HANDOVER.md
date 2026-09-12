@@ -4,7 +4,174 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-08 (**ALL THREE DEPLOYED to `osiun.localhost` +
+_Last updated: 2026-09-12 — two pieces of work, both DEPLOYED + migrated to
+`osiun.localhost` (commits `9cec634` `6bb7af5`, plus `dfb569f`/`6224dc4`/
+`33f7bee` reviewed from the prior session — see below):
+
+## 1. Org hierarchy attach/detach now needs the other side's approval
+
+Supersedes the 2026-09-08 "satu komando, no approval" model — owner asked for
+contact-person verification + a required reject reason wherever a posko/org/
+induk asks to join or be merged. Implemented for **all 4** scenarios (org
+membership already had approve/reject, extended with a mandatory reason;
+the other 3 are new):
+
+- **New org registers claiming a parent** — `create_organization(...,
+  parent_organization=X)` now files a pending request to X's owner instead
+  of setting the link immediately (closed a real gap: previously anyone
+  could register a new org claiming e.g. "PMI Pusat" as parent with zero
+  consent from PMI).
+- **Induk pulls a standalone org (merge)** — needs the target org owner's
+  approval now (previously immediate, no-approval).
+- **Org asks to detach** — needs the *current* induk's approval now
+  (previously immediate).
+- **Posko/user joins an org** (`decide_membership`) — reject/revoke now
+  require a `note` (was optional before).
+
+Only bypassed when the same actor manages both sides, or a System Manager
+acts — nobody else needs to consent then, so it still executes immediately.
+
+- `RN Org Merge Request` gained an `action` field (attach/detach) so a
+  pending row knows what to execute on approval.
+- New `api_community_cluster.decide_org_link(request, approve|reject|
+  withdraw, note)`. Self-approval is blocked (`requested_by` check).
+  `org_coordination()` now returns `pending_requests[]` with **both**
+  orgs' `contact_person`/`contact_summary` (mutual verification) plus the
+  requester's email/phone.
+- FE: `koordinasi-organisasi.html`/`.js` (`?v=orgapproval-20260912`) —
+  new "Permintaan Menunggu Persetujuan" panel (approve / reject-with-
+  prompted-reason / withdraw), reject-reason `window.prompt()` on
+  membership decisions too. `org-posko.js` create-org flow shows "menunggu
+  persetujuan organisasi induk" when the claim is pending.
+- Verified end-to-end via `bench console` (self-approve blocked, reject-
+  without-reason blocked, both attach directions route to the correct
+  approver — this caught a real bug, see below, contact info surfaces) —
+  rolled back test data, no residue. Commit `9cec634`.
+
+**Bug caught by the test before deploy:** the first version of
+`set_org_parent` always asked the *prospective parent's* owner for consent,
+even when the **parent's own owner** was the one initiating (pulling a
+standalone org under them) — in that direction it's the *child's* owner who
+must consent, not the parent's (who already asked). Fixed before deploy;
+see `_apply_org_link`/`set_org_parent` comments.
+
+## 2. Full E2E simulation: Krakatau meletus 2026 (Lampung Selatan) — found + fixed 2 real bugs
+
+Built at the owner's request specifically to stress a **freshly-created**
+disaster event (not one migrated from the old Postgres system) across every
+module, with real actors and real API calls (no raw doctype inserts, no
+rollback — this data persists on `osiun.localhost` as demo data, everything
+titled `[SIMULASI] ...`). The seed script itself was run once from `/tmp`
+inside the container via `bench console` and NOT saved to the repo (see
+"Not covered by this pass" below for how to rebuild one).
+
+**Scenario:** `event-krakatau-2026` (critical, Kalianda & pesisir Lampung
+Selatan). 4 organizations — BNPB Pusat (induk), BPBD Provinsi Lampung
+(registered *claiming* BNPB as parent → pending → BNPB approved — exercises
+the new approval flow end-to-end), Klub Otomotif Mercy Peduli Bencana
+(community logistics/transport club), OSIS SMAN 1 Kalianda (student
+volunteers, last-mile distribution). 8 poskos across 6 types: org_admin
+(BNPB command), posko_operator (BPBD coordination), **shelter running all 3
+functions** (shelter+logistics+kitchen, GOR Kalianda, 850 jiwa), medical,
+field_assessment, collection_hub (Klub Mercy), transport (OSIS last-mile),
+and one **citizen-run posko with no organization at all** (Posko Logistik
+Warga Kalianda, direct dari masyarakat). Org membership approve (Rendra →
+OSIS, verified) + reject-with-reason (Joko → Klub Mercy, "belum bisa
+diverifikasi"). Needs/stock across mixed units (kg/liter/pcs/lembar vs
+karung/dus/botol/box) to exercise the normalization pipeline (`classify_text`
+auto-grouped the mixed-unit masker stock into "APD & Perlindungan" on
+insert, as designed). A full distribution flow (Klub Mercy → Shelter, 50
+dus air mineral, "OSIS SMAN 1 Kalianda - Relawan Motor" as transporter) run
+through all 6 lifecycle steps to `received`, then read back via
+`flow_trace`/`lacak-logistik.html` (QR page). WA broadcast from the shelter
+(after enabling `notify_whatsapp_enabled` — off by default). Verifikator
+eksternal request (`request_posko_verification`, method `site_visit`).
+Program khusus (psychosocial support, Rp150jt budget). Work object + alat
+prediction (2000 m² volcanic-ash/debris blocking the Kalianda-Bakauheni
+road, category `puing_berat` — see note below) + a real Resource Profile
+(2 excavators) to feed the gap number.
+
+**2 real bugs found and fixed (both were pre-existing, not introduced by
+this session's own work) — commit `6bb7af5`:**
+
+1. **`lacak-logistik.js` was completely broken since it shipped
+   (2026-09-08).** Its `$()` helper called `document.getElementById(id)`
+   but every single call site passed a `"#id"` CSS selector — so `$()`
+   always returned `null`, and the page could never render anything, not
+   even its own error message (`Cannot set properties of null (setting
+   'innerHTML')`, silent unless you open devtools). The 2026-09-08
+   "DEPLOYED & VERIFIED" note only checked the backend `flow_trace` API
+   response, never that this page actually renders it — first real
+   browser check of this page since it was built. Fixed: `$()` now uses
+   `querySelector`, matching every other page's convention in this app.
+2. **`api_control_centre.canonical_event()` silently broke every board for
+   any newly-created (non-migrated) disaster event.** It blindly prefixed
+   every event reference with `"disaster_events:"`. That happened to be
+   correct for all 6 existing events only because they were migrated in
+   from the old Postgres system with that literal string baked into their
+   Frappe `name`/`legacy_id`. A disaster event created directly in Frappe
+   — `frappe.new_doc("RN Disaster Event")`, i.e. **every future real
+   disaster registered from here on** — gets a bare name, so
+   `posko_registry_board` and the other 13 call sites across 3 files all
+   silently returned zero rows for it (`poskos: []`, no error). Fixed by
+   delegating to the same DB-aware `reference_resolver.
+   resolve_disaster_event()` already used by `create_posko`. Verified
+   both directions: `event-krakatau-2026` (bare) now returns its 8
+   poskos; `event-sim-001` (prefixed) still returns its 18 — no
+   regression on old data.
+
+**Honesty note on the work-object category:** the existing alat-prediction
+rule set (`_EQUIP_PREDICTION_RULES`, built 2026-09-02) only has
+`longsoran/jembatan_putus/puing_berat/pohon_tumbang/akses_terendam/lainnya`
+— none of which is really "volcanic ash." `akses_terendam` (flooded access)
+was tried first and produced a nonsensical "1 pompa air per ~200 m²" (water
+pump) prediction; switched to `puing_berat` (heavy debris, chainsaw/
+forklift) as the honest closest fit for ash+debris blocking a road, rather
+than leave a misleading demo number in place. If Krakatau-style ash events
+become a recurring scenario, this rule set may deserve its own
+`abu_vulkanik` category — not built here since it wasn't asked for.
+
+**Verified via Playwright** (`/volume1/docker/osiun-playwright-check/
+rn-krakatau-check.js`, kept for re-runs): `registrasi-posko.html?event=
+event-krakatau-2026` shows all 8 poskos correctly grouped by org (including
+"🏢 BPBD Provinsi Lampung · 4 posko" — confirming the hierarchy attach
+actually took, and "🏢 Tanpa organisasi · 1 posko" for the citizen posko);
+`lacak-logistik.html?flow=<name>` renders the full 6-step timeline with
+real item/route/transport/receipt data; `alat-kerja.html` shows the work
+object; `program-khusus.html` shows the psychosocial program. Zero console
+errors on any of the 4 after the fixes (program-khusus's 2 pre-existing
+403s are the already-known, owner-declined legacy `context()` guest-
+whitelist gap — not new).
+
+**Not covered by this pass** (be aware before assuming full coverage):
+- `koordinasi-organisasi.html`'s new pending-requests panel was verified
+  via `bench console` (backend logic + permissions), **not** browser-
+  clicked as a logged-in org owner — the Playwright pass here was guest-
+  only pages. Next session should log in as `sim-retno@example.org` /
+  `sim-yusuf@example.org` (real Frappe Users seeded, no password set —
+  needs a reset or an admin impersonation route) and click through
+  approve/reject/withdraw.
+- `war-room.html` (Control Centre) was hit but only checked for a clean
+  page load, not that the Krakatau event's KPI numbers are correct.
+  `canonical_event()`'s fix should make it correct now (same function it
+  uses), but this wasn't independently re-verified per-tile.
+- `ai-settings`/org BYOK key UI, verifikator queue UI
+  (`verifikator.html`), and the org AI key itself were not touched this
+  pass.
+- The seed script (actors + orgs + poskos + everything else) was run
+  once from `/tmp` inside the container and not saved to the repo — it
+  was throwaway by design (real API calls via `bench console`, not meant
+  to be re-run idempotently). If more Krakatau scenario data is wanted,
+  write a fresh script following the pattern in this section rather than
+  looking for a saved one.
+
+**Still needs a repro (carried over, unrelated):** user's "config for org/
+koordinasi shows empty now" — said "kerjakan semua" without detail; not
+diagnosed.
+
+---
+
+_Previously updated 2026-09-08 (**ALL THREE DEPLOYED to `osiun.localhost` +
 migrated + restarted + smoke-checked** — commits `88ee9ad` `d15fe51`
 `2956329` `b0973ab`:
 (1) **WhatsApp-send** — `RN Notification Setting`/`Log` created, `global`

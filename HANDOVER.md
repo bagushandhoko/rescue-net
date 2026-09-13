@@ -4059,6 +4059,73 @@ account couldn't search the missing/found list at all.
   migrate` needed (pure Python, no schema change).
 - Cache-buster: `search-found.js` → `?v=publicdash-20260913`.
 
+## Offline-first: laporan-masyarakat wired to rn-sync-engine.js (2026-09-13) — DONE & DEPLOYED
+
+Architecture audit flagged this as Partial: `rn-sync-engine.js` (local
+`localStorage` queue + retry-on-reconnect) was real and working, but only
+loaded on 5 secondary pages, and the actual public community-report form
+just caught the fetch failure and showed `err.message` — the exact target
+failure (no local queue, report lost on a bad connection).
+
+Deeper finding while wiring this: `api_sync.push()`'s per-event apply
+logic (`_apply_event`) only ever had ONE real apply rule —
+`resource_request`/`create`. Every other `object_type` (including
+anything a naive `rnQueueEvent({object_type:"community_report",...})`
+would have sent) fell through to `"apply_status":"stored_only"` — logged
+to `RN Sync Log` for audit, but never turned into a real operational
+record. Also, ordinary (non-`command_center`) logged-in users could only
+push `resource_request` events at all (`_prepare_scoped_booking_events`
+hard-rejected everything else) — a citizen's queued report would have
+been rejected outright on sync, not just inert.
+
+- **`api_sync.py`**: added `_apply_community_report()`, which calls
+  `api_reports.submit_community_report()` directly — same code path as
+  the live online POST, so area resolution / predicted-needs / optional
+  `RN Community Need` creation isn't duplicated. Runs inside the pusher's
+  own Frappe session (`push()` already requires login), so
+  `submit_community_report`'s own `frappe.session.user` → `RN User
+  Account` resolution attaches the real reporter, not a client-supplied
+  identity. Wired into `_apply_event()` alongside the existing
+  `resource_request` rule. `_prepare_scoped_booking_events()` extended so
+  a plain citizen may also push `community_report`/`create` (still
+  forcing `source_user_id`/`source_organization_id` from the session for
+  the audit log, never trusting the client). No schema change — dedup
+  reuses the existing `RN Sync Log.event_id` uniqueness check already in
+  `_push()`.
+- **`community-report.js`**: extracted `communityReportBridgePayload()`
+  (the form-shape → backend-shape mapping already used for the live POST)
+  so the offline queue stores the identical shape `_apply_community_report`
+  expects — one mapping definition, not two drifting copies. On a genuine
+  network failure (`err.status === undefined` — a bare `fetch()` throw
+  from `rn-frappe-client.js`, as opposed to a 403/500 that already carries
+  a real server message) or when `navigator.onLine` is already false, the
+  report is queued via `RNSync.queueEvent()` with a "tersimpan lokal,
+  akan terkirim otomatis" message instead of just showing the error; a
+  genuine validation error from the server still surfaces as-is so the
+  citizen can fix the form rather than queuing something that will fail
+  identically on sync. Refreshes the report list on `rn:sync-complete`.
+- **`laporan-masyarakat.html`**: now loads `rn-sync-engine.js` and calls
+  `rnSetupAutoSync()` on load — this was the first page in the app to
+  actually call it; the 5 other pages that load `rn-sync-engine.js` never
+  called `rnSetupAutoSync()` either, so none of them auto-retry on
+  reconnect today (only manual `RNSync.triggerSync()` from
+  `sync-console.html`). Left those other pages alone — out of scope here.
+- **Verified against the live container, not just read:** `bench console`
+  as a plain (`org_admin`, non-manager) `RN User Account` pushed a
+  `community_report` event through `api_sync.push()` → a real `RN
+  Community Report` was created with `reporter_user` correctly resolved
+  to that account; re-pushing the identical `event_id` returned
+  `duplicate_ignored`; the test record was deleted afterward. Playwright
+  (`file://` load of `laporan-masyarakat.html`, no server needed since
+  the queue is pure `localStorage`) confirmed `window.RNSync`,
+  `queueEvent`, `rnSetupAutoSync`, and `communityReportBridgePayload` are
+  all wired, `communityReportBridgePayload()` maps `lat/lng/
+  disaster_event_id` correctly to `latitude/longitude/disaster_event`,
+  and `queueEvent()` persists the right envelope to
+  `rn_sync_pending_events_v1` with zero console errors.
+- Deployed `api_sync.py` via the usual `docker cp` + `chown frappe:frappe`
+  + `chmod` + restart. No `bench migrate` (pure Python).
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

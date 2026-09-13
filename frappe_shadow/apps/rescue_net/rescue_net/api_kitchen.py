@@ -2,6 +2,7 @@ import json
 from collections import defaultdict
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 
 from frappe.utils import (
@@ -732,6 +733,7 @@ def add_evidence(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def dashboard(posko=None):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -990,6 +992,7 @@ def _drill(title, sub, href):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def kitchen_board(posko=None, disaster_event=None):
     """Dapur Umum dashboard (matches the DMS mock-up), guest read-only.
 

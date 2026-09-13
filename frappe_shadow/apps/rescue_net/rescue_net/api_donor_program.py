@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event
 
 from frappe.utils import flt, now_datetime, nowdate
@@ -720,6 +721,7 @@ def context(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def public_context(
     disaster_event=None,
 ):
@@ -1269,6 +1271,7 @@ def _pk_drill(title, sub, href=""):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def program_board(disaster_event=None):
     """Program Khusus dashboard (matches the DMS mock-up), guest read-only.
 
@@ -1481,6 +1484,7 @@ def create_cash_donation(donor_program, amount, is_anonymous=0, message=None,
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def program_donations(donor_program):
     """Public donation wall (received only, donor masked if anonymous) for
     one program. If the caller manages that program's owner, also returns
@@ -1565,6 +1569,7 @@ def decide_cash_donation(donation, action, note=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def program_detail(program):
     row = frappe.db.get_value(
         "RN Donor Program", program, SPECIAL_PROGRAM_FIELDS, as_dict=True,

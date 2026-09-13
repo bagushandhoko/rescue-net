@@ -309,6 +309,7 @@ def me():
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def session_info():
     # guest-safe: the public header / auth.js loadSession() poll this on every
     # page load — return a plain Guest marker instead of a 403.
@@ -343,6 +344,7 @@ def session_info():
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def social_login_url(provider="google", redirect_to=None):
     """Real Google/other-provider "Login/Daftar" URL for a custom login page
     like auth.html to redirect to. `frappe.integrations.oauth2_logins.

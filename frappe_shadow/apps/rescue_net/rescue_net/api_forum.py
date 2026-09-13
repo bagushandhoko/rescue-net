@@ -4,6 +4,7 @@ posting tanpa akun; operator posko / koordinator memberi tanggapan resmi.
 """
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime, cint
 
 from rescue_net.access_policy import rn_actor, is_system_manager
@@ -34,6 +35,7 @@ def _event_or_filters(disaster_event, ev):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def feedback_threads(disaster_event=None, category=None, limit=200):
     ev = _event(disaster_event)
     filters = {"parent_feedback": ["in", ["", None]], "status": ["!=", "hidden"]}
@@ -77,6 +79,7 @@ def feedback_threads(disaster_event=None, category=None, limit=200):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=3600)
 def post_feedback(topic, body, disaster_event=None, category="usul",
                   author_name=None, author_contact=None, wilayah=None,
                   parent_feedback=None):
@@ -110,6 +113,7 @@ def post_feedback(topic, body, disaster_event=None, category="usul",
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=3600)
 def upvote_feedback(feedback):
     if not frappe.db.exists("RN Community Feedback", feedback):
         frappe.throw("Masukan tidak ditemukan.")

@@ -161,6 +161,41 @@
       </div>
     </section>
 
+    <section class="content-grid" id="systemAdminSection" hidden>
+      <div class="panel">
+        <div class="panel-header">
+          <div>
+            <h3>Database Backup</h3>
+            <p>Snapshot harian otomatis (retensi 30 hari) + backup manual. System Manager saja.</p>
+          </div>
+          <button class="btn primary" type="button" id="triggerBackupBtn">Buat Backup Sekarang</button>
+        </div>
+        <p class="subtitle" id="backupStatusMsg"></p>
+        <div class="event-list" id="backupList"></div>
+      </div>
+
+      <aside class="panel summary">
+        <h3>Restore Database</h3>
+        <p class="subtitle" style="color:#b23b3b">
+          ⚠ Menimpa SELURUH data live saat ini. Sistem otomatis membuat safety-snapshot
+          sebelum restore, tapi tetap tidak bisa dibatalkan begitu proses berjalan.
+        </p>
+        <div class="summary-list" id="restoreStatus"><div><span>Status</span><b>Idle</b></div></div>
+        <form class="rn-form" id="restoreForm">
+          <label>Pilih Snapshot
+            <select name="backup_timestamp" id="restoreTimestamp" required></select>
+          </label>
+          <label>Ketik nama situs untuk konfirmasi
+            <input name="confirm_site_name" id="confirmSiteName" placeholder="osiun.localhost" required autocomplete="off">
+          </label>
+          <div class="form-actions">
+            <button class="btn" type="submit" id="restoreBtn" style="background:#c23a3a;border-color:#c23a3a;color:#fff">Restore</button>
+          </div>
+        </form>
+        <p class="subtitle" id="restoreMsg"></p>
+      </aside>
+    </section>
+
     <section class="panel create-panel">
       <div class="panel-header">
         <div>
@@ -201,6 +236,7 @@
 
 <script src="../assets/js/ai-settings.js?v=byok-org-20260904"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/system-admin.js?v=backuprestore-20260913"></script>
 <script src="../assets/js/rn-public-header.js?v=eventlabel-20260912"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>

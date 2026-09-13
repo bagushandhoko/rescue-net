@@ -3,6 +3,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 import frappe
+from frappe.rate_limiter import rate_limit
 
 from rescue_net.migration.status import build_status_report
 from rescue_net.migration.war_room import preview_shadow_snapshot
@@ -44,6 +45,7 @@ LEGACY_KEYS = {
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def health():
     return {
         'system': 'Rescue-Net Frappe Shadow Compatibility API',
@@ -54,46 +56,55 @@ def health():
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def status():
     return build_status_report()
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def disasters(limit=100):
     return _legacy_response('RN Disaster Event', limit)
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def organizations(limit=100):
     return _legacy_response('RN Organization', limit)
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def poskos(limit=100):
     return _legacy_response('RN Posko', limit)
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def logistic_needs(limit=100):
     return _legacy_response('RN Logistic Need', limit)
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def aid_offers(limit=100):
     return _legacy_response('RN Aid Offer', limit)
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def distribution_flows(limit=100):
     return _legacy_response('RN Distribution Flow', limit)
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def war_room():
     return _serialize(preview_shadow_snapshot())
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def all_p0(limit=100):
     return {
         'mode': 'shadow-only',

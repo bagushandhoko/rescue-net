@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import cint, flt, getdate, now_datetime
 
@@ -204,6 +205,7 @@ def _all_shelters():
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def dashboard(posko=None):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -1094,6 +1096,7 @@ def _shelter_href(posko, event):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def shelter_board(disaster_event=None):
     """Shelter & Akomodasi overview (matches the DMS mock-up), guest read-only.
 

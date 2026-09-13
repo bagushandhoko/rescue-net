@@ -4,6 +4,7 @@ dan pihak lain bisa mengajukan penawaran dengan batas waktu.
 """
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime, flt, cint, get_datetime
 
 from rescue_net.access_policy import rn_actor, is_system_manager, can_manage_organization
@@ -52,6 +53,7 @@ def _owns_tender(actor, t):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def tender_board(disaster_event=None, limit=200):
     from rescue_net.api_donor_program import _owner_verified, _is_control, _allowed_owner
 
@@ -123,6 +125,7 @@ def tender_board(disaster_event=None, limit=200):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def tender_detail(tender):
     t = frappe.db.get_value(
         "RN Procurement Tender", tender,
@@ -209,6 +212,7 @@ def create_tender(disaster_event, title, rab_total=0, scope_description=None,
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=3600)
 def submit_bid(tender, bidder_name, bid_amount, bid_days=None,
                bidder_org=None, bidder_contact=None, proposal_summary=None,
                attachment_url=None):

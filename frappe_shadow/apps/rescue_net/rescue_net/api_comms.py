@@ -13,6 +13,7 @@ way as every other create_* endpoint in the app (any authenticated RN actor).
 """
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime
 
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
@@ -89,6 +90,7 @@ def _drill(title, sub=None, href=None):
 # --- board -------------------------------------------------------------------
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def comms_board(disaster_event=None):
     event = resolve_disaster_event(disaster_event)
     ev_q = (event or "")

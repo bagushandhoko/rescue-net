@@ -1,4 +1,5 @@
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime
 
 from rescue_net.access_policy import rn_actor
@@ -908,6 +909,7 @@ def update_posko(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def get_posko_settings(posko):
     """Prefill payload + edit gate for the shared "Pengaturan Posko" panel on
     a posko workspace page. Mirrors `update_posko`'s `_can_edit_posko` gate.

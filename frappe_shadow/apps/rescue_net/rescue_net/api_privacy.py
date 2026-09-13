@@ -1,4 +1,5 @@
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import cint
 
 from rescue_net.access_policy import (
@@ -235,6 +236,7 @@ def update_posko(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def public_posko(posko):
     if not public_posko_allowed(posko):
         frappe.throw(

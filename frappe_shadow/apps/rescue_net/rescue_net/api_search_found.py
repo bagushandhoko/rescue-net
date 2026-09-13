@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import now_datetime
 
@@ -624,6 +625,7 @@ def _resolve_disaster_event(value):
 # to Guest. Full identity stays behind restricted_record(), which is not
 # guest-accessible and still requires a manager role.
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def dashboard(disaster_event=None):
     # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
     disaster_event = resolve_disaster_event(disaster_event)

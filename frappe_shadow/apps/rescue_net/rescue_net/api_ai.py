@@ -2,6 +2,7 @@ import hashlib
 import json
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 import requests
 from frappe.utils import now_datetime
@@ -1421,6 +1422,7 @@ def context(disaster_event_id):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def public_context(disaster_event_id):
     ctx = _build_context(
         disaster_event_id,
@@ -1808,6 +1810,7 @@ operational facts.
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def public_active_disasters():
     rows = frappe.get_all(
         "RN Disaster Event",
@@ -1859,6 +1862,7 @@ def public_active_disasters():
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def public_map_context(disaster_event_id):
     disaster_event_id = str(
         disaster_event_id or ""

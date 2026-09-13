@@ -1,4 +1,5 @@
 import frappe
+from frappe.rate_limiter import rate_limit
 
 from rescue_net.api_ai import (
     public_context,
@@ -713,6 +714,7 @@ _EVIDENCE_MODULE_ORDER = [
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def evidence_board(disaster_event=None, limit=300):
     """Evidence Center dashboard (matches the DMS mock-up), guest read-only.
 
@@ -889,6 +891,7 @@ def _poskos_viewer_context():
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def event_poskos(disaster_event):
     """Posko list for an event, each tagged with Control Centre sharing
     mode, plus a small `viewer` block so operational-page selectors can
@@ -903,6 +906,7 @@ def event_poskos(disaster_event):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def posko_detail(posko, disaster_event=None):
     """Posko view for the Control Centre drill-down.
 
@@ -1163,6 +1167,7 @@ _LOGISTIK_CONVERSIONS = [
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def logistik_board(posko, disaster_event=None):
     """Posko Logistik dashboard (matches the DMS mock-up).
 
@@ -1467,6 +1472,7 @@ def _posko_functions(name):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def posko_functions(posko):
     """Tiny guest lookup for the sidebar function-switcher group.
 
@@ -1661,6 +1667,7 @@ def _incoming_flows(name):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def logistik_stock_cards(posko, disaster_event=None):
     name = _resolve_posko(posko)
     if not name:
@@ -1669,6 +1676,7 @@ def logistik_stock_cards(posko, disaster_event=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def logistik_incoming(posko, disaster_event=None):
     name = _resolve_posko(posko)
     if not name:
@@ -1677,6 +1685,7 @@ def logistik_incoming(posko, disaster_event=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def logistik_stock_sources(posko, item=None):
     """"Asal item" — where the stock at this posko for `item` came from:
     received aid offers (donations / community shipments) + arrived
@@ -1745,6 +1754,7 @@ def logistik_stock_sources(posko, item=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def logistik_dispatch_options(disaster_event, source_posko=None):
     """Choices for the "Kirim stok" form on Posko Logistik:
       destinations = receiver poskos of this event (not transport, not self)
@@ -1806,6 +1816,7 @@ def logistik_dispatch_options(disaster_event, source_posko=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def logistik_open_needs(disaster_event, limit=200):
     """Public 'papan kebutuhan' - open logistic needs across every posko of
     an event, each with the serving posko's beneficiary count and fulfilment
@@ -1956,6 +1967,7 @@ def set_item_consumption(posko, item_name, daily_rate):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=3600)
 def fulfill_need(need, donor_name, quantity, unit=None,
                  pickup_location=None, contact=None, disaster_event=None):
     """Public: an outside collector / member of the public offers to fill a
@@ -2588,6 +2600,7 @@ def _group_by_org(rows, dimension, res):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def kpi_drilldown(disaster_event, dimension, limit=500):
     """Underlying records for one Control Centre KPI / module tile,
     grouped by the owning organisation and gated by that organisation's
@@ -2616,6 +2629,7 @@ def kpi_drilldown(disaster_event, dimension, limit=500):
 @frappe.whitelist(
     allow_guest=True
 )
+@rate_limit(limit=120, seconds=60)
 def public_dashboard(
     disaster_event_id
 ):
@@ -2782,6 +2796,7 @@ def _ba_dominant_area(poskos):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def active_disasters_board(limit=60):
     """Public 'Bencana Aktif' dashboard feed: every active RN Disaster Event
     with a per-region (kabupaten/kota) breakdown, rolled-up KPI totals, and a
@@ -3086,6 +3101,7 @@ def _resolve_flow_by_trace(code):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def flow_trace(flow=None, trace=None):
     """Public shipment tracking for ONE RN Distribution Flow, keyed by record
     name (`flow`) or by its `RN-XXXXXXXX` trace code (`trace`). Guest-safe
@@ -3175,6 +3191,7 @@ def _qty_fmt(value):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def distribusi_board(disaster_event=None):
     """Manajemen Distribusi dashboard (matches the DMS mock-up), guest
     read-only. One payload: KPI totals + drill items, the 4-column matching
@@ -3620,6 +3637,7 @@ _DELIVERY_LABEL = {
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def posko_distribusi_board(posko=None, disaster_event=None):
     """Workspace for a Posko Distribusi (posko_type='transport') — the party
     that provides transport equipment + space: bisa Garuda, kapal TNI AL,
@@ -4107,6 +4125,7 @@ def _org_program_count(org_name):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def org_posko_board(disaster_event=None):
     """Organisasi & Posko dashboard (matches the DMS mock-up), guest
     read-only. KPI totals + a tree (event -> organisasi -> posko) + a flat
@@ -4194,6 +4213,7 @@ def org_posko_board(disaster_event=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def org_detail(organization):
     """Detail rail for one organisasi — real fields + poskos + a simple
     member list (best-effort: RN User Account rows with this organization,
@@ -4246,6 +4266,7 @@ def org_detail(organization):
 # ============================================================
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def posko_verification_checklist(posko):
     """Real checklist for the mock-up's "Status Verifikasi Posko" panel —
     every item is a literal field-filled check, not a fabricated status."""
@@ -4282,6 +4303,7 @@ def posko_verification_checklist(posko):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def posko_registry_board(disaster_event=None, limit=200):
     """KPI totals + Daftar Posko table for the mock-up, guest read-only."""
     event = canonical_event(disaster_event) if disaster_event else None
@@ -4437,6 +4459,7 @@ def _my_posko_names(actor):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def posko_edit_scope(posko=None, disaster_event=None):
     """Tell a posko operational page how to scope itself for the viewer.
 
@@ -4542,6 +4565,7 @@ def _operate_href(posko_row, event):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def my_org_coordination(disaster_event=None):
     """Internal-organisation coordination board for a logged-in org member."""
     from urllib.parse import quote as _urlquote

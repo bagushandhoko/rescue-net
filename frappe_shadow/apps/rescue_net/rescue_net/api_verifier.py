@@ -11,6 +11,7 @@ RN Verification Endorsement / RN Verification Action.
 """
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime, cint
 
 from rescue_net.access_policy import rn_actor, is_system_manager, can_manage_posko
@@ -173,6 +174,7 @@ def apply_as_verifier(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def verifier_directory(wilayah=None, status="active", limit=200):
     """Public list of verifiers (optionally filtered by wilayah substring)."""
     filters = {}
@@ -458,6 +460,7 @@ def revoke_endorsement(endorsement, reason=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def posko_verification_public(posko):
     """Guest-readable credibility panel for a posko."""
     p = frappe.db.get_value(

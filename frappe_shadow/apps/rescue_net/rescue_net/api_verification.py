@@ -1,4 +1,5 @@
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, now_datetime
 
 from rescue_net.access_policy import (
@@ -467,6 +468,7 @@ def _f(v):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def approval_queue(disaster_event=None, limit=300):
     """Cross-doctype approval queue (matches the DMS mock-up), guest
     read-only. One payload: KPI totals + the queue rows for every kind,
@@ -544,6 +546,7 @@ def approval_queue(disaster_event=None, limit=300):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def approval_item_detail(kind, name):
     """Real record detail + linked evidence + a lightweight status timeline
     for the mock-up's "Detail Item" / "Jejak Audit" panels. No fabricated

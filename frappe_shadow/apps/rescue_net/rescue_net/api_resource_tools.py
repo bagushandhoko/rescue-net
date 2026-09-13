@@ -2,6 +2,7 @@ import math
 from collections import defaultdict
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event
 from rescue_net.intelligence.normalization import normalize_unit
 # classify_text via the registry so the live "Kelompok Alat" fallback honours
@@ -961,6 +962,7 @@ def _visible_request(actor, row):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def dashboard(disaster_event=None):
     # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
     disaster_event = resolve_disaster_event(disaster_event)
@@ -1278,6 +1280,7 @@ def _tb_drill(title, sub, href=""):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def tools_board(disaster_event=None):
     """Manajemen Alat Kerja dashboard (matches the DMS mock-up), guest read-only.
 
@@ -1698,6 +1701,7 @@ def _split_lines(text):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def resource_profile_board(user_account=None):
     """Profil Sumber Daya (matches the DMS mock-up) — a single volunteer/
     member's own profile: verified-contact chips, skills, personally-owned
@@ -1963,6 +1967,7 @@ def _predict_equipment(object_type, size_value, ready_by_category):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def work_objects_board(disaster_event=None):
     """Object Kerja & Prediksi Kebutuhan Alat — real reported incident/damage
     objects (longsoran/jembatan putus/puing berat/...) with a heuristic

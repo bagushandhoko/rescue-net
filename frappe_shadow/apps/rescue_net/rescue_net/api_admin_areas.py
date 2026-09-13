@@ -3,6 +3,7 @@ import urllib.parse
 import urllib.request
 
 import frappe
+from frappe.rate_limiter import rate_limit
 
 
 LEGACY_CHILDREN_URL = (
@@ -61,6 +62,7 @@ def _legacy_children(parent_code=None, level=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def get_children(parent_code=None, level=None):
     try:
         rows = _legacy_children(
@@ -79,5 +81,6 @@ def get_children(parent_code=None, level=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def get_provinces():
     return get_children(level="province")

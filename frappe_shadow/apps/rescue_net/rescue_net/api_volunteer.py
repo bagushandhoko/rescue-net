@@ -850,6 +850,7 @@ def add_evidence(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def dashboard(posko=None):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -1189,6 +1190,7 @@ def _num_i(v):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def volunteer_board(disaster_event=None):
     """Manajemen Relawan dashboard (matches the DMS mock-up), guest read-only.
 

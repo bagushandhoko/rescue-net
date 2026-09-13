@@ -5,6 +5,7 @@ ini lapisan perencanaan / masukan kebijakan (blueprint: Rehabilitation).
 """
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime, flt, cint
 
 from rescue_net.access_policy import rn_actor, is_system_manager
@@ -28,6 +29,7 @@ def _event(disaster_event):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def displacement_board(disaster_event=None):
     ev = _event(disaster_event)
     _f = ["name", "title", "household_code", "origin_area", "current_location",

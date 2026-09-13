@@ -4,6 +4,117 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
+_Last updated: 2026-09-13_ — closed 2 of the 3 "important, not yet fixed"
+items from the pre-deployment readiness audit, plus a new feature: DB
+backup/restore menu for System Manager.
+
+## Rate-limiting on every guest endpoint — DONE & DEPLOYED
+
+The readiness audit found only 2 endpoints app-wide used `@rate_limit`
+(`register`, `register_volunteer`) despite ~80 `allow_guest=True`
+functions across 21 files — cheap scrape/spam/DoS surface once a real
+public domain is live. A script-driven pass (regex-matched every
+`@frappe.whitelist(...allow_guest=True...)` immediately above a `def`,
+skipping the 2 already decorated) added `@rate_limit(...)` to the
+remaining ~78, classified into 3 buckets:
+- **Reads/dashboards/boards** (the large majority — `*_board`,
+  `dashboard`, `*_detail`, `public_context`, `compat/api.py`'s legacy
+  endpoints, etc.): `limit=120, seconds=60` — generous enough for normal
+  polling, blocks a tight scrape loop.
+- **Writes** (`fulfill_need`, `post_feedback`, `upvote_feedback`,
+  `submit_guest_aid_offer_multi`, `edit_guest_aid_offer`,
+  `book_transport_space_public`, `update_public_transport_booking`,
+  `submit_bid`): `limit=20, seconds=3600`.
+- **`edit_code`-guessing reads** (`get_guest_aid_offer`,
+  `get_public_transport_booking` — a guest looks up their own submission
+  by a shared secret code, so repeated guessing is a brute-force vector):
+  `limit=15, seconds=3600`.
+
+All IP-based (Frappe's default), no `key=` field — `frappe.rate_limiter`
+already namespaces by the called method (`cmd`), so no collision risk
+between endpoints. Deployed via `docker cp` + `chown frappe:frappe` +
+`chmod 644` (same docker-cp-lands-as-1024:users gotcha as every other
+deploy in this doc — hit it again mid-session, first `docker cp` landed
+one directory level too deep, e.g.
+`.../rescue_net/rescue_net/rescue_net/api_admin_areas.py` instead of
+`.../rescue_net/rescue_net/api_admin_areas.py` — cleaned up before
+recopying to the right path) + container restart. Verified: `bench
+execute rescue_net.api_gis.national_situation` returns the normal
+payload post-restart (no import/decorator errors across all 21 files),
+and all 21 files pass `python3 -m ast.parse` before deploy.
+
+## Dead FastAPI `.env` secret cleanup — DONE
+
+`/volume1/docker/rescue-net-api/.env` (container `rescue-net-api`,
+`Exited` 2+ weeks, confirmed zero references anywhere else under
+`/volume1/docker`) had a live `rescuenet_user` Postgres password and an
+`AI_KEY_ENCRYPTION_SECRET` sitting in plaintext with `777` permissions.
+Fixed: rotated `rescuenet_user`'s password in `postgres-main` (`ALTER
+USER ... WITH PASSWORD ...` — confirmed no other service uses
+`rescuenet_db`/`rescuenet_user`, `postgres-main` also separately hosts
+`osiun_db`/`osiun_user` for an unrelated app, untouched); old `.env`
+moved to `.env.leaked-rotated-20260913.bak` (`chmod 600`); live `.env`
+rewritten with the rotated password + a fresh unused dummy encryption
+secret + a comment explaining why, `chmod 600`.
+
+## Database Backup & Restore menu (System Manager only) — DONE & DEPLOYED
+
+New ask (not from the audit): a UI menu to back up and restore the RN
+database, gated to the top-level admin. No dedicated "super admin" page
+exists in the frontend — placed it as a new panel in `ai-settings.html`
+(the existing settings page closest to "admin secret key" in the user's
+mental model, already loads `session-role.js`), hidden unless
+`RN_SESSION.getUser().role === "system_manager"` (client-side
+progressive disclosure; real enforcement is server-side on every call).
+
+- **`api_system_admin.py`** (new): `list_backups()` reads the same
+  `backups_retained/<site>/<timestamp>/` directory the daily backup job
+  (`rescue_net.setup.db_backup`) already writes to. `trigger_backup()`
+  runs one on demand (calls the same `run_daily_backup()`). `restore_backup(
+  backup_timestamp, confirm_site_name)`:
+  1. Refuses unless `confirm_site_name` is typed exactly (the site name)
+     — the safety mechanism the owner asked for.
+  2. Takes one more safety snapshot of whatever is live RIGHT NOW before
+     touching anything, so a restore is itself always undoable.
+  3. Never restores in-process. `bench restore`'s own code path calls
+     `frappe.init()` and drops+recreates the schema — doing that inside
+     the live gunicorn worker handling the request would yank the DB out
+     from under every concurrent request. Instead spawns a fully detached
+     `bash -lc "bench --site <site> --force restore ..."` subprocess
+     (`start_new_session=True`), which on completion `clear-cache`s and
+     writes `restore_status.json` (polled by the frontend every 4s).
+  4. **Caveat surfaced in the UI, not fully automated**: after a restore,
+     the already-running backend/worker/scheduler containers still hold
+     pre-restore Redis cache / in-memory state. This code has no
+     docker-socket access from inside the container to restart siblings —
+     a human still needs to `docker restart osiun-frappe-*` from the host
+     afterward for a fully clean state (same as every other Python-file
+     deploy in this doc already required).
+  - Every function calls `_require_system_manager()` — `"System Manager"
+    not in frappe.get_roles(frappe.session.user)` → `PermissionError`.
+    `rescue_net.api_auth.me()` already resolves Administrator (no linked
+    `RN User Account`) to `role: "system_manager"`, matching what
+    `session-role.js`'s `roleAllows()` already treats as global
+    authority — no new role concept introduced.
+- **`ai-settings.html`** + **`system-admin.js`** (new): a
+  `#systemAdminSection` with a backup list + "Buat Backup Sekarang"
+  button, and a restore form (pick snapshot + type site name to confirm,
+  plus a native `confirm()` dialog as a second guard) that polls restore
+  status until done/failed.
+- **Verified against the live container** (bench console, not just
+  read): as Administrator, `list_backups()`/`trigger_backup()` work
+  (manual trigger produced a real second snapshot next to the daily
+  one); as a real non-system-manager `RN User Account` user
+  (`sim-ui-peduli@example.org`), every call correctly raises
+  `PermissionError`; `restore_backup()`'s guards correctly reject a wrong
+  `confirm_site_name` and a nonexistent snapshot timestamp.
+  **Not yet verified**: an actual end-to-end restore run (the
+  `bash -lc "bench restore"` subprocess path itself) — deliberately not
+  fired during this session per the hard-to-reverse-action guidance;
+  offered to the owner, not yet actioned. If testing this, the safest
+  option is restoring the just-taken backup onto itself (no data change
+  expected) rather than an older snapshot.
+
 _Last updated: 2026-09-12 (later same day, commit `4964b94`)_ — closed out
 the "laporan masyarakat" task (commits `d1c1318` + `4964b94`):
 

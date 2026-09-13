@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import cint, flt, now_datetime
 
@@ -131,6 +132,7 @@ def _class_fields(prefix=""):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def dashboard(posko=None):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -1416,6 +1418,7 @@ def add_evidence(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def public_dashboard(posko):
     if not public_posko_allowed(posko):
         frappe.throw(
@@ -2275,6 +2278,7 @@ def _load_guest_offer(aid_offer, edit_code, donor_contact=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=3600)
 def submit_guest_aid_offer_multi(
     disaster_event,
     donor_name,
@@ -2386,6 +2390,7 @@ def submit_guest_aid_offer_multi(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=15, seconds=3600)
 def get_guest_aid_offer(aid_offer, edit_code, donor_contact=None):
     """Fetch one guest offer (+ its batch siblings) for the edit form."""
     doc = _load_guest_offer(aid_offer, edit_code, donor_contact)
@@ -2404,6 +2409,7 @@ def get_guest_aid_offer(aid_offer, edit_code, donor_contact=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=3600)
 def edit_guest_aid_offer(
     aid_offer,
     edit_code,
@@ -2511,6 +2517,7 @@ def _guest_booking_view(doc):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=3600)
 def book_transport_space_public(
     transport_space,
     contact_person,
@@ -2609,12 +2616,14 @@ def book_transport_space_public(
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=15, seconds=3600)
 def get_public_transport_booking(booking, edit_code, contact_phone=None):
     """Lacak status booking tamu dengan Booking ID + Kode Edit (+ HP opsional)."""
     return _guest_booking_view(_load_guest_booking(booking, edit_code, contact_phone))
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=20, seconds=3600)
 def update_public_transport_booking(
     booking,
     edit_code,
@@ -3213,6 +3222,7 @@ def _row_base_split(row):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def item_groups(disaster_event=None, posko=None, kinds=None):
     """Canonical rollup of aid offers + needs + stock by
     (canonical_group, base_unit). Each group carries three honest numbers:
@@ -3339,6 +3349,7 @@ def item_groups(disaster_event=None, posko=None, kinds=None):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def item_group_members(group, disaster_event=None, unit=None, posko=None,
                        kinds=None):
     from rescue_net.intelligence.normalization import normalize_unit

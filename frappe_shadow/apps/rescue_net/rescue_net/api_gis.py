@@ -4,6 +4,7 @@ disaster events, aggregated by province (and city for drill-down). Point layer
 """
 
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime, cint
 
 _SEV_RANK = {"critical": 3, "urgent": 2, "high": 2, "normal": 1, "low": 0, "": 0, None: 0}
@@ -15,6 +16,7 @@ def _sev_max(a, b):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
 def national_situation(active_only=1):
     active_only = str(active_only).lower() in ("1", "true", "yes")
 

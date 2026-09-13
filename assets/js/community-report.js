@@ -1,4 +1,32 @@
 
+// Backend-shape mapping for a community report submission — shared by the
+// live POST below and by the offline queue (see setupCommunityReportForm),
+// so a report queued while offline reaches api_sync._apply_community_report
+// with the exact same field shape submit_community_report expects.
+function communityReportBridgePayload(body) {
+  return {
+    title: body.title,
+    description: body.description,
+    report_type: body.report_type || null,
+    priority: body.priority || null,
+    affected_people_count: Number(body.affected_people_count || 0),
+    urgent_needs: body.urgent_needs || null,
+    location_text: body.location_text || null,
+    latitude: body.latitude ?? body.lat ?? null,
+    longitude: body.longitude ?? body.lng ?? null,
+    province_code: body.province_code || null,
+    city_code: body.city_code || null,
+    district_code: body.district_code || null,
+    village_code: body.village_code || null,
+    consent_to_contact: body.consent_to_contact ? 1 : 0,
+    location_input_method: body.location_input_method || null,
+    create_need: body.create_need ? 1 : 0,
+    damage_scale_value: body.damage_scale_value ?? null,
+    damage_scale_unit: body.damage_scale_unit || null,
+    disaster_event: body.disaster_event_id || null
+  };
+}
+
 async function rnFetch(path, options = {}) {
   const method =
     String(
@@ -78,70 +106,7 @@ async function rnFetch(path, options = {}) {
     return await RN_FRAPPE.call(
       "rescue_net.api_frontend_bridge."
       + "submit_community_report_bridge",
-      {
-        title:
-          body.title,
-
-        description:
-          body.description,
-
-        report_type:
-          body.report_type || null,
-
-        priority:
-          body.priority || null,
-
-        affected_people_count:
-          Number(
-            body.affected_people_count || 0
-          ),
-
-        urgent_needs:
-          body.urgent_needs || null,
-
-        location_text:
-          body.location_text || null,
-
-        latitude:
-          body.latitude ?? body.lat ?? null,
-
-        longitude:
-          body.longitude ?? body.lng ?? null,
-
-        province_code:
-          body.province_code || null,
-
-        city_code:
-          body.city_code || null,
-
-        district_code:
-          body.district_code || null,
-
-        village_code:
-          body.village_code || null,
-
-        consent_to_contact:
-          body.consent_to_contact
-            ? 1
-            : 0,
-
-        location_input_method:
-          body.location_input_method || null,
-
-        create_need:
-          body.create_need
-            ? 1
-            : 0,
-
-        damage_scale_value:
-          body.damage_scale_value ?? null,
-
-        damage_scale_unit:
-          body.damage_scale_unit || null,
-
-        disaster_event:
-          body.disaster_event_id || null
-      },
+      communityReportBridgePayload(body),
       {
         method: "POST"
       }
@@ -492,6 +457,27 @@ function setupCommunityReportForm() {
       return;
     }
 
+    function queueOffline() {
+      window.RNSync.queueEvent({
+        object_type: "community_report",
+        operation: "create",
+        payload_json: communityReportBridgePayload(payload)
+      });
+      form.reset();
+      form.querySelector("input[name='location_input_method'][value='government_area_select']").checked = true;
+      updateLocationMessage();
+      if (msg) {
+        msg.textContent = "Tidak ada koneksi internet. Laporan disimpan di perangkat ini dan akan " +
+          "otomatis terkirim saat online kembali.";
+      }
+    }
+
+    // No signal at all: don't even attempt the request, queue right away.
+    if (!navigator.onLine && window.RNSync) {
+      queueOffline();
+      return;
+    }
+
     try {
       if (msg) msg.textContent = "Mengirim laporan...";
       const data = await rnFetch("/public/community-reports", {
@@ -511,7 +497,19 @@ function setupCommunityReportForm() {
       if (msg) msg.textContent = successText;
       await loadCommunityReports();
     } catch (err) {
-      if (msg) msg.textContent = err.message;
+      // err.status is only set once a response actually came back (see
+      // rn-frappe-client.js) — a bare fetch() network failure (offline, DNS,
+      // connection reset) throws a plain TypeError with no .status at all.
+      // Only THAT case is safe to queue; a real server-side validation
+      // error (400/403/500 with a message) must still surface as-is so the
+      // citizen can fix the form instead of queuing a request that will
+      // fail again identically once it syncs.
+      const isNetworkFailure = err.status === undefined;
+      if (isNetworkFailure && window.RNSync) {
+        queueOffline();
+      } else if (msg) {
+        msg.textContent = err.message;
+      }
     }
   });
 
@@ -560,4 +558,12 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCommunityReportForm();
   setupCommunityReportActions();
   loadCommunityReports();
+
+  // Reconciliation: a report queued offline gets pushed automatically by
+  // rn-sync-engine.js once the device is back online (see rnSetupAutoSync
+  // in laporan-masyarakat.html) — refresh the list so it stops showing
+  // only the local placeholder state once the real record exists server-side.
+  window.addEventListener("rn:sync-complete", () => {
+    loadCommunityReports().catch(() => {});
+  });
 });

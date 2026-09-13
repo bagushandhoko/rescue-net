@@ -239,9 +239,20 @@
 
   <script src="../assets/js/rn-public-header.js?v=eventlabel-20260912"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/community-report.js?v=predictneeds-20260912"></script>
+<script src="../assets/js/rn-sync-engine.js?v=offlinereport-20260913"></script>
+<script src="../assets/js/community-report.js?v=offlinereport-20260913"></script>
   <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
   <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
+  <script>
+    // Auto-retry a report queued while offline as soon as the device is
+    // back online (rn-sync-engine.js). See community-report.js's
+    // "rn:sync-complete" listener for the resulting list refresh.
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.RNSync && typeof rnSetupAutoSync === "function") {
+        rnSetupAutoSync();
+      }
+    });
+  </script>
 </body>
 </html>
 

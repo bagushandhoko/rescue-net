@@ -252,17 +252,148 @@ def _apply_resource_request(
     }
 
 
+def _apply_community_report(
+    event_id,
+    event,
+):
+    payload = event.get(
+        "payload_json"
+    ) or {}
+
+    title = payload.get("title")
+    description = payload.get(
+        "description"
+    )
+
+    if not title or not description:
+        return {
+            "apply_status": "rejected",
+            "reason": (
+                "title and description "
+                "are required"
+            ),
+        }
+
+    from rescue_net.api_reports import (
+        submit_community_report,
+    )
+
+    # Reuses the same code path as the online
+    # /public/community-reports submit — the offline
+    # queue payload is captured from that same form, so
+    # the shape matches. Runs in the pusher's own session
+    # (push() already requires login), so
+    # submit_community_report's own frappe.session.user ->
+    # RN User Account resolution attaches the real reporter.
+    result = submit_community_report(
+        title=title,
+        description=description,
+        report_type=payload.get(
+            "report_type"
+        ),
+        priority=payload.get(
+            "priority"
+        ),
+        affected_people_count=(
+            payload.get(
+                "affected_people_count"
+            )
+            or 0
+        ),
+        urgent_needs=payload.get(
+            "urgent_needs"
+        ),
+        location_text=payload.get(
+            "location_text"
+        ),
+        latitude=payload.get(
+            "latitude"
+        ),
+        longitude=payload.get(
+            "longitude"
+        ),
+        province_code=payload.get(
+            "province_code"
+        ),
+        city_code=payload.get(
+            "city_code"
+        ),
+        district_code=payload.get(
+            "district_code"
+        ),
+        village_code=payload.get(
+            "village_code"
+        ),
+        consent_to_contact=(
+            payload.get(
+                "consent_to_contact"
+            )
+            or 0
+        ),
+        location_input_method=(
+            payload.get(
+                "location_input_method"
+            )
+        ),
+        create_need=(
+            payload.get(
+                "create_need"
+            )
+            or 0
+        ),
+        damage_scale_value=payload.get(
+            "damage_scale_value"
+        ),
+        damage_scale_unit=payload.get(
+            "damage_scale_unit"
+        ),
+        disaster_event=payload.get(
+            "disaster_event"
+        ),
+    )
+
+    return {
+        "apply_status": "applied",
+        "object_type":
+            "community_report",
+        "local_object_id":
+            event.get("object_id"),
+        "server_object_id":
+            result["name"],
+        "community_need":
+            result.get(
+                "community_need"
+            ),
+    }
+
+
 def _apply_event(
     event_id,
     event,
 ):
+    object_type = event.get(
+        "object_type"
+    )
+    operation = event.get(
+        "operation"
+    )
+
     if (
-        event.get("object_type")
+        object_type
         == "resource_request"
-        and event.get("operation")
-        == "create"
+        and operation == "create"
     ):
         return _apply_resource_request(
+            event_id,
+            event,
+        )
+
+    if (
+        object_type
+        == "community_report"
+        and operation == "create"
+    ):
+        return _apply_community_report(
             event_id,
             event,
         )
@@ -622,117 +753,161 @@ def _prepare_scoped_booking_events(events):
         ).strip()
 
         if (
-            object_type
-            != "resource_request"
-            or operation != "create"
+            object_type == "resource_request"
+            and operation == "create"
         ):
-            frappe.throw(
-                "User biasa hanya boleh "
-                "Sync booking resource_request/create.",
-                frappe.PermissionError,
+            payload = _loads(
+                event.get(
+                    "payload_json"
+                ),
+                {},
             )
 
-        payload = _loads(
-            event.get(
-                "payload_json"
-            ),
-            {},
-        )
+            if not isinstance(
+                payload,
+                dict,
+            ):
+                frappe.throw(
+                    "payload_json booking tidak valid."
+                )
 
-        if not isinstance(
-            payload,
-            dict,
-        ):
-            frappe.throw(
-                "payload_json booking tidak valid."
-            )
+            requested_by_type = str(
+                payload.get(
+                    "requested_by_type"
+                )
+                or "user"
+            ).strip().lower()
 
-        requested_by_type = str(
-            payload.get(
-                "requested_by_type"
-            )
-            or "user"
-        ).strip().lower()
-
-        requested_by_id = (
-            payload.get(
-                "requested_by_id"
-            )
-        )
-
-        if requested_by_type in {
-            "user",
-            "individual",
-            "personal",
-            "other",
-            "lainnya",
-        }:
-            requested_by_type = "user"
             requested_by_id = (
+                payload.get(
+                    "requested_by_id"
+                )
+            )
+
+            if requested_by_type in {
+                "user",
+                "individual",
+                "personal",
+                "other",
+                "lainnya",
+            }:
+                requested_by_type = "user"
+                requested_by_id = (
+                    actor_name
+                    or frappe.session.user
+                )
+
+            elif requested_by_type in {
+                "organization",
+                "organisation",
+                "kelompok",
+                "group",
+            }:
+                if not actor_org:
+                    frappe.throw(
+                        "Akun ini belum terhubung "
+                        "ke Kelompok.",
+                        frappe.PermissionError,
+                    )
+
+                requested_by_type = "organization"
+                requested_by_id = actor_org
+
+            elif requested_by_type == "posko":
+                if not actor_posko:
+                    frappe.throw(
+                        "Akun ini belum terhubung "
+                        "ke Posko.",
+                        frappe.PermissionError,
+                    )
+
+                requested_by_id = actor_posko
+
+            else:
+                frappe.throw(
+                    "Tipe requester booking "
+                    "tidak valid.",
+                    frappe.PermissionError,
+                )
+
+            payload["requested_by_type"] = (
+                requested_by_type
+            )
+            payload["requested_by_id"] = (
+                requested_by_id
+            )
+
+            # Browser tidak menjadi authority
+            # untuk identitas user.
+            event["source_user_id"] = (
                 actor_name
                 or frappe.session.user
             )
 
-        elif requested_by_type in {
-            "organization",
-            "organisation",
-            "kelompok",
-            "group",
-        }:
-            if not actor_org:
+            event[
+                "source_organization_id"
+            ] = actor_org
+
+            event[
+                "disaster_event_id"
+            ] = payload.get(
+                "disaster_event_id"
+            )
+
+            event[
+                "payload_json"
+            ] = payload
+
+        elif (
+            object_type == "community_report"
+            and operation == "create"
+        ):
+            payload = _loads(
+                event.get(
+                    "payload_json"
+                ),
+                {},
+            )
+
+            if not isinstance(
+                payload,
+                dict,
+            ):
                 frappe.throw(
-                    "Akun ini belum terhubung "
-                    "ke Kelompok.",
-                    frappe.PermissionError,
+                    "payload_json laporan tidak valid."
                 )
 
-            requested_by_type = "organization"
-            requested_by_id = actor_org
+            # Browser tidak menjadi authority
+            # untuk identitas user — submit_community_report
+            # itself resolves the reporter from
+            # frappe.session.user, these are only for the
+            # RN Sync Log audit trail.
+            event["source_user_id"] = (
+                actor_name
+                or frappe.session.user
+            )
 
-        elif requested_by_type == "posko":
-            if not actor_posko:
-                frappe.throw(
-                    "Akun ini belum terhubung "
-                    "ke Posko.",
-                    frappe.PermissionError,
-                )
+            event[
+                "source_organization_id"
+            ] = actor_org
 
-            requested_by_id = actor_posko
+            event[
+                "disaster_event_id"
+            ] = _disaster_from_payload(
+                payload
+            )
+
+            event[
+                "payload_json"
+            ] = payload
 
         else:
             frappe.throw(
-                "Tipe requester booking "
-                "tidak valid.",
+                "User biasa hanya boleh Sync "
+                "booking resource_request/create "
+                "atau community_report/create.",
                 frappe.PermissionError,
             )
-
-        payload["requested_by_type"] = (
-            requested_by_type
-        )
-        payload["requested_by_id"] = (
-            requested_by_id
-        )
-
-        # Browser tidak menjadi authority
-        # untuk identitas user.
-        event["source_user_id"] = (
-            actor_name
-            or frappe.session.user
-        )
-
-        event[
-            "source_organization_id"
-        ] = actor_org
-
-        event[
-            "disaster_event_id"
-        ] = payload.get(
-            "disaster_event_id"
-        )
-
-        event[
-            "payload_json"
-        ] = payload
 
         prepared.append(event)
 

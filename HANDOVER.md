@@ -4126,6 +4126,51 @@ been rejected outright on sync, not just inert.
 - Deployed `api_sync.py` via the usual `docker cp` + `chown frappe:frappe`
   + `chmod` + restart. No `bench migrate` (pure Python).
 
+## Pre-deployment readiness audit + daily DB backup fix (2026-09-13) — BLOCKER CLOSED
+
+After the 6-pillar architecture audit + fixes above, owner asked what's
+left before real deployment. A fork-driven readiness pass across secrets,
+site config, backup/DR, rate-limiting, data hygiene, test coverage,
+legacy cleanup, TLS/domain, and PII-at-rest found one **blocker** and
+several **important** (not yet acted on) items:
+
+- **BLOCKER (fixed this entry): zero backups ever taken.**
+  `sites/osiun.localhost/private/backups/` was completely empty. The
+  scheduler was running (66 registered jobs) but every backup job Frappe
+  core ships (`dropbox_settings`/`s3_backup_settings`/`google_drive`
+  `take_backups_daily`) is a no-op unless that cloud storage is
+  configured — none were. Fixed by adding
+  `rescue_net.setup.db_backup.run_daily_backup()` as a
+  `scheduler_events["daily"]` hook (see the commit above it for full
+  detail) — runs inside the already-running Frappe scheduler, no OS
+  cron/root needed. **Caveat: still same single bind-mounted volume
+  (`/volume1`)** — this protects against accidental deletion / rotation
+  misconfig / container loss, NOT a real disk/NAS failure. Genuine
+  off-box backup (S3 bucket, rsync to another host) needs credentials
+  only the site owner has — offered, not yet actioned.
+- **Important, NOT yet fixed — flagging for a future session:**
+  - No rate-limiting on any `allow_guest=True` endpoint (only 2 endpoints
+    app-wide use `@rate_limit` at all: OTP login, volunteer contact).
+    This includes the just-shipped public `api_search_found.dashboard()`
+    (`limit_page_length=2000`, unauthenticated). Cheap scrape/DoS vector
+    once a real public domain is live.
+  - No real public domain + TLS. Backend is `127.0.0.1:8095` (loopback
+    only); the only external hostname configured is a Tailscale Funnel
+    mesh domain (`osiun.tail251e1e.ts.net`), not a production domain+cert.
+  - Zero automated tests (`find ... test_*.py` = 0 results). All
+    verification is manual smoke-test scripts + per-feature Playwright,
+    same as documented throughout this file — no CI, no regression net.
+  - `/volume1/docker/rescue-net-api/.env` (dead FastAPI, container
+    Exited 2+ weeks, confirmed zero references from the live frontend)
+    still has a live-looking `AI_KEY_ENCRYPTION_SECRET` and DB password
+    sitting on disk unrotated.
+  - All current data is simulation (3 documented sim runs: national-
+    support, karhutla, Krakatau — 7 Disaster Event / 27 Organization / 43
+    Posko / 31 Community Report / 6 Missing Person Report rows). No wipe/
+    reset script exists, and ~40 frontend JS call sites hardcode an
+    `"event-sim-001"` fallback — needs a plan before a real event launch
+    so old sim data + fallback defaults don't bleed into it.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

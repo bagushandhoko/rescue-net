@@ -4022,6 +4022,43 @@ link to `posko-detail.html`. An organisation that shares only `aggregate`
     intentionally-left-alone legacy 403).
   - Cache-buster: `style.css`/`program-khusus.js` → `?v=progkhusus-20260902`.
 
+## Search & Found dashboard opened to public (2026-09-13) — DONE & DEPLOYED
+
+Architecture audit flagged `api_search_found.dashboard()` as Partial: PII
+masking already worked (`person_name`/NIK were never in the `fields=` list),
+but the whole function required login, so a citizen without a Rescue-Net
+account couldn't search the missing/found list at all.
+
+- `dashboard()` → `@frappe.whitelist(allow_guest=True)`,
+  `actor = rn_actor(required=False)`. For a Guest actor, the existing
+  `_can_operate_posko` per-row filter is skipped — that filter is an
+  operational-management scope check (can this actor edit this posko's
+  records), not a privacy check, and a guest has no posko/org to scope by
+  in the first place. Any logged-in actor's behaviour (manager or plain
+  viewer) is byte-for-byte unchanged. `mode` now returns `"public"` for
+  guests alongside the existing `"manager"`/`"viewer"`.
+- `restricted_record()` (returns real `person_name`) deliberately left
+  untouched — still plain `@frappe.whitelist()` + `_assert_manager`, no
+  frontend caller exists for it today. Added a `# SECURITY` comment above
+  it as a guard against a future accidental `allow_guest=True`.
+- `search-found.js`: match-review buttons (Mark Reunited/Investigating/
+  Reject) now only render when `ctx.mode === "manager"` — this also
+  incidentally fixes a pre-existing bug where any logged-in non-manager
+  viewer saw buttons that `update_match_status()` would have rejected
+  anyway. The two create-report forms (`missingForm`/`foundForm`) are
+  `hidden` for `mode === "public"` instead of letting a guest submit and
+  hit a login error.
+- Verified against the live container (not just read): `curl` as Guest
+  returns HTTP 200 with `mode:"public"` and no `person_name` key anywhere
+  in the payload; `restricted_record` as Guest returns HTTP 403
+  ("Function ... is not whitelisted"); `bench execute` as Administrator
+  still returns `mode:"manager"` with the same rows as before.
+- Deployed via `docker cp` + `chown frappe:frappe` + `chmod` (docker cp
+  lands files as 1024:users, unreadable by the frappe user — same gotcha
+  as every other deploy in this doc) + container restart. No `bench
+  migrate` needed (pure Python, no schema change).
+- Cache-buster: `search-found.js` → `?v=publicdash-20260913`.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

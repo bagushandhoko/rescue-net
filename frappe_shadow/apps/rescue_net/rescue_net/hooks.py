@@ -19,6 +19,16 @@ after_install = [
     "rescue_net.setup.notification_defaults.install_defaults",
 ]
 
+# Frappe core's own backup jobs (dropbox/S3/Google Drive) are all no-ops
+# unless that cloud storage is configured — this site had none, so zero
+# backups were ever taken. See rescue_net.setup.db_backup for the caveats
+# (still same host volume, not genuine off-box backup).
+scheduler_events = {
+    "daily": [
+        "rescue_net.setup.db_backup.run_daily_backup",
+    ],
+}
+
 # Re-seed the editable rule tables after every migrate. All installers are
 # idempotent — they skip any row whose name already exists (org_brand_defaults
 # also skips any org whose brand_color was set by hand in Desk).

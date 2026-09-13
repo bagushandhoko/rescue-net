@@ -532,6 +532,8 @@ def add_evidence(
     }
 
 
+# SECURITY: returns unmasked person_name — must stay login + manager
+# gated. Never add allow_guest=True here.
 @frappe.whitelist()
 def restricted_record(
     doctype,
@@ -617,11 +619,15 @@ def _resolve_disaster_event(value):
     return value
 
 
-@frappe.whitelist()
+# Public listing: person_name/NIK are never in the `fields=` lists below
+# (only person_code + masked description/clothing), so this is safe to open
+# to Guest. Full identity stays behind restricted_record(), which is not
+# guest-accessible and still requires a manager role.
+@frappe.whitelist(allow_guest=True)
 def dashboard(disaster_event=None):
     # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
     disaster_event = resolve_disaster_event(disaster_event)
-    actor = rn_actor()
+    actor = rn_actor(required=False)
 
     resolved_event = (
         _resolve_disaster_event(
@@ -681,23 +687,34 @@ def dashboard(disaster_event=None):
         limit_page_length=2000,
     )
 
-    allowed_missing = []
+    if actor:
+        # Unchanged existing behaviour for any logged-in actor.
+        allowed_missing = []
 
-    for row in missing:
-        if _can_operate_posko(
-            actor,
-            row.posko,
-        ):
-            allowed_missing.append(row)
+        for row in missing:
+            if _can_operate_posko(
+                actor,
+                row.posko,
+            ):
+                allowed_missing.append(row)
 
-    allowed_found = []
+        allowed_found = []
 
-    for row in found:
-        if _can_operate_posko(
-            actor,
-            row.posko,
-        ):
-            allowed_found.append(row)
+        for row in found:
+            if _can_operate_posko(
+                actor,
+                row.posko,
+            ):
+                allowed_found.append(row)
+    else:
+        # Guest: the masked `fields=` lists above (person_code + generic
+        # description/clothing only, no person_name/NIK) are what make this
+        # safe to expose, so the network-wide list is shown unfiltered by
+        # posko/org — that scoping is an operational-management check, not
+        # a privacy one, and a citizen searching for missing family has no
+        # posko/org affiliation to scope by in the first place.
+        allowed_missing = missing
+        allowed_found = found
 
     missing_names = {
         x.name
@@ -742,7 +759,7 @@ def dashboard(disaster_event=None):
         "mode": (
             "manager"
             if _is_manager(actor)
-            else "viewer"
+            else ("viewer" if actor else "public")
         ),
         "missing": allowed_missing,
         "found": allowed_found,

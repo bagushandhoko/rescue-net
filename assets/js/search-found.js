@@ -190,7 +190,7 @@ function renderFound(items) {
         );
 }
 
-function renderMatches(items) {
+function renderMatches(items, canManage) {
   const el =
     document.getElementById(
       "matches"
@@ -246,7 +246,7 @@ function renderMatches(items) {
                   </span>
 
                   ${
-                    status !== "reunited"
+                    canManage && status !== "reunited"
                       ? `<button class="btn primary"
                            type="button"
                            onclick="updateMatchStatus(
@@ -259,7 +259,7 @@ function renderMatches(items) {
                   }
 
                   ${
-                    status === "candidate"
+                    canManage && status === "candidate"
                       ? `<button class="btn"
                            type="button"
                            onclick="updateMatchStatus(
@@ -272,6 +272,7 @@ function renderMatches(items) {
                   }
 
                   ${
+                    canManage &&
                     status !== "rejected" &&
                     status !== "reunited"
                       ? `<button class="btn"
@@ -430,9 +431,25 @@ async function loadSearchFound() {
       reunitedCount;
   }
 
+  const canManage = ctx.mode === "manager";
+
   renderMissing(missing);
   renderFound(found);
-  renderMatches(matches);
+  renderMatches(matches, canManage);
+
+  const missingFormEl =
+    document.getElementById("missingForm");
+  const foundFormEl =
+    document.getElementById("foundForm");
+
+  // Guest: browsing the masked list is allowed, but filing a new
+  // missing/found report requires a Rescue-Net account (backend still
+  // enforces this — this just avoids showing a form that will fail).
+  [missingFormEl, foundFormEl].forEach(form => {
+    if (form) {
+      form.hidden = ctx.mode === "public";
+    }
+  });
 
   const missingForm =
     document.getElementById(

@@ -4352,9 +4352,25 @@ a no-op). Renamed there. `pages/ai-settings.html` kept its filename/URL
 - Deployed `api_auth.py` via the usual `docker cp` + `sudo docker
   restart osiun-frappe-backend` (3 passes, as the `user_type` bug was
   found and fixed). Frontend files are the static-serve-is-deploy case
-  above. **Not yet committed/pushed to git** as of this entry — do that
-  next (`git add` the touched files, commit, `git push origin main` per
-  the SSH deploy key workflow).
+  above. Committed as `29e6933` and pushed to `origin/main`.
+- **Follow-up same day:** owner asked for an optional organization
+  filter on the Reset Password user picker ("supaya lebih mudah...
+  walaupun tidak harus dipakai karena ada yang non organisasi").
+  `admin_list_users` now also resolves each user's organization — same
+  precedence as `_primary_organization()` (direct `RN User
+  Account.organization` field first, else the first `approved` `RN
+  Organization Membership` row) — and returns a deduped `organizations`
+  list alongside `users`. Confirmed via direct SQL join against
+  `tabUser`/`tabRN User Account`/`tabRN Organization Membership` that
+  the mix is real: some accounts have a direct org, some only a
+  membership-table org, several have neither (individual
+  volunteers/donors) — exactly the "optional filter" the request
+  described. `rn-password-settings.js`'s `renderUserOptions()` now
+  combines the existing text search with an org `<select>` (both
+  optional, AND'd together when both are set); the option label appends
+  `— <organization title>` when present. No extra network round-trip —
+  everything comes back in the one `admin_list_users` call already
+  fetched on section load.
 
 ## Rules / gotchas
 

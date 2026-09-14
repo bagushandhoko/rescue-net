@@ -96,6 +96,12 @@
           <label>Cari User
             <input type="text" id="adminResetUserSearch" placeholder="Ketik email atau nama...">
           </label>
+          <label>Filter Organisasi
+            <span class="subtitle">Opsional — ada user tanpa organisasi.</span>
+            <select id="adminResetOrgFilter">
+              <option value="">Semua organisasi</option>
+            </select>
+          </label>
           <label>Pilih User
             <select name="user" id="adminResetUserSelect" required>
               <option value="">Memuat daftar user...</option>
@@ -304,7 +310,7 @@
 
 <script src="../assets/js/ai-settings.js?v=byok-org-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
-<script src="../assets/js/rn-password-settings.js?v=setting-20260914"></script>
+<script src="../assets/js/rn-password-settings.js?v=orgfilter-20260914"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/system-admin.js?v=backuprestore-20260913"></script>
 <script src="../assets/js/rn-public-header.js?v=home-authswitch-20260914"></script>

@@ -33,26 +33,52 @@
 
   /* ---- Reset password user lain (System Manager) ---- */
   let adminUsers = [];
+  let adminOrganizations = [];
 
-  function renderUserOptions(filter) {
+  // Both filters are optional and combine: text search always works,
+  // organization narrows further but plenty of accounts (individual
+  // volunteers/donors) have none, so it's never required.
+  function renderUserOptions() {
     const select = document.getElementById("adminResetUserSelect");
     if (!select) return;
-    const f = (filter || "").trim().toLowerCase();
-    const rows = f
-      ? adminUsers.filter(u =>
-          u.name.toLowerCase().includes(f) ||
-          (u.full_name || "").toLowerCase().includes(f))
-      : adminUsers;
+
+    const searchEl = document.getElementById("adminResetUserSearch");
+    const orgEl = document.getElementById("adminResetOrgFilter");
+    const f = ((searchEl && searchEl.value) || "").trim().toLowerCase();
+    const org = (orgEl && orgEl.value) || "";
+
+    const rows = adminUsers.filter(u => {
+      const matchesSearch = !f ||
+        u.name.toLowerCase().includes(f) ||
+        (u.full_name || "").toLowerCase().includes(f);
+      const matchesOrg = !org || u.organization_id === org;
+      return matchesSearch && matchesOrg;
+    });
 
     select.innerHTML = rows.length
-      ? rows.map(u => `<option value="${u.name}">${u.full_name || u.name} (${u.name})</option>`).join("")
+      ? rows.map(u => {
+          const orgLabel = u.organization_title ? ` — ${u.organization_title}` : "";
+          return `<option value="${u.name}">${u.full_name || u.name} (${u.name})${orgLabel}</option>`;
+        }).join("")
       : `<option value="">Tidak ada user cocok</option>`;
+  }
+
+  function renderOrgFilterOptions() {
+    const select = document.getElementById("adminResetOrgFilter");
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML =
+      `<option value="">Semua organisasi</option>` +
+      adminOrganizations.map(o => `<option value="${o.id}">${o.title}</option>`).join("");
+    if (adminOrganizations.some(o => o.id === current)) select.value = current;
   }
 
   async function loadAdminUsers() {
     const data = await window.RN_FRAPPE.call("rescue_net.api_auth.admin_list_users");
     adminUsers = data.users || [];
-    renderUserOptions("");
+    adminOrganizations = data.organizations || [];
+    renderOrgFilterOptions();
+    renderUserOptions();
   }
 
   // Guarantee at least 1 uppercase + 1 digit so it always passes the
@@ -121,7 +147,13 @@
     const search = document.getElementById("adminResetUserSearch");
     if (search && !search.dataset.wired) {
       search.dataset.wired = "1";
-      search.addEventListener("input", () => renderUserOptions(search.value));
+      search.addEventListener("input", () => renderUserOptions());
+    }
+
+    const orgFilter = document.getElementById("adminResetOrgFilter");
+    if (orgFilter && !orgFilter.dataset.wired) {
+      orgFilter.dataset.wired = "1";
+      orgFilter.addEventListener("change", () => renderUserOptions());
     }
 
     const genBtn = document.getElementById("adminGeneratePasswordBtn");

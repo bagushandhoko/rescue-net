@@ -543,7 +543,13 @@ def change_password(old_password=None, new_password=None):
 @frappe.whitelist()
 def admin_list_users(search=None):
     """System Manager only — user picker for the admin reset-password
-    tool. Excludes Administrator/service accounts and Guest."""
+    tool. Excludes Administrator/service accounts and Guest. Also
+    resolves each user's organization (same precedence as
+    `_primary_organization`: direct `RN User Account.organization` field
+    first, else the first approved `RN Organization Membership` row) so
+    the frontend can offer an optional organization filter — optional
+    because plenty of accounts (individual volunteers/donors) have none.
+    """
     if not is_system_manager():
         frappe.throw("Hanya System Manager.", frappe.PermissionError)
 
@@ -560,16 +566,67 @@ def admin_list_users(search=None):
             ["full_name", "like", f"%{search}%"],
         ]
 
-    rows = frappe.get_all(
+    users = frappe.get_all(
         "User",
         filters=filters,
         or_filters=or_filters,
         fields=["name", "full_name"],
         order_by="full_name asc",
-        limit_page_length=200,
+        limit_page_length=500,
     )
 
-    return {"users": rows}
+    if not users:
+        return {"users": [], "organizations": []}
+
+    user_names = [u.name for u in users]
+
+    accounts = frappe.get_all(
+        "RN User Account",
+        filters={"frappe_user": ("in", user_names)},
+        fields=["name", "frappe_user", "organization"],
+    )
+    account_by_user = {a.frappe_user: a for a in accounts}
+
+    membership_org = {}
+    account_names = [a.name for a in accounts]
+    if account_names:
+        for m in frappe.get_all(
+            "RN Organization Membership",
+            filters={"user_account": ("in", account_names), "status": "approved"},
+            fields=["user_account", "organization"],
+        ):
+            membership_org.setdefault(m.user_account, m.organization)
+
+    org_id_by_user = {}
+    for user_name, account in account_by_user.items():
+        org_id_by_user[user_name] = account.organization or membership_org.get(account.name)
+
+    org_ids = sorted({v for v in org_id_by_user.values() if v})
+    org_title = {}
+    if org_ids:
+        for o in frappe.get_all(
+            "RN Organization",
+            filters={"name": ("in", org_ids)},
+            fields=["name", "title"],
+        ):
+            org_title[o.name] = o.title or o.name
+
+    rows = [
+        {
+            "name": u.name,
+            "full_name": u.full_name,
+            "organization_id": org_id_by_user.get(u.name),
+            "organization_title": org_title.get(org_id_by_user.get(u.name)),
+        }
+        for u in users
+    ]
+
+    organizations = [
+        {"id": oid, "title": org_title.get(oid, oid)}
+        for oid in org_ids
+    ]
+
+    return {"users": rows, "organizations": organizations}
 
 
 @frappe.whitelist()

@@ -148,6 +148,24 @@ body {
   opacity: 1;
 }
 
+/* rn-navigation-v2.css's hover/active states (rgba(255,255,255,...)) are
+   tuned for the dark .sidebar used on most other pages — nearly invisible
+   against this sidebar's light/white background. Override with the same
+   dark-on-light treatment .cc-sidebar nav a.active already uses above. */
+.cc-sidebar .rn-nav-v2-summary:hover {
+  background: #fff0eb;
+}
+
+.cc-sidebar .rn-nav-v2-link:hover {
+  background: rgba(232, 117, 88, .08);
+}
+
+.cc-sidebar .rn-nav-v2-link.active,
+.cc-sidebar .rn-nav-v2-link[aria-current="page"] {
+  background: #fff0eb;
+  color: var(--red);
+}
+
 .cc-system {
   margin-top: auto;
 

@@ -20,7 +20,7 @@
 .rn-nav-v2-group[data-rn-group="posko-fn"] {
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid var(--line, rgba(0, 0, 0, .12));
 }
 
 .rn-nav-v2-group[data-rn-group="posko-fn"] .rn-nav-v2-summary {
@@ -51,7 +51,7 @@
 }
 
 .rn-nav-v2-summary:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(244, 167, 134, .30), rgba(255, 255, 255, .55));
 }
 
 .rn-nav-v2-chevron {
@@ -117,12 +117,13 @@
 }
 
 .rn-nav-v2-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(90deg, rgba(244, 167, 134, .30), rgba(255, 255, 255, .55));
 }
 
 .rn-nav-v2-link.active,
 .rn-nav-v2-link[aria-current="page"] {
-  background: rgba(255, 255, 255, 0.14);
+  background: linear-gradient(90deg, rgba(244, 167, 134, .30), rgba(255, 255, 255, .55));
+  color: #2d211b;
   font-weight: 700;
 }
 

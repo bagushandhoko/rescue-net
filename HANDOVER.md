@@ -4636,6 +4636,50 @@ gap if not double-checked via md5sum before moving on. Worth remembering:
 always diff local-vs-container after *every* backend file edit, not
 just at the end of a batch.
 
+## Mobile sidebar: "Posko" menu missing + washed-out nav contrast (2026-09-14)
+
+Owner: "di control centre hp, side menu posko kok nggak muncul" then
+"cek juga menu2 hp sudah bener di semua halaman."
+
+**Root cause 1 — Posko wasn't missing, just collapsed by default on
+pages that aren't themselves a Posko/Modul/Donasi/Pengaturan member.**
+`rn-navigation-v2.js`'s `renderNavigation()` replaces the whole `<nav>`
+with 4 collapsible `<details>` groups; when the current page isn't
+listed in any `CONFIG` group (checked which pages: 13 of them —
+`war-room.html`, `bencana-aktif.html`, `data-consolidation.html`,
+`disaster-detail.html`, `edit-bantuan.html`, `lacak-logistik.html`,
+`notifikasi-settings.html`, `control-centre-v4.html`, plus guest pages
+that don't use this nav at all), only "Modul" auto-opened as a fallback
+— leaving "Posko" (the group operators need most, and the one this
+report was about) collapsed and easy to miss, especially cramped in a
+mobile drawer. Swapped the fallback: `groupHtml("Posko", ..., !anyMatch)`
+instead of Modul. Real effect: **every one of those cross-posko/orphan
+pages**, not just Control Centre.
+
+**Root cause 2 — nav-v2's hover/active states were built for a dark
+sidebar this app doesn't have.** `rn-navigation-v2.css` used
+`rgba(255,255,255,...)` overlays for `.rn-nav-v2-summary:hover`/
+`.rn-nav-v2-link:hover`/`.active` — but BOTH sidebar contexts it renders
+into are light: the shared `.sidebar` (`style.css`, a light peach
+gradient) used by ~30 pages, and Control Centre's own `.cc-sidebar`
+(near-white). White-on-near-white at 8-14% opacity is nearly invisible.
+Fixed at the source in `rn-navigation-v2.css`: swapped to the same warm
+peach gradient (`rgba(244,167,134,.30)` → `rgba(255,255,255,.55)`,
+`color:#2d211b`) that `style.css`'s original `nav a:hover, nav a.active`
+already uses elsewhere in the app — benefits every `.sidebar` page, not
+just Control Centre. Control Centre's own `.cc-sidebar` gets an
+additional, more-specific override in `rn-control-centre-final.css`
+(`.cc-sidebar .rn-nav-v2-link.active` → `var(--red)`/`#fff0eb`) to match
+that page's own established red/pink accent instead of the generic
+peach, layered on top of the now-fixed base — not a conflict, the more
+specific rule just wins there.
+
+Bumped cache-busters on `rn-navigation-v2.js` (all 38 pages that load
+it), `rn-navigation-v2.css` (same 38), and `rn-control-centre-final.css`
+(war-room.html). Not independently browser-verified (no screenshot
+capability this session) — verified via curl that the deployed CSS/JS
+match source and the logic is sound; flag for a real-device check.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

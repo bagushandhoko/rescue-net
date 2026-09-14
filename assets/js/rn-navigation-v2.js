@@ -305,9 +305,13 @@
     nav.setAttribute("data-rn-navigation-version", CONFIG.version);
     nav.setAttribute("aria-label", "Navigasi operasional Rescue-Net");
 
-    // If the current page isn't itself a member of either group (e.g. Control
-    // Centre, Map), neither would auto-open, leaving the sidebar visually
-    // empty below two collapsed headers. Default "Modul" open in that case.
+    // Pages like Control Centre, Bencana Aktif, Data Konsolidasi aren't
+    // themselves a member of any group, so none would auto-open by default
+    // — reported as "menu Posko kok nggak muncul" (it was there, just
+    // collapsed behind an easy-to-miss toggle, on exactly these
+    // cross-posko dashboards where jumping to a specific posko is the
+    // single most common next click). Default "Posko" open in that case,
+    // not "Modul" — Posko is the group operators need most often.
     const anyMatch =
       CONFIG.posko.some(item => isActive(item.href)) ||
       CONFIG.modules.some(item => isActive(item.href)) ||
@@ -315,9 +319,9 @@
       CONFIG.pengaturan.some(item => isActive(item.href));
 
     nav.innerHTML =
-      groupHtml("Posko", CONFIG.posko, "posko") +
+      groupHtml("Posko", CONFIG.posko, "posko", !anyMatch) +
       groupHtml("Donasi & Program Khusus", CONFIG.donasi, "donasi") +
-      groupHtml("Modul", CONFIG.modules, "modul", !anyMatch) +
+      groupHtml("Modul", CONFIG.modules, "modul") +
       groupHtml("Pengaturan", CONFIG.pengaturan, "pengaturan");
 
     wireAccordion(nav);

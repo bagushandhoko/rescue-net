@@ -4403,16 +4403,18 @@ explicitly saying candidates are not fabricated until a real duplicate-
 detection model exists. The "Duplicate Need Candidates" panel being empty
 is by design, not related to the fix above.
 
-**Also flagged, not yet fixed:** `rn-public-header.js`'s top-nav `links`
-array hardcodes `?event=event-sim-001` on both "Control Centre" and "Data
-Konsolidasi" — clicking either from a page where a *different* disaster
-event is active silently switches back to `event-sim-001` instead of
-preserving context (the operator-sidebar equivalent links get this via
-`rn-navigation-v2.js`'s `preserveEventContext()`; the public header nav
-never runs anything equivalent). Owner also described a desired flow —
-logistics-need KPIs on Control Centre / Bencana Aktif should be clickable
-through to Data Konsolidasi, drillable down to the raw source record —
-which doesn't exist yet as any kind of link today; this is new work, not
+**Also flagged at the time, fixed later the same day — see the "Data
+Konsolidasi: real drill-down + click-through" entry below:**
+`rn-public-header.js`'s top-nav `links` array hardcodes `?event=event-sim-001`
+on both "Control Centre" and "Data Konsolidasi" — clicking either from a page
+where a *different* disaster event is active silently switches back to
+`event-sim-001` instead of preserving context (the operator-sidebar equivalent
+links get this via `rn-navigation-v2.js`'s `preserveEventContext()`; the
+public header nav never runs anything equivalent). Owner also described a
+desired flow — logistics-need KPIs on Control Centre / Bencana Aktif should be
+clickable through to Data Konsolidasi, drillable down to the raw source
+record — which doesn't exist yet as any kind of link today; this is new work,
+not
 a fix. Deployed `api_intelligence.py` via the usual `docker cp` + restart.
 
 ## Data Konsolidasi: real drill-down + click-through from Control Centre / Bencana Aktif (2026-09-14)
@@ -4482,6 +4484,87 @@ Deployed `api_intelligence.py` via the usual `docker cp` + restart;
 static frontend files (all the `.js`/`.css`/`.html` above) are
 serve-from-disk, no deploy step, cache-busting query params bumped on
 every page that loads the touched shared files.
+
+## Real duplicate-need detection + dead link/hardcoded-event fixes from the review pass (2026-09-14)
+
+Owner asked for a review of everything done that day, then: "benerin
+semua, dan hindari duplikasi sistem yg di rancang sdh jalan belum, untuk
+hindari terjadi laporan duplikasi di daerah yg sama atau berdekatan,
+kamu sudah tau rancangannya?"
+
+**Honest answer at the time: no automated design existed.** Searched the
+whole app for any duplicate/proximity-matching doctype or algorithm —
+none. The only real anti-duplication mechanism was the MAX-not-SUM
+consolidation rule (`_group_rows`, fixed earlier this session) which
+prevents double-counting *within the same named area* — real, but does
+nothing for two reports in *nearby but differently-named* areas. The
+`duplicate_candidates()` endpoint that was supposed to surface literal
+duplicate pairs for review was an intentional stub returning `[]`
+("tidak difabrikasi... sampai canonical duplicate model tersedia").
+
+**Built a real first-pass version** in `api_frontend_bridge.py`:
+`duplicate_candidates(disaster_event)` now compares open `RN Logistic
+Need` rows grouped by canonical item (so unrelated items never get
+compared), and flags a pair when either (a) both sides' posko have
+GPS coordinates within `DUPLICATE_RADIUS_KM = 3.0` km of each other
+(haversine — new `_haversine_km` helper, no existing geo-distance util
+in the codebase) — "berdekatan" — or (b) neither has coordinates but
+they share the same posko village name — "daerah yang sama" fallback.
+Same posko reporting the same item twice is skipped (that's not a
+duplicate, just one source). Computed live on every read, capped at the
+top 100 by score — no new doctype/persisted table. **Verified live
+against real event-sim-001 data: found 6 real candidate pairs**, e.g.
+two different posko ~0.4km apart both logging "Air Bersih" needs.
+
+**While wiring this, found the whole page's write-action layer was
+dead**: `data-consolidation.js`'s `rnFetch()` only had explicit routes
+for GET-style reads — every POST/PATCH ("Check Duplicate", "Rebuild
+Consolidated Needs", the duplicate resolve buttons, AND the Raw Reports
+Queue's "Review Lokasi / Tandai Agregat / Verified Unique" buttons) fell
+through to the generic `unsupported_consolidation_operation` stub and
+always failed, with **no try/catch anywhere in `setupActions()`** so
+failures were silent (unhandled promise rejection, no visible error).
+Fixed the two that matter for the duplicate-avoidance story specifically:
+- New `duplicates_check()` — candidates are computed live, so this just
+  validates the event and reports the current count instead of being a
+  fake no-op.
+- New `community_report_set_consolidation()` — this is the actual
+  human-in-the-loop half of duplicate handling (an operator marking a
+  raw `RN Community Report` as `verified_unique` / `excluded_aggregate`
+  / `needs_location_review`). Was rendering as if it worked since a
+  2026-09-04 session but the PATCH never had a real backend. **Verified
+  live**: changed a real report's `consolidation_status`, confirmed via
+  SQL, reverted it back.
+- Both routes added to `rnFetch()`, both click handlers (+ the
+  duplicate-resolve one) now wrapped in try/catch showing
+  `err.message` via the status line instead of failing silently.
+- **Left alone, flagged clearly, not fixed**: "Rebuild Consolidated
+  Needs" (`/consolidated-needs/rebuild`) still hits the honest stub on
+  purpose — turning raw reports into a persisted consolidated-need draft
+  is a real, separate feature needing a canonical doctype/workflow
+  decision, not something to build blind in the same pass.
+
+**Also fixed while in this file** (found during the review, not part of
+the original ask but directly relevant): `community-report.js` had
+`disaster_event_id: "event-sim-001"` hardcoded in the report-list fetch
+AND the public submission form's payload — meaning every "Laporan
+Masyarakat" submitted through the public form, for ANY real disaster,
+silently got filed under the sim event and would never show up under
+the real one. Now reads `window.rnActiveEvent` (set by
+`rn-public-header.js`, loaded first on this page) with the old literal
+as a last-resort fallback only. Same pattern likely exists on other
+pages not audited this pass — worth a dedicated grep sweep for
+`"event-sim-001"` as a literal string sometime.
+
+**Also fixed**: the "Buka laporan masyarakat →" drill-down link added
+earlier this session pointed at `laporan-masyarakat.html?report=<id>`,
+but that page never read a `report` param — dead link (low real-world
+impact since `RN Community Need` has ~1 row system-wide, but a real gap
+found on review). `community-report.js`'s `reportCard()` now gives each
+card `id="report-<id>"` and `loadCommunityReports()` scrolls to + flashes
+(reuses `.rn-kpi-jump-highlight`) the matching card via that param.
+
+Deployed `api_frontend_bridge.py` via the usual `docker cp` + restart.
 
 ## Rules / gotchas
 

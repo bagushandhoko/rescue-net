@@ -1,5 +1,7 @@
 import base64
+import math
 import uuid
+from collections import defaultdict
 
 import frappe
 from frappe.utils import flt, now_datetime
@@ -1589,18 +1591,207 @@ def consolidated_needs(
     return result
 
 
+DUPLICATE_RADIUS_KM = 3.0
+
+
+def _haversine_km(lat1, lng1, lat2, lng2):
+    if None in (lat1, lng1, lat2, lng2):
+        return None
+
+    r = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lng2 - lng1)
+    a = (
+        math.sin(dphi / 2) ** 2
+        + math.cos(p1) * math.cos(p2) * math.sin(dlambda / 2) ** 2
+    )
+
+    return 2 * r * math.asin(math.sqrt(a))
+
+
 @frappe.whitelist()
 def duplicate_candidates(
     disaster_event,
 ):
+    """Real first-pass duplicate detector — not fabricated, but computed
+    live every call (no persisted "resolved" state yet; the Needs Review /
+    Not Duplicate / Confirm Duplicate buttons in the UI don't have
+    anywhere real to save to until a canonical duplicate model exists —
+    same caveat as before, just no longer hidden behind an always-empty
+    stub).
+
+    Compares open `RN Logistic Need` rows for the same disaster event,
+    grouped by canonical item/group so unrelated items are never compared,
+    and flags a pair as a candidate when either:
+    - both sides' posko have coordinates and are within
+      `DUPLICATE_RADIUS_KM` of each other ("berdekatan"), or
+    - neither has coordinates but their posko share the same village name
+      ("daerah yang sama") — a coarser fallback for posko without GPS set.
+    Two needs logged by the SAME posko are not a "duplicate" of each
+    other (that's just the same source reporting twice), so those pairs
+    are skipped.
+    """
+    _actor()
+    event = _canonical_event(disaster_event)
+
+    need_fields = _safe_fields(
+        "RN Logistic Need",
+        [
+            "name", "disaster_event", "posko", "item_name",
+            "canonical_group", "canonical_item", "need_status",
+        ],
+    )
+    needs = frappe.get_all(
+        "RN Logistic Need",
+        filters={
+            "disaster_event": event,
+            "need_status": ["in", ["open", "needs_review"]],
+        },
+        fields=need_fields,
+        limit_page_length=2000,
+    )
+
+    posko_ids = list({n.get("posko") for n in needs if n.get("posko")})
+    posko_geo = {}
+    if posko_ids:
+        for p in frappe.get_all(
+            "RN Posko",
+            filters={"name": ["in", posko_ids]},
+            fields=["name", "latitude", "longitude", "village_name", "district_name"],
+        ):
+            posko_geo[p.name] = p
+
+    enriched = []
+    for n in needs:
+        p = posko_geo.get(n.get("posko")) or {}
+        item_key = (
+            n.get("canonical_item")
+            or n.get("canonical_group")
+            or n.get("item_name")
+            or ""
+        ).strip().lower()
+
+        if not item_key or not n.get("posko"):
+            continue
+
+        enriched.append({
+            "name": n.get("name"),
+            "posko": n.get("posko"),
+            "item_key": item_key,
+            "lat": p.get("latitude"),
+            "lng": p.get("longitude"),
+            "area": p.get("village_name") or p.get("district_name"),
+        })
+
+    by_item = defaultdict(list)
+    for row in enriched:
+        by_item[row["item_key"]].append(row)
+
+    candidates = []
+    for rows in by_item.values():
+        for i in range(len(rows)):
+            for j in range(i + 1, len(rows)):
+                a, b = rows[i], rows[j]
+
+                if a["posko"] == b["posko"]:
+                    continue
+
+                dist = _haversine_km(a["lat"], a["lng"], b["lat"], b["lng"])
+                reason = None
+                score = 0
+
+                if dist is not None and dist <= DUPLICATE_RADIUS_KM:
+                    reason = "Lokasi berdekatan (~%.1f km), item sama" % dist
+                    score = max(30, round(100 - (dist / DUPLICATE_RADIUS_KM) * 40))
+                elif dist is None and a["area"] and a["area"] == b["area"]:
+                    reason = "Area sama (%s), item sama, posko tanpa koordinat" % a["area"]
+                    score = 55
+
+                if reason:
+                    candidates.append({
+                        "id": "%s::%s" % (a["name"], b["name"]),
+                        "object_type": "RN Logistic Need",
+                        "object_id_a": a["name"],
+                        "object_id_b": b["name"],
+                        "match_reason": reason,
+                        "match_score": score,
+                        "status": "pending_review",
+                    })
+
+    candidates.sort(key=lambda c: c["match_score"], reverse=True)
+
+    return candidates[:100]
+
+
+@frappe.whitelist()
+def duplicates_check(disaster_event, object_type="all"):
+    """"Check Duplicate" button on Data Konsolidasi. `duplicate_candidates`
+    is computed live on every read (no persisted table to refresh), so this
+    just validates the event and reports the current count — kept as a
+    real endpoint (not the generic unsupported-operation stub) so the
+    button gives honest, specific feedback instead of a canned error."""
+    _actor()
+    event = _canonical_event(disaster_event)
+
+    count = len(duplicate_candidates(event))
+
+    return {
+        "ok": True,
+        "disaster_event": event,
+        "object_type": object_type,
+        "candidate_count": count,
+    }
+
+
+@frappe.whitelist()
+def community_report_set_consolidation(
+    report,
+    consolidation_status=None,
+    location_status=None,
+    is_aggregate=None,
+    reviewer_id=None,
+    notes=None,
+):
+    """"Review Lokasi / Tandai Agregat / Verified Unique" buttons on Data
+    Konsolidasi's Raw Reports Queue — the actual human-in-the-loop
+    duplicate/aggregate resolution mechanism (distinct from the automated
+    proximity detector above, which only flags candidates for a human to
+    look at). Was previously unrouted in the frontend's rnFetch() and fell
+    through to `unsupported_consolidation_operation`, so these buttons
+    always failed silently despite rendering as if they worked."""
     _actor()
 
-    # Candidate duplicate tidak difabrikasi.
-    # Return empty sampai canonical duplicate
-    # model benar-benar tersedia.
-    _canonical_event(disaster_event)
+    if not frappe.db.exists("RN Community Report", report):
+        frappe.throw("RN Community Report tidak ditemukan.")
 
-    return []
+    fields = _safe_fields(
+        "RN Community Report",
+        ["consolidation_status", "location_status", "is_aggregate"],
+    )
+
+    updates = {}
+    if consolidation_status is not None and "consolidation_status" in fields:
+        updates["consolidation_status"] = consolidation_status
+    if location_status is not None and "location_status" in fields:
+        updates["location_status"] = location_status
+    if is_aggregate is not None and "is_aggregate" in fields:
+        updates["is_aggregate"] = (
+            1 if str(is_aggregate).lower() in ("1", "true", "yes") else 0
+        )
+
+    if not updates:
+        frappe.throw("Tidak ada field consolidation yang valid untuk diupdate.")
+
+    frappe.db.set_value("RN Community Report", report, updates)
+    frappe.db.commit()
+
+    frappe.logger().info(
+        "[community_report_set_consolidation] %s -> %s oleh %s (%s)"
+        % (report, updates, reviewer_id or frappe.session.user, notes or "")
+    )
+
+    return {"ok": True, "report": report, "updated": updates}
 
 
 @frappe.whitelist()

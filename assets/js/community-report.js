@@ -87,6 +87,7 @@ async function rnFetch(path, options = {}) {
           url.searchParams.get(
             "disaster_event_id"
           )
+          || window.rnActiveEvent
           || "event-sim-001",
 
         status:
@@ -310,7 +311,7 @@ function reportCard(report) {
   const locationStatus = report.location_status || "no_coordinate";
   const consolidationStatus = report.consolidation_status || "not_ready_no_location";
   return `
-    <article class="event-card community-report-item">
+    <article class="event-card community-report-item" id="report-${report.id}">
       <div class="event-main">
         <div>
           <h4>${safeText(report.title)}</h4>
@@ -343,10 +344,23 @@ async function loadCommunityReports() {
   target.innerHTML = "<p class=\"subtitle\">Loading laporan masyarakat...</p>";
   try {
     const status = document.querySelector("[data-community-status-filter]")?.value || "";
-    const reports = await rnFetch(`/community-reports?disaster_event_id=event-sim-001${status ? `&status=${status}` : ""}`);
+    const activeEvent = window.rnActiveEvent || "event-sim-001";
+    const reports = await rnFetch(`/community-reports?disaster_event_id=${encodeURIComponent(activeEvent)}${status ? `&status=${status}` : ""}`);
     target.innerHTML = reports.length
       ? reports.map(reportCard).join("")
       : "<p class=\"subtitle\">Belum ada laporan pada filter ini.</p>";
+
+    // Deep link from another page (e.g. Data Konsolidasi's rollup source
+    // drill-down) — ?report=<id> scrolls to and briefly highlights it.
+    const wantedReport = new URLSearchParams(location.search).get("report");
+    if (wantedReport) {
+      const el = document.getElementById(`report-${wantedReport}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("rn-kpi-jump-highlight");
+        setTimeout(() => el.classList.remove("rn-kpi-jump-highlight"), 1600);
+      }
+    }
   } catch (err) {
     target.innerHTML = `<p class="subtitle">${err.message}</p>`;
   }
@@ -416,7 +430,7 @@ function setupCommunityReportForm() {
     const lat = numberOrNull(form.lat.value);
     const lng = numberOrNull(form.lng.value);
     const payload = {
-      disaster_event_id: "event-sim-001",
+      disaster_event_id: window.rnActiveEvent || "event-sim-001",
       reporter_name: form.reporter_name.value.trim(),
       reporter_phone: form.reporter_phone.value.trim(),
       reporter_role: form.reporter_role.value,

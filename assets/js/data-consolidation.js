@@ -158,6 +158,35 @@ async function rnFetch(path, options = {}) {
     );
   }
 
+  if (url.pathname === "/duplicates/check" && method === "POST") {
+    const body = JSON.parse(options.body || "{}");
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge.duplicates_check",
+      {
+        disaster_event: body.disaster_event_id || eventId,
+        object_type: body.object_type || "all"
+      },
+      { method: "POST" }
+    );
+  }
+
+  if (/^\/community-reports\/[^/]+\/consolidation$/.test(url.pathname) && method === "PATCH") {
+    const body = JSON.parse(options.body || "{}");
+    const report = url.pathname.split("/")[2];
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge.community_report_set_consolidation",
+      {
+        report,
+        consolidation_status: body.consolidation_status,
+        location_status: body.location_status,
+        is_aggregate: body.is_aggregate,
+        reviewer_id: body.reviewer_id,
+        notes: body.notes
+      },
+      { method: "POST" }
+    );
+  }
+
   if (method !== "GET") {
     return await RN_FRAPPE.call(
       "rescue_net.api_frontend_bridge."
@@ -372,7 +401,7 @@ function sourceRowHtml(s) {
     href = `posko-logistik.html?id=${encodeURIComponent(stripPrefix(s.posko, "posko_nodes:"))}&event=${encodeURIComponent(eventId)}`;
     linkLabel = "Buka di Posko Logistik →";
   } else if (s.source_report) {
-    href = `laporan-masyarakat.html?report=${encodeURIComponent(s.source_report)}`;
+    href = `laporan-masyarakat.html?report=${encodeURIComponent(s.source_report)}&event=${encodeURIComponent(eventId)}`;
     linkLabel = "Buka laporan masyarakat →";
   }
   return `
@@ -535,59 +564,88 @@ async function loadDataConsolidation() {
 function setupActions() {
   document.querySelector("[data-check-duplicates]")?.addEventListener("click", async () => {
     setText("[data-consolidation-status]", "Checking duplicate candidates...");
-    await rnFetch("/duplicates/check", {
-      method: "POST",
-      body: JSON.stringify({ disaster_event_id: EVENT_ID, object_type: "all" })
-    });
-    await loadDataConsolidation();
+    try {
+      const r = await rnFetch("/duplicates/check", {
+        method: "POST",
+        body: JSON.stringify({ disaster_event_id: EVENT_ID, object_type: "all" })
+      });
+      await loadDataConsolidation();
+      setText("[data-consolidation-status]", `${(r && r.candidate_count) || 0} kandidat duplikat ditemukan.`);
+    } catch (err) {
+      setText("[data-consolidation-status]", err.message);
+    }
   });
 
   document.querySelector("[data-check-community-duplicates]")?.addEventListener("click", async () => {
     setText("[data-consolidation-status]", "Checking community report overlap...");
-    await rnFetch("/duplicates/check", {
-      method: "POST",
-      body: JSON.stringify({ disaster_event_id: EVENT_ID, object_type: "community_report" })
-    });
-    await loadDataConsolidation();
+    try {
+      await rnFetch("/duplicates/check", {
+        method: "POST",
+        body: JSON.stringify({ disaster_event_id: EVENT_ID, object_type: "community_report" })
+      });
+      await loadDataConsolidation();
+    } catch (err) {
+      setText("[data-consolidation-status]", err.message);
+    }
   });
 
+  // NOTE: turning raw reports into a persisted "consolidated need" draft
+  // is a real, separate feature (needs a canonical Frappe doctype/workflow
+  // decision) that hasn't been built — this still hits the honest
+  // unsupported-operation stub on purpose, not silently.
   document.querySelector("[data-rebuild-consolidated]")?.addEventListener("click", async () => {
     setText("[data-consolidation-status]", "Rebuilding consolidated needs...");
-    await rnFetch(`/consolidated-needs/rebuild?disaster_event_id=${encodeURIComponent(EVENT_ID)}`, {
-      method: "POST"
-    });
-    await loadDataConsolidation();
+    try {
+      await rnFetch(`/consolidated-needs/rebuild?disaster_event_id=${encodeURIComponent(EVENT_ID)}`, {
+        method: "POST"
+      });
+      await loadDataConsolidation();
+    } catch (err) {
+      setText("[data-consolidation-status]", err.message);
+    }
   });
 
   document.addEventListener("click", async (event) => {
     const btn = event.target.closest("[data-resolve-duplicate]");
     if (!btn) return;
-    await rnFetch(`/duplicates/${btn.getAttribute("data-resolve-duplicate")}/resolve`, {
-      method: "POST",
-      body: JSON.stringify({
-        status: btn.getAttribute("data-status"),
-        reviewed_by: "operator-web",
-        review_notes: "Updated from Data Konsolidasi UI"
-      })
-    });
-    await loadDataConsolidation();
+    // Candidates are now real (computed live from posko proximity/area —
+    // see api_frontend_bridge.duplicate_candidates), but there's still no
+    // canonical model to persist a resolve decision to, so this always
+    // fails server-side. Surface that honestly instead of failing silent.
+    try {
+      await rnFetch(`/duplicates/${btn.getAttribute("data-resolve-duplicate")}/resolve`, {
+        method: "POST",
+        body: JSON.stringify({
+          status: btn.getAttribute("data-status"),
+          reviewed_by: "operator-web",
+          review_notes: "Updated from Data Konsolidasi UI"
+        })
+      });
+      await loadDataConsolidation();
+    } catch (err) {
+      setText("[data-consolidation-status]", err.message);
+    }
   });
 
   document.addEventListener("click", async (event) => {
     const btn = event.target.closest("[data-community-consolidation]");
     if (!btn) return;
     const status = btn.getAttribute("data-status");
-    await rnFetch(`/community-reports/${btn.getAttribute("data-community-consolidation")}/consolidation`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        consolidation_status: status,
-        location_status: status === "verified_unique" ? "verified_location" : undefined,
-        is_aggregate: status === "excluded_aggregate" ? true : undefined,
-        reviewer_id: "operator-web",
-        notes: "Updated from Data Konsolidasi UI"
-      })
-    });
-    await loadDataConsolidation();
+    try {
+      await rnFetch(`/community-reports/${btn.getAttribute("data-community-consolidation")}/consolidation`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          consolidation_status: status,
+          location_status: status === "verified_unique" ? "verified_location" : undefined,
+          is_aggregate: status === "excluded_aggregate" ? true : undefined,
+          reviewer_id: "operator-web",
+          notes: "Updated from Data Konsolidasi UI"
+        })
+      });
+      await loadDataConsolidation();
+    } catch (err) {
+      setText("[data-consolidation-status]", err.message);
+    }
   });
 
   // KPI cards -> jump to + briefly highlight the panel with that detail.

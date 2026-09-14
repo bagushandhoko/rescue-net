@@ -5,7 +5,7 @@
 (function () {
   "use strict";
 
-  var PAGE_SIZE = 3;
+  var PAGE_SIZE = 7;
   var METHOD = "rescue_net.api_control_centre.active_disasters_board";
 
   var state = {

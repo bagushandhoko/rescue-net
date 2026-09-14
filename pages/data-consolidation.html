@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Data Konsolidasi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=rollupdrill-20260914">
+  <link rel="stylesheet" href="../assets/css/style.css?v=balistfix-20260914">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -57,21 +57,21 @@
     </header>
 
     <section class="kpi-grid">
-      <div class="kpi-card"><span class="kpi-icon" data-icon="clipboard-check"></span><span>Raw Reports</span><strong data-raw-reports>0</strong><small>laporan mentah</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="layers"></span><span>Consolidated Needs</span><strong data-consolidated-count>0</strong><small>draft final kebutuhan</small></div>
-      <div class="kpi-card warning"><span class="kpi-icon" data-icon="search"></span><span>Duplicate Candidates</span><strong data-duplicate-count>0</strong><small>perlu review</small></div>
-      <div class="kpi-card danger"><span class="kpi-icon" data-icon="map-pin"></span><span>Location Review</span><strong data-location-review-count>0</strong><small>butuh titik/akurasi</small></div>
+      <button class="kpi-card rn-kpi-btn" type="button" data-kpi-target="panelRawReports"><span class="kpi-icon" data-icon="clipboard-check"></span><span>Raw Reports</span><strong data-raw-reports>0</strong><small>laporan mentah · lihat daftar</small></button>
+      <button class="kpi-card rn-kpi-btn" type="button" data-kpi-target="panelConsolidated"><span class="kpi-icon" data-icon="layers"></span><span>Consolidated Needs</span><strong data-consolidated-count>0</strong><small>draft final kebutuhan · lihat daftar</small></button>
+      <button class="kpi-card warning rn-kpi-btn" type="button" data-kpi-target="panelDuplicates"><span class="kpi-icon" data-icon="search"></span><span>Duplicate Candidates</span><strong data-duplicate-count>0</strong><small>perlu review · lihat daftar</small></button>
+      <button class="kpi-card danger rn-kpi-btn" type="button" data-kpi-target="panelRawReports"><span class="kpi-icon" data-icon="map-pin"></span><span>Location Review</span><strong data-location-review-count>0</strong><small>butuh titik/akurasi · lihat di Raw Reports</small></button>
     </section>
 
     <section class="kpi-grid">
-      <div class="kpi-card warning"><span class="kpi-icon" data-icon="layers"></span><span>Aggregate Reports</span><strong data-aggregate-count>0</strong><small>jangan dijumlahkan otomatis</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="scale"></span><span>Rule</span><strong>MAX</strong><small>safe first pass, bukan SUM</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="target"></span><span>Granularity</span><strong>GPS</strong><small>desa/point diprioritaskan</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="shield-check"></span><span>AI Guard</span><strong>WARN</strong><small>raw overlap diberi warning</small></div>
+      <button class="kpi-card warning rn-kpi-btn" type="button" data-kpi-target="panelRawReports"><span class="kpi-icon" data-icon="layers"></span><span>Aggregate Reports</span><strong data-aggregate-count>0</strong><small>jangan dijumlahkan otomatis · lihat di Raw Reports</small></button>
+      <button class="kpi-card rn-kpi-btn" type="button" data-kpi-target="panelRollup"><span class="kpi-icon" data-icon="scale"></span><span>Rule</span><strong>MAX</strong><small>safe first pass, bukan SUM · lihat rollup</small></button>
+      <button class="kpi-card rn-kpi-btn" type="button" data-kpi-target="panelAreas"><span class="kpi-icon" data-icon="target"></span><span>Granularity</span><strong>GPS</strong><small>desa/point diprioritaskan · lihat area</small></button>
+      <button class="kpi-card rn-kpi-btn" type="button" data-kpi-target="panelDuplicates"><span class="kpi-icon" data-icon="shield-check"></span><span>AI Guard</span><strong>WARN</strong><small>raw overlap diberi warning · lihat duplicate</small></button>
     </section>
 
     <section class="content-grid">
-      <div class="panel">
+      <div class="panel" id="panelRollup">
         <div class="panel-header">
           <div>
             <h3>Rollup Nasional / Range View</h3>
@@ -89,7 +89,7 @@
     </section>
 
     <section class="content-grid">
-      <div class="panel">
+      <div class="panel" id="panelRawReports">
         <div class="panel-header">
           <div>
             <h3>Raw Reports Queue</h3>
@@ -99,7 +99,7 @@
         <div class="event-list" data-raw-report-queue></div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="panelDuplicates">
         <div class="panel-header">
           <div>
             <h3>Duplicate Need Candidates</h3>
@@ -109,7 +109,7 @@
         <div class="event-list" data-duplicate-candidates></div>
       </div>
 
-      <aside class="panel summary">
+      <aside class="panel summary" id="panelAreas">
         <h3>Operational Area Warnings</h3>
         <p class="subtitle">Organisasi level provinsi harus punya child area/posko sebelum dipakai untuk distribusi desa.</p>
         <div class="event-list" data-operational-areas></div>
@@ -117,7 +117,7 @@
     </section>
 
     <section class="content-grid">
-      <div class="panel">
+      <div class="panel" id="panelConsolidated">
         <div class="panel-header">
           <div>
             <h3>Consolidated Needs</h3>
@@ -149,7 +149,7 @@
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-public-header.js?v=navevent-20260914"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/data-consolidation.js?v=rollupdrill-20260914"></script>
+<script src="../assets/js/data-consolidation.js?v=kpijump-20260914"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=pengaturan-20260914"></script>

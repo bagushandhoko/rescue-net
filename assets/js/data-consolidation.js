@@ -589,6 +589,17 @@ function setupActions() {
     });
     await loadDataConsolidation();
   });
+
+  // KPI cards -> jump to + briefly highlight the panel with that detail.
+  document.querySelectorAll("[data-kpi-target]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(btn.getAttribute("data-kpi-target"));
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.add("rn-kpi-jump-highlight");
+      setTimeout(() => target.classList.remove("rn-kpi-jump-highlight"), 1600);
+    });
+  });
 }
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -536,6 +536,16 @@ a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3
   font-weight: 700;
 }
 
+/* Brief flash on a panel after a KPI card jump-scrolls to it. */
+.rn-kpi-jump-highlight {
+  animation: rn-kpi-jump-flash 1.6s ease;
+}
+
+@keyframes rn-kpi-jump-flash {
+  0%, 100% { box-shadow: var(--shadow); border-color: var(--line); }
+  15% { box-shadow: 0 0 0 3px rgba(232,117,88,.35), var(--shadow); border-color: rgba(232,117,88,.55); }
+}
+
 .event-main {
   display: flex;
   justify-content: space-between;
@@ -4904,7 +4914,11 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   width: 100%;
 }
 
-.rn-ba-grid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); align-items: start; }
+/* align-items: stretch (the grid default) so .rn-ba-list-panel's
+   flex/flex:1-on-table-wrap trick below can actually fill the row height
+   instead of shrink-wrapping its own (often shorter) content while the
+   taller .rn-ba-summary sibling leaves it looking cut short. */
+.rn-ba-grid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); align-items: stretch; }
 .rn-ba-list-panel { display: flex; flex-direction: column; }
 .rn-ba-list-panel .rn-table-wrap { flex: 1 1 auto; }
 .rn-ba-list-panel .rn-table-foot { margin-top: auto; }

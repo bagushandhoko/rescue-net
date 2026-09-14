@@ -514,3 +514,90 @@ def register(
             "peran " + role_key + " menunggu verifikasi."
         ),
     }
+
+
+@frappe.whitelist()
+@rate_limit(limit=6, seconds=60 * 60)
+def change_password(old_password=None, new_password=None):
+    """Self-service password change on the Setting page — any logged-in
+    user, own account only. Verifies `old_password` against the stored
+    hash first (frappe.utils.password.check_password already raises
+    frappe.AuthenticationError on mismatch); other active sessions for
+    this user are logged out, current one is kept.
+    """
+    from frappe.utils.password import check_password, update_password
+
+    user = _require_login()
+
+    if not old_password or not new_password:
+        frappe.throw("Password lama dan password baru wajib diisi.")
+
+    check_password(user, old_password)
+    _check_password_strength(new_password)
+
+    update_password(user, new_password, logout_all_sessions=True)
+
+    return {"ok": True, "message": "Password berhasil diubah."}
+
+
+@frappe.whitelist()
+def admin_list_users(search=None):
+    """System Manager only — user picker for the admin reset-password
+    tool. Excludes Administrator/service accounts and Guest."""
+    if not is_system_manager():
+        frappe.throw("Hanya System Manager.", frappe.PermissionError)
+
+    # No user_type restriction: most Rescue-Net accounts are "Website User"
+    # (register() creates them that way) — filtering to "System User" here
+    # left the picker showing almost nobody. "Guest" is Frappe's built-in
+    # placeholder row (always present, not a real login) — exclude it too.
+    filters = {"enabled": 1, "name": ("not in", ["Administrator", "Guest"])}
+    or_filters = None
+    search = (search or "").strip()
+    if search:
+        or_filters = [
+            ["name", "like", f"%{search}%"],
+            ["full_name", "like", f"%{search}%"],
+        ]
+
+    rows = frappe.get_all(
+        "User",
+        filters=filters,
+        or_filters=or_filters,
+        fields=["name", "full_name"],
+        order_by="full_name asc",
+        limit_page_length=200,
+    )
+
+    return {"users": rows}
+
+
+@frappe.whitelist()
+@rate_limit(limit=20, seconds=60 * 60)
+def admin_reset_password(user=None, new_password=None):
+    """System Manager only — force-set another user's password (lost
+    password / support request), skipping the old-password check that
+    `change_password` requires for a self-service change. All of the
+    target user's existing sessions are logged out so they must
+    re-authenticate with the new password."""
+    from frappe.utils.password import update_password
+
+    if not is_system_manager():
+        frappe.throw("Hanya System Manager.", frappe.PermissionError)
+
+    user = (user or "").strip()
+    if not user or user == "Administrator":
+        frappe.throw("User tidak valid.")
+
+    if not frappe.db.exists("User", user):
+        frappe.throw("User tidak ditemukan.")
+
+    _check_password_strength(new_password)
+
+    update_password(user, new_password, logout_all_sessions=True)
+
+    frappe.logger().info(
+        f"[admin_reset_password] password direset oleh {frappe.session.user} untuk {user}"
+    )
+
+    return {"ok": True, "message": "Password user berhasil direset."}

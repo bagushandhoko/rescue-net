@@ -4282,6 +4282,80 @@ several **important** (not yet acted on) items:
     `"event-sim-001"` fallback — needs a plan before a real event launch
     so old sim data + fallback defaults don't bleed into it.
 
+## Home-page login state + Setting page (change/reset password) (2026-09-14)
+
+Owner reported Google login worked but the home page (`index.html`) kept
+showing "Login/registrasi" after logging in. Root cause: the home page
+has its own hand-built header (`.welcome-nav`/`.welcome-login-link`,
+`body.home-page`), separate from the dynamic header every other page gets
+from `rn-public-header.js`. That script explicitly skips `isHome` pages
+**and** `index.html` never even loaded the script — so the home login
+link was never checked against `session_info`. Fixed by adding
+`wireHomeAuthArea()` to `rn-public-header.js` (reuses the static
+`.welcome-login-link` element instead of building a duplicate one) and
+including the script on `index.html`. Verified live via curl that the
+updated JS + matching markup selectors are being served (this repo's
+`assets/`/`pages/`/`index.html` are served as static files directly —
+editing them on disk *is* the deploy, no container/build step).
+
+**"Setting" page** (owner asked to rename "AI Settings" → "Setting",
+make it available to everyone, and add change-password + admin
+reset-password): `rn-navigation-v2.js`'s `CONFIG.modules` array is the
+single source of the sidebar nav label (it fully replaces each page's
+static `<nav>` markup at runtime — editing the per-page HTML `<nav>` is
+a no-op). Renamed there. `pages/ai-settings.html` kept its filename/URL
+(only the label changed) and gained:
+- `change_password(old_password, new_password)` in `api_auth.py` — any
+  logged-in user, own account only; verifies the old password via
+  `frappe.utils.password.check_password`, enforces the same
+  `_check_password_strength` rule `register()` already uses, then
+  `update_password(..., logout_all_sessions=True)` (kicks other devices,
+  keeps the session that made the call).
+- `admin_list_users(search)` + `admin_reset_password(user, new_password)`
+  — System Manager only (`access_policy.is_system_manager()`), same
+  pattern as `api_system_admin._require_system_manager()`. Reset skips
+  the old-password check and force-logs-out every session of the target
+  user.
+- New `assets/js/rn-password-settings.js` wires both forms; the admin
+  section (`#adminResetPasswordSection`) hides itself for non-
+  `system_manager` users exactly like `#systemAdminSection` (backup/
+  restore) already did via `system-admin.js`.
+- **Bug found + fixed same session:** `admin_list_users`'s first cut
+  filtered `user_type = "System User"` — but `register()` creates every
+  public-signup account as `user_type = "Website User"`, so the picker
+  came back nearly empty. Dropped that filter (kept `enabled=1`,
+  excluded `Administrator` **and** `Guest` — the latter is Frappe's
+  always-present placeholder row in `tabUser`, not a real login).
+  Confirmed via direct SQL against `tabUser` before/after.
+- **Verified live, not just read:** logged in via curl as the seeded
+  demo account `ld1.demo@rescue-net.local` (`LandRover2026!` — see the
+  demo-passwords entry above) and drove `change_password` through wrong-
+  old-password (rejected), weak-new-password (rejected), and a real
+  round-trip (old password stops working, new one logs in) — then
+  changed it back to `LandRover2026!` so the demo credential stays
+  stable for the next session. Also confirmed a non-`system_manager`
+  session gets `PermissionError` from both `admin_list_users` and
+  `admin_reset_password`. Did **not** get to click-test the admin
+  Reset-Password/Backup-Restore UI in a real browser as an actual
+  System Manager — no such credential was available this session;
+  worth a follow-up check.
+- Owner then asked to tidy the page layout: regrouped everything into 4
+  titled sections in this order — **Ganti Password** (everyone) /
+  **Reset Password** (System Manager) / **Backup & Restore** (System
+  Manager, was `#systemAdminSection`) / **AI Setting** (BYOK key mgmt +
+  usage + design notes, unchanged functionality) — via new
+  `.rn-settings-group` / `.rn-settings-group-title` rules added to
+  `style.css`. Each admin-only group's `hidden` toggle moved from an
+  inner panel onto the group wrapper `div`; JS that reads
+  `#adminResetPasswordSection`/`#systemAdminSection` by id needed no
+  changes since the ids just moved elements.
+- Deployed `api_auth.py` via the usual `docker cp` + `sudo docker
+  restart osiun-frappe-backend` (3 passes, as the `user_type` bug was
+  found and fixed). Frontend files are the static-serve-is-deploy case
+  above. **Not yet committed/pushed to git** as of this entry — do that
+  next (`git add` the touched files, commit, `git push origin main` per
+  the SSH deploy key workflow).
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

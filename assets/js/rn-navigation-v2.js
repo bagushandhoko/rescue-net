@@ -129,7 +129,7 @@
         icon: "ai-analyst"
       },
       {
-        label: "AI Settings",
+        label: "Setting",
         href: "ai-settings.html",
         icon: "ai-settings"
       },

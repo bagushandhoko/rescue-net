@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | AI Settings</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=contentgridfix-20260912">
+  <title>Rescue-Net | Setting</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=settingsgroup-20260914">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=navgis-20260904" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -39,7 +39,7 @@
       <a href="evidence.html?event=event-sim-001">Evidence</a>
       <a href="verification-approval.html?event=event-sim-001">Verification</a>
       <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
-      <a class="active" href="ai-settings.html">AI Settings</a>
+      <a class="active" href="ai-settings.html">Setting</a>
       <a href="notifikasi-settings.html">Notifikasi WhatsApp</a>
       <a href="sync-console.html?event=event-sim-001">Sync Console</a>
       <a href="contact-directory.html">Contact Directory</a>
@@ -48,200 +48,270 @@
 
   <main class="main">
     <header class="topbar">
-    <div class="rn-page-mobile-title">AI Settings</div>
+    <div class="rn-page-mobile-title">Setting</div>
 
       <div>
-        <p class="eyebrow">BYOK · Bring Your Own Key</p>
-        <h2>AI Settings</h2>
-        <p class="subtitle">Setiap user/organisasi dapat memakai API key AI sendiri. Secret key disimpan terenkripsi dan tidak ditampilkan ulang.</p>
+        <p class="eyebrow">Akun & AI</p>
+        <h2>Setting</h2>
+        <p class="subtitle">Ganti password akun Anda, kelola API key AI, dan (System Manager) reset password user &amp; backup/restore database.</p>
         <p class="subtitle" id="aiSettingsStatus">Ready.</p>
       </div>
-      <div class="status-pill">Encrypted User Key</div>
+      <div class="status-pill">Akun Anda</div>
     </header>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Current AI Key Status</h3>
-            <p>Status key aktif untuk user/provider.</p>
-          </div>
-        </div>
-
-        <div class="summary-list" id="keyStatus">
-          <div><span>Status</span><b>Not loaded</b></div>
-        </div>
-
-        <div class="form-actions">
-          <button class="btn" type="button" id="checkKeyBtn">Check Key Status</button>
-          <button class="btn" type="button" id="testKeyBtn">Uji Koneksi</button>
-          <button class="btn" type="button" id="deleteKeyBtn">Delete Key</button>
-        </div>
-        <p class="subtitle" id="testKeyMsg"></p>
+    <div class="rn-settings-group">
+      <div class="rn-settings-group-title">
+        <h2>Ganti Password</h2>
+        <p>Ubah password akun Anda sendiri.</p>
       </div>
 
-      <aside class="panel summary">
-        <h3>Save AI Key (Personal)</h3>
-        <p class="subtitle">Gunakan key dummy untuk test. Jangan taruh key asli di GitHub atau chat.</p>
-
-        <form class="rn-form" id="aiKeyForm">
-          <label>User ID
-            <input name="user_id" value="user-demo-001" required>
+      <section class="panel">
+        <form class="rn-form" id="changePasswordForm">
+          <label>Password Lama
+            <input name="old_password" type="password" required autocomplete="current-password">
           </label>
-
-          <label>Organization ID
-            <input name="organization_id" value="org-bpbd-aceh">
+          <label>Password Baru
+            <input name="new_password" type="password" required minlength="8" autocomplete="new-password">
           </label>
-
-          <label>Provider
-            <select name="provider">
-              <option value="openai">openai</option>
-            </select>
+          <label>Ulangi Password Baru
+            <input name="confirm_password" type="password" required minlength="8" autocomplete="new-password">
           </label>
-
-          <label>Model
-            <select name="model_name">
-              <option value="gpt-4o-mini">gpt-4o-mini</option>
-              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-              <option value="gpt-4.1">gpt-4.1</option>
-            </select>
-          </label>
-
-          <label>API Key
-            <input name="api_key" type="password" placeholder="Paste API key here" required>
-          </label>
-
-          <label>Key Label
-            <input name="api_key_label" value="Demo User Key">
-          </label>
-
+          <p class="subtitle">Minimal 8 karakter, mengandung 1 huruf besar dan 1 angka.</p>
           <div class="form-actions">
-            <button class="btn primary" type="submit">Save Encrypted Key</button>
+            <button class="btn primary" type="submit">Ubah Password</button>
           </div>
         </form>
-      </aside>
-    </section>
+        <p class="subtitle" id="changePasswordMsg"></p>
+      </section>
+    </div>
 
-    <section class="content-grid" id="orgKeySection" hidden>
-      <div class="panel">
-        <div class="panel-header"><div><h3>Kunci AI Organisasi</h3><p>Dipakai anggota organisasi yang belum punya kunci pribadi.</p></div></div>
-        <div class="summary-list" id="orgKeyStatus"><div><span>Status</span><b>—</b></div></div>
-        <div class="form-actions">
-          <button class="btn" type="button" id="orgCheckBtn">Cek Status</button>
-          <button class="btn" type="button" id="orgTestBtn">Uji Koneksi</button>
-          <button class="btn" type="button" id="orgDeleteBtn">Hapus Kunci Org</button>
-        </div>
-        <p class="subtitle" id="orgKeyMsg"></p>
+    <div class="rn-settings-group" id="adminResetPasswordSection" hidden>
+      <div class="rn-settings-group-title">
+        <h2>Reset Password</h2>
+        <p>System Manager saja. Reset password user manapun tanpa perlu password lama — untuk kasus lupa password / support. User yang direset akan otomatis logout dari semua device.</p>
       </div>
-      <aside class="panel summary">
-        <h3>Simpan Kunci AI Organisasi</h3>
-        <form class="rn-form" id="orgKeyForm">
-          <label>Organization ID<input name="organization_id" readonly></label>
-          <label>Provider<select name="provider"><option value="openai">openai</option></select></label>
-          <label>Model
-            <select name="model_name">
-              <option value="gpt-4o-mini">gpt-4o-mini</option>
-              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-              <option value="gpt-4.1">gpt-4.1</option>
+
+      <section class="panel">
+        <form class="rn-form" id="adminResetPasswordForm">
+          <label>Cari User
+            <input type="text" id="adminResetUserSearch" placeholder="Ketik email atau nama...">
+          </label>
+          <label>Pilih User
+            <select name="user" id="adminResetUserSelect" required>
+              <option value="">Memuat daftar user...</option>
             </select>
           </label>
-          <label>API Key<input name="api_key" type="password" placeholder="Paste API key" required></label>
-          <label>Label<input name="api_key_label" value="Org Key"></label>
-          <div class="form-actions"><button class="btn primary" type="submit">Simpan Kunci Org</button></div>
-        </form>
-      </aside>
-    </section>
-
-    <section class="panel">
-      <div class="panel-header"><div><h3>Pemakaian AI (30 hari)</h3><p>Log jumlah panggilan &amp; token — tanpa isi pertanyaan/jawaban, tanpa secret.</p></div></div>
-      <div class="summary-list" id="aiUsage"><div><span>—</span><b>belum dimuat</b></div></div>
-      <div class="form-actions">
-        <button class="btn" type="button" id="usageUserBtn">Pemakaian Saya</button>
-        <button class="btn" type="button" id="usageOrgBtn" hidden>Pemakaian Organisasi</button>
-      </div>
-    </section>
-
-    <section class="content-grid" id="systemAdminSection" hidden>
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Database Backup</h3>
-            <p>Snapshot harian otomatis (retensi 30 hari) + backup manual. System Manager saja.</p>
-          </div>
-          <button class="btn primary" type="button" id="triggerBackupBtn">Buat Backup Sekarang</button>
-        </div>
-        <p class="subtitle" id="backupStatusMsg"></p>
-        <div class="event-list" id="backupList"></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Restore Database</h3>
-        <p class="subtitle" style="color:#b23b3b">
-          ⚠ Menimpa SELURUH data live saat ini. Sistem otomatis membuat safety-snapshot
-          sebelum restore, tapi tetap tidak bisa dibatalkan begitu proses berjalan.
-        </p>
-        <div class="summary-list" id="restoreStatus"><div><span>Status</span><b>Idle</b></div></div>
-        <form class="rn-form" id="restoreForm">
-          <label>Pilih Snapshot
-            <select name="backup_timestamp" id="restoreTimestamp" required></select>
-          </label>
-          <label>Ketik nama situs untuk konfirmasi
-            <input name="confirm_site_name" id="confirmSiteName" placeholder="osiun.localhost" required autocomplete="off">
+          <label>Password Baru
+            <input name="new_password" type="password" required minlength="8" autocomplete="new-password">
           </label>
           <div class="form-actions">
-            <button class="btn" type="submit" id="restoreBtn" style="background:#c23a3a;border-color:#c23a3a;color:#fff">Restore</button>
+            <button class="btn" type="button" id="adminGeneratePasswordBtn">Buat Acak</button>
+            <button class="btn primary" type="submit">Reset Password</button>
           </div>
         </form>
-        <p class="subtitle" id="restoreMsg"></p>
-      </aside>
-    </section>
+        <p class="subtitle" id="adminResetPasswordMsg"></p>
+      </section>
+    </div>
 
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>AI BYOK Design</h3>
-          <p>Aturan keamanan yang dipakai Rescue-Net.</p>
+    <div class="rn-settings-group" id="systemAdminSection" hidden>
+      <div class="rn-settings-group-title">
+        <h2>Backup / Restore</h2>
+        <p>System Manager saja. Snapshot harian otomatis (retensi 30 hari), backup manual, dan restore dari snapshot.</p>
+      </div>
+
+      <section class="content-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Database Backup</h3>
+              <p>Snapshot harian otomatis + backup manual.</p>
+            </div>
+            <button class="btn primary" type="button" id="triggerBackupBtn">Buat Backup Sekarang</button>
+          </div>
+          <p class="subtitle" id="backupStatusMsg"></p>
+          <div class="event-list" id="backupList"></div>
         </div>
+
+        <aside class="panel summary">
+          <h3>Restore Database</h3>
+          <p class="subtitle" style="color:#b23b3b">
+            ⚠ Menimpa SELURUH data live saat ini. Sistem otomatis membuat safety-snapshot
+            sebelum restore, tapi tetap tidak bisa dibatalkan begitu proses berjalan.
+          </p>
+          <div class="summary-list" id="restoreStatus"><div><span>Status</span><b>Idle</b></div></div>
+          <form class="rn-form" id="restoreForm">
+            <label>Pilih Snapshot
+              <select name="backup_timestamp" id="restoreTimestamp" required></select>
+            </label>
+            <label>Ketik nama situs untuk konfirmasi
+              <input name="confirm_site_name" id="confirmSiteName" placeholder="osiun.localhost" required autocomplete="off">
+            </label>
+            <div class="form-actions">
+              <button class="btn" type="submit" id="restoreBtn" style="background:#c23a3a;border-color:#c23a3a;color:#fff">Restore</button>
+            </div>
+          </form>
+          <p class="subtitle" id="restoreMsg"></p>
+        </aside>
+      </section>
+    </div>
+
+    <div class="rn-settings-group">
+      <div class="rn-settings-group-title">
+        <h2>AI Setting</h2>
+        <p>BYOK · Bring Your Own Key. Setiap user/organisasi dapat memakai API key AI sendiri. Secret key disimpan terenkripsi dan tidak ditampilkan ulang.</p>
       </div>
 
-      <div class="event-list">
-        <article class="event-card">
-          <div class="event-main">
+      <section class="content-grid">
+        <div class="panel">
+          <div class="panel-header">
             <div>
-              <h4>Security Rules</h4>
-              <p>
-                Secret key tidak boleh masuk JavaScript, tidak boleh masuk GitHub, tidak boleh dikirim balik ke browser, dan tidak boleh disimpan plaintext.
-                Browser hanya boleh melihat status dan masked key.
-              </p>
+              <h3>Current AI Key Status</h3>
+              <p>Status key aktif untuk user/provider.</p>
             </div>
-            <div class="chips"><span class="chip warning">owner_only</span></div>
           </div>
-        </article>
 
-        <article class="event-card">
-          <div class="event-main">
-            <div>
-              <h4>Usage Priority</h4>
-              <p>
-                AI request memakai key user sendiri. Jika tidak ada, nanti bisa fallback ke key organisasi. Jika tidak ada key, AI disabled dan user diminta mengisi key.
-              </p>
-            </div>
-            <div class="chips"><span class="chip neutral">BYOK</span></div>
+          <div class="summary-list" id="keyStatus">
+            <div><span>Status</span><b>Not loaded</b></div>
           </div>
-        </article>
-      </div>
-    </section>
+
+          <div class="form-actions">
+            <button class="btn" type="button" id="checkKeyBtn">Check Key Status</button>
+            <button class="btn" type="button" id="testKeyBtn">Uji Koneksi</button>
+            <button class="btn" type="button" id="deleteKeyBtn">Delete Key</button>
+          </div>
+          <p class="subtitle" id="testKeyMsg"></p>
+        </div>
+
+        <aside class="panel summary">
+          <h3>Save AI Key (Personal)</h3>
+          <p class="subtitle">Gunakan key dummy untuk test. Jangan taruh key asli di GitHub atau chat.</p>
+
+          <form class="rn-form" id="aiKeyForm">
+            <label>User ID
+              <input name="user_id" value="user-demo-001" required>
+            </label>
+
+            <label>Organization ID
+              <input name="organization_id" value="org-bpbd-aceh">
+            </label>
+
+            <label>Provider
+              <select name="provider">
+                <option value="openai">openai</option>
+              </select>
+            </label>
+
+            <label>Model
+              <select name="model_name">
+                <option value="gpt-4o-mini">gpt-4o-mini</option>
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="gpt-4.1">gpt-4.1</option>
+              </select>
+            </label>
+
+            <label>API Key
+              <input name="api_key" type="password" placeholder="Paste API key here" required>
+            </label>
+
+            <label>Key Label
+              <input name="api_key_label" value="Demo User Key">
+            </label>
+
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Save Encrypted Key</button>
+            </div>
+          </form>
+        </aside>
+      </section>
+
+      <section class="content-grid" id="orgKeySection" hidden>
+        <div class="panel">
+          <div class="panel-header"><div><h3>Kunci AI Organisasi</h3><p>Dipakai anggota organisasi yang belum punya kunci pribadi.</p></div></div>
+          <div class="summary-list" id="orgKeyStatus"><div><span>Status</span><b>—</b></div></div>
+          <div class="form-actions">
+            <button class="btn" type="button" id="orgCheckBtn">Cek Status</button>
+            <button class="btn" type="button" id="orgTestBtn">Uji Koneksi</button>
+            <button class="btn" type="button" id="orgDeleteBtn">Hapus Kunci Org</button>
+          </div>
+          <p class="subtitle" id="orgKeyMsg"></p>
+        </div>
+        <aside class="panel summary">
+          <h3>Simpan Kunci AI Organisasi</h3>
+          <form class="rn-form" id="orgKeyForm">
+            <label>Organization ID<input name="organization_id" readonly></label>
+            <label>Provider<select name="provider"><option value="openai">openai</option></select></label>
+            <label>Model
+              <select name="model_name">
+                <option value="gpt-4o-mini">gpt-4o-mini</option>
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="gpt-4.1">gpt-4.1</option>
+              </select>
+            </label>
+            <label>API Key<input name="api_key" type="password" placeholder="Paste API key" required></label>
+            <label>Label<input name="api_key_label" value="Org Key"></label>
+            <div class="form-actions"><button class="btn primary" type="submit">Simpan Kunci Org</button></div>
+          </form>
+        </aside>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div><h3>Pemakaian AI (30 hari)</h3><p>Log jumlah panggilan &amp; token — tanpa isi pertanyaan/jawaban, tanpa secret.</p></div></div>
+        <div class="summary-list" id="aiUsage"><div><span>—</span><b>belum dimuat</b></div></div>
+        <div class="form-actions">
+          <button class="btn" type="button" id="usageUserBtn">Pemakaian Saya</button>
+          <button class="btn" type="button" id="usageOrgBtn" hidden>Pemakaian Organisasi</button>
+        </div>
+      </section>
+
+      <section class="panel create-panel">
+        <div class="panel-header">
+          <div>
+            <h3>AI BYOK Design</h3>
+            <p>Aturan keamanan yang dipakai Rescue-Net.</p>
+          </div>
+        </div>
+
+        <div class="event-list">
+          <article class="event-card">
+            <div class="event-main">
+              <div>
+                <h4>Security Rules</h4>
+                <p>
+                  Secret key tidak boleh masuk JavaScript, tidak boleh masuk GitHub, tidak boleh dikirim balik ke browser, dan tidak boleh disimpan plaintext.
+                  Browser hanya boleh melihat status dan masked key.
+                </p>
+              </div>
+              <div class="chips"><span class="chip warning">owner_only</span></div>
+            </div>
+          </article>
+
+          <article class="event-card">
+            <div class="event-main">
+              <div>
+                <h4>Usage Priority</h4>
+                <p>
+                  AI request memakai key user sendiri. Jika tidak ada, nanti bisa fallback ke key organisasi. Jika tidak ada key, AI disabled dan user diminta mengisi key.
+                </p>
+              </div>
+              <div class="chips"><span class="chip neutral">BYOK</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
   </main>
 </div>
 
 <script src="../assets/js/ai-settings.js?v=byok-org-20260904"></script>
+<script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
+<script src="../assets/js/rn-password-settings.js?v=setting-20260914"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/system-admin.js?v=backuprestore-20260913"></script>
-<script src="../assets/js/rn-public-header.js?v=eventlabel-20260912"></script>
+<script src="../assets/js/rn-public-header.js?v=home-authswitch-20260914"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 
-<script src="../assets/js/rn-navigation-v2.js?v=donorlanding-20260912"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=setting-20260914"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
 </body>
 </html>

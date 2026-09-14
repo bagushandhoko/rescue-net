@@ -431,6 +431,41 @@ a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3
   display: none;
 }
 
+/* Named divider between unrelated groups stacked on one page (e.g. the
+   Setting page's Ganti Password / Reset Password / Backup & Restore / AI
+   Setting blocks) — a lighter rule than a full new .panel, just enough to
+   read as separate sections instead of one long undifferentiated list. */
+.rn-settings-group {
+  margin-top: 34px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+.rn-settings-group:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.rn-settings-group[hidden] {
+  display: none;
+}
+
+.rn-settings-group-title {
+  margin: 0 0 16px;
+}
+
+.rn-settings-group-title h2 {
+  font-size: 21px;
+  margin: 0 0 4px;
+}
+
+.rn-settings-group-title p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .panel {
   background:
     linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,248,243,.94));

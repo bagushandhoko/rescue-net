@@ -165,14 +165,19 @@
   }
 
   // Login pill by default; after login → "👤 <nama>" + a Logout link.
-  async function buildAuthArea(header) {
-    const actions = header.querySelector(".rn-public-actions") || header;
+  // `existingLoginEl` lets a page with its own hand-built login link (the
+  // home page's static ".welcome-login-link") reuse this same session
+  // check instead of getting a duplicate dynamically-built one.
+  async function buildAuthArea(container, existingLoginEl) {
+    const actions = existingLoginEl ? container : (container.querySelector(".rn-public-actions") || container);
 
-    const loginEl = document.createElement("a");
-    loginEl.className = LOGIN_LINK.className;
-    loginEl.href = LOGIN_LINK.href;
-    loginEl.textContent = LOGIN_LINK.label;
-    actions.appendChild(loginEl);
+    const loginEl = existingLoginEl || document.createElement("a");
+    if (!existingLoginEl) {
+      loginEl.className = LOGIN_LINK.className;
+      loginEl.href = LOGIN_LINK.href;
+      loginEl.textContent = LOGIN_LINK.label;
+      actions.appendChild(loginEl);
+    }
 
     let sess = null;
     try {
@@ -207,12 +212,26 @@
     });
 
     loginEl.replaceWith(userEl);
-    actions.appendChild(logoutEl);
+    userEl.insertAdjacentElement("afterend", logoutEl);
+  }
+
+  // Home page keeps its own hand-built ".welcome-nav" markup (buildHeader()
+  // below skips it entirely) — wire its static login link to the same
+  // session check so it also flips to "👤 <nama>" + Logout once logged in.
+  function wireHomeAuthArea() {
+    const nav = document.querySelector(".welcome-links");
+    const loginLink = document.querySelector(".welcome-login-link");
+    if (!nav || !loginLink) return;
+    buildAuthArea(nav, loginLink);
   }
 
   function buildHeader() {
+    if (isHome) {
+      wireHomeAuthArea();
+      return;
+    }
+
     if (
-      isHome ||
       document.body.classList.contains("mockup-viewer") ||
       document.querySelector(".rn-public-header")
     ) return;

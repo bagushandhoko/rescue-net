@@ -203,6 +203,7 @@ def _group_rows(rows):
         qty_measurable = 0.0
         qty_estimated = 0.0
         unmeasurable_count = 0
+        sources = []
 
         for row, area, bkt in members:
             source_identity = (
@@ -211,6 +212,29 @@ def _group_rows(rows):
                 or row.name
             )
             source_ids.add(source_identity)
+
+            # Raw records behind this group's number — an operator needs to
+            # see these to judge whether MAX/the AI estimate is actually
+            # right, not just trust the rollup.
+            sources.append({
+                "name": row.name,
+                "doctype": row._doctype,
+                "item_text": (
+                    row.raw_need_text
+                    or row.canonical_item
+                    or key[2]
+                ),
+                "quantity": row.quantity,
+                "quantity_min": row.quantity_min,
+                "quantity_max": row.quantity_max,
+                "unit": row.unit,
+                "area": area["area"],
+                "posko": row.posko,
+                "source_report": row.source_report,
+                "disaster_event": row.disaster_event,
+                "observed_at": row.observed_at or row.source_updated_at,
+                "verification_status": row.verification_status,
+            })
 
             if row.community_owner:
                 organizations.add(
@@ -347,6 +371,7 @@ def _group_rows(rows):
                 "Derived estimate. Raw reports remain source of truth; "
                 "MAX is used when overlap cannot be excluded."
             ),
+            "sources": sources[:50],
         })
 
     output.sort(
@@ -386,6 +411,8 @@ def control_centre_summary():
         ],
         limit_page_length=5000,
     )
+    for row in community_rows:
+        row["_doctype"] = "RN Community Need"
 
     # RN Community Need is legacy/near-empty (1 row system-wide) — the real
     # logistics-need pipeline writes to RN Logistic Need instead, which this
@@ -415,6 +442,7 @@ def control_centre_summary():
         limit_page_length=5000,
     )
     for row in logistic_rows:
+        row["_doctype"] = "RN Logistic Need"
         row["requester_user"] = row.get("created_by_user")
         row["need_type"] = row.get("item_name")
         row["raw_need_text"] = row.get("raw_item_text")

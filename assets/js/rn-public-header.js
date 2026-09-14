@@ -2,18 +2,6 @@
   const isHome = document.body.classList.contains("home-page");
   const prefix = isHome ? "" : "../";
 
-  const links = [
-    { label: "About Us", href: `${prefix}index.html#tentang` },
-    { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` },
-    { label: "Home", href: `${prefix}index.html` },
-    { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
-    { label: "Control Centre", href: `${prefix}pages/war-room.html?event=event-sim-001` },
-    { label: "Data Konsolidasi", href: `${prefix}pages/data-consolidation.html?event=event-sim-001` },
-    { label: "Download", href: `${prefix}../rescue-net-app/download.html` },
-    { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
-    { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` }
-  ];
-
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
   // ---- Shared disaster-event picker -----------------------------------------
@@ -89,6 +77,22 @@
   }
 
   window.rnActiveEvent = currentEventId();
+
+  // Built AFTER rnActiveEvent so Control Centre / Data Konsolidasi carry
+  // whatever event is actually active instead of always reopening
+  // event-sim-001 — the two links used to hardcode that, so navigating
+  // away from a different active disaster silently switched context.
+  const links = [
+    { label: "About Us", href: `${prefix}index.html#tentang` },
+    { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` },
+    { label: "Home", href: `${prefix}index.html` },
+    { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
+    { label: "Control Centre", href: `${prefix}pages/war-room.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
+    { label: "Data Konsolidasi", href: `${prefix}pages/data-consolidation.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
+    { label: "Download", href: `${prefix}../rescue-net-app/download.html` },
+    { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
+    { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` }
+  ];
 
   async function buildEventPicker(header) {
     const active = window.rnActiveEvent;

@@ -231,7 +231,19 @@
             );
           })
           .join("");
-        return drillGroup(ev, '<div class="rn-ba-ditems">' + rows + "</div>");
+        // Raw per-posko needs above are un-consolidated (no dedup/MAX
+        // across overlapping reports) — link out to the AI rollup so an
+        // operator can cross-check before deciding what to send.
+        var consolidationLink =
+          kind === "kebutuhan"
+            ? '<a class="btn ghost mini" href="data-consolidation.html?event=' +
+              encodeURIComponent(shortId(ev.id)) +
+              '">Lihat Analisa AI / Data Konsolidasi ↗</a>'
+            : "";
+        return drillGroup(
+          ev,
+          '<div class="rn-ba-ditems">' + rows + "</div>" + consolidationLink
+        );
       })
       .join("");
   }
@@ -473,6 +485,7 @@
     var evParam = "event=" + encodeURIComponent(shortId(ev.id));
     $("#baOpenWarRoom").href = "war-room.html?" + evParam;
     $("#baOpenDetail").href = "disaster-detail.html?" + evParam;
+    $("#baOpenConsolidation").href = "data-consolidation.html?" + evParam;
   }
 
   function statBox(label, value) {

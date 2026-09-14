@@ -129,11 +129,6 @@
         icon: "ai-analyst"
       },
       {
-        label: "Setting",
-        href: "ai-settings.html",
-        icon: "ai-settings"
-      },
-      {
         label: "Sync Console",
         href: "sync-console.html",
         icon: "sync"
@@ -167,6 +162,17 @@
         label: "Program Khusus (Tracking)",
         href: "program-khusus.html?event=event-sim-001",
         icon: "program"
+      }
+    ],
+
+    // Own top-level group, not tucked under "Modul" — account/admin
+    // settings (ganti password, reset password, backup/restore, AI key)
+    // are a different kind of thing than an operational module.
+    pengaturan: [
+      {
+        label: "Setting",
+        href: "ai-settings.html",
+        icon: "ai-settings"
       }
     ]
   };
@@ -305,12 +311,14 @@
     const anyMatch =
       CONFIG.posko.some(item => isActive(item.href)) ||
       CONFIG.modules.some(item => isActive(item.href)) ||
-      CONFIG.donasi.some(item => isActive(item.href));
+      CONFIG.donasi.some(item => isActive(item.href)) ||
+      CONFIG.pengaturan.some(item => isActive(item.href));
 
     nav.innerHTML =
       groupHtml("Posko", CONFIG.posko, "posko") +
       groupHtml("Donasi & Program Khusus", CONFIG.donasi, "donasi") +
-      groupHtml("Modul", CONFIG.modules, "modul", !anyMatch);
+      groupHtml("Modul", CONFIG.modules, "modul", !anyMatch) +
+      groupHtml("Pengaturan", CONFIG.pengaturan, "pengaturan");
 
     wireAccordion(nav);
     if (window.RNIconFill) window.RNIconFill(nav);

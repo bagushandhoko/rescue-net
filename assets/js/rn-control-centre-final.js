@@ -1918,6 +1918,58 @@ function renderModules(ctx) {
 }
 
 
+// AI-consolidated needs rollup (api_intelligence.control_centre_summary) —
+// a different number than the "Logistik" stock tile above (that's raw stock
+// item count; this is the MAX-rule / AI-estimate cross-posko consolidation).
+// Card is a real navigation, not a modal: operators go to Data Konsolidasi
+// to see per-group raw sources and judge the estimate themselves.
+async function renderAiConsolidationModule() {
+  const card = document.getElementById("moduleAiConsolidationCard");
+  if (!card) return;
+
+  try {
+    const summary = await call(
+      "rescue_net.api_intelligence.control_centre_summary",
+      {}
+    );
+    const groups = (summary && summary.groups) || [];
+    const needsReview = groups.filter(
+      g => Number(g.unmeasurable_count || 0) > 0 || Number(g.qty_estimated || 0) > 0
+    ).length;
+
+    setText("moduleAiConsolidationValue", groups.length);
+    setText(
+      "moduleAiConsolidationDetail",
+      groups.length ? `kelompok kebutuhan · ${needsReview} perlu ditinjau` : "belum ada data"
+    );
+  } catch (err) {
+    setText("moduleAiConsolidationValue", "-");
+    setText("moduleAiConsolidationDetail", "gagal memuat");
+  }
+
+  if (card.dataset.wired) return;
+  card.dataset.wired = "1";
+  card.classList.add("cc-clickable");
+  card.setAttribute("role", "button");
+  card.setAttribute("tabindex", "0");
+  card.title = "Buka Data Konsolidasi — rincian & sumber data mentah per kelompok kebutuhan.";
+
+  function go() {
+    const u = new URL("data-consolidation.html", location.href);
+    u.searchParams.set("event", eventId());
+    location.href = u.toString();
+  }
+
+  card.addEventListener("click", go);
+  card.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      go();
+    }
+  });
+}
+
+
 function renderMiniChart(
   id,
   values
@@ -2079,6 +2131,8 @@ async function load() {
   renderModules(
     ctx
   );
+
+  renderAiConsolidationModule().catch(() => {});
 
 
   const trends =

@@ -4415,6 +4415,74 @@ through to Data Konsolidasi, drillable down to the raw source record —
 which doesn't exist yet as any kind of link today; this is new work, not
 a fix. Deployed `api_intelligence.py` via the usual `docker cp` + restart.
 
+## Data Konsolidasi: real drill-down + click-through from Control Centre / Bencana Aktif (2026-09-14)
+
+Owner: "semuanya kerjakan, kan pengguna harus tau angka logistik yang
+tampil secara MAX berapa, secara analisa AI, dan bisa keliatan sumber
+data asli dari mana sehingga bisa lakukan judgment angka harus berapa."
+Closed all 4 items flagged in the entry above:
+
+- **`rn-public-header.js` hardcoded `event=event-sim-001`**: the `links`
+  array (top public nav) was a `const` evaluated before
+  `window.rnActiveEvent` existed. Moved it after that assignment and
+  interpolated `window.rnActiveEvent` into the Control Centre / Data
+  Konsolidasi hrefs instead of a literal string. (Home page's own
+  hardcoded quick-action links in `index.html` were left alone — out of
+  scope, landing-page CTAs without an active-event context anyway.)
+- **Real source drill-down in Data Konsolidasi**: `_group_rows()` in
+  `api_intelligence.py` now collects a `sources` list per group (raw
+  record id/doctype, item text, qty, unit, area, posko, verification
+  status, observed_at — capped 50/group) and returns it in
+  `control_centre_summary()`'s group objects. `data-consolidation.js`'s
+  `renderNationalRollup()` cards are now clickable
+  (`data-rollup-group="<group_key>"`); clicking populates the "Trace
+  Detail" panel (`renderRollupTrace`) with that group's full raw-record
+  table, each row linking to `posko-logistik.html?id=<posko>&event=...`
+  (Logistic Need sources) so an operator can actually verify/correct the
+  number instead of trusting a black-box MAX/AI estimate. This replaces
+  the old `renderRollupTrace` which only re-sorted the SAME aggregate
+  rows under a misleading "Trace" label — never touched raw records.
+- **Control Centre (`war-room.html`) click-through**: new 7th
+  `.cc-modules` tile `#moduleAiConsolidationCard` ("Kebutuhan Logistik
+  (AI)") — `rn-control-centre-final.js`'s new
+  `renderAiConsolidationModule()` fetches `control_centre_summary()`
+  independently of the existing `public_dashboard` call, shows group
+  count + how many need review, and is a real navigation (not the
+  existing `openDrill()` modal pattern used by the other module tiles)
+  to `data-consolidation.html?event=<current>` — owner's own words were
+  "keluar pindah ke halaman data konsolidasi", not another in-page
+  modal. `.cc-modules` grid bumped `repeat(6,1fr)` → `repeat(7,1fr)` in
+  `rn-control-centre-final.css`; no other rule assumed exactly 6
+  columns. NOTE: this tile is a DIFFERENT metric from the existing
+  "Logistik" tile next to it (that one is raw stock-item count from
+  `public_dashboard`, unrelated to the AI-consolidated needs rollup) —
+  don't merge them, they answer different questions.
+- **Bencana Aktif (`bencana-aktif.html`) click-through**: added
+  `#baOpenConsolidation` button next to the existing "Buka Control
+  Centre"/"Lihat Detail" actions in the per-selected-disaster summary
+  card, and a per-disaster-group link inside the "Kebutuhan Kritis" KPI
+  drill-down (`renderDrill("kebutuhan")` in `bencana-aktif.js`) — both
+  point at `data-consolidation.html?event=<that disaster's own event
+  id>`, not the globally active one, since Bencana Aktif lets an
+  operator inspect a *different* disaster than whichever is "active" in
+  localStorage. The raw per-posko "Kebutuhan Kritis" list itself
+  (`api_control_centre.active_disasters_board`'s `kebutuhan_items`,
+  reads `RN Logistic Need` un-consolidated) was already real and
+  correct — this only adds the cross-check link to the AI/MAX view, it
+  doesn't touch that existing feature.
+
+**Also done in the same session, unrelated to this thread**: "Setting"
+sidebar entry moved out of the "Modul" accordion group into its own
+top-level `CONFIG.pengaturan` group in `rn-navigation-v2.js` (owner:
+"setting pindahkan ke menu terpisah tidak dibawah modul") — account/
+admin settings read as a different kind of thing than an operational
+module.
+
+Deployed `api_intelligence.py` via the usual `docker cp` + restart;
+static frontend files (all the `.js`/`.css`/`.html` above) are
+serve-from-disk, no deploy step, cache-busting query params bumped on
+every page that loads the touched shared files.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

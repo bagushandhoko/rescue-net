@@ -303,18 +303,24 @@ function formatQty(value) {
 
 // Real consolidated rollup from api_intelligence.control_centre_summary:
 // one row per (canonical_group, base_unit) with the honest 3-bucket split.
+// Kept here so a click can look a group back up without a second fetch.
+let RN_ROLLUP_GROUPS = [];
+let RN_ROLLUP_SELECTED = null;
+
 function renderNationalRollup(payload) {
   const target = document.querySelector("[data-national-rollup]");
   if (!target) return;
-  const groups = (payload?.groups || [])
+  RN_ROLLUP_GROUPS = (payload?.groups || [])
     .slice()
     .sort((a, b) => (b.qty_total || 0) - (a.qty_total || 0));
-  target.innerHTML = groups.length ? groups.map(g => {
+
+  target.innerHTML = RN_ROLLUP_GROUPS.length ? RN_ROLLUP_GROUPS.map(g => {
     const unit = safe(g.base_unit, "");
     const est = Number(g.qty_estimated || 0) > 0;
     const um = Number(g.unmeasurable_count || 0) > 0;
+    const active = g.group_key === RN_ROLLUP_SELECTED ? " selected" : "";
     return `
-      <article class="event-card">
+      <article class="event-card rn-rollup-card${active}" data-rollup-group="${g.group_key}" role="button" tabindex="0">
         <div class="event-main">
           <div>
             <h4>${safe(g.canonical_group || g.canonical_item)} | ${formatQty(g.qty_total)} ${unit}</h4>
@@ -322,6 +328,7 @@ function renderNationalRollup(payload) {
               Terukur: <b>${formatQty(g.qty_measurable)}</b> ${unit} ·
               Perkiraan AI: <b>${formatQty(g.qty_estimated)}</b> ${unit}<br>
               ${g.source_count != null ? `${g.source_count} laporan digabung` : ""}${g.organization_count > 1 ? ` · ${g.organization_count} organisasi` : ""}${um ? ` · ${g.unmeasurable_count} belum terukur` : ""}
+              · <span class="rn-rollup-hint">klik untuk lihat sumber data asli →</span>
             </p>
           </div>
           <div class="chips">
@@ -332,31 +339,105 @@ function renderNationalRollup(payload) {
         </div>
       </article>
     `;
-  }).join("") : card("Belum ada kebutuhan terkonsolidasi", "Belum ada RN Community Need aktif untuk dikonsolidasikan.", "empty");
+  }).join("") : card("Belum ada kebutuhan terkonsolidasi", "Belum ada kebutuhan logistik/komunitas aktif untuk dikonsolidasikan.", "empty");
+
+  target.querySelectorAll("[data-rollup-group]").forEach(el => {
+    function open() {
+      renderRollupTrace(el.getAttribute("data-rollup-group"));
+    }
+    el.addEventListener("click", open);
+    el.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+    });
+  });
+
+  // Keep the previously-open trace in sync after a Rebuild/refresh.
+  if (RN_ROLLUP_SELECTED) renderRollupTrace(RN_ROLLUP_SELECTED);
 }
 
-// "Trace": the same groups ordered by what still needs review (belum terukur,
-// lalu perkiraan terbesar) — an honest "mana yang perlu ditinjau" list.
-function renderRollupTrace(payload) {
+function stripPrefix(value, prefix) {
+  return String(value || "").startsWith(prefix) ? String(value).slice(prefix.length) : String(value || "");
+}
+
+// One raw record behind a rollup number — linked back to where it actually
+// lives so an operator can verify/correct it, not just trust the estimate.
+function sourceRowHtml(s) {
+  const qty = s.quantity_min != null && s.quantity_max != null && s.quantity_min !== s.quantity_max
+    ? `${formatQty(s.quantity_min)}–${formatQty(s.quantity_max)}`
+    : formatQty(s.quantity);
+  const eventId = stripPrefix(s.disaster_event, "disaster_events:");
+  let href = null;
+  let linkLabel = null;
+  if (s.posko) {
+    href = `posko-logistik.html?id=${encodeURIComponent(stripPrefix(s.posko, "posko_nodes:"))}&event=${encodeURIComponent(eventId)}`;
+    linkLabel = "Buka di Posko Logistik →";
+  } else if (s.source_report) {
+    href = `laporan-masyarakat.html?report=${encodeURIComponent(s.source_report)}`;
+    linkLabel = "Buka laporan masyarakat →";
+  }
+  return `
+    <tr>
+      <td>${safe(s.item_text)}</td>
+      <td>${qty} ${safe(s.unit, "")}</td>
+      <td>${safe(s.area, "-")}</td>
+      <td>${safe(s.verification_status, "-")}</td>
+      <td>${safe((s.observed_at || "").toString().slice(0, 16), "-")}</td>
+      <td>${href ? `<a href="${href}">${linkLabel}</a>` : safe(s.name)}</td>
+    </tr>
+  `;
+}
+
+// "Trace": clicking a rollup card shows exactly which raw records (and
+// where each one lives) were combined into that number, so an operator can
+// judge whether MAX/the AI estimate is actually right instead of just
+// trusting a black-box total.
+function renderRollupTrace(groupKey) {
   const target = document.querySelector("[data-rollup-trace]");
   if (!target) return;
-  const groups = (payload?.groups || [])
-    .slice()
-    .sort((a, b) =>
-      (b.unmeasurable_count || 0) - (a.unmeasurable_count || 0) ||
-      (b.qty_estimated || 0) - (a.qty_estimated || 0));
-  const needsReview = groups.filter(g =>
-    Number(g.unmeasurable_count || 0) > 0 || Number(g.qty_estimated || 0) > 0);
-  target.innerHTML = needsReview.length ? needsReview.slice(0, 15).map(g => {
-    const unit = safe(g.base_unit, "");
-    return card(
-      `${safe(g.canonical_group || g.canonical_item)} | perlu ditinjau`,
-      `Perkiraan AI ${formatQty(g.qty_estimated)} ${unit}` +
-      (g.unmeasurable_count ? ` · ${g.unmeasurable_count} entri tanpa angka baku` : "") +
-      `<br>Terukur pasti: ${formatQty(g.qty_measurable)} ${unit}`,
-      g.unmeasurable_count ? "belum terukur" : "perkiraan"
+
+  RN_ROLLUP_SELECTED = groupKey || null;
+  document.querySelectorAll("[data-rollup-group]").forEach(el => {
+    el.classList.toggle("selected", el.getAttribute("data-rollup-group") === groupKey);
+  });
+
+  const g = RN_ROLLUP_GROUPS.find(row => row.group_key === groupKey);
+  if (!g) {
+    target.innerHTML = card(
+      "Belum ada yang dipilih",
+      "Klik salah satu baris di panel kiri (Rollup Nasional) untuk melihat daftar laporan mentah di baliknya.",
+      ""
     );
-  }).join("") : card("Semua terukur", "Tidak ada kelompok kebutuhan yang perlu ditinjau — semua sudah punya angka baku.", "ok");
+    return;
+  }
+
+  const unit = safe(g.base_unit, "");
+  const sources = g.sources || [];
+
+  target.innerHTML = `
+    <article class="event-card">
+      <div class="event-main">
+        <div>
+          <h4>${safe(g.canonical_group || g.canonical_item)} — ${g.area || "Lintas wilayah"}</h4>
+          <p>
+            Total: <b>${formatQty(g.qty_total)} ${unit}</b> (MAX per overlap, bukan SUM)<br>
+            Terukur: ${formatQty(g.qty_measurable)} ${unit} · Perkiraan AI: ${formatQty(g.qty_estimated)} ${unit}<br>
+            Rentang mentah: ${g.estimate_min != null ? formatQty(g.estimate_min) : "-"}–${g.estimate_max != null ? formatQty(g.estimate_max) : "-"} ${unit} ·
+            Confidence: ${g.confidence}% (${g.confidence_label})
+          </p>
+        </div>
+      </div>
+    </article>
+    <div class="rn-table-wrap">
+      <table class="rn-table">
+        <thead>
+          <tr><th>Item (teks asli)</th><th>Qty</th><th>Area</th><th>Verifikasi</th><th>Diamati</th><th>Sumber</th></tr>
+        </thead>
+        <tbody>
+          ${sources.length ? sources.map(sourceRowHtml).join("") : `<tr><td colspan="6">Tidak ada rincian sumber untuk kelompok ini.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function renderAreas(rows) {
@@ -441,7 +522,7 @@ async function loadDataConsolidation() {
     renderDuplicates(duplicates);
     renderConsolidated(consolidated);
     renderNationalRollup(nationalRollup);
-    renderRollupTrace(nationalRollup);
+    if (!RN_ROLLUP_SELECTED) renderRollupTrace(null);
     renderAreas(areas);
     renderBeneficiaryGroups(groups);
     renderEvidenceRequirements(evidenceRules);

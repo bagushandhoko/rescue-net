@@ -111,25 +111,28 @@ def accept_suggestion(
     }
 
 
-def _source_area(report):
-    if not report:
-        return {
-            "area": "Unknown",
-            "admin_area_id": None,
-        }
+_AREA_FIELDS = [
+    "admin_area_id",
+    "village_name",
+    "district_name",
+    "city_name",
+    "province_name",
+]
 
-    row = frappe.db.get_value(
-        "RN Community Report",
-        report,
-        [
-            "admin_area_id",
-            "village_name",
-            "district_name",
-            "city_name",
-            "province_name",
-        ],
-        as_dict=True,
-    )
+
+def _source_area(report=None, posko=None):
+    # RN Community Need rows carry a source_report; RN Logistic Need rows
+    # (no such field) carry a posko instead — either one resolves an area.
+    if report:
+        row = frappe.db.get_value(
+            "RN Community Report", report, _AREA_FIELDS, as_dict=True,
+        )
+    elif posko:
+        row = frappe.db.get_value(
+            "RN Posko", posko, _AREA_FIELDS, as_dict=True,
+        )
+    else:
+        row = None
 
     if not row:
         return {
@@ -157,7 +160,7 @@ def _group_rows(rows):
     grouped = defaultdict(list)
 
     for row in rows:
-        area = _source_area(row.source_report)
+        area = _source_area(row.source_report, row.posko)
 
         group_name = (
             row.canonical_group
@@ -360,7 +363,7 @@ def _group_rows(rows):
 def control_centre_summary():
     rn_actor()
 
-    rows = frappe.get_all(
+    community_rows = frappe.get_all(
         "RN Community Need",
         filters={
             "status": [
@@ -383,6 +386,40 @@ def control_centre_summary():
         ],
         limit_page_length=5000,
     )
+
+    # RN Community Need is legacy/near-empty (1 row system-wide) — the real
+    # logistics-need pipeline writes to RN Logistic Need instead, which this
+    # rollup never looked at, so it always rendered as empty. Same
+    # normalization shape, different field names: map them onto the names
+    # _group_rows()/_source_area() expect rather than forking the grouping
+    # logic in two.
+    logistic_rows = frappe.get_all(
+        "RN Logistic Need",
+        filters={
+            "need_status": [
+                "in",
+                ["open", "needs_review"],
+            ]
+        },
+        fields=[
+            "name", "disaster_event", "posko",
+            "created_by_user", "item_name", "raw_item_text",
+            "canonical_category", "canonical_group", "canonical_item",
+            "quantity", "unit", "quantity_mode",
+            "quantity_min", "quantity_max",
+            "verification_status",
+            "normalization_confidence",
+            "observed_at", "source_updated_at",
+            "freshness_policy_minutes", "modified",
+        ],
+        limit_page_length=5000,
+    )
+    for row in logistic_rows:
+        row["requester_user"] = row.get("created_by_user")
+        row["need_type"] = row.get("item_name")
+        row["raw_need_text"] = row.get("raw_item_text")
+
+    rows = community_rows + logistic_rows
 
     return {
         "raw_need_count": len(rows),

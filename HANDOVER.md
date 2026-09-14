@@ -4372,6 +4372,49 @@ a no-op). Renamed there. `pages/ai-settings.html` kept its filename/URL
   everything comes back in the one `admin_list_users` call already
   fetched on section load.
 
+## Data Konsolidasi rollup was reading the wrong (near-empty) doctype (2026-09-14)
+
+Owner asked why the "Data Konsolidasi" page's "Rollup Nasional / Range
+View" panel (the "Rule: MAX" + "Perkiraan AI" KPI/consolidation feature)
+looked empty, and separately noted it's only reachable via the top
+public nav bar link (`rn-public-header.js`'s `links` array), not from the
+left operator sidebar (`rn-navigation-v2.js` has no entry for it at all
+— flagged, not yet added, owner didn't confirm they want it there).
+
+Root cause of the "empty" panel: `api_intelligence.control_centre_summary()`
+only ever queried **`RN Community Need`**, which is legacy/near-dead (1
+row system-wide, 0 for `event-sim-001`). The real logistics-need pipeline
+writes to **`RN Logistic Need`** instead (25 rows for `event-sim-001`,
+42/37-groups system-wide) — same normalization/grouping field shape
+(`canonical_category/group/item`, `quantity_min/max`, etc.) but different
+field names (`posko` instead of `source_report`, `created_by_user`
+instead of `requester_user`, `item_name`/`raw_item_text` instead of
+`need_type`/`raw_need_text`). `control_centre_summary()` now fetches both
+doctypes and aliases the Logistic Need fields onto the names `_group_rows()`
+already expects instead of forking the grouping logic; `_source_area()`
+now also accepts a `posko` fallback (RN Posko has the same
+village/district/city/province fields as RN Community Report) since
+Logistic Need rows have no `source_report`. Verified live: `raw_need_count`
+went from ~0 to 42, 37 real groups with non-zero `qty_estimated`.
+
+**Separately found, not a bug — an honest stub:** `duplicate_candidates()`
+in `api_frontend_bridge.py` always returns `[]` with a code comment
+explicitly saying candidates are not fabricated until a real duplicate-
+detection model exists. The "Duplicate Need Candidates" panel being empty
+is by design, not related to the fix above.
+
+**Also flagged, not yet fixed:** `rn-public-header.js`'s top-nav `links`
+array hardcodes `?event=event-sim-001` on both "Control Centre" and "Data
+Konsolidasi" — clicking either from a page where a *different* disaster
+event is active silently switches back to `event-sim-001` instead of
+preserving context (the operator-sidebar equivalent links get this via
+`rn-navigation-v2.js`'s `preserveEventContext()`; the public header nav
+never runs anything equivalent). Owner also described a desired flow —
+logistics-need KPIs on Control Centre / Bencana Aktif should be clickable
+through to Data Konsolidasi, drillable down to the raw source record —
+which doesn't exist yet as any kind of link today; this is new work, not
+a fix. Deployed `api_intelligence.py` via the usual `docker cp` + restart.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 
 import frappe
@@ -6,6 +7,7 @@ from rescue_net.access_policy import (
     is_system_manager,
     rn_actor,
 )
+from rescue_net.reference_resolver import resolve_disaster_event
 from rescue_net.intelligence.freshness import freshness
 # Registry = built-in keyword rules + editable RN Normalization Rule records
 # (Frappe Desk). Import from here, never straight from `.normalization`, so the
@@ -384,61 +386,72 @@ def _group_rows(rows):
     return output
 
 
-@frappe.whitelist()
-def control_centre_summary():
-    rn_actor()
+_COMMUNITY_NEED_FIELDS = [
+    "name", "disaster_event",
+    "source_report", "requester_user",
+    "community_owner", "need_type",
+    "raw_need_text", "canonical_category",
+    "canonical_group", "canonical_item",
+    "quantity", "unit", "quantity_mode",
+    "quantity_min", "quantity_max",
+    "verification_status",
+    "normalization_confidence",
+    "observed_at", "source_updated_at",
+    "freshness_policy_minutes", "modified",
+]
+
+_LOGISTIC_NEED_FIELDS = [
+    "name", "disaster_event", "posko",
+    "created_by_user", "item_name", "raw_item_text",
+    "canonical_category", "canonical_group", "canonical_item",
+    "quantity", "unit", "quantity_mode",
+    "quantity_min", "quantity_max",
+    "verification_status",
+    "normalization_confidence",
+    "observed_at", "source_updated_at",
+    "freshness_policy_minutes", "modified",
+]
+
+
+def _fetch_need_rows(disaster_event=None, names=None):
+    """Shared fetch+alias for RN Community Need + RN Logistic Need feeding
+    _group_rows()/_source_area(). RN Community Need is legacy/near-empty (1
+    row system-wide) — the real logistics-need pipeline writes to RN
+    Logistic Need instead, so its differently-named fields get mapped onto
+    what _group_rows() expects rather than forking the grouping logic.
+
+    `disaster_event`: restrict to one event (open/active statuses only —
+    the live rollup / a fresh rebuild).
+    `names`: restrict to an explicit prior set of IDs regardless of current
+    status — replaying a frozen historical snapshot against whatever those
+    records look like *now* (a record edited since the snapshot shows its
+    current values, not a frozen-at-the-time copy — nothing is duplicated
+    to avoid that drift; see RN Consolidated Need Snapshot's docstring).
+    """
+    if names is not None:
+        community_filters = {"name": ["in", names]}
+        logistic_filters = {"name": ["in", names]}
+    else:
+        community_filters = {"status": ["in", ["open", "in_progress"]]}
+        logistic_filters = {"need_status": ["in", ["open", "needs_review"]]}
+
+        if disaster_event:
+            community_filters["disaster_event"] = disaster_event
+            logistic_filters["disaster_event"] = disaster_event
 
     community_rows = frappe.get_all(
         "RN Community Need",
-        filters={
-            "status": [
-                "in",
-                ["open", "in_progress"],
-            ]
-        },
-        fields=[
-            "name", "disaster_event",
-            "source_report", "requester_user",
-            "community_owner", "need_type",
-            "raw_need_text", "canonical_category",
-            "canonical_group", "canonical_item",
-            "quantity", "unit", "quantity_mode",
-            "quantity_min", "quantity_max",
-            "verification_status",
-            "normalization_confidence",
-            "observed_at", "source_updated_at",
-            "freshness_policy_minutes", "modified",
-        ],
+        filters=community_filters,
+        fields=_COMMUNITY_NEED_FIELDS,
         limit_page_length=5000,
     )
     for row in community_rows:
         row["_doctype"] = "RN Community Need"
 
-    # RN Community Need is legacy/near-empty (1 row system-wide) — the real
-    # logistics-need pipeline writes to RN Logistic Need instead, which this
-    # rollup never looked at, so it always rendered as empty. Same
-    # normalization shape, different field names: map them onto the names
-    # _group_rows()/_source_area() expect rather than forking the grouping
-    # logic in two.
     logistic_rows = frappe.get_all(
         "RN Logistic Need",
-        filters={
-            "need_status": [
-                "in",
-                ["open", "needs_review"],
-            ]
-        },
-        fields=[
-            "name", "disaster_event", "posko",
-            "created_by_user", "item_name", "raw_item_text",
-            "canonical_category", "canonical_group", "canonical_item",
-            "quantity", "unit", "quantity_mode",
-            "quantity_min", "quantity_max",
-            "verification_status",
-            "normalization_confidence",
-            "observed_at", "source_updated_at",
-            "freshness_policy_minutes", "modified",
-        ],
+        filters=logistic_filters,
+        fields=_LOGISTIC_NEED_FIELDS,
         limit_page_length=5000,
     )
     for row in logistic_rows:
@@ -447,7 +460,14 @@ def control_centre_summary():
         row["need_type"] = row.get("item_name")
         row["raw_need_text"] = row.get("raw_item_text")
 
-    rows = community_rows + logistic_rows
+    return community_rows + logistic_rows
+
+
+@frappe.whitelist()
+def control_centre_summary():
+    rn_actor()
+
+    rows = _fetch_need_rows()
 
     return {
         "raw_need_count": len(rows),
@@ -457,4 +477,99 @@ def control_centre_summary():
             "Consolidated values are derived estimates, "
             "not replacements for raw reports."
         ),
+    }
+
+
+@frappe.whitelist()
+def rebuild_consolidated_needs(disaster_event):
+    """"Rebuild Consolidated Needs" on Data Konsolidasi. Does NOT persist a
+    copy of the computed numbers (that would drift from the raw records
+    and just be more data to keep in sync) — it snapshots which raw need
+    IDs were included right now (a few hundred bytes of names, not a
+    result blob), so `consolidated_need_snapshot_detail` can replay the
+    exact same MAX-rule computation against the original records later,
+    keeping the original detail traceable instead of duplicated."""
+    actor = rn_actor()
+    event = resolve_disaster_event(disaster_event) or disaster_event
+
+    if not event:
+        frappe.throw("Disaster Event tidak ditemukan")
+
+    rows = _fetch_need_rows(disaster_event=event)
+    groups = _group_rows(rows)
+
+    doc = frappe.get_doc({
+        "doctype": "RN Consolidated Need Snapshot",
+        "disaster_event": event,
+        "rule": "MAX_OVERLAP_SAFE",
+        "raw_need_count": len(rows),
+        "group_count": len(groups),
+        "need_ids_json": json.dumps([r["name"] for r in rows]),
+        "triggered_by": getattr(actor, "name", None) or frappe.session.user,
+    })
+    doc.flags.ignore_permissions = True
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {
+        "ok": True,
+        "snapshot": doc.name,
+        "disaster_event": event,
+        "raw_need_count": len(rows),
+        "group_count": len(groups),
+        "created": doc.creation,
+    }
+
+
+@frappe.whitelist()
+def consolidated_need_snapshots(disaster_event):
+    """Riwayat (history) list — metadata only, no recompute."""
+    rn_actor()
+    event = resolve_disaster_event(disaster_event) or disaster_event
+
+    rows = frappe.get_all(
+        "RN Consolidated Need Snapshot",
+        filters={"disaster_event": event} if event else {},
+        fields=[
+            "name", "disaster_event", "rule", "raw_need_count",
+            "group_count", "triggered_by", "creation",
+        ],
+        order_by="creation desc",
+        limit_page_length=200,
+    )
+
+    return rows
+
+
+@frappe.whitelist()
+def consolidated_need_snapshot_detail(name):
+    """Replays one snapshot's frozen ID set through the same grouping
+    logic as the live rollup — the historical view, computed fresh from
+    whatever those original records look like today rather than from a
+    stored copy."""
+    rn_actor()
+
+    if not frappe.db.exists("RN Consolidated Need Snapshot", name):
+        frappe.throw("Snapshot tidak ditemukan")
+
+    snap = frappe.get_doc("RN Consolidated Need Snapshot", name)
+
+    try:
+        need_ids = json.loads(snap.need_ids_json or "[]")
+    except ValueError:
+        need_ids = []
+
+    rows = _fetch_need_rows(names=need_ids) if need_ids else []
+    missing = len(need_ids) - len(rows)
+
+    return {
+        "snapshot": snap.name,
+        "disaster_event": snap.disaster_event,
+        "rule": snap.rule,
+        "created": snap.creation,
+        "triggered_by": snap.triggered_by,
+        "raw_need_count_at_snapshot": snap.raw_need_count,
+        "raw_need_count_now": len(rows),
+        "missing_since_snapshot": max(0, missing),
+        "groups": _group_rows(rows),
     }

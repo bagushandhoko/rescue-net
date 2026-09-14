@@ -1809,6 +1809,181 @@ operational facts.
     }
 
 
+@frappe.whitelist()
+@rate_limit(limit=20, seconds=60 * 60)
+def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="openai"):
+    """Manual, on-demand AI judgment for one duplicate-candidate pair from
+    api_frontend_bridge.duplicate_candidates() (pure geo-distance + same-
+    item matching, no AI). Owner's own choice: this is deliberately
+    per-pair and operator-triggered, never automatic on page load — it's
+    a real paid API call against the operator's own BYOK key."""
+    _actor, user_id = _assert_self(
+        user_id
+    )
+
+    provider = (
+        provider or "openai"
+    ).strip().lower()
+
+    if provider != "openai":
+        frappe.throw(
+            "AI provider is not supported"
+        )
+
+    api_key, model_name, key_source, key_owner_type, key_owner_id = _resolve_ai_key(
+        user_id, provider
+    )
+
+    if not api_key:
+        frappe.throw(
+            "Belum ada kunci AI aktif untuk Anda atau organisasi Anda. "
+            "Tambahkan di Setting."
+        )
+
+    def _need_brief(name):
+        if not frappe.db.exists("RN Logistic Need", name):
+            return None
+
+        doc = frappe.db.get_value(
+            "RN Logistic Need",
+            name,
+            [
+                "item_name", "raw_item_text", "quantity", "unit",
+                "posko", "disaster_event", "observed_at",
+            ],
+            as_dict=True,
+        )
+
+        posko_title = (
+            frappe.db.get_value("RN Posko", doc.posko, "title")
+            if doc.posko else None
+        )
+
+        return {
+            "id": name,
+            "item": doc.item_name,
+            "raw_text": doc.raw_item_text,
+            "quantity": doc.quantity,
+            "unit": doc.unit,
+            "posko": posko_title or doc.posko,
+            "observed_at": str(doc.observed_at) if doc.observed_at else None,
+            "disaster_event": doc.disaster_event,
+        }
+
+    need_a = _need_brief(object_id_a)
+    need_b = _need_brief(object_id_b)
+
+    if not need_a or not need_b:
+        frappe.throw("Salah satu kebutuhan (RN Logistic Need) tidak ditemukan.")
+
+    setting = frappe._dict({"model_name": model_name})
+
+    system_prompt = """
+You are Rescue-Net's duplicate-need reviewer. You are given two
+logistics need records already flagged as geographically close (or
+same-village) candidates for the same canonical item. Judge whether
+they most likely describe the SAME real-world need (should be merged /
+treated as one, not summed) or are genuinely DIFFERENT needs that just
+happen to be nearby. Consider the raw text, quantity, and posko.
+Respond in Indonesian. The FIRST LINE of your answer must be exactly
+one word: "DUPLIKAT" or "BEDA". Then 1-2 short sentences of reasoning.
+Never expose API keys or credentials.
+"""
+
+    payload = {
+        "model":
+            setting.model_name
+            or DEFAULT_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt,
+            },
+            {
+                "role": "user",
+                "content":
+                    "Kebutuhan A:\n" + json.dumps(need_a, default=str)
+                    + "\n\nKebutuhan B:\n" + json.dumps(need_b, default=str),
+            },
+        ],
+        "temperature": 0.1,
+    }
+
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": "Bearer " + api_key,
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=60,
+        )
+    except Exception:
+        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
+                      user_id=user_id, key_source=key_source, provider=provider,
+                      model_name=setting.model_name or DEFAULT_MODEL,
+                      disaster_event=need_a.get("disaster_event"),
+                      outcome="error", error_note="network")
+        frappe.throw(
+            "AI request failed. Please check AI provider, model, "
+            "quota, and network settings."
+        )
+
+    if response.status_code == 401:
+        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
+                      user_id=user_id, key_source=key_source, provider=provider,
+                      model_name=setting.model_name or DEFAULT_MODEL,
+                      disaster_event=need_a.get("disaster_event"),
+                      outcome="auth_error", error_note="401")
+        frappe.throw(
+            "AI request failed: invalid API key. Please update your "
+            "AI key in Setting.",
+            frappe.AuthenticationError,
+        )
+
+    if not response.ok:
+        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
+                      user_id=user_id, key_source=key_source, provider=provider,
+                      model_name=setting.model_name or DEFAULT_MODEL,
+                      disaster_event=need_a.get("disaster_event"),
+                      outcome="error", error_note=str(response.status_code))
+        frappe.throw(
+            "AI request failed. Please check AI provider, model, "
+            "quota, and network settings."
+        )
+
+    data = response.json()
+
+    try:
+        answer = data["choices"][0]["message"]["content"]
+    except Exception:
+        frappe.throw("AI provider returned an invalid response.")
+
+    first_line = (answer or "").strip().splitlines()[0].strip().upper() if answer else ""
+    if "DUPLIKAT" in first_line:
+        verdict = "duplicate"
+    elif "BEDA" in first_line:
+        verdict = "different"
+    else:
+        verdict = "unclear"
+
+    _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
+                  user_id=user_id, key_source=key_source, provider=provider,
+                  model_name=setting.model_name or DEFAULT_MODEL,
+                  disaster_event=need_a.get("disaster_event"),
+                  a_chars=len(answer or ""), usage=data.get("usage"), outcome="ok")
+
+    return {
+        "object_id_a": object_id_a,
+        "object_id_b": object_id_b,
+        "verdict": verdict,
+        "answer": answer,
+        "model_name": setting.model_name or DEFAULT_MODEL,
+        "key_source": key_source,
+    }
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def public_active_disasters():

@@ -187,6 +187,28 @@ async function rnFetch(path, options = {}) {
     );
   }
 
+  if (url.pathname === "/consolidated-needs/rebuild" && method === "POST") {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_intelligence.rebuild_consolidated_needs",
+      { disaster_event: url.searchParams.get("disaster_event_id") || eventId },
+      { method: "POST" }
+    );
+  }
+
+  if (url.pathname === "/consolidated-needs/snapshots") {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_intelligence.consolidated_need_snapshots",
+      { disaster_event: eventId }
+    );
+  }
+
+  if (url.pathname === "/consolidated-needs/snapshot-detail") {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_intelligence.consolidated_need_snapshot_detail",
+      { name: url.searchParams.get("name") }
+    );
+  }
+
   if (method !== "GET") {
     return await RN_FRAPPE.call(
       "rescue_net.api_frontend_bridge."
@@ -289,10 +311,12 @@ function renderDuplicates(rows) {
         <div>
           <h4>${row.object_type}: ${row.object_id_a} vs ${row.object_id_b}</h4>
           <p>${row.match_reason || "candidate"} | score ${row.match_score} | status ${row.status}</p>
+          <p class="subtitle" data-ai-dup-result="${row.id}"></p>
         </div>
         <div class="chips"><span class="chip warning">${row.status}</span></div>
       </div>
       <div class="community-report-actions">
+        <button class="btn" type="button" data-analyze-duplicate="${row.id}" data-object-a="${row.object_id_a}" data-object-b="${row.object_id_b}">Analisa AI</button>
         <button class="btn" type="button" data-resolve-duplicate="${row.id}" data-status="needs_review">Needs Review</button>
         <button class="btn" type="button" data-resolve-duplicate="${row.id}" data-status="not_duplicate">Not Duplicate</button>
         <button class="btn primary" type="button" data-resolve-duplicate="${row.id}" data-status="confirmed_duplicate">Confirm Duplicate</button>
@@ -439,10 +463,16 @@ function renderRollupTrace(groupKey) {
     return;
   }
 
+  target.innerHTML = groupDetailHtml(g);
+}
+
+// Shared by the live rollup trace and the historical snapshot detail —
+// same group shape (api_intelligence._group_rows output) either way.
+function groupDetailHtml(g) {
   const unit = safe(g.base_unit, "");
   const sources = g.sources || [];
 
-  target.innerHTML = `
+  return `
     <article class="event-card">
       <div class="event-main">
         <div>
@@ -467,6 +497,93 @@ function renderRollupTrace(groupKey) {
       </table>
     </div>
   `;
+}
+
+// ---- Riwayat Konsolidasi (RN Consolidated Need Snapshot) ----
+// Metadata-only history: each snapshot stores which raw need IDs were
+// included, not a copy of the computed numbers. Detail is recomputed live
+// from those original records when opened.
+let RN_SNAPSHOTS = [];
+let RN_SNAPSHOT_SELECTED = null;
+let RN_SNAPSHOT_GROUPS = [];
+let RN_SNAPSHOT_GROUP_SELECTED = null;
+
+function fmtSnapshotDate(value) {
+  if (!value) return "-";
+  return String(value).slice(0, 16).replace("T", " ");
+}
+
+function renderSnapshots() {
+  const target = document.querySelector("[data-consolidation-snapshots]");
+  if (!target) return;
+
+  target.innerHTML = RN_SNAPSHOTS.length ? RN_SNAPSHOTS.map(s => {
+    const active = s.name === RN_SNAPSHOT_SELECTED ? " selected" : "";
+    return `
+      <article class="event-card rn-rollup-card${active}" data-snapshot="${s.name}" role="button" tabindex="0">
+        <div class="event-main">
+          <div>
+            <h4>${fmtSnapshotDate(s.creation)}</h4>
+            <p>${s.raw_need_count} kebutuhan mentah → ${s.group_count} kelompok · rule ${safe(s.rule)} · oleh ${safe(s.triggered_by)}</p>
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("") : card("Belum ada snapshot", "Klik \"Rebuild Consolidated Needs\" untuk membuat snapshot pertama.", "empty");
+
+  target.querySelectorAll("[data-snapshot]").forEach(el => {
+    function open() { loadSnapshotDetail(el.getAttribute("data-snapshot")); }
+    el.addEventListener("click", open);
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+  });
+}
+
+async function loadSnapshots() {
+  RN_SNAPSHOTS = await rnFetch("/consolidated-needs/snapshots");
+  renderSnapshots();
+}
+
+async function loadSnapshotDetail(name) {
+  RN_SNAPSHOT_SELECTED = name;
+  RN_SNAPSHOT_GROUP_SELECTED = null;
+  renderSnapshots();
+
+  const hint = document.querySelector("[data-snapshot-detail-hint]");
+  const target = document.querySelector("[data-snapshot-detail]");
+  if (hint) hint.textContent = "Memuat…";
+
+  try {
+    const detail = await rnFetch(`/consolidated-needs/snapshot-detail?name=${encodeURIComponent(name)}`);
+    RN_SNAPSHOT_GROUPS = detail.groups || [];
+
+    if (hint) {
+      hint.textContent = `${fmtSnapshotDate(detail.created)} · ${detail.raw_need_count_now} kebutuhan (saat ini)` +
+        (detail.missing_since_snapshot ? `, ${detail.missing_since_snapshot} sudah dihapus/berubah sejak snapshot` : "") +
+        " — klik kelompok untuk rincian sumber.";
+    }
+
+    if (target) {
+      target.innerHTML = RN_SNAPSHOT_GROUPS.length ? RN_SNAPSHOT_GROUPS.map(g => `
+        <article class="event-card rn-rollup-card" data-snapshot-group="${g.group_key}" role="button" tabindex="0">
+          <div class="event-main">
+            <div>
+              <h4>${safe(g.canonical_group || g.canonical_item)} | ${formatQty(g.qty_total)} ${safe(g.base_unit, "")}</h4>
+              <p>${g.area || "Lintas wilayah"} · <span class="rn-rollup-hint">klik untuk rincian →</span></p>
+            </div>
+          </div>
+        </article>
+      `).join("") : card("Tidak ada kelompok", "Semua record di snapshot ini sudah dihapus/berubah.", "empty");
+
+      target.querySelectorAll("[data-snapshot-group]").forEach(el => {
+        el.addEventListener("click", () => {
+          const g = RN_SNAPSHOT_GROUPS.find(row => row.group_key === el.getAttribute("data-snapshot-group"));
+          if (g) target.insertAdjacentHTML("beforeend", groupDetailHtml(g));
+        });
+      });
+    }
+  } catch (err) {
+    if (hint) hint.textContent = "✗ " + err.message;
+  }
 }
 
 function renderAreas(rows) {
@@ -559,6 +676,12 @@ async function loadDataConsolidation() {
   } catch (err) {
     setText("[data-consolidation-status]", `${err.message}. Jika endpoint 404, jalankan rebuild API.`);
   }
+
+  try {
+    await loadSnapshots();
+  } catch (err) {
+    setText("[data-snapshot-detail-hint]", "✗ " + err.message);
+  }
 }
 
 function setupActions() {
@@ -589,19 +712,57 @@ function setupActions() {
     }
   });
 
-  // NOTE: turning raw reports into a persisted "consolidated need" draft
-  // is a real, separate feature (needs a canonical Frappe doctype/workflow
-  // decision) that hasn't been built — this still hits the honest
-  // unsupported-operation stub on purpose, not silently.
+  // Creates an RN Consolidated Need Snapshot — metadata + the raw need IDs
+  // included right now, not a copy of the computed numbers (see Riwayat
+  // Konsolidasi panel). Recomputed live from those original records when
+  // a past snapshot is opened, so nothing drifts out of sync with source.
   document.querySelector("[data-rebuild-consolidated]")?.addEventListener("click", async () => {
     setText("[data-consolidation-status]", "Rebuilding consolidated needs...");
     try {
-      await rnFetch(`/consolidated-needs/rebuild?disaster_event_id=${encodeURIComponent(EVENT_ID)}`, {
+      const r = await rnFetch(`/consolidated-needs/rebuild?disaster_event_id=${encodeURIComponent(EVENT_ID)}`, {
         method: "POST"
       });
       await loadDataConsolidation();
+      setText("[data-consolidation-status]", `Snapshot dibuat: ${r.raw_need_count} kebutuhan → ${r.group_count} kelompok.`);
     } catch (err) {
       setText("[data-consolidation-status]", err.message);
+    }
+  });
+
+  // Manual, on-demand AI judgment per candidate pair (real paid API call
+  // against the operator's own BYOK key — deliberately not automatic).
+  document.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-analyze-duplicate]");
+    if (!btn) return;
+    const pairId = btn.getAttribute("data-analyze-duplicate");
+    const out = document.querySelector(`[data-ai-dup-result="${pairId}"]`);
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Menganalisa…";
+    if (out) out.textContent = "";
+    try {
+      const session = await RN_FRAPPE.session();
+      if (!session || !session.user) throw new Error("Perlu login untuk fitur ini.");
+      const r = await RN_FRAPPE.call(
+        "rescue_net.api_ai.analyze_duplicate_candidate",
+        {
+          user_id: session.user,
+          object_id_a: btn.getAttribute("data-object-a"),
+          object_id_b: btn.getAttribute("data-object-b")
+        },
+        { method: "POST" }
+      );
+      if (out) {
+        const label = r.verdict === "duplicate" ? "🔴 AI: kemungkinan DUPLIKAT"
+          : r.verdict === "different" ? "🟢 AI: kemungkinan BEDA"
+          : "⚪ AI: tidak jelas";
+        out.textContent = `${label} — ${r.answer || ""}`;
+      }
+    } catch (err) {
+      if (out) out.textContent = "✗ " + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
     }
   });
 

@@ -4566,6 +4566,76 @@ card `id="report-<id>"` and `loadCommunityReports()` scrolls to + flashes
 
 Deployed `api_frontend_bridge.py` via the usual `docker cp` + restart.
 
+## Manual AI dedup judgment + real Consolidated Need history (2026-09-14)
+
+Follow-up to the duplicate-detection entry above. Owner asked two design
+questions rather than a blind "build it":
+
+**Q1: link the geo-math duplicate detector to the AI Analyst?** Answer
+given: the detector is pure haversine + same-item matching, no LLM
+involved; AI Analyst (`api_ai.ask()`) already exists with a real OpenAI
+BYOK pipeline. Offered auto-on-every-load vs manual-per-pair vs skip —
+owner picked **manual per pair** (cost-conscious, nothing fires without
+an explicit click). Built `api_ai.analyze_duplicate_candidate(user_id,
+object_id_a, object_id_b)`: fetches both `RN Logistic Need` records +
+their posko titles, sends a short prompt asking the model to answer
+"DUPLIKAT" or "BEDA" (first line) + 1-2 sentence reasoning, using the
+exact same `_resolve_ai_key`/error-handling/`_log_ai_usage` pattern as
+`ask()`. Data Konsolidasi's Duplicate Need Candidates cards now have an
+"Analisa AI" button that calls it and shows the verdict inline
+(`renderDuplicates`/new click handler in `data-consolidation.js`).
+**Verified live** the guard path (no AI key configured → clean
+`ValidationError`, not a crash) — couldn't verify the actual OpenAI
+round-trip without spending the owner's real API key/quota; that path
+is structurally identical to the already-working `ask()` endpoint, so
+low risk, but flag it as the one untested branch.
+
+**Q2: "Rebuild Consolidated Needs" — persist for history, but not
+space-heavy.** Owner explicitly steered toward **metadata + traceable
+references, not duplicated computed data** — same principle as the
+MAX-not-SUM rule ("jangan gandakan, cukup rujuk ke sumber"). Built
+new doctype **`RN Consolidated Need Snapshot`** (7 fields: disaster_event,
+rule, raw_need_count, group_count, `need_ids_json` — just the list of
+raw `RN Logistic/Community Need` names, not their values —,
+triggered_by, notes). `rebuild_consolidated_needs(disaster_event)` in
+`api_intelligence.py` snapshots which raw IDs are currently open for
+that event (a few hundred bytes, not a result blob).
+`consolidated_need_snapshot_detail(name)` replays that frozen ID set
+through the *same* `_group_rows()` used by the live rollup, computed
+fresh against whatever those records look like now — so a record edited
+after the snapshot shows its current value, not a stale frozen copy
+(explicit tradeoff, not a bug: nothing is duplicated, so nothing can
+drift out of sync with source; `missing_since_snapshot` in the response
+surfaces if a referenced record was later deleted).
+`control_centre_summary()` refactored to share the fetch/alias logic
+(`_fetch_need_rows()`) with the new endpoints instead of duplicating it
+— verified unchanged output after the refactor (still 42/37).
+
+New "Riwayat Konsolidasi" panel on Data Konsolidasi lists past snapshots
+(timestamp, counts, who triggered it); clicking one shows its group
+breakdown, clicking a group reuses the same `groupDetailHtml()` /
+source-drill-down table as the live rollup. "Rebuild Consolidated Needs"
+button now actually does something (creates a real snapshot) instead of
+hitting the honest stub from the previous entry.
+
+**Deploy note — new doctype, not just a .py swap:** `docker cp` the new
+`rescue_net/doctype/rn_consolidated_need_snapshot/` folder (json + py +
+__init__.py) AND fix ownership after (`chown -R frappe:frappe` +
+`chmod -R u+rwX,go+rX` — the known docker-cp-lands-unreadable gotcha
+from the 2026-09-08 WA-notify deploy), THEN `bench --site osiun.localhost
+migrate` to actually create the DB table, THEN restart. Followed
+`scripts/deploy-wa-and-flowtrace.sh`'s proven sequence. Verified table
+exists via `DESCRIBE` and all 3 new endpoints end-to-end (rebuild →
+snapshot created with real ID count; snapshots list → shows it;
+snapshot-detail → replays correctly, `missing_since_snapshot: 0`).
+
+**Also caught mid-deploy**: `api_ai.py` had been edited earlier in the
+session (the `analyze_duplicate_candidate` addition) but never actually
+`docker cp`'d to the container — would have been a silent no-op deploy
+gap if not double-checked via md5sum before moving on. Worth remembering:
+always diff local-vs-container after *every* backend file edit, not
+just at the end of a batch.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

@@ -5014,6 +5014,71 @@ transport to `posko-distribusi.html`, unclassified to
 `posko-detail.html` — logistics-posko needs unchanged (still get
 `&penuhi=` for the quick-fulfill deep link).
 
+## Jiwa Berisiko: 2-step drill by problem type, not a flat posko list (2026-09-15)
+
+Owner, same day: "belum bener. Contoh jiwa beresiko kalau di klik harus
+tampilkan kondisi kritis, shelter laporan masyarakat, pasien kekurangan
+obat atau tenaga medis, dll, kl diklik baru masuk ke posko medis mana
+yang masalah." The jiwa_items fix earlier today (flat "posko + jiwa
+count, click → that posko's page") wasn't it — owner wants WHAT the
+problem is shown first, THEN which posko has it. Confirmed the
+structure via AskUserQuestion before building: 1 modal, 2 steps
+(category list → back button → that category's specific items).
+
+Backend: `jiwa_items` replaced with `jiwa_categories` — new
+`_ba_jiwa_categories()` builds 5 categories per event from REAL records
+(not invented labels with no data behind them):
+1. **Kasus Medis Kritis** — `RN Medical Case` severity berat/kritis or
+   triage merah/hitam, still active (not discharged/closed/deceased).
+2. **Kekurangan Obat & Alat Kesehatan** — critical `RN Logistic Need`
+   rows whose reporting posko is `posko_type: medical` (a subset of the
+   same records `kebutuhan_items` shows).
+3. **Kekurangan Tenaga Medis** — `RN Volunteer Assignment`
+   `assignment_type: medical`, priority urgent/critical, still
+   planned/cancelled (i.e. unfilled).
+4. **Shelter Kondisi Kritis** — `RN Shelter Occupancy` over capacity, or
+   a critical + open `RN Shelter Need`.
+5. **Laporan Korban dari Masyarakat** — `RN Community Report` rows with
+   `affected_people_count > 0`, linked via `laporan-masyarakat.html
+   ?report=<name>` (that page's JS already supports this deep link).
+
+**2 real bugs found mid-build, both fixed**:
+- `RN Shelter Need` has **no `disaster_event` column at all** (checked
+  the doctype meta) — `event_filters()` silently returned `{}`, so
+  EVERY shelter need across EVERY active disaster leaked into every
+  other event's drill (verified live: same 2 shelter poskos showed up
+  identically under all 7 events, including ones with zero real
+  shelter data). Fixed by scoping via posko membership in that event's
+  own `poskos` list instead.
+- Several `posko` reference fields on these doctypes still store the
+  legacy `posko_nodes:` prefix, which doesn't match `RN Posko`'s real
+  (unprefixed) docname — so `posko_title`/`posko_region`/`posko_by_name`
+  lookups missed and an item's title fell back to showing the raw
+  internal ID. Normalized every `posko` reference before using it as a
+  lookup key (`_group_by_posko()` and the shelter section). Also found
+  one genuinely **dangling** reference (a shelter-need row pointing at
+  a posko that no longer exists — `frappe.db.get_value` returned
+  `None`) — rather than showing a dead-end link, these are now silently
+  dropped (`_group_by_posko` requires `posko in posko_by_name`).
+
+Frontend (`bencana-aktif.js`): `renderDrill("jiwa")` is now 2 modes
+keyed on `state.jiwaOpen` (`null` = level 1 category list per event,
+`{eventId,key}` = level 2 that category's items + a `data-jiwa-back`
+button). `openDrill()` resets `state.jiwaOpen = null` so the modal
+always opens at level 1. A category with `count: 0` renders as a
+disabled button (no dead click). Click delegation on the existing
+`#baDrill` listener (`data-jiwa-cat`/`data-jiwa-back`) just re-renders
+`#baDrillBody` in place — no new modal, no page nav.
+
+Verified live end-to-end via Playwright: level 1 shows 5 categories per
+event with correct real counts (disabled where 0), clicking an enabled
+one shows the right specific posko/laporan items with correct hrefs
+(medical → posko-medis-detail.html etc.), back button returns to level
+1 cleanly, zero console errors. Also re-confirmed via curl that the
+cross-event shelter-need leak is gone (events with no real shelter data
+now correctly show `shelter_kritis: 0`, not the same 2 phantom entries
+every other event was showing before the fix).
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

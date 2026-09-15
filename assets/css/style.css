@@ -4979,6 +4979,15 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-ba-pill.is-kritis { background: rgba(216, 69, 69, .14); color: var(--red); }
 .rn-ba-pill.is-siaga { background: rgba(221, 138, 47, .16); color: var(--orange); }
 .rn-ba-pill.is-waspada { background: rgba(184, 137, 24, .14); color: var(--yellow); }
+.rn-ba-pill.is-ok { background: rgba(47, 158, 89, .12); color: #2f9e59; }
+
+.rn-ba-catbtn {
+  width: 100%;
+  font: inherit;
+  cursor: pointer;
+}
+.rn-ba-catbtn.is-disabled { cursor: default; opacity: .55; }
+.rn-ba-back { margin-bottom: 10px; }
 
 .rn-ba-pager { display: flex; gap: 4px; }
 .rn-ba-pg {

@@ -16,6 +16,10 @@
     selectedId: null,
     expanded: {},
     expandAll: false,
+    // "Jiwa Berisiko" drill is 2 steps: null = level 1 (category list per
+    // event), {eventId,key} = level 2 (that one category's specific
+    // posko/laporan items). Reset to null every time the modal (re)opens.
+    jiwaOpen: null,
   };
 
   var $ = function (sel, root) {
@@ -118,6 +122,7 @@
   function openDrill(kind) {
     var cfg = DRILL[kind];
     if (!cfg) return;
+    state.jiwaOpen = null;
     $("#baDrillTitle").textContent = cfg.title;
     $("#baDrillBody").innerHTML = renderDrill(kind);
     var sub = "";
@@ -177,55 +182,68 @@
     }
 
     if (kind === "jiwa") {
+      // Level 2: one category already picked — show exactly what's
+      // wrong and where (posko/laporan), with a way back to the
+      // category list. Owner: a number with nowhere to click into
+      // "posko medis mana yang bermasalah" isn't good enough.
+      if (state.jiwaOpen) {
+        var openEv = evs.filter(function (e) { return e.id === state.jiwaOpen.eventId; })[0];
+        var cat = openEv && (openEv.jiwa_categories || [])
+          .filter(function (c) { return c.key === state.jiwaOpen.key; })[0];
+        if (!openEv || !cat) {
+          state.jiwaOpen = null;
+          return renderDrill("jiwa");
+        }
+        var detailRows = (cat.items || [])
+          .map(function (it) {
+            return (
+              '<a class="rn-ba-ditem" href="' + esc(it.href) + '">' +
+              "<span><b>" + esc(it.title) + "</b><small>" +
+              esc(it.detail || "") + (it.region ? " · " + esc(it.region) : "") + "</small></span>" +
+              '<span class="rn-ba-pill is-kritis">' + fmt(it.count) + "</span>" +
+              '<span class="rn-ba-ditem-go">→</span>' +
+              "</a>"
+            );
+          })
+          .join("");
+        return (
+          '<button type="button" class="btn ghost mini rn-ba-back" data-jiwa-back>← Kembali ke daftar kategori</button>' +
+          drillGroup(openEv, '<div class="rn-ba-ditems">' +
+            (detailRows || '<p class="rn-muted">Tidak ada rincian.</p>') + "</div>")
+        );
+      }
+
+      // Level 1: WHAT is critical, per event, not just how many people —
+      // each category is a button into level 2 above.
       return evs
-        .filter(function (ev) { return ev.jiwa_berisiko > 0 || (ev.regions || []).length; })
+        .filter(function (ev) { return ev.jiwa_berisiko > 0 || (ev.jiwa_categories || []).some(function (c) { return c.count; }); })
         .sort(function (a, b) { return b.jiwa_berisiko - a.jiwa_berisiko; })
         .map(function (ev) {
-          var rows = (ev.regions || [])
-            .map(function (rg) {
+          var cats = (ev.jiwa_categories || [])
+            .map(function (c) {
+              var disabled = !c.count;
               return (
-                "<tr><td>" + esc(rg.name) + "</td><td>" + fmt(rg.jiwa_berisiko) +
-                "</td><td>" + fmt(rg.posko_count) + "</td><td>" + pill(rg.status_label) + "</td></tr>"
+                '<button type="button" class="rn-ba-ditem rn-ba-catbtn' + (disabled ? " is-disabled" : "") + '"' +
+                (disabled ? " disabled" : (' data-jiwa-cat="' + esc(c.key) + '" data-jiwa-event="' + esc(ev.id) + '"')) + ">" +
+                "<span><b>" + esc(c.label) + "</b></span>" +
+                '<span class="rn-ba-pill ' + (c.count ? "is-kritis" : "is-ok") + '">' + fmt(c.count) + "</span>" +
+                (disabled ? "" : '<span class="rn-ba-ditem-go">→</span>') +
+                "</button>"
               );
             })
             .join("");
-          var tbl =
-            '<table class="rn-table"><thead><tr><th>Wilayah</th><th>Jiwa</th>' +
-            "<th>Posko</th><th>Status</th></tr></thead><tbody>" +
-            (rows || '<tr><td colspan="4"><em class="rn-muted">Belum ada data wilayah</em></td></tr>') +
-            "</tbody></table>";
-
-          // Per-posko breakdown — where the jiwa_berisiko count actually
-          // comes from (posko medis / shelter / dapur umum / dll), routed
-          // to each posko's own operational page instead of only a
-          // region rollup with nowhere to click through to.
-          var items = (ev.jiwa_items || [])
-            .map(function (it) {
-              return (
-                '<a class="rn-ba-ditem" href="' + esc(it.href) + '">' +
-                "<span><b>" + esc(it.posko_title) + "</b><small>" +
-                esc(it.type_label) + " · " + esc(it.region) + "</small></span>" +
-                '<span class="rn-ba-pill is-siaga">' + fmt(it.jiwa) + " jiwa</span>" +
-                '<span class="rn-ba-ditem-go">→</span>' +
-                "</a>"
-              );
-            })
-            .join("");
-          var itemsBlock = items
-            ? '<div class="rn-ba-ditems">' + items + "</div>"
-            : '<p class="rn-muted">Belum ada rincian per-posko.</p>';
 
           var links =
             '<div class="rn-ba-drill-links">' +
             '<a class="btn ghost mini" href="war-room.html?event=' +
             encodeURIComponent(shortId(ev.id)) + '">Buka Control Centre ↗</a>' +
             '<a class="btn ghost mini" href="laporan-masyarakat.html?event=' +
-            encodeURIComponent(shortId(ev.id)) + '">Laporan Korban dari Masyarakat ↗</a>' +
+            encodeURIComponent(shortId(ev.id)) + '">Semua Laporan Masyarakat ↗</a>' +
             '<a class="btn ghost mini" href="data-consolidation.html?event=' +
             encodeURIComponent(shortId(ev.id)) + '">Data Konsolidasi (AI) ↗</a>' +
             "</div>";
 
-          return drillGroup(ev, tbl + itemsBlock + links);
+          return drillGroup(ev, '<div class="rn-ba-ditems">' + cats + "</div>" + links);
         })
         .join("") || '<p class="rn-muted">Belum ada jiwa berisiko tercatat.</p>';
     }
@@ -552,6 +570,20 @@
         select(row.getAttribute("data-select"));
         closeDrill();
         $(".rn-ba-list-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      var catBtn = e.target.closest("[data-jiwa-cat]");
+      if (catBtn) {
+        state.jiwaOpen = {
+          eventId: catBtn.getAttribute("data-jiwa-event"),
+          key: catBtn.getAttribute("data-jiwa-cat"),
+        };
+        $("#baDrillBody").innerHTML = renderDrill("jiwa");
+        return;
+      }
+      if (e.target.closest("[data-jiwa-back]")) {
+        state.jiwaOpen = null;
+        $("#baDrillBody").innerHTML = renderDrill("jiwa");
       }
     });
 

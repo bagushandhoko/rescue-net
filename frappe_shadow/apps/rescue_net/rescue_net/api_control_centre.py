@@ -2817,6 +2817,231 @@ def _kebutuhan_href(posko_row, posko_id, event, item_name):
     return href
 
 
+_MEDICAL_CRIT_SEVERITY = {"severe", "critical"}
+_MEDICAL_CRIT_TRIAGE = {"red", "black"}
+_MEDICAL_CLOSED_CASE = {"discharged", "closed", "deceased"}
+
+
+def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_region):
+    """"Jiwa Berisiko" drill, level 1 — owner: a raw beneficiary count
+    with nowhere to click into "posko medis mana yang bermasalah" isn't
+    good enough. WHAT is critical, grouped from real records, so level 2
+    (frontend) can drill straight to the specific posko/laporan with the
+    problem: kasus medis kritis, kekurangan obat/alkes, kekurangan
+    tenaga medis, shelter kondisi kritis, laporan korban masyarakat."""
+
+    def _group_by_posko(rows, detail_fn):
+        buckets = {}
+        for r in rows:
+            # Some legacy rows still store `posko` with the pre-cutover
+            # `posko_nodes:` prefix, which doesn't match RN Posko's real
+            # docname — normalize before using it as the lookup key, or
+            # posko_title/posko_region/posko_by_name all miss and the
+            # item shows a raw internal ID as its title instead of the
+            # posko's actual name.
+            posko = str(r.get("posko") or "").replace("posko_nodes:", "") or None
+            # Drop a dangling reference to a posko that no longer exists
+            # for this event — a dead-end link with a raw ID as its title
+            # is worse than just not showing that one row.
+            if not posko or posko not in posko_by_name:
+                continue
+            buckets.setdefault(posko, []).append(r)
+        items = [
+            {
+                "title": posko_title.get(posko) or posko,
+                "region": posko_region.get(posko) or "Lintas wilayah",
+                "detail": detail_fn(rows),
+                "count": len(rows),
+                "href": _operate_href(posko_by_name.get(posko, {"name": posko}), short_ev),
+            }
+            for posko, rows in buckets.items()
+        ]
+        items.sort(key=lambda it: -it["count"])
+        return items
+
+    categories = []
+
+    # 1) Kasus medis kritis — triase merah/hitam atau severity berat/kritis,
+    # masih ditangani (belum discharged/closed/meninggal).
+    cases = frappe.get_all(
+        "RN Medical Case",
+        filters=event_filters(cols("RN Medical Case"), event_id),
+        fields=_sf("RN Medical Case", ["name", "posko", "severity", "triage_status", "case_status"]),
+        limit_page_length=500,
+    )
+    crit_cases = [
+        c for c in cases
+        if (
+            str(c.get("severity") or "").lower() in _MEDICAL_CRIT_SEVERITY
+            or str(c.get("triage_status") or "").lower() in _MEDICAL_CRIT_TRIAGE
+        )
+        and str(c.get("case_status") or "active").lower() not in _MEDICAL_CLOSED_CASE
+    ]
+    categories.append({
+        "key": "medis_kritis",
+        "label": "Kasus Medis Kritis",
+        "count": len(crit_cases),
+        "items": _group_by_posko(
+            crit_cases,
+            lambda rows: "%d kasus triase merah/hitam atau severity berat/kritis" % len(rows),
+        ),
+    })
+
+    # 2) Kekurangan obat/alkes — kebutuhan logistik kritis yang dilaporkan
+    # posko bertipe medical (subset dari kebutuhan_items di atas).
+    needs = frappe.get_all(
+        "RN Logistic Need",
+        filters=event_filters(cols("RN Logistic Need"), event_id),
+        fields=_sf("RN Logistic Need", ["name", "item_name", "urgency", "need_status", "posko"]),
+        limit_page_length=500,
+    )
+    med_needs = [
+        n for n in needs
+        if str(n.get("urgency") or "").lower() in _CRIT_URGENCY
+        and str(n.get("need_status") or "open").lower() not in _CLOSED_NEED
+        and str((posko_by_name.get(n.get("posko")) or {}).get("posko_type") or "").lower() == "medical"
+    ]
+    categories.append({
+        "key": "kekurangan_obat",
+        "label": "Kekurangan Obat & Alat Kesehatan",
+        "count": len(med_needs),
+        "items": _group_by_posko(
+            med_needs,
+            lambda rows: ", ".join(sorted({r.get("item_name") or "-" for r in rows})[:4]),
+        ),
+    })
+
+    # 3) Kekurangan tenaga medis — permintaan relawan medis prioritas
+    # urgent/kritis yang belum terisi (planned/cancelled = belum jalan).
+    assigns = frappe.get_all(
+        "RN Volunteer Assignment",
+        filters=event_filters(cols("RN Volunteer Assignment"), event_id),
+        fields=_sf("RN Volunteer Assignment", ["name", "posko", "assignment_type", "priority", "assignment_status"]),
+        limit_page_length=500,
+    )
+    nakes_gaps = [
+        a for a in assigns
+        if str(a.get("assignment_type") or "").lower() == "medical"
+        and str(a.get("priority") or "").lower() in ("urgent", "critical")
+        and str(a.get("assignment_status") or "planned").lower() in ("planned", "cancelled")
+    ]
+    categories.append({
+        "key": "kekurangan_nakes",
+        "label": "Kekurangan Tenaga Medis",
+        "count": len(nakes_gaps),
+        "items": _group_by_posko(
+            nakes_gaps,
+            lambda rows: "%d permintaan relawan medis belum terisi" % len(rows),
+        ),
+    })
+
+    # 4) Shelter kondisi kritis — melebihi kapasitas, atau kebutuhan
+    # shelter berstatus kritis & masih terbuka.
+    occs = frappe.get_all(
+        "RN Shelter Occupancy",
+        filters=event_filters(cols("RN Shelter Occupancy"), event_id),
+        fields=_sf("RN Shelter Occupancy", ["name", "posko", "capacity_total", "current_occupancy"]),
+        limit_page_length=500,
+    )
+    over_capacity = {
+        str(o.get("posko") or "").replace("posko_nodes:", ""): o for o in occs
+        if o.get("posko")
+        and _num(o.get("capacity_total")) > 0
+        and _num(o.get("current_occupancy")) > _num(o.get("capacity_total"))
+    }
+    # RN Shelter Need has NO disaster_event column at all (checked the
+    # doctype meta) — event_filters() would silently return {} and every
+    # shelter need across EVERY event leaked into this one's drill. Scope
+    # by posko membership in this event's own poskos instead.
+    shelter_needs_all = frappe.get_all(
+        "RN Shelter Need",
+        fields=_sf("RN Shelter Need", ["name", "posko", "item_name", "priority", "need_status"]),
+        limit_page_length=2000,
+    )
+    shelter_needs = [
+        n for n in shelter_needs_all
+        if str(n.get("posko") or "").replace("posko_nodes:", "") in posko_by_name
+    ]
+    crit_shelter_needs = [
+        n for n in shelter_needs
+        if str(n.get("priority") or "").lower() == "critical"
+        and str(n.get("need_status") or "open").lower() == "open"
+        and n.get("posko")
+    ]
+    # Only poskos that still resolve to a real RN Posko doc for this event —
+    # a dangling `posko` reference (renamed/deleted record; seen live for
+    # one legacy shelter-need row) would otherwise show a dead-end link
+    # with the raw internal ID as its title instead of a real posko name.
+    shelter_posko_ids = (set(over_capacity) | {
+        str(n["posko"]).replace("posko_nodes:", "") for n in crit_shelter_needs
+    }) & set(posko_by_name)
+    shelter_items = []
+    for posko in shelter_posko_ids:
+        occ = over_capacity.get(posko)
+        needs_hit = [
+            n for n in crit_shelter_needs
+            if str(n.get("posko") or "").replace("posko_nodes:", "") == posko
+        ]
+        details = []
+        if occ:
+            details.append(
+                "Kapasitas %d, terisi %d (penuh)"
+                % (int(_num(occ.get("capacity_total"))), int(_num(occ.get("current_occupancy"))))
+            )
+        if needs_hit:
+            details.append(
+                "%d kebutuhan kritis (%s)"
+                % (len(needs_hit), ", ".join(sorted({n.get("item_name") or "-" for n in needs_hit})[:3]))
+            )
+        shelter_items.append({
+            "title": posko_title.get(posko) or posko,
+            "region": posko_region.get(posko) or "Lintas wilayah",
+            "detail": " · ".join(details),
+            "count": (1 if occ else 0) + len(needs_hit),
+            "href": _operate_href(posko_by_name.get(posko, {"name": posko}), short_ev),
+        })
+    shelter_items.sort(key=lambda it: -it["count"])
+    categories.append({
+        "key": "shelter_kritis",
+        "label": "Shelter Kondisi Kritis",
+        "count": len(shelter_items),
+        "items": shelter_items,
+    })
+
+    # 5) Laporan korban dari masyarakat — laporan warga yang mencatat
+    # jiwa terdampak, terbaru dulu.
+    reports = frappe.get_all(
+        "RN Community Report",
+        filters=event_filters(cols("RN Community Report"), event_id),
+        fields=_sf("RN Community Report", [
+            "name", "title", "report_type", "affected_people_count",
+            "reporter_name", "city_name", "district_name", "village_name",
+        ]),
+        order_by="creation desc",
+        limit_page_length=200,
+    )
+    victim_reports = [r for r in reports if _num(r.get("affected_people_count")) > 0]
+    categories.append({
+        "key": "laporan_korban",
+        "label": "Laporan Korban dari Masyarakat",
+        "count": len(victim_reports),
+        "items": [
+            {
+                "title": r.get("title") or r.get("report_type") or "Laporan Masyarakat",
+                "region": r.get("village_name") or r.get("district_name") or r.get("city_name") or "-",
+                "detail": "%d jiwa terdampak · pelapor: %s" % (
+                    int(_num(r.get("affected_people_count"))), r.get("reporter_name") or "warga",
+                ),
+                "count": int(_num(r.get("affected_people_count"))),
+                "href": "laporan-masyarakat.html?report=" + str(r["name"]) + "&event=" + short_ev,
+            }
+            for r in victim_reports[:30]
+        ],
+    })
+
+    return categories
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def active_disasters_board(limit=60):
@@ -2952,24 +3177,9 @@ def active_disasters_board(limit=60):
         # _operate_href() every other "go operate this posko" link in this
         # module already uses (posko-medis-detail / shelter-detail /
         # dapur-umum / posko-logistik / posko-distribusi / posko-detail).
-        jiwa_items = [
-            {
-                "posko": p["name"],
-                "posko_title": p.get("title") or p["name"],
-                "region": posko_region[p["name"]],
-                "type": p.get("posko_type"),
-                "type_label": _BA_POSKO_TYPE_LABEL.get(
-                    str(p.get("posko_type") or "").lower(), "Posko"
-                ),
-                "jiwa": int(_num(p.get("rn_beneficiary_count"))),
-                "href": _operate_href(p, short_ev),
-            }
-            for p in sorted(
-                poskos,
-                key=lambda p: -int(_num(p.get("rn_beneficiary_count"))),
-            )
-            if int(_num(p.get("rn_beneficiary_count"))) > 0
-        ]
+        jiwa_categories = _ba_jiwa_categories(
+            event_id, short_ev, posko_by_name, posko_title, posko_region
+        )
 
         jiwa = sum(int(_num(p.get("rn_beneficiary_count"))) for p in poskos)
         pengungsi = sum(
@@ -3060,7 +3270,7 @@ def active_disasters_board(limit=60):
             "kebutuhan_items": kebutuhan_items,
             "distribusi_items": distribusi_items,
             "posko_kritis_items": posko_kritis_items,
-            "jiwa_items": jiwa_items,
+            "jiwa_categories": jiwa_categories,
         })
 
         tot_jiwa += jiwa

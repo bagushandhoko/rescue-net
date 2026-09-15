@@ -536,6 +536,10 @@ a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3
   font-weight: 700;
 }
 
+.rn-dup-dismissed {
+  opacity: .55;
+}
+
 /* Brief flash on a panel after a KPI card jump-scrolls to it. */
 .rn-kpi-jump-highlight {
   animation: rn-kpi-jump-flash 1.6s ease;

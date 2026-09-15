@@ -1720,8 +1720,82 @@ def duplicate_candidates(
                     })
 
     candidates.sort(key=lambda c: c["match_score"], reverse=True)
+    candidates = candidates[:100]
 
-    return candidates[:100]
+    # Overlay any persisted operator decision (RN Duplicate Candidate
+    # Resolution) — this used to always read back as "pending_review"
+    # because resolve_duplicate_candidate() didn't exist yet.
+    if candidates:
+        resolutions = frappe.get_all(
+            "RN Duplicate Candidate Resolution",
+            filters={"pair_id": ["in", [c["id"] for c in candidates]]},
+            fields=["pair_id", "status", "reviewed_by", "ai_verdict", "notes"],
+        )
+        resolution_by_pair = {r.pair_id: r for r in resolutions}
+
+        for c in candidates:
+            r = resolution_by_pair.get(c["id"])
+            if r:
+                c["status"] = r.status
+                c["reviewed_by"] = r.reviewed_by
+                c["ai_verdict"] = r.ai_verdict
+                c["notes"] = r.notes
+
+    return candidates
+
+
+@frappe.whitelist()
+def resolve_duplicate_candidate(pair_id, status, reviewed_by=None, review_notes=None,
+                                 ai_verdict=None, ai_answer=None):
+    """Persist an operator's Needs Review / Not Duplicate / Confirm
+    Duplicate decision for one candidate pair from duplicate_candidates()
+    — this always failed before (no canonical model existed; the button
+    rendered as if it worked). `pair_id` is the same
+    "<object_id_a>::<object_id_b>" key duplicate_candidates() returns as
+    `id`. Upserts by pair_id so re-resolving the same pair updates it
+    instead of creating duplicates of the duplicate-resolution itself."""
+    actor = _actor()
+
+    valid_statuses = {"needs_review", "not_duplicate", "confirmed_duplicate"}
+    if status not in valid_statuses:
+        frappe.throw("Status tidak valid.")
+
+    parts = (pair_id or "").split("::")
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        frappe.throw("pair_id tidak valid.")
+
+    object_id_a, object_id_b = parts
+    who = reviewed_by or getattr(actor, "name", None) or frappe.session.user
+
+    if frappe.db.exists("RN Duplicate Candidate Resolution", pair_id):
+        doc = frappe.get_doc("RN Duplicate Candidate Resolution", pair_id)
+        doc.status = status
+        doc.reviewed_by = who
+        doc.notes = review_notes
+        if ai_verdict:
+            doc.ai_verdict = ai_verdict
+            doc.ai_answer = ai_answer
+        doc.flags.ignore_permissions = True
+        doc.save(ignore_permissions=True)
+    else:
+        doc = frappe.get_doc({
+            "doctype": "RN Duplicate Candidate Resolution",
+            "pair_id": pair_id,
+            "object_type": "RN Logistic Need",
+            "object_id_a": object_id_a,
+            "object_id_b": object_id_b,
+            "status": status,
+            "reviewed_by": who,
+            "notes": review_notes,
+            "ai_verdict": ai_verdict,
+            "ai_answer": ai_answer,
+        })
+        doc.flags.ignore_permissions = True
+        doc.insert(ignore_permissions=True)
+
+    frappe.db.commit()
+
+    return {"ok": True, "pair_id": pair_id, "status": status}
 
 
 @frappe.whitelist()

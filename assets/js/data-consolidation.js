@@ -170,6 +170,21 @@ async function rnFetch(path, options = {}) {
     );
   }
 
+  if (/^\/duplicates\/.+\/resolve$/.test(url.pathname) && method === "POST") {
+    const body = JSON.parse(options.body || "{}");
+    const pairId = url.pathname.replace(/^\/duplicates\//, "").replace(/\/resolve$/, "");
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge.resolve_duplicate_candidate",
+      {
+        pair_id: pairId,
+        status: body.status,
+        reviewed_by: body.reviewed_by,
+        review_notes: body.review_notes
+      },
+      { method: "POST" }
+    );
+  }
+
   if (/^\/community-reports\/[^/]+\/consolidation$/.test(url.pathname) && method === "PATCH") {
     const body = JSON.parse(options.body || "{}");
     const report = url.pathname.split("/")[2];
@@ -302,18 +317,26 @@ function renderRawReports(rows) {
   }).join("") : card("Belum ada raw report", "Laporan mentah akan muncul di sini sebelum menjadi angka final.", "empty");
 }
 
+const DUPLICATE_STATUS_CHIP = {
+  pending_review: "warning",
+  needs_review: "warning",
+  not_duplicate: "success",
+  confirmed_duplicate: "neutral"
+};
+
 function renderDuplicates(rows) {
   const target = document.querySelector("[data-duplicate-candidates]");
   if (!target) return;
-  target.innerHTML = rows.length ? rows.map(row => `
-    <article class="event-card">
+  target.innerHTML = rows.length ? rows.map(row => {
+    return `
+    <article class="event-card${row.status === "not_duplicate" ? " rn-dup-dismissed" : ""}">
       <div class="event-main">
         <div>
           <h4>${row.object_type}: ${row.object_id_a} vs ${row.object_id_b}</h4>
-          <p>${row.match_reason || "candidate"} | score ${row.match_score} | status ${row.status}</p>
-          <p class="subtitle" data-ai-dup-result="${row.id}"></p>
+          <p>${row.match_reason || "candidate"} | score ${row.match_score} | status ${row.status}${row.reviewed_by ? ` · oleh ${row.reviewed_by}` : ""}</p>
+          <p class="subtitle" data-ai-dup-result="${row.id}">${row.ai_verdict ? `AI sebelumnya: ${row.ai_verdict === "duplicate" ? "DUPLIKAT" : row.ai_verdict === "different" ? "BEDA" : "tidak jelas"}` : ""}</p>
         </div>
-        <div class="chips"><span class="chip warning">${row.status}</span></div>
+        <div class="chips"><span class="chip ${DUPLICATE_STATUS_CHIP[row.status] || "warning"}">${row.status}</span></div>
       </div>
       <div class="community-report-actions">
         <button class="btn" type="button" data-analyze-duplicate="${row.id}" data-object-a="${row.object_id_a}" data-object-b="${row.object_id_b}">Analisa AI</button>
@@ -322,7 +345,8 @@ function renderDuplicates(rows) {
         <button class="btn primary" type="button" data-resolve-duplicate="${row.id}" data-status="confirmed_duplicate">Confirm Duplicate</button>
       </div>
     </article>
-  `).join("") : card("Tidak ada kandidat duplikat", "Belum ada raw report yang terdeteksi berpotensi overlap.", "ok");
+  `;
+  }).join("") : card("Tidak ada kandidat duplikat", "Belum ada raw report yang terdeteksi berpotensi overlap.", "ok");
 }
 
 function renderConsolidated(rows) {
@@ -769,10 +793,8 @@ function setupActions() {
   document.addEventListener("click", async (event) => {
     const btn = event.target.closest("[data-resolve-duplicate]");
     if (!btn) return;
-    // Candidates are now real (computed live from posko proximity/area —
-    // see api_frontend_bridge.duplicate_candidates), but there's still no
-    // canonical model to persist a resolve decision to, so this always
-    // fails server-side. Surface that honestly instead of failing silent.
+    // Persists to RN Duplicate Candidate Resolution (upserted by pair_id),
+    // overlaid back onto duplicate_candidates() on the next load.
     try {
       await rnFetch(`/duplicates/${btn.getAttribute("data-resolve-duplicate")}/resolve`, {
         method: "POST",
@@ -783,6 +805,7 @@ function setupActions() {
         })
       });
       await loadDataConsolidation();
+      setText("[data-consolidation-status]", "Status kandidat duplikat disimpan.");
     } catch (err) {
       setText("[data-consolidation-status]", err.message);
     }

@@ -2803,6 +2803,20 @@ def _ba_dominant_area(poskos):
     return counter.most_common(1)[0][0] if counter else None
 
 
+def _kebutuhan_href(posko_row, posko_id, event, item_name):
+    """Route a critical-need item to its REPORTING posko's own type
+    (medis/shelter/dapur/logistik/dll) via _operate_href() — a critical
+    need isn't always logistics just because it's stored in RN Logistic
+    Need. Only a logistics-type posko gets &penuhi= appended, since only
+    posko-logistik.html's own JS reads that deep-link param."""
+    row = posko_row or {"name": posko_id}
+    href = _operate_href(row, event)
+    ptype = str((posko_row or {}).get("posko_type") or "").lower()
+    if ptype in ("logistics", "collection_hub"):
+        href += "&penuhi=" + (item_name or "")
+    return href
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def active_disasters_board(limit=60):
@@ -2859,6 +2873,7 @@ def active_disasters_board(limit=60):
 
         posko_region = {p["name"]: _ba_region_key(p) for p in poskos}
         posko_title = {p["name"]: (p.get("title") or p["name"]) for p in poskos}
+        posko_by_name = {p["name"]: p for p in poskos}
 
         crit_needs = [
             n for n in needs
@@ -2879,12 +2894,15 @@ def active_disasters_board(limit=60):
                 "posko": n.get("posko"),
                 "posko_title": posko_title.get(n.get("posko")) or n.get("posko") or "-",
                 "region": posko_region.get(n.get("posko")) or "Lintas wilayah",
+                # A "kebutuhan kritis" isn't always a logistics need from a
+                # logistics posko — e.g. KH-POSKO-ISPA is posko_type
+                # "medical" but its critical needs (masker, oksigen) used to
+                # hardcode a posko-logistik.html link anyway. Route by the
+                # REPORTING posko's actual type instead, via _kebutuhan_href().
                 "href": (
-                    "posko-logistik.html?id="
-                    + str(n.get("posko") or "").replace("posko_nodes:", "")
-                    + "&event=" + short_ev
-                    + "&penuhi=" + (n.get("item_name") or "")
-                ) if n.get("posko") else ("war-room.html?event=" + short_ev),
+                    _kebutuhan_href(posko_by_name.get(n.get("posko")), n.get("posko"), short_ev, n.get("item_name"))
+                    if n.get("posko") else ("war-room.html?event=" + short_ev)
+                ),
             }
             for n in sorted(
                 crit_needs,

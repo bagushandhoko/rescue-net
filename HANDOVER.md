@@ -4996,6 +4996,24 @@ on `bencana-aktif.js`/`style.css` — this page's own `<link>`/`<script>`
 tags only (the CSS addition — `.rn-ba-drill-links` — is scoped to this
 page's drill modal, not worth a site-wide 38-page cache-buster bump).
 
+**Follow-up same session**: owner "link di masing2 item harusnya..."
+(cut off) → clarified via AskUserQuestion: "item beda kategori harus ke
+halaman beda". Found `kebutuhan_items`' href was hardcoded to
+`posko-logistik.html` for EVERY critical need regardless of which
+posko actually reported it — confirmed live: `KH-POSKO-ISPA` /
+`KH-POSKO-SATWA` are `posko_type: "medical"` ("Pos Kesehatan ISPA",
+"Posko Medis Satwa") but their masker/oksigen/obat needs all linked to
+the logistics page. New `_kebutuhan_href(posko_row, posko_id, event,
+item_name)` routes by the REPORTING posko's actual type via
+`_operate_href()` (same helper the jiwa_items fix above already uses)
+— `&penuhi=<item>` only appended when the target is actually
+posko-logistik.html, since that's the only page whose JS reads that
+param. Verified live (curl + Playwright): medical-posko needs now go
+to `posko-medis-detail.html`, shelter needs to `shelter-detail.html`,
+transport to `posko-distribusi.html`, unclassified to
+`posko-detail.html` — logistics-posko needs unchanged (still get
+`&penuhi=` for the quick-fulfill deep link).
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

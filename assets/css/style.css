@@ -4937,6 +4937,9 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-ba-row:hover { background: rgba(232, 131, 93, .07); }
 .rn-ba-row.is-selected { background: rgba(59, 130, 196, .10); }
 
+.rn-ba-clickcell { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+.rn-ba-clickcell:hover { color: var(--peach2); font-weight: 700; }
+
 .rn-ba-name { display: flex; align-items: flex-start; gap: 8px; text-align: left; }
 .rn-ba-name > span { display: flex; flex-direction: column; }
 .rn-ba-name small { color: var(--muted); font-size: 12px; }

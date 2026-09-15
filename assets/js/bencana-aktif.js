@@ -20,6 +20,10 @@
     // event), {eventId,key} = level 2 (that one category's specific
     // posko/laporan items). Reset to null every time the modal (re)opens.
     jiwaOpen: null,
+    // Set when a drill was opened by clicking a number in the table
+    // (main row or an expanded region row) instead of the top KPI card —
+    // scopes the drill to that one disaster instead of every active one.
+    drillFocusEventId: null,
   };
 
   var $ = function (sel, root) {
@@ -119,14 +123,27 @@
     distribusi: { title: "Distribusi Terhambat / Menunggu" },
   };
 
-  function openDrill(kind) {
+  function openDrill(kind, focusEventId) {
     var cfg = DRILL[kind];
     if (!cfg) return;
     state.jiwaOpen = null;
+    // A click on a number in the "Daftar Bencana Aktif" table (main row
+    // or an expanded region row) — those numbers used to just sit there
+    // with no click handler at all. Now they open the SAME drill as the
+    // KPI card above, but scoped to just that one disaster instead of
+    // every active one.
+    state.drillFocusEventId = focusEventId || null;
     $("#baDrillTitle").textContent = cfg.title;
     $("#baDrillBody").innerHTML = renderDrill(kind);
+    var focusEv = state.drillFocusEventId
+      ? state.events.filter(function (e) { return e.id === state.drillFocusEventId; })[0]
+      : null;
     var sub = "";
-    if (kind === "kebutuhan")
+    if (focusEv) {
+      if (kind === "kebutuhan") sub = fmt(focusEv.kebutuhan_kritis) + " item di " + focusEv.name;
+      else if (kind === "distribusi") sub = fmt(focusEv.distribusi_terhambat) + " item di " + focusEv.name;
+      else if (kind === "jiwa") sub = fmt(focusEv.jiwa_berisiko) + " jiwa dilayani posko di " + focusEv.name;
+    } else if (kind === "kebutuhan")
       sub = fmt(state.totals.kebutuhan_kritis) + " item · klik untuk buka posko & isi bantuan";
     else if (kind === "distribusi")
       sub = fmt(state.totals.distribusi_terhambat) + " item";
@@ -158,7 +175,9 @@
   }
 
   function renderDrill(kind) {
-    var evs = state.events;
+    var evs = state.drillFocusEventId
+      ? state.events.filter(function (e) { return e.id === state.drillFocusEventId; })
+      : state.events;
 
     if (kind === "bencana") {
       return (
@@ -347,13 +366,13 @@
         "<td>" +
         pill(ev.status_label) +
         "</td>" +
-        "<td>" +
+        '<td class="rn-ba-clickcell" data-drill-focus="jiwa">' +
         fmt(ev.jiwa_berisiko) +
         "</td>" +
-        "<td>" +
+        '<td class="rn-ba-clickcell" data-drill-focus="kebutuhan">' +
         fmt(ev.kebutuhan_kritis) +
         "</td>" +
-        "<td>" +
+        '<td class="rn-ba-clickcell" data-drill-focus="distribusi">' +
         fmt(ev.distribusi_terhambat) +
         " / " +
         fmt(ev.distribusi_total) +
@@ -385,13 +404,13 @@
             "<td>" +
             pill(rg.status_label) +
             "</td>" +
-            "<td>" +
+            '<td class="rn-ba-clickcell" data-drill-focus="jiwa">' +
             fmt(rg.jiwa_berisiko) +
             "</td>" +
-            "<td>" +
+            '<td class="rn-ba-clickcell" data-drill-focus="kebutuhan">' +
             fmt(rg.kebutuhan_kritis) +
             "</td>" +
-            "<td>" +
+            '<td class="rn-ba-clickcell" data-drill-focus="distribusi">' +
             fmt(rg.distribusi) +
             "</td>" +
             "<td>" +
@@ -614,6 +633,18 @@
     });
 
     $("#baTableBody").addEventListener("click", function (e) {
+      // A number cell (main row or an expanded region row) — open that
+      // KPI's drill scoped to just this one disaster, same as clicking
+      // the KPI card up top but focused. Checked first since a region
+      // row (tr.rn-ba-sub) isn't a tr.rn-ba-row and the row-select logic
+      // below would just silently do nothing for it.
+      var cell = e.target.closest("[data-drill-focus]");
+      if (cell) {
+        var anyRow = e.target.closest("tr[data-id]");
+        if (anyRow) openDrill(cell.getAttribute("data-drill-focus"), anyRow.getAttribute("data-id"));
+        return;
+      }
+
       var row = e.target.closest("tr.rn-ba-row");
       if (!row) return;
       var id = row.getAttribute("data-id");

@@ -5079,6 +5079,32 @@ cross-event shelter-need leak is gone (events with no real shelter data
 now correctly show `shelter_kritis: 0`, not the same 2 phantom entries
 every other event was showing before the fix).
 
+**Follow-up same session**: owner "itu 850 diklik nggak respon apa2."
+Found via Playwright DOM search (not guessing) — "850" was in the
+LEFT "Daftar Bencana Aktif" table's Jiwa Berisiko column, not the KPI
+drill modal, in 2 places with 2 different real causes: the main
+`tr.rn-ba-row` cell (click fires `select()`, but that row was already
+selected in the test session, so nothing visibly changed — looked like
+"no response"), and the expanded region `tr.rn-ba-sub` row's cell
+(genuinely **zero** click handler — `#baTableBody`'s listener only
+looked for `tr.rn-ba-row`, which a region sub-row isn't).
+
+Confirmed via AskUserQuestion: clicking either should open the same
+KPI drill modal as the top cards, but focused to just that one
+disaster. `openDrill(kind, focusEventId)` gained an optional 2nd arg;
+new `state.drillFocusEventId` filters `renderDrill()`'s event list to
+one when set (KPI cards still pass none → all events, unchanged). The
+3 numeric columns (Jiwa Berisiko / Kebutuhan Kritis / Distribusi) in
+both the main row and region sub-rows are now `.rn-ba-clickcell`
+(dotted underline, hover highlight) with `data-drill-focus`; click
+delegation checks for that attribute before falling through to the old
+row-select/caret-expand logic, so region rows are no longer dead ends.
+Drill subtitle shows that one event's own number ("850 jiwa dilayani
+posko di [SIMULASI] Krakatau Meletus 2026") instead of the sitewide
+total when focused. Verified live via Playwright: main-row and
+region-row clicks both open the drill scoped to exactly 1 event group,
+zero console errors. Frontend-only change, no backend redeploy needed.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

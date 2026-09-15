@@ -4936,6 +4936,66 @@ whitelisted function, not wherever `_actor()`/`rn_actor()` is actually
 called) — both picked up by werkzeug's autoreload, no restart needed
 for a plain `.py` change once the container's already up.
 
+## Bencana Aktif KPI drills — real links to source posko/pages (2026-09-15)
+
+Owner: "betulkan link jiwa beresiko dll ... link ke posko medis, kebutuhan
+shelter, laporan korban dr masyarakat, kebutuhan kritis dari logistik,
+dapur umum, distribusi penumpukan bantuan di posko, dan nanti bisa
+sampe ke konsolidasi data itu." The "Jiwa Berisiko" KPI drill
+(`pages/bencana-aktif.html`) opened a modal with only a region-level
+rollup table (name/jiwa/posko count/status) and one blanket "Buka
+Control Centre" link — no way to reach the actual posko (medis/shelter/
+dapur umum) the jiwa count came from. "Distribusi Terhambat" items DID
+link out already, but only to the generic `management-distribusi.html`
+module page, not the specific posko carrying the backlog.
+
+`api_control_centre.active_disasters_board()` gained `jiwa_items`: one
+row per posko with `rn_beneficiary_count > 0`, routed to that posko's
+own operational page by type via the module's existing `_operate_href()`
+helper (medical→posko-medis-detail.html, shelter→shelter-detail.html,
+kitchen→dapur-umum.html, logistics/collection_hub→posko-logistik.html,
+transport→posko-distribusi.html, else→posko-detail.html) — same helper
+`my_org_coordination()` already used, just never wired into this
+dashboard's per-posko drills before. `distribusi_items`' `href` changed
+from the generic module link to `posko-distribusi.html?id=<destination_
+posko>` (falls back to the old generic link only when a flow has no
+destination posko).
+
+**Real bug found + fixed in `_operate_href()` itself** (not new code —
+existing shared helper, used by `my_org_coordination()` too): it never
+stripped the legacy `posko_nodes:` prefix some pre-Frappe-cutover posko
+docnames still carry, unlike every other href-builder in this module.
+Caught via live data: `posko-sim-dapur`'s actual docname is
+`posko_nodes:posko-sim-dapur`, so the Dapur Umum jiwa_items link
+produced `dapur-umum.html?id=posko_nodes:posko-sim-dapur` — broken.
+Fixed by stripping the prefix inside `_operate_href()`, which also
+fixes it for `my_org_coordination()`'s "my poskos" operate links (not
+verified live for that specific caller this session, but the fix is at
+the shared source so it benefits both).
+
+Frontend (`bencana-aktif.js`): `renderDrill("jiwa")` now renders a
+per-posko items list (same `.rn-ba-ditem` card pattern kebutuhan/
+distribusi already use) below the region table, plus a `.rn-ba-drill-
+links` row per event group with 3 links: Control Centre, **"Laporan
+Korban dari Masyarakat ↗"** (new — `laporan-masyarakat.html?event=`,
+closes the "laporan korban dari masyarakat" ask; that page's JS already
+supports `?event=` deep-linking per its own cache-buster name), and
+**"Data Konsolidasi (AI) ↗"** (closes "sampai ke konsolidasi data").
+The `kebutuhan`/`distribusi` drills' existing Data Konsolidasi link was
+previously `kebutuhan`-only; now shows on both.
+
+Verified live: guest `active_disasters_board` response inspected
+directly (jiwa_items correctly type-routed post-fix, distribusi_items
+posko-specific), then Playwright end-to-end on the real page — opened
+all 3 KPI drills (jiwa/kebutuhan/distribusi), captured every item's
+href + every drill-group action link, zero console/page errors.
+
+Deployed: `docker cp api_control_centre.py` (no new doctype, no
+migrate needed), picked up by werkzeug autoreload. Cache-busters bumped
+on `bencana-aktif.js`/`style.css` — this page's own `<link>`/`<script>`
+tags only (the CSS addition — `.rn-ba-drill-links` — is scoped to this
+page's drill modal, not worth a site-wide 38-page cache-buster bump).
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

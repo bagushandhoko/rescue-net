@@ -2745,6 +2745,14 @@ _OPS_CRITICAL = {"critical", "overload", "emergency", "danger"}
 _OPS_WARNING = {"urgent", "warning", "affected", "disrupted"}
 _CRIT_URGENCY = {"critical", "urgent", "high"}
 _CLOSED_NEED = {"fulfilled", "closed", "cancelled", "met", "done"}
+_BA_POSKO_TYPE_LABEL = {
+    "medical": "Posko Medis",
+    "shelter": "Shelter",
+    "kitchen": "Dapur Umum",
+    "logistics": "Posko Logistik",
+    "collection_hub": "Posko Logistik",
+    "transport": "Posko Distribusi",
+}
 
 
 def _ba_region_key(posko):
@@ -2892,7 +2900,15 @@ def active_disasters_board(limit=60):
                 "posko_title": posko_title.get(f.get("destination_posko"))
                 or f.get("destination_posko") or "-",
                 "region": posko_region.get(f.get("destination_posko")) or "Lintas wilayah",
-                "href": "management-distribusi.html?event=" + short_ev,
+                # Deep-link to the destination posko's own board (where the
+                # backlog actually is) instead of the generic module page —
+                # same "route by what the item actually points to" rule
+                # kebutuhan_items already follows below.
+                "href": (
+                    "posko-distribusi.html?id="
+                    + str(f.get("destination_posko") or "").replace("posko_nodes:", "")
+                    + "&event=" + short_ev
+                ) if f.get("destination_posko") else ("management-distribusi.html?event=" + short_ev),
             }
             for f in blocked_flows
         ]
@@ -2910,6 +2926,31 @@ def active_disasters_board(limit=60):
             }
             for p in poskos
             if _ba_situation(p.get("operational_status")) == "critical"
+        ]
+        # Jiwa Berisiko drill previously showed only a region rollup table
+        # with one blanket "Buka Control Centre" link — no way to reach the
+        # actual posko carrying the people (medis/shelter/dapur/etc). One
+        # row per posko with beneficiaries, routed by type via the same
+        # _operate_href() every other "go operate this posko" link in this
+        # module already uses (posko-medis-detail / shelter-detail /
+        # dapur-umum / posko-logistik / posko-distribusi / posko-detail).
+        jiwa_items = [
+            {
+                "posko": p["name"],
+                "posko_title": p.get("title") or p["name"],
+                "region": posko_region[p["name"]],
+                "type": p.get("posko_type"),
+                "type_label": _BA_POSKO_TYPE_LABEL.get(
+                    str(p.get("posko_type") or "").lower(), "Posko"
+                ),
+                "jiwa": int(_num(p.get("rn_beneficiary_count"))),
+                "href": _operate_href(p, short_ev),
+            }
+            for p in sorted(
+                poskos,
+                key=lambda p: -int(_num(p.get("rn_beneficiary_count"))),
+            )
+            if int(_num(p.get("rn_beneficiary_count"))) > 0
         ]
 
         jiwa = sum(int(_num(p.get("rn_beneficiary_count"))) for p in poskos)
@@ -3001,6 +3042,7 @@ def active_disasters_board(limit=60):
             "kebutuhan_items": kebutuhan_items,
             "distribusi_items": distribusi_items,
             "posko_kritis_items": posko_kritis_items,
+            "jiwa_items": jiwa_items,
         })
 
         tot_jiwa += jiwa
@@ -4549,8 +4591,13 @@ def posko_edit_scope(posko=None, disaster_event=None):
 
 
 def _operate_href(posko_row, event):
-    """Route a posko to its operational workspace by type."""
-    pid = posko_row.get("name")
+    """Route a posko to its operational workspace by type. Strips the
+    legacy `posko_nodes:` prefix some pre-Frappe-cutover posko docnames
+    still carry — every other href-builder in this module already does
+    this (kebutuhan_items/posko_kritis_items/etc); this one didn't, so a
+    legacy-prefixed posko (e.g. `posko_nodes:posko-sim-dapur`) produced a
+    broken `?id=posko_nodes:...` link."""
+    pid = str(posko_row.get("name") or "").replace("posko_nodes:", "")
     ev = event or posko_row.get("disaster_event") or ""
     ptype = str(posko_row.get("posko_type") or "").lower()
     page = {

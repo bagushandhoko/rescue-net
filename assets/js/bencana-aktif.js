@@ -193,10 +193,39 @@
             '<table class="rn-table"><thead><tr><th>Wilayah</th><th>Jiwa</th>' +
             "<th>Posko</th><th>Status</th></tr></thead><tbody>" +
             (rows || '<tr><td colspan="4"><em class="rn-muted">Belum ada data wilayah</em></td></tr>') +
-            "</tbody></table>" +
+            "</tbody></table>";
+
+          // Per-posko breakdown — where the jiwa_berisiko count actually
+          // comes from (posko medis / shelter / dapur umum / dll), routed
+          // to each posko's own operational page instead of only a
+          // region rollup with nowhere to click through to.
+          var items = (ev.jiwa_items || [])
+            .map(function (it) {
+              return (
+                '<a class="rn-ba-ditem" href="' + esc(it.href) + '">' +
+                "<span><b>" + esc(it.posko_title) + "</b><small>" +
+                esc(it.type_label) + " · " + esc(it.region) + "</small></span>" +
+                '<span class="rn-ba-pill is-siaga">' + fmt(it.jiwa) + " jiwa</span>" +
+                '<span class="rn-ba-ditem-go">→</span>' +
+                "</a>"
+              );
+            })
+            .join("");
+          var itemsBlock = items
+            ? '<div class="rn-ba-ditems">' + items + "</div>"
+            : '<p class="rn-muted">Belum ada rincian per-posko.</p>';
+
+          var links =
+            '<div class="rn-ba-drill-links">' +
             '<a class="btn ghost mini" href="war-room.html?event=' +
-            encodeURIComponent(shortId(ev.id)) + '">Buka Control Centre ↗</a>';
-          return drillGroup(ev, tbl);
+            encodeURIComponent(shortId(ev.id)) + '">Buka Control Centre ↗</a>' +
+            '<a class="btn ghost mini" href="laporan-masyarakat.html?event=' +
+            encodeURIComponent(shortId(ev.id)) + '">Laporan Korban dari Masyarakat ↗</a>' +
+            '<a class="btn ghost mini" href="data-consolidation.html?event=' +
+            encodeURIComponent(shortId(ev.id)) + '">Data Konsolidasi (AI) ↗</a>' +
+            "</div>";
+
+          return drillGroup(ev, tbl + itemsBlock + links);
         })
         .join("") || '<p class="rn-muted">Belum ada jiwa berisiko tercatat.</p>';
     }
@@ -231,15 +260,13 @@
             );
           })
           .join("");
-        // Raw per-posko needs above are un-consolidated (no dedup/MAX
+        // Raw per-posko needs/flows above are un-consolidated (no dedup/MAX
         // across overlapping reports) — link out to the AI rollup so an
         // operator can cross-check before deciding what to send.
         var consolidationLink =
-          kind === "kebutuhan"
-            ? '<a class="btn ghost mini" href="data-consolidation.html?event=' +
-              encodeURIComponent(shortId(ev.id)) +
-              '">Lihat Analisa AI / Data Konsolidasi ↗</a>'
-            : "";
+          '<a class="btn ghost mini" href="data-consolidation.html?event=' +
+          encodeURIComponent(shortId(ev.id)) +
+          '">Lihat Analisa AI / Data Konsolidasi ↗</a>';
         return drillGroup(
           ev,
           '<div class="rn-ba-ditems">' + rows + "</div>" + consolidationLink

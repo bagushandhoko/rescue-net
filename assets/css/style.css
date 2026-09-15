@@ -5186,6 +5186,8 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-ba-dg-head b { font-size: 14px; }
 .rn-ba-dg-head small { flex: 1 1 100%; }
 .rn-ba-dg .btn.mini { margin-top: 8px; }
+.rn-ba-drill-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.rn-ba-drill-links .btn.mini { margin-top: 0; }
 
 .rn-ba-ditems { display: flex; flex-direction: column; gap: 6px; }
 .rn-ba-ditem {

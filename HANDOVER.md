@@ -4680,6 +4680,38 @@ it), `rn-navigation-v2.css` (same 38), and `rn-control-centre-final.css`
 capability this session) — verified via curl that the deployed CSS/JS
 match source and the logic is sound; flag for a real-device check.
 
+## Duplicate-candidate resolve decisions now persist (2026-09-15)
+
+Owner asked what menu avoids duplicate input for the same area, then
+"tutup gap itu" — this is the gap flagged (but not closed) in the
+2026-09-14 "Real duplicate-need detection" entry: the Needs Review /
+Not Duplicate / Confirm Duplicate buttons on Data Konsolidasi rendered
+as if they worked but had nowhere to save to.
+
+Found the fix was **already written but never committed or deployed**
+(local uncommitted diff from a prior session): new doctype `RN
+Duplicate Candidate Resolution` (pair_id-keyed, upsertable),
+`resolve_duplicate_candidate()` in `api_frontend_bridge.py` persists
+the operator decision to it, `duplicate_candidates()` overlays the
+saved status/reviewed_by/ai_verdict back onto each live-computed pair.
+`data-consolidation.js` already had the resolve route wired + dismissed
+styling for `not_duplicate` pairs. Verified in container logs this had
+even been curl-tested working (12:52 the previous session) — just sitting
+as `git status` `M`/`??` with no commit, so it would've been lost/
+re-discovered as "still broken" next session.
+
+Committed (`89c3c8c`) and deployed: `docker cp` doctype +
+`api_frontend_bridge.py`, `chown`/`chmod` fix, `bench --site
+osiun.localhost migrate` (table verified via `DESCRIBE`), container
+restart. Post-restart the backend was slow to answer `/api/method/ping`
+(~7 min of connection timeouts/resets, both from the host and from
+inside the container) — this was cold-start latency after `migrate`,
+not a crash: `docker top` showed the werkzeug reloader + a live child
+process burning CPU the whole time, and it came back to normal
+(<1s ping) on its own. **Lesson: after `bench migrate` + restart, expect
+a multi-minute unresponsive window before verifying — don't diagnose
+it as broken from a handful of quick timeouts.**
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on
@@ -4693,3 +4725,6 @@ match source and the logic is sound; flag for a real-device check.
 - Do not hardcode map pins in JS; fix coordinates on the `RN Posko` record.
 - Playwright runs only inside Docker image `mcr.microsoft.com/playwright:v1.56.1-noble`
   (host chromium lacks GUI libs). Scripts in `/volume1/docker/osiun-playwright-check/`.
+- Before assuming code doesn't exist yet, check `git status` for uncommitted
+  local changes first — a prior session may have already written (and even
+  live-tested) the fix without committing/deploying/documenting it.

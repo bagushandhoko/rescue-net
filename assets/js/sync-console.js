@@ -210,21 +210,8 @@ async function api(path, options = {}) {
 }
 
 
-function card(title, body, chip) {
-  return `
-    <article class="event-card">
-      <div class="event-main">
-        <div>
-          <h4>${title}</h4>
-          <p>${body}</p>
-        </div>
-        <div class="chips">
-          <span class="chip warning">${chip}</span>
-        </div>
-      </div>
-    </article>
-  `;
-}
+// card() now lives in data-consolidation.js — both pages share one tab
+// on Sync Data Konsolidasi, and that version handles a missing chip too.
 
 function retryConflicts() {
   const drafts = getDrafts();

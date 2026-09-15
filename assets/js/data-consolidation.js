@@ -1,7 +1,7 @@
 const EVENT_ID = new URLSearchParams(window.location.search).get("event") || "event-sim-001";
 
 
-async function rnFetch(path, options = {}) {
+async function rnConsolFetch(path, options = {}) {
   const method =
     String(
       options.method || "GET"
@@ -563,7 +563,7 @@ function renderSnapshots() {
 }
 
 async function loadSnapshots() {
-  RN_SNAPSHOTS = await rnFetch("/consolidated-needs/snapshots");
+  RN_SNAPSHOTS = await rnConsolFetch("/consolidated-needs/snapshots");
   renderSnapshots();
 }
 
@@ -577,7 +577,7 @@ async function loadSnapshotDetail(name) {
   if (hint) hint.textContent = "Memuat…";
 
   try {
-    const detail = await rnFetch(`/consolidated-needs/snapshot-detail?name=${encodeURIComponent(name)}`);
+    const detail = await rnConsolFetch(`/consolidated-needs/snapshot-detail?name=${encodeURIComponent(name)}`);
     RN_SNAPSHOT_GROUPS = detail.groups || [];
 
     if (hint) {
@@ -662,14 +662,14 @@ function renderEvidenceRequirements(payload) {
 async function loadDataConsolidation() {
   try {
     const [summary, rawReports, duplicates, consolidated, nationalRollup, areas, groups, evidenceRules] = await Promise.all([
-      rnFetch(`/data-consolidation/summary?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
-      rnFetch(`/data-consolidation/raw-reports?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
-      rnFetch(`/duplicates/candidates?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
-      rnFetch(`/consolidated-needs?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
-      rnFetch(`/data-consolidation/national-rollup?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
-      rnFetch(`/operational-areas?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
-      rnFetch(`/beneficiary-groups?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
-      rnFetch("/data-consolidation/evidence-requirements")
+      rnConsolFetch(`/data-consolidation/summary?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
+      rnConsolFetch(`/data-consolidation/raw-reports?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
+      rnConsolFetch(`/duplicates/candidates?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
+      rnConsolFetch(`/consolidated-needs?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
+      rnConsolFetch(`/data-consolidation/national-rollup?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
+      rnConsolFetch(`/operational-areas?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
+      rnConsolFetch(`/beneficiary-groups?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
+      rnConsolFetch("/data-consolidation/evidence-requirements")
     ]);
 
     // consolidation_summary only returns *_count totals; derive the tiles the
@@ -712,7 +712,7 @@ function setupActions() {
   document.querySelector("[data-check-duplicates]")?.addEventListener("click", async () => {
     setText("[data-consolidation-status]", "Checking duplicate candidates...");
     try {
-      const r = await rnFetch("/duplicates/check", {
+      const r = await rnConsolFetch("/duplicates/check", {
         method: "POST",
         body: JSON.stringify({ disaster_event_id: EVENT_ID, object_type: "all" })
       });
@@ -726,7 +726,7 @@ function setupActions() {
   document.querySelector("[data-check-community-duplicates]")?.addEventListener("click", async () => {
     setText("[data-consolidation-status]", "Checking community report overlap...");
     try {
-      await rnFetch("/duplicates/check", {
+      await rnConsolFetch("/duplicates/check", {
         method: "POST",
         body: JSON.stringify({ disaster_event_id: EVENT_ID, object_type: "community_report" })
       });
@@ -743,7 +743,7 @@ function setupActions() {
   document.querySelector("[data-rebuild-consolidated]")?.addEventListener("click", async () => {
     setText("[data-consolidation-status]", "Rebuilding consolidated needs...");
     try {
-      const r = await rnFetch(`/consolidated-needs/rebuild?disaster_event_id=${encodeURIComponent(EVENT_ID)}`, {
+      const r = await rnConsolFetch(`/consolidated-needs/rebuild?disaster_event_id=${encodeURIComponent(EVENT_ID)}`, {
         method: "POST"
       });
       await loadDataConsolidation();
@@ -796,7 +796,7 @@ function setupActions() {
     // Persists to RN Duplicate Candidate Resolution (upserted by pair_id),
     // overlaid back onto duplicate_candidates() on the next load.
     try {
-      await rnFetch(`/duplicates/${btn.getAttribute("data-resolve-duplicate")}/resolve`, {
+      await rnConsolFetch(`/duplicates/${btn.getAttribute("data-resolve-duplicate")}/resolve`, {
         method: "POST",
         body: JSON.stringify({
           status: btn.getAttribute("data-status"),
@@ -816,7 +816,7 @@ function setupActions() {
     if (!btn) return;
     const status = btn.getAttribute("data-status");
     try {
-      await rnFetch(`/community-reports/${btn.getAttribute("data-community-consolidation")}/consolidation`, {
+      await rnConsolFetch(`/community-reports/${btn.getAttribute("data-community-consolidation")}/consolidation`, {
         method: "PATCH",
         body: JSON.stringify({
           consolidation_status: status,

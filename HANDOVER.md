@@ -4752,6 +4752,67 @@ needed one earlier this session because a *new doctype* needed
 itself required it). `kirim-bantuan.html`/`public-aid.js` are static,
 live immediately on save.
 
+## Sync Console merged into Data Konsolidasi as "Sync Data Konsolidasi" (2026-09-15)
+
+Owner: "halaman sync data konsolidasi, recheck fungsi konsol logistik,
+hindari duplikasi dan online offline berjalan dengan baik." Found this
+had **already been built uncommitted** by a prior session (`git status`
+showed `data-consolidation.html`/`.js`, `sync-console.html`/`.js`,
+`rn-navigation-v2.js`, `rn-public-header.js` modified + new untracked
+`assets/js/sync-data-konsolidasi-tabs.js`, undocumented in this file) —
+same lesson as the 2026-09-15 duplicate-candidate-persistence entry:
+check `git status` before assuming work doesn't exist.
+
+`pages/data-consolidation.html` (title now "Sync Data Konsolidasi") got
+3 tabs (`assets/js/sync-data-konsolidasi-tabs.js`, hash-routed
+`#tab=konsolidasi|duplikasi|sync`, defaults to `konsolidasi`):
+- **Konsolidasi Logistik** — rollup nasional, consolidated needs,
+  beneficiary groups, riwayat konsolidasi, evidence rules (the old
+  Data Konsolidasi content minus the duplicate/raw-report panels).
+- **Cegah Duplikasi Report** — raw reports queue + duplicate candidate
+  review (the panels split out of the tab above).
+- **Sync Offline ↔ Online** — the entire old Sync Console page content
+  (offline draft form, local drafts, server requests/assignments, sync
+  events, conflicts, audit log, federation repository) moved in as-is.
+
+`pages/sync-console.html` is now a 1-line meta-refresh + JS redirect to
+`data-consolidation.html?event=...#tab=sync` (old bookmarks/links keep
+working). All 36 other pages' sidebar links and `rn-navigation-v2.js` /
+`rn-public-header.js` renamed "Sync Console" → "Sync Data Konsolidasi"
+pointing at `data-consolidation.html` — grepped the live `pages/`
+tree afterward, zero stragglers (only archived/backup copies still say
+Sync Console, which don't matter).
+
+**Duplication actually removed, not just visual**: both scripts declare
+top-level globals and now share one page load, so the prior session
+renamed `data-consolidation.js`'s `rnFetch()` → `rnConsolFetch()`
+(would've silently shadowed `sync-console.js`'s own `api()`-calling
+helpers had names collided) and deleted `sync-console.js`'s duplicate
+`card()` — it now reuses `data-consolidation.js`'s version. Diffed both
+files' top-level `function`/`const`/`let` declarations side by side to
+confirm no remaining name collisions.
+
+**Verified with Playwright** (`/volume1/docker/osiun-playwright-check/
+rn-synckonsol-check.js`, `-403.js`, `-login.js`):
+- Guest load: 0 `pageerror`s, no duplicate DOM ids across the 3 tabs'
+  worth of merged markup, tab clicks switch panels + update the hash,
+  loading the page directly with `#tab=sync` opens straight to that
+  tab, `sync-console.html` redirects correctly. Offline-draft
+  save/Sync Push exercised without throwing.
+- Real login (`ld1.demo@rescue-net.local`, posko coordinator): all 3
+  tabs render live server data (26 raw reports, 6 real duplicate
+  candidates on tab 2; sync status/assignments/events on tab 3), Sync
+  Pull button completes live against the server.
+- The only 403s seen (guest *and* logged-in) are `api_sync.status` —
+  **intentional**, that endpoint calls `_require_control()`
+  (Control Centre role only) by design; a posko coordinator correctly
+  gets denied and the panel just renders empty instead of erroring.
+  Not a bug from this merge, pre-existing access control.
+
+Not yet done: no screenshot/visual pass on mobile width for the new
+tab bar (`.rn-tabs`/`.rn-tab` classes are reused from elsewhere in the
+app, so styling should already be responsive, but not eyeballed here).
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

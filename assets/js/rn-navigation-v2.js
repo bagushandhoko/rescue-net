@@ -129,8 +129,8 @@
         icon: "ai-analyst"
       },
       {
-        label: "Sync Console",
-        href: "sync-console.html",
+        label: "Sync Data Konsolidasi",
+        href: "data-consolidation.html",
         icon: "sync"
       },
       {

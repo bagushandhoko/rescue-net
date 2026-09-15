@@ -4712,6 +4712,46 @@ process burning CPU the whole time, and it came back to normal
 a multi-minute unresponsive window before verifying — don't diagnose
 it as broken from a handful of quick timeouts.**
 
+## Kirim Bantuan: GPS current-location + pick-on-map for pickup location (2026-09-15)
+
+Owner, mid-session: "di kiriman bantuan, untuk lokasi bisa pake gps
+skr, bisa pilih di map." `pages/kirim-bantuan.html`'s "Lokasi Barang /
+Pickup" was a plain free-text address input (`pickup_location`,
+Small Text on `RN Aid Offer`) — no coordinates at all.
+
+Reused the exact GPS/Leaflet pattern already proven on Registrasi
+Posko (`registrasi-posko.js`'s `GEO`/`initGeoMap`/`useCurrentLocation`)
+instead of inventing a new one: "📍 Lokasi saat ini" button
+(`navigator.geolocation.getCurrentPosition`) + "🗺️ Pilih di peta"
+toggle (draggable Leaflet marker, click-anywhere-to-set), writing into
+hidden `pickup_lat`/`pickup_lng` inputs (`#kbLat`/`#kbLng`,
+`setupAidLocationPicker()` in `public-aid.js`). The free-text address
+field stays — coordinates are an optional precision add-on for the
+pickup crew, not a replacement (donor may not know their exact pin).
+
+Backend: new `pickup_latitude`/`pickup_longitude` (Float) fields on
+`RN Aid Offer`; `submit_guest_aid_offer_multi()` takes them as
+optional params and stores them on every item row of the batch.
+Backward compatible — omitting them behaves exactly as before.
+
+**Verified live** via `bench console` (not just browser-untested code):
+called `submit_guest_aid_offer_multi` with
+`pickup_latitude=-6.123456, pickup_longitude=106.654321`, read the
+created `RN Aid Offer` back, confirmed both values round-tripped
+exactly, then deleted the test record. Did not browser-test the actual
+click-on-map/geolocation-permission UX (no browser available this
+session) — flag for a real-device check per [[testing-methodology-real-login]]
+pattern, though this form requires no login so the access-control risk
+that pattern warns about doesn't apply here.
+
+Deployed: `docker cp` doctype json + `api_logistics.py`, `bench migrate`
+(columns verified via `DESCRIBE`), werkzeug auto-reloaded the `.py`
+change on its own this time (no manual container restart needed — only
+needed one earlier this session because a *new doctype* needed
+`migrate` before the reloader's file-watch fired, not because reload
+itself required it). `kirim-bantuan.html`/`public-aid.js` are static,
+live immediately on save.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

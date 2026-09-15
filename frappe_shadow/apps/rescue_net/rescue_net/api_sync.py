@@ -1352,13 +1352,16 @@ def status(limit=50):
     rows = frappe.get_all(
         "RN Sync Log",
         fields=[
+            "name",
             "event_id",
+            "disaster_event_id",
             "object_type",
             "object_id",
             "operation",
             "source_device_id",
             "apply_status",
             "conflict_status",
+            "error_message",
             "creation",
         ],
         order_by="creation desc",

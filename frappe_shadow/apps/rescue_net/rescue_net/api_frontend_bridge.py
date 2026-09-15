@@ -7,7 +7,12 @@ import frappe
 from frappe.utils import flt, now_datetime
 from frappe.utils.file_manager import save_file
 
-from rescue_net.access_policy import rn_actor
+from rescue_net.access_policy import (
+    can_edit_event,
+    editable_disaster_events,
+    is_system_manager,
+    rn_actor,
+)
 from rescue_net.reference_resolver import (
     resolve_disaster_event,
     resolve_posko,
@@ -48,6 +53,24 @@ def _actor():
     if not actor:
         frappe.throw(
             "Login Rescue-Net diperlukan",
+            frappe.PermissionError,
+        )
+
+    return actor
+
+
+def _require_event_edit(event):
+    """Gate for Data Konsolidasi WRITE actions: logged in AND the actor's
+    organisation actually operates a posko in this disaster event (or the
+    actor is a System Manager, who may edit every event). Viewing is open
+    to guests (see the guest-safe read endpoints below) — this only gates
+    writes."""
+    actor = _actor()
+
+    if not can_edit_event(actor, event):
+        frappe.throw(
+            "Anda tidak punya akses edit untuk bencana ini — "
+            "organisasi Anda tidak menangani bencana ini.",
             frappe.PermissionError,
         )
 
@@ -1135,12 +1158,12 @@ def _row_value(row, *names):
     return None
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def community_reports(
     disaster_event=None,
     status=None,
 ):
-    _actor()
+    rn_actor(required=False)
 
     event = (
         _canonical_event(disaster_event)
@@ -1440,11 +1463,34 @@ def _count_for_event(
     )
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
+def consolidation_edit_scope(disaster_event=None):
+    """Tells Sync Data Konsolidasi's frontend what to enable, instead of
+    it inferring permission from a failed write. Guest → everything
+    disabled. Logged in → enabled only for events their organisation
+    actually operates in (or every event, for a System Manager)."""
+    actor = rn_actor(required=False)
+    event = _canonical_event(disaster_event) if disaster_event else None
+
+    editable = editable_disaster_events(actor) if actor else set()
+
+    return {
+        "logged_in": bool(actor),
+        "is_system_manager": bool(actor) and is_system_manager(),
+        "editable_events": (
+            None if editable is None else sorted(editable)
+        ),
+        "can_edit_current": (
+            bool(event) and bool(actor) and can_edit_event(actor, event)
+        ),
+    }
+
+
+@frappe.whitelist(allow_guest=True)
 def consolidation_summary(
     disaster_event,
 ):
-    _actor()
+    rn_actor(required=False)
 
     event = _canonical_event(
         disaster_event
@@ -1504,7 +1550,7 @@ def consolidation_summary(
     return result
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def consolidation_raw_reports(
     disaster_event,
 ):
@@ -1513,11 +1559,11 @@ def consolidation_raw_reports(
     )
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def consolidated_needs(
     disaster_event,
 ):
-    _actor()
+    rn_actor(required=False)
 
     event = _canonical_event(
         disaster_event
@@ -1552,6 +1598,8 @@ def consolidated_needs(
                 "canonical_category",
                 "canonical_group",
                 "canonical_item",
+                "posko",
+                "source_report",
                 "creation",
             ],
         )
@@ -1610,7 +1658,7 @@ def _haversine_km(lat1, lng1, lat2, lng2):
     return 2 * r * math.asin(math.sqrt(a))
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def duplicate_candidates(
     disaster_event,
 ):
@@ -1632,7 +1680,7 @@ def duplicate_candidates(
     other (that's just the same source reporting twice), so those pairs
     are skipped.
     """
-    _actor()
+    rn_actor(required=False)
     event = _canonical_event(disaster_event)
 
     need_fields = _safe_fields(
@@ -1714,6 +1762,8 @@ def duplicate_candidates(
                         "object_type": "RN Logistic Need",
                         "object_id_a": a["name"],
                         "object_id_b": b["name"],
+                        "posko_a": a["posko"],
+                        "posko_b": b["posko"],
                         "match_reason": reason,
                         "match_score": score,
                         "status": "pending_review",
@@ -1754,8 +1804,6 @@ def resolve_duplicate_candidate(pair_id, status, reviewed_by=None, review_notes=
     "<object_id_a>::<object_id_b>" key duplicate_candidates() returns as
     `id`. Upserts by pair_id so re-resolving the same pair updates it
     instead of creating duplicates of the duplicate-resolution itself."""
-    actor = _actor()
-
     valid_statuses = {"needs_review", "not_duplicate", "confirmed_duplicate"}
     if status not in valid_statuses:
         frappe.throw("Status tidak valid.")
@@ -1763,6 +1811,11 @@ def resolve_duplicate_candidate(pair_id, status, reviewed_by=None, review_notes=
     parts = (pair_id or "").split("::")
     if len(parts) != 2 or not parts[0] or not parts[1]:
         frappe.throw("pair_id tidak valid.")
+
+    pair_event = frappe.db.get_value(
+        "RN Logistic Need", parts[0], "disaster_event"
+    )
+    actor = _require_event_edit(pair_event) if pair_event else _actor()
 
     object_id_a, object_id_b = parts
     who = reviewed_by or getattr(actor, "name", None) or frappe.session.user
@@ -1799,14 +1852,75 @@ def resolve_duplicate_candidate(pair_id, status, reviewed_by=None, review_notes=
 
 
 @frappe.whitelist()
+def set_consolidation_override(group_key, disaster_event, override_qty,
+                                reason=None):
+    """Operator's manual judgment on a Rollup Nasional group — takes
+    precedence over the MAX-rule estimate (see
+    api_intelligence._overlay_group_overrides). Upserts by group_key,
+    same pattern as resolve_duplicate_candidate()."""
+    event = _canonical_event(disaster_event)
+    actor = _require_event_edit(event)
+
+    who = getattr(actor, "name", None) or frappe.session.user
+
+    try:
+        override_qty = float(override_qty)
+    except (TypeError, ValueError):
+        frappe.throw("Override qty tidak valid.")
+
+    if frappe.db.exists("RN Consolidation Group Override", group_key):
+        doc = frappe.get_doc("RN Consolidation Group Override", group_key)
+        doc.override_qty = override_qty
+        doc.reason = reason
+        doc.reviewed_by = who
+        doc.status = "active"
+        doc.flags.ignore_permissions = True
+        doc.save(ignore_permissions=True)
+    else:
+        doc = frappe.get_doc({
+            "doctype": "RN Consolidation Group Override",
+            "override_key": group_key,
+            "disaster_event": event,
+            "group_key": group_key,
+            "override_qty": override_qty,
+            "reason": reason,
+            "reviewed_by": who,
+            "status": "active",
+        })
+        doc.flags.ignore_permissions = True
+        doc.insert(ignore_permissions=True)
+
+    frappe.db.commit()
+
+    return {"ok": True, "group_key": group_key, "override_qty": override_qty}
+
+
+@frappe.whitelist()
+def clear_consolidation_override(group_key, disaster_event):
+    """Removes a manual override so the group goes back to the live
+    MAX-rule estimate."""
+    event = _canonical_event(disaster_event)
+    _require_event_edit(event)
+
+    if frappe.db.exists("RN Consolidation Group Override", group_key):
+        doc = frappe.get_doc("RN Consolidation Group Override", group_key)
+        doc.status = "cleared"
+        doc.flags.ignore_permissions = True
+        doc.save(ignore_permissions=True)
+        frappe.db.commit()
+
+    return {"ok": True, "group_key": group_key}
+
+
+@frappe.whitelist()
 def duplicates_check(disaster_event, object_type="all"):
     """"Check Duplicate" button on Data Konsolidasi. `duplicate_candidates`
     is computed live on every read (no persisted table to refresh), so this
     just validates the event and reports the current count — kept as a
     real endpoint (not the generic unsupported-operation stub) so the
     button gives honest, specific feedback instead of a canned error."""
-    _actor()
     event = _canonical_event(disaster_event)
+    _require_event_edit(event)
 
     count = len(duplicate_candidates(event))
 
@@ -1834,10 +1948,13 @@ def community_report_set_consolidation(
     look at). Was previously unrouted in the frontend's rnFetch() and fell
     through to `unsupported_consolidation_operation`, so these buttons
     always failed silently despite rendering as if they worked."""
-    _actor()
-
     if not frappe.db.exists("RN Community Report", report):
         frappe.throw("RN Community Report tidak ditemukan.")
+
+    report_event = frappe.db.get_value(
+        "RN Community Report", report, "disaster_event"
+    )
+    _require_event_edit(report_event) if report_event else _actor()
 
     fields = _safe_fields(
         "RN Community Report",
@@ -1868,11 +1985,11 @@ def community_report_set_consolidation(
     return {"ok": True, "report": report, "updated": updates}
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def consolidation_auxiliary(
     disaster_event,
 ):
-    _actor()
+    rn_actor(required=False)
 
     event = _canonical_event(
         disaster_event

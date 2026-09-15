@@ -136,7 +136,10 @@ async function api(path, options = {}) {
     || url.pathname ===
       "/audit-events"
   ) {
-    const rows =
+    // api_sync.status() returns {counts, items} (Control Centre role
+    // only — 403 for everyone else, caught by loadServerConflicts()/
+    // loadAuditEvents() below), not a bare array.
+    const payload =
       await RN_FRAPPE.call(
         "rescue_net.api_sync.status",
         {
@@ -149,6 +152,8 @@ async function api(path, options = {}) {
             )
         }
       );
+
+    const rows = payload && payload.items || [];
 
     if (
       url.pathname ===
@@ -421,24 +426,29 @@ async function loadServerConflicts() {
     return;
   }
 
-  el.innerHTML = items.map(c => `
+  el.innerHTML = items.map(c => {
+    const logId = c.name || c.conflict_id || c.id || "";
+    return `
     <article class="event-card">
       <div class="event-main">
         <div>
-          <h4>${c.conflict_id || c.id || "conflict"}</h4>
+          <h4>${logId || "conflict"}</h4>
           <p>
             ${c.object_type || "object"} / ${c.object_id || "n/a"}<br>
             Status: ${c.status || c.conflict_status || "needs_review"}<br>
-            Reason: ${c.reason || c.conflict_reason || c.sync_error || "n/a"}
+            Reason: ${c.reason || c.conflict_reason || c.sync_error || c.error_message || "n/a"}
           </p>
+          <p class="subtitle" data-ai-conflict-result="${logId}"></p>
         </div>
         <div class="chips">
           <span class="chip warning">${c.status || c.conflict_status || "conflict"}</span>
-          <button class="btn" type="button" data-resolve-conflict="${c.conflict_id || c.id || ""}">Resolve</button>
+          ${logId ? `<button class="btn" type="button" data-analyze-conflict="${logId}">Analisa AI</button>` : ""}
+          <button class="btn" type="button" data-resolve-conflict="${logId}">Resolve</button>
         </div>
       </div>
     </article>
-  `).join("");
+  `;
+  }).join("");
 }
 
 async function loadAuditEvents() {
@@ -656,6 +666,34 @@ document.addEventListener("DOMContentLoaded", () => {
     const btn = e.target.closest("[data-resolve-conflict]");
     if (btn) {
       resolveServerConflict(btn.dataset.resolveConflict).catch(err => statusMsg(err.message));
+    }
+  });
+
+  // Manual, on-demand AI judgment per sync conflict — advisory only, the
+  // operator still resolves via Retry Conflicts / Resolve above.
+  document.addEventListener("click", async e => {
+    const btn = e.target.closest("[data-analyze-conflict]");
+    if (!btn) return;
+    const logId = btn.getAttribute("data-analyze-conflict");
+    const out = document.querySelector(`[data-ai-conflict-result="${logId}"]`);
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Menganalisa…";
+    if (out) out.textContent = "";
+    try {
+      const session = await RN_FRAPPE.session();
+      if (!session || !session.user) throw new Error("Perlu login untuk fitur ini.");
+      const r = await RN_FRAPPE.call(
+        "rescue_net.api_ai.analyze_sync_conflict",
+        { user_id: session.user, sync_log_id: logId },
+        { method: "POST" }
+      );
+      if (out) out.textContent = "🤖 AI: " + (r.answer || "");
+    } catch (err) {
+      if (out) out.textContent = "✗ " + err.message;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
     }
   });
 

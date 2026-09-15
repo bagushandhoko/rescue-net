@@ -4813,6 +4813,129 @@ Not yet done: no screenshot/visual pass on mobile width for the new
 tab bar (`.rn-tabs`/`.rn-tab` classes are reused from elsewhere in the
 app, so styling should already be responsive, but not eyeballed here).
 
+## Sync Data Konsolidasi — access control, traceability, manual override, AI (2026-09-15)
+
+Owner, same day as the tab merge above: asked where the "AI function"
+was and, on being told nothing new had actually been added, asked for
+all three tabs to get real AI help (manual button, like the existing
+duplicate-candidate one), click-through traceability to raw source
+records, manual judgment override, and — the biggest one — access
+scoped by login: an org can only *edit* Data Konsolidasi for the
+disaster event(s) it actually operates in, System Manager edits every
+event, guest is view-only (previously guests got a flat 403 on every
+read too, not just writes). Planned via `/var/services/homes/admin/
+.claude/plans/iridescent-giggling-conway.md`, then built + deployed +
+verified same session.
+
+**Access control** — `access_policy.py` gained `editable_disaster_events(actor)`
+(`None`=System Manager/all, else a set derived from `RN Posko.organization`
++`.disaster_event` — an org's editable events are whichever events it runs
+a posko in) and `can_edit_event(actor, event)`. **Canonicalizes every event
+through `resolve_disaster_event()` before comparing** — RN Posko rows don't
+reliably store the event reference in the same form a resolved user-supplied
+ID takes (hit this for real: `event-sim-001` resolves to
+`disaster_events:event-sim-001`, and comparing the raw vs. resolved form
+silently denied SIM-LR-ORG edit access to its own event during testing —
+same class of bug as the Krakatau sim's bare-event mismatch). New
+`_require_event_edit(event)` (api_frontend_bridge.py) gates the 4 actual
+writes: `rebuild_consolidated_needs`, `duplicates_check`,
+`resolve_duplicate_candidate` (event resolved from the pair's `RN Logistic
+Need.disaster_event`), `community_report_set_consolidation` (event resolved
+from the report). New guest-safe `consolidation_edit_scope(disaster_event)`
+returns `{logged_in, is_system_manager, editable_events, can_edit_current}`
+— frontend calls it once per load, `applyEditScope()` disables (never hides)
+every write control + shows an inline notice, same pattern as
+`rn-posko-scope.js` elsewhere in the app. 8 read endpoints across
+`api_frontend_bridge.py`/`api_intelligence.py` (`consolidation_summary`,
+`consolidation_raw_reports`→`community_reports`, `consolidated_needs`,
+`duplicate_candidates`, `consolidation_auxiliary`, `control_centre_summary`,
+`consolidated_need_snapshots`, `consolidated_need_snapshot_detail`) switched
+from hard-login to `allow_guest=True` + `rn_actor(required=False)`.
+
+**Traceability** — `consolidated_needs()` now also selects `posko`/
+`source_report` (silently dropped by `_safe_fields()` for whichever
+doctype doesn't have the field, so no error); `duplicate_candidates()`
+now returns `posko_a`/`posko_b`. New shared `traceLinkHtml()` helper in
+`data-consolidation.js` (same posko-logistik.html/laporan-masyarakat.html
+routing `sourceRowHtml()` already used for Rollup Nasional) now also
+renders on the Consolidated Needs cards and as "Buka A →"/"Buka B →" on
+duplicate candidates. Rollup Nasional's own trace (pre-existing) was left
+as-is. Sync tab: skipped adding hard link URLs for `RN Sync Log`
+`object_type`/`object_id` rows (aid_offer/resource_request/etc. don't
+have a reliable single-record page from a bare docname without another
+API round-trip per row) — the "Analisa AI" button below covers that
+tab's "understand this record" need instead, more honestly than a
+maybe-broken link would have.
+
+**Manual override** — new doctype `RN Consolidation Group Override`
+(`override_key`=`group_key`, upsert, same shape as `RN Duplicate
+Candidate Resolution`). `set_consolidation_override`/
+`clear_consolidation_override` (api_frontend_bridge.py, `_require_event_edit`-
+gated) write it; `api_intelligence.control_centre_summary()` overlays an
+`active` override onto its matching group (`qty_total_computed` keeps the
+original MAX-rule number visible alongside the override). Frontend: the
+Rollup Nasional "Trace Detail" panel (`groupDetailHtml(g, live)` — new
+`live` param, `true` only for the current rollup trace, not the frozen
+historical snapshot replay) gained an "Override manual" mini-form
+(qty + reason), gated by `can_edit_current` same as everything else.
+
+**AI** — `api_ai.py` factored the duplicate-candidate AI call's request/
+error/usage-logging boilerplate into `_openai_chat()`, then reused it for
+two new manual (button, never automatic — owner's explicit choice) AI
+functions: `analyze_rollup_group(user_id, disaster_event, group_key)`
+(button next to the new override form — advisory judgment on whether the
+MAX-rule estimate looks right given its raw sources, cached onto the
+override doctype's `ai_suggestion` so it survives a reload) and
+`analyze_sync_conflict(user_id, sync_log_id)` (button on each "Server
+Sync Conflicts" row — explains the payload + server error in plain
+Indonesian). Both fail the same friendly way as the existing
+`analyze_duplicate_candidate` when no AI key is configured (verified via
+curl: HTTP 417 "Belum ada kunci AI aktif...", not a crash) — couldn't
+verify a real OpenAI round-trip this session (no key configured on the
+test org), but the request/error/logging plumbing is identical to the
+already-working duplicate-candidate path.
+
+**2 real pre-existing bugs found + fixed en route** (Sync tab, unrelated
+to the access-control work but directly in the "recheck fungsi konsol
+logistik" ask): `sync-console.js`'s `/sync-conflicts` treated
+`api_sync.status()`'s return (`{counts, items}`) as a bare array —
+`.filter()` on an object silently failed every time, so "Server Sync
+Conflicts" always rendered empty even when conflicts existed. And
+`api_sync.status()` itself never selected `name` (or `error_message`/
+`disaster_event_id`) on `RN Sync Log`, so even after that fix the
+Resolve button had no ID to act on and "Reason" always showed "n/a".
+Fixed both (`sync-console.js` unwraps `.items`; `status()` field list
+now includes `name`/`error_message`/`disaster_event_id`) — this is what
+made the new "Analisa AI" button on that panel possible at all.
+
+**Verified**: bench-console + curl-with-session (no second-org/System-
+Manager browser credential documented — see the 09-15 tab-merge entry's
+same caveat) confirmed `can_edit_event` true for LD1's own event, false
+for a different org's event (`event-karhutla-kalbar-2026`), true for
+Administrator on any event; `consolidation_edit_scope`/`rebuild_
+consolidated_needs`/`set_consolidation_override`/`clear_
+consolidation_override` all matched over real HTTP with an `ld1.demo`
+session. Playwright: guest sees full data (no more 403s) with every
+write control disabled + the notice shown (verified via 2 isolated
+single-guest runs — a multi-context script that runs guest first in a
+freshly-launched browser showed a flaky "not yet loaded" false negative
+on 2 of 4 runs, purely a browser cold-start timing artifact of *that
+harness*, not the app — always correct when guest is checked in
+isolation); `ld1.demo` sees 37 rollup groups + override form + Analisa
+AI button, 6 duplicate candidates with 12 trace links, sync tab loads.
+
+Deployed: `scripts/deploy-synckonsol-smart.sh` (new — `docker cp` of
+`access_policy.py`/`api_frontend_bridge.py`/`api_intelligence.py`/
+`api_ai.py`/`api_sync.py` + the new doctype dir, perms fix, `bench
+migrate`, restart). One redeploy-without-restart needed mid-session for
+`access_policy.py` (event-canonicalization fix) and another for
+`api_frontend_bridge.py` (`consolidation_raw_reports` missed its own
+`allow_guest=True` on the first pass even though the function it
+delegates to had it — Frappe's guest check happens at the outer
+whitelisted function, not wherever `_actor()`/`rn_actor()` is actually
+called) — both picked up by werkzeug's autoreload, no restart needed
+for a plain `.py` change once the container's already up.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

@@ -4,6 +4,7 @@ from collections import defaultdict
 import frappe
 
 from rescue_net.access_policy import (
+    can_edit_event,
     is_system_manager,
     rn_actor,
 )
@@ -463,15 +464,48 @@ def _fetch_need_rows(disaster_event=None, names=None):
     return community_rows + logistic_rows
 
 
-@frappe.whitelist()
+def _overlay_group_overrides(groups):
+    """A manual "Override manual" judgment (RN Consolidation Group
+    Override, set via api_frontend_bridge.set_consolidation_override)
+    takes precedence over the MAX-rule estimate for its group — same
+    overlay-after-live-compute pattern duplicate_candidates() uses for
+    RN Duplicate Candidate Resolution, so the original raw numbers stay
+    untouched and the override is always visible as an override, not a
+    silent edit."""
+    if not groups:
+        return groups
+
+    overrides = frappe.get_all(
+        "RN Consolidation Group Override",
+        filters={
+            "group_key": ["in", [g["group_key"] for g in groups]],
+            "status": "active",
+        },
+        fields=["group_key", "override_qty", "reason", "reviewed_by", "ai_suggestion"],
+    )
+    by_key = {o.group_key: o for o in overrides}
+
+    for g in groups:
+        o = by_key.get(g["group_key"])
+        if o:
+            g["qty_total_computed"] = g["qty_total"]
+            g["qty_total"] = o.override_qty
+            g["override_reason"] = o.reason
+            g["overridden_by"] = o.reviewed_by
+            g["ai_suggestion"] = o.ai_suggestion
+
+    return groups
+
+
+@frappe.whitelist(allow_guest=True)
 def control_centre_summary():
-    rn_actor()
+    rn_actor(required=False)
 
     rows = _fetch_need_rows()
 
     return {
         "raw_need_count": len(rows),
-        "groups": _group_rows(rows),
+        "groups": _overlay_group_overrides(_group_rows(rows)),
         "rule": "MAX_OVERLAP_SAFE",
         "warning": (
             "Consolidated values are derived estimates, "
@@ -494,6 +528,13 @@ def rebuild_consolidated_needs(disaster_event):
 
     if not event:
         frappe.throw("Disaster Event tidak ditemukan")
+
+    if not can_edit_event(actor, event):
+        frappe.throw(
+            "Anda tidak punya akses edit untuk bencana ini — "
+            "organisasi Anda tidak menangani bencana ini.",
+            frappe.PermissionError,
+        )
 
     rows = _fetch_need_rows(disaster_event=event)
     groups = _group_rows(rows)
@@ -521,10 +562,10 @@ def rebuild_consolidated_needs(disaster_event):
     }
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def consolidated_need_snapshots(disaster_event):
     """Riwayat (history) list — metadata only, no recompute."""
-    rn_actor()
+    rn_actor(required=False)
     event = resolve_disaster_event(disaster_event) or disaster_event
 
     rows = frappe.get_all(
@@ -541,13 +582,13 @@ def consolidated_need_snapshots(disaster_event):
     return rows
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def consolidated_need_snapshot_detail(name):
     """Replays one snapshot's frozen ID set through the same grouping
     logic as the live rollup — the historical view, computed fresh from
     whatever those original records look like today rather than from a
     stored copy."""
-    rn_actor()
+    rn_actor(required=False)
 
     if not frappe.db.exists("RN Consolidated Need Snapshot", name):
         frappe.throw("Snapshot tidak ditemukan")

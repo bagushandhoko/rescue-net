@@ -1984,6 +1984,248 @@ Never expose API keys or credentials.
     }
 
 
+def _openai_chat(api_key, model_name, system_prompt, user_content,
+                  user_id, key_source, key_owner_type, key_owner_id,
+                  provider, disaster_event=None):
+    """Shared one-shot chat call for the manual "Analisa AI" buttons —
+    factored out of analyze_duplicate_candidate() so
+    analyze_rollup_group()/analyze_sync_conflict() don't duplicate the
+    request/error/usage-logging boilerplate."""
+    payload = {
+        "model": model_name or DEFAULT_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content},
+        ],
+        "temperature": 0.1,
+    }
+
+    try:
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers={
+                "Authorization": "Bearer " + api_key,
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=60,
+        )
+    except Exception:
+        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
+                      user_id=user_id, key_source=key_source, provider=provider,
+                      model_name=model_name or DEFAULT_MODEL,
+                      disaster_event=disaster_event,
+                      outcome="error", error_note="network")
+        frappe.throw(
+            "AI request failed. Please check AI provider, model, "
+            "quota, and network settings."
+        )
+
+    if response.status_code == 401:
+        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
+                      user_id=user_id, key_source=key_source, provider=provider,
+                      model_name=model_name or DEFAULT_MODEL,
+                      disaster_event=disaster_event,
+                      outcome="auth_error", error_note="401")
+        frappe.throw(
+            "AI request failed: invalid API key. Please update your "
+            "AI key in Setting.",
+            frappe.AuthenticationError,
+        )
+
+    if not response.ok:
+        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
+                      user_id=user_id, key_source=key_source, provider=provider,
+                      model_name=model_name or DEFAULT_MODEL,
+                      disaster_event=disaster_event,
+                      outcome="error", error_note=str(response.status_code))
+        frappe.throw(
+            "AI request failed. Please check AI provider, model, "
+            "quota, and network settings."
+        )
+
+    data = response.json()
+
+    try:
+        answer = data["choices"][0]["message"]["content"]
+    except Exception:
+        frappe.throw("AI provider returned an invalid response.")
+
+    _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
+                  user_id=user_id, key_source=key_source, provider=provider,
+                  model_name=model_name or DEFAULT_MODEL,
+                  disaster_event=disaster_event,
+                  a_chars=len(answer or ""), usage=data.get("usage"), outcome="ok")
+
+    return answer
+
+
+@frappe.whitelist()
+def analyze_rollup_group(user_id, disaster_event, group_key, provider="openai"):
+    """Manual, on-demand AI judgment for one Rollup Nasional group on
+    Sync Data Konsolidasi's Konsolidasi Logistik tab — advisory only,
+    never applied automatically. The operator reads the suggestion, then
+    decides whether to leave the MAX-rule estimate as-is or use
+    api_frontend_bridge.set_consolidation_override() to record their own
+    judgment (see that function's docstring)."""
+    _actor, user_id = _assert_self(user_id)
+
+    provider = (provider or "openai").strip().lower()
+    if provider != "openai":
+        frappe.throw("AI provider is not supported")
+
+    api_key, model_name, key_source, key_owner_type, key_owner_id = _resolve_ai_key(
+        user_id, provider
+    )
+    if not api_key:
+        frappe.throw(
+            "Belum ada kunci AI aktif untuk Anda atau organisasi Anda. "
+            "Tambahkan di Setting."
+        )
+
+    from rescue_net.api_intelligence import _fetch_need_rows, _group_rows
+    from rescue_net.reference_resolver import resolve_disaster_event
+
+    event = resolve_disaster_event(disaster_event) or disaster_event
+    groups = _group_rows(_fetch_need_rows(disaster_event=event))
+    group = next((g for g in groups if g["group_key"] == group_key), None)
+
+    if not group:
+        frappe.throw("Group kebutuhan tidak ditemukan (mungkin sudah berubah — muat ulang).")
+
+    system_prompt = """
+You are Rescue-Net's logistics-consolidation reviewer. You are given one
+consolidated need group: its raw source reports (item, quantity, posko,
+verification status) and the MAX-overlap-safe estimate computed from
+them. Judge whether that estimate looks reasonable given the sources, or
+flag a concern (e.g. sources look like they might double-count the same
+delivery, or the estimate seems too low/high for the source count).
+Respond in Indonesian, 2-4 short sentences. You may suggest a corrected
+number but make clear it is only a suggestion — the operator decides.
+Never expose API keys or credentials.
+"""
+
+    user_content = (
+        "Group: " + json.dumps({
+            "canonical_group": group.get("canonical_group"),
+            "area": group.get("area"),
+            "base_unit": group.get("base_unit"),
+            "qty_measurable": group.get("qty_measurable"),
+            "qty_estimated": group.get("qty_estimated"),
+            "qty_total": group.get("qty_total"),
+            "source_count": group.get("source_count"),
+            "independent_source_count": group.get("independent_source_count"),
+            "confidence_label": group.get("confidence_label"),
+        }, default=str)
+        + "\n\nRaw sources:\n"
+        + json.dumps(group.get("sources") or [], default=str)
+    )
+
+    answer = _openai_chat(
+        api_key, model_name, system_prompt, user_content,
+        user_id, key_source, key_owner_type, key_owner_id, provider,
+        disaster_event=event,
+    )
+
+    # Cached onto the override doctype (even with no override set yet) so
+    # the suggestion survives a page reload instead of vanishing the
+    # moment the operator navigates away.
+    if frappe.db.exists("RN Consolidation Group Override", group_key):
+        doc = frappe.get_doc("RN Consolidation Group Override", group_key)
+    else:
+        doc = frappe.get_doc({
+            "doctype": "RN Consolidation Group Override",
+            "override_key": group_key,
+            "disaster_event": event,
+            "group_key": group_key,
+            "override_qty": group.get("qty_total"),
+            "status": "cleared",
+        })
+    doc.ai_suggestion = answer
+    doc.ai_asked_at = now_datetime()
+    doc.flags.ignore_permissions = True
+    if doc.is_new():
+        doc.insert(ignore_permissions=True)
+    else:
+        doc.save(ignore_permissions=True)
+    frappe.db.commit()
+
+    return {"group_key": group_key, "answer": answer, "model_name": model_name or DEFAULT_MODEL}
+
+
+@frappe.whitelist()
+def analyze_sync_conflict(user_id, sync_log_id, provider="openai"):
+    """Manual, on-demand AI judgment for one entry in "Server Sync
+    Conflicts" on Sync Data Konsolidasi's Sync Offline ↔ Online tab —
+    advisory only. The operator still resolves the conflict themselves
+    via the existing Retry Conflicts flow; this never auto-applies
+    anything."""
+    _actor, user_id = _assert_self(user_id)
+
+    provider = (provider or "openai").strip().lower()
+    if provider != "openai":
+        frappe.throw("AI provider is not supported")
+
+    api_key, model_name, key_source, key_owner_type, key_owner_id = _resolve_ai_key(
+        user_id, provider
+    )
+    if not api_key:
+        frappe.throw(
+            "Belum ada kunci AI aktif untuk Anda atau organisasi Anda. "
+            "Tambahkan di Setting."
+        )
+
+    log = frappe.db.get_value(
+        "RN Sync Log", sync_log_id,
+        ["object_type", "object_id", "operation", "apply_status",
+         "conflict_status", "error_message", "payload_json",
+         "apply_result_json", "event_id", "source_device_id"],
+        as_dict=True,
+    )
+    if not log:
+        frappe.throw("RN Sync Log tidak ditemukan.")
+
+    system_prompt = """
+You are Rescue-Net's offline-sync conflict reviewer. You are given one
+sync log entry that failed to apply cleanly (rejected or flagged for
+review) when a field device pushed it to the server, including the
+payload it sent and the server's error/reason. Explain in plain
+Indonesian, in 2-4 short sentences, what likely went wrong and what the
+operator should check or do next (e.g. "retry once online data
+refreshed", "check if the resource is already booked", "data device
+mungkin sudah usang, tarik ulang dulu"). Never expose API keys or
+credentials.
+"""
+
+    user_content = json.dumps({
+        "object_type": log.object_type,
+        "object_id": log.object_id,
+        "operation": log.operation,
+        "apply_status": log.apply_status,
+        "conflict_status": log.conflict_status,
+        "error_message": log.error_message,
+        "payload": _loads_json_safe(log.payload_json),
+        "apply_result": _loads_json_safe(log.apply_result_json),
+    }, default=str)
+
+    answer = _openai_chat(
+        api_key, model_name, system_prompt, user_content,
+        user_id, key_source, key_owner_type, key_owner_id, provider,
+        disaster_event=log.event_id,
+    )
+
+    return {"sync_log_id": sync_log_id, "answer": answer, "model_name": model_name or DEFAULT_MODEL}
+
+
+def _loads_json_safe(value):
+    if not value:
+        return None
+    try:
+        return json.loads(value)
+    except Exception:
+        return value
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def public_active_disasters():

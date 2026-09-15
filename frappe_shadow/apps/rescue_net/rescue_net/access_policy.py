@@ -188,6 +188,64 @@ def can_manage_posko(actor, posko):
     return can_coordinate_posko(actor, posko)
 
 
+def editable_disaster_events(actor):
+    """Which RN Disaster Event names `actor` may edit Data Konsolidasi
+    for. `None` = every event (System Manager). Otherwise a set
+    (possibly empty) derived from `RN Posko.organization`/`.disaster_event`
+    — an org's editable events are whichever events it actually runs a
+    posko in; a lone posko-assignment actor with no org gets just their
+    posko's event.
+
+    Runs every event value through `resolve_disaster_event()` — RN Posko
+    rows aren't guaranteed to store the disaster_event reference in the
+    same canonical form callers resolve a user-supplied event ID to (seen
+    before: the Krakatau sim's bare-vs-`disaster_events:`-prefixed
+    mismatch), so a raw un-normalized comparison here would silently
+    deny an org edit access to its own event."""
+    from rescue_net.reference_resolver import resolve_disaster_event
+
+    if is_system_manager():
+        return None
+
+    if not actor or not actor.name:
+        return set()
+
+    raw_events = set()
+
+    org = (
+        actor.get("organization") if hasattr(actor, "get")
+        else getattr(actor, "organization", None)
+    )
+    if org:
+        raw_events |= {
+            e for e in frappe.get_all(
+                "RN Posko",
+                filters={"organization": org},
+                pluck="disaster_event",
+            )
+            if e
+        }
+
+    posko = (
+        actor.get("posko") if hasattr(actor, "get")
+        else getattr(actor, "posko", None)
+    )
+    if posko:
+        ev = frappe.db.get_value("RN Posko", posko, "disaster_event")
+        if ev:
+            raw_events.add(ev)
+
+    return {
+        resolve_disaster_event(e) or e
+        for e in raw_events
+    }
+
+
+def can_edit_event(actor, event):
+    events = editable_disaster_events(actor)
+    return events is None or event in events
+
+
 def public_posko_allowed(posko_name):
     posko = frappe.db.get_value(
         "RN Posko",

@@ -25,6 +25,54 @@ async function rnConsolFetch(path, options = {}) {
 
   if (
     url.pathname ===
+      "/data-consolidation/edit-scope"
+  ) {
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "consolidation_edit_scope",
+      {
+        disaster_event:
+          eventId
+      }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/consolidation/override" && method === "POST"
+  ) {
+    const body = JSON.parse(options.body || "{}");
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "set_consolidation_override",
+      {
+        group_key: body.group_key,
+        disaster_event: eventId,
+        override_qty: body.override_qty,
+        reason: body.reason
+      },
+      { method: "POST" }
+    );
+  }
+
+  if (
+    url.pathname ===
+      "/consolidation/override/clear" && method === "POST"
+  ) {
+    const body = JSON.parse(options.body || "{}");
+    return await RN_FRAPPE.call(
+      "rescue_net.api_frontend_bridge."
+      + "clear_consolidation_override",
+      {
+        group_key: body.group_key,
+        disaster_event: eventId
+      },
+      { method: "POST" }
+    );
+  }
+
+  if (
+    url.pathname ===
       "/data-consolidation/summary"
   ) {
     return await RN_FRAPPE.call(
@@ -334,6 +382,7 @@ function renderDuplicates(rows) {
         <div>
           <h4>${row.object_type}: ${row.object_id_a} vs ${row.object_id_b}</h4>
           <p>${row.match_reason || "candidate"} | score ${row.match_score} | status ${row.status}${row.reviewed_by ? ` · oleh ${row.reviewed_by}` : ""}</p>
+          <p class="subtitle">${traceLinkHtml(row.posko_a, null, null, "Buka A →")} ${traceLinkHtml(row.posko_b, null, null, "Buka B →")}</p>
           <p class="subtitle" data-ai-dup-result="${row.id}">${row.ai_verdict ? `AI sebelumnya: ${row.ai_verdict === "duplicate" ? "DUPLIKAT" : row.ai_verdict === "different" ? "BEDA" : "tidak jelas"}` : ""}</p>
         </div>
         <div class="chips"><span class="chip ${DUPLICATE_STATUS_CHIP[row.status] || "warning"}">${row.status}</span></div>
@@ -347,6 +396,39 @@ function renderDuplicates(rows) {
     </article>
   `;
   }).join("") : card("Tidak ada kandidat duplikat", "Belum ada raw report yang terdeteksi berpotensi overlap.", "ok");
+}
+
+// Who may WRITE on this page for the current event — guest and any org
+// that doesn't operate in this disaster event get can_edit_current:false;
+// a System Manager gets it for every event. Fetched once on load (see
+// loadEditScope()), applied by applyEditScope() (disables controls,
+// never hides them — same rule as the rest of the app's posko pages).
+let RN_EDIT_SCOPE = { logged_in: false, is_system_manager: false, editable_events: [], can_edit_current: false };
+
+async function loadEditScope() {
+  try {
+    RN_EDIT_SCOPE = await rnConsolFetch(`/data-consolidation/edit-scope?disaster_event_id=${encodeURIComponent(EVENT_ID)}`);
+  } catch (err) {
+    RN_EDIT_SCOPE = { logged_in: false, is_system_manager: false, editable_events: [], can_edit_current: false };
+  }
+  applyEditScope();
+}
+
+function applyEditScope() {
+  const canEdit = !!RN_EDIT_SCOPE.can_edit_current;
+
+  document.querySelectorAll(
+    "[data-check-duplicates], [data-check-community-duplicates], [data-rebuild-consolidated], " +
+    "[data-resolve-duplicate], [data-community-consolidation], [data-consol-override-submit], [data-consol-override-clear]"
+  ).forEach(el => { el.disabled = !canEdit; });
+
+  const notice = document.querySelector("[data-consol-edit-notice]");
+  if (notice) {
+    notice.hidden = canEdit;
+    notice.textContent = RN_EDIT_SCOPE.logged_in
+      ? "Anda hanya bisa melihat bencana ini — edit hanya untuk organisasi yang menangani bencana ini, atau System Manager."
+      : "Anda melihat sebagai tamu — login sebagai organisasi yang menangani bencana ini (atau System Manager) untuk bisa mengedit.";
+  }
 }
 
 function renderConsolidated(rows) {
@@ -365,9 +447,10 @@ function renderConsolidated(rows) {
       row.merge_method ? `Metode: ${row.merge_method}` : null,
       row.source_count != null ? `Sumber: ${row.source_count}` : null,
     ].filter(Boolean).join(" | ");
+    const link = traceLinkHtml(row.posko, row.source_report, row.disaster_event);
     return card(
       `${name} | ${formatQty(qty)} ${unit}`,
-      `${meta}${meta ? "<br>" : ""}Status: ${safe(row.status, "-")}`,
+      `${meta}${meta ? "<br>" : ""}Status: ${safe(row.status, "-")}${link ? `<br>${link}` : ""}`,
       row.status
     );
   }).join("") : card("Belum ada consolidated needs", "Klik Rebuild untuk membuat draft kebutuhan terkonsolidasi dari raw logistic needs.", "empty");
@@ -436,6 +519,23 @@ function stripPrefix(value, prefix) {
   return String(value || "").startsWith(prefix) ? String(value).slice(prefix.length) : String(value || "");
 }
 
+// Shared "trace to source" link builder — same posko/laporan-masyarakat
+// routing as sourceRowHtml() below, reused by renderConsolidated() and
+// renderDuplicates() so every panel on this page can point back to where
+// a number actually came from, not just the Rollup Nasional trace.
+function traceLinkHtml(posko, sourceReport, eventId, label) {
+  const ev = eventId || EVENT_ID;
+  if (posko) {
+    const href = `posko-logistik.html?id=${encodeURIComponent(stripPrefix(posko, "posko_nodes:"))}&event=${encodeURIComponent(ev)}`;
+    return `<a href="${href}">${label || "Buka di Posko Logistik →"}</a>`;
+  }
+  if (sourceReport) {
+    const href = `laporan-masyarakat.html?report=${encodeURIComponent(sourceReport)}&event=${encodeURIComponent(ev)}`;
+    return `<a href="${href}">${label || "Buka laporan masyarakat →"}</a>`;
+  }
+  return "";
+}
+
 // One raw record behind a rollup number — linked back to where it actually
 // lives so an operator can verify/correct it, not just trust the estimate.
 function sourceRowHtml(s) {
@@ -487,14 +587,51 @@ function renderRollupTrace(groupKey) {
     return;
   }
 
-  target.innerHTML = groupDetailHtml(g);
+  target.innerHTML = groupDetailHtml(g, true);
+  applyEditScope();
 }
 
 // Shared by the live rollup trace and the historical snapshot detail —
 // same group shape (api_intelligence._group_rows output) either way.
-function groupDetailHtml(g) {
+// `live`: true only for the current Rollup Nasional trace (not the frozen
+// historical snapshot replay) — that's the only context where "Override
+// manual" / "Analisa AI" make sense, since they act on the LIVE group_key.
+function groupDetailHtml(g, live) {
   const unit = safe(g.base_unit, "");
   const sources = g.sources || [];
+  const hasOverride = g.override_reason != null || g.overridden_by;
+
+  const overrideBlock = live ? `
+    <article class="event-card">
+      <div class="event-main">
+        <div>
+          <h4>Judgment manual</h4>
+          <p>
+            ${hasOverride
+              ? `Override aktif: <b>${formatQty(g.qty_total)} ${unit}</b> (estimasi otomatis: ${formatQty(g.qty_total_computed)} ${unit})
+                 oleh ${safe(g.overridden_by, "-")}${g.override_reason ? ` — ${g.override_reason}` : ""}`
+              : "Belum ada override manual — angka di atas murni hasil MAX-rule."}
+            ${g.ai_suggestion ? `<br>🤖 Saran AI: ${g.ai_suggestion}` : ""}
+          </p>
+        </div>
+      </div>
+      <div class="rn-form" style="margin-top:8px">
+        <div class="form-grid">
+          <label>Qty override
+            <input type="number" step="any" data-consol-override-qty value="${hasOverride ? g.qty_total : ""}" placeholder="${formatQty(g.qty_total)}">
+          </label>
+          <label>Alasan
+            <input type="text" data-consol-override-reason value="${safe(g.override_reason, "")}">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="button" data-analyze-rollup="${g.group_key}">Analisa AI</button>
+          <button class="btn primary" type="button" data-consol-override-submit="${g.group_key}">Simpan Override</button>
+          ${hasOverride ? `<button class="btn" type="button" data-consol-override-clear="${g.group_key}">Hapus Override</button>` : ""}
+        </div>
+      </div>
+    </article>
+  ` : "";
 
   return `
     <article class="event-card">
@@ -510,6 +647,7 @@ function groupDetailHtml(g) {
         </div>
       </div>
     </article>
+    ${overrideBlock}
     <div class="rn-table-wrap">
       <table class="rn-table">
         <thead>
@@ -669,7 +807,8 @@ async function loadDataConsolidation() {
       rnConsolFetch(`/data-consolidation/national-rollup?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
       rnConsolFetch(`/operational-areas?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
       rnConsolFetch(`/beneficiary-groups?disaster_event_id=${encodeURIComponent(EVENT_ID)}`),
-      rnConsolFetch("/data-consolidation/evidence-requirements")
+      rnConsolFetch("/data-consolidation/evidence-requirements"),
+      loadEditScope()
     ]);
 
     // consolidation_summary only returns *_count totals; derive the tiles the
@@ -696,6 +835,7 @@ async function loadDataConsolidation() {
     renderAreas(areas);
     renderBeneficiaryGroups(groups);
     renderEvidenceRequirements(evidenceRules);
+    applyEditScope();
     setText("[data-consolidation-status]", "Loaded");
   } catch (err) {
     setText("[data-consolidation-status]", `${err.message}. Jika endpoint 404, jalankan rebuild API.`);
@@ -827,6 +967,74 @@ function setupActions() {
         })
       });
       await loadDataConsolidation();
+    } catch (err) {
+      setText("[data-consolidation-status]", err.message);
+    }
+  });
+
+  // Manual, on-demand AI judgment for one Rollup Nasional group —
+  // advisory only, mirrors the duplicate-candidate "Analisa AI" pattern.
+  document.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-analyze-rollup]");
+    if (!btn) return;
+    const groupKey = btn.getAttribute("data-analyze-rollup");
+    const originalLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Menganalisa…";
+    try {
+      const session = await RN_FRAPPE.session();
+      if (!session || !session.user) throw new Error("Perlu login untuk fitur ini.");
+      await RN_FRAPPE.call(
+        "rescue_net.api_ai.analyze_rollup_group",
+        { user_id: session.user, disaster_event: EVENT_ID, group_key: groupKey },
+        { method: "POST" }
+      );
+      renderRollupTrace(RN_ROLLUP_SELECTED);
+      setText("[data-consolidation-status]", "Analisa AI selesai.");
+    } catch (err) {
+      setText("[data-consolidation-status]", err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalLabel;
+    }
+  });
+
+  // Operator's manual judgment on a rollup group's total — persists to
+  // RN Consolidation Group Override, overlaid back onto the live rollup.
+  document.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-consol-override-submit]");
+    if (!btn) return;
+    const groupKey = btn.getAttribute("data-consol-override-submit");
+    const form = btn.closest(".rn-form");
+    const qty = form?.querySelector("[data-consol-override-qty]")?.value;
+    const reason = form?.querySelector("[data-consol-override-reason]")?.value;
+    if (qty === "" || qty == null) {
+      setText("[data-consolidation-status]", "Isi qty override dulu.");
+      return;
+    }
+    try {
+      await rnConsolFetch("/consolidation/override", {
+        method: "POST",
+        body: JSON.stringify({ group_key: groupKey, override_qty: qty, reason })
+      });
+      await loadDataConsolidation();
+      setText("[data-consolidation-status]", "Override manual disimpan.");
+    } catch (err) {
+      setText("[data-consolidation-status]", err.message);
+    }
+  });
+
+  document.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-consol-override-clear]");
+    if (!btn) return;
+    const groupKey = btn.getAttribute("data-consol-override-clear");
+    try {
+      await rnConsolFetch("/consolidation/override/clear", {
+        method: "POST",
+        body: JSON.stringify({ group_key: groupKey })
+      });
+      await loadDataConsolidation();
+      setText("[data-consolidation-status]", "Override manual dihapus.");
     } catch (err) {
       setText("[data-consolidation-status]", err.message);
     }

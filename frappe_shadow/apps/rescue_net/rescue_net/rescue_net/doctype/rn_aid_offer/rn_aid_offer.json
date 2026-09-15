@@ -85,6 +85,18 @@
    "fieldtype": "Small Text"
   },
   {
+   "fieldname": "pickup_latitude",
+   "label": "Pickup Latitude",
+   "fieldtype": "Float",
+   "precision": "6"
+  },
+  {
+   "fieldname": "pickup_longitude",
+   "label": "Pickup Longitude",
+   "fieldtype": "Float",
+   "precision": "6"
+  },
+  {
    "fieldname": "donor_contact",
    "label": "Donor Contact",
    "fieldtype": "Data"

@@ -163,6 +163,90 @@ function initAidItems(form) {
 }
 
 
+/* ---------- Lokasi pickup: GPS sekarang / pilih di peta ---------- */
+function setupAidLocationPicker(form) {
+  const latEl = document.getElementById("kbLat");
+  const lngEl = document.getElementById("kbLng");
+  const nowBtn = document.getElementById("kbGeoNow");
+  const mapBtn = document.getElementById("kbGeoMap");
+  const mapWrap = document.getElementById("kbMapWrap");
+  const msgEl = document.getElementById("kbGeoMsg");
+  if (!latEl || !lngEl || !nowBtn || !mapBtn) return;
+
+  const GEO = { map: null, marker: null };
+
+  function msg(t) { if (msgEl) msgEl.textContent = t ? " " + t : ""; }
+
+  function setLatLng(lat, lng) {
+    latEl.value = Number(lat).toFixed(6);
+    lngEl.value = Number(lng).toFixed(6);
+    if (GEO.marker) GEO.marker.setLatLng([lat, lng]);
+  }
+
+  nowBtn.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      msg("Peramban tidak mendukung geolokasi. Isi lokasi manual di kolom teks.");
+      return;
+    }
+    msg("Mengambil lokasi…");
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        setLatLng(pos.coords.latitude, pos.coords.longitude);
+        msg("Lokasi terisi (±" + Math.round(pos.coords.accuracy || 0) + " m).");
+        if (GEO.map) GEO.map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+      },
+      err => {
+        msg("Gagal: " + ((err && err.message) || "izin lokasi ditolak") + ". Pakai peta atau isi alamat manual.");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  });
+
+  function initMap() {
+    if (GEO.map || typeof L === "undefined") return;
+    const lat = Number(latEl.value), lng = Number(lngEl.value);
+    const start = (latEl.value && lngEl.value && isFinite(lat) && isFinite(lng)) ? [lat, lng] : [-2.5, 118.0];
+    const zoom = (latEl.value && lngEl.value) ? 16 : 4;
+    GEO.map = L.map("kbMap").setView(start, zoom);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(GEO.map);
+    const icon = L.divIcon({
+      className: "rn-geo-pin",
+      html: '<span style="display:block;width:16px;height:16px;border-radius:50% 50% 50% 0;background:#c0392b;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);transform:rotate(-45deg)"></span>',
+      iconSize: [16, 16], iconAnchor: [8, 16],
+    });
+    GEO.marker = L.marker(start, { draggable: true, icon }).addTo(GEO.map);
+    GEO.marker.on("dragend", () => {
+      const p = GEO.marker.getLatLng();
+      setLatLng(p.lat, p.lng);
+      msg("Titik diperbarui dari peta.");
+    });
+    GEO.map.on("click", e => {
+      setLatLng(e.latlng.lat, e.latlng.lng);
+      msg("Titik dipilih dari peta.");
+    });
+  }
+
+  mapBtn.addEventListener("click", () => {
+    if (typeof L === "undefined") { msg("Peta tidak tersedia — pakai lokasi saat ini atau isi alamat manual."); return; }
+    if (!mapWrap) return;
+    mapWrap.hidden = !mapWrap.hidden;
+    if (!mapWrap.hidden) {
+      initMap();
+      setTimeout(() => {
+        if (GEO.map) GEO.map.invalidateSize();
+      }, 60);
+    }
+  });
+
+  form.__resetAidLocation = function () {
+    latEl.value = "";
+    lngEl.value = "";
+    msg("");
+  };
+}
+
+
 async function populateDisasterPicker(form) {
   const sel = form.querySelector("[data-disaster-picker]");
   if (!sel || !window.RN_FRAPPE) return;
@@ -197,6 +281,7 @@ function setupPublicAidForm() {
   populateDisasterPicker(form);
   setupDeliveryModeToggle(form);
   initAidItems(form);
+  setupAidLocationPicker(form);
 
   form.addEventListener(
     "submit",
@@ -288,6 +373,16 @@ function setupPublicAidForm() {
               pickup_location:
                 form.pickup_location.value.trim() || null,
 
+              pickup_latitude:
+                form.pickup_lat && form.pickup_lat.value
+                  ? Number(form.pickup_lat.value)
+                  : null,
+
+              pickup_longitude:
+                form.pickup_lng && form.pickup_lng.value
+                  ? Number(form.pickup_lng.value)
+                  : null,
+
               ready_at:
                 form.ready_at.value.trim() || null,
 
@@ -305,6 +400,7 @@ function setupPublicAidForm() {
 
         form.reset();
         if (form.__resetAidItems) form.__resetAidItems();
+        if (form.__resetAidLocation) form.__resetAidLocation();
 
         if (
           form.disaster_event_id

@@ -2287,12 +2287,17 @@ def submit_guest_aid_offer_multi(
     handling_mode="need_pickup",
     target_posko=None,
     pickup_location=None,
+    pickup_latitude=None,
+    pickup_longitude=None,
     ready_at=None,
     notes=None,
 ):
     """One guest "Kirim Bantuan" carrying several barang, no account needed.
     Returns the Aid IDs plus ONE Edit Code (shown once) covering all rows."""
     import json as _json
+
+    lat = flt(pickup_latitude) if pickup_latitude not in (None, "") else None
+    lng = flt(pickup_longitude) if pickup_longitude not in (None, "") else None
 
     donor_name = str(donor_name or "").strip()
     donor_contact = str(donor_contact or "").strip()
@@ -2356,6 +2361,8 @@ def submit_guest_aid_offer_multi(
         doc.unit = row.get("unit")
         doc.quantity_mode = row.get("quantity_mode") or "exact"
         doc.pickup_location = pickup_location
+        doc.pickup_latitude = lat
+        doc.pickup_longitude = lng
         doc.ready_at = (str(row.get("ready_at")).strip() if row.get("ready_at") else None) or ready_at
         doc.notes = notes
         doc.handling_mode = "need_pickup"

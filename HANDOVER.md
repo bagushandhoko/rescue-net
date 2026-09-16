@@ -5264,6 +5264,36 @@ total when focused. Verified live via Playwright: main-row and
 region-row clicks both open the drill scoped to exactly 1 event group,
 zero console errors. Frontend-only change, no backend redeploy needed.
 
+## 2026-09-16: Posko Kritis KPI now reflects unstaffed medical risk
+
+User feedback (Krakatau sim, Posko Medis Darurat Kalianda): the AI
+situation analyst could correctly read "ada korban tapi belum ada
+tenaga medis di posko" from raw context, but the deterministic
+`posko_kritis` KPI/map pin/drill-down only ever looked at the manually
+set `operational_status` field — so a real risk conclusion visible at
+the AI-chat/consolidation level never showed up as `kritis` on the
+posko itself. Not consistent.
+
+Fixed in `api_control_centre.py`: new `_medical_unstaffed_poskos(posko_names)`
+returns posko names with an open `RN Medical Case` (`case_status` in
+active/stabilized/evacuating) but no currently-active (`accepted`/
+`checked_in`/`in_progress`) medical `RN Volunteer Assignment`
+(`assignment_type == "medical"` or `required_skill` mentions
+medis/medical) there. Wired into `map_points()` (forces
+`situation = "critical"`, which drives the Control Centre "Posko
+Kritis" KPI, map pin color, and `_drill_posko_kritis`) and into
+`active_disasters_board()`'s per-event `_ba_situation_of()` (drives
+Bencana Aktif's `posko_kritis` count and "Isu Kritis Teratas" list).
+
+Verified live against Krakatau sim: Posko Medis Darurat Kalianda has 3
+open medical cases and 2 medical volunteer assignments both still
+`planned` (nobody checked in yet) — `operational_status` on the posko
+itself is plain `active`. Before the fix this posko was `situation:
+safe`; after, it's `critical`, Control Centre `map.summary.critical`
+went 0→1, and Bencana Aktif's `posko_kritis`/`isu_kritis` now list it.
+Deployed via `docker cp` + `docker restart osiun-frappe-backend`
+(md5-verified). Not yet pushed to GitHub.
+
 ## Rules / gotchas
 
 - **Frappe bench console via stdin** breaks on multi-line `for` loops and on

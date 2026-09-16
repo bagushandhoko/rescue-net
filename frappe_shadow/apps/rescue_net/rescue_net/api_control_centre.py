@@ -140,6 +140,8 @@ def map_points(event):
 
     _fn = {r.get("name"): _row_fns(r) for r in rows}
 
+    unstaffed = _medical_unstaffed_poskos([r.get("name") for r in rows])
+
     result = []
 
     for raw in rows:
@@ -195,6 +197,9 @@ def map_points(event):
 
         else:
             situation = "safe"
+
+        if row.get("name") in unstaffed:
+            situation = "critical"
 
         result.append({
             "id":
@@ -2057,6 +2062,57 @@ _DRILL_TITLES = {
 }
 
 
+_MEDICAL_OPEN_CASE = {"active", "stabilized", "evacuating"}
+_MEDICAL_ACTIVE_ASSIGNMENT = {"accepted", "checked_in", "in_progress"}
+
+
+def _medical_unstaffed_poskos(posko_names):
+    """Posko names with an open RN Medical Case but no currently-active
+    medical RN Volunteer Assignment there — patients present, nobody
+    medically staffing them.
+
+    This is the same "korban berisiko" read a human (or the AI situation
+    analyst, which sees the raw case + assignment data) makes by eye —
+    it needs to land in the deterministic situation/KPI computation too
+    (map_points' "critical" count, the Bencana Aktif rollup), not stay a
+    conclusion only visible at the consolidation/chat level while the
+    posko's own status still reads normal.
+    """
+    names = [n for n in (posko_names or []) if n]
+    if not names or not frappe.db.exists("DocType", "RN Medical Case"):
+        return set()
+
+    case_poskos = set()
+    for c in frappe.get_all(
+        "RN Medical Case",
+        filters={"posko": ["in", names]},
+        fields=["posko", "case_status"],
+        limit_page_length=5000,
+    ):
+        if str(c.get("case_status") or "").lower() in _MEDICAL_OPEN_CASE:
+            case_poskos.add(c.get("posko"))
+
+    if not case_poskos or not frappe.db.exists("DocType", "RN Volunteer Assignment"):
+        return case_poskos
+
+    covered = set()
+    for a in frappe.get_all(
+        "RN Volunteer Assignment",
+        filters={"posko": ["in", list(case_poskos)]},
+        fields=["posko", "assignment_status", "assignment_type", "required_skill"],
+        limit_page_length=5000,
+    ):
+        if str(a.get("assignment_status") or "").lower() not in _MEDICAL_ACTIVE_ASSIGNMENT:
+            continue
+        skill_text = (
+            str(a.get("assignment_type") or "") + " " + str(a.get("required_skill") or "")
+        ).lower()
+        if "medi" in skill_text:
+            covered.add(a.get("posko"))
+
+    return case_poskos - covered
+
+
 def _fmt(v):
     try:
         f = float(v)
@@ -3104,6 +3160,14 @@ def active_disasters_board(limit=60):
         posko_title = {p["name"]: (p.get("title") or p["name"]) for p in poskos}
         posko_by_name = {p["name"]: p for p in poskos}
 
+        unstaffed = _medical_unstaffed_poskos([p["name"] for p in poskos])
+
+        def _ba_situation_of(p):
+            sit = _ba_situation(p.get("operational_status"))
+            if p["name"] in unstaffed:
+                sit = "critical"
+            return sit
+
         crit_needs = [
             n for n in needs
             if str(n.get("urgency") or "").lower() in _CRIT_URGENCY
@@ -3172,7 +3236,7 @@ def active_disasters_board(limit=60):
                 ),
             }
             for p in poskos
-            if _ba_situation(p.get("operational_status")) == "critical"
+            if _ba_situation_of(p) == "critical"
         ]
         # Jiwa Berisiko drill previously showed only a region rollup table
         # with one blanket "Buka Control Centre" link — no way to reach the
@@ -3203,7 +3267,7 @@ def active_disasters_board(limit=60):
             })
             row["posko_count"] += 1
             row["jiwa_berisiko"] += int(_num(p.get("rn_beneficiary_count")))
-            sit = _ba_situation(p.get("operational_status"))
+            sit = _ba_situation_of(p)
             if _SIT_RANK[sit] > _SIT_RANK[row["situation"]]:
                 row["situation"] = sit
             row["last_updated"] = _ba_max_dt(row["last_updated"], p.get("modified"))

@@ -2830,16 +2830,20 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
     problem: kasus medis kritis, kekurangan obat/alkes, kekurangan
     tenaga medis, shelter kondisi kritis, laporan korban masyarakat."""
 
+    def _norm_posko(raw):
+        # Some legacy rows store `posko` with a stray pre-cutover
+        # `posko_nodes:` prefix that doesn't match RN Posko's real
+        # docname — but for some events (e.g. Aceh/Luwu-era imports) the
+        # real docname itself legitimately starts with `posko_nodes:`.
+        # Try the raw value first (covers the real-docname case), only
+        # stripping the prefix as a fallback for the stray-artifact case.
+        raw = str(raw or "")
+        return raw if raw in posko_by_name else raw.replace("posko_nodes:", "")
+
     def _group_by_posko(rows, detail_fn):
         buckets = {}
         for r in rows:
-            # Some legacy rows still store `posko` with the pre-cutover
-            # `posko_nodes:` prefix, which doesn't match RN Posko's real
-            # docname — normalize before using it as the lookup key, or
-            # posko_title/posko_region/posko_by_name all miss and the
-            # item shows a raw internal ID as its title instead of the
-            # posko's actual name.
-            posko = str(r.get("posko") or "").replace("posko_nodes:", "") or None
+            posko = _norm_posko(r.get("posko")) or None
             # Drop a dangling reference to a posko that no longer exists
             # for this event — a dead-end link with a raw ID as its title
             # is worse than just not showing that one row.
@@ -2944,7 +2948,7 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
         limit_page_length=500,
     )
     over_capacity = {
-        str(o.get("posko") or "").replace("posko_nodes:", ""): o for o in occs
+        _norm_posko(o.get("posko")): o for o in occs
         if o.get("posko")
         and _num(o.get("capacity_total")) > 0
         and _num(o.get("current_occupancy")) > _num(o.get("capacity_total"))
@@ -2960,7 +2964,7 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
     )
     shelter_needs = [
         n for n in shelter_needs_all
-        if str(n.get("posko") or "").replace("posko_nodes:", "") in posko_by_name
+        if _norm_posko(n.get("posko")) in posko_by_name
     ]
     crit_shelter_needs = [
         n for n in shelter_needs
@@ -2973,14 +2977,14 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
     # one legacy shelter-need row) would otherwise show a dead-end link
     # with the raw internal ID as its title instead of a real posko name.
     shelter_posko_ids = (set(over_capacity) | {
-        str(n["posko"]).replace("posko_nodes:", "") for n in crit_shelter_needs
+        _norm_posko(n["posko"]) for n in crit_shelter_needs
     }) & set(posko_by_name)
     shelter_items = []
     for posko in shelter_posko_ids:
         occ = over_capacity.get(posko)
         needs_hit = [
             n for n in crit_shelter_needs
-            if str(n.get("posko") or "").replace("posko_nodes:", "") == posko
+            if _norm_posko(n.get("posko")) == posko
         ]
         details = []
         if occ:

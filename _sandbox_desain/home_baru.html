@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rescue-Net | Open Disaster Coordination</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f25542;
+            --primary-hover: #d94938;
+            --bg-body: #fff9f8; /* Soft background color matching mock-up */
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); }
+
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+        /* NAVBAR */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 24px 0; }
+        .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.4rem; color: var(--primary); text-decoration: none;}
+        .brand svg { width: 32px; height: 32px; }
+        .nav-links { display: flex; gap: 32px; font-weight: 500; font-size: 0.95rem; }
+        .nav-links a { color: var(--text-main); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-actions { display: flex; gap: 12px; }
+        .btn { padding: 10px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s;}
+        .btn-outline { border: 1px solid var(--border); background: white; color: var(--text-main); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-solid { background: var(--primary); color: white; border: 1px solid var(--primary); }
+        .btn-solid:hover { background: var(--primary-hover); }
+
+        /* HERO SECTION */
+        .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 60px 0; }
+        .hero-title { font-size: 4rem; color: var(--primary); font-weight: 700; line-height: 1.1; margin-bottom: 16px; }
+        .hero-subtitle { font-size: 1.25rem; font-weight: 600; margin-bottom: 24px; }
+        .hero-desc { font-size: 1rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 32px; max-width: 95%; }
+        .hero-cta { display: flex; gap: 16px; margin-bottom: 24px; }
+        .hero-secondary-cta { display: flex; gap: 16px; }
+
+        /* Secondary CTA buttons from mock-up */
+        .btn-alert { background: white; border: 1px solid var(--border); color: var(--text-main); padding: 12px 24px; border-radius: 8px; font-weight: 600; display:inline-flex; align-items:center; gap:8px; text-decoration:none; }
+        .btn-alert svg { color: var(--primary); width: 18px; }
+        .btn-help { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 12px 24px; border-radius: 8px; font-weight: 600; display:inline-flex; align-items:center; gap:8px; text-decoration:none; }
+        .btn-help svg { color: #10b981; width: 18px; }
+
+        .hero-image-wrapper { position: relative; display: flex; justify-content: flex-end; }
+        /* Placeholder for the hero image */
+        .hero-image-box { width: 100%; max-width: 500px; height: 350px; background: #ffe4e0; border-radius: 24px; display:flex; align-items:center; justify-content:center; color: var(--primary); font-weight: 600; }
+
+        /* Floating Badges */
+        .float-badge { position: absolute; background: white; padding: 10px 16px; border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.85rem; border: 1px solid var(--border); }
+        .badge-1 { top: -20px; right: 20px; color: #065f46; }
+        .badge-2 { bottom: 40px; left: -20px; color: var(--text-main); }
+        .badge-3 { bottom: -20px; right: 40px; color: #b45309; }
+
+        /* KPI SECTION (WITH FRAPPE ATTRIBUTES) */
+        .kpi-section { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px; margin-bottom: 60px; }
+        .kpi-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.02); }
+        .kpi-icon { width: 56px; height: 56px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+        .kpi-content h4 { font-size: 0.85rem; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+        .kpi-content strong { font-size: 1.8rem; font-weight: 700; color: var(--text-main); line-height: 1; display: block; }
+        .kpi-trend { font-size: 0.75rem; margin-top: 6px; display: block; font-weight: 600; }
+
+        /* ROLES SECTION */
+        .section-title { font-size: 1.5rem; margin-bottom: 24px; font-weight: 600; }
+        .roles-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin-bottom: 60px; }
+        .role-card { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); text-decoration: none; color: inherit; }
+        .role-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .role-icon-box { width: 44px; height: 44px; background: #fff1f0; color: var(--primary); border-radius: 12px; display: flex; justify-content: center; align-items: center; margin-bottom: 16px; }
+        .role-card h3 { font-size: 1rem; margin-bottom: 8px; }
+        .role-card p { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; flex: 1; }
+        .role-link { color: var(--primary); font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+        /* FOOTER FEATURES */
+        .footer-features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; padding: 40px 0; border-top: 1px solid var(--border); margin-bottom: 20px;}
+        .feature-item { display: flex; gap: 12px; }
+        .feature-icon { color: var(--primary); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: white; border-radius: 50%; border: 1px solid var(--border); padding: 6px;}
+        .feature-item h4 { font-size: 0.95rem; margin-bottom: 4px; }
+        .feature-item p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+
+        @media (max-width: 1024px) {
+            .hero { grid-template-columns: 1fr; text-align: center; }
+            .hero-image-wrapper { justify-content: center; margin-top: 40px; }
+            .hero-desc { margin: 0 auto 32px; }
+            .hero-cta, .hero-secondary-cta { justify-content: center; }
+            .kpi-section { grid-template-columns: repeat(2, 1fr); }
+            .roles-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Rescue-Net
+        </a>
+        <div class="nav-links">
+            <a href="#tentang">Tentang Kami</a>
+            <a href="#fitur">Fitur</a>
+            <a href="#bencana">Bencana Aktif</a>
+            <a href="pages/war-room.html">Peta</a>
+            <a href="pages/kirim-bantuan.html">Pusat Bantuan</a>
+        </div>
+        <div class="nav-actions">
+            <a href="pages/auth.html" class="btn btn-outline">Masuk</a>
+            <a href="pages/auth.html" class="btn btn-solid">Daftar</a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <main>
+        <section class="hero" id="tentang">
+            <div class="hero-content">
+                <h1 class="hero-title">Rescue-Net</h1>
+                <h2 class="hero-subtitle">Open Disaster Coordination & Relief Management System</h2>
+                <p class="hero-desc">Menghubungkan kebutuhan, bantuan, relawan, transportasi, logistik, posko medis, dan bukti lapangan terverifikasi dalam satu sistem terbuka untuk respons bencana yang cepat, transparan, dan kolaboratif.</p>
+
+                <div class="hero-cta">
+                    <a href="pages/auth.html" class="btn btn-solid">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                        Masuk
+                    </a>
+                    <a href="pages/auth.html" class="btn btn-outline">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                        Daftar
+                    </a>
+                </div>
+
+                <div class="hero-secondary-cta">
+                    <a href="pages/bencana-aktif.html" class="btn-alert">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                        Lihat Bencana Aktif
+                    </a>
+                    <a href="pages/kirim-bantuan.html" class="btn-help">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        Saya Ingin Membantu
+                    </a>
+                </div>
+            </div>
+
+            <div class="hero-image-wrapper">
+                <div class="hero-image-box">
+                    [ Placeholder: Gambar Tim Rescue ]
+                </div>
+
+                <div class="float-badge badge-1">
+                    <svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Data Terverifikasi
+                </div>
+                <div class="float-badge badge-2">
+                    <svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg> Koordinasi Terbuka
+                </div>
+                <div class="float-badge badge-3">
+                    <svg width="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg> Bantuan Tepat Sasaran
+                </div>
+            </div>
+        </section>
+
+        <!-- KPI SECTION WITH FRAPPE ATTRIBUTES PRESERVED -->
+        <section class="kpi-section" aria-label="Live Rescue-Net metrics">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:#fff1f0; color:var(--primary);"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg></div>
+                <div class="kpi-content">
+                    <h4>Bencana Aktif</h4>
+                    <strong data-rn-live-active-disasters>24</strong>
+                    <span class="kpi-trend" style="color:var(--primary);">+6 dari kemarin</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:#fff7ed; color:#ea580c;"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg></div>
+                <div class="kpi-content">
+                    <h4>Kebutuhan Kritis</h4>
+                    <strong data-rn-live-critical-needs>153</strong>
+                    <span class="kpi-trend" style="color:#ea580c;">+18 dari kemarin</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:#ecfdf5; color:#10b981;"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg></div>
+                <div class="kpi-content">
+                    <h4>Relawan Dibutuhkan</h4>
+                    <strong data-rn-live-volunteers>1.248</strong>
+                    <span class="kpi-trend" style="color:#10b981;">+312 dari kemarin</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background:#fef2f2; color:#ef4444;"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon></svg></div>
+                <div class="kpi-content">
+                    <h4>Distribusi Terhambat</h4>
+                    <strong data-rn-live-blocked-flows>36</strong>
+                    <span class="kpi-trend" style="color:#ef4444;">-5 dari kemarin</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ROLES GRID SECTION -->
+        <h2 class="section-title">Bergabung sesuai peran Anda</h2>
+        <section class="roles-grid" id="fitur">
+            <a href="pages/kirim-bantuan.html" class="role-card">
+                <div class="role-icon-box"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
+                <h3>Donatur</h3>
+                <p>Salurkan bantuan dan pantau dampaknya secara transparan.</p>
+                <div class="role-link">Pelajari lebih lanjut &rarr;</div>
+            </a>
+
+            <a href="pages/management-relawan.html" class="role-card">
+                <div class="role-icon-box" style="background:#ecfdf5; color:#10b981;"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path></svg></div>
+                <h3>Relawan</h3>
+                <p>Temukan misi relawan terdekat dan bantu sesuai keahlian Anda.</p>
+                <div class="role-link">Pelajari lebih lanjut &rarr;</div>
+            </a>
+
+            <a href="pages/organisasi-posko.html" class="role-card">
+                <div class="role-icon-box" style="background:#fff7ed; color:#ea580c;"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg></div>
+                <h3>Organisasi</h3>
+                <p>Kelola tim, distribusi, dan laporan dalam satu platform.</p>
+                <div class="role-link">Pelajari lebih lanjut &rarr;</div>
+            </a>
+
+            <a href="pages/posko-detail.html" class="role-card">
+                <div class="role-icon-box" style="background:#fef3c7; color:#d97706;"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg></div>
+                <h3>Posko</h3>
+                <p>Kelola kebutuhan, logistik, dan informasi di posko Anda.</p>
+                <div class="role-link">Pelajari lebih lanjut &rarr;</div>
+            </a>
+
+            <a href="pages/posko-medis-detail.html" class="role-card">
+                <div class="role-icon-box" style="background:#e0f2fe; color:#0284c7;"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg></div>
+                <h3>Medis</h3>
+                <p>Koordinasi layanan kesehatan dan data pasien dengan aman.</p>
+                <div class="role-link">Pelajari lebih lanjut &rarr;</div>
+            </a>
+
+            <a href="pages/management-distribusi.html" class="role-card">
+                <div class="role-icon-box" style="background:#f3f4f6; color:#4b5563;"><svg width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon></svg></div>
+                <h3>Transport</h3>
+                <p>Sediakan armada dan dukung pengiriman bantuan tepat waktu.</p>
+                <div class="role-link">Pelajari lebih lanjut &rarr;</div>
+            </a>
+        </section>
+
+    </main>
+
+    <!-- FOOTER FEATURES -->
+    <footer class="footer-features">
+        <div class="feature-item">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div>
+            <div>
+                <h4>Terbuka & Transparan</h4>
+                <p>Data dan proses dapat diakses publik.</p>
+            </div>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div>
+            <div>
+                <h4>Terverifikasi</h4>
+                <p>Setiap informasi diverifikasi di lapangan.</p>
+            </div>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path></svg></div>
+            <div>
+                <h4>Kolaboratif</h4>
+                <p>Bekerja bersama, dampak lebih besar.</p>
+            </div>
+        </div>
+        <div class="feature-item">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></div>
+            <div>
+                <h4>Aman & Terpercaya</h4>
+                <p>Privasi dan keamanan menjadi prioritas.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<!-- SCRIPTS FRAPPE PENTING (Dibiarkan untuk integrasi) -->
+<!-- <script src="assets/js/rn-icons.js?v=kpiicon-20260904"></script> -->
+<!-- <script src="assets/js/rn-frappe-client.js?v=nonjson-20260903"></script> -->
+<!-- <script src="assets/js/api.js?v=pubctx-20260903b"></script> -->
+<!-- <script src="assets/js/session-role.js?v=role-ui-1"></script> -->
+
+</body>
+</html>

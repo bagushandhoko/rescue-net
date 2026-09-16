@@ -4,9 +4,84 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-13_ — closed 2 of the 3 "important, not yet fixed"
-items from the pre-deployment readiness audit, plus a new feature: DB
-backup/restore menu for System Manager.
+_Last updated: 2026-09-16_ — seeded the missing medis/shelter/laporan
+domain data for the Krakatau active-disaster sim so its Bencana Aktif
+links actually show data end-to-end (data-only, no code change).
+
+## Krakatau sim: Jiwa Berisiko / Shelter / Laporan data seeded — DONE & VERIFIED
+
+Owner report: on `pages/bencana-aktif.html`, the links for
+"[SIMULASI] Krakatau Meletus 2026" (`event-krakatau-2026`) were wired
+up correctly but showed no data when clicked — the "Jiwa Berisiko"
+drill's medis/shelter/laporan-masyarakat categories were all empty.
+Root cause confirmed via `bench console`: this event had 10 real
+`RN Posko` records (from the earlier Krakatau sim build) but **zero**
+`RN Medical Case`, `RN Shelter Occupancy`, `RN Shelter Need`,
+`RN Community Report`, `RN Volunteer Assignment` — only 1
+`RN Distribution Flow` row existed. The `_ba_jiwa_categories()` drill
+logic in `api_control_centre.py` (built in a prior session, see git log
+around `15afbc0`/`5a7ccb6`) was correct; there was simply no data
+behind it for this specific event.
+
+**Seeded 17 new records** for `event-krakatau-2026`, all titled/tagged
+`[SIMULASI]` per this event's existing convention, matched to its real
+poskos (medical: `rn-posko-5a64af4a1377ad0c030d`, shelter:
+`rn-posko-3eeac38371403c6a0e61`, logistics/collection_hub poskos for
+breadth):
+- 3 `RN Medical Case` (2 critical/red+black triage → feeds "Kasus Medis
+  Kritis"; 1 mild/green control case)
+- 4 `RN Logistic Need` (2 critical at the medical posko → "Kekurangan
+  Obat & Alat Kesehatan"; 2 more at logistics/collection_hub poskos for
+  "Kebutuhan Kritis" breadth)
+- 2 `RN Volunteer Profile` + 2 `RN Volunteer Assignment` (medical,
+  urgent/critical, unfilled → "Kekurangan Tenaga Medis")
+- 1 `RN Shelter Occupancy` (210/150, over capacity) + 1 `RN Shelter
+  Need` (critical, open) → "Shelter Kondisi Kritis"
+- 2 `RN Community Report` (8 and 15 `affected_people_count`) →
+  "Laporan Korban dari Masyarakat"
+- 2 more `RN Distribution Flow` rows for distribusi breadth
+
+Checked every doctype's `reqd` fields and `Select` options via
+`frappe.get_meta` first, and used an existing Karhutla-sim record as a
+shape template, rather than guessing field names/enum values.
+
+**Verified end-to-end, not just DB inserts:**
+1. `rescue_net.api_control_centre.active_disasters_board` (the guest
+   API `bencana-aktif.js` calls) now returns all 5 `jiwa_categories`
+   non-empty for Krakatau with correct counts and hrefs
+   (`posko-medis-detail.html`, `shelter-detail.html`,
+   `laporan-masyarakat.html?report=...`), `kebutuhan_kritis: 4`,
+   `distribusi_total: 3`.
+2. `rescue_net.api_shelter.shelter_board` and
+   `rescue_net.api_shelter.dashboard` (used by `shelter-detail.html`)
+   both return the real seeded numbers (210/150 overcapacity,
+   `kelompok_rentan: 74`, the seeded need row) — confirmed via direct
+   curl.
+3. **Live Playwright run against the real page**
+   (`https://osiun.tail251e1e.ts.net/rescue-net/pages/bencana-aktif.html`,
+   script `rn-bencana-krakatau-verify.js` in
+   `/volume1/docker/osiun-playwright-check/`): focused the drill on
+   Krakatau's own table row (not the sitewide KPI), opened "Jiwa
+   Berisiko", confirmed all 5 categories enabled with real counts,
+   drilled into each one and got real items with correct hrefs, zero
+   console/page errors.
+
+**Not fully confirmed:** the actual rendered content of the
+`shelter-detail.html` / `laporan-masyarakat.html` destination pages
+once navigated to directly — a follow-up Playwright check hit
+inconsistent load-timing against the `docker run` test harness itself
+(each Playwright container invocation in this environment has 100s+
+cold-start overhead, unrelated to the app) rather than a confirmed app
+bug; the backing APIs those pages call are independently verified
+correct via curl above, so the data is there, but the actual DOM
+render on those two specific pages wasn't visually re-confirmed this
+session. Worth a quick manual browser check if the owner has doubts.
+
+Other empty-shell active events (`Longsor Bogor 2026`, `banjir
+sumatar`, `Banjir Luwu 2025`) have **zero poskos at all** — out of
+scope here, left untouched. `event-sim-001` and
+`event-karhutla-kalbar-2026` already had real domain data behind every
+link from prior sessions.
 
 ## Rate-limiting on every guest endpoint — DONE & DEPLOYED
 

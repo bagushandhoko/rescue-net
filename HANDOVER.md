@@ -4,9 +4,12 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-16_ — seeded the missing medis/shelter/laporan
-domain data for the Krakatau active-disaster sim so its Bencana Aktif
-links actually show data end-to-end (data-only, no code change).
+_Last updated: 2026-09-16_ — seeded missing medis/shelter/laporan
+domain data for the Krakatau active-disaster sim, then did the same for
+`event-aceh-2025` (Community Report + Volunteer Assignment were the
+missing pieces there) and fixed a real `_norm_posko()` lookup bug that
+gap exposed — so Bencana Aktif links show real data end-to-end for
+both events now.
 
 ## Krakatau sim: Jiwa Berisiko / Shelter / Laporan data seeded — DONE & VERIFIED
 
@@ -82,6 +85,69 @@ sumatar`, `Banjir Luwu 2025`) have **zero poskos at all** — out of
 scope here, left untouched. `event-sim-001` and
 `event-karhutla-kalbar-2026` already had real domain data behind every
 link from prior sessions.
+
+## Gempa Aceh Barat 2025: same data gap filled + a real `_norm_posko()` bug fixed — DONE & VERIFIED
+
+Same sweep as the Krakatau fix above, applied to `disaster_events:event-aceh-2025`
+("Gempa Aceh Barat 2025", event_status active). This event already had
+real Medical Case/Shelter Occupancy/Shelter Need/Logistic Need/Distribution
+Flow data from an earlier session, but `RN Community Report` and
+`RN Volunteer Assignment` were both 0 — so "Laporan Korban dari
+Masyarakat" and "Kekurangan Tenaga Medis" in the Jiwa Berisiko drill were
+empty for this event.
+
+Seeded (all `[SIMULASI]`-tagged, using an existing Karhutla-sim record of
+each doctype as a schema/shape template): 2 `RN Community Report` rows
+(6 and 4 `affected_people_count`, tied to Gang Melati / near the
+logistics posko) and 2 `RN Volunteer Assignment` rows (`assignment_type:
+medical`, priority critical/urgent, status `planned` = unfilled, at
+`posko_nodes:posko-medis-aceh`, reusing existing `RN Volunteer Profile`
+records `KH-VOL-05`/`KH-VOL-06` since this event has none of its own).
+
+**Real bug found and fixed while verifying:** `active_disasters_board`
+showed `kekurangan_nakes: count: 2` but `items: []` — a dead-end. Cause:
+this event's `RN Posko` docnames literally start with `posko_nodes:`
+(a real, current docname for this legacy-import event — not a stray
+prefix), but `_ba_jiwa_categories()`'s `_group_by_posko()` and the
+shelter-matching code unconditionally stripped that prefix before
+looking the row up in `posko_by_name` (which is keyed by the real,
+still-prefixed docname for this event) — so every row for this event's
+poskos silently failed the lookup and got dropped, even though the
+top-level `count` (computed before grouping) was correct. Fixed by
+adding a `_norm_posko()` helper in `api_control_centre.py` that tries
+the raw value first and only falls back to stripping the prefix if the
+raw value isn't a real posko — covers both "prefix is legit part of the
+docname" (this event) and "prefix is stray legacy cruft" (the case the
+original stripping code was written for) via the same lookup. Applied
+everywhere `_ba_jiwa_categories()` matched on `posko` (medis/shelter
+categories); did NOT touch `_operate_href()`'s always-strip convention
+used for building `?id=` URL params, which is a separate, intentional,
+consistently-applied pattern elsewhere in this module. Deployed via
+`docker cp` + restart, verified live via
+`active_disasters_board` — `kekurangan_nakes` now returns the real item
+(`Posko Medis Aceh Barat`, 2 permintaan, href
+`posko-medis-detail.html?id=posko-medis-aceh&event=event-aceh-2025`)
+and `laporan_korban` returns both new reports with correct
+`laporan-masyarakat.html?report=...` hrefs.
+
+**Not re-verified live in Playwright** for this event specifically (only
+via direct API curl) — the drill UI/click-through logic itself was
+already Playwright-verified end-to-end for Krakatau above and is
+event-agnostic, so this is lower risk than a first-time check, but
+still worth a look if the owner wants full confidence on this specific
+event.
+
+Left `medis_kritis`/`kekurangan_obat`/`shelter_kritis` at their existing
+0 counts for this event — those reflect real pre-existing data not
+meeting the "kritis" filter thresholds, not a gap in scope here.
+
+Possible follow-up (not fixed, out of scope for this pass): two other
+`?id=` URL builders in the same file (`distribusi_items`'s
+`posko-distribusi.html` link and `posko_kritis_items`'s
+`posko-detail.html` link) also unconditionally strip `posko_nodes:`
+like `_operate_href()` does — untested whether the destination pages
+handle a stripped id correctly for this event's posko-naming style,
+since both lists happened to be empty for Aceh right now.
 
 ## Rate-limiting on every guest endpoint — DONE & DEPLOYED
 

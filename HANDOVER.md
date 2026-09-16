@@ -69,16 +69,25 @@ shape template, rather than guessing field names/enum values.
    drilled into each one and got real items with correct hrefs, zero
    console/page errors.
 
-**Not fully confirmed:** the actual rendered content of the
-`shelter-detail.html` / `laporan-masyarakat.html` destination pages
-once navigated to directly — a follow-up Playwright check hit
-inconsistent load-timing against the `docker run` test harness itself
-(each Playwright container invocation in this environment has 100s+
-cold-start overhead, unrelated to the app) rather than a confirmed app
-bug; the backing APIs those pages call are independently verified
-correct via curl above, so the data is there, but the actual DOM
-render on those two specific pages wasn't visually re-confirmed this
-session. Worth a quick manual browser check if the owner has doubts.
+**Follow-up (2026-09-16, later same day) — now fully confirmed via
+Playwright**: re-ran `rn-bencana-krakatau-verify.js` plus 2 new
+one-off scripts (`rn-laporan-check3.js`/`4.js` in
+`/volume1/docker/osiun-playwright-check/`) against the live pages.
+`shelter-detail.html?id=rn-posko-3eeac38371403c6a0e61&event=event-krakatau-2026`
+renders the real shelter name ("GOR Kalianda"), zero console errors.
+`laporan-masyarakat.html?report=<id>&event=event-krakatau-2026` needed
+a longer wait (~5s, not the 2.5s the first script used — the page
+chains `session_info` → `admin_area_children` → `community_reports`
+calls sequentially) but then correctly renders the exact seeded report
+card and would scroll/highlight it (`#report-<id>` exists in the DOM).
+One red herring while digging in: a `403` on
+`admin_area_children?level=province` for the anonymous test session —
+turned out to be **expected**, not a bug: both `admin_area_children`
+and `submit_community_report_bridge` in `api_frontend_bridge.py` are
+`@frappe.whitelist()` (no `allow_guest=True`) — the whole "Kirim
+Laporan" submission path already requires login end-to-end, so a
+logged-out guest 403ing on the location-cascader call is consistent,
+not a guest-facing feature silently broken.
 
 Other empty-shell active events (`Longsor Bogor 2026`, `banjir
 sumatar`, `Banjir Luwu 2025`) have **zero poskos at all** — out of
@@ -141,13 +150,22 @@ Left `medis_kritis`/`kekurangan_obat`/`shelter_kritis` at their existing
 0 counts for this event — those reflect real pre-existing data not
 meeting the "kritis" filter thresholds, not a gap in scope here.
 
-Possible follow-up (not fixed, out of scope for this pass): two other
-`?id=` URL builders in the same file (`distribusi_items`'s
+**Follow-up (2026-09-16, later same day) — checked, no bug**: the two
+other `?id=` URL builders in the same file (`distribusi_items`'s
 `posko-distribusi.html` link and `posko_kritis_items`'s
-`posko-detail.html` link) also unconditionally strip `posko_nodes:`
-like `_operate_href()` does — untested whether the destination pages
-handle a stripped id correctly for this event's posko-naming style,
-since both lists happened to be empty for Aceh right now.
+`posko-detail.html` link) unconditionally strip `posko_nodes:` like
+`_operate_href()` does. Confirmed via `bench console` both lists are
+still empty for Aceh right now (no critical posko, no blocked flow),
+so the path isn't exercised — but even if it were, it's safe: Aceh's
+posko `legacy_id` values are already stored **unprefixed**
+(`legacy_id: "posko-medis-aceh"` for `name:
+"posko_nodes:posko-medis-aceh"`), and both destination endpoints
+(`posko_detail`, `posko_distribusi_board`) resolve the incoming `id`
+via `_resolve_posko()`, which falls back to a `legacy_id` match after
+the direct-name lookup fails — so a stripped id round-trips correctly
+for this event's actual data. Not a general guarantee for every future
+event (an event whose posko `legacy_id` is never set, or set to
+something else, could still break), but nothing to fix today.
 
 ## Rate-limiting on every guest endpoint — DONE & DEPLOYED
 

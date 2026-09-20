@@ -4,13 +4,50 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-20_ — Posko Kritis KPI now also counts shelters over capacity (see
-"Shelter overcapacity → Posko Kritis" below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
+_Last updated: 2026-09-20_ — Posko Kritis KPI now also counts shelters over capacity AND
+critical needs with nothing en route (see "Posko Kritis: derived signals" sections below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
 domain data for the Krakatau active-disaster sim, then did the same for
 `event-aceh-2025` (Community Report + Volunteer Assignment were the
 missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
+
+## Posko Kritis: logistics-gap signal + unified reasons (2026-09-20) — DONE & DEPLOYED
+
+Third instance of the "kritis must be a deterministic per-posko signal" rule
+(after `_medical_unstaffed_poskos` `220ab4e` and `_shelter_overcapacity_poskos`
+`9c13ee5`). New `_logistics_gap_poskos()` in `api_control_centre.py`: a posko
+with an open **critical** `RN Logistic Need` (urgency == `critical` only, need
+not closed) and **no** `RN Distribution Flow` moving towards it
+(`destination_posko`, status not in `_DRILL_BLOCKED_FLOW` — so `assigned_pickup`
+/ `pending` / `cancelled` do not count as supply; `in_transit` / `dispatched` /
+`arrived` / `received*` / `stock_transferred` do) is `critical`.
+
+**Refactor:** the three derived signals are now combined in ONE place,
+`_derived_critical_reasons(names)` → `{posko: [reasons]}`, used by
+`map_points()` (adds `critical_reasons` to each point), `active_disasters_board()`
+(`posko_kritis_items[].reasons`, reason appended to the "Isu Kritis Teratas"
+`detail`) and `_drill_posko_kritis` (reason appended to the row `detail`). They
+can no longer disagree about which poskos are critical.
+
+- **Verified live** (`active_disasters_board`, before → after): Karhutla 1 → 2
+  (Pos Alat Kerja & Logistik: 1 critical need, nothing en route), Simulasi
+  Gempa 5 → 7 (LD3 Kaway XVI, Pos Medis TNI AL Rujukan; LD2/LD4 were already
+  critical by status, they now also carry the reason), Krakatau 2 (unchanged —
+  Kalianda has an `in_transit` flow), Aceh 1 (unchanged — `received_verified`).
+  `kpi_drilldown(dimension="posko_kritis")` totals match the board; the org
+  visibility gating in the drill still hides restricted poskos (shown 1 / hidden 1).
+- **Privacy call:** reason texts carry **no capacity/occupancy figures** — they
+  also surface on the guest-safe board; numbers stay on `shelter-detail`.
+- **Deploy:** plain `cp` into `/volume1/docker/osiun-frappe-shadow/apps/rescue_net/…`
+  + `chmod 755` + `docker restart osiun-frappe-backend` (md5 host==container).
+- **Judgement call to revisit:** only `critical` urgency counts; if the owner
+  wants `urgent`/`high` needs to count too, widen the filter in
+  `_logistics_gap_poskos` (it would turn many more poskos red).
+- **Not done:** the FE (`bencana-aktif.js`, `rn-control-centre-final.js`) does not
+  render `critical_reasons` / `reasons` as their own chip yet — they only show up
+  inside the existing detail strings. A per-posko "why is this red?" tooltip on
+  the map pin is the natural next step.
 
 ## Shelter overcapacity → Posko Kritis KPI (2026-09-20) — DONE & DEPLOYED
 
@@ -35,8 +72,7 @@ via the new shared helper `_shelter_overcapacity_poskos()` in
 - **Gotcha (again):** `docker cp` into the container leaves root-owned files
   (`Permission denied` for the frappe user). Pipe scripts via
   `docker exec -i … ../env/bin/python - < script.py` instead.
-- **Still open, same pattern:** logistics gap vs distribusi KPI (a posko with
-  critical open `RN Logistic Need` but no flowing `RN Distribution Flow`).
+- **Logistics gap vs distribusi KPI:** done, see the section above.
 
 ## Krakatau sim: Jiwa Berisiko / Shelter / Laporan data seeded — DONE & VERIFIED
 

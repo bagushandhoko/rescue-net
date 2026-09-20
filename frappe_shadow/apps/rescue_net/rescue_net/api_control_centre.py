@@ -140,8 +140,7 @@ def map_points(event):
 
     _fn = {r.get("name"): _row_fns(r) for r in rows}
 
-    unstaffed = _medical_unstaffed_poskos([r.get("name") for r in rows])
-    overcap = _shelter_overcapacity_poskos([r.get("name") for r in rows])
+    derived = _derived_critical_reasons([r.get("name") for r in rows])
 
     result = []
 
@@ -199,7 +198,7 @@ def map_points(event):
         else:
             situation = "safe"
 
-        if row.get("name") in unstaffed or row.get("name") in overcap:
+        if row.get("name") in derived:
             situation = "critical"
 
         result.append({
@@ -241,6 +240,9 @@ def map_points(event):
 
             "situation":
                 situation,
+
+            "critical_reasons":
+                derived.get(row.get("name"), []),
 
             "organization":
                 row.get("organization"),
@@ -2144,6 +2146,76 @@ def _shelter_overcapacity_poskos(posko_names):
     return result
 
 
+def _logistics_gap_poskos(posko_names):
+    """posko name -> number of open CRITICAL RN Logistic Needs, restricted to
+    poskos that have NO distribution flow actually moving towards them.
+
+    "Moving" = any RN Distribution Flow with destination_posko == posko whose
+    status is not in _DRILL_BLOCKED_FLOW (in_transit / dispatched / arrived /
+    received* / stock_transferred all count; assigned_pickup, pending,
+    cancelled ... do not). A critical need with nothing en route is a real
+    risk that a human reads straight off the board — same "one real signal,
+    used everywhere" rule as _medical_unstaffed_poskos, not something to
+    leave visible only in the kebutuhan_kritis rollup.
+
+    Only urgency == "critical" counts (not urgent/high) so this stays a
+    conservative flag rather than turning most poskos red.
+    """
+    names = [n for n in (posko_names or []) if n]
+    if not names or not frappe.db.exists("DocType", "RN Logistic Need"):
+        return {}
+
+    critical = {}
+    for n in frappe.get_all(
+        "RN Logistic Need",
+        filters={"posko": ["in", names]},
+        fields=["posko", "urgency", "need_status"],
+        limit_page_length=5000,
+    ):
+        if str(n.get("urgency") or "").lower() != "critical":
+            continue
+        if str(n.get("need_status") or "open").lower() in _DRILL_CLOSED_NEED:
+            continue
+        critical[n.get("posko")] = critical.get(n.get("posko"), 0) + 1
+
+    if not critical or not frappe.db.exists("DocType", "RN Distribution Flow"):
+        return critical
+
+    supplied = set()
+    for f in frappe.get_all(
+        "RN Distribution Flow",
+        filters={"destination_posko": ["in", list(critical)]},
+        fields=["destination_posko", "flow_status"],
+        limit_page_length=5000,
+    ):
+        if str(f.get("flow_status") or "").lower() not in _DRILL_BLOCKED_FLOW:
+            supplied.add(f.get("destination_posko"))
+
+    return {p: c for p, c in critical.items() if p not in supplied}
+
+
+def _derived_critical_reasons(posko_names):
+    """posko name -> [human-readable reasons] for every posko that is
+    critical because of a deterministic derived signal, independent of its
+    manually-set operational_status. The single place the three signals
+    (medical unstaffed, shelter over capacity, critical need with nothing
+    en route) are combined, so map_points(), the Bencana Aktif board and the
+    Posko Kritis drill can never disagree about which poskos are critical."""
+    names = [n for n in (posko_names or []) if n]
+    reasons = {}
+    for p in _medical_unstaffed_poskos(names):
+        reasons.setdefault(p, []).append("Kasus medis terbuka, belum ada tenaga medis aktif")
+    # No capacity/occupancy figures in the text: these reasons also surface on
+    # the guest-safe Bencana Aktif board; the numbers live on shelter-detail,
+    # which has its own access control.
+    for p in _shelter_overcapacity_poskos(names):
+        reasons.setdefault(p, []).append("Shelter melebihi kapasitas")
+    for p, c in _logistics_gap_poskos(names).items():
+        reasons.setdefault(p, []).append(
+            "%d kebutuhan kritis terbuka, belum ada distribusi yang bergerak" % c)
+    return reasons
+
+
 def _fmt(v):
     try:
         f = float(v)
@@ -2305,6 +2377,7 @@ def _drill_posko_kritis(event, res, limit):
             "title": p.get("name"),
             "detail": " · ".join(x for x in [
                 p.get("posko_type"), p.get("address"),
+                "; ".join(p.get("critical_reasons") or []),
             ] if x),
             "quantity": 0,
             "unit": None,
@@ -3191,12 +3264,11 @@ def active_disasters_board(limit=60):
         posko_title = {p["name"]: (p.get("title") or p["name"]) for p in poskos}
         posko_by_name = {p["name"]: p for p in poskos}
 
-        unstaffed = _medical_unstaffed_poskos([p["name"] for p in poskos])
-        overcap = _shelter_overcapacity_poskos([p["name"] for p in poskos])
+        derived = _derived_critical_reasons([p["name"] for p in poskos])
 
         def _ba_situation_of(p):
             sit = _ba_situation(p.get("operational_status"))
-            if p["name"] in unstaffed or p["name"] in overcap:
+            if p["name"] in derived:
                 sit = "critical"
             return sit
 
@@ -3261,6 +3333,7 @@ def active_disasters_board(limit=60):
                 "posko_title": p.get("title") or p["name"],
                 "region": posko_region[p["name"]],
                 "type": p.get("posko_type"),
+                "reasons": derived.get(p["name"], []),
                 "href": (
                     "posko-detail.html?id="
                     + str(p["name"]).replace("posko_nodes:", "")
@@ -3336,7 +3409,7 @@ def active_disasters_board(limit=60):
             isu.append({
                 "kind": "posko",
                 "title": it["posko_title"] + " berstatus kritis",
-                "detail": it["region"],
+                "detail": it["region"] + (" · " + "; ".join(it["reasons"]) if it.get("reasons") else ""),
                 "level": "Sangat Tinggi",
                 "href": it["href"],
             })

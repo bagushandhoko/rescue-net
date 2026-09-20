@@ -199,6 +199,33 @@ const hidden = (w, id) => w.document.getElementById(id).hidden;
   check("F reset password: pw baru tampil; pw lama mati, pw baru hidup", newPw.length >= 10 && (await login("opjs@cmdtest.local", tmp)).loginStatus !== 200 && (await login("opjs@cmdtest.local", newPw)).loginStatus === 200, newPw);
   w.close();
 
+  // ================= G. wakil pusat + info notifikasi WA =================
+  const wk = await c.call("rescue_net.api_command.create_command_account", { organization: org.name, full_name: "Wakil JS", email: "wakiljs@cmdtest.local", role: "community_coordinator", phone: "081234500009" }, { method: "POST" });
+  w = openPage("komando-pusat.html", ["komando-pusat.js"], pusat);
+  await until(() => /Wakil JS/.test(text(w, "kpAccTable")));
+  check("G info notifikasi: pemilik tanpa nomor HP disebut, belum ada penerima", /belum ada penerima/.test(text(w, "kpNotifyInfo")) && /Tanpa nomor HP/.test(text(w, "kpNotifyInfo")), text(w, "kpNotifyInfo"));
+  const wkRow = () => [...w.document.querySelectorAll("#kpAccTable tbody tr")].find((tr) => /Wakil JS/.test(tr.textContent));
+  check("G pemilik melihat tombol 'Jadikan wakil pusat' untuk anggota pusat", !!wkRow().querySelector("[data-accact=deputy-on]"));
+  check("G pemilik tak punya tombol wakil/kelola pada barisnya sendiri", ![...w.document.querySelectorAll("#kpAccTable tbody tr")].find((tr) => /Pemilik \(super admin\)/.test(tr.textContent)).querySelector("button"));
+  wkRow().querySelector("[data-accact=deputy-on]").click();
+  await until(() => /Wakil pusat/.test(wkRow().textContent));
+  check("G diangkat: baris menampilkan 'Wakil pusat' + tombol Cabut wakil", /Wakil pusat/.test(wkRow().textContent) && !!wkRow().querySelector("[data-accact=deputy-off]") && !wkRow().querySelector("[data-accact=deputy-on]"));
+  check("G info notifikasi kini memuat wakil bernomor HP", /Wakil JS \(wakil\)/.test(text(w, "kpNotifyInfo")), text(w, "kpNotifyInfo"));
+  w.close();
+
+  const wakilSess = await login("wakiljs@cmdtest.local", wk.temporary_password);
+  check("G wakil login", wakilSess.loginStatus === 200, wakilSess.loginStatus);
+  w = openPage("komando-pusat.html", ["komando-pusat.js"], wakilSess);
+  await until(() => !hidden(w, "kpCenterView"));
+  check("G wakil membuka halaman pusat (panel pusat tampil, bukan pesan 'bukan pengelola')", !hidden(w, "kpCenterView") && hidden(w, "kpNotice"), text(w, "kpNoticeTitle"));
+  await until(() => /Pemilik \(super admin\)/.test(text(w, "kpAccTable")));
+  check("G wakil TIDAK melihat tombol angkat/cabut wakil", !w.document.querySelector("#kpAccTable [data-accact^=deputy]"));
+  const ownerRow = [...w.document.querySelectorAll("#kpAccTable tbody tr")].find((tr) => /Pemilik \(super admin\)/.test(tr.textContent));
+  check("G wakil tak bisa mengelola akun pemilik", !ownerRow.querySelector("button"));
+  const selfRow = [...w.document.querySelectorAll("#kpAccTable tbody tr")].find((tr) => /Wakil JS/.test(tr.textContent));
+  check("G wakil tak punya tombol kelola pada wakil lain/dirinya (hanya pemilik)", !selfRow.querySelector("button"));
+  w.close();
+
   console.log(`ok=${ok} fail=${fail}`);
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error("CRASH", e); process.exit(2); });

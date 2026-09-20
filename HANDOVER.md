@@ -13,6 +13,27 @@ missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
 
+## Komando terpusat — follow-ups (2026-09-20, same day) — DONE & DEPLOYED
+
+Closes decisions #5 and #7 above and the open `set_posko_functions` hole.
+- **Wakil pusat (deputy).** New membership role `deputy` (`membership_role` is a plain Data field, no migration).
+  `command.is_command_authority(actor, org)` = owner OR deputy (or System Manager); `is_command_owner` stays owner-only.
+  `access_policy.can_manage_organization/can_manage_posko` and `needs_approval` use *authority*. A deputy can decide requests,
+  create accounts, suspend/reset accounts, edit any posko in the tree with no approval. Only the OWNER can appoint/revoke a deputy
+  (`api_command.set_command_deputy`, pusat org only, target must be an approved member, owner can't be made deputy) and only the owner can
+  suspend/reset a deputy's account. UI: "Jadikan wakil pusat / Cabut wakil" buttons on the account table (owner view only).
+- **WhatsApp notifications** (`command.notify_request_filed/decided`, via `api_notify.send_whatsapp`; logged in RN Notification Log,
+  `simulated` until a WA provider is configured): new request -> every owner+deputy with a phone number; decision -> the requester.
+  Best-effort in try/except — a WA failure can never lose a request. `command_overview` returns `notify_recipients` and the page shows
+  who will be told (and who has no phone number). Still NO WA/email of temporary passwords (shown once on screen only).
+- **`set_posko_functions` now permission-checked for everyone** (was open to any logged-in account): System Manager, whoever
+  `can_manage_posko`, the posko creator (registration form calls it right after create_posko), or a manager of the posko's org.
+  Guests / outsiders get PermissionError. Resolves the "still open for mandiri" note above.
+- **Tests:** `scripts/komando-tests` api_e2e **86/86**, check_notify **4/4**, page_jsdom **41/41** (all real logins, live site; test data
+  cleaned afterwards, poskos back to 43). New: phases 11-13 (deputy lifecycle + limits, set_posko_functions gate, WA), page section G.
+- **Still not verified:** real-browser/phone rendering of komando-pusat.html (jsdom only). Remaining owner decisions: 1-4, 6 above;
+  a deputy is any approved member of the pusat org (incl. a posko operator) — the owner chooses.
+
 ## Komando terpusat — optional centralized-coordination scheme (2026-09-20) — DONE & DEPLOYED
 
 Owner ask: for poskos under one command (e.g. TNI) the **pusat creates the posko users**, poskos just run

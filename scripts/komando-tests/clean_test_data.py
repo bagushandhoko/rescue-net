@@ -21,6 +21,9 @@ n["merge"] = gone("RN Org Merge Request", "requester_organization", orgs) + gone
 n["posko"] = gone("RN Posko", "name", poskos)
 n["acct"] = gone("RN User Account", "name", accts)
 n["org"] = gone("RN Organization", "name", orgs)
+# WhatsApp log rows the tests generated (simulated sends to the fixed test numbers 0812345000xx)
+logs = frappe.get_all("RN Notification Log", filters={"to_number": ["like", "%812345000%"], "context_type": "command_request"}, pluck="name")
+n["wa_log"] = gone("RN Notification Log", "name", logs)
 for u in frappe.get_all("User", filters={"name": ["like", "%@cmdtest.local"]}, pluck="name"):
     frappe.delete_doc("User", u, force=True, ignore_permissions=True)
 frappe.db.commit()

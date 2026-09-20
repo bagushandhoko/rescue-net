@@ -93,10 +93,26 @@ def _is_system_manager():
     return is_system_manager()
 
 
-def is_command_owner(actor, org):
-    """True when `actor` is an approved OWNER of a pusat that commands `org`
-    (or of `org` itself when it is a pusat) — or a System Manager — and `org`
-    is under a command. Never true for `mandiri` organisations."""
+DEPUTY_ROLE = "deputy"          # "wakil pusat": membership_role in the pusat org
+AUTHORITY_ROLES = ("owner", DEPUTY_ROLE)
+
+
+def _has_membership(actor, chain, roles):
+    return bool(frappe.db.exists(
+        "RN Organization Membership",
+        {
+            "user_account": actor.name,
+            "organization": ["in", chain],
+            "membership_role": ["in", list(roles)],
+            "status": "approved",
+        },
+    ))
+
+
+def is_command_authority(actor, org):
+    """True when `actor` may act for the pusat over `org`: an approved OWNER or
+    DEPUTY (wakil pusat) of a terpusat org at/above `org` — or a System Manager —
+    and `org` is under a command. Never true for `mandiri` organisations."""
     chain = command_chain(org)
     if not chain:
         return False
@@ -104,21 +120,26 @@ def is_command_owner(actor, org):
         return True
     if not actor or not actor.get("name"):
         return False
-    return bool(frappe.db.exists(
-        "RN Organization Membership",
-        {
-            "user_account": actor.name,
-            "organization": ["in", chain],
-            "membership_role": "owner",
-            "status": "approved",
-        },
-    ))
+    return _has_membership(actor, chain, AUTHORITY_ROLES)
+
+
+def is_command_owner(actor, org):
+    """Stricter than is_command_authority: the OWNER (super admin) only — the
+    only one who may appoint / revoke deputies."""
+    chain = command_chain(org)
+    if not chain:
+        return False
+    if _is_system_manager():
+        return True
+    if not actor or not actor.get("name"):
+        return False
+    return _has_membership(actor, chain, ("owner",))
 
 
 def needs_approval(actor, org):
-    """True when `org` is under a command and `actor` is NOT its command owner
-    — i.e. a structural change must go through the pusat."""
-    return bool(command_chain(org)) and not is_command_owner(actor, org)
+    """True when `org` is under a command and `actor` is NOT one of its command
+    authorities (owner / deputy) — i.e. a structural change must go through the pusat."""
+    return bool(command_chain(org)) and not is_command_authority(actor, org)
 
 
 def is_bypassed():
@@ -130,9 +151,9 @@ def posko_org(posko):
     return frappe.db.get_value("RN Posko", posko, "organization") if posko else None
 
 
-def is_command_owner_of_posko(actor, posko):
+def is_command_authority_of_posko(actor, posko):
     org = posko_org(posko)
-    return bool(org) and is_command_owner(actor, org)
+    return bool(org) and is_command_authority(actor, org)
 
 
 def is_account_member(actor, org):
@@ -141,6 +162,63 @@ def is_account_member(actor, org):
         return False
     from rescue_net.access_policy import approved_member
     return approved_member(actor.name, org) or actor.get("organization") == org
+
+
+# --------------------------------------------------------------------
+# Notifications (WhatsApp via api_notify; best-effort, never blocks a request)
+# --------------------------------------------------------------------
+
+def authorities(org):
+    """Owners + deputies of the pusat(s) over `org`: [{user_account, name, phone, role}]."""
+    chain = command_chain(org)
+    if not chain:
+        return []
+    rows = frappe.get_all(
+        "RN Organization Membership",
+        filters={"organization": ["in", chain], "membership_role": ["in", list(AUTHORITY_ROLES)], "status": "approved"},
+        fields=["user_account", "membership_role"], limit_page_length=200,
+    )
+    out, seen = [], set()
+    for r in rows:
+        if r.user_account in seen:
+            continue
+        seen.add(r.user_account)
+        acc = frappe.db.get_value("RN User Account", r.user_account, ["title", "phone", "status"], as_dict=True)
+        if acc and acc.status == "active":
+            out.append({"user_account": r.user_account, "name": acc.title, "phone": acc.phone, "role": r.membership_role})
+    return out
+
+
+def _notify(phone, body, event_key, request_name, scope):
+    if not (phone or "").strip():
+        return {"status": "skipped", "reason": "tidak ada nomor"}
+    try:
+        from rescue_net.api_notify import send_whatsapp
+        return send_whatsapp(phone, body, context_type="command_request", context_id=request_name,
+                             event_key=event_key, scope=scope)
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "command notify")
+        return {"status": "failed", "error": "notify error"}
+
+
+def notify_request_filed(doc):
+    """Tell every pusat authority a new request is waiting."""
+    org_title = frappe.db.get_value("RN Organization", doc.organization, "title") or doc.organization
+    requester = (frappe.db.get_value("RN User Account", doc.requested_by, "title") if doc.requested_by else None) or "level bawah"
+    body = "[Rescue-Net] Permintaan baru ke pusat komando: %s — dari %s (%s). Buka halaman Komando Pusat untuk memutuskan." % (
+        doc.summary, requester, org_title)
+    return [_notify(a["phone"], body, "command_request_new", doc.name, doc.command_organization) for a in authorities(doc.organization)]
+
+
+def notify_request_decided(doc):
+    """Tell the requester the outcome."""
+    if not doc.requested_by:
+        return None
+    phone = frappe.db.get_value("RN User Account", doc.requested_by, "phone")
+    outcome = {"applied": "DITERAPKAN", "rejected": "DITOLAK", "failed": "DISETUJUI tetapi GAGAL diterapkan"}.get(doc.status, doc.status)
+    body = "[Rescue-Net] Permintaan Anda (%s) %s oleh pusat komando.%s" % (
+        doc.summary, outcome, (" Catatan: %s" % doc.decision_note) if doc.decision_note else "")
+    return _notify(phone, body, "command_request_decided", doc.name, doc.command_organization)
 
 
 # --------------------------------------------------------------------
@@ -167,6 +245,10 @@ def file_request(actor, org, action, payload, summary, target_posko=None):
     doc.requested_by = actor.name if actor and actor.get("name") else None
     doc.requested_at = now_datetime()
     doc.insert(ignore_permissions=True)
+    try:
+        notify_request_filed(doc)
+    except Exception:  # a notification problem must never lose the request
+        frappe.log_error(frappe.get_traceback(), "command notify_request_filed")
 
     return {
         "pending": True,

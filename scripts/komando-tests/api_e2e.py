@@ -192,4 +192,80 @@ check("10. org mandiri: tidak di bawah komando", ok_(r) and not r[1]["under_comm
 r = man.call("api_command", "command_overview")
 check("10. org mandiri: bukan pusat, tak bisa buka ringkasan komando", not ok_(r), r)
 
+# ---------- 11. wakil pusat (deputy): keputusan & pembuatan akun, tapi bukan pengangkatan wakil ----------
+PH_DEP, PH_REQ = "081234500002", "081234500001"
+r = pusat.call("api_command", "create_command_account", organization=P, full_name="Wakil Uji", email="wakil@cmdtest.local", role="community_coordinator", phone=PH_DEP)
+check("11. pusat membuat akun calon wakil (anggota pusat)", ok_(r) and r[1].get("temporary_password"), r)
+WAKIL_ACC = r[1].get("user_account") if ok_(r) else None; WAKIL_PW = r[1].get("temporary_password") if ok_(r) else "x"
+wakil = C("wakil@cmdtest.local", WAKIL_PW)
+r = wakil.call("api_command", "command_overview", organization=P)
+check("11. sebelum diangkat: anggota biasa tak bisa buka ringkasan pusat", not ok_(r), r)
+r = out.call("api_command", "set_command_deputy", organization=P, user_account=WAKIL_ACC, active=1)
+check("11. orang luar tak bisa mengangkat wakil", not ok_(r), r)
+r = wakil.call("api_command", "set_command_deputy", organization=P, user_account=WAKIL_ACC, active=1)
+check("11. calon wakil tak bisa mengangkat dirinya sendiri", not ok_(r), r)
+r = pusat.call("api_command", "set_command_deputy", organization=P, user_account=pusat_acc[0]["user_account"], active=1)
+check("11. pemilik tak bisa dijadikan wakil", not ok_(r), r)
+r = pusat.call("api_command", "set_command_deputy", organization=P, user_account="RN-USER-TIDAK-ADA", active=1)
+check("11. akun non-anggota tak bisa dijadikan wakil", not ok_(r), r)
+r = pusat.call("api_command", "set_command_deputy", organization=P, user_account=WAKIL_ACC, active=1)
+check("11. pemilik mengangkat wakil", ok_(r) and r[1]["membership_role"] == "deputy", r)
+r = wakil.call("api_command", "command_overview", organization=P)
+check("11. wakil melihat ringkasan pusat (bukan pemilik)", ok_(r) and r[1]["viewer_is_owner"] is False, r if not ok_(r) else r[1].get("viewer_is_owner"))
+check("11. daftar penerima WA memuat wakil bernomor HP", ok_(r) and any(x["role"] == "deputy" and x["has_phone"] for x in r[1]["notify_recipients"]), r if not ok_(r) else r[1]["notify_recipients"])
+r = wakil.call("api_command", "command_status", organization=P)
+check("11. status wakil: authority=true, owner=false", ok_(r) and r[1]["is_command_authority"] and not r[1]["is_command_owner"] and not r[1]["needs_approval"], r)
+r = wakil.call("api_command", "set_command_deputy", organization=P, user_account=WAKIL_ACC, active=0)
+check("11. wakil tak bisa mengangkat/mencabut wakil", not ok_(r), r)
+r = wakil.call("api_command", "create_command_account", organization=P, full_name="Charlie Uji", email="charlie@cmdtest.local", posko=A, role="posko_operator", phone=PH_REQ)
+check("11. wakil membuat akun langsung (tanpa pengajuan)", ok_(r) and r[1].get("temporary_password"), r)
+CHARLIE_PW = r[1].get("temporary_password") if ok_(r) else "x"; CHARLIE_ACC = r[1].get("user_account") if ok_(r) else None
+charlie = C("charlie@cmdtest.local", CHARLIE_PW)
+r = charlie.call("api_community_cluster", "update_posko", posko=A, address="Jl. Wakil 77")
+check("11. operator mengajukan ubah alamat -> permintaan menunggu", ok_(r) and r[1].get("pending"), r)
+R_DEP = r[1].get("command_request") if ok_(r) else None
+r = wakil.call("api_command", "decide_command_request", request=R_DEP, decision="approve", note="oke dari wakil")
+check("11. wakil memutuskan permintaan -> diterapkan", ok_(r) and r[1]["status"] == "applied", r)
+r = charlie.call("api_community_cluster", "get_posko_settings", posko=A)
+check("11. perubahan yang disetujui wakil berlaku", ok_(r) and r[1]["posko"].get("address") == "Jl. Wakil 77", r)
+r = wakil.call("api_community_cluster", "update_posko", posko=A, title="[UJI-KOMANDO] Alfa oleh Wakil")
+check("11. wakil mengubah posko langsung (tanpa pengajuan)", ok_(r) and not r[1].get("pending"), r)
+r = wakil.call("api_command", "set_command_account_active", user_account=pusat_acc[0]["user_account"], active=0, note="coba")
+check("11. wakil tak bisa menonaktifkan pemilik", not ok_(r), r)
+r = wakil.call("api_command", "set_command_account_active", user_account=WAKIL_ACC, active=0, note="coba")
+check("11. wakil tak bisa menonaktifkan dirinya sendiri", not ok_(r), r)
+r = wakil.call("api_command", "reset_command_account_password", user_account=CHARLIE_ACC)
+check("11. wakil bisa reset password operator", ok_(r) and r[1].get("temporary_password"), r)
+CHARLIE_PW = r[1].get("temporary_password") if ok_(r) else "x"
+# wakil kedua: hanya pemilik yang boleh menonaktifkan/reset wakil lain
+r = pusat.call("api_command", "create_command_account", organization=P, full_name="Wakil Dua", email="wakil2@cmdtest.local", role="community_coordinator")
+W2_ACC = r[1].get("user_account") if ok_(r) else None
+pusat.call("api_command", "set_command_deputy", organization=P, user_account=W2_ACC, active=1)
+r = wakil.call("api_command", "reset_command_account_password", user_account=W2_ACC)
+check("11. wakil tak bisa reset password wakil lain", not ok_(r), r)
+r = pusat.call("api_command", "reset_command_account_password", user_account=W2_ACC)
+check("11. pemilik bisa reset password wakil", ok_(r) and r[1].get("temporary_password"), r)
+r = pusat.call("api_command", "set_command_deputy", organization=P, user_account=WAKIL_ACC, active=0)
+check("11. pemilik mencabut wakil", ok_(r) and r[1]["membership_role"] == "member", r)
+r = wakil.call("api_command", "decide_command_request", request=R_DEP, decision="approve")
+check("11. wakil yang dicabut kehilangan kewenangan", not ok_(r), r)
+r = wakil.call("api_command", "create_command_account", organization=P, full_name="Ilegal", email="ilegal@cmdtest.local", posko=A)
+check("11. wakil yang dicabut tak bisa membuat akun", not ok_(r), r)
+r = pusat.call("api_command", "set_command_deputy", organization=M, user_account=WAKIL_ACC, active=1)
+check("11. wakil hanya bisa diangkat di org pusat (bukan mandiri)", not ok_(r), r)
+
+# ---------- 12. set_posko_functions: sebelumnya TANPA cek izin; kini org mandiri juga dijaga ----------
+r = man.call("api_control_centre", "set_posko_functions", posko=MP, functions=["kitchen"])
+check("12. pembuat posko mandiri masih bisa mengubah fungsi posko", ok_(r) and not r[1].get("pending"), r)
+r = out.call("api_control_centre", "set_posko_functions", posko=MP, functions=["shelter"])
+check("12. orang luar TIDAK bisa mengubah fungsi posko mandiri", not ok_(r), r)
+r = C().call("api_control_centre", "set_posko_functions", posko=MP, functions=["shelter"])
+check("12. tamu (belum login) tak bisa mengubah fungsi posko", not ok_(r), r)
+
+# ---------- 13. penerima WA: nomor tak valid tak boleh menggagalkan pengajuan ----------
+charlie = C("charlie@cmdtest.local", CHARLIE_PW)   # reset password mematikan sesi lama
+r = charlie.call("api_community_cluster", "update_posko", posko=A, address="Jl. Notif 1")
+check("13. pengajuan tetap tercatat walau ada penerima WA", ok_(r) and r[1].get("pending"), r)
+print("PHONES", PH_DEP, PH_REQ, "REQ_FILED", r[1].get("command_request") if ok_(r) else None, "REQ_DECIDED", R_DEP)
+
 print(f"ok={ok} fail={fail}")

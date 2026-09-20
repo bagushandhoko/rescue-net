@@ -138,10 +138,10 @@ def can_manage_organization(actor, organization):
     ):
         return True
 
-    # Komando terpusat: the owner of a `terpusat` pusat is super admin of every
+    # Komando terpusat: the owner (and deputies) of a `terpusat` pusat administer every
     # organisation below it. No-op for `mandiri` organisations.
-    from rescue_net.command import is_command_owner
-    return is_command_owner(actor, organization)
+    from rescue_net.command import is_command_authority
+    return is_command_authority(actor, organization)
 
 
 # Roles that coordinate an organisation's whole response instead of running a
@@ -193,8 +193,8 @@ def can_manage_posko(actor, posko):
         return True
 
     # Komando terpusat: the pusat's owner manages every posko in the tree.
-    from rescue_net.command import is_command_owner_of_posko
-    return is_command_owner_of_posko(actor, posko)
+    from rescue_net.command import is_command_authority_of_posko
+    return is_command_authority_of_posko(actor, posko)
 
 
 def editable_disaster_events(actor):

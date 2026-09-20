@@ -30,7 +30,7 @@ def _titles(names):
 
 
 def _owned_centers(actor):
-    """terpusat organisations `actor` commands (owner). System Manager: all of them."""
+    """terpusat organisations `actor` commands (owner or deputy). System Manager: all of them."""
     if is_system_manager():
         return frappe.get_all("RN Organization", filters={"coordination_scheme": "terpusat"},
                               pluck="name", limit_page_length=500)
@@ -38,17 +38,24 @@ def _owned_centers(actor):
         return []
     owned = frappe.get_all(
         "RN Organization Membership",
-        filters={"user_account": actor.name, "membership_role": "owner", "status": "approved"},
+        filters={"user_account": actor.name, "membership_role": ["in", list(command.AUTHORITY_ROLES)], "status": "approved"},
         pluck="organization", limit_page_length=200,
     )
     return [o for o in sorted(set(owned)) if command.scheme_of(o) == command.TERPUSAT]
 
 
 def _require_owner(actor, organization):
+    """Pusat authority = owner or deputy (wakil pusat)."""
     if not command.command_chain(organization):
         frappe.throw("Organisasi ini tidak berada di bawah komando terpusat.")
-    if not command.is_command_owner(actor, organization):
+    if not command.is_command_authority(actor, organization):
         frappe.throw("Hanya pengelola pusat komando yang dapat melakukan ini.", frappe.PermissionError)
+
+
+def _require_strict_owner(actor, organization):
+    """Only the pusat OWNER (not a deputy): appointing / revoking deputies."""
+    if not command.is_command_owner(actor, organization):
+        frappe.throw("Hanya pemilik (super admin) pusat komando yang dapat melakukan ini.", frappe.PermissionError)
 
 
 def _account_org(user_account):
@@ -77,6 +84,7 @@ def command_status(organization=None):
         "under_command": bool(chain),
         "command_organization": chain[0] if chain else None,
         "is_command_owner": bool(chain) and command.is_command_owner(actor, org),
+        "is_command_authority": bool(chain) and command.is_command_authority(actor, org),
         "needs_approval": bool(chain) and command.needs_approval(actor, org),
         "owned_centers": _owned_centers(actor),
     }
@@ -171,6 +179,9 @@ def command_overview(organization=None):
         "requests": reqs,
         "pending_count": sum(1 for r in reqs if r.status == "pending"),
         "account_roles": list(command.ACCOUNT_ROLES),
+        "viewer_is_owner": command.is_command_owner(actor, center),
+        "notify_recipients": [{"name": a["name"], "role": a["role"], "has_phone": bool((a["phone"] or "").strip())}
+                              for a in command.authorities(center)],
     }
 
 
@@ -217,7 +228,7 @@ def request_command_account(organization, full_name, email, posko=None, role="po
     actor = rn_actor()
     if not command.command_chain(organization):
         frappe.throw("Organisasi ini tidak berada di bawah komando terpusat.")
-    if command.is_command_owner(actor, organization):
+    if command.is_command_authority(actor, organization):
         frappe.throw("Anda pengelola pusat: buat akun langsung, tidak perlu pengajuan.")
     if not command.is_account_member(actor, organization):
         frappe.throw("Anda bukan anggota organisasi ini.", frappe.PermissionError)
@@ -240,6 +251,10 @@ def _managed_account(actor, user_account):
     if frappe.db.exists("RN Organization Membership", {"user_account": user_account, "membership_role": "owner",
                                                         "status": "approved"}):
         frappe.throw("Akun pemilik organisasi tidak bisa dikelola dari sini.")
+    if frappe.db.exists("RN Organization Membership", {"user_account": user_account,
+                                                        "membership_role": command.DEPUTY_ROLE, "status": "approved"}):
+        # a deputy can be suspended / reset only by the owner, never by another deputy
+        _require_strict_owner(actor, org)
     if actor and actor.get("name") == user_account:
         frappe.throw("Anda tidak bisa mengelola akun Anda sendiri dari sini.")
     return org
@@ -280,6 +295,32 @@ def reset_command_account_password(user_account, new_password=None):
     update_password(fu, new_password)
     clear_sessions(fu, force=True)
     return {"user_account": user_account, "temporary_password": temporary}
+
+
+@frappe.whitelist()
+def set_command_deputy(organization, user_account, active=1):
+    """The pusat OWNER appoints / revokes a deputy (wakil pusat): an approved
+    member of the pusat org who may then decide requests, create accounts and
+    administer the tree — but cannot appoint deputies or touch the owner.
+    `organization` must be the pusat itself (a terpusat organisation)."""
+    actor = rn_actor()
+    if command.scheme_of(organization) != command.TERPUSAT:
+        frappe.throw("Wakil hanya bisa diangkat pada organisasi pusat (skema komando terpusat).")
+    _require_strict_owner(actor, organization)
+    row = frappe.db.get_value(
+        "RN Organization Membership",
+        {"user_account": user_account, "organization": organization, "status": "approved"},
+        ["name", "membership_role"], as_dict=True,
+    )
+    if not row:
+        frappe.throw("Akun itu belum menjadi anggota organisasi pusat ini.")
+    if row.membership_role == "owner":
+        frappe.throw("Pemilik pusat tidak bisa dijadikan atau dicabut sebagai wakil.")
+    on = str(active).lower() in ("1", "true", "yes")
+    frappe.db.set_value("RN Organization Membership", row.name, "membership_role",
+                        command.DEPUTY_ROLE if on else "member")
+    return {"user_account": user_account, "organization": organization,
+            "membership_role": command.DEPUTY_ROLE if on else "member"}
 
 
 # --------------------------------------------------------------------
@@ -364,6 +405,10 @@ def decide_command_request(request, decision, note=None):
             frappe.flags.command_bypass = False
 
     doc.save(ignore_permissions=True)
+    try:
+        command.notify_request_decided(doc)
+    except Exception:  # best-effort
+        frappe.log_error(frappe.get_traceback(), "command notify_request_decided")
     out = {"request": doc.name, "status": doc.status, "apply_result": doc.apply_result}
     if result and result.get("temporary_password"):
         out["temporary_password"] = result["temporary_password"]

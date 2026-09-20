@@ -109,7 +109,16 @@
     }).join("");
   }
 
+  function renderNotifyInfo() {
+    var rec = state.data.notify_recipients || [];
+    var withPhone = rec.filter(function (r) { return r.has_phone; }), without = rec.filter(function (r) { return !r.has_phone; });
+    $("kpNotifyInfo").textContent = "Permintaan baru dikabarkan lewat WhatsApp ke: " +
+      (withPhone.length ? withPhone.map(function (r) { return r.name + (r.role === "deputy" ? " (wakil)" : ""); }).join(", ") : "belum ada penerima (isi nomor HP akun pengelola)") +
+      (without.length ? ". Tanpa nomor HP: " + without.map(function (r) { return r.name; }).join(", ") + "." : ".");
+  }
+
   function renderPending() {
+    renderNotifyInfo();
     var rows = state.data.requests.filter(function (r) { return r.status === "pending"; });
     $("kpPending").innerHTML = rows.length ? rows.map(function (r) {
       return '<div class="kp-req" data-req="' + esc(r.name) + '">' +
@@ -161,14 +170,21 @@
     });
     $("kpAccTable").innerHTML = "<thead><tr><th>Akun</th><th>Peran</th><th>Organisasi / Posko</th><th>Status</th><th>Aksi</th></tr></thead><tbody>" +
       (rows.length ? rows.map(function (a) {
-        var owner = a.membership_role === "owner";
+        var owner = a.membership_role === "owner", deputy = a.membership_role === "deputy";
+        var viewerOwner = !!state.data.viewer_is_owner;
         var on = a.status === "active";
-        return "<tr><td><b>" + esc(a.name) + "</b><small>" + esc(a.email) + "</small></td><td>" + esc(owner ? "Pemilik (super admin)" : (ROLE_LABEL[a.role] || a.role || "-")) +
+        var roleLabel = owner ? "Pemilik (super admin)" : deputy ? "Wakil pusat" : (ROLE_LABEL[a.role] || a.role || "-");
+        // owner accounts are never managed here; a deputy account only by the owner
+        var canManage = !owner && (!deputy || viewerOwner);
+        var canAppoint = viewerOwner && !owner && a.organization === state.center;
+        return "<tr><td><b>" + esc(a.name) + "</b><small>" + esc(a.email) + "</small></td><td>" + esc(roleLabel) +
           "</td><td>" + esc(a.organization_title) + "<small>" + esc(a.posko_title || "-") + "</small></td><td>" + tag(on ? "ok" : "bad", on ? "Aktif" : a.status) + "</td><td>" +
-          (owner ? '<span class="kp-empty">-</span>' :
+          (!canManage && !canAppoint ? '<span class="kp-empty">-</span>' :
             '<div class="kp-btn-row" data-acc="' + esc(a.user_account) + '">' +
-            (on ? '<button type="button" class="btn ghost mini" data-accact="suspend">Nonaktifkan</button>' : '<button type="button" class="btn ghost mini" data-accact="activate">Aktifkan</button>') +
-            '<button type="button" class="btn ghost mini" data-accact="reset">Reset password</button></div>') + "</td></tr>";
+            (canManage ? (on ? '<button type="button" class="btn ghost mini" data-accact="suspend">Nonaktifkan</button>' : '<button type="button" class="btn ghost mini" data-accact="activate">Aktifkan</button>') +
+              '<button type="button" class="btn ghost mini" data-accact="reset">Reset password</button>' : "") +
+            (canAppoint ? (deputy ? '<button type="button" class="btn ghost mini" data-accact="deputy-off">Cabut wakil</button>' : '<button type="button" class="btn ghost mini" data-accact="deputy-on">Jadikan wakil pusat</button>') : "") +
+            "</div>") + "</td></tr>";
       }).join("") : '<tr><td colspan="5" class="kp-empty">Belum ada akun.</td></tr>') + "</tbody>";
   }
 
@@ -218,6 +234,10 @@
         await call("set_command_account_active", { user_account: user, active: 0, note: why.trim() }, true);
       } else if (act === "activate") {
         await call("set_command_account_active", { user_account: user, active: 1 }, true);
+      } else if (act === "deputy-on" || act === "deputy-off") {
+        var deputyOn = act === "deputy-on";
+        if (!window.confirm(deputyOn ? "Jadikan akun ini wakil pusat? Ia dapat memutuskan permintaan, membuat akun, dan mengelola seluruh organisasi/posko di bawah komando (kecuali mengangkat wakil)." : "Cabut peran wakil pusat dari akun ini?")) { btn.disabled = false; return; }
+        await call("set_command_deputy", { organization: state.center, user_account: user, active: deputyOn ? 1 : 0 }, true);
       } else if (act === "reset") {
         if (!window.confirm("Reset password akun ini? Semua sesi loginnya akan keluar.")) { btn.disabled = false; return; }
         var res = await call("reset_command_account_password", { user_account: user }, true);

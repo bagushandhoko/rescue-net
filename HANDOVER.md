@@ -4,12 +4,39 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-16_ — seeded missing medis/shelter/laporan
+_Last updated: 2026-09-20_ — Posko Kritis KPI now also counts shelters over capacity (see
+"Shelter overcapacity → Posko Kritis" below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
 domain data for the Krakatau active-disaster sim, then did the same for
 `event-aceh-2025` (Community Report + Volunteer Assignment were the
 missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
+
+## Shelter overcapacity → Posko Kritis KPI (2026-09-20) — DONE & DEPLOYED
+
+Second instance of the "kritis must be a deterministic per-posko signal"
+rule (first: `_medical_unstaffed_poskos`, commit `220ab4e`). A shelter whose
+`RN Shelter Occupancy.current_occupancy` exceeds `capacity_total` is now
+`critical` in both places that derive posko situation:
+`map_points()` (Control Centre map / "Posko Kritis" KPI) and
+`active_disasters_board()` (Bencana Aktif `posko_kritis` + "Isu Kritis Teratas"),
+via the new shared helper `_shelter_overcapacity_poskos()` in
+`api_control_centre.py` — regardless of the manually-set `operational_status`.
+
+- **Verified live** (`/api/method/rescue_net.api_control_centre.active_disasters_board`,
+  before → after): Krakatau `posko_kritis` 1 → 2 (GOR Kalianda 210/150),
+  Simulasi Gempa 4 → 5 (Shelter Simulasi 215/200). Those are the only 2
+  over-capacity shelters in the DB, so no other event moved.
+- **Deploy:** copied `api_control_centre.py` into
+  `/volume1/docker/osiun-frappe-shadow/apps/rescue_net/rescue_net/` (bind-mounted
+  into `osiun-frappe-backend`; md5 host==container `be60d310…`), `chmod 755`,
+  `docker restart osiun-frappe-backend`, ping 200. Previous copy kept at
+  session scratch only — `git show 220ab4e:frappe_shadow/apps/rescue_net/rescue_net/api_control_centre.py` restores it.
+- **Gotcha (again):** `docker cp` into the container leaves root-owned files
+  (`Permission denied` for the frappe user). Pipe scripts via
+  `docker exec -i … ../env/bin/python - < script.py` instead.
+- **Still open, same pattern:** logistics gap vs distribusi KPI (a posko with
+  critical open `RN Logistic Need` but no flowing `RN Distribution Flow`).
 
 ## Krakatau sim: Jiwa Berisiko / Shelter / Laporan data seeded — DONE & VERIFIED
 

@@ -141,6 +141,7 @@ def map_points(event):
     _fn = {r.get("name"): _row_fns(r) for r in rows}
 
     unstaffed = _medical_unstaffed_poskos([r.get("name") for r in rows])
+    overcap = _shelter_overcapacity_poskos([r.get("name") for r in rows])
 
     result = []
 
@@ -198,7 +199,7 @@ def map_points(event):
         else:
             situation = "safe"
 
-        if row.get("name") in unstaffed:
+        if row.get("name") in unstaffed or row.get("name") in overcap:
             situation = "critical"
 
         result.append({
@@ -2113,6 +2114,36 @@ def _medical_unstaffed_poskos(posko_names):
     return case_poskos - covered
 
 
+def _shelter_overcapacity_poskos(posko_names):
+    """posko name -> {capacity, occupancy} for RN Shelter Occupancy rows
+    over their capacity_total, restricted to posko_names.
+
+    Same "one real signal, used everywhere" pattern as
+    _medical_unstaffed_poskos — a shelter over capacity is critical
+    regardless of whether anyone remembered to set operational_status.
+    """
+    names = [n for n in (posko_names or []) if n]
+    if not names or not frappe.db.exists("DocType", "RN Shelter Occupancy"):
+        return {}
+
+    result = {}
+    for o in frappe.get_all(
+        "RN Shelter Occupancy",
+        filters={"posko": ["in", names]},
+        fields=["posko", "capacity_total", "current_occupancy"],
+        limit_page_length=2000,
+    ):
+        cap = _num(o.get("capacity_total"))
+        occ = _num(o.get("current_occupancy"))
+        if cap <= 0 or occ <= cap:
+            continue
+        prev = result.get(o.get("posko"))
+        if not prev or occ > prev["occupancy"]:
+            result[o.get("posko")] = {"capacity": cap, "occupancy": occ}
+
+    return result
+
+
 def _fmt(v):
     try:
         f = float(v)
@@ -3161,10 +3192,11 @@ def active_disasters_board(limit=60):
         posko_by_name = {p["name"]: p for p in poskos}
 
         unstaffed = _medical_unstaffed_poskos([p["name"] for p in poskos])
+        overcap = _shelter_overcapacity_poskos([p["name"] for p in poskos])
 
         def _ba_situation_of(p):
             sit = _ba_situation(p.get("operational_status"))
-            if p["name"] in unstaffed:
+            if p["name"] in unstaffed or p["name"] in overcap:
                 sit = "critical"
             return sit
 

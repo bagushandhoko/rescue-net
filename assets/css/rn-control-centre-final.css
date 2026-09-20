@@ -2258,3 +2258,8 @@ body {
   margin: 4px 0 0;
   padding-left: 16px;
 }
+.cc-crit-why-hidden {
+  color: #6b7280;
+  border-left-color: #9ca3af;
+  background: rgba(107, 114, 128, 0.08);
+}

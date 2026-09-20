@@ -1279,10 +1279,16 @@ function renderMap(
           ? point.critical_reasons.filter(Boolean)
           : [];
 
+      const reasonsHidden =
+        !reasons.length
+        && !!point.critical_reasons_hidden;
+
       const pinTitle =
         reasons.length
           ? `${point.name || "Posko"} — Kritis: ${reasons.join("; ")}`
-          : (point.name || "");
+          : reasonsHidden
+            ? `${point.name || "Posko"} — Kritis (rincian penyebab terbatas)`
+            : (point.name || "");
 
       // Posko di lokasi yang sama (mis. beberapa posko satu kecamatan) saling
       // menutupi; pin kritis/waspada harus di atas pin aman supaya tetap
@@ -1343,7 +1349,12 @@ function renderMap(
                        .join("")
                    }</ul>
                  </div>`
-              : ""
+              : reasonsHidden
+                ? `<div class="cc-crit-why cc-crit-why-hidden">
+                     <b>Kenapa kritis?</b>
+                     Rincian penyebab hanya untuk pihak yang berwenang.
+                   </div>`
+                : ""
           }
 
           Koordinasi:

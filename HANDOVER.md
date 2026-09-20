@@ -44,10 +44,25 @@ can no longer disagree about which poskos are critical.
 - **Judgement call to revisit:** only `critical` urgency counts; if the owner
   wants `urgent`/`high` needs to count too, widen the filter in
   `_logistics_gap_poskos` (it would turn many more poskos red).
-- **Not done:** the FE (`bencana-aktif.js`, `rn-control-centre-final.js`) does not
-  render `critical_reasons` / `reasons` as their own chip yet — they only show up
-  inside the existing detail strings. A per-posko "why is this red?" tooltip on
-  the map pin is the natural next step.
+- **FE "why is this red?" — DONE (2026-09-20, later):** `assets/js/rn-control-centre-final.js`
+  (Control Centre v4 + War Room map): each pin gets a native tooltip
+  `"<posko> — Kritis: <reasons>"` and the popup a red "Kenapa kritis?" list
+  (`.cc-crit-why` in `rn-control-centre-final.css`), fed by `point.critical_reasons`.
+  Cache-bust `?v=whypin2-20260920` on both pages.
+- **Real bug found on the way:** critical pins were covered by SAFE pins at the same
+  coordinates (all Kalianda poskos share ~one spot in Krakatau) — clicking the red pin
+  opened a safe posko's popup, so the critical posko was effectively unclickable.
+  Fixed with Leaflet `zIndexOffset` (critical 1000 / warning 500 / safe 0). Pins that
+  share a spot are still stacked (no spiderfy/cluster) — only the top one is clickable.
+- **Playwright** (`/volume1/docker/osiun-playwright-check/rn-whypin.js`, docker
+  `playwright:v1.56.1-noble --network host`, page `http://127.0.0.1/rescue-net/pages/control-centre-v4.html?event=…`):
+  7/7 — tooltip-pin count == API poskos-with-reasons (Krakatau 2, Simulasi Gempa 6 of 7
+  critical; the 7th is critical by manual status only), popup shows reasons, no JS errors.
+  Screenshots looked right.
+- **Open:** disclosure level — reasons are shown for every posko incl. those whose org
+  `control_centre_share` is "summary" (same level as the board already lists their titles
+  + kebutuhan items; generic text, no numbers). Gate on `detail_allowed` if the owner
+  wants stricter.
 
 ## Shelter overcapacity → Posko Kritis KPI (2026-09-20) — DONE & DEPLOYED
 

@@ -1272,10 +1272,35 @@ function renderMap(
         });
 
 
+      // Kenapa pin ini merah? Alasan turunan (medis tanpa tenaga, shelter
+      // melebihi kapasitas, kebutuhan kritis tanpa distribusi) dari backend.
+      const reasons =
+        Array.isArray(point.critical_reasons)
+          ? point.critical_reasons.filter(Boolean)
+          : [];
+
+      const pinTitle =
+        reasons.length
+          ? `${point.name || "Posko"} — Kritis: ${reasons.join("; ")}`
+          : (point.name || "");
+
+      // Posko di lokasi yang sama (mis. beberapa posko satu kecamatan) saling
+      // menutupi; pin kritis/waspada harus di atas pin aman supaya tetap
+      // terlihat dan bisa diklik.
+      const zIndexOffset =
+        situation === "critical"
+          ? 1000
+          : situation === "warning"
+            ? 500
+            : 0;
+
       L.marker(
         [lat,lng],
         {
-          icon
+          icon,
+          title:
+            pinTitle,
+          zIndexOffset
         }
       )
       .addTo(
@@ -1307,6 +1332,19 @@ function renderMap(
           </b>
 
           <br>
+
+          ${
+            reasons.length
+              ? `<div class="cc-crit-why">
+                   <b>Kenapa kritis?</b>
+                   <ul>${
+                     reasons
+                       .map(r => `<li>${safe(r)}</li>`)
+                       .join("")
+                   }</ul>
+                 </div>`
+              : ""
+          }
 
           Koordinasi:
           <b>

@@ -2243,3 +2243,18 @@ body {
 .cc-need-btn:hover {
   filter: brightness(.95);
 }
+
+/* Popup pin peta: alasan posko kritis dari sinyal turunan backend */
+.cc-crit-why {
+  margin: 6px 0;
+  padding: 6px 8px;
+  border-left: 3px solid #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.cc-crit-why ul {
+  margin: 4px 0 0;
+  padding-left: 16px;
+}

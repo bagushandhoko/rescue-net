@@ -648,25 +648,37 @@ function setupOrganizationForm() {
 
   if (!form) return;
 
+  // The page has no #orgPoskoStatus element, so say() alone never shows
+  // anything; each form owns a .form-message for its own feedback.
+  const say = m => {
+    statusMsg(m);
+    const t = form.querySelector(".form-message");
+    if (t) t.textContent = m;
+  };
+
   form.addEventListener(
     "submit",
     async e => {
       e.preventDefault();
+      try {
 
+      // The input is named "name"; `form.title` is the form's own title
+      // attribute (a string), so it never carried the value — read via elements.
       const title =
-        form.title?.value?.trim() ||
-        form.organization_name
-          ?.value
-          ?.trim();
+        (
+          form.elements.title ||
+          form.elements.name ||
+          form.elements.organization_name
+        )?.value?.trim();
 
       if (!title) {
-        statusMsg(
+        say(
           "Nama organisasi wajib diisi."
         );
         return;
       }
 
-      statusMsg(
+      say(
         "Saving Organization..."
       );
 
@@ -697,7 +709,12 @@ function setupOrganizationForm() {
             form.parent_organization
               ?.value
               ?.trim() ||
-            null
+            null,
+
+          coordination_scheme:
+            form.elements.coordination_scheme
+              ?.value ||
+            "mandiri"
         },
         {
           method: "POST"
@@ -706,13 +723,18 @@ function setupOrganizationForm() {
 
       form.reset();
 
-      statusMsg(
-        res && res.parent_link_pending
-          ? "Organisasi tersimpan. Permintaan bergabung ke induk sedang menunggu persetujuan pengelola organisasi induk."
-          : "Organization saved."
+      say(
+        res && res.coordination_scheme === "terpusat"
+          ? "Organisasi komando terpusat tersimpan. Anda super admin organisasi ini — buka halaman Komando Pusat untuk membuat akun posko."
+          : res && res.parent_link_pending
+            ? "Organisasi tersimpan. Permintaan bergabung ke induk sedang menunggu persetujuan pengelola organisasi induk."
+            : "Organization saved."
       );
 
       await loadOrgPosko();
+      } catch (err) {
+        say("Gagal: " + ((err && err.message) || err));
+      }
     }
   );
 }
@@ -729,10 +751,19 @@ function setupPoskoForm() {
 
   if (!form) return;
 
+  // The page has no #orgPoskoStatus element, so say() alone never shows
+  // anything; each form owns a .form-message for its own feedback.
+  const say = m => {
+    statusMsg(m);
+    const t = form.querySelector(".form-message");
+    if (t) t.textContent = m;
+  };
+
   form.addEventListener(
     "submit",
     async e => {
       e.preventDefault();
+      try {
       const el = form.elements;
       const val = n => (el[n] && el[n].value || "").trim();
 
@@ -741,7 +772,7 @@ function setupPoskoForm() {
       const address = val("location") || val("address");
 
       if (!title || !poskoType || !address) {
-        statusMsg("Nama Posko, tipe, dan alamat wajib diisi.");
+        say("Nama Posko, tipe, dan alamat wajib diisi.");
         return;
       }
 
@@ -754,7 +785,7 @@ function setupPoskoForm() {
       }
       const logisticsRole = val("logistics_role");
 
-      statusMsg("Menyimpan posko…");
+      say("Menyimpan posko…");
 
       const created = await RN_FRAPPE.call(
         "rescue_net.api_community_cluster.create_posko",
@@ -766,6 +797,13 @@ function setupPoskoForm() {
         },
         { method: "POST" }
       );
+
+      // Komando terpusat: a non-pusat member's new posko is a REQUEST to the pusat.
+      if (created && created.pending) {
+        form.reset();
+        say("Permintaan tambah posko diajukan ke pusat komando dan menunggu persetujuan. Fungsi posko diatur setelah disetujui.");
+        return;
+      }
 
       // apply functions + logistics role
       const poskoId =
@@ -781,12 +819,15 @@ function setupPoskoForm() {
           { method: "POST" }
         );
       } catch (fe) {
-        statusMsg("Posko dibuat, tapi gagal set fungsi: " + (fe.message || fe));
+        say("Posko dibuat, tapi gagal set fungsi: " + (fe.message || fe));
       }
 
       form.reset();
-      statusMsg("Posko tersimpan" + (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "") + ".");
+      say("Posko tersimpan" + (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "") + ".");
       await loadOrgPosko();
+      } catch (err) {
+        say("Gagal: " + ((err && err.message) || err));
+      }
     }
   );
 }

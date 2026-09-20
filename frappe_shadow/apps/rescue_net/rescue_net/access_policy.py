@@ -127,17 +127,21 @@ def can_manage_organization(actor, organization):
     if not actor or not actor.name:
         return False
 
-    return bool(
-        frappe.db.exists(
-            "RN Organization Membership",
-            {
-                "user_account": actor.name,
-                "organization": organization,
-                "membership_role": "owner",
-                "status": "approved",
-            },
-        )
-    )
+    if frappe.db.exists(
+        "RN Organization Membership",
+        {
+            "user_account": actor.name,
+            "organization": organization,
+            "membership_role": "owner",
+            "status": "approved",
+        },
+    ):
+        return True
+
+    # Komando terpusat: the owner of a `terpusat` pusat is super admin of every
+    # organisation below it. No-op for `mandiri` organisations.
+    from rescue_net.command import is_command_owner
+    return is_command_owner(actor, organization)
 
 
 # Roles that coordinate an organisation's whole response instead of running a
@@ -185,7 +189,12 @@ def can_manage_posko(actor, posko):
     if approved_posko_assignment(actor.name, posko):
         return True
 
-    return can_coordinate_posko(actor, posko)
+    if can_coordinate_posko(actor, posko):
+        return True
+
+    # Komando terpusat: the pusat's owner manages every posko in the tree.
+    from rescue_net.command import is_command_owner_of_posko
+    return is_command_owner_of_posko(actor, posko)
 
 
 def editable_disaster_events(actor):

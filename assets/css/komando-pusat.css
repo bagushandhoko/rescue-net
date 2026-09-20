@@ -1,0 +1,36 @@
+/* Komando Pusat — halaman pengelola pusat; mengikuti token warna style.css */
+.kp-head-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.kp-center-pick { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.kp-center-pick select { font: inherit; padding: 4px 6px; border: 1px solid var(--line2); border-radius: 8px; background: var(--panel); color: inherit; }
+.kp-notice { border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; background: var(--panel2); max-width: 680px; margin-bottom: 14px; }
+.kp-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+.kp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.kp-kpi { border: 1px solid var(--line2); border-radius: 12px; padding: 12px 14px; background: var(--panel2); }
+.kp-kpi b { display: block; font-size: 24px; line-height: 1.1; }
+.kp-kpi span { font-size: 11.5px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+.kp-kpi.warn b { color: var(--red, #c0392b); }
+.kp-table-wrap { overflow-x: auto; }
+.kp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.kp-table th, .kp-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.kp-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); white-space: nowrap; }
+.kp-table td small { display: block; color: var(--muted); font-size: 11.5px; }
+.kp-tag { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }
+.kp-tag.ok { color: var(--green); border-color: rgba(47,155,104,.4); }
+.kp-tag.bad { color: var(--red, #c0392b); border-color: rgba(192,57,43,.4); }
+.kp-tag.wait { color: var(--yellow); border-color: rgba(184,137,24,.4); }
+.kp-req { border: 1px solid var(--line2); border-radius: 12px; padding: 12px 14px; background: var(--panel2); margin-bottom: 10px; display: grid; gap: 8px; }
+.kp-req h4 { margin: 0; font-size: 14px; }
+.kp-req-meta { color: var(--muted); font-size: 12px; }
+.kp-req-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.kp-req-actions input { flex: 1 1 220px; min-width: 0; font: inherit; padding: 6px 8px; border: 1px solid var(--line2); border-radius: 8px; background: var(--panel); color: inherit; }
+.kp-empty { color: var(--muted); font-size: 13px; padding: 8px 0; }
+.kp-search { font: inherit; padding: 6px 8px; border: 1px solid var(--line2); border-radius: 8px; background: var(--panel); color: inherit; max-width: 260px; width: 100%; }
+.kp-secret { margin-top: 12px; border: 1px solid rgba(47,155,104,.5); background: rgba(47,155,104,.08); border-radius: 12px; padding: 12px 14px; display: grid; gap: 8px; }
+.kp-secret-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.kp-secret-row span { min-width: 130px; color: var(--muted); font-size: 12px; }
+.kp-secret code { font-size: 15px; padding: 4px 8px; border-radius: 8px; background: var(--panel); border: 1px solid var(--line2); user-select: all; word-break: break-all; }
+.kp-btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .kp-head-actions { align-items: flex-start; }
+  .kp-req-actions input { flex-basis: 100%; }
+}

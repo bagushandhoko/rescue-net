@@ -199,6 +199,24 @@ def update_posko(
         posko,
     )
 
+    # Komando terpusat: visibility / openness of a posko is decided by the pusat.
+    from rescue_net import command
+    if doc.organization and not command.is_bypassed() and command.needs_approval(actor, doc.organization):
+        return command.file_request(
+            actor, doc.organization, "update_posko",
+            {"posko": doc.name, "privacy": {
+                "public_detail": public_detail,
+                "public_participation": public_participation,
+                "accept_volunteers": accept_volunteers,
+                "accept_goods": accept_goods,
+                "accept_donations": accept_donations,
+                "accept_partners": accept_partners,
+                "public_service_access": public_service_access,
+            }},
+            "Ubah kebijakan publik posko %s" % (doc.title or doc.name),
+            target_posko=doc.name,
+        )
+
     doc.public_detail = public_detail
     doc.public_participation = cint(
         public_participation

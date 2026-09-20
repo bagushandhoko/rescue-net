@@ -336,6 +336,13 @@
           public_detail: fd.get("public_detail"),
         }, { method: "POST" });
 
+        // Komando terpusat: posko baru dari level bawah = permintaan ke pusat.
+        if (res && res.pending) {
+          msg.textContent = "Permintaan tambah posko diajukan ke pusat komando dan menunggu persetujuan.";
+          form.reset();
+          return;
+        }
+
         // fungsi posko (boleh > 1): checkbox + fallback ke jenis utama
         var functions = [];
         if (form.fn_logistics && form.fn_logistics.checked) functions.push("logistics");

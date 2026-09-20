@@ -22,6 +22,7 @@
     <nav>
 <a href="map.html?event=event-sim-001"><span class="nav-icon" data-icon="map"></span>Map</a>
       <a class="active" href="organisasi-posko.html"><span class="nav-icon" data-icon="organisasi"></span>Organisasi & Posko</a>
+      <a href="komando-pusat.html"><span class="nav-icon" data-icon="verification"></span>Komando Pusat</a>
       <a href="registrasi-posko.html?event=event-sim-001"><span class="nav-icon" data-icon="registrasi-posko"></span>Registrasi &amp; Verifikasi Posko</a>
       <a href="posko-detail.html?id=posko-sim-logistik"><span class="nav-icon" data-icon="posko"></span>Posko Detail</a>
       <a href="posko-logistik.html"><span class="nav-icon" data-icon="logistik"></span>Logistik</a>
@@ -99,6 +100,17 @@
             <label>Bagian dari organisasi (opsional)
               <select name="parent_organization"><option value="">Berdiri sendiri (bukan sub-organisasi)</option></select>
             </label>
+            <fieldset class="rn-scheme" style="border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0">
+              <legend style="font-size:12px;color:var(--muted);padding:0 6px">Skema koordinasi (dipilih sekali saat mendaftar)</legend>
+              <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
+                <input type="radio" name="coordination_scheme" value="mandiri" checked style="margin-top:3px">
+                <span><b>Mandiri</b> (default) — tiap posko dan anggota mengelola dirinya sendiri.</span>
+              </label>
+              <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
+                <input type="radio" name="coordination_scheme" value="terpusat" style="margin-top:3px">
+                <span><b>Komando terpusat</b> — untuk posko di bawah satu komando (mis. TNI): <b>pusat membuat akun posko</b>, posko tinggal menjalankan fungsinya, dan perubahan level bawah butuh persetujuan pusat. Anda menjadi <b>super admin</b> organisasi ini.</span>
+              </label>
+            </fieldset>
             <p class="subtitle">Kelompok baru selalu dibuat dengan status <b>pending</b> dan trust level <b>unverified</b>. Kalau ini cabang/sub dari organisasi yang sudah ada, pilih induknya. Kalau awalnya berdiri sendiri, gabung belakangan lewat <b>permintaan merger</b> di halaman Koordinasi Organisasi.</p>
             <div class="form-actions">
               <button class="btn primary" type="submit">Simpan Kelompok</button>
@@ -156,7 +168,7 @@
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/org-posko.js?v=orgapproval-20260912"></script>
+<script src="../assets/js/org-posko.js?v=komando-20260920b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=navevent-20260914"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

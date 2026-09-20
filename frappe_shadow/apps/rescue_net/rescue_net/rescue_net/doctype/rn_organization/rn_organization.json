@@ -161,6 +161,15 @@
    "fieldtype": "Link",
    "options": "RN Organization",
    "description": "Induk organisasi. Diisi saat dibuat sebagai sub-organisasi, atau lewat persetujuan permintaan merger."
+  },
+  {
+   "fieldname": "coordination_scheme",
+   "label": "Coordination Scheme",
+   "fieldtype": "Select",
+   "options": "mandiri\nterpusat",
+   "default": "mandiri",
+   "in_list_view": 0,
+   "description": "mandiri = tiap posko/anggota mengelola diri sendiri. terpusat = komando: akun posko dibuat pusat, perubahan level bawah perlu persetujuan pusat."
   }
  ],
  "permissions": [

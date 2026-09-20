@@ -167,7 +167,7 @@
       var g = function (n) { return f[n] ? String(f[n].value).trim() : ""; };
       msg.textContent = "Menyimpan…";
       try {
-        await window.RN_FRAPPE.call("rescue_net.api_community_cluster.update_posko", {
+        var saved = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.update_posko", {
           posko: POSKO,
           title: g("title"),
           posko_type: g("posko_type"),
@@ -190,8 +190,10 @@
           notify_whatsapp_enabled: f.notify_whatsapp_enabled && f.notify_whatsapp_enabled.checked ? 1 : 0,
           notify_whatsapp_numbers: g("notify_whatsapp_numbers"),
         }, { method: "POST" });
-        msg.textContent = "Tersimpan ✓ — memuat ulang…";
-        setTimeout(function () { location.reload(); }, 600);
+        msg.textContent = saved && saved.pending
+          ? "Tersimpan ✓ — perubahan data pokok (nama/lokasi/jadwal/visibilitas) diajukan ke pusat komando dan menunggu persetujuan. Perubahan operasional sudah berlaku."
+          : "Tersimpan ✓ — memuat ulang…";
+        setTimeout(function () { location.reload(); }, saved && saved.pending ? 3500 : 600);
       } catch (err) {
         msg.textContent = "Gagal: " + ((err && err.message) || err);
       }

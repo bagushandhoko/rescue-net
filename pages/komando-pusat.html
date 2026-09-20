@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rescue-Net | Komando Pusat</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=balistfix-20260914">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/komando-pusat.css?v=komando-20260920" />
+</head>
+<body>
+<div class="app-shell kp-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="registrasi-posko.html?event=event-sim-001">Registrasi &amp; Verifikasi Posko</a>
+      <a href="koordinasi-organisasi.html?event=event-sim-001">Koordinasi Organisasi</a>
+      <a class="active" href="komando-pusat.html">Komando Pusat</a>
+      <a href="posko-detail.html?id=posko-sim-logistik">Posko Detail</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Manajemen Distribusi</a>
+      <a href="posko-distribusi.html?event=event-sim-001">Posko Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="search-found.html?event=event-sim-001">Search &amp; Found</a>
+      <a href="program-khusus.html?event=event-sim-001">Program Khusus</a>
+      <a href="donor-program.html?event=event-sim-001">Donor Program</a>
+      <a href="recovery-reconstruction.html?event=event-sim-001">Recovery</a>
+      <a href="management-relawan.html">Relawan</a>
+      <a href="alat-kerja.html?event=event-sim-001">Alat Kerja</a>
+      <a href="alat-komunikasi.html?event=event-sim-001">Alat Komunikasi</a>
+      <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
+      <a href="evidence.html?event=event-sim-001">Evidence</a>
+      <a href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a href="war-room.html?event=event-sim-001">Control Centre</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="data-consolidation.html?event=event-sim-001">Sync Data Konsolidasi</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Komando Pusat</div>
+      <div>
+        <p class="eyebrow">Skema koordinasi terpusat</p>
+        <h2 id="kpTitle">Komando Pusat</h2>
+        <p class="subtitle">Untuk organisasi yang dikendalikan satu komando (mis. satuan TNI): <b>pusat membuat akun posko</b>, posko tinggal menjalankan fungsinya, dan perubahan dari level bawah baru berlaku setelah <b>disetujui pusat</b>.</p>
+        <p class="subtitle" id="kpStatus">Memuat…</p>
+      </div>
+      <div class="kp-head-actions">
+        <label class="kp-center-pick" id="kpCenterPickWrap" hidden>Pusat:
+          <select id="kpCenterPick"></select>
+        </label>
+        <div class="status-pill" id="kpBadge">Komando Pusat</div>
+      </div>
+    </header>
+
+    <!-- Bukan pengelola pusat -->
+    <section id="kpNotice" hidden>
+      <div class="kp-notice">
+        <h3 id="kpNoticeTitle"></h3>
+        <p class="rn-muted" id="kpNoticeText"></p>
+        <div class="kp-row">
+          <a class="btn primary mini" id="kpLoginBtn" href="auth.html" hidden>Masuk</a>
+          <a class="btn ghost mini" href="organisasi-posko.html">Daftarkan organisasi (pilih skema)</a>
+        </div>
+      </div>
+      <div class="panel" id="kpMineWrap" hidden>
+        <div class="panel-header"><div><h3>Permintaan Saya ke Pusat</h3><p>Perubahan yang Anda ajukan dan keputusannya.</p></div></div>
+        <div class="kp-table-wrap"><table class="kp-table" id="kpMineTable"></table></div>
+      </div>
+    </section>
+
+    <!-- Pengelola pusat -->
+    <div id="kpCenterView" hidden>
+      <section class="kp-kpis" id="kpKpis"></section>
+
+      <section class="content-grid rn-md-wide">
+        <div class="panel">
+          <div class="panel-header"><div><h3>Antrean Persetujuan</h3><p>Permintaan dari level bawah. Menyetujui = perubahan langsung diterapkan.</p></div></div>
+          <div id="kpPending"></div>
+        </div>
+      </section>
+
+      <section class="content-grid rn-md-wide">
+        <div class="panel">
+          <div class="panel-header"><div><h3>Buat Akun Posko</h3><p>Akun langsung aktif. Jika password dikosongkan, dibuat password sementara yang hanya tampil sekali.</p></div></div>
+          <form class="rn-form kp-form" id="kpAccountForm" autocomplete="off">
+            <div class="form-grid">
+              <label>Organisasi
+                <select name="organization" id="kpAccOrg" required></select>
+              </label>
+              <label>Posko
+                <select name="posko" id="kpAccPosko"></select>
+              </label>
+              <label>Nama lengkap<input name="full_name" maxlength="140" required></label>
+              <label>Email (untuk login)<input name="email" type="email" required autocapitalize="none"></label>
+              <label>Peran
+                <select name="role" id="kpAccRole"></select>
+              </label>
+              <label>HP / WhatsApp (opsional)<input name="phone" maxlength="40"></label>
+              <label>Password (opsional)<input name="password" type="password" minlength="8" autocomplete="new-password" placeholder="Kosong = dibuat otomatis"></label>
+              <label>Ulangi password<input name="password2" type="password" minlength="8" autocomplete="new-password"></label>
+            </div>
+            <p class="rn-muted" id="kpAccHint">Peran koordinator organisasi tidak perlu posko; peran operator wajib memilih posko.</p>
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Buat Akun</button>
+              <span class="form-message" id="kpAccMsg"></span>
+            </div>
+          </form>
+          <div class="kp-secret" id="kpSecret" hidden>
+            <p><b>Akun dibuat.</b> Sampaikan kredensial ini ke yang bersangkutan — password sementara <b>hanya tampil sekali</b>.</p>
+            <div class="kp-secret-row"><span>Email</span><code id="kpSecretEmail"></code></div>
+            <div class="kp-secret-row"><span>Password sementara</span><code id="kpSecretPw"></code><button type="button" class="btn ghost mini" id="kpSecretCopy">Salin</button></div>
+            <button type="button" class="btn ghost mini" id="kpSecretClose">Tutup</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="content-grid rn-md-wide">
+        <div class="panel">
+          <div class="panel-header"><div><h3>Struktur &amp; Posko di Bawah Komando</h3><p>Organisasi yang bernaung di bawah pusat ini beserta poskonya.</p></div></div>
+          <div class="kp-table-wrap"><table class="kp-table" id="kpOrgTable"></table></div>
+        </div>
+      </section>
+
+      <section class="content-grid rn-md-wide">
+        <div class="panel">
+          <div class="panel-header"><div><h3>Akun</h3><p>Nonaktifkan / aktifkan kembali / reset password. Akun pemilik organisasi tidak dikelola dari sini.</p></div>
+            <input type="search" id="kpAccSearch" placeholder="Cari nama / email / posko" class="kp-search">
+          </div>
+          <div class="kp-table-wrap"><table class="kp-table" id="kpAccTable"></table></div>
+        </div>
+      </section>
+
+      <section class="content-grid rn-md-wide">
+        <div class="panel">
+          <div class="panel-header"><div><h3>Riwayat Keputusan</h3><p>Semua permintaan yang sudah diputuskan.</p></div></div>
+          <div class="kp-table-wrap"><table class="kp-table" id="kpHistTable"></table></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+<script src="../assets/js/komando-pusat.js?v=komando-20260920b"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=navevent-20260914"></script>
+<script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
+<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+
+<script src="../assets/js/rn-navigation-v2.js?v=poskodefault-20260914"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+</body>
+</html>

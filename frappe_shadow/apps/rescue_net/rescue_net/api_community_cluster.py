@@ -53,8 +53,16 @@ def list_organizations():
 @frappe.whitelist()
 def create_organization(title, organization_type="community",
                         contact_person=None, notes=None,
-                        parent_organization=None):
+                        parent_organization=None,
+                        coordination_scheme="mandiri"):
     actor = _actor()
+
+    # Komando terpusat is chosen here, once, when the pusat registers itself.
+    # The registrant is already made OWNER below = super admin of their own
+    # organisation (and of everything attached under it, see command.py).
+    coordination_scheme = (coordination_scheme or "mandiri").strip().lower()
+    if coordination_scheme not in ("mandiri", "terpusat"):
+        frappe.throw("Skema koordinasi tidak valid (mandiri/terpusat).")
 
     parent_organization = (parent_organization or "").strip() or None
     if parent_organization and not frappe.db.exists(
@@ -71,6 +79,7 @@ def create_organization(title, organization_type="community",
     org.identity_verification_status = "unverified"
     org.contact_person = contact_person
     org.notes = notes
+    org.coordination_scheme = coordination_scheme
     org.insert(ignore_permissions=True)
 
     membership = frappe.new_doc("RN Organization Membership")
@@ -98,6 +107,7 @@ def create_organization(title, organization_type="community",
     return {
         "organization": org.name,
         "membership": membership.name,
+        "coordination_scheme": coordination_scheme,
         "status": org.status,
         "trust_level": org.trust_level,
         "parent_organization": (link_result or {}).get("parent_organization") if not link_pending else None,
@@ -119,6 +129,13 @@ def request_membership(organization):
 
     if existing:
         return existing
+
+    from rescue_net.command import command_chain
+    if command_chain(organization):
+        frappe.throw(
+            "Organisasi ini dikelola dengan komando terpusat: akun anggota "
+            "dibuat oleh pusat, tidak bisa mendaftar sendiri. Hubungi admin pusat."
+        )
 
     membership = frappe.new_doc("RN Organization Membership")
     membership.user_account = actor.name
@@ -776,6 +793,43 @@ def create_posko(
                 "yang sudah Anda ikuti"
             )
 
+        # Komando terpusat: a non-pusat member adds a posko only by REQUEST.
+        from rescue_net import command
+        if not command.is_bypassed() and command.needs_approval(actor, organization):
+            return command.file_request(
+                actor, organization, "create_posko",
+                {
+                    "title": title, "posko_type": posko_type, "address": address,
+                    "organization": organization, "disaster_event": disaster_event,
+                    "latitude": latitude, "longitude": longitude,
+                    "officer_in_charge_name": officer_in_charge_name,
+                    "officer_in_charge_role": officer_in_charge_role,
+                    "officer_in_charge_phone": officer_in_charge_phone,
+                    "officer_in_charge_email": officer_in_charge_email,
+                    "emergency_contact": emergency_contact, "facilities": facilities,
+                    "rn_beneficiary_count": rn_beneficiary_count, "public_detail": public_detail,
+                },
+                "Tambah posko: %s" % title,
+            )
+
+    return _create_posko_impl(
+        actor, title, posko_type, address, organization, disaster_event,
+        latitude, longitude, officer_in_charge_name, officer_in_charge_role,
+        officer_in_charge_phone, officer_in_charge_email, emergency_contact,
+        facilities, rn_beneficiary_count, public_detail,
+    )
+
+
+def _create_posko_impl(
+    actor, title, posko_type, address, organization=None,
+    disaster_event=None, latitude=None, longitude=None,
+    officer_in_charge_name=None, officer_in_charge_role=None,
+    officer_in_charge_phone=None, officer_in_charge_email=None,
+    emergency_contact=None, facilities=None, rn_beneficiary_count=None,
+    public_detail=None, assignment_status=None,
+):
+    """Create the posko + the creator's assignment. `actor` is whoever the
+    posko is created FOR (the requester when the pusat approves a request)."""
     from rescue_net.reference_resolver import resolve_disaster_event
 
     posko = frappe.new_doc("RN Posko")
@@ -814,7 +868,7 @@ def create_posko(
     assignment.assignment_role = actor.role or "member"
 
     # Membuat Posko tidak menaikkan role.
-    assignment.status = (
+    assignment.status = assignment_status or (
         "approved" if actor.role == "posko_operator" else "pending"
     )
 
@@ -852,6 +906,51 @@ def update_posko(
 
     if not _can_edit_posko(actor, doc):
         frappe.throw("Akses edit posko ditolak", frappe.PermissionError)
+
+    # Komando terpusat: identity/location/visibility/schedule changes by anyone
+    # but the pusat are REQUESTED, not applied. Operational fields (status,
+    # notes, contact, beneficiaries, ...) still apply directly.
+    command_request = None
+    from rescue_net import command
+    if doc.organization and not command.is_bypassed() and command.needs_approval(actor, doc.organization):
+        wanted = {}
+
+        def _same(field, value):
+            cur = doc.get(field)
+            if field in ("latitude", "longitude"):
+                try:
+                    return abs(float(cur or 0) - float(value)) < 1e-9
+                except (TypeError, ValueError):
+                    return False
+            if field == "public_detail":
+                return (cur or "inherit") == (value or "inherit")
+            if field in ("active_from", "active_until"):
+                norm = lambda x: str(x or "").replace("T", " ").strip()[:16]
+                return norm(cur) == norm(value)
+            return str(cur or "").strip() == str(value or "").strip()
+
+        # The settings panel posts every field on each save: only what REALLY
+        # changes is a structural change worth asking the pusat about.
+        for k, v in (("title", title), ("posko_type", posko_type), ("address", address)):
+            if v is not None and not _same(k, v):
+                wanted[k] = v
+        for k, v in (("latitude", latitude), ("longitude", longitude)):
+            if v not in (None, "") and not _same(k, v):
+                wanted[k] = v
+        if public_detail in ("inherit", "private", "public") and not _same("public_detail", public_detail or "inherit"):
+            wanted["public_detail"] = public_detail
+        for k, v in (("active_from", active_from), ("active_until", active_until)):
+            if v is not None and not _same(k, v):
+                wanted[k] = v
+        if wanted:
+            command_request = command.file_request(
+                actor, doc.organization, "update_posko",
+                {"posko": doc.name, "changes": wanted},
+                "Ubah posko %s: %s" % (doc.title or doc.name, ", ".join(sorted(wanted))),
+                target_posko=doc.name,
+            )
+            title = posko_type = address = latitude = longitude = None
+            public_detail = active_from = active_until = None
 
     old_status = doc.operational_status
 
@@ -905,7 +1004,10 @@ def update_posko(
         except Exception:
             frappe.log_error(frappe.get_traceback(), "notify_posko status change")
 
-    return {"posko": doc.name, "modified": doc.modified}
+    result = {"posko": doc.name, "modified": doc.modified}
+    if command_request:
+        result.update(command_request)
+    return result
 
 
 @frappe.whitelist(allow_guest=True)

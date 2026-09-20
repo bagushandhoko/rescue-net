@@ -4,13 +4,98 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-20_ — Posko Kritis KPI now also counts shelters over capacity AND
-critical needs with nothing en route (see "Posko Kritis: derived signals" sections below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
+_Last updated: 2026-09-20_ — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
+(5 real poskos deleted by a test-cleanup script, fully restored from backup). Also: Posko Kritis KPI counts shelters over
+capacity AND critical needs with nothing en route (see "Posko Kritis: derived signals" sections below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
 domain data for the Krakatau active-disaster sim, then did the same for
 `event-aceh-2025` (Community Report + Volunteer Assignment were the
 missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
+
+## Komando terpusat — optional centralized-coordination scheme (2026-09-20) — DONE & DEPLOYED
+
+Owner ask: for poskos under one command (e.g. TNI) the **pusat creates the posko users**, poskos just run
+their functions, lower levels can add/change things **only with the pusat's approval**. It is a **choice made
+when the pusat first registers its organisation** (not for everyone), and the registrant becomes **super admin
+of their own organisation**.
+
+**Model** (`rescue_net/command.py` = rules, `api_command.py` = API; everything is a no-op for `mandiri` orgs):
+- `RN Organization.coordination_scheme` = `mandiri` (default, all 27 existing orgs) | `terpusat`. Chosen in
+  `create_organization(coordination_scheme=…)` (org form on `organisasi-posko.html` has the radio). Afterwards only
+  a System Manager can change it (`api_command.set_coordination_scheme`; **no UI for that yet**).
+- The registrant is the org's `owner` membership = super admin. **Command tree** = the terpusat org + every org
+  attached under it via `parent_organization` (the existing approval-gated attach flow, unchanged). Nearest terpusat
+  ancestor = "pusat" for a request; owners of any higher terpusat ancestor may decide it too.
+- `access_policy.can_manage_organization` / `can_manage_posko` now also return true for a command owner over the
+  whole tree (`command.is_command_owner*`).
+- **Accounts are created by the pusat**: `create_command_account` → Frappe user + active `RN User Account`
+  (role set immediately, no System Manager approval) + approved Membership + approved Posko Assignment. Temp
+  password generated when none given, returned ONCE. Roles: posko/medical/shelter operator, community_coordinator.
+  `set_command_account_active` (reason required to suspend; also blocks login + kills sessions),
+  `reset_command_account_password`. Self-join is blocked: `request_membership` on an org under command throws.
+- **Approval gate** (new doctype `RN Command Change Request`, states pending/applied/rejected/failed/withdrawn):
+  for a non-command-owner in an org under command: `create_posko`, structural `update_posko` fields
+  (`title, posko_type, address, latitude, longitude, public_detail, active_from, active_until` — constant
+  `command.STRUCTURAL_POSKO_FIELDS`), `api_privacy.update_posko` (visibility/openness), `set_posko_functions` and
+  `request_command_account` become **requests**, applied server-side (with `frappe.flags.command_bypass`) only when the
+  pusat approves (`decide_command_request`; reject needs a reason; no self-approval). Operational fields
+  (status, notes, contact, beneficiaries, facilities, WhatsApp notify) still apply directly. The panel posts ALL
+  fields on save, so only fields that actually CHANGED are turned into a request. An approved request that violates
+  org rules (e.g. making a posko public when the org forbids it) ends `failed` with the reason, applies nothing.
+  `create_posko` was split into the gate + `_create_posko_impl(actor, …)` so an approved posko is created FOR the
+  requester (assignment approved), not for the approver.
+- **UI**: `pages/komando-pusat.html` + `assets/js/komando-pusat.js` + `komando-pusat.css` (KPIs, approval queue with
+  note field, create-account form with password confirmation + one-time temp-password panel, tree/poskos, account
+  table with suspend/activate/reset, decision history; non-pusat viewers see their own requests). Nav link on
+  `organisasi-posko.html` / `koordinasi-organisasi.html` only (other pages' nav are copies — add as needed).
+  `registrasi-posko.js`, `org-posko.js`, `rn-posko-settings.js` show "diajukan ke pusat" when the response has `pending`.
+
+**Verified (real logins, live site):** `scripts/komando-tests/` — `api_e2e.py` **57/57** (registration as terpusat +
+super admin, pusat-created accounts + login, self-join blocked, operator operational-vs-structural split,
+no-change save files no request, reject-needs-reason, apply, failed-apply path, sub-org attach → request → account,
+pusat manages the whole tree, outsiders denied everywhere, suspend/reactivate/reset, scheme immutable for owners,
+`mandiri` control group unchanged) and `page_jsdom.js` **31/31** (the real page JS in jsdom against the live API).
+**Not verified:** a real-browser (Chromium) run and phone layout of `komando-pusat.html` — Chromium on this NAS thrashes
+(swap 100 %), `rn-komando-ui.js` in `/volume1/docker/osiun-playwright-check/` exists but never completed. Eyeball it once.
+
+**Pre-existing bugs found & fixed on the way**
+- `org-posko.js` create-org form read `form.title` while the input is named `name` → the form always said "Nama
+  organisasi wajib diisi". Fixed (`form.elements`).
+- `statusMsg()` writes to `#orgPoskoStatus`, which doesn't exist on the page → the create-org / create-posko forms never
+  showed ANY feedback and API errors were uncaught. Both handlers now write to their own `.form-message` and catch errors.
+- `api_control_centre.set_posko_functions` had **no permission check at all**. Under command orgs it is now gated
+  (members file a request, outsiders get PermissionError). **It is still open for `mandiri` poskos — decide whether to
+  require `can_manage_posko` there too** (not done: could break existing pages).
+- Critical pins are now shown with their reasons **only when the viewer's share mode for that posko is `full`**
+  (`_hide_reasons`, `_reasons_visible_to_viewer`); otherwise the pin stays red with "rincian penyebab terbatas".
+
+**Decisions I made that the owner may want to change**
+1. Operational vs structural split above; 2. "lower level" = any non-owner member of an org in the tree (incl. a child
+org's owner); 3. a request is filed against the nearest pusat, any owner up the chain may decide; 4. the requester's
+chosen posko *functions* are not carried by a create-posko request (the pusat sets them after approval); 5. no
+email/WhatsApp delivery of temp passwords or of "new request" alerts (the pusat opens the page); 6. scheme immutable
+after registration except System Manager; 7. approving requires the pusat owner to be logged in — no delegation to a
+non-owner "wakil pusat" role yet.
+
+**Deploy notes:** the app dir `/volume1/docker/osiun-frappe-shadow/apps/rescue_net` is bind-mounted and owned by uid 1000:
+plain `cp` cannot create files there. Working recipe: `tar -cf - <files> | docker exec -i -u root osiun-frappe-backend sh -c
+'cd …/apps/rescue_net/rescue_net && tar -xf - --no-same-owner && chown … && chmod …'`, THEN `bench --site osiun.localhost
+migrate` (**run migrate only after the files are copied** — my first migrate started early, read the old JSON and silently
+did not add the column; a second run did), then `docker restart osiun-frappe-backend`.
+
+## INCIDENT 2026-09-20 — 5 live poskos deleted by a test-cleanup script; fully restored
+
+A cleanup script built its delete filters as `["in", ids or [""]]`. With no test orgs yet, that became
+`organization IN ('')` and matched 5 real poskos with an EMPTY organisation (+1 posko assignment), which were deleted
+and committed. Caught the same minute (script printed `poskos 5` for 0 orgs). **Restored from the daily backup**
+(`sites/osiun.localhost/private/backups/20260920_000040-…sql.gz`): loaded the backup's `INSERT` blocks into
+`CREATE TABLE tmp LIKE …`, diffed by `name`, reviewed, inserted only the missing rows in one transaction:
+`RN Posko` 38 → 43, `RN Posko Assignment` 12 → 13, byte-identical key fields, Bencana Aktif board numbers identical to
+before. Restored: `posko_nodes:posko-dapur-melati`, `posko-shelter-melati`, `posko-sim-dapur`, `posko-sim-shelter`,
+`rn-posko-d9690e2127180aa21d3f`. Memberships / merge requests were untouched (verified by diff). Lesson recorded in
+memory (`feedback-destructive-empty-filter`); `scripts/komando-tests/clean_test_data.py` now prints a PLAN and skips empty
+lists. **Never build a delete from a possibly-empty id list.**
 
 ## Posko Kritis: logistics-gap signal + unified reasons (2026-09-20) — DONE & DEPLOYED
 

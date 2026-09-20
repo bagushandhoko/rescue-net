@@ -273,6 +273,16 @@ def map_points(event):
     return result
 
 
+def _hide_reasons(point):
+    """Why a posko is critical is posko-level detail: like the rest of its
+    detail it is only shown to a viewer allowed the "full" share mode. The pin
+    itself (situation) stays visible — it is summary-level — so flag that the
+    reasons exist but are withheld."""
+    if point.get("critical_reasons"):
+        point["critical_reasons_hidden"] = True
+    point["critical_reasons"] = []
+
+
 def _annotate_share_mode(points):
     """Tag each map point with the org's Control Centre sharing mode.
 
@@ -286,6 +296,7 @@ def _annotate_share_mode(points):
         for point in points:
             point["share_mode"] = "summary"
             point["detail_allowed"] = False
+            _hide_reasons(point)
         return
 
     try:
@@ -303,6 +314,8 @@ def _annotate_share_mode(points):
 
         point["share_mode"] = info.get("mode", "summary")
         point["detail_allowed"] = point["share_mode"] == "full"
+        if not point["detail_allowed"]:
+            _hide_reasons(point)
         # point["public_participation"] (from map_points) is the generic
         # "this posko opened itself to outside coordination" flag the shared
         # selector groups on; each operational board decides what specifically
@@ -1908,10 +1921,26 @@ def set_posko_functions(posko, functions=None, logistics_role=None):
     import json
     from rescue_net.access_policy import rn_actor
 
-    rn_actor()
+    actor = rn_actor()
     name = _resolve_posko(posko)
     if not name:
         frappe.throw("Posko tidak ditemukan")
+
+    # Komando terpusat: which functions a posko serves is structural. Under a
+    # command organisation only the pusat applies it directly; a member of that
+    # organisation files a request; anyone else is refused (this endpoint had no
+    # permission check at all before). `mandiri` poskos: unchanged.
+    from rescue_net import command
+    posko_org = command.posko_org(name)
+    if posko_org and not command.is_bypassed() and command.needs_approval(actor, posko_org):
+        if not command.is_account_member(actor, posko_org):
+            frappe.throw("Anda tidak dapat mengubah posko ini", frappe.PermissionError)
+        return command.file_request(
+            actor, posko_org, "set_posko_functions",
+            {"posko": name, "functions": functions, "logistics_role": logistics_role},
+            "Ubah fungsi posko %s" % (frappe.db.get_value("RN Posko", name, "title") or name),
+            target_posko=name,
+        )
 
     if isinstance(functions, str):
         functions = functions.strip()
@@ -2214,6 +2243,31 @@ def _derived_critical_reasons(posko_names):
         reasons.setdefault(p, []).append(
             "%d kebutuhan kritis terbuka, belum ada distribusi yang bergerak" % c)
     return reasons
+
+
+def _reasons_visible_to_viewer(posko_names):
+    """Subset of posko_names whose derived-critical reasons the current viewer
+    may see (effective share mode "full"). Fails closed: any error -> none."""
+    names = [n for n in (posko_names or []) if n]
+    if not names:
+        return set()
+    try:
+        from rescue_net.visibility import effective_posko_share
+        from rescue_net.access_policy import rn_actor
+    except Exception:
+        return set()
+    try:
+        actor = rn_actor(required=False)
+    except Exception:
+        actor = None
+    visible = set()
+    for n in names:
+        try:
+            if effective_posko_share(n, actor).get("mode") == "full":
+                visible.add(n)
+        except Exception:
+            pass
+    return visible
 
 
 def _fmt(v):
@@ -3265,6 +3319,9 @@ def active_disasters_board(limit=60):
         posko_by_name = {p["name"]: p for p in poskos}
 
         derived = _derived_critical_reasons([p["name"] for p in poskos])
+        # Situation uses every derived signal; the *reasons* are posko-level
+        # detail and only go to viewers allowed that posko's full share mode.
+        reasons_ok = _reasons_visible_to_viewer(list(derived))
 
         def _ba_situation_of(p):
             sit = _ba_situation(p.get("operational_status"))
@@ -3333,7 +3390,8 @@ def active_disasters_board(limit=60):
                 "posko_title": p.get("title") or p["name"],
                 "region": posko_region[p["name"]],
                 "type": p.get("posko_type"),
-                "reasons": derived.get(p["name"], []),
+                "reasons": derived.get(p["name"], []) if p["name"] in reasons_ok else [],
+                "reasons_hidden": p["name"] in derived and p["name"] not in reasons_ok,
                 "href": (
                     "posko-detail.html?id="
                     + str(p["name"]).replace("posko_nodes:", "")

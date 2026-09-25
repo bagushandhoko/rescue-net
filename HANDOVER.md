@@ -4,7 +4,7 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-25_ — NEW: Jiwa Berisiko = PEOPLE (aspek logistik/shelter/medis); Control Centre mock-up alignment (layout, KPI = drill totals, real sparklines) + komando terpusat round 3 (scheme admin UI for System Manager, posko functions carried by create-posko requests). Earlier: 2026-09-20 — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
+_Last updated: 2026-09-25_ — NEW: Shelter QA pass 2 (real Sanitasi & Air); Jiwa Berisiko = PEOPLE (aspek logistik/shelter/medis); Control Centre mock-up alignment (layout, KPI = drill totals, real sparklines) + komando terpusat round 3 (scheme admin UI for System Manager, posko functions carried by create-posko requests). Earlier: 2026-09-20 — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
 (5 real poskos deleted by a test-cleanup script, fully restored from backup). Also: Posko Kritis KPI counts shelters over
 capacity AND critical needs with nothing en route (see "Posko Kritis: derived signals" sections below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
 domain data for the Krakatau active-disaster sim, then did the same for
@@ -12,6 +12,26 @@ domain data for the Krakatau active-disaster sim, then did the same for
 missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
+
+## Shelter & Akomodasi (`shelter-detail.html`) — mock-up QA pass 2 (2026-09-25) — DEPLOYED
+
+- **Sanitasi & Air is real now** (was a "belum ada field-nya" note): new fields on **RN Shelter Occupancy** `toilet_total`,
+  `toilet_functional`, `water_point_total`, `water_point_functional` + `wash_observed_at` (set only when counts are reported —
+  Frappe Int columns read 0 for old rows, so 0 must never mean "no toilets"; my first version made that mistake and flagged every
+  shelter, fixed before release). `create_occupancy(...)` takes them (functional defaults to total); "Catat Okupansi" form has the 4
+  inputs. `shelter_board.sanitasi_air` = totals, people per functional toilet / water point vs **Sphere** (`SPHERE_PEOPLE_PER_TOILET`
+  20, `SPHERE_PEOPLE_PER_WATER_POINT` 250), shelters not reporting listed. A shelter over the ratio is a per-shelter kritis signal:
+  counted in the **Sanitasi Kritis / Air Bersih Kritis KPI** (union with urgent sanitation/water needs), in their drill items, and
+  as a "Perhatian" row in Peringatan Keselamatan.
+- Sim data: one new occupancy observation per sim shelter of event-sim-001 (copied numbers + WASH counts), `legacy_source =
+  "sim-wash-20260925"` (Shelter Simulasi 1:24 toilets → warning; Gedung Serbaguna OK).
+- **Density** (scoped `.rn-sh-page` on `<main>`; style.css is shared by ~38 pages): KPI icon-left layout (values no longer wrap
+  "1 / Lokasi"), 11px tables with ellipsis + title tooltips, compact Kebutuhan Dasar, compact warnings with Penting/Perhatian
+  chips, rows 2.3fr/1fr/1fr and 2fr/1.25fr/1fr (`.rn-sh-row-b`; mobile rule updated for its specificity). Fixed: Daftar Shelter's
+  Okupansi/Status and other right-hand columns were clipped off entirely. Kelompok Rentan KPI note = "% dari penghuni".
+- **Remaining vs mock-up:** "Okupansi" header in Akomodasi Relawan clipped by a few px (site sidebar is 300px vs mock-up 225px —
+  global, not changed); header right side still status/user pills (mock-up: bell + event picker); no pixel-diff scores for this page
+  yet (stopped for the 23:00 NAS shutdown). Screenshots `rn-shelter-*.png` in /volume1/docker/osiun-playwright-check.
 
 ## Jiwa Berisiko = jumlah ORANG, 3 aspek (logistik · shelter · medis) (2026-09-25) — DEPLOYED
 

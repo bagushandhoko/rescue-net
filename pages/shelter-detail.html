@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Shelter & Akomodasi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=balistfix-20260914">
+  <link rel="stylesheet" href="../assets/css/style.css?v=shdense-20260925g">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-lightbox.css?v=lb-2" />
@@ -46,7 +46,7 @@
     </nav>
   </aside>
 
-  <main class="main">
+  <main class="main rn-sh-page">
     <header class="topbar">
       <div class="rn-page-mobile-title">Shelter & Akomodasi</div>
 
@@ -111,7 +111,7 @@
       </div>
     </section>
 
-    <section class="content-grid rn-sh-row-a">
+    <section class="content-grid rn-sh-row-a rn-sh-row-b">
       <div class="panel">
         <div class="panel-header">
           <div><h3>Akomodasi Relawan / Petugas</h3></div>
@@ -200,6 +200,18 @@
           </label>
           <label>Jumlah Disabilitas
             <input name="disabled_count" type="number" value="3">
+          </label>
+          <label>Toilet / MCK Tersedia
+            <input name="toilet_total" type="number" min="0" placeholder="kosong = belum dihitung">
+          </label>
+          <label>Toilet / MCK Berfungsi
+            <input name="toilet_functional" type="number" min="0">
+          </label>
+          <label>Titik Air Bersih Tersedia
+            <input name="water_point_total" type="number" min="0" placeholder="kosong = belum dihitung">
+          </label>
+          <label>Titik Air Bersih Berfungsi
+            <input name="water_point_functional" type="number" min="0">
           </label>
           <label>Status Sanitasi
             <input name="sanitation_status" value="limited">
@@ -293,7 +305,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/shelter-detail.js?v=shelter-20260906"></script>
+<script src="../assets/js/shelter-detail.js?v=wash-20260925d"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=navevent-20260914"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

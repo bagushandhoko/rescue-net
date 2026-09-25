@@ -347,6 +347,10 @@ def create_occupancy(
     elderly_count=0,
     pregnant_count=0,
     disability_count=0,
+    toilet_total=None,
+    toilet_functional=None,
+    water_point_total=None,
+    water_point_functional=None,
 ):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -387,6 +391,24 @@ def create_occupancy(
     doc.disability_count = cint(
         disability_count
     )
+    # Sanitasi & air: left empty (not 0) when the shelter did not report them,
+    # so "not reported" never reads as "zero toilets".
+    for field, value in (
+        ("toilet_total", toilet_total), ("toilet_functional", toilet_functional),
+        ("water_point_total", water_point_total), ("water_point_functional", water_point_functional),
+    ):
+        if value not in (None, ""):
+            doc.set(field, max(0, cint(value)))
+            doc.wash_observed_at = now_datetime()
+    # total reported without a functional count -> assume all function
+    if toilet_total not in (None, "") and toilet_functional in (None, ""):
+        doc.toilet_functional = doc.toilet_total
+    if water_point_total not in (None, "") and water_point_functional in (None, ""):
+        doc.water_point_functional = doc.water_point_total
+    if doc.get("toilet_functional") and doc.get("toilet_total") and doc.toilet_functional > doc.toilet_total:
+        frappe.throw("Toilet berfungsi tidak boleh melebihi toilet tersedia.")
+    if doc.get("water_point_functional") and doc.get("water_point_total") and doc.water_point_functional > doc.water_point_total:
+        frappe.throw("Titik air berfungsi tidak boleh melebihi titik air tersedia.")
     doc.observed_at = now_datetime()
     doc.source_updated_at = (
         doc.observed_at
@@ -816,6 +838,11 @@ def _latest_occupancies(allowed):
             "elderly_count",
             "pregnant_count",
             "disability_count",
+            "toilet_total",
+            "toilet_functional",
+            "water_point_total",
+            "water_point_functional",
+            "wash_observed_at",
             "observed_at",
         ],
         order_by=(
@@ -1059,6 +1086,11 @@ _VULNERABLE_LABELS = {
 }
 
 _SANITATION_KEYWORDS = ("sanitasi", "toilet", "mck", "disinfektan", "sabun")
+
+# Sphere Handbook minimum standards (WASH): max people per functional toilet
+# in a camp setting / per water tap.
+SPHERE_PEOPLE_PER_TOILET = 20
+SPHERE_PEOPLE_PER_WATER_POINT = 250
 _WATER_KEYWORDS = ("air bersih", "air minum")
 
 
@@ -1108,8 +1140,8 @@ def shelter_board(disaster_event=None):
     critical needs — no safety/sanitation status field exists on RN Shelter
     Occupancy yet, so nothing is fabricated there), the evidence strip, and
     Akomodasi Relawan/Petugas (RN Volunteer Accommodation — separate from
-    the disaster-victim shelters above). Literal toilet/water-point counts
-    from the mock-up still have no backing doctype — honestly omitted.
+    the disaster-victim shelters above). Sanitasi & Air = reported toilet /
+    water-point counts on RN Shelter Occupancy vs the Sphere standards.
     """
     event = resolve_disaster_event(disaster_event) or disaster_event
 
@@ -1196,22 +1228,60 @@ def shelter_board(disaster_event=None):
             "open_count": len(matches),
         })
 
-    air_bersih_kritis = sum(
-        1 for posko in posko_names
-        if any(
-            n.posko == posko and str(n.priority).lower() in urgent_terms
-            and any(k in (n.item_name or "").lower() for k in _WATER_KEYWORDS)
-            for n in open_needs
-        )
-    )
-    sanitasi_kritis = sum(
-        1 for posko in posko_names
-        if any(
-            n.posko == posko and str(n.priority).lower() in urgent_terms
-            and any(k in (n.item_name or "").lower() for k in _SANITATION_KEYWORDS)
-            for n in open_needs
-        )
-    )
+    # Sanitasi & air from reported facility counts (RN Shelter Occupancy),
+    # judged per shelter against the Sphere minimum standards. A shelter over
+    # the ratio is a deterministic "kritis" signal in the same KPI as an
+    # urgent sanitation/water need — not only a number in this panel.
+    sanitasi_air = {
+        "toilet_total": 0, "toilet_functional": 0, "water_total": 0, "water_functional": 0,
+        "people_toilet": 0, "people_water": 0, "reported": 0, "missing": [],
+        "toilet_standard": SPHERE_PEOPLE_PER_TOILET, "water_standard": SPHERE_PEOPLE_PER_WATER_POINT,
+    }
+    toilet_bad, water_bad = {}, {}
+    for posko in posko_names:
+        row = latest_by_posko.get(posko)
+        cur = cint(row.current_occupancy) if row else 0
+        # Int columns read 0 when never filled: only a row with wash_observed_at
+        # actually reported its toilets / water points.
+        reported = bool(row and row.get("wash_observed_at"))
+        t_tot = row.get("toilet_total") if reported else None
+        w_tot = row.get("water_point_total") if reported else None
+        if not reported:
+            if cur:
+                sanitasi_air["missing"].append(posko_by_name[posko].title)
+            continue
+        sanitasi_air["reported"] += 1
+        if t_tot is not None:
+            t_fn = cint(row.get("toilet_functional") if row.get("toilet_functional") is not None else t_tot)
+            sanitasi_air["toilet_total"] += cint(t_tot)
+            sanitasi_air["toilet_functional"] += t_fn
+            sanitasi_air["people_toilet"] += cur
+            if cur and (not t_fn or cur / t_fn > SPHERE_PEOPLE_PER_TOILET):
+                toilet_bad[posko] = (cur, t_fn)
+        if w_tot is not None:
+            w_fn = cint(row.get("water_point_functional") if row.get("water_point_functional") is not None else w_tot)
+            sanitasi_air["water_total"] += cint(w_tot)
+            sanitasi_air["water_functional"] += w_fn
+            sanitasi_air["people_water"] += cur
+            if cur and (not w_fn or cur / w_fn > SPHERE_PEOPLE_PER_WATER_POINT):
+                water_bad[posko] = (cur, w_fn)
+    sanitasi_air["toilet_ratio"] = (round(sanitasi_air["people_toilet"] / sanitasi_air["toilet_functional"])
+                                    if sanitasi_air["toilet_functional"] else None)
+    sanitasi_air["water_ratio"] = (round(sanitasi_air["people_water"] / sanitasi_air["water_functional"])
+                                   if sanitasi_air["water_functional"] else None)
+    sanitasi_air["toilet_bad"] = len(toilet_bad)
+    sanitasi_air["water_bad"] = len(water_bad)
+
+    water_need_poskos = {
+        n.posko for n in open_needs
+        if str(n.priority).lower() in urgent_terms and any(k in (n.item_name or "").lower() for k in _WATER_KEYWORDS)
+    }
+    sanitation_need_poskos = {
+        n.posko for n in open_needs
+        if str(n.priority).lower() in urgent_terms and any(k in (n.item_name or "").lower() for k in _SANITATION_KEYWORDS)
+    }
+    air_bersih_kritis = len(water_need_poskos | set(water_bad))
+    sanitasi_kritis = len(sanitation_need_poskos | set(toilet_bad))
 
     # Kelompok Rentan table: category -> total, %, shelter with the most.
     kelompok_rentan = []
@@ -1267,6 +1337,22 @@ def shelter_board(disaster_event=None):
                 "href": _shelter_href(n.posko, event),
                 "level": "critical",
             })
+    for posko, (cur, fn) in toilet_bad.items():
+        peringatan.append({
+            "title": posko_by_name[posko].title,
+            "sub": ("Tidak ada toilet berfungsi untuk %d orang" % cur) if not fn else
+                   ("Toilet tidak mencukupi (1:%d, standar 1:%d)" % (round(cur / fn), SPHERE_PEOPLE_PER_TOILET)),
+            "href": _shelter_href(posko, event),
+            "level": "warning",
+        })
+    for posko, (cur, fn) in water_bad.items():
+        peringatan.append({
+            "title": posko_by_name[posko].title,
+            "sub": ("Tidak ada titik air berfungsi untuk %d orang" % cur) if not fn else
+                   ("Titik air bersih tidak mencukupi (1:%d, standar 1:%d)" % (round(cur / fn), SPHERE_PEOPLE_PER_WATER_POINT)),
+            "href": _shelter_href(posko, event),
+            "level": "warning",
+        })
     peringatan.sort(key=lambda r: 0 if r.get("level") == "critical" else 1)
 
     # Evidence strip, same unified feed as other posko pages.
@@ -1308,6 +1394,11 @@ def shelter_board(disaster_event=None):
                 for n in open_needs
                 if str(n.priority).lower() in urgent_terms
                 and any(k in (n.item_name or "").lower() for k in _WATER_KEYWORDS)
+            ] + [
+                _drill(posko_by_name[p].title,
+                       "titik air: %s untuk %d orang (standar 1:%d)" % (fn or "tidak ada yang berfungsi", cur, SPHERE_PEOPLE_PER_WATER_POINT),
+                       _shelter_href(p, event))
+                for p, (cur, fn) in water_bad.items()
             ],
             "sanitasi_items": [
                 _drill(posko_by_name[n.posko].title, n.item_name + " · kritis",
@@ -1315,6 +1406,11 @@ def shelter_board(disaster_event=None):
                 for n in open_needs
                 if str(n.priority).lower() in urgent_terms
                 and any(k in (n.item_name or "").lower() for k in _SANITATION_KEYWORDS)
+            ] + [
+                _drill(posko_by_name[p].title,
+                       "toilet: %s untuk %d orang (standar 1:%d)" % (fn or "tidak ada yang berfungsi", cur, SPHERE_PEOPLE_PER_TOILET),
+                       _shelter_href(p, event))
+                for p, (cur, fn) in toilet_bad.items()
             ],
         },
         "daftar_shelter": daftar_shelter,
@@ -1327,6 +1423,7 @@ def shelter_board(disaster_event=None):
         "kebutuhan_dasar": kebutuhan_dasar,
         "kelompok_rentan": kelompok_rentan,
         "checkin_checkout": checkin_checkout,
+        "sanitasi_air": sanitasi_air,
         "peringatan": peringatan,
         "bukti": bukti,
         "bukti_total": len(bukti),

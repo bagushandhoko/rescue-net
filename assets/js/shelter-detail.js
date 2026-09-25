@@ -152,6 +152,13 @@
     $("#kpiKapasitas").textContent = fmt(t.kapasitas_maksimal);
     $("#kpiOvercapacity").textContent = fmt(t.overcapacity);
     $("#kpiRentan").textContent = fmt(t.kelompok_rentan);
+    var rentanNote = document.querySelector('#kpiRentan + small');
+    if (rentanNote) {
+      rentanNote.textContent = t.total_penghuni
+        ? Math.round(100 * t.kelompok_rentan / t.total_penghuni) + "% dari penghuni"
+        : "dari penghuni";
+      rentanNote.title = "bayi, anak, lansia, ibu hamil, disabilitas";
+    }
     $("#kpiAirKritis").textContent = fmt(t.air_bersih_kritis) + " Lokasi";
     $("#kpiSanitasiKritis").textContent = fmt(t.sanitasi_kritis) + " Lokasi";
   }
@@ -167,9 +174,9 @@
       .map(function (r) {
         return (
           '<tr class="rn-ba-row" data-href="' + esc(r.href) + '">' +
-          "<td><b>" + esc(r.title) + "</b></td><td>" + esc(r.lokasi) + "</td>" +
+          '<td title="' + esc(r.title) + '"><b>' + esc(r.title) + '</b></td><td title="' + esc(r.lokasi) + '">' + esc(r.lokasi) + "</td>" +
           "<td>" + fmt(r.penghuni) + "</td><td>" + fmt(r.kapasitas) + "</td>" +
-          "<td>" + (r.okupansi_pct == null ? "-" : r.okupansi_pct + "%") + "</td>" +
+          "<td>" + (r.okupansi_pct == null ? "-" : Math.round(r.okupansi_pct) + "%") + "</td>" +
           '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(statusLabel(r.status)) + "</span></td></tr>"
         );
       })
@@ -222,12 +229,38 @@
       .join("");
   }
 
-  function renderSanitasiAir(t) {
+  function renderSanitasiAir(t, sa) {
     var el = $("#sanitasiAir");
+    sa = sa || {};
+    function tile(icon, title, total, fn, ratio, std, bad, usedLabel, usedVal) {
+        var warn = ratio != null && ratio > std;
+        return (
+          '<div class="rn-sh-wash-tile">' +
+          '<h4><span class="rn-sh-need-icon" data-icon="' + icon + '"></span>' + esc(title) + "</h4>" +
+          '<div class="rn-sh-wash-row"><span>Tersedia</span><b>' + fmt(total) + "</b></div>" +
+          '<div class="rn-sh-wash-row"><span>' + usedLabel + "</span><b>" + fmt(usedVal) + "</b></div>" +
+          '<div class="rn-sh-wash-row' + (warn ? " is-bad" : "") + '" title="Standar Sphere 1:' + std + '"><span>Rasio</span><b>' +
+          (ratio == null ? "-" : "1 : " + fmt(ratio) + " org") + (warn ? " ⚠" : "") + "</b></div>" +
+          "</div>"
+        );
+    }
+    if (!sa.reported) {
+      el.innerHTML =
+        '<p class="rn-muted rn-sh-gap-note">Belum ada shelter yang melaporkan jumlah toilet/MCK &amp; titik air bersih. ' +
+        'Isi di <b>Catat Okupansi</b> di bawah (per shelter).</p>' +
+        '<div class="rn-sh-sanitasi-row"><span>Kebutuhan air/sanitasi mendesak terbuka</span><b>' +
+        fmt(t.air_bersih_kritis) + " / " + fmt(t.sanitasi_kritis) + " lokasi</b></div>";
+      return;
+    }
     el.innerHTML =
-      '<div class="rn-sh-sanitasi-row"><span>Kebutuhan Air Bersih terbuka (kritis/urgent)</span><b>' + fmt(t.air_bersih_kritis) + ' lokasi</b></div>' +
-      '<div class="rn-sh-sanitasi-row"><span>Kebutuhan Sanitasi terbuka (kritis/urgent)</span><b>' + fmt(t.sanitasi_kritis) + ' lokasi</b></div>' +
-      '<p class="rn-muted rn-sh-gap-note">Jumlah toilet/MCK &amp; titik air fisik belum tercatat sebagai data terstruktur (belum ada field-nya) — dihitung dari kebutuhan sanitasi/air yang masih terbuka.</p>';
+      '<div class="rn-sh-wash">' +
+      tile("droplet", "Toilet / MCK", sa.toilet_total, sa.toilet_functional, sa.toilet_ratio, sa.toilet_standard, sa.toilet_bad, "Berfungsi", sa.toilet_functional) +
+      tile("droplet", "Titik Air Bersih", sa.water_total, sa.water_functional, sa.water_ratio, sa.water_standard, sa.water_bad, "Berfungsi", sa.water_functional) +
+      "</div>" +
+      ((sa.missing || []).length
+        ? '<p class="rn-muted rn-sh-gap-note">Belum melapor: ' + esc(sa.missing.join(", ")) + ".</p>"
+        : "");
+    if (window.RNIconFill) window.RNIconFill(el);
   }
 
   function renderCheckinOut(c) {
@@ -263,7 +296,8 @@
       .map(function (r) {
         return (
           '<a class="event-card rn-sh-alert" href="' + esc(r.href) + '"><div class="event-main"><div><h4>⚠ ' + esc(r.title) + "</h4><p>" + esc(r.sub) + "</p></div>" +
-          '<div class="chips"><span class="chip danger">' + esc(r.level) + "</span></div></div></a>"
+          '<div class="chips"><span class="chip ' + (r.level === "critical" ? "danger" : "warning") + '">' +
+          (r.level === "critical" ? "Penting" : "Perhatian") + "</span></div></div></a>"
         );
       })
       .join("");
@@ -313,7 +347,7 @@
     renderDaftarShelter(data.daftar_shelter || []);
     renderOkupansiDonut(data.kapasitas_okupansi || { terisi: 0, tersedia: 0, kapasitas_max: 0, pct: 0 });
     renderKebutuhanDasar(data.kebutuhan_dasar || []);
-    renderSanitasiAir(data.totals || {});
+    renderSanitasiAir(data.totals || {}, data.sanitasi_air);
     renderCheckinOut(data.checkin_checkout || { checkin_people: 0, checkin_households: 0, checkout_people: 0, checkout_households: 0, moved_people: 0, moved_households: 0 });
     renderKelompokRentan(data.kelompok_rentan || []);
     renderPeringatan(data.peringatan || []);
@@ -428,6 +462,10 @@
         children_count: Number(form.children_count.value || 0),
         elderly_count: Number(form.elderly_count.value || 0),
         disability_count: Number(form.disabled_count.value || 0),
+        toilet_total: form.toilet_total && form.toilet_total.value !== "" ? Number(form.toilet_total.value) : null,
+        toilet_functional: form.toilet_functional && form.toilet_functional.value !== "" ? Number(form.toilet_functional.value) : null,
+        water_point_total: form.water_point_total && form.water_point_total.value !== "" ? Number(form.water_point_total.value) : null,
+        water_point_functional: form.water_point_functional && form.water_point_functional.value !== "" ? Number(form.water_point_functional.value) : null,
       }, { method: "POST" });
       statusMsg("Shelter occupancy saved.");
       await refreshAll();

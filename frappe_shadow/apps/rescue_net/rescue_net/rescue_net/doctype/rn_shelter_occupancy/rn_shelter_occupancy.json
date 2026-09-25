@@ -93,6 +93,37 @@
    "default": 0
   },
   {
+   "fieldname": "toilet_total",
+   "label": "Toilet / MCK Tersedia",
+   "fieldtype": "Int",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "toilet_functional",
+   "label": "Toilet / MCK Berfungsi",
+   "fieldtype": "Int",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "water_point_total",
+   "label": "Titik Air Bersih Tersedia",
+   "fieldtype": "Int",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "water_point_functional",
+   "label": "Titik Air Bersih Berfungsi",
+   "fieldtype": "Int",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "wash_observed_at",
+   "label": "Sanitasi & Air Dilaporkan",
+   "fieldtype": "Datetime",
+   "read_only": 1,
+   "description": "Diisi otomatis saat jumlah toilet/titik air dilaporkan; kosong = belum dilaporkan (angka 0 bukan berarti tidak ada)."
+  },
+  {
    "fieldname": "observed_at",
    "label": "Observed At",
    "fieldtype": "Datetime"

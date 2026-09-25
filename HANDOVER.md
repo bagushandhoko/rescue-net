@@ -13,7 +13,7 @@ missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
 
-## NEXT: Dapur Umum (`dapur-umum.html`) — mock-up QA pass 2 survey (2026-09-25 22:42, not started)
+## NEXT: Dapur Umum (`dapur-umum.html`) — mock-up QA pass 2 (2026-09-25 22:42; items 1-3 DONE 22:47, 4-6 open)
 
 Live screenshot `/volume1/docker/osiun-playwright-check/rn-dapur-desktop.png` vs `assets/img/mockup/dapur umum.png`. Same gap
 pattern as Shelter before its fix — reuse the Shelter recipe (page-scoped class on `<main>`, KPI icon-left layout, 11px tables):
@@ -27,7 +27,9 @@ pattern as Shelter before its fix — reuse the Shelter recipe (page-scoped clas
    — same open item as Shelter.
 6. Status Gas / BBM: only LPG tile, no "sisa untuk ± N hari" and no BBM tile (check whether consumption rate data exists before
    building it).
-Stop rule this evening: the NAS powers off at 23:00 — nothing was changed on this page.
+DONE 22:47 (CSS only): `<main class="main rn-dp-page">`; the Shelter density rules are now shared as
+`:is(.rn-sh-page, .rn-dp-page)` (KPI icon-left, 11px tables, small chips) → KPIs compact, Stok Bahan STATUS visible, row 2
+`align-items: stretch` (equal panel heights). Shelter re-checked, unchanged. Still open: items 4-6 + the Kapasitas progress bar.
 
 ## Shelter & Akomodasi (`shelter-detail.html`) — mock-up QA pass 2 (2026-09-25) — DEPLOYED
 

@@ -5263,7 +5263,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
    Dapur Umum — pages/dapur-umum.html
    ============================================================ */
 .rn-dp-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.rn-dp-row2 { grid-template-columns: minmax(0, .95fr) minmax(0, .95fr) minmax(0, 1.7fr) minmax(0, 1.1fr); align-items: start; }
+.rn-dp-row2 { grid-template-columns: minmax(0, .95fr) minmax(0, .95fr) minmax(0, 1.7fr) minmax(0, 1.1fr); align-items: stretch; }
 .rn-dp-grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .rn-dp-row4 { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
 
@@ -5325,25 +5325,25 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-sh-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
 .rn-sh-row-a { grid-template-columns: minmax(0, 2.3fr) minmax(0, 1fr) minmax(0, 1fr); }
 .rn-sh-row-a.rn-sh-row-b { grid-template-columns: minmax(0, 2fr) minmax(0, 1.25fr) minmax(0, 1fr); }
-/* mock-up density (scoped to this page: style.css is shared by ~38 pages):
+/* mock-up density (scoped to Shelter + Dapur Umum: style.css is shared by ~38 pages):
    icon left, label / value / note stacked in the right column */
-.rn-sh-page .rn-sh-kpi .kpi-card {
+:is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card {
   min-height: 96px; padding: 14px; border-radius: 16px;
   grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto 1fr;
   align-items: start; row-gap: 2px; text-align: left;
 }
-.rn-sh-page .rn-sh-kpi .kpi-icon { grid-row: 1 / span 3; width: 44px; height: 44px; }
-.rn-sh-page .rn-sh-kpi .kpi-card > span:not(.kpi-icon),
-.rn-sh-page .rn-sh-kpi .kpi-card > strong,
-.rn-sh-page .rn-sh-kpi .kpi-card > small { grid-column: 2; grid-row: auto; margin: 0; }
-.rn-sh-page .rn-sh-kpi .kpi-card > span:not(.kpi-icon) { font-size: 11px; line-height: 1.3; }
-.rn-sh-page .rn-sh-kpi .kpi-card > strong { font-size: 20px; line-height: 1.2; white-space: nowrap; }
-.rn-sh-page .rn-sh-kpi .kpi-card > small { font-size: 10px; line-height: 1.3; }
+:is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-icon { grid-row: 1 / span 3; width: 44px; height: 44px; }
+:is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > span:not(.kpi-icon),
+:is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > strong,
+:is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > small { grid-column: 2; grid-row: auto; margin: 0; }
+:is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > span:not(.kpi-icon) { font-size: 11px; line-height: 1.3; }
+:is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > strong { font-size: 20px; line-height: 1.2; white-space: nowrap; }
+:is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > small { font-size: 10px; line-height: 1.3; }
 .rn-sh-page .panel { padding: 16px; }
-.rn-sh-page .panel-header h3 { font-size: 14px; }
-.rn-sh-page .rn-table { font-size: 11px; }
-.rn-sh-page .rn-table th { font-size: 10px; padding: 6px 5px; white-space: nowrap; }
-.rn-sh-page .rn-table td { padding: 8px 5px; white-space: nowrap; }
+:is(.rn-sh-page, .rn-dp-page) .panel-header h3 { font-size: 14px; }
+:is(.rn-sh-page, .rn-dp-page) .rn-table { font-size: 11px; }
+:is(.rn-sh-page, .rn-dp-page) .rn-table th { font-size: 10px; padding: 6px 5px; white-space: nowrap; }
+:is(.rn-sh-page, .rn-dp-page) .rn-table td { padding: 8px 5px; white-space: nowrap; }
 .rn-sh-page .rn-table td:first-child { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
 /* Daftar Shelter: Lokasi / Kelompok Rentan: Lokasi Terbanyak — truncate, full text in title */
 .rn-sh-page #akomodasiRelawanBody td:first-child { max-width: 90px; }
@@ -5359,8 +5359,8 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-sh-kebutuhan .event-card { padding: 6px 10px; border-radius: 10px; min-width: 0; }
 .rn-sh-kebutuhan .event-main { min-width: 0; gap: 6px; }
 .rn-sh-page .rn-sh-kebutuhan .chip,
-.rn-sh-page .rn-table .chip,
-.rn-sh-page .rn-table [class*=pill] { height: 20px; font-size: 10px; padding: 0 7px; }
+:is(.rn-sh-page, .rn-dp-page) .rn-table .chip,
+:is(.rn-sh-page, .rn-dp-page) .rn-table [class*=pill] { height: 20px; font-size: 10px; padding: 0 7px; }
 .rn-sh-kebutuhan .event-card p { display: none; }
 .rn-sh-kebutuhan h4 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; }
 .rn-sh-wash { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

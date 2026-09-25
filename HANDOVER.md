@@ -13,6 +13,22 @@ missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
 
+## NEXT: Dapur Umum (`dapur-umum.html`) — mock-up QA pass 2 survey (2026-09-25 22:42, not started)
+
+Live screenshot `/volume1/docker/osiun-playwright-check/rn-dapur-desktop.png` vs `assets/img/mockup/dapur umum.png`. Same gap
+pattern as Shelter before its fix — reuse the Shelter recipe (page-scoped class on `<main>`, KPI icon-left layout, 11px tables):
+1. KPI cards stacked/large (label wraps 3 lines, card 160px tall vs ~100 in the mock-up); Kapasitas KPI lacks the progress bar the
+   mock-up has under "Produksi Hari Ini".
+2. Stok Bahan Dapur: STATUS column clipped off (table wider than the panel) — same bug Shelter's Daftar Shelter had.
+3. Row 2 panel heights unequal (Target Layanan / donut / stok / kebutuhan); "Kebutuhan Bahan Kritis" title wraps 3 lines.
+4. Jadwal Masak / Distribusi Makanan Hari Ini show "Belum ada … hari ini" — real data (no meal production today for
+   event-sim-001), not a bug; mock-up shows time-slot cards → consider rendering the schedule as cards even when empty.
+5. Title "Dapur Umum Simulasi" (posko title) vs mock-up "Dapur Umum"; header right = status/user pills (mock-up: bell + event picker)
+   — same open item as Shelter.
+6. Status Gas / BBM: only LPG tile, no "sisa untuk ± N hari" and no BBM tile (check whether consumption rate data exists before
+   building it).
+Stop rule this evening: the NAS powers off at 23:00 — nothing was changed on this page.
+
 ## Shelter & Akomodasi (`shelter-detail.html`) — mock-up QA pass 2 (2026-09-25) — DEPLOYED
 
 - **Sanitasi & Air is real now** (was a "belum ada field-nya" note): new fields on **RN Shelter Occupancy** `toilet_total`,

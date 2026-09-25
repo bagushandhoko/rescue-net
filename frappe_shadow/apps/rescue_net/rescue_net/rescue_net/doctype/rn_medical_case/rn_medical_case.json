@@ -43,6 +43,14 @@
    "reqd": 1
   },
   {
+   "fieldname": "patient_kind",
+   "label": "Jenis Pasien",
+   "fieldtype": "Select",
+   "options": "manusia\nsatwa",
+   "default": "manusia",
+   "description": "Satwa tidak dihitung sebagai Jiwa Berisiko."
+  },
+  {
    "fieldname": "age_group",
    "label": "Kelompok Usia",
    "fieldtype": "Select",

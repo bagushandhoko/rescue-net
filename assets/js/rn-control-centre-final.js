@@ -1125,7 +1125,7 @@ function renderKpi(
   const pick = (dim, fallback) =>
     kt[dim] === null || kt[dim] === undefined ? fallback : kt[dim];
 
-  const risk = pick("kebutuhan", num(s.open_need_count) + num(s.shelter_need_count));
+  const risk = pick("jiwa", 0);
   const critical = pick("posko_kritis", dashboard.map?.summary?.critical || 0);
   const flows = pick("distribusi", s.distribution_flow_count || 0);
   const blocked = pick("distribusi_terhambat", 0);
@@ -1143,7 +1143,22 @@ function renderKpi(
     }
   }
 
-  kpi("kpiRisk", risk, base.kebutuhan, "kebutuhan");
+  kpi("kpiRisk", risk, base.jiwa, "jiwa terlayani");
+  // Jiwa Berisiko terdiri dari 3 aspek; satu orang bisa masuk >1 aspek,
+  // total per posko = aspek terbesar (tidak dobel).
+  const asp = kt.jiwa_aspects || {};
+  const aspText = [["logistik", "Logistik"], ["shelter", "Shelter"], ["medis", "Medis"]]
+    .map(([k, l]) => `${l} ${format(asp[k] || 0)}`).join(" · ");
+  setText("kpiRiskSub", aspText);
+  const riskCard = document.getElementById("kpiRisk")?.closest("article");
+  if (riskCard) {
+    riskCard.dataset.missing = kt.jiwa_missing || 0;
+    const miss = document.getElementById("kpiRiskMissing");
+    if (miss) {
+      miss.hidden = !kt.jiwa_missing;
+      miss.textContent = kt.jiwa_missing ? `${kt.jiwa_missing} posko belum lapor jiwa` : "";
+    }
+  }
   kpi("kpiPoskoCritical", critical, base.posko_kritis || dashboard.map?.summary?.total, "posko");
   // Bantuan mengalir: bar = porsi alur yang TIDAK terhambat
   kpi("kpiAidFlow", flows, base.distribusi, "alur", base.distribusi > 0 ? (flows - blocked) / base.distribusi : 0);
@@ -1156,9 +1171,10 @@ function renderKpi(
   // membuka poskonya. Organisasi tertutup hanya membagi ringkasan.
   drillCard(
     document.getElementById("kpiRisk"),
-    "kebutuhan",
-    "Jiwa Berisiko = kebutuhan logistik & shelter yang belum terpenuhi. "
-    + "Klik untuk rincian per kelompok."
+    "jiwa",
+    "Jiwa Berisiko = orang, per posko nilai terbesar dari: pasien yang masih "
+    + "ditangani, penghuni shelter yang melebihi kapasitas, dan jiwa yang "
+    + "membutuhkan kebutuhan mendesak yang belum dikirim. Klik untuk rincian per posko."
   );
 
   drillCard(

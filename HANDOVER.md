@@ -4,7 +4,7 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-25_ — NEW: Control Centre mock-up alignment (layout, KPI = drill totals, real sparklines) + komando terpusat round 3 (scheme admin UI for System Manager, posko functions carried by create-posko requests). Earlier: 2026-09-20 — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
+_Last updated: 2026-09-25_ — NEW: Jiwa Berisiko = PEOPLE (aspek logistik/shelter/medis); Control Centre mock-up alignment (layout, KPI = drill totals, real sparklines) + komando terpusat round 3 (scheme admin UI for System Manager, posko functions carried by create-posko requests). Earlier: 2026-09-20 — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
 (5 real poskos deleted by a test-cleanup script, fully restored from backup). Also: Posko Kritis KPI counts shelters over
 capacity AND critical needs with nothing en route (see "Posko Kritis: derived signals" sections below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
 domain data for the Krakatau active-disaster sim, then did the same for
@@ -12,6 +12,31 @@ domain data for the Krakatau active-disaster sim, then did the same for
 missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
+
+## Jiwa Berisiko = jumlah ORANG, 3 aspek (logistik · shelter · medis) (2026-09-25) — DEPLOYED
+
+Owner: "selesaikan jiwa beresiko ke jumlah orang … posko medis harus kirim juga info itu, shelter yang overload, kebutuhan logistik
+dikaitkan dengan jiwa". Before: Control Centre counted NEEDS (records), Bencana Aktif summed `rn_beneficiary_count` (people
+SERVED, not at risk). Now ONE model, `api_control_centre._jiwa_berisiko_by_posko(names)` → per posko `aspects`:
+- **medis** = open RN Medical Case rows of people (`case_status` in `_MEDICAL_OPEN_CASE`); new field **`RN Medical Case.patient_kind`**
+  (manusia default | satwa) — satwa excluded (KH-POSKO-SATWA's 3 animal cases were counted as "jiwa"; set to satwa). Form on
+  posko-medis-detail has the select; `api_medical.create_case(patient_kind=)`.
+- **shelter** = all occupants of a shelter over capacity (`_shelter_overcapacity_poskos`).
+- **logistik** = open critical/urgent RN Logistic Need with no flow moving to the posko → the people who need it: new field
+  **`RN Logistic Need.jiwa_terdampak`** ("Jiwa yang Membutuhkan"), else the posko's jiwa dilayani, else its shelter occupancy; if none →
+  `missing` ("data jiwa belum dilaporkan posko" / "Perlu dilengkapi"). Posko Logistik "Tambah Kebutuhan" form asks for it (required for
+  urgent/critical); `api_logistics.create_need(jiwa_terdampak=)`.
+- Per posko jiwa = the LARGEST aspect (same people appear in several); totals per aspect via `jiwa_aspect_totals` (can sum > total).
+- Used by: `kpi_totals` (`jiwa`, `jiwa_aspects`, `jiwa_missing`, base = Σ max(jiwa dilayani|occupancy, jiwa berisiko)), new drill
+  dimension **`jiwa`** (`_drill_jiwa`, org-gated like every drill), Control Centre KPI (value + "Logistik a · Shelter b · Medis c" +
+  "N posko belum lapor jiwa"), Bencana Aktif `jiwa_berisiko` per event AND per region + `jiwa_aspects` + `jiwa_missing_poskos` +
+  categories "Aspek Logistik/Shelter/Medis — N jiwa" and "Posko Belum Melaporkan Jumlah Jiwa" (before the older record-count
+  categories). Live: Simulasi Gempa 217 (Shelter 215, Medis 2, 5 poskos missing — the LD Landrover poskos have urgent needs but no
+  jiwa data; NOT invented, flagged for operators), Krakatau 213, Karhutla 120. CC == Bencana Aktif for every event.
+- **Real bug fixed:** `api_logistics.create_need` never set `disaster_event`, so needs reported from the Posko Logistik form were
+  invisible on every event board. Root fix in `RNLogisticNeed.before_insert` (inherit the posko's event); the 4 affected rows (GOR
+  Kalianda, Krakatau sim, 2026-09-12) back-filled by explicit name.
+- Migrate run (2 new columns). Playwright `rn-jiwa.js` 6/6 (CC KPI+drill, BA aspect categories + per-posko rows with links, no JS errors).
 
 ## Control Centre (`war-room.html`) — mock-up alignment pass (2026-09-25) — DEPLOYED
 
@@ -44,7 +69,7 @@ Closes the 4 open gaps from the 2026-09-05 pass (map zoom was already done):
   real OSM tiles/photos vs the mock-up's drawn map/photos, real sparkline shapes. Not below the 2 % bar — stopped after 3 rounds
   per the diff methodology; owner to judge the side-by-sides `pair-*.png` there.
 - **Not done / notes:** mock-up's "↑ 12% dari kemarin" deltas (no per-day history of KPI values is stored — would need a daily
-  snapshot doctype); "Jiwa Berisiko" is still a count of unmet needs, not people. `control-centre-v4.html` (unlinked duplicate page
+  snapshot doctype); "Jiwa Berisiko" — now people, see the section above. `control-centre-v4.html` (unlinked duplicate page
   sharing the JS/CSS) still has the old markup: it keeps working (2-table fallback kept) but its 3-card grid now leaves an empty 4th
   column. Cache-buster `?v=ccmock-20260925e`.
 

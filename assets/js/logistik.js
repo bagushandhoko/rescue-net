@@ -1014,6 +1014,12 @@ function setupLogisticNeedForm() {
 
   form.addEventListener("submit", async e => {
     e.preventDefault();
+    const jiwa = form.jiwa_terdampak ? form.jiwa_terdampak.value.trim() : "";
+    if (["urgent", "critical"].includes(form.priority.value) && !(Number(jiwa) > 0)) {
+      if (msg) msg.textContent = "Isi jumlah jiwa yang membutuhkan untuk kebutuhan urgent/critical.";
+      form.jiwa_terdampak && form.jiwa_terdampak.focus();
+      return;
+    }
     try {
       if (msg) msg.textContent = "Menyimpan kebutuhan…";
       await RN_FRAPPE.call(
@@ -1025,7 +1031,8 @@ function setupLogisticNeedForm() {
           unit: form.unit.value.trim(),
           quantity_mode: "exact",
           urgency: form.priority.value,
-          needed_before: form.needed_before.value.trim()
+          needed_before: form.needed_before.value.trim(),
+          jiwa_terdampak: jiwa || null
         },
         { method: "POST" }
       );

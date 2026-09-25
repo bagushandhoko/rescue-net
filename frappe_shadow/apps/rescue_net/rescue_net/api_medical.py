@@ -341,6 +341,7 @@ def create_case(
     severity="mild",
     triage_status="green",
     treatment_notes=None,
+    patient_kind="manusia",
 ):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -372,6 +373,7 @@ def create_case(
     doc.gender = gender
     doc.severity = severity
     doc.triage_status = triage_status
+    doc.patient_kind = "satwa" if str(patient_kind or "").strip().lower() == "satwa" else "manusia"
     doc.case_status = "active"
     doc.treatment_notes = (
         treatment_notes

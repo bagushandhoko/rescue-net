@@ -71,6 +71,11 @@ class RNLogisticNeed(Document):
         if not self.created_by_user:
             self.created_by_user = _actor()
 
+        # Every board filters needs by disaster event; a need reported from a
+        # posko form without it was invisible everywhere. Inherit the posko's.
+        if not self.disaster_event and self.posko:
+            self.disaster_event = frappe.db.get_value("RN Posko", self.posko, "disaster_event")
+
         if not self.raw_item_text:
             self.raw_item_text = self.item_name or self.title or ""
 

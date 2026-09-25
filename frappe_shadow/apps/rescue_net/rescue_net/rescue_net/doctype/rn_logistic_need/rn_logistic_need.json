@@ -65,6 +65,13 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "jiwa_terdampak",
+   "label": "Jiwa yang Membutuhkan",
+   "fieldtype": "Int",
+   "non_negative": 1,
+   "description": "Jumlah orang yang membutuhkan barang ini. Dipakai untuk KPI Jiwa Berisiko."
+  },
+  {
    "fieldname": "need_status",
    "label": "Need Status",
    "fieldtype": "Data"

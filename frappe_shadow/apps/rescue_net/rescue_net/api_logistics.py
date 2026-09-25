@@ -302,6 +302,7 @@ def create_need(
     estimate_text=None,
     urgency="normal",
     needed_before=None,
+    jiwa_terdampak=None,
 ):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -334,6 +335,8 @@ def create_need(
     doc.estimate_text = estimate_text
     doc.urgency = urgency
     doc.needed_before = needed_before
+    if jiwa_terdampak not in (None, ""):
+        doc.jiwa_terdampak = max(0, int(flt(jiwa_terdampak)))
     doc.need_status = "open"
     doc.insert(ignore_permissions=True)
 

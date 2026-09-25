@@ -595,6 +595,16 @@ body {
   color: var(--green);
 }
 
+.cc-kpis em.cc-kpi-warn {
+  color: var(--orange);
+
+  font-weight: 600;
+}
+
+.cc-kpis em.cc-kpi-warn[hidden] {
+  display: none;
+}
+
 .cc-kpi-bar {
   grid-column: 1 / -1;
   align-self: end;

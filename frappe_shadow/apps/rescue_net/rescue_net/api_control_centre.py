@@ -2097,6 +2097,7 @@ _DRILL_DELIVERED_OFFER = {
 }
 
 _DRILL_TITLES = {
+    "jiwa": "Jiwa Berisiko per Posko",
     "kebutuhan": "Kebutuhan Lapangan Belum Terpenuhi",
     "posko_kritis": "Posko Berstatus Kritis",
     "distribusi": "Alur Distribusi Bantuan",
@@ -2261,6 +2262,135 @@ def _derived_critical_reasons(posko_names):
     return reasons
 
 
+_JIWA_NEED_URGENCY = {"critical", "urgent"}
+
+
+def _jiwa_berisiko_by_posko(posko_names):
+    """posko name -> {"jiwa": people at risk, "aspects": {"medis"|"shelter"|"logistik": people},
+    "reasons": [..], "missing": bool}.
+
+    PEOPLE, not records. Per posko the largest of three deterministic signals
+    (max, not sum: the same people show up in several of them):
+      * medis    — open RN Medical Case rows of people (1 case = 1 patient;
+                 `patient_kind` = satwa is excluded);
+      * shelter  — a shelter over its capacity: all its current occupants;
+      * logistik — an open critical/urgent RN Logistic Need with no
+                   distribution flow moving to the posko: the people that need
+                   it (`jiwa_terdampak` on the need, else the posko's jiwa
+                   dilayani, else its shelter occupancy).
+    `missing` = a logistics risk exists but the posko never reported how many
+    people it concerns, so it counts 0 — shown as "data jiwa belum dilaporkan"
+    so the posko can fix its data instead of silently disappearing.
+    Used by the Control Centre KPI + drill and the Bencana Aktif board, so all
+    of them show the same number."""
+    names = [n for n in (posko_names or []) if n]
+    out = {}
+    if not names:
+        return out
+
+    def slot(p):
+        return out.setdefault(p, {"jiwa": 0, "reasons": [], "missing": False, "_by": {}})
+
+    # medis
+    if frappe.db.exists("DocType", "RN Medical Case"):
+        per = {}
+        has_kind = "patient_kind" in cols("RN Medical Case")
+        for c in frappe.get_all("RN Medical Case", filters={"posko": ["in", names]},
+                                fields=["posko", "case_status"] + (["patient_kind"] if has_kind else []),
+                                limit_page_length=5000):
+            if str(c.get("patient_kind") or "manusia").lower() == "satwa":
+                continue  # animals are treated here but are not "jiwa"
+            if str(c.get("case_status") or "active").lower() in _MEDICAL_OPEN_CASE:
+                per[c.get("posko")] = per.get(c.get("posko"), 0) + 1
+        for p, n in per.items():
+            slot(p)["_by"]["medis"] = n
+            slot(p)["reasons"].append("%d pasien masih ditangani" % n)
+
+    # shelter overload
+    for p, o in _shelter_overcapacity_poskos(names).items():
+        slot(p)["_by"]["shelter"] = int(o["occupancy"])
+        slot(p)["reasons"].append("shelter melebihi kapasitas")
+
+    # logistik: open critical/urgent needs with nothing en route
+    needs = {}
+    ncols = cols("RN Logistic Need")
+    nfields = ["posko", "urgency", "need_status", "item_name"] + (["jiwa_terdampak"] if "jiwa_terdampak" in ncols else [])
+    for n in frappe.get_all("RN Logistic Need", filters={"posko": ["in", names]},
+                            fields=nfields, limit_page_length=5000):
+        if str(n.get("urgency") or "").lower() not in _JIWA_NEED_URGENCY:
+            continue
+        if str(n.get("need_status") or "open").lower() in _DRILL_CLOSED_NEED:
+            continue
+        needs.setdefault(n.get("posko"), []).append(n)
+    if needs and frappe.db.exists("DocType", "RN Distribution Flow"):
+        for f in frappe.get_all("RN Distribution Flow", filters={"destination_posko": ["in", list(needs)]},
+                                fields=["destination_posko", "flow_status"], limit_page_length=5000):
+            if str(f.get("flow_status") or "").lower() not in _DRILL_BLOCKED_FLOW:
+                needs.pop(f.get("destination_posko"), None)
+    if needs:
+        bene = {r.name: int(_num(r.get("rn_beneficiary_count")))
+                for r in frappe.get_all("RN Posko", filters={"name": ["in", list(needs)]},
+                                        fields=["name"] + (["rn_beneficiary_count"] if "rn_beneficiary_count" in cols("RN Posko") else []),
+                                        limit_page_length=1000)}
+        occ = {}
+        if frappe.db.exists("DocType", "RN Shelter Occupancy"):
+            for o in frappe.get_all("RN Shelter Occupancy", filters={"posko": ["in", list(needs)]},
+                                    fields=["posko", "current_occupancy"], limit_page_length=2000):
+                occ[o.get("posko")] = max(occ.get(o.get("posko"), 0), int(_num(o.get("current_occupancy"))))
+        for p, rows in needs.items():
+            declared = max([int(_num(r.get("jiwa_terdampak"))) for r in rows] or [0])
+            people = declared or bene.get(p) or occ.get(p) or 0
+            s_ = slot(p)
+            items = sorted({r.get("item_name") or "-" for r in rows})
+            s_["reasons"].append("%d kebutuhan mendesak belum dikirim (%s)" % (len(rows), ", ".join(items[:3])))
+            if people:
+                s_["_by"]["logistik"] = people
+            else:
+                s_["missing"] = True
+
+    for p, s_ in out.items():
+        s_["aspects"] = {k: int(v) for k, v in s_.pop("_by").items()}
+        s_["jiwa"] = max(s_["aspects"].values() or [0])
+        if s_["missing"] and not s_["jiwa"]:
+            s_["reasons"].append("data jiwa belum dilaporkan posko")
+    return out
+
+
+JIWA_ASPECTS = (("logistik", "Logistik"), ("shelter", "Shelter"), ("medis", "Medis"))
+
+
+def jiwa_aspect_totals(jiwa_by):
+    """People per aspect across poskos. Aspects overlap (the same people can be
+    in an overloaded shelter AND wait for an urgent need), so their sum can be
+    larger than the Jiwa Berisiko total, which takes the largest aspect per posko."""
+    return {k: sum(j["aspects"].get(k, 0) for j in jiwa_by.values()) for k, _ in JIWA_ASPECTS}
+
+
+def _aspect_text(aspects):
+    return " · ".join("%s %s" % (label, _fmt(aspects[k])) for k, label in JIWA_ASPECTS if aspects.get(k))
+
+
+def _drill_jiwa(event, res, limit):
+    """"Jiwa Berisiko" drill: one row per posko, quantity = people at risk."""
+    names = _event_posko_names(event)
+    titles = {p.name: p.title for p in frappe.get_all(
+        "RN Posko", filters={"name": ["in", names or [""]]}, fields=["name", "title"], limit_page_length=1000)}
+    rows = []
+    for p, j in sorted(_jiwa_berisiko_by_posko(names).items(), key=lambda kv: -kv[1]["jiwa"]):
+        rows.append({
+            "id": p,
+            "title": ("%s jiwa berisiko" % _fmt(j["jiwa"])) if j["jiwa"] else "Jumlah jiwa belum dilaporkan",
+            "detail": ((_aspect_text(j["aspects"]) + " — ") if j["aspects"] else "") + "; ".join(j["reasons"]),
+            "quantity": j["jiwa"],
+            "unit": "jiwa",
+            "gap": j["jiwa"],
+            "status": "perlu dilengkapi" if j["missing"] and not j["jiwa"] else None,
+            "priority": "critical" if j["jiwa"] else None,
+            "_posko": p,
+        })
+    return rows[:limit]
+
+
 def _reasons_visible_to_viewer(posko_names):
     """Subset of posko_names whose derived-critical reasons the current viewer
     may see (effective share mode "full"). Fails closed: any error -> none."""
@@ -2368,6 +2498,7 @@ def _drill_kebutuhan(event, res, limit):
         fields=_sf("RN Logistic Need", [
             "name", "item_name", "quantity", "unit", "urgency",
             "need_status", "posko", "needed_before", "legacy_payload", "modified",
+            "jiwa_terdampak",
         ]),
         order_by="modified desc",
         limit_page_length=limit,
@@ -2396,7 +2527,9 @@ def _drill_kebutuhan(event, res, limit):
             "detail": (
                 f"butuh {_fmt(required)} {n.get('unit') or ''}".strip()
                 + (f" · realisasi {_fmt(realized)}" if realized else "")
+                + (f" · untuk {_fmt(n.get('jiwa_terdampak'))} jiwa" if n.get("jiwa_terdampak") else "")
             ),
+            "jiwa": int(_num(n.get("jiwa_terdampak"))),
             "quantity": required,
             "unit": n.get("unit"),
             "gap": max(0.0, required - realized),
@@ -2723,6 +2856,7 @@ def _drill_search(event, res, limit):
 
 
 _DRILL_BUILDERS = {
+    "jiwa": _drill_jiwa,
     "kebutuhan": _drill_kebutuhan,
     "posko_kritis": _drill_posko_kritis,
     "distribusi": _drill_distribusi,
@@ -2860,7 +2994,7 @@ def kpi_drilldown(disaster_event, dimension, limit=500):
 # The six top KPI tiles + the bottom module cards. Each value is the SAME row count its drill-down
 # (`kpi_drilldown`) lists, so a tile can never disagree with its own detail;
 # `base` is the denominator the tile's bar is drawn against.
-KPI_DIMENSIONS = ("kebutuhan", "posko_kritis", "distribusi",
+KPI_DIMENSIONS = ("jiwa", "kebutuhan", "posko_kritis", "distribusi",
                   "distribusi_terhambat", "medis", "donasi",
                   # bottom module cards
                   "stok", "relawan", "program", "search")
@@ -2880,6 +3014,28 @@ def _shelter_need_count(event):
     return frappe.db.count("RN Shelter Need", {"posko": ["in", names]}) if names else 0
 
 
+def _jiwa_dilayani_total(event):
+    """People the event's poskos serve: jiwa dilayani (rn_beneficiary_count),
+    else the posko's shelter occupancy, but at least its jiwa berisiko — the
+    denominator of the Jiwa Berisiko bar."""
+    names = _event_posko_names(event)
+    if not names:
+        return 0
+    has_bene = "rn_beneficiary_count" in cols("RN Posko")
+    bene = {r.name: int(_num(r.get("rn_beneficiary_count"))) for r in frappe.get_all(
+        "RN Posko", filters={"name": ["in", names]},
+        fields=["name"] + (["rn_beneficiary_count"] if has_bene else []), limit_page_length=1000)}
+    occ = {}
+    if frappe.db.exists("DocType", "RN Shelter Occupancy"):
+        for o in frappe.get_all("RN Shelter Occupancy", filters={"posko": ["in", names]},
+                                fields=["posko", "current_occupancy"], limit_page_length=2000):
+            occ[o.get("posko")] = max(occ.get(o.get("posko"), 0), int(_num(o.get("current_occupancy"))))
+    # people at risk at a posko are people it serves too (e.g. patients at a
+    # posko that never filled jiwa dilayani) — never let the base fall below them
+    risk = _jiwa_berisiko_by_posko(names)
+    return sum(max(bene.get(p) or occ.get(p, 0), (risk.get(p) or {}).get("jiwa", 0)) for p in names)
+
+
 def kpi_totals(event, posko_total=None):
     try:
         from rescue_net.access_policy import rn_actor
@@ -2890,12 +3046,18 @@ def kpi_totals(event, posko_total=None):
     out = {}
     for dim in KPI_DIMENSIONS:
         try:
-            out[dim] = len(_DRILL_BUILDERS[dim](event, res, 500))
+            rows = _DRILL_BUILDERS[dim](event, res, 500)
+            # jiwa = people (sum of the drill rows' quantity), everything else = rows
+            out[dim] = int(sum(_num(r.get("quantity")) for r in rows)) if dim == "jiwa" else len(rows)
         except Exception:
             frappe.log_error(frappe.get_traceback(), "kpi_totals %s" % dim)
             out[dim] = None
     flows = _event_count("RN Distribution Flow", event)
+    jiwa_by = _jiwa_berisiko_by_posko(_event_posko_names(event))
+    out["jiwa_missing"] = sum(1 for j in jiwa_by.values() if j["missing"] and not j["jiwa"])
+    out["jiwa_aspects"] = jiwa_aspect_totals(jiwa_by)
     out["base"] = {
+        "jiwa": _jiwa_dilayani_total(event),
         "kebutuhan": _event_count("RN Logistic Need", event) + _shelter_need_count(event),
         "posko_kritis": posko_total if posko_total is not None else _event_count("RN Posko", event),
         "distribusi": flows,
@@ -3549,11 +3711,52 @@ def active_disasters_board(limit=60):
         # _operate_href() every other "go operate this posko" link in this
         # module already uses (posko-medis-detail / shelter-detail /
         # dapur-umum / posko-logistik / posko-distribusi / posko-detail).
-        jiwa_categories = _ba_jiwa_categories(
+        # People at risk (not people served): same per-posko model as the
+        # Control Centre KPI / "jiwa" drill — _jiwa_berisiko_by_posko.
+        jiwa_by = _jiwa_berisiko_by_posko([p["name"] for p in poskos])
+
+        def _jiwa_item(pname, detail):
+            return {
+                "title": posko_title.get(pname) or pname,
+                "region": posko_region.get(pname) or "Lintas wilayah",
+                "detail": detail,
+                "count": jiwa_by[pname]["jiwa"],
+                "href": _operate_href(posko_by_name.get(pname, {"name": pname}), short_ev),
+            }
+
+        no_data = [p for p, j in jiwa_by.items() if j["missing"] and not j["jiwa"]]
+        aspect_why = {
+            "logistik": "jiwa yang kebutuhan mendesaknya belum dikirim",
+            "shelter": "penghuni shelter yang melebihi kapasitas",
+            "medis": "pasien yang masih ditangani",
+        }
+        jiwa_categories = []
+        for key, label in JIWA_ASPECTS:
+            members = sorted((p for p, j in jiwa_by.items() if j["aspects"].get(key)),
+                             key=lambda p: -jiwa_by[p]["aspects"][key])
+            items = []
+            for p in members:
+                it = _jiwa_item(p, "%s jiwa (%s) · %s" % (
+                    _fmt(jiwa_by[p]["aspects"][key]), aspect_why[key], "; ".join(jiwa_by[p]["reasons"])))
+                it["count"] = jiwa_by[p]["aspects"][key]
+                items.append(it)
+            jiwa_categories.append({
+                "key": "jiwa_" + key,
+                "label": "Aspek %s — %s jiwa" % (label, _fmt(sum(i["count"] for i in items))),
+                "count": sum(i["count"] for i in items),
+                "items": items,
+            })
+        jiwa_categories.append({
+            "key": "jiwa_belum_lapor",
+            "label": "Posko Belum Melaporkan Jumlah Jiwa",
+            "count": len(no_data),
+            "items": [_jiwa_item(p, "; ".join(jiwa_by[p]["reasons"])) for p in no_data],
+        })
+        jiwa_categories = jiwa_categories + _ba_jiwa_categories(
             event_id, short_ev, posko_by_name, posko_title, posko_region
         )
-
-        jiwa = sum(int(_num(p.get("rn_beneficiary_count"))) for p in poskos)
+        jiwa = sum(j["jiwa"] for j in jiwa_by.values())
+        jiwa_missing = sum(1 for j in jiwa_by.values() if j["missing"] and not j["jiwa"])
         pengungsi = sum(
             int(_num(p.get("rn_beneficiary_count")))
             for p in poskos
@@ -3570,7 +3773,7 @@ def active_disasters_board(limit=60):
                 "last_updated": None,
             })
             row["posko_count"] += 1
-            row["jiwa_berisiko"] += int(_num(p.get("rn_beneficiary_count")))
+            row["jiwa_berisiko"] += (jiwa_by.get(p["name"]) or {}).get("jiwa", 0)
             sit = _ba_situation_of(p)
             if _SIT_RANK[sit] > _SIT_RANK[row["situation"]]:
                 row["situation"] = sit
@@ -3631,6 +3834,8 @@ def active_disasters_board(limit=60):
             "started_at": _ba_iso(ev.get("started_at")),
             "last_updated": _ba_iso(last_updated),
             "jiwa_berisiko": jiwa,
+            "jiwa_missing_poskos": jiwa_missing,
+            "jiwa_aspects": jiwa_aspect_totals(jiwa_by),
             "pengungsi": pengungsi,
             "kebutuhan_kritis": len(crit_needs),
             "distribusi_terhambat": len(blocked_flows),

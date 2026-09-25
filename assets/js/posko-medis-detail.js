@@ -408,6 +408,9 @@ function setupCaseForm() {
             age_group:
               form.age_group.value.trim(),
 
+            patient_kind:
+              form.patient_kind ? form.patient_kind.value : "manusia",
+
             gender:
               form.gender.value.trim(),
 

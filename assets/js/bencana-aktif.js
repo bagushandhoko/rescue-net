@@ -142,13 +142,13 @@
     if (focusEv) {
       if (kind === "kebutuhan") sub = fmt(focusEv.kebutuhan_kritis) + " item di " + focusEv.name;
       else if (kind === "distribusi") sub = fmt(focusEv.distribusi_terhambat) + " item di " + focusEv.name;
-      else if (kind === "jiwa") sub = fmt(focusEv.jiwa_berisiko) + " jiwa dilayani posko di " + focusEv.name;
+      else if (kind === "jiwa") sub = fmt(focusEv.jiwa_berisiko) + " jiwa berisiko di " + focusEv.name + (focusEv.jiwa_missing_poskos ? " · " + focusEv.jiwa_missing_poskos + " posko belum melaporkan jumlah jiwa" : "");
     } else if (kind === "kebutuhan")
       sub = fmt(state.totals.kebutuhan_kritis) + " item · klik untuk buka posko & isi bantuan";
     else if (kind === "distribusi")
       sub = fmt(state.totals.distribusi_terhambat) + " item";
     else if (kind === "jiwa")
-      sub = "Total " + fmt(state.totals.jiwa_berisiko) + " jiwa dilayani posko";
+      sub = "Total " + fmt(state.totals.jiwa_berisiko) + " jiwa berisiko (pasien ditangani, penghuni shelter overload, jiwa yang kebutuhan mendesaknya belum dikirim)";
     else sub = fmt(state.totals.bencana_aktif) + " bencana berstatus aktif";
     $("#baDrillSub").textContent = sub;
     var m = $("#baDrill");

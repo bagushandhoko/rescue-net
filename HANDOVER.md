@@ -29,8 +29,8 @@ both events now.
   "1 / Lokasi"), 11px tables with ellipsis + title tooltips, compact Kebutuhan Dasar, compact warnings with Penting/Perhatian
   chips, rows 2.3fr/1fr/1fr and 2fr/1.25fr/1fr (`.rn-sh-row-b`; mobile rule updated for its specificity). Fixed: Daftar Shelter's
   Okupansi/Status and other right-hand columns were clipped off entirely. Kelompok Rentan KPI note = "% dari penghuni".
-- **Remaining vs mock-up:** "Okupansi" header in Akomodasi Relawan clipped by a few px (site sidebar is 300px vs mock-up 225px —
-  global, not changed); header right side still status/user pills (mock-up: bell + event picker); no pixel-diff scores for this page
+- Akomodasi Relawan header no longer clipped (header "Okup.", Lokasi 90px; fixed 22:35 same day).
+- **Remaining vs mock-up:** header right side still status/user pills (mock-up: bell + event picker); no pixel-diff scores for this page
   yet (stopped for the 23:00 NAS shutdown). Screenshots `rn-shelter-*.png` in /volume1/docker/osiun-playwright-check.
 
 ## Jiwa Berisiko = jumlah ORANG, 3 aspek (logistik · shelter · medis) (2026-09-25) — DEPLOYED

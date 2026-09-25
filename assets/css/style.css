@@ -5346,6 +5346,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-sh-page .rn-table td { padding: 8px 5px; white-space: nowrap; }
 .rn-sh-page .rn-table td:first-child { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
 /* Daftar Shelter: Lokasi / Kelompok Rentan: Lokasi Terbanyak — truncate, full text in title */
+.rn-sh-page #akomodasiRelawanBody td:first-child { max-width: 90px; }
 .rn-sh-page #daftarShelterBody td:nth-child(2),
 .rn-sh-page #kelompokRentanBody td:nth-child(4) { max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
 .rn-sh-page #peringatanList { gap: 8px; }

@@ -2856,6 +2856,127 @@ def kpi_drilldown(disaster_event, dimension, limit=500):
     return _group_by_org(rows, dimension, res)
 
 
+
+# The six top KPI tiles + the bottom module cards. Each value is the SAME row count its drill-down
+# (`kpi_drilldown`) lists, so a tile can never disagree with its own detail;
+# `base` is the denominator the tile's bar is drawn against.
+KPI_DIMENSIONS = ("kebutuhan", "posko_kritis", "distribusi",
+                  "distribusi_terhambat", "medis", "donasi",
+                  # bottom module cards
+                  "stok", "relawan", "program", "search")
+
+
+def _event_count(doctype, event):
+    columns = cols(doctype)
+    flt = event_filters(columns, event)
+    return frappe.db.count(doctype, flt) if flt else 0
+
+
+def _shelter_need_count(event):
+    # same scope as _drill_kebutuhan: shelter needs of the event's poskos
+    if not frappe.db.exists("DocType", "RN Shelter Need"):
+        return 0
+    names = _event_posko_names(event)
+    return frappe.db.count("RN Shelter Need", {"posko": ["in", names]}) if names else 0
+
+
+def kpi_totals(event, posko_total=None):
+    try:
+        from rescue_net.access_policy import rn_actor
+        actor = rn_actor(required=False)
+    except Exception:
+        actor = None
+    res = _OrgResolver(actor)
+    out = {}
+    for dim in KPI_DIMENSIONS:
+        try:
+            out[dim] = len(_DRILL_BUILDERS[dim](event, res, 500))
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), "kpi_totals %s" % dim)
+            out[dim] = None
+    flows = _event_count("RN Distribution Flow", event)
+    out["base"] = {
+        "kebutuhan": _event_count("RN Logistic Need", event) + _shelter_need_count(event),
+        "posko_kritis": posko_total if posko_total is not None else _event_count("RN Posko", event),
+        "distribusi": flows,
+        "distribusi_terhambat": flows,
+        "medis": _event_count("RN Medical Case", event),
+        "donasi": _event_count("RN Aid Offer", event),
+    }
+    return out
+
+
+# Activity per Control Centre module card (the sparkline under each
+# bottom card). Real records only: count of records per period, dated by
+# `observed_at` when the doctype has it, else `creation`. Aggregate counts,
+# no per-posko detail, so it is as guest-safe as the card values themselves.
+TREND_SOURCES = {
+    "logistics": ("RN Logistic Need",),
+    "distribution": ("RN Distribution Flow",),
+    "medical": ("RN Medical Case",),
+    "volunteer": ("RN Volunteer Assignment",),
+    "program": ("RN Donor Program Update",),
+    "search_found": ("RN Missing Person Report", "RN Found Person Report"),
+}
+
+
+def activity_trends(event, buckets=14):
+    """Records per period since the disaster started (or since its first
+    record), split into up to `buckets` equal periods ending today — a
+    simulated/older event still shows how activity developed instead of a
+    flat "last 14 days" line. `days` = start date of each period."""
+    from frappe.utils import add_days, date_diff, getdate, nowdate
+
+    end = getdate(nowdate())
+    started = None
+    for field in ("started_at", "creation"):
+        try:
+            started = frappe.db.get_value("RN Disaster Event", event, field)
+        except Exception:
+            started = None
+        if started:
+            break
+    starts = []
+    for doctypes in TREND_SOURCES.values():
+        for doctype in doctypes:
+            columns = cols(doctype)
+            if "disaster_event" in columns:
+                date_col = "coalesce(`observed_at`, `creation`)" if "observed_at" in columns else "`creation`"
+                first = frappe.db.sql(
+                    "select min(date({d})) from `tab{t}` where `disaster_event` = %s".format(d=date_col, t=doctype), (event,))
+                if first and first[0][0]:
+                    starts.append(getdate(first[0][0]))
+    start = getdate(started) if started else (min(starts) if starts else add_days(end, -13))
+    if starts:
+        start = min([start] + starts)
+    span = max(1, date_diff(end, start) + 1)
+    n = max(2, min(int(buckets or 14), span))
+    step = span / float(n)
+    edges = [add_days(start, int(round(i * step))) for i in range(n)] + [add_days(end, 1)]
+    out = {"days": [str(d) for d in edges[:-1]], "period_days": round(step, 1)}
+    for key, doctypes in TREND_SOURCES.items():
+        series = [0] * n
+        for doctype in doctypes:
+            columns = cols(doctype)
+            if "disaster_event" not in columns:
+                continue
+            date_col = "coalesce(`observed_at`, `creation`)" if "observed_at" in columns else "`creation`"
+            rows = frappe.db.sql(
+                "select date({d}) as d, count(*) as n from `tab{t}` "
+                "where `disaster_event` = %(ev)s and date({d}) between %(start)s and %(end)s "
+                "group by date({d})".format(d=date_col, t=doctype),
+                {"ev": event, "start": start, "end": end}, as_dict=True,
+            )
+            for r in rows:
+                d = getdate(r.d)
+                for i in range(n):
+                    if edges[i] <= d < edges[i + 1]:
+                        series[i] += int(r.n or 0)
+                        break
+        out[key] = series
+    return out
+
+
 @frappe.whitelist(
     allow_guest=True
 )
@@ -2887,6 +3008,10 @@ def public_dashboard(
     evidence_rows = event_evidence(
         event
     )
+
+    if isinstance(context, dict):
+        context["trends"] = activity_trends(event)
+        context["kpi_totals"] = kpi_totals(event, posko_total=len(points))
 
     return {
         "viewer_mode":

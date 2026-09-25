@@ -4,7 +4,7 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-25_ — NEW: komando terpusat round 3 (scheme admin UI for System Manager, posko functions carried by create-posko requests). Earlier: 2026-09-20 — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
+_Last updated: 2026-09-25_ — NEW: Control Centre mock-up alignment (layout, KPI = drill totals, real sparklines) + komando terpusat round 3 (scheme admin UI for System Manager, posko functions carried by create-posko requests). Earlier: 2026-09-20 — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
 (5 real poskos deleted by a test-cleanup script, fully restored from backup). Also: Posko Kritis KPI counts shelters over
 capacity AND critical needs with nothing en route (see "Posko Kritis: derived signals" sections below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
 domain data for the Krakatau active-disaster sim, then did the same for
@@ -13,7 +13,42 @@ missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
 
-## Komando terpusat — round 3 (2026-09-25) — DEPLOYED, API/jsdom tests NOT yet run
+## Control Centre (`war-room.html`) — mock-up alignment pass (2026-09-25) — DEPLOYED
+
+Closes the 4 open gaps from the 2026-09-05 pass (map zoom was already done):
+- **#1 order** now = mock-up: header → 6 KPI → (Peta | Prioritas Keputusan | **Kebutuhan Kritis (72 Jam)** | Bukti) → module cards.
+  The old full-width 2-table "Kebutuhan Kritis" strip above the KPIs is gone; it is a card in the main grid (single table
+  Kebutuhan | Butuh | Tersedia | Gap, top 6 by gap, item click = existing `openNeedPoskoDrill`, "Lihat semua kebutuhan" =
+  `openDrill("kebutuhan")`). Prioritas has a level tag (Kritis/Tinggi/Sedang) on the right + "Lihat semua prioritas (N)"
+  toggle; Bukti has "Lihat semua bukti" → `evidence.html?event=`. Phone: peta, prioritas, kebutuhan (bukti hidden, as mock-up).
+- **#3 sparklines were ALWAYS empty** ("menunggu histori"): the frontend read `ctx.trends`, the backend never sent it. New
+  `api_control_centre.activity_trends(event)` — real record counts per period (dated `observed_at` else `creation`) from the
+  event start / first record to today in ≤14 equal periods (`days`, `period_days`); sources in `TREND_SOURCES`. Sparkline =
+  coloured line + area + dots, tooltip explains the period.
+- **#4 KPI bars** + sub-line "dari N …" and **a real consistency bug fixed**: 3 of 6 KPI tiles disagreed with their own
+  drill-down (Jiwa Berisiko read a non-existent `open_logistic_need_count` → 9 vs 29; Distribusi Terhambat was a regex over alert
+  text → 0 vs 7; Donasi counted all offers 17 vs 15 undistributed), and the Logistik module card showed 30 vs drill 16. New
+  `kpi_totals(event)` = `len(_DRILL_BUILDERS[dim](…))` for the 6 KPIs + 4 module dims, i.e. the SAME rows the drill lists, plus
+  `base` denominators (kebutuhan = logistic needs + shelter needs of the event's poskos, mirroring `_drill_kebutuhan`). Bar =
+  value/base (Bantuan Mengalir: share NOT blocked). Module status badges are deterministic rules (title on each badge):
+  Logistik Kritis/Waspada/Aman by open critical/urgent needs, Distribusi Terganggu if any blocked flow, etc.
+- **#5 header**: severity mapped to "Siaga Tingkat Tinggi"/…, inline with the title; absolute update time; event picker with pin;
+  **"Bagikan Situasi"** (Web Share API, else copies the URL). New icon `share` in `rn-icons.js`.
+- **CSS cleanup (root cause, not a new layer):** the "NORMAL TYPOGRAPHY OVERRIDE" block was 100 % dead — all 40 declarations were
+  re-declared by the same selectors in the "LARGE NORMAL TYPOGRAPHY" block right after it (checked by script) — deleted. New
+  rules were written into the base sections; font sizes changed in the one effective (LARGE) block.
+- **Measured** (`/volume1/docker/osiun-playwright-check/rn-cc-mock.js` + `cc-diff.js`, viewport 1290, live crop resized to the
+  mock-up crop, box-blur 6, pixelmatch 0.1): section heights now match the mock-up (KPI 160 vs 157, grid 385 vs 387, modules 208 vs
+  203). Diff: header 24.6 %, KPI 11.5 %, grid 26.9 %, modules 15.8 % (before this pass header 28 %, modules 30.8 %). The
+  remainder is content, not composition: different disaster title/text, the mock-up's illustrated colour icons vs our line icons,
+  real OSM tiles/photos vs the mock-up's drawn map/photos, real sparkline shapes. Not below the 2 % bar — stopped after 3 rounds
+  per the diff methodology; owner to judge the side-by-sides `pair-*.png` there.
+- **Not done / notes:** mock-up's "↑ 12% dari kemarin" deltas (no per-day history of KPI values is stored — would need a daily
+  snapshot doctype); "Jiwa Berisiko" is still a count of unmet needs, not people. `control-centre-v4.html` (unlinked duplicate page
+  sharing the JS/CSS) still has the old markup: it keeps working (2-table fallback kept) but its 3-card grid now leaves an empty 4th
+  column. Cache-buster `?v=ccmock-20260925e`.
+
+## Komando terpusat — round 3 (2026-09-25) — DEPLOYED & TESTED
 
 Closes decisions #4 and #6.
 - **#6 scheme after registration — System Manager UI.** New `api_command.scheme_admin_list()` (SM only: every org + scheme, parent,
@@ -35,10 +70,12 @@ Closes decisions #4 and #6.
   users → see below.
 - **Deployed** via `sudo docker cp` + `docker exec -u root chown 1000:1000 / chmod 644` (docker cp keeps the repo's restrictive
   mode — the backend could not read it until chmod) + restart; md5 container == repo. Existing public endpoints 200.
-- **NOT RUN:** `api_e2e.py` (new phases 14 = functions carried, 15 = SM scheme changes; needs a `sm@cmdtest.local` System Manager
-  test user now created by `setup_test_users.py`) and `page_jsdom.js` section H (SM panel). Reason: this session's permission
-  mode denied running `setup_test_users.py` / `clean_test_data.py` (bench scripts that write to the live DB). Run order in
-  `scripts/komando-tests/README.md`; `clean_test_data.py` now also deletes the scheme-change comments on test orgs.
+- **Tests (owner allowed docker exec):** `api_e2e.py` **100/100** (new phase 14 = functions carried, 15 = SM scheme changes incl.
+  the pending-request guard; SM test user `sm@cmdtest.local` from `setup_test_users.py`), `check_notify.py` **4/4** (N1 tightened to
+  exactly 1 WA for the numbered deputy — the old `>= 2` only passed thanks to leftover log rows), `page_jsdom.js` **47/47** (new
+  section H: SM scheme panel). jsdom must run on a CLEAN setup (after api_e2e the pusat user has 2 centres). Real-browser logged-in
+  run `rn-komando-ui.js`: 14 checks pass, then times out (NAS swap 100 %, a second browser context takes > 180 s) — environment,
+  not the page. Test data cleaned, poskos 43.
 - Still owner decisions (unchanged): #1 structural-field split, #2 "lower level" definition, #3 nearest pusat decides,
   #5 temp passwords are shown once on screen only (deliberately not sent over WA/email).
 

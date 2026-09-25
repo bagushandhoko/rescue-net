@@ -585,6 +585,32 @@ function renderEventSelector(
 }
 
 
+
+function wireShare(title) {
+  const btn = document.getElementById("ccShareBtn");
+  if (!btn || btn.dataset.wired) {
+    return;
+  }
+  btn.dataset.wired = "1";
+  btn.addEventListener("click", async () => {
+    const msg = document.getElementById("ccShareMsg");
+    const url = location.href;
+    const text = `Situasi terkini: ${title} — Control Centre Rescue-Net`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: text, text, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      if (msg) msg.textContent = "Tautan disalin";
+    } catch (err) {
+      if (err && err.name === "AbortError") return;
+      if (msg) msg.textContent = url;
+    }
+    if (msg) setTimeout(() => { msg.textContent = ""; }, 4000);
+  });
+}
+
 function renderHeader(ctx) {
   const disaster =
     ctx.disaster
@@ -606,11 +632,33 @@ function renderHeader(ctx) {
     title
   );
 
-  setText(
-    "severityBadge",
-    disaster.severity
-    || "-"
-  );
+  const sevLabel = {
+    critical: "Siaga Tingkat Tinggi",
+    high: "Siaga Tinggi",
+    medium: "Waspada",
+    low: "Pemantauan"
+  }[String(disaster.severity || "").toLowerCase()] || disaster.severity || "";
+  const sev = document.getElementById("severityBadge");
+  if (sev) {
+    sev.textContent = sevLabel;
+    sev.hidden = !sevLabel;
+    sev.dataset.level = String(disaster.severity || "").toLowerCase();
+  }
+
+  const abs = document.getElementById("lastUpdateAbsolute");
+  if (abs && ctx.generated_at) {
+    const d = new Date(String(ctx.generated_at).replace(" ", "T"));
+    abs.textContent = isNaN(d)
+      ? ""
+      : "• " + d.toLocaleString("id-ID", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) + " WIB";
+  }
+
+  wireShare(title);
+
+  const evMore = document.getElementById("ccEvidenceMore");
+  if (evMore) {
+    evMore.href = `evidence.html?event=${encodeURIComponent(eventId())}`;
+  }
 
   setText(
     "mapTitle",
@@ -630,7 +678,67 @@ function renderHeader(ctx) {
 }
 
 
+
+const CC_NEEDS_CARD_ROWS = 6;
+
+function needRow(row) {
+  const item = row.item_name || row.item_text || row.need_name || "Kebutuhan";
+  const need = num(row.quantity_required || row.required_quantity || row.quantity);
+  const realized = num(
+    row.realized_quantity || row.fulfilled_quantity || row.delivered_quantity
+    || row.quantity_fulfilled || row.quantity_delivered
+  );
+  return { item, need, realized, gap: Math.max(0, need - realized), unit: row.unit || "" };
+}
+
+function renderNeedsCard(ctx, host) {
+  const rows = (ctx.logistic_needs || [])
+    .filter(row => !["closed", "cancelled"].includes(String(row.status || "").toLowerCase()))
+    .map(needRow)
+    .sort((a, b) => b.gap - a.gap)
+    .slice(0, CC_NEEDS_CARD_ROWS);
+
+  host.innerHTML = rows.length
+    ? rows.map(r => `
+        <tr>
+          <td class="cc-need-item" data-need-item="${safe(r.item)}" role="button" tabindex="0"
+              title="${safe(r.item)}${r.unit ? ` (${safe(r.unit)})` : ""} — klik: lihat posko mana yang membutuhkan, pilih tujuan bantuan">
+            ${safe(r.item)}
+          </td>
+          <td>${format(r.need)}</td>
+          <td>${format(r.realized)}</td>
+          <td class="cc-need-gap">${format(r.gap)}</td>
+        </tr>
+      `).join("")
+    : `<tr><td colspan="4">Belum ada kebutuhan.</td></tr>`;
+
+  host.querySelectorAll("[data-need-item]").forEach(el => {
+    const go = () => openNeedPoskoDrill(el.dataset.needItem);
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        go();
+      }
+    });
+  });
+
+  const more = document.getElementById("ccNeedsMore");
+  if (more && !more.dataset.wired) {
+    more.dataset.wired = "1";
+    more.addEventListener("click", () => openDrill("kebutuhan"));
+  }
+}
+
 function renderNeeds(ctx) {
+  const single =
+    document.getElementById(
+      "criticalNeedsBody"
+    );
+  if (single) {
+    renderNeedsCard(ctx, single);
+    return;
+  }
   const left =
     document.getElementById(
       "criticalNeedsBodyLeft"
@@ -1010,52 +1118,38 @@ function renderKpi(
     ctx.alerts
     || [];
 
-  setText(
-    "kpiRisk",
-    num(
-      s.open_logistic_need_count
-    )
-    +
-    num(
-      s.shelter_need_count
-    )
-  );
+  // Nilai tiap kartu = jumlah baris yang sama dengan drill-down-nya
+  // (backend `kpi_totals`), jadi kartu tak bisa berbeda dari rinciannya.
+  const kt = ctx.kpi_totals || {};
+  const base = kt.base || {};
+  const pick = (dim, fallback) =>
+    kt[dim] === null || kt[dim] === undefined ? fallback : kt[dim];
 
-  setText(
-    "kpiPoskoCritical",
-    dashboard.map
-      ?.summary
-      ?.critical
-      || 0
-  );
+  const risk = pick("kebutuhan", num(s.open_need_count) + num(s.shelter_need_count));
+  const critical = pick("posko_kritis", dashboard.map?.summary?.critical || 0);
+  const flows = pick("distribusi", s.distribution_flow_count || 0);
+  const blocked = pick("distribusi_terhambat", 0);
+  const medical = pick("medis", s.medical_case_count || 0);
+  const donation = pick("donasi", s.aid_offer_count || 0);
 
-  setText(
-    "kpiAidFlow",
-    s.distribution_flow_count
-    || 0
-  );
+  function kpi(id, value, of, noun, ratio) {
+    setText(id, format(value));
+    setText(`${id}Sub`, of ? `dari ${format(of)} ${noun}` : "belum ada data");
+    const bar = document.getElementById(`${id}Bar`);
+    if (bar) {
+      const pct = of > 0 ? Math.max(0, Math.min(100, (ratio === undefined ? value / of : ratio) * 100)) : 0;
+      bar.style.width = `${pct.toFixed(0)}%`;
+      bar.parentElement.title = of > 0 ? `${pct.toFixed(0)}% ${noun}` : "";
+    }
+  }
 
-  setText(
-    "kpiBlockedDistribution",
-    alerts.filter(
-      a =>
-        /jalan|akses|route|distribution/i.test(
-          `${a.type || ""} ${a.message || ""}`
-        )
-    ).length
-  );
-
-  setText(
-    "kpiMedicalOverload",
-    s.medical_case_count
-    || 0
-  );
-
-  setText(
-    "kpiDonation",
-    s.aid_offer_count
-    || 0
-  );
+  kpi("kpiRisk", risk, base.kebutuhan, "kebutuhan");
+  kpi("kpiPoskoCritical", critical, base.posko_kritis || dashboard.map?.summary?.total, "posko");
+  // Bantuan mengalir: bar = porsi alur yang TIDAK terhambat
+  kpi("kpiAidFlow", flows, base.distribusi, "alur", base.distribusi > 0 ? (flows - blocked) / base.distribusi : 0);
+  kpi("kpiBlockedDistribution", blocked, base.distribusi_terhambat, "alur");
+  kpi("kpiMedicalOverload", medical, base.medis, "kasus");
+  kpi("kpiDonation", donation, base.donasi, "tawaran");
 
   // Setiap KPI membuka rincian lintas kelompok: daftar item/objek/
   // situasi di baliknya, dikelompokkan per organisasi; klik "Lanjut"
@@ -1437,6 +1531,17 @@ function renderMap(
 }
 
 
+let CC_PRIORITY_ALL = false;
+
+const CC_PRIORITY_TAG = {
+  critical: ["crit", "Kritis"],
+  high: ["high", "Tinggi"],
+  urgent: ["high", "Tinggi"],
+  medium: ["med", "Sedang"],
+  normal: ["med", "Sedang"],
+  low: ["low", "Rendah"]
+};
+
 function renderPriority(ctx) {
   const host =
     document.getElementById(
@@ -1453,10 +1558,19 @@ function renderPriority(ctx) {
       ctx.alerts
       || []
     )
-  ].slice(
-    0,
-    5
-  );
+  ];
+  const total = items.length;
+  items.splice(CC_PRIORITY_ALL ? total : 5);
+
+  const more = document.getElementById("ccPriorityMore");
+  if (more) {
+    more.hidden = total <= 5;
+    more.innerHTML = CC_PRIORITY_ALL ? "Tampilkan 5 teratas &uarr;" : `Lihat semua prioritas (${total}) &rarr;`;
+    more.onclick = () => {
+      CC_PRIORITY_ALL = !CC_PRIORITY_ALL;
+      renderPriority(ctx);
+    };
+  }
 
 
   host.innerHTML =
@@ -1490,6 +1604,10 @@ function renderPriority(ctx) {
                 </p>
 
               </div>
+              ${(() => {
+                const t = CC_PRIORITY_TAG[String(row.priority || row.severity || "").toLowerCase()];
+                return t ? `<em class="cc-pri-tag ${t[0]}">${t[1]}</em>` : "<i></i>";
+              })()}
 
             </div>
           `
@@ -1820,114 +1938,56 @@ function renderModules(ctx) {
     ctx.summary
     || {};
 
-  setText(
-    "moduleLogisticsValue",
-    s.stock_item_count
-    || 0
+  // Nilai = total drill-down yang sama (backend `kpi_totals`); status
+  // diturunkan dari data dengan aturan tetap (lihat title tiap badge).
+  const kt = ctx.kpi_totals || {};
+  const val = (dim, fallback) =>
+    kt[dim] === null || kt[dim] === undefined ? fallback : kt[dim];
+  const openNeeds = (ctx.logistic_needs || []).filter(
+    n => !["closed", "cancelled", "fulfilled"].includes(String(n.status || "").toLowerCase())
   );
+  const urg = u => openNeeds.filter(n => String(n.urgency || "").toLowerCase() === u).length;
+  const blocked = val("distribusi_terhambat", 0);
 
-  setText(
-    "moduleLogisticsDetail",
-    "item stok"
-  );
+  function mod(key, value, detail, status, level, why) {
+    setText(`module${key}Value`, format(value));
+    setText(`module${key}Detail`, detail);
+    const em = document.getElementById(`module${key}Status`);
+    if (em) {
+      em.textContent = status;
+      em.dataset.level = level;
+      em.title = why;
+    }
+  }
 
-  setText(
-    "moduleLogisticsStatus",
-    "Live"
-  );
+  const stock = val("stok", s.stock_item_count || 0);
+  const crit = urg("critical"), urgent = urg("urgent");
+  mod("Logistics", stock, "stok barang per posko",
+    crit ? "Kritis" : urgent ? "Waspada" : "Aman",
+    crit ? "bad" : urgent ? "warn" : "ok",
+    `Kritis bila ada kebutuhan berurgensi critical yang masih terbuka (${crit}); Waspada bila urgent (${urgent}).`);
 
+  const flows = val("distribusi", s.distribution_flow_count || 0);
+  mod("Distribution", flows, blocked ? `${format(blocked)} alur terhambat` : "alur distribusi",
+    !flows ? "Belum ada" : blocked ? "Terganggu" : "Lancar",
+    !flows ? "" : blocked ? "warn" : "ok",
+    "Terganggu bila ada alur distribusi macet / menunggu pickup.");
 
-  setText(
-    "moduleDistributionValue",
-    s.distribution_flow_count
-    || 0
-  );
+  const med = val("medis", s.medical_case_count || 0);
+  mod("Medical", med, "kasus medis", med ? "Aktif" : "Tidak ada kasus", med ? "warn" : "ok",
+    "Aktif bila ada kasus medis tercatat.");
 
-  setText(
-    "moduleDistributionDetail",
-    "flow distribusi"
-  );
+  const vol = val("relawan", s.volunteer_count || 0);
+  mod("Volunteer", vol, "penugasan relawan", vol ? "Siap" : "Belum ada", vol ? "ok" : "",
+    "Siap bila ada relawan yang ditugaskan.");
 
-  setText(
-    "moduleDistributionStatus",
-    "Live"
-  );
+  const prog = val("program", s.program_count || 0);
+  mod("Program", prog, "program berjalan", prog ? "Berjalan" : "Belum ada", prog ? "ok" : "",
+    "Berjalan bila ada program khusus / donasi terarah.");
 
-
-  setText(
-    "moduleMedicalValue",
-    s.medical_case_count
-    || 0
-  );
-
-  setText(
-    "moduleMedicalDetail",
-    "kasus medis"
-  );
-
-  setText(
-    "moduleMedicalStatus",
-    "Live"
-  );
-
-
-  setText(
-    "moduleVolunteerValue",
-    s.volunteer_count
-    || 0
-  );
-
-  setText(
-    "moduleVolunteerDetail",
-    "relawan"
-  );
-
-  setText(
-    "moduleVolunteerStatus",
-    "Live"
-  );
-
-
-  setText(
-    "moduleProgramValue",
-    s.program_count
-    || s.donor_program_count
-    || 0
-  );
-
-  setText(
-    "moduleProgramDetail",
-    "program"
-  );
-
-  setText(
-    "moduleProgramStatus",
-    "Live"
-  );
-
-
-  setText(
-    "moduleSearchValue",
-    (
-      num(
-        s.missing_person_count
-      )
-      +
-      num(
-        s.found_person_count
-      )
-    )
-  );
-
-  setText(
-    "moduleSearchDetail",
-    "laporan"
-  );
-
-  setText(
-    "moduleSearchStatus",
-    "Live"
-  );
+  const sf = val("search", num(s.missing_person_count) + num(s.found_person_count));
+  mod("Search", sf, "laporan hilang & ditemukan", sf ? "Aktif" : "Belum ada", sf ? "warn" : "",
+    "Aktif bila ada laporan orang hilang / ditemukan.");
 
   drillCard(
     document.getElementById("moduleLogisticsValue"),
@@ -2021,7 +2081,8 @@ async function renderAiConsolidationModule() {
 
 function renderMiniChart(
   id,
-  values
+  values,
+  meta
 ) {
   const host =
     document.getElementById(
@@ -2077,52 +2138,31 @@ function renderMiniChart(
     || 1;
 
 
-  const points =
-    nums.map(
-      (v,i) => {
-        const x =
-          2
-          +
-          i
-          *
-          96
-          /
-          (
-            nums.length
-            - 1
-          );
-
-        const y =
-          31
-          -
-          (
-            v - min
-          )
-          /
-          range
-          * 25;
-
-        return (
-          `${x},${y}`
-        );
-      }
-    ).join(" ");
-
+  const pts =
+    nums.map((v, i) => [
+      2 + i * 96 / (nums.length - 1),
+      44 - (v - min) / range * 36
+    ]);
+  const line = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
+  const area = `M2,46 L${line.replace(/ /g, " L")} L98,46 Z`;
+  // dots: zero-length round-capped strokes stay round when the SVG is stretched
+  const dots = pts.map(p => `M${p[0].toFixed(1)},${p[1].toFixed(1)}h0`).join(" ");
 
   host.innerHTML =
     `
-      <svg
-        viewBox="0 0 100 35"
-        preserveAspectRatio="none"
-      >
-        <polyline
-          points="${points}"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-        />
+      <svg viewBox="0 0 100 48" preserveAspectRatio="none" aria-hidden="true">
+        <path d="${area}" fill="currentColor" fill-opacity=".12" stroke="none"/>
+        <polyline points="${line}" fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+        <path d="${dots}" stroke="currentColor" stroke-width="4" stroke-linecap="round"
+              vector-effect="non-scaling-stroke"/>
       </svg>
     `;
+  if (meta && meta.days && meta.days.length) {
+    host.title =
+      `Jumlah catatan per periode ±${meta.period_days || 1} hari, `
+      + `${meta.days[0]} s.d. hari ini (total ${nums.reduce((a, b) => a + b, 0)})`;
+  }
 }
 
 
@@ -2191,32 +2231,38 @@ async function load() {
 
   renderMiniChart(
     "chartLogistics",
-    trends.logistics
+    trends.logistics,
+    trends
   );
 
   renderMiniChart(
     "chartDistribution",
-    trends.distribution
+    trends.distribution,
+    trends
   );
 
   renderMiniChart(
     "chartMedical",
-    trends.medical
+    trends.medical,
+    trends
   );
 
   renderMiniChart(
     "chartVolunteer",
-    trends.volunteer
+    trends.volunteer,
+    trends
   );
 
   renderMiniChart(
     "chartProgram",
-    trends.program
+    trends.program,
+    trends
   );
 
   renderMiniChart(
     "chartSearch",
-    trends.search_found
+    trends.search_found,
+    trends
   );
 
 

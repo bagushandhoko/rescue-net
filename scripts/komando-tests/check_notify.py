@@ -11,9 +11,10 @@ def check(name, cond, extra=""):
     ok, fail = (ok + 1, fail) if cond else (ok, fail + 1)
     print(("PASS " if cond else "FAIL ") + name + ("" if cond else "  -> " + str(extra)[:300]))
 new = logs("081234500002", "command_request_new")
-check("N1. wakil (bernomor HP) dikabari WA saat ada permintaan baru", len(new) >= 2 and all(l.context_type == "command_request" for l in new), new)
+# the numbered deputy is deputy for exactly ONE new request (phase 11); after being revoked they must not be told again
+check("N1. wakil (bernomor HP) dikabari WA saat ada permintaan baru — dan tidak lagi setelah dicabut", len(new) == 1 and all(l.context_type == "command_request" for l in new), new)
 check("N2. isi WA memuat ringkasan permintaan", all("Permintaan baru" in (l.body or "") for l in new), new)
 dec = logs("081234500001", "command_request_decided")
-check("N3. pemohon dikabari WA saat permintaannya diputuskan", len(dec) >= 1 and "DITERAPKAN" in (dec[0].body or ""), dec)
+check("N3. pemohon dikabari WA saat permintaannya diputuskan", any("DITERAPKAN" in (l.body or "") for l in dec), dec)
 check("N4. status log = simulated/sent (bukan failed)", all(l.status in ("simulated", "sent") for l in new + dec), [l.status for l in new + dec])
 print(f"notify ok={ok} fail={fail}")

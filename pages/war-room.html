@@ -17,7 +17,7 @@
 
   <link
     rel="stylesheet"
-    href="../assets/css/rn-control-centre-final.css?v=whypin-20260920"
+    href="../assets/css/rn-control-centre-final.css?v=ccmock-20260925e"
   >
 
   <link
@@ -100,15 +100,11 @@
     <!-- HEADER -->
     <header class="cc-header">
 
-      <div>
+      <div class="cc-header-title">
         <h1>
-          <span class="desktop-only">
-            Control Centre —
-          </span>
-
-          <span id="disasterName">
-            Memuat...
-          </span>
+          <span class="desktop-only">Control Centre —</span>
+          <span id="disasterName">Memuat...</span>
+          <span id="severityBadge" class="cc-severity" hidden></span>
         </h1>
 
         <div
@@ -118,134 +114,80 @@
 
         <p>
           Data diperbarui
-          <span id="lastUpdateRelative">
-            -
-          </span>
+          <span id="lastUpdateRelative">-</span>
+          <span id="lastUpdateAbsolute" class="cc-header-abs"></span>
         </p>
       </div>
 
       <div class="cc-header-actions">
 
-        <select id="activeEventSelect">
-          <option>Memuat...</option>
-        </select>
+        <label class="cc-event-pick">
+          <span class="cc-event-pick-icon" data-icon="map-pin" aria-hidden="true"></span>
+          <select id="activeEventSelect" aria-label="Pilih bencana">
+            <option>Memuat...</option>
+          </select>
+        </label>
 
-        <span
-          id="severityBadge"
-          class="cc-severity"
-        >
-          -
-        </span>
+        <button id="ccShareBtn" class="cc-share-btn" type="button">
+          <span data-icon="share" aria-hidden="true"></span>
+          Bagikan Situasi
+        </button>
+        <span id="ccShareMsg" class="cc-share-msg" role="status"></span>
 
       </div>
 
     </header>
 
 
-    <!-- KEBUTUHAN 2 KOLOM -->
-    <section class="cc-needs">
-
-      <div class="cc-section-title">
-        <strong>
-          Kebutuhan Kritis
-        </strong>
-
-        <span>
-          72 Jam • Kebutuhan vs Realisasi
-        </span>
-      </div>
-
-      <div class="cc-needs-grid">
-
-        <table>
-          <thead>
-            <tr>
-              <th>Kebutuhan</th>
-              <th>Butuh</th>
-              <th>Realisasi</th>
-              <th>Progress</th>
-              <th>Gap</th>
-            </tr>
-          </thead>
-
-          <tbody id="criticalNeedsBodyLeft">
-            <tr>
-              <td colspan="5">
-                Memuat...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-
-        <table>
-          <thead>
-            <tr>
-              <th>Kebutuhan</th>
-              <th>Butuh</th>
-              <th>Realisasi</th>
-              <th>Progress</th>
-              <th>Gap</th>
-            </tr>
-          </thead>
-
-          <tbody id="criticalNeedsBodyRight">
-            <tr>
-              <td colspan="5">
-                Memuat...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-      </div>
-
-    </section>
-
-
     <!-- KPI -->
     <section class="cc-kpis">
 
-      <article>
+      <article class="cc-kpi red">
         <span class="cc-kpi-icon red" data-icon="users"></span>
         <small>Jiwa Berisiko</small>
         <strong id="kpiRisk">-</strong>
-        <em>Live</em>
+        <em id="kpiRiskSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiRiskBar"></i></div>
       </article>
 
-      <article>
+      <article class="cc-kpi red">
         <span class="cc-kpi-icon red" data-icon="map-pin"></span>
         <small>Posko Kritis</small>
         <strong id="kpiPoskoCritical">-</strong>
-        <em>Live</em>
+        <em id="kpiPoskoCriticalSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiPoskoCriticalBar"></i></div>
       </article>
 
-      <article>
+      <article class="cc-kpi green">
         <span class="cc-kpi-icon green" data-icon="truck"></span>
         <small>Bantuan Mengalir</small>
         <strong id="kpiAidFlow">-</strong>
-        <em>Live</em>
+        <em id="kpiAidFlowSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiAidFlowBar"></i></div>
       </article>
 
-      <article>
+      <article class="cc-kpi orange">
         <span class="cc-kpi-icon orange" data-icon="alert-circle"></span>
         <small>Distribusi Terhambat</small>
         <strong id="kpiBlockedDistribution">-</strong>
-        <em>Live</em>
+        <em id="kpiBlockedDistributionSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiBlockedDistributionBar"></i></div>
       </article>
 
-      <article>
+      <article class="cc-kpi red">
         <span class="cc-kpi-icon red" data-icon="cross"></span>
         <small>Medis Overload</small>
         <strong id="kpiMedicalOverload">-</strong>
-        <em>Live</em>
+        <em id="kpiMedicalOverloadSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiMedicalOverloadBar"></i></div>
       </article>
 
-      <article>
+      <article class="cc-kpi orange">
         <span class="cc-kpi-icon orange" data-icon="gift"></span>
         <small>Donasi Menumpuk</small>
         <strong id="kpiDonation">-</strong>
-        <em>Live</em>
+        <em id="kpiDonationSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiDonationBar"></i></div>
       </article>
 
     </section>
@@ -308,6 +250,38 @@
           Memuat...
         </div>
 
+        <button type="button" class="cc-card-more" id="ccPriorityMore">Lihat semua prioritas &rarr;</button>
+
+      </article>
+
+
+      <!-- KEBUTUHAN KRITIS -->
+      <article class="cc-card cc-needs-card">
+
+        <header>
+          <strong>
+            Kebutuhan Kritis <small>(72 Jam)</small>
+          </strong>
+        </header>
+
+        <div class="cc-needs-scroll">
+          <table class="cc-needs-table">
+            <thead>
+              <tr>
+                <th>Kebutuhan</th>
+                <th>Butuh</th>
+                <th>Tersedia</th>
+                <th>Gap</th>
+              </tr>
+            </thead>
+            <tbody id="criticalNeedsBody">
+              <tr><td colspan="4">Memuat...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <button type="button" class="cc-card-more" id="ccNeedsMore">Lihat semua kebutuhan &rarr;</button>
+
       </article>
 
 
@@ -327,6 +301,8 @@
           Memuat...
         </div>
 
+        <a class="cc-card-more" id="ccEvidenceMore" href="evidence.html">Lihat semua bukti &rarr;</a>
+
       </article>
 
     </section>
@@ -336,10 +312,11 @@
     <section class="cc-modules">
 
       <article>
-        <b>Logistik</b>
+        <b><span class="cc-mod-icon orange" data-icon="package" aria-hidden="true"></span>Logistik</b>
         <strong id="moduleLogisticsValue">-</strong>
         <span id="moduleLogisticsDetail">-</span>
-        <div class="cc-mini-chart" id="chartLogistics"></div>
+        <div class="cc-mini-chart orange" id="chartLogistics"></div>
+        <small class="cc-mod-status-label">Status</small>
         <em id="moduleLogisticsStatus">-</em>
       </article>
 
@@ -351,42 +328,47 @@
       </article>
 
       <article>
-        <b>Distribusi</b>
+        <b><span class="cc-mod-icon orange" data-icon="truck" aria-hidden="true"></span>Distribusi</b>
         <strong id="moduleDistributionValue">-</strong>
         <span id="moduleDistributionDetail">-</span>
-        <div class="cc-mini-chart" id="chartDistribution"></div>
+        <div class="cc-mini-chart orange" id="chartDistribution"></div>
+        <small class="cc-mod-status-label">Status</small>
         <em id="moduleDistributionStatus">-</em>
       </article>
 
       <article>
-        <b>Medis</b>
+        <b><span class="cc-mod-icon red" data-icon="heart" aria-hidden="true"></span>Medis</b>
         <strong id="moduleMedicalValue">-</strong>
         <span id="moduleMedicalDetail">-</span>
-        <div class="cc-mini-chart" id="chartMedical"></div>
+        <div class="cc-mini-chart red" id="chartMedical"></div>
+        <small class="cc-mod-status-label">Status</small>
         <em id="moduleMedicalStatus">-</em>
       </article>
 
       <article>
-        <b>Relawan</b>
+        <b><span class="cc-mod-icon green" data-icon="users" aria-hidden="true"></span>Relawan</b>
         <strong id="moduleVolunteerValue">-</strong>
         <span id="moduleVolunteerDetail">-</span>
-        <div class="cc-mini-chart" id="chartVolunteer"></div>
+        <div class="cc-mini-chart green" id="chartVolunteer"></div>
+        <small class="cc-mod-status-label">Status</small>
         <em id="moduleVolunteerStatus">-</em>
       </article>
 
       <article>
-        <b>Program</b>
+        <b><span class="cc-mod-icon orange" data-icon="clipboard-check" aria-hidden="true"></span>Program</b>
         <strong id="moduleProgramValue">-</strong>
         <span id="moduleProgramDetail">-</span>
-        <div class="cc-mini-chart" id="chartProgram"></div>
+        <div class="cc-mini-chart orange" id="chartProgram"></div>
+        <small class="cc-mod-status-label">Status</small>
         <em id="moduleProgramStatus">-</em>
       </article>
 
       <article>
-        <b>Search & Found</b>
+        <b><span class="cc-mod-icon orange" data-icon="search" aria-hidden="true"></span>Search & Found</b>
         <strong id="moduleSearchValue">-</strong>
         <span id="moduleSearchDetail">-</span>
-        <div class="cc-mini-chart" id="chartSearch"></div>
+        <div class="cc-mini-chart red" id="chartSearch"></div>
+        <small class="cc-mod-status-label">Status</small>
         <em id="moduleSearchStatus">-</em>
       </article>
 
@@ -519,11 +501,11 @@
 ></script>
 
 <script
-  src="../assets/js/rn-icons.js?v=kpiicon-20260904"
+  src="../assets/js/rn-icons.js?v=shareicon-20260925"
 ></script>
 
 <script
-  src="../assets/js/rn-control-centre-final.js?v=whypin3-20260920"
+  src="../assets/js/rn-control-centre-final.js?v=ccmock-20260925e"
 ></script>
 
 <script

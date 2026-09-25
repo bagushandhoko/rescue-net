@@ -301,7 +301,9 @@ check("15. (persiapan) ada permintaan menunggu di pusat", ok_(r) and r[1].get("p
 R_WAIT = r[1].get("command_request") if ok_(r) else None
 r = sm.call("api_command", "set_coordination_scheme", organization=P, scheme="mandiri", reason="uji")
 check("15. ke mandiri ditolak selama ada permintaan menunggu", not ok_(r) and "menunggu" in str(r[1]).lower(), r)
-pusat.call("api_command", "decide_command_request", request=R_WAIT, decision="reject", note="uji selesai")
+for q in pusat.call("api_command", "command_overview", organization=P)[1]["requests"]:
+    if q["status"] == "pending":   # incl. the one phase 13 left waiting
+        pusat.call("api_command", "decide_command_request", request=q["name"], decision="reject", note="uji selesai")
 r = sm.call("api_command", "set_coordination_scheme", organization=P, scheme="mandiri", reason="uji ganti skema")
 check("15. SM mengubah pusat ke mandiri (setelah antrean kosong)", ok_(r) and r[1].get("changed") and r[1]["scheme"] == "mandiri", r)
 r = charlie.call("api_community_cluster", "update_posko", posko=A, address="Jl. Bebas 1")

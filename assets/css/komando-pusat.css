@@ -1,5 +1,6 @@
 /* Komando Pusat — halaman pengelola pusat; mengikuti token warna style.css */
 .kp-head-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.kp-center-pick[hidden], #kpBadge[hidden] { display: none; }
 .kp-center-pick { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
 .kp-center-pick select { font: inherit; padding: 4px 6px; border: 1px solid var(--line2); border-radius: 8px; background: var(--panel); color: inherit; }
 .kp-notice { border: 1px solid var(--line2); border-radius: 12px; padding: 16px 18px; background: var(--panel2); max-width: 680px; margin-bottom: 14px; }

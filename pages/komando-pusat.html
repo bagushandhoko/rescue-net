@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="../assets/css/style.css?v=balistfix-20260914">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
-  <link rel="stylesheet" href="../assets/css/komando-pusat.css?v=komando-20260920" />
+  <link rel="stylesheet" href="../assets/css/komando-pusat.css?v=komando-20260925" />
 </head>
 <body>
 <div class="app-shell kp-shell">
@@ -153,11 +153,21 @@
         </div>
       </section>
     </div>
+    <!-- System Manager: skema koordinasi setelah pendaftaran -->
+    <section class="content-grid rn-md-wide" id="kpSchemeAdmin" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Skema Koordinasi Organisasi (System Manager)</h3><p>Skema dipilih saat organisasi didaftarkan; setelah itu hanya System Manager yang dapat mengubahnya. Alasan wajib dan dicatat di organisasi.</p></div>
+          <input type="search" id="kpSchemeSearch" placeholder="Cari organisasi" class="kp-search">
+        </div>
+        <p class="rn-muted" id="kpSchemeMsg"></p>
+        <div class="kp-table-wrap"><table class="kp-table" id="kpSchemeTable"></table></div>
+      </div>
+    </section>
   </main>
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/komando-pusat.js?v=komando-20260920c"></script>
+<script src="../assets/js/komando-pusat.js?v=komando-20260925"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=navevent-20260914"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

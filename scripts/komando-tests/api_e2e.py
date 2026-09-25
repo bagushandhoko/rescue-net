@@ -268,4 +268,47 @@ r = charlie.call("api_community_cluster", "update_posko", posko=A, address="Jl. 
 check("13. pengajuan tetap tercatat walau ada penerima WA", ok_(r) and r[1].get("pending"), r)
 print("PHONES", PH_DEP, PH_REQ, "REQ_FILED", r[1].get("command_request") if ok_(r) else None, "REQ_DECIDED", R_DEP)
 
+# ---------- 14. permintaan tambah posko membawa fungsi posko; diterapkan saat disetujui ----------
+r = pusat.call("api_command", "create_command_account", organization=P, full_name="Operator Fungsi", email="fn@cmdtest.local", posko=A, role="posko_operator")
+fnop = C("fn@cmdtest.local", r[1].get("temporary_password") if ok_(r) else "x")
+r = fnop.call("api_community_cluster", "create_posko", title="[UJI-KOMANDO] Posko Fungsi", posko_type="logistics", address="Jl. Fungsi 1",
+              organization=P, functions='["shelter","kitchen"]', logistics_role="")
+check("14. operator: tambah posko + fungsi = permintaan", ok_(r) and r[1].get("pending"), r)
+R_FN = r[1].get("command_request") if ok_(r) else None
+ov = pusat.call("api_command", "command_overview", organization=P)[1]
+rq = [x for x in ov["requests"] if x["name"] == R_FN]
+check("14. ringkasan permintaan menyebut fungsi yang diajukan", rq and "shelter, kitchen" in rq[0]["summary"], rq)
+r = pusat.call("api_command", "decide_command_request", request=R_FN, decision="approve")
+check("14. disetujui & diterapkan", ok_(r) and r[1]["status"] == "applied", r)
+new_posko = (json.loads(r[1]["apply_result"]) if ok_(r) else {}).get("posko")
+r = pusat.call("api_control_centre", "posko_functions", posko=new_posko)
+fns = sorted((r[1] or {}).get("functions") or []) if ok_(r) else None
+check("14. posko baru langsung punya fungsi yang diajukan (shelter+kitchen, bukan jenis utama logistik)", fns == ["kitchen", "shelter"], r)
+
+# ---------- 15. System Manager mengubah skema (dengan alasan & syarat) ----------
+sm = C("sm@cmdtest.local")
+r = pusat.call("api_command", "scheme_admin_list")
+check("15. bukan System Manager tak bisa melihat daftar skema", not ok_(r), r)
+r = sm.call("api_command", "command_status")
+check("15. command_status melaporkan is_system_manager", ok_(r) and r[1].get("is_system_manager") is True, r)
+r = sm.call("api_command", "scheme_admin_list")
+rows = {o["name"]: o for o in r[1]["organizations"]} if ok_(r) else {}
+check("15. SM melihat daftar skema (pusat uji = terpusat, pemilik tercatat)", rows.get(P, {}).get("scheme") == "terpusat" and rows.get(P, {}).get("owner"), rows.get(P))
+r = sm.call("api_command", "set_coordination_scheme", organization=M, scheme="terpusat")
+check("15. ubah skema tanpa alasan ditolak", not ok_(r) and "alasan" in str(r[1]).lower(), r)
+r = charlie.call("api_community_cluster", "update_posko", posko=A, address="Jl. Tunggu 9")
+check("15. (persiapan) ada permintaan menunggu di pusat", ok_(r) and r[1].get("pending"), r)
+R_WAIT = r[1].get("command_request") if ok_(r) else None
+r = sm.call("api_command", "set_coordination_scheme", organization=P, scheme="mandiri", reason="uji")
+check("15. ke mandiri ditolak selama ada permintaan menunggu", not ok_(r) and "menunggu" in str(r[1]).lower(), r)
+pusat.call("api_command", "decide_command_request", request=R_WAIT, decision="reject", note="uji selesai")
+r = sm.call("api_command", "set_coordination_scheme", organization=P, scheme="mandiri", reason="uji ganti skema")
+check("15. SM mengubah pusat ke mandiri (setelah antrean kosong)", ok_(r) and r[1].get("changed") and r[1]["scheme"] == "mandiri", r)
+r = charlie.call("api_community_cluster", "update_posko", posko=A, address="Jl. Bebas 1")
+check("15. setelah mandiri: perubahan struktural oleh anggota tak lagi jadi permintaan", ok_(r) and not r[1].get("pending"), r)
+r = sm.call("api_command", "set_coordination_scheme", organization=P, scheme="terpusat", reason="uji kembali")
+check("15. SM mengembalikan ke terpusat", ok_(r) and r[1]["scheme"] == "terpusat", r)
+r = sm.call("api_command", "set_coordination_scheme", organization=P, scheme="terpusat", reason="sama")
+check("15. skema sama = tidak berubah", ok_(r) and r[1].get("changed") is False, r)
+
 print(f"ok={ok} fail={fail}")

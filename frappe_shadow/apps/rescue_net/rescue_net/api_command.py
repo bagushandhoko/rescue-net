@@ -87,6 +87,7 @@ def command_status(organization=None):
         "is_command_authority": bool(chain) and command.is_command_authority(actor, org),
         "needs_approval": bool(chain) and command.needs_approval(actor, org),
         "owned_centers": _owned_centers(actor),
+        "is_system_manager": is_system_manager(),
     }
 
 
@@ -342,7 +343,12 @@ def _apply(doc):
         requester = _requester_actor(doc.requested_by)
         if not requester:
             frappe.throw("Akun pemohon tidak ditemukan.")
+        functions = payload.pop("functions", None)
+        logistics_role = payload.pop("logistics_role", None)
         res = _create_posko_impl(requester, assignment_status="approved", **payload)
+        if functions or logistics_role:
+            from rescue_net.api_control_centre import set_posko_functions
+            set_posko_functions(posko=res.get("posko"), functions=functions, logistics_role=logistics_role)
         return {"posko": res.get("posko")}
     if doc.action == "update_posko":
         if payload.get("privacy"):
@@ -435,10 +441,53 @@ def withdraw_command_request(request):
 # --------------------------------------------------------------------
 
 @frappe.whitelist()
-def set_coordination_scheme(organization, scheme):
+def scheme_admin_list():
+    """System Manager: every organisation with its coordination scheme, so the
+    scheme can be changed after registration (komando-pusat.html admin panel)."""
+    if not is_system_manager():
+        frappe.throw("Hanya System Manager yang dapat mengelola skema koordinasi.", frappe.PermissionError)
+    orgs = frappe.get_all(
+        "RN Organization",
+        fields=["name", "title", "parent_organization", "coordination_scheme", "status"],
+        order_by="title asc", limit_page_length=1000,
+    )
+    names = [o.name for o in orgs]
+    owners = {}
+    for m in frappe.get_all(
+        "RN Organization Membership",
+        filters={"organization": ["in", names or [""]], "membership_role": "owner", "status": "approved"},
+        fields=["organization", "user_account"], limit_page_length=2000,
+    ):
+        owners.setdefault(m.organization, m.user_account)
+    owner_titles = {
+        a.name: a.title for a in frappe.get_all(
+            "RN User Account", filters={"name": ["in", sorted(set(owners.values())) or [""]]},
+            fields=["name", "title"], limit_page_length=2000,
+        )
+    }
+    pending = {}
+    for r in frappe.get_all(
+        "RN Command Change Request", filters={"status": "pending"},
+        fields=["command_organization"], limit_page_length=5000,
+    ):
+        pending[r.command_organization] = pending.get(r.command_organization, 0) + 1
+    titles = {o.name: o.title for o in orgs}
+    return {"organizations": [{
+        "name": o.name, "title": o.title, "status": o.status,
+        "scheme": o.coordination_scheme or command.MANDIRI,
+        "parent_organization": o.parent_organization,
+        "parent_title": titles.get(o.parent_organization) if o.parent_organization else None,
+        "owner": owner_titles.get(owners.get(o.name)) or owners.get(o.name),
+        "pending_requests": pending.get(o.name, 0),
+    } for o in orgs]}
+
+
+@frappe.whitelist()
+def set_coordination_scheme(organization, scheme, reason=None):
     """The scheme is chosen when the pusat registers; afterwards only a System
     Manager can change it (an existing organisation must not be turned into a
-    command organisation by its own members)."""
+    command organisation by its own members). A reason is required and kept as
+    a comment on the organisation."""
     if not is_system_manager():
         frappe.throw("Hanya System Manager yang dapat mengubah skema koordinasi.", frappe.PermissionError)
     scheme = (scheme or "").strip().lower()
@@ -446,5 +495,27 @@ def set_coordination_scheme(organization, scheme):
         frappe.throw("Skema tidak valid (mandiri/terpusat).")
     if not frappe.db.exists("RN Organization", organization):
         frappe.throw("Organisasi tidak ditemukan.")
+    reason = (reason or "").strip()
+    if not reason:
+        frappe.throw("Alasan perubahan skema wajib diisi.")
+    current = command.scheme_of(organization)
+    if current == scheme:
+        return {"organization": organization, "scheme": scheme, "changed": False}
+    if scheme == command.MANDIRI:
+        # Requests filed to this pusat would be left without anyone to decide them.
+        waiting = frappe.db.count("RN Command Change Request",
+                                  {"command_organization": organization, "status": "pending"})
+        if waiting:
+            frappe.throw("Masih ada %d permintaan menunggu keputusan pusat ini. Putuskan dulu sebelum "
+                         "mengubah skema ke mandiri." % waiting)
+    else:
+        # A pusat without an owner has no one but System Manager to run it.
+        if not frappe.db.exists("RN Organization Membership", {
+                "organization": organization, "membership_role": "owner", "status": "approved"}):
+            frappe.throw("Organisasi ini belum punya pemilik (owner) yang disetujui; "
+                         "komando terpusat butuh pemilik sebagai super admin.")
     frappe.db.set_value("RN Organization", organization, "coordination_scheme", scheme)
-    return {"organization": organization, "scheme": scheme}
+    frappe.get_doc("RN Organization", organization).add_comment(
+        "Info", "Skema koordinasi diubah %s → %s oleh %s. Alasan: %s"
+        % (current, scheme, frappe.session.user, reason[:500]))
+    return {"organization": organization, "scheme": scheme, "changed": True, "previous": current}

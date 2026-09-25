@@ -20,6 +20,7 @@ n["member"] = gone("RN Organization Membership", "organization", orgs) + gone("R
 n["merge"] = gone("RN Org Merge Request", "requester_organization", orgs) + gone("RN Org Merge Request", "target_organization", orgs)
 n["posko"] = gone("RN Posko", "name", poskos)
 n["acct"] = gone("RN User Account", "name", accts)
+n["comment"] = gone("Comment", "reference_name", orgs)   # set_coordination_scheme audit comments
 n["org"] = gone("RN Organization", "name", orgs)
 # WhatsApp log rows the tests generated (simulated sends to the fixed test numbers 0812345000xx)
 logs = frappe.get_all("RN Notification Log", filters={"to_number": ["like", "%812345000%"], "context_type": "command_request"}, pluck="name")

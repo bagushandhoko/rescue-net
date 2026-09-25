@@ -226,6 +226,37 @@ const hidden = (w, id) => w.document.getElementById(id).hidden;
   check("G wakil tak punya tombol kelola pada wakil lain/dirinya (hanya pemilik)", !selfRow.querySelector("button"));
   w.close();
 
+  // ================= H. panel skema koordinasi (System Manager) =================
+  w = openPage("komando-pusat.html", ["komando-pusat.js"], pusat);
+  await until(() => !hidden(w, "kpCenterView"));
+  await sleep(1500);
+  check("H bukan System Manager: panel skema tersembunyi", hidden(w, "kpSchemeAdmin"));
+  w.close();
+  const smSess = await login("sm@cmdtest.local");
+  check("H System Manager login", smSess.loginStatus === 200, smSess.loginStatus);
+  w = openPage("komando-pusat.html", ["komando-pusat.js"], smSess);
+  await until(() => !hidden(w, "kpSchemeAdmin") && /UJI-KOMANDO/.test(text(w, "kpSchemeTable")));
+  const orgRow = () => [...w.document.querySelectorAll("#kpSchemeTable tbody tr")].find((tr) => tr.textContent.indexOf(org.title) !== -1);
+  check("H SM: panel skema tampil, org uji = Komando terpusat", !!orgRow() && /Komando terpusat/.test(orgRow().textContent), text(w, "kpSchemeTable").slice(0, 300));
+  w.prompt = () => "";
+  orgRow().querySelector("[data-scheme-to]") && orgRow().querySelector("[data-scheme-to]").click();
+  await sleep(800);
+  check("H SM: tanpa alasan tidak ada perubahan", /Komando terpusat/.test(orgRow().textContent));
+  const btn = orgRow().querySelector("[data-scheme-to]");
+  if (btn) {
+    w.prompt = () => "uji jsdom";
+    btn.click();
+    await until(() => /Mandiri/.test(orgRow().textContent) || /menunggu/i.test(text(w, "kpSchemeMsg")));
+    check("H SM: ubah ke mandiri lewat UI", /Mandiri/.test(orgRow().textContent), text(w, "kpSchemeMsg"));
+    w.prompt = () => "uji jsdom kembali";
+    orgRow().querySelector("[data-scheme-to]").click();
+    await until(() => /Komando terpusat/.test(orgRow().textContent));
+    check("H SM: kembalikan ke terpusat lewat UI", /Komando terpusat/.test(orgRow().textContent));
+  } else {
+    check("H SM: tombol ubah tersedia (tidak ada permintaan menunggu)", false, orgRow().textContent);
+  }
+  w.close();
+
   console.log(`ok=${ok} fail=${fail}`);
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error("CRASH", e); process.exit(2); });

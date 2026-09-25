@@ -4,7 +4,7 @@
 > this repo and immediately know **what is done, what is in flight, what is next**.
 > Update this file in the same commit as the work it describes.
 
-_Last updated: 2026-09-20_ — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
+_Last updated: 2026-09-25_ — NEW: komando terpusat round 3 (scheme admin UI for System Manager, posko functions carried by create-posko requests). Earlier: 2026-09-20 — NEW: optional **komando terpusat** scheme (see "Komando terpusat" section) + an INCIDENT note
 (5 real poskos deleted by a test-cleanup script, fully restored from backup). Also: Posko Kritis KPI counts shelters over
 capacity AND critical needs with nothing en route (see "Posko Kritis: derived signals" sections below); earlier on 2026-09-16 — seeded missing medis/shelter/laporan
 domain data for the Krakatau active-disaster sim, then did the same for
@@ -12,6 +12,35 @@ domain data for the Krakatau active-disaster sim, then did the same for
 missing pieces there) and fixed a real `_norm_posko()` lookup bug that
 gap exposed — so Bencana Aktif links show real data end-to-end for
 both events now.
+
+## Komando terpusat — round 3 (2026-09-25) — DEPLOYED, API/jsdom tests NOT yet run
+
+Closes decisions #4 and #6.
+- **#6 scheme after registration — System Manager UI.** New `api_command.scheme_admin_list()` (SM only: every org + scheme, parent,
+  owner, pending-request count). `set_coordination_scheme(organization, scheme, reason)` now **requires a reason** (kept as an
+  `Info` comment on the RN Organization), refuses **terpusat → mandiri while requests to that pusat are still pending**
+  (they would be orphaned), refuses **mandiri → terpusat when the org has no approved owner** (nobody to run it), and returns
+  `changed: False` for a no-op. `command_status` now also returns `is_system_manager`. Page: `komando-pusat.html` panel
+  "Skema Koordinasi Organisasi (System Manager)" (`#kpSchemeAdmin`, search + one button per org, reason via prompt); shown only
+  when `command_status.is_system_manager`, independent of the pusat view.
+- **#4 posko functions travel with a create-posko request.** `create_posko(…, functions=None, logistics_role=None)`: on the
+  command-request path they go into the payload (summary says "(fungsi: …)"); `_apply` pops them, creates the posko for the
+  requester, then calls `set_posko_functions`. The direct (non-command) path ignores them — `registrasi-posko.js` still calls
+  `set_posko_functions` after a direct create; it now computes the functions BEFORE `create_posko` and sends them along.
+- **Guest header fix:** the empty "Pusat:" select and "Bukan pusat" badge showed for guests (`.kp-center-pick { display:flex }`
+  beat `[hidden]`). Fixed in `komando-pusat.css` + badge hidden when logged out.
+- **Real browser, finally:** `/volume1/docker/osiun-playwright-check/rn-komando-guest.js` (docker `playwright:v1.56.1-noble
+  --network host`, single context, desktop 1400 + phone 390) **12/12** — guest notice, no horizontal scroll, no off-screen
+  elements, no JS errors; screenshots `rn-komando-guest-*.png`. The full logged-in UI run (`rn-komando-ui.js`) still needs test
+  users → see below.
+- **Deployed** via `sudo docker cp` + `docker exec -u root chown 1000:1000 / chmod 644` (docker cp keeps the repo's restrictive
+  mode — the backend could not read it until chmod) + restart; md5 container == repo. Existing public endpoints 200.
+- **NOT RUN:** `api_e2e.py` (new phases 14 = functions carried, 15 = SM scheme changes; needs a `sm@cmdtest.local` System Manager
+  test user now created by `setup_test_users.py`) and `page_jsdom.js` section H (SM panel). Reason: this session's permission
+  mode denied running `setup_test_users.py` / `clean_test_data.py` (bench scripts that write to the live DB). Run order in
+  `scripts/komando-tests/README.md`; `clean_test_data.py` now also deletes the scheme-change comments on test orgs.
+- Still owner decisions (unchanged): #1 structural-field split, #2 "lower level" definition, #3 nearest pusat decides,
+  #5 temp passwords are shown once on screen only (deliberately not sent over WA/email).
 
 ## Komando terpusat — follow-ups (2026-09-20, same day) — DONE & DEPLOYED
 

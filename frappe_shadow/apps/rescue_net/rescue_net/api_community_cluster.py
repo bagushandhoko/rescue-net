@@ -766,11 +766,14 @@ def create_posko(
     officer_in_charge_name=None, officer_in_charge_role=None,
     officer_in_charge_phone=None, officer_in_charge_email=None,
     emergency_contact=None, facilities=None, rn_beneficiary_count=None,
-    public_detail=None,
+    public_detail=None, functions=None, logistics_role=None,
 ):
     """Also backs the "Registrasi & Verifikasi Posko" mock-up's form — the
     extra kwargs are all optional so existing callers (Organisasi & Posko's
     simpler "Tambah Posko" form) keep working unchanged.
+    `functions` / `logistics_role` are only used when the posko becomes a
+    komando-terpusat request (set on approval); a direct create keeps calling
+    `api_control_centre.set_posko_functions` afterwards.
     """
     actor = _actor()
 
@@ -808,8 +811,10 @@ def create_posko(
                     "officer_in_charge_email": officer_in_charge_email,
                     "emergency_contact": emergency_contact, "facilities": facilities,
                     "rn_beneficiary_count": rn_beneficiary_count, "public_detail": public_detail,
+                    # the requested functions travel with the request and are set on approval
+                    "functions": functions, "logistics_role": logistics_role,
                 },
-                "Tambah posko: %s" % title,
+                "Tambah posko: %s" % title + (" (fungsi: %s)" % _functions_label(functions) if _functions_label(functions) else ""),
             )
 
     return _create_posko_impl(
@@ -818,6 +823,16 @@ def create_posko(
         officer_in_charge_phone, officer_in_charge_email, emergency_contact,
         facilities, rn_beneficiary_count, public_detail,
     )
+
+
+def _functions_label(functions):
+    import json
+    if isinstance(functions, str):
+        try:
+            functions = json.loads(functions)
+        except ValueError:
+            functions = functions.split(",")
+    return ", ".join(str(f).strip() for f in (functions or []) if str(f).strip())
 
 
 def _create_posko_impl(

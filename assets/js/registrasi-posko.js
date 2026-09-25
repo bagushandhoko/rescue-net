@@ -318,6 +318,15 @@
       var latlng = String(fd.get("latlng") || "").split(",").map(function (s) { return s.trim(); });
 
       msg.textContent = "Menyimpan…";
+      // fungsi posko (boleh > 1): checkbox + fallback ke jenis utama
+      var functions = [];
+      if (form.fn_logistics && form.fn_logistics.checked) functions.push("logistics");
+      if (form.fn_shelter && form.fn_shelter.checked) functions.push("shelter");
+      if (form.fn_kitchen && form.fn_kitchen.checked) functions.push("kitchen");
+      var primary = fd.get("posko_type");
+      if (!functions.length && ["logistics", "shelter", "kitchen"].indexOf(primary) !== -1) {
+        functions.push(primary);
+      }
       try {
         var res = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.create_posko", {
           title: fd.get("title"),
@@ -334,24 +343,18 @@
           facilities: fd.get("facilities"),
           rn_beneficiary_count: fd.get("rn_beneficiary_count"),
           public_detail: fd.get("public_detail"),
+          // dipakai hanya bila posko menjadi permintaan ke pusat komando
+          functions: JSON.stringify(functions),
+          logistics_role: fd.get("logistics_role") || "",
         }, { method: "POST" });
 
         // Komando terpusat: posko baru dari level bawah = permintaan ke pusat.
         if (res && res.pending) {
-          msg.textContent = "Permintaan tambah posko diajukan ke pusat komando dan menunggu persetujuan.";
+          msg.textContent = "Permintaan tambah posko diajukan ke pusat komando dan menunggu persetujuan" + (functions.length ? " (fungsi: " + functions.join(", ") + " ikut diajukan)." : ".");
           form.reset();
           return;
         }
 
-        // fungsi posko (boleh > 1): checkbox + fallback ke jenis utama
-        var functions = [];
-        if (form.fn_logistics && form.fn_logistics.checked) functions.push("logistics");
-        if (form.fn_shelter && form.fn_shelter.checked) functions.push("shelter");
-        if (form.fn_kitchen && form.fn_kitchen.checked) functions.push("kitchen");
-        var primary = fd.get("posko_type");
-        if (!functions.length && ["logistics", "shelter", "kitchen"].indexOf(primary) !== -1) {
-          functions.push(primary);
-        }
         if (functions.length || fd.get("logistics_role")) {
           try {
             await window.RN_FRAPPE.call("rescue_net.api_control_centre.set_posko_functions", {

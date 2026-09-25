@@ -2,7 +2,8 @@
  *
  * Backend: rescue_net.api_command.*  (command_overview, create_command_account,
  * decide_command_request, set_command_account_active, reset_command_account_password,
- * my_command_requests). Aturan ada di server; halaman ini hanya menampilkan dan memanggil.
+ * my_command_requests, scheme_admin_list / set_coordination_scheme untuk System
+ * Manager). Aturan ada di server; halaman ini hanya menampilkan dan memanggil.
  */
 (function () {
   "use strict";
@@ -60,7 +61,9 @@
       ? "Halaman ini untuk pengelola organisasi berskema komando terpusat. Silakan masuk."
       : "Halaman ini untuk pemilik organisasi berskema komando terpusat. Skema dipilih sekali saat organisasi pusat didaftarkan. Jika organisasi Anda berada di bawah komando pusat, perubahan Anda diajukan ke pusat dan statusnya tampil di bawah.";
     $("kpStatus").textContent = loggedOut ? "Belum masuk" : "Akses pusat komando diperlukan";
+    $("kpCenterPickWrap").hidden = true;
     $("kpBadge").textContent = "Bukan pusat";
+    $("kpBadge").hidden = loggedOut;
     if (!loggedOut) {
       try {
         var mine = await call("my_command_requests");
@@ -85,6 +88,7 @@
     var d = state.data;
     $("kpNotice").hidden = true;
     $("kpCenterView").hidden = false;
+    $("kpBadge").hidden = false;
     $("kpTitle").textContent = "Komando Pusat — " + d.center.title;
     $("kpBadge").textContent = d.pending_count ? d.pending_count + " menunggu persetujuan" : "Tidak ada antrean";
     $("kpStatus").textContent = d.organizations.length + " organisasi · " + d.poskos.length + " posko · " + d.accounts.length + " akun";
@@ -198,6 +202,60 @@
       }).join("") : '<tr><td colspan="5" class="kp-empty">Belum ada riwayat.</td></tr>') + "</tbody>";
   }
 
+  // ---------- System Manager: skema koordinasi ----------
+
+  var SCHEME_LABEL = { mandiri: "Mandiri", terpusat: "Komando terpusat" };
+
+  async function loadSchemeAdmin() {
+    var st;
+    try { st = await call("command_status"); } catch (_) { return; }
+    if (!st || !st.is_system_manager) return;
+    $("kpSchemeAdmin").hidden = false;
+    try {
+      var res = await call("scheme_admin_list");
+      state.schemes = res.organizations || [];
+      renderSchemes();
+    } catch (e) { setMsg($("kpSchemeMsg"), errText(e), true); }
+  }
+
+  function renderSchemes() {
+    var q = state.schemeQuery || "";
+    var rows = (state.schemes || []).filter(function (o) {
+      return !q || (o.title + " " + (o.owner || "") + " " + (o.parent_title || "")).toLowerCase().indexOf(q) !== -1;
+    });
+    $("kpSchemeTable").innerHTML = "<thead><tr><th>Organisasi</th><th>Pemilik</th><th>Skema</th><th>Ubah ke</th></tr></thead><tbody>" +
+      (rows.length ? rows.map(function (o) {
+        var target = o.scheme === "terpusat" ? "mandiri" : "terpusat";
+        var blocked = target === "mandiri" && o.pending_requests ? o.pending_requests + " permintaan menunggu — putuskan dulu" :
+          target === "terpusat" && !o.owner ? "Belum ada pemilik" : "";
+        return "<tr><td><b>" + esc(o.title) + "</b>" + (o.parent_title ? "<small>di bawah " + esc(o.parent_title) + "</small>" : "") +
+          "</td><td>" + esc(o.owner || "-") + "</td><td>" + tag(o.scheme === "terpusat" ? "ok" : "", SCHEME_LABEL[o.scheme] || o.scheme) +
+          (o.pending_requests ? "<small>" + esc(o.pending_requests) + " menunggu</small>" : "") + "</td><td>" +
+          (blocked ? '<span class="kp-empty">' + esc(blocked) + "</span>" :
+            '<button type="button" class="btn ghost mini" data-scheme-org="' + esc(o.name) + '" data-scheme-to="' + target + '">Jadikan ' + esc(SCHEME_LABEL[target]) + "</button>") +
+          "</td></tr>";
+      }).join("") : '<tr><td colspan="4" class="kp-empty">Tidak ada organisasi.</td></tr>') + "</tbody>";
+  }
+
+  async function onSchemeChange(btn) {
+    var org = btn.getAttribute("data-scheme-org"), to = btn.getAttribute("data-scheme-to");
+    var o = (state.schemes || []).find(function (x) { return x.name === org; }) || { title: org };
+    var why = window.prompt("Ubah skema \"" + o.title + "\" menjadi " + SCHEME_LABEL[to] + ".\n" +
+      (to === "terpusat" ? "Pemilik organisasi menjadi super admin; perubahan struktural dari level bawah harus disetujui pusat." :
+        "Organisasi dan posko di bawahnya kembali mengelola diri sendiri; tidak ada lagi persetujuan pusat.") +
+      "\n\nAlasan (wajib):");
+    if (!why || !why.trim()) return;
+    btn.disabled = true;
+    try {
+      await call("set_coordination_scheme", { organization: org, scheme: to, reason: why.trim() }, true);
+      setMsg($("kpSchemeMsg"), "Skema " + o.title + " sekarang " + SCHEME_LABEL[to] + ".");
+      var res = await call("scheme_admin_list");
+      state.schemes = res.organizations || [];
+      renderSchemes();
+      load(state.center);
+    } catch (e) { setMsg($("kpSchemeMsg"), errText(e), true); btn.disabled = false; }
+  }
+
   // ---------- aksi ----------
 
   function showSecret(email, pw) {
@@ -282,6 +340,9 @@
     });
     $("kpPending").addEventListener("click", function (e) { var b = e.target.closest("[data-decide]"); if (b) onDecide(b); });
     $("kpAccTable").addEventListener("click", function (e) { var b = e.target.closest("[data-accact]"); if (b) onAccountAction(b); });
+    $("kpSchemeTable").addEventListener("click", function (e) { var b = e.target.closest("[data-scheme-to]"); if (b) onSchemeChange(b); });
+    $("kpSchemeSearch").addEventListener("input", function (e) { state.schemeQuery = e.target.value.trim().toLowerCase(); renderSchemes(); });
     load();
+    loadSchemeAdmin();
   });
 })();

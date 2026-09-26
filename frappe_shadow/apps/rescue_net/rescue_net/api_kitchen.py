@@ -312,34 +312,9 @@ def _stock_state(
         or row.creation
     )
 
-    filters = {
-        "posko": posko,
-        "item_name": item_name,
-        "unit": unit,
-        "usage_status": "consumed",
-    }
+    from rescue_net.services.stock import consumed_after
 
-    if baseline:
-        filters[
-            "consumed_at"
-        ] = [
-            ">",
-            baseline,
-        ]
-
-    rows = frappe.get_all(
-        "RN Kitchen Ingredient Usage",
-        filters=filters,
-        fields=[
-            "quantity",
-        ],
-        limit_page_length=5000,
-    )
-
-    used = sum(
-        flt(x.quantity)
-        for x in rows
-    )
+    used = consumed_after(posko, item_name, unit, baseline)
 
     available = max(
         basis - used,

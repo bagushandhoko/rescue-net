@@ -2885,84 +2885,6 @@ def receive_flow_and_update_stock(
             "Item Distribution Flow tidak tersedia"
         )
 
-    # Coarse lock on destination Posko serializes
-    # stock updates even when no previous observation
-    # exists yet.
-    frappe.db.sql(
-        """
-        SELECT name
-        FROM `tabRN Posko`
-        WHERE name=%s
-        FOR UPDATE
-        """,
-        (destination,),
-    )
-
-    latest = frappe.db.sql(
-        """
-        SELECT
-            name,
-            quantity,
-            unit,
-            quantity_mode
-        FROM `tabRN Stock Observation`
-        WHERE
-            posko=%s
-            AND item_name=%s
-        ORDER BY
-            observed_at DESC,
-            creation DESC
-        LIMIT 1
-        FOR UPDATE
-        """,
-        (
-            destination,
-            item_name,
-        ),
-        as_dict=True,
-    )
-
-    previous_quantity = 0.0
-
-    if latest:
-        prev = latest[0]
-
-        previous_unit = (
-            prev.unit or ""
-        ).strip()
-
-        if (
-            previous_unit
-            and previous_unit != unit
-        ):
-            frappe.throw(
-                "Unit stok terakhir berbeda: "
-                f"{previous_unit} != {unit}. "
-                "Normalisasi unit diperlukan "
-                "sebelum penerimaan."
-            )
-
-        previous_mode = (
-            prev.quantity_mode or "unknown"
-        )
-
-        if (
-            previous_mode != "exact"
-            and prev.quantity not in (
-                None,
-                "",
-            )
-        ):
-            frappe.throw(
-                "Stok terakhir bukan quantity "
-                "exact. Verifikasi stok terlebih "
-                "dahulu sebelum menerima flow."
-            )
-
-        previous_quantity = flt(
-            prev.quantity or 0
-        )
-
     # Preserve the existing lifecycle and all its
     # side effects for Transport Space / Aid Offer.
     flow_result = update_flow_status(
@@ -2976,44 +2898,15 @@ def receive_flow_and_update_stock(
         ),
     )
 
-    now = now_datetime()
+    from rescue_net.services.stock import receive_into_stock
 
-    stock = frappe.new_doc(
-        "RN Stock Observation"
-    )
-
-    stock.title = (
-        f"{item_name} - receipt"
-    )
-
-    stock.disaster_event = (
-        doc.disaster_event
-    )
-
-    stock.posko = destination
-    stock.item_name = item_name
-    stock.raw_item_text = item_name
-
-    stock.quantity = (
-        previous_quantity + qty
-    )
-
-    stock.quantity_mode = "exact"
-    stock.unit = unit
-    stock.stock_state = "available"
-
-    stock.notes = (
-        "Verified receipt from "
-        f"Distribution Flow {flow}. "
-        f"Received {qty} {unit}. "
-        f"Previous stock {previous_quantity} {unit}."
-    )
-
-    stock.observed_at = now
-    stock.source_updated_at = now
-
-    stock.insert(
-        ignore_permissions=True
+    stock, previous_quantity, used = receive_into_stock(
+        destination, item_name, unit, qty, doc.disaster_event,
+        lambda prev, used: (
+            f"Verified receipt from Distribution Flow {flow}. "
+            f"Received {qty} {unit}. Previous stock {prev} {unit}"
+            + (f" (after {used} {unit} kitchen usage)." if used else ".")
+        ),
     )
 
     return {
@@ -3095,76 +2988,30 @@ def receive_aid_offer_and_update_stock(
     if not item_name:
         frappe.throw("Item Aid Offer tidak tersedia")
 
-    # Coarse lock on destination Posko serializes stock updates even
-    # when no previous observation exists yet.
-    frappe.db.sql(
-        """
-        SELECT name
-        FROM `tabRN Posko`
-        WHERE name=%s
-        FOR UPDATE
-        """,
-        (destination,),
+    # L-3: an offer carried by a Distribution Flow is counted into stock by
+    # the flow receipt — receiving it here too would add the goods twice.
+    if current_status == "delivered" or frappe.db.exists("RN Distribution Flow", {
+        "aid_offer": doc.name, "flow_status": ["!=", "cancelled"],
+    }):
+        frappe.throw(
+            "Kiriman ini dikirim lewat Distribution Flow — terima melalui flow tersebut."
+        )
+
+    from rescue_net.services.stock import receive_into_stock
+
+    stock, previous_quantity, used = receive_into_stock(
+        destination, item_name, unit, qty, doc.disaster_event,
+        lambda prev, used: (
+            f"Diterima dari kiriman masyarakat {doc.donor_name or 'donatur'} "
+            f"({aid_offer}). Diterima {qty} {unit}. Stok sebelumnya {prev} {unit}"
+            + (f" (setelah pemakaian dapur {used} {unit})." if used else ".")
+            + (f" Catatan: {receipt_note}" if receipt_note else "")
+        ),
+        what="menerima kiriman ini",
     )
-
-    latest = frappe.db.sql(
-        """
-        SELECT name, quantity, unit, quantity_mode
-        FROM `tabRN Stock Observation`
-        WHERE posko=%s AND item_name=%s
-        ORDER BY observed_at DESC, creation DESC
-        LIMIT 1
-        FOR UPDATE
-        """,
-        (destination, item_name),
-        as_dict=True,
-    )
-
-    previous_quantity = 0.0
-    if latest:
-        prev = latest[0]
-
-        previous_unit = (prev.unit or "").strip()
-        if previous_unit and previous_unit != unit:
-            frappe.throw(
-                "Unit stok terakhir berbeda: "
-                f"{previous_unit} != {unit}. "
-                "Normalisasi unit diperlukan sebelum penerimaan."
-            )
-
-        previous_mode = prev.quantity_mode or "unknown"
-        if previous_mode != "exact" and prev.quantity not in (None, ""):
-            frappe.throw(
-                "Stok terakhir bukan quantity exact. Verifikasi stok "
-                "terlebih dahulu sebelum menerima kiriman ini."
-            )
-
-        previous_quantity = flt(prev.quantity or 0)
 
     doc.offer_status = "received"
     doc.save(ignore_permissions=True)
-
-    now = now_datetime()
-
-    stock = frappe.new_doc("RN Stock Observation")
-    stock.title = f"{item_name} - receipt"
-    stock.disaster_event = doc.disaster_event
-    stock.posko = destination
-    stock.item_name = item_name
-    stock.raw_item_text = item_name
-    stock.quantity = previous_quantity + qty
-    stock.quantity_mode = "exact"
-    stock.unit = unit
-    stock.stock_state = "available"
-    stock.notes = (
-        f"Diterima dari kiriman masyarakat {doc.donor_name or 'donatur'} "
-        f"({aid_offer}). Diterima {qty} {unit}. "
-        f"Stok sebelumnya {previous_quantity} {unit}."
-        + (f" Catatan: {receipt_note}" if receipt_note else "")
-    )
-    stock.observed_at = now
-    stock.source_updated_at = now
-    stock.insert(ignore_permissions=True)
 
     return {
         "aid_offer": doc.name,

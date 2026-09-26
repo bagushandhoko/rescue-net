@@ -11,7 +11,7 @@ from rescue_net.access_policy import (
     is_system_manager,
     rn_actor,
 )
-from rescue_net.rescue_net.doctype.rn_volunteer_assignment.rn_volunteer_assignment import (
+from rescue_net.rn_volunteer.doctype.rn_volunteer_assignment.rn_volunteer_assignment import (
     TRANSITIONS,
 )
 

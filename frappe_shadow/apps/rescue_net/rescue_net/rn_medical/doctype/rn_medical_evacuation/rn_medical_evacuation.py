@@ -85,7 +85,7 @@ class RNMedicalEvacuation(Document):
 
     def _assert_case_can_evacuate(self):
         # M-4: a live case of this posko, with no other evacuation running
-        from rescue_net.rescue_net.doctype.rn_medical_case.rn_medical_case import TERMINAL
+        from rescue_net.rn_medical.doctype.rn_medical_case.rn_medical_case import TERMINAL
         case = frappe.db.get_value("RN Medical Case", self.medical_case,
                                    ["posko", "case_status"], as_dict=True)
         if not case:
@@ -102,7 +102,7 @@ class RNMedicalEvacuation(Document):
 
     def on_update(self):
         # the case follows its evacuation, through the case's own rules (M-2/M-3)
-        from rescue_net.rescue_net.doctype.rn_medical_case.rn_medical_case import cascade_case_status
+        from rescue_net.rn_medical.doctype.rn_medical_case.rn_medical_case import cascade_case_status
         from rescue_net.services.guards import bypass, changed
         if bypass(self) or not (self.flags.in_insert or changed(self, "evacuation_status")):
             return

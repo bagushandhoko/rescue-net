@@ -5,3 +5,4 @@ RN Command
 RN Community
 RN Logistics
 RN Shelter
+RN Medical

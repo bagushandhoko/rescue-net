@@ -19,8 +19,8 @@ OPERATOR_ROLES = {
 
 
 # status graphs + the case/evacuation cascade live in the controllers (phase 2)
-from rescue_net.rescue_net.doctype.rn_medical_case.rn_medical_case import CASE_TRANSITIONS  # noqa: E402,F401
-from rescue_net.rescue_net.doctype.rn_medical_evacuation.rn_medical_evacuation import EVAC_TRANSITIONS  # noqa: E402,F401
+from rescue_net.rn_medical.doctype.rn_medical_case.rn_medical_case import CASE_TRANSITIONS  # noqa: E402,F401
+from rescue_net.rn_medical.doctype.rn_medical_evacuation.rn_medical_evacuation import EVAC_TRANSITIONS  # noqa: E402,F401
 
 
 def _member_orgs(actor):

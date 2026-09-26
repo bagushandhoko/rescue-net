@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN Medical Case",
- "module": "Rescue Net",
+ "module": "RN Medical",
  "custom": 0,
  "is_submittable": 0,
  "title_field": "patient_code",

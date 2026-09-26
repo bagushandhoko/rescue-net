@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Medical Supply Use",
-  "module": "Rescue Net",
+  "module": "RN Medical",
   "custom": 0,
   "is_submittable": 0,
   "title_field": "item_name",

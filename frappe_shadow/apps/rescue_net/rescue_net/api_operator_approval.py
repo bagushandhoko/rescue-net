@@ -118,6 +118,33 @@ def pending_requests():
         limit_page_length=200,
     )
 
+    # O-10: an operator who is already effective and creates another posko
+    # waits here too — their new assignment is pending, the role is not
+    seen = {u.name for u in users}
+    waiting = set(frappe.get_all(
+        "RN Posko Assignment",
+        filters={"status": "pending"},
+        pluck="user_account",
+    )) - seen
+    users += [] if not waiting else frappe.get_all(
+        "RN User Account",
+        filters={
+            "role": "posko_operator",
+            "status": "active",
+            "name": ["in", sorted(waiting)],
+        },
+        fields=[
+            "name",
+            "title",
+            "email",
+            "frappe_user",
+            "role",
+            "requested_role",
+            "role_request_status",
+        ],
+        limit_page_length=200,
+    )
+
     result = []
 
     for user in users:
@@ -208,18 +235,20 @@ def approve_posko_operator(user_account, posko):
         posko,
     )
 
-    if user.requested_role != "posko_operator":
-        frappe.throw("User tidak meminta role posko_operator")
-
-    if user.role_request_status != "pending":
-        frappe.throw("Role request bukan pending")
-
     if assignment.status != "pending":
         frappe.throw("Posko assignment bukan pending")
 
-    user.role = "posko_operator"
-    user.role_request_status = "approved"
-    user.save(ignore_permissions=True)
+    # an already-effective operator only gets the new posko (O-10)
+    if user.role != "posko_operator":
+        if user.requested_role != "posko_operator":
+            frappe.throw("User tidak meminta role posko_operator")
+
+        if user.role_request_status != "pending":
+            frappe.throw("Role request bukan pending")
+
+        user.role = "posko_operator"
+        user.role_request_status = "approved"
+        user.save(ignore_permissions=True)
 
     assignment.assignment_role = "posko_operator"
     assignment.status = "approved"
@@ -254,14 +283,13 @@ def reject_posko_operator(user_account, posko):
         posko,
     )
 
-    if user.role == "posko_operator":
-        frappe.throw(
-            "Operator yang sudah efektif tidak dapat ditolak "
-            "melalui pending request"
-        )
+    if assignment.status != "pending":
+        frappe.throw("Posko assignment bukan pending")
 
-    user.role_request_status = "rejected"
-    user.save(ignore_permissions=True)
+    # an already-effective operator keeps the role; only this posko is refused
+    if user.role != "posko_operator":
+        user.role_request_status = "rejected"
+        user.save(ignore_permissions=True)
 
     assignment.assignment_role = "posko_operator"
     assignment.status = "rejected"

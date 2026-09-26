@@ -793,7 +793,10 @@ function setupPoskoForm() {
           title,
           posko_type: poskoType,
           address,
-          organization: val("organization_id") || val("organization") || null
+          organization: val("organization_id") || val("organization") || null,
+          // functions + logistics role are set by create_posko itself
+          functions: JSON.stringify(functions),
+          logistics_role: logisticsRole || ""
         },
         { method: "POST" }
       );
@@ -801,29 +804,13 @@ function setupPoskoForm() {
       // Komando terpusat: a non-pusat member's new posko is a REQUEST to the pusat.
       if (created && created.pending) {
         form.reset();
-        say("Permintaan tambah posko diajukan ke pusat komando dan menunggu persetujuan. Fungsi posko diatur setelah disetujui.");
+        say("Permintaan tambah posko diajukan ke pusat komando dan menunggu persetujuan" + (functions.length ? " (fungsi: " + functions.join(", ") + " ikut diajukan)." : "."));
         return;
       }
 
-      // apply functions + logistics role
-      const poskoId =
-        (created && (created.name || created.posko || created.id)) || title;
-      try {
-        await RN_FRAPPE.call(
-          "rescue_net.api_control_centre.set_posko_functions",
-          {
-            posko: poskoId,
-            functions: JSON.stringify(functions),
-            logistics_role: logisticsRole || ""
-          },
-          { method: "POST" }
-        );
-      } catch (fe) {
-        say("Posko dibuat, tapi gagal set fungsi: " + (fe.message || fe));
-      }
-
       form.reset();
-      say("Posko tersimpan" + (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "") + ".");
+      say("Posko tersimpan" + (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "") +
+        (created && created.assignment_status === "pending" ? ". Hak kelola posko aktif setelah penugasan Anda disetujui admin." : "."));
       await loadOrgPosko();
       } catch (err) {
         say("Gagal: " + ((err && err.message) || err));

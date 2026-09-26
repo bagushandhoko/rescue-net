@@ -1918,7 +1918,6 @@ def set_posko_functions(posko, functions=None, logistics_role=None):
     """Set which functions a posko serves (logistik / shelter / dapur umum)
     and, for logistik, whether it is a collector or a receiver.
     `functions` may be a JSON array or a comma string."""
-    import json
     from rescue_net.access_policy import rn_actor
 
     actor = rn_actor()
@@ -1943,20 +1942,24 @@ def set_posko_functions(posko, functions=None, logistics_role=None):
         )
 
     # Everyone else (mandiri poskos, or the pusat itself applying an approved
-    # request): this endpoint used to have NO permission check, so any logged-in
-    # account could change any posko's functions. Now: System Manager, whoever
-    # manages the posko (assignment / org coordinator / pusat authority), the
-    # creator of the posko (the registration form calls this right after
-    # create_posko, before the creator's own assignment is approved) or the
-    # owner of the posko's organisation.
+    # request): System Manager, whoever manages the posko (approved assignment
+    # / org coordinator / pusat authority) or the owner of the posko's
+    # organisation. The creator's first choice is applied by create_posko
+    # itself — a pending creator has no rights on the posko yet (O-9).
     from rescue_net.access_policy import can_manage_organization, can_manage_posko, is_system_manager
     if not (
         is_system_manager()
         or can_manage_posko(actor, name)
-        or frappe.db.get_value("RN Posko", name, "owner") == frappe.session.user
         or (posko_org and can_manage_organization(actor, posko_org))
     ):
         frappe.throw("Anda tidak dapat mengubah fungsi posko ini", frappe.PermissionError)
+
+    return {"posko": name, **apply_posko_functions(name, functions, logistics_role)}
+
+
+def apply_posko_functions(name, functions=None, logistics_role=None):
+    """Write the function flags; callers check the rights."""
+    import json
 
     if isinstance(functions, str):
         functions = functions.strip()
@@ -1975,8 +1978,7 @@ def set_posko_functions(posko, functions=None, logistics_role=None):
         upd["rn_logistics_role"] = logistics_role
 
     frappe.db.set_value("RN Posko", name, upd)
-    frappe.db.commit()
-    return {"posko": name, **_posko_functions(name)}
+    return _posko_functions(name)
 
 
 def _assert_posko_operator(actor, posko):

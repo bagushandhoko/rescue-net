@@ -783,9 +783,8 @@ def create_posko(
     """Also backs the "Registrasi & Verifikasi Posko" mock-up's form — the
     extra kwargs are all optional so existing callers (Organisasi & Posko's
     simpler "Tambah Posko" form) keep working unchanged.
-    `functions` / `logistics_role` are only used when the posko becomes a
-    komando-terpusat request (set on approval); a direct create keeps calling
-    `api_control_centre.set_posko_functions` afterwards.
+    `functions` / `logistics_role` are set on the new posko right away, or
+    travel with a komando-terpusat request and are set on approval.
     """
     actor = _actor()
 
@@ -829,12 +828,18 @@ def create_posko(
                 "Tambah posko: %s" % title + (" (fungsi: %s)" % _functions_label(functions) if _functions_label(functions) else ""),
             )
 
-    return _create_posko_impl(
+    res = _create_posko_impl(
         actor, title, posko_type, address, organization, disaster_event,
         latitude, longitude, officer_in_charge_name, officer_in_charge_role,
         officer_in_charge_phone, officer_in_charge_email, emergency_contact,
         facilities, rn_beneficiary_count, public_detail,
     )
+    # the creator's own form choice, applied at creation — afterwards
+    # functions change only through someone who manages the posko (O-9)
+    if functions or logistics_role:
+        from rescue_net.api_control_centre import apply_posko_functions
+        res.update(apply_posko_functions(res["posko"], functions, logistics_role))
+    return res
 
 
 def _functions_label(functions):
@@ -894,10 +899,10 @@ def _create_posko_impl(
     assignment.posko = posko.name
     assignment.assignment_role = actor.role or "member"
 
-    # Membuat Posko tidak menaikkan role.
-    assignment.status = assignment_status or (
-        "approved" if actor.role == "posko_operator" else "pending"
-    )
+    # Membuat Posko tidak menaikkan role, dan tidak memberi hak atas posko:
+    # the assignment waits for a System Manager (O-10), whatever global role
+    # the creator holds; only an approved komando request passes "approved".
+    assignment.status = assignment_status or "pending"
 
     assignment.insert(ignore_permissions=True)
 
@@ -913,7 +918,6 @@ def _can_edit_posko(actor, posko_doc):
     return bool(
         is_system_manager()
         or can_manage_posko(actor, posko_doc.name)
-        or posko_doc.owner == frappe.session.user
     )
 
 
@@ -1096,8 +1100,12 @@ def delete_posko(posko):
     actor = _actor()
     doc = frappe.get_doc("RN Posko", posko)
 
-    if not (is_system_manager() or doc.owner == frappe.session.user):
-        frappe.throw("Hanya pembuat posko atau System Manager yang dapat menghapus", frappe.PermissionError)
+    from rescue_net.access_policy import approved_posko_assignment
+    creator_still_assigned = (doc.owner == frappe.session.user
+                              and approved_posko_assignment(actor.name, doc.name))
+    if not (is_system_manager() or creator_still_assigned):
+        frappe.throw("Hanya pembuat posko (dengan penugasan disetujui) atau System Manager yang dapat menghapus",
+                     frappe.PermissionError)
 
     linked_checks = [
         ("RN Logistic Need", {"posko": posko}),

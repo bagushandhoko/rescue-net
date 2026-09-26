@@ -1,8 +1,11 @@
-"""Membership decisions follow from→to, org links need the other side's consent (phase 2: O-2, O-4)."""
+"""Membership decisions follow from→to, org links need the other side's consent, posko rights
+only after an approved assignment (phase 2: O-2, O-4, O-9, O-10)."""
 
 import frappe
 
 from rescue_net import api_community_cluster as api
+from rescue_net import api_control_centre as cc
+from rescue_net import api_operator_approval as approval
 from rescue_net.tests.factories import RNTestCase, as_user, make_actor, make_org
 
 
@@ -73,3 +76,50 @@ class TestOrgLinkConsent(RNTestCase):
         with as_user(self.child_co_owner.user):
             api.decide_org_link(req, "approve")
         self.assertEqual(self.parent_of(self.child), self.parent.name)
+
+
+class TestPoskoRightsNeedApprovedAssignment(RNTestCase):
+    def create(self, actor, **kw):
+        with as_user(actor.user):
+            return api.create_posko(title="Posko Uji Hak", posko_type="logistics",
+                                    address="Jl. Uji 1", **kw)
+
+    def test_creator_waits_for_approval_before_editing(self):
+        creator = make_actor(role="viewer")
+        res = self.create(creator, functions='["logistics", "kitchen"]', logistics_role="receiver")
+        self.assertEqual(res["assignment_status"], "pending")
+        # the creator's form choice is applied at creation
+        self.assertEqual(frappe.db.get_value("RN Posko", res["posko"], "rn_fn_kitchen"), 1)
+        with as_user(creator.user):
+            for fn, kw in ((api.update_posko, {"notes": "diubah"}),
+                           (cc.set_posko_functions, {"functions": '["shelter"]'}),
+                           (api.delete_posko, {})):
+                with self.assertRaises(frappe.PermissionError):
+                    fn(res["posko"], **kw)
+        frappe.db.set_value("RN User Account", creator.account,
+                            {"requested_role": "posko_operator", "role_request_status": "pending"})
+        approval.approve_posko_operator(creator.account, res["posko"])
+        with as_user(creator.user):
+            api.update_posko(res["posko"], notes="diubah")
+        self.assertEqual(frappe.db.get_value("RN Posko", res["posko"], "notes"), "diubah")
+
+    def test_effective_operator_gets_a_new_posko_only_after_approval(self):
+        operator = make_actor()  # global posko_operator role
+        res = self.create(operator)
+        self.assertEqual(res["assignment_status"], "pending")
+        with as_user(operator.user), self.assertRaises(frappe.PermissionError):
+            api.update_posko(res["posko"], notes="diubah")
+        waiting = {(r["user_account"], r["posko"]) for r in
+                   (dict(r, user_account=r["name"]) for r in approval.pending_requests())}
+        self.assertIn((operator.account, res["posko"]), waiting)
+        approval.approve_posko_operator(operator.account, res["posko"])
+        with as_user(operator.user):
+            api.update_posko(res["posko"], notes="diubah")
+
+    def test_rejecting_an_operator_new_posko_keeps_the_role(self):
+        operator = make_actor()
+        res = self.create(operator)
+        approval.reject_posko_operator(operator.account, res["posko"])
+        self.assertEqual(frappe.db.get_value("RN User Account", operator.account, "role"), "posko_operator")
+        with as_user(operator.user), self.assertRaises(frappe.PermissionError):
+            api.update_posko(res["posko"], notes="diubah")

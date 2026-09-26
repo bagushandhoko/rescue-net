@@ -343,7 +343,7 @@
           facilities: fd.get("facilities"),
           rn_beneficiary_count: fd.get("rn_beneficiary_count"),
           public_detail: fd.get("public_detail"),
-          // dipakai hanya bila posko menjadi permintaan ke pusat komando
+          // diset langsung saat posko dibuat, atau ikut permintaan ke pusat komando
           functions: JSON.stringify(functions),
           logistics_role: fd.get("logistics_role") || "",
         }, { method: "POST" });
@@ -355,20 +355,9 @@
           return;
         }
 
-        if (functions.length || fd.get("logistics_role")) {
-          try {
-            await window.RN_FRAPPE.call("rescue_net.api_control_centre.set_posko_functions", {
-              posko: res.posko,
-              functions: JSON.stringify(functions),
-              logistics_role: fd.get("logistics_role") || "",
-            }, { method: "POST" });
-          } catch (fe) {
-            msg.textContent = "Posko dibuat, tapi gagal set fungsi: " + (fe && fe.message || fe);
-          }
-        }
-
         msg.textContent = "Posko tersimpan: " + res.posko +
-          (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "");
+          (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "") +
+          (res.assignment_status === "pending" ? ". Hak kelola posko aktif setelah penugasan Anda disetujui admin." : "");
         form.reset();
         await loadRegistry();
         await selectPosko(res.posko);

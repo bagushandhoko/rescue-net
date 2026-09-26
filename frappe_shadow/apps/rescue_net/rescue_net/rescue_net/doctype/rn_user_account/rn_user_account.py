@@ -24,3 +24,10 @@ class RNUserAccount(Document):
         ).hexdigest()[:24]
 
         self.name = f"rn-user-{digest}"
+
+    def validate(self):
+        # Owner rule (2026-09-26, VF-1): changing the role of an existing
+        # account is a System Manager decision — whatever path saves it.
+        from rescue_net.services.guards import bypass, changed, is_privileged
+        if changed(self, "role") and not bypass(self) and not is_privileged():
+            frappe.throw("Perubahan role akun hanya bisa dilakukan System Manager.", frappe.PermissionError)

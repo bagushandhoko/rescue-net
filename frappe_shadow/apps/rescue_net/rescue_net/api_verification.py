@@ -666,6 +666,34 @@ _STATUS_DONE = {"verified", "official_verified", "community_verified", "approved
 _STATUS_CLOSED = _STATUS_DONE | {"rejected"}
 
 
+def _assert_may_decide(actor, kind, doc, status_field):
+    """VF-1 / VF-2 (owner 2026-09-26): role requests are System Manager only;
+    a decided item is not re-decided by an operator; nobody verifies their
+    own posko, organisation or record."""
+    from rescue_net.access_policy import approved_member, can_manage_posko
+
+    if is_system_manager():
+        return
+    if kind == "user":
+        frappe.throw("Persetujuan role hanya oleh System Manager.", frappe.PermissionError)
+
+    current = doc.get(status_field)
+    if current in _STATUS_CLOSED:
+        frappe.throw(f"Item ini sudah diputuskan ('{current}').", frappe.PermissionError)
+
+    me = getattr(actor, "name", None)
+    if doc.get("owner") == frappe.session.user or (me and doc.get("created_by_user") == me):
+        frappe.throw("Tidak bisa memverifikasi data yang Anda buat sendiri.", frappe.PermissionError)
+    if kind == "organisasi" and me and approved_member(me, doc.name):
+        frappe.throw("Tidak bisa memverifikasi organisasi Anda sendiri.", frappe.PermissionError)
+    posko = doc.name if kind == "posko" else doc.get("posko") or doc.get("destination_posko")
+    if posko and actor and can_manage_posko(actor, posko):
+        frappe.throw("Tidak bisa memverifikasi posko yang Anda kelola.", frappe.PermissionError)
+    org = doc.get("organization") if kind == "posko" else None
+    if org and me and approved_member(me, org):
+        frappe.throw("Tidak bisa memverifikasi posko organisasi Anda sendiri.", frappe.PermissionError)
+
+
 @frappe.whitelist()
 def approval_action(kind, name, action, note=None):
     """Real write action (login required — no guest write, matching every
@@ -688,6 +716,7 @@ def approval_action(kind, name, action, note=None):
 
     doc = frappe.get_doc(doctype, name)
     status_field = "role_request_status" if kind == "user" else "verification_status"
+    _assert_may_decide(actor, kind, doc, status_field)
 
     new_status = {
         "approve": "approved" if kind == "user" else (

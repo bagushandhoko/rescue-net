@@ -11,6 +11,9 @@ from rescue_net.access_policy import (
     is_system_manager,
     rn_actor,
 )
+from rescue_net.rescue_net.doctype.rn_volunteer_assignment.rn_volunteer_assignment import (
+    TRANSITIONS,
+)
 
 
 MANAGER_ROLES = {
@@ -26,29 +29,6 @@ ACTIVE_ASSIGNMENTS = {
     "accepted",
     "checked_in",
     "in_progress",
-}
-
-
-TRANSITIONS = {
-    "planned": {
-        "accepted",
-        "cancelled",
-    },
-    "accepted": {
-        "checked_in",
-        "cancelled",
-    },
-    "checked_in": {
-        "in_progress",
-        "completed",
-        "cancelled",
-    },
-    "in_progress": {
-        "completed",
-        "cancelled",
-    },
-    "completed": set(),
-    "cancelled": set(),
 }
 
 
@@ -198,6 +178,40 @@ def _assert_manager_posko(actor, posko):
             "Akses Posko ditolak",
             frappe.PermissionError,
         )
+
+
+def _can_manage_volunteer(actor, profile):
+    """V-4: the volunteer themself, a manager of a posko they serve (or
+    served), or — for a self-registered pool entry without an account — a
+    manager of a posko in the same disaster event. A global operator role
+    alone is not enough."""
+    if is_system_manager():
+        return True
+
+    if not actor:
+        return False
+
+    if profile.user_account and profile.user_account == actor.name:
+        return True
+
+    poskos = set(frappe.get_all(
+        "RN Volunteer Assignment",
+        filters={"volunteer": profile.name},
+        pluck="posko",
+    ))
+
+    if not profile.user_account and profile.disaster_event:
+        poskos |= set(frappe.get_all(
+            "RN Posko",
+            filters={"disaster_event": profile.disaster_event},
+            pluck="name",
+        ))
+
+    return any(
+        _can_operate_posko(actor, posko)
+        for posko in poskos
+        if posko
+    )
 
 
 def _refresh_profile_assignment_state(
@@ -409,15 +423,7 @@ def update_profile(
         volunteer,
     )
 
-    own = (
-        doc.user_account
-        == actor.name
-    )
-
-    if (
-        not own
-        and not _is_manager(actor)
-    ):
+    if not _can_manage_volunteer(actor, doc):
         frappe.throw(
             "Akses profil relawan ditolak",
             frappe.PermissionError,
@@ -492,15 +498,7 @@ def set_availability(
         volunteer,
     )
 
-    own = (
-        doc.user_account
-        == actor.name
-    )
-
-    if (
-        not own
-        and not _is_manager(actor)
-    ):
+    if not _can_manage_volunteer(actor, doc):
         frappe.throw(
             "Akses relawan ditolak",
             frappe.PermissionError,
@@ -661,40 +659,18 @@ def update_assignment_status(
         == actor.name
     )
 
-    if new_status in {
-        "accepted",
-        "cancelled",
-    }:
-        if not (
-            own_volunteer
-            or _is_manager(actor)
-        ):
-            frappe.throw(
-                "Akses assignment ditolak",
-                frappe.PermissionError,
-            )
-
-    elif new_status in {
-        "checked_in",
-        "in_progress",
-        "completed",
-    }:
-        if not (
-            own_volunteer
-            or _can_operate_posko(
-                actor,
-                doc.posko,
-            )
-        ):
-            frappe.throw(
-                "Akses assignment ditolak",
-                frappe.PermissionError,
-            )
-
-    else:
-        _assert_manager_posko(
+    # V-4: the volunteer themself or a manager of THIS posko — a global
+    # operator role elsewhere is not enough
+    if not (
+        own_volunteer
+        or _can_operate_posko(
             actor,
             doc.posko,
+        )
+    ):
+        frappe.throw(
+            "Akses assignment ditolak",
+            frappe.PermissionError,
         )
 
     current = doc.assignment_status

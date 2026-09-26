@@ -4,14 +4,17 @@ import frappe
 from frappe.model.document import Document
 
 
-STATUS = {
-    "planned",
-    "accepted",
-    "checked_in",
-    "in_progress",
-    "completed",
-    "cancelled",
+# a volunteer assignment moves forward only; completed / cancelled are final
+TRANSITIONS = {
+    "planned": {"accepted", "cancelled"},
+    "accepted": {"checked_in", "cancelled"},
+    "checked_in": {"in_progress", "completed", "cancelled"},
+    "in_progress": {"completed", "cancelled"},
+    "completed": set(),
+    "cancelled": set(),
 }
+
+STATUS = set(TRANSITIONS)
 
 
 class RNVolunteerAssignment(Document):
@@ -39,3 +42,6 @@ class RNVolunteerAssignment(Document):
             frappe.throw(
                 "Status penugasan tidak valid"
             )
+
+        from rescue_net.services.guards import assert_transition
+        assert_transition(self, "assignment_status", TRANSITIONS, "Status penugasan", initial={"planned"})

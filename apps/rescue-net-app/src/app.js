@@ -339,9 +339,10 @@ async function loadContextGate() {
     const orgs = await api("/organizations");
     cacheSet("activeOrganizations", orgs);
     $("[data-active-org-select]").innerHTML = '<option value="">Pilih organisasi</option>' + orgs.map((row) => `<option value="${row.id}">${row.name}</option>`).join("");
-  } catch {
+  } catch (err) {
     const orgs = cacheGet("activeOrganizations", []);
-    $("[data-active-org-select]").innerHTML = '<option value="">Pilih organisasi</option>' + orgs.map((row) => `<option value="${row.id}">${row.name}</option>`).join("");
+    const empty = err.status === 403 ? "Masuk dulu (panel di atas) untuk memilih organisasi" : "Pilih organisasi";
+    $("[data-active-org-select]").innerHTML = `<option value="">${orgs.length ? "Pilih organisasi" : empty}</option>` + orgs.map((row) => `<option value="${row.id}">${row.name}</option>`).join("");
   }
 }
 

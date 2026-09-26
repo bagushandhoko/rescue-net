@@ -75,3 +75,15 @@ Suite (2026-09-26): `test_smoke`, `test_logistics_chain`, `test_sensitive_data`,
 - UI text is Indonesian; code comments English.
 - Frontend: bump the `?v=` cache-buster on a page's `<script>`/`<link>` when changing the file.
 - Keep `HANDOVER.md` short and current in the same commit as the work.
+
+## Keputusan Arsitektur
+
+Keputusan arsitektur yang berlaku ada di `docs/adr/` (mulai `0001-arsitektur-inti.md`: Frappe satu-satunya
+backend, modular monolith, MariaDB, frontend statis headless, AI BYOK suggest/accept).
+Jangan mengusulkan perubahan yang bertentangan dengan ADR tanpa alasan kuat. Jika perlu, tulis ADR baru
+berstatus Proposed dan minta persetujuan owner.
+
+## Next Steps
+
+Roadmap: `docs/NEXT_STEPS.md`. Fase 9 (federasi, sinkronisasi offline, standar data kemanusiaan P-code/HXL/CAP)
+dimulai dengan desain berupa ADR Proposed setelah Fase 8 selesai — jangan dikerjakan sebelum owner memerintahkan.

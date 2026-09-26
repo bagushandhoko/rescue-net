@@ -40,6 +40,17 @@ def _my_verifier(actor, statuses=("active",)):
     return row
 
 
+def _manages_target(user_account, posko):
+    """True when the account runs the posko or belongs to its organisation."""
+    from rescue_net.access_policy import approved_member, approved_posko_assignment
+    if not user_account or not posko:
+        return False
+    if approved_posko_assignment(user_account, posko):
+        return True
+    org = frappe.db.get_value("RN Posko", posko, "organization")
+    return bool(org and approved_member(user_account, org))
+
+
 def _wilayah_of_posko(posko):
     p = frappe.db.get_value(
         "RN Posko", posko,
@@ -74,7 +85,10 @@ def _active_endorsements(posko):
 
 def _recompute_posko_credibility(posko):
     """trusted_verifier_count + verification_status from active endorsements."""
-    ends = _active_endorsements(posko)
+    # VF-3: only endorsements from verifiers that are still active count
+    ends = [e for e in _active_endorsements(posko)
+            if not e.verifier
+            or frappe.db.get_value("RN Verifier Profile", e.verifier, "verifier_status") == "active"]
     n = len(ends)
 
     gov = False
@@ -87,10 +101,16 @@ def _recompute_posko_credibility(posko):
             gov = True
             break
 
-    cur = frappe.db.get_value("RN Posko", posko, "verification_status") or "self_reported"
+    cur, prev_n = frappe.db.get_value(
+        "RN Posko", posko, ["verification_status", "trusted_verifier_count"]) or (None, 0)
+    cur = cur or "self_reported"
     new = cur
-    if n == 0:
-        if cur in ("community_verified", "official_verified"):
+    if cur in ("rejected", "needs_correction"):
+        pass  # a reviewer's decision is not overruled by endorsements
+    elif n == 0:
+        # only a status that came from endorsements falls back; an official
+        # status set by an admin (no endorsements behind it) stays
+        if cur in ("community_verified", "official_verified") and cint(prev_n) > 0:
             new = "self_reported"
     elif gov or n >= 2:
         new = "official_verified"
@@ -211,6 +231,17 @@ def approve_verifier(verifier, action="approve", trust_level=None, note=None):
     if action not in ("approve", "suspend", "revoke", "reject"):
         frappe.throw("Aksi tidak valid (approve/suspend/revoke/reject).")
 
+    if not sm:
+        # VF-6: a sponsor never acts on their own profile, never revives a
+        # revoked verifier, and grants less trust than their own
+        if doc.name == mine["name"]:
+            frappe.throw("Tidak bisa memutuskan profil verifikator Anda sendiri.", frappe.PermissionError)
+        if doc.verifier_status == "revoked" and action == "approve":
+            frappe.throw("Verifikator yang dicabut hanya bisa diaktifkan lagi oleh System Manager.",
+                         frappe.PermissionError)
+        if trust_level not in (None, "") and cint(trust_level) >= cint(mine.get("trust_level")):
+            frappe.throw("Trust level harus di bawah trust level Anda.", frappe.PermissionError)
+
     if action == "approve":
         doc.verifier_status = "active"
         doc.approved_by = actor.name
@@ -259,6 +290,8 @@ def request_posko_verification(posko, verifier=None, method="site_visit", note=N
                                 ["name", "verifier_status"], as_dict=True)
         if not v or v.verifier_status != "active":
             frappe.throw("Verifikator tidak aktif / tidak ditemukan.")
+        if _manages_target(frappe.db.get_value("RN Verifier Profile", verifier, "user"), posko):
+            frappe.throw("Verifikator tidak boleh pengelola / anggota organisasi posko ini.")
 
     dup = frappe.db.exists("RN Verification Request", {
         "object_type": "posko", "object_id": posko,
@@ -384,10 +417,21 @@ def endorse_posko(request=None, posko=None, method=None, statement=None,
     req = None
     if request:
         req = frappe.get_doc("RN Verification Request", request)
-        posko = posko or req.object_id
+        # VF-5: the endorsement answers THIS open request for THIS posko
+        if req.status not in ("pending", "accepted"):
+            frappe.throw(f"Permintaan verifikasi sudah berstatus '{req.status}'.")
+        if req.verifier and req.verifier != mine["name"]:
+            frappe.throw("Permintaan ini ditujukan ke verifikator lain.", frappe.PermissionError)
+        if posko and posko != req.object_id:
+            frappe.throw("Posko tidak sesuai dengan permintaan verifikasi.")
+        posko = req.object_id
         method = method or req.method
     if not posko or not frappe.db.exists("RN Posko", posko):
         frappe.throw("Posko tidak ditemukan.")
+    # VF-4: nobody endorses a posko they run or whose organisation they belong to
+    if _manages_target(actor.name, posko):
+        frappe.throw("Tidak bisa meng-endorse posko yang Anda kelola / organisasi Anda sendiri.",
+                     frappe.PermissionError)
 
     method = method if method in ("site_visit", "network_vouch", "document_review") else "site_visit"
     if method == "network_vouch" and not (vouched_via and str(vouched_via).strip()):

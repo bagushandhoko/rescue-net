@@ -47,6 +47,10 @@ fi
 
 echo "== 3. migrate + restart =="
 sudo docker exec "$C" sh -c "cd $B && bench --site $SITE migrate 2>&1 | tail -8 && bench --site $SITE clear-cache"
+echo "== 3b. remove leftovers the copy step never deletes =="
+# the old catch-all module folder (DocTypes moved to rescue_net/rn_<domain>/ in
+# phase 4, plus stale pre-git API copies) and *.pre-* / *.bak* file copies
+sudo docker exec -u root "$C" sh -c "cd $B/apps/rescue_net/rescue_net && rm -rf rescue_net && find . \\( -name '*.pre-*' -o -name '*.bak*' -o -name '*.BEFORE*' \\) -not -path '*/node_modules/*' -type f -print -delete | wc -l | sed 's/^/stale copies removed: /'"
 sudo docker restart "$C" >/dev/null
 i=0
 until [ "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8095/api/method/ping)" = "200" ]; do

@@ -293,6 +293,9 @@ def act(
     before_status = doc.status or "none"
     before_trust = cint(doc.trust_score or 0)
 
+    if doc.status == transitions[action]:
+        frappe.throw("Laporan sudah berstatus '%s'." % doc.status)
+
     evidence_count = frappe.db.count(
         "RN Community Report Evidence",
         {"report": report},

@@ -1,6 +1,15 @@
 import frappe
 from frappe.model.document import Document
 
+# C-1: a report is decided from→to; verified / rejected are final
+REPORT_TRANSITIONS = {
+    "submitted": {"triaged", "verified", "rejected", "escalated"},
+    "triaged": {"verified", "rejected", "escalated"},
+    "escalated": {"triaged", "verified", "rejected"},
+    "verified": set(),
+    "rejected": set(),
+}
+
 
 class RNCommunityReport(Document):
     def autoname(self):
@@ -48,3 +57,13 @@ class RNCommunityReport(Document):
                 frappe.db.get_value("User", user, "full_name")
                 or user
             )
+
+    def validate(self):
+        from rescue_net.services.guards import assert_transition, bypass, changed, is_privileged
+
+        assert_transition(self, "status", REPORT_TRANSITIONS, "Status laporan")
+        if bypass(self) or not changed(self, "status") or is_privileged():
+            return
+        actor = frappe.db.get_value("RN User Account", {"frappe_user": frappe.session.user}, "name")
+        if actor and actor == self.reporter_user:
+            frappe.throw("Pelapor tidak dapat memutuskan laporannya sendiri.", frappe.PermissionError)

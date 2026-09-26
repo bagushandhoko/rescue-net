@@ -23,13 +23,36 @@ _Last updated: 2026-09-26_
 
 ## Architecture review (2026-09-26) — 6 phases, one at a time, owner approves each
 
-1. **Automated test foundation — IN PROGRESS** (this session). Isolated stack `rescuenet-test-*` containers +
-   site `rescuenet-test.localhost`; tests in `rescue_net/tests/`.
+1. **Automated test foundation — DONE 2026-09-26, awaiting owner review.** Isolated stack `rescuenet-test-*`
+   containers + site `rescuenet-test.localhost` (`allow_tests`; production has no such flag); 57 tests in
+   `rescue_net/tests/` pass (9 skips = the known bugs below). How to run: `CLAUDE.md` → Tests.
 2. Business invariants → DocType controllers / `rescue_net/services/`; split api_*.py > 1,500 lines.
 3. Finish the FastAPI retirement (audit table → owner picks the cutover date → archive tag `fastapi-final`).
 4. Split the single "Rescue Net" module per domain.
 5. Frontend cleanup (dead/duplicate JS, shared components, web vs `apps/rescue-net-app` decision).
 6. Repo hygiene (backup/, _archive/, scratchpad/, _sandbox_desain/, root .txt/.md, one push script).
+
+## Known bugs found by the tests (2026-09-26) — reported, NOT fixed (owner decides)
+
+Each has a `@known_bug` test (and/or a `KNOWN_LEAKS` entry in the Guest sweep).
+
+| Id | Where | What leaks / breaks | Size of fix |
+|---|---|---|---|
+| BUG-1 | `api_control_centre.posko_distribusi_board` (guest) | every booking's handover `verification_pin` + booker `contact_phone`, donor `donor_contact` in the pickup queue | small: gate by `_di_flags` (can_manage) |
+| BUG-2 | `api_control_centre.posko_verification_checklist` (guest) | PIC phone + email as checklist values | small: return done-flags only unless share mode full |
+| BUG-3 | `api_shelter.dashboard(posko=X)` (guest) | household `notes` / `destination` of any shelter + PIC phone, no privacy check | small-medium: apply `effective_posko_share` |
+| BUG-4 | `api_ai._build_context` is `@frappe.whitelist()` | any logged-in user gets the unscrubbed global AI context; no extra field today (hardening) | tiny: drop the decorator |
+| BUG-5 | `api_resource_tools.resource_profile_board(user_account=X)` (guest) | ANY account's phone, email, volunteer contact, owned resources | small: only self / managers get contacts |
+| BUG-6 | `api_volunteer.dashboard(posko=X)` (guest) | volunteer profiles incl. `contact` + PIC phone | small: strip contacts for guests |
+| GAP-P2 | RN Distribution Flow | status transitions enforced only in `update_flow_status`; `doc.save()` can jump planned → received | phase 2 |
+| DATA-1 | production DB | 12 Custom Fields on RN Posko / Distribution Flow / Stock Observation exist only in production (made in Desk, not in JSON/fixtures) — a fresh install or restore to a new server breaks `logistik_board`, `kitchen_board`, `shelter_board`, `national_situation`, `logistik_dispatch_options` ("Unknown column") | medium: move into DocType JSON (phase 2/4) |
+
+Questions for the owner (not bugs until confirmed):
+- `api_control_centre.fulfill_need` (guest) creates an Aid Offer for ANY posko, without the
+  `public_participation` + `accept_goods` gate `api_logistics.create_aid_offer` applies. Intended?
+- `api_search_found.restricted_record`: a report with no posko can be opened (full name) by ANY user whose role
+  is a manager role (posko/medical/shelter operator, command centre), from any organisation. Intended?
+- Guest Search & Found dashboard shows all reports network-wide, a logged-in user without posko rights sees fewer.
 
 ## Open items (not part of the review phases)
 

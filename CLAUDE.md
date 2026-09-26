@@ -54,6 +54,18 @@ Rules:
   (`event-sim-001`, `ld1.demo@…`).
 - Test classes use `frappe.tests.utils.FrappeTestCase` (Frappe 15); each test runs in a transaction that is
   rolled back.
+- Call endpoints the way the browser does when the check matters: `api_call("rescue_net.api_x.fn", ...)`
+  applies Frappe's whitelist / `allow_guest` check for the current `as_user(...)` / `as_guest()` session.
+- A confirmed bug the owner has not approved fixing yet gets a test marked `@known_bug("BUG-n")` (reported as
+  a skip). When the fix lands the test fails with "looks fixed — remove @known_bug": remove the marker in the
+  same commit. Bug ids and descriptions: `HANDOVER.md` → "Known bugs found by the tests".
+- New `allow_guest` endpoint → `test_public_endpoints.GUEST_ENDPOINTS` fails until you review what it returns
+  to Guest and add it; the Guest sweep then checks it against the sentinel secrets.
+- The test site gets production's hand-made Custom Fields from `tests/setup_test_site.py` (types inferred).
+  A new field must go into the DocType JSON, never be created by hand in Desk.
+
+Suite (2026-09-26): `test_smoke`, `test_logistics_chain`, `test_sensitive_data`, `test_public_endpoints`,
+`test_ai`, `test_access_policy` — 57 tests, ~75 s.
 
 ## Conventions
 

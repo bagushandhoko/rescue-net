@@ -77,6 +77,11 @@ sync_app() {
   $D exec -u root $BENCH sh -c "chown -R 1000:1000 $B/apps/rescue_net && chmod -R u+rwX,go+rX $B/apps/rescue_net && find $B/apps/rescue_net -name __pycache__ -prune -exec rm -rf {} +"
 }
 
+# Test-site-only preparation (see rescue_net/tests/setup_test_site.py).
+prepare_site() {
+  bexec bench --site $SITE execute rescue_net.tests.setup_test_site.ensure_custom_fields
+}
+
 init() {
   up
   sync_app
@@ -99,6 +104,7 @@ EOF
   fi
   bexec bench --site $SITE set-config allow_tests true
   bexec bench --site $SITE set-config developer_mode 0
+  prepare_site
   bexec bench --site $SITE list-apps
 }
 
@@ -109,6 +115,7 @@ case "${1:-}" in
     shift
     up
     sync_app
+    prepare_site
     bexec bench --site $SITE run-tests --app rescue_net "$@"
     ;;
   migrate) up; sync_app; bexec bench --site $SITE migrate ;;

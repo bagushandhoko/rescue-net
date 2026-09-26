@@ -6,9 +6,21 @@ that do not change from session to session.
 ## Layout
 
 - Frappe app (backend, system of record): `frappe_shadow/apps/rescue_net/rescue_net/`
-  - `api_*.py` — whitelisted endpoints; `access_policy.py` (`rn_actor()`, posko/org permission helpers),
-    `visibility.py` (public/summary scrubbing), `reference_resolver.py` (event/posko id resolution)
-  - `rescue_net/doctype/rn_*/` — 70 DocTypes (JSON + controller)
+  - `api_*.py` — whitelisted endpoints (input check, permission check, call the service, shape the
+    response). The six big ones are split into packages — `control_centre/`, `logistics/`, `ai/`,
+    `resource_tools/`, `donor_program/`, `frontend_bridge/` — and `api_<name>.py` is only a compatibility
+    layer re-exporting every name, so frontend paths `rescue_net.api_<name>.<fn>` keep working. Add new
+    code to the package module of its sub-domain, not to the compat file. No module over ~1,500 lines.
+  - `services/` — shared business rules called by controllers and APIs: `guards.py` (`assert_transition`,
+    `assert_quantities`, `bypass` for data loads), `stock.py`, `money.py`, `transport.py`, `llm.py`
+    (OpenAI / Claude / Gemini), `report_intake.py`, `report_routing.py`, `tool_needs.py`
+  - `access_policy.py` (`rn_actor()`, posko/org permission helpers), `visibility.py` (public/summary
+    scrubbing), `reference_resolver.py` (event/posko id resolution)
+  - `rescue_net/doctype/rn_*/` — 78 DocTypes (JSON + controller). **Rules that must always hold live in the
+    controller** (`validate` / `on_update`, via `services/`), not only in an API function — Desk, imports
+    and other endpoints save through the controller too. Every such rule has a test that saves directly
+    with `frappe.get_doc(...).save()`.
+  - `patches.txt` + `patches/` — one-off data/schema patches run by `bench migrate`
   - `setup/` — idempotent default installers run by `after_install` / `after_migrate`
   - `tests/` — automated tests (see below)
 - Frontend: `index.html`, `pages/*.html`, `assets/js/*.js`, `assets/css/*.css` (vanilla JS, served from disk).
@@ -20,10 +32,10 @@ that do not change from session to session.
 - Production site: `osiun.localhost` in container `osiun-frappe-backend`.
 - **Never** run tests, seed scripts, experimental migrates or data cleanup against production.
   All of that happens on the isolated test stack below.
-- A commit is not a deploy. Deploying a Python/DocType change = back up the target file, `docker cp`,
-  `chown 1000:1000` + `chmod 644`, `bench migrate` if a DocType JSON changed, `docker restart
-  osiun-frappe-backend`, verify md5 host == container. Say explicitly in HANDOVER.md when a change is
-  committed but not deployed.
+- A commit is not a deploy. Deploy = `sh scripts/rn-deploy-app.sh` (backup code + DB, copy the git-tracked
+  app files, `bench migrate`, restart, probe). Copying files without the migrate is not a partial deploy,
+  it is a broken production: the running backend picks up new code at once and fails on missing columns.
+  Say explicitly in HANDOVER.md when a change is committed but not deployed.
 - Destructive data operations: preview the exact rows first; never build a filter from a list that can be
   empty (`["in", ids or [""]]` once deleted 5 real poskos).
 
@@ -64,8 +76,8 @@ Rules:
 - The 12 former production-only Custom Fields are standard DocType fields since DATA-1 (patch `rescue_net.patches.v2026_09.custom_fields_into_doctype`).
   A new field must go into the DocType JSON, never be created by hand in Desk.
 
-Suite (2026-09-26): `test_smoke`, `test_logistics_chain`, `test_sensitive_data`, `test_public_endpoints`,
-`test_ai`, `test_access_policy` — 57 tests, ~75 s.
+Suite (2026-09-26, end of phase 2): 197 tests in `rescue_net/tests/`, ~4 min on an idle NAS (up to 16 min
+under load), including `test_sim_kekeringan` (a full drought scenario).
 
 ## Conventions
 

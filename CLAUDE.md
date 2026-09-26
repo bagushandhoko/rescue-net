@@ -24,8 +24,9 @@ that do not change from session to session.
   - `setup/` — idempotent default installers run by `after_install` / `after_migrate`
   - `tests/` — automated tests (see below)
 - Frontend: `index.html`, `pages/*.html`, `assets/js/*.js`, `assets/css/*.css` (vanilla JS, served from disk).
-- Legacy (retired, do not extend): `backend/` (FastAPI), `database/` (PostgreSQL migrations).
-- Offline app source: `apps/rescue-net-app/`.
+- Offline app source: `apps/rescue-net-app/` — a router in `src/app.js` maps its REST-style calls onto
+  Frappe methods; deployed as static files in `/volume1/web/rescue-net-app/`. There is no FastAPI any more
+  (removed in phase 3, history in the git tag `fastapi-final`) — never add a second backend.
 
 ## Production — hands off
 

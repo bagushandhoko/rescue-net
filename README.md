@@ -18,16 +18,17 @@ Rescue-Net connects active disaster events, verified organizations, posko/field 
 - **Backend / system of record: Frappe 15 + MariaDB.** Frappe app `rescue_net`, production site
   `osiun.localhost` in container `osiun-frappe-backend` (compose in `/volume1/docker/osiun-frappe-shadow/`).
 - Frontend: static HTML/JS in this repo, served from disk under `/rescue-net/`.
-- Legacy FastAPI (`backend/`, container `rescue-net-api`) + PostgreSQL `rescuenet_db` are **retired**
-  (stopped / read-only, kept for rollback only). Their formal removal is tracked in `HANDOVER.md`.
+- The former FastAPI + PostgreSQL backend was removed on 2026-09-26 (phase 3). Its code is kept only in the
+  git tag `fastapi-final`; the final database backup is on the server in
+  `/volume1/docker/osiun-backups/rescue-net-legacy/` (not in git). Frappe is the only backend.
 - Branch: `main` (only branch).
 
 ## Repository Source Layout
 
 - Frappe app source: `frappe_shadow/apps/rescue_net/rescue_net/` (API modules, DocTypes, tests)
 - Website: repository root (`index.html`, `pages/`, `assets/`)
-- Offline-first Web/PWA/Android/iOS/Desktop source: `apps/rescue-net-app/`
-- Legacy (retired): `backend/` (FastAPI), `database/migrations/` (PostgreSQL)
+- Offline-first Web/PWA/Android/iOS/Desktop source: `apps/rescue-net-app/` (talks to Frappe; served from
+  `/volume1/web/rescue-net-app/` as `/rescue-net-app/`)
 - Status + open items: `HANDOVER.md`; working rules and how to run tests: `CLAUDE.md`;
   full history: `docs/history/`
 

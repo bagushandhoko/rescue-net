@@ -1,5 +1,5 @@
 """Membership decisions follow from→to, org links need the other side's consent, posko rights
-only after an approved assignment (phase 2: O-2, O-4, O-9, O-10)."""
+only after an approved assignment (phase 2: O-2, O-4, O-9, O-10, O-11)."""
 
 import frappe
 
@@ -123,3 +123,17 @@ class TestPoskoRightsNeedApprovedAssignment(RNTestCase):
         self.assertEqual(frappe.db.get_value("RN User Account", operator.account, "role"), "posko_operator")
         with as_user(operator.user), self.assertRaises(frappe.PermissionError):
             api.update_posko(res["posko"], notes="diubah")
+
+    def test_creator_deletes_an_empty_posko_but_not_one_with_other_members(self):
+        creator = make_actor(role="viewer")
+        empty, busy = (self.create(creator)["posko"] for _ in range(2))
+        for posko in (empty, busy):
+            frappe.db.set_value("RN Posko Assignment", {"posko": posko}, "status", "approved")
+        make_actor(posko=frappe._dict(name=busy))
+        with as_user(creator.user):
+            api.delete_posko(empty)
+            with self.assertRaises(frappe.ValidationError):
+                api.delete_posko(busy)
+        self.assertFalse(frappe.db.exists("RN Posko", empty))
+        self.assertFalse(frappe.db.exists("RN Posko Assignment", {"posko": empty}))
+        self.assertTrue(frappe.db.exists("RN Posko", busy))

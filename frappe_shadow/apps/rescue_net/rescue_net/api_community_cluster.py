@@ -1115,7 +1115,6 @@ def delete_posko(posko):
         ("RN Shelter Occupancy", {"posko": posko}),
         ("RN Kitchen Production", {"posko": posko}),
         ("RN Volunteer Assignment", {"posko": posko}),
-        ("RN Posko Assignment", {"posko": posko}),
     ]
     for doctype, filters in linked_checks:
         if frappe.db.exists(doctype, filters):
@@ -1123,6 +1122,17 @@ def delete_posko(posko):
                 f"Posko ini sudah punya data operasional ({doctype}) — "
                 "tidak bisa dihapus. Ubah status jadi 'offline' sebagai gantinya."
             )
+
+    # O-11: the creator's own assignment goes with the posko; anyone else's
+    # assignment means other people work here and blocks the delete
+    creator = frappe.db.get_value("RN User Account", {"frappe_user": doc.owner}, "name")
+    assignments = frappe.get_all("RN Posko Assignment", filters={"posko": posko},
+                                 fields=["name", "user_account"])
+    if any(a.user_account != creator for a in assignments):
+        frappe.throw("Posko ini sudah punya anggota lain — tidak bisa dihapus. "
+                     "Ubah status jadi 'offline' sebagai gantinya.")
+    for a in assignments:
+        frappe.delete_doc("RN Posko Assignment", a.name, ignore_permissions=True)
 
     frappe.delete_doc("RN Posko", posko, ignore_permissions=True)
     return {"posko": posko, "deleted": True}

@@ -127,7 +127,7 @@ def request_membership(organization):
         as_dict=True,
     )
 
-    if existing:
+    if existing and existing.status not in ("rejected", "revoked"):
         return existing
 
     from rescue_net.command import command_chain
@@ -136,6 +136,14 @@ def request_membership(organization):
             "Organisasi ini dikelola dengan komando terpusat: akun anggota "
             "dibuat oleh pusat, tidak bisa mendaftar sendiri. Hubungi admin pusat."
         )
+
+    if existing:
+        # asking again after a rejection / revocation: the same row goes back to pending
+        membership = frappe.get_doc("RN Organization Membership", existing.name)
+        membership.status = "pending"
+        membership.requested_at = now_datetime()
+        membership.save(ignore_permissions=True)
+        return {"name": membership.name, "status": membership.status}
 
     membership = frappe.new_doc("RN Organization Membership")
     membership.user_account = actor.name
@@ -499,9 +507,13 @@ def decide_org_link(request, action, note=None):
         doc.save(ignore_permissions=True)
         return {"request": doc.name, "status": doc.status}
 
-    can_decide = sysmgr or _owns_org(actor, doc.requester_organization) or _owns_org(actor, doc.target_organization)
-    if not can_decide:
-        frappe.throw("Anda bukan pengelola organisasi terkait.", frappe.PermissionError)
+    # O-4: only the side that has to consent decides — the side the requester
+    # did not manage (requester_organization = parent slot, target = child)
+    requester = frappe._dict(name=doc.requested_by)
+    consenting = (doc.target_organization if _owns_org(requester, doc.requester_organization)
+                  else doc.requester_organization)
+    if not (sysmgr or _owns_org(actor, consenting)):
+        frappe.throw("Keputusan ada pada pengelola organisasi pihak lain.", frappe.PermissionError)
     if actor.name == doc.requested_by and not sysmgr:
         frappe.throw("Anda tidak bisa memutuskan permintaan yang Anda ajukan sendiri — menunggu pihak lain.", frappe.PermissionError)
 

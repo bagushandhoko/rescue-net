@@ -44,6 +44,9 @@ body {
   display: grid; grid-template-columns: 1fr 240px; gap: 18px; align-items: stretch;
   padding: 28px; border: 1px solid var(--line); border-radius: 22px; background: var(--panel);
 }
+.login-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.login-form input { flex: 1 1 180px; min-width: 0; }
+.api-config[data-login-box] { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .api-config {
   display: grid;
   grid-template-columns: 1fr auto;

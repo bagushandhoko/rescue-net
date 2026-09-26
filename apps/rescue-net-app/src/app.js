@@ -1,18 +1,22 @@
+// Server = the Rescue-Net web origin; every call goes to Frappe
+// (/rescue-net-frappe/api/method/...). FastAPI was retired 2026-09-26.
+const FRAPPE_PATH = "/rescue-net-frappe/api/method/";
+const PUBLIC_SERVER = "https://osiun.tail251e1e.ts.net";
+
 function defaultApiBase() {
-  if (location.protocol === "https:") return `${location.origin}/rescue-net-api`;
-  if (/^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\.|^127\.|^localhost$/i.test(location.hostname)) {
-    return `http://${location.hostname}:8092`;
-  }
-  return "http://192.168.100.32:8092";
+  // served from the web (PWA): same origin; native builds: the public server
+  if (location.protocol === "https:" && !/^(localhost|capacitor)$/i.test(location.hostname)) return location.origin;
+  return PUBLIC_SERVER;
 }
 
 function storedApiBase() {
-  const stored = localStorage.getItem("rn_api_base");
-  if (location.protocol === "https:" && stored && stored.startsWith("http://")) {
+  const stored = (localStorage.getItem("rn_api_base") || "").replace(/\/$/, "");
+  // an old FastAPI address (…/rescue-net-api, :8092) is replaced by the server
+  if (!stored || /rescue-net-api|:8092/.test(stored)) {
     localStorage.setItem("rn_api_base", defaultApiBase());
     return defaultApiBase();
   }
-  return stored || defaultApiBase();
+  return stored;
 }
 
 let API_BASE = storedApiBase();
@@ -37,19 +41,176 @@ let deferredInstallPrompt = null;
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
-async function api(path, options = {}) {
-  const res = await fetch(API_BASE + path, {
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-    ...options
+let RN_SESSION = null;
+
+async function frappeCall(method, args = {}, post = false) {
+  const headers = { Accept: "application/json" };
+  const init = { credentials: "include", headers };
+  let url = API_BASE + FRAPPE_PATH + method;
+  if (post) {
+    if (!RN_SESSION) await loadSession();
+    headers["Content-Type"] = "application/json";
+    if (RN_SESSION?.csrf_token) headers["X-Frappe-CSRF-Token"] = RN_SESSION.csrf_token;
+    init.method = "POST";
+    init.body = JSON.stringify(args);
+  } else {
+    const q = new URLSearchParams();
+    Object.entries(args).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== "") q.set(k, v); });
+    if (q.toString()) url += "?" + q;
+  }
+  const res = await fetch(url, init);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = String(data._server_messages ? JSON.parse(data._server_messages).map((m) => JSON.parse(m).message).join(" ") :
+      data.message || data.exception || `HTTP ${res.status}`).replace(/<[^>]+>/g, " ");
+    const err = new Error(res.status === 403 ? `Perlu login. ${msg}` : msg);
+    err.status = res.status;
+    throw err;
+  }
+  return Object.prototype.hasOwnProperty.call(data, "message") ? data.message : data;
+}
+
+async function loadSession() {
+  try {
+    RN_SESSION = await frappeCall("rescue_net.api_ai.session_info");
+  } catch {
+    RN_SESSION = null;
+  }
+  renderLogin();
+  return RN_SESSION;
+}
+
+async function login(email, password) {
+  const res = await fetch(API_BASE + FRAPPE_PATH + "login", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ usr: email, pwd: password })
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  if (!res.ok) throw new Error("Email atau password salah.");
+  RN_SESSION = null;
+  return loadSession();
+}
+
+async function logout() {
+  await fetch(API_BASE + FRAPPE_PATH + "logout", { credentials: "include" }).catch(() => {});
+  RN_SESSION = null;
+  renderLogin();
+}
+
+function renderLogin() {
+  const box = $("[data-login-box]");
+  if (!box) return;
+  const user = RN_SESSION?.user;
+  $("[data-login-form]")?.classList.toggle("hidden", !!user);
+  $("[data-login-status]") && ($("[data-login-status]").textContent = user ? `Masuk sebagai ${user}` : "Belum masuk — laporan & sync butuh login.");
+  $("[data-logout]")?.classList.toggle("hidden", !user);
+}
+
+const eventArg = (q) => q.get("disaster_event_id") || activeEventId();
+
+// The app still speaks its old REST paths; this maps each onto Frappe and
+// reshapes the answer, so the screens did not have to change.
+async function api(path, options = {}) {
+  const url = new URL(path, "http://app.local");
+  const method = (options.method || "GET").toUpperCase();
+  const body = options.body ? JSON.parse(options.body) : {};
+  const q = url.searchParams;
+  const route = `${method} ${url.pathname}`;
+  switch (route) {
+    case "GET /health":
+      return frappeCall("rescue_net.api_events.health");
+    case "GET /disasters": {
+      const r = await frappeCall("rescue_net.api_events.disasters", { limit: 200 });
+      return (r.disasters || []).map((d) => ({
+        id: d.name, name: d.title || d.name, location: d.location_summary || "-",
+        status: d.event_status || "active", severity: d.severity
+      }));
+    }
+    case "POST /disasters": {
+      const r = await frappeCall("rescue_net.api_frontend_bridge.create_disaster_event", { payload_json: JSON.stringify(body) }, true);
+      return { ...r, id: r.name || r.id };
+    }
+    case "GET /organizations": {
+      const rows = await frappeCall("rescue_net.api_community_cluster.list_organizations");
+      return (rows || []).map((o) => ({ id: o.name, name: o.title || o.name, status: o.status }));
+    }
+    case "GET /central-data/status": {
+      const s = await frappeCall("rescue_net.api_frontend_bridge.consolidation_summary", { disaster_event: eventArg(q) });
+      return {
+        summary: {
+          raw_reports_total: s.community_report_count || 0,
+          consolidated_needs: (s.community_need_count || 0) + (s.logistic_need_count || 0),
+          location_review_needed: s.location_review_needed || 0
+        },
+        unit_review_total: 0
+      };
+    }
+    case "GET /consolidated-needs": {
+      const r = await frappeCall("rescue_net.api_frontend_bridge.consolidated_needs", { disaster_event: eventArg(q) });
+      const rows = Array.isArray(r) ? r : (r.rows || r.needs || []);
+      return rows.map((n) => ({
+        item_name: n.item_name || n.title, quantity_final: n.quantity ?? "-", quantity_unit: n.unit || "",
+        merge_method: n.canonical_group ? "grup " + n.canonical_group : "per laporan", source_count: 1,
+        confidence_level: n.verification_status || "unverified",
+        status: n.verification_status === "verified" ? "verified" : (n.need_status || n.status || "open")
+      }));
+    }
+    case "POST /consolidated-needs/rebuild":
+      return frappeCall("rescue_net.api_intelligence.rebuild_consolidated_needs", { disaster_event: eventArg(q) }, true);
+    case "GET /data-consolidation/raw-reports": {
+      const rows = await frappeCall("rescue_net.api_frontend_bridge.consolidation_raw_reports", { disaster_event: eventArg(q) });
+      return (rows || []).map((r) => ({ ...r, source_type: r.source_type || r.report_type || "community_report" }));
+    }
+    case "POST /duplicates/check":
+      return frappeCall("rescue_net.api_frontend_bridge.duplicates_check",
+        { disaster_event: body.disaster_event_id || activeEventId(), object_type: body.object_type || "all" }, true);
+    case "GET /unit-catalog":
+      return frappeCall("rescue_net.api_device.unit_catalog");
+    case "POST /unit-normalize":
+      return frappeCall("rescue_net.api_device.unit_normalize", body, true);
+    case "GET /admin-areas/children": {
+      const rows = await frappeCall("rescue_net.api_admin_areas.get_children",
+        { parent_code: q.get("parent_code") || "", level: q.get("level") || "" });
+      return (rows || []).map((a) => ({ code: a.code, name: a.area_name, level: a.level, parent_code: a.parent_code }));
+    }
+    case "POST /public/community-reports": {
+      const levelCode = {};
+      if (body.admin_area_id) levelCode[`${body.area_level || "village"}_code`] = body.admin_area_id;
+      const r = await frappeCall("rescue_net.api_frontend_bridge.submit_community_report_bridge", {
+        title: body.title, description: body.description, report_type: body.report_type,
+        priority: body.priority, affected_people_count: body.affected_people_count || 0,
+        urgent_needs: body.urgent_needs, location_text: body.location_text,
+        latitude: body.latitude ?? body.lat ?? null, longitude: body.longitude ?? body.lng ?? null,
+        consent_to_contact: body.consent_to_contact ? 1 : 0, location_input_method: body.location_input_method,
+        disaster_event: body.disaster_event_id, intake_mode: "form", ...levelCode
+      }, true);
+      return { community_report: { id: r.name, consolidation_status: r.posko_title ? `diteruskan ke ${r.posko_title}` : (r.status || "submitted") } };
+    }
+    case "POST /device-registrations":
+      return frappeCall("rescue_net.api_device.register_device", { payload: JSON.stringify(body) }, true);
+    case "POST /sync/push":
+      return frappeCall("rescue_net.api_sync.push", body, true);
+    default:
+      throw new Error(`Rute app tidak dikenal: ${route}`);
+  }
 }
 
 async function apiForm(path, formData) {
-  const res = await fetch(API_BASE + path, { method: "POST", body: formData });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  if (path !== "/evidence/upload") throw new Error(`Rute app tidak dikenal: POST ${path}`);
+  const file = formData.get("file");
+  const base64 = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+  return frappeCall("rescue_net.api_frontend_bridge.upload_evidence", {
+    filename: file.name || "bukti.jpg", content_base64: base64,
+    disaster_event: formData.get("disaster_event_id"), linked_object_type: formData.get("linked_object_type"),
+    linked_object_id: formData.get("linked_object_id"), evidence_type: formData.get("evidence_type") || "photo",
+    uploaded_by: formData.get("uploaded_by")
+  }, true);
 }
 
 function readStore(key, fallback = []) {
@@ -155,11 +316,7 @@ async function refreshStatus() {
     text("[data-api-status]", "Online");
   } catch (err) {
     text("[data-api-status]", "Offline cache");
-    if (API_BASE.includes("/rescue-net-api")) {
-      text("[data-api-url]", `${API_BASE} belum aktif. API pusat hidup, tapi reverse proxy web belum tersambung: /rescue-net-api -> 127.0.0.1:8092.`);
-    } else {
-      text("[data-api-url]", `${API_BASE} tidak terjangkau. Data lokal tetap tersimpan di HP.`);
-    }
+    text("[data-api-url]", `${API_BASE} tidak terjangkau. Data lokal tetap tersimpan di HP.`);
   }
 }
 
@@ -698,6 +855,27 @@ function setupActions() {
     }
   });
   $("[data-refresh]").addEventListener("click", refreshAll);
+  $("[data-login-form]")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const f = event.currentTarget;
+    const msg = $("[data-login-message]");
+    msg.textContent = "Masuk…";
+    try {
+      await login(f.email.value.trim(), f.password.value);
+      f.password.value = "";
+      msg.textContent = "";
+      await refreshAll();
+      runSync();
+    } catch (err) {
+      msg.textContent = err.message;
+    }
+  });
+  $("[data-logout]")?.addEventListener("click", logout);
+  $("[data-login-google]")?.addEventListener("click", async () => {
+    const r = await frappeCall("rescue_net.api_auth.social_login_url", { provider: "google", redirect_to: location.href }).catch(() => null);
+    if (r?.available && r.url) location.href = r.url;
+    else $("[data-login-message]").textContent = "Login Google hanya tersedia di versi web.";
+  });
   $("[data-sync-now]").addEventListener("click", runSync);
   $("[data-save-context]")?.addEventListener("click", async () => {
     const id = $("[data-event-select]")?.value;
@@ -759,6 +937,7 @@ function setupActions() {
 
 async function refreshAll() {
   await refreshStatus();
+  await loadSession();
   await loadContextGate();
   await Promise.all([loadDashboard(), loadRawQueue(), loadUnits()]);
   await loadBuildInfo();

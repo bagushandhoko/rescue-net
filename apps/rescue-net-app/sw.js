@@ -1,4 +1,4 @@
-const CACHE_NAME = "rescue-net-app-v6";
+const CACHE_NAME = "rescue-net-app-v7";
 const APP_SHELL = [
   "./",
   "index.html",
@@ -23,6 +23,9 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
+  // API answers (logged-in data) are never put in the shared cache; the app
+  // keeps its own offline copy in localStorage
+  if (new URL(request.url).pathname.includes("/api/method/")) return;
   event.respondWith(
     fetch(request).then((response) => {
       const copy = response.clone();

@@ -21,10 +21,21 @@
       <button class="icon-button" type="button" data-refresh aria-label="Refresh">R</button>
     </header>
     <section class="api-config">
-      <label>API Base
-        <input data-api-base-input value="http://192.168.100.32:8092">
+      <label>Server Rescue-Net
+        <input data-api-base-input value="https://osiun.tail251e1e.ts.net">
       </label>
-      <button class="btn" type="button" data-save-api>Save API</button>
+      <button class="btn" type="button" data-save-api>Simpan Server</button>
+    </section>
+    <section class="api-config" data-login-box>
+      <small data-login-status>Memeriksa sesi…</small>
+      <form class="login-form" data-login-form>
+        <input name="email" type="email" placeholder="Email akun Rescue-Net" autocomplete="username" required>
+        <input name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+        <button class="btn" type="submit">Masuk</button>
+        <button class="btn" type="button" data-login-google>Google</button>
+      </form>
+      <button class="btn hidden" type="button" data-logout>Keluar</button>
+      <small data-login-message></small>
     </section>
 
     <main>
@@ -61,7 +72,7 @@
       </section>
 
       <nav class="tabbar" aria-label="Mode aplikasi">
-        <button class="active" type="button" data-view="warroom">Command Centre</button>
+        <button class="active" type="button" data-view="warroom">Control Centre</button>
         <button type="button" data-view="register">Registrasi</button>
         <button type="button" data-view="report">Laporan</button>
         <button type="button" data-view="organization">Organisasi</button>

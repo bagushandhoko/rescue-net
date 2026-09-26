@@ -136,6 +136,7 @@ def make_transport_space(posko, **fields):
         coordination_posko=posko.name,
         provider_name=fields.pop("provider_name", "Truk Uji"),
         transport_status=fields.pop("transport_status", "available"),
+        capacity_weight_kg=fields.pop("capacity_weight_kg", 1000),
         **fields,
     )
 

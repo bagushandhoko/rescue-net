@@ -647,47 +647,6 @@ def update_transport_space(
 
 # --- Transport booking / space blocking + relawan-pickup matching -----------
 
-_BOOKING_HOLD_STATES = {"requested", "confirmed"}
-
-
-def _transport_capacity(space):
-    """Return capacity + committed (confirmed) + held (requested) + available
-    for one RN Transport Space doc/dict."""
-    cap_kg = flt(space.get("capacity_weight_kg"))
-    cap_m3 = flt(space.get("capacity_volume_m3"))
-    # capacity the provider keeps for its own cargo — the space offered to
-    # other parties is capacity minus this.
-    own_kg = flt(space.get("own_load_kg"))
-    own_m3 = flt(space.get("own_load_m3"))
-    offered_kg = max(0.0, cap_kg - own_kg)
-    offered_m3 = max(0.0, cap_m3 - own_m3)
-
-    agg = frappe.get_all(
-        "RN Transport Booking",
-        filters={"transport_space": space.get("name"),
-                 "status": ["in", list(_BOOKING_HOLD_STATES)]},
-        fields=["status", "qty_weight_kg", "qty_volume_m3"],
-        limit_page_length=500,
-    )
-    used_kg = sum(flt(b.qty_weight_kg) for b in agg if b.status == "confirmed")
-    used_m3 = sum(flt(b.qty_volume_m3) for b in agg if b.status == "confirmed")
-    held_kg = sum(flt(b.qty_weight_kg) for b in agg if b.status == "requested")
-    held_m3 = sum(flt(b.qty_volume_m3) for b in agg if b.status == "requested")
-
-    avail_kg = max(0.0, offered_kg - used_kg - held_kg)
-    avail_m3 = max(0.0, offered_m3 - used_m3 - held_m3)
-    pct = round(100.0 * (own_kg + used_kg) / cap_kg, 1) if cap_kg else 0
-    return {
-        "cap_kg": cap_kg, "cap_m3": cap_m3,
-        "own_kg": own_kg, "own_m3": own_m3,
-        "offered_kg": offered_kg, "offered_m3": offered_m3,
-        "used_kg": used_kg, "used_m3": used_m3,
-        "held_kg": held_kg, "held_m3": held_m3,
-        "avail_kg": avail_kg, "avail_m3": avail_m3,
-        "pct": pct, "booking_count": len(agg),
-    }
-
-
 def _recompute_transport_committed(space_name):
     rows = frappe.get_all(
         "RN Transport Booking",
@@ -738,20 +697,10 @@ def book_transport_space(
             "atau pesan armada bermode kurir."
         )
 
+    # the fit against the armada's free space is checked by the booking
+    # controller under a lock on the armada (services/transport.py)
     w = flt(qty_weight_kg) if qty_weight_kg not in (None, "") else 0.0
     v = flt(qty_volume_m3) if qty_volume_m3 not in (None, "") else 0.0
-    if w <= 0 and v <= 0:
-        frappe.throw("Isi berat (kg) atau volume (m3) muatan.")
-
-    cap = _transport_capacity(space.as_dict())
-    if space.capacity_weight_kg and w > cap["avail_kg"] + 0.001:
-        frappe.throw(
-            f"Kapasitas berat tidak cukup: sisa {cap['avail_kg']:.0f} kg, diminta {w:.0f} kg."
-        )
-    if space.capacity_volume_m3 and v > cap["avail_m3"] + 0.001:
-        frappe.throw(
-            f"Kapasitas volume tidak cukup: sisa {cap['avail_m3']:.1f} m3, diminta {v:.1f} m3."
-        )
 
     policy = space.booking_policy or "pin_verify"
     pin = None
@@ -1013,6 +962,8 @@ def claim_distribution_flow(flow, transport_space=None, eta=None, note=None):
 
     coord_posko = None
     if transport_space:
+        from rescue_net.services.transport import assert_bookable, lock_space
+        assert_bookable(lock_space(transport_space))
         space = frappe.get_doc("RN Transport Space", transport_space)
         coord_posko = space.coordination_posko
         if not _can_contribute(actor, coord_posko):
@@ -1307,6 +1258,11 @@ def update_flow_status(
             "received":"completed",
             "cancelled":"available",
         }.get(new_status)
+
+        # L-12: a flow that ends frees the armada only when no other flow rides it
+        from rescue_net.services.transport import armada_status_after_flow
+        transport_status = transport_status and armada_status_after_flow(
+            doc.transport_space, doc.name, transport_status)
 
         if transport_status:
             frappe.db.set_value(
@@ -2570,16 +2526,9 @@ def book_transport_space_public(
             "Armada ini hanya menyediakan ruang muat (bukan kurir). Pilih 'antar sendiri'."
         )
 
+    # fit + armada status: booking controller (services/transport.py)
     w = flt(qty_weight_kg) if qty_weight_kg not in (None, "") else 0.0
     v = flt(qty_volume_m3) if qty_volume_m3 not in (None, "") else 0.0
-    if w <= 0 and v <= 0:
-        frappe.throw("Isi berat (kg) atau volume (m3) muatan.")
-
-    cap = _transport_capacity(space.as_dict())
-    if space.capacity_weight_kg and w > cap["avail_kg"] + 0.001:
-        frappe.throw(f"Ruang tidak cukup: sisa {cap['avail_kg']:.0f} kg, diminta {w:.0f} kg.")
-    if space.capacity_volume_m3 and v > cap["avail_m3"] + 0.001:
-        frappe.throw(f"Ruang tidak cukup: sisa {cap['avail_m3']:.1f} m3, diminta {v:.1f} m3.")
 
     policy = space.booking_policy or "pin_verify"
     pin = None
@@ -2658,20 +2607,9 @@ def update_public_transport_booking(
         _recompute_transport_committed(doc.transport_space)
         return {"booking": doc.name, "status": "cancelled", "status_label": "Dibatalkan"}
 
-    space = frappe.get_doc("RN Transport Space", doc.transport_space)
+    # a changed quantity is re-checked by the booking controller
     new_w = flt(qty_weight_kg) if qty_weight_kg not in (None, "") else flt(doc.qty_weight_kg)
     new_v = flt(qty_volume_m3) if qty_volume_m3 not in (None, "") else flt(doc.qty_volume_m3)
-    if new_w <= 0 and new_v <= 0:
-        frappe.throw("Isi berat (kg) atau volume (m3) muatan.")
-
-    cap = _transport_capacity(space.as_dict())
-    # add this booking's own current hold back before the check
-    avail_kg = cap["avail_kg"] + flt(doc.qty_weight_kg)
-    avail_m3 = cap["avail_m3"] + flt(doc.qty_volume_m3)
-    if space.capacity_weight_kg and new_w > avail_kg + 0.001:
-        frappe.throw(f"Ruang tidak cukup: sisa {avail_kg:.0f} kg.")
-    if space.capacity_volume_m3 and new_v > avail_m3 + 0.001:
-        frappe.throw(f"Ruang tidak cukup: sisa {avail_m3:.1f} m3.")
 
     for field, val in (
         ("cargo_desc", cargo_desc),

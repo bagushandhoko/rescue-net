@@ -5,7 +5,15 @@ from frappe.model.document import Document
 from frappe.utils import now_datetime
 
 
-STATUS = {"requested", "confirmed", "rejected", "cancelled", "completed"}
+TRANSITIONS = {
+    "requested": {"confirmed", "rejected", "cancelled"},
+    "confirmed": {"completed", "rejected", "cancelled"},
+    "rejected": set(),
+    "cancelled": set(),
+    "completed": set(),
+}
+
+STATUS = set(TRANSITIONS)
 
 
 class RNTransportBooking(Document):
@@ -36,3 +44,13 @@ class RNTransportBooking(Document):
             v = self.get(f)
             if v is not None and float(v) < 0:
                 frappe.throw("Kuantitas booking tidak boleh negatif")
+
+        from rescue_net.services.guards import assert_transition, bypass, changed
+        from rescue_net.services.transport import HOLD_STATES, hold_capacity
+
+        assert_transition(self, "status", TRANSITIONS, "Status booking")
+        if bypass(self) or self.status not in HOLD_STATES:
+            return
+        # L-6: space is held from the request on, checked under the armada lock
+        if self.is_new() or changed(self, "qty_weight_kg") or changed(self, "qty_volume_m3"):
+            hold_capacity(self)

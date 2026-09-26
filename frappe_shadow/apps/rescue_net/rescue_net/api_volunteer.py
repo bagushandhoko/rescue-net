@@ -574,21 +574,7 @@ def create_assignment(
             "Relawan sedang tidak tersedia"
         )
 
-    active = frappe.db.exists(
-        "RN Volunteer Assignment",
-        {
-            "volunteer": volunteer,
-            "assignment_status": [
-                "in",
-                list(ACTIVE_ASSIGNMENTS),
-            ],
-        },
-    )
-
-    if active:
-        frappe.throw(
-            "Relawan sudah memiliki penugasan aktif"
-        )
+    # one active assignment per volunteer: RN Volunteer Assignment controller
 
     doc = frappe.new_doc(
         "RN Volunteer Assignment"

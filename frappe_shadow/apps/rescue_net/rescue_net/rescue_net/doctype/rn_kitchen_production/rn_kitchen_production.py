@@ -5,6 +5,14 @@ from frappe.model.document import Document
 from frappe.utils import cint
 
 
+# a production moves forward only; distributed is final
+TRANSITIONS = {
+    "prepared": {"dispatched"},
+    "dispatched": {"distributed"},
+    "distributed": set(),
+}
+
+
 class RNKitchenProduction(Document):
     def autoname(self):
         if self.legacy_id:
@@ -29,11 +37,10 @@ class RNKitchenProduction(Document):
                 "Jumlah porsi harus lebih dari 0"
             )
 
-        if self.production_status not in {
-            "prepared",
-            "dispatched",
-            "distributed",
-        }:
+        if self.production_status not in TRANSITIONS:
             frappe.throw(
                 "Status produksi tidak valid"
             )
+
+        from rescue_net.services.guards import assert_transition
+        assert_transition(self, "production_status", TRANSITIONS, "Status produksi", initial={"prepared"})

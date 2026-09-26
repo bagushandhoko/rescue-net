@@ -37,25 +37,6 @@ ACTIVE_DEPLOYMENT = {
     "in_use",
 }
 
-DEPLOYMENT_TRANSITIONS = {
-    "reserved": {
-        "deployed",
-        "cancelled",
-    },
-    "deployed": {
-        "in_use",
-        "completed",
-        "cancelled",
-    },
-    "in_use": {
-        "completed",
-        "cancelled",
-    },
-    "completed": set(),
-    "cancelled": set(),
-}
-
-
 def _role(actor):
     return getattr(actor, "role", None)
 
@@ -704,16 +685,7 @@ def update_deployment_status(
 
     current = doc.deployment_status
 
-    if new_status not in (
-        DEPLOYMENT_TRANSITIONS.get(
-            current,
-            set(),
-        )
-    ):
-        frappe.throw(
-            f"Transisi deployment tidak valid: "
-            f"{current} -> {new_status}"
-        )
+    # transition: RN Work Tool Deployment controller
 
     doc.deployment_status = new_status
 

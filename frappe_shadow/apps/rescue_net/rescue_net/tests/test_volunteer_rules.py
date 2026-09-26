@@ -56,3 +56,20 @@ class TestVolunteerRights(RNTestCase):
         doc.assignment_status = "completed"
         with self.assertRaises(frappe.ValidationError):
             doc.save(ignore_permissions=True)
+
+    # V-2: one active assignment per volunteer, also on a direct insert
+    def test_second_active_assignment_is_refused_on_a_direct_insert(self):
+        doc = frappe.get_doc({
+            "doctype": "RN Volunteer Assignment", "volunteer": self.profile, "posko": self.w.posko_b.name,
+            "task_title": "Dapur", "assignment_status": "planned",
+        })
+        with self.assertRaises(frappe.ValidationError):
+            doc.insert(ignore_permissions=True)
+        with as_user(self.op_b.user), self.assertRaises(frappe.ValidationError):
+            api.create_assignment(self.profile, self.w.posko_b.name, "Dapur")
+
+    def test_new_assignment_after_the_old_one_ends(self):
+        with as_user(self.op_a.user):
+            api.update_assignment_status(self.assignment, "cancelled")
+        with as_user(self.op_b.user):
+            api.create_assignment(self.profile, self.w.posko_b.name, "Dapur")

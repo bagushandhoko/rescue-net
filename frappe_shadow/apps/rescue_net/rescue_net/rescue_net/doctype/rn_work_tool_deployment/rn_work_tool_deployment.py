@@ -5,6 +5,16 @@ from frappe.model.document import Document
 from frappe.utils import flt
 
 
+# completed / cancelled are final
+TRANSITIONS = {
+    "reserved": {"deployed", "cancelled"},
+    "deployed": {"in_use", "completed", "cancelled"},
+    "in_use": {"completed", "cancelled"},
+    "completed": set(),
+    "cancelled": set(),
+}
+
+
 class RNWorkToolDeployment(Document):
     def autoname(self):
         if self.legacy_id:
@@ -25,16 +35,13 @@ class RNWorkToolDeployment(Document):
         )
 
     def validate(self):
-        if self.deployment_status not in {
-            "reserved",
-            "deployed",
-            "in_use",
-            "completed",
-            "cancelled",
-        }:
+        if self.deployment_status not in TRANSITIONS:
             frappe.throw(
                 "Status deployment tidak valid"
             )
+
+        from rescue_net.services.guards import assert_transition
+        assert_transition(self, "deployment_status", TRANSITIONS, "Status deployment", initial={"reserved"})
 
         if flt(self.quantity_assigned) <= 0:
             frappe.throw(

@@ -23,17 +23,6 @@ from rescue_net.access_policy import (
 
 CONTROL_ROLE = "command_center"
 
-TRANSITIONS = {
-    "prepared": {
-        "dispatched",
-    },
-    "dispatched": {
-        "distributed",
-    },
-    "distributed": set(),
-}
-
-
 def _role(actor):
     return getattr(actor, "role", None)
 
@@ -566,16 +555,7 @@ def update_production_status(
         doc.production_status
     )
 
-    if new_status not in (
-        TRANSITIONS.get(
-            current,
-            set(),
-        )
-    ):
-        frappe.throw(
-            f"Transisi produksi tidak valid: "
-            f"{current} -> {new_status}"
-        )
+    # transition: RN Kitchen Production controller
 
     doc.production_status = (
         new_status

@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Operational Evidence",
-  "module": "Rescue Net",
+  "module": "RN Verification",
   "custom": 0,
   "is_submittable": 0,
   "fields": [

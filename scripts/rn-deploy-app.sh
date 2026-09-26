@@ -6,7 +6,8 @@
 #
 # 1. backup: app code tarball in the container + bench DB backup
 # 2. copy every app file from git (tests excluded) — files that exist only in
-#    production are left alone
+#    production are left alone; the offline app's static files go to
+#    /volume1/web/rescue-net-app/
 # 3. bench migrate (new DocTypes / fields), clear-cache, restart
 # 4. probe a few endpoints — every line should say 200
 # Rollback: tar xzf /home/frappe/rn-app-backup-<ts>.tgz -C apps (in the
@@ -33,6 +34,17 @@ sudo docker exec -u root "$C" sh -c "cd $B/apps/rescue_net && tar xf $TAR && tar
 rm -f "$TAR" "$TAR.list"
 echo "copied"
 
+echo "== 2b. offline app (static files) =="
+APP_SRC="$REPO/apps/rescue-net-app"
+APP_DST=/volume1/web/rescue-net-app
+if [ -d "$APP_DST" ]; then
+  # the built downloads (APK, desktop zips) and local backups stay in place
+  (cd "$APP_SRC" && git ls-files) | while read -r f; do
+    mkdir -p "$APP_DST/$(dirname "$f")" && cp "$APP_SRC/$f" "$APP_DST/$f"
+  done
+  echo "offline app -> $APP_DST"
+fi
+
 echo "== 3. migrate + restart =="
 sudo docker exec "$C" sh -c "cd $B && bench --site $SITE migrate 2>&1 | tail -8 && bench --site $SITE clear-cache"
 sudo docker restart "$C" >/dev/null
@@ -45,7 +57,9 @@ echo "== 4. probe =="
 for m in "rescue_net.api_resource_tools.work_objects_board?disaster_event=event-sim-001" \
          rescue_net.api_ai.ai_providers \
          rescue_net.api_control_centre.active_disasters_board \
-         "rescue_net.api_frontend_bridge.community_reports?disaster_event=event-sim-001"; do
+         "rescue_net.api_frontend_bridge.community_reports?disaster_event=event-sim-001" \
+         rescue_net.api_events.disasters \
+         rescue_net.api_device.unit_catalog; do
   printf '%-78s %s\n' "$m" "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:8095/api/method/$m")"
 done
 echo "done"

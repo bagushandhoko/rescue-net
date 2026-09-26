@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
-  "name": "RN Action Plan Update",
-  "module": "Rescue Net",
+  "name": "RN Action Plan",
+  "module": "RN Command",
   "custom": 0,
   "is_submittable": 0,
   "autoname": "field:legacy_id",
@@ -29,20 +29,9 @@
     },
     {
       "fieldname": "title",
-      "label": "Update Title",
+      "label": "Action Title",
       "fieldtype": "Data",
       "reqd": 1
-    },
-    {
-      "fieldname": "action_plan",
-      "label": "Action Plan",
-      "fieldtype": "Link",
-      "options": "RN Action Plan"
-    },
-    {
-      "fieldname": "action_plan_legacy_id",
-      "label": "Action Plan Legacy ID",
-      "fieldtype": "Data"
     },
     {
       "fieldname": "disaster_event",
@@ -56,40 +45,65 @@
       "fieldtype": "Data"
     },
     {
-      "fieldname": "progress_status",
-      "label": "Progress Status",
+      "fieldname": "posko",
+      "label": "Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko"
+    },
+    {
+      "fieldname": "posko_legacy_id",
+      "label": "Posko Legacy ID",
       "fieldtype": "Data"
     },
     {
-      "fieldname": "realized_quantity",
-      "label": "Realized Quantity",
+      "fieldname": "category",
+      "label": "Category",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "target_object",
+      "label": "Target Object",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "target_quantity",
+      "label": "Target Quantity",
       "fieldtype": "Float"
     },
     {
-      "fieldname": "realized_unit",
-      "label": "Realized Unit",
+      "fieldname": "target_unit",
+      "label": "Target Unit",
       "fieldtype": "Data"
     },
     {
-      "fieldname": "observation",
-      "label": "Observation",
+      "fieldname": "assigned_to",
+      "label": "Assigned To (legacy)",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "planned_start",
+      "label": "Planned Start",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "planned_end",
+      "label": "Planned End",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "priority",
+      "label": "Priority",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
       "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "evidence_file",
-      "label": "Evidence File",
-      "fieldtype": "Link",
-      "options": "RN Evidence File"
-    },
-    {
-      "fieldname": "evidence_file_legacy_id",
-      "label": "Evidence File Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "reported_by",
-      "label": "Reported By (legacy)",
-      "fieldtype": "Data"
     },
     {
       "fieldname": "legacy_payload",

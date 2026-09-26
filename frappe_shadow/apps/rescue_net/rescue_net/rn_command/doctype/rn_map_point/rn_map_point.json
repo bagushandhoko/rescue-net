@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Map Point",
-  "module": "Rescue Net",
+  "module": "RN Command",
   "custom": 0,
   "is_submittable": 0,
   "track_changes": 1,

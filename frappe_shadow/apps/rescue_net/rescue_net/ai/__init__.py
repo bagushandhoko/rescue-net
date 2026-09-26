@@ -1,0 +1,4 @@
+"""AI API
+
+The frontend and other modules keep calling `rescue_net.api_ai.<name>`;
+that module re-exports everything defined here."""

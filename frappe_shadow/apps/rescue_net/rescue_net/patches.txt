@@ -3,3 +3,4 @@ rescue_net.patches.v2026_09.custom_fields_into_doctype
 
 [post_model_sync]
 rescue_net.patches.v2026_09.drop_dead_doctypes
+rescue_net.patches.v2026_09.drop_old_module_def

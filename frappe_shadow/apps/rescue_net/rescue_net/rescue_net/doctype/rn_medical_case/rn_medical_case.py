@@ -26,6 +26,39 @@ CASE_STATUS = {
 }
 
 
+CASE_TRANSITIONS = {
+    "active": {"stabilized", "referred", "evacuating", "discharged", "deceased", "closed"},
+    "stabilized": {"referred", "evacuating", "admitted", "discharged", "closed"},
+    "referred": {"evacuating", "admitted", "closed"},
+    "evacuating": {"admitted", "discharged", "deceased", "closed"},
+    "admitted": {"discharged", "deceased", "closed"},
+    "discharged": {"closed"},
+    "deceased": {"closed"},
+    "closed": set(),
+}
+
+TERMINAL = {"discharged", "deceased", "closed"}
+
+# a cancelled evacuation hands the patient back to the posko
+EVAC_REVERT = {"referred": {"active"}, "evacuating": {"active"}}
+
+
+def cascade_case_status(case_name, new_status, revert=False):
+    """Move a case because its evacuation moved. Goes through validate(); a
+    step the case graph does not allow (e.g. the case was closed meanwhile)
+    is skipped, never forced (M-2)."""
+    case = frappe.get_doc("RN Medical Case", case_name)
+    old = case.case_status
+    graph = EVAC_REVERT if revert else CASE_TRANSITIONS
+    if old == new_status or new_status not in graph.get(old, ()):
+        return False
+    case.case_status = new_status
+    case.source_updated_at = now_datetime()
+    case.flags.rn_evac_revert = revert
+    case.save(ignore_permissions=True)
+    return True
+
+
 def _actor():
     if frappe.session.user in (
         "Guest",
@@ -94,3 +127,7 @@ class RNMedicalCase(Document):
             frappe.throw(
                 "Status kasus tidak valid"
             )
+
+        from rescue_net.services.guards import assert_transition
+        graph = EVAC_REVERT if self.flags.get("rn_evac_revert") else CASE_TRANSITIONS
+        assert_transition(self, "case_status", graph, "Status kasus")

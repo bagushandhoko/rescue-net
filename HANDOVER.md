@@ -27,7 +27,8 @@ _Last updated: 2026-09-26_
    containers + site `rescuenet-test.localhost` (`allow_tests`; production has no such flag); 57 tests in
    `rescue_net/tests/` pass (9 skips = the known bugs below). How to run: `CLAUDE.md` → Tests.
 2. Business invariants → DocType controllers / `rescue_net/services/`; split api_*.py > 1,500 lines.
-   **Step 1 (inventory) DONE 2026-09-26 → `docs/PHASE2_INVARIANTS.md`; waiting for the owner's answers (section D) before moving anything.**
+   **Step 1 (inventory) DONE 2026-09-26 → `docs/PHASE2_INVARIANTS.md`; owner answered: fix ALL group A, VF-1 = System Manager only, S-2 accept + flag, no stock recount.**
+   Progress (each commit = rules in the controller + direct-save tests): VF-1/2 ✔, VF-3..6 ✔, SF-2/3/4 ✔, M-2/3/4 ✔ (medical case/evacuation graphs + cascade in the controllers). Next: L-3/L-4 stock, then the rest of group A, group B, API split.
 3. Finish the FastAPI retirement (audit table → owner picks the cutover date → archive tag `fastapi-final`).
 4. Split the single "Rescue Net" module per domain.
 5. Frontend cleanup (dead/duplicate JS, shared components, web vs `apps/rescue-net-app` decision).

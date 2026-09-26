@@ -18,68 +18,9 @@ OPERATOR_ROLES = {
 }
 
 
-CASE_TRANSITIONS = {
-    "active": {
-        "stabilized",
-        "referred",
-        "evacuating",
-        "discharged",
-        "deceased",
-        "closed",
-    },
-    "stabilized": {
-        "referred",
-        "evacuating",
-        "admitted",
-        "discharged",
-        "closed",
-    },
-    "referred": {
-        "evacuating",
-        "admitted",
-        "closed",
-    },
-    "evacuating": {
-        "admitted",
-        "discharged",
-        "deceased",
-        "closed",
-    },
-    "admitted": {
-        "discharged",
-        "deceased",
-        "closed",
-    },
-    "discharged": {"closed"},
-    "deceased": {"closed"},
-    "closed": set(),
-}
-
-
-EVAC_TRANSITIONS = {
-    "requested": {
-        "assigned",
-        "cancelled",
-    },
-    "assigned": {
-        "en_route_pickup",
-        "patient_on_board",
-        "cancelled",
-    },
-    "en_route_pickup": {
-        "patient_on_board",
-        "cancelled",
-    },
-    "patient_on_board": {
-        "arrived_hospital",
-        "cancelled",
-    },
-    "arrived_hospital": {
-        "handover_complete",
-    },
-    "handover_complete": set(),
-    "cancelled": set(),
-}
+# status graphs + the case/evacuation cascade live in the controllers (phase 2)
+from rescue_net.rescue_net.doctype.rn_medical_case.rn_medical_case import CASE_TRANSITIONS  # noqa: E402,F401
+from rescue_net.rescue_net.doctype.rn_medical_evacuation.rn_medical_evacuation import EVAC_TRANSITIONS  # noqa: E402,F401
 
 
 def _member_orgs(actor):
@@ -571,22 +512,6 @@ def create_evacuation(
         ignore_permissions=True
     )
 
-    if case.case_status in {
-        "active",
-        "stabilized",
-    }:
-        frappe.db.set_value(
-            "RN Medical Case",
-            case.name,
-            {
-                "case_status": "referred",
-                "source_updated_at": (
-                    now_datetime()
-                ),
-            },
-            update_modified=False,
-        )
-
     return {
         "medical_evacuation": doc.name,
         "evacuation_status": (
@@ -634,15 +559,6 @@ def update_evacuation_status(
     if new_status == "patient_on_board":
         doc.departed_at = now
 
-        frappe.db.set_value(
-            "RN Medical Case",
-            doc.medical_case,
-            {
-                "case_status": "evacuating",
-                "source_updated_at": now,
-            },
-            update_modified=False,
-        )
 
     if new_status == "arrived_hospital":
         doc.arrived_at = now
@@ -650,15 +566,6 @@ def update_evacuation_status(
     if new_status == "handover_complete":
         doc.handover_at = now
 
-        frappe.db.set_value(
-            "RN Medical Case",
-            doc.medical_case,
-            {
-                "case_status": "admitted",
-                "source_updated_at": now,
-            },
-            update_modified=False,
-        )
 
     doc.save(
         ignore_permissions=True

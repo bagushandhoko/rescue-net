@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Duplicate Candidate Resolution",
-  "module": "Rescue Net",
+  "module": "RN Intelligence",
   "custom": 0,
   "is_submittable": 0,
   "autoname": "field:pair_id",

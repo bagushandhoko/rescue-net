@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Normalization Rule",
-  "module": "Rescue Net",
+  "module": "RN Intelligence",
   "custom": 0,
   "autoname": "field:rule_name",
   "title_field": "rule_name",

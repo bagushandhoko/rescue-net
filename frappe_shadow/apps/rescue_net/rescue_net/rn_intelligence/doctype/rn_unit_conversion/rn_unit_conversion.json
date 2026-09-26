@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Unit Conversion",
-  "module": "Rescue Net",
+  "module": "RN Intelligence",
   "custom": 0,
   "autoname": "field:conversion_name",
   "title_field": "conversion_name",

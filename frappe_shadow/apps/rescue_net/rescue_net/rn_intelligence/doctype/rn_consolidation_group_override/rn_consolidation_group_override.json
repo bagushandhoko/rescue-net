@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Consolidation Group Override",
-  "module": "Rescue Net",
+  "module": "RN Intelligence",
   "custom": 0,
   "is_submittable": 0,
   "autoname": "field:override_key",

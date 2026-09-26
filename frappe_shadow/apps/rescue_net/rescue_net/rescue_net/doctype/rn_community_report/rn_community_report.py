@@ -62,8 +62,25 @@ class RNCommunityReport(Document):
         from rescue_net.services.guards import assert_transition, bypass, changed, is_privileged
 
         assert_transition(self, "status", REPORT_TRANSITIONS, "Status laporan")
+        self.assert_counts()
         if bypass(self) or not changed(self, "status") or is_privileged():
             return
         actor = frappe.db.get_value("RN User Account", {"frappe_user": frappe.session.user}, "name")
         if actor and actor == self.reporter_user:
             frappe.throw("Pelapor tidak dapat memutuskan laporannya sendiri.", frappe.PermissionError)
+
+    def assert_counts(self):
+        """C-2 / C-4: trust score is 0-100; affected people and the damage
+        scale are never negative (checked when they change, so an old
+        imported row does not block an unrelated edit)."""
+        from rescue_net.services.guards import bypass, changed
+
+        if bypass(self):
+            return
+        touched = lambda f: self.is_new() or changed(self, f)  # noqa: E731
+        if touched("trust_score") and self.trust_score not in (None, "") and not 0 <= int(self.trust_score) <= 100:
+            frappe.throw("Trust score harus 0-100.")
+        for field, label in (("affected_people_count", "Jumlah terdampak"), ("damage_scale_value", "Skala kerusakan")):
+            v = self.get(field)
+            if touched(field) and v not in (None, "") and float(v) < 0:
+                frappe.throw(f"{label} tidak boleh negatif.")

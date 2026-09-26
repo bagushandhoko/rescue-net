@@ -101,6 +101,8 @@ class RNAidOffer(Document):
             self.verification_status = "self_reported"
 
     def validate(self):
+        from rescue_net.services.guards import assert_quantities
+        assert_quantities(self, allow_zero=False, label="Jumlah bantuan")
         from rescue_net.services.guards import bypass, changed, previous
 
         if bypass(self) or self.is_new():

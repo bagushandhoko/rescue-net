@@ -132,6 +132,9 @@ class RNDistributionFlow(Document):
             self.source_updated_at = self.observed_at
 
     def validate(self):
+        from rescue_net.services.guards import assert_quantities
+        assert_quantities(self, allow_zero=False, label="Jumlah distribusi")
+        self.assert_received_within_sent()
         if (
             not self.legacy_id
             and self.flow_status
@@ -163,3 +166,21 @@ class RNDistributionFlow(Document):
             frappe.db.set_value("RN Aid Offer", self.aid_offer,
                                 {"offer_status": OFFER_STATUS_FOR[self.flow_status], "source_updated_at": now},
                                 update_modified=False)
+
+    def assert_received_within_sent(self):
+        """L-2: what is received is never negative and never more than what
+        was sent, when both are counted in the same unit (a receipt in
+        another unit — karung vs kg — cannot be compared here)."""
+        from rescue_net.services.guards import bypass, changed
+
+        rq = self.received_quantity
+        if bypass(self) or rq in (None, "") or not (self.is_new() or changed(self, "received_quantity")):
+            return
+        rq = float(rq)
+        if rq < 0:
+            frappe.throw("Jumlah diterima tidak boleh negatif.")
+        sent = self.quantity
+        same_unit = not self.received_unit or not self.unit or \
+            str(self.received_unit).strip().lower() == str(self.unit).strip().lower()
+        if sent not in (None, "") and float(sent) > 0 and same_unit and rq > float(sent):
+            frappe.throw(f"Jumlah diterima ({rq:g}) melebihi jumlah yang dikirim ({float(sent):g} {self.unit or ''}).")

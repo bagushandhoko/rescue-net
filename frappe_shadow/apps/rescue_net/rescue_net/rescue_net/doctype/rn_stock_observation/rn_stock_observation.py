@@ -77,3 +77,7 @@ class RNStockObservation(Document):
 
         if not self.source_updated_at:
             self.source_updated_at = self.observed_at
+
+    def validate(self):
+        from rescue_net.services.guards import assert_quantities
+        assert_quantities(self, allow_zero=True, label="Jumlah stok")

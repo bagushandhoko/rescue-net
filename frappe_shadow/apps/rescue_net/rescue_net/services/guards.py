@@ -66,3 +66,28 @@ def assert_positive(doc, *fields):
 def is_privileged(user=None):
     from rescue_net.access_policy import is_system_manager
     return is_system_manager(user)
+
+
+def _touched(doc, field):
+    """Checked on insert and when the field changes, so an old row with a
+    legacy value does not block an unrelated edit."""
+    return doc.is_new() or changed(doc, field)
+
+
+def assert_quantities(doc, allow_zero=False, label="Jumlah"):
+    """L-1: a quantity that is given is > 0 (>= 0 for a stock count); a range
+    is non-negative with min <= max. An empty quantity is allowed —
+    quantity_mode 'unknown' / 'estimated' carries no number."""
+    if bypass(doc):
+        return
+    q = doc.get("quantity")
+    if q not in (None, "") and _touched(doc, "quantity"):
+        if float(q) < 0 or (float(q) == 0 and not allow_zero):
+            frappe.throw(f"{label} harus {'0 atau lebih' if allow_zero else 'lebih dari 0'}.")
+    lo, hi = doc.get("quantity_min"), doc.get("quantity_max")
+    if (_touched(doc, "quantity_min") or _touched(doc, "quantity_max")):
+        for v in (lo, hi):
+            if v not in (None, "") and float(v) < 0:
+                frappe.throw(f"Rentang {label.lower()} tidak boleh negatif.")
+        if lo not in (None, "") and hi not in (None, "") and float(lo) > float(hi):
+            frappe.throw(f"{label} minimum tidak boleh melebihi maksimum.")

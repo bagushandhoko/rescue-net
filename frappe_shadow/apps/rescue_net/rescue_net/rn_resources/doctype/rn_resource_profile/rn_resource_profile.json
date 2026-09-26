@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN Resource Profile",
- "module": "Rescue Net",
+ "module": "RN Resources",
  "title_field": "resource_name",
  "fields": [
   {

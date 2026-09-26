@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Comms Frequency",
-  "module": "Rescue Net",
+  "module": "RN Resources",
   "custom": 0,
   "is_submittable": 0,
   "title_field": "band_label",

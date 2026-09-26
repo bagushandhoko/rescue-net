@@ -1,10 +1,10 @@
 {
   "doctype": "DocType",
-  "name": "RN Comms Device",
-  "module": "Rescue Net",
+  "name": "RN Comms Operator",
+  "module": "RN Resources",
   "custom": 0,
   "is_submittable": 0,
-  "title_field": "device_name",
+  "title_field": "operator_name",
   "fields": [
     {
       "fieldname": "legacy_id",
@@ -26,55 +26,44 @@
       "options": "RN Posko"
     },
     {
-      "fieldname": "owner_type",
-      "label": "Owner Type",
-      "fieldtype": "Select",
-      "options": "organization\nposko\nexternal",
-      "default": "organization"
-    },
-    {
-      "fieldname": "owner_id",
-      "label": "Owner ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "device_name",
-      "label": "Nama Alat",
+      "fieldname": "operator_name",
+      "label": "Nama Operator",
       "fieldtype": "Data",
       "reqd": 1
     },
     {
-      "fieldname": "category",
-      "label": "Kategori",
+      "fieldname": "role",
+      "label": "Peran",
       "fieldtype": "Select",
-      "options": "ht\nrepeater\ntelepon_satelit\nstarlink\nvsat\nrouter_4g5g\nantena_mast",
-      "reqd": 1
+      "options": "koordinator_radio\noperator\nteknisi",
+      "default": "operator"
+    },
+    {
+      "fieldname": "channel",
+      "label": "Channel",
+      "fieldtype": "Data",
+      "description": "mis. CH 01"
     },
     {
       "fieldname": "status",
       "label": "Status",
       "fieldtype": "Select",
-      "options": "active\nspare\ninactive\nneeds_attention",
-      "default": "active"
+      "options": "online\nsiaga\nistirahat\noffline",
+      "default": "siaga"
     },
     {
-      "fieldname": "battery_pct",
-      "label": "Baterai (%)",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "frequency_channel",
-      "label": "Frekuensi / Channel",
+      "fieldname": "contact_phone",
+      "label": "No. Kontak",
       "fieldtype": "Data"
     },
     {
-      "fieldname": "current_location",
-      "label": "Lokasi Saat Ini",
+      "fieldname": "skills",
+      "label": "Keahlian",
       "fieldtype": "Data"
     },
     {
-      "fieldname": "notes",
-      "label": "Catatan",
+      "fieldname": "shift_note",
+      "label": "Catatan Shift",
       "fieldtype": "Small Text"
     },
     {

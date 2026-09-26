@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN Work Object",
- "module": "Rescue Net",
+ "module": "RN Resources",
  "custom": 0,
  "is_submittable": 0,
  "title_field": "title",

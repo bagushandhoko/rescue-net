@@ -1,10 +1,10 @@
 {
   "doctype": "DocType",
-  "name": "RN Comms Operator",
-  "module": "Rescue Net",
+  "name": "RN Comms Device",
+  "module": "RN Resources",
   "custom": 0,
   "is_submittable": 0,
-  "title_field": "operator_name",
+  "title_field": "device_name",
   "fields": [
     {
       "fieldname": "legacy_id",
@@ -26,44 +26,55 @@
       "options": "RN Posko"
     },
     {
-      "fieldname": "operator_name",
-      "label": "Nama Operator",
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Select",
+      "options": "organization\nposko\nexternal",
+      "default": "organization"
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "device_name",
+      "label": "Nama Alat",
       "fieldtype": "Data",
       "reqd": 1
     },
     {
-      "fieldname": "role",
-      "label": "Peran",
+      "fieldname": "category",
+      "label": "Kategori",
       "fieldtype": "Select",
-      "options": "koordinator_radio\noperator\nteknisi",
-      "default": "operator"
-    },
-    {
-      "fieldname": "channel",
-      "label": "Channel",
-      "fieldtype": "Data",
-      "description": "mis. CH 01"
+      "options": "ht\nrepeater\ntelepon_satelit\nstarlink\nvsat\nrouter_4g5g\nantena_mast",
+      "reqd": 1
     },
     {
       "fieldname": "status",
       "label": "Status",
       "fieldtype": "Select",
-      "options": "online\nsiaga\nistirahat\noffline",
-      "default": "siaga"
+      "options": "active\nspare\ninactive\nneeds_attention",
+      "default": "active"
     },
     {
-      "fieldname": "contact_phone",
-      "label": "No. Kontak",
+      "fieldname": "battery_pct",
+      "label": "Baterai (%)",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "frequency_channel",
+      "label": "Frekuensi / Channel",
       "fieldtype": "Data"
     },
     {
-      "fieldname": "skills",
-      "label": "Keahlian",
+      "fieldname": "current_location",
+      "label": "Lokasi Saat Ini",
       "fieldtype": "Data"
     },
     {
-      "fieldname": "shift_note",
-      "label": "Catatan Shift",
+      "fieldname": "notes",
+      "label": "Catatan",
       "fieldtype": "Small Text"
     },
     {

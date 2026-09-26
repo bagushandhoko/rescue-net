@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Work Tool Deployment",
-  "module": "Rescue Net",
+  "module": "RN Resources",
   "title_field": "deployment_status",
   "fields": [
     {

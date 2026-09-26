@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Resource Request",
-  "module": "Rescue Net",
+  "module": "RN Resources",
   "autoname": "hash",
   "track_changes": 1,
   "title_field": "requested_by_id",

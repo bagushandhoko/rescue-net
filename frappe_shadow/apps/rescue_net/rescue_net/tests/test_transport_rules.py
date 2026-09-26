@@ -67,8 +67,9 @@ class TestArmadaSharedByFlows(LogisticsTestCase):
                          flow_status="planned").name
         with as_user(self.op_a.user):
             api.claim_distribution_flow(second, transport_space=space.name)
+        # claiming the second flow put the armada on "assigned" (L-11)
         self.move(first, "cancelled")
-        self.assertEqual(self.status("RN Transport Space", space.name, "transport_status"), "reserved")
+        self.assertEqual(self.status("RN Transport Space", space.name, "transport_status"), "assigned")
         self.move(second, "cancelled")
         self.assertEqual(self.status("RN Transport Space", space.name, "transport_status"), "available")
 

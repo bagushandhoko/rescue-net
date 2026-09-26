@@ -50,6 +50,12 @@ def _classify(doc, raw):
         doc.estimate_text = suggestion["estimate_text"]
 
 
+# L-11: the donor's side of an offer (what, how much, where to, cancel) is
+# fixed once goods are on the way or the offer is done
+DONOR_FIELDS = ("item_name", "quantity", "unit", "target_posko")
+FINAL_OFFER_STATES = {"delivered", "received", "received_verified", "stock_transferred", "cancelled"}
+
+
 class RNAidOffer(Document):
     def autoname(self):
         if self.legacy_id:
@@ -93,3 +99,20 @@ class RNAidOffer(Document):
 
         if not self.verification_status:
             self.verification_status = "self_reported"
+
+    def validate(self):
+        from rescue_net.services.guards import bypass, changed, previous
+
+        if bypass(self) or self.is_new():
+            return
+        edited = [f for f in DONOR_FIELDS if changed(self, f)]
+        cancelling = changed(self, "offer_status") and self.offer_status == "cancelled"
+        if not (edited or cancelling):
+            return
+        if previous(self, "offer_status") in FINAL_OFFER_STATES:
+            frappe.throw(f"Bantuan berstatus '{previous(self, 'offer_status')}' tidak bisa diubah lagi.")
+        if frappe.get_all("RN Distribution Flow",
+                          filters={"aid_offer": self.name,
+                                   "flow_status": ["not in", ["received", "cancelled", "rejected"]]},
+                          limit_page_length=1):
+            frappe.throw("Bantuan ini sedang dalam alur distribusi — batalkan alurnya dulu di posko.")

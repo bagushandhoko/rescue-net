@@ -10,7 +10,6 @@ from rescue_net.tests.factories import (
     api_call,
     as_guest,
     as_user,
-    known_bug,
     make_actor,
     make_transport_space,
     make_world,
@@ -164,12 +163,8 @@ class TestTransitions(LogisticsTestCase):
         with self.assertRaises(frappe.ValidationError):
             flow.save(ignore_permissions=True)
 
-    @known_bug("GAP-P2-transitions")
     def test_transition_rules_hold_on_direct_save(self):
-        """KNOWN GAP (architecture review phase 2): the transition table lives
-        only in api_logistics.update_flow_status, so Desk / import / any other
-        endpoint can jump planned → received. Remove @known_bug once the
-        rule moves into the RN Distribution Flow controller."""
+        """GAP-P2 / L-10: the graph lives in the RN Distribution Flow controller."""
         flow = frappe.get_doc("RN Distribution Flow", self.flow_to_a())
         flow.flow_status = "received"
         with self.assertRaises(frappe.ValidationError):

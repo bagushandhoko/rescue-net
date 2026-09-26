@@ -50,16 +50,41 @@ def _classify(doc, raw):
         doc.estimate_text = suggestion["estimate_text"]
 
 
-VALID_STATES = {
-    "planned",
-    "pickup_claimed",
-    "assigned_pickup",
-    "dispatched",
-    "in_transit",
-    "arrived_at_posko",
-    "partially_received",
-    "received",
-    "cancelled",
+# L-10 / GAP-P2: every save follows this graph (was only in update_flow_status)
+TRANSITIONS = {
+    "planned": {"assigned_pickup", "cancelled"},
+    # a transporter posko claimed the pickup of an aid offer
+    "pickup_claimed": {"assigned_pickup", "dispatched", "in_transit", "cancelled"},
+    "assigned_pickup": {"dispatched", "in_transit", "cancelled"},
+    "dispatched": {"in_transit", "arrived_at_posko", "cancelled"},
+    "in_transit": {"arrived_at_posko", "cancelled"},
+    "arrived_at_posko": {"partially_received", "received", "cancelled"},
+    "partially_received": {"partially_received", "received"},
+    "received": set(),
+    "cancelled": set(),
+}
+
+VALID_STATES = set(TRANSITIONS)
+
+# L-11: what the armada and the aid offer show while a flow is at a status
+TRANSPORT_STATUS_FOR = {
+    "assigned_pickup": "assigned",
+    "dispatched": "assigned",
+    "in_transit": "in_transit",
+    "arrived_at_posko": "arrived",
+    "partially_received": "arrived",
+    "received": "completed",
+    "cancelled": "available",
+}
+OFFER_STATUS_FOR = {
+    "pickup_claimed": "pickup_claimed",
+    "assigned_pickup": "reserved",
+    "dispatched": "in_transit",
+    "in_transit": "in_transit",
+    "arrived_at_posko": "in_transit",
+    "partially_received": "in_transit",
+    "received": "delivered",
+    "cancelled": "available",
 }
 
 
@@ -113,3 +138,28 @@ class RNDistributionFlow(Document):
             and self.flow_status not in VALID_STATES
         ):
             frappe.throw("Status distribusi tidak valid")
+
+        from rescue_net.services.guards import assert_transition
+        assert_transition(self, "flow_status", TRANSITIONS, "Status distribusi",
+                          initial={"planned", "pickup_claimed"})
+
+    def on_update(self):
+        """The armada and the aid offer follow the flow on every status change."""
+        from rescue_net.services.guards import bypass
+
+        before = self.get_doc_before_save()
+        if bypass(self) or not before or before.flow_status == self.flow_status:
+            return
+        now = now_datetime()
+        if self.transport_space:
+            from rescue_net.services.transport import armada_status_after_flow
+            status = TRANSPORT_STATUS_FOR.get(self.flow_status)
+            status = status and armada_status_after_flow(self.transport_space, self.name, status)
+            if status:
+                frappe.db.set_value("RN Transport Space", self.transport_space,
+                                    {"transport_status": status, "source_updated_at": now},
+                                    update_modified=False)
+        if self.aid_offer and self.flow_status in OFFER_STATUS_FOR:
+            frappe.db.set_value("RN Aid Offer", self.aid_offer,
+                                {"offer_status": OFFER_STATUS_FOR[self.flow_status], "source_updated_at": now},
+                                update_modified=False)

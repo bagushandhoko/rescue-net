@@ -14,6 +14,7 @@ from rescue_net.access_policy import (
     rn_actor,
 )
 from rescue_net.intelligence.freshness import freshness
+from rescue_net.rescue_net.doctype.rn_distribution_flow.rn_distribution_flow import TRANSITIONS
 from rescue_net.intelligence.normalization import normalize_unit
 
 
@@ -913,6 +914,14 @@ def claim_aid_pickup(transporter_posko, aid_offer, destination_posko,
 
     posko_title = frappe.db.get_value("RN Posko", transporter_posko, "title") or transporter_posko
 
+    # the offer is claimed (and targeted) before its flow exists — once the
+    # flow runs, the donor side of the offer is fixed (L-11)
+    offer.offer_status = "pickup_claimed"
+    offer.notes = ((offer.notes + " | ") if offer.notes else "") + \
+        "Akan dijemput oleh " + posko_title + " → " + \
+        (frappe.db.get_value("RN Posko", destination_posko, "title") or destination_posko)
+    offer.save(ignore_permissions=True)
+
     flow = frappe.new_doc("RN Distribution Flow")
     flow.title = ((offer.item_name or offer.raw_item_text or "Bantuan")
                   + " — dijemput " + posko_title)
@@ -936,12 +945,6 @@ def claim_aid_pickup(transporter_posko, aid_offer, destination_posko,
             flow.set(f, now_datetime())
     flow.insert(ignore_permissions=True)
 
-    offer.offer_status = "pickup_claimed"
-    offer.notes = ((offer.notes + " | ") if offer.notes else "") + \
-        "Akan dijemput oleh " + posko_title + " → " + \
-        (frappe.db.get_value("RN Posko", destination_posko, "title") or destination_posko)
-    offer.save(ignore_permissions=True)
-
     return {
         "flow": flow.name,
         "aid_offer": aid_offer,
@@ -963,9 +966,7 @@ def claim_distribution_flow(flow, transport_space=None, eta=None, note=None):
 
     if doc.transport_space:
         frappe.throw("Alur ini sudah punya armada.")
-    if str(doc.flow_status or "").lower() in (
-        "in_transit", "arrived_at_posko", "arrived", "received", "cancelled",
-    ):
+    if "assigned_pickup" not in TRANSITIONS.get(doc.flow_status or "planned", set()):
         frappe.throw(f"Alur ini sudah berstatus '{doc.flow_status}'.")
 
     coord_posko = None
@@ -1192,18 +1193,6 @@ def create_flow(
     }
 
 
-TRANSITIONS = {
-    "planned":{"assigned_pickup","cancelled"},
-    "assigned_pickup":{"dispatched","in_transit","cancelled"},
-    "dispatched":{"in_transit","arrived_at_posko","cancelled"},
-    "in_transit":{"arrived_at_posko","cancelled"},
-    "arrived_at_posko":{"partially_received","received","cancelled"},
-    "partially_received":{"partially_received","received"},
-    "received":set(),
-    "cancelled":set(),
-}
-
-
 @frappe.whitelist()
 def update_flow_status(
     flow,
@@ -1263,54 +1252,7 @@ def update_flow_status(
 
     doc.save(ignore_permissions=True)
 
-    if doc.transport_space:
-        transport_status = {
-            "assigned_pickup":"assigned",
-            "dispatched":"assigned",
-            "in_transit":"in_transit",
-            "arrived_at_posko":"arrived",
-            "partially_received":"arrived",
-            "received":"completed",
-            "cancelled":"available",
-        }.get(new_status)
-
-        # L-12: a flow that ends frees the armada only when no other flow rides it
-        from rescue_net.services.transport import armada_status_after_flow
-        transport_status = transport_status and armada_status_after_flow(
-            doc.transport_space, doc.name, transport_status)
-
-        if transport_status:
-            frappe.db.set_value(
-                "RN Transport Space",
-                doc.transport_space,
-                {
-                    "transport_status":transport_status,
-                    "source_updated_at":now,
-                },
-                update_modified=False,
-            )
-
-    if doc.aid_offer:
-        offer_status = {
-            "assigned_pickup":"reserved",
-            "dispatched":"in_transit",
-            "in_transit":"in_transit",
-            "arrived_at_posko":"in_transit",
-            "partially_received":"in_transit",
-            "received":"delivered",
-            "cancelled":"available",
-        }.get(new_status)
-
-        if offer_status:
-            frappe.db.set_value(
-                "RN Aid Offer",
-                doc.aid_offer,
-                {
-                    "offer_status":offer_status,
-                    "source_updated_at":now,
-                },
-                update_modified=False,
-            )
+    # armada + aid offer follow in RNDistributionFlow.on_update (L-11)
 
     return {
         "flow":doc.name,

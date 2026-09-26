@@ -516,21 +516,33 @@ function setupMissingForm() {
           form.description.value.trim(),
 
         clothing_description:
-          form.clothing_description.value.trim()
+          form.clothing_description.value.trim(),
+
+        // who to call back to confirm the report (restricted field)
+        reporter_name:
+          form.reporter_name.value.trim(),
+
+        reporter_contact:
+          form.reporter_contact.value.trim()
       };
 
       statusMsg(
         "Saving missing report..."
       );
 
-      await window.RN_FRAPPE.call(
-        "rescue_net.api_search_found." +
-        "create_missing_report",
-        payload,
-        {
-          method: "POST"
-        }
-      );
+      try {
+        await window.RN_FRAPPE.call(
+          "rescue_net.api_search_found." +
+          "create_missing_report",
+          payload,
+          {
+            method: "POST"
+          }
+        );
+      } catch (err) {
+        statusMsg((err && err.message) || String(err));
+        return;
+      }
 
       statusMsg(
         "Missing report saved."
@@ -578,21 +590,32 @@ function setupFoundForm() {
           form.description.value.trim(),
 
         clothing_description:
-          form.clothing_description.value.trim()
+          form.clothing_description.value.trim(),
+
+        reporter_name:
+          form.finder_name.value.trim(),
+
+        reporter_contact:
+          form.finder_contact.value.trim()
       };
 
       statusMsg(
         "Saving found report..."
       );
 
-      await window.RN_FRAPPE.call(
-        "rescue_net.api_search_found." +
-        "create_found_report",
-        payload,
-        {
-          method: "POST"
-        }
-      );
+      try {
+        await window.RN_FRAPPE.call(
+          "rescue_net.api_search_found." +
+          "create_found_report",
+          payload,
+          {
+            method: "POST"
+          }
+        );
+      } catch (err) {
+        statusMsg((err && err.message) || String(err));
+        return;
+      }
 
       statusMsg(
         "Found report saved."

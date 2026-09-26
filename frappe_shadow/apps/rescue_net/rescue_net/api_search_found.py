@@ -100,6 +100,25 @@ def _actor_name(actor):
     return getattr(actor, "name", None)
 
 
+def _reporter_identity(actor, posko, reporter_name=None, reporter_contact=None):
+    """Who to call back to confirm a report. Owner rule (2026-09-26): a
+    report that is not tied to a posko may be opened by any operator, so the
+    reporter must be reachable — the typed contact, else the account's phone
+    or email; refuse the report when there is none."""
+    name = str(reporter_name or "").strip() or None
+    contact = str(reporter_contact or "").strip() or None
+    account = getattr(actor, "name", None)
+    if account and not (name and contact):
+        row = frappe.db.get_value(
+            "RN User Account", account, ["title", "phone", "email"], as_dict=True,
+        ) or {}
+        name = name or row.get("title")
+        contact = contact or row.get("phone") or row.get("email")
+    if not contact and not posko:
+        frappe.throw("Kontak pelapor wajib diisi agar laporan bisa dikonfirmasi.")
+    return name, contact
+
+
 @frappe.whitelist()
 def create_missing_report(
     person_code,
@@ -110,6 +129,8 @@ def create_missing_report(
     last_seen_time=None,
     description=None,
     clothing_description=None,
+    reporter_name=None,
+    reporter_contact=None,
 ):
     # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
     disaster_event = resolve_disaster_event(disaster_event)
@@ -151,6 +172,9 @@ def create_missing_report(
     doc.created_by_user = _actor_name(
         actor
     )
+    doc.reporter_name, doc.reporter_contact = _reporter_identity(
+        actor, posko, reporter_name, reporter_contact,
+    )
     doc.verification_status = (
         "self_reported"
     )
@@ -174,6 +198,8 @@ def create_found_report(
     found_time=None,
     description=None,
     clothing_description=None,
+    reporter_name=None,
+    reporter_contact=None,
 ):
     # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
     disaster_event = resolve_disaster_event(disaster_event)
@@ -212,6 +238,9 @@ def create_found_report(
     doc.observed_at = now_datetime()
     doc.created_by_user = _actor_name(
         actor
+    )
+    doc.reporter_name, doc.reporter_contact = _reporter_identity(
+        actor, posko, reporter_name, reporter_contact,
     )
     doc.verification_status = (
         "self_reported"
@@ -570,6 +599,12 @@ def restricted_record(
         "clothing_description": (
             doc.clothing_description
         ),
+        # to confirm the report with whoever filed it
+        "reporter": {
+            "name": doc.get("reporter_name"),
+            "contact": doc.get("reporter_contact"),
+            "account": doc.created_by_user,
+        },
         "privacy": "restricted",
     }
 

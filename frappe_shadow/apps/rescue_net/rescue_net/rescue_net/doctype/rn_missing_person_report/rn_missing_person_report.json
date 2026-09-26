@@ -73,6 +73,17 @@
    "options": "RN User Account"
   },
   {
+   "fieldname": "reporter_name",
+   "fieldtype": "Data",
+   "label": "Reporter Name"
+  },
+  {
+   "fieldname": "reporter_contact",
+   "fieldtype": "Data",
+   "label": "Reporter Contact",
+   "description": "Phone / email to confirm the report with the reporter. Restricted: never shown to the public."
+  },
+  {
    "fieldname": "verification_status",
    "label": "Verification Status",
    "fieldtype": "Data",

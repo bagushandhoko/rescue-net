@@ -4,53 +4,43 @@ Rescue-Net is an open-source Disaster Management System for coordinating disaste
 
 ## Live URLs
 
-- Local web: `http://192.168.100.32/rescue-net/`
-- Deployment web aktif: gunakan domain yang terpasang di server produksi.
-- War Room: `/rescue-net/pages/war-room.html?event=event-sim-001`
+- Public host: `https://osiun.tail251e1e.ts.net/rescue-net/` (Tailscale Funnel)
+- Control Centre: `/rescue-net/pages/war-room.html`
 - Mock-up viewer: `/rescue-net/pages/mockup.html?screen=welcome`
-- API health: `http://127.0.0.1:8092/health`
+- API (Frappe): `/rescue-net-frappe/api/method/<rescue_net.api_*.fn>`; health: `/rescue-net-frappe/api/method/frappe.ping`
 
 ## Purpose
 
 Rescue-Net connects active disaster events, verified organizations, posko/field posts, logistics needs, aid offers, distribution flows, resource profiles, work tools, volunteers, shelters, medical posts, public kitchens, search/found cases, evidence, verification, donor programs, recovery projects, and AI-assisted situation analysis.
 
-The prototype is designed for fast field operation first: small functional changes, quick smoke tests, then commits.
-
 ## Current Runtime
 
-- Project path: `/volume1/web/rescue-net`
-- Runtime API path: `/volume1/docker/rescue-net-api`
-- API port: `8092`
-- Database container: `postgres-main`
-- Database name: `rescuenet_db`
-- Branch: `main`
+- **Backend / system of record: Frappe 15 + MariaDB.** Frappe app `rescue_net`, production site
+  `osiun.localhost` in container `osiun-frappe-backend` (compose in `/volume1/docker/osiun-frappe-shadow/`).
+- Frontend: static HTML/JS in this repo, served from disk under `/rescue-net/`.
+- Legacy FastAPI (`backend/`, container `rescue-net-api`) + PostgreSQL `rescuenet_db` are **retired**
+  (stopped / read-only, kept for rollback only). Their formal removal is tracked in `HANDOVER.md`.
+- Branch: `main` (only branch).
 
 ## Repository Source Layout
 
+- Frappe app source: `frappe_shadow/apps/rescue_net/rescue_net/` (API modules, DocTypes, tests)
 - Website: repository root (`index.html`, `pages/`, `assets/`)
-- FastAPI backend: `backend/`
 - Offline-first Web/PWA/Android/iOS/Desktop source: `apps/rescue-net-app/`
-- Database migrations: `database/migrations/`
-- Current operational handoff: `docs/HANDOFF_LATEST_RN.txt`
+- Legacy (retired): `backend/` (FastAPI), `database/migrations/` (PostgreSQL)
+- Status + open items: `HANDOVER.md`; working rules and how to run tests: `CLAUDE.md`;
+  full history: `docs/history/`
 
-Runtime deployment paths are separate copies on Synology. After a live hotfix,
-always synchronize the final backend/app source back into the repository.
+A commit is not a deploy: the production container reads its own copy of the app. See `CLAUDE.md`.
 
-Run quick checks on the Synology host:
+## Tests
 
-```sh
-curl -fsS http://127.0.0.1:8092/health
-curl -fsS http://127.0.0.1:8092/ai/context/event-sim-001 | python3 -m json.tool
-sh scripts/rn-smoke-test.sh
-```
-
-Run a short operational UAT with simulation data:
+Automated tests run on an isolated Frappe test stack (never on production):
 
 ```sh
-sh scripts/rn-uat-kilat.sh
+sh scripts/rn-test-stack.sh init   # once
+sh scripts/rn-test-stack.sh test
 ```
-
-This checks demo login, AI context summary, Resource Profile, Recovery, core pages, sync push/pull, audit endpoint, and sync conflict endpoint. It creates one simulated `resource_request` sync event each time it runs.
 
 ## Live Modules
 
@@ -78,19 +68,6 @@ This checks demo login, AI context summary, Resource Profile, Recovery, core pag
 - AI Settings
 - Sync Console
 - Contact Directory
-
-## Backend Routes To Guard
-
-These route groups are expected to stay registered in OpenAPI:
-
-- `/health`
-- `/ai/context/{event_id}`
-- `/resource-profiles`
-- `/recovery-projects`
-- `/recovery-project-updates`
-- `/audit-events`
-- `/sync-conflicts`
-- `/sync-conflicts/{conflict_id}/resolve`
 
 ## Mock-up Viewer
 
@@ -155,16 +132,15 @@ The target output is empty.
 
 ## Push Checklist
 
-GitHub push may require the existing owner token/script on the Synology host. Do not push until the secret scan is clean.
+Push goes over the SSH deploy key (`remote.origin.pushurl`). Do not push until the tests pass and the secret scan is clean.
 
 ```sh
 git status --short
-sh scripts/rn-smoke-test.sh
-# run secret scan from the Safety Rules section
+sh scripts/rn-test-stack.sh test
+sh scripts/rn-secret-scan.sh
 git add <changed-files>
 git commit -m "Describe the Rescue-Net update"
-./rn-push-main.sh
-git fetch origin
+git push origin main
 git log --oneline origin/main..HEAD
 ```
 
@@ -177,7 +153,6 @@ After a successful push, `git log --oneline origin/main..HEAD` should be empty.
 - Do not reintroduce `rnLayoutDebugBadge`.
 - Do not add 10-second polling sync; keep sync event-driven.
 - Keep layout/color changes small until core functions are stable.
-- Current handoff: `docs/HANDOFF_LATEST_RN.txt`
+- Current status: `HANDOVER.md` (older `docs/HANDOFF*`/`docs/CURRENT_STATUS.md` are historical)
 - Full blueprint: `docs/BLUEPRINT.md`
-- Current status: `docs/CURRENT_STATUS.md`
 - Do not modify unrelated systems on the same server while working on Rescue-Net unless explicitly requested.

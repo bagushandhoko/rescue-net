@@ -9,7 +9,9 @@ stored per-report value with its reason, never only an AI remark):
   (admin_area_id prefix or area names)
 * distance (both have coordinates): up to 40, falling to 0 at 50 km;
   +10 inside the posko's coverage radius
-* function: +15 when the posko's type/functions fit the report type
+* function: +15 when the posko's type/functions fit the report type; for
+  medical / shelter / missing-person reports a fitting posko that is close
+  enough on location alone wins over a closer posko without that function
 
 Only open poskos of the report's disaster event are candidates (any active
 event's poskos when the report names no event). Below MIN_SCORE the report
@@ -114,17 +116,29 @@ def score(report, posko):
     return round(pts, 1), why
 
 
+# report types only a posko with that function can handle: such a posko is
+# preferred whenever it is itself close/relevant enough
+SPECIALISED = {"medical_case", "shelter_need", "missing_or_found"}
+
+
 def best_posko(report):
     """(posko_name, score, reason) or (None, 0, reason) — `report` is a dict
     or document with the report's area/coordinate/type fields."""
     ranked = []
     for p in _candidates(report):
         pts, why = score(report, p)
-        ranked.append((pts, p, why))
+        fits = any(w.startswith("fungsi posko cocok") for w in why)
+        ranked.append((pts, fits, p, why))
     if not ranked:
         return None, 0, "Belum ada posko aktif pada kejadian ini."
-    ranked.sort(key=lambda x: (-x[0], x[1].name))
-    pts, p, why = ranked[0]
+    ranked.sort(key=lambda x: (-x[0], x[2].name))
+    pool = ranked
+    if (report.get("report_type") or "") in SPECIALISED:
+        # location points alone (without the function bonus) must still pass
+        fitting = [r for r in ranked if r[1] and r[0] - 15 >= MIN_SCORE]
+        if fitting:
+            pool = fitting
+    pts, _fits, p, why = pool[0]
     if pts < MIN_SCORE:
         return None, pts, "Tidak ada posko yang cukup dekat/relevan — menunggu triase Control Centre."
     return p.name, pts, f"{p.title}: " + ", ".join(why)

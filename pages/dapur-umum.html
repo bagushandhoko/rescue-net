@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Dapur Umum</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=dpdense-20260925b">
+  <link rel="stylesheet" href="../assets/css/style.css?v=dpp2-20260926">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-lightbox.css?v=lb-2" />
@@ -67,7 +67,7 @@
         <span class="kpi-icon" data-icon="gauge"></span><span>Kapasitas Porsi / Hari</span><strong id="kpiKapasitas">-</strong><small>puncak historis</small>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="produksi">
-        <span class="kpi-icon" data-icon="utensils"></span><span>Produksi Hari Ini</span><strong id="kpiProduksi">-</strong><small>porsi</small>
+        <span class="kpi-icon" data-icon="utensils"></span><span>Produksi Hari Ini</span><strong id="kpiProduksi">-</strong><span class="rn-dp-kpi-bar" aria-hidden="true"><i id="kpiProduksiBar"></i></span><small id="kpiProduksiHint">dari kapasitas</small>
       </button>
       <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="gap">
         <span class="kpi-icon" data-icon="alert-circle"></span><span>Gap Porsi</span><strong id="kpiGap">-</strong><small id="kpiGapHint">dari kapasitas</small>
@@ -123,12 +123,7 @@
     <section class="content-grid rn-dp-grid3">
       <div class="panel">
         <div class="panel-header"><div><h3>Jadwal Masak</h3></div></div>
-        <div class="rn-table-wrap">
-          <table class="rn-table">
-            <thead><tr><th>Waktu</th><th>Menu</th><th>Porsi</th><th>Status</th></tr></thead>
-            <tbody id="jadwalBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
-          </table>
-        </div>
+        <div class="rn-dp-jadwal" id="jadwalList"><p class="rn-muted">Memuat…</p></div>
       </div>
 
       <div class="panel">
@@ -243,7 +238,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/dapur-umum.js?v=dapur-20260904"></script>
+<script src="../assets/js/dapur-umum.js?v=dapurp2-20260926b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=navevent-20260914"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

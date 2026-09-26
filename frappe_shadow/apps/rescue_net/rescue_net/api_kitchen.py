@@ -6,6 +6,7 @@ from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 
 from frappe.utils import (
+    add_days,
     cint,
     flt,
     get_datetime,
@@ -970,21 +971,80 @@ def control_centre_kitchen():
     }
 
 
-_GAS_BBM_KEYWORDS = ("gas", "lpg", "solar", "bensin", "bbm", "genset", "elpiji")
+# Status Gas / BBM: the two fuel categories the mock-up always shows. A
+# stock item belongs to the first category whose keyword is in its name.
+_FUEL_CATEGORIES = (
+    ("gas", "Gas LPG", ("lpg", "elpiji", "gas")),
+    ("bbm", "BBM Genset", ("solar", "bensin", "pertalite", "bbm", "genset", "minyak tanah")),
+)
+
+# Consumption rate = RN Kitchen Ingredient Usage (the real consumption event)
+# over this window; days-left below these thresholds raises the item's status.
+USAGE_RATE_WINDOW_DAYS = 7
+SISA_HARI_KRITIS = 1
+SISA_HARI_WASPADA = 3
 
 
-def _stock_status(available, basis):
+def _fuel_category(item_name):
+    name = (item_name or "").lower()
+    for key, _label, words in _FUEL_CATEGORIES:
+        if any(w in name for w in words):
+            return key
+    return None
+
+
+def _stock_status(available, basis, sisa_hari=None):
     if available is None:
         return "tidak diketahui"
     if available <= 0:
         return "kritis"
+    status = "aman"
     if basis:
         ratio = available / basis
         if ratio < 0.34:
-            return "kritis"
-        if ratio < 0.6:
-            return "waspada"
-    return "aman"
+            status = "kritis"
+        elif ratio < 0.6:
+            status = "waspada"
+    if sisa_hari is not None and status != "kritis":
+        if sisa_hari < SISA_HARI_KRITIS:
+            status = "kritis"
+        elif sisa_hari < SISA_HARI_WASPADA:
+            status = "waspada"
+    return status
+
+
+def _usage_per_day(posko):
+    """{(item_name, unit): consumed per day} from the last
+    USAGE_RATE_WINDOW_DAYS of kitchen usage. The divisor is the span actually
+    covered (first usage → now, at least 1 day, at most the window), so a
+    kitchen that started 2 days ago is not diluted over 7."""
+    now = now_datetime()
+    since = add_days(now, -USAGE_RATE_WINDOW_DAYS)
+    rows = frappe.get_all(
+        "RN Kitchen Ingredient Usage",
+        filters={
+            "posko": posko,
+            "usage_status": "consumed",
+            "consumed_at": [">", since],
+        },
+        fields=["item_name", "unit", "quantity", "consumed_at"],
+        limit_page_length=5000,
+    )
+    total = defaultdict(float)
+    first = {}
+    for r in rows:
+        key = (r.item_name, r.unit or "")
+        total[key] += flt(r.quantity)
+        at = get_datetime(r.consumed_at)
+        if key not in first or at < first[key]:
+            first[key] = at
+    rate = {}
+    for key, qty in total.items():
+        span = (now - first[key]).total_seconds() / 86400.0
+        span = min(max(span, 1.0), float(USAGE_RATE_WINDOW_DAYS))
+        if qty > 0:
+            rate[key] = qty / span
+    return rate
 
 
 def _drill(title, sub, href):
@@ -1130,6 +1190,7 @@ def kitchen_board(posko=None, disaster_event=None):
         order_by="observed_at desc, creation desc",
         limit_page_length=500,
     )
+    usage_rate = _usage_per_day(posko)
     seen = set()
     stok_bahan = []
     for row in observations:
@@ -1140,19 +1201,44 @@ def kitchen_board(posko=None, disaster_event=None):
         state = _stock_state(posko, row.item_name, row.unit, strict=False)
         available = state["available_quantity"] if state else None
         basis = state["basis_quantity"] if state else None
+        per_hari = usage_rate.get(key)
+        sisa_hari = (
+            round(available / per_hari, 1)
+            if per_hari and available is not None else None
+        )
         stok_bahan.append({
             "item_name": row.item_name,
             "unit": row.unit,
             "stok": available,
-            "status": _stock_status(available, basis),
+            "basis": basis,
+            "per_hari": round(per_hari, 2) if per_hari else None,
+            "sisa_hari": sisa_hari,
+            "status": _stock_status(available, basis, sisa_hari),
             "observed_at": row.observed_at,
         })
 
     kebutuhan_kritis = [s for s in stok_bahan if s["status"] in ("kritis", "waspada")]
-    gas_bbm = [
-        s for s in stok_bahan
-        if any(k in (s["item_name"] or "").lower() for k in _GAS_BBM_KEYWORDS)
-    ]
+
+    # One tile per fuel category; a category with no stock item recorded is
+    # still returned (recorded=False) so the page can say so instead of
+    # silently dropping the tile.
+    gas_bbm = []
+    for cat_key, cat_label, _words in _FUEL_CATEGORIES:
+        items = [s for s in stok_bahan if _fuel_category(s["item_name"]) == cat_key]
+        if items:
+            for s in items:
+                gas_bbm.append(dict(s, category=cat_key, recorded=True))
+        else:
+            gas_bbm.append({
+                "category": cat_key,
+                "item_name": cat_label,
+                "recorded": False,
+                "stok": None,
+                "unit": "",
+                "per_hari": None,
+                "sisa_hari": None,
+                "status": "tidak diketahui",
+            })
 
     # Relawan dapur: volunteers assigned straight to this posko.
     volunteers = frappe.get_all(

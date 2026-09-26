@@ -194,6 +194,11 @@
       ? Math.round((100 * totals.gap_porsi) / totals.kapasitas_porsi_hari)
       : 0;
     $("#kpiGapHint").textContent = pct + "% dari kapasitas";
+    var prodPct = totals.kapasitas_porsi_hari
+      ? Math.round((100 * totals.produksi_hari_ini) / totals.kapasitas_porsi_hari)
+      : 0;
+    $("#kpiProduksiBar").style.width = Math.min(100, prodPct) + "%";
+    $("#kpiProduksiHint").textContent = prodPct + "% dari kapasitas";
   }
 
   function renderTarget(t) {
@@ -228,27 +233,67 @@
       .map(function (r) {
         return (
           '<article class="event-card"><div class="event-main"><div><h4>' + esc(r.item_name) + "</h4>" +
-          "<p>Stok tersisa: <b>" + fmt(r.stok) + "</b> " + esc(r.unit) + "</p></div>" +
+          "<p>Stok tersisa: <b>" + fmt(r.stok) + "</b> " + esc(r.unit) +
+          (r.sisa_hari != null ? " · ± " + String(r.sisa_hari).replace(".", ",") + " hari" : "") + "</p></div>" +
           '<div class="chips"><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status) + "</span></div></div></article>"
         );
       })
       .join("");
   }
 
-  function renderJadwal(rows) {
-    var body = $("#jadwalBody");
-    if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="4"><em class="rn-muted">Belum ada produksi hari ini.</em></td></tr>';
-      return;
+  /* Jadwal Masak — one card per meal slot (Sarapan / Makan Siang / Makan
+     Malam, mock-up layout). Today's RN Kitchen Production rows are placed in
+     the slot their time falls in; a slot with no production says so instead
+     of inventing a menu or portion count. Rows outside the three windows get
+     their own card. */
+  var MEAL_SLOTS = [
+    { key: "sarapan", label: "Sarapan", time: "06:00", from: 4, to: 10 },
+    { key: "siang", label: "Makan Siang", time: "11:00", from: 10, to: 15 },
+    { key: "malam", label: "Makan Malam", time: "17:00", from: 15, to: 22 },
+  ];
+
+  function slotStatus(rows) {
+    if (!rows.length) return { label: "Belum dicatat", cls: "" };
+    if (rows.every(function (r) { return r.status === "distributed"; })) return { label: "Selesai", cls: "ok" };
+    if (rows.some(function (r) { return r.status === "dispatched" || r.status === "distributed"; })) {
+      return { label: "Proses", cls: "info" };
     }
-    body.innerHTML = rows
-      .map(function (r) {
-        return (
-          "<tr><td>" + esc(r.time) + "</td><td>" + esc(r.meal_name) + "</td><td>" + fmt(r.portions) + "</td>" +
-          "<td>" + esc(r.status_label) + "</td></tr>"
-        );
-      })
-      .join("");
+    return { label: "Menunggu", cls: "warning" };
+  }
+
+  function jadwalCard(time, title, rows) {
+    var st = slotStatus(rows);
+    var menu = rows.map(function (r) { return r.meal_name; }).filter(Boolean).join(", ");
+    var porsi = rows.reduce(function (n, r) { return n + (Number(r.portions) || 0); }, 0);
+    var sub = rows.length ? fmt(porsi) + " porsi" + (menu ? " · " + menu : "") : "Belum ada produksi";
+    var href = rows.length === 1 ? rows[0].href : "";
+    var tag = href ? "a" : "div";
+    return (
+      "<" + tag + ' class="rn-dp-slot' + (rows.length ? "" : " is-empty") + '"' +
+      (href ? ' href="' + esc(href) + '"' : "") + ">" +
+      '<b class="rn-dp-slot-time">' + esc(time) + "</b>" +
+      '<span class="rn-dp-slot-main"><strong>' + esc(title) + "</strong>" +
+      '<small title="' + esc(sub) + '">' + esc(sub) + "</small></span>" +
+      '<span class="chip ' + st.cls + '">' + esc(st.label) + "</span></" + tag + ">"
+    );
+  }
+
+  function renderJadwal(rows) {
+    var el = $("#jadwalList");
+    var bySlot = {};
+    var extra = [];
+    rows.forEach(function (r) {
+      var h = parseInt(String(r.time || "").slice(0, 2), 10);
+      var slot = MEAL_SLOTS.filter(function (m) { return h >= m.from && h < m.to; })[0];
+      if (slot) (bySlot[slot.key] = bySlot[slot.key] || []).push(r);
+      else extra.push(r);
+    });
+    el.innerHTML =
+      MEAL_SLOTS.map(function (m) {
+        var list = bySlot[m.key] || [];
+        return jadwalCard(list.length ? list[0].time : m.time, m.label, list);
+      }).join("") +
+      extra.map(function (r) { return jadwalCard(r.time, "Tambahan", [r]); }).join("");
   }
 
   function renderDistribusi(rows) {
@@ -286,20 +331,50 @@
       .join("");
   }
 
+  /* Status Gas / BBM — one tile per fuel category (backend always sends
+     both). "Sisa ± N hari" comes from the real kitchen-usage rate; the bar
+     is days left against a 7-day buffer. No rate / no stock = said plainly. */
+  var FUEL_BUFFER_DAYS = 7;
+
   function renderFuel(rows) {
     var el = $("#fuelGrid");
     if (!rows.length) {
       el.innerHTML = '<p class="rn-muted">Belum ada data gas/BBM tercatat.</p>';
       return;
     }
+    var logistikHref = "posko-logistik.html?id=" + encodeURIComponent(getKitchenPoskoId()) +
+      (getEventId() ? "&event=" + encodeURIComponent(getEventId()) : "");
     el.innerHTML = rows
       .map(function (r) {
+        // Older backend responses carry no `recorded` key: treat as recorded.
+        var recorded = r.recorded !== false;
+        var icon = r.category === "bbm" ? "droplet" : "flame";
+        var cls = statusPillClass(r.status);
+        var value, note, bar = "";
+        if (!recorded) {
+          value = "Belum tercatat";
+          note = '<a href="' + esc(logistikHref) + '">Catat stok →</a>';
+        } else {
+          value = fmt(r.stok) + " " + esc(r.unit);
+          if (r.sisa_hari != null) {
+            note = "Sisa untuk ± " + String(r.sisa_hari).replace(".", ",") + " hari";
+            bar = '<span class="rn-dp-fuel-bar ' + cls + '"><i style="width:' +
+              Math.min(100, Math.round((100 * r.sisa_hari) / FUEL_BUFFER_DAYS)) + '%"></i></span>';
+          } else {
+            note = "Laju pemakaian belum tercatat";
+          }
+        }
         return (
-          '<div class="rn-dp-fuel-card"><span>' + esc(r.item_name) + "</span><b>" + fmt(r.stok) + " " + esc(r.unit) + "</b>" +
-          '<small class="chip ' + statusPillClass(r.status) + '">' + esc(r.status) + "</small></div>"
+          '<div class="rn-dp-fuel-card' + (recorded ? "" : " is-empty") + '">' +
+          '<span class="rn-dp-fuel-icon ' + cls + '" data-icon="' + icon + '"></span>' +
+          '<div class="rn-dp-fuel-body"><span>' + esc(r.item_name) + "</span>" +
+          "<b>" + value + "</b><small>" + note + "</small>" + bar + "</div>" +
+          (recorded ? '<small class="chip ' + cls + '">' + esc(r.status) + "</small>" : "") +
+          "</div>"
         );
       })
       .join("");
+    if (window.RNIconFill) window.RNIconFill(el);
   }
 
   var PLACEHOLDER_ICONS = ["🍚", "🥘", "🔥"];

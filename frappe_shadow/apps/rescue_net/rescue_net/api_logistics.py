@@ -3353,11 +3353,22 @@ def correct_item_normalization(doctype, name, canonical_group=None,
         d.conversion_source = res["conversion_source"]
         d.conversion_status = res["conversion_status"]
 
+    # L-23: regrouping is a contribution; changing a stock row's amount
+    # (quantity / mode / unit / isi per kemasan) is a stock edit.
+    rewrites_amount = any(v not in (None, "") for v in (
+        quantity, quantity_mode, unit, base_quantity, pack_size))
+
     def _apply(dt, nm, is_primary):
         posko = _posko_of(dt, nm)
         if posko and not _can_contribute(actor, resolve_posko(posko)):
             frappe.throw(
                 f"Anda tidak berhak mengoreksi item milik posko {posko}.",
+                frappe.PermissionError,
+            )
+        if (is_primary and rewrites_amount and dt == "RN Stock Observation"
+                and not (posko and _can_operate(actor, resolve_posko(posko)))):
+            frappe.throw(
+                "Jumlah/satuan stok hanya dapat diubah operator posko.",
                 frappe.PermissionError,
             )
         d = frappe.get_doc(dt, nm)

@@ -530,6 +530,31 @@ def create_resource_request(
     }
 
 
+def _can_decide_resource_request(doc):
+    """The resource's owner decides: its posko's operators, its organisation's
+    managers, the individual owner; System Manager always."""
+    from rescue_net.access_policy import can_manage_organization, is_system_manager, rn_actor
+    from rescue_net.api_logistics import _can_operate
+    from rescue_net.reference_resolver import resolve_organization, resolve_posko
+
+    if is_system_manager():
+        return True
+    actor = rn_actor()
+    profile = doc.resource_profile and frappe.db.get_value(
+        "RN Resource Profile", doc.resource_profile, ["owner_type", "owner_id"], as_dict=True)
+    if not profile or not profile.owner_id:
+        return False
+    if profile.owner_type == "posko":
+        posko = resolve_posko(profile.owner_id)
+        return bool(posko) and _can_operate(actor, posko)
+    if profile.owner_type == "organization":
+        org = resolve_organization(profile.owner_id)
+        return bool(org) and can_manage_organization(actor, org)
+    if profile.owner_type == "individual":
+        return bool(actor and actor.name) and profile.owner_id in (actor.name, actor.frappe_user)
+    return False
+
+
 @frappe.whitelist()
 def approve_resource_request(
     resource_request,
@@ -549,6 +574,12 @@ def approve_resource_request(
         "RN Resource Request",
         resource_request,
     )
+
+    if not _can_decide_resource_request(doc):   # L-24
+        frappe.throw(
+            "Hanya pemilik/pengelola sumber daya ini yang dapat menyetujui permintaan.",
+            frappe.PermissionError,
+        )
 
     if doc.request_status not in (
         "requested",

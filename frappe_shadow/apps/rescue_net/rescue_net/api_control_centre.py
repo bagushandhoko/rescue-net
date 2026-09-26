@@ -1979,6 +1979,14 @@ def set_posko_functions(posko, functions=None, logistics_role=None):
     return {"posko": name, **_posko_functions(name)}
 
 
+def _assert_posko_operator(actor, posko):
+    """Posko data / stock edits: the posko's own operators and managers only."""
+    from rescue_net.api_logistics import _can_operate
+    if not _can_operate(actor, posko):
+        frappe.throw("Hanya operator/pengelola posko ini yang dapat mengubah data ini.",
+                     frappe.PermissionError)
+
+
 @frappe.whitelist()
 def set_posko_beneficiary(posko, count, note=None):
     from rescue_net.access_policy import rn_actor
@@ -1988,6 +1996,9 @@ def set_posko_beneficiary(posko, count, note=None):
     name = _resolve_posko(posko)
     if not name:
         frappe.throw("Posko tidak ditemukan")
+    _assert_posko_operator(actor, name)          # O-7
+    if _num(count) < 0:
+        frappe.throw("Jumlah penerima manfaat tidak boleh negatif.")
 
     frappe.db.set_value("RN Posko", name, {
         "rn_beneficiary_count": int(_num(count)),
@@ -2002,8 +2013,13 @@ def set_posko_beneficiary(posko, count, note=None):
 def set_item_consumption(posko, item_name, daily_rate):
     from rescue_net.access_policy import rn_actor
 
-    rn_actor()
+    actor = rn_actor()
     name = _resolve_posko(posko)
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+    _assert_posko_operator(actor, name)          # L-23
+    if _num(daily_rate) < 0:
+        frappe.throw("Konsumsi harian tidak boleh negatif.")
     obs = frappe.get_all(
         "RN Stock Observation",
         filters={"posko": name, "item_name": item_name},

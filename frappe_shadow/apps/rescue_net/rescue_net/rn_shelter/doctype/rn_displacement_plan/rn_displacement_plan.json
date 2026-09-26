@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Displacement Plan",
-  "module": "Rescue Net",
+  "module": "RN Shelter",
   "custom": 0,
   "is_submittable": 0,
   "autoname": "hash",

@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Shelter Need",
-  "module": "Rescue Net",
+  "module": "RN Shelter",
   "custom": 0,
   "is_submittable": 0,
   "title_field": "item_name",

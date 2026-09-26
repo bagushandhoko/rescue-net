@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Shelter Household",
-  "module": "Rescue Net",
+  "module": "RN Shelter",
   "custom": 0,
   "is_submittable": 0,
   "title_field": "household_code",

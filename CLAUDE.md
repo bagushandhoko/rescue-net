@@ -16,7 +16,10 @@ that do not change from session to session.
     (OpenAI / Claude / Gemini), `report_intake.py`, `report_routing.py`, `tool_needs.py`
   - `access_policy.py` (`rn_actor()`, posko/org permission helpers), `visibility.py` (public/summary
     scrubbing), `reference_resolver.py` (event/posko id resolution)
-  - `rescue_net/doctype/rn_*/` — 78 DocTypes (JSON + controller). **Rules that must always hold live in the
+  - `rn_<domain>/doctype/rn_*/` — 74 DocTypes (JSON + controller) in 12 Frappe modules: `RN Core`,
+    `RN Command`, `RN Community`, `RN Logistics`, `RN Shelter`, `RN Medical`, `RN Volunteer`, `RN Resources`,
+    `RN Donor`, `RN Search Found`, `RN Verification`, `RN Intelligence` (`modules.txt`; grouping in
+    `docs/PHASE4_MODULE_PROPOSAL.md`). A new DocType goes into the module of its domain. **Rules that must always hold live in the
     controller** (`validate` / `on_update`, via `services/`), not only in an API function — Desk, imports
     and other endpoints save through the controller too. Every such rule has a test that saves directly
     with `frappe.get_doc(...).save()`.

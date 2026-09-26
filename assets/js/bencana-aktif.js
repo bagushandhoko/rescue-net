@@ -238,7 +238,33 @@
         .filter(function (ev) { return ev.jiwa_berisiko > 0 || (ev.jiwa_categories || []).some(function (c) { return c.count; }); })
         .sort(function (a, b) { return b.jiwa_berisiko - a.jiwa_berisiko; })
         .map(function (ev) {
-          var cats = (ev.jiwa_categories || [])
+          // one row per posko (jiwa_poskos): the per-category list used to
+          // repeat the same posko once per problem. Old backend: categories.
+          var perPosko = ev.jiwa_poskos;
+          var catList = (ev.jiwa_categories || []).filter(function (c) {
+            return !perPosko || c.key === "laporan_korban" || c.key === "jiwa_belum_lapor";
+          });
+          var poskoRows = (perPosko || [])
+            .map(function (r) {
+              var lines = (r.problems || []).map(function (pb) {
+                return "<small>" + (pb.is_jiwa ? "" : "⚠ ") + esc(pb.label) + ": " + esc(pb.detail || fmt(pb.count)) + "</small>";
+              }).join("");
+              return (
+                '<a class="rn-ba-ditem" href="' + esc(r.href) + '">' +
+                "<span><b>" + esc(r.title) + "</b>" + lines +
+                (r.region ? "<small>" + esc(r.region) + "</small>" : "") + "</span>" +
+                '<span class="rn-ba-pill ' + (r.jiwa ? "is-kritis" : "is-siaga") + '">' +
+                (r.jiwa ? fmt(r.jiwa) + " jiwa" : (r.problems || []).length + " masalah") + "</span>" +
+                '<span class="rn-ba-ditem-go">→</span>' +
+                "</a>"
+              );
+            })
+            .join("");
+          var aspects = ev.jiwa_aspects
+            ? '<p class="rn-muted">Jiwa per aspek: logistik ' + fmt(ev.jiwa_aspects.logistik) +
+              " · shelter " + fmt(ev.jiwa_aspects.shelter) + " · medis " + fmt(ev.jiwa_aspects.medis) + "</p>"
+            : "";
+          var cats = catList
             .map(function (c) {
               var disabled = !c.count;
               return (
@@ -262,7 +288,8 @@
             encodeURIComponent(shortId(ev.id)) + '">Data Konsolidasi (AI) ↗</a>' +
             "</div>";
 
-          return drillGroup(ev, '<div class="rn-ba-ditems">' + cats + "</div>" + links);
+          return drillGroup(ev, (perPosko ? aspects + '<div class="rn-ba-ditems">' + poskoRows + "</div>" : "") +
+            '<div class="rn-ba-ditems">' + cats + "</div>" + links);
         })
         .join("") || '<p class="rn-muted">Belum ada jiwa berisiko tercatat.</p>';
     }

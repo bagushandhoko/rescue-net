@@ -3369,6 +3369,38 @@ _MEDICAL_CRIT_TRIAGE = {"red", "black"}
 _MEDICAL_CLOSED_CASE = {"discharged", "closed", "deceased"}
 
 
+# categories that are not about one posko's own people/problems — they stay
+# separate lists in the drill instead of being merged per posko
+_JIWA_NON_POSKO = {"laporan_korban", "jiwa_belum_lapor"}
+
+
+def _ba_jiwa_by_posko(categories):
+    """"Jiwa Berisiko" drill, one row per posko: the same posko used to show
+    up once per category (aspect medis, kasus kritis, kekurangan obat,
+    kekurangan nakes, ...) and read as duplicates. Here each posko appears
+    once, with its jiwa count (aspect categories only — indicator counts are
+    cases/needs, not people) and every problem as a line under it."""
+    rows = {}
+    for cat in categories:
+        if cat["key"] in _JIWA_NON_POSKO:
+            continue
+        is_jiwa = cat["key"].startswith("jiwa_")
+        label = cat["label"].split(" — ")[0]
+        for it in cat.get("items") or []:
+            key = it.get("href") or it.get("title")
+            row = rows.setdefault(key, {
+                "title": it.get("title"), "region": it.get("region"), "href": it.get("href"),
+                "jiwa": 0, "problems": [],
+            })
+            if is_jiwa:
+                row["jiwa"] += int(it.get("count") or 0)
+            row["problems"].append({"key": cat["key"], "label": label, "detail": it.get("detail"),
+                                    "count": it.get("count"), "is_jiwa": is_jiwa})
+    out = list(rows.values())
+    out.sort(key=lambda r: (-r["jiwa"], -len(r["problems"]), r["title"] or ""))
+    return out
+
+
 def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_region):
     """"Jiwa Berisiko" drill, level 1 — owner: a raw beneficiary count
     with nowhere to click into "posko medis mana yang bermasalah" isn't
@@ -3785,6 +3817,7 @@ def active_disasters_board(limit=60):
         jiwa_categories = jiwa_categories + _ba_jiwa_categories(
             event_id, short_ev, posko_by_name, posko_title, posko_region
         )
+        jiwa_poskos = _ba_jiwa_by_posko(jiwa_categories)
         jiwa = sum(j["jiwa"] for j in jiwa_by.values())
         jiwa_missing = sum(1 for j in jiwa_by.values() if j["missing"] and not j["jiwa"])
         pengungsi = sum(
@@ -3878,6 +3911,7 @@ def active_disasters_board(limit=60):
             "distribusi_items": distribusi_items,
             "posko_kritis_items": posko_kritis_items,
             "jiwa_categories": jiwa_categories,
+            "jiwa_poskos": jiwa_poskos,
         })
 
         tot_jiwa += jiwa

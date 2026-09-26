@@ -116,10 +116,25 @@ def guest_methods():
         if m.name.startswith("api_"):
             importlib.import_module("rescue_net." + m.name)
     return {
-        fn.__module__.replace("rescue_net.", "", 1) + "." + fn.__name__: fn
+        _public_path(fn): fn
         for fn in frappe.guest_methods
         if getattr(fn, "__module__", "").startswith("rescue_net.")
     }
+
+
+def _public_path(fn):
+    """The dotted path the frontend calls: code split into a package
+    (rescue_net/<package>/*) is still served as api_<package>.*."""
+    module = fn.__module__.replace("rescue_net.", "", 1)
+    package = module.split(".")[0]
+    if package in SPLIT_PACKAGES:
+        module = "api_" + package
+    return module + "." + fn.__name__
+
+
+# API files split into a package per sub-domain (phase 2); the old module
+# re-exports everything, so the public path stays api_<package>.<name>
+SPLIT_PACKAGES = {"control_centre", "logistics", "ai", "resource_tools", "donor_program", "frontend_bridge"}
 
 
 class TestGuestInventory(RNTestCase):

@@ -50,6 +50,30 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "rn_fn_logistics",
+   "label": "Fungsi: Logistik",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "rn_fn_shelter",
+   "label": "Fungsi: Shelter",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "rn_fn_kitchen",
+   "label": "Fungsi: Dapur Umum",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "rn_logistics_role",
+   "label": "Peran Logistik",
+   "fieldtype": "Select",
+   "options": "\ncollector\nreceiver"
+  },
+  {
    "fieldname": "address",
    "label": "Address",
    "fieldtype": "Small Text"
@@ -113,6 +137,17 @@
    "fieldname": "verification_status",
    "label": "Verification Status",
    "fieldtype": "Data"
+  },
+  {
+   "fieldname": "rn_comms_status",
+   "label": "Status Komunikasi",
+   "fieldtype": "Select",
+   "options": "\nconnected\nweak\ndisconnected"
+  },
+  {
+   "fieldname": "rn_comms_last_contact",
+   "label": "Kontak Komunikasi Terakhir",
+   "fieldtype": "Datetime"
   },
   {
    "fieldname": "owner_type",
@@ -209,6 +244,21 @@
    "fieldname": "coverage_radius_meters",
    "label": "Coverage Radius Meters",
    "fieldtype": "Float"
+  },
+  {
+   "fieldname": "rn_beneficiary_count",
+   "label": "Jiwa Dilayani",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "rn_beneficiary_note",
+   "label": "Catatan Jiwa Dilayani",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "rn_beneficiary_updated_at",
+   "label": "Jiwa Dilayani Diperbarui",
+   "fieldtype": "Datetime"
   },
   {
    "fieldname": "parent_posko",

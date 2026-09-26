@@ -71,6 +71,11 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "rn_movement_type",
+   "label": "Jenis Pergerakan",
+   "fieldtype": "Data"
+  },
+  {
    "fieldname": "legacy_payload",
    "label": "Legacy Payload",
    "fieldtype": "Code",

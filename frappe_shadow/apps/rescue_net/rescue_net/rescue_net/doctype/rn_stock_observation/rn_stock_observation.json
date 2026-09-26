@@ -65,6 +65,16 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "rn_daily_consumption",
+   "label": "Laju Konsumsi / hari",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "rn_consumption_source",
+   "label": "Sumber Laju",
+   "fieldtype": "Data"
+  },
+  {
    "fieldname": "estimate_text",
    "label": "Estimate Text",
    "fieldtype": "Small Text"

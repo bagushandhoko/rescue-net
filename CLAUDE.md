@@ -61,7 +61,7 @@ Rules:
   same commit. Bug ids and descriptions: `HANDOVER.md` → "Known bugs found by the tests".
 - New `allow_guest` endpoint → `test_public_endpoints.GUEST_ENDPOINTS` fails until you review what it returns
   to Guest and add it; the Guest sweep then checks it against the sentinel secrets.
-- The test site gets production's hand-made Custom Fields from `tests/setup_test_site.py` (types inferred).
+- The 12 former production-only Custom Fields are standard DocType fields since DATA-1 (patch `rescue_net.patches.v2026_09.custom_fields_into_doctype`).
   A new field must go into the DocType JSON, never be created by hand in Desk.
 
 Suite (2026-09-26): `test_smoke`, `test_logistics_chain`, `test_sensitive_data`, `test_public_endpoints`,

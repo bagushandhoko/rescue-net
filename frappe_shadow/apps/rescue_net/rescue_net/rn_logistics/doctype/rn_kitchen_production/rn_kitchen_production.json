@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN Kitchen Production",
- "module": "Rescue Net",
+ "module": "RN Logistics",
  "title_field": "meal_name",
  "fields": [
   {

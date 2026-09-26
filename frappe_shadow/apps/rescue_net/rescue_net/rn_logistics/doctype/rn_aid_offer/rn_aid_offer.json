@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN Aid Offer",
- "module": "Rescue Net",
+ "module": "RN Logistics",
  "custom": 0,
  "is_submittable": 0,
  "title_field": "title",

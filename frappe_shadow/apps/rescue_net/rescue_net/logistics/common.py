@@ -16,7 +16,7 @@ from rescue_net.access_policy import (
     rn_actor,
 )
 from rescue_net.intelligence.freshness import freshness
-from rescue_net.rescue_net.doctype.rn_distribution_flow.rn_distribution_flow import TRANSITIONS
+from rescue_net.rn_logistics.doctype.rn_distribution_flow.rn_distribution_flow import TRANSITIONS
 from rescue_net.intelligence.normalization import normalize_unit
 
 

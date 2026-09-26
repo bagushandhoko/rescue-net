@@ -91,6 +91,21 @@
    "fieldtype": "Long Text"
   },
   {
+   "fieldname": "intake_mode",
+   "label": "Cara Lapor",
+   "fieldtype": "Select",
+   "options": "form\nnarrative",
+   "default": "form",
+   "description": "form = pelapor mengisi form; narrative = pelapor cukup menulis uraian, sistem mengisi form."
+  },
+  {
+   "fieldname": "intake_parser",
+   "label": "Pengolah Uraian",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "description": "rules = aturan kata kunci; ai:<provider> = diolah AI (saran, ditinjau pelapor)."
+  },
+  {
    "fieldname": "affected_people_count",
    "label": "Affected People Count",
    "fieldtype": "Int"
@@ -202,6 +217,38 @@
    "fieldname": "consolidation_status",
    "label": "Consolidation Status",
    "fieldtype": "Data"
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko Tujuan",
+   "fieldtype": "Link",
+   "options": "RN Posko",
+   "description": "Posko yang paling relevan (wilayah, jarak, fungsi) — dipilih otomatis, bisa dialihkan operator."
+  },
+  {
+   "fieldname": "routing_score",
+   "label": "Skor Kecocokan Posko",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "routing_reason",
+   "label": "Alasan Posko Tujuan",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "routing_mode",
+   "label": "Cara Penentuan Posko",
+   "fieldtype": "Select",
+   "options": "\nauto\nmanual",
+   "read_only": 1
+  },
+  {
+   "fieldname": "routed_at",
+   "label": "Diteruskan Pada",
+   "fieldtype": "Datetime",
+   "read_only": 1
   },
   {
    "fieldname": "status",

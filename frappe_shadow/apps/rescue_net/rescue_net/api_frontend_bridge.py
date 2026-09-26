@@ -1243,6 +1243,10 @@ def community_reports(
             "area_level",
             "consolidation_status",
             "trust_score",
+            "posko",
+            "routing_reason",
+            "intake_mode",
+            "intake_parser",
             "consent_to_contact",
             "reporter_name",
             "reporter_phone",
@@ -1261,6 +1265,12 @@ def community_reports(
     )
 
     from rescue_net.api_reports import predict_report_needs
+
+    routed = {r.get("posko") for r in rows if r.get("posko")}
+    posko_titles = dict(frappe.get_all(
+        "RN Posko", filters={"name": ["in", list(routed)]},
+        fields=["name", "title"], as_list=True,
+    )) if routed else {}
 
     result = []
 
@@ -1284,6 +1294,11 @@ def community_reports(
             item.get("report_type"),
             item.get("damage_scale_value"),
             item.get("affected_people_count"),
+        )
+
+        item["posko_title"] = (
+            posko_titles.get(item.get("posko"))
+            if item.get("posko") else None
         )
 
         result.append(item)
@@ -2402,57 +2417,6 @@ def admin_area_children(
     return fn(**kwargs)
 
 
-@frappe.whitelist()
-def submit_community_report_bridge(
-    title,
-    description,
-    report_type=None,
-    priority=None,
-    affected_people_count=0,
-    urgent_needs=None,
-    location_text=None,
-    latitude=None,
-    longitude=None,
-    province_code=None,
-    city_code=None,
-    district_code=None,
-    village_code=None,
-    consent_to_contact=0,
-    location_input_method=None,
-    create_need=0,
-    damage_scale_value=None,
-    damage_scale_unit=None,
-    disaster_event=None,
-):
-    _actor()
-
-    from rescue_net.api_reports import (
-        submit_community_report,
-    )
-
-    return submit_community_report(
-        title=title,
-        description=description,
-        report_type=report_type,
-        priority=priority,
-        affected_people_count=affected_people_count,
-        urgent_needs=urgent_needs,
-        location_text=location_text,
-        latitude=latitude,
-        longitude=longitude,
-        province_code=province_code,
-        city_code=city_code,
-        district_code=district_code,
-        village_code=village_code,
-        consent_to_contact=consent_to_contact,
-        location_input_method=location_input_method,
-        create_need=create_need,
-        damage_scale_value=damage_scale_value,
-        damage_scale_unit=damage_scale_unit,
-        disaster_event=disaster_event,
-    )
-
-
 def _dynamic_insert(
     doctype,
     payload,
@@ -2604,8 +2568,8 @@ def admin_area_children(
 
 @frappe.whitelist()
 def submit_community_report_bridge(
-    title,
-    description,
+    title=None,
+    description=None,
     report_type=None,
     priority=None,
     affected_people_count=0,
@@ -2623,6 +2587,8 @@ def submit_community_report_bridge(
     damage_scale_value=None,
     damage_scale_unit=None,
     disaster_event=None,
+    intake_mode="form",
+    intake_parser=None,
 ):
     _actor()
 
@@ -2650,6 +2616,8 @@ def submit_community_report_bridge(
         damage_scale_value=damage_scale_value,
         damage_scale_unit=damage_scale_unit,
         disaster_event=disaster_event,
+        intake_mode=intake_mode,
+        intake_parser=intake_parser,
     )
 
 

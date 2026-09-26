@@ -23,7 +23,9 @@ function communityReportBridgePayload(body) {
     create_need: body.create_need ? 1 : 0,
     damage_scale_value: body.damage_scale_value ?? null,
     damage_scale_unit: body.damage_scale_unit || null,
-    disaster_event: body.disaster_event_id || null
+    disaster_event: body.disaster_event_id || null,
+    intake_mode: body.intake_mode || "form",
+    intake_parser: body.intake_parser || null
   };
 }
 
@@ -307,6 +309,193 @@ function predictedNeedsLine(predicted_needs) {
   return `<p class="community-report-predicted"><b>Perkiraan kebutuhan (heuristik):</b> ${list}</p>`;
 }
 
+function escHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function routingLine(report) {
+  if (!report.posko && !report.routing_reason) return "";
+  const target = report.posko_title || report.posko;
+  return `<p class="community-report-predicted"><b>Posko tujuan:</b> ${target ? escHtml(target) : "belum ada"}`
+    + (report.routing_reason ? ` <small>— ${escHtml(report.routing_reason)}</small>` : "") + "</p>";
+}
+
+/* ---------- Session: a report belongs to a logged-in reporter ---------- */
+let RN_REPORTER = null;
+
+async function loadReporterSession(form) {
+  let session = null;
+  try {
+    session = await RN_FRAPPE.session();
+  } catch (err) {
+    session = null;
+  }
+  const loggedIn = !!(session && session.user && session.user !== "Guest");
+  RN_REPORTER = loggedIn ? session : null;
+  const gate = document.querySelector("[data-report-login]");
+  if (gate) gate.hidden = loggedIn;
+  form.querySelectorAll("button[type='submit'], [data-draft-report]").forEach((b) => { b.disabled = !loggedIn; });
+  const rnLogin = document.querySelector("[data-login-rn]");
+  if (rnLogin) rnLogin.href = "auth.html?next=" + encodeURIComponent(location.pathname + location.search);
+  if (loggedIn && form.reporter_name && !form.reporter_name.value) {
+    form.reporter_name.value = session.full_name || session.user;
+  }
+  document.querySelector("[data-my-reports-panel]")?.toggleAttribute("hidden", !loggedIn);
+  if (loggedIn) loadMyReports().catch(() => {});
+  return loggedIn;
+}
+
+async function loginWithGoogle(btn) {
+  btn.disabled = true;
+  try {
+    const r = await RN_FRAPPE.call("rescue_net.api_auth.social_login_url", {
+      provider: "google",
+      redirect_to: location.href
+    });
+    if (r && r.available && r.url) {
+      location.href = r.url;
+      return;
+    }
+    alert((r && r.reason) || "Login Google belum tersedia.");
+  } catch (err) {
+    alert(err.message);
+  }
+  btn.disabled = false;
+}
+
+/* ---------- Cukup ceritakan: uraian -> form (AI / aturan) ---------- */
+function setIntakeMode(form, mode) {
+  form.dataset.mode = mode;
+}
+
+function draftSummary(d) {
+  const f = d.fields || {};
+  const needs = (d.predicted_needs || [])
+    .map((n) => `${n.predicted_qty} ${escHtml(n.unit)} ${escHtml(n.label)}${n.per_day ? "/hari" : ""}`).join(", ");
+  const notes = (f.notes || []).map((n) => `<li>${escHtml(n)}</li>`).join("");
+  return `
+    <b>Diolah dengan ${escHtml(d.parser_label)} — periksa dan perbaiki kolom di bawah sebelum kirim.</b>
+    <span>Jenis: ${escHtml(d.report_type_label || f.report_type)} · Prioritas: ${escHtml(f.priority)} · Terdampak: ${Number(f.affected_people_count || 0)} orang</span>
+    <span>Posko tujuan: ${d.suggested_posko_title ? escHtml(d.suggested_posko_title) : "belum ada"} <small>— ${escHtml(d.routing_reason || "")}</small></span>
+    ${needs ? `<span>Perkiraan kebutuhan: ${needs}</span>` : ""}
+    ${notes ? `<ul>${notes}</ul>` : ""}`;
+}
+
+function applyDraft(form, d) {
+  const f = d.fields || {};
+  const set = (name, value) => {
+    if (form[name] && value !== null && value !== undefined && value !== "") form[name].value = value;
+  };
+  set("title", f.title);
+  set("report_type", f.report_type);
+  set("priority", f.priority);
+  set("affected_people_count", f.affected_people_count);
+  set("urgent_needs", f.urgent_needs);
+  set("damage_scale_value", f.damage_scale_value);
+  set("damage_scale_unit", f.damage_scale_unit);
+  set("location_text", f.location_text);
+  form.description.value = form.narrative.value.trim();
+  form.dataset.intakeParser = d.parser || "rules";
+  form.dataset.drafted = "1";
+}
+
+async function draftReport(form) {
+  const msg = document.querySelector("[data-draft-message]");
+  const box = document.querySelector("[data-draft-result]");
+  const narrative = form.narrative.value.trim();
+  if (narrative.length < 15) {
+    msg.textContent = "Ceritakan sedikit lebih lengkap: apa yang terjadi, di mana, siapa terdampak, apa yang dibutuhkan.";
+    return;
+  }
+  msg.textContent = "Mengolah uraian…";
+  try {
+    const d = await RN_FRAPPE.call("rescue_net.api_reports.draft_community_report", {
+      narrative,
+      disaster_event: window.rnActiveEvent || null,
+      latitude: numberOrNull(form.lat.value),
+      longitude: numberOrNull(form.lng.value),
+      province_code: form.province_code.value || null,
+      city_code: form.city_code.value || null,
+      district_code: form.district_code.value || null,
+      village_code: form.village_code.value || null
+    }, { method: "POST" });
+    applyDraft(form, d);
+    box.innerHTML = draftSummary(d);
+    box.hidden = false;
+    msg.textContent = "Form sudah terisi. Periksa lalu tekan Kirim Laporan.";
+  } catch (err) {
+    msg.textContent = err.message;
+  }
+}
+
+/* ---------- Laporan Saya + tindak lanjut ---------- */
+const UPDATE_TYPE_LABEL = { info: "Info terbaru", additional_need: "Kebutuhan tambahan", resolved: "Sudah tertangani" };
+
+function myReportCard(r) {
+  const thread = (r.updates || []).map((u) => `
+    <div><b>${u.author_role === "posko" ? "Posko" : "Anda"}</b> · ${escHtml(UPDATE_TYPE_LABEL[u.update_type] || u.update_type)}
+      <small>${escHtml(u.posted_at || "")}</small><br>${escHtml(u.body)}
+      ${u.urgent_needs ? `<br><small>Kebutuhan: ${escHtml(u.urgent_needs)}</small>` : ""}
+      ${u.affected_people_count ? `<br><small>Terdampak kini: ${Number(u.affected_people_count)} orang</small>` : ""}</div>`).join("");
+  return `
+    <article class="event-card community-report-item">
+      <div class="event-main">
+        <div>
+          <h4>${escHtml(r.title)}</h4>
+          <p>${escHtml(r.location_text || "-")} | <b>${escHtml(r.report_type || "-")}</b> | ${escHtml(r.status)}</p>
+          ${routingLine(r)}
+          ${thread ? `<div class="rn-report-thread">${thread}</div>` : ""}
+        </div>
+        <div class="chips"><span class="chip neutral">${escHtml(r.name)}</span></div>
+      </div>
+      ${r.status === "rejected" ? "" : `
+      <form class="rn-form rn-report-followup" data-followup="${escHtml(r.name)}">
+        <label>Jenis
+          <select name="update_type">
+            <option value="additional_need">Kebutuhan tambahan</option>
+            <option value="info">Info terbaru</option>
+            <option value="resolved">Sudah tertangani</option>
+          </select>
+        </label>
+        <label>Kebutuhan (opsional)<input name="urgent_needs" placeholder="mis. susu bayi 50 kotak"></label>
+        <label>Jumlah terdampak kini<input name="affected_people_count" type="number" min="0" placeholder="opsional"></label>
+        <textarea name="body" rows="2" required placeholder="Apa yang berubah / bantuan apa lagi yang dibutuhkan?"></textarea>
+        <div class="form-actions"><button class="btn" type="submit">Kirim Tindak Lanjut</button><span class="form-message"></span></div>
+      </form>`}
+    </article>`;
+}
+
+async function loadMyReports() {
+  const target = document.querySelector("[data-my-reports]");
+  if (!target) return;
+  const rows = await RN_FRAPPE.call("rescue_net.api_reports.my_community_reports");
+  target.innerHTML = rows.length
+    ? rows.map(myReportCard).join("")
+    : "<p class=\"subtitle\">Anda belum mengirim laporan.</p>";
+}
+
+function setupFollowUps() {
+  document.addEventListener("submit", async (e) => {
+    const f = e.target.closest("[data-followup]");
+    if (!f) return;
+    e.preventDefault();
+    const out = f.querySelector(".form-message");
+    out.textContent = "Mengirim…";
+    try {
+      await RN_FRAPPE.call("rescue_net.api_reports.add_community_report_update", {
+        report: f.dataset.followup,
+        update_type: f.update_type.value,
+        body: f.body.value.trim(),
+        urgent_needs: f.urgent_needs.value.trim() || null,
+        affected_people_count: numberOrNull(f.affected_people_count.value)
+      }, { method: "POST" });
+      await loadMyReports();
+    } catch (err) {
+      out.textContent = err.message;
+    }
+  });
+}
+
 function reportCard(report) {
   const locationStatus = report.location_status || "no_coordinate";
   const consolidationStatus = report.consolidation_status || "not_ready_no_location";
@@ -318,6 +507,7 @@ function reportCard(report) {
           <p>${safeText(report.location_text)} | <b>${safeText(report.report_type)}</b> | ${safeText(report.status)}</p>
           <p>${safeText(report.description)}</p>
           ${predictedNeedsLine(report.predicted_needs)}
+          ${routingLine(report)}
           <small>${safeText(report.reporter_role)} | ${trustLabel(report.trust_score || 0)} (${report.trust_score || 0})</small>
         </div>
         <div class="chips">
@@ -396,6 +586,22 @@ function setupCommunityReportForm() {
       : "Wilayah pemerintah dipilih. Tambahkan titik GPS/peta jika memungkinkan.";
   }
 
+  form.querySelectorAll("input[name='intake_mode']").forEach((r) => {
+    r.addEventListener("change", () => setIntakeMode(form, r.value));
+  });
+  setIntakeMode(form, form.querySelector("input[name='intake_mode']:checked")?.value || "narrative");
+  // "Cukup ceritakan" needs the intake backend (draft_community_report);
+  // until that is deployed the page stays on the plain form.
+  RN_FRAPPE.call("rescue_net.api_ai.ai_providers").catch(() => {
+    form.querySelector("input[name='intake_mode'][value='form']").checked = true;
+    setIntakeMode(form, "form");
+    document.querySelector(".rn-report-mode")?.setAttribute("hidden", "");
+  });
+  form.narrative?.addEventListener("input", () => { delete form.dataset.drafted; });
+  document.querySelector("[data-draft-report]")?.addEventListener("click", () => draftReport(form));
+  document.querySelector("[data-login-google]")?.addEventListener("click", (e) => loginWithGoogle(e.currentTarget));
+  loadReporterSession(form);
+
   form.querySelectorAll("input[name='location_input_method'], input[name='lat'], input[name='lng'], select[name='area_level']").forEach((field) => {
     field.addEventListener("change", updateLocationMessage);
     field.addEventListener("input", updateLocationMessage);
@@ -458,10 +664,24 @@ function setupCommunityReportForm() {
       evidence_caption: form.evidence_caption.value.trim(),
       consent_to_contact: form.consent_to_contact.checked,
       damage_scale_value: numberOrNull(form.damage_scale_value.value),
-      damage_scale_unit: form.damage_scale_unit.value.trim() || null
+      damage_scale_unit: form.damage_scale_unit.value.trim() || null,
+      intake_mode: form.dataset.mode === "narrative" ? "narrative" : "form",
+      intake_parser: form.dataset.mode === "narrative" ? (form.dataset.intakeParser || null) : null
     };
 
-    if (!payload.reporter_name || !payload.title || !payload.description || !payload.location_text) {
+    if (!RN_REPORTER) {
+      if (msg) msg.textContent = "Masuk dulu (akun Rescue-Net atau Google) untuk mengirim laporan.";
+      return;
+    }
+
+    if (payload.intake_mode === "narrative") {
+      // narrative only: the server fills whatever the draft did not
+      if (!payload.description) payload.description = form.narrative.value.trim();
+      if (!payload.description) {
+        if (msg) msg.textContent = "Tuliskan uraian kondisi lapangan dulu.";
+        return;
+      }
+    } else if (!payload.reporter_name || !payload.title || !payload.description || !payload.location_text) {
       if (msg) msg.textContent = "Lengkapi nama, judul, lokasi/wilayah, dan deskripsi laporan.";
       return;
     }
@@ -500,8 +720,19 @@ function setupCommunityReportForm() {
       });
       form.reset();
       form.querySelector("input[name='location_input_method'][value='government_area_select']").checked = true;
+      delete form.dataset.drafted;
+      delete form.dataset.intakeParser;
+      const mode = document.querySelector(".rn-report-mode")?.hidden ? "form" : "narrative";
+      form.querySelector(`input[name='intake_mode'][value='${mode}']`).checked = true;
+      setIntakeMode(form, mode);
+      const draftBox = document.querySelector("[data-draft-result]");
+      if (draftBox) draftBox.hidden = true;
+      if (RN_REPORTER && form.reporter_name) form.reporter_name.value = RN_REPORTER.full_name || RN_REPORTER.user;
       updateLocationMessage();
       let successText = `Laporan masuk: ${data.name}. Status: ${data.status || "submitted"}, koordinat: ${data.has_coordinates ? "ada" : "belum ada"}.`;
+      successText += data.posko_title
+        ? ` Diteruskan ke ${data.posko_title}.`
+        : " Belum ada posko yang cocok — menunggu triase Control Centre.";
       if (data.predicted_needs && data.predicted_needs.length) {
         const list = data.predicted_needs
           .map((n) => `${n.predicted_qty} ${n.unit} ${n.label}${n.per_day ? "/hari" : ""}`)
@@ -510,6 +741,7 @@ function setupCommunityReportForm() {
       }
       if (msg) msg.textContent = successText;
       await loadCommunityReports();
+      loadMyReports().catch(() => {});
     } catch (err) {
       // err.status is only set once a response actually came back (see
       // rn-frappe-client.js) — a bare fetch() network failure (offline, DNS,
@@ -571,6 +803,7 @@ function setupCommunityReportActions() {
 document.addEventListener("DOMContentLoaded", () => {
   setupCommunityReportForm();
   setupCommunityReportActions();
+  setupFollowUps();
   loadCommunityReports();
 
   // Reconciliation: a report queued offline gets pushed automatically by

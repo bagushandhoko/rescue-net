@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rescue-Net | Laporan Masyarakat</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=predictneeds-20260912">
+  <link rel="stylesheet" href="../assets/css/style.css?v=aiintake-20260926">
 </head>
 <body class="public-report-page">
   <main class="public-report-shell">
@@ -34,6 +34,40 @@
         </div>
 
         <form class="rn-form rn-event-form" data-community-report-form>
+          <div class="rn-report-login" data-report-login hidden>
+            <b>Masuk dulu untuk melapor</b>
+            <span>Laporan tercatat atas akun Anda, sehingga Anda bisa menambah kondisi atau kebutuhan bantuan berikutnya dan melihat tanggapan posko.</span>
+            <div class="form-actions">
+              <a class="btn primary" data-login-rn href="auth.html">Masuk / Daftar Akun Rescue-Net</a>
+              <button class="btn" type="button" data-login-google>Masuk dengan Google</button>
+            </div>
+          </div>
+
+          <div class="rn-report-mode" role="radiogroup" aria-label="Cara melapor">
+            <label>
+              <input type="radio" name="intake_mode" value="narrative" checked>
+              <b>Cukup ceritakan</b>
+              <span>Tulis uraian bebas. Sistem mengisi form dan memilih posko tujuan — Anda periksa dulu sebelum kirim.</span>
+            </label>
+            <label>
+              <input type="radio" name="intake_mode" value="form">
+              <b>Isi form</b>
+              <span>Isi sendiri setiap kolom laporan.</span>
+            </label>
+          </div>
+
+          <div class="rn-report-narrative" data-narrative-block>
+            <label>Ceritakan kondisi lapangan
+              <textarea name="narrative" rows="5" maxlength="5000" placeholder="Contoh: Sumur di Dusun Oebelo kering sejak 2 bulan, 50 KK kekurangan air bersih, butuh truk tangki air dan jerigen."></textarea>
+            </label>
+            <div class="form-actions">
+              <button class="btn primary" type="button" data-draft-report>Proses Uraian</button>
+              <span class="form-message" data-draft-message>Apa yang terjadi, di mana, berapa orang terdampak, apa yang dibutuhkan.</span>
+            </div>
+            <div class="rn-report-draft" data-draft-result hidden></div>
+          </div>
+
+          <div class="rn-report-fields" data-report-fields>
           <div class="form-grid event-form-grid">
             <label>Nama pelapor
               <input name="reporter_name" placeholder="Nama lengkap / nama posko">
@@ -68,6 +102,7 @@
                 <option value="missing_or_found">Ada orang hilang / ditemukan</option>
                 <option value="shelter_need">Kebutuhan shelter / pengungsian</option>
                 <option value="blocked_access">Jalan terputus / akses terganggu</option>
+                <option value="water_shortage">Kekeringan / krisis air bersih</option>
                 <option value="available_stock">Stok atau bantuan tersedia</option>
                 <option value="new_hazard">Risiko bahaya baru</option>
                 <option value="evidence_upload">Upload bukti / foto / video</option>
@@ -192,6 +227,8 @@
               Bersedia dihubungi verifikator
             </label>
           </div>
+          </div>
+
           <div class="form-actions">
             <button class="btn primary" type="submit">Kirim Laporan</button>
             <span class="form-message" data-community-report-message>Laporan masuk sebagai submitted/belum terverifikasi.</span>
@@ -206,6 +243,16 @@
 <a href="posko-logistik.html"><b>Logistik</b><span>Dapat dikonversi menjadi logistic need.</span></a>
         <a href="evidence.html?event=event-sim-001"><b>Evidence</b><span>Bukti otomatis dilabeli sumber community_report.</span></a>
       </aside>
+    </section>
+
+    <section class="public-report-panel rn-my-reports" data-my-reports-panel hidden>
+      <div class="panel-header">
+        <div>
+          <h3>Laporan Saya</h3>
+          <p>Tambahkan kondisi terbaru atau kebutuhan bantuan berikutnya. Posko tujuan menanggapi di utas yang sama.</p>
+        </div>
+      </div>
+      <div class="event-list" data-my-reports></div>
     </section>
 
     <section class="public-report-panel community-operator-panel">
@@ -240,7 +287,7 @@
   <script src="../assets/js/rn-public-header.js?v=navevent-20260914"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-sync-engine.js?v=offlinereport-20260913"></script>
-<script src="../assets/js/community-report.js?v=deeplinkevent-20260914"></script>
+<script src="../assets/js/community-report.js?v=aiintake-20260926"></script>
   <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
   <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script>

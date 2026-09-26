@@ -11,15 +11,11 @@
   var BOARD_CACHE = null;
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-  function fmt(n) { return Number(n || 0).toLocaleString("id-ID"); }
-  function getEventId() { return new URLSearchParams(window.location.search).get("event") || "event-sim-001"; }
+  function esc(s) { return window.RNUI.esc(s); }
+  function fmt(n) { return window.RNUI.fmt(n); }
+  function getEventId() { return window.RNUI.eventId(); }
   function shortTime(s) { return s ? String(s).slice(11, 16) : "-"; }
-  function shortDate(s) { return s ? String(s).slice(0, 10) : "-"; }
+  function shortDate(s) { return window.RNUI.shortDate(s); }
 
   var DRILL_TITLES = {
     alat_tersedia: "Alat Tersedia", kebutuhan_alat: "Kebutuhan Alat",

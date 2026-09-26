@@ -13,13 +13,9 @@
   var BOARD_CACHE = null;
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-  function fmt(n) { return Number(n || 0).toLocaleString("id-ID"); }
-  function getEventId() { return new URLSearchParams(window.location.search).get("event") || "event-sim-001"; }
+  function esc(s) { return window.RNUI.esc(s); }
+  function fmt(n) { return window.RNUI.fmt(n); }
+  function getEventId() { return window.RNUI.eventId(); }
 
   function statusPillClass(status) {
     if (status === "unavailable" || status === "off_duty") return "";

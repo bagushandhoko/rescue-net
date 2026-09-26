@@ -17,11 +17,7 @@
   if (!document.querySelector(PANEL)) return;
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
   function fmt(n) {
     var v = Number(n || 0);
     return (Math.round(v * 100) / 100).toLocaleString("id-ID");

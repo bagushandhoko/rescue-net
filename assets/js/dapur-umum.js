@@ -17,15 +17,9 @@
     return (root || document).querySelector(sel);
   };
 
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
 
-  function fmt(n) {
-    return Number(n || 0).toLocaleString("id-ID");
-  }
+  function fmt(n) { return window.RNUI.fmt(n); }
 
   function safe(v) {
     return v === null || v === undefined || v === "" ? "n/a" : v;

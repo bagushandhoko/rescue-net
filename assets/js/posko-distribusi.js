@@ -11,12 +11,8 @@
   var CACHE = null;
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-  function fmt(n) { return Number(n || 0).toLocaleString("id-ID"); }
+  function esc(s) { return window.RNUI.esc(s); }
+  function fmt(n) { return window.RNUI.fmt(n); }
   var qs = new URLSearchParams(location.search);
   function getEvent() { return qs.get("event") || "event-sim-001"; }
   function getPosko() { return qs.get("id") || qs.get("posko") || ""; }

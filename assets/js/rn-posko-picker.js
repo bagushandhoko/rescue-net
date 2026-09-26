@@ -22,11 +22,7 @@
 (function () {
   "use strict";
 
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
 
   function poskoValue(pt) {
     return pt.posko_id || pt.name || pt.id || "";

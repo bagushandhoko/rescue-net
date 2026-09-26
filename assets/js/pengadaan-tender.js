@@ -5,11 +5,7 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var qs = new URLSearchParams(location.search);
   function getEvent() { return qs.get("event") || "event-sim-001"; }
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
   function rp(n) { n = Number(n || 0); return n ? "Rp " + n.toLocaleString("id-ID") : "-"; }
   function dt(s) { return s ? String(s).slice(0, 16).replace("T", " ") : "-"; }
 

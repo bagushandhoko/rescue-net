@@ -17,11 +17,7 @@
   var POSKO = qs.get("id") || qs.get("posko") || "";
   if (!POSKO) return;
 
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
   function el(html) { var d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; }
   function v(x) { return x == null ? "" : String(x); }
 

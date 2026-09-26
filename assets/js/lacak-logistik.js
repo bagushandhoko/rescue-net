@@ -9,11 +9,7 @@
 
   function $(sel) { return document.querySelector(sel); }
 
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
 
   function fmtDateTime(v) {
     if (!v) return "";

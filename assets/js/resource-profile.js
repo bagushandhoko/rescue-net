@@ -15,13 +15,9 @@
   var BOARD = null;
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
   function getUserParam() { return new URLSearchParams(window.location.search).get("user") || null; }
-  function shortDate(s) { return s ? String(s).slice(0, 10) : "-"; }
+  function shortDate(s) { return window.RNUI.shortDate(s); }
   function initials(name) {
     var parts = String(name || "?").trim().split(/\s+/);
     return ((parts[0] || "")[0] || "") + ((parts[1] || "")[0] || "");

@@ -2,11 +2,7 @@
 (function () {
   "use strict";
   var $ = function (s, r) { return (r || document).querySelector(s); };
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
   function n(x) { return Number(x || 0).toLocaleString("id-ID"); }
   var SEV_COLOR = { critical: "#c0392b", urgent: "#d8862f", high: "#d8862f", normal: "#3b82c4", low: "#7aa7cf" };
   function sevChip(s) {

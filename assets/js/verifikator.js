@@ -6,11 +6,7 @@
   "use strict";
   var A = "rescue_net.api_verifier.";
   var $ = function (s, r) { return (r || document).querySelector(s); };
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
   function call(m, args, opts) { return window.RN_FRAPPE.call(A + m, args || {}, opts || {}); }
   function fmtDate(s) { return s ? String(s).slice(0, 16).replace("T", " ") : "-"; }
 

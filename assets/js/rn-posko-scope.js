@@ -26,11 +26,7 @@
     if (!ev) { try { ev = localStorage.getItem("rn_active_event"); } catch (e) {} }
     return String(ev || "event-sim-001").replace(/^disaster_events:/, "");
   }
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
 
   function hideOne(host) {
     if (host && !host.dataset.rnScopeHidden) {

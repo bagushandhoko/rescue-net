@@ -10,11 +10,7 @@
 
   function $(id) { return document.getElementById(id); }
   function msg(t) { var e = $("nsStatus"); if (e) e.textContent = t; }
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
 
   async function call(method, args, write) {
     args = args || {};

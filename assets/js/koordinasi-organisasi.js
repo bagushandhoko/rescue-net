@@ -12,11 +12,7 @@
   var BOARD = "rescue_net.api_control_centre.my_org_coordination";
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
+  function esc(s) { return window.RNUI.esc(s); }
   var qs = new URLSearchParams(location.search);
   function getEvent() { return qs.get("event") || "event-sim-001"; }
 

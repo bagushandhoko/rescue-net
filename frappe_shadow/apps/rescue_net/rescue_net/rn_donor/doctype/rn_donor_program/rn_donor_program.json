@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN Donor Program",
- "module": "Rescue Net",
+ "module": "RN Donor",
  "engine": "InnoDB",
  "track_changes": 1,
  "sort_field": "modified",

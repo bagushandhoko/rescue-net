@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN Cash Donation",
- "module": "Rescue Net",
+ "module": "RN Donor",
  "autoname": "hash",
  "track_changes": 1,
  "field_order": [

@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN Found Person Report",
- "module": "Rescue Net",
+ "module": "RN Search Found",
  "title_field": "person_code",
  "fields": [
   {

@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Search Found Match",
-  "module": "Rescue Net",
+  "module": "RN Search Found",
   "title_field": "match_status",
   "fields": [
     {

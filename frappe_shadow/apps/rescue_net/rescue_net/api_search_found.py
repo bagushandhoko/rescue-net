@@ -22,7 +22,7 @@ MANAGER_ROLES = {
 
 
 # the rules live in the match controller (phase 2)
-from rescue_net.rescue_net.doctype.rn_search_found_match.rn_search_found_match import (  # noqa: E402
+from rescue_net.rn_search_found.doctype.rn_search_found_match.rn_search_found_match import (  # noqa: E402
     MATCH_TRANSITIONS,
 )
 

@@ -4,7 +4,6 @@ import json
 import frappe
 from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
-import requests
 from frappe.utils import now_datetime
 
 from rescue_net.access_policy import (
@@ -12,9 +11,40 @@ from rescue_net.access_policy import (
     is_system_manager,
     rn_actor,
 )
+from rescue_net.services import llm
 
 
-DEFAULT_MODEL = "gpt-4o-mini"
+DEFAULT_MODEL = "gpt-4o-mini"  # OpenAI default; other providers: llm.PROVIDERS
+
+
+def _prov(provider, allow_auto=False):
+    """Provider name from the client. 'auto' (or empty, where allowed) means
+    "whichever active key I saved last"."""
+    p = (provider or "").strip().lower()
+    if allow_auto and p in ("", "auto"):
+        return "auto"
+    try:
+        return llm.normalize_provider(p or "openai")
+    except llm.LLMError:
+        frappe.throw("Provider AI tidak didukung. Pilih OpenAI, Claude, atau Gemini.")
+
+
+def _model_for(provider, model_name):
+    m = (model_name or "").strip()
+    if not m:
+        return llm.default_model(provider)
+    # a model name of another provider (e.g. the old gpt default sent along
+    # with a Claude key) falls back to this provider's default
+    for other, spec in llm.PROVIDERS.items():
+        if other != provider and m in spec["models"]:
+            return llm.default_model(provider)
+    return m
+
+
+@frappe.whitelist(allow_guest=True)
+def ai_providers():
+    """Provider catalogue for the AI Settings page (no secrets)."""
+    return llm.catalog()
 
 
 def _require_login():
@@ -137,12 +167,12 @@ def save_user_key(
     api_key,
     organization_id=None,
     provider="openai",
-    model_name=DEFAULT_MODEL,
+    model_name=None,
     api_key_label=None,
 ):
     actor, user_id = _assert_self(user_id)
 
-    provider = (provider or "openai").strip().lower()
+    provider = _prov(provider)
     api_key = (api_key or "").strip()
 
     if len(api_key) < 20:
@@ -163,7 +193,7 @@ def save_user_key(
         doc.provider = provider
 
     doc.organization_id = organization_id
-    doc.model_name = model_name or DEFAULT_MODEL
+    doc.model_name = _model_for(provider, model_name)
 
     # Password field -> Frappe encrypted storage.
     doc.api_key = api_key
@@ -201,7 +231,7 @@ def get_user_key_status(
 ):
     _actor, user_id = _assert_self(user_id)
 
-    provider = (provider or "openai").strip().lower()
+    provider = _prov(provider)
     name = _setting_name(user_id, provider)
 
     if not frappe.db.exists(
@@ -248,7 +278,7 @@ def update_user_model(
 ):
     actor, user_id = _assert_self(user_id)
 
-    provider = (provider or "openai").strip().lower()
+    provider = _prov(provider)
     name = _setting_name(user_id, provider)
 
     if not frappe.db.exists(
@@ -269,9 +299,7 @@ def update_user_model(
             "AI user setting not found"
         )
 
-    doc.model_name = (
-        model_name or DEFAULT_MODEL
-    )
+    doc.model_name = _model_for(provider, model_name)
     doc.updated_by_user_id = actor
     doc.save(ignore_permissions=True)
 
@@ -285,7 +313,7 @@ def delete_user_key(
 ):
     actor, user_id = _assert_self(user_id)
 
-    provider = (provider or "openai").strip().lower()
+    provider = _prov(provider)
     name = _setting_name(user_id, provider)
 
     if not frappe.db.exists(
@@ -333,6 +361,10 @@ def delete_user_key(
 # writes an RN AI Usage Log row (counts only) per call.
 # ============================================================
 
+# owner id of the platform key (System Manager) used by public features
+PLATFORM_OWNER = "__platform__"
+
+
 def _org_setting_name(organization_id, provider):
     raw = f"org:{(organization_id or '').strip().lower()}|{(provider or 'openai').strip().lower()}"
     return "rn-ai-" + hashlib.sha256(raw.encode()).hexdigest()[:24]
@@ -350,9 +382,9 @@ def _assert_org_admin(organization_id):
 
 @frappe.whitelist()
 def save_org_key(organization_id, api_key, provider="openai",
-                 model_name=DEFAULT_MODEL, api_key_label=None):
+                 model_name=None, api_key_label=None):
     actor = _assert_org_admin(organization_id)
-    provider = (provider or "openai").strip().lower()
+    provider = _prov(provider)
     api_key = (api_key or "").strip()
     if len(api_key) < 20:
         frappe.throw("API key is too short")
@@ -368,7 +400,7 @@ def save_org_key(organization_id, api_key, provider="openai",
     doc.organization_id = organization_id
     doc.owner_type = "organization"
     doc.owner_id = organization_id
-    doc.model_name = model_name or DEFAULT_MODEL
+    doc.model_name = _model_for(provider, model_name)
     doc.api_key = api_key
     doc.api_key_last4 = api_key[-4:]
     doc.api_key_label = api_key_label
@@ -386,7 +418,7 @@ def save_org_key(organization_id, api_key, provider="openai",
 @frappe.whitelist()
 def get_org_key_status(organization_id, provider="openai"):
     _assert_org_admin(organization_id)
-    provider = (provider or "openai").strip().lower()
+    provider = _prov(provider)
     name = _org_setting_name(organization_id, provider)
     if not frappe.db.exists("RN AI User Setting", name):
         return {"organization_id": organization_id, "provider": provider, "key_exists": False}
@@ -400,7 +432,7 @@ def get_org_key_status(organization_id, provider="openai"):
 @frappe.whitelist()
 def delete_org_key(organization_id, provider="openai"):
     actor = _assert_org_admin(organization_id)
-    provider = (provider or "openai").strip().lower()
+    provider = _prov(provider)
     name = _org_setting_name(organization_id, provider)
     if not frappe.db.exists("RN AI User Setting", name):
         return {"status": "not_found"}
@@ -413,18 +445,105 @@ def delete_org_key(organization_id, provider="openai"):
     return {"status": "deleted"}
 
 
-def _resolve_ai_key(user_id, provider):
-    """Personal key first, then the asker's approved-org key. Returns
-    (api_key, model_name, key_source, owner_type, owner_id) or (None, ...)."""
-    provider = (provider or "openai").strip().lower()
+def _require_system_manager():
+    if not is_system_manager():
+        frappe.throw("Hanya System Manager yang dapat mengatur kunci AI platform.",
+                     frappe.PermissionError)
 
-    uname = _setting_name(user_id, provider)
-    if frappe.db.exists("RN AI User Setting", uname):
-        d = frappe.get_doc("RN AI User Setting", uname)
-        if d.status == "active":
-            k = d.get_password("api_key")
-            if k:
-                return k, (d.model_name or DEFAULT_MODEL), "user", "user", user_id
+
+@frappe.whitelist()
+def save_platform_key(api_key, provider="openai", model_name=None, api_key_label=None):
+    """Platform key for public features (citizen report intake). Stored like
+    an org key under PLATFORM_OWNER; the secret is never returned."""
+    _require_system_manager()
+    provider = _prov(provider)
+    api_key = (api_key or "").strip()
+    if len(api_key) < 20:
+        frappe.throw("API key is too short")
+    name = _org_setting_name(PLATFORM_OWNER, provider)
+    if frappe.db.exists("RN AI User Setting", name):
+        doc = frappe.get_doc("RN AI User Setting", name)
+    else:
+        doc = frappe.new_doc("RN AI User Setting")
+        doc.name = name
+        doc.provider = provider
+        doc.created_by_user_id = frappe.session.user
+    doc.user_id = "org:" + PLATFORM_OWNER  # autoname = _org_setting_name(PLATFORM_OWNER, provider)
+    doc.owner_type = "platform"
+    doc.owner_id = PLATFORM_OWNER
+    doc.model_name = _model_for(provider, model_name)
+    doc.api_key = api_key
+    doc.api_key_last4 = api_key[-4:]
+    doc.api_key_label = api_key_label
+    doc.status = "active"
+    doc.updated_by_user_id = frappe.session.user
+    doc.save(ignore_permissions=True) if not doc.is_new() else doc.insert(ignore_permissions=True)
+    return {"status": "saved", "setting": _safe_setting(doc)}
+
+
+@frappe.whitelist()
+def get_platform_key_status():
+    _require_system_manager()
+    out = []
+    for p in llm.PROVIDERS:
+        d = _active_setting(_org_setting_name(PLATFORM_OWNER, p))
+        out.append({"provider": p, "key_exists": bool(d),
+                    "masked_key": ("****" + (d.api_key_last4 or "")) if d else None,
+                    "model_name": d.model_name if d else None,
+                    "updated_at": d.modified if d else None})
+    _key, model, provider = resolve_platform_key()
+    return {"providers": out, "active_provider": provider, "active_model": model}
+
+
+@frappe.whitelist()
+def delete_platform_key(provider="openai"):
+    _require_system_manager()
+    name = _org_setting_name(PLATFORM_OWNER, _prov(provider))
+    if not frappe.db.exists("RN AI User Setting", name):
+        return {"status": "not_found"}
+    doc = frappe.get_doc("RN AI User Setting", name)
+    doc.status = "deleted"
+    doc.api_key = None
+    doc.api_key_last4 = None
+    doc.updated_by_user_id = frappe.session.user
+    doc.save(ignore_permissions=True)
+    return {"status": "deleted"}
+
+
+@frappe.whitelist()
+def test_platform_key(provider="openai"):
+    _require_system_manager()
+    provider = _prov(provider)
+    d = _active_setting(_org_setting_name(PLATFORM_OWNER, provider))
+    if not d:
+        return {"ok": False, "message": "Belum ada kunci platform untuk diuji."}
+    ok, message = llm.test_key(provider, d.get_password("api_key"))
+    return {"ok": ok, "message": message, "provider": provider}
+
+
+def _active_setting(name):
+    if not frappe.db.exists("RN AI User Setting", name):
+        return None
+    d = frappe.get_doc("RN AI User Setting", name)
+    return d if d.status == "active" and d.get_password("api_key", raise_exception=False) else None
+
+
+def _pick_latest(names):
+    found = [d for d in (_active_setting(n) for n in names) if d]
+    return max(found, key=lambda d: d.modified) if found else None
+
+
+def _resolve_ai_key(user_id, provider):
+    """Personal key first, then the asker's approved-org key. provider='auto'
+    takes, at each level, the active key saved most recently. Returns
+    (api_key, model_name, key_source, owner_type, owner_id, provider) or
+    (None, ...)."""
+    providers = list(llm.PROVIDERS) if provider == "auto" else [provider]
+
+    d = _pick_latest([_setting_name(user_id, p) for p in providers])
+    if d:
+        p = llm.normalize_provider(d.provider)
+        return d.get_password("api_key"), _model_for(p, d.model_name), "user", "user", user_id, p
 
     actor = rn_actor(required=False)
     org_ids = []
@@ -434,14 +553,21 @@ def _resolve_ai_key(user_id, provider):
         if o and o not in org_ids:
             org_ids.append(o)
     for oid in org_ids:
-        oname = _org_setting_name(oid, provider)
-        if frappe.db.exists("RN AI User Setting", oname):
-            d = frappe.get_doc("RN AI User Setting", oname)
-            if d.status == "active":
-                k = d.get_password("api_key")
-                if k:
-                    return k, (d.model_name or DEFAULT_MODEL), "organization", "organization", oid
-    return None, DEFAULT_MODEL, None, None, None
+        d = _pick_latest([_org_setting_name(oid, p) for p in providers])
+        if d:
+            p = llm.normalize_provider(d.provider)
+            return d.get_password("api_key"), _model_for(p, d.model_name), "organization", "organization", oid, p
+    return None, None, None, None, None, provider
+
+
+def resolve_platform_key():
+    """The platform key a System Manager sets for public features (citizen
+    report intake) — never used for personal chat. (key, model, provider)."""
+    d = _pick_latest([_org_setting_name(PLATFORM_OWNER, p) for p in llm.PROVIDERS])
+    if not d:
+        return None, None, None
+    p = llm.normalize_provider(d.provider)
+    return d.get_password("api_key"), _model_for(p, d.model_name), p
 
 
 def _log_ai_usage(*, owner_type, owner_id, user_id, key_source, provider,
@@ -472,7 +598,7 @@ def _log_ai_usage(*, owner_type, owner_id, user_id, key_source, provider,
 @frappe.whitelist()
 def test_ai_key(user_id=None, organization_id=None, provider="openai"):
     """Validate a stored key with a tiny provider call. Never returns the key."""
-    provider = (provider or "openai").strip().lower()
+    provider = _prov(provider)
     if organization_id:
         _assert_org_admin(organization_id)
         name = _org_setting_name(organization_id, provider)
@@ -486,18 +612,11 @@ def test_ai_key(user_id=None, organization_id=None, provider="openai"):
     key = doc.get_password("api_key") if doc.status == "active" else None
     if not key:
         return {"ok": False, "message": "Kunci tidak aktif."}
-    if provider != "openai":
-        return {"ok": False, "message": "Provider belum didukung untuk uji."}
-    try:
-        r = requests.get("https://api.openai.com/v1/models",
-                         headers={"Authorization": "Bearer " + key}, timeout=20)
-    except Exception:
-        return {"ok": False, "message": "Gagal menghubungi provider (jaringan)."}
-    if r.status_code == 401:
-        return {"ok": False, "message": "Kunci ditolak (401)."}
-    if not r.ok:
-        return {"ok": False, "message": f"Provider mengembalikan {r.status_code}."}
-    return {"ok": True, "message": "Kunci valid.", "model_hint": doc.model_name or DEFAULT_MODEL}
+    ok, message = llm.test_key(provider, key)
+    out = {"ok": ok, "message": message, "provider": provider}
+    if ok:
+        out["model_hint"] = _model_for(provider, doc.model_name)
+    return out
 
 
 @frappe.whitelist()
@@ -1537,7 +1656,7 @@ def ask(
     user_id,
     disaster_event_id,
     question,
-    provider="openai",
+    provider="auto",
 ):
     _actor, user_id = _assert_self(
         user_id
@@ -1550,17 +1669,10 @@ def ask(
             "Question is required"
         )
 
-    provider = (
-        provider or "openai"
-    ).strip().lower()
-
-    if provider != "openai":
-        frappe.throw(
-            "AI provider is not supported"
-        )
+    provider = _prov(provider, allow_auto=True)
 
     # Personal key first, then the asker's approved-organisation key (BYOK).
-    api_key, model_name, key_source, key_owner_type, key_owner_id = _resolve_ai_key(
+    api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
         user_id, provider
     )
 
@@ -1569,8 +1681,6 @@ def ask(
             "Belum ada kunci AI aktif untuk Anda atau organisasi Anda. "
             "Tambahkan di AI Settings."
         )
-
-    setting = frappe._dict({"model_name": model_name})
 
     ctx = context(
         disaster_event_id
@@ -1683,109 +1793,19 @@ to flag for follow-up, not as verified
 operational facts.
 """
 
-    payload = {
-        "model":
-            setting.model_name
-            or DEFAULT_MODEL,
-        "messages": [
-            {
-                "role": "system",
-                "content":
-                    system_prompt,
-            },
-            {
-                "role": "user",
-                "content":
-                    "Rescue-Net context JSON:\n"
-                    + json.dumps(
-                        compact,
-                        default=str,
-                    ),
-            },
-            {
-                "role": "user",
-                "content": question,
-            },
-        ],
-        "temperature": 0.2,
-    }
-
-    try:
-        response = requests.post(
-            "https://api.openai.com/"
-            "v1/chat/completions",
-            headers={
-                "Authorization":
-                    "Bearer " + api_key,
-                "Content-Type":
-                    "application/json",
-            },
-            json=payload,
-            timeout=60,
-        )
-    except Exception:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=setting.model_name or DEFAULT_MODEL,
-                      disaster_event=disaster_event_id, q_chars=len(question),
-                      outcome="error", error_note="network")
-        frappe.throw(
-            "AI request failed. Please "
-            "check AI provider, model, "
-            "quota, and network settings."
-        )
-
-    if response.status_code == 401:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=setting.model_name or DEFAULT_MODEL,
-                      disaster_event=disaster_event_id, q_chars=len(question),
-                      outcome="auth_error", error_note="401")
-        frappe.throw(
-            "AI request failed: invalid "
-            "API key. Please update your "
-            "AI key in AI Settings.",
-            frappe.AuthenticationError,
-        )
-
-    if not response.ok:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=setting.model_name or DEFAULT_MODEL,
-                      disaster_event=disaster_event_id, q_chars=len(question),
-                      outcome="error", error_note=str(response.status_code))
-        frappe.throw(
-            "AI request failed. Please "
-            "check AI provider, model, "
-            "quota, and network settings."
-        )
-
-    data = response.json()
-
-    try:
-        answer = data[
-            "choices"
-        ][0]["message"]["content"]
-    except Exception:
-        frappe.throw(
-            "AI provider returned an "
-            "invalid response."
-        )
-
-    _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                  user_id=user_id, key_source=key_source, provider=provider,
-                  model_name=setting.model_name or DEFAULT_MODEL,
-                  disaster_event=disaster_event_id, q_chars=len(question),
-                  a_chars=len(answer or ""), usage=data.get("usage"),
-                  outcome="ok")
+    answer = _llm_chat(
+        api_key, model_name, system_prompt,
+        ["Rescue-Net context JSON:\n" + json.dumps(compact, default=str), question],
+        user_id, key_source, key_owner_type, key_owner_id, provider,
+        disaster_event=disaster_event_id, q_chars=len(question), temperature=0.2,
+    )
 
     return {
         "user_id": user_id,
         "provider": provider,
         "key_source": key_source,
         "model_name":
-            setting.model_name
-            or DEFAULT_MODEL,
+            model_name,
         "disaster_event_id":
             disaster_event_id,
         "question": question,
@@ -1801,18 +1821,12 @@ operational facts.
                     [],
                 )
             ),
-        "key_used":
-            "****"
-            + (
-                setting.api_key_last4
-                or ""
-            ),
     }
 
 
 @frappe.whitelist()
 @rate_limit(limit=20, seconds=60 * 60)
-def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="openai"):
+def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="auto"):
     """Manual, on-demand AI judgment for one duplicate-candidate pair from
     api_frontend_bridge.duplicate_candidates() (pure geo-distance + same-
     item matching, no AI). Owner's own choice: this is deliberately
@@ -1822,16 +1836,9 @@ def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="ope
         user_id
     )
 
-    provider = (
-        provider or "openai"
-    ).strip().lower()
+    provider = _prov(provider, allow_auto=True)
 
-    if provider != "openai":
-        frappe.throw(
-            "AI provider is not supported"
-        )
-
-    api_key, model_name, key_source, key_owner_type, key_owner_id = _resolve_ai_key(
+    api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
         user_id, provider
     )
 
@@ -1877,8 +1884,6 @@ def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="ope
     if not need_a or not need_b:
         frappe.throw("Salah satu kebutuhan (RN Logistic Need) tidak ditemukan.")
 
-    setting = frappe._dict({"model_name": model_name})
-
     system_prompt = """
 You are Rescue-Net's duplicate-need reviewer. You are given two
 logistics need records already flagged as geographically close (or
@@ -1891,75 +1896,13 @@ one word: "DUPLIKAT" or "BEDA". Then 1-2 short sentences of reasoning.
 Never expose API keys or credentials.
 """
 
-    payload = {
-        "model":
-            setting.model_name
-            or DEFAULT_MODEL,
-        "messages": [
-            {
-                "role": "system",
-                "content": system_prompt,
-            },
-            {
-                "role": "user",
-                "content":
-                    "Kebutuhan A:\n" + json.dumps(need_a, default=str)
-                    + "\n\nKebutuhan B:\n" + json.dumps(need_b, default=str),
-            },
-        ],
-        "temperature": 0.1,
-    }
-
-    try:
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": "Bearer " + api_key,
-                "Content-Type": "application/json",
-            },
-            json=payload,
-            timeout=60,
-        )
-    except Exception:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=setting.model_name or DEFAULT_MODEL,
-                      disaster_event=need_a.get("disaster_event"),
-                      outcome="error", error_note="network")
-        frappe.throw(
-            "AI request failed. Please check AI provider, model, "
-            "quota, and network settings."
-        )
-
-    if response.status_code == 401:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=setting.model_name or DEFAULT_MODEL,
-                      disaster_event=need_a.get("disaster_event"),
-                      outcome="auth_error", error_note="401")
-        frappe.throw(
-            "AI request failed: invalid API key. Please update your "
-            "AI key in Setting.",
-            frappe.AuthenticationError,
-        )
-
-    if not response.ok:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=setting.model_name or DEFAULT_MODEL,
-                      disaster_event=need_a.get("disaster_event"),
-                      outcome="error", error_note=str(response.status_code))
-        frappe.throw(
-            "AI request failed. Please check AI provider, model, "
-            "quota, and network settings."
-        )
-
-    data = response.json()
-
-    try:
-        answer = data["choices"][0]["message"]["content"]
-    except Exception:
-        frappe.throw("AI provider returned an invalid response.")
+    answer = _llm_chat(
+        api_key, model_name, system_prompt,
+        "Kebutuhan A:\n" + json.dumps(need_a, default=str)
+        + "\n\nKebutuhan B:\n" + json.dumps(need_b, default=str),
+        user_id, key_source, key_owner_type, key_owner_id, provider,
+        disaster_event=need_a.get("disaster_event"), temperature=0.1,
+    )
 
     first_line = (answer or "").strip().splitlines()[0].strip().upper() if answer else ""
     if "DUPLIKAT" in first_line:
@@ -1969,100 +1912,44 @@ Never expose API keys or credentials.
     else:
         verdict = "unclear"
 
-    _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                  user_id=user_id, key_source=key_source, provider=provider,
-                  model_name=setting.model_name or DEFAULT_MODEL,
-                  disaster_event=need_a.get("disaster_event"),
-                  a_chars=len(answer or ""), usage=data.get("usage"), outcome="ok")
-
     return {
         "object_id_a": object_id_a,
         "object_id_b": object_id_b,
         "verdict": verdict,
         "answer": answer,
-        "model_name": setting.model_name or DEFAULT_MODEL,
+        "model_name": model_name,
         "key_source": key_source,
     }
 
 
-def _openai_chat(api_key, model_name, system_prompt, user_content,
-                  user_id, key_source, key_owner_type, key_owner_id,
-                  provider, disaster_event=None):
-    """Shared one-shot chat call for the manual "Analisa AI" buttons —
-    factored out of analyze_duplicate_candidate() so
-    analyze_rollup_group()/analyze_sync_conflict() don't duplicate the
-    request/error/usage-logging boilerplate."""
-    payload = {
-        "model": model_name or DEFAULT_MODEL,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content},
-        ],
-        "temperature": 0.1,
-    }
-
+def _llm_chat(api_key, model_name, system_prompt, user_content,
+              user_id, key_source, key_owner_type, key_owner_id,
+              provider, disaster_event=None, q_chars=0, temperature=0.1,
+              json_mode=False):
+    """One chat call for every AI feature, any provider (services/llm.py):
+    request, error mapping and the RN AI Usage Log row live here once."""
+    model_name = _model_for(provider, model_name)
+    log = dict(owner_type=key_owner_type, owner_id=key_owner_id, user_id=user_id,
+               key_source=key_source, provider=provider, model_name=model_name,
+               disaster_event=disaster_event, q_chars=q_chars)
     try:
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": "Bearer " + api_key,
-                "Content-Type": "application/json",
-            },
-            json=payload,
-            timeout=60,
-        )
-    except Exception:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=model_name or DEFAULT_MODEL,
-                      disaster_event=disaster_event,
-                      outcome="error", error_note="network")
-        frappe.throw(
-            "AI request failed. Please check AI provider, model, "
-            "quota, and network settings."
-        )
-
-    if response.status_code == 401:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=model_name or DEFAULT_MODEL,
-                      disaster_event=disaster_event,
-                      outcome="auth_error", error_note="401")
-        frappe.throw(
-            "AI request failed: invalid API key. Please update your "
-            "AI key in Setting.",
-            frappe.AuthenticationError,
-        )
-
-    if not response.ok:
-        _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                      user_id=user_id, key_source=key_source, provider=provider,
-                      model_name=model_name or DEFAULT_MODEL,
-                      disaster_event=disaster_event,
-                      outcome="error", error_note=str(response.status_code))
-        frappe.throw(
-            "AI request failed. Please check AI provider, model, "
-            "quota, and network settings."
-        )
-
-    data = response.json()
-
-    try:
-        answer = data["choices"][0]["message"]["content"]
-    except Exception:
-        frappe.throw("AI provider returned an invalid response.")
-
-    _log_ai_usage(owner_type=key_owner_type, owner_id=key_owner_id,
-                  user_id=user_id, key_source=key_source, provider=provider,
-                  model_name=model_name or DEFAULT_MODEL,
-                  disaster_event=disaster_event,
-                  a_chars=len(answer or ""), usage=data.get("usage"), outcome="ok")
-
+        answer, usage = llm.chat(provider, api_key, model_name, system_prompt, user_content,
+                                 temperature=temperature, json_mode=json_mode)
+    except llm.LLMError as e:
+        _log_ai_usage(**log, outcome="auth_error" if e.kind == "auth" else "error",
+                      error_note=f"{e.kind} {e.note}".strip())
+        if e.kind == "auth":
+            frappe.throw("Permintaan AI gagal: kunci API ditolak. Perbarui kunci di AI Settings.",
+                         frappe.AuthenticationError)
+        if e.kind == "refusal":
+            frappe.throw("Provider AI menolak permintaan ini.")
+        frappe.throw("Permintaan AI gagal. Periksa provider, model, kuota, dan jaringan.")
+    _log_ai_usage(**log, a_chars=len(answer or ""), usage=usage, outcome="ok")
     return answer
 
 
 @frappe.whitelist()
-def analyze_rollup_group(user_id, disaster_event, group_key, provider="openai"):
+def analyze_rollup_group(user_id, disaster_event, group_key, provider="auto"):
     """Manual, on-demand AI judgment for one Rollup Nasional group on
     Sync Data Konsolidasi's Konsolidasi Logistik tab — advisory only,
     never applied automatically. The operator reads the suggestion, then
@@ -2071,11 +1958,9 @@ def analyze_rollup_group(user_id, disaster_event, group_key, provider="openai"):
     judgment (see that function's docstring)."""
     _actor, user_id = _assert_self(user_id)
 
-    provider = (provider or "openai").strip().lower()
-    if provider != "openai":
-        frappe.throw("AI provider is not supported")
+    provider = _prov(provider, allow_auto=True)
 
-    api_key, model_name, key_source, key_owner_type, key_owner_id = _resolve_ai_key(
+    api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
         user_id, provider
     )
     if not api_key:
@@ -2122,7 +2007,7 @@ Never expose API keys or credentials.
         + json.dumps(group.get("sources") or [], default=str)
     )
 
-    answer = _openai_chat(
+    answer = _llm_chat(
         api_key, model_name, system_prompt, user_content,
         user_id, key_source, key_owner_type, key_owner_id, provider,
         disaster_event=event,
@@ -2151,11 +2036,11 @@ Never expose API keys or credentials.
         doc.save(ignore_permissions=True)
     frappe.db.commit()
 
-    return {"group_key": group_key, "answer": answer, "model_name": model_name or DEFAULT_MODEL}
+    return {"group_key": group_key, "answer": answer, "model_name": model_name}
 
 
 @frappe.whitelist()
-def analyze_sync_conflict(user_id, sync_log_id, provider="openai"):
+def analyze_sync_conflict(user_id, sync_log_id, provider="auto"):
     """Manual, on-demand AI judgment for one entry in "Server Sync
     Conflicts" on Sync Data Konsolidasi's Sync Offline ↔ Online tab —
     advisory only. The operator still resolves the conflict themselves
@@ -2163,11 +2048,9 @@ def analyze_sync_conflict(user_id, sync_log_id, provider="openai"):
     anything."""
     _actor, user_id = _assert_self(user_id)
 
-    provider = (provider or "openai").strip().lower()
-    if provider != "openai":
-        frappe.throw("AI provider is not supported")
+    provider = _prov(provider, allow_auto=True)
 
-    api_key, model_name, key_source, key_owner_type, key_owner_id = _resolve_ai_key(
+    api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
         user_id, provider
     )
     if not api_key:
@@ -2209,13 +2092,13 @@ credentials.
         "apply_result": _loads_json_safe(log.apply_result_json),
     }, default=str)
 
-    answer = _openai_chat(
+    answer = _llm_chat(
         api_key, model_name, system_prompt, user_content,
         user_id, key_source, key_owner_type, key_owner_id, provider,
         disaster_event=log.event_id,
     )
 
-    return {"sync_log_id": sync_log_id, "answer": answer, "model_name": model_name or DEFAULT_MODEL}
+    return {"sync_log_id": sync_log_id, "answer": answer, "model_name": model_name}
 
 
 def _loads_json_safe(value):

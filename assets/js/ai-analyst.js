@@ -233,7 +233,7 @@ function setupAiAsk() {
         {
           user_id: session.user,
           disaster_event_id: getEventId(),
-          provider: "openai",
+          provider: "auto",
           question: form.question.value.trim()
         },
         true

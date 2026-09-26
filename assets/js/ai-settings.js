@@ -80,6 +80,70 @@ async function ensureSession() {
   return RN_FRAPPE_SESSION;
 }
 
+/* ---- Provider catalogue (OpenAI / Claude / Gemini) ---- */
+let RN_AI_PROVIDERS = [];
+
+function fillModels(form) {
+  const prov = form.querySelector("[data-ai-provider]");
+  const model = form.querySelector("[data-ai-model]");
+  if (!prov || !model) return;
+  const spec = RN_AI_PROVIDERS.find(p => p.provider === prov.value);
+  const models = spec ? spec.models : [];
+  model.innerHTML = models.map(m =>
+    `<option value="${m}"${spec && m === spec.default_model ? " selected" : ""}>${m}</option>`).join("");
+  const key = form.querySelector("input[name='api_key']");
+  if (key && spec) key.placeholder = "Paste API key (" + spec.key_hint + ")";
+}
+
+async function loadProviders() {
+  try {
+    RN_AI_PROVIDERS = await frappeCall("rescue_net.api_ai.ai_providers");
+  } catch (err) {
+    // backend without the multi-provider endpoint yet: OpenAI only
+    RN_AI_PROVIDERS = [{ provider: "openai", label: "OpenAI", default_model: "gpt-4o-mini",
+      models: ["gpt-4o-mini", "gpt-4.1-mini", "gpt-4.1"], key_hint: "sk-..." }];
+  }
+  document.querySelectorAll("form").forEach(form => {
+    const prov = form.querySelector("[data-ai-provider]");
+    if (!prov) return;
+    prov.innerHTML = RN_AI_PROVIDERS.map(p => `<option value="${p.provider}">${p.label}</option>`).join("");
+    prov.addEventListener("change", () => fillModels(form));
+    fillModels(form);
+  });
+}
+
+function providerLabel(p) {
+  return (RN_AI_PROVIDERS.find(x => x.provider === p) || {}).label || p || "-";
+}
+
+/* ---- Platform key (System Manager) ---- */
+async function platformCheck() {
+  const d = await frappeCall("rescue_net.api_ai.get_platform_key_status");
+  document.getElementById("platformKeySection").hidden = false;
+  const rows = (d.providers || []).map(p =>
+    `<div><span>${providerLabel(p.provider)}</span><b>${p.key_exists ? p.masked_key + " · " + p.model_name : "Belum diatur"}</b></div>`);
+  rows.unshift(`<div><span>Provider aktif</span><b>${d.active_provider ? providerLabel(d.active_provider) + " · " + d.active_model : "Tidak ada (pakai aturan kata kunci)"}</b></div>`);
+  document.getElementById("platformKeyStatus").innerHTML = rows.join("");
+}
+
+async function platformSave(e) {
+  e.preventDefault();
+  const f = document.getElementById("platformKeyForm");
+  const msg = document.getElementById("platformKeyMsg");
+  msg.textContent = "Menyimpan…";
+  await frappeCall("rescue_net.api_ai.save_platform_key", {
+    provider: f.provider.value, model_name: f.model_name.value,
+    api_key: f.api_key.value.trim(), api_key_label: f.api_key_label.value.trim()
+  }, true);
+  f.api_key.value = "";
+  msg.textContent = "Tersimpan terenkripsi.";
+  await platformCheck();
+}
+
+function platformProvider() {
+  return document.getElementById("platformKeyForm").provider.value;
+}
+
 function getForm() {
   return document.getElementById("aiKeyForm");
 }
@@ -90,7 +154,7 @@ function renderKeyStatus(data) {
   if (!data.key_exists) {
     el.innerHTML = `
       <div><span>User</span><b>${data.user_id || "-"}</b></div>
-      <div><span>Provider</span><b>${data.provider || "openai"}</b></div>
+      <div><span>Provider</span><b>${providerLabel(data.provider)}</b></div>
       <div><span>Key</span><b>Not configured</b></div>
       <div><span>Status</span><b>No active AI key</b></div>
     `;
@@ -102,7 +166,7 @@ function renderKeyStatus(data) {
   el.innerHTML = `
     <div><span>User</span><b>${s.user_id}</b></div>
     <div><span>Organization</span><b>${s.organization_id || "personal"}</b></div>
-    <div><span>Provider</span><b>${s.provider}</b></div>
+    <div><span>Provider</span><b>${providerLabel(s.provider)}</b></div>
     <div><span>Model</span><b>${s.model_name}</b></div>
     <div><span>Masked Key</span><b>${data.masked_key}</b></div>
     <div><span>Label</span><b>${s.api_key_label || "-"}</b></div>
@@ -210,7 +274,7 @@ function renderOrgStatus(d) {
   }
   const s = d.setting || {};
   el.innerHTML = `<div><span>Organisasi</span><b>${s.organization_id}</b></div>` +
-    `<div><span>Provider</span><b>${s.provider}</b></div>` +
+    `<div><span>Provider</span><b>${providerLabel(s.provider)}</b></div>` +
     `<div><span>Model</span><b>${s.model_name}</b></div>` +
     `<div><span>Masked</span><b>${d.masked_key}</b></div>` +
     `<div><span>Status</span><b>${s.status}</b></div>`;
@@ -218,7 +282,7 @@ function renderOrgStatus(d) {
 async function orgCheck() {
   if (!orgId()) return;
   const d = await frappeCall("rescue_net.api_ai.get_org_key_status",
-    { organization_id: orgId(), provider: "openai" });
+    { organization_id: orgId(), provider: document.getElementById("orgKeyForm").provider.value });
   renderOrgStatus(d);
 }
 async function orgSave(e) {
@@ -237,13 +301,13 @@ async function orgSave(e) {
 async function orgTest() {
   document.getElementById("orgKeyMsg").textContent = "Menguji…";
   const r = await frappeCall("rescue_net.api_ai.test_ai_key",
-    { organization_id: orgId(), provider: "openai" }, true);
+    { organization_id: orgId(), provider: document.getElementById("orgKeyForm").provider.value }, true);
   document.getElementById("orgKeyMsg").textContent = (r.ok ? "✓ " : "✗ ") + (r.message || "");
 }
 async function orgDelete() {
   if (!confirm("Hapus kunci AI organisasi " + orgId() + "?")) return;
   await frappeCall("rescue_net.api_ai.delete_org_key",
-    { organization_id: orgId(), provider: "openai" }, true);
+    { organization_id: orgId(), provider: document.getElementById("orgKeyForm").provider.value }, true);
   await orgCheck();
 }
 
@@ -267,9 +331,33 @@ async function usageOrg() {
   renderUsage(u, "Organisasi " + orgId());
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const form = getForm();
   form.addEventListener("submit", saveKey);
+  await loadProviders().catch(err => statusMsg(err.message));
+  form.provider.addEventListener("change", () => checkKeyStatus().catch(err => statusMsg(err.message)));
+  document.getElementById("orgKeyForm").provider.addEventListener("change", () => orgCheck().catch(() => {}));
+
+  // Platform key: the section appears only when the System Manager check passes.
+  platformCheck().then(() => {
+    const pf = document.getElementById("platformKeyForm");
+    const pmsg = document.getElementById("platformKeyMsg");
+    pf.addEventListener("submit", e => platformSave(e).catch(err => { pmsg.textContent = "✗ " + err.message; }));
+    document.getElementById("platformTestBtn").addEventListener("click", async () => {
+      pmsg.textContent = "Menguji…";
+      try {
+        const r = await frappeCall("rescue_net.api_ai.test_platform_key", { provider: platformProvider() }, true);
+        pmsg.textContent = (r.ok ? "✓ " : "✗ ") + (r.message || "");
+      } catch (err) { pmsg.textContent = "✗ " + err.message; }
+    });
+    document.getElementById("platformDeleteBtn").addEventListener("click", async () => {
+      if (!confirm("Hapus kunci AI platform untuk " + providerLabel(platformProvider()) + "?")) return;
+      try {
+        await frappeCall("rescue_net.api_ai.delete_platform_key", { provider: platformProvider() }, true);
+        await platformCheck();
+      } catch (err) { pmsg.textContent = "✗ " + err.message; }
+    });
+  }).catch(() => {});
 
   document.getElementById("checkKeyBtn").addEventListener("click", () => {
     checkKeyStatus().catch(err => statusMsg(err.message));

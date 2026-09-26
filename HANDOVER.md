@@ -3804,8 +3804,8 @@ here). Owner decisions this pass: **fix as we go** (report per page), and
   Deploy = copy the changed file into the container at
   `/home/frappe/frappe-bench/apps/rescue_net/rescue_net/…`, `chown frappe:frappe`,
   then `docker restart osiun-frappe-backend`. Back up the target first.
-- **Run scripts:** `rn-push-main.sh` / `rn-push-dev.sh` push to GitHub (token from
-  the sudo-only `/volume1/docker/osiun-deploy/osiun-deploy.env`).
+- **Run scripts:** `rn-push-main.sh` commits the whole tree and pushes `main` over SSH
+  (`remote.origin.pushurl`). `main` is the only branch (`dev` removed 2026-09-26).
 
 ## Current program: every page functional + matches its mockup + real data
 

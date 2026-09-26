@@ -300,10 +300,9 @@ Sudah mulai dibuat:
 
 ## 8. Branching
 
-- main = stable / production / owner updates
-- dev = contributor / Codex / testing
-
-Owner can push directly to main. Contributor/Codex should work in dev.
+- `main` is the only branch (default on GitHub). The old `dev` branch was removed on 2026-09-26 after it was confirmed fully contained in `main`.
+- Work lands on `main` as small, descriptive commits (one logical change per commit), pushed with `git push origin main` (SSH deploy key via `remote.origin.pushurl`) or with `rn-push-main.sh`.
+- Short-lived feature branches are fine for risky work, but merge back to `main` quickly; do not keep long-lived parallel branches.
 
 ## 9. Security Rules
 

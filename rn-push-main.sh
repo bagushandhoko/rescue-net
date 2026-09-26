@@ -1,16 +1,13 @@
 #!/bin/sh
+# Owner push: commit everything in the working tree and push to GitHub `main`.
+# `main` is the only branch (the old `dev` branch was removed 2026-09-26).
+# Push goes over SSH via remote.origin.pushurl (deploy key alias
+# `github-rescue-net`); the old GITHUB_TOKEN in osiun-deploy.env expired.
 set -eu
 
 cd /volume1/web/rescue-net
 
 echo "=== Rescue-Net Owner Push to MAIN ==="
-
-GITHUB_TOKEN="$(sudo sh -c '. /volume1/docker/osiun-deploy/osiun-deploy.env; printf "%s" "$GITHUB_TOKEN"')"
-
-if [ -z "$GITHUB_TOKEN" ]; then
-  echo "ERROR: GITHUB_TOKEN not found."
-  exit 1
-fi
 
 git checkout main
 git fetch origin main
@@ -25,6 +22,11 @@ AHEAD_COUNT="$(git rev-list --count origin/main..HEAD 2>/dev/null || printf "0")
 if [ "$HAS_CHANGES" -eq 0 ] && [ "$AHEAD_COUNT" -eq 0 ]; then
   echo "No changes or local commits to push."
   exit 0
+fi
+
+if [ -z "$(git config --get remote.origin.pushurl || true)" ]; then
+  echo "ERROR: remote.origin.pushurl not set (expected git@github-rescue-net:bagushandhoko/rescue-net.git)."
+  exit 1
 fi
 
 git config user.name "bagushandhoko"
@@ -51,16 +53,6 @@ if [ "$HAS_CHANGES" -eq 1 ]; then
   git commit -m "Owner update Rescue-Net $(date '+%Y-%m-%d %H:%M:%S')"
 fi
 
-git remote set-url origin "https://github.com/bagushandhoko/rescue-net.git"
-
-export GITHUB_TOKEN
-
-git -c 'credential.helper=!f() {
-  if [ "$1" = "get" ]; then
-    printf "%s\n" "username=x-access-token"
-    printf "%s\n" "password=$GITHUB_TOKEN"
-  fi
-}; f' push origin main
-git remote set-url origin "https://github.com/bagushandhoko/rescue-net.git"
+git push origin main
 
 echo "OK: pushed to GitHub main."

@@ -41,7 +41,7 @@
         icon: "relawan"
       },
       {
-        label: "Posko Alat Kerja",
+        label: "Kebutuhan & Manajemen Alat Kerja",
         href: "alat-kerja.html?event=event-sim-001",
         icon: "alat-kerja"
       },

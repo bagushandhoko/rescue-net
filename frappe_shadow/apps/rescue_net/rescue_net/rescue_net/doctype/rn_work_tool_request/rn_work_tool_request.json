@@ -64,6 +64,13 @@
    "fieldtype": "Small Text"
   },
   {
+   "fieldname": "work_object",
+   "label": "Kondisi Lapangan",
+   "fieldtype": "Link",
+   "options": "RN Work Object",
+   "description": "Kondisi lapangan yang melahirkan kebutuhan alat ini (dari perkiraan alat)."
+  },
+  {
    "fieldname": "priority",
    "label": "Priority",
    "fieldtype": "Select",

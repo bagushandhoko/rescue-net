@@ -5,10 +5,10 @@ from frappe.model.document import Document
 from frappe.utils import now_datetime
 
 
-OBJECT_TYPES = {
-    "longsoran", "jembatan_putus", "puing_berat",
-    "pohon_tumbang", "akses_terendam", "lainnya",
-}
+from rescue_net.services.tool_needs import CONDITIONS
+
+# field conditions a work object may describe (services/tool_needs.py)
+OBJECT_TYPES = set(CONDITIONS)
 STATUS = {"open", "in_progress", "resolved"}
 
 
@@ -48,10 +48,10 @@ class RNWorkObject(Document):
 
     def validate(self):
         if self.object_type and self.object_type not in OBJECT_TYPES:
-            frappe.throw("Jenis object kerja tidak valid")
+            frappe.throw("Jenis kondisi lapangan tidak valid")
 
         if self.status and self.status not in STATUS:
             frappe.throw("Status penanganan tidak valid")
 
         if self.size_value is not None and float(self.size_value) <= 0:
-            frappe.throw("Ukuran object kerja harus lebih dari 0")
+            frappe.throw("Ukuran fisik kondisi lapangan harus lebih dari 0")

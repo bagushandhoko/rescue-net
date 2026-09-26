@@ -11,7 +11,7 @@ from frappe.utils import cint, flt
 # butuh makanan/pakaian/shelter", optional fields, feeds a heuristic
 # estimate so posko can adjust prep. Deliberately the SAME kind of
 # simple, honestly-labeled divisor heuristic as
-# api_resource_tools._EQUIP_PREDICTION_RULES/_predict_equipment (Alat
+# services/tool_needs.py (Kebutuhan Alat Kerja) (Alat
 # Kerja's "Prediksi Kebutuhan Alat") — a real math estimate, not a
 # fabricated "AI" black box, and not a real LLM call for something
 # this deterministic.
@@ -45,7 +45,7 @@ _TANKER_LITRES = 5000.0
 
 def predict_report_needs(report_type, damage_scale_value=None, affected_people_count=0):
     """Heuristic equipment/logistics estimate from a citizen report — same
-    honest-heuristic spirit as api_resource_tools._predict_equipment.
+    honest-heuristic spirit as services/tool_needs.estimate.
     Returns [] when there's nothing to predict from (no scale/people given,
     or a report_type this doesn't apply to) — never fabricates a number."""
     report_type = (report_type or "").strip()

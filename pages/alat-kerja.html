@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Rescue-Net | Alat Kerja</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=balistfix-20260914">
+  <title>Rescue-Net | Kebutuhan & Manajemen Alat Kerja</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=needsfirst-20260926">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -34,7 +34,7 @@
       <a href="donor-program.html?event=event-sim-001"><span class="nav-icon" data-icon="donor"></span>Donor Program</a>
       <a href="recovery-reconstruction.html?event=event-sim-001"><span class="nav-icon" data-icon="recovery"></span>Recovery</a>
 <a href="management-relawan.html"><span class="nav-icon" data-icon="relawan"></span>Relawan</a>
-      <a class="active" href="alat-kerja.html?event=event-sim-001"><span class="nav-icon" data-icon="alat-kerja"></span>Alat Kerja</a>
+      <a class="active" href="alat-kerja.html?event=event-sim-001"><span class="nav-icon" data-icon="alat-kerja"></span>Kebutuhan &amp; Manajemen Alat Kerja</a>
       <a href="resource-profile.html?event=event-sim-001"><span class="nav-icon" data-icon="resource"></span>Profil Sumber Daya</a>
       <a href="evidence.html?event=event-sim-001"><span class="nav-icon" data-icon="evidence"></span>Evidence</a>
       <a href="verification-approval.html?event=event-sim-001"><span class="nav-icon" data-icon="verification"></span>Verification</a>
@@ -47,23 +47,26 @@
 
   <main class="main">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Alat Kerja</div>
+    <div class="rn-page-mobile-title">Kebutuhan & Manajemen Alat Kerja</div>
 
       <div>
-        <p class="eyebrow">Work Tools / Heavy Equipment</p>
-        <h2>Manajemen Alat Kerja</h2>
-        <p class="subtitle">Inventari alat berat, operator, matching kebutuhan, dan dispatch untuk event bencana.</p>
+        <p class="eyebrow">Kondisi Lapangan → Kebutuhan Alat → Manajemen Alat</p>
+        <h2>Kebutuhan &amp; Manajemen Alat Kerja</h2>
+        <p class="subtitle">Mulai dari kondisi fisik di lapangan (volume longsor, luas banjir, jumlah korban), hitung alat dan hari kerja yang diperlukan, jadikan kebutuhan alat, lalu kelola pemenuhannya: matching, dispatch, operator, BBM.</p>
         <p class="subtitle" id="workToolStatus">Memuat…</p>
       </div>
       <div class="status-pill" id="workToolUpdated">Alat Kerja · Live</div>
     </header>
 
     <section class="kpi-grid rn-ak-kpi">
-      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="alat_tersedia">
-        <span class="kpi-icon" data-icon="wrench"></span><span>Alat Tersedia</span><strong id="kpiAlatTersedia">-</strong><small>siap dipakai</small>
-      </button>
+      <div class="kpi-card warning">
+        <span class="kpi-icon" data-icon="alert-triangle"></span><span>Kondisi Lapangan</span><strong id="kpiKondisiLapangan">-</strong><small>belum selesai ditangani</small>
+      </div>
       <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="kebutuhan_alat">
         <span class="kpi-icon" data-icon="alert-circle"></span><span>Kebutuhan Alat</span><strong id="kpiKebutuhanAlat">-</strong><small>belum terpenuhi</small>
+      </button>
+      <button type="button" class="kpi-card rn-kpi-btn" data-kpi="alat_tersedia">
+        <span class="kpi-icon" data-icon="wrench"></span><span>Alat Tersedia</span><strong id="kpiAlatTersedia">-</strong><small>siap dipakai</small>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="operator_aktif">
         <span class="kpi-icon" data-icon="radio"></span><span>Operator Aktif</span><strong id="kpiOperatorAktif">-</strong><small>sedang bertugas</small>
@@ -79,6 +82,51 @@
       </button>
     </section>
 
+    <div class="rn-ak-step"><span>1</span><div><h3>Kondisi Lapangan &amp; Perkiraan Alat</h3><p>Catat kondisi fisik yang harus ditangani. Sistem menghitung jenis alat, jumlah, dan hari kerja — setiap angka disertai dasar perhitungannya.</p></div></div>
+    <section class="rn-ak-step1">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Kondisi Lapangan</h3><p>Contoh: longsor 200 m³ selesai 2 hari → 2 ekskavator + 1 buldoser · banjir permukiman 5 ha → 5 perahu karet · 200 korban → 250 kantong jenazah.</p></div>
+        </div>
+        <div id="objectList"></div>
+      </div>
+      <aside class="panel">
+        <div class="panel-header"><div><h3>Catat Kondisi Lapangan</h3><p>Ukuran fisik, bukan daftar alat.</p></div></div>
+        <form class="rn-form rn-ak-condition-form" id="objectForm">
+          <label>Nama kondisi<input name="title" placeholder="mis. Longsor Jalan Desa KM 12" required></label>
+          <label>Jenis kondisi<select name="object_type" id="objectTypeSelect"></select></label>
+          <div class="form-grid">
+            <label><span id="sizeLabel">Ukuran fisik</span><input name="size_value" type="number" step="any" min="0" required placeholder="mis. 200"></label>
+            <label>Satuan<input name="size_unit" placeholder="m3"></label>
+          </div>
+          <label id="daysField">Target selesai (hari kerja)<input name="work_days_target" type="number" min="1" placeholder="mis. 2"></label>
+          <label>Posko penanggung jawab<select name="posko" id="objectPoskoSelect"><option value="">— Control Centre —</option></select></label>
+          <label>Lokasi<input name="location" placeholder="Desa / ruas jalan / titik"></label>
+          <label>Catatan<input name="notes" placeholder="opsional"></label>
+          <div class="form-actions"><button class="btn primary" type="submit">Simpan &amp; Hitung Alat</button><span class="rn-pr-add-msg" id="objectFormMsg"></span></div>
+        </form>
+      </aside>
+    </section>
+
+    <div class="rn-ak-step"><span>2</span><div><h3>Kebutuhan Alat</h3><p>Perkiraan yang sudah dijadikan permintaan alat, diurutkan menurut prioritas, beserta hambatannya.</p></div></div>
+
+
+    <section class="content-grid rn-ak-row2">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Matching Kebutuhan Alat</h3><p>Permintaan alat terbuka (dari perkiraan kondisi lapangan atau diminta langsung), diranking berdasarkan prioritas.</p></div>
+        </div>
+        <div id="matchList"></div>
+      </div>
+
+      <aside class="panel">
+        <div class="panel-header"><div><h3>Hambatan Alat Kerja</h3></div></div>
+        <div class="event-list" id="blockerList"></div>
+      </aside>
+    </section>
+
+    <div class="rn-ak-step"><span>3</span><div><h3>Manajemen Alat</h3><p>Inventari dan operator yang memenuhi kebutuhan, kelompok alat lintas posko, dispatch, lokasi kerja, BBM, dan pelacakan aset.</p></div></div>
+
     <section class="content-grid">
       <div class="panel">
         <div class="panel-header">
@@ -93,58 +141,16 @@
       </aside>
     </section>
 
-    <section class="content-grid rn-ak-row2">
-      <div class="panel">
-        <div class="panel-header">
-          <div><h3>Matching Kebutuhan Alat</h3><p>Permintaan alat terbuka, diranking berdasarkan prioritas.</p></div>
-        </div>
-        <div id="matchList"></div>
+
+    <section class="panel">
+      <div class="panel-header">
+        <div><h3>Kelompok Alat (Normalisasi AI Lintas Posko)</h3><p>Alat sejenis digabung otomatis meski nama/satuan berbeda antar posko.</p></div>
       </div>
-
-      <aside class="panel">
-        <div class="panel-header"><div><h3>Hambatan Alat Kerja</h3></div></div>
-        <div class="event-list" id="blockerList"></div>
-      </aside>
-    </section>
-
-    <section class="content-grid rn-ak-row2">
-      <div class="panel">
-        <div class="panel-header">
-          <div><h3>Object Kerja & Prediksi Kebutuhan Alat</h3><p>Insiden/kerusakan lapangan (longsoran, jembatan putus, puing berat, dll) dengan estimasi kebutuhan alat.</p></div>
-        </div>
-        <div id="objectList"></div>
-        <button class="rn-pr-add-btn" data-toggle="objectForm" type="button">+ Lapor Object Kerja</button>
-        <form class="rn-ak-object-form" id="objectForm">
-          <input name="title" placeholder="Nama object kerja (mis. Longsoran KM 12)" required>
-          <div class="rn-ak-object-form-grid">
-            <select name="object_type">
-              <option value="longsoran">Longsoran</option>
-              <option value="jembatan_putus">Jembatan Putus</option>
-              <option value="puing_berat">Puing Berat</option>
-              <option value="pohon_tumbang">Pohon Tumbang</option>
-              <option value="akses_terendam">Akses Terendam</option>
-              <option value="lainnya">Lainnya</option>
-            </select>
-            <input name="location" placeholder="Lokasi">
-            <input name="size_value" type="number" step="0.1" placeholder="Ukuran (mis. 300)" required>
-            <input name="size_unit" placeholder="Satuan (m3/m/m2/pohon)">
-          </div>
-          <input name="notes" placeholder="Catatan tambahan (opsional)">
-          <div class="rn-pr-add-actions"><button class="btn primary mini" type="submit">Simpan & Prediksi</button></div>
-          <span class="rn-pr-add-msg" id="objectFormMsg"></span>
-        </form>
+      <div class="rn-ak-group-row is-head">
+        <span>Kelompok</span><span>Jumlah Item</span><span>Total / Satuan</span><span>Posko</span><span>Sumber</span>
       </div>
-
-      <aside class="panel">
-        <div class="panel-header">
-          <div><h3>Kelompok Alat (Normalisasi AI Lintas Posko)</h3><p>Alat sejenis digabung otomatis meski nama/satuan berbeda antar posko.</p></div>
-        </div>
-        <div class="rn-ak-group-row is-head">
-          <span>Kelompok</span><span>Jumlah Item</span><span>Total / Satuan</span><span>Posko</span><span>Sumber</span>
-        </div>
-        <div id="groupList"></div>
-        <p class="rn-muted" id="groupsNote" style="font-size:11px;margin-top:8px;"></p>
-      </aside>
+      <div id="groupList"></div>
+      <p class="rn-muted" id="groupsNote" style="font-size:11px;margin-top:8px;"></p>
     </section>
 
     <section class="panel">
@@ -299,7 +305,7 @@
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/alat-kerja.js?v=alatkerja-20260903a"></script>
+<script src="../assets/js/alat-kerja.js?v=needsfirst-20260926"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=navevent-20260914"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

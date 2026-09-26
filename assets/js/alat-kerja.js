@@ -230,58 +230,154 @@
   var STATUS_CHIP = { open: "warning", in_progress: "", resolved: "ok" };
   var STATUS_LABEL = { open: "Terbuka", in_progress: "Dikerjakan", resolved: "Selesai" };
 
+  var CONDITIONS = [];
+  var TO_REQUEST_METHOD = "rescue_net.api_resource_tools.create_requests_from_work_object";
+
+  function predRow(p) {
+    var days = p.work_days ? " · " + fmt(p.work_days) + " hari kerja" : "";
+    var stock = p.gap > 0
+      ? '<span class="chip danger">Kurang ' + fmt(p.gap) + " (siap " + fmt(p.ready_available) + ")</span>"
+      : '<span class="chip ok">Siap ' + fmt(p.ready_available) + "</span>";
+    var asked = p.requested > 0
+      ? '<span class="chip">Diminta ' + fmt(p.requested) + "</span>"
+      : '<span class="chip warning">Belum diminta</span>';
+    return (
+      '<div class="rn-ak-pred-row"><span><b>' + esc(p.label) + " × " + fmt(p.predicted_qty) + " " + esc(p.unit || "") + days +
+      "</b><small>" + esc(p.basis) + "</small></span><span>" + stock + " " + asked + "</span></div>"
+    );
+  }
+
   function renderObjects(objects) {
     var el = $("#objectList");
     if (!objects || !objects.length) {
-      el.innerHTML = '<p class="rn-muted">Belum ada object kerja dilaporkan.</p>';
+      el.innerHTML = '<p class="rn-muted">Belum ada kondisi lapangan dicatat. Mulai dari form di samping: ukuran fisik kondisi, bukan daftar alat.</p>';
       return;
     }
     el.innerHTML = objects.map(function (o) {
-      var preds = (o.predictions || []).map(function (p) {
-        return (
-          '<div class="rn-ak-pred-row"><span><b>' + esc(p.label) + " × " + fmt(p.predicted_qty) + '</b><small>' + esc(p.basis) + "</small></span>" +
-          '<span class="chip ' + (p.gap > 0 ? "danger" : "ok") + '">' + (p.gap > 0 ? "Kurang " + fmt(p.gap) : "Cukup") + " (siap " + fmt(p.ready_available) + ")</span></div>"
-        );
-      }).join("") || '<p class="rn-muted" style="font-size:11px;">Tidak ada prediksi untuk jenis object ini.</p>';
+      var preds = (o.predictions || []).map(predRow).join("") ||
+        '<p class="rn-muted" style="font-size:11px;">Belum ada aturan perkiraan alat untuk jenis kondisi ini — minta alat langsung di bagian bawah.</p>';
+      var days = o.work_days_target ? " · target " + fmt(o.work_days_target) + " hari kerja" : "";
+      var action = (o.status === "resolved" || !NEEDS_FIRST_BACKEND) ? "" : (o.to_request > 0
+        ? '<button class="btn primary mini" type="button" data-to-request="' + esc(o.name) + '">Jadikan Kebutuhan Alat</button>'
+        : (o.predictions || []).length ? "<small>Semua alat dari perkiraan ini sudah diminta — kelola di Kebutuhan Alat &amp; Manajemen.</small>" : "");
       return (
         '<div class="rn-ak-object-card"><div class="rn-ak-object-head"><b>' + esc(o.title) + "</b>" +
         '<span class="chip ' + (STATUS_CHIP[o.status] || "") + '">' + (STATUS_LABEL[o.status] || o.status) + "</span></div>" +
-        '<div class="rn-ak-object-meta">' + esc(o.object_type_label) + " · " + fmt(o.size_value) + " " + esc(o.size_unit || "") + " · " + esc(o.location || "-") + "</div>" +
-        '<div class="rn-ak-object-preds">' + preds + "</div></div>"
+        '<div class="rn-ak-object-meta">' + esc(o.object_type_label) + " · " + fmt(o.size_value) + " " + esc(o.size_unit || "") + days +
+        " · " + esc(o.location || "-") + "</div>" +
+        '<div class="rn-ak-object-preds">' + preds + "</div>" +
+        '<div class="rn-ak-object-actions">' + action + '<span class="rn-pr-add-msg" data-to-request-msg="' + esc(o.name) + '"></span></div></div>'
       );
     }).join("");
   }
 
+  function fillConditionSelect(conditions) {
+    var sel = document.getElementById("objectTypeSelect");
+    if (!sel || !conditions.length) return;
+    CONDITIONS = conditions;
+    var cur = sel.value;
+    sel.innerHTML = conditions.map(function (c) {
+      return '<option value="' + esc(c.object_type) + '">' + esc(c.label) + "</option>";
+    }).join("");
+    if (cur) sel.value = cur;
+    applyCondition();
+  }
+
+  function applyCondition() {
+    var form = document.getElementById("objectForm");
+    var c = CONDITIONS.find(function (x) { return x.object_type === form.object_type.value; });
+    if (!c) return;
+    $("#sizeLabel").textContent = "Ukuran fisik: " + c.measure;
+    form.size_unit.value = c.unit || "";
+    $("#daysField").hidden = !c.time_based;
+    if (c.time_based && !form.work_days_target.value) form.work_days_target.value = c.default_days || "";
+  }
+
+  async function loadObjectPoskos() {
+    var sel = document.getElementById("objectPoskoSelect");
+    if (!sel) return;
+    var res = await window.RN_FRAPPE.call("rescue_net.api_control_centre.event_poskos", { disaster_event: getEventId() });
+    var points = Array.isArray(res) ? res : (res.points || []);
+    var manages = (res.viewer && res.viewer.manages) || [];
+    var mine = points.filter(function (pt) { return manages.indexOf(pt.posko_id || pt.id || pt.name) !== -1; });
+    sel.innerHTML = '<option value="">— Control Centre —</option>' + mine.map(function (pt) {
+      var id = pt.posko_id || pt.id || pt.name;
+      return '<option value="' + esc(id) + '">' + esc(pt.name || id) + "</option>";
+    }).join("");
+    if (mine.length === 1) sel.value = mine[0].posko_id || mine[0].id || mine[0].name;
+  }
+
+  // backend before the needs-first release: no condition catalogue, no
+  // create_requests_from_work_object — show the old condition types, no button
+  var LEGACY_CONDITIONS = [
+    { object_type: "longsoran", label: "Longsoran", unit: "m3", measure: "volume material", default_days: null, time_based: false },
+    { object_type: "jembatan_putus", label: "Jembatan putus", unit: "m", measure: "panjang bentang", default_days: null, time_based: false },
+    { object_type: "puing_berat", label: "Puing berat", unit: "m2", measure: "luas puing", default_days: null, time_based: false },
+    { object_type: "pohon_tumbang", label: "Pohon tumbang", unit: "pohon", measure: "jumlah pohon", default_days: null, time_based: false },
+    { object_type: "akses_terendam", label: "Akses terendam", unit: "m2", measure: "luas genangan akses", default_days: null, time_based: false },
+    { object_type: "lainnya", label: "Lainnya", unit: "", measure: "ukuran", default_days: null, time_based: false }
+  ];
+  var NEEDS_FIRST_BACKEND = true;
+
   async function loadObjects() {
     var data = await window.RN_FRAPPE.call(OBJECT_TYPE_METHOD, { disaster_event: getEventId() });
+    NEEDS_FIRST_BACKEND = Array.isArray(data.conditions);
+    fillConditionSelect(NEEDS_FIRST_BACKEND ? data.conditions : LEGACY_CONDITIONS);
+    var open = (data.objects || []).filter(function (o) { return o.status !== "resolved"; }).length;
+    var kpi = document.getElementById("kpiKondisiLapangan");
+    if (kpi) kpi.textContent = fmt(open);
     renderObjects(data.objects || []);
   }
 
   function setupObjectForm() {
-    var toggleBtn = document.querySelector('[data-toggle="objectForm"]');
     var form = document.getElementById("objectForm");
-    if (!toggleBtn || !form) return;
-    toggleBtn.addEventListener("click", function () { form.classList.toggle("is-open"); });
+    if (!form) return;
+    fillConditionSelect(LEGACY_CONDITIONS);  // until the board answers
+    form.object_type.addEventListener("change", function () {
+      form.work_days_target.value = "";
+      applyCondition();
+    });
+    loadObjectPoskos().catch(function () {});
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       var msg = $("#objectFormMsg");
-      msg.textContent = "Menyimpan & menghitung prediksi…";
+      msg.textContent = "Menyimpan & menghitung alat…";
       try {
         await window.RN_FRAPPE.call(CREATE_OBJECT_METHOD, {
           title: form.title.value.trim(),
           object_type: form.object_type.value,
           size_value: Number(form.size_value.value),
           size_unit: form.size_unit.value.trim(),
+          work_days_target: $("#daysField").hidden ? null : (Number(form.work_days_target.value) || null),
+          posko: form.posko.value || null,
           location: form.location.value.trim(),
           notes: form.notes.value.trim(),
           disaster_event: getEventId(),
         }, { method: "POST" });
+        var keepType = form.object_type.value;
         form.reset();
-        form.classList.remove("is-open");
-        msg.textContent = "";
+        form.object_type.value = keepType;
+        applyCondition();
+        msg.textContent = "Tersimpan — lihat perkiraan alat di daftar.";
         await loadObjects();
       } catch (err) {
         msg.textContent = "Gagal: " + (err && err.message || err) + (/login|permission|akses/i.test(String(err && err.message)) ? " (perlu login)" : "");
+      }
+    });
+    document.addEventListener("click", async function (e) {
+      var btn = e.target.closest("[data-to-request]");
+      if (!btn) return;
+      var id = btn.getAttribute("data-to-request");
+      var out = document.querySelector('[data-to-request-msg="' + id + '"]');
+      btn.disabled = true;
+      try {
+        var r = await window.RN_FRAPPE.call(TO_REQUEST_METHOD, { work_object: id }, { method: "POST" });
+        if (out) out.textContent = r.message || "";
+        await loadObjects();
+        await loadBoard();
+      } catch (err) {
+        btn.disabled = false;
+        if (out) out.textContent = "Gagal: " + (err && err.message || err);
       }
     });
   }

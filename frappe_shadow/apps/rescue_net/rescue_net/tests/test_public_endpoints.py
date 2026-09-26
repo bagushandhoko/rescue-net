@@ -34,6 +34,7 @@ from rescue_net.tests.factories import (
 
 GUEST_ENDPOINTS = {
     "api_admin_areas.get_children", "api_admin_areas.get_provinces",
+    "api_device.unit_catalog", "api_device.unit_normalize", "api_events.disasters", "api_events.health",
     "api_ai.ai_providers", "api_ai.public_active_disasters", "api_ai.public_context", "api_ai.public_map_context",
     "api_auth.register", "api_auth.session_info", "api_auth.social_login_url",
     "api_comms.comms_board",

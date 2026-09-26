@@ -6,7 +6,7 @@ app_email = "bagushandhoko@gmail.com"
 app_license = "MIT"
 
 # Rescue-Net authenticated identity bridge
-on_login = "rescue_net.migration.identity_bridge.handle_identity_on_login"
+on_login = "rescue_net.identity_bridge.handle_identity_on_login"
 
 after_install = [
     "rescue_net.setup.normalization_defaults.install_defaults",

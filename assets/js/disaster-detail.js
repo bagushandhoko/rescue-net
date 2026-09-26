@@ -1,3 +1,10 @@
+
+// Event list: rescue_net.api_events.disasters (phase 3); the retired
+// compat adapter answers until the backend with api_events is deployed.
+function rnDisastersCall(args) {
+  return RN_FRAPPE.call("rescue_net.api_events.disasters", args)
+    .catch(function () { return RN_FRAPPE.call("rescue_net.compat.api.disasters", args); });
+}
 function getDisasterId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("id") || params.get("event") || "event-sim-001";
@@ -29,8 +36,7 @@ async function rnFetch(path, options = {}) {
     url.pathname === "/disasters"
     && method === "GET"
   ) {
-    return await RN_FRAPPE.call(
-      "rescue_net.compat.api.disasters",
+    return await rnDisastersCall(
       {
         limit: 100
       }
@@ -335,7 +341,7 @@ async function loadDisasterDetail() {
       rnFetch(`/ai/context/${disasterId}`)
     ]);
 
-    // rescue_net.compat.api.disasters wraps rows under a "disasters" key
+    // rescue_net.api_events.disasters wraps rows under a "disasters" key
     // (legacy shadow-cutover response shape), it's not a bare array.
     const disaster = (disasters.disasters || []).find(d => d.id === disasterId) || aiContext.disaster || { id: disasterId };
 

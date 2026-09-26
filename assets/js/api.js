@@ -1,3 +1,10 @@
+
+// Event list: rescue_net.api_events.disasters (phase 3); the retired
+// compat adapter answers until the backend with api_events is deployed.
+function rnDisastersCall(args) {
+  return RN_FRAPPE.call("rescue_net.api_events.disasters", args)
+    .catch(function () { return RN_FRAPPE.call("rescue_net.compat.api.disasters", args); });
+}
 async function rnFetch(path, options = {}) {
   if (!window.RN_FRAPPE) {
     throw new Error(
@@ -29,11 +36,10 @@ async function rnFetch(path, options = {}) {
     url.pathname === "/disasters"
     && method === "GET"
   ) {
-    // compat.api.disasters returns { mode, cutover_allowed, disasters: [...] }
+    // api_events.disasters returns { mode, cutover_allowed, disasters: [...] }
     // with canonical field names — unwrap + normalise to the shape the
     // welcome page renderers expect.
-    const raw = await RN_FRAPPE.call(
-      "rescue_net.compat.api.disasters",
+    const raw = await rnDisastersCall(
       { limit: 100 }
     );
     const list = Array.isArray(raw)

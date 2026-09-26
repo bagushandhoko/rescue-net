@@ -281,5 +281,8 @@ def update_tender_status(tender, status):
         frappe.throw("Anda bukan penyelenggara tender ini.", frappe.PermissionError)
     if status not in _TENDER_STATUS:
         frappe.throw("Status tender tidak valid.")
-    frappe.db.set_value("RN Procurement Tender", tender, "status", status)
+    # through the controller: status graph + verified-org gate (L-16)
+    doc = frappe.get_doc("RN Procurement Tender", tender)
+    doc.status = status
+    doc.save(ignore_permissions=True)
     return {"tender": tender, "status": status}

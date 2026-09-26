@@ -5,9 +5,11 @@ import frappe
 
 def bypass(doc):
     """Data loads (legacy migration, fixtures, bench import, patches) set
-    their own states; rules apply to every live write."""
+    their own states; rules apply to every live write. The legacy importers
+    insert with `legacy_id` set — an insert carrying one is a data load."""
     return bool(
         doc.flags.get("rn_data_load")
+        or (doc.is_new() and doc.get("legacy_id"))
         or frappe.flags.in_import
         or frappe.flags.in_migrate
         or frappe.flags.in_install

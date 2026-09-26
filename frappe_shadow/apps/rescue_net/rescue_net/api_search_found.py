@@ -21,18 +21,10 @@ MANAGER_ROLES = {
 }
 
 
-MATCH_TRANSITIONS = {
-    "proposed": {
-        "confirmed",
-        "rejected",
-    },
-    "confirmed": {
-        "reunited",
-        "rejected",
-    },
-    "rejected": set(),
-    "reunited": set(),
-}
+# the rules live in the match controller (phase 2)
+from rescue_net.rescue_net.doctype.rn_search_found_match.rn_search_found_match import (  # noqa: E402
+    MATCH_TRANSITIONS,
+)
 
 
 def _role(actor):
@@ -313,45 +305,6 @@ def propose_match(
     }
 
 
-def _assert_no_confirmed_conflict(doc):
-    conflicts = frappe.get_all(
-        "RN Search Found Match",
-        filters=[
-            [
-                "name",
-                "!=",
-                doc.name,
-            ],
-            [
-                "match_status",
-                "in",
-                [
-                    "confirmed",
-                    "reunited",
-                ],
-            ],
-        ],
-        fields=[
-            "name",
-            "missing_report",
-            "found_report",
-        ],
-        limit_page_length=5000,
-    )
-
-    for row in conflicts:
-        if (
-            row.missing_report
-            == doc.missing_report
-            or row.found_report
-            == doc.found_report
-        ):
-            frappe.throw(
-                "Salah satu laporan sudah mempunyai "
-                "match terkonfirmasi"
-            )
-
-
 @frappe.whitelist()
 def update_match_status(
     match,
@@ -380,23 +333,8 @@ def update_match_status(
 
     current = doc.match_status
 
-    if new_status not in (
-        MATCH_TRANSITIONS.get(
-            current,
-            set(),
-        )
-    ):
-        frappe.throw(
-            f"Transisi match tidak valid: "
-            f"{current} -> {new_status}"
-        )
-
-    if new_status in {
-        "confirmed",
-        "reunited",
-    }:
-        _assert_no_confirmed_conflict(doc)
-
+    # transitions, one confirmed match per report and the report status
+    # sync are enforced by RNSearchFoundMatch (validate / on_update)
     doc.match_status = new_status
     doc.review_notes = review_notes
     doc.reviewed_by_user = (
@@ -405,51 +343,11 @@ def update_match_status(
     doc.reviewed_at = now_datetime()
 
     if new_status == "confirmed":
-        doc.verification_status = (
-            "reviewed"
-        )
-
+        doc.verification_status = "reviewed"
     elif new_status == "reunited":
-        doc.verification_status = (
-            "verified"
-        )
-
-        frappe.db.set_value(
-            "RN Missing Person Report",
-            doc.missing_report,
-            "report_status",
-            "reunited",
-            update_modified=False,
-        )
-
-        frappe.db.set_value(
-            "RN Found Person Report",
-            doc.found_report,
-            "report_status",
-            "reunited",
-            update_modified=False,
-        )
-
+        doc.verification_status = "verified"
     elif new_status == "rejected":
-        doc.verification_status = (
-            "rejected"
-        )
-
-        frappe.db.set_value(
-            "RN Missing Person Report",
-            doc.missing_report,
-            "report_status",
-            "missing",
-            update_modified=False,
-        )
-
-        frappe.db.set_value(
-            "RN Found Person Report",
-            doc.found_report,
-            "report_status",
-            "found",
-            update_modified=False,
-        )
+        doc.verification_status = "rejected"
 
     doc.save(ignore_permissions=True)
 

@@ -3,6 +3,7 @@ from collections import defaultdict
 import frappe
 from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event
+from rescue_net.access_policy import is_system_manager
 
 from frappe.utils import flt, now_datetime, nowdate
 
@@ -577,18 +578,8 @@ def create_update(
     # Exact legacy semantic:
     # current_amount bertambah amount_spent
     # pada setiap update.
-    new_current = (
-        flt(p.current_amount)
-        + amount
-    )
-
-    frappe.db.set_value(
-        "RN Donor Program",
-        p.name,
-        "current_amount",
-        new_current,
-        update_modified=True,
-    )
+    from rescue_net.services.money import add_to_program
+    new_current = add_to_program(p.name, "current_amount", amount)   # L-9
 
     return {
         "update": doc.name,
@@ -936,6 +927,11 @@ def create_special_program(
             "Budget tidak boleh negatif"
         )
 
+    # L-9: money received / spent only grows through confirmed donations and
+    # spending updates — a new program starts at 0 (System Manager may seed).
+    if not is_system_manager():
+        budget_received = budget_spent = 0.0
+
     doc = frappe.new_doc(
         "RN Donor Program"
     )
@@ -1126,22 +1122,9 @@ def create_special_program_update(
 
     # Exact special-program legacy semantic:
     # hanya budget_spent yang bertambah.
-    new_budget_spent = (
-        flt(p.budget_spent)
-        + amount_spent
-    )
-
-    frappe.db.set_value(
-        "RN Donor Program",
-        p.name,
-        {
-            "budget_spent":
-                new_budget_spent,
-            "updated_by_user":
-                _actor_name(actor),
-        },
-        update_modified=True,
-    )
+    from rescue_net.services.money import add_to_program
+    new_budget_spent = add_to_program(p.name, "budget_spent", amount_spent,   # L-9
+                                      updated_by_user=_actor_name(actor))
 
     return {
         "update": doc.name,
@@ -1542,6 +1525,8 @@ def decide_cash_donation(donation, action, note=None):
     pledge. Confirming is the ONLY thing that moves a donation onto the
     public wall and into the program's real budget_received."""
     actor = rn_actor()
+    from rescue_net.services.money import add_to_program, lock
+    lock("RN Cash Donation", donation)          # L-17: a double click waits, then sees "decided"
     doc = frappe.get_doc("RN Cash Donation", donation)
     if doc.status != "pending":
         frappe.throw("Donasi ini sudah diputuskan.")
@@ -1562,8 +1547,7 @@ def decide_cash_donation(donation, action, note=None):
     doc.save(ignore_permissions=True)
 
     if action == "confirm":
-        current = flt(frappe.db.get_value("RN Donor Program", doc.donor_program, "budget_received"))
-        frappe.db.set_value("RN Donor Program", doc.donor_program, "budget_received", current + flt(doc.amount))
+        add_to_program(doc.donor_program, "budget_received", doc.amount)
 
     return {"donation": doc.name, "status": doc.status}
 

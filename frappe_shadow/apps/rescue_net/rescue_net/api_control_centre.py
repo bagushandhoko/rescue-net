@@ -2050,11 +2050,14 @@ def fulfill_need(need, donor_name, quantity, unit=None,
         "RN Logistic Need",
         need if frappe.db.exists("RN Logistic Need", need)
         else {"legacy_id": need},
-        ["name", "item_name", "unit", "posko", "disaster_event"],
+        ["name", "item_name", "unit", "posko", "disaster_event", "need_status"],
         as_dict=True,
     )
     if not n:
         frappe.throw("Kebutuhan tidak ditemukan")
+    # L-20: only an open need can still be filled
+    if str(n.get("need_status") or "open").lower() in _DRILL_CLOSED_NEED:
+        frappe.throw("Kebutuhan ini sudah ditutup (%s)." % n.get("need_status"))
 
     if not str(donor_name or "").strip():
         frappe.throw("Nama donatur wajib diisi")

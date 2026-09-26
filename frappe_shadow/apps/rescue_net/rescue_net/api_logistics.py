@@ -903,6 +903,14 @@ def claim_aid_pickup(transporter_posko, aid_offer, destination_posko,
     if existing:
         frappe.throw("Bantuan ini sudah punya alur distribusi.")
 
+    # L-19: aid goes where the donor sent it; an untargeted offer takes the
+    # destination chosen here as its target
+    if not destination_posko or not frappe.db.exists("RN Posko", destination_posko):
+        frappe.throw("Posko tujuan tidak ditemukan.")
+    if offer.target_posko and offer.target_posko != destination_posko:
+        frappe.throw("Bantuan ini ditujukan ke posko lain — tujuan penjemputan harus posko itu.")
+    offer.target_posko = destination_posko
+
     posko_title = frappe.db.get_value("RN Posko", transporter_posko, "title") or transporter_posko
 
     flow = frappe.new_doc("RN Distribution Flow")
@@ -1108,6 +1116,13 @@ def create_flow(
         ):
             frappe.throw(
                 "Kebutuhan berasal dari Posko yang berbeda"
+            )
+
+        # L-20: no new flow for a need that is already closed
+        from rescue_net.api_control_centre import _DRILL_CLOSED_NEED
+        if str(need_doc.need_status or "open").lower() in _DRILL_CLOSED_NEED:
+            frappe.throw(
+                f"Kebutuhan ini sudah ditutup ({need_doc.need_status})."
             )
 
     doc = frappe.new_doc("RN Distribution Flow")

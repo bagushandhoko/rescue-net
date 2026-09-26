@@ -90,6 +90,9 @@ under load), including `test_sim_kekeringan` (a full drought scenario).
 - Frappe 15.113.4: `from frappe.rate_limiter import rate_limit` (no `frappe.rate_limit`).
 - UI text is Indonesian; code comments English.
 - Frontend: bump the `?v=` cache-buster on a page's `<script>`/`<link>` when changing the file.
+- The website is the installable app (PWA): `manifest.webmanifest`, `sw.js`, `assets/js/rn-pwa.js` on every page. A new
+  page gets the manifest `<link>` and `rn-pwa.js`; bump `CACHE` in `sw.js` when the precache list changes. Never let
+  the service worker cache `/api/method/` answers. Native builds are only a wrapper (`apps/rescue-net-shell/`).
 - Frontend helpers live in `assets/js/rn-ui.js` (`window.RNUI`: `esc`, `fmt`, `shortDate`, `fmtTime`, `eventId`,
   `chip`, `kpiCard`, `modal`). Use them in new code instead of another local copy; a page that uses them loads
   `rn-ui.js` before its own script.

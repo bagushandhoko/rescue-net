@@ -19,6 +19,8 @@ body {
 }
 .app-frame { width: min(1180px, 100%); margin: 0 auto; padding: 18px; }
 .hidden { display: none !important; }
+.retired-banner { position: sticky; top: 0; z-index: 50; padding: 10px 14px; background: #2d211b; color: #fff; font-size: 14px; line-height: 1.4; }
+.retired-banner a { color: #ffd7c7; }
 .app-header {
   position: sticky; top: 0; z-index: 5;
   display: flex; justify-content: space-between; align-items: center;

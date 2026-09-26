@@ -89,7 +89,7 @@
     { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
     { label: "Control Centre", href: `${prefix}pages/war-room.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
     { label: "Sync Data Konsolidasi", href: `${prefix}pages/data-consolidation.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
-    { label: "Download", href: `${prefix}../rescue-net-app/download.html` },
+    { label: "Install App", href: `${prefix}pages/install.html` },
     { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
     { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` }
   ];

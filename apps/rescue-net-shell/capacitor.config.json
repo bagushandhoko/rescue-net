@@ -1,0 +1,15 @@
+{
+  "appId": "org.rescuenet.app",
+  "appName": "Rescue-Net",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://osiun.tail251e1e.ts.net/rescue-net/index.html?source=app",
+    "androidScheme": "https",
+    "cleartext": false,
+    "allowNavigation": ["osiun.tail251e1e.ts.net"]
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1200, "backgroundColor": "#fff7f0", "showSpinner": false }
+  }
+}

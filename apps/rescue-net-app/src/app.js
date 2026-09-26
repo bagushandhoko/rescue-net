@@ -804,6 +804,7 @@ async function syncOne(item) {
 }
 
 async function runSync() {
+  setTimeout(() => { if (!pendingOldQueue()) location.replace("../rescue-net/pages/install.html?from=app"); }, 1500);
   if (!navigator.onLine) {
     renderSyncQueue();
     return;
@@ -948,7 +949,32 @@ async function refreshAll() {
   runSync();
 }
 
+// Phase 5 (option B): the website is the app now. A device with nothing left
+// to send goes straight to the web app; one with pending items stays here so
+// the queue can still be sent (it only exists in this app's storage).
+function pendingOldQueue() {
+  const queue = readStore(STORE_KEYS.queue).filter((i) => i.status !== "synced");
+  const reports = readStore(STORE_KEYS.reports).filter((r) => r.local_status && r.local_status !== "synced");
+  return queue.length + reports.length;
+}
+
+function retirementNotice() {
+  const left = pendingOldQueue();
+  if (!left) {
+    location.replace("../rescue-net/pages/install.html?from=app");
+    return true;
+  }
+  const bar = document.createElement("div");
+  bar.className = "retired-banner";
+  bar.innerHTML = `Aplikasi ini sudah dipensiunkan — Rescue-Net kini dipasang langsung dari website. ` +
+    `Masih ada <b>${left}</b> data yang belum terkirim di HP ini: masuk, lalu tekan <b>Sync</b>. ` +
+    `Setelah terkirim Anda diarahkan ke <a href="../rescue-net/pages/install.html">Rescue-Net versi web</a>.`;
+  document.body.prepend(bar);
+  return false;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  if (retirementNotice()) return;
   setupTabs();
   setupActions();
   setupReport();

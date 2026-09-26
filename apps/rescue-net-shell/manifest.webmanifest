@@ -1,0 +1,21 @@
+{
+  "name": "Rescue-Net — Disaster Management System",
+  "short_name": "Rescue-Net",
+  "description": "Koordinasi bencana: laporan masyarakat, posko, logistik, shelter, medis — bisa dipakai offline.",
+  "lang": "id",
+  "start_url": "/rescue-net/index.html?source=pwa",
+  "scope": "/rescue-net/",
+  "display": "standalone",
+  "background_color": "#fff7f0",
+  "theme_color": "#ef523d",
+  "icons": [
+    { "src": "/rescue-net/assets/img/pwa/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/rescue-net/assets/img/pwa/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/rescue-net/assets/img/pwa/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Lapor Kejadian", "url": "/rescue-net/pages/laporan-masyarakat.html" },
+    { "name": "Bencana Aktif", "url": "/rescue-net/pages/bencana-aktif.html" },
+    { "name": "Posko Logistik", "url": "/rescue-net/pages/posko-logistik.html" }
+  ]
+}

@@ -13,11 +13,14 @@ VULNERABLE_FIELDS = (
     "disability_count",
 )
 
-VALID_STATUS = {
-    "checked_in",
-    "moved",
-    "checked_out",
+# a household moves out once; moved / checked_out are final
+TRANSITIONS = {
+    "checked_in": {"moved", "checked_out"},
+    "moved": set(),
+    "checked_out": set(),
 }
+
+VALID_STATUS = set(TRANSITIONS)
 
 
 def actor_name():
@@ -76,6 +79,19 @@ class RNShelterHousehold(Document):
         if self.household_status not in VALID_STATUS:
             frappe.throw(
                 "Status keluarga tidak valid"
+            )
+
+        from rescue_net.services.guards import assert_transition, bypass, changed
+        assert_transition(self, "household_status", TRANSITIONS, "Status keluarga", initial={"checked_in"})
+
+        if (
+            self.household_status == "moved"
+            and changed(self, "household_status")
+            and not self.destination
+            and not bypass(self)
+        ):
+            frappe.throw(
+                "Tujuan perpindahan wajib diisi"
             )
 
         for fieldname in VULNERABLE_FIELDS:

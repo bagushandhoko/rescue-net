@@ -84,3 +84,20 @@ class RNShelterOccupancy(Document):
                 frappe.throw(
                     f"{fieldname} tidak boleh negatif"
                 )
+
+        # functional never exceeds what exists (a count left empty = not reported)
+        for functional, total, label in (
+            ("toilet_functional", "toilet_total", "Toilet berfungsi tidak boleh melebihi toilet tersedia."),
+            ("water_point_functional", "water_point_total", "Titik air berfungsi tidak boleh melebihi titik air tersedia."),
+        ):
+            f, t = self.get(functional), self.get(total)
+            if f not in (None, "") and t not in (None, "") and int(f) > int(t):
+                frappe.throw(label)
+
+        # shelters do overflow in the field: an occupancy above capacity is
+        # accepted and flagged on the row, never refused
+        capacity = int(self.capacity_total or 0)
+        self.over_capacity = int(
+            capacity > 0
+            and int(self.current_occupancy or 0) > capacity
+        )

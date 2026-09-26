@@ -12,12 +12,15 @@ MODES = {
     "unknown",
 }
 
-STATUS = {
-    "open",
-    "partially_met",
-    "met",
-    "cancelled",
+# a shelter need is met or cancelled once; both are final
+TRANSITIONS = {
+    "open": {"partially_met", "met", "cancelled"},
+    "partially_met": {"met", "cancelled"},
+    "met": set(),
+    "cancelled": set(),
 }
+
+STATUS = set(TRANSITIONS)
 
 
 def actor_name():
@@ -80,6 +83,9 @@ class RNShelterNeed(Document):
             frappe.throw(
                 "Status kebutuhan tidak valid"
             )
+
+        from rescue_net.services.guards import assert_transition
+        assert_transition(self, "need_status", TRANSITIONS, "Status kebutuhan", initial={"open"})
 
         if self.quantity_mode in {
             "exact",

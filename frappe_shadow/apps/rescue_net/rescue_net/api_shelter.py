@@ -20,31 +20,6 @@ CONTROL_ROLES = {
 }
 
 
-HOUSEHOLD_TRANSITIONS = {
-    "checked_in": {
-        "moved",
-        "checked_out",
-    },
-    "moved": set(),
-    "checked_out": set(),
-}
-
-
-NEED_TRANSITIONS = {
-    "open": {
-        "partially_met",
-        "met",
-        "cancelled",
-    },
-    "partially_met": {
-        "met",
-        "cancelled",
-    },
-    "met": set(),
-    "cancelled": set(),
-}
-
-
 def _member_orgs(actor):
     if not actor or not actor.name:
         return []
@@ -415,10 +390,7 @@ def create_occupancy(
         doc.toilet_functional = doc.toilet_total
     if water_point_total not in (None, "") and water_point_functional in (None, ""):
         doc.water_point_functional = doc.water_point_total
-    if doc.get("toilet_functional") and doc.get("toilet_total") and doc.toilet_functional > doc.toilet_total:
-        frappe.throw("Toilet berfungsi tidak boleh melebihi toilet tersedia.")
-    if doc.get("water_point_functional") and doc.get("water_point_total") and doc.water_point_functional > doc.water_point_total:
-        frappe.throw("Titik air berfungsi tidak boleh melebihi titik air tersedia.")
+    # functional <= total and the over-capacity flag: RN Shelter Occupancy controller
     doc.observed_at = now_datetime()
     doc.source_updated_at = (
         doc.observed_at
@@ -453,8 +425,7 @@ def create_occupancy(
         "current_occupancy": current,
         "occupancy_percent": pct,
         "over_capacity": bool(
-            capacity > 0
-            and current > capacity
+            doc.over_capacity
         ),
     }
 
@@ -547,25 +518,7 @@ def update_household_status(
     )
 
     current = doc.household_status
-
-    if new_status not in (
-        HOUSEHOLD_TRANSITIONS.get(
-            current,
-            set(),
-        )
-    ):
-        frappe.throw(
-            f"Transisi keluarga tidak valid: "
-            f"{current} -> {new_status}"
-        )
-
-    if (
-        new_status == "moved"
-        and not destination
-    ):
-        frappe.throw(
-            "Tujuan perpindahan wajib diisi"
-        )
+    # transition + destination-on-move: RN Shelter Household controller
 
     now = now_datetime()
 
@@ -705,17 +658,7 @@ def update_need_status(
     )
 
     current = doc.need_status
-
-    if new_status not in (
-        NEED_TRANSITIONS.get(
-            current,
-            set(),
-        )
-    ):
-        frappe.throw(
-            f"Transisi kebutuhan tidak valid: "
-            f"{current} -> {new_status}"
-        )
+    # transition: RN Shelter Need controller
 
     doc.need_status = new_status
 

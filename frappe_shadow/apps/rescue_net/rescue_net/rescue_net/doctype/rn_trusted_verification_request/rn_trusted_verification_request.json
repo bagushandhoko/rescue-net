@@ -1,0 +1,37 @@
+{
+  "doctype": "DocType",
+  "name": "RN Trusted Verification Request",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "field:legacy_id",
+  "naming_rule": "By fieldname",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "legacy_id", "label": "Legacy ID", "fieldtype": "Data", "unique": 1 },
+    { "fieldname": "legacy_source", "label": "Legacy Source", "fieldtype": "Data", "default": "rescue-net-fastapi" },
+    { "fieldname": "migration_status", "label": "Migration Status", "fieldtype": "Select", "options": "Shadow Imported\nValidated\nNeeds Review", "default": "Shadow Imported" },
+    { "fieldname": "title", "label": "Request Title", "fieldtype": "Data", "reqd": 1 },
+    { "fieldname": "requester_type", "label": "Requester Type", "fieldtype": "Data" },
+    { "fieldname": "requester_id", "label": "Requester ID (legacy)", "fieldtype": "Data" },
+    { "fieldname": "target_type", "label": "Target Type (legacy, polymorphic)", "fieldtype": "Data" },
+    { "fieldname": "target_id", "label": "Target ID (legacy, polymorphic)", "fieldtype": "Data" },
+    { "fieldname": "requested_verifier", "label": "Requested Verifier", "fieldtype": "Link", "options": "RN Verifier Profile" },
+    { "fieldname": "requested_verifier_legacy_id", "label": "Requested Verifier Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "requested_verifier_name", "label": "Requested Verifier Name", "fieldtype": "Data" },
+    { "fieldname": "requested_verifier_phone", "label": "Requested Verifier Phone", "fieldtype": "Data" },
+    { "fieldname": "requested_verifier_email", "label": "Requested Verifier Email", "fieldtype": "Data" },
+    { "fieldname": "relationship_description", "label": "Relationship Description", "fieldtype": "Small Text" },
+    { "fieldname": "verification_scope", "label": "Verification Scope", "fieldtype": "Data" },
+    { "fieldname": "message", "label": "Message", "fieldtype": "Small Text" },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Data" },
+    { "fieldname": "token_hash", "label": "Token Hash (already hashed at source)", "fieldtype": "Data" },
+    { "fieldname": "expires_at", "label": "Expires At", "fieldtype": "Data" },
+    { "fieldname": "decided_at", "label": "Decided At", "fieldtype": "Data" },
+    { "fieldname": "correction_note", "label": "Correction Note", "fieldtype": "Small Text" },
+    { "fieldname": "legacy_payload", "label": "Legacy Payload", "fieldtype": "Code", "options": "JSON" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 0, "cancel": 0, "amend": 0 }
+  ]
+}

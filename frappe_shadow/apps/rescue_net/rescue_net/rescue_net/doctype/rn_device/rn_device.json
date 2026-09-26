@@ -1,0 +1,28 @@
+{
+  "doctype": "DocType",
+  "name": "RN Device",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "field:legacy_id",
+  "naming_rule": "By fieldname",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "legacy_id", "label": "Legacy ID", "fieldtype": "Data", "unique": 1 },
+    { "fieldname": "legacy_source", "label": "Legacy Source", "fieldtype": "Data", "default": "rescue-net-fastapi" },
+    { "fieldname": "migration_status", "label": "Migration Status", "fieldtype": "Select", "options": "Shadow Imported\nValidated\nNeeds Review", "default": "Shadow Imported" },
+    { "fieldname": "title", "label": "Device Name", "fieldtype": "Data", "reqd": 1 },
+    { "fieldname": "device_type", "label": "Device Type", "fieldtype": "Data" },
+    { "fieldname": "owner_user", "label": "Owner User", "fieldtype": "Link", "options": "RN User Account" },
+    { "fieldname": "owner_user_legacy_id", "label": "Owner User Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "owner_organization", "label": "Owner Organization", "fieldtype": "Link", "options": "RN Organization" },
+    { "fieldname": "owner_organization_legacy_id", "label": "Owner Organization Legacy ID", "fieldtype": "Data" },
+    { "fieldname": "last_seen_at", "label": "Last Seen At", "fieldtype": "Data" },
+    { "fieldname": "public_key", "label": "Public Key", "fieldtype": "Small Text" },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Data" },
+    { "fieldname": "legacy_payload", "label": "Legacy Payload", "fieldtype": "Code", "options": "JSON" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1, "submit": 0, "cancel": 0, "amend": 0 }
+  ]
+}

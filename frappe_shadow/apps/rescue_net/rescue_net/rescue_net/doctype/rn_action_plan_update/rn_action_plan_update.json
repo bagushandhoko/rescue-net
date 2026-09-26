@@ -1,0 +1,113 @@
+{
+  "doctype": "DocType",
+  "name": "RN Action Plan Update",
+  "module": "Rescue Net",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "field:legacy_id",
+  "naming_rule": "By fieldname",
+  "title_field": "title",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "legacy_source",
+      "label": "Legacy Source",
+      "fieldtype": "Data",
+      "default": "rescue-net-fastapi"
+    },
+    {
+      "fieldname": "migration_status",
+      "label": "Migration Status",
+      "fieldtype": "Select",
+      "options": "Shadow Imported\nValidated\nNeeds Review",
+      "default": "Shadow Imported"
+    },
+    {
+      "fieldname": "title",
+      "label": "Update Title",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "action_plan",
+      "label": "Action Plan",
+      "fieldtype": "Link",
+      "options": "RN Action Plan"
+    },
+    {
+      "fieldname": "action_plan_legacy_id",
+      "label": "Action Plan Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event"
+    },
+    {
+      "fieldname": "disaster_event_legacy_id",
+      "label": "Disaster Event Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "progress_status",
+      "label": "Progress Status",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "realized_quantity",
+      "label": "Realized Quantity",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "realized_unit",
+      "label": "Realized Unit",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "observation",
+      "label": "Observation",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "evidence_file",
+      "label": "Evidence File",
+      "fieldtype": "Link",
+      "options": "RN Evidence File"
+    },
+    {
+      "fieldname": "evidence_file_legacy_id",
+      "label": "Evidence File Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reported_by",
+      "label": "Reported By (legacy)",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1,
+      "submit": 0,
+      "cancel": 0,
+      "amend": 0
+    }
+  ]
+}

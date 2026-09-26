@@ -1,8 +1,9 @@
 import frappe
-from frappe.tests.utils import FrappeTestCase
+
+from rescue_net.tests.factories import RNTestCase
 
 
-class TestSmoke(FrappeTestCase):
+class TestSmoke(RNTestCase):
     def test_site_is_the_test_site(self):
         # Guard: this suite must never run against production.
         self.assertTrue(frappe.conf.get("allow_tests"))

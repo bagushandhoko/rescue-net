@@ -872,7 +872,8 @@ def _disaster_summary(name):
 
     return dict(row) if row else None
 
-@frappe.whitelist()
+# Private helper — NOT whitelisted: with public=True it skips the AI scope and
+# returns data before _public_scrub. Callers: context() / public_context().
 def _build_context(disaster_event_id, public=False):
     # RN_CANONICAL_REF disaster_event_id = resolve_disaster_event(disaster_event_id)
     disaster_event_id = resolve_disaster_event(disaster_event_id)

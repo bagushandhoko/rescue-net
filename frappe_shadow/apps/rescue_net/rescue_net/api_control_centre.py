@@ -2041,6 +2041,15 @@ def fulfill_need(need, donor_name, quantity, unit=None,
     if not str(donor_name or "").strip():
         frappe.throw("Nama donatur wajib diisi")
 
+    # Owner rule (2026-09-26): a posko that is not open to the public takes
+    # no donations from outside — same gate as every other aid-offer path
+    # (public detail + public_participation + accept_goods), unless the
+    # caller is part of the posko's own organisation.
+    from rescue_net.access_policy import rn_actor
+    from rescue_net.api_logistics import _user_aid_posko_allowed
+    if n.get("posko") and not _user_aid_posko_allowed(rn_actor(required=False), n.get("posko")):
+        frappe.throw("Posko ini tidak membuka penerimaan bantuan publik.", frappe.PermissionError)
+
     doc = frappe.new_doc("RN Aid Offer")
     doc.legacy_source = "public_fulfil"
     doc.title = f"Donasi {n.get('item_name')} - {donor_name}"
@@ -4502,6 +4511,9 @@ def posko_distribusi_board(posko=None, disaster_event=None):
     # shows: manage = daftarkan/perbarui armada, konfirmasi booking, tugaskan
     # relawan; coordinate = pesan slot pada armada posko lain yang terbuka.
     _di_flags = _posko_actor_flags(posko)
+    # Booker / donor contacts and the handover PIN are for the posko's own
+    # operators only — Guest and other posko see the booking without them.
+    _di_contacts = bool(_di_flags[1])
 
     # can a warga with no account book space here? (transport posko opened
     # public participation and its org privacy allows public detail)
@@ -4638,11 +4650,11 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "requested_window": b.get("requested_window") or "",
             "is_guest": (b.get("submitted_channel") == "guest"),
             "booker": b.booker_name or b.booked_by_type or "-",
-            "supplier_contact_person": b.contact_person or "",
-            "supplier_contact_phone": b.contact_phone or "",
+            "supplier_contact_person": (b.contact_person or "") if _di_contacts else "",
+            "supplier_contact_phone": (b.contact_phone or "") if _di_contacts else "",
             "pickup": b.pickup_location or "",
             "dropoff": b.dropoff_location or "",
-            "verification_pin": b.verification_pin or "",
+            "verification_pin": (b.verification_pin or "") if _di_contacts else "",
             "requested_at": _dt(b.requested_at),
         })
 
@@ -4726,7 +4738,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "quantity": o.quantity,
                 "unit": o.unit or "",
                 "donor": o.donor_name or "-",
-                "donor_contact": o.donor_contact or "",
+                "donor_contact": (o.donor_contact or "") if _di_contacts else "",
                 "pickup_location": o.pickup_location or "-",
                 "ready_at": o.ready_at or "-",
                 "suggested_destination": o.target_posko or "",
@@ -5140,6 +5152,15 @@ def posko_verification_checklist(posko):
         {"key": "trusted_verifier", "label": "Trusted Verifier",
          "value": doc.trusted_verifier_count, "done": bool((doc.trusted_verifier_count or 0) > 0)},
     ]
+
+    # The PIC's email / phone / name are shown only to viewers who may see
+    # the PIC (posko_detail's rule); everyone else gets the done-flags.
+    from rescue_net.access_policy import rn_actor
+    from rescue_net.visibility import posko_contacts_visible
+    if not posko_contacts_visible(doc.name, rn_actor(required=False)):
+        for item in items:
+            if item["key"] in ("email", "phone", "pic"):
+                item["value"] = None
 
     return {
         "posko": doc.name,

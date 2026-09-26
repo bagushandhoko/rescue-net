@@ -3,14 +3,13 @@ Replaces the print-only scripts scratchpad/test_coord_edit.py and
 scratchpad/test_ld2_reg.py (which ran against the production sim users)."""
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
 
 from rescue_net.access_policy import can_manage_organization, can_manage_posko, rn_actor
 from rescue_net.api_control_centre import posko_edit_scope
-from rescue_net.tests.factories import as_guest, as_user, make_actor, make_posko, make_user, make_world
+from rescue_net.tests.factories import RNTestCase, as_guest, as_user, make_actor, make_posko, make_user, make_world
 
 
-class TestRnActor(FrappeTestCase):
+class TestRnActor(RNTestCase):
     def test_guest(self):
         with as_guest():
             self.assertIsNone(rn_actor(required=False))
@@ -41,8 +40,9 @@ class TestRnActor(FrappeTestCase):
             self.assertEqual(rn_actor().role, "system_manager")
 
 
-class TestPoskoManagement(FrappeTestCase):
+class TestPoskoManagement(RNTestCase):
     def setUp(self):
+        super().setUp()
         self.w = make_world()
         self.sibling = make_posko(self.w.event, self.w.org_a, title="Posko A2")
         self.coordinator = make_actor(role="community_coordinator", org=self.w.org_a)

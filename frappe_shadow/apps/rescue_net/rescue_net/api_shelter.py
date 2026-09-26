@@ -327,6 +327,16 @@ def dashboard(posko=None):
         limit_page_length=2000,
     )
 
+    if not actor:
+        # Guest view: counts stay public, but a household's free-text notes
+        # and onward destination are personal data; the PIC phone follows
+        # the posko's share mode.
+        from rescue_net.visibility import redact_posko_contacts
+        redact_posko_contacts(poskos)
+        for h in households:
+            h["notes"] = None
+            h["destination"] = None
+
     return {
         "poskos": poskos,
         "occupancies": occupancies,

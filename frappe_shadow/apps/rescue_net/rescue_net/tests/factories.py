@@ -14,9 +14,26 @@ A typical world:
 """
 
 from contextlib import contextmanager
+from unittest import mock
 
 import frappe
+from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime
+
+
+class RNTestCase(FrappeTestCase):
+    """Base class for every rescue_net test. Several endpoints call
+    frappe.db.commit() themselves (fulfill_need, …); inside a test that
+    would persist the test's data past its rollback, so commit is a no-op
+    here and every test is rolled back on tearDown."""
+
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch.object(frappe.db, "commit", lambda *a, **kw: None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.addCleanup(frappe.db.rollback)
+        self.addCleanup(frappe.set_user, "Administrator")
 
 
 def uid(prefix="t"):

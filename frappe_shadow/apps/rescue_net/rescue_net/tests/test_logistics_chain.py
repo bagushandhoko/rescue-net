@@ -3,10 +3,11 @@ whitelisted API (the path the frontend uses), plus valid/invalid status
 transitions and who may drive them."""
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
 
 from rescue_net import api_logistics as api
 from rescue_net.tests.factories import (
+    RNTestCase,
+    api_call,
     as_guest,
     as_user,
     known_bug,
@@ -16,8 +17,9 @@ from rescue_net.tests.factories import (
 )
 
 
-class LogisticsTestCase(FrappeTestCase):
+class LogisticsTestCase(RNTestCase):
     def setUp(self):
+        super().setUp()
         self.w = make_world()
         self.op_a = make_actor(posko=self.w.posko_a)            # operator of posko A
         self.op_b = make_actor(posko=self.w.posko_b)            # operator of posko B (other org)
@@ -216,3 +218,46 @@ class TestChainPermissions(LogisticsTestCase):
                 api.add_evidence("RN Distribution Flow", flow, "/files/x.jpg")
         with as_user(self.op_a.user), self.assertRaises(frappe.ValidationError):
             api.add_evidence("RN Medical Case", flow, "/files/x.jpg")   # doctype not allowed
+
+
+class TestPublicDonation(LogisticsTestCase):
+    """Owner rule 2026-09-26: a posko not open to the public takes no
+    donations from outside (fulfill_need was the one path without the gate)."""
+
+    def fulfill(self, need):
+        with as_guest():
+            return api_call("rescue_net.api_control_centre.fulfill_need", need=need,
+                            donor_name="Warga Uji", quantity=2, contact="0812")
+
+    def test_closed_posko_refuses_outside_donation(self):
+        need = self.need_at_a()
+        with self.assertRaises(frappe.PermissionError):
+            self.fulfill(need)
+        self.assertFalse(frappe.db.exists("RN Aid Offer", {"donor_name": "Warga Uji",
+                                                           "target_posko": self.w.posko_a.name}))
+
+    def test_open_posko_accepts_outside_donation(self):
+        frappe.db.set_value("RN Organization", self.w.org_a.name,
+                            {"privacy_mode": "open", "allow_posko_public_choice": 1})
+        frappe.db.set_value("RN Posko", self.w.posko_a.name,
+                            {"public_detail": "public", "public_participation": 1, "accept_goods": 1})
+        need = self.need_at_a()
+        self.fulfill(need)
+        self.assertTrue(frappe.db.exists("RN Aid Offer", {"donor_name": "Warga Uji",
+                                                          "target_posko": self.w.posko_a.name}))
+
+    def test_open_posko_that_does_not_accept_goods_refuses(self):
+        frappe.db.set_value("RN Organization", self.w.org_a.name,
+                            {"privacy_mode": "open", "allow_posko_public_choice": 1})
+        frappe.db.set_value("RN Posko", self.w.posko_a.name,
+                            {"public_detail": "public", "public_participation": 1, "accept_goods": 0})
+        with self.assertRaises(frappe.PermissionError):
+            self.fulfill(self.need_at_a())
+
+    def test_own_org_member_may_still_fulfil_a_closed_posko(self):
+        need = self.need_at_a()
+        with as_user(self.member_a.user):
+            api_call("rescue_net.api_control_centre.fulfill_need", need=need,
+                     donor_name="Gudang Org A", quantity=2)
+        self.assertTrue(frappe.db.exists("RN Aid Offer", {"donor_name": "Gudang Org A",
+                                                          "target_posko": self.w.posko_a.name}))

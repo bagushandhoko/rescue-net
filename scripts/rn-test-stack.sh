@@ -79,6 +79,8 @@ sync_app() {
 
 # Test-site-only preparation (see rescue_net/tests/setup_test_site.py).
 prepare_site() {
+  # tests create many Users per minute; Frappe throttles at 60/hour by default
+  bexec bench --site $SITE set-config --parse throttle_user_limit 100000 >/dev/null
   bexec bench --site $SITE execute rescue_net.tests.setup_test_site.ensure_custom_fields
 }
 

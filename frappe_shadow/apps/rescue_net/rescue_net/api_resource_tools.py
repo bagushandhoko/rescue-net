@@ -1772,6 +1772,9 @@ def resource_profile_board(user_account=None):
     name_display = (vp.volunteer_name if vp else None) or ua.title or ua.username
 
     can_edit = bool(actor and _actor_name(actor) == target)
+    # Phone / email are shown only to the profile's owner (and System
+    # Manager); everyone else — Guest included — sees the verified chips only.
+    show_contacts = can_edit or is_system_manager()
 
     return {
         "target": target,
@@ -1783,8 +1786,8 @@ def resource_profile_board(user_account=None):
             "role": (vp.main_skill if vp else None) or ua.role,
             "organization": org_title,
             "location": (vp.current_location if vp else None) or "-",
-            "email": ua.email,
-            "phone": ua.phone or (vp.contact if vp else None),
+            "email": ua.email if show_contacts else None,
+            "phone": (ua.phone or (vp.contact if vp else None)) if show_contacts else None,
             "about": (vp.notes if vp else None) or "-",
             "joined_at": ua.creation,
             "aktif": (vp.availability_status != "unavailable") if vp else (ua.status == "active"),

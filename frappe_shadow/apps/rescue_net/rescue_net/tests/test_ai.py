@@ -2,17 +2,16 @@
 someone else's key, and the public AI context is scrubbed."""
 
 import frappe
-from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime
 
 from rescue_net import api_ai
 from rescue_net.tests.factories import (
+    RNTestCase,
     _insert,
     api_call,
     as_guest,
     as_user,
     contains_value,
-    known_bug,
     make_actor,
     make_medical_case,
     make_posko,
@@ -26,8 +25,9 @@ PHONE = "+62811-0000-5555"
 EMAIL = "pic.rahasia@test.rescue-net.local"
 
 
-class TestByokKey(FrappeTestCase):
+class TestByokKey(RNTestCase):
     def setUp(self):
+        super().setUp()
         self.w = make_world()
         self.me = make_actor()
         self.other = make_actor()
@@ -92,8 +92,9 @@ class TestByokKey(FrappeTestCase):
             api_ai.get_org_key_status(self.w.org_a.name)
 
 
-class TestPublicAiContext(FrappeTestCase):
+class TestPublicAiContext(RNTestCase):
     def setUp(self):
+        super().setUp()
         self.w = make_world()
         frappe.db.set_value("RN Posko", self.w.posko_a.name, {
             "officer_in_charge_phone": PHONE,
@@ -128,15 +129,9 @@ class TestPublicAiContext(FrappeTestCase):
         self.assertFalse(contains_value(data, "Nama AI Rahasia"))
         self.assertFalse(any(k in ("person_name", "treatment_notes") for _p, k, _v in walk(data)))
 
-    @known_bug("BUG-4")
     def test_unscrubbed_builder_is_not_http_callable(self):
-        """BUG-4 (hardening, low today): api_ai._build_context is
-        @frappe.whitelist(), so any logged-in user can call
-        /api/method/rescue_net.api_ai._build_context?public=1 and get the global
-        context WITHOUT _public_scrub. Checked 2026-09-26: its row selections
-        currently carry no field the scrub would remove, so nothing extra leaks
-        today — but any field added to _build_context later would bypass the
-        scrub on this path. It should be a private helper."""
+        """BUG-4 (fixed 2026-09-26): _build_context(public=True) returns data
+        before _public_scrub, so it must not be reachable over HTTP."""
         outsider = make_actor(role="viewer")
         with as_user(outsider.user), self.assertRaises(frappe.PermissionError):
             api_call("rescue_net.api_ai._build_context", disaster_event_id=self.w.event.name, public=1)

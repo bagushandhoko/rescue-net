@@ -17,11 +17,11 @@ import pkgutil
 
 import frappe
 import rescue_net
-from frappe.tests.utils import FrappeTestCase
 from frappe.utils import now_datetime
 
 from rescue_net import api_ai
 from rescue_net.tests.factories import (
+    RNTestCase,
     _insert,
     as_guest,
     as_user,
@@ -101,24 +101,14 @@ SECRETS = {
     "complaint": "KELUHAN-SENTINEL",
     "treatment": "TERAPI-SENTINEL",
     "person_name": "Nama Sentinel Hilang",
+    "reporter_contact": "+62811-1111-0006",
     "household_note": "CATATAN-KK-SENTINEL",
     "ai_key": "fake-byok-SENTINEL-0123456789abcdef",
 }
 
-# Confirmed leaks (2026-09-26), reported to the owner, not fixed yet:
-# (endpoint, secret) → bug id. Each is described in test_sensitive_data.
-KNOWN_LEAKS = {
-    ("api_control_centre.posko_distribusi_board", "booking_pin"): "BUG-1",
-    ("api_control_centre.posko_distribusi_board", "booking_phone"): "BUG-1",
-    ("api_control_centre.posko_distribusi_board", "donor_phone"): "BUG-1",
-    ("api_control_centre.posko_verification_checklist", "officer_phone"): "BUG-2",
-    ("api_control_centre.posko_verification_checklist", "officer_email"): "BUG-2",
-    ("api_shelter.dashboard", "household_note"): "BUG-3",
-    ("api_shelter.dashboard", "officer_phone"): "BUG-3",
-    ("api_resource_tools.resource_profile_board", "account_phone"): "BUG-5",
-    ("api_volunteer.dashboard", "volunteer_phone"): "BUG-6",
-    ("api_volunteer.dashboard", "officer_phone"): "BUG-6",
-}
+# Confirmed leaks reported to the owner but not fixed yet:
+# {(endpoint, secret key): "BUG-n"}. Empty since BUG-1..6 were fixed 2026-09-26.
+KNOWN_LEAKS = {}
 
 
 def guest_methods():
@@ -132,7 +122,7 @@ def guest_methods():
     }
 
 
-class TestGuestInventory(FrappeTestCase):
+class TestGuestInventory(RNTestCase):
     def test_guest_endpoint_list_is_reviewed(self):
         current = set(guest_methods())
         self.assertEqual(sorted(current - GUEST_ENDPOINTS), [],
@@ -141,8 +131,9 @@ class TestGuestInventory(FrappeTestCase):
                          "guest endpoint(s) removed: drop them from GUEST_ENDPOINTS")
 
 
-class TestGuestSweep(FrappeTestCase):
+class TestGuestSweep(RNTestCase):
     def setUp(self):
+        super().setUp()
         s = SECRETS
         self.w = w = make_world()
         officer = {"officer_in_charge_phone": s["officer_phone"], "officer_in_charge_email": s["officer_email"]}
@@ -166,6 +157,7 @@ class TestGuestSweep(FrappeTestCase):
                           treatment_notes=s["treatment"], disaster_event=w.event.name)
         _insert("RN Missing Person Report", disaster_event=w.event.name, posko=w.posko_a.name,
                 person_code="MP-SENTINEL", person_name=s["person_name"], report_status="missing",
+                reporter_name="Pelapor Sentinel", reporter_contact=s["reporter_contact"],
                 observed_at=now_datetime())
         _insert("RN Shelter Household", posko=self.shelter.name, household_code="KK-SENTINEL",
                 members_count=3, household_status="checked_in", notes=s["household_note"],

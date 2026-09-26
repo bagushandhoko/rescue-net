@@ -1027,6 +1027,14 @@ def dashboard(posko=None):
             limit_page_length=2000,
         )
 
+    if not actor:
+        # Guest view: volunteer contacts are for posko operators only, the
+        # PIC phone follows the posko's share mode.
+        from rescue_net.visibility import redact_posko_contacts
+        redact_posko_contacts(poskos)
+        for p in profiles:
+            p["contact"] = None
+
     return {
         "mode": "manager",
         "poskos": poskos,

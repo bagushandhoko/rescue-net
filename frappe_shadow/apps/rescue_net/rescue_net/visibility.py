@@ -120,3 +120,23 @@ def posko_share_map(posko_names, actor=None):
         out[name] = effective_posko_share(name, actor)["mode"]
 
     return out
+
+
+POSKO_CONTACT_FIELDS = ("officer_in_charge_phone", "officer_in_charge_email")
+
+
+def posko_contacts_visible(posko_name, actor=None):
+    """The PIC's phone / email follow the same rule as posko_detail's
+    `detail.officer`: only in "full" share mode for this viewer."""
+    return effective_posko_share(posko_name, actor).get("mode") == FULL
+
+
+def redact_posko_contacts(rows, actor=None, name_field="name"):
+    """Blank PIC phone/email on posko rows the viewer may only see in summary
+    mode. Keeps the keys (value None) so response shapes do not change."""
+    for row in rows or []:
+        if not posko_contacts_visible(row.get(name_field), actor):
+            for field in POSKO_CONTACT_FIELDS:
+                if field in row:
+                    row[field] = None
+    return rows

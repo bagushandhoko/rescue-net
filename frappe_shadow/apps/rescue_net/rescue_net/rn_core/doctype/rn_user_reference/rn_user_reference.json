@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "RN User Reference",
- "module": "Rescue Net",
+ "module": "RN Core",
  "autoname": "hash",
  "track_changes": 1,
  "field_order": [

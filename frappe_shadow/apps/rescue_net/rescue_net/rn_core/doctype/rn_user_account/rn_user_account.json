@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN User Account",
-  "module": "Rescue Net",
+  "module": "RN Core",
   "custom": 0,
   "is_submittable": 0,
   "naming_rule": "By fieldname",

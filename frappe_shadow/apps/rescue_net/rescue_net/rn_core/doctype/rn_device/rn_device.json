@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Device",
-  "module": "Rescue Net",
+  "module": "RN Core",
   "custom": 0,
   "is_submittable": 0,
   "autoname": "field:legacy_id",

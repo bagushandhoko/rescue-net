@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Notification Log",
-  "module": "Rescue Net",
+  "module": "RN Core",
   "autoname": "hash",
   "track_changes": 0,
   "field_order": [

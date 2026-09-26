@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
-  "name": "RN Organization Membership",
-  "module": "Rescue Net",
+  "name": "RN Posko Assignment",
+  "module": "RN Core",
   "custom": 0,
   "is_submittable": 0,
   "fields": [
@@ -28,15 +28,15 @@
       "reqd": 1
     },
     {
-      "fieldname": "organization",
-      "label": "Organization",
+      "fieldname": "posko",
+      "label": "Posko",
       "fieldtype": "Link",
-      "options": "RN Organization",
+      "options": "RN Posko",
       "reqd": 1
     },
     {
-      "fieldname": "membership_role",
-      "label": "Membership Role",
+      "fieldname": "assignment_role",
+      "label": "Role",
       "fieldtype": "Data",
       "reqd": 1
     },
@@ -47,35 +47,10 @@
       "reqd": 1
     },
     {
-      "fieldname": "requested_at",
-      "label": "Requested At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "approved_at",
-      "label": "Approved At",
-      "fieldtype": "Datetime"
-    },
-    {
       "fieldname": "approved_by",
       "label": "Approved By",
       "fieldtype": "Link",
       "options": "RN User Account"
-    },
-    {
-      "fieldname": "member_verified",
-      "label": "Member Identity Verified by HQ",
-      "fieldtype": "Check"
-    },
-    {
-      "fieldname": "verified_at",
-      "label": "Verified At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "decision_note",
-      "label": "Decision Note",
-      "fieldtype": "Small Text"
     },
     {
       "fieldname": "legacy_payload",

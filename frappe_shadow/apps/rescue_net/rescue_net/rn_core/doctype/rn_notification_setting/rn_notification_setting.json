@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Notification Setting",
-  "module": "Rescue Net",
+  "module": "RN Core",
   "custom": 0,
   "autoname": "hash",
   "track_changes": 1,

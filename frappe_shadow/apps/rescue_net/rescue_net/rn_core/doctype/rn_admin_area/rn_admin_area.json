@@ -1,7 +1,7 @@
 {
   "doctype": "DocType",
   "name": "RN Admin Area",
-  "module": "Rescue Net",
+  "module": "RN Core",
   "custom": 0,
   "is_submittable": 0,
   "autoname": "field:code",

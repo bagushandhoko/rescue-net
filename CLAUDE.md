@@ -1,7 +1,47 @@
 # CLAUDE.md — working rules for Rescue-Net
 
-Read `HANDOVER.md` first (current status, open items, gotchas). This file holds the rules
-that do not change from session to session.
+Single source of rules for every agent working in this repo (`AGENTS.md` points here).
+
+## Aturan keselamatan (selalu berlaku)
+
+- **Jangan** menjalankan test, seed, cleanup, atau migrate eksperimen di site produksi (`osiun.localhost`,
+  container `osiun-frappe-backend`). Semua itu di test stack terisolasi (lihat "Tests").
+- **Jangan** memulai fase berikutnya tanpa perintah eksplisit owner. Berhenti di akhir tiap fase/sub-fase dan tunggu
+  review. Rencana yang owner minta "disimpan" bukan perintah untuk dikerjakan.
+- **Semua perubahan data oleh AI lewat AI Suggestion** (disetujui manusia) — ADR-0002. AI tidak pernah lebih
+  berkuasa dari penggunanya.
+- Jangan menaruh secret di repo (repo publik di GitHub); jalankan `sh scripts/rn-secret-scan.sh` sebelum commit.
+- Operasi hapus data: tampilkan baris yang akan dihapus dulu; jangan pernah membuat filter dari daftar yang bisa
+  kosong (`["in", ids or [""]]` pernah menghapus 5 posko nyata).
+
+## Wajib dibaca
+
+@docs/adr/0001-arsitektur-inti.md
+@docs/adr/0002-kebijakan-ai.md
+@docs/adr/0003-distribusi-server-klien.md
+
+Sebelum memulai tugas atau fase baru, baca `docs/NEXT_STEPS.md` dan cek fase mana yang sedang aktif.
+Detail status, item terbuka, dan gotcha ada di `HANDOVER.md`.
+
+## Status saat ini
+
+Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-09-27.)
+
+- **Sedang berjalan:** tidak ada. Architecture review Fase 1–6 selesai dari sisi agent; Fase 6 menunggu review
+  owner (`docs/PHASE6_REPO_HYGIENE.md`).
+- **Fase berikutnya:** menunggu perintah owner. Kandidat prioritas: Fase 0 (pisahkan lingkungan agent dari
+  produksi). Isi Fase 7–8 belum diberikan owner (Fase 7 wajib mengikuti ADR-0002 bagian 11).
+- **Produksi:** ter-deploy sampai Fase 3 (`rn-deploy-app.sh`, 2026-09-26). Fase 4 (12 modul RN) di-commit tetapi
+  belum di-deploy; frontend Fase 5 sudah live (disajikan dari disk).
+- **Menunggu keputusan/aksi owner:**
+  1. `sudo sh scripts/rn-install-nginx-deny.sh` — saat ini seluruh repo termasuk `.git` masih bisa diunduh publik.
+  2. Blok hapus di `docs/PHASE6_REPO_HYGIENE.md` (backup/, scratchpad/, dll. — ditolak izin agent).
+  3. Ganti password root MariaDB produksi; repo GitHub jadi private atau tetap publik.
+  4. `scripts/komando-tests/` berjalan terhadap produksi — porting ke test stack (usul: Fase 0).
+  5. Deploy Fase 4 (`sh scripts/rn-deploy-app.sh`); rebuild APK/desktop dari `apps/rescue-net-shell/`, lalu hapus
+     `apps/rescue-net-app/`.
+  6. 9g menyebut "lanjutkan dari `apps/rescue-net-app`", bertentangan dengan keputusan Fase 5 (`rescue-net-shell`).
+  7. Kemungkinan bug: pemakaian key platform tidak tercatat di RN AI Usage Log (ADR-0002, catatan kesesuaian no. 9).
 
 ## Layout
 
@@ -29,23 +69,18 @@ that do not change from session to session.
 - Frontend: `index.html`, `pages/*.html`, `assets/js/*.js`, `assets/css/*.css` (vanilla JS, served from disk).
   The web root is the git checkout: only `index.html`, `manifest.webmanifest`, `sw.js`, `pages/`, `assets/` are
   public; `ops/nginx/www.rescue-net-static-deny.conf` 404s the rest. A new top-level folder or root file that
-  must stay private needs a line there. Never put secrets in the repo (it is public on GitHub) — run
-  `sh scripts/rn-secret-scan.sh` before committing.
-- Offline app source: `apps/rescue-net-app/` — a router in `src/app.js` maps its REST-style calls onto
-  Frappe methods; deployed as static files in `/volume1/web/rescue-net-app/`. There is no FastAPI any more
-  (removed in phase 3, history in the git tag `fastapi-final`) — never add a second backend.
+  must stay private needs a line there.
+- Old offline app `apps/rescue-net-app/` (router onto Frappe, served from `/volume1/web/rescue-net-app/`) is being
+  retired: the website is the installable app, native builds wrap it (`apps/rescue-net-shell/`). There is no
+  FastAPI any more (git tag `fastapi-final`) — never add a second backend.
 
 ## Production — hands off
 
 - Production site: `osiun.localhost` in container `osiun-frappe-backend`.
-- **Never** run tests, seed scripts, experimental migrates or data cleanup against production.
-  All of that happens on the isolated test stack below.
 - A commit is not a deploy. Deploy = `sh scripts/rn-deploy-app.sh` (backup code + DB, copy the git-tracked
   app files, `bench migrate`, restart, probe). Copying files without the migrate is not a partial deploy,
   it is a broken production: the running backend picks up new code at once and fails on missing columns.
   Say explicitly in HANDOVER.md when a change is committed but not deployed.
-- Destructive data operations: preview the exact rows first; never build a filter from a list that can be
-  empty (`["in", ids or [""]]` once deleted 5 real poskos).
 
 ## Tests (mandatory for every change)
 
@@ -104,24 +139,21 @@ under load), including `test_sim_kekeringan` (a full drought scenario).
 
 ## Keputusan Arsitektur
 
-Keputusan arsitektur yang berlaku ada di `docs/adr/` (mulai `0001-arsitektur-inti.md`: Frappe satu-satunya
-backend, modular monolith, MariaDB, frontend statis headless, AI BYOK suggest/accept).
-Jangan mengusulkan perubahan yang bertentangan dengan ADR tanpa alasan kuat. Jika perlu, tulis ADR baru
-berstatus Proposed dan minta persetujuan owner.
+ADR yang berlaku ada di `docs/adr/` dan diimpor di "Wajib dibaca". Jangan mengusulkan perubahan yang bertentangan
+dengan ADR tanpa alasan kuat; jika perlu, tulis ADR baru berstatus Proposed dan minta persetujuan owner.
 
-ADR-0002 (`docs/adr/0002-kebijakan-ai.md`) mengatur semua fitur AI: AI tidak lebih berkuasa dari user; perubahan
-data lewat AI Suggestion (disetujui manusia); tanpa subsidi (BYOK organisasi/user, key platform hanya untuk fungsi
-dasar tingkat platform dan fungsi makro); fungsi dasar selalu aktif, fungsi lanjutan hanya di disaster event yang
-diaktifkan super admin; data sensitif butuh izin admin organisasi; ada fallback berbasis aturan saat AI tidak
-tersedia.
-
-ADR-0003 (`docs/adr/0003-distribusi-server-klien.md`): server Rescue-Net didistribusikan sebagai image Docker
-berversi (plus installer dan Rescue-Net Box), BUKAN .exe berisi Frappe. Target EXE/APK adalah aplikasi klien.
+- ADR-0001: Frappe satu-satunya backend, modular monolith, MariaDB, frontend statis headless, AI BYOK suggest/accept.
+- ADR-0002: AI tidak lebih berkuasa dari user; perubahan data lewat AI Suggestion; tanpa subsidi (BYOK); fungsi
+  dasar selalu aktif, fungsi lanjutan hanya di bencana yang diaktifkan super admin; data sensitif butuh izin admin
+  organisasi; ada fallback berbasis aturan saat AI tidak tersedia.
+- ADR-0003: server Rescue-Net didistribusikan sebagai image Docker berversi (plus installer dan Rescue-Net Box),
+  BUKAN .exe berisi Frappe. Target EXE/APK adalah aplikasi klien.
 
 ## Next Steps
 
 Roadmap: `docs/NEXT_STEPS.md`. Fase 9 (federasi, sinkronisasi offline, standar data kemanusiaan P-code/HXL/CAP)
-dimulai dengan desain berupa ADR Proposed setelah Fase 8 selesai — jangan dikerjakan sebelum owner memerintahkan.
+dimulai dengan desain berupa ADR Proposed setelah Fase 8 selesai — jangan dikerjakan sebelum owner memerintahkan;
+9f–9g: distribusi server (image Docker, installer, perawatan) dan Rescue-Net Box + aplikasi klien (ADR-0003).
 Fase 0 (prioritas, sebelum Fase 1 setelah owner perintahkan): lingkungan kerja agent dipisah dari produksi dan
 deploy hanya lewat alur Git yang disetujui owner. Fase 10: backlog fitur baru (peringatan dini BMKG, QR bantuan &
 kartu pengungsi, SMS, gudang, status akses, papan kebutuhan publik, mode latihan, check-in relawan) — tiap fitur

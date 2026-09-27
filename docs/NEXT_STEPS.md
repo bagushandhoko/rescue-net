@@ -3,6 +3,35 @@
 Satu fase dikerjakan pada satu waktu; berhenti di akhir tiap fase dan tunggu review owner.
 Status per fase yang sedang berjalan ada di `HANDOVER.md`.
 
+## FASE 0 — Pisahkan lingkungan kerja agent dari produksi
+PRIORITAS: dikerjakan sebelum Fase 1 setelah owner perintahkan.
+Latar: agent saat ini bekerja di server yang juga menjalankan
+produksi. Insiden 2026-09-20 (5 posko live terhapus) adalah
+akibatnya.
+
+Langkah:
+1. Usulkan ke owner lingkungan kerja terpisah (container atau server
+   lain) dengan site Frappe dan database sendiri, berisi salinan
+   data yang sudah dianonimkan. Produksi tidak bisa dijangkau dari
+   lingkungan ini.
+2. Produksi hanya diperbarui lewat Git: commit → test otomatis →
+   review owner → merge ke main → deploy dengan script tetap
+   (git pull, bench migrate, restart). Agent tidak menjalankan
+   perintah langsung di produksi.
+3. Agent tidak memegang password database produksi, API key
+   produksi, atau akses SSH produksi.
+4. Buat .claude/settings.json yang melarang perintah berbahaya:
+   bench ke site produksi, drop database, rm -rf di folder penting,
+   dan perintah deploy manual.
+5. Siapkan GitHub Actions yang menjalankan test di setiap pull
+   request. Minta owner mengaktifkan branch protection pada main
+   (hanya owner yang bisa melakukannya di Settings GitHub).
+6. Untuk perubahan berisiko (migrate, hapus data, perubahan
+   permission), agent menulis rencana dan menunggu persetujuan owner.
+Selesai jika: agent bekerja sepenuhnya di luar produksi dan deploy
+hanya lewat alur Git yang disetujui owner.
+>>> BERHENTI, tunggu review owner.
+
 ## FASE 1–6 — Architecture review (2026-09-26)
 1. Fondasi test otomatis (selesai).
 2. Invariant bisnis ke controller DocType / `rescue_net/services/`; pecah `api_*.py` > 1.500 baris (berjalan).
@@ -14,6 +43,9 @@ Status per fase yang sedang berjalan ada di `HANDOVER.md`.
 Detail dan progres: `HANDOVER.md` → "Architecture review".
 
 ## FASE 7–8
+Semua fitur AI wajib mengikuti docs/adr/0002-kebijakan-ai.md. Urutan pengerjaan
+Fase 7 mengikuti bagian 11 ADR-0002 (Urutan implementasi).
+
 Belum tercatat di repo — isi saat owner menyampaikan rinciannya.
 
 ## FASE 9 — Federasi, sinkronisasi & interoperabilitas
@@ -57,3 +89,63 @@ dan harus disetujui owner sebelum implementasi.
   antar server, dan pemulihan setelah koneksi putus.
 
 >>> BERHENTI di akhir tiap sub-fase, tunggu review owner.
+
+
+## FASE 10 — Backlog fitur baru
+Prasyarat: fondasi dan fitur AI inti stabil. Untuk setiap fitur,
+cek dulu apa yang sudah ada di kode, tulis desain singkat, dan minta
+persetujuan owner sebelum membangun. Prioritas owner-review: 10b,
+10f, 10a.
+
+10a. Integrasi peringatan dini dan data resmi
+- Integrasi data terbuka BMKG (gempa, cuaca) dan sumber resmi lain
+  (mis. inaRISK BNPB).
+- Gempa/kejadian di atas ambang tertentu → DRAFT Disaster Event,
+  tandai posko/organisasi di sekitar, kirim notifikasi. Aktivasi
+  tetap oleh manusia.
+- Pertimbangkan standar CAP (lihat Fase 9c).
+
+10b. QR code paket bantuan dan kartu pengungsi
+- QR per paket/batch bantuan, di-scan saat dikirim, transit, dan
+  diterima → rantai bukti (chain of custody) otomatis, terhubung ke
+  Distribution Flow dan evidence.
+- Kartu QR per kepala keluarga pengungsi untuk mencegah penerimaan
+  ganda. QR tidak boleh memuat data sensitif secara langsung, hanya
+  ID yang diverifikasi di server.
+- Harus bisa di-scan offline dan disinkronkan belakangan.
+
+10c. SMS sebagai jalur cadangan
+- Laporan kebutuhan/status via SMS dengan format sederhana, dan
+  notifikasi keluar via SMS.
+- Melengkapi intake WhatsApp (Fase 7c); output tetap lewat AI
+  Suggestion / review manual.
+
+10d. Manajemen gudang dan inventaris
+- Stok per gudang/posko, tanggal kedaluwarsa untuk makanan dan obat,
+  prinsip kedaluwarsa duluan keluar duluan, peringatan mendekati
+  kedaluwarsa.
+- Bangun di atas RN Stock Observation yang sudah ada.
+
+10e. Status akses dan infrastruktur
+- Layer peta status jalan/jembatan (terbuka, rusak, putus), listrik,
+  dan sinyal, dengan sumber dan waktu pembaruan.
+- Dipakai transport booking untuk memilih rute realistis.
+- Lihat batasan GIS di Fase 8d.
+
+10f. Papan kebutuhan publik untuk donatur
+- Halaman publik kebutuhan aktual per wilayah/posko, termasuk barang
+  yang TIDAK dibutuhkan, untuk mencegah donasi salah sasaran.
+- Audit dulu apakah halaman kebutuhan publik yang ada sudah
+  memenuhi fungsi ini. Tanpa data sensitif.
+
+10g. Mode latihan
+- Perkuat mode simulasi (sudah ada jejak event-sim-001): data
+  latihan ditandai jelas, terpisah dari data nyata, mudah dibersihkan
+  tanpa risiko menyentuh data nyata.
+- Dipakai untuk uji lapangan Fase 8g.
+
+10h. Check-in/check-out relawan di zona bahaya
+- Koordinator selalu tahu siapa yang sedang di lapangan, dengan
+  peringatan jika relawan melewati batas waktu tanpa check-out.
+- Audit dulu fitur check-in dan safety briefing yang sudah ada.
+>>> BERHENTI di akhir tiap fitur, tunggu review owner.

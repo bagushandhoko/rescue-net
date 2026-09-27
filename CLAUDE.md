@@ -105,7 +105,17 @@ backend, modular monolith, MariaDB, frontend statis headless, AI BYOK suggest/ac
 Jangan mengusulkan perubahan yang bertentangan dengan ADR tanpa alasan kuat. Jika perlu, tulis ADR baru
 berstatus Proposed dan minta persetujuan owner.
 
+ADR-0002 (`docs/adr/0002-kebijakan-ai.md`) mengatur semua fitur AI: AI tidak lebih berkuasa dari user; perubahan
+data lewat AI Suggestion (disetujui manusia); tanpa subsidi (BYOK organisasi/user, key platform hanya untuk fungsi
+dasar tingkat platform dan fungsi makro); fungsi dasar selalu aktif, fungsi lanjutan hanya di disaster event yang
+diaktifkan super admin; data sensitif butuh izin admin organisasi; ada fallback berbasis aturan saat AI tidak
+tersedia.
+
 ## Next Steps
 
 Roadmap: `docs/NEXT_STEPS.md`. Fase 9 (federasi, sinkronisasi offline, standar data kemanusiaan P-code/HXL/CAP)
 dimulai dengan desain berupa ADR Proposed setelah Fase 8 selesai — jangan dikerjakan sebelum owner memerintahkan.
+Fase 0 (prioritas, sebelum Fase 1 setelah owner perintahkan): lingkungan kerja agent dipisah dari produksi dan
+deploy hanya lewat alur Git yang disetujui owner. Fase 10: backlog fitur baru (peringatan dini BMKG, QR bantuan &
+kartu pengungsi, SMS, gudang, status akses, papan kebutuhan publik, mode latihan, check-in relawan) — tiap fitur
+mulai dari audit kode + desain singkat yang disetujui owner.

@@ -88,6 +88,58 @@ dan harus disetujui owner sebelum implementasi.
 - Test wajib: sinkronisasi, konflik, data sensitif tidak bocor
   antar server, dan pemulihan setelah koneksi putus.
 
+9f. Distribusi server federasi
+Prasyarat: desain federasi (9a–9b) disetujui, Fase 0 dan Fase 1
+selesai (test berjalan otomatis di CI).
+1. Image Docker resmi Rescue-Net
+   - Bangun di atas frappe_docker, berisi app rescue_net.
+   - Rilis berversi (semantic versioning) lewat GitHub Actions,
+     otomatis setelah test lulus.
+   - Tidak ada secret, key, atau data di dalam image. Konfigurasi
+     lewat environment/file terpisah saat instalasi.
+2. Installer sekali klik
+   - Linux/VPS: satu script yang memasang Docker (jika belum ada),
+     menarik image, membuat site, dan menampilkan langkah awal.
+   - Windows: installer yang memeriksa/menyiapkan Docker Desktop dan
+     WSL, lalu menjalankan Rescue-Net.
+   - Wizard pendaftaran awal: nama organisasi, admin pertama, dan
+     identitas server untuk federasi (ID global server, sesuai 9b).
+3. Perawatan bawaan
+   - Update: pengecekan versi baru dan update dengan satu perintah,
+     dengan backup otomatis sebelum update dan rollback jika gagal.
+   - Backup: jadwal otomatis ke lokasi terpisah (drive eksternal atau
+     penyimpanan lain), plus perintah restore yang sudah diuji.
+   - Health check: status layanan, sisa disk, status backup terakhir,
+     status sinkronisasi federasi; tampil di halaman admin.
+4. Dokumentasi instalasi untuk organisasi non-teknis (bahasa
+   Indonesia, langkah demi langkah).
+5. Test: instalasi bersih, update antar versi, restore dari backup,
+   dan dua server test yang saling sinkron.
+>>> BERHENTI, tunggu review owner.
+
+9g. Rescue-Net Box dan aplikasi klien
+Prasyarat: 9f selesai.
+1. Rescue-Net Box
+   - Usulkan ke owner spesifikasi perangkat (mini PC, penyimpanan,
+     daya/baterai, WiFi lokal) dan OS dasar.
+   - Image siap tulis ke perangkat: Linux + Docker + Rescue-Net,
+     menyala otomatis saat perangkat dihidupkan.
+   - Berjalan di jaringan lokal (WiFi posko) tanpa internet; sinkron
+     ke server federasi saat koneksi tersedia (mis. Starlink).
+   - Enkripsi disk dan kata sandi admin wajib diganti saat pertama
+     dipakai (perangkat bisa hilang/dicuri di lapangan).
+   - Panduan singkat: menyalakan, menghubungkan, mematikan dengan aman.
+2. Aplikasi klien EXE/APK
+   - Klien terhubung ke server organisasi atau Rescue-Net Box, dengan
+     pilihan server saat login.
+   - Lanjutkan dari apps/rescue-net-app (Capacitor/PWA). Untuk Windows,
+     usulkan ke owner pembungkus desktop (mis. Tauri atau Electron)
+     atau cukup PWA terinstal.
+   - Satu basis kode untuk web, Android, dan desktop sejauh mungkin
+     (sejalan dengan Fase 5).
+   - Mode offline mengikuti hasil uji Fase 8e.
+>>> BERHENTI, tunggu review owner.
+
 >>> BERHENTI di akhir tiap sub-fase, tunggu review owner.
 
 

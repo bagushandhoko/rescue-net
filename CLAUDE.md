@@ -115,6 +115,9 @@ dasar tingkat platform dan fungsi makro); fungsi dasar selalu aktif, fungsi lanj
 diaktifkan super admin; data sensitif butuh izin admin organisasi; ada fallback berbasis aturan saat AI tidak
 tersedia.
 
+ADR-0003 (`docs/adr/0003-distribusi-server-klien.md`): server Rescue-Net didistribusikan sebagai image Docker
+berversi (plus installer dan Rescue-Net Box), BUKAN .exe berisi Frappe. Target EXE/APK adalah aplikasi klien.
+
 ## Next Steps
 
 Roadmap: `docs/NEXT_STEPS.md`. Fase 9 (federasi, sinkronisasi offline, standar data kemanusiaan P-code/HXL/CAP)

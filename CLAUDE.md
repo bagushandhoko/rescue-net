@@ -32,7 +32,7 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-09-27.)
 - **Fase berikutnya:** menunggu perintah owner. Kandidat prioritas: Fase 0 (pisahkan lingkungan agent dari
   produksi). Isi Fase 7–8 belum diberikan owner (Fase 7 wajib mengikuti ADR-0002 bagian 11).
 - **Produksi:** ter-deploy sampai Fase 4 (12 modul RN; `rn-deploy-app.sh` 2026-09-27 09:51, patch
-  drop_dead_doctypes + drop_old_module_def tercatat di Patch Log, 4 DocType mati hilang, ping 200); frontend Fase 5 sudah live (disajikan dari disk). Aturan nginx deny terpasang 2026-09-27
+  drop_dead_doctypes + drop_old_module_def tercatat di Patch Log, 4 DocType mati hilang, ping 200); fix log key platform (df98b61) ter-deploy 2026-09-27 (`rn-deploy-app.sh`, semua probe 200); frontend Fase 5 sudah live (disajikan dari disk). Aturan nginx deny terpasang 2026-09-27
   (`.git`, docs, `frappe_shadow/`, `scripts/`, `.env`, `*.md` → 404; semua `pages/*.html` + `assets/` → 200).
 - **Menunggu keputusan/aksi owner:**
   1. Blok hapus di `docs/PHASE6_REPO_HYGIENE.md` (backup/, scratchpad/, dll. — ditolak izin agent).
@@ -42,10 +42,7 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-09-27.)
   4. Rebuild APK/desktop dari `apps/rescue-net-shell/`, lalu hapus
      `apps/rescue-net-app/`.
   5. 9g menyebut "lanjutkan dari `apps/rescue-net-app`", bertentangan dengan keputusan Fase 5 (`rescue-net-shell`).
-  6. Bug log key platform (ADR-0002 catatan no. 9) diperbaiki di df98b61 (201 test lulus 2026-09-27); belum
-     di-deploy (ada migrate: opsi Select baru di RN AI Usage Log). Jalankan satu baris ini:
-     `cd /volume1/web/rescue-net && sh scripts/rn-deploy-app.sh`
-  7. Build APK: wrapper `rescue-net-shell` sudah terpasang di `/volume1/web/rescue-net-build/app` (isi lama di
+  6. Build APK: wrapper `rescue-net-shell` sudah terpasang di `/volume1/web/rescue-net-build/app` (isi lama di
      `artifacts/app-before-shell-20260927-094134.tgz`). Jalankan satu baris ini:
      `cd /volume1/web/rescue-net-build && sudo sh scripts/rn-build-android-sudo.sh`
      Hapus `apps/rescue-net-app/` setelah langkah 2b `rn-deploy-app.sh` dibereskan.

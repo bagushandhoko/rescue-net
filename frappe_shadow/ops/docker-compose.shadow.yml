@@ -9,7 +9,7 @@ services:
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
     environment:
-      MYSQL_ROOT_PASSWORD: osiun_root_123
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:?set it in .env next to docker-compose.yml, never in git}"
     volumes:
       - ./mariadb:/var/lib/mysql
     restart: unless-stopped

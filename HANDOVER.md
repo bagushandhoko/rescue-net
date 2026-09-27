@@ -40,7 +40,12 @@ _Last updated: 2026-09-26_
 3. Finish the FastAPI retirement (audit table → owner picks the cutover date → archive tag `fastapi-final`).
 4. Split the single "Rescue Net" module per domain.
 5. Frontend cleanup (dead/duplicate JS, shared components, web vs `apps/rescue-net-app` decision).
-6. Repo hygiene (backup/, _archive/, scratchpad/, _sandbox_desain/, root .txt/.md, one push script).
+6. Repo hygiene — **2026-09-27 done as far as Claude can: `docs/PHASE6_REPO_HYGIENE.md`.** Found: the whole repo incl.
+   `.git` and the MariaDB root password was downloadable at `/rescue-net/<path>`, and the GitHub repo is public.
+   Fixed in repo: nginx deny rule `ops/nginx/` (tested in a throwaway nginx), compose password → `${MYSQL_ROOT_PASSWORD}`,
+   secret scan extended, old docs → `docs/history/`, one push script `scripts/rn-push-main.sh`. **Owner:**
+   `sudo sh scripts/rn-install-nginx-deny.sh`; run the delete block in the phase-6 doc (deletes were blocked for
+   Claude); rotate the MariaDB root password; decide GitHub private/public; komando-tests hit production.
 
 ## Known bugs found by the tests (2026-09-26)
 

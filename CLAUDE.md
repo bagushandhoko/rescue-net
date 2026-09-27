@@ -27,6 +27,10 @@ that do not change from session to session.
   - `setup/` — idempotent default installers run by `after_install` / `after_migrate`
   - `tests/` — automated tests (see below)
 - Frontend: `index.html`, `pages/*.html`, `assets/js/*.js`, `assets/css/*.css` (vanilla JS, served from disk).
+  The web root is the git checkout: only `index.html`, `manifest.webmanifest`, `sw.js`, `pages/`, `assets/` are
+  public; `ops/nginx/www.rescue-net-static-deny.conf` 404s the rest. A new top-level folder or root file that
+  must stay private needs a line there. Never put secrets in the repo (it is public on GitHub) — run
+  `sh scripts/rn-secret-scan.sh` before committing.
 - Offline app source: `apps/rescue-net-app/` — a router in `src/app.js` maps its REST-style calls onto
   Frappe methods; deployed as static files in `/volume1/web/rescue-net-app/`. There is no FastAPI any more
   (removed in phase 3, history in the git tag `fastapi-final`) — never add a second backend.

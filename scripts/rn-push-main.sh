@@ -32,18 +32,7 @@ fi
 git config user.name "bagushandhoko"
 git config user.email "bagushandhoko@users.noreply.github.com"
 
-if grep -RInE "sk-[A-Za-z0-9_-]{20,}|rescuenet_dev_password|POSTGRES_PASSWORD=[^[:space:]]+|postgresql://[^:]+:[^@]+@" . \
-  --exclude-dir="@eaDir" \
-  --exclude-dir=".git" \
-  --exclude="*.bak*" \
-  --exclude="*.zip" \
-  --exclude=".env" \
-  --exclude="*.png" \
-  --exclude="*.jpg" \
-  --exclude="*.jpeg" \
-  --exclude="*.webp" \
-  --exclude="rn-push*.sh" \
-  | head -5 | grep .; then
+if sh scripts/rn-secret-scan.sh | head -5 | grep .; then
   echo "ERROR: possible secret found. Push cancelled."
   exit 1
 fi

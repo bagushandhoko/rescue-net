@@ -31,6 +31,8 @@ Rescue-Net connects active disaster events, verified organizations, posko/field 
   `/volume1/web/rescue-net-app/` as `/rescue-net-app/`)
 - Status + open items: `HANDOVER.md`; working rules and how to run tests: `CLAUDE.md`;
   full history: `docs/history/`
+- Ops: `ops/nginx/` (nginx rule that keeps non-website repo files off the public URL), `scripts/`
+  (`rn-deploy-app.sh`, `rn-test-stack.sh`, `rn-push-main.sh`, `rn-secret-scan.sh`, `rn-install-nginx-deny.sh`)
 
 A commit is not a deploy: the production container reads its own copy of the app. See `CLAUDE.md`.
 
@@ -154,6 +156,6 @@ After a successful push, `git log --oneline origin/main..HEAD` should be empty.
 - Do not reintroduce `rnLayoutDebugBadge`.
 - Do not add 10-second polling sync; keep sync event-driven.
 - Keep layout/color changes small until core functions are stable.
-- Current status: `HANDOVER.md` (older `docs/HANDOFF*`/`docs/CURRENT_STATUS.md` are historical)
+- Current status: `HANDOVER.md` (older handoffs, roadmaps and audits are in `docs/history/`)
 - Full blueprint: `docs/BLUEPRINT.md`
 - Do not modify unrelated systems on the same server while working on Rescue-Net unless explicitly requested.

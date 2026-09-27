@@ -6,7 +6,10 @@ openai_key='sk-[A-Za-z0-9_-]{20,}'
 db_password='rescuenet_dev_''password'
 postgres_env='POSTGRES_''PASSWORD=[^[:space:]]+'
 dsn='postgresql''://[^:]+:[^@]+@'
-pattern="$openai_key|$db_password|$postgres_env|$dsn"
+# a literal value after MYSQL_ROOT_PASSWORD / MARIADB_ROOT_PASSWORD (a ${VAR} reference is fine)
+mysql_env='(MYSQL|MARIADB)_ROOT_''PASSWORD(:[[:space:]]+|=)["'"'"']?[^$"'"'"'[:space:]]'
+gemini_key='AIza''[0-9A-Za-z_-]{35}'
+pattern="$openai_key|$db_password|$postgres_env|$dsn|$mysql_env|$gemini_key"
 
 grep -RInE "$pattern" . \
   --exclude-dir="@eaDir" \

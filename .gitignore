@@ -23,17 +23,10 @@ dist/
 build/
 
 # Runtime safety backups are kept on Synology, not in GitHub.
-backups/codex-*/
-backups/trusted-verifier-*/
-backups/github-sync-*/
 
-backups/rn-access-fix-*/
 backups/
 *.bak-before-*
 
-# Pre-Frappe local database backups (do not publish)
-_archive/pre-frappe-db-*/
-_archive/frappe-p0-precutover/
 *.dump
 
 # Stray runtime pre-change backups, keep local only

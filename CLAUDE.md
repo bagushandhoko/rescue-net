@@ -42,9 +42,8 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-09-27.)
   4. Rebuild APK/desktop dari `apps/rescue-net-shell/`, lalu hapus
      `apps/rescue-net-app/`.
   5. 9g menyebut "lanjutkan dari `apps/rescue-net-app`", bertentangan dengan keputusan Fase 5 (`rescue-net-shell`).
-  6. Bug log key platform (ADR-0002 catatan no. 9) sudah diperbaiki di working tree, BELUM di-commit: jalankan
-     `sh scripts/rn-test-stack.sh migrate` lalu `sh scripts/rn-test-stack.sh test` (butuh sudo), commit kalau lulus,
-     lalu ikut deploy.
+  6. Bug log key platform (ADR-0002 catatan no. 9) diperbaiki di df98b61 (201 test lulus 2026-09-27); belum
+     di-deploy. Perlu `sh scripts/rn-deploy-app.sh` (ada migrate: opsi Select baru di RN AI Usage Log).
   7. Build APK: wrapper `rescue-net-shell` sudah terpasang di `/volume1/web/rescue-net-build/app` (isi lama di
      `artifacts/app-before-shell-20260927-094134.tgz`); tinggal `cd /volume1/web/rescue-net-build && sudo sh
      scripts/rn-build-android-sudo.sh`. Hapus `apps/rescue-net-app/` setelah langkah 2b

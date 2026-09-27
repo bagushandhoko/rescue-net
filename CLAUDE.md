@@ -32,16 +32,17 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-09-27.)
 - **Fase berikutnya:** menunggu perintah owner. Kandidat prioritas: Fase 0 (pisahkan lingkungan agent dari
   produksi). Isi Fase 7–8 belum diberikan owner (Fase 7 wajib mengikuti ADR-0002 bagian 11).
 - **Produksi:** ter-deploy sampai Fase 3 (`rn-deploy-app.sh`, 2026-09-26). Fase 4 (12 modul RN) di-commit tetapi
-  belum di-deploy; frontend Fase 5 sudah live (disajikan dari disk).
+  belum di-deploy; frontend Fase 5 sudah live (disajikan dari disk). Aturan nginx deny terpasang 2026-09-27
+  (`.git`, docs, `frappe_shadow/`, `scripts/`, `.env`, `*.md` → 404; semua `pages/*.html` + `assets/` → 200).
 - **Menunggu keputusan/aksi owner:**
-  1. `sudo sh scripts/rn-install-nginx-deny.sh` — saat ini seluruh repo termasuk `.git` masih bisa diunduh publik.
-  2. Blok hapus di `docs/PHASE6_REPO_HYGIENE.md` (backup/, scratchpad/, dll. — ditolak izin agent).
-  3. Ganti password root MariaDB produksi; repo GitHub jadi private atau tetap publik.
-  4. `scripts/komando-tests/` berjalan terhadap produksi — porting ke test stack (usul: Fase 0).
-  5. Deploy Fase 4 (`sh scripts/rn-deploy-app.sh`); rebuild APK/desktop dari `apps/rescue-net-shell/`, lalu hapus
+  1. Blok hapus di `docs/PHASE6_REPO_HYGIENE.md` (backup/, scratchpad/, dll. — ditolak izin agent).
+  2. Ganti password root MariaDB produksi (ditunda owner 2026-09-27, "nanti aja"); repo GitHub jadi private atau
+     tetap publik.
+  3. `scripts/komando-tests/` berjalan terhadap produksi — porting ke test stack (usul: Fase 0).
+  4. Deploy Fase 4 (`sh scripts/rn-deploy-app.sh`); rebuild APK/desktop dari `apps/rescue-net-shell/`, lalu hapus
      `apps/rescue-net-app/`.
-  6. 9g menyebut "lanjutkan dari `apps/rescue-net-app`", bertentangan dengan keputusan Fase 5 (`rescue-net-shell`).
-  7. Kemungkinan bug: pemakaian key platform tidak tercatat di RN AI Usage Log (ADR-0002, catatan kesesuaian no. 9).
+  5. 9g menyebut "lanjutkan dari `apps/rescue-net-app`", bertentangan dengan keputusan Fase 5 (`rescue-net-shell`).
+  6. Kemungkinan bug: pemakaian key platform tidak tercatat di RN AI Usage Log (ADR-0002, catatan kesesuaian no. 9).
 
 ## Layout
 

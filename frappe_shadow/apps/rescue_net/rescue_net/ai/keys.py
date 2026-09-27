@@ -533,6 +533,7 @@ def ai_usage_summary(user_id=None, organization_id=None, days=30):
         "by_key_source": {
             "user": sum(1 for r in rows if r.key_source == "user"),
             "organization": sum(1 for r in rows if r.key_source == "organization"),
+            "platform": sum(1 for r in rows if r.key_source == "platform"),
         },
         "recent": rows[:15],
     }

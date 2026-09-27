@@ -119,6 +119,10 @@ class TestIntakeAndRouting(RNTestCase):
         self.assertEqual(d["fields"]["report_type"], "water_shortage")
         self.assertEqual(d["fields"]["affected_people_count"], 320)
         self.assertEqual(d["fields"]["urgent_needs"], "air bersih 5000 liter, jerigen")
+        log = frappe.get_all("RN AI Usage Log", filters={"user_id": self.reporter.user},
+                             fields=["owner_type", "key_source", "provider", "total_tokens", "outcome"])
+        self.assertEqual([(r.owner_type, r.key_source, r.provider, r.total_tokens, r.outcome) for r in log],
+                         [("platform", "platform", "anthropic", 90, "ok")])
 
     def test_ai_failure_falls_back_to_rules(self):
         api_ai.save_platform_key(KEY, provider="gemini")

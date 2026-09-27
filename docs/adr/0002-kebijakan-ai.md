@@ -255,8 +255,10 @@ Berbeda / belum ada:
    `owner_type="platform"` dan `key_source="platform"`, padahal opsi Select di
    RN AI Usage Log hanya `user` dan `organization`. Validasi Select Frappe
    kemungkinan besar menolak insert, dan `_log_ai_usage` menelan error itu,
-   sehingga pemakaian key platform tidak tercatat. Belum diverifikasi dengan
-   menjalankannya.
+   sehingga pemakaian key platform tidak tercatat. Perbaikan 2026-09-27: opsi
+   `platform` ditambahkan ke `owner_type` dan `key_source`, `ai_usage_summary`
+   menghitungnya, dan `test_platform_ai_key_parses_the_narrative` memeriksa baris
+   lognya. Lulus test suite (201 test, 2026-09-27); belum di-deploy.
 10. **Fallback intake berbeda dengan ADR.** Tanpa key platform (atau jika
     provider gagal), laporan diurai aturan lalu dikirim pelapor seperti biasa.
     Belum ada antrian review manual berlabel "belum diproses AI", dan belum ada

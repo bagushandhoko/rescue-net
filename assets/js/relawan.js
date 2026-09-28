@@ -24,6 +24,24 @@
     return "";
   }
 
+  var STATUS_LABEL = { available: "Available", assigned: "Bertugas", limited: "Terbatas", unavailable: "Tidak Aktif", off_duty: "Istirahat" };
+
+  function initials(name) {
+    return String(name || "?").split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
+  }
+  /* raw skill tags ("field_assessment", "4x4_transport") shown as words */
+  function skillLabel(s) {
+    var t = String(s || "").replace(/_/g, " ").trim();
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  function durasiLabel(d) {
+    return String(d || "-").replace(/\bhours?\b/i, "jam").replace(/\bdays?\b/i, "hari");
+  }
+
+  /* category labels come from api_volunteer filter_keterampilan */
+  var JENIS_ICON = { "Evakuasi": "alert-triangle", "Medis": "cross", "Dapur & Logistik": "utensils", "Search & Found": "search",
+    "Pickup & Transport": "truck", "Komunikasi": "radio", "Shelter": "tent" };
+
   var DRILL_TITLES = {
     terdaftar: "Relawan Terdaftar", available: "Available Hari Ini",
     bertugas: "Sedang Bertugas", butuh: "Butuh Penugasan", fatigue: "Fatigue Risk",
@@ -72,11 +90,17 @@
       return;
     }
     body.innerHTML = rows.map(function (r) {
-      var skills = r.skills.map(function (s) { return '<span class="chip">' + esc(s) + "</span>"; }).join(" ");
+      var shown = r.skills.slice(0, 1);
+      var more = r.skills.length - shown.length;
+      var skills = shown.map(function (s) { return '<span class="chip rn-rw-skill">' + esc(skillLabel(s)) + "</span>"; }).join("") +
+        (more > 0 ? '<span class="rn-rw-more" title="' + esc(r.skills.map(skillLabel).join(", ")) + '">+' + more + "</span>" : "");
       return (
-        "<tr><td><b>" + esc(r.volunteer_name) + "</b></td><td>" + esc(r.organisasi) + "</td>" +
-        "<td>" + skills + "</td><td>" + esc(r.lokasi) + "</td><td>" + esc(r.durasi) + "</td>" +
-        '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status) + "</span></td></tr>"
+        '<tr><td><span class="rn-rw-person"><span class="rn-rw-avatar">' + esc(initials(r.volunteer_name)) + "</span><b>" + esc(r.volunteer_name) + "</b></span></td>" +
+        '<td title="' + esc(r.organisasi) + '">' + esc(r.organisasi) + "</td>" +
+        '<td><span class="rn-rw-skills">' + skills + "</span></td>" +
+        '<td title="' + esc(r.lokasi) + '">' + esc(r.lokasi) + "</td>" +
+        '<td title="' + esc(r.durasi) + '">' + esc(durasiLabel(r.durasi)) + "</td>" +
+        '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(STATUS_LABEL[r.status] || r.status) + "</span></td></tr>"
       );
     }).join("");
     $("#daftarRelawanShown").textContent = "Menampilkan " + rows.length + " dari " + rows.length + " relawan";
@@ -112,8 +136,9 @@
     var el = $("#jenisRelawan");
     if (!rows.length) { el.innerHTML = '<p class="rn-muted">Belum ada data.</p>'; return; }
     el.innerHTML = rows.map(function (r) {
-      return '<div class="rn-rw-jenis-tile"><b>' + fmt(r.count) + "</b><span>" + esc(r.label) + "</span></div>";
+      return '<div class="rn-rw-jenis-tile"><span class="rn-rw-tile-icon" data-icon="' + (JENIS_ICON[r.label] || "users") + '"></span><b>' + fmt(r.count) + "</b><span>" + esc(r.label) + "</span></div>";
     }).join("");
+    if (window.RNIconFill) window.RNIconFill();
   }
 
   function renderSafety(ak) {
@@ -193,7 +218,7 @@
   }
 
   function renderPapan(rows) {
-    $("#papanCount").textContent = rows.length;
+    $("#papanCount").textContent = rows.length + " tugas menunggu konfirmasi";
     var el = $("#papanPenugasan");
     if (!rows.length) {
       el.innerHTML = '<article class="event-card"><div class="event-main"><div><h4>Tidak ada tugas menunggu</h4><p>Semua assignment sudah diterima/berjalan.</p></div></div></article>';
@@ -212,7 +237,7 @@
   async function loadBoard() {
     var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: getEventId() });
     BOARD_CACHE = data;
-    $("#relawanUpdated").textContent = "Relawan · Diperbarui " + String(data.generated_at || "").slice(11, 16);
+    $("#relawanUpdated").textContent = "Diperbarui " + String(data.generated_at || "").slice(11, 16);
     renderKpi(data.totals || {});
     renderDaftarRelawan(data.daftar_relawan || []);
     renderFilterKeterampilan(data.filter_keterampilan || []);
@@ -419,7 +444,7 @@ function fillVolunteerSelect(items) {
 
 async function loadRelawan() {
   statusMsg(
-    "Loading volunteers from Frappe..."
+    ""
   );
 
   const ctx =
@@ -443,7 +468,7 @@ async function loadRelawan() {
   );
 
   statusMsg(
-    "Loaded from Frappe"
+    ""
   );
 }
 
@@ -505,7 +530,7 @@ function setupVolunteerForm() {
       );
 
       statusMsg(
-        "Volunteer profile saved."
+        "· Profil relawan tersimpan."
       );
 
       form.reset();
@@ -564,7 +589,7 @@ function setupAssignmentForm() {
       );
 
       statusMsg(
-        "Volunteer assignment saved."
+        "· Penugasan relawan tersimpan."
       );
 
       form.reset();

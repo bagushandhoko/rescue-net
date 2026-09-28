@@ -25,10 +25,12 @@ Detail status, item terbuka, dan gotcha ada di `HANDOVER.md`.
 
 ## Status saat ini
 
-Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-09-27.)
+Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-09-28.)
 
 - **Sedang berjalan:** tidak ada. Architecture review Fase 1–6 selesai dari sisi agent; Fase 6 menunggu review
   owner (`docs/PHASE6_REPO_HYGIENE.md`).
+- **Mock-up pass 2 (perintah owner 2026-09-28, frontend saja = langsung live):** Dapur Umum dan Manajemen Relawan
+  selesai; berikutnya Manajemen Distribusi, lalu sisa daftar `assets/img/mockup/`.
 - **Fase berikutnya:** menunggu perintah owner. Kandidat prioritas: Fase 0 (pisahkan lingkungan agent dari
   produksi). Isi Fase 7–8 belum diberikan owner (Fase 7 wajib mengikuti ADR-0002 bagian 11).
 - **Produksi:** ter-deploy sampai Fase 4 (12 modul RN; `rn-deploy-app.sh` 2026-09-27 09:51, patch

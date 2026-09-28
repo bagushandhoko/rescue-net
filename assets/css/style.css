@@ -5333,22 +5333,59 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 /* ============================================================
    Dapur Umum — pages/dapur-umum.html
    ============================================================ */
-.rn-dp-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.rn-dp-row2 { grid-template-columns: minmax(0, .95fr) minmax(0, .95fr) minmax(0, 1.7fr) minmax(0, 1.1fr); align-items: stretch; }
-.rn-dp-grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.rn-dp-row4 { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+/* column ratios measured on assets/img/mockup/dapur umum.png */
+.rn-dp-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.rn-dp-row2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr) minmax(0, 1.85fr) minmax(0, 1.7fr); align-items: stretch; gap: 12px; }
+.rn-dp-row2 > .panel { padding: 14px; }
+.rn-dp-page .rn-seeall { font-size: 10px; }
+.rn-dp-page .rn-table th { text-transform: none; letter-spacing: 0; }
+.rn-dp-grid3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr) minmax(0, 1.3fr); align-items: stretch; }
+.rn-dp-row4 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.03fr); align-items: stretch; }
+.rn-dp-page .panel { padding: 16px; }
+.rn-dp-meta { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.rn-dp-meta b { color: var(--text, #2d211b); font-weight: 600; }
+/* the public header already shows login state; the mock-up header has none */
+.rn-dp-page .topbar [data-rn-session-pill] { display: none; }
+.rn-dp-page .kpi-card .rn-dp-unit { font-size: 12px; font-weight: 600; color: var(--text, #2d211b); }
+/* donut + legend side by side like the mock-up */
+.rn-dp-donut-panel .rn-donut-wrap { flex-wrap: nowrap; gap: 14px; }
+.rn-dp-donut-panel .rn-donut { width: 96px; height: 96px; }
+.rn-dp-donut-panel .rn-donut::after, .rn-dp-donut-panel .rn-donut-center { inset: 14px; }
+.rn-dp-donut-panel .rn-donut-legend { flex: 1 1 auto; min-width: 0; gap: 6px; }
+.rn-dp-donut-panel .rn-donut-legend li { font-size: 11px; gap: 6px; align-items: flex-start; line-height: 1.35; }
+.rn-dp-donut-panel .rn-donut-legend li b { margin-left: 0; font-weight: 600; }
+.rn-dp-donut-panel .rn-donut-dot { margin-top: 3px; }
+.rn-dp-page .kpi-card .rn-dp-unit { display: inline; }
+.rn-dp-page .panel-header { gap: 8px; margin-bottom: 10px; }
+.rn-dp-page .panel-header h3 { font-size: 13px; white-space: nowrap; }
+.rn-dp-kritis-list .event-card h4 { font-size: 13px; margin: 0; }
+.rn-dp-kritis-list .event-card p { font-size: 11px; margin: 2px 0 0; }
 
 /* Target Layanan — plain stacked rows (matches the mock-up; no boxed cards
    since this panel sits in a narrow column next to the donut). */
 .rn-dp-target { display: flex; flex-direction: column; gap: 14px; }
 .rn-dp-target > div + div { padding-top: 12px; border-top: 1px solid var(--line); }
-.rn-dp-target span { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
-.rn-dp-target b { display: block; font-size: 22px; margin-top: 4px; }
+.rn-dp-target > div > span { display: block; font-size: 11px; color: var(--muted); }
+.rn-dp-target b { display: block; font-size: 18px; margin-top: 4px; white-space: nowrap; }
+.rn-dp-target b small { font-size: 12px; font-weight: 600; color: var(--text, #2d211b); }
 .rn-dp-target small { color: var(--muted); font-size: 11px; }
+.rn-dp-target .rn-dp-rasio { display: block; margin-top: 8px; }
 .rn-dp-target-modal { flex-direction: row; gap: 12px; }
 .rn-dp-target-modal > div { flex: 1 1 0; background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; border-top: 0; }
 
-.rn-dp-relawan-foot { margin-top: 8px; font-size: 12px; }
+.rn-dp-relawan-foot { margin-top: 8px; font-size: 11px; }
+#relawanCount { font-size: 11px; }
+.rn-dp-vol { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 8px;
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); }
+.rn-dp-vol-avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700;
+  background: rgba(230,95,60,.14); color: #c2482c; }
+.rn-dp-vol-main { min-width: 0; display: flex; flex-direction: column; }
+.rn-dp-vol-main strong { font-size: 12px; }
+.rn-dp-vol-main small { font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rn-dp-vol-status { font-size: 11px; font-weight: 600; color: var(--muted); }
+.rn-dp-vol-status.ok { color: #2f8a57; }
+.rn-dp-vol-status.warning { color: #c97a1f; }
+.rn-dp-page #relawanList { gap: 6px; }
 
 /* KPI "Produksi Hari Ini" — produced vs capacity bar (mock-up) */
 .rn-dp-kpi-bar { display: block; height: 5px; border-radius: 99px; background: rgba(230,95,60,.14); overflow: hidden; margin: 2px 0; }
@@ -5356,9 +5393,9 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 
 /* Jadwal Masak — one card per meal slot (time | meal + portions | status) */
 .rn-dp-jadwal { display: flex; flex-direction: column; gap: 8px; }
-.rn-dp-slot { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 10px;
+.rn-dp-slot { display: grid; grid-template-columns: 50px minmax(0, 1fr) auto; align-items: center; gap: 8px;
   padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); color: inherit; text-decoration: none; }
-.rn-dp-slot-time { font-size: 15px; text-align: center; padding: 6px 0; border-radius: 9px; background: var(--panel, #fff); border: 1px solid var(--line); }
+.rn-dp-slot-time { font-size: 13px; text-align: center; padding: 6px 0; border-radius: 9px; background: var(--panel, #fff); border: 1px solid var(--line); }
 .rn-dp-slot-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .rn-dp-slot-main strong { font-size: 12px; }
 .rn-dp-slot-main small { font-size: 11px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -5441,6 +5478,9 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 :is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > span:not(.kpi-icon) { font-size: 11px; line-height: 1.3; }
 :is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > strong { font-size: 20px; line-height: 1.2; white-space: nowrap; }
 :is(.rn-sh-page, .rn-dp-page) .kpi-grid .kpi-card > small { font-size: 10px; line-height: 1.3; }
+.rn-dp-page .kpi-grid .kpi-card { padding: 12px; column-gap: 8px; grid-template-columns: 36px minmax(0, 1fr); min-height: 88px; }
+.rn-dp-page .kpi-grid .kpi-icon { width: 36px; height: 36px; }
+.rn-dp-page .kpi-grid .kpi-card > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rn-sh-page .panel { padding: 16px; }
 :is(.rn-sh-page, .rn-dp-page) .panel-header h3 { font-size: 14px; }
 :is(.rn-sh-page, .rn-dp-page) .rn-table { font-size: 11px; }

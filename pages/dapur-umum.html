@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Dapur Umum</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=dpmock-20260928e">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-lightbox.css?v=lb-2" />
@@ -53,12 +53,10 @@
       <div class="rn-page-mobile-title">Dapur Umum</div>
 
       <div>
-        <p class="eyebrow">Kitchen / Meal Production</p>
-        <h2 id="kitchenTitle">Dapur Umum</h2>
+        <h2>Dapur Umum</h2>
         <p class="subtitle">Kelola produksi dan distribusi makanan untuk memenuhi kebutuhan pengungsi.</p>
-        <p class="subtitle" id="kitchenStatus">Memuat…</p>
+        <p class="rn-dp-meta"><b id="kitchenTitle">-</b> · <span id="kitchenStatus">Memuat…</span></p>
       </div>
-      <div class="status-pill" id="kitchenUpdated">Kitchen · Live Stock</div>
     </header>
 
     <section class="kpi-grid rn-dp-kpi">
@@ -86,9 +84,8 @@
       <div class="panel rn-dp-target-panel">
         <div class="panel-header"><div><h3>Target Layanan</h3></div></div>
         <div class="rn-dp-target">
-          <div><span>Total Target</span><b id="targetTotal">-</b><small>porsi / hari</small></div>
-          <div><span>Target Jiwa</span><b id="targetJiwa">-</b><small>jiwa</small></div>
-          <div><span>Rasio</span><b id="targetRasio">-</b></div>
+          <div><span>Total Target</span><b><span id="targetTotal">-</span> <small>porsi / hari</small></b></div>
+          <div><span>Target Jiwa</span><b><span id="targetJiwa">-</span> <small>jiwa</small></b><small class="rn-dp-rasio">Rasio <span id="targetRasio">-</span></small></div>
         </div>
       </div>
 
@@ -139,7 +136,7 @@
       </div>
 
       <div class="panel">
-        <div class="panel-header"><div><h3>Relawan Dapur <span class="chip" id="relawanCount">0</span></h3></div></div>
+        <div class="panel-header"><div><h3>Relawan Dapur</h3><small class="rn-muted" id="relawanCount"></small></div></div>
         <div class="event-list" id="relawanList"></div>
         <p class="rn-muted rn-dp-relawan-foot" id="relawanFoot"></p>
       </div>
@@ -160,17 +157,17 @@
       </div>
     </section>
 
-    <details class="panel rn-input-drawer" id="stockPanel">
+    <details class="panel rn-input-drawer" id="stockPanel" data-requires-role-action="create_stock">
       <summary>
-        <h3>Kitchen Stock (Riwayat) <span class="chip" id="stockLegacyCount">0</span></h3>
+        <h3>Stok Dapur (Riwayat) <span class="chip" id="stockLegacyCount">0</span></h3>
         <p>Saldo bahan dan barang yang tersedia di dapur umum.</p>
       </summary>
       <div class="event-list" id="kitchenStock"></div>
     </details>
 
-    <details class="panel create-panel rn-input-drawer">
+    <details class="panel create-panel rn-input-drawer" data-requires-role-action="create_stock">
       <summary>
-        <h3>Record Meal Production</h3>
+        <h3>Catat Produksi Makanan</h3>
         <p>Catat produksi makanan dan otomatis kurangi stok bahan.</p>
       </summary>
 
@@ -212,9 +209,9 @@
       </form>
     </details>
 
-    <details class="panel rn-input-drawer">
+    <details class="panel rn-input-drawer" data-requires-role-action="create_stock">
       <summary>
-        <h3>Meal Productions &amp; Stock Movements (Riwayat Mentah)</h3>
+        <h3>Produksi &amp; Mutasi Stok (Riwayat Mentah)</h3>
         <p>Data mentah di balik dashboard di atas.</p>
       </summary>
       <div class="content-grid">
@@ -241,7 +238,7 @@
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/dapur-umum.js?v=dapurp2-20260926b"></script>
+<script src="../assets/js/dapur-umum.js?v=dpmock-20260928e"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

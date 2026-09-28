@@ -168,7 +168,7 @@
         .map(function (s) {
           return (
             '<li><span class="rn-donut-dot" style="background:' + (DONUT_COLORS[s.key] || "#bbb") + '"></span>' +
-            "<span>" + esc(s.label) + "</span><b>" + fmt(s.value) + "</b><small>(" + s.pct + "%)</small></li>"
+            "<span>" + esc(s.label) + "<br><b>" + fmt(s.value) + "</b> <small>(" + s.pct + "%)</small></span></li>"
           );
         })
         .join("");
@@ -178,12 +178,15 @@
   /* ---------- render main board ---------- */
 
   function renderKpi(totals) {
-    $("#kpiJiwa").textContent = fmt(totals.jiwa_dilayani);
-    $("#kpiKapasitas").textContent = fmt(totals.kapasitas_porsi_hari);
-    $("#kpiProduksi").textContent = fmt(totals.produksi_hari_ini);
-    $("#kpiGap").textContent = fmt(totals.gap_porsi);
-    $("#kpiBahan").textContent = fmt(totals.bahan_kritis);
-    $("#kpiDistribusi").textContent = fmt(totals.distribusi_hari_ini);
+    var withUnit = function (sel, v, unit) {
+      $(sel).innerHTML = esc(fmt(v)) + (unit ? ' <small class="rn-dp-unit">' + unit + "</small>" : "");
+    };
+    withUnit("#kpiJiwa", totals.jiwa_dilayani);
+    withUnit("#kpiKapasitas", totals.kapasitas_porsi_hari);
+    withUnit("#kpiProduksi", totals.produksi_hari_ini, "porsi");
+    withUnit("#kpiGap", totals.gap_porsi, "porsi");
+    withUnit("#kpiBahan", totals.bahan_kritis, "item");
+    withUnit("#kpiDistribusi", totals.distribusi_hari_ini, "porsi");
     var pct = totals.kapasitas_porsi_hari
       ? Math.round((100 * totals.gap_porsi) / totals.kapasitas_porsi_hari)
       : 0;
@@ -259,7 +262,7 @@
     var st = slotStatus(rows);
     var menu = rows.map(function (r) { return r.meal_name; }).filter(Boolean).join(", ");
     var porsi = rows.reduce(function (n, r) { return n + (Number(r.portions) || 0); }, 0);
-    var sub = rows.length ? fmt(porsi) + " porsi" + (menu ? " · " + menu : "") : "Belum ada produksi";
+    var sub = rows.length ? fmt(porsi) + " porsi" + (menu ? " · " + menu : "") : st.label;
     var href = rows.length === 1 ? rows[0].href : "";
     var tag = href ? "a" : "div";
     return (
@@ -268,7 +271,7 @@
       '<b class="rn-dp-slot-time">' + esc(time) + "</b>" +
       '<span class="rn-dp-slot-main"><strong>' + esc(title) + "</strong>" +
       '<small title="' + esc(sub) + '">' + esc(sub) + "</small></span>" +
-      '<span class="chip ' + st.cls + '">' + esc(st.label) + "</span></" + tag + ">"
+      (rows.length ? '<span class="chip ' + st.cls + '">' + esc(st.label) + "</span>" : "") + "</" + tag + ">"
     );
   }
 
@@ -307,7 +310,7 @@
   }
 
   function renderRelawan(rd) {
-    $("#relawanCount").textContent = rd.total + " Relawan";
+    $("#relawanCount").textContent = "Total " + rd.total + " Relawan";
     $("#relawanFoot").textContent =
       "Aktif " + rd.aktif + " · Istirahat " + rd.istirahat + " · Tidak Aktif " + rd.tidak_aktif;
     var el = $("#relawanList");
@@ -317,9 +320,12 @@
     }
     el.innerHTML = rd.list
       .map(function (v) {
+        var initials = String(v.name || "?").split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
+        var cls = v.status_label === "Aktif" ? "ok" : v.status_label === "Istirahat" ? "warning" : "";
         return (
-          '<article class="event-card"><div class="event-main"><div><h4>' + esc(v.name) + "</h4><p>" + esc(v.role) + "</p></div>" +
-          '<div class="chips"><span class="chip">' + esc(v.status_label) + "</span></div></div></article>"
+          '<div class="rn-dp-vol"><span class="rn-dp-vol-avatar">' + esc(initials) + "</span>" +
+          '<span class="rn-dp-vol-main"><strong>' + esc(v.name) + "</strong><small>" + esc(v.role) + "</small></span>" +
+          '<span class="rn-dp-vol-status ' + cls + '">' + esc(v.status_label) + "</span></div>"
         );
       })
       .join("");
@@ -420,7 +426,6 @@
 
     var posko = data.posko || {};
     $("#kitchenTitle").textContent = posko.title || posko.name || poskoId;
-    $("#kitchenUpdated").textContent = "Kitchen · Diperbarui " + String(data.generated_at || "").slice(11, 16);
 
     renderKpi(data.totals || {});
     renderTarget(data.target_layanan || {});
@@ -440,7 +445,7 @@
     var seeAll = $("#evidenceSeeAll");
     if (seeAll) seeAll.href = evidenceHref;
 
-    statusMsg("Dimuat pukul " + String(data.generated_at || "").slice(11, 16));
+    statusMsg("Diperbarui " + String(data.generated_at || "").slice(11, 16));
   }
 
   /* ---------- legacy raw panels (unchanged behaviour) ---------- */
@@ -570,9 +575,9 @@
         notes: form.notes.value.trim(),
       };
 
-      statusMsg("Saving meal production...");
+      statusMsg("Menyimpan produksi makanan…");
       await window.RN_FRAPPE.call("rescue_net.api_kitchen.create_production", payload, { method: "POST" });
-      statusMsg("Meal production saved.");
+      statusMsg("Produksi makanan tersimpan.");
       form.reset();
       await refreshAll();
     });

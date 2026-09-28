@@ -257,13 +257,18 @@ def distribusi_board(disaster_event=None):
                    if b.status in ("confirmed", "requested"))
 
     def _cap_bucket(rows):
-        total_kg = sum(_num(t.capacity_weight_kg) for t in rows)
-        used_kg = sum(_num(t.capacity_weight_kg) for t in rows if t.transport_status in UTILISED_STATES)
-        pct = round(100.0 * used_kg / total_kg, 1) if total_kg else 0
         blocked_m3 = round(sum(_blocked_m3_for(t) for t in rows), 1)
         terpakai_m3 = round(sum(_num(t.capacity_volume_m3) for t in rows
                                 if t.transport_status in UTILISED_STATES), 1)
         total_m3 = round(sum(_num(t.capacity_volume_m3) for t in rows), 1)
+        # "Ruang" transport = volume: the % must be terpakai_m3 / total_m3, the same
+        # numbers shown next to it (KPI note, donut). Weight only when no armada has m³.
+        if total_m3:
+            pct = round(100.0 * terpakai_m3 / total_m3, 1)
+        else:
+            total_kg = sum(_num(t.capacity_weight_kg) for t in rows)
+            used_kg = sum(_num(t.capacity_weight_kg) for t in rows if t.transport_status in UTILISED_STATES)
+            pct = round(100.0 * used_kg / total_kg, 1) if total_kg else 0
         return {
             "tersedia_m3": round(max(0.0, sum(_num(t.capacity_volume_m3) for t in rows
                                       if t.transport_status == "available") - blocked_m3), 1),

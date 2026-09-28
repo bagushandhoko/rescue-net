@@ -81,14 +81,37 @@
     $("#kpiLaut").textContent = t.kapasitas_laut_pct + "%";
     $("#kpiUdara").textContent = t.kapasitas_udara_pct + "%";
     $("#kpiKebutuhan").textContent = fmt(t.kebutuhan_belum_match);
+    ["Transport", "Darat", "Laut", "Udara"].forEach(function (k) {
+      var pct = t[k === "Transport" ? "transport_space_pct" : "kapasitas_" + k.toLowerCase() + "_pct"] || 0;
+      $("#kpi" + k + "Bar").style.width = Math.min(100, pct) + "%";
+    });
     $("#kpiTerhambat").textContent = fmt(t.distribusi_terhambat);
   }
+
+  /* "terpakai / total m³" under the capacity KPIs, from the same by_type buckets as Ruang Transportasi */
+  function renderKpiM3(rt) {
+    function m3(b) { return fmt((b && b.terpakai_m3) || 0) + " / " + fmt((b && b.total_m3) || 0) + " m³"; }
+    ["darat", "laut", "udara"].forEach(function (k) {
+      $("#kpi" + k.charAt(0).toUpperCase() + k.slice(1) + "Sub").textContent = m3(rt.by_type[k]);
+    });
+    /* overall also counts moda "lainnya" — same bucket as transport_space_pct */
+    $("#kpiTransportSub").textContent = m3(rt.overall);
+  }
+
+  /* RN Transport Space.transport_status options */
+  var UNIT_STATUS = { available: "Tersedia", reserved: "Dipesan", assigned: "Ditugaskan", in_transit: "Dalam Perjalanan", arrived: "Tiba", completed: "Selesai", cancelled: "Dibatalkan" };
+
+  /* urgency / aid-offer status codes shown on the matching board */
+  var BOARD_LABEL = { critical: "Kritis", urgent: "Mendesak", high: "Tinggi", medium: "Sedang", normal: "Normal", low: "Rendah",
+    ready: "Siap", need_pickup: "Perlu Jemput", available: "Tersedia", offered: "Ditawarkan", matched: "Cocok", pledged: "Dijanjikan" };
 
   function boardItemHtml(it, extra) {
     return (
       '<div class="rn-md-board-item">' +
-      "<b>" + esc(it.title) + "</b><small>" + esc(it.sub || "") + "</small>" +
-      (extra ? '<span class="chip ' + esc(extra.cls || "") + '">' + esc(extra.label) + "</span>" : "") +
+      '<b title="' + esc(it.title) + '">' + esc(it.title) + "</b>" +
+      '<small title="' + esc(it.sub || "") + '">' +
+      (extra ? '<span class="chip ' + esc(extra.cls || "") + '">' + esc(BOARD_LABEL[extra.label] || extra.label) + "</span> " : "") +
+      esc(it.sub || "") + "</small>" +
       "</div>"
     );
   }
@@ -140,8 +163,8 @@
     body.innerHTML = bucket.units.length
       ? bucket.units.map(function (u) {
           return (
-            "<tr><td>" + esc(u.provider) + "</td><td>" + fmt(u.capacity_m3) + " m³</td><td>" + esc(u.route) + "</td>" +
-            '<td><span class="chip ' + statusPillClass(u.status) + '">' + esc(u.status) + "</span></td></tr>"
+            '<tr><td title="' + esc(u.provider) + '"><b>' + esc(u.provider) + "</b></td><td>" + fmt(u.capacity_m3) + ' m³</td><td title="' + esc(u.route) + '">' + esc(u.route) + "</td>" +
+            '<td><span class="chip ' + statusPillClass(u.status) + '">' + esc(UNIT_STATUS[u.status] || u.status) + "</span></td></tr>"
           );
         }).join("")
       : '<tr><td colspan="4"><em class="rn-muted">Belum ada unit ' + activeTransportTab + '.</em></td></tr>';
@@ -184,8 +207,8 @@
     body.innerHTML = rows.map(function (r) {
       return (
         '<tr class="rn-ba-row" data-href="' + esc(r.href) + '">' +
-        "<td><b>" + esc(r.id) + "</b></td><td>" + esc(r.kebutuhan) + "</td><td>" + esc(r.bantuan) + "</td>" +
-        "<td>" + esc(r.pickup_oleh) + "</td><td>" + esc(r.transportasi) + "</td><td>" + esc(r.rute) + "</td>" +
+        '<td title="' + esc(r.id) + '"><b>' + esc(r.id) + '</b></td><td title="' + esc(r.kebutuhan) + '">' + esc(r.kebutuhan) + '</td><td title="' + esc(r.bantuan) + '">' + esc(r.bantuan) + "</td>" +
+        '<td title="' + esc(r.pickup_oleh) + '">' + esc(r.pickup_oleh) + "</td><td>" + esc(r.transportasi) + '</td><td title="' + esc(r.rute) + '">' + esc(r.rute) + "</td>" +
         "<td>" + esc(r.eta) + "</td>" +
         '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status_label) + "</span></td>" +
         '<td><button type="button" class="rn-lacak-btn" data-lacak="' + esc(r.id) +
@@ -219,7 +242,7 @@
     el.innerHTML = rows.map(function (r) {
       var inner =
         '<div class="event-main"><div><h4>⚠ ' + esc(r.title) + "</h4><p>" + esc(r.sub) + "</p></div>" +
-        '<div class="chips"><span class="chip ' + (r.level === "critical" ? "danger" : "warning") + '">' + esc(r.level) + "</span></div></div>";
+        '<div class="chips"><span class="chip ' + (r.level === "critical" ? "danger" : "warning") + '">' + (r.level === "critical" ? "Kritis" : "Perhatian") + "</span></div></div>";
       return r.href
         ? '<a class="event-card rn-sh-alert" href="' + esc(r.href) + '">' + inner + "</a>"
         : '<article class="event-card">' + inner + "</article>";
@@ -323,8 +346,8 @@
   async function loadBoard() {
     var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: getEventId() });
     BOARD_CACHE = data;
-    $("#distribusiUpdated").textContent = "Distribusi · Diperbarui " + String(data.generated_at || "").slice(11, 16);
-    $("#distribusiStatus").textContent = "Dimuat pukul " + String(data.generated_at || "").slice(11, 16);
+    $("#distribusiUpdated").textContent = "Diperbarui " + String(data.generated_at || "").slice(11, 16);
+    renderKpiM3(data.ruang_transportasi);
 
     renderKpi(data.totals || {});
     renderMatchingBoard(data.matching_board || {});

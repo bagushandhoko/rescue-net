@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Manajemen Distribusi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=mdmock-20260928g">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
   <style>
@@ -53,21 +53,15 @@
     </nav>
   </aside>
 
-  <main class="main">
+  <main class="main rn-md-page">
     <header class="topbar rn-md-topbar">
       <div class="rn-page-mobile-title">Manajemen Distribusi</div>
 
       <div>
-        <p class="eyebrow">Pencocokan Bantuan & Transportasi</p>
         <h2>Manajemen Distribusi</h2>
-        <p class="subtitle">
-          Menghubungkan bantuan dari donatur, kebutuhan posko, relawan pickup, dan penyedia transport
-          menjadi aliran distribusi yang bisa dipantau.
-        </p>
-        <p class="subtitle" id="distribusiStatus">Memuat…</p>
+        <p class="subtitle">Cocokkan kebutuhan posko, bantuan, relawan pickup, dan transportasi dalam satu alur yang terpantau.</p>
+        <p class="rn-page-meta"><span id="distribusiUpdated">Memuat…</span> <span id="distribusiStatus"></span></p>
       </div>
-      <div class="status-pill" id="distribusiUpdated">Distribusi · Live</div>
-    </header>
 
     <div class="rn-md-toolbar">
       <input type="search" id="distribusiSearch" placeholder="Cari kebutuhan, bantuan, lokasi, atau kode…" aria-label="Cari distribusi">
@@ -80,21 +74,22 @@
         <option value="received">Diterima</option>
         <option value="cancelled">Dibatalkan</option>
       </select>
-      <button class="btn primary" type="button" id="buatDistribusiBtn">+ Buat Distribusi</button>
+      <button class="btn primary" type="button" id="buatDistribusiBtn" data-requires-role-action="create_distribution">+ Buat Distribusi</button>
     </div>
+    </header>
 
     <section class="kpi-grid rn-md-kpi">
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="transport">
-        <span class="kpi-icon" data-icon="truck"></span><span>Ruang Transportasi</span><strong id="kpiTransport">-</strong><small>utilisasi keseluruhan</small>
+        <span class="kpi-icon" data-icon="truck"></span><span>Transport Space</span><strong id="kpiTransport">-</strong><small id="kpiTransportSub">utilisasi keseluruhan</small><span class="rn-dp-kpi-bar"><i id="kpiTransportBar"></i></span>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="darat">
-        <span class="kpi-icon" data-icon="truck"></span><span>Kapasitas Darat</span><strong id="kpiDarat">-</strong><small>terpakai</small>
+        <span class="kpi-icon" data-icon="truck"></span><span>Kapasitas Darat</span><strong id="kpiDarat">-</strong><small id="kpiDaratSub">terpakai</small><span class="rn-dp-kpi-bar"><i id="kpiDaratBar"></i></span>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="laut">
-        <span class="kpi-icon" data-icon="route"></span><span>Kapasitas Laut</span><strong id="kpiLaut">-</strong><small>terpakai</small>
+        <span class="kpi-icon" data-icon="ship"></span><span>Kapasitas Laut</span><strong id="kpiLaut">-</strong><small id="kpiLautSub">terpakai</small><span class="rn-dp-kpi-bar"><i id="kpiLautBar"></i></span>
       </button>
       <button type="button" class="kpi-card rn-kpi-btn" data-kpi="udara">
-        <span class="kpi-icon" data-icon="route"></span><span>Kapasitas Udara</span><strong id="kpiUdara">-</strong><small>terpakai</small>
+        <span class="kpi-icon" data-icon="plane"></span><span>Kapasitas Udara</span><strong id="kpiUdara">-</strong><small id="kpiUdaraSub">terpakai</small><span class="rn-dp-kpi-bar"><i id="kpiUdaraBar"></i></span>
       </button>
       <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="kebutuhan">
         <span class="kpi-icon" data-icon="alert-circle"></span><span>Kebutuhan Belum Match</span><strong id="kpiKebutuhan">-</strong><small>item terbuka</small>
@@ -150,6 +145,7 @@
         </div>
         <div class="rn-table-wrap">
           <table class="rn-table">
+            <colgroup><col style="width:35%"><col style="width:15%"><col style="width:26%"><col style="width:24%"></colgroup>
             <thead><tr><th>Unit</th><th>Kapasitas</th><th>Rute</th><th>Status</th></tr></thead>
             <tbody id="transportUnitBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
           </table>
@@ -157,14 +153,15 @@
       </div>
     </section>
 
-    <section class="content-grid rn-md-row2">
+    <section class="content-grid rn-md-row2 rn-md-row3">
       <div class="panel">
         <div class="panel-header">
           <div><h3>Alur Distribusi <small class="rn-muted">(Live Shipment)</small></h3><p>Pemantauan distribusi bantuan secara real-time dari penjemputan hingga diterima.</p></div>
         </div>
-        <div class="rn-table-wrap">
+        <div class="rn-table-wrap rn-md-alur-wrap">
           <table class="rn-table">
-            <thead><tr><th>ID Distribusi</th><th>Kebutuhan</th><th>Bantuan</th><th>Dijemput Oleh</th><th>Transportasi</th><th>Rute</th><th>ETA</th><th>Status</th><th>Trace</th></tr></thead>
+            <colgroup><col style="width:11%"><col style="width:15%"><col style="width:10%"><col style="width:12%"><col style="width:7%"><col style="width:14%"><col style="width:6%"><col style="width:15%"><col style="width:10%"></colgroup>
+            <thead><tr><th>ID Distribusi</th><th>Kebutuhan</th><th>Bantuan</th><th>Dijemput Oleh</th><th>Moda</th><th>Rute</th><th>ETA</th><th>Status</th><th>Trace</th></tr></thead>
             <tbody id="alurBody"><tr><td colspan="9">Memuat…</td></tr></tbody>
           </table>
         </div>
@@ -205,7 +202,7 @@
       </div>
     </section>
 
-    <details class="panel rn-input-drawer">
+    <details class="panel rn-input-drawer" data-requires-role-action="create_distribution">
       <summary>
         <h3>Bantuan Perlu Dijemput &amp; Donatur Antar Sendiri (Riwayat)</h3>
       </summary>
@@ -221,7 +218,7 @@
       </div>
     </details>
 
-    <details class="panel rn-input-drawer" id="flowDrawer">
+    <details class="panel rn-input-drawer" id="flowDrawer" data-requires-role-action="create_distribution">
       <summary>
         <h3>Ruang Transportasi Tersedia &amp; Buat Alur Distribusi</h3>
       </summary>
@@ -258,7 +255,7 @@
       </div>
     </details>
 
-    <details class="panel rn-input-drawer">
+    <details class="panel rn-input-drawer" data-requires-role-action="create_distribution">
       <summary><h3>Alur Distribusi (Riwayat Mentah)</h3></summary>
       <div class="event-list" data-distribution-flows></div>
     </details>
@@ -301,11 +298,11 @@
   </div>
 </div>
 
-<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+<script src="../assets/js/rn-icons.js?v=shipplane-20260928"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/vendor/qrcode/qrcode.min.js"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/distribusi.js?v=eventdd-20260908"></script>
+<script src="../assets/js/distribusi.js?v=mdmock-20260928g"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-resource-booking.js?v=booking-sync-1"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>

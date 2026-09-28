@@ -78,3 +78,19 @@ class TestArmadaSharedByFlows(LogisticsTestCase):
         flow = self.flow_to_a()
         with as_user(self.op_a.user), self.assertRaises(frappe.ValidationError):
             api.claim_distribution_flow(flow, transport_space=space.name)
+
+
+class TestDistribusiCapacityPct(LogisticsTestCase):
+    def test_capacity_pct_is_the_volume_shown_beside_it(self):
+        """Ruang Transportasi shows "terpakai / total m³" next to the %, so the % is by volume."""
+        from rescue_net.control_centre.distribusi import distribusi_board
+        ev = self.w.event.name
+        make_transport_space(self.w.posko_a, disaster_event=ev, transport_type="darat",
+                             transport_status="assigned", capacity_volume_m3=10, capacity_weight_kg=1000)
+        make_transport_space(self.w.posko_a, disaster_event=ev, transport_type="darat",
+                             transport_status="available", capacity_volume_m3=30, capacity_weight_kg=100)
+        data = distribusi_board(ev)
+        darat = data["ruang_transportasi"]["by_type"]["darat"]
+        self.assertEqual((darat["terpakai_m3"], darat["total_m3"]), (10, 40))
+        self.assertEqual(data["totals"]["kapasitas_darat_pct"], 25.0)   # by weight it would be 90.9
+        self.assertEqual(data["totals"]["transport_space_pct"], 25.0)

@@ -5466,26 +5466,26 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-sh-row-a.rn-sh-row-b { grid-template-columns: minmax(0, 2fr) minmax(0, 1.25fr) minmax(0, 1fr); }
 /* mock-up density (scoped to Shelter, Dapur Umum, Manajemen Distribusi: style.css is shared by ~38 pages):
    icon left, label / value / note stacked in the right column */
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .kpi-grid .kpi-card {
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .kpi-grid .kpi-card {
   min-height: 96px; padding: 14px; border-radius: 16px;
   grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto 1fr;
   align-items: start; row-gap: 2px; text-align: left;
 }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .kpi-grid .kpi-icon { grid-row: 1 / span 3; width: 44px; height: 44px; }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .kpi-grid .kpi-card > span:not(.kpi-icon),
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .kpi-grid .kpi-card > strong,
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .kpi-grid .kpi-card > small { grid-column: 2; grid-row: auto; margin: 0; }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .kpi-grid .kpi-card > span:not(.kpi-icon) { font-size: 11px; line-height: 1.3; }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .kpi-grid .kpi-card > strong { font-size: 20px; line-height: 1.2; white-space: nowrap; }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .kpi-grid .kpi-card > small { font-size: 10px; line-height: 1.3; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .kpi-grid .kpi-icon { grid-row: 1 / span 3; width: 44px; height: 44px; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .kpi-grid .kpi-card > span:not(.kpi-icon),
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .kpi-grid .kpi-card > strong,
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .kpi-grid .kpi-card > small { grid-column: 2; grid-row: auto; margin: 0; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .kpi-grid .kpi-card > span:not(.kpi-icon) { font-size: 11px; line-height: 1.3; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .kpi-grid .kpi-card > strong { font-size: 20px; line-height: 1.2; white-space: nowrap; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .kpi-grid .kpi-card > small { font-size: 10px; line-height: 1.3; }
 .rn-dp-page .kpi-grid .kpi-card { padding: 12px; column-gap: 8px; grid-template-columns: 36px minmax(0, 1fr); min-height: 88px; }
 .rn-dp-page .kpi-grid .kpi-icon { width: 36px; height: 36px; }
 .rn-dp-page .kpi-grid .kpi-card > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rn-sh-page .panel { padding: 16px; }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .panel-header h3 { font-size: 14px; }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .rn-table { font-size: 11px; }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .rn-table th { font-size: 10px; padding: 6px 5px; white-space: nowrap; }
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .rn-table td { padding: 8px 5px; white-space: nowrap; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .panel-header h3 { font-size: 14px; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .rn-table { font-size: 11px; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .rn-table th { font-size: 10px; padding: 6px 5px; white-space: nowrap; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .rn-table td { padding: 8px 5px; white-space: nowrap; }
 .rn-sh-page .rn-table td:first-child { max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
 /* Daftar Shelter: Lokasi / Kelompok Rentan: Lokasi Terbanyak — truncate, full text in title */
 .rn-sh-page #akomodasiRelawanBody td:first-child { max-width: 90px; }
@@ -5501,8 +5501,8 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-sh-kebutuhan .event-card { padding: 6px 10px; border-radius: 10px; min-width: 0; }
 .rn-sh-kebutuhan .event-main { min-width: 0; gap: 6px; }
 .rn-sh-page .rn-sh-kebutuhan .chip,
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .rn-table .chip,
-:is(.rn-sh-page, .rn-dp-page, .rn-md-page) .rn-table [class*=pill] { height: 20px; font-size: 10px; padding: 0 7px; }
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .rn-table .chip,
+:is(.rn-sh-page, .rn-dp-page, .rn-md-page, .rn-dense) .rn-table [class*=pill] { height: 20px; font-size: 10px; padding: 0 7px; }
 .rn-sh-kebutuhan .event-card p { display: none; }
 .rn-sh-kebutuhan h4 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 12px; }
 .rn-sh-wash { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -6212,9 +6212,37 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 /* ============================================================
    Alat Komunikasi — pages/alat-komunikasi.html
    ============================================================ */
+/* column ratios measured on assets/img/mockup/alat komunikasi.png */
 .rn-kom-kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.rn-kom-row1 { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; }
-.rn-kom-row2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.rn-kom-row1 { grid-template-columns: minmax(0, 1.28fr) minmax(0, 1fr) minmax(0, .85fr); align-items: stretch; }
+.rn-kom-row3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) minmax(0, 1.15fr); align-items: stretch; }
+.rn-kom-page .rn-kom-row1 > .panel:first-child .panel-header { flex-wrap: wrap; }
+.rn-kom-page .rn-kom-row1 > .panel:first-child .rn-table td,
+.rn-kom-page .rn-kom-row1 > .panel:first-child .rn-table th { padding: 6px 4px; text-align: center; }
+.rn-kom-page .rn-kom-row1 > .panel:first-child .rn-table :is(td, th):first-child { text-align: left; white-space: nowrap; }
+.rn-kom-map { height: 190px; border-radius: 12px; border: 1px solid var(--line); background: #eef0ea; overflow: hidden; }
+.rn-kom-page .rn-kom-conn-legend { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0 6px; }
+.rn-kom-conn-tile { border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; display: grid; grid-template-columns: 18px minmax(0, 1fr);
+  column-gap: 5px; align-items: center; font-size: 10px; color: var(--muted); background: var(--panel, #fff); }
+.rn-kom-conn-tile b { grid-column: 1 / -1; font-size: 15px; color: var(--text); text-align: center; margin-top: 2px; }
+.rn-kom-conn-tile b small { font-size: 10px; font-weight: 600; }
+.rn-kom-conn-dot { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 11px; }
+.rn-kom-conn-tile.ok .rn-kom-conn-dot { background: #2f9a5c; }
+.rn-kom-conn-tile.warn .rn-kom-conn-dot { background: #e08a1e; }
+.rn-kom-conn-tile.bad .rn-kom-conn-dot { background: #d23c3c; }
+.rn-kom-conn-list > summary { cursor: pointer; font-size: 11px; color: var(--muted); padding: 4px 0; }
+.rn-kom-conn-list .rn-table-wrap { max-height: 220px; overflow-y: auto; }
+.rn-kom-op-av { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 700;
+  background: rgba(230,95,60,.14); color: #c2482c; }
+.rn-kom-page .rn-kom-op-row { grid-template-columns: 28px minmax(0,1fr) auto auto; gap: 8px; padding: 7px 0; }
+.rn-kom-page .rn-kom-op-id b { font-size: 12px; }
+.rn-kom-page .rn-kom-op-id small { font-size: 10px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rn-kom-page .rn-kom-op-row .chip { height: 20px; font-size: 10px; padding: 0 7px; }
+.rn-kom-page .rn-kom-batt-row { grid-template-columns: minmax(0,1fr) 90px 38px; gap: 8px; padding: 6px 0; }
+.rn-kom-page .rn-kom-batt-id b { font-size: 12px; }
+.rn-kom-page .rn-kom-batt-id small { font-size: 10px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rn-kom-page .rn-kom-batt-list { max-height: 300px; overflow-y: auto; }
+.rn-kom-page #alertList { max-height: 330px; overflow-y: auto; }
 
 .rn-kom-op-list { display: flex; flex-direction: column; }
 .rn-kom-op-row {
@@ -6253,12 +6281,12 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 
 @media (max-width: 1100px) {
   .rn-kom-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .rn-kom-row1, .rn-kom-row2 { grid-template-columns: minmax(0, 1fr); }
+  .rn-kom-row1, .rn-kom-row3 { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
   .rn-kom-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rn-kom-batt-row { grid-template-columns: minmax(0,1fr) 80px 40px; }
-  .rn-kom-op-row { grid-template-columns: minmax(0,1fr) auto; }
+  .rn-kom-page .rn-kom-op-row { grid-template-columns: 28px minmax(0,1fr) auto; }
   .rn-kom-op-ch { display: none; }
 }
 
@@ -6321,3 +6349,88 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-ig-fix-actions { grid-column:1/-1; display:flex; align-items:center; gap:10px; }
 .rn-ig-fix-msg { font-size:11px; color:var(--muted); }
 @media (max-width:640px){ .rn-ig-fix { grid-template-columns:minmax(0,1fr); } }
+
+/* ============================================================
+   .rn-dense — mock-up density shared by the pass-2 pages (set on <main>).
+   Builds on the :is(.rn-sh-page, …, .rn-dense) KPI/table rules above; each
+   page only adds its own column ratios and special components.
+   ============================================================ */
+.rn-dense .topbar { align-items: flex-start; }
+.rn-dense .topbar .eyebrow,
+.rn-dense .topbar > .status-pill,
+.rn-dense .topbar [data-rn-session-pill] { display: none; }
+.rn-dense .topbar .subtitle + .subtitle { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.rn-dense .panel { padding: 16px; }
+.rn-dense .panel-header { gap: 8px; margin-bottom: 10px; }
+.rn-dense .panel-header h3 { font-size: 14px; }
+.rn-dense .panel-header p { font-size: 11px; margin: 2px 0 0; }
+.rn-dense .panel-header .btn.mini, .rn-dense .panel-header .rn-tab { padding: 4px 10px; font-size: 11px; }
+.rn-dense .kpi-grid { gap: 12px; }
+.rn-dense .kpi-grid .kpi-card { padding: 12px; column-gap: 8px; grid-template-columns: 36px minmax(0, 1fr); min-height: 84px;
+  background: var(--panel, #fff); border-color: var(--line); }
+.rn-dense .kpi-grid .kpi-icon { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; align-self: start; }
+.rn-dense .kpi-grid .kpi-icon .rn-ic { margin: 0; }
+.rn-dense .kpi-grid .kpi-card > span:not(.kpi-icon) { color: var(--text); font-weight: 600; font-size: 10.5px; }
+.rn-dense .kpi-grid .kpi-card > strong { color: var(--text); }
+.rn-dense .kpi-grid .kpi-card > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rn-dense .rn-table th { text-transform: none; letter-spacing: 0; }
+.rn-dense .rn-table td { padding: 7px 5px; }
+.rn-dense .event-list { gap: 8px; }
+.rn-dense .event-list .event-card { padding: 8px 10px; border-radius: 10px; }
+.rn-dense .event-list .event-card h4 { font-size: 12px; margin: 0; }
+.rn-dense .event-list .event-card p { font-size: 11px; margin: 2px 0 0; }
+.rn-dense .event-list .event-card .chip { height: 20px; font-size: 10px; padding: 0 7px; }
+.rn-dense .rn-input-drawer > summary h3 { font-size: 14px; }
+.rn-dense .rn-input-drawer > summary p { font-size: 11px; }
+@media (max-width: 640px) {
+  .rn-dense .kpi-grid .kpi-card > span:not(.kpi-icon) { white-space: normal; }
+}
+
+/* Alat Komunikasi pass 2 (2026-09-30): row spacing, operator add button at the bottom,
+   one-line frequency rows, alert cards with a round icon and "Sejak" time on the right */
+.rn-kom-page .rn-kom-row3 { margin-top: 18px; }
+.rn-kom-page .rn-kom-footnote { margin: 10px 2px 14px; }
+.rn-kom-page .rn-kom-row1 > aside.panel { display: flex; flex-direction: column; }
+.rn-kom-page .rn-kom-op-list { flex: 1; }
+.rn-kom-op-add { width: 100%; margin-top: 8px; justify-content: center; font-size: 12px; padding: 7px 10px; background: transparent; }
+.rn-kom-page .rn-kom-op-row { grid-template-columns: 28px minmax(0,1fr) auto auto; }
+.rn-kom-page .rn-kom-op-id b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rn-kom-freq-list { display: flex; flex-direction: column; }
+.rn-kom-freq-row { display: grid; grid-template-columns: 18px minmax(0,1fr) auto 8px; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 11.5px; }
+.rn-kom-freq-row:last-child { border-bottom: 0; }
+.rn-kom-freq-ic { color: #7a6a62; display: grid; place-items: center; }
+.rn-kom-freq-ic .rn-ic, .rn-kom-freq-ic svg { width: 15px; height: 15px; }
+.rn-kom-freq-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rn-kom-freq-name small { color: var(--muted); font-size: 11px; }
+.rn-kom-freq-st { font-size: 11px; color: var(--muted); }
+.rn-kom-freq-st.warn { color: #c77a12; } .rn-kom-freq-st.bad { color: #c2332f; }
+.rn-kom-freq-dot { width: 7px; height: 7px; border-radius: 50%; background: #2f9a5c; }
+.rn-kom-freq-dot.warn { background: #e08a1e; } .rn-kom-freq-dot.bad { background: #d23c3c; }
+.rn-kom-page #alertList { display: flex; flex-direction: column; gap: 8px; }
+.rn-kom-alert { display: grid; grid-template-columns: 34px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 9px 10px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--panel, #fff); color: inherit; text-decoration: none; }
+.rn-kom-alert-ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; }
+.rn-kom-alert-ic.bad { background: #d23c3c; } .rn-kom-alert-ic.warn { background: #e08a1e; }
+.rn-kom-alert-ic .rn-ic, .rn-kom-alert-ic svg { width: 17px; height: 17px; }
+.rn-kom-alert-body { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.rn-kom-alert-body b { font-size: 12px; }
+.rn-kom-alert-body .chip { height: 18px; font-size: 10px; padding: 0 6px; }
+.rn-kom-alert-body small { font-size: 10.5px; color: var(--muted); }
+.rn-kom-alert-time { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.rn-kom-page .rn-kom-op-row { grid-template-columns: 28px minmax(0,1fr) auto; }
+.rn-kom-op-side { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.rn-kom-op-st { font-size: 10px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.rn-kom-op-st i { width: 6px; height: 6px; border-radius: 50%; background: #a89a91; }
+.rn-kom-op-st.ok { color: #2f9a5c; } .rn-kom-op-st.ok i { background: #2f9a5c; }
+.rn-kom-op-st.warning { color: #c77a12; } .rn-kom-op-st.warning i { background: #e08a1e; }
+.rn-kom-op-st.danger { color: #c2332f; } .rn-kom-op-st.danger i { background: #d23c3c; }
+.rn-kom-page .rn-kom-op-ch { font-size: 10px; padding: 0 6px; }
+.rn-kom-page .rn-kom-batt-id b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 640px) { .rn-kom-page .rn-kom-op-ch { display: inline-block; } }
+.rn-kom-page :is(#battList, #alertList):not(.is-all) .rn-kom-extra { display: none; }
+.rn-kom-page :is(#battList, #alertList) { max-height: none; overflow: visible; }
+.rn-kom-more { margin-top: 6px; width: 100%; border: 1px solid var(--line); border-radius: 10px; background: transparent;
+  color: #d9482f; font-size: 11px; font-weight: 600; padding: 6px 10px; cursor: pointer; }
+.rn-kom-page .rn-kom-freq-row { padding: 4px 0; }
+.rn-kom-page .rn-kom-row3 .panel-header p { display: none; }

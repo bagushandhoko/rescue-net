@@ -6,7 +6,8 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Alat Komunikasi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="../assets/css/style.css?v=dense-20260930">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -48,7 +49,7 @@
     </nav>
   </aside>
 
-  <main class="main">
+  <main class="main rn-dense rn-kom-page">
     <header class="topbar">
       <div class="rn-page-mobile-title">Alat Komunikasi</div>
 
@@ -100,37 +101,34 @@
         </div>
       </div>
 
-      <aside class="panel">
+      <div class="panel rn-kom-conn">
         <div class="panel-header">
-          <div><h3>Operator Radio</h3></div>
-          <button class="btn primary mini" type="button" id="opAddBtn">+ Tambah Operator</button>
-        </div>
-        <div class="rn-kom-op-list" id="operatorList"></div>
-      </aside>
-    </section>
-
-    <section class="content-grid rn-kom-row2">
-      <div class="panel">
-        <div class="panel-header">
-          <div><h3>Konektivitas Posko</h3><p>Status hubungan tiap posko dengan pusat komando.</p></div>
+          <div><h3>Konektivitas Posko</h3></div>
           <a class="btn mini" href="map.html?event=event-sim-001" id="mapLink">Lihat Peta</a>
         </div>
+        <div class="rn-kom-map" id="connMap" aria-label="Peta konektivitas posko"></div>
         <div class="rn-kom-conn-legend" id="connLegend"></div>
-        <div class="rn-table-wrap">
-          <table class="rn-table">
-            <thead><tr><th>Posko</th><th>Status</th><th>Kontak Terakhir</th></tr></thead>
-            <tbody id="connBody"><tr><td colspan="3">Memuat…</td></tr></tbody>
-          </table>
-        </div>
+        <details class="rn-kom-conn-list">
+          <summary id="connListSummary">Daftar posko</summary>
+          <div class="rn-table-wrap">
+            <table class="rn-table">
+              <thead><tr><th>Posko</th><th>Status</th><th>Kontak Terakhir</th></tr></thead>
+              <tbody id="connBody"><tr><td colspan="3">Memuat…</td></tr></tbody>
+            </table>
+          </div>
+        </details>
       </div>
 
       <aside class="panel">
-        <div class="panel-header"><div><h3>Peringatan Konektivitas</h3></div></div>
-        <div class="event-list" id="alertList"></div>
+        <div class="panel-header">
+          <div><h3>Operator Radio</h3></div>
+        </div>
+        <div class="rn-kom-op-list" id="operatorList"></div>
+        <button class="btn rn-kom-op-add" type="button" id="opAddBtn">+ Tambah Operator</button>
       </aside>
     </section>
 
-    <section class="content-grid rn-kom-row2">
+    <section class="content-grid rn-kom-row3">
       <div class="panel">
         <div class="panel-header">
           <div><h3>Status Daya &amp; Baterai</h3><p>Unit dengan baterai terendah lebih dulu.</p></div>
@@ -140,13 +138,12 @@
 
       <div class="panel">
         <div class="panel-header"><div><h3>Status Frekuensi &amp; Jaringan</h3></div></div>
-        <div class="rn-table-wrap">
-          <table class="rn-table">
-            <thead><tr><th>Kanal</th><th>Frekuensi / Penyedia</th><th>Status</th></tr></thead>
-            <tbody id="freqBody"><tr><td colspan="3">Memuat…</td></tr></tbody>
-          </table>
-        </div>
+        <div class="rn-kom-freq-list" id="freqList"><p class="rn-muted">Memuat…</p></div>
       </div>
+      <aside class="panel">
+        <div class="panel-header"><div><h3>Peringatan Konektivitas</h3></div></div>
+        <div class="event-list" id="alertList"></div>
+      </aside>
     </section>
 
     <p class="rn-muted rn-kom-footnote" id="komFootnote"></p>
@@ -280,8 +277,9 @@
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/alat-komunikasi.js?v=komunikasi-20260903"></script>
+<script src="../assets/vendor/leaflet/leaflet.js"></script>
+<script src="../assets/js/rn-ui.js?v=cluster-20260930"></script>
+<script src="../assets/js/alat-komunikasi.js?v=dense-20260930"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

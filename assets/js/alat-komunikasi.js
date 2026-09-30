@@ -103,23 +103,59 @@
     var chip = { online: "ok", siaga: "warning", istirahat: "", offline: "danger" };
     el.innerHTML = ops.map(function (o) {
       return (
-        '<div class="rn-kom-op-row">' +
+        '<div class="rn-kom-op-row"><span class="rn-kom-op-av">' + esc(String(o.name || "?").split(/\s+/).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase()) + "</span>" +
         "<span class=\"rn-kom-op-id\"><b>" + esc(o.name) + "</b><small>" + esc(o.role_label) +
         (o.posko && o.posko !== "-" ? " · " + esc(o.posko) : "") + "</small></span>" +
-        '<span class="rn-kom-op-ch">' + esc(o.channel) + "</span>" +
-        '<span class="chip ' + (chip[o.status] || "") + '">' + esc(o.status_label) + "</span>" +
+        '<span class="rn-kom-op-side"><span class="rn-kom-op-ch">' + esc(o.channel) + "</span>" +
+        '<span class="rn-kom-op-st ' + (chip[o.status] || "") + '"><i></i>' + esc(o.status_label) + "</span></span>" +
         "</div>"
       );
     }).join("");
   }
 
+  var CONN_COLOR = { connected: "#2f9a5c", weak: "#e08a1e", disconnected: "#d23c3c", unknown: "#a89a91" };
+  var connMap = null, connLayer = null;
+
+  /* mock-up: map with one pin per posko coloured by status, three count tiles under it */
+  function renderConnMap(rows) {
+    var host = $("#connMap");
+    if (!host || typeof L === "undefined") { if (host) host.hidden = true; return; }
+    if (!connMap) {
+      connMap = L.map(host, { zoomControl: false, attributionControl: false, scrollWheelZoom: false });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 }).addTo(connMap);
+      connLayer = L.layerGroup().addTo(connMap);
+    }
+    connLayer.clearLayers();
+    var pts = [];
+    rows.forEach(function (p) {
+      if (p.lat == null || p.lng == null) return;
+      var ll = [Number(p.lat), Number(p.lng)];
+      pts.push(ll);
+      var m = L.circleMarker(ll, { radius: p.status === "unknown" ? 5 : 8, weight: 2, color: "#fff",
+        fillColor: CONN_COLOR[p.status] || CONN_COLOR.unknown, fillOpacity: 0.95 }).addTo(connLayer);
+      m.bindTooltip(p.title + " · " + p.status_label);
+      if (p.href) m.on("click", function () { window.location.href = p.href; });
+    });
+    if (pts.length) connMap.fitBounds(window.RNUI.localClusterBounds(pts), { padding: [18, 18], maxZoom: 13 });
+    else connMap.setView([-2.5, 118], 4);
+    setTimeout(function () { connMap.invalidateSize(); }, 50);
+  }
+
   function renderConnectivity(k) {
     k = k || {};
+    function tile(cls, icon, n, label) {
+      return '<div class="rn-kom-conn-tile ' + cls + '"><span class="rn-kom-conn-dot" data-icon="' + icon + '"></span>' +
+        "<span>" + label + "</span><b>" + fmt(n) + " <small>Posko</small></b></div>";
+    }
     $("#connLegend").innerHTML =
-      '<span class="rn-kom-conn-pill ok"><b>' + fmt(k.terhubung) + "</b> Terhubung</span>" +
-      '<span class="rn-kom-conn-pill warn"><b>' + fmt(k.lemah) + "</b> Koneksi Lemah</span>" +
-      '<span class="rn-kom-conn-pill bad"><b>' + fmt(k.tidak_terhubung) + "</b> Tidak Terhubung</span>" +
-      (k.belum_terdata ? '<span class="rn-kom-conn-pill"><b>' + fmt(k.belum_terdata) + "</b> Belum Terdata</span>" : "");
+      tile("ok", "check-circle", k.terhubung, "Terhubung") +
+      tile("warn", "alert-triangle", k.lemah, "Koneksi Lemah") +
+      tile("bad", "wifi-off", k.tidak_terhubung, "Tidak Terhubung");
+    if (window.RNIconFill) window.RNIconFill($("#connLegend"));
+    var rows0 = k.poskos || [];
+    $("#connListSummary").textContent = "Daftar posko (" + rows0.length + ")" +
+      (k.belum_terdata ? " · " + fmt(k.belum_terdata) + " belum terdata" : "");
+    renderConnMap(rows0);
 
     var body = $("#connBody");
     var rows = k.poskos || [];
@@ -139,6 +175,18 @@
     });
   }
 
+  /* mock-up shows the first few rows and a "Lihat semua" link that expands the rest */
+  function moreToggle(el, shown, total) {
+    if (total <= shown) return;
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "rn-kom-more"; btn.textContent = "Lihat semua (" + total + ")";
+    btn.addEventListener("click", function () {
+      var open = el.classList.toggle("is-all");
+      btn.textContent = open ? "Tampilkan lebih sedikit" : "Lihat semua (" + total + ")";
+    });
+    el.appendChild(btn);
+  }
+
   function renderBattery(rows) {
     var el = $("#battList");
     if (!rows || !rows.length) {
@@ -146,33 +194,46 @@
       return;
     }
     var cls = { kritis: "bad", waspada: "warn", aman: "ok" };
-    el.innerHTML = rows.slice(0, 10).map(function (b) {
+    el.classList.remove("is-all");
+    el.innerHTML = rows.slice(0, 10).map(function (b, i) {
       return (
-        '<div class="rn-kom-batt-row">' +
+        '<div class="rn-kom-batt-row' + (i >= 5 ? " rn-kom-extra" : "") + '">' +
         "<span class=\"rn-kom-batt-id\"><b>" + esc(b.label) + "</b><small>" + esc(b.category_label) + " · " + esc(b.posko) + "</small></span>" +
         '<span class="rn-kom-batt-bar"><i class="' + (cls[b.state] || "") + '" style="width:' + Math.max(4, b.battery_pct) + '%"></i></span>' +
         '<span class="rn-kom-batt-pct ' + (cls[b.state] || "") + '">' + fmt(b.battery_pct) + "%</span>" +
         "</div>"
       );
     }).join("");
+    moreToggle(el, 5, Math.min(rows.length, 10));
   }
 
+  var FREQ_ICON = { vhf: "radio", uhf: "radio", hf: "radio", seluler: "activity", starlink: "map-signal", vsat: "map-signal" };
+  var FREQ_CLS = { baik: "ok", sibuk: "warn", lemah: "warn", down: "bad" };
+
+  /* mock-up: icon · "VHF Primary (146.020 MHz)" · status word · dot, one line per channel */
   function renderFrequency(rows) {
-    var body = $("#freqBody");
+    var el = $("#freqList");
     if (!rows || !rows.length) {
-      body.innerHTML = '<tr><td colspan="3"><em class="rn-muted">Belum ada kanal frekuensi terdata.</em></td></tr>';
+      el.innerHTML = '<p class="rn-muted">Belum ada kanal frekuensi terdata.</p>';
       return;
     }
-    var chip = { baik: "ok", sibuk: "warning", lemah: "warning", down: "danger" };
-    body.innerHTML = rows.map(function (f) {
-      var right = f.status_label + (f.load_pct != null ? " " + f.load_pct + "%" : "");
-      var meta = [f.frequency_value, f.provider].filter(Boolean).join(" · ") || f.network_label;
+    el.innerHTML = rows.map(function (f) {
+      var detail = f.frequency_value || f.provider || "";
+      var right = f.status_label + (f.load_pct != null && f.status === "sibuk" ? " " + f.load_pct + "%" : "");
+      var cls = FREQ_CLS[f.status] || "";
       return (
-        "<tr><td><b>" + esc(f.band_label) + "</b><br><small class=\"rn-muted\">" + esc(f.network_label) + "</small></td>" +
-        "<td>" + esc(meta) + "</td>" +
-        '<td><span class="chip ' + (chip[f.status] || "") + '">' + esc(right) + "</span></td></tr>"
+        '<div class="rn-kom-freq-row"><span class="rn-kom-freq-ic" data-icon="' + (FREQ_ICON[f.network_type] || "radio") + '"></span>' +
+        '<span class="rn-kom-freq-name" title="' + esc(f.network_label) + '">' + esc(f.band_label) +
+        (detail ? " <small>(" + esc(detail) + ")</small>" : "") + "</span>" +
+        '<span class="rn-kom-freq-st ' + cls + '">' + esc(right) + '</span><i class="rn-kom-freq-dot ' + cls + '"></i></div>'
       );
     }).join("");
+    if (window.RNIconFill) window.RNIconFill(el);
+  }
+
+  /* "… 2026-09-03 08:19:50.553877" -> "… 03/09 08:19" (the API puts raw datetimes in the text) */
+  function tidyTimes(s) {
+    return String(s || "").replace(/(\d{4})-(\d{2})-(\d{2})[ T](\d{2}:\d{2})(:[\d.]+)?/g, function (_, y, m, d, hm) { return d + "/" + m + " " + hm; });
   }
 
   function renderAlerts(rows) {
@@ -181,15 +242,24 @@
       el.innerHTML = '<article class="event-card"><div class="event-main"><div><h4>Aman</h4><p>Tidak ada peringatan konektivitas saat ini.</p></div></div></article>';
       return;
     }
-    el.innerHTML = rows.slice(0, 12).map(function (r) {
+    el.classList.remove("is-all");
+    el.innerHTML = rows.slice(0, 12).map(function (r, i) {
+      var extra = i >= 3 ? " rn-kom-extra" : "";
+      var icon = /baterai/i.test(r.tag) ? "battery-low" : /tidak terhubung|terputus/i.test(r.tag) ? "wifi-off" : "alert-triangle";
+      var lvl = r.level === "critical" ? "bad" : "warn";
+      var time = r.time ? tidyTimes(r.time).slice(0, 11) : "";
       var inner =
-        '<div class="event-main"><div><h4>' + (r.level === "critical" ? "⚠ " : "") + esc(r.title) + "</h4>" +
-        "<p>" + esc(r.sub) + (r.time ? ' · <span class="rn-muted">' + esc(tsLabel(r.time)) + "</span>" : "") + "</p></div>" +
-        '<div class="chips"><span class="chip ' + (r.level === "critical" ? "danger" : "warning") + '">' + esc(r.tag) + "</span></div></div>";
+        '<span class="rn-kom-alert-ic ' + lvl + '" data-icon="' + icon + '"></span>' +
+        '<span class="rn-kom-alert-body"><b>' + esc(r.title) + "</b>" +
+        '<span class="chip ' + (lvl === "bad" ? "danger" : "warning") + '">' + esc(r.tag) + "</span>" +
+        "<small>" + esc(tidyTimes(r.sub)) + "</small></span>" +
+        (time ? '<span class="rn-kom-alert-time">Sejak ' + esc(time) + "</span>" : "");
       return r.href
-        ? '<a class="event-card rn-sh-alert" href="' + esc(r.href) + '">' + inner + "</a>"
-        : '<article class="event-card">' + inner + "</article>";
+        ? '<a class="rn-kom-alert' + extra + '" href="' + esc(r.href) + '">' + inner + "</a>"
+        : '<div class="rn-kom-alert' + extra + '">' + inner + "</div>";
     }).join("");
+    moreToggle(el, 3, Math.min(rows.length, 12));
+    if (window.RNIconFill) window.RNIconFill(el);
   }
 
   /* ---------- forms ---------- */
@@ -236,7 +306,7 @@
     CACHE = data;
     var t = shortTime(data.generated_at);
     $("#komUpdated").textContent = "Alat Komunikasi · Diperbarui " + (t || "-");
-    $("#komStatus").textContent = "Dimuat pukul " + (t || "-");
+    $("#komStatus").textContent = "Diperbarui " + (t || "-");
 
     renderKpi(data.totals || {});
     renderInventory();

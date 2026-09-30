@@ -76,6 +76,23 @@
     };
   }
 
+  /* [[lat,lng],...] -> the points within radiusKm of the median point, so one distant hub does not
+     zoom a local map out to all of Indonesia (same rule as the Control Centre map). */
+  function localClusterBounds(points, radiusKm) {
+    if (points.length <= 1) return points;
+    var r = radiusKm || 150;
+    var lats = points.map(function (p) { return p[0]; }).sort(function (a, b) { return a - b; });
+    var lngs = points.map(function (p) { return p[1]; }).sort(function (a, b) { return a - b; });
+    var mid = Math.floor(lats.length / 2), m = [lats[mid], lngs[mid]];
+    function km(a, b) {
+      var R = 6371, rad = Math.PI / 180, dLa = (b[0] - a[0]) * rad, dLo = (b[1] - a[1]) * rad;
+      var h = Math.sin(dLa / 2) * Math.sin(dLa / 2) + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(dLo / 2) * Math.sin(dLo / 2);
+      return 2 * R * Math.asin(Math.sqrt(h));
+    }
+    var local = points.filter(function (p) { return km(p, m) <= r; });
+    return local.length >= points.length / 2 ? local : points;
+  }
+
   window.RNUI = { esc: esc, fmt: fmt, shortDate: shortDate, fmtTime: fmtTime, eventId: eventId,
-                  chip: chip, kpiCard: kpiCard, modal: modal };
+                  chip: chip, kpiCard: kpiCard, modal: modal, localClusterBounds: localClusterBounds };
 })();

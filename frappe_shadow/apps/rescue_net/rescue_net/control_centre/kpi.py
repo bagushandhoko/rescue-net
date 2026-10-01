@@ -111,6 +111,13 @@ class _OrgResolver:
         return self._mode[posko_name]
 
 
+def _public_reporter_label(label):
+    label = label or ""
+    if frappe.session.user not in (None, "", "Guest"):
+        return label or "Pelapor terverifikasi"
+    return label.split(" · ", 1)[1] if " · " in label else "Pelapor terverifikasi"
+
+
 def _drill_kebutuhan(event, res, limit):
     import json
 
@@ -121,7 +128,7 @@ def _drill_kebutuhan(event, res, limit):
         fields=_sf("RN Logistic Need", [
             "name", "item_name", "quantity", "unit", "urgency",
             "need_status", "posko", "needed_before", "legacy_payload", "modified",
-            "jiwa_terdampak",
+            "jiwa_terdampak", "report_channel", "reporter_label", "reporter_confirmation",
         ]),
         order_by="modified desc",
         limit_page_length=limit,
@@ -160,6 +167,10 @@ def _drill_kebutuhan(event, res, limit):
             "priority": n.get("urgency"),
             "when": n.get("needed_before"),
             "_posko": n.get("posko"),
+            # Pelapor Terverifikasi (services/reporter.py); guests see the role, not the name
+            **({"report_channel": n.get("report_channel"),
+                "reporter_label": _public_reporter_label(n.get("reporter_label")),
+                "reporter_confirmation": n.get("reporter_confirmation")} if n.get("report_channel") else {}),
         })
 
     if frappe.db.exists("DocType", "RN Shelter Need"):

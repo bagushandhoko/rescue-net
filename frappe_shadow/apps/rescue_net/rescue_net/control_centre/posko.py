@@ -295,6 +295,26 @@ def posko_detail(posko, disaster_event=None):
     return result
 
 
+def _reporter_label(n, logged_in):
+    """Logged-in viewers see "Nama · Jabatan, Instansi"; guests only the role part."""
+    label = n.get("reporter_label") or ""
+    if logged_in:
+        return label or "Pelapor terverifikasi"
+    return label.split(" · ", 1)[1] if " · " in label else "Pelapor terverifikasi"
+
+
+def _can_report(can_manage):
+    """Pelapor Terverifikasi may report a need at any posko (services/reporter.py)."""
+    if can_manage:
+        return False
+    from rescue_net.access_policy import rn_actor
+    from rescue_net.services import reporter
+    try:
+        return reporter.is_verified_reporter(rn_actor(required=False))
+    except Exception:
+        return False
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def logistik_board(posko, disaster_event=None):
@@ -342,7 +362,8 @@ def logistik_board(posko, disaster_event=None):
         "RN Logistic Need",
         filters={"posko": name},
         fields=_sf("RN Logistic Need", ["name", "item_name", "quantity", "unit",
-                "urgency", "need_status", "needed_before", "legacy_payload"]),
+                "urgency", "need_status", "needed_before", "legacy_payload",
+                "report_channel", "reporter_label", "reporter_confirmation"]),
         order_by="modified desc",
         limit_page_length=200,
     )
@@ -377,6 +398,11 @@ def logistik_board(posko, disaster_event=None):
             "estimasi_habis": payload.get("estimasi_habis") or "-",
             "waktu_harus_tiba": n.get("needed_before") or "-",
             "priority": n.get("urgency") or "normal",
+            # Pelapor Terverifikasi: labelled, "belum dikonfirmasi" until the posko decides
+            "need": n.get("name"),
+            "report_channel": n.get("report_channel") or None,
+            "reporter_label": _reporter_label(n, base.get("logged_in")) if n.get("report_channel") else None,
+            "reporter_confirmation": n.get("reporter_confirmation") if n.get("report_channel") else None,
         })
 
     urgent_rows.sort(key=lambda r: (
@@ -471,6 +497,7 @@ def logistik_board(posko, disaster_event=None):
         "logged_in": base.get("logged_in", False),
         "can_manage": base.get("can_manage", False),
         "can_coordinate": base.get("can_coordinate", False),
+        "can_report": _can_report(base.get("can_manage", False)),
         "public_participation": base.get("public_participation", False),
         "is_collector": is_collector,
         "logistics_role": posko_out.get("logistics_role"),

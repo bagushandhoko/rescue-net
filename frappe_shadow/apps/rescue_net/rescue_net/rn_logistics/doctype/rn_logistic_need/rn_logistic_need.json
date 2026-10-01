@@ -222,6 +222,24 @@
    "fieldname": "needed_before",
    "label": "Needed Before",
    "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "report_channel",
+   "label": "Jalur Laporan",
+   "fieldtype": "Data",
+   "description": "Kosong = dicatat posko/organisasi; 'verified_reporter' = dilaporkan pelapor terverifikasi dari luar posko."
+  },
+  {
+   "fieldname": "reporter_label",
+   "label": "Pelapor",
+   "fieldtype": "Data",
+   "description": "Nama · jabatan, instansi saat dilaporkan."
+  },
+  {
+   "fieldname": "reporter_confirmation",
+   "label": "Konfirmasi Posko",
+   "fieldtype": "Data",
+   "description": "pending / confirmed / rejected — keputusan petugas posko atas laporan pelapor."
   }
  ],
  "permissions": [

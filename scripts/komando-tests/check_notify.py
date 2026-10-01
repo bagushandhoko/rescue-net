@@ -1,7 +1,11 @@
 # Run inside the container AFTER api_e2e.py: the WhatsApp notifications must be in RN Notification Log.
 # args via env: none — numbers are the fixed test numbers used by api_e2e.py (section 11/13).
 import frappe
-frappe.init(site="osiun.localhost", sites_path="/home/frappe/frappe-bench/sites"); frappe.connect()
+import os, sys
+SITE = os.environ.get("RN_SITE", "rescuenet-test.localhost")
+if SITE == "osiun.localhost":
+    sys.exit("DITOLAK: komando-tests tidak boleh dijalankan terhadap produksi (osiun.localhost). Pakai scripts/rn-test-stack.sh e2e.")
+frappe.init(site=SITE, sites_path="/home/frappe/frappe-bench/sites"); frappe.connect()
 def logs(num, key):
     return frappe.get_all("RN Notification Log", filters={"to_number": ["like", "%" + num[-9:]], "event_key": key},
                           fields=["name", "status", "body", "context_type"], limit_page_length=50)
@@ -18,3 +22,4 @@ dec = logs("081234500001", "command_request_decided")
 check("N3. pemohon dikabari WA saat permintaannya diputuskan", any("DITERAPKAN" in (l.body or "") for l in dec), dec)
 check("N4. status log = simulated/sent (bukan failed)", all(l.status in ("simulated", "sent") for l in new + dec), [l.status for l in new + dec])
 print(f"notify ok={ok} fail={fail}")
+sys.exit(1 if fail else 0)

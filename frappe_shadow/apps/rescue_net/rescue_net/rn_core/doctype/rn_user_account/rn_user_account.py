@@ -29,5 +29,10 @@ class RNUserAccount(Document):
         # Owner rule (2026-09-26, VF-1): changing the role of an existing
         # account is a System Manager decision — whatever path saves it.
         from rescue_net.services.guards import bypass, changed, is_privileged
-        if changed(self, "role") and not bypass(self) and not is_privileged():
+        # Exception (owner 2026-10-01): a senior verifier may grant exactly the
+        # Pelapor Terverifikasi role to an account that asked for it
+        # (services/reporter.activate sets the flag; api_verifier checks trust).
+        reporter_grant = (self.flags.get("rn_reporter_activation") and self.role == "verified_reporter"
+                          and self.requested_role == "pelapor")
+        if changed(self, "role") and not bypass(self) and not is_privileged() and not reporter_grant:
             frappe.throw("Perubahan role akun hanya bisa dilakukan System Manager.", frappe.PermissionError)

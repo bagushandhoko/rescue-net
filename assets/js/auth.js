@@ -42,7 +42,8 @@
   // explicit ?next= (e.g. they were bounced here mid-flow) still wins.
   var ROLE_LANDING_PAGE = {
     petugas_posko: "registrasi-posko.html",
-    donatur: "program-khusus.html"
+    donatur: "program-khusus.html",
+    pelapor: "posko-logistik.html"
   };
   function registerLandingTarget(role) {
     try {
@@ -171,7 +172,7 @@
     var pending =
       s.role_request_status && String(s.role_request_status).toLowerCase() === "pending"
         ? "<div><span>Peran diminta</span><b>" +
-          safe(s.requested_role) +
+          safe(s.requested_role === "pelapor" ? "Pelapor Terverifikasi" : s.requested_role) +
           " (menunggu verifikasi)</b></div>"
         : "";
 
@@ -280,11 +281,27 @@
     });
   }
 
+  /* Pelapor Terverifikasi: instansi/jabatan/wilayah + a reference the verifier can call */
+  function wireReporterToggle() {
+    var wrap = document.getElementById("reporterFields");
+    var chk = document.getElementById("consentVerificationChk");
+    var refs = document.getElementById("referenceFields");
+    if (!wrap) return;
+    $all('input[name="role"]').forEach(function (r) {
+      r.addEventListener("change", function () {
+        var on = r.value === "pelapor" && r.checked;
+        if (r.checked) wrap.hidden = !on;
+        if (on && chk && !chk.checked) { chk.checked = true; if (refs) refs.hidden = false; }
+      });
+    });
+  }
+
   /* ---------- init ---------- */
   async function init() {
     wirePwToggles();
     wireGoogleButtons();
     wireReferenceToggle();
+    wireReporterToggle();
 
     $all("[data-auth-tab]").forEach(function (el) {
       el.addEventListener("click", function (e) {
@@ -366,6 +383,13 @@
           setMessage("registerMessage", "Nama, email, dan password wajib diisi.", true);
           return;
         }
+        var reporterAgency = role === "pelapor" ? (f.reporter_agency.value || "").trim() : "";
+        var reporterPosition = role === "pelapor" ? (f.reporter_position.value || "").trim() : "";
+        var reporterArea = role === "pelapor" ? (f.reporter_area.value || "").trim() : "";
+        if (role === "pelapor" && !(reporterAgency && reporterPosition)) {
+          setMessage("registerMessage", "Pelapor terverifikasi wajib mengisi instansi/kelompok dan jabatan/peran.", true);
+          return;
+        }
         var c = pwChecks(pass);
         if (!c.len || !c.upper || !c.digit) {
           setMessage("registerMessage", "Password belum memenuhi semua syarat.", true);
@@ -387,7 +411,10 @@
             consent_verification: consentVerification,
             reference_name: referenceName,
             reference_relation: referenceRelation,
-            reference_contact: referenceContact
+            reference_contact: referenceContact,
+            reporter_agency: reporterAgency,
+            reporter_position: reporterPosition,
+            reporter_area: reporterArea
           });
           setMessage("registerMessage", (out && out.message) || "Akun dibuat. Masuk…");
           await login(email, pass);

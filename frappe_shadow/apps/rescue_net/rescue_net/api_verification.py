@@ -8,6 +8,7 @@ from rescue_net.access_policy import (
     rn_actor,
 )
 from rescue_net.intelligence.freshness import freshness
+from rescue_net.services import reporter
 
 
 VERIFY_ROLES = {
@@ -600,6 +601,11 @@ def approval_item_detail(kind, name):
             "Role Diminta": doc.requested_role, "Email": doc.email, "Phone": doc.phone,
             "Bersedia Diverifikasi": "Ya" if getattr(doc, "consent_verification", 0) else "Tidak",
         }
+        if doc.requested_role == "pelapor":
+            fields["Role Diminta"] = "Pelapor Terverifikasi (lapor kebutuhan di semua posko)"
+            fields["Instansi / Kelompok"] = doc.get("reporter_agency")
+            fields["Jabatan / Peran"] = doc.get("reporter_position")
+            fields["Wilayah Pantauan"] = doc.get("reporter_area")
         # Free-choice reference (RT/Kepala Sekolah/tokoh dikenal, dst — bukan
         # dari jaringan verifikator terdaftar) yang dipilih sendiri saat
         # registrasi, kalau ada.
@@ -732,7 +738,9 @@ def approval_action(kind, name, action, note=None):
 
     setattr(doc, status_field, new_status)
 
-    if action == "approve" and kind == "user" and getattr(doc, "requested_role", None):
+    if action == "approve" and kind == "user" and doc.get("requested_role") == reporter.SIGNUP_KEY:
+        reporter.activate(doc, frappe.session.user)
+    elif action == "approve" and kind == "user" and getattr(doc, "requested_role", None):
         doc.role = doc.requested_role
         if hasattr(doc, "status"):
             doc.status = "active"

@@ -19,6 +19,8 @@ PUBLIC_SIGNUP_ROLES = {
     "donatur": "viewer",
     "organisasi": "viewer",
     "petugas_posko": "viewer",
+    # Pelapor Terverifikasi: only reports needs at any posko (services/reporter.py)
+    "pelapor": "verified_reporter",
 }
 
 
@@ -52,6 +54,12 @@ ROLE_MATRIX = [
         "scope": "posko",
         "can_verify": True,
         "can_view_sensitive": True,
+    },
+    {
+        "role": "verified_reporter",
+        "scope": "report_need_any_posko",
+        "can_verify": False,
+        "can_view_sensitive": False,
     },
     {
         "role": "command_center",
@@ -396,6 +404,9 @@ def register(
     reference_name=None,
     reference_relation=None,
     reference_contact=None,
+    reporter_agency=None,
+    reporter_position=None,
+    reporter_area=None,
 ):
     """Public self-service signup used by pages/auth.html (Daftar tab).
 
@@ -430,6 +441,14 @@ def register(
 
     if role_key not in PUBLIC_SIGNUP_ROLES:
         role_key = "relawan"
+
+    reporter_agency = (reporter_agency or "").strip()[:140] or None
+    reporter_position = (reporter_position or "").strip()[:140] or None
+    reporter_area = (reporter_area or "").strip()[:140] or None
+    if role_key == "pelapor" and not (reporter_agency and reporter_position):
+        frappe.throw("Pelapor terverifikasi wajib mengisi instansi/kelompok dan jabatan/peran.")
+    if role_key != "pelapor":
+        reporter_agency = reporter_position = reporter_area = None
 
     if frappe.db.exists("User", email):
         frappe.throw("Email sudah terdaftar. Silakan masuk.")
@@ -467,6 +486,9 @@ def register(
                 "role_request_status": "pending",
                 "status": "pending_verification",
                 "consent_verification": consent_verification,
+                "reporter_agency": reporter_agency,
+                "reporter_position": reporter_position,
+                "reporter_area": reporter_area,
             }
         )
         account.flags.ignore_permissions = True

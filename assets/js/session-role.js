@@ -55,6 +55,10 @@
     }
 
     const rules = {
+      // Pelapor Terverifikasi: report needs at any posko, nothing else
+      verified_reporter: [
+        "report_need"
+      ],
       command_center: [
         "verify",
         "create_posko",

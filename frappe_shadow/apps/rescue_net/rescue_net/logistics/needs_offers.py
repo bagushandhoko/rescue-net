@@ -15,6 +15,7 @@ from rescue_net.access_policy import (
     public_posko_allowed,
     rn_actor,
 )
+from rescue_net.services import reporter
 from rescue_net.intelligence.freshness import freshness
 from rescue_net.rn_logistics.doctype.rn_distribution_flow.rn_distribution_flow import TRANSITIONS
 from rescue_net.intelligence.normalization import normalize_unit
@@ -203,13 +204,21 @@ def create_need(
     posko = resolve_posko(posko)
     actor = rn_actor()
 
+    # Pelapor Terverifikasi: may report a need at ANY posko (and only that) —
+    # the need lands on the same posko list, labelled and "belum dikonfirmasi"
+    via_reporter = False
     if not _can_contribute(actor, posko):
-        frappe.throw(
-            "Anda tidak dapat menambahkan kebutuhan ke Posko ini",
-            frappe.PermissionError,
-        )
+        if not (reporter.is_verified_reporter(actor) and frappe.db.exists("RN Posko", posko)):
+            frappe.throw(
+                "Anda tidak dapat menambahkan kebutuhan ke Posko ini",
+                frappe.PermissionError,
+            )
+        reporter.check_rate(actor.name)
+        via_reporter = True
 
     doc = frappe.new_doc("RN Logistic Need")
+    if via_reporter:
+        reporter.mark_need(doc, actor)
     doc.title = item_text
     doc.posko = posko
     doc.item_name = item_text
@@ -239,7 +248,33 @@ def create_need(
         "need":doc.name,
         "canonical_group":doc.canonical_group,
         "quantity_mode":doc.quantity_mode,
+        "report_channel": doc.get("report_channel") or None,
     }
+
+
+@frappe.whitelist()
+def confirm_reported_need(need, action, note=None):
+    """A posko operator confirms or rejects a need a Pelapor Terverifikasi
+    reported at their posko. Rejected → need_status "cancelled" (drops off
+    every open-needs list); the row stays for the audit trail."""
+    actor = rn_actor()
+    doc = frappe.get_doc("RN Logistic Need", need)
+    if doc.get("report_channel") != reporter.CHANNEL:
+        frappe.throw("Kebutuhan ini bukan laporan pelapor.")
+    if not _can_operate(actor, doc.posko):
+        frappe.throw("Hanya petugas posko ini yang dapat mengonfirmasi laporan.", frappe.PermissionError)
+    action = str(action or "").strip().lower()
+    if action not in ("confirm", "reject"):
+        frappe.throw("Aksi tidak valid (confirm/reject).")
+    if doc.get("reporter_confirmation") in ("confirmed", "rejected"):
+        frappe.throw(f"Laporan ini sudah diputuskan ({doc.reporter_confirmation}).")
+    doc.reporter_confirmation = "confirmed" if action == "confirm" else "rejected"
+    if action == "reject":
+        doc.need_status = "cancelled"
+    if note:
+        doc.estimate_text = ((doc.estimate_text + "\n") if doc.estimate_text else "") + "Catatan posko: " + str(note)[:300]
+    doc.save(ignore_permissions=True)
+    return {"need": doc.name, "reporter_confirmation": doc.reporter_confirmation, "need_status": doc.need_status}
 
 
 @frappe.whitelist()

@@ -22,8 +22,11 @@ function itemCategory(name) {
   return "Lainnya";
 }
 
+// HTML-escaped (item names / labels come from posko staff, donors and, since
+// 2026-10-01, outside verified reporters — every value goes into innerHTML)
 function safe(v) {
-  return (v === null || v === undefined || v === "") ? "-" : v;
+  if (v === null || v === undefined || v === "") return "-";
+  return String(v).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 }
 
 function num(v) {
@@ -252,7 +255,16 @@ function renderManageAccess(b) {
 
   // inline edit affordances on the dashboard (operator of THIS posko only)
   const addNeed = document.getElementById("btnOpenAddNeed");
-  if (addNeed) addNeed.hidden = !canManage;
+  const canReport = !!b.can_report && !canManage;  // Pelapor Terverifikasi: needs only, any posko
+  if (addNeed) {
+    addNeed.hidden = !(canManage || canReport);
+    addNeed.textContent = canReport ? "+ Laporkan Kebutuhan" : "+ Tambah";
+  }
+  const modalTitle = document.getElementById("addNeedModalTitle");
+  if (modalTitle) modalTitle.textContent = canReport ? "Laporkan Kebutuhan (Pelapor Terverifikasi)" : "Tambah Kebutuhan Logistik";
+  const reporterNote = document.getElementById("reporterNeedNote");
+  if (reporterNote) reporterNote.hidden = !canReport;
+  if (noAccess && canReport) noAccess.hidden = true;
   const editJiwa = document.getElementById("btnEditJiwa");
   if (editJiwa) editJiwa.hidden = !canManage || isCollector;
 
@@ -613,6 +625,45 @@ function drillGroupsHtml(data) {
    by the visibility model (open orgs → item rows w/ posko link; closed orgs
    → one summary row). Falls back to this posko's own list if the drill
    call failed. */
+/* Pelapor Terverifikasi rows: who reported + "belum dikonfirmasi"; the
+   operator of THAT posko gets Konfirmasi / Tolak (confirm_reported_need). */
+function reporterBadge(it, posko) {
+  if (!it || !it.report_channel) return "";
+  const st = it.reporter_confirmation || "pending";
+  const label = st === "confirmed" ? "dikonfirmasi posko" : st === "rejected" ? "ditolak posko" : "belum dikonfirmasi";
+  const b = LOGISTIK_BOARD || {};
+  const mine = b.can_manage && posko && posko === ((b.posko && b.posko.name) || poskoParam());
+  const id = it.id || it.need;
+  const act = mine && st === "pending" && id
+    ? `<span class="rn-rep-act"><button type="button" class="btn mini" data-rep-need="${safe(id)}" data-rep-act="confirm">Konfirmasi</button>` +
+      `<button type="button" class="btn mini" data-rep-need="${safe(id)}" data-rep-act="reject">Tolak</button></span>`
+    : "";
+  return `<small class="rn-rep-badge ${st}">Laporan pelapor terverifikasi · ${safe(it.reporter_label)} · ${label}</small>${act}`;
+}
+
+async function decideReportedNeed(btn) {
+  const need = btn.getAttribute("data-rep-need");
+  const act = btn.getAttribute("data-rep-act");
+  let note = null;
+  if (act === "reject") {
+    note = prompt("Alasan menolak laporan ini (opsional):", "");
+    if (note === null) return;
+  }
+  btn.disabled = true;
+  try {
+    await RN_FRAPPE.call("rescue_net.api_logistics.confirm_reported_need", { need, action: act, note }, { method: "POST" });
+    await loadBoard();
+  } catch (err) {
+    btn.disabled = false;
+    alert("Gagal: " + (err && err.message || err));
+  }
+}
+
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-rep-need]");
+  if (btn) { e.preventDefault(); decideReportedNeed(btn); }
+});
+
 const _PRI_RANK = p => (/crit|darurat/i.test(p) ? 0 : /urgent|segera/i.test(p) ? 1 : /high|tinggi/i.test(p) ? 2 : 3);
 
 function renderNeedsBoard(data, board) {
@@ -660,7 +711,7 @@ function renderNeedsBoard(data, board) {
       const pri = String(it.priority || "").toLowerCase();
       const priCls = /crit|darurat/.test(pri) ? "danger" : /urgent|high|tinggi|segera/.test(pri) ? "warning" : "neutral";
       return `<tr>
-        <td><b>${safe(it.title)}</b></td>
+        <td><b>${safe(it.title)}</b>${reporterBadge(it, it.posko)}</td>
         <td>${href
           ? `<a href="${href}">${safe(it.posko_title || it.posko)}</a>`
           : safe(it.posko_title || it.posko || "-")}
@@ -883,7 +934,7 @@ function openBuktiModal(row) {
   if (!row) return;
   const modal = document.getElementById("buktiModal");
   if (!modal) return;
-  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = safe(v); };
+  const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = (v === null || v === undefined || v === "") ? "-" : String(v); };
   const img = document.getElementById("buktiModalImg");
   const cap = buktiCleanCap(row);
   if (img) { img.src = row.evidence_url || ""; img.alt = cap; }
@@ -1036,10 +1087,13 @@ function setupLogisticNeedForm() {
         },
         { method: "POST" }
       );
-      if (msg) msg.textContent = "Kebutuhan tersimpan.";
+      const reported = LOGISTIK_BOARD && LOGISTIK_BOARD.can_report && !LOGISTIK_BOARD.can_manage;
+      if (msg) msg.textContent = reported
+        ? "Laporan terkirim — tampil di posko ini dengan tanda belum dikonfirmasi."
+        : "Kebutuhan tersimpan.";
       form.reset();
       await loadBoard();
-      closeAddNeedModal();
+      if (!reported) closeAddNeedModal();
     } catch (err) {
       if (msg) msg.textContent = err.message;
     }

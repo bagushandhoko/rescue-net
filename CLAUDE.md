@@ -27,8 +27,10 @@ Detail status, item terbuka, dan gotcha ada di `HANDOVER.md`.
 
 Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-01.)
 
-- **Sedang berjalan:** permintaan owner 2026-10-01 — registrasi "pelapor terverifikasi" (BNPB/kepolisian/warga
-  peduli; hanya bisa menambah item laporan di semua posko). Architecture review Fase 6 menunggu review owner.
+- **Selesai (belum deploy):** "pelapor terverifikasi" (owner 2026-10-01) — role `verified_reporter`, hanya menambah
+  Kebutuhan di posko mana pun (label pelapor + "belum dikonfirmasi" sampai posko konfirmasi/tolak; batas 30/jam;
+  `services/reporter.py`, `tests/test_verified_reporter.py`); 214 test lulus. **Perlu `bench migrate` + `rn-deploy-app.sh`**
+  (field baru RN User Account + RN Logistic Need). Architecture review Fase 6 menunggu review owner.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
   Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
   pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**

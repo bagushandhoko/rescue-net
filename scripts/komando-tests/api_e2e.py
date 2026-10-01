@@ -1,5 +1,8 @@
-import http.cookiejar, json, urllib.request, urllib.error
-BASE = "http://127.0.0.1:8095"
+import http.cookiejar, json, os, sys, urllib.request, urllib.error
+SITE = os.environ.get("RN_SITE", "rescuenet-test.localhost")
+if SITE == "osiun.localhost":
+    sys.exit("DITOLAK: komando-tests tidak boleh dijalankan terhadap produksi (osiun.localhost). Pakai scripts/rn-test-stack.sh e2e.")
+BASE = os.environ.get("RN_BASE", "http://127.0.0.1:8000")
 PW = "CmdTest123"
 ok = fail = 0
 def check(name, cond, extra=""):
@@ -16,7 +19,7 @@ class C:
             s, m = self._req("GET", "/api/method/rescue_net.api_auth.session_info")
             self.csrf = (m or {}).get("csrf_token") if isinstance(m, dict) else None
     def _req(self, method, path, body=None):
-        h = {"Accept": "application/json", "Host": "osiun.localhost"}
+        h = {"Accept": "application/json", "Host": SITE}
         data = None
         if body is not None: data = json.dumps(body).encode(); h["Content-Type"] = "application/json"
         if self.csrf: h["X-Frappe-CSRF-Token"] = self.csrf
@@ -314,3 +317,4 @@ r = sm.call("api_command", "set_coordination_scheme", organization=P, scheme="te
 check("15. skema sama = tidak berubah", ok_(r) and r[1].get("changed") is False, r)
 
 print(f"ok={ok} fail={fail}")
+sys.exit(1 if fail else 0)

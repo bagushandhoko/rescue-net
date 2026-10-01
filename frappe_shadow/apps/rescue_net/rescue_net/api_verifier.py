@@ -15,6 +15,7 @@ from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime, cint
 
 from rescue_net.access_policy import rn_actor, is_system_manager, can_manage_posko
+from rescue_net.services import reporter
 
 
 # --- helpers --------------------------------------------------------------
@@ -268,6 +269,69 @@ def approve_verifier(verifier, action="approve", trust_level=None, note=None):
     _audit("verifier", doc.name, action, doc.verifier_status, note, actor)
     return {"verifier": doc.name, "verifier_status": doc.verifier_status,
             "trust_level": doc.trust_level}
+
+
+# --- Pelapor Terverifikasi accounts -----------------------------------------
+
+def _may_decide_reporters(actor):
+    if is_system_manager():
+        return None
+    mine = _my_verifier(actor)
+    if not (mine and not mine.get("_inactive") and cint(mine.get("trust_level")) >= 2):
+        frappe.throw("Hanya System Manager atau verifikator senior (trust ≥ 2) yang dapat memverifikasi pelapor.",
+                     frappe.PermissionError)
+    return mine
+
+
+@frappe.whitelist()
+def reporter_requests(include_decided=0):
+    """Pending Pelapor Terverifikasi sign-ups (services/reporter.py) for a
+    System Manager or a senior verifier; requests in the verifier's own
+    wilayah first. Contact + reference are included — the reviewer has to
+    reach the person (or their reference) before approving."""
+    actor = _actor()
+    mine = _may_decide_reporters(actor)
+    filters = {"requested_role": reporter.SIGNUP_KEY}
+    if not cint(include_decided):
+        filters["role_request_status"] = "pending"
+    rows = frappe.get_all(
+        "RN User Account", filters=filters,
+        fields=["name", "title", "email", "phone", "reporter_agency", "reporter_position",
+                "reporter_area", "role_request_status", "reporter_verified_by", "creation"],
+        order_by="creation desc", limit_page_length=200,
+    )
+    refs = {}
+    for r in frappe.get_all("RN User Reference", filters={"user_account": ["in", [x.name for x in rows] or ["-"]]},
+                            fields=["user_account", "reference_name", "reference_relation", "reference_contact", "status"]):
+        refs.setdefault(r.user_account, r)
+    for r in rows:
+        r["reference"] = refs.get(r.name)
+        r["in_my_area"] = bool(mine and _wilayah_match(mine.get("wilayah"), r.reporter_area))
+    rows.sort(key=lambda r: not r["in_my_area"])
+    return {"requests": rows, "count": len(rows)}
+
+
+@frappe.whitelist()
+def decide_reporter(user_account, action="approve", note=None):
+    actor = _actor()
+    _may_decide_reporters(actor)
+    doc = frappe.get_doc("RN User Account", user_account)
+    if doc.get("requested_role") != reporter.SIGNUP_KEY:
+        frappe.throw("Akun ini tidak meminta role pelapor.")
+    if not is_system_manager() and doc.name == actor.name:
+        frappe.throw("Tidak bisa memverifikasi akun Anda sendiri.", frappe.PermissionError)
+    if doc.get("role_request_status") != "pending":
+        frappe.throw(f"Permintaan ini sudah diputuskan ({doc.role_request_status}).")
+    action = str(action or "").strip().lower()
+    if action == "approve":
+        reporter.activate(doc, actor.name or frappe.session.user)
+    elif action == "reject":
+        doc.role_request_status = "rejected"
+    else:
+        frappe.throw("Aksi tidak valid (approve/reject).")
+    doc.save(ignore_permissions=True)
+    _audit("reporter_account", doc.name, action, doc.role_request_status, note, actor)
+    return {"user_account": doc.name, "role_request_status": doc.role_request_status, "role": doc.role}
 
 
 # --- posko asks a verifier -------------------------------------------------

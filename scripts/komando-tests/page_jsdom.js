@@ -3,8 +3,11 @@
 const http = require("http");
 const fs = require("fs");
 const { JSDOM } = require("jsdom");
+const SITE = process.env.RN_SITE || "rescuenet-test.localhost";
+if (SITE === "osiun.localhost") { console.error("DITOLAK: komando-tests tidak boleh dijalankan terhadap produksi."); process.exit(1); }
+const BASE = new URL(process.env.RN_BASE || "http://127.0.0.1:8000");
 
-const WEB = "/volume1/web/rescue-net";
+const WEB = process.env.RN_WEB || require("path").resolve(__dirname, "../..");
 const PW = "CmdTest123";
 let ok = 0, fail = 0;
 const check = (n, c, x = "") => { c ? ok++ : fail++; console.log((c ? "PASS " : "FAIL ") + n + (c ? "" : "  -> " + JSON.stringify(x).slice(0, 400))); };
@@ -16,9 +19,9 @@ function makeSession() {
   const jar = {};
   const req = (method, path, body) => new Promise((resolve, reject) => {
     const data = body ? body.toString() : null;
-    const headers = { Host: "osiun.localhost", Accept: "application/json", Cookie: Object.entries(jar).map(([k, v]) => k + "=" + v).join("; ") };
+    const headers = { Host: SITE, Accept: "application/json", Cookie: Object.entries(jar).map(([k, v]) => k + "=" + v).join("; ") };
     if (data) { headers["Content-Type"] = "application/x-www-form-urlencoded"; headers["Content-Length"] = Buffer.byteLength(data); }
-    const r = http.request({ host: "127.0.0.1", port: 8095, path, method, headers }, (res) => {
+    const r = http.request({ host: BASE.hostname, port: Number(BASE.port) || 80, path, method, headers }, (res) => {
       (res.headers["set-cookie"] || []).forEach((c) => { const [kv] = c.split(";"); const i = kv.indexOf("="); jar[kv.slice(0, i)] = kv.slice(i + 1); });
       let t = ""; res.on("data", (d) => (t += d)); res.on("end", () => resolve({ status: res.statusCode, text: t }));
     });

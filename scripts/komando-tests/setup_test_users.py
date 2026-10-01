@@ -1,5 +1,9 @@
 import frappe
-frappe.init(site="osiun.localhost", sites_path="/home/frappe/frappe-bench/sites"); frappe.connect()
+import os, sys
+SITE = os.environ.get("RN_SITE", "rescuenet-test.localhost")
+if SITE == "osiun.localhost":
+    sys.exit("DITOLAK: komando-tests tidak boleh dijalankan terhadap produksi (osiun.localhost). Pakai scripts/rn-test-stack.sh e2e.")
+frappe.init(site=SITE, sites_path="/home/frappe/frappe-bench/sites"); frappe.connect()
 PW = "CmdTest123"
 for key in ("pusat", "sub", "out", "man"):
     email = f"{key}@cmdtest.local"

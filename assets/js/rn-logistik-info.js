@@ -10,8 +10,9 @@ window.RNLogistikInfo = (function () {
 
   let movTab = "masuk";
 
-  function safe(v) {
-    return (v === null || v === undefined || v === "") ? "-" : v;
+  function safe(v) {  // HTML-escaped — values go into innerHTML
+    if (v === null || v === undefined || v === "") return "-";
+    return String(v).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
   }
 
   function fmt(v) {
@@ -105,7 +106,9 @@ window.RNLogistikInfo = (function () {
     }
     body.innerHTML = rows.map(r => `
       <tr>
-        <td><b>${safe(r.item_name)}</b> <small>${safe(r.unit)}</small></td>
+        <td><b>${safe(r.item_name)}</b> <small>${safe(r.unit)}</small>${r.report_channel
+          ? `<small class="rn-rep-badge ${safe(r.reporter_confirmation || "pending")}">Laporan pelapor terverifikasi · ${safe(r.reporter_label)} · ${
+              r.reporter_confirmation === "confirmed" ? "dikonfirmasi posko" : "belum dikonfirmasi"}</small>` : ""}</td>
         <td>${fmt(r.stok_tersedia)} ${safe(r.unit)}</td>
         <td class="rn-gap">${r.gap ? fmt(r.gap) + " " + safe(r.unit) : "—"}</td>
         <td>${habisDot(r.estimasi_habis)}</td>

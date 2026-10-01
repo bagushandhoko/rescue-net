@@ -6,6 +6,7 @@
 #   sh scripts/rn-test-stack.sh init    # create site rescuenet-test.localhost + install rescue_net
 #   sh scripts/rn-test-stack.sh test [extra run-tests args]   # run the rescue_net test suite
 #   sh scripts/rn-test-stack.sh migrate # bench migrate on the test site (after DocType JSON changes)
+#   sh scripts/rn-test-stack.sh e2e     # scripts/komando-tests (real logins over HTTP) against the test site
 #   sh scripts/rn-test-stack.sh down    # stop + remove containers (volumes kept)
 #   sh scripts/rn-test-stack.sh wipe    # down + delete the test volumes (fresh start)
 #
@@ -109,6 +110,38 @@ EOF
   bexec bench --site $SITE list-apps
 }
 
+# scripts/komando-tests against the TEST site: bench serve inside the test
+# bench, the python checks run inside it too (the port is not published).
+stop_serve() {
+  bexec sh -c '[ -f /tmp/rn-serve.pid ] && kill $(cat /tmp/rn-serve.pid) 2>/dev/null; rm -f /tmp/rn-serve.pid' || true
+}
+
+e2e() {
+  up
+  sync_app
+  prepare_site
+  bexec bench --site $SITE migrate >/dev/null
+  $D exec -u root $BENCH rm -rf /tmp/komando-tests
+  $D cp "$REPO/scripts/komando-tests" $BENCH:/tmp/komando-tests
+  $D exec -u root $BENCH sh -c "chown -R 1000:1000 /tmp/komando-tests && chmod -R u+rwX,go+rX /tmp/komando-tests"
+  stop_serve
+  bexec sh -c "nohup bench serve --port 8000 >/tmp/rn-serve.log 2>&1 & echo \$! > /tmp/rn-serve.pid"
+  i=0
+  until bexec curl -s -o /dev/null -H "Host: $SITE" http://127.0.0.1:8000/api/method/ping; do
+    i=$((i + 1)); [ $i -gt 30 ] && { echo "bench serve did not start" >&2; bexec tail -20 /tmp/rn-serve.log; exit 1; }
+    sleep 2
+  done
+  kt() { $D exec -w $B/sites -e RN_SITE=$SITE -e RN_BASE=http://127.0.0.1:8000 $BENCH "$@"; }
+  kt ../env/bin/python /tmp/komando-tests/clean_test_data.py
+  kt ../env/bin/python /tmp/komando-tests/setup_test_users.py
+  rc=0
+  kt python3 /tmp/komando-tests/api_e2e.py || rc=$?
+  kt ../env/bin/python /tmp/komando-tests/check_notify.py || rc=$?
+  kt ../env/bin/python /tmp/komando-tests/clean_test_data.py
+  stop_serve
+  return $rc
+}
+
 case "${1:-}" in
   up) up ;;
   init) init ;;
@@ -120,6 +153,7 @@ case "${1:-}" in
     bexec bench --site $SITE run-tests --app rescue_net "$@"
     ;;
   migrate) up; sync_app; bexec bench --site $SITE migrate ;;
+  e2e) e2e ;;
   shell) up; $D exec -it -w $B $BENCH bash ;;
   down) $D rm -f $BENCH $REDIS $DB >/dev/null 2>&1 || true; echo "test stack down" ;;
   wipe)
@@ -127,5 +161,5 @@ case "${1:-}" in
     $D volume rm rescuenet-test-db rescuenet-test-sites >/dev/null 2>&1 || true
     echo "test stack wiped"
     ;;
-  *) sed -n '2,15p' "$0"; exit 1 ;;
+  *) sed -n '2,16p' "$0"; exit 1 ;;
 esac

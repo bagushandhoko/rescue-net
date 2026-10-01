@@ -108,6 +108,34 @@
       "label": "Legacy Payload",
       "fieldtype": "Code",
       "options": "JSON"
+    },
+    {
+      "fieldname": "reporter_agency",
+      "label": "Instansi / Kelompok Pelapor",
+      "fieldtype": "Data",
+      "description": "Pelapor terverifikasi: instansi (BNPB/BPBD, Polri, TNI, pemerintah desa) atau kelompok warga."
+    },
+    {
+      "fieldname": "reporter_position",
+      "label": "Jabatan / Peran Pelapor",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reporter_area",
+      "label": "Wilayah Pantauan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "reporter_verified_by",
+      "label": "Diverifikasi Oleh",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "reporter_verified_at",
+      "label": "Diverifikasi Pada",
+      "fieldtype": "Datetime",
+      "read_only": 1
     }
   ],
   "permissions": [

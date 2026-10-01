@@ -217,6 +217,39 @@
 
   var WIRED = false;
 
+  /* Pelapor Terverifikasi sign-ups (api_verifier.reporter_requests) — the
+     server decides who may see them; any error just keeps the section hidden */
+  async function loadReporters() {
+    var d;
+    try { d = await call("reporter_requests", {}); } catch (e) { $("#vfReporterSection").hidden = true; return; }
+    var list = (d && d.requests) || [];
+    $("#vfReporterCount").textContent = list.length + " menunggu";
+    $("#vfReporters").innerHTML = list.length ? '<div class="vf-grid">' + list.map(function (r) {
+      var ref = r.reference;
+      return '<div class="vf-card" data-rid="' + esc(r.name) + '">' +
+        "<b>" + esc(r.title) + "</b>" + (r.in_my_area ? ' <span class="chip good">wilayah Anda</span>' : "") +
+        '<div class="vf-meta">' + esc(r.reporter_position || "-") + " · " + esc(r.reporter_agency || "-") +
+        (r.reporter_area ? " · pantau " + esc(r.reporter_area) : "") + "</div>" +
+        '<div class="vf-meta">' + esc(r.phone || "") + (r.phone && r.email ? " · " : "") + esc(r.email || "") + " · daftar " + fmtDate(r.creation) + "</div>" +
+        (ref ? '<div class="vf-meta">Referensi: ' + esc(ref.reference_name) + (ref.reference_relation ? " (" + esc(ref.reference_relation) + ")" : "") +
+          (ref.reference_contact ? " · " + esc(ref.reference_contact) : "") + "</div>" : '<div class="vf-meta">Tanpa referensi</div>') +
+        '<div class="vf-actions"><button class="btn mini primary" type="button" data-ra="approve">Setujui</button> ' +
+        '<button class="btn mini" type="button" data-ra="reject">Tolak</button><span class="vf-msg"></span></div></div>';
+    }).join("") + "</div>" : '<p class="vf-empty">Tidak ada permohonan pelapor menunggu.</p>';
+    $("#vfReporterSection").hidden = false;
+    document.querySelectorAll("#vfReporters [data-ra]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var box = btn.closest("[data-rid]");
+        var msg = box.querySelector(".vf-msg");
+        msg.textContent = " memproses…";
+        try {
+          await call("decide_reporter", { user_account: box.getAttribute("data-rid"), action: btn.getAttribute("data-ra") }, { method: "POST" });
+          setTimeout(loadReporters, 400);
+        } catch (err) { msg.textContent = " gagal: " + ((err && err.message) || err); }
+      });
+    });
+  }
+
   async function load() {
     var dir;
     try { dir = await call("verifier_directory", {}); } catch (e) { dir = { verifiers: [] }; }
@@ -234,6 +267,7 @@
       if (sess.is_system_manager || sess.role === "system_manager") canApprove = true;
     } catch (e) {}
     await loadPending(canApprove);
+    await loadReporters();
 
     var role = inbox && inbox.is_verifier
       ? (inbox.verifier ? "Verifikator · " + (inbox.verifier.verifier_status) : "Verifikator")

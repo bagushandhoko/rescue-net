@@ -1,5 +1,9 @@
 import frappe
-frappe.init(site="osiun.localhost", sites_path="/home/frappe/frappe-bench/sites"); frappe.connect()
+import os, sys
+SITE = os.environ.get("RN_SITE", "rescuenet-test.localhost")
+if SITE == "osiun.localhost":
+    sys.exit("DITOLAK: komando-tests tidak boleh dijalankan terhadap produksi (osiun.localhost). Pakai scripts/rn-test-stack.sh e2e.")
+frappe.init(site=SITE, sites_path="/home/frappe/frappe-bench/sites"); frappe.connect()
 # GUARD: never build a delete filter from an empty list (see feedback-destructive-empty-filter).
 def gone(doctype, field, values):
     values = [v for v in values if v]

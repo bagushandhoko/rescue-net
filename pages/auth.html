@@ -157,7 +157,29 @@
             <label><input type="radio" name="role" value="donatur"> Donatur</label>
             <label><input type="radio" name="role" value="organisasi"> Organisasi</label>
             <label><input type="radio" name="role" value="petugas_posko"> Petugas Posko</label>
+            <label><input type="radio" name="role" value="pelapor"> Pelapor Terverifikasi</label>
           </fieldset>
+
+          <div id="reporterFields" class="rn-auth-reference" hidden>
+            <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Untuk petugas resmi (BNPB/BPBD, Polri, TNI, perangkat desa) atau warga yang mendedikasikan diri memantau kondisi sekitar. Setelah diverifikasi admin atau verifikator senior, Anda bisa <b>melaporkan kebutuhan di semua posko</b> — laporan langsung tampil di posko itu dengan nama/instansi Anda dan ditandai “belum dikonfirmasi” sampai petugas posko memastikannya. Pelapor tidak bisa mengubah stok atau data posko.</p>
+            <label>Instansi / kelompok
+              <input name="reporter_agency" type="text" list="reporterAgencyOptions" placeholder="mis. BPBD Aceh Barat, Polsek Samatiga, warga Desa Suak">
+              <datalist id="reporterAgencyOptions">
+                <option value="BNPB">
+                <option value="BPBD">
+                <option value="Polri">
+                <option value="TNI">
+                <option value="Pemerintah Desa / Kelurahan">
+                <option value="Warga peduli">
+              </datalist>
+            </label>
+            <label>Jabatan / peran
+              <input name="reporter_position" type="text" placeholder="mis. Kapolsek, Kepala Seksi Kedaruratan, Ketua RT">
+            </label>
+            <label>Wilayah yang Anda pantau
+              <input name="reporter_area" type="text" placeholder="mis. Kecamatan Samatiga, Aceh Barat">
+            </label>
+          </div>
 
           <label class="rn-auth-check">
             <input type="checkbox" name="consent_verification" id="consentVerificationChk"> Saya bersedia diverifikasi untuk meningkatkan trust level akun/posko saya
@@ -220,7 +242,7 @@
 </div>
 
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/auth.js?v=rolelanding-20260912b"></script>
+<script src="../assets/js/auth.js?v=pelapor-20261001"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -6106,6 +6106,8 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-ak-ditem { border-bottom: 1px solid var(--line); }
 .rn-ak-ditem .rn-ba-ditem { border-bottom: 0; }
 .rn-ak-contact { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 12px; padding: 0 12px 10px; }
+.rn-ak-contact small { display: block; font-size: 10px; color: var(--muted); }
+.rn-ak-contact > small { flex-basis: 100%; }
 .rn-ak-contact a { color: #d9482f; font-weight: 600; }
 .rn-ak-contact.is-locked { color: var(--muted); font-size: 11.5px; }
 .rn-ak-block-table a { color: inherit; text-decoration: underline; text-decoration-color: rgba(0,0,0,.2); }

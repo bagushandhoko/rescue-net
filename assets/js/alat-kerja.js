@@ -62,17 +62,29 @@
 
   /* PIC of the posko (BBM kritis): name/role/phone only when the backend sends it
      (posko_contacts_visible — same rule as Posko Detail), else a login hint */
+  function loginLink(text) {
+    return '<a href="auth.html?next=' + encodeURIComponent(location.pathname + location.search) + '">' + text + "</a>";
+  }
+
+  function personHtml(c) {
+    return '<div class="rn-ak-contact"><span><small>' + esc(c.source || "Kontak") + "</small><b>" + esc(c.name || "-") + "</b>" +
+      (c.role ? " · " + esc(c.role) : "") + "</span>" +
+      (c.phone ? '<a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + "</a>" : "") +
+      (c.whatsapp_url ? '<a href="' + esc(c.whatsapp_url) + '" target="_blank" rel="noopener">WhatsApp</a>' : "") +
+      (c.email ? '<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + "</a>" : "") +
+      (c.note ? "<small>" + esc(c.note) + "</small>" : "") + "</div>";
+  }
+
   function contactHtml(it) {
-    var c = it.contact;
-    if (c && (c.name || c.phone)) {
-      return '<div class="rn-ak-contact"><span>PIC: <b>' + esc(c.name || "-") + "</b>" + (c.role ? " · " + esc(c.role) : "") + "</span>" +
-        (c.phone ? '<a href="tel:' + esc(c.phone) + '">' + esc(c.phone) + "</a>" : "") +
-        (c.whatsapp_url ? '<a href="' + esc(c.whatsapp_url) + '" target="_blank" rel="noopener">WhatsApp</a>' : "") + "</div>";
-    }
-    if (c) return '<div class="rn-ak-contact is-locked">Posko ini belum mencatat PIC.</div>';
+    var list = it.contacts || (it.contact ? [it.contact] : null);
+    if (list && list.length) return list.map(personHtml).join("");
     if (it.contact_locked) {
-      return '<div class="rn-ak-contact is-locked">Kontak PIC hanya untuk petugas posko / organisasi terkait — ' +
-        '<a href="auth.html?next=' + encodeURIComponent(location.pathname + location.search) + '">login</a> atau buka Posko Detail.</div>';
+      return '<div class="rn-ak-contact is-locked">Kontak hanya untuk petugas posko / organisasi terkait — ' + loginLink("login") + "</div>";
+    }
+    if (list) {
+      var logged = window.RN_SESSION && window.RN_SESSION.getUser && window.RN_SESSION.getUser();
+      return '<div class="rn-ak-contact is-locked">Posko ini belum mencatat PIC.' +
+        (logged ? "" : " " + loginLink("Login") + " untuk melihat petugas / pengurus organisasinya.") + "</div>";
     }
     return "";
   }
@@ -91,7 +103,7 @@
 
   function fuelItem(f) {
     return { title: f.item_name, sub: (f.posko_name ? f.posko_name + " · " : "") + "Stok " + fmt(f.stok) + " " + (f.unit || "") + " tersisa",
-      href: f.href || "", contact: f.contact, contact_locked: f.contact_locked };
+      href: f.href || "", contact: f.contact, contacts: f.contacts, contact_locked: f.contact_locked };
   }
 
   function showDrill(title, sub, html) {

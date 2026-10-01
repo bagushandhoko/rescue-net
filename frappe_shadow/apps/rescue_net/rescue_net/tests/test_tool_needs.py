@@ -114,3 +114,21 @@ class TestBbmKritisPoskoContact(RNTestCase):
             board = api.tools_board(self.w.event.name)
         self.assertFalse(contains_value(board, self.PHONE))
         self.assertTrue(all(i["contact_locked"] for i in board["kpi_items"]["bbm_kritis_items"]))
+
+
+class TestBbmContactFallback(RNTestCase):
+    """A posko without PIC still names someone to call: its operators, then the
+    organisation's members — account details only for logged-in viewers."""
+
+    def test_falls_back_to_org_member_for_logged_in(self):
+        w = make_world()
+        _insert("RN Stock Observation", title="Oli", disaster_event=w.event.name, posko=w.posko_a.name,
+                item_name="Oli Mesin", quantity=1, quantity_max=100, unit="liter")
+        admin = make_actor(org=w.org_a, org_role="admin", phone="081277770001")
+        with as_user(admin.user):
+            item = api.tools_board(w.event.name)["kpi_items"]["bbm_kritis_items"][0]
+        self.assertEqual(item["contact"]["phone"], "081277770001")
+        self.assertTrue(item["contact"]["source"].startswith("Pengurus"))
+        with as_user("Guest"):
+            board = api.tools_board(w.event.name)
+        self.assertFalse(contains_value(board, "081277770001"))

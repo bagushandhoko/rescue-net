@@ -332,36 +332,84 @@ def _qty(v):
     return int(v) if v == int(v) else v
 
 
+def _wa_url(number):
+    wa = "".join(ch for ch in (number or "") if ch.isdigit())
+    if wa.startswith("0"):
+        wa = "62" + wa[1:]
+    return f"https://wa.me/{wa}" if wa else None
+
+
+def _person(name, role, phone=None, email=None, source=""):
+    return {"name": name, "role": role, "phone": phone, "email": email,
+            "whatsapp_url": _wa_url(phone), "source": source}
+
+
+_ORG_ROLE_ORDER = {"owner": 0, "admin": 1, "coordinator": 2, "member": 3}
+
+
+def _posko_contacts(p, include_accounts=True):
+    """Who to call about this posko, best source first (max 3):
+    the posko PIC → accounts assigned to the posko → the organisation's contact
+    → the organisation's approved members (owner/admin before members).
+    Personal account details (phone/email of a user account) only for a
+    logged-in viewer — a guest gets the posko's / organisation's own contact."""
+    out = []
+    if p.officer_in_charge_name or p.officer_in_charge_phone:
+        out.append(_person(p.officer_in_charge_name, p.officer_in_charge_role,
+                           p.officer_in_charge_whatsapp or p.officer_in_charge_phone, None, "PIC posko"))
+    accounts = []
+    for a in frappe.get_all("RN Posko Assignment", filters={"posko": p.name, "status": "approved"},
+                            fields=["user_account", "assignment_role"], limit_page_length=5):
+        accounts.append((a.user_account, a.assignment_role or "operator", "Petugas posko"))
+    org = frappe.db.get_value("RN Organization", p.organization, ["title", "contact_person", "contact_summary"],
+                              as_dict=True) if p.organization else None
+    if org and (org.contact_person or org.contact_summary):
+        out.append(_person(org.contact_person or org.title, "Kontak " + (org.title or "organisasi"),
+                           None, None, "Kontak organisasi"))
+        if org.contact_summary:
+            out[-1]["note"] = org.contact_summary
+    if p.organization:
+        members = frappe.get_all("RN Organization Membership",
+                                 filters={"organization": p.organization, "status": "approved"},
+                                 fields=["user_account", "membership_role"], limit_page_length=20)
+        members.sort(key=lambda m: _ORG_ROLE_ORDER.get(m.membership_role, 9))
+        for m in members:
+            accounts.append((m.user_account, m.membership_role, "Pengurus " + ((org or {}).get("title") or "organisasi")))
+    seen = set()
+    for acc, role, source in (accounts if include_accounts else []):
+        if len(out) >= 3:
+            break
+        if not acc or acc in seen:
+            continue
+        seen.add(acc)
+        a = frappe.db.get_value("RN User Account", acc, ["title", "phone", "email", "status"], as_dict=True)
+        if a and a.status == "active":
+            out.append(_person(a.title, role, a.phone, a.email, source))
+    return out[:3]
+
+
 def _attach_fuel_posko(fuel, actor, event=None):
-    """Posko name + link on every fuel row; the PIC (name, role, phone) only
-    where posko_contacts_visible() allows it — the same rule as posko_detail's
-    `detail.officer`. Other viewers get contact=None, contact_locked=True."""
+    """Posko name + link on every fuel row; who to contact (see _posko_contacts)
+    only where posko_contacts_visible() allows it — the same rule as posko_detail's
+    `detail.officer`. Other viewers get contacts=[], contact_locked=True."""
     names = {f["posko"] for f in fuel if f.get("posko")}
     poskos = {
         p.name: p for p in frappe.get_all(
             "RN Posko",
             filters={"name": ["in", list(names)]},
-            fields=["name", "title", "officer_in_charge_name", "officer_in_charge_role",
+            fields=["name", "title", "organization", "officer_in_charge_name", "officer_in_charge_role",
                     "officer_in_charge_phone", "officer_in_charge_whatsapp"],
         )
     } if names else {}
     visible = {n: posko_contacts_visible(n, actor) for n in names}
+    contacts = {n: _posko_contacts(poskos[n], include_accounts=bool(actor)) for n in poskos if visible.get(n)}
     for f in fuel:
         p = poskos.get(f.get("posko"))
         f["posko_name"] = (p.title if p else None) or f.get("posko") or "Posko tidak tercatat"
         f["href"] = f"posko-detail.html?id={f['posko']}&event={event or ''}" if p else ""
-        f["contact"] = None
+        f["contacts"] = contacts.get(p.name, []) if p else []
+        f["contact"] = f["contacts"][0] if f["contacts"] else None
         f["contact_locked"] = bool(p) and not visible.get(p.name)
-        if p and visible.get(p.name):
-            wa = "".join(ch for ch in (p.officer_in_charge_whatsapp or p.officer_in_charge_phone or "") if ch.isdigit())
-            if wa.startswith("0"):
-                wa = "62" + wa[1:]
-            f["contact"] = {
-                "name": p.officer_in_charge_name,
-                "role": p.officer_in_charge_role,
-                "phone": p.officer_in_charge_phone,
-                "whatsapp_url": f"https://wa.me/{wa}" if wa else None,
-            }
 
 
 def _tb_drill(title, sub, href=""):
@@ -522,7 +570,8 @@ def tools_board(disaster_event=None):
         "bbm_kritis_items": [
             dict(
                 _tb_drill(f["item_name"], f"{f['posko_name']} · Stok {_qty(f['stok'])} {f['unit'] or ''} tersisa", f["href"]),
-                posko=f["posko"], posko_name=f["posko_name"], contact=f["contact"], contact_locked=f["contact_locked"],
+                posko=f["posko"], posko_name=f["posko_name"], contact=f["contact"], contacts=f["contacts"],
+                contact_locked=f["contact_locked"],
             )
             for f in bbm_kritis
         ],

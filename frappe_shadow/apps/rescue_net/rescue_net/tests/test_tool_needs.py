@@ -5,7 +5,7 @@ import frappe
 
 from rescue_net import api_resource_tools as api
 from rescue_net.services import tool_needs
-from rescue_net.tests.factories import RNTestCase, _insert, as_user, make_actor, make_posko, make_world
+from rescue_net.tests.factories import RNTestCase, _insert, as_user, contains_value, make_actor, make_posko, make_world
 
 
 class TestEstimate(RNTestCase):
@@ -70,3 +70,47 @@ class TestFromConditionToRequests(RNTestCase):
             out = api.create_requests_from_work_object(obj)
         self.assertEqual([(c["tool_type"], c["quantity"], c["unit"]) for c in out["created"]],
                          [("kantong_jenazah", 250, "pcs")])
+
+
+class TestBbmKritisPoskoContact(RNTestCase):
+    """BBM Kritis on Manajemen Alat Kerja names the posko and its PIC; the PIC's
+    phone follows posko_contacts_visible (posko/org members yes, guests no)."""
+
+    PHONE = "081299990001"
+
+    def setUp(self):
+        super().setUp()
+        self.w = make_world()
+        for posko in (self.w.posko_a, self.w.posko_b):
+            frappe.db.set_value("RN Posko", posko.name, {
+                "officer_in_charge_name": "PIC " + posko.title, "officer_in_charge_phone": self.PHONE,
+            })
+            # same fuel at both poskos: both critical stocks must be listed
+            _insert("RN Stock Observation", title="Solar", disaster_event=self.w.event.name, posko=posko.name,
+                    item_name="Solar", quantity=10, quantity_max=200, unit="liter")
+        self.op = make_actor(posko=self.w.posko_a)
+
+    def items(self):
+        return api.tools_board(self.w.event.name)["kpi_items"]["bbm_kritis_items"]
+
+    def test_each_posko_listed_with_link(self):
+        with as_user(self.op.user):
+            items = self.items()
+        self.assertEqual({i["posko"] for i in items}, {self.w.posko_a.name, self.w.posko_b.name})
+        for i in items:
+            self.assertIn("posko-detail.html?id=" + i["posko"], i["href"])
+
+    def test_own_posko_sees_pic_other_posko_locked(self):
+        with as_user(self.op.user):
+            items = {i["posko"]: i for i in self.items()}
+        own, other = items[self.w.posko_a.name], items[self.w.posko_b.name]
+        self.assertEqual(own["contact"]["phone"], self.PHONE)
+        self.assertTrue(own["contact"]["whatsapp_url"].endswith("6281299990001"))
+        self.assertIsNone(other["contact"])
+        self.assertTrue(other["contact_locked"])
+
+    def test_guest_gets_no_phone(self):
+        with as_user("Guest"):
+            board = api.tools_board(self.w.event.name)
+        self.assertFalse(contains_value(board, self.PHONE))
+        self.assertTrue(all(i["contact_locked"] for i in board["kpi_items"]["bbm_kritis_items"]))

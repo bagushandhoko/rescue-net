@@ -20,6 +20,7 @@ from frappe.utils import (
 )
 
 from rescue_net.services import tool_needs
+from rescue_net.visibility import posko_contacts_visible
 from rescue_net.access_policy import (
     can_manage_organization,
     can_manage_posko,
@@ -326,6 +327,43 @@ def _fuel_status(qty, basis):
     return "aman"
 
 
+def _qty(v):
+    v = flt(v)
+    return int(v) if v == int(v) else v
+
+
+def _attach_fuel_posko(fuel, actor, event=None):
+    """Posko name + link on every fuel row; the PIC (name, role, phone) only
+    where posko_contacts_visible() allows it — the same rule as posko_detail's
+    `detail.officer`. Other viewers get contact=None, contact_locked=True."""
+    names = {f["posko"] for f in fuel if f.get("posko")}
+    poskos = {
+        p.name: p for p in frappe.get_all(
+            "RN Posko",
+            filters={"name": ["in", list(names)]},
+            fields=["name", "title", "officer_in_charge_name", "officer_in_charge_role",
+                    "officer_in_charge_phone", "officer_in_charge_whatsapp"],
+        )
+    } if names else {}
+    visible = {n: posko_contacts_visible(n, actor) for n in names}
+    for f in fuel:
+        p = poskos.get(f.get("posko"))
+        f["posko_name"] = (p.title if p else None) or f.get("posko") or "Posko tidak tercatat"
+        f["href"] = f"posko-detail.html?id={f['posko']}&event={event or ''}" if p else ""
+        f["contact"] = None
+        f["contact_locked"] = bool(p) and not visible.get(p.name)
+        if p and visible.get(p.name):
+            wa = "".join(ch for ch in (p.officer_in_charge_whatsapp or p.officer_in_charge_phone or "") if ch.isdigit())
+            if wa.startswith("0"):
+                wa = "62" + wa[1:]
+            f["contact"] = {
+                "name": p.officer_in_charge_name,
+                "role": p.officer_in_charge_role,
+                "phone": p.officer_in_charge_phone,
+                "whatsapp_url": f"https://wa.me/{wa}" if wa else None,
+            }
+
+
 def _tb_drill(title, sub, href=""):
     return {"title": title, "sub": sub, "href": href}
 
@@ -422,17 +460,19 @@ def tools_board(disaster_event=None):
     )
 
     # --- BBM & Support Operasional (fuel) ---
+    # latest observation per (posko, item, unit): the same fuel at two poskos is
+    # two stocks — deduping by item alone hid a critical stock at the second posko
     fuel_rows = frappe.get_all(
         "RN Stock Observation",
         filters=res_filters,
-        fields=["item_name", "unit", "quantity", "quantity_max", "stock_state", "observed_at"],
+        fields=["posko", "item_name", "unit", "quantity", "quantity_max", "stock_state", "observed_at"],
         order_by="observed_at desc",
         limit_page_length=500,
     )
     seen_fuel = set()
     fuel = []
     for row in fuel_rows:
-        key = (row.item_name, row.unit or "")
+        key = (row.posko or "", row.item_name, row.unit or "")
         if key in seen_fuel or not any(k in (row.item_name or "").lower() for k in _FUEL_KEYWORDS):
             continue
         seen_fuel.add(key)
@@ -444,7 +484,10 @@ def tools_board(disaster_event=None):
             "kapasitas": row.quantity_max,
             "status": status,
             "observed_at": row.observed_at,
+            "posko": row.posko,
         })
+    _attach_fuel_posko(fuel, rn_actor(required=False), event)
+    fuel.sort(key=lambda f: {"kritis": 0, "waspada": 1}.get(f["status"], 2))
     bbm_kritis = [f for f in fuel if f["status"] == "kritis"]
 
     totals = {
@@ -477,7 +520,10 @@ def tools_board(disaster_event=None):
             for d in dispatch_berjalan
         ],
         "bbm_kritis_items": [
-            _tb_drill(f["item_name"], f"Stok {f['stok']} {f['unit']} tersisa")
+            dict(
+                _tb_drill(f["item_name"], f"{f['posko_name']} · Stok {_qty(f['stok'])} {f['unit'] or ''} tersisa", f["href"]),
+                posko=f["posko"], posko_name=f["posko_name"], contact=f["contact"], contact_locked=f["contact_locked"],
+            )
             for f in bbm_kritis
         ],
         "alat_rusak_items": [
@@ -572,7 +618,8 @@ def tools_board(disaster_event=None):
         blockers.append({
             "type": "bbm_kritis",
             "label": f["item_name"],
-            "detail": f"Stok {f['stok']} {f['unit']} tersisa",
+            "detail": f"{f['posko_name']} · Stok {_qty(f['stok'])} {f['unit'] or ''} tersisa",
+            "href": f["href"],
             "severity": "critical",
         })
     for r in alat_rusak:

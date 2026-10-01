@@ -68,6 +68,14 @@
     "trending-down": '<path d="m3 8 6 6 4-4 8 8"/><path d="M15 18h6v-6"/>',
     "map-signal": '<path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z"/><path d="M9.5 10a2.5 2.5 0 0 1 5 0"/>',
     dot: '<circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/>',
+    // work tools (Alat Kerja)
+    excavator: '<path d="M2.5 19.5h11"/><rect x="3" y="15.5" width="10" height="4" rx="2"/><path d="M4.5 15.5V12h6v3.5M10.5 12l3.5-6 5 2.5-1.5 4"/><path d="M17.5 12.5 21 16l-3 1.5"/>',
+    generator: '<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M6 18v2M18 18v2M6.5 9.5h5v5h-5Z"/><path d="m16 9-1.5 3h2.5L15.5 15"/>',
+    pump: '<circle cx="9" cy="13" r="5"/><circle cx="9" cy="13" r="1.6"/><path d="M14 11h4v4h-4M18 13h3M9 8V4h4M4 20h10"/>',
+    forklift: '<path d="M3 7h5l3 6v4H3Z"/><circle cx="5.5" cy="18" r="1.8"/><circle cx="10" cy="18" r="1.8"/><path d="M14 4v15h7M14 15h6"/>',
+    chainsaw: '<rect x="2.5" y="9" width="8" height="7" rx="1.5"/><path d="M10.5 10.5H20a2 2 0 0 1 0 4h-9.5"/><path d="M4.5 9V7h4v2"/>',
+    boat: '<path d="M2.5 13h19l-2 4.5a2 2 0 0 1-1.8 1.2H6.3a2 2 0 0 1-1.8-1.2Z"/><path d="M6 13v-2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M2 21c2 0 2-1 4-1s2 1 4 1 2-1 4-1 2 1 4 1 2-1 4-1"/>',
+    qr: '<rect x="3.5" y="3.5" width="6" height="6" rx="1"/><rect x="14.5" y="3.5" width="6" height="6" rx="1"/><rect x="3.5" y="14.5" width="6" height="6" rx="1"/><path d="M14.5 14.5h2.5v2.5M20.5 14.5v2M14.5 20.5h2M18.5 18.5h2v2"/>',
   };
 
   // convenient aliases
@@ -86,6 +94,8 @@
     internet: "wifi-off", operator: "radio", repeater: "radio",
     bbm: "flame", air: "droplet", terhambat: "alert-circle",
     matched: "check-circle", terpakai: "layers", waktu: "clock",
+    ekskavator: "excavator", buldoser: "excavator", genset: "generator",
+    pompa_air: "pump", perahu_karet: "boat", oli: "droplet",
   };
 
   function resolve(name) {

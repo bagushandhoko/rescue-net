@@ -25,13 +25,15 @@ Detail status, item terbuka, dan gotcha ada di `HANDOVER.md`.
 
 ## Status saat ini
 
-Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-09-30.)
+Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-01.)
 
-- **Sedang berjalan:** tidak ada. Architecture review Fase 1–6 selesai dari sisi agent; Fase 6 menunggu review
-  owner (`docs/PHASE6_REPO_HYGIENE.md`).
+- **Sedang berjalan:** permintaan owner 2026-10-01 — registrasi "pelapor terverifikasi" (BNPB/kepolisian/warga
+  peduli; hanya bisa menambah item laporan di semua posko). Architecture review Fase 6 menunggu review owner.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
-  Manajemen Distribusi, Alat Komunikasi selesai; berikutnya sisa daftar `assets/img/mockup/`. Distribusi juga mengubah backend:
-  % kapasitas transport kini volume (m³, sama dengan angka di sebelahnya), dulu berat — **perlu `rn-deploy-app.sh`**.
+  Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
+  pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**
+  Distribusi (% kapasitas transport per volume) dan Alat Kerja (BBM Kritis per posko + PIC sesuai
+  `posko_contacts_visible`; tanpa deploy, drill BBM tampil tanpa posko).
 - **Fase berikutnya:** menunggu perintah owner. Kandidat prioritas: Fase 0 (pisahkan lingkungan agent dari
   produksi). Isi Fase 7–8 belum diberikan owner (Fase 7 wajib mengikuti ADR-0002 bagian 11).
 - **Produksi:** ter-deploy sampai Fase 4 (12 modul RN; `rn-deploy-app.sh` 2026-09-27 09:51, patch

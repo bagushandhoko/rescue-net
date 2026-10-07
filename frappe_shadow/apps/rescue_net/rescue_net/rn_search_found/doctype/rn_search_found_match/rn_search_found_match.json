@@ -32,6 +32,11 @@
       "default": "proposed"
     },
     {
+      "fieldname": "match_score",
+      "label": "Skor Kecocokan (%)",
+      "fieldtype": "Int"
+    },
+    {
       "fieldname": "match_basis",
       "label": "Dasar Pencocokan",
       "fieldtype": "Small Text"

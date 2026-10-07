@@ -1,0 +1,83 @@
+{
+ "doctype": "DocType",
+ "name": "RN Search Found Claim",
+ "module": "RN Search Found",
+ "title_field": "claim_code",
+ "autoname": "hash",
+ "fields": [
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "claim_code",
+   "label": "ID Klaim",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Jenis",
+   "fieldtype": "Select",
+   "options": "barang\naset",
+   "default": "barang"
+  },
+  {
+   "fieldname": "item_description",
+   "label": "Deskripsi",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "claimant_name",
+   "label": "Pelapor / Pengklaim",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "claimant_contact",
+   "label": "Kontak (terbatas)",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "claim_status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "menunggu_verifikasi\nterverifikasi\nsiap_diserahkan\nselesai\nditolak",
+   "default": "menunggu_verifikasi"
+  },
+  {
+   "fieldname": "location_text",
+   "label": "Lokasi",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Diperbarui",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Created By",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

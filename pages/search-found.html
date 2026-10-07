@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Search & Found</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=sf2-20261007">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -47,169 +47,169 @@
     </nav>
   </aside>
 
-  <main class="main">
+  <main class="main rn-dense rn-sf-page">
     <header class="topbar">
     <div class="rn-page-mobile-title">Search & Found</div>
 
       <div>
         <p class="eyebrow">Restricted Search & Found</p>
-        <h2>Search & Found</h2>
-        <p class="subtitle">Laporan orang hilang, orang ditemukan, dan kandidat match.</p>
-        <p class="subtitle" id="sfStatus">Ready.</p>
+        <h2>Search &amp; Found</h2>
+        <p class="subtitle">Kelola orang hilang, korban ditemukan, aset/barang hilang, barang ditemukan, dan hewan.</p>
+        <p class="subtitle" id="sfStatus">Memuat…</p>
       </div>
-      <div class="status-pill">Privacy Restricted</div>
+      <div class="rn-sf-actions" id="sfActions">
+        <button type="button" class="btn primary" data-sf-open="missingDrawer">+ Lapor Hilang</button>
+        <button type="button" class="btn" data-sf-open="foundDrawer">+ Lapor Ditemukan</button>
+      </div>
     </header>
 
-    <section class="kpi-grid">
-      <div class="kpi-card danger"><span class="kpi-icon" data-icon="alert-triangle"></span><span>Missing</span><strong id="kpiMissing">0</strong><small>reports</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="user"></span><span>Found</span><strong id="kpiFound">0</strong><small>reports</small></div>
-      <div class="kpi-card warning"><span class="kpi-icon" data-icon="search"></span><span>Matches</span><strong id="kpiMatches">0</strong><small>candidate/reunited</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="hand-heart"></span><span>Reunited</span><strong id="kpiReunited">0</strong><small>confirmed</small></div>
+    <section class="kpi-grid rn-sf-kpi" id="sfKpi">
+      <div class="kpi-card danger"><span class="kpi-icon" data-icon="users"></span><span>Orang Hilang</span><strong id="kpiMissing">-</strong><small id="kpiMissingD"></small></div>
+      <div class="kpi-card"><span class="kpi-icon" data-icon="user"></span><span>Korban Ditemukan</span><strong id="kpiFound">-</strong><small id="kpiFoundD"></small></div>
+      <div class="kpi-card warning"><span class="kpi-icon" data-icon="id-card"></span><span>Belum Teridentifikasi</span><strong id="kpiUnident">-</strong><small id="kpiUnidentD"></small></div>
+      <div class="kpi-card good"><span class="kpi-icon" data-icon="hand-heart"></span><span>Sudah Reunifikasi</span><strong id="kpiReunited">-</strong><small id="kpiReunitedD"></small></div>
+      <div class="kpi-card warning"><span class="kpi-icon" data-icon="box"></span><span>Aset Hilang</span><strong id="kpiAsset">-</strong><small id="kpiAssetD"></small></div>
+      <div class="kpi-card danger"><span class="kpi-icon" data-icon="package"></span><span>Barang Ditemukan</span><strong id="kpiItems">-</strong><small id="kpiItemsD"></small></div>
     </section>
 
-    <section class="content-grid">
+    <section class="panel rn-sf-tabs-wrap">
+      <div class="rn-sf-tabs" role="tablist" id="sfTabs">
+        <button type="button" role="tab" class="is-active" data-tab="orang"><span class="rn-ic" data-icon="users"></span>Orang Hilang</button>
+        <button type="button" role="tab" data-tab="korban"><span class="rn-ic" data-icon="user"></span>Korban Ditemukan</button>
+        <button type="button" role="tab" data-tab="aset"><span class="rn-ic" data-icon="box"></span>Aset / Barang</button>
+        <button type="button" role="tab" data-tab="hewan"><span class="rn-ic" data-icon="heart"></span>Hewan Peliharaan / Ternak</button>
+      </div>
+
+      <div class="rn-sf-rowa">
+        <div class="rn-sf-card">
+          <div class="panel-header"><div><h3 id="boardTitle">Papan Pencocokan (Possible Matches)</h3></div></div>
+          <div id="boardList" class="rn-sf-board"></div>
+          <button type="button" class="rn-sf-link" id="boardMore" hidden></button>
+        </div>
+        <div class="rn-sf-card">
+          <div class="panel-header"><div><h3>Reunifikasi Keluarga (Aktif)</h3></div></div>
+          <div id="reuniList" class="rn-sf-reuni"></div>
+        </div>
+        <div class="rn-sf-card">
+          <div class="panel-header"><div><h3>Status Identifikasi</h3></div></div>
+          <div class="rn-sf-ident">
+            <svg viewBox="0 0 120 120" id="idDonut" aria-label="Status identifikasi"></svg>
+            <ul id="idLegend"></ul>
+          </div>
+          <div class="rn-sf-total"><span>Total</span><strong id="idTotal">0</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="rn-sf-rowb">
       <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Missing Person Reports</h3>
-            <p>Data restricted. Gunakan kode anonim, bukan publikasi identitas sensitif.</p>
-          </div>
+        <div class="panel-header"><div><h3>Klaim &amp; Serah Terima (Barang / Aset)</h3></div></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table" id="claimTable">
+            <thead><tr><th>ID Klaim</th><th>Deskripsi</th><th>Status</th><th>Lokasi</th><th>Diperbarui</th></tr></thead>
+            <tbody id="claimBody"></tbody>
+          </table>
         </div>
-        <div class="event-list" id="missingReports"></div>
+        <button type="button" class="rn-sf-link" data-sf-open="claimDrawer">+ Ajukan klaim baru</button>
       </div>
-
-      <aside class="panel summary">
-        <h3>Add Missing Report</h3>
-        <form class="rn-form" id="missingForm">
-          <label>Disaster Event ID
-            <input name="disaster_event_id" value="event-sim-001" required>
-          </label>
-          <label>Reporter Name
-            <input name="reporter_name" placeholder="Nama pelapor (kosong = nama akun)">
-          </label>
-          <label>Reporter Contact
-            <input name="reporter_contact" placeholder="No. HP / email untuk konfirmasi (kosong = kontak akun)">
-          </label>
-          <label>Relation
-            <input name="reporter_relation" value="keluarga">
-          </label>
-          <label>Person Code
-            <input name="person_code" value="MP-002" required>
-          </label>
-          <label>Person Name / Alias
-            <input name="person_name" value="Anonim 002">
-          </label>
-          <label>Age Group
-            <input name="age_group" value="adult">
-          </label>
-          <label>Gender
-            <input name="gender" value="unknown">
-          </label>
-          <label>Last Seen Location
-            <input name="last_seen_location" value="Dekat pasar lama">
-          </label>
-          <label>Last Seen Time
-            <input name="last_seen_time" value="Kemarin sore">
-          </label>
-          <label>Description
-            <input name="description" value="Terpisah saat evakuasi.">
-          </label>
-          <label>Clothing
-            <input name="clothing_description" value="Baju gelap">
-          </label>
-          <label>Special Notes
-            <input name="special_notes" value="Data restricted.">
-          </label>
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Save Missing Report</button>
-            <button class="btn" type="button" id="refreshSf">Refresh</button>
-          </div>
-        </form>
-      </aside>
-    </section>
-
-    <section class="content-grid">
       <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Found Person Reports</h3>
-            <p>Laporan orang ditemukan dan lokasi saat ini.</p>
-          </div>
-        </div>
-        <div class="event-list" id="foundReports"></div>
+        <div class="panel-header"><div><h3>Foto Bukti (Terbaru)</h3></div><a class="rn-sf-more" id="photoAll" href="evidence.html">Lihat semua</a></div>
+        <div class="rn-sf-photos" id="photoGrid"></div>
+        <a class="rn-sf-link" id="photoAdd" href="evidence.html">+ Unggah foto baru</a>
       </div>
-
-      <aside class="panel summary">
-        <h3>Add Found Report</h3>
-        <form class="rn-form" id="foundForm">
-          <label>Person Code
-            <input name="person_code" value="FP-002" required>
-          </label>
-          <label>Person Name / Alias
-            <input name="person_name" value="Anonim 002">
-          </label>
-          <label>Finder Name
-            <input name="finder_name" placeholder="Nama penemu (kosong = nama akun)">
-          </label>
-          <label>Finder Contact
-            <input name="finder_contact" placeholder="No. HP / email untuk konfirmasi (kosong = kontak akun)">
-          </label>
-          <label>Age Group
-            <input name="age_group" value="adult">
-          </label>
-          <label>Gender
-            <input name="gender" value="unknown">
-          </label>
-          <label>Found Location
-            <input name="found_location" value="Shelter Gang Melati">
-          </label>
-          <label>Found Time
-            <input name="found_time" value="Hari ini pagi">
-          </label>
-          <label>Current Location
-            <input name="current_location" value="posko-shelter-melati">
-          </label>
-          <label>Condition Notes
-            <input name="condition_notes" value="Selamat, kondisi stabil.">
-          </label>
-          <label>Description
-            <input name="description" value="Cocok dengan laporan keluarga.">
-          </label>
-          <label>Clothing
-            <input name="clothing_description" value="Baju gelap">
-          </label>
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Save Found Report</button>
-          </div>
-        </form>
-      </aside>
-    </section>
-
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>Create Manual Match</h3>
-          <p>Pilih laporan hilang dan laporan ditemukan untuk membuat kandidat match.</p>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Aksi Verifikasi</h3></div></div>
+        <div class="rn-sf-acts" id="sfActs">
+          <a href="verification-approval.html"><span class="rn-sf-ico" data-icon="id-card"></span><span><b>Verifikasi Identitas</b><small>Cek &amp; verifikasi data diri</small></span><i>›</i></a>
+          <button type="button" id="actMatch"><span class="rn-sf-ico" data-icon="refresh"></span><span><b>Pencocokan Data</b><small>Jalankan pencocokan manual</small></span><i>›</i></button>
+          <a id="actEvidence" href="evidence.html"><span class="rn-sf-ico" data-icon="evidence"></span><span><b>Validasi Bukti</b><small>Tinjau dokumen &amp; foto pendukung</small></span><i>›</i></a>
+          <button type="button" data-sf-open="claimDrawer"><span class="rn-sf-ico" data-icon="clipboard-check"></span><span><b>Serah Terima</b><small>Catat proses serah terima resmi</small></span><i>›</i></button>
         </div>
       </div>
-      <div id="manualMatchPanel"></div>
     </section>
 
-    <section class="panel create-panel">
-      <div class="panel-header">
-        <div>
-          <h3>Matches</h3>
-          <p>Kandidat kecocokan antara laporan hilang dan ditemukan.</p>
+    <p class="rn-muted rn-sf-footnote"><span class="rn-ic" data-icon="shield-check"></span> Data bersifat sensitif. Gunakan sesuai kewenangan dan jaga kerahasiaan. <span class="rn-sf-updated" id="sfUpdated"></span></p>
+
+    <details class="panel rn-input-drawer" id="missingDrawer">
+      <summary><h3>Lapor Orang / Aset / Hewan Hilang</h3><p>Perlu login. Nama lengkap hanya terlihat oleh operator berwenang.</p></summary>
+      <form class="rn-form" id="missingForm">
+        <div class="form-grid rn-sf-form-grid">
+          <input type="hidden" name="disaster_event_id" value="event-sim-001">
+          <label>Jenis<select name="subject_type"><option value="orang">Orang</option><option value="aset">Aset / barang</option><option value="hewan">Hewan</option></select></label>
+          <label>Kode<input name="person_code" placeholder="mis. MP-002" required></label>
+          <label>Nama / alias<input name="person_name" placeholder="Nama atau alias"></label>
+          <label>Usia (tahun)<input name="age_years" type="number" min="0" max="120"></label>
+          <label>Jenis kelamin<select name="gender"><option value="">—</option><option value="laki-laki">Laki-laki</option><option value="perempuan">Perempuan</option><option value="unknown">Tidak diketahui</option></select></label>
+          <label>Lokasi terakhir terlihat<input name="last_seen_location" placeholder="mis. Kp. Melayu, Jakarta Timur"></label>
+          <label>Waktu terakhir terlihat<input name="last_seen_time" placeholder="YYYY-MM-DD HH:MM"></label>
+          <label>Pakaian / ciri fisik<input name="clothing_description" placeholder="mis. kaos merah, celana biru"></label>
+          <label>Deskripsi<input name="description" placeholder="Kondisi saat terpisah"></label>
+          <label>Nama pelapor<input name="reporter_name" placeholder="kosong = nama akun"></label>
+          <label>Kontak pelapor<input name="reporter_contact" placeholder="No. HP / email (kosong = kontak akun)"></label>
         </div>
-      </div>
-      <div class="event-list" id="matches"></div>
-    </section>
+        <div class="form-actions"><button class="btn primary" type="submit">Simpan Laporan Hilang</button><button class="btn" type="button" id="refreshSf">Muat ulang</button></div>
+      </form>
+    </details>
+
+    <details class="panel rn-input-drawer" id="foundDrawer">
+      <summary><h3>Lapor Ditemukan</h3><p>Orang, aset/barang, atau hewan yang ditemukan. Perlu login.</p></summary>
+      <form class="rn-form" id="foundForm">
+        <div class="form-grid rn-sf-form-grid">
+          <label>Jenis<select name="subject_type"><option value="orang">Orang</option><option value="aset">Aset / barang</option><option value="hewan">Hewan</option></select></label>
+          <label>Kode<input name="person_code" placeholder="mis. FP-002" required></label>
+          <label>Nama / alias<input name="person_name" placeholder="Nama atau alias"></label>
+          <label>Usia (tahun)<input name="age_years" type="number" min="0" max="120"></label>
+          <label>Jenis kelamin<select name="gender"><option value="">—</option><option value="laki-laki">Laki-laki</option><option value="perempuan">Perempuan</option><option value="unknown">Tidak diketahui</option></select></label>
+          <label>Lokasi ditemukan<input name="found_location" placeholder="mis. Posko DKI 02"></label>
+          <label>Waktu ditemukan<input name="found_time" placeholder="YYYY-MM-DD HH:MM"></label>
+          <label>Pakaian / ciri fisik<input name="clothing_description"></label>
+          <label>Deskripsi<input name="description"></label>
+          <label>Nama penemu<input name="finder_name" placeholder="kosong = nama akun"></label>
+          <label>Kontak penemu<input name="finder_contact" placeholder="No. HP / email (kosong = kontak akun)"></label>
+        </div>
+        <div class="form-actions"><button class="btn primary" type="submit">Simpan Laporan Ditemukan</button></div>
+      </form>
+    </details>
+
+    <details class="panel rn-input-drawer" id="claimDrawer">
+      <summary><h3>Ajukan Klaim / Serah Terima</h3><p>Barang atau aset yang ditemukan dan diklaim pemiliknya. Perlu login.</p></summary>
+      <form class="rn-form" id="claimForm">
+        <div class="form-grid rn-sf-form-grid">
+          <label>Jenis<select name="kind"><option value="barang">Barang</option><option value="aset">Aset</option></select></label>
+          <label>Deskripsi barang<input name="item_description" placeholder="mis. Tas ransel hitam" required></label>
+          <label>Lokasi (posko penyimpan)<input name="location_text" placeholder="mis. Posko DKI 02"></label>
+          <label>Nama pengklaim<input name="claimant_name" placeholder="kosong = nama akun"></label>
+          <label>Kontak pengklaim<input name="claimant_contact" placeholder="No. HP / email"></label>
+        </div>
+        <div class="form-actions"><button class="btn primary" type="submit">Ajukan Klaim</button></div>
+      </form>
+    </details>
+
+    <details class="panel rn-input-drawer" id="allReports">
+      <summary><h3>Semua Laporan &amp; Pencocokan</h3><p>Daftar laporan hilang, laporan ditemukan, dan kandidat pencocokan beserta tindak lanjut operator.</p></summary>
+      <h4 class="rn-sf-sub">Laporan Hilang</h4><div class="event-list" id="missingReports"></div>
+      <h4 class="rn-sf-sub">Laporan Ditemukan</h4><div class="event-list" id="foundReports"></div>
+      <h4 class="rn-sf-sub">Pencocokan</h4><div class="event-list" id="matches"></div>
+    </details>
   </main>
 </div>
 
-<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+
+<div id="sfDetail" class="rn-ba-modal" hidden>
+  <div class="rn-ba-modal-backdrop" data-close></div>
+  <div class="rn-ba-modal-card" role="dialog" aria-modal="true" aria-labelledby="sfDetailTitle">
+    <div class="rn-ba-modal-head">
+      <div><h3 id="sfDetailTitle">-</h3><p id="sfDetailSub" class="rn-muted"></p></div>
+      <button type="button" class="rn-ba-modal-close" data-close aria-label="Tutup">×</button>
+    </div>
+    <div class="rn-ba-modal-body" id="sfDetailBody"></div>
+  </div>
+</div>
+
+<script src="../assets/js/rn-icons.js?v=tools-20261001"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
-<script src="../assets/js/search-found.js?v=reporter-20260926"></script>
+<script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+<script src="../assets/js/search-found.js?v=mockup2-20261007"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

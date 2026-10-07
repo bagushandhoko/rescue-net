@@ -35,6 +35,24 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "subject_type",
+   "label": "Jenis",
+   "fieldtype": "Select",
+   "options": "orang\naset\nhewan",
+   "default": "orang"
+  },
+  {
+   "fieldname": "age_years",
+   "label": "Usia (tahun)",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "gender",
+   "label": "Jenis Kelamin",
+   "fieldtype": "Select",
+   "options": "\nlaki-laki\nperempuan\nunknown"
+  },
+  {
    "fieldname": "last_seen_location",
    "label": "Lokasi Terakhir Terlihat",
    "fieldtype": "Data"

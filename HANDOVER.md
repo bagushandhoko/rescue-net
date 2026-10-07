@@ -6,7 +6,7 @@
 > archived at `docs/history/HANDOVER-log-2026-08-31_to_2026-09-25.md` — search it
 > before assuming something was never built.
 
-_Last updated: 2026-09-26_
+_Last updated: 2026-10-07 — Search & Found mock-up pass 2 (see CLAUDE.md status)_
 
 ## System snapshot
 

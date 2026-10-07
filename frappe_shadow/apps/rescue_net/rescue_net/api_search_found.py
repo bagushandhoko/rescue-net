@@ -5,6 +5,14 @@ from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import now_datetime
 
+from rescue_net.services.search_found import (
+    SUBJECTS,
+    identification_counts,
+    last_day_count,
+    match_score,
+    present_fields,
+    suggestions,
+)
 from rescue_net.access_policy import (
     can_manage_organization,
     can_manage_posko,
@@ -111,6 +119,26 @@ def _reporter_identity(actor, posko, reporter_name=None, reporter_contact=None):
     return name, contact
 
 
+def _apply_subject(doc, subject_type, age_years, gender):
+    """Kind (orang / aset / hewan), age and gender — only when the columns exist."""
+    subject_type = (subject_type or "orang").strip().lower()
+    if subject_type not in SUBJECTS:
+        frappe.throw("Jenis laporan harus orang, aset, atau hewan.")
+    gender = (gender or "").strip().lower() or None
+    if gender not in (None, "laki-laki", "perempuan", "unknown"):
+        frappe.throw("Jenis kelamin harus laki-laki, perempuan, atau unknown.")
+    try:
+        age = int(age_years) if str(age_years or "").strip() else None
+    except ValueError:
+        frappe.throw("Usia harus berupa angka.")
+    if age is not None and not 0 <= age <= 120:
+        frappe.throw("Usia harus antara 0 dan 120 tahun.")
+    meta = frappe.get_meta(doc.doctype)
+    for field, value in (("subject_type", subject_type), ("age_years", age), ("gender", gender)):
+        if meta.has_field(field):
+            doc.set(field, value)
+
+
 @frappe.whitelist()
 def create_missing_report(
     person_code,
@@ -123,6 +151,9 @@ def create_missing_report(
     clothing_description=None,
     reporter_name=None,
     reporter_contact=None,
+    subject_type="orang",
+    age_years=None,
+    gender=None,
 ):
     # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
     disaster_event = resolve_disaster_event(disaster_event)
@@ -170,6 +201,7 @@ def create_missing_report(
     doc.verification_status = (
         "self_reported"
     )
+    _apply_subject(doc, subject_type, age_years, gender)
 
     doc.insert(ignore_permissions=True)
 
@@ -192,6 +224,9 @@ def create_found_report(
     clothing_description=None,
     reporter_name=None,
     reporter_contact=None,
+    subject_type="orang",
+    age_years=None,
+    gender=None,
 ):
     # RN_CANONICAL_REF disaster_event = resolve_disaster_event(disaster_event)
     disaster_event = resolve_disaster_event(disaster_event)
@@ -237,6 +272,7 @@ def create_found_report(
     doc.verification_status = (
         "self_reported"
     )
+    _apply_subject(doc, subject_type, age_years, gender)
 
     doc.insert(ignore_permissions=True)
 
@@ -296,6 +332,11 @@ def propose_match(
     doc.match_status = "proposed"
     doc.match_basis = match_basis
     doc.verification_status = "pending"
+    if frappe.get_meta("RN Search Found Match").has_field("match_score"):
+        doc.match_score = match_score(
+            frappe.get_doc("RN Missing Person Report", missing_report),
+            frappe.get_doc("RN Found Person Report", found_report),
+        )
 
     doc.insert(ignore_permissions=True)
 
@@ -553,6 +594,133 @@ def _resolve_disaster_event(value):
     return value
 
 
+
+def _kind(row):
+    return row.get("subject_type") or "orang"
+
+
+def _brief(row, place_field, time_field):
+    """Masked summary of a report: code, age, gender, place — never a name."""
+    return {
+        "id": row["name"],
+        "code": row.get("person_code"),
+        "kind": _kind(row),
+        "age_years": row.get("age_years"),
+        "gender": row.get("gender"),
+        "place": row.get(place_field),
+        "time": str(row.get(time_field) or "") or None,
+        "status": row.get("report_status"),
+        "identification_status": row.get("identification_status"),
+        "description": row.get("description"),
+        "clothing": row.get("clothing_description"),
+    }
+
+
+def _board(missing, found, matches):
+    """Per kind: `possible` = stored proposals + unsaved suggestions with a
+    score, `active` = confirmed matches heading for reunification."""
+    m_by = {r["name"]: r for r in missing}
+    f_by = {r["name"]: r for r in found}
+    board = {k: {"possible": [], "active": []} for k in SUBJECTS}
+
+    def pair(mid, fid, score, match=None, status=None):
+        m, f = m_by.get(mid), f_by.get(fid)
+        if not m or not f:
+            return None
+        return {
+            "match": match,
+            "status": status,
+            "score": score,
+            "missing": _brief(m, "last_seen_location", "last_seen_time"),
+            "found": _brief(f, "found_location", "found_time"),
+        }
+
+    for x in matches:
+        st = x.get("match_status")
+        if st not in ("proposed", "confirmed"):
+            continue
+        m = m_by.get(x["missing_report"])
+        score = x.get("match_score")
+        if score is None and m and f_by.get(x["found_report"]):
+            score = match_score(m, f_by[x["found_report"]])
+        row = pair(x["missing_report"], x["found_report"], score, x["name"], st)
+        if row:
+            board[row["missing"]["kind"] if row["missing"]["kind"] in board else "orang"][
+                "possible" if st == "proposed" else "active"
+            ].append(row)
+
+    for x in suggestions(missing, found, matches):
+        row = pair(x["missing_report"], x["found_report"], x["score"])
+        if row:
+            board[row["missing"]["kind"] if row["missing"]["kind"] in board else "orang"]["possible"].append(row)
+
+    for b in board.values():
+        b["possible"].sort(key=lambda r: -(r["score"] or 0))
+    return board
+
+
+def _kpis(missing, found, matches):
+    def of(rows, kind):
+        return [r for r in rows if _kind(r) == kind]
+
+    m_orang, f_orang = of(missing, "orang"), of(found, "orang")
+    unidentified = [
+        r for r in f_orang
+        if r.get("report_status") != "reunited"
+        and (r.get("identification_status") or "belum_teridentifikasi") == "belum_teridentifikasi"
+    ]
+    reunited = [x for x in matches if x.get("match_status") == "reunited"]
+    return {
+        "orang_hilang": {"n": len(m_orang), "new_24h": last_day_count(m_orang)},
+        "korban_ditemukan": {"n": len(f_orang), "new_24h": last_day_count(f_orang)},
+        "belum_teridentifikasi": {"n": len(unidentified), "new_24h": last_day_count(unidentified)},
+        "reunifikasi": {"n": len(reunited), "new_24h": last_day_count(reunited, "reviewed_at")},
+        "aset_hilang": {"n": len(of(missing, "aset")), "new_24h": last_day_count(of(missing, "aset"))},
+        "barang_ditemukan": {"n": len(of(found, "aset")), "new_24h": last_day_count(of(found, "aset"))},
+    }
+
+
+def _claims(actor, event):
+    if not frappe.db.exists("DocType", "RN Search Found Claim"):
+        return []
+    filters = {"disaster_event": event} if event else {}
+    rows = frappe.get_all(
+        "RN Search Found Claim",
+        filters=filters,
+        fields=["name", "claim_code", "kind", "item_description", "claim_status",
+                "location_text", "observed_at", "posko"],
+        order_by="observed_at desc, creation desc",
+        limit_page_length=50,
+    )
+    if actor:
+        rows = [r for r in rows if _can_operate_posko(actor, r.posko)]
+    return rows
+
+
+def _photos(actor, mode, names):
+    """Latest evidence photos of these reports. Faces are sensitive: only
+    operators get the (private) file URLs, everyone else sees a count."""
+    if not names or not frappe.db.exists("DocType", "RN Operational Evidence"):
+        return {"count": 0, "items": []}
+    rows = frappe.get_all(
+        "RN Operational Evidence",
+        filters={
+            "linked_doctype": ["in", ["RN Missing Person Report", "RN Found Person Report"]],
+            "linked_name": ["in", list(names)],
+        },
+        fields=["name", "file_url", "caption", "posko", "observed_at", "linked_name"],
+        order_by="observed_at desc",
+        limit_page_length=60,
+    )
+    items = []
+    if mode == "manager":
+        for r in rows:
+            if r.file_url and (r.file_url.lower().split("?")[0].endswith((".jpg", ".jpeg", ".png", ".webp", ".gif"))):
+                items.append({"url": r.file_url, "caption": r.caption, "posko": r.posko,
+                              "at": str(r.observed_at or ""), "report": r.linked_name})
+    return {"count": len(rows), "items": items[:6]}
+
+
 # Public listing: person_name/NIK are never in the `fields=` lists below
 # (only person_code + masked description/clothing), so this is safe to open
 # to Guest. Full identity stays behind restricted_record(), which is not
@@ -585,7 +753,7 @@ def dashboard(disaster_event=None):
     missing = frappe.get_all(
         "RN Missing Person Report",
         filters=missing_filters,
-        fields=[
+        fields=present_fields("RN Missing Person Report", [
             "name",
             "disaster_event",
             "posko",
@@ -597,7 +765,10 @@ def dashboard(disaster_event=None):
             "report_status",
             "observed_at",
             "verification_status",
-        ],
+            "subject_type",
+            "age_years",
+            "gender",
+        ]),
         order_by="creation desc",
         limit_page_length=2000,
     )
@@ -605,7 +776,7 @@ def dashboard(disaster_event=None):
     found = frappe.get_all(
         "RN Found Person Report",
         filters=found_filters,
-        fields=[
+        fields=present_fields("RN Found Person Report", [
             "name",
             "disaster_event",
             "posko",
@@ -617,7 +788,11 @@ def dashboard(disaster_event=None):
             "report_status",
             "observed_at",
             "verification_status",
-        ],
+            "subject_type",
+            "age_years",
+            "gender",
+            "identification_status",
+        ]),
         order_by="creation desc",
         limit_page_length=2000,
     )
@@ -666,15 +841,16 @@ def dashboard(disaster_event=None):
     if missing_names and found_names:
         raw_matches = frappe.get_all(
             "RN Search Found Match",
-            fields=[
+            fields=present_fields("RN Search Found Match", [
                 "name",
                 "missing_report",
                 "found_report",
                 "match_status",
                 "match_basis",
+                "match_score",
                 "reviewed_at",
                 "verification_status",
-            ],
+            ]),
             order_by="creation desc",
             limit_page_length=2000,
         )
@@ -690,12 +866,21 @@ def dashboard(disaster_event=None):
             )
         ]
 
+    mode = (
+        "manager"
+        if _is_manager(actor)
+        else ("viewer" if actor else "public")
+    )
+    board = _board(allowed_missing, allowed_found, matches)
+
     return {
-        "mode": (
-            "manager"
-            if _is_manager(actor)
-            else ("viewer" if actor else "public")
-        ),
+        "mode": mode,
+        "generated_at": str(now_datetime()),
+        "kpis": _kpis(allowed_missing, allowed_found, matches),
+        "board": board,
+        "identification": identification_counts(allowed_found),
+        "claims": _claims(actor, resolved_event),
+        "photos": _photos(actor, mode, missing_names | found_names),
         "missing": allowed_missing,
         "found": allowed_found,
         "matches": matches,
@@ -759,3 +944,69 @@ def control_centre_search_found():
             "kontak, atau ciri pribadi."
         ),
     }
+
+
+@frappe.whitelist()
+def create_claim(
+    item_description,
+    kind="barang",
+    disaster_event=None,
+    posko=None,
+    claimant_name=None,
+    claimant_contact=None,
+    location_text=None,
+):
+    """File a claim for a found item / asset (Klaim & Serah Terima)."""
+    disaster_event = resolve_disaster_event(disaster_event)
+    posko = resolve_posko(posko)
+    actor = rn_actor()
+    if posko and not _can_operate_posko(actor, posko):
+        frappe.throw("Akses Posko ditolak", frappe.PermissionError)
+    if kind not in ("barang", "aset"):
+        frappe.throw("Jenis klaim harus barang atau aset.")
+    item_description = str(item_description or "").strip()
+    if not item_description:
+        frappe.throw("Deskripsi barang wajib diisi.")
+    name, contact = _reporter_identity(actor, posko, claimant_name, claimant_contact)
+
+    doc = frappe.new_doc("RN Search Found Claim")
+    doc.disaster_event = _resolve_disaster_event(disaster_event)
+    doc.posko = posko
+    doc.claim_code = "CLM-%s-%s" % (now_datetime().year, frappe.generate_hash(length=5).upper())
+    doc.kind = kind
+    doc.item_description = item_description
+    doc.claimant_name = name
+    doc.claimant_contact = contact
+    doc.location_text = location_text
+    doc.claim_status = "menunggu_verifikasi"
+    doc.observed_at = now_datetime()
+    doc.created_by_user = _actor_name(actor)
+    doc.insert(ignore_permissions=True)
+    return {"claim": doc.name, "claim_code": doc.claim_code, "status": doc.claim_status}
+
+
+@frappe.whitelist()
+def update_claim_status(claim, new_status):
+    actor = rn_actor()
+    _assert_manager(actor)
+    doc = frappe.get_doc("RN Search Found Claim", claim)
+    if doc.posko and not _can_operate_posko(actor, doc.posko):
+        frappe.throw("Akses klaim ditolak", frappe.PermissionError)
+    previous = doc.claim_status
+    doc.claim_status = new_status
+    doc.observed_at = now_datetime()
+    doc.save(ignore_permissions=True)
+    return {"claim": doc.name, "previous_status": previous, "status": doc.claim_status}
+
+
+@frappe.whitelist()
+def set_identification_status(found_report, new_status):
+    """Operator moves a found person through the identification steps."""
+    actor = rn_actor()
+    _assert_manager(actor)
+    _assert_record_access(actor, "RN Found Person Report", found_report)
+    allowed = ("belum_teridentifikasi", "proses_identifikasi", "teridentifikasi", "tidak_dapat_diidentifikasi")
+    if new_status not in allowed:
+        frappe.throw("Status identifikasi tidak valid.")
+    frappe.db.set_value("RN Found Person Report", found_report, "identification_status", new_status)
+    return {"found_report": found_report, "identification_status": new_status}

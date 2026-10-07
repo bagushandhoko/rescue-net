@@ -35,6 +35,24 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "subject_type",
+   "label": "Jenis",
+   "fieldtype": "Select",
+   "options": "orang\naset\nhewan",
+   "default": "orang"
+  },
+  {
+   "fieldname": "age_years",
+   "label": "Usia (tahun)",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "gender",
+   "label": "Jenis Kelamin",
+   "fieldtype": "Select",
+   "options": "\nlaki-laki\nperempuan\nunknown"
+  },
+  {
    "fieldname": "found_location",
    "label": "Lokasi Ditemukan",
    "fieldtype": "Data"
@@ -60,6 +78,13 @@
    "fieldtype": "Select",
    "options": "found\nreunited\nclosed",
    "default": "found"
+  },
+  {
+   "fieldname": "identification_status",
+   "label": "Status Identifikasi",
+   "fieldtype": "Select",
+   "options": "belum_teridentifikasi\nproses_identifikasi\nteridentifikasi\ntidak_dapat_diidentifikasi",
+   "default": "belum_teridentifikasi"
   },
   {
    "fieldname": "observed_at",

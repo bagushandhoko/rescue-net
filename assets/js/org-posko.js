@@ -31,6 +31,14 @@
     $("#kpiAnggota").textContent = fmt(t.anggota_terdaftar);
   }
 
+  var ORG_ICON = { government: "building", ngo: "hand-heart", community: "users", military: "shield-check", company: "building", campus: "evidence", school: "evidence" };
+  var POSKO_ICON = { logistics: "package", logistik: "package", medical: "medis", medis: "medis", kitchen: "dapur", dapur: "dapur", shelter: "shelter",
+    communication: "radio", radio: "radio", distribution: "truck", distribusi: "truck" };
+  function orgIcon(t) { return ORG_ICON[String(t || "").toLowerCase()] || "building"; }
+  function poskoIcon(t) { return POSKO_ICON[String(t || "").toLowerCase()] || "posko"; }
+  function isVerified(s) { return /^(official_verified|verified|community_verified|trusted)/.test(String(s || "")); }
+  function isActive(s) { return !/^(offline|inactive|closed|nonaktif)/i.test(String(s || "")); }
+
   function orgCardHtml(o) {
     var isSel = state.selected === o.name;
     return (
@@ -50,31 +58,39 @@
     if (state.view === "list") {
       el.innerHTML = '<div class="rn-op-list">' + orgs.map(orgCardHtml).join("") + "</div>";
     } else {
-      el.innerHTML = '<div class="rn-op-tree">' + orgs.map(function (o) {
-        var isSel = state.selected === o.name;
-        var poskoRows = (o.poskos || []).map(function (p) {
-          return (
-            '<a class="rn-op-posko-row" href="' + esc(p.href) + '">' +
-            "<span>" + esc(p.title) + "</span>" +
-            '<span class="chip ' + statusPillClass(p.status) + '">' + esc(p.status) + "</span></a>"
-          );
-        }).join("");
-        return (
-          '<div class="rn-op-tree-node' + (isSel ? " is-selected" : "") + '">' +
-          '<div class="rn-op-tree-org" data-org="' + esc(o.name) + '">' +
-          "<b>" + esc(o.title) + '</b><span class="chip ' + statusPillClass(o.verification_status) + '">' + fmt(o.posko_count) + " posko</span>" +
-          "</div>" +
-          '<div class="rn-op-tree-poskos">' + (poskoRows || '<span class="rn-muted">Belum ada posko.</span>') + "</div>" +
-          "</div>"
-        );
-      }).join("") + "</div>";
+      var sel = orgs.filter(function (o) { return o.name === state.selected; })[0];
+      var ev = BOARD_CACHE || {};
+      var root = '<div class="rn-opx-root"><span class="rn-opx-rooticon" data-icon="alert-triangle"></span><span><b>' + esc(ev.event_title || "Bencana aktif") +
+        "</b><small>" + (ev.event_since ? "Sejak " + esc(ev.event_since) : "") + "</small></span>" +
+        (ev.event_status ? '<span class="chip good">' + esc(ev.event_status) + "</span>" : "") + "</div>";
+      var orgRow = '<div class="rn-opx-orgs">' + orgs.map(function (o) {
+        return '<div class="rn-opx-org' + (o.name === state.selected ? " is-selected" : "") + '" data-org="' + esc(o.name) + '">' +
+          (isVerified(o.verification_status) ? '<i class="rn-opx-ok" data-icon="check-circle"></i>' : "") +
+          '<span class="rn-opx-ico" data-icon="' + orgIcon(o.organization_type) + '"></span><b>' + esc(o.title) + "</b><small>" + fmt(o.posko_count) + " Posko</small></div>";
+      }).join("") + '<button type="button" class="rn-opx-add" data-add-org><span>+</span>Tambah Organisasi</button></div>';
+      var poskoRow = sel ? '<div class="rn-opx-poskos">' + ((sel.poskos || []).map(function (p) {
+        return '<a class="rn-opx-posko" href="' + esc(p.href) + '"><span class="rn-opx-ico" data-icon="' + poskoIcon(p.posko_type) + '"></span><b>' + esc(p.title) + "</b>" +
+          '<span class="chip ' + (isActive(p.status) ? "good" : "") + '">' + (isActive(p.status) ? "Aktif" : esc(p.status)) + "</span><small>" + fmt(p.member_count || 0) + " Anggota</small></a>";
+      }).join("") || '<p class="rn-muted">Belum ada posko untuk organisasi ini.</p>') + "</div>" : "";
+      var legend = '<ul class="rn-opx-legend"><li><i class="a"></i>Organisasi Utama</li><li><i class="b"></i>Posko Aktif</li><li><i class="c"></i>Posko Non-aktif</li><li><i class="d"></i>Pending Verifikasi</li></ul>';
+      el.innerHTML = '<div class="rn-opx-tree">' + root + orgRow + poskoRow + "</div>" + legend;
     }
+    if (window.RNIconFill) window.RNIconFill(el);
     el.querySelectorAll("[data-org]").forEach(function (node) {
       node.addEventListener("click", function (e) {
         if (e.target.closest(".rn-op-posko-row")) return;
         selectOrg(node.getAttribute("data-org"));
       });
     });
+    var add = el.querySelector("[data-add-org]");
+    if (add) add.addEventListener("click", function () {
+      var d = document.querySelector("details.rn-input-drawer");
+      if (d) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    });
+  }
+
+  function statTile(label, value, sub, icon, link) {
+    return '<div class="rn-opx-stat"><span><small>' + esc(label) + "</small><b>" + esc(value) + "</b>" + (sub ? "<em>" + sub + "</em>" : "") + '</span><i data-icon="' + icon + '"></i></div>';
   }
 
   function renderDetail(detail) {
@@ -82,54 +98,72 @@
     var poskos = detail.poskos || [];
     var members = detail.members || [];
     var programs = detail.programs || [];
-    var checklist = detail.checklist || {};
+    var counts = detail.counts || { members: members.length, poskos: poskos.length, posko_active: poskos.length, programs: programs.length, program_active: programs.length };
+    var trust = detail.trust || null;
 
     var poskoRows = poskos.length
       ? poskos.map(function (p) {
           return '<div class="rn-op-detail-row"><b>' + esc(p.title) + '</b><span class="chip ' + statusPillClass(p.operational_status) + '">' + esc(p.operational_status) + "</span></div>";
         }).join("")
       : '<p class="rn-muted">Belum ada posko.</p>';
-
     var memberRows = members.length
       ? members.map(function (m) { return '<div class="rn-op-detail-row"><b>' + esc(m.title || m.name) + "</b><small>" + esc(m.role || "-") + "</small></div>"; }).join("")
       : '<p class="rn-muted">Belum ada anggota terdaftar.</p>';
-
     var programRows = programs.length
       ? programs.map(function (p) { return '<div class="rn-op-detail-row"><b>' + esc(p.program_name) + '</b><span class="chip">' + esc(p.status) + "</span></div>"; }).join("")
       : '<p class="rn-muted">Belum ada program.</p>';
 
-    var checklistHtml = ["identitas_organisasi", "kontak_person", "trusted_verifier"].map(function (k) {
-      var labels = { identitas_organisasi: "Identitas Organisasi", kontak_person: "Kontak Person Terisi", trusted_verifier: "Punya Trusted Verifier" };
-      var ok = checklist[k];
-      return '<li class="' + (ok ? "is-done" : "") + '">' + (ok ? "✓" : "○") + " " + labels[k] + "</li>";
-    }).join("");
+    var res = (detail.resources || []).slice(0, 4);
+    var resHtml = res.length
+      ? '<div class="rn-opx-res">' + res.map(function (r) {
+          return "<div><b>" + fmt(r.quantity || r.items) + "</b><small>" + esc(r.label) + "</small><em>" + fmt(r.items) + " item</em></div>";
+        }).join("") + "</div>"
+      : '<p class="rn-muted rn-opx-empty">Belum ada sumber daya terdaftar.</p>';
+
+    var trustHtml = "";
+    if (trust) {
+      trustHtml = '<div class="rn-opx-trust"><h4>Tingkat Kepercayaan (Trust Level)</h4><div class="rn-opx-trustbody">' +
+        '<div class="rn-opx-shield g' + esc(trust.grade) + '"><span>' + esc(trust.grade) + "</span></div>" +
+        '<div class="rn-opx-trustmain"><b>' + esc(trust.score >= 90 ? "Tinggi" : trust.score >= 70 ? "Cukup" : trust.score >= 50 ? "Sedang" : "Rendah") + "</b><small>Skor: " + esc(trust.score) + "/100</small>" +
+        '<div class="rn-opx-bar"><i style="width:' + esc(trust.score) + '%"></i></div></div>' +
+        '<ul class="rn-opx-checks">' + trust.checks.map(function (c) { return '<li class="' + (c.done ? "ok" : "") + '"><span>' + esc(c.label) + "</span><i>" + (c.done ? "✓" : "○") + "</i></li>"; }).join("") + "</ul></div>" +
+        '<p class="rn-muted">Skor = jumlah dari 4 pemeriksaan di atas (25 poin masing-masing).</p></div>';
+    }
 
     $("#orgDetailPanel").innerHTML =
-      '<div class="rn-op-detail-head"><h3>' + esc(org.title) + '</h3><span class="chip ' + statusPillClass(org.verification_status) + '">' + esc(org.verification_status) + "</span></div>" +
-      '<p class="rn-muted">' + esc(org.organization_type) + " · " + esc(org.contact_person || "-") + "</p>" +
+      '<div class="rn-opx-dhead"><span class="rn-opx-logo">' + esc((org.title || "?").replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()) + "</span><div><h3>" + esc(org.title) +
+      '</h3><small>' + esc(org.organization_type) + " · " + esc(org.contact_person || "-") + '</small></div><span class="chip ' + statusPillClass(org.verification_status) + '">' + esc(org.verification_status) + "</span></div>" +
       '<div class="rn-tabs rn-op-detail-tabs">' +
       '<button type="button" class="rn-tab is-active" data-tab="ringkasan">Ringkasan</button>' +
       '<button type="button" class="rn-tab" data-tab="posko">Posko (' + poskos.length + ')</button>' +
-      '<button type="button" class="rn-tab" data-tab="anggota">Anggota (' + members.length + ')</button>' +
+      '<button type="button" class="rn-tab" data-tab="anggota">Anggota (' + counts.members + ')</button>' +
       '<button type="button" class="rn-tab" data-tab="program">Program (' + programs.length + ')</button>' +
       "</div>" +
       '<div class="rn-op-tabpane" data-pane="ringkasan">' +
-      '<div class="rn-va-trust"><span>Trust Level</span><b>' + esc(org.trust_level) + "</b>" +
-      "<span>Verifier Terpercaya</span><b>" + fmt(org.trusted_verifier_count) + "</b></div>" +
-      '<ul class="rn-op-checklist">' + checklistHtml + "</ul>" +
-      '<p class="rn-muted">Terakhir diperbarui: ' + fmtTime(org.modified) + "</p>" +
+      '<div class="rn-opx-stats">' +
+      statTile("Status Verifikasi", isVerified(org.verification_status) ? "Terverifikasi" : "Belum", "", "check-circle") +
+      statTile("Anggota", fmt(counts.members), "", "users") +
+      statTile("Posko Aktif", fmt(counts.posko_active), '<a data-tab-go="posko">Lihat detail →</a>', "posko") +
+      statTile("Program Aktif", fmt(counts.program_active), '<a data-tab-go="program">Lihat detail →</a>', "heart") +
+      "</div>" +
+      '<div class="rn-opx-box"><div class="rn-opx-boxh"><h4>Ringkasan Sumber Daya</h4><a href="resource-profile.html">Lihat semua →</a></div>' + resHtml + "</div>" +
+      trustHtml +
+      '<p class="rn-muted rn-opx-upd">Terakhir diperbarui: ' + fmtTime(org.modified) + "</p>" +
       "</div>" +
       '<div class="rn-op-tabpane" data-pane="posko" hidden>' + poskoRows + "</div>" +
       '<div class="rn-op-tabpane" data-pane="anggota" hidden>' + memberRows + "</div>" +
       '<div class="rn-op-tabpane" data-pane="program" hidden>' + programRows + "</div>";
 
-    $("#orgDetailPanel").querySelectorAll(".rn-op-detail-tabs .rn-tab").forEach(function (tab) {
-      tab.addEventListener("click", function () {
-        $("#orgDetailPanel").querySelectorAll(".rn-op-detail-tabs .rn-tab").forEach(function (t) { t.classList.remove("is-active"); });
-        tab.classList.add("is-active");
-        $("#orgDetailPanel").querySelectorAll(".rn-op-tabpane").forEach(function (p) { p.hidden = p.getAttribute("data-pane") !== tab.getAttribute("data-tab"); });
-      });
+    var panel = $("#orgDetailPanel");
+    function showTab(name) {
+      panel.querySelectorAll(".rn-op-detail-tabs .rn-tab").forEach(function (t) { t.classList.toggle("is-active", t.getAttribute("data-tab") === name); });
+      panel.querySelectorAll(".rn-op-tabpane").forEach(function (p) { p.hidden = p.getAttribute("data-pane") !== name; });
+    }
+    panel.querySelectorAll(".rn-op-detail-tabs .rn-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () { showTab(tab.getAttribute("data-tab")); });
     });
+    panel.querySelectorAll("[data-tab-go]").forEach(function (a) { a.addEventListener("click", function () { showTab(a.getAttribute("data-tab-go")); }); });
+    if (window.RNIconFill) window.RNIconFill(panel);
   }
 
   async function selectOrg(name) {

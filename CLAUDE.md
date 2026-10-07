@@ -50,6 +50,10 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07.)
   identitas pembuat, rekam jejak keputusan, kelengkapan bukti — `services/approval_risk.py`), Alur Persetujuan 4 langkah dari status + log,
   Jejak Audit dengan pelaku. DocType baru **RN Approval Log** (append-only; `approval_action` mencatat tiap keputusan). "Merge" tetap TIDAK dibuat
   (alasan di docstring api_verification). 232 test lulus. **Perlu `rn-deploy-app.sh`** (migrate); sebelum itu kolom Risk kosong.
+- **Organisasi & Posko mock-up pass 2 (2026-10-07):** pohon visual (event → kartu organisasi → kartu posko dengan jumlah anggota) + panel detail
+  (Status Verifikasi, Anggota, Posko/Program Aktif, Ringkasan Sumber Daya dari RN Resource Profile, Trust Level dengan nilai A–D = 4 pemeriksaan × 25 poin).
+  Backend: `org_posko_board` (+`event_title`, `member_count` per posko), `org_detail` (+`counts`, `resources`, `trust`). Tanpa deploy halaman tetap jalan
+  (anggota per posko 0, sumber daya/trust kosong). **Perlu `rn-deploy-app.sh`** — satu deploy sekaligus dengan Verification & Approval.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
   Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
   pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**

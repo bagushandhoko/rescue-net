@@ -66,6 +66,15 @@ def org_posko_board(disaster_event=None):
     for p in poskos:
         posko_by_org.setdefault(p.organization, []).append(p)
 
+    member_by_posko = {}
+    if poskos:
+        for r in frappe.get_all(
+            "RN Posko Assignment",
+            filters={"posko": ["in", [p.name for p in poskos]], "status": "approved"},
+            fields=["posko", "count(name) as n"], group_by="posko", limit_page_length=2000,
+        ):
+            member_by_posko[r.posko] = r.n
+
     orgs_raw = frappe.get_all(
         "RN Organization", filters={"name": ["in", org_names]} if org_names else {},
         fields=["name", "title", "organization_type", "verification_status",
@@ -83,6 +92,7 @@ def org_posko_board(disaster_event=None):
         posko_list = [
             {"name": p.name, "title": p.title, "posko_type": p.posko_type,
              "status": p.operational_status, "verification_status": p.verification_status,
+             "member_count": member_by_posko.get(p.name, 0),
              "href": "posko-detail.html?id=" + p.name + "&event=" + (event or "")}
             for p in org_poskos
         ]
@@ -111,8 +121,13 @@ def org_posko_board(disaster_event=None):
 
     orgs.sort(key=lambda r: -r["posko_count"])
 
+    event_row = frappe.db.get_value("RN Disaster Event", event, ["title", "event_status", "started_at"], as_dict=True) if event else None
+
     return {
         "disaster_event": event,
+        "event_title": event_row.title if event_row else None,
+        "event_status": event_row.event_status if event_row else None,
+        "event_since": str(event_row.started_at)[:10] if event_row and event_row.get("started_at") else None,
         "generated_at": frappe.utils.now_datetime(),
         "totals": {
             "organisasi_aktif": sum(1 for o in orgs if o["status"] == "active" or o["verification_status"] not in _ORG_PENDING_TERMS),
@@ -170,13 +185,57 @@ def org_detail(organization):
         "trusted_verifier": bool((org.get("trusted_verifier_count") or 0) > 0),
     }
 
+    members_total = _org_member_count(organization)
+    posko_active = sum(1 for p in poskos if str(p.operational_status or "").lower() not in _POSKO_INACTIVE_TERMS)
+    program_active = sum(1 for p in programs if p.status == "active")
+
     return {
         "org": org,
         "poskos": poskos,
         "members": members,
         "programs": programs,
         "checklist": checklist,
+        "counts": {"members": members_total, "poskos": len(poskos), "posko_active": posko_active,
+                   "programs": len(programs), "program_active": program_active},
+        "resources": _org_resources(organization),
+        "trust": _org_trust(checklist, members_total),
     }
+
+
+_RESOURCE_LABEL = {
+    "kendaraan": "Kendaraan", "fasilitas": "Fasilitas", "barang_bantuan": "Barang Bantuan",
+    "alat_kerja": "Alat Kerja", "medis": "Obat & Medis", "skill": "Keahlian",
+}
+
+
+def _org_resources(organization):
+    """Resource profiles the organisation owns, grouped by category: items + total quantity."""
+    rows = frappe.get_all(
+        "RN Resource Profile", filters={"owner_type": "organization", "owner_id": organization},
+        fields=["category", "quantity"], limit_page_length=2000,
+    )
+    groups = {}
+    for r in rows:
+        g = groups.setdefault(r.category or "lainnya", {"items": 0, "quantity": 0.0})
+        g["items"] += 1
+        g["quantity"] += float(r.quantity or 0)
+    out = [{"category": k, "label": _RESOURCE_LABEL.get(k, str(k).replace("_", " ").title()),
+            "items": v["items"], "quantity": v["quantity"]} for k, v in groups.items()]
+    out.sort(key=lambda g: -g["items"])
+    return out
+
+
+def _org_trust(checklist, members):
+    """Verification completeness score: four literal checks, 25 points each.
+    Grade A >= 90, B >= 70, C >= 50, else D — not a model, just a count."""
+    checks = [
+        {"key": "identitas", "label": "Verifikasi Identitas", "done": checklist["identitas_organisasi"]},
+        {"key": "kontak", "label": "Kontak Person Terisi", "done": checklist["kontak_person"]},
+        {"key": "verifier", "label": "Trusted Verifier", "done": checklist["trusted_verifier"]},
+        {"key": "anggota", "label": "Anggota Terdaftar", "done": members > 0},
+    ]
+    score = 25 * sum(1 for c in checks if c["done"])
+    return {"score": score, "grade": "A" if score >= 90 else "B" if score >= 70 else "C" if score >= 50 else "D", "checks": checks}
 
 
 @frappe.whitelist(allow_guest=True)

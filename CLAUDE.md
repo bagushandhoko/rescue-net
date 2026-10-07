@@ -25,7 +25,7 @@ Detail status, item terbuka, dan gotcha ada di `HANDOVER.md`.
 
 ## Status saat ini
 
-Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07.)
+Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07 malam.)
 
 - **Selesai (belum deploy):** "pelapor terverifikasi" (owner 2026-10-01) — role `verified_reporter`, hanya menambah
   Kebutuhan di posko mana pun (label pelapor + "belum dikonfirmasi" sampai posko konfirmasi/tolak; batas 30/jam;
@@ -57,6 +57,10 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07.)
 - **Registrasi & Verifikasi Posko mock-up pass 2 (2026-10-07, frontend = live):** form dua kolom padat (urutan field disusun ulang, nama field tetap),
   checkbox fungsi posko diperbaiki, tombol Tindakan berwarna. "Upload Foto Posko" dari mock-up BELUM dibuat (butuh alur upload file per posko).
   Gotcha: aturan mobile site-wide menjadikan `input`/`label` lebar penuh — pakai `!important` + selektor spesifik untuk checkbox.
+- **Mock-up pass 2 SELESAI untuk semua file di `assets/img/mockup/` (2026-10-07):** + Welcome (kartu peran) dan Login (panel "Bergabung sesuai peran").
+  Daftar belum-deploy: Verification & Approval (RN Approval Log + risk) dan Organisasi & Posko (counts/resources/trust) — jalankan `sh scripts/rn-deploy-app.sh`
+  dari `/volume1/web/rescue-net` (>120 dtk; jalankan dengan `!`). Sisa celah yang dicatat: foto posko (Registrasi), KPI "dari kemarin" (butuh riwayat harian),
+  "Merge" (Verification, sengaja tidak dibuat). 234 test lulus.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
   Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
   pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**

@@ -443,3 +443,16 @@
     init();
   }
 })();
+
+/* "Bergabung sesuai peran Anda": a role tile opens the Daftar tab with that role chosen */
+document.addEventListener("click", function (e) {
+  var t = e.target.closest("[data-pick-role]");
+  if (!t) return;
+  var radio = document.querySelector('#registerForm input[name="role"][value="' + t.getAttribute("data-pick-role") + '"]');
+  if (radio) {
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  var form = document.getElementById("registerForm");
+  if (form && form.scrollIntoView) form.scrollIntoView({ behavior: "smooth", block: "start" });
+});

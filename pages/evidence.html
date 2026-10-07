@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Evidence Center</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=ev2-20261007">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
   <link rel="stylesheet" href="../assets/css/rn-lightbox.css?v=lb-2" />
@@ -48,7 +48,7 @@
     </nav>
   </aside>
 
-  <main class="main">
+  <main class="main rn-dense rn-evc-page">
     <header class="topbar">
       <div class="rn-page-mobile-title">Evidence Center</div>
 
@@ -82,32 +82,45 @@
       </button>
     </section>
 
-    <section class="panel">
-      <div class="panel-header">
-        <div><h3>Filter Modul</h3></div>
-      </div>
-      <div class="rn-ev-modul-chips" id="modulChips"></div>
-
-      <div class="rn-ev-toolbar">
-        <input type="search" id="evidenceSearch" placeholder="Cari evidence, lokasi, uploader…">
-        <button class="btn" id="exportBtn" type="button">⬇ Ekspor CSV</button>
+    <section class="panel rn-ev-main">
+      <div class="rn-ev-bar">
+        <div class="rn-ev-filterbox">
+          <h3>Filter Modul</h3>
+          <div class="rn-ev-modul-chips" id="modulChips"></div>
+        </div>
+        <div class="rn-ev-tools">
+          <input type="search" id="evidenceSearch" placeholder="Cari evidence, lokasi, uploader…">
+          <details class="rn-ev-more-filter" id="moreFilter">
+            <summary class="btn"><span data-icon="layers"></span> Filter Lainnya</summary>
+            <div class="rn-ev-pop">
+              <label>Verifikasi<select id="fVerif"><option value="">Semua</option><option value="verified">Terverifikasi</option><option value="pending">Pending</option><option value="rejected">Ditolak</option><option value="restricted">Restricted</option></select></label>
+              <label>Visibilitas<select id="fVis"><option value="">Semua</option><option value="public">Publik</option><option value="restricted">Terbatas</option></select></label>
+              <label>Jenis<select id="fMime"><option value="">Semua</option><option value="image">Foto</option><option value="video">Video</option><option value="document">Dokumen</option></select></label>
+              <label class="rn-ev-chk"><input type="checkbox" id="fGeo"> Hanya yang punya GPS</label>
+              <button type="button" class="btn mini" id="fReset">Atur ulang</button>
+            </div>
+          </details>
+          <button class="btn" id="exportBtn" type="button"><span data-icon="share"></span> Ekspor</button>
+        </div>
       </div>
 
       <div class="rn-table-wrap">
         <table class="rn-table rn-ev-table">
           <thead>
             <tr>
+              <th class="rn-ev-c0"><input type="checkbox" id="selAll" aria-label="Pilih semua"></th>
               <th>Evidence</th><th>Modul</th><th>Lokasi</th><th>Waktu</th>
-              <th>Uploader</th><th>Verifikasi</th><th>Visibilitas</th>
+              <th>Uploader</th><th>Verifikasi</th><th>Visibilitas</th><th>Aksi</th>
             </tr>
           </thead>
-          <tbody id="evidenceBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+          <tbody id="evidenceBody"><tr><td colspan="9">Memuat…</td></tr></tbody>
         </table>
       </div>
 
       <div class="rn-table-foot">
         <span id="evidenceShown">—</span>
         <div class="rn-ev-pager" id="evidencePager"></div>
+        <label class="rn-ev-per">Per halaman <select id="perPage"><option>5</option><option selected>10</option><option>20</option><option>50</option></select></label>
       </div>
     </section>
 
@@ -185,10 +198,10 @@
   </div>
 </div>
 
-<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+<script src="../assets/js/rn-icons.js?v=tools-20261001"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/evidence.js?v=evidence-20260903c"></script>
+<script src="../assets/js/evidence.js?v=ev2-20261007"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -43,6 +43,9 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07.)
   `services/program_plan.py`, `donor_program/plan.py` (`save_plan_item`, `delete_plan_item`, `set_output_verification`); KPI Milestone Terlambat /
   Lokasi Belum Terlayani / Butuh Dukungan memakai baris nyata (program tanpa rencana tetap pakai aturan lama). 228 test lulus.
   Ter-deploy (probe 200, `plan` terkirim); rencana masih kosong sampai pemilik mengisi; tombol edit belum dicoba dengan login nyata.
+- **Evidence Center mock-up pass 2 (2026-10-07, frontend saja = live):** tabel 9 kolom (checkbox, GPS, Aksi ⋯ buka/unduh/salin), Filter Lainnya
+  (verifikasi/visibilitas/jenis/GPS), per-halaman, pager berelipsis, ekspor CSV hanya yang dipilih, kartu di HP. Kelas halaman `rn-evc-page`
+  (`.rn-ev-page` sudah dipakai tombol pager lama — jangan dipakai lagi untuk halaman). Berikutnya: Profil Sumber Daya, Verification, Organisasi & Posko.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
   Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
   pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**

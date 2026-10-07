@@ -10,8 +10,9 @@
 
   var BOARD_METHOD = "rescue_net.api_control_centre.evidence_board";
   var PAGE_SIZE = 10;
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
-  var state = { rows: [], filtered: [], module: "Semua", query: "", page: 0 };
+  var state = { rows: [], filtered: [], module: "Semua", query: "", page: 0, verif: "", vis: "", mime: "", geo: false, sel: {} };
   var BOARD_CACHE = null;
 
   var $ = function (sel, root) { return (root || document).querySelector(sel); };
@@ -107,10 +108,29 @@
     });
   }
 
+  function hasGeo(r) { return !!(r.latitude && r.longitude && (Math.abs(r.latitude) > 0.0001 || Math.abs(r.longitude) > 0.0001)); }
+  function matchVerif(r, v) {
+    var l = String(r.status || "").toLowerCase();
+    if (v === "verified") return statusPillClass(l) === "ok";
+    if (v === "restricted") return r.visibility === "restricted" && l === "restricted";
+    return l === v;
+  }
+  function fmtWhen(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(String(s || ""));
+    if (!m) return ["-", ""];
+    return [Number(m[3]) + " " + MONTHS[Number(m[2]) - 1] + " " + m[1], m[4] + ":" + m[5] + " WIB"];
+  }
+  var VERIF_LABEL = { verified: "Terverifikasi", official_verified: "Terverifikasi", community_verified: "Terverifikasi", pending: "Pending", rejected: "Ditolak", flagged: "Ditandai", restricted: "Restricted" };
+  var VERIF_ICON = { ok: "check-circle", warning: "clock", danger: "alert-circle" };
+
   function applyFilter() {
     var q = state.query.toLowerCase();
     state.filtered = state.rows.filter(function (r) {
       if (state.module !== "Semua" && r.module !== state.module) return false;
+      if (state.verif && !matchVerif(r, state.verif)) return false;
+      if (state.vis && r.visibility !== state.vis) return false;
+      if (state.mime && r.mime !== state.mime) return false;
+      if (state.geo && !hasGeo(r)) return false;
       if (!q) return true;
       var hay = [r.title, r.location_text, r.posko, r.uploader].join(" ").toLowerCase();
       return hay.indexOf(q) !== -1;
@@ -126,36 +146,47 @@
 
     var body = $("#evidenceBody");
     if (!slice.length) {
-      body.innerHTML = '<tr><td colspan="7"><em class="rn-muted">Tidak ada evidence yang cocok.</em></td></tr>';
+      body.innerHTML = '<tr><td colspan="9"><em class="rn-muted">Tidak ada evidence yang cocok.</em></td></tr>';
     } else {
-      body.innerHTML = slice.map(function (r) {
+      body.innerHTML = slice.map(function (r, i) {
         var url = r.evidence_url || "";
         var thumb = r.mime === "image"
           ? '<img src="' + esc(url) + '" alt="" loading="lazy">'
           : '<span class="rn-ev-thumb-icon">' + mimeIcon(r.mime) + "</span>";
-        var geo = (r.latitude && r.longitude && (Math.abs(r.latitude) > 0.0001 || Math.abs(r.longitude) > 0.0001))
-          ? '<small class="rn-ev-geo">📍 ' + r.latitude.toFixed(4) + ", " + r.longitude.toFixed(4) + "</small>"
+        var geo = hasGeo(r)
+          ? '<small class="rn-ev-geo"><span data-icon="map-pin"></span>' + r.latitude.toFixed(4) + ", " + r.longitude.toFixed(4) + "</small>"
           : "";
         var cap = String(r.evidence_caption || r.caption || r.title || "Evidence").replace(/^\s*\[[^\]]+\]\s*/, "");
         var meta = [r.location_text || r.posko, r.uploader].filter(Boolean).join(" · ");
         var lbAttr = r.mime === "image"
           ? ' data-caption="' + esc(cap) + '" data-meta="' + esc(meta) + '"'
           : ' data-no-lightbox';
+        var when = fmtWhen(r.created_at);
+        var vc = statusPillClass(r.status);
+        var vlabel = VERIF_LABEL[String(r.status || "").toLowerCase()] || r.status || "-";
+        var vtone = String(r.status).toLowerCase() === "restricted" ? "danger" : vc;
+        var id = String(r.name || r.id || url || (state.page * PAGE_SIZE + i));
+        var typeIcon = r.mime === "video" ? "camera" : r.mime === "document" ? "clipboard-check" : "camera";
         return (
-          "<tr>" +
-          '<td><a class="rn-ev-cell" href="' + esc(url) + '" target="_blank" rel="noopener"' + lbAttr + ">" +
-          '<span class="rn-ev-thumb">' + thumb + "</span>" +
+          '<tr data-id="' + esc(id) + '">' +
+          '<td class="rn-ev-c0"><input type="checkbox" class="rn-ev-sel" data-id="' + esc(id) + '"' + (state.sel[id] ? " checked" : "") + ' aria-label="Pilih"></td>' +
+          '<td data-label="Evidence"><a class="rn-ev-cell" href="' + esc(url) + '" target="_blank" rel="noopener"' + lbAttr + ">" +
+          '<span class="rn-ev-thumb">' + thumb + '<i class="rn-ev-type ' + esc(r.mime || "image") + '" data-icon="' + typeIcon + '"></i></span>' +
           "<span><b>" + esc(r.title || "Evidence") + "</b><small>" + esc(filename(url)) + "</small>" + geo + "</span>" +
           "</a></td>" +
-          '<td><span class="chip">' + esc(r.module) + "</span></td>" +
-          "<td>" + esc(r.location_text || r.posko || "-") + "</td>" +
-          "<td>" + esc(String(r.created_at || "").slice(0, 16).replace("T", " ")) + "</td>" +
-          "<td><b>" + esc(r.uploader || "-") + "</b><small>" + esc(r.uploader_role || "-") + "</small></td>" +
-          '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status || "-") + "</span></td>" +
-          '<td><span class="chip ' + (r.visibility === "public" ? "ok" : "") + '">' + (r.visibility === "public" ? "Publik" : "Terbatas") + "</span></td>" +
+          '<td data-label="Modul"><span class="chip rn-ev-mod" data-mod="' + esc(r.module) + '">' + esc(r.module) + "</span></td>" +
+          '<td data-label="Lokasi" class="rn-ev-loc">' + esc(r.location_text || r.posko || "-") + "</td>" +
+          '<td data-label="Waktu" class="rn-ev-when">' + esc(when[0]) + "<small>" + esc(when[1]) + "</small></td>" +
+          '<td data-label="Uploader"><b>' + esc(r.uploader || "-") + "</b><small>" + esc(r.uploader_role || "-") + "</small></td>" +
+          '<td data-label="Verifikasi"><span class="chip ' + vtone + '">' + (VERIF_ICON[vtone] ? '<span data-icon="' + VERIF_ICON[vtone] + '"></span>' : "") + esc(vlabel) + "</span></td>" +
+          '<td data-label="Visibilitas"><span class="chip ' + (r.visibility === "public" ? "" : "danger") + '">' + (r.visibility === "public" ? "Publik" : "Terbatas") + "</span></td>" +
+          '<td class="rn-ev-act"><details class="rn-ev-menu"><summary aria-label="Aksi">⋯</summary><div>' +
+          (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener">Buka file</a><a href="' + esc(url) + '" download>Unduh</a><button type="button" data-copy="' + esc(url) + '">Salin tautan</button>' : "<span>Tidak ada file</span>") +
+          "</div></details></td>" +
           "</tr>"
         );
       }).join("");
+      if (window.RNIconFill) window.RNIconFill(body);
     }
 
     $("#evidenceShown").textContent = total
@@ -163,16 +194,58 @@
       : "0 evidence";
 
     var pager = $("#evidencePager");
-    var btns = [];
+    var btns = [], shown = [];
     for (var i = 0; i < pages; i++) {
-      btns.push('<button type="button" class="rn-ev-page' + (i === state.page ? " is-active" : "") + '" data-page="' + i + '">' + (i + 1) + "</button>");
+      if (i === 0 || i === pages - 1 || Math.abs(i - state.page) <= 1) shown.push(i);
+      else if (shown[shown.length - 1] !== "…") shown.push("…");
     }
+    shown.forEach(function (i) {
+      btns.push(i === "…" ? '<span class="rn-ev-gap">…</span>'
+        : '<button type="button" class="rn-ev-page' + (i === state.page ? " is-active" : "") + '" data-page="' + i + '">' + (i + 1) + "</button>");
+    });
     pager.innerHTML = btns.join("");
     pager.querySelectorAll("button").forEach(function (btn) {
       btn.addEventListener("click", function () {
         state.page = Number(btn.getAttribute("data-page"));
         renderTable();
       });
+    });
+    var all = $("#selAll");
+    if (all) all.checked = slice.length > 0 && slice.every(function (r) { return state.sel[String(r.name || r.id || r.evidence_url)]; });
+  }
+
+  function setupFilters() {
+    function bind(id, key, isCheck) {
+      $(id).addEventListener("change", function (e) {
+        state[key] = isCheck ? e.target.checked : e.target.value;
+        state.page = 0;
+        applyFilter();
+      });
+    }
+    bind("#fVerif", "verif"); bind("#fVis", "vis"); bind("#fMime", "mime"); bind("#fGeo", "geo", true);
+    $("#fReset").addEventListener("click", function () {
+      ["#fVerif", "#fVis", "#fMime"].forEach(function (id) { $(id).value = ""; });
+      $("#fGeo").checked = false;
+      state.verif = state.vis = state.mime = ""; state.geo = false; state.page = 0;
+      applyFilter();
+    });
+    $("#perPage").addEventListener("change", function (e) { PAGE_SIZE = Number(e.target.value) || 10; state.page = 0; renderTable(); });
+    $("#selAll").addEventListener("change", function (e) {
+      var from = state.page * PAGE_SIZE;
+      state.filtered.slice(from, from + PAGE_SIZE).forEach(function (r) { state.sel[String(r.name || r.id || r.evidence_url)] = e.target.checked; });
+      renderTable();
+    });
+    $("#evidenceBody").addEventListener("change", function (e) {
+      if (e.target.classList.contains("rn-ev-sel")) { state.sel[e.target.dataset.id] = e.target.checked; renderTable(); }
+    });
+    $("#evidenceBody").addEventListener("click", function (e) {
+      var c = e.target.closest("[data-copy]");
+      if (!c) return;
+      var url = new URL(c.dataset.copy, location.href).href;
+      (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { c.textContent = "Tersalin"; }, function () { window.prompt("Salin tautan", url); });
+    });
+    document.addEventListener("click", function (e) {
+      document.querySelectorAll(".rn-ev-menu[open], #moreFilter[open]").forEach(function (d) { if (!d.contains(e.target)) d.open = false; });
     });
   }
 
@@ -193,7 +266,8 @@
     $("#exportBtn").addEventListener("click", function () {
       var header = ["Judul", "Modul", "Lokasi", "Waktu", "Uploader", "Role", "Verifikasi", "Visibilitas", "URL"];
       var lines = [header.map(csvEscape).join(",")];
-      state.filtered.forEach(function (r) {
+      var picked = state.filtered.filter(function (r) { return state.sel[String(r.name || r.id || r.evidence_url)]; });
+      (picked.length ? picked : state.filtered).forEach(function (r) {
         lines.push([
           r.title, r.module, r.location_text || r.posko || "-", r.created_at,
           r.uploader, r.uploader_role, r.status, r.visibility, r.evidence_url,
@@ -287,6 +361,7 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
 
     setupSearch();
+    setupFilters();
     setupExport();
     setupUploadForm();
     loadBoard().catch(function (err) { statusMsg("Gagal memuat: " + (err && err.message || err)); });

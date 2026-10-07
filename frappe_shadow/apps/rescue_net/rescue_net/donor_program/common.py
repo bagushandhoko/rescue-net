@@ -343,6 +343,13 @@ SPECIAL_PROGRAM_FIELDS = PROGRAM_FIELDS + [
     "officer_in_charge_phone",
     "evidence_file_id",
     "updated_by_user",
+    "cover_image_url",
+    "partners",
+    "output_target",
+    "output_verified",
+    "output_verification_status",
+    "output_verifier",
+    "output_estimated_done",
 ]
 
 

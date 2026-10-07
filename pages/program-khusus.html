@@ -6,7 +6,8 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=pk2-20261007">
+  <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -47,7 +48,7 @@
     </nav>
   </aside>
 
-  <main class="main">
+  <main class="main rn-dense rn-pk-page">
     <header class="topbar">
     <div class="rn-page-mobile-title">Program Khusus</div>
 
@@ -71,13 +72,13 @@
         <span class="kpi-icon" data-icon="check-circle"></span><span>Program Selesai</span><strong id="kpiSelesai">-</strong><small>tuntas</small>
       </button>
       <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="milestone_terlambat">
-        <span class="kpi-icon" data-icon="clock"></span><span>Milestone Terlambat</span><strong id="kpiTerlambat">-</strong><small>lewat target selesai</small>
+        <span class="kpi-icon" data-icon="clock"></span><span>Milestone Terlambat</span><strong id="kpiTerlambat">-</strong><small>lewat target</small>
       </button>
       <button type="button" class="kpi-card warning rn-kpi-btn" data-kpi="lokasi_belum_terlayani">
-        <span class="kpi-icon" data-icon="map-pin"></span><span>Lokasi Belum Terlayani</span><strong id="kpiLokasi">-</strong><small>belum ada update</small>
+        <span class="kpi-icon" data-icon="map-pin"></span><span>Lokasi Belum Terlayani</span><strong id="kpiLokasi">-</strong><small>belum terlayani</small>
       </button>
       <button type="button" class="kpi-card danger rn-kpi-btn" data-kpi="butuh_support">
-        <span class="kpi-icon" data-icon="hand-heart"></span><span>Butuh Dukungan</span><strong id="kpiSupport">-</strong><small>prioritas tinggi, progres rendah</small>
+        <span class="kpi-icon" data-icon="hand-heart"></span><span>Butuh Dukungan</span><strong id="kpiSupport">-</strong><small>kebutuhan belum terpenuhi</small>
       </button>
     </section>
 
@@ -98,11 +99,25 @@
       <div class="panel" id="programDetailPanel">
         <div id="detailEmpty" class="rn-muted">Pilih program dari daftar untuk melihat detail.</div>
         <div id="detailBody" hidden>
-          <div class="rn-pk-detail-head">
-            <h3 id="detailName">-</h3>
-            <span class="chip" id="detailStatus"></span>
+          <div class="rn-pk-hero">
+            <div class="rn-pk-cover" id="detailCover"></div>
+            <div class="rn-pk-hero-main">
+              <h3 id="detailName">-</h3>
+              <div class="rn-pk-hero-chips"><span class="chip" id="detailCategory"></span><span class="chip" id="detailStatus"></span></div>
+              <ul class="rn-pk-hero-meta" id="detailMeta"></ul>
+            </div>
+            <div class="rn-pk-overall">
+              <div class="rn-pk-overall-top"><span>Overall Progress</span><button type="button" class="btn mini" id="shareProgram">Bagikan</button></div>
+              <div class="rn-pk-progress-row">
+                <div class="rn-pk-progress-pct" id="detailProgressPct">0%</div>
+                <div class="rn-pk-progress-bar-wrap"><div class="rn-pk-progress-bar"><div id="detailProgressBar" style="width:0%"></div></div></div>
+              </div>
+              <div class="rn-pk-overall-nums">
+                <div><span id="detailTargetLabel">Target</span><b id="detailTarget">-</b></div>
+                <div><span>Tercapai</span><b id="detailCurrent">-</b></div>
+              </div>
+            </div>
           </div>
-          <div class="rn-pk-detail-meta" id="detailMeta"></div>
 
           <div id="detailNotPublicBanner" class="rn-va-fields" style="border:1px solid var(--yellow, #b88918);border-radius:8px;padding:10px 12px;margin:8px 0;" hidden>
             <p class="rn-muted" style="margin:0 0 8px">Program ini <b>belum tampil publik</b> karena organisasi/posko/akun pemilik belum terverifikasi. Selesaikan dulu di Verification &amp; Approval, lalu klik tombol ini untuk publikasikan.</p>
@@ -110,21 +125,27 @@
             <span class="form-message" id="recheckPublishMsg"></span>
           </div>
 
-          <div class="rn-pk-progress-row">
-            <div class="rn-pk-progress-pct" id="detailProgressPct">0%</div>
-            <div class="rn-pk-progress-bar-wrap">
-              <div class="rn-pk-progress-bar"><div id="detailProgressBar" style="width:0%"></div></div>
-              <div class="rn-pk-bar-label"><span>Target: <b id="detailTarget">-</b></span><span>Tercapai: <b id="detailCurrent">-</b></span></div>
-            </div>
-          </div>
-
           <div class="rn-tabs rn-pk-detail-tabs" id="detailTabs">
             <button class="rn-tab is-active" data-tab="ringkasan" type="button">Ringkasan</button>
+            <button class="rn-tab" data-tab="rencana" type="button" id="tabBtnRencana" hidden>Rencana Kerja</button>
             <button class="rn-tab" data-tab="anggaran" type="button">Anggaran</button>
             <button class="rn-tab" data-tab="riwayat" type="button">Riwayat</button>
           </div>
 
           <div id="tabRingkasan">
+            <div class="rn-pk-row3">
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Target &amp; Milestone</h4></div><ol class="rn-pk-ms" id="planMilestones"></ol></div>
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Lokasi Implementasi</h4></div>
+                <div class="rn-pk-map" id="planMap"></div>
+                <div class="rn-pk-loc-nums"><div><span>Total Lokasi</span><b id="locTotal">0</b></div><div><span>Terlayani</span><b id="locServed">0</b></div><div><span>Belum Terlayani</span><b id="locUnserved">0</b></div></div></div>
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Kebutuhan Program</h4></div><div class="rn-pk-needs" id="planNeeds"></div></div>
+            </div>
+            <div class="rn-pk-support-grid" id="planSupport"></div>
+            <div class="rn-pk-row3">
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Progress Lapangan</h4></div><div class="rn-pk-fieldprog" id="planField"></div></div>
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Evidence Program</h4></div><div class="rn-bukti-grid" id="detailEvidence"></div></div>
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Verifikasi Output</h4></div><dl class="rn-pk-verif" id="planVerif"></dl></div>
+            </div>
             <p id="detailDescription" class="rn-muted"></p>
             <div class="rn-dp-target">
               <div><span>Penanggung Jawab</span><b id="detailOfficer">-</b><small id="detailOfficerPhone"></small></div>
@@ -146,15 +167,19 @@
               <p class="rn-muted" id="projectRabDoc"></p>
               <a class="btn ghost mini" id="projectTenderLink" href="pengadaan-tender.html" target="_blank" rel="noopener">Lihat Detail Tender & Penawaran →</a>
             </div>
+          </div>
 
-            <h4 style="margin-top:16px;">Bukti Program</h4>
-            <div class="rn-bukti-grid" id="detailEvidence"></div>
-            <div class="rn-pk-support-grid">
-              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="package"></span><b>Dukungan Logistik</b><a href="posko-logistik.html">Ajukan Dukungan →</a></div>
-              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="truck"></span><b>Dukungan Distribusi</b><a href="management-distribusi.html">Ajukan Dukungan →</a></div>
-              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="users"></span><b>Dukungan Relawan</b><a href="management-relawan.html">Ajukan Dukungan →</a></div>
-              <div class="rn-pk-support-tile"><span class="rn-pk-support-icon" data-icon="wrench"></span><b>Dukungan Alat Kerja</b><a href="alat-kerja.html">Ajukan Dukungan →</a></div>
-            </div>
+          <div id="tabRencana" hidden>
+            <p class="rn-muted" style="font-size:12px">Hanya pemilik program atau Control Centre yang dapat mengubah rencana. Perubahan langsung tampil di Ringkasan dan menggerakkan KPI Milestone Terlambat, Lokasi Belum Terlayani, dan Butuh Dukungan.</p>
+            <h4 class="rn-md-detail-h">Milestone</h4><div id="editMilestones" class="rn-pk-edit"></div>
+            <form class="rn-form rn-pk-addform" data-add="milestone"><input name="title" placeholder="Nama milestone" required><input name="due_date" type="date" title="Target selesai"><select name="milestone_status"><option value="belum_mulai">Belum mulai</option><option value="berjalan">Berjalan</option><option value="selesai">Selesai</option></select><input name="progress_percent" type="number" min="0" max="100" placeholder="%"><button class="btn mini primary" type="submit">Tambah</button></form>
+            <h4 class="rn-md-detail-h">Lokasi</h4><div id="editLocations" class="rn-pk-edit"></div>
+            <form class="rn-form rn-pk-addform" data-add="location"><input name="title" placeholder="Nama lokasi" required><input name="latitude" type="number" step="any" placeholder="Lat"><input name="longitude" type="number" step="any" placeholder="Lng"><button class="btn mini primary" type="submit">Tambah</button></form>
+            <h4 class="rn-md-detail-h">Kebutuhan &amp; Dukungan</h4><div id="editNeeds" class="rn-pk-edit"></div>
+            <form class="rn-form rn-pk-addform" data-add="need"><input name="item" placeholder="Kebutuhan" required><select name="kind"><option value="material">Material</option><option value="logistik">Logistik</option><option value="distribusi">Distribusi</option><option value="relawan">Relawan</option><option value="alat_kerja">Alat Kerja</option></select><input name="qty_needed" type="number" step="any" min="0" placeholder="Butuh"><input name="qty_available" type="number" step="any" min="0" placeholder="Ada"><input name="unit" placeholder="Satuan"><button class="btn mini primary" type="submit">Tambah</button></form>
+            <h4 class="rn-md-detail-h">Verifikasi Output</h4>
+            <form class="rn-form rn-pk-addform" id="verifForm"><select name="status"><option value="">Status…</option><option value="belum_dimulai">Belum dimulai</option><option value="dalam_proses">Dalam proses</option><option value="terverifikasi">Terverifikasi</option><option value="ditolak">Ditolak</option></select><input name="output_target" type="number" min="0" placeholder="Target output"><input name="output_verified" type="number" min="0" placeholder="Terverifikasi"><input name="verifier" placeholder="Verifikator"><input name="estimated_done" type="date" title="Estimasi selesai"><button class="btn mini primary" type="submit">Simpan</button></form>
+            <p class="form-message" id="planMsg"></p>
           </div>
 
           <div id="tabAnggaran" hidden>
@@ -293,9 +318,10 @@
   </div>
 </div>
 
-<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+<script src="../assets/js/rn-icons.js?v=tools-20261001"></script>
+<script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=designimg-20260912"></script>
+<script src="../assets/js/program-khusus.js?v=pk2-20261007"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>

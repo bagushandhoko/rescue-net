@@ -1,0 +1,62 @@
+{
+ "doctype": "DocType",
+ "name": "RN Program Milestone",
+ "module": "RN Donor",
+ "autoname": "hash",
+ "title_field": "title",
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "fields": [
+  {
+   "fieldname": "program",
+   "label": "Program",
+   "fieldtype": "Link",
+   "options": "RN Donor Program",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "label": "Milestone",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "sort_order",
+   "label": "Urutan",
+   "fieldtype": "Int",
+   "default": "0"
+  },
+  {
+   "fieldname": "due_date",
+   "label": "Target Selesai",
+   "fieldtype": "Date"
+  },
+  {
+   "fieldname": "milestone_status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "belum_mulai\nberjalan\nselesai",
+   "default": "belum_mulai"
+  },
+  {
+   "fieldname": "progress_percent",
+   "label": "Progres (%)",
+   "fieldtype": "Int",
+   "default": "0"
+  },
+  {
+   "fieldname": "completed_at",
+   "label": "Selesai Pada",
+   "fieldtype": "Date"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

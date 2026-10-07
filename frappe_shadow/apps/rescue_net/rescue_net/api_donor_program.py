@@ -9,10 +9,11 @@ is attached to the function objects, so the old paths stay callable.
 from rescue_net.donor_program import (  # noqa: F401
     board,
     common,
+    plan,
     programs,
     special,
 )
 
-for _module in (common, board, programs, special,):
+for _module in (common, board, plan, programs, special,):
     globals().update({k: v for k, v in vars(_module).items() if not k.startswith("__")})
 del _module

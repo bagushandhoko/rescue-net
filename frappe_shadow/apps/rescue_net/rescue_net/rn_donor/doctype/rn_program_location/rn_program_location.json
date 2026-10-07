@@ -1,0 +1,57 @@
+{
+ "doctype": "DocType",
+ "name": "RN Program Location",
+ "module": "RN Donor",
+ "autoname": "hash",
+ "title_field": "title",
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "fields": [
+  {
+   "fieldname": "program",
+   "label": "Program",
+   "fieldtype": "Link",
+   "options": "RN Donor Program",
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "label": "Lokasi",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "latitude",
+   "label": "Latitude",
+   "fieldtype": "Float",
+   "precision": "6"
+  },
+  {
+   "fieldname": "longitude",
+   "label": "Longitude",
+   "fieldtype": "Float",
+   "precision": "6"
+  },
+  {
+   "fieldname": "location_status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "belum_terlayani\nterlayani",
+   "default": "belum_terlayani"
+  },
+  {
+   "fieldname": "served_at",
+   "label": "Terlayani Pada",
+   "fieldtype": "Date"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

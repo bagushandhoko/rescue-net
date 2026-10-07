@@ -37,7 +37,14 @@
   "officer_in_charge_name",
   "officer_in_charge_phone",
   "evidence_file_id",
-  "updated_by_user"
+  "updated_by_user",
+  "cover_image_url",
+  "partners",
+  "output_target",
+  "output_verified",
+  "output_verification_status",
+  "output_verifier",
+  "output_estimated_done"
  ],
  "fields": [
   {
@@ -216,6 +223,42 @@
    "fieldtype": "Data",
    "label": "Updated By User",
    "read_only": 1
+  },
+  {
+   "fieldname": "cover_image_url",
+   "label": "Foto Sampul",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "partners",
+   "label": "Mitra",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "output_target",
+   "label": "Target Output (unit)",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "output_verified",
+   "label": "Output Terverifikasi",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "output_verification_status",
+   "label": "Status Verifikasi Output",
+   "fieldtype": "Select",
+   "options": "\nbelum_dimulai\ndalam_proses\nterverifikasi\nditolak"
+  },
+  {
+   "fieldname": "output_verifier",
+   "label": "Verifikator",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "output_estimated_done",
+   "label": "Estimasi Selesai Verifikasi",
+   "fieldtype": "Date"
   }
  ],
  "permissions": [

@@ -1,0 +1,62 @@
+{
+ "doctype": "DocType",
+ "name": "RN Program Need",
+ "module": "RN Donor",
+ "autoname": "hash",
+ "title_field": "item",
+ "sort_field": "modified",
+ "sort_order": "ASC",
+ "fields": [
+  {
+   "fieldname": "program",
+   "label": "Program",
+   "fieldtype": "Link",
+   "options": "RN Donor Program",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item",
+   "label": "Kebutuhan",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Jenis Dukungan",
+   "fieldtype": "Select",
+   "options": "material\nlogistik\ndistribusi\nrelawan\nalat_kerja",
+   "default": "material"
+  },
+  {
+   "fieldname": "qty_needed",
+   "label": "Dibutuhkan",
+   "fieldtype": "Float",
+   "default": "0"
+  },
+  {
+   "fieldname": "qty_available",
+   "label": "Tersedia",
+   "fieldtype": "Float",
+   "default": "0"
+  },
+  {
+   "fieldname": "unit",
+   "label": "Satuan",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "needed_by",
+   "label": "Dibutuhkan Sebelum",
+   "fieldtype": "Date"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

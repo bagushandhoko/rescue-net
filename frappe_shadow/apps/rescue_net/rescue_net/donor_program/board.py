@@ -17,6 +17,8 @@ from rescue_net.api_kitchen import (
     _assert_operate,
 )
 
+from rescue_net.services.program_plan import board_stats, plan_for
+
 from rescue_net.donor_program.common import (  # noqa: F401
     SPECIAL_PROGRAM_FIELDS,
     UPDATE_FIELDS,
@@ -111,6 +113,7 @@ def program_board(disaster_event=None):
             tender_by_program.setdefault(t.donor_program, t)
 
     today = nowdate()
+    stats = board_stats(names)
     programs = []
     for r in rows:
         prog_updates = updates_by_program.get(r.name, [])
@@ -122,11 +125,13 @@ def program_board(disaster_event=None):
             progress = 0.0
 
         location = r.target_location or r.location or "-"
-        is_late = bool(
-            r.status == "active"
-            and r.end_date
-            and str(r.end_date) < str(today)
-        )
+        plan = stats.get(r.name)
+        # a program with milestones is late when one of THEM is; one without
+        # falls back to its own end date
+        if plan and plan["milestones"]:
+            is_late = bool(r.status == "active" and plan["late_milestones"])
+        else:
+            is_late = bool(r.status == "active" and r.end_date and str(r.end_date) < str(today))
 
         tender = tender_by_program.get(r.name)
         programs.append({
@@ -150,6 +155,10 @@ def program_board(disaster_event=None):
             "tender": tender.name if tender else None,
             "tender_status": tender.status if tender else None,
             "is_own_hidden": r.name in own_hidden_names,
+            "cover_image_url": r.get("cover_image_url"),
+            "unserved_locations": list(plan["unserved_locations"]) if plan else [],
+            "support_gap": bool(plan and plan["support_gap"]),
+            "locations_total": plan["locations"] if plan else 0,
         })
 
     active = [p for p in programs if p["status"] == "active"]
@@ -159,13 +168,18 @@ def program_board(disaster_event=None):
     ]
     completed = [p for p in programs if p["status"] == "completed"]
     late = [p for p in programs if p["is_late"]]
-    underserved_locations = {
-        p["location"] for p in active
-        if p["update_count"] == 0 and p["location"] != "-"
-    }
+    # real location rows when a program keeps them, else the old rule
+    # (a program location with no update yet)
+    underserved_locations = set()
+    for p in active:
+        if p["locations_total"]:
+            underserved_locations.update(p["program_name"] + " — " + t for t in p["unserved_locations"])
+        elif p["update_count"] == 0 and p["location"] != "-":
+            underserved_locations.add(p["location"])
     needs_support = [
         p for p in active
-        if (p["priority"] or "").lower() in _PRIORITY_CRITICAL and p["progress_percent"] < 50
+        if p["support_gap"]
+        or ((p["priority"] or "").lower() in _PRIORITY_CRITICAL and p["progress_percent"] < 50)
     ]
 
     totals = {
@@ -433,6 +447,7 @@ def program_detail(program):
             "progress_percent": progress,
             "program_kind": "project" if project else "cash",
         },
+        "plan": plan_for(program, row),
         "updates": [dict(u) for u in updates],
         "bukti": bukti,
         "donations": donations,

@@ -37,6 +37,12 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07.)
   **RN Search Found Claim**, `services/search_found.py` (skor deterministik, tanpa LLM), endpoint `create_claim`,
   `update_claim_status`, `set_identification_status`; `dashboard` menambah `kpis/board/identification/claims/photos` (nama tidak pernah
   dikirim; foto hanya untuk operator). 222 test lulus. Ter-deploy (`rn-deploy-app.sh`, probe 200, dashboard publik tanpa nama); tombol operator belum dicoba dengan login nyata.
+- **Program Khusus mock-up pass 2 (2026-10-07, selesai, belum deploy):** detail program sesuai mock-up (hero + Overall Progress, Target & Milestone,
+  peta Lokasi, Kebutuhan Program, 4 kartu Support, Progress Lapangan / Evidence / Verifikasi Output; tab "Rencana Kerja" untuk pemilik).
+  Model baru: RN Program Milestone / Location / Need + 7 field di RN Donor Program (sampul, mitra, verifikasi output);
+  `services/program_plan.py`, `donor_program/plan.py` (`save_plan_item`, `delete_plan_item`, `set_output_verification`); KPI Milestone Terlambat /
+  Lokasi Belum Terlayani / Butuh Dukungan memakai baris nyata (program tanpa rencana tetap pakai aturan lama). 228 test lulus.
+  **Perlu `rn-deploy-app.sh`** (migrate); sebelum itu `program_detail` tidak mengirim `plan` dan bagian baru kosong.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
   Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
   pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**

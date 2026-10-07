@@ -31,12 +31,12 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07.)
   Kebutuhan di posko mana pun (label pelapor + "belum dikonfirmasi" sampai posko konfirmasi/tolak; batas 30/jam;
   `services/reporter.py`, `tests/test_verified_reporter.py`); 214 test lulus. **Perlu `bench migrate` + `rn-deploy-app.sh`**
   (field baru RN User Account + RN Logistic Need). Architecture review Fase 6 menunggu review owner.
-- **Search & Found mock-up pass 2 (2026-10-07, selesai, belum deploy backend):** halaman dibangun ulang sesuai mock-up (6 KPI, 4 tab,
+- **Search & Found mock-up pass 2 (2026-10-07, selesai, ter-deploy 2026-10-07):** halaman dibangun ulang sesuai mock-up (6 KPI, 4 tab,
   Papan Pencocokan dengan skor %, Reunifikasi Aktif, donut Status Identifikasi, Klaim & Serah Terima, Foto Bukti, Aksi Verifikasi).
   Backend: field `subject_type/age_years/gender` (laporan hilang+ditemukan), `identification_status`, `match_score`, DocType baru
   **RN Search Found Claim**, `services/search_found.py` (skor deterministik, tanpa LLM), endpoint `create_claim`,
   `update_claim_status`, `set_identification_status`; `dashboard` menambah `kpis/board/identification/claims/photos` (nama tidak pernah
-  dikirim; foto hanya untuk operator). 222 test lulus. **Perlu `bench migrate` + `rn-deploy-app.sh`**; sebelum itu halaman jatuh balik ke data lama.
+  dikirim; foto hanya untuk operator). 222 test lulus. Ter-deploy (`rn-deploy-app.sh`, probe 200, dashboard publik tanpa nama); tombol operator belum dicoba dengan login nyata.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
   Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
   pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**

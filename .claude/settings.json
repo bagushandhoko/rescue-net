@@ -1,0 +1,39 @@
+{
+  "$comment": "Fase 0: agent bekerja di luar produksi. Aturan ini berlaku saat Claude Code dijalankan dari folder repo ini. Pertahanan utamanya bukan file ini tetapi akun agent tanpa sudo/docker (docs/PHASE0_ENV_SEPARATION.md).",
+  "permissions": {
+    "deny": [
+      "Bash(*osiun-frappe-*)",
+      "Bash(*osiun.localhost*)",
+      "Bash(*127.0.0.1:8095*)",
+      "Bash(*localhost:8095*)",
+      "Bash(*rn-deploy-app.sh*)",
+      "Bash(*rn-deploy-from-git.sh*)",
+      "Bash(*rn-install-nginx-deny.sh*)",
+      "Bash(*drop-site*)",
+      "Bash(*DROP DATABASE*)",
+      "Bash(*drop database*)",
+      "Bash(*DROP TABLE*)",
+      "Bash(*drop table*)",
+      "Bash(*TRUNCATE*)",
+      "Bash(rm -rf /*)",
+      "Bash(sudo rm *)",
+      "Bash(*rm -rf /volume1*)",
+      "Bash(*nginx -s*)",
+      "Bash(*synoservice*)",
+      "Bash(*systemctl*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * main*)",
+      "Bash(git push * HEAD:main*)",
+      "Bash(git push)",
+      "Read(/volume1/docker/osiun-deploy/**)",
+      "Read(/volume1/docker/osiun-backups/**)",
+      "Read(//**/.env)",
+      "Read(//**/site_config.json)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(*bench * migrate*)"
+    ]
+  }
+}

@@ -6843,3 +6843,66 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-prx-page .rn-pr-item-icon { width: 28px; height: 28px; }
 .rn-prx-page .rn-pr-add-btn { font-size: 11px; padding: 7px; }
 .rn-prx-page .rn-pr-footer { margin-top: 12px; padding: 10px 16px; font-size: 11px; }
+
+/* Verification & Approval pass 2 (2026-10-07) — layout of "verification & Approval.png" (<main class="rn-dense rn-vax-page">) */
+.rn-vax-page .rn-va-row { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, .85fr); gap: 12px; margin-top: 12px; align-items: start; }
+.rn-vax-page .rn-va-tabs { gap: 6px; margin-bottom: 10px; flex-wrap: nowrap; overflow-x: auto; }
+.rn-vax-page .rn-va-tabs .rn-tab { padding: 5px 11px; font-size: 11px; white-space: nowrap; }
+.rn-vax-page .rn-table td { white-space: normal; padding: 9px 5px; vertical-align: middle; font-size: 11px; }
+.rn-vax-page .rn-table td b { font-size: 11.5px; display: block; }
+.rn-vax-page .rn-table td small { display: block; color: var(--muted); font-size: 10px; margin-top: 1px; }
+.rn-vax-page .rn-table th { white-space: nowrap; }
+.rn-vax-page .rn-table .chip { height: 20px; font-size: 9.5px; padding: 0 8px; white-space: nowrap; }
+.rn-vax-page .rn-ba-row { cursor: pointer; }
+.rn-vax-page .rn-ba-row.is-selected td { background: rgba(232, 85, 61, .07); }
+.rn-vax-page .rn-ba-row.is-selected td:first-child { box-shadow: inset 2px 0 0 #e8553d; }
+.rn-vax-kind { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; }
+.rn-vax-kind i { color: #d8573a; font-size: 14px; font-style: normal; display: inline-grid; }
+.rn-vax-go { color: var(--muted); font-size: 16px; text-align: right; width: 18px; }
+.rn-vax-dhead { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+.rn-vax-dhead b { font-size: 13px; display: block; }
+.rn-vax-dhead small { display: block; color: var(--muted); font-size: 10.5px; margin-top: 2px; }
+.rn-vax-dicon { width: 34px; height: 34px; border-radius: 9px; background: rgba(230, 95, 60, .12); color: #d8573a; display: grid; place-items: center; font-size: 17px; flex: none; }
+.rn-vax-dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; font-size: 11px; }
+.rn-vax-dl dt { color: var(--muted); }
+.rn-vax-dl dd { margin: 0; font-weight: 600; word-break: break-word; }
+.rn-vax-page .rn-sub-h { font-size: 12px; margin: 14px 0 8px; }
+.rn-vax-trust { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: center; border: 1px solid var(--line); border-radius: 12px; padding: 10px; background: #fff; }
+.rn-vax-ring { width: 84px; height: 84px; }
+.rn-vax-ringn { font-size: 22px; font-weight: 800; fill: var(--text, #2d211b); }
+.rn-vax-risk { display: inline-block; font-size: 10.5px; font-weight: 700; margin-bottom: 4px; }
+.rn-vax-risk.rendah { color: #23824a; } .rn-vax-risk.sedang { color: #c47a12; } .rn-vax-risk.tinggi { color: #c2332f; }
+.rn-vax-trust ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 10.5px; }
+.rn-vax-trust li { display: flex; justify-content: space-between; gap: 6px; }
+.rn-vax-trust li b { color: #23824a; }
+.rn-vax-basis { font-size: 10px; margin: 6px 2px 0; }
+.rn-vax-col { display: grid; gap: 12px; min-width: 0; }
+.rn-vax-page .rn-va-steps { gap: 8px; margin: 0; }
+.rn-vax-page .rn-va-steps li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 11px; padding: 8px 10px; border: 1px solid transparent; border-radius: 10px; }
+.rn-vax-page .rn-va-steps li.is-current { border-color: rgba(232, 85, 61, .45); background: rgba(232, 85, 61, .06); }
+.rn-vax-steptext b { display: block; font-size: 11.5px; }
+.rn-vax-steptext small { display: block; font-size: 10px; color: var(--muted); }
+.rn-vax-page .rn-va-steps li em { font-style: normal; font-size: 9.5px; color: var(--muted); text-align: right; max-width: 82px; }
+.rn-vax-page .rn-va-timeline li { position: relative; padding: 6px 0 8px 18px; font-size: 11px; border-bottom: 0; }
+.rn-vax-page .rn-va-timeline li::before { content: ""; position: absolute; left: 3px; top: 10px; width: 8px; height: 8px; border-radius: 50%; background: #e8553d; }
+.rn-vax-page .rn-va-timeline li:last-child::before { background: #c9c1bc; }
+.rn-vax-page .rn-va-timeline li::after { content: ""; position: absolute; left: 6.5px; top: 20px; bottom: -4px; width: 1px; background: var(--line); }
+.rn-vax-page .rn-va-timeline li:last-child::after { display: none; }
+.rn-vax-page .rn-va-timeline small { display: block; color: var(--muted); font-size: 10px; }
+.rn-vax-page .rn-va-actionbar { margin-top: 12px; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 4px 14px; align-items: center; }
+.rn-vax-page .rn-va-actionbar .panel-header { margin: 0; grid-row: 1 / span 3; }
+.rn-vax-page .rn-va-actionbar .panel-header p { font-size: 10px; margin-top: 4px; }
+.rn-vax-page .rn-va-actionbar .rn-va-merge-note, .rn-vax-page .rn-va-actionbar #actionMsg { grid-column: 2; margin: 4px 0 0; font-size: 10.5px; }
+.rn-vax-page .rn-va-action { display: grid; grid-template-columns: 34px 1fr; column-gap: 10px; text-align: left; align-items: center; padding: 10px 12px; border-width: 1.5px; font-size: 12px; }
+.rn-vax-page .rn-va-action .rn-va-action-icon { grid-row: 1 / span 2; width: 32px; height: 32px; border-radius: 50%; background: currentColor; display: grid; place-items: center; }
+.rn-vax-page .rn-va-action .rn-va-action-icon .rn-ic { color: #fff; width: 18px; height: 18px; }
+.rn-vax-page .rn-va-action small { grid-column: 2; font-size: 10px; color: var(--muted); opacity: 1; }
+@media (max-width: 1100px) {
+  .rn-vax-page .rn-va-row { grid-template-columns: minmax(0, 1fr); }
+  .rn-vax-page .rn-va-actionbar { grid-template-columns: minmax(0, 1fr); }
+  .rn-vax-page .rn-va-actionbar .panel-header { grid-row: auto; }
+  .rn-vax-page .rn-va-actionbar .rn-va-merge-note, .rn-vax-page .rn-va-actionbar #actionMsg { grid-column: 1; }
+}
+.rn-vax-page .rn-vax-table { table-layout: fixed; width: 100%; } .rn-vax-page .rn-vax-table td { overflow: hidden; word-break: break-word; }
+.rn-vax-page .rn-va-row { grid-template-columns: minmax(0, 1.95fr) minmax(0, 1fr) minmax(0, .82fr); }
+.rn-vax-page .rn-vax-table .chip { padding: 0 6px; font-size: 9px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; } .rn-vax-page .rn-vax-table td { overflow: visible; }

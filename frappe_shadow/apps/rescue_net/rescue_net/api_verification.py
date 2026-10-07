@@ -2,6 +2,8 @@ import frappe
 from frappe.rate_limiter import rate_limit
 from frappe.utils import cint, now_datetime
 
+from rescue_net.services.approval_risk import SIGNALS, Context, risk_label
+
 from rescue_net.access_policy import (
     approved_member,
     is_system_manager,
@@ -403,6 +405,62 @@ _KIND_CONFIG = {
 }
 
 
+_RISK_FAMILIES = [
+    ("RN User Account", "role_request_status"),
+    ("RN Organization", "verification_status"),
+    ("RN Posko", "verification_status"),
+    ("RN Logistic Need", "verification_status"),
+    ("RN Shelter Need", "verification_status"),
+    ("RN Distribution Flow", "verification_status"),
+]
+
+FLOW_STEPS = (
+    ("Pemeriksaan Awal", "Koordinator"),
+    ("Review Senior", "Supervisor"),
+    ("Persetujuan Akhir", "Administrator"),
+    ("Selesai", "Terverifikasi"),
+)
+
+
+def _flow(status, log):
+    """Four-step approval flow derived from the item's real status and decision log.
+    pending -> step 1; escalated -> step 2; decided (approved / rejected) -> done."""
+    st = str(status or "").lower()
+    decided = st in _STATUS_CLOSED
+    current = 3 if decided else 1 if st == "escalated" else 0
+    steps = []
+    for i, (label, role) in enumerate(FLOW_STEPS):
+        who = None
+        if i == 0 and log:
+            who = log[0].get("actor")
+        if i == 2 and decided and log:
+            who = log[-1].get("actor")
+        steps.append({
+            "n": i + 1, "label": label, "role": role,
+            "state": "done" if i < current or (decided and i == 3 and st != "rejected") else "current" if i == current else "todo",
+            "note": ("Ditolak" if st == "rejected" and i == 3 else "Sedang diproses" if i == current and not decided
+                     else "Perlu revisi" if st == "needs_correction" and i == 0 else None),
+            "actor": who,
+        })
+    return steps
+
+
+def _audit(doctype, name, creation, owner, status):
+    """Decision log (newest first) + the original submission."""
+    rows = frappe.get_all(
+        "RN Approval Log", filters={"target_doctype": doctype, "target_name": name},
+        fields=["action", "before_status", "after_status", "actor_name", "actor_role", "note", "decided_at"],
+        order_by="decided_at asc", limit_page_length=100,
+    ) if frappe.db.exists("DocType", "RN Approval Log") else []
+    log = [{"time": r.decided_at, "label": ACTION_LABEL.get(r.action, r.action), "actor": r.actor_name or r.actor_role,
+            "note": r.note, "status": r.after_status} for r in rows]
+    trail = [{"time": creation, "label": "Draft dibuat", "actor": owner if owner != "-" else None, "note": None, "status": None}] + log
+    return log, list(reversed(trail))
+
+
+ACTION_LABEL = {"approve": "Disetujui", "reject": "Ditolak", "request_revision": "Diminta revisi", "escalate": "Dieskalasi"}
+
+
 def _row_owner(row):
     return row.get("owner") or "-"
 
@@ -524,8 +582,12 @@ def approval_queue(disaster_event=None, limit=300):
             k = row.get("linked_object_id")
             if k:
                 ev_by_linked[k] = ev_by_linked.get(k, 0) + 1
+    ctx = Context(_RISK_FAMILIES)
     for item in queue:
         item["evidence_count"] = ev_by_linked.get(item["name"], 0)
+        owner = item.get("owner") if item["kind"] != "evidence" else None
+        item["risk_score"], _sig = ctx.score(owner, item["evidence_count"])
+        item["risk"] = risk_label(item["risk_score"])
 
     queue.sort(key=lambda r: str(r.get("modified") or r.get("creation") or ""), reverse=True)
     queue = queue[: int(limit)]
@@ -570,12 +632,15 @@ def approval_item_detail(kind, name):
         )
         if not doc:
             frappe.throw("Evidence tidak ditemukan")
+        log, trail = _audit("RN Operational Evidence", doc.name, doc.creation, None, doc.verification_status)
+        score, sig = Context(_RISK_FAMILIES).score(None, 1)
         return {
             "kind": kind, "name": doc.name, "title": doc.caption or doc.name,
             "status": doc.verification_status, "creation": doc.creation, "modified": doc.modified,
             "fields": {"Posko": doc.posko, "Tipe": doc.evidence_type},
             "evidence": [{"evidence_url": doc.file_url}],
-            "trust": None,
+            "trust": None, "risk_score": score, "risk": risk_label(score), "signals": _signals(sig),
+            "flow": _flow(doc.verification_status, log), "audit": trail,
             "timeline": _timeline(doc.creation, doc.modified, doc.verification_status),
         }
 
@@ -631,10 +696,14 @@ def approval_item_detail(kind, name):
             if row.get("linked_object_id") == name:
                 evidence.append({"evidence_url": row.get("evidence_url"), "caption": row.get("caption")})
 
+    score, sig = Context(_RISK_FAMILIES).score(doc.get("owner"), len(evidence))
+    log, trail = _audit(doctype, name, doc.creation, doc.get("owner"), status)
     return {
         "kind": kind, "name": name, "title": getattr(doc, cfg["name_field"], None) or name,
         "status": status, "creation": doc.creation, "modified": doc.modified,
         "fields": fields, "evidence": evidence, "trust": trust,
+        "risk_score": score, "risk": risk_label(score), "signals": _signals(sig),
+        "flow": _flow(status, log), "audit": trail,
         "timeline": _timeline(doc.creation, doc.modified, status),
     }
 
@@ -662,6 +731,10 @@ def decide_user_reference(reference, status, note=None):
     doc.save(ignore_permissions=True)
 
     return {"reference": doc.name, "status": doc.status}
+
+
+def _signals(sig):
+    return [{"key": k, "label": label, "value": sig[k]} for k, label in SIGNALS]
 
 
 def _timeline(creation, modified, status):
@@ -736,6 +809,7 @@ def approval_action(kind, name, action, note=None):
         "escalate": "escalated",
     }[action]
 
+    before_status = doc.get(status_field)
     setattr(doc, status_field, new_status)
 
     if action == "approve" and kind == "user" and doc.get("requested_role") == reporter.SIGNUP_KEY:
@@ -751,6 +825,17 @@ def approval_action(kind, name, action, note=None):
         doc.priority = "critical"
 
     doc.save(ignore_permissions=True)
+
+    note = (note or "").strip()[:500] or None
+    account = getattr(actor, "name", None)
+    title = frappe.db.get_value("RN User Account", account, "title") if account else None
+    frappe.get_doc({
+        "doctype": "RN Approval Log", "kind": kind, "target_doctype": doctype, "target_name": name,
+        "action": action, "before_status": before_status, "after_status": new_status,
+        "actor_account": account, "actor_name": title or frappe.session.user,
+        "actor_role": getattr(actor, "role", None) or ("System Manager" if is_system_manager() else None),
+        "note": note, "decided_at": now_datetime(),
+    }).insert(ignore_permissions=True)
 
     return {
         "kind": kind, "name": name, "action": action,

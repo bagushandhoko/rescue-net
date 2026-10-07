@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Verification & Approval</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=vax-20261007">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -47,7 +47,7 @@
     </nav>
   </aside>
 
-  <main class="main">
+  <main class="main rn-dense rn-vax-page">
     <header class="topbar">
       <div class="rn-page-mobile-title">Verification & Approval</div>
 
@@ -96,9 +96,10 @@
           <button type="button" class="rn-tab" data-kind="evidence">Evidence</button>
         </div>
         <div class="rn-table-wrap">
-          <table class="rn-table">
-            <thead><tr><th>Jenis</th><th>Nama</th><th>Dibuat Oleh</th><th>Evidence</th><th>Status</th></tr></thead>
-            <tbody id="queueBody"><tr><td colspan="5">Memuat…</td></tr></tbody>
+          <table class="rn-table rn-vax-table">
+            <colgroup><col style="width:74px"><col><col style="width:66px"><col style="width:46px"><col style="width:56px"><col style="width:74px"><col style="width:14px"></colgroup>
+            <thead><tr><th>Jenis</th><th>Nama</th><th>Dibuat Oleh</th><th>Evidence</th><th>Risk</th><th>Status</th><th></th></tr></thead>
+            <tbody id="queueBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
           </table>
         </div>
         <div class="rn-table-foot"><span id="queueShown">—</span><div class="rn-ev-pager" id="queuePager"></div></div>
@@ -109,12 +110,15 @@
         <div id="detailBody"><p class="rn-muted">Pilih item dari Antrian Verifikasi.</p></div>
       </div>
 
-      <div class="panel">
-        <div class="panel-header"><div><h3>Alur Persetujuan</h3></div></div>
-        <ol class="rn-va-steps" id="approvalSteps"></ol>
-
-        <h3 class="rn-sub-h">Jejak Audit</h3>
-        <ul class="rn-va-timeline" id="auditTimeline"></ul>
+      <div class="rn-vax-col">
+        <div class="panel">
+          <div class="panel-header"><div><h3>Alur Persetujuan</h3></div></div>
+          <ol class="rn-va-steps" id="approvalSteps"></ol>
+        </div>
+        <div class="panel rn-vax-audit">
+          <div class="panel-header"><div><h3>Jejak Audit</h3></div></div>
+          <ul class="rn-va-timeline" id="auditTimeline"></ul>
+        </div>
       </div>
     </section>
 

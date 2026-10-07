@@ -1,0 +1,81 @@
+{
+ "doctype": "DocType",
+ "name": "RN Approval Log",
+ "module": "RN Core",
+ "autoname": "hash",
+ "title_field": "action",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "fields": [
+  {
+   "fieldname": "kind",
+   "label": "Jenis",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_doctype",
+   "label": "DocType",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "target_name",
+   "label": "Dokumen",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "action",
+   "label": "Aksi",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "before_status",
+   "label": "Status Sebelum",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "after_status",
+   "label": "Status Sesudah",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "actor_account",
+   "label": "Pelaku (Akun)",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "actor_name",
+   "label": "Pelaku",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "actor_role",
+   "label": "Peran Pelaku",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "note",
+   "label": "Catatan",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Waktu",
+   "fieldtype": "Datetime"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

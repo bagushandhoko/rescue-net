@@ -27,6 +27,13 @@
     return "";
   }
 
+  var KIND_ICON = { user: "user", organisasi: "building", posko: "posko", needs: "alert-circle", expense: "scale", evidence: "camera" };
+  var STATUS_LABEL = { pending: "Menunggu", self_reported: "Menunggu", needs_correction: "Revisi", escalated: "Dieskalasi", approved: "Disetujui",
+    verified: "Terverifikasi", official_verified: "Terverifikasi", community_verified: "Terverifikasi", rejected: "Ditolak" };
+  function riskChip(r) {
+    var tone = r === "Tinggi" ? "danger" : r === "Sedang" ? "warning" : r === "Rendah" ? "good" : "";
+    return r ? '<span class="chip ' + tone + '">' + esc(r) + "</span>" : "-";
+  }
   var KIND_LABELS = { user: "User", organisasi: "Organisasi", posko: "Posko", needs: "Needs", expense: "Expense", evidence: "Evidence" };
 
   function renderKpi(t) {
@@ -72,19 +79,22 @@
 
     var body = $("#queueBody");
     if (!slice.length) {
-      body.innerHTML = '<tr><td colspan="5"><em class="rn-muted">Tidak ada item.</em></td></tr>';
+      body.innerHTML = '<tr><td colspan="7"><em class="rn-muted">Tidak ada item.</em></td></tr>';
     } else {
       body.innerHTML = slice.map(function (r) {
         var isSel = state.selected && state.selected.kind === r.kind && state.selected.name === r.name;
         return (
           '<tr class="rn-ba-row' + (isSel ? " is-selected" : "") + '" data-kind="' + esc(r.kind) + '" data-name="' + esc(r.name) + '">' +
-          "<td><span class=\"chip\">" + esc(KIND_LABELS[r.kind] || r.kind) + "</span></td>" +
+          '<td><span class="rn-vax-kind"><i data-icon="' + (KIND_ICON[r.kind] || "dot") + '"></i>' + esc(KIND_LABELS[r.kind] || r.kind) + "</span></td>" +
           "<td><b>" + esc(r.title) + "</b><small>" + fmtTime(r.creation) + "</small></td>" +
           "<td>" + esc(r.owner) + "</td>" +
           "<td>" + fmt(r.evidence_count) + "</td>" +
-          '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(r.status) + "</span></td></tr>"
+          "<td>" + riskChip(r.risk) + "</td>" +
+          '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(STATUS_LABEL[r.status] || r.status) + "</span></td>" +
+          '<td class="rn-vax-go">›</td></tr>'
         );
       }).join("");
+      if (window.RNIconFill) window.RNIconFill(body);
     }
     body.querySelectorAll("tr[data-name]").forEach(function (tr) {
       tr.addEventListener("click", function () { selectItem(tr.getAttribute("data-kind"), tr.getAttribute("data-name")); });
@@ -104,19 +114,21 @@
     });
   }
 
+  function ring(score) {
+    var R = 34, C = 2 * Math.PI * R, len = (Math.max(0, Math.min(100, score)) / 100) * C;
+    var col = score >= 75 ? "#2fa66a" : score >= 50 ? "#f59e0b" : "#e04b3a";
+    return '<svg viewBox="0 0 84 84" class="rn-vax-ring"><circle cx="42" cy="42" r="' + R + '" fill="none" stroke="#eadfd9" stroke-width="8"/>' +
+      '<circle cx="42" cy="42" r="' + R + '" fill="none" stroke="' + col + '" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + len.toFixed(1) + " " + C.toFixed(1) +
+      '" transform="rotate(-90 42 42)"/><text x="42" y="46" text-anchor="middle" class="rn-vax-ringn">' + esc(score) + "</text></svg>";
+  }
+
   function renderDetail(detail) {
     $("#detailKindChip").textContent = KIND_LABELS[detail.kind] || detail.kind;
-    var fieldsHtml = Object.keys(detail.fields || {}).map(function (k) {
-      var v = detail.fields[k];
-      return v == null || v === "" ? "" : "<div><span>" + esc(k) + "</span><b>" + esc(v) + "</b></div>";
+    var fields = Object.assign({ "Dibuat pada": fmtTime(detail.creation) }, detail.fields || {});
+    var fieldsHtml = Object.keys(fields).map(function (k) {
+      var v = fields[k];
+      return v == null || v === "" ? "" : "<dt>" + esc(k) + "</dt><dd>" + esc(v) + "</dd>";
     }).join("");
-
-    var trustHtml = "";
-    if (detail.trust) {
-      trustHtml =
-        '<div class="rn-va-trust"><span>Trust Level</span><b>' + esc(detail.trust.trust_level || "-") + "</b>" +
-        "<span>Verifier Terpercaya</span><b>" + fmt(detail.trust.trusted_verifier_count) + "</b></div>";
-    }
 
     var evidenceHtml = (detail.evidence || []).length
       ? '<div class="rn-dp-evidence-strip">' + detail.evidence.map(function (e) {
@@ -124,31 +136,40 @@
         }).join("") + "</div>"
       : '<p class="rn-muted">Belum ada evidence terkait.</p>';
 
-    $("#detailBody").innerHTML =
-      "<h4>" + esc(detail.title) + "</h4>" +
-      '<p class="rn-muted">' + esc(detail.name) + " · Diajukan " + fmtTime(detail.creation) + "</p>" +
-      '<div class="rn-va-fields">' + fieldsHtml + "</div>" +
-      trustHtml +
-      '<h3 class="rn-sub-h">Evidence</h3>' + evidenceHtml;
+    var trustHtml = "";
+    if (detail.risk_score != null) {
+      trustHtml = '<h3 class="rn-sub-h">Trust / Risk Score</h3><div class="rn-vax-trust">' + ring(detail.risk_score) +
+        '<div><span class="rn-vax-risk ' + esc((detail.risk || "").toLowerCase()) + '">' + esc(detail.risk) + "</span><ul>" +
+        (detail.signals || []).map(function (g) { return "<li><span>" + esc(g.label) + "</span><b>" + esc(g.value) + "%</b></li>"; }).join("") +
+        '</ul></div></div><p class="rn-muted rn-vax-basis">Rata-rata tiga sinyal nyata: identitas pembuat, rekam jejak keputusan sebelumnya, dan bukti terlampir.' +
+        (detail.trust && detail.trust.trusted_verifier_count != null ? " Verifier terpercaya: " + fmt(detail.trust.trusted_verifier_count) + "." : "") + "</p>";
+    }
 
-    renderSteps(detail.status);
-    renderTimeline(detail.timeline || []);
+    var isNew = !/^(approved|verified|official_verified|community_verified|rejected)$/.test(String(detail.status || ""));
+    $("#detailBody").innerHTML =
+      '<div class="rn-vax-dhead"><span class="rn-vax-dicon"><i data-icon="' + (KIND_ICON[detail.kind] || "dot") + '"></i></span><div><b>' + esc(detail.title) +
+      (isNew ? ' <span class="chip good">Baru</span>' : "") + "</b><small>ID: " + esc(detail.name) + "</small></div></div>" +
+      "<dl class=\"rn-vax-dl\">" + fieldsHtml + "</dl>" +
+      '<h3 class="rn-sub-h">Evidence (' + (detail.evidence || []).length + ")</h3>" + evidenceHtml + trustHtml;
+
+    renderSteps(detail.flow);
+    renderTimeline(detail.audit || detail.timeline || []);
+    if (window.RNIconFill) window.RNIconFill($("#detailBody"));
   }
 
-  var STEP_LABELS = ["Diajukan", "Menunggu Verifikasi", "Diputuskan"];
-  function renderSteps(status) {
-    var l = String(status || "").toLowerCase();
-    var closed = ["verified", "official_verified", "community_verified", "approved", "rejected"].indexOf(l) !== -1;
-    var stepIndex = closed ? 2 : 1;
-    $("#approvalSteps").innerHTML = STEP_LABELS.map(function (label, i) {
-      var cls = i < stepIndex ? "is-done" : i === stepIndex ? "is-current" : "";
-      return '<li class="' + cls + '"><span class="rn-va-step-num">' + (i + 1) + "</span>" + esc(label) + "</li>";
+  function renderSteps(flow) {
+    $("#approvalSteps").innerHTML = (flow || []).map(function (st) {
+      return '<li class="is-' + esc(st.state) + '"><span class="rn-va-step-num">' + st.n + "</span><span class=\"rn-vax-steptext\"><b>" + esc(st.label) + "</b><small>" + esc(st.role) +
+        "</small></span><em>" + esc(st.actor || st.note || (st.state === "todo" ? "Menunggu" : "")) + "</em></li>";
     }).join("");
   }
 
   function renderTimeline(items) {
     $("#auditTimeline").innerHTML = items.length
-      ? items.map(function (it) { return "<li><b>" + fmtTime(it.time) + "</b><span>" + esc(it.label) + "</span></li>"; }).join("")
+      ? items.map(function (it) {
+          return '<li><b>' + fmtTime(it.time) + "</b><span>" + esc(it.label) + (it.actor ? " — " + esc(it.actor) : "") + "</span>" +
+            (it.note ? "<small>" + esc(it.note) + "</small>" : "") + "</li>";
+        }).join("")
       : '<li class="rn-muted">Belum ada riwayat.</li>';
   }
 

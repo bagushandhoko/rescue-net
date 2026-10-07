@@ -46,6 +46,10 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07.)
 - **Evidence Center mock-up pass 2 (2026-10-07, frontend saja = live):** tabel 9 kolom (checkbox, GPS, Aksi ⋯ buka/unduh/salin), Filter Lainnya
   (verifikasi/visibilitas/jenis/GPS), per-halaman, pager berelipsis, ekspor CSV hanya yang dipilih, kartu di HP. Kelas halaman `rn-evc-page`
   (`.rn-ev-page` sudah dipakai tombol pager lama — jangan dipakai lagi untuk halaman). Berikutnya: Profil Sumber Daya, Verification, Organisasi & Posko.
+- **Verification & Approval mock-up pass 2 (2026-10-07, selesai, belum deploy backend):** kolom Risk, Trust/Risk Score (rata-rata 3 sinyal nyata:
+  identitas pembuat, rekam jejak keputusan, kelengkapan bukti — `services/approval_risk.py`), Alur Persetujuan 4 langkah dari status + log,
+  Jejak Audit dengan pelaku. DocType baru **RN Approval Log** (append-only; `approval_action` mencatat tiap keputusan). "Merge" tetap TIDAK dibuat
+  (alasan di docstring api_verification). 232 test lulus. **Perlu `rn-deploy-app.sh`** (migrate); sebelum itu kolom Risk kosong.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
   Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
   pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**

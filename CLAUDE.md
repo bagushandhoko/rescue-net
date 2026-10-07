@@ -31,41 +31,12 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07 malam.)
   Kebutuhan di posko mana pun (label pelapor + "belum dikonfirmasi" sampai posko konfirmasi/tolak; batas 30/jam;
   `services/reporter.py`, `tests/test_verified_reporter.py`); 214 test lulus. **Perlu `bench migrate` + `rn-deploy-app.sh`**
   (field baru RN User Account + RN Logistic Need). Architecture review Fase 6 menunggu review owner.
-- **Search & Found mock-up pass 2 (2026-10-07, selesai, ter-deploy 2026-10-07):** halaman dibangun ulang sesuai mock-up (6 KPI, 4 tab,
-  Papan Pencocokan dengan skor %, Reunifikasi Aktif, donut Status Identifikasi, Klaim & Serah Terima, Foto Bukti, Aksi Verifikasi).
-  Backend: field `subject_type/age_years/gender` (laporan hilang+ditemukan), `identification_status`, `match_score`, DocType baru
-  **RN Search Found Claim**, `services/search_found.py` (skor deterministik, tanpa LLM), endpoint `create_claim`,
-  `update_claim_status`, `set_identification_status`; `dashboard` menambah `kpis/board/identification/claims/photos` (nama tidak pernah
-  dikirim; foto hanya untuk operator). 222 test lulus. Ter-deploy (`rn-deploy-app.sh`, probe 200, dashboard publik tanpa nama); tombol operator belum dicoba dengan login nyata.
-- **Program Khusus mock-up pass 2 (2026-10-07, selesai, ter-deploy 2026-10-07):** detail program sesuai mock-up (hero + Overall Progress, Target & Milestone,
-  peta Lokasi, Kebutuhan Program, 4 kartu Support, Progress Lapangan / Evidence / Verifikasi Output; tab "Rencana Kerja" untuk pemilik).
-  Model baru: RN Program Milestone / Location / Need + 7 field di RN Donor Program (sampul, mitra, verifikasi output);
-  `services/program_plan.py`, `donor_program/plan.py` (`save_plan_item`, `delete_plan_item`, `set_output_verification`); KPI Milestone Terlambat /
-  Lokasi Belum Terlayani / Butuh Dukungan memakai baris nyata (program tanpa rencana tetap pakai aturan lama). 228 test lulus.
-  Ter-deploy (probe 200, `plan` terkirim); rencana masih kosong sampai pemilik mengisi; tombol edit belum dicoba dengan login nyata.
-- **Evidence Center mock-up pass 2 (2026-10-07, frontend saja = live):** tabel 9 kolom (checkbox, GPS, Aksi ⋯ buka/unduh/salin), Filter Lainnya
-  (verifikasi/visibilitas/jenis/GPS), per-halaman, pager berelipsis, ekspor CSV hanya yang dipilih, kartu di HP. Kelas halaman `rn-evc-page`
-  (`.rn-ev-page` sudah dipakai tombol pager lama — jangan dipakai lagi untuk halaman). Berikutnya: Profil Sumber Daya, Verification, Organisasi & Posko.
-- **Verification & Approval mock-up pass 2 (2026-10-07, selesai, belum deploy backend):** kolom Risk, Trust/Risk Score (rata-rata 3 sinyal nyata:
-  identitas pembuat, rekam jejak keputusan, kelengkapan bukti — `services/approval_risk.py`), Alur Persetujuan 4 langkah dari status + log,
-  Jejak Audit dengan pelaku. DocType baru **RN Approval Log** (append-only; `approval_action` mencatat tiap keputusan). "Merge" tetap TIDAK dibuat
-  (alasan di docstring api_verification). 232 test lulus. **Perlu `rn-deploy-app.sh`** (migrate); sebelum itu kolom Risk kosong.
-- **Organisasi & Posko mock-up pass 2 (2026-10-07):** pohon visual (event → kartu organisasi → kartu posko dengan jumlah anggota) + panel detail
-  (Status Verifikasi, Anggota, Posko/Program Aktif, Ringkasan Sumber Daya dari RN Resource Profile, Trust Level dengan nilai A–D = 4 pemeriksaan × 25 poin).
-  Backend: `org_posko_board` (+`event_title`, `member_count` per posko), `org_detail` (+`counts`, `resources`, `trust`). Tanpa deploy halaman tetap jalan
-  (anggota per posko 0, sumber daya/trust kosong). **Perlu `rn-deploy-app.sh`** — satu deploy sekaligus dengan Verification & Approval.
-- **Registrasi & Verifikasi Posko mock-up pass 2 (2026-10-07, frontend = live):** form dua kolom padat (urutan field disusun ulang, nama field tetap),
-  checkbox fungsi posko diperbaiki, tombol Tindakan berwarna. "Upload Foto Posko" dari mock-up BELUM dibuat (butuh alur upload file per posko).
-  Gotcha: aturan mobile site-wide menjadikan `input`/`label` lebar penuh — pakai `!important` + selektor spesifik untuk checkbox.
-- **Mock-up pass 2 SELESAI untuk semua file di `assets/img/mockup/` (2026-10-07):** + Welcome (kartu peran) dan Login (panel "Bergabung sesuai peran").
-  Daftar belum-deploy: Verification & Approval (RN Approval Log + risk) dan Organisasi & Posko (counts/resources/trust) — jalankan `sh scripts/rn-deploy-app.sh`
-  dari `/volume1/web/rescue-net` (>120 dtk; jalankan dengan `!`). Sisa celah yang dicatat: foto posko (Registrasi), KPI "dari kemarin" (butuh riwayat harian),
-  "Merge" (Verification, sengaja tidak dibuat). 234 test lulus.
-- **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
-  Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
-  pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**
-  Distribusi (% kapasitas transport per volume) dan Alat Kerja (BBM Kritis per posko + PIC sesuai
-  `posko_contacts_visible`; tanpa deploy, drill BBM tampil tanpa posko).
+- **Mock-up pass 2 SELESAI untuk semua file di `assets/img/mockup/` (2026-10-07; rincian per halaman: HANDOVER.md "Mock-up pass 2").**
+  Frontend langsung live. Backend baru: Search & Found + Program Khusus **ter-deploy**; Verification & Approval (RN Approval Log, risk) dan
+  Organisasi & Posko (counts/resources/trust) **belum deploy** → `sh scripts/rn-deploy-app.sh` dari `/volume1/web/rescue-net` (>120 dtk, jalankan dengan `!`),
+  plus Distribusi (% kapasitas) dan Alat Kerja (BBM per posko) dari pass sebelumnya. Belum dicoba dengan login nyata: tombol operator Search & Found,
+  Rencana Kerja Program Khusus. Celah tercatat: foto posko (Registrasi), KPI "dari kemarin" (butuh riwayat harian), "Merge" (sengaja tidak dibuat).
+  Gotcha CSS: `.rn-ev-page` = tombol pager (halaman Evidence pakai `rn-evc-page`); aturan mobile site-wide membuat input/label lebar penuh. 234 test lulus.
 - **Fase berikutnya:** menunggu perintah owner. Kandidat prioritas: Fase 0 (pisahkan lingkungan agent dari
   produksi). Isi Fase 7–8 belum diberikan owner (Fase 7 wajib mengikuti ADR-0002 bagian 11).
 - **Produksi:** ter-deploy sampai Fase 4 (12 modul RN; `rn-deploy-app.sh` 2026-09-27 09:51, patch

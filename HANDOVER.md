@@ -103,3 +103,18 @@ Owner answers to the questions (2026-09-26), implemented:
 - Check `git status` before assuming code doesn't exist — a prior session may have left it uncommitted.
 - The NAS powers off at **23:00 WIB**: have everything committed/pushed and this file updated by ~22:30.
 - Push: `git push origin main` works over the SSH deploy key (`remote.origin.pushurl`); `main` is the only branch.
+
+
+## Mock-up pass 2 (2026-10-07) — per halaman
+
+- **Search & Found** (deployed): `subject_type/age_years/gender` pada laporan hilang+ditemukan, `identification_status`, `match_score`, DocType **RN Search Found Claim**;
+  `services/search_found.py` (skor deterministik, tanpa LLM); endpoint `create_claim`, `update_claim_status`, `set_identification_status`; `dashboard` + `kpis/board/identification/claims/photos`
+  (nama tak pernah dikirim, foto hanya operator).
+- **Program Khusus** (deployed): RN Program Milestone / Location / Need + field sampul/mitra/verifikasi output di RN Donor Program; `services/program_plan.py`,
+  `donor_program/plan.py` (`save_plan_item`, `delete_plan_item`, `set_output_verification`); KPI Milestone Terlambat / Lokasi Belum Terlayani / Butuh Dukungan dari baris nyata
+  (program tanpa rencana tetap aturan lama).
+- **Evidence Center** (frontend): tabel 9 kolom, Filter Lainnya, per-halaman, pager berelipsis, ekspor CSV baris terpilih, kartu di HP.
+- **Profil Sumber Daya / Registrasi Posko / Welcome / Login** (frontend): kerapatan mock-up; Registrasi: urutan field diubah (nama tetap), foto posko belum ada; Login: panel peran.
+- **Verification & Approval** (belum deploy): kolom Risk + Trust/Risk Score dari 3 sinyal nyata (`services/approval_risk.py`), Alur 4 langkah, Jejak Audit; DocType **RN Approval Log**
+  (append-only, ditulis `approval_action`). "Merge" sengaja tidak dibuat.
+- **Organisasi & Posko** (belum deploy): pohon visual; `org_posko_board` (+`event_title`, `member_count`), `org_detail` (+`counts`, `resources`, `trust` A–D = 4 pemeriksaan × 25).

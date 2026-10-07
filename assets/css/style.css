@@ -7010,3 +7010,19 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-auth-join-grid small { display: block; font-size: 10px; color: var(--muted); line-height: 1.3; }
 .rn-auth-join-grid em { font-style: normal; color: var(--muted); }
 @media (max-width: 640px) { .rn-auth-join-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rn-auth-join-grid button { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; } .rn-auth-join-grid em { display: none; } }
+
+/* Welcome page pass 2 (2026-10-07): role cards as in "welcome page rescue-net.png" — bordered white cards, icon left of title */
+@media (min-width: 901px) {
+  .welcome-roles .role-card { grid-template-columns: 46px minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: 10px; row-gap: 4px; align-items: start; padding: 14px; background: #fff; border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 6px 18px rgba(145, 84, 54, .06); min-height: 150px; transition: transform .15s ease, box-shadow .15s ease; }
+  .welcome-roles .role-card:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(145, 84, 54, .12); }
+  .welcome-roles .role-card .role-icon { grid-row: 1 / span 2; width: 44px; height: 44px; margin: 0; }
+  .welcome-roles .role-card b { grid-column: 2; align-self: center; font-size: 13px; }
+  .welcome-roles .role-card > span:not(.role-icon):not(.role-more) { grid-column: 2; font-size: 11px; line-height: 1.4; }
+  .welcome-roles .role-card .role-more { grid-column: 1 / -1; align-self: end; margin-top: 4px; font-size: 11px; }
+  .welcome-roles h2, .welcome-roles h3 { font-size: 16px; }
+}
+@media (min-width: 901px) {
+  body.home-page .welcome-roles .role-card .role-icon { display: grid !important; place-items: center; width: 44px !important; height: 44px !important; border-radius: 50% !important; background: rgba(255, 234, 224, .9) !important; color: #ef5c45 !important; border: 1px solid rgba(232, 117, 88, .18) !important; margin: 0 !important; }
+  body.home-page .welcome-roles .role-card:nth-child(2) .role-icon, body.home-page .welcome-roles .role-card:nth-child(5) .role-icon { background: rgba(226, 244, 234, .9) !important; color: #2f8b61 !important; }
+  body.home-page .welcome-roles .role-card:nth-child(4) .role-icon, body.home-page .welcome-roles .role-card:nth-child(6) .role-icon { background: rgba(255, 241, 224, .9) !important; color: #dd7431 !important; }
+}

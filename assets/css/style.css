@@ -6968,3 +6968,33 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   .rn-opx-trustbody { grid-template-columns: 56px minmax(0, 1fr); }
   .rn-opx-checks { grid-column: 1 / -1; }
 }
+
+/* Registrasi & Verifikasi Posko pass 2 (2026-10-07) — dense two-column form of "registrasi & verifikasi Posko.png" (<main class="rn-dense rn-regx-page">) */
+.rn-regx-page .rn-rp-kpi { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.rn-regx-page .rn-rp-row { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+.rn-regx-page .rn-rp-row > .panel { padding: 16px; }
+.rn-regx-page .rn-form .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+.rn-regx-page .rn-form label { font-size: 11px; gap: 4px; }
+.rn-regx-page .rn-form input:not([type=checkbox]), .rn-regx-page .rn-form select { font-size: 12px; padding: 8px 10px; border-radius: 8px; }
+.rn-regx-page .rn-fn-picker { grid-column: 1 / -1; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; margin: 0; }
+.rn-regx-page .rn-fn-picker legend { font-size: 10.5px; padding: 0 6px; text-transform: none; letter-spacing: 0; }
+.rn-regx-page .rn-check { display: inline-flex !important; flex-direction: row !important; align-items: center; gap: 6px; font-size: 11.5px; }
+.rn-regx-page .rn-check input[type=checkbox] { width: 16px !important; height: 16px !important; padding: 0; margin: 0; flex: none; }
+.rn-regx-page .rn-geo-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rn-regx-page .rn-geo-actions .btn { font-size: 11px; padding: 6px 10px; }
+.rn-regx-page .form-actions { margin-top: 12px; }
+.rn-regx-page .rn-rp-checklist li { font-size: 11.5px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+.rn-regx-page .rn-rp-actions .btn { font-size: 12px; padding: 9px 12px; }
+.rn-regx-page .rn-rp-actions .btn.primary { background: #2fa66a; border-color: #2fa66a; color: #fff; }
+.rn-regx-page .rn-rp-actions .btn.danger { color: #c2332f; border-color: #e5a7a3; background: #fff; }
+.rn-regx-page .rn-sub-h { font-size: 12px; margin: 14px 0 8px; }
+.rn-regx-page .rn-table td { white-space: normal; padding: 8px 5px; font-size: 11px; }
+.rn-regx-page .rn-table th { white-space: nowrap; font-size: 10.5px; text-transform: none; letter-spacing: 0; }
+@media (max-width: 640px) { .rn-regx-page .rn-form .form-grid { grid-template-columns: minmax(0, 1fr); } .rn-regx-page .rn-rp-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rn-regx-page .panel, .rn-regx-page .rn-table-wrap { min-width: 0; max-width: 100%; } .rn-regx-page .rn-table-wrap { overflow-x: auto; }
+.rn-regx-page .form-grid > *, .rn-regx-page .rn-form label, .rn-regx-page fieldset { min-width: 0; } .rn-regx-page .rn-form input:not([type=checkbox]), .rn-regx-page .rn-form select { width: 100%; min-width: 0; box-sizing: border-box; }
+.rn-regx-page .rn-fn-picker { display: block; }
+.rn-regx-page .rn-fn-picker .rn-check { margin: 4px 14px 4px 0; }
+.rn-regx-page .rn-fn-picker .rn-check { width: auto !important; min-width: 0 !important; flex: 0 0 auto !important; }
+.rn-regx-page .rn-fn-picker { display: block !important; } .rn-regx-page .rn-fn-picker .rn-check { display: inline-flex !important; max-width: 100%; }
+.rn-regx-page .rn-form .rn-fn-picker .rn-check input[type=checkbox] { width: 16px !important; min-width: 16px !important; height: 16px !important; padding: 0 !important; }

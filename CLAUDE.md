@@ -54,6 +54,9 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07.)
   (Status Verifikasi, Anggota, Posko/Program Aktif, Ringkasan Sumber Daya dari RN Resource Profile, Trust Level dengan nilai A–D = 4 pemeriksaan × 25 poin).
   Backend: `org_posko_board` (+`event_title`, `member_count` per posko), `org_detail` (+`counts`, `resources`, `trust`). Tanpa deploy halaman tetap jalan
   (anggota per posko 0, sumber daya/trust kosong). **Perlu `rn-deploy-app.sh`** — satu deploy sekaligus dengan Verification & Approval.
+- **Registrasi & Verifikasi Posko mock-up pass 2 (2026-10-07, frontend = live):** form dua kolom padat (urutan field disusun ulang, nama field tetap),
+  checkbox fungsi posko diperbaiki, tombol Tindakan berwarna. "Upload Foto Posko" dari mock-up BELUM dibuat (butuh alur upload file per posko).
+  Gotcha: aturan mobile site-wide menjadikan `input`/`label` lebar penuh — pakai `!important` + selektor spesifik untuk checkbox.
 - **Mock-up pass 2 (perintah owner 2026-09-28, frontend = langsung live):** Dapur Umum, Manajemen Relawan,
   Manajemen Distribusi, Alat Komunikasi, Kebutuhan & Manajemen Alat Kerja (e58d554, tata letak mock-up atas
   pilihan owner) selesai; berikutnya Search & Found, Program Khusus, Evidence, dst. **Perlu `rn-deploy-app.sh`:**

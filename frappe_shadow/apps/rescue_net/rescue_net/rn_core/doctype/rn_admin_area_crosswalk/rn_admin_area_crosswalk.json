@@ -1,0 +1,64 @@
+{
+  "doctype": "DocType",
+  "name": "RN Admin Area Crosswalk",
+  "module": "RN Core",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "external_code",
+  "track_changes": 0,
+  "fields": [
+    {
+      "fieldname": "code_system",
+      "label": "Sistem Kode",
+      "fieldtype": "Select",
+      "options": "ocha_pcode\nbps\nkemendagri_legacy\nother",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "external_code",
+      "label": "Kode Eksternal",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "area",
+      "label": "Wilayah",
+      "fieldtype": "Link",
+      "options": "RN Admin Area",
+      "reqd": 1,
+      "in_list_view": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "confidence",
+      "label": "Keyakinan",
+      "fieldtype": "Select",
+      "options": "exact\nprobable\nmanual",
+      "default": "exact"
+    },
+    {
+      "fieldname": "source",
+      "label": "Sumber",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "notes",
+      "label": "Catatan",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

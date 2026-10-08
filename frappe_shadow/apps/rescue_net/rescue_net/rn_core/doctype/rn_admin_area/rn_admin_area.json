@@ -7,15 +7,101 @@
   "autoname": "field:code",
   "title_field": "area_name",
   "fields": [
-    {"fieldname":"code","label":"Area Code","fieldtype":"Data","reqd":1,"unique":1},
-    {"fieldname":"area_name","label":"Area Name","fieldtype":"Data","reqd":1},
-    {"fieldname":"level","label":"Level","fieldtype":"Select","options":"province\ncity\ndistrict\nvillage","reqd":1},
-    {"fieldname":"parent_code","label":"Parent Code","fieldtype":"Data"},
-    {"fieldname":"source","label":"Source","fieldtype":"Data"},
-    {"fieldname":"source_reference","label":"Source Reference","fieldtype":"Data"},
-    {"fieldname":"enabled","label":"Enabled","fieldtype":"Check","default":"1"}
+    {
+      "fieldname": "code",
+      "label": "Area Code",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "area_name",
+      "label": "Area Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "level",
+      "label": "Level",
+      "fieldtype": "Select",
+      "options": "province\ncity\ndistrict\nvillage",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "parent_code",
+      "label": "Parent Code",
+      "fieldtype": "Data",
+      "search_index": 1
+    },
+    {
+      "fieldname": "source",
+      "label": "Source",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "source_reference",
+      "label": "Source Reference",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "enabled",
+      "label": "Enabled",
+      "fieldtype": "Check",
+      "default": "1"
+    },
+    {
+      "fieldname": "pcode_ocha",
+      "label": "P-code OCHA (COD-AB)",
+      "fieldtype": "Data",
+      "search_index": 1,
+      "description": "Diverifikasi dari berkas HDX saat impor; kosong bila belum dipetakan."
+    },
+    {
+      "fieldname": "bps_code",
+      "label": "Kode BPS",
+      "fieldtype": "Data",
+      "search_index": 1
+    },
+    {
+      "fieldname": "center_lat",
+      "label": "Latitude Pusat",
+      "fieldtype": "Float",
+      "precision": "9"
+    },
+    {
+      "fieldname": "center_lng",
+      "label": "Longitude Pusat",
+      "fieldtype": "Float",
+      "precision": "9"
+    },
+    {
+      "fieldname": "valid_from",
+      "label": "Berlaku Dari",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "valid_to",
+      "label": "Berlaku Sampai",
+      "fieldtype": "Date",
+      "description": "Pemekaran/penggabungan: wilayah lama diberi tanggal ini, tidak dihapus."
+    },
+    {
+      "fieldname": "replaced_by",
+      "label": "Digantikan Oleh",
+      "fieldtype": "Link",
+      "options": "RN Admin Area"
+    }
   ],
   "permissions": [
-    {"role":"System Manager","read":1,"write":1,"create":1,"delete":1}
-  ]
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "index_web_pages_for_search": 0
 }

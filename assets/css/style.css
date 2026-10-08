@@ -7064,3 +7064,13 @@ body.public-report-page .btn.primary:not(:disabled) { opacity: 1; }
 .community-operator-panel .community-report-item.is-later { display: none; }
 .community-operator-panel .queue-more { justify-self: center; width: auto; padding: 8px 18px; font-size: 13px; cursor: pointer; }
 body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { display: none; }
+
+/* Narrative box: textarea and its "Konversi ke Form" bar read as one control */
+.rn-narrative-title { display: block; margin-bottom: 6px; font-weight: 700; font-size: 14px; }
+.rn-narrative-box { border: 1px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; }
+.rn-narrative-box:focus-within { border-color: rgba(232,117,88,.7); box-shadow: 0 0 0 3px rgba(232,117,88,.15); }
+.rn-narrative-box textarea { display: block; width: 100%; border: 0; border-radius: 0; box-shadow: none; outline: 0; resize: vertical; margin: 0; padding: 12px 14px; background: transparent; }
+.rn-narrative-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 8px 14px; border-top: 1px solid var(--line); background: rgba(255,240,232,.55); }
+.rn-narrative-bar .form-message { flex: 1 1 auto; min-width: 0; font-size: 12.5px; }
+.rn-narrative-bar .btn { flex: 0 0 auto; width: auto; padding: 8px 16px; font-size: 13px; border-radius: 10px; cursor: pointer; }
+@media (max-width: 720px) { .rn-narrative-bar { flex-direction: column-reverse; align-items: stretch; padding: 10px; } .rn-narrative-bar .btn { width: 100%; } }

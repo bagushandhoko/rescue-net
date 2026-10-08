@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Laporan Masyarakat</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926-rp2">
+  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926-rp3">
 </head>
 <body class="public-report-page">
   <main class="public-report-shell">
@@ -58,12 +58,13 @@
           </div>
 
           <div class="rn-report-narrative" data-narrative-block>
-            <label>Ceritakan kondisi lapangan
-              <textarea name="narrative" rows="5" maxlength="5000" placeholder="Contoh: Sumur di Dusun Oebelo kering sejak 2 bulan, 50 KK kekurangan air bersih, butuh truk tangki air dan jerigen."></textarea>
-            </label>
-            <div class="form-actions">
-              <button class="btn primary" type="button" data-draft-report>Proses Uraian</button>
-              <span class="form-message" data-draft-message>Apa yang terjadi, di mana, berapa orang terdampak, apa yang dibutuhkan.</span>
+            <label for="rn-narrative" class="rn-narrative-title">Ceritakan kondisi lapangan</label>
+            <div class="rn-narrative-box">
+              <textarea id="rn-narrative" name="narrative" rows="5" maxlength="5000" placeholder="Contoh: Sumur di Dusun Oebelo kering sejak 2 bulan, 50 KK kekurangan air bersih, butuh truk tangki air dan jerigen."></textarea>
+              <div class="rn-narrative-bar">
+                <span class="form-message" data-draft-message>Apa yang terjadi, di mana, berapa orang terdampak, apa yang dibutuhkan.</span>
+                <button class="btn primary" type="button" data-draft-report>Konversi ke Form</button>
+              </div>
             </div>
             <div class="rn-report-draft" data-draft-result hidden></div>
           </div>

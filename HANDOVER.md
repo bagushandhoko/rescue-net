@@ -59,6 +59,7 @@ Cloudflare route + DNS for `rescue-net.online` / `www` live (HTTP `localhost:818
 (was `https://osiun.tail251e1e.ts.net:8443`; backup off-repo, 600), so the Google redirect_uri is now
 `https://rescue-net.online/api/method/frappe.integrations.oauth2_logins.login_via_google`.
 **Pending owner:** add that redirect URI (and origin `https://rescue-net.online`) in Google Cloud Console, then try a real Google login. Google login started from the old Tailscale host now returns to rescue-net.online.
+nginx DSM (installed by the owner 2026-10-08 via `/volume1/docker/rescue-web/install-nginx-blocks.sh`): the public `/rescue-net-frappe/` path now lets only `rescue_net.api_*`, login and logout through (Desk login, `/app`, `/api/resource`, `ping` = 404), and `/web/database/*` (Odoo) is 404.
 Known: the Frappe `sid` cookie has no `Secure` flag (gunicorn does not trust `X-Forwarded-Proto` from the docker network); old native builds that call the API
 cross-origin are blocked by the new CORS list.
 

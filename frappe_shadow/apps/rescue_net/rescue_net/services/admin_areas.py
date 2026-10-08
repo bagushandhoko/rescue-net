@@ -172,14 +172,17 @@ def match_by_names(province=None, city=None, district=None, village=None):
     a wrong guess is worse than 'unmatched' (the reporter's area stays free text for a human to fix)."""
     parent, path, level_done = None, [], None
     for level, name in (("province", province), ("city", city), ("district", district), ("village", village)):
-        want = codes.normalize_name(name)
+        want = codes.normalize_name(name, level)
         if not want:
             continue
         filters = {"level": level, "enabled": 1}
         if parent:
             filters["parent_code"] = parent
         rows = frappe.get_all(DOCTYPE, filters=filters, fields=["name", "area_name"], limit_page_length=0)
-        exact = [r for r in rows if codes.normalize_name(r.area_name) == want]
+        exact = [r for r in rows if codes.normalize_name(r.area_name, level) == want]
+        if len(exact) > 1 and level == "city" and codes.city_kind(name):
+            kind = codes.city_kind(name)
+            exact = [r for r in exact if codes.city_kind(r.area_name) == kind] or exact
         if len(exact) == 1:
             parent, level_done = exact[0].name, level
             path.append(exact[0].name)

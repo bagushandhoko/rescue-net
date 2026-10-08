@@ -143,9 +143,39 @@ def sort_rows(rows):
     return sorted(rows, key=lambda r: (order.get(r.get("level"), 9), r.get("code", "")))
 
 
-def normalize_name(name):
-    """For name matching only: lower-case, drop 'Kabupaten/Kota/Kecamatan/Desa/Kelurahan' prefixes, punctuation."""
+# How people actually write provinces vs the official (Kepmendagri) spelling. Keys/values are normalize_name() output.
+PROVINCE_ALIASES = {
+    "dki jakarta": "daerah khusus ibukota jakarta", "dki": "daerah khusus ibukota jakarta",
+    "jakarta": "daerah khusus ibukota jakarta", "daerah khusus jakarta": "daerah khusus ibukota jakarta",
+    "di yogyakarta": "daerah istimewa yogyakarta", "d i yogyakarta": "daerah istimewa yogyakarta",
+    "diy": "daerah istimewa yogyakarta", "yogyakarta": "daerah istimewa yogyakarta",
+    "nad": "aceh", "nanggroe aceh darussalam": "aceh", "bangka belitung": "kepulauan bangka belitung",
+    "babel": "kepulauan bangka belitung", "kepri": "kepulauan riau", "ntb": "nusa tenggara barat",
+    "ntt": "nusa tenggara timur", "sumut": "sumatera utara", "sumbar": "sumatera barat", "sumsel": "sumatera selatan",
+    "kalbar": "kalimantan barat", "kalteng": "kalimantan tengah", "kalsel": "kalimantan selatan",
+    "kaltim": "kalimantan timur", "kaltara": "kalimantan utara", "sulut": "sulawesi utara",
+    "sulteng": "sulawesi tengah", "sulsel": "sulawesi selatan", "sultra": "sulawesi tenggara",
+    "sulbar": "sulawesi barat", "jabar": "jawa barat", "jateng": "jawa tengah", "jatim": "jawa timur",
+}
+
+
+def city_kind(name):
+    """'Kota Bandung' -> 'kota', 'Kab. Bandung' -> 'kabupaten', 'Bandung' -> None."""
+    s = clean(name).lower()
+    if re.match(r"^\s*kota\b", s):
+        return "kota"
+    if re.match(r"^\s*(kabupaten|kab\b)", s):
+        return "kabupaten"
+    return None
+
+
+def normalize_name(name, level=None):
+    """For name matching only: lower-case, drop 'Kabupaten/Kota/Kecamatan/Desa/Kelurahan' prefixes, punctuation;
+    provinces also go through PROVINCE_ALIASES (DKI Jakarta → Daerah Khusus Ibukota Jakarta, ...)."""
     s = clean(name).lower()
     s = re.sub(r"\b(kabupaten|kab\.?|kota adm\.?|kota administrasi|kota|kecamatan|kec\.?|kelurahan|kel\.?|desa|provinsi|prov\.?)\b", " ", s)
     s = re.sub(r"[^a-z0-9 ]+", " ", s)
-    return re.sub(r"\s+", " ", s).strip()
+    s = re.sub(r"\s+", " ", s).strip()
+    if level == "province":
+        s = PROVINCE_ALIASES.get(s, s)
+    return s

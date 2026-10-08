@@ -156,3 +156,32 @@ class TestCrosswalkAndMatching(RNTestCase):
                 make(**kw)
         ok = make(valid_to="2026-01-01", replaced_by="91.71.02.1001")
         self.assertEqual(ok.name, "91.71.02.1099")
+
+
+class TestRealWorldNames(RNTestCase):
+    """Names as people write them vs the official Kepmendagri spelling (checked against the real 2025 dataset)."""
+
+    def setUp(self):
+        super().setUp()
+        svc.import_rows(rows([
+            {"kode": "31", "nama": "Daerah Khusus Ibukota Jakarta"}, {"kode": "3171", "nama": "Kota Administrasi Jakarta Pusat"},
+            {"kode": "317101", "nama": "Gambir"}, {"kode": "3171011001", "nama": "Gambir"},
+            {"kode": "32", "nama": "Jawa Barat"}, {"kode": "3204", "nama": "Kabupaten Bandung"}, {"kode": "3273", "nama": "Kota Bandung"},
+            {"kode": "320401", "nama": "Soreang"}, {"kode": "327301", "nama": "Bandung Kulon"},
+            {"kode": "34", "nama": "Daerah Istimewa Yogyakarta"}]), "uji", dry_run=False)
+
+    def test_province_aliases(self):
+        for written, code in (("DKI Jakarta", "31"), ("Daerah Khusus Jakarta", "31"), ("D.I. Yogyakarta", "34"),
+                              ("DI Yogyakarta", "34"), ("Jabar", "32"), ("Provinsi Jawa Barat", "32")):
+            self.assertEqual(svc.match_by_names(written)["code"], code, written)
+
+    def test_kota_vs_kabupaten(self):
+        self.assertEqual(svc.match_by_names("Jawa Barat", "Kota Bandung")["code"], "32.73")
+        self.assertEqual(svc.match_by_names("Jawa Barat", "Kab. Bandung")["code"], "32.04")
+        amb = svc.match_by_names("Jawa Barat", "Bandung")                       # no kind: refuse to guess
+        self.assertIsNone(amb["code"])
+        self.assertEqual(sorted(amb["candidates"]), ["32.04", "32.73"])
+
+    def test_jakarta_administrative_city_and_walk_to_village(self):
+        m = svc.match_by_names("DKI Jakarta", "Jakarta Pusat", "Gambir", "Gambir")
+        self.assertEqual((m["code"], m["level"]), ("31.71.01.1001", "village"))

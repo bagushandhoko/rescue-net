@@ -906,9 +906,17 @@ function verifyFormHtml(d) {
 function reporterPanelHtml(d, view) {
   const v = d.verification || { status: "self_reported", count: 0, verifiers: [], evidence: [] };
   const pill = reporterBadgeHtml(v.status, v.count);
-  const contact = d.phone
-    ? `<a class="btn primary mini" href="${escHtml(d.whatsapp_url)}" target="_blank" rel="noopener">WhatsApp</a>
-       <a class="btn mini" href="${escHtml(d.tel_url)}">Telepon ${escHtml(d.phone)}</a>`
+  const channels = [];
+  if (d.phone) {
+    channels.push(`<a class="btn primary mini" href="${escHtml(d.whatsapp_url)}" target="_blank" rel="noopener">WhatsApp</a>`);
+    channels.push(`<a class="btn mini" href="${escHtml(d.tel_url)}">Telepon ${escHtml(d.phone)}</a>`);
+  }
+  if (d.email) {
+    channels.push(`<a class="btn mini" href="${escHtml(d.mailto_url)}">Email ${escHtml(d.email)}</a>` +
+      (d.email_source === "google" ? ' <span class="rn-muted" title="Alamat ini dikonfirmasi Google saat login">✓ Google</span>' : ""));
+  }
+  const contact = channels.length
+    ? channels.join(" ")
     : `<span class="rn-muted">${escHtml(d.reason_no_contact || "Kontak tidak tersedia.")}</span>`;
   const evidence = (v.evidence || []).map((e) =>
     `<li class="${e.ok ? "ok" : "no"}"><b>${escHtml(e.label)}</b> — ${escHtml(e.detail)}</li>`).join("");

@@ -39,6 +39,9 @@
       '<div class="vf-meta">' + esc(v.position_title || "-") + " · " + esc(v.wilayah || "-") + "</div>" +
       (v.public_role_description ? '<div class="vf-meta" style="margin-top:4px">' + esc(v.public_role_description) + "</div>" : "") +
       '<div class="vf-meta" style="margin-top:4px">Trust ' + (v.trust_level || 0) + " · " + (v.endorsement_count || 0) + " endorsement</div>" +
+      (opts.approvable || v.verifier_status !== "active" ? "" :
+        '<div class="vf-contact" data-vc="' + esc(v.name) + '"><button type="button" class="btn mini" data-vc-open>Hubungi</button>' +
+        '<span class="vf-contact-out rn-muted"></span></div>') +
       actions +
       "</article>";
   }
@@ -252,6 +255,29 @@
       });
     });
   }
+
+  // Hubungi: phone / WhatsApp / email of a verifier — logged-in accounts only, every lookup is audited
+  document.addEventListener("click", async function (e) {
+    var btn = e.target.closest("[data-vc-open]");
+    if (!btn) return;
+    var box = btn.closest(".vf-contact"), out = box.querySelector(".vf-contact-out");
+    btn.disabled = true; out.textContent = "Memuat…";
+    try {
+      var d = await call("verifier_contact", { verifier: box.getAttribute("data-vc") }, { method: "POST" });
+      var parts = [];
+      if (d.phone) {
+        parts.push('<a class="btn primary mini" href="' + esc(d.whatsapp_url) + '" target="_blank" rel="noopener">WhatsApp</a>');
+        parts.push('<a class="btn mini" href="' + esc(d.tel_url) + '">Telepon</a>');
+      }
+      if (d.email) parts.push('<a class="btn mini" href="' + esc(d.mailto_url) + '">Email</a>');
+      out.innerHTML = parts.length ? parts.join(" ") : esc(d.reason_no_contact || "Kontak tidak tersedia.");
+      btn.hidden = true;
+    } catch (err) {
+      var m = (err && err.message) || "";
+      out.textContent = /login|masuk|403|izin|permission/i.test(m) ? "Masuk dulu untuk menghubungi verifikator." : m;
+      btn.disabled = false;
+    }
+  });
 
   async function load() {
     var dir;

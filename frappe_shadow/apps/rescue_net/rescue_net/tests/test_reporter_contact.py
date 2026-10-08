@@ -281,9 +281,8 @@ class TestEmailChannel(RNTestCase):
         frappe.db.set_value("RN Community Report", out["name"], "posko", self.posko.name)
         return reporter, out["name"]
 
-    def test_report_keeps_the_email_and_the_operator_can_mail_the_reporter(self):
+    def test_the_operator_can_mail_the_reporter_from_the_account_email(self):
         reporter, name = self.reporter_report()
-        self.assertEqual(frappe.db.get_value("RN Community Report", name, "reporter_email"), reporter.user.lower())
         with as_user(self.operator.user):
             out = api.reporter_contact(name)
         self.assertEqual(out["email"], reporter.user.lower())

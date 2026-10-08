@@ -7272,3 +7272,7 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-vx-hub table.vx-table th { padding: 11px 14px !important; }
 .rn-vx-hub table.vx-table .chip { font-size: 11.5px; padding: 3px 10px; }
 .rn-vx-hub table.vx-table td b, .rn-vx-hub table.vx-table td a { font-size: 13.5px !important; }
+
+.vf-contact { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.vf-contact .btn.mini, .vf-contact-out .btn.mini { width: auto; padding: 5px 12px; font-size: 12.5px; border-radius: 9px; display: inline-block; text-decoration: none; cursor: pointer; }
+.vf-contact-out { display: inline-flex; flex-wrap: wrap; gap: 6px; font-size: 12.5px; }

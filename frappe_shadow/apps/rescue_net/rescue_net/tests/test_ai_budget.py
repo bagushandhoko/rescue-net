@@ -167,6 +167,15 @@ class TestBudget(Base):
         with _post():
             self.assertEqual(self.ask(self.owner.user)["answer"], "jawab")  # personal context still works
 
+    def test_a_disabled_local_profile_says_so_instead_of_missing_key(self):
+        with as_user(self.owner.user):
+            api_ai.save_ai_profile("organization", self.org.name, provider="local",
+                                   base_url="http://10.0.0.5/v1", status="disabled")
+            with self.assertRaises(frappe.ValidationError) as e:
+                api_ai.resolve_ai(self.owner.user, "auto", self.org.name)
+            self.assertIn("dinonaktifkan", str(e.exception))
+            self.assertEqual(api_ai.ai_contexts()["organizations"], [])
+
     def test_hourly_rate_limit_per_organisation(self):
         with mock.patch.dict(budget.HOURLY_LIMIT, {"organization": 2}), _post(1):
             self.ask(self.owner.user, organization_id=self.org.name)

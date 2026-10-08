@@ -458,6 +458,8 @@ def resolve_ai(user_id, provider, organization_id=None):
         level, owner_type, owner_id = "personal", "user", user_id
         name_of = _setting_name
 
+    if frappe.db.get_value("RN AI Profile", profile_name(level, owner_id), "status") == "disabled":
+        frappe.throw("AI dinonaktifkan oleh pengelola untuk konteks ini.")
     prof = _profile_choice(level, owner_id, want + providers)
     if prof and prof.provider == "local":
         return {"api_key": "", "model": prof.model_name, "key_source": owner_type, "owner_type": owner_type,
@@ -590,10 +592,16 @@ def ai_contexts():
     they belong to that has an active key. The page picks one and sends
     organization_id (or nothing for personal) to the AI endpoints."""
     user = _require_login()
-    out = {"personal": {"available": bool(resolve_ai(user, "auto"))}, "organizations": []}
+    def usable(org=None):
+        try:
+            return bool(resolve_ai(user, "auto", org))
+        except frappe.ValidationError:  # switched off by its owner
+            return False
+
+    out = {"personal": {"available": usable()}, "organizations": []}
     actor = rn_actor(required=False)
     for oid in sorted(_member_orgs(actor)) if actor else []:
-        if resolve_ai(user, "auto", oid):
+        if usable(oid):
             out["organizations"].append({
                 "id": oid, "title": frappe.db.get_value("RN Organization", oid, "title") or oid})
     return out

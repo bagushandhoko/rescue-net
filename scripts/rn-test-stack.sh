@@ -142,8 +142,36 @@ e2e() {
   return $rc
 }
 
+# Real-login AI checks (Fase 7): own users/org/event, a fake local-model server, cleaned afterwards.
+e2e_ai() {
+  up
+  sync_app
+  prepare_site
+  bexec bench --site $SITE migrate >/dev/null
+  $D exec -u root $BENCH rm -rf /tmp/komando-tests
+  $D cp "$REPO/scripts/komando-tests" $BENCH:/tmp/komando-tests
+  $D exec -u root $BENCH sh -c "chown -R 1000:1000 /tmp/komando-tests && chmod -R u+rwX,go+rX /tmp/komando-tests"
+  stop_serve
+  bexec sh -c "nohup bench serve --port 8000 >/tmp/rn-serve.log 2>&1 & echo \$! > /tmp/rn-serve.pid"
+  i=0
+  until bexec curl -s -o /dev/null -H "Host: $SITE" http://127.0.0.1:8000/api/method/ping; do
+    i=$((i + 1)); [ $i -gt 30 ] && { echo "bench serve did not start" >&2; bexec tail -20 /tmp/rn-serve.log; exit 1; }
+    sleep 2
+  done
+  kt() { $D exec -w $B/sites -e RN_SITE=$SITE -e RN_BASE=http://127.0.0.1:8000 $BENCH "$@"; }
+  kt ../env/bin/python /tmp/komando-tests/clean_ai_data.py
+  ids=$(kt ../env/bin/python /tmp/komando-tests/setup_ai_users.py | grep '^AI_ORG=')
+  org=$(echo "$ids" | sed 's/^AI_ORG=\([^ ]*\) .*/\1/'); ev=$(echo "$ids" | sed 's/.*AI_EVENT=//')
+  rc=0
+  $D exec -w $B/sites -e RN_SITE=$SITE -e RN_BASE=http://127.0.0.1:8000 -e AI_ORG="$org" -e AI_EVENT="$ev" $BENCH python3 /tmp/komando-tests/ai_e2e.py || rc=$?
+  kt ../env/bin/python /tmp/komando-tests/clean_ai_data.py
+  stop_serve
+  return $rc
+}
+
 case "${1:-}" in
   up) up ;;
+  e2e-ai) e2e_ai ;;
   init) init ;;
   test)
     shift

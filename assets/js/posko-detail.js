@@ -67,7 +67,7 @@ async function renderVerifPanel(poskoName) {
           ${e.statement ? `<div class="rn-muted">"${safe(e.statement)}"</div>` : ""}
         </div>`).join("")
     : `<p class="rn-muted">Belum ada endorsement verifikator.
-       <a href="verifikator.html">Minta verifikasi ke verifikator wilayah →</a></p>`;
+       <a href="verification-approval.html#pengajuan/permintaan">Minta verifikasi ke verifikator wilayah →</a></p>`;
 
   el.innerHTML = `
     <div class="panel-header">

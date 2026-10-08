@@ -109,14 +109,9 @@
         icon: "search-found"
       },
       {
-        label: "Verification",
+        label: "Verifikasi",
         href: "verification-approval.html",
         icon: "verification"
-      },
-      {
-        label: "Jaringan Verifikator",
-        href: "verifikator.html",
-        icon: "id-card"
       },
       {
         label: "Masukan Masyarakat",

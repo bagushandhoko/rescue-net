@@ -880,7 +880,7 @@ function verifiedBadge(report) {
 function endorsementItem(e) {
   const name = escHtml(e.verifier || "Verifikator");
   const link = e.verifier_id
-    ? `<a href="verifikator.html?cari=${encodeURIComponent(e.verifier || "")}" title="Buka di Jaringan Verifikator">${name}</a>` : name;
+    ? `<a href="verification-approval.html?cari=${encodeURIComponent(e.verifier || "")}#verifikator/direktori" title="Buka di Verifikasi › Verifikator">${name}</a>` : name;
   const pos = e.position ? ` — ${escHtml(e.position)}` : "";
   return `<li><b>${link}</b>${pos}<br>
     <small>${escHtml(e.role_label || "")} · ${escHtml(e.method_label || "")}${e.verified_at ? " · " + escHtml(e.verified_at) : ""}${e.vouched_via ? " · via " + escHtml(e.vouched_via) : ""}</small>
@@ -926,7 +926,7 @@ function reporterPanelHtml(d, view) {
       ${ends ? `<ul class="rn-rp-ends">${ends}</ul>` : `<p class="rn-muted">Belum ada organisasi atau verifikator yang memverifikasi pelapor ini.</p>`}
       ${evidence ? `<ul class="rn-rp-evidence">${evidence}</ul>` : ""}
       <small class="rn-muted">Status mengikuti Jaringan Verifikator yang sama dengan posko.
-        <a href="verifikator.html">Lihat Jaringan Verifikator</a></small>
+        <a href="verification-approval.html#verifikator/direktori">Lihat Verifikator</a></small>
       ${verifyFormHtml(d)}
     </div>`;
 }

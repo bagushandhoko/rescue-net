@@ -584,16 +584,16 @@ function reportCard(report) {
           ${predictedNeedsLine(report.predicted_needs)}
           ${routingLine(report)}
           ${aiStatusLine(report)}
-          <small>${safeText(report.reporter_name)}${verifiedBadge(report)} · ${safeText(report.reporter_role)} | ${trustLabel(report.trust_score || 0)} (${report.trust_score || 0})</small>
+          <small>${safeText(report.reporter_name)}${verifiedBadge(report, true)} · ${safeText(report.reporter_role)} | ${trustLabel(report.trust_score || 0)} (${report.trust_score || 0})</small>
           ${report.can_contact_reporter ? `
           <div class="rn-reporter-actions">
             <button class="btn mini" type="button" data-reporter-view="contact" data-report-id="${report.id}">Hubungi pelapor</button>
             <button class="rn-link-btn" type="button" data-reporter-view="level" data-report-id="${report.id}">Verifikator &amp; level ›</button>
-          </div>` : (report.reporter_level >= 3 ? `
+          </div>` : (isVerified(report) ? `
           <div class="rn-reporter-actions">
             <button class="rn-link-btn" type="button" data-reporter-view="level" data-report-id="${report.id}">Lihat verifikator ›</button>
           </div>` : "")}
-          ${(report.can_contact_reporter || report.reporter_level >= 3) ? `<div class="rn-reporter-panel" data-reporter-panel="${report.id}" data-local="${escHtml(JSON.stringify({ level: report.reporter_level || 0, label: report.reporter_level_label || "", types: report.reporter_verified_types || [] }))}" hidden></div>` : ""}
+          ${(report.can_contact_reporter || isVerified(report)) ? `<div class="rn-reporter-panel" data-reporter-panel="${report.id}" data-local="${escHtml(JSON.stringify({ status: report.reporter_verification_status || "self_reported", count: report.reporter_verified_count || 0, verifiers: report.reporter_verifiers || [] }))}" hidden></div>` : ""}
         </div>
         <div class="chips">
           <span class="chip ${report.priority === "critical" ? "danger" : report.priority === "urgent" ? "warning" : "neutral"}">${report.priority}</span>
@@ -857,20 +857,23 @@ function setupCommunityReportForm() {
   updateLocationMessage();
 }
 
-/* Blue check = verification level >= 3 (account vouched for / verified reporter / verified organisation). */
+/* Same shared badge as the posko pages (RNVerifBadge): status from the Jaringan Verifikator.
+   A reporter nobody has vouched for shows no badge. */
+function isVerified(report) { return (report.reporter_verification_status || "self_reported") !== "self_reported"; }
+
 function verifiedBadge(report) {
-  if (!(report.reporter_level >= 3)) return "";
-  const who = (report.reporter_verified_types || []).join(", ");
-  const tip = `Terverifikasi (level ${report.reporter_level} · ${report.reporter_level_label})` + (who ? ` — oleh ${who}` : "");
-  return ` <svg class="rn-vcheck" viewBox="0 0 24 24" role="img" aria-label="${escHtml(tip)}"><title>${escHtml(tip)}</title>` +
-    `<circle cx="12" cy="12" r="11" fill="#1d9bf0"/><path d="M7 12.5l3.2 3.2L17 8.8" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  if (!isVerified(report) || !window.RNVerifBadge) return "";
+  return ` <button type="button" class="rn-vb-btn" data-reporter-view="level" data-report-id="${report.id}" title="Lihat siapa yang memverifikasi">` +
+    window.RNVerifBadge.html(report.reporter_verification_status, report.reporter_verified_count) + "</button>";
 }
 
 function endorsementItem(e) {
-  if (!e.verifier_name) return `<li><b>${escHtml(e.type_label)}</b></li>`;
-  const who = [e.position, e.organization].filter(Boolean).map(escHtml).join(", ");
-  return `<li><b>${escHtml(e.verifier_name)}</b>${who ? ` — ${who}` : ""}<br>
-    <small>${escHtml(e.type_label)} · ${escHtml(e.method_label || "")}${e.verified_at ? " · " + escHtml(e.verified_at) : ""}</small>
+  const name = escHtml(e.verifier || "Verifikator");
+  const link = e.verifier_id
+    ? `<a href="verifikator.html?cari=${encodeURIComponent(e.verifier || "")}" title="Buka di Jaringan Verifikator">${name}</a>` : name;
+  const pos = e.position ? ` — ${escHtml(e.position)}` : "";
+  return `<li><b>${link}</b>${pos}<br>
+    <small>${escHtml(e.role_label || "")} · ${escHtml(e.method_label || "")}${e.verified_at ? " · " + escHtml(e.verified_at) : ""}${e.vouched_via ? " · via " + escHtml(e.vouched_via) : ""}</small>
     ${e.statement ? `<br><small>“${escHtml(e.statement)}”</small>` : ""}</li>`;
 }
 
@@ -891,15 +894,15 @@ function verifyFormHtml(d) {
 }
 
 function reporterPanelHtml(d, view) {
-  const v = d.verification || { level: 0, label: "", evidence: [], endorsements: [] };
-  const steps = [1, 2, 3, 4].map((n) => `<i class="${n <= v.level ? "on" : ""}"></i>`).join("");
+  const v = d.verification || { status: "self_reported", count: 0, verifiers: [], evidence: [] };
+  const pill = window.RNVerifBadge ? window.RNVerifBadge.html(v.status, v.count) : escHtml(v.status);
   const contact = d.phone
     ? `<a class="btn primary mini" href="${escHtml(d.whatsapp_url)}" target="_blank" rel="noopener">WhatsApp</a>
        <a class="btn mini" href="${escHtml(d.tel_url)}">Telepon ${escHtml(d.phone)}</a>`
     : `<span class="rn-muted">${escHtml(d.reason_no_contact || "Kontak tidak tersedia.")}</span>`;
   const evidence = (v.evidence || []).map((e) =>
     `<li class="${e.ok ? "ok" : "no"}"><b>${escHtml(e.label)}</b> — ${escHtml(e.detail)}</li>`).join("");
-  const ends = (v.endorsements || []).map(endorsementItem).join("");
+  const ends = (v.verifiers || []).map(endorsementItem).join("");
   const contactSection = d.local ? "" : `
     <div class="rn-rp-section" data-section="contact" ${view === "contact" ? "" : "hidden"}>
       <div class="rn-rp-title">Hubungi ${escHtml(d.reporter_name || "pelapor")}</div>
@@ -908,21 +911,20 @@ function reporterPanelHtml(d, view) {
     </div>`;
   return contactSection + `
     <div class="rn-rp-section" data-section="level" ${view === "level" || d.local ? "" : "hidden"}>
-      <div class="rn-rp-title">Level verifikasi pelapor: <b>${v.level} · ${escHtml(v.label)}</b></div>
-      <div class="rn-rp-steps" aria-label="Level ${v.level} dari 4">${steps}</div>
+      <div class="rn-rp-title">Verifikasi pelapor: ${pill}</div>
       <div class="rn-rp-title">Diverifikasi oleh</div>
       ${ends ? `<ul class="rn-rp-ends">${ends}</ul>` : `<p class="rn-muted">Belum ada verifikator yang memverifikasi pelapor ini.</p>`}
       ${evidence ? `<ul class="rn-rp-evidence">${evidence}</ul>` : ""}
-      <small class="rn-muted">${d.local ? "Nama verifikator hanya terlihat oleh posko tujuan. " : ""}No HP belum dicek OTP.
-        <a href="verifikator.html">Jaringan verifikator</a></small>
+      <small class="rn-muted">Status mengikuti Jaringan Verifikator yang sama dengan posko.
+        <a href="verifikator.html">Lihat Jaringan Verifikator</a></small>
       ${verifyFormHtml(d)}
     </div>`;
 }
 
 function localPanelData(panel) {
   const l = JSON.parse(panel.dataset.local || "{}");
-  return { local: true, verification: { level: l.level || 0, label: l.label || "", evidence: [],
-    endorsements: (l.types || []).map((t) => ({ type_label: t })) } };
+  return { local: true, verification: { status: l.status || "self_reported", count: l.count || 0,
+    verifiers: l.verifiers || [], evidence: [] } };
 }
 
 async function toggleReporterPanel(button) {

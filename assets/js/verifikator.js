@@ -254,6 +254,13 @@
     var dir;
     try { dir = await call("verifier_directory", {}); } catch (e) { dir = { verifiers: [] }; }
     DIRECTORY = (dir && dir.verifiers) || [];
+    // deep link from a report / posko panel: verifikator.html?cari=<nama verifikator>
+    var wanted = new URLSearchParams(location.search).get("cari");
+    if (wanted && !$("#vfSearch").value) {
+      $("#vfSearch").value = wanted;
+      var dirEl = $("#vfDirectory");
+      if (dirEl && dirEl.scrollIntoView) setTimeout(function () { dirEl.scrollIntoView({ behavior: "smooth", block: "start" }); }, 400);
+    }
     renderDirectory($("#vfSearch").value);
 
     var inbox = await loadInbox();

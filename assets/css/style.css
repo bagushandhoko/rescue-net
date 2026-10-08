@@ -7098,3 +7098,6 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-reporter-panel .rn-rp-ends { margin: 0 0 8px; padding: 0 0 0 16px; display: grid; gap: 6px; }
 .rn-reporter-panel .rn-rp-verify { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(232,117,88,.45); display: grid; gap: 6px; }
 .rn-reporter-panel .rn-rp-verify select, .rn-reporter-panel .rn-rp-verify input, .rn-reporter-panel .rn-rp-verify textarea { width: 100%; font-size: 13px; }
+
+.rn-vb-btn { background: none; border: 0; padding: 0; margin-left: 4px; cursor: pointer; vertical-align: middle; }
+.rn-reporter-panel .rn-rp-title .rn-vbadge { vertical-align: middle; }

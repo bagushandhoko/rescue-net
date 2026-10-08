@@ -7093,3 +7093,8 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-reporter-panel .rn-rp-evidence li.no::before { content: "– "; color: #999; }
 .rn-reporter-panel .rn-muted { color: var(--muted); font-size: 12.5px; }
 .rn-reporter-panel .rn-error { color: #b3261e; font-weight: 600; }
+
+.rn-vcheck { width: 15px; height: 15px; vertical-align: -3px; margin-left: 3px; }
+.rn-reporter-panel .rn-rp-ends { margin: 0 0 8px; padding: 0 0 0 16px; display: grid; gap: 6px; }
+.rn-reporter-panel .rn-rp-verify { margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(232,117,88,.45); display: grid; gap: 6px; }
+.rn-reporter-panel .rn-rp-verify select, .rn-reporter-panel .rn-rp-verify input, .rn-reporter-panel .rn-rp-verify textarea { width: 100%; font-size: 13px; }

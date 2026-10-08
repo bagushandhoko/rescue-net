@@ -106,6 +106,13 @@ SECRETS = {
     "reporter_contact": "+62811-1111-0006",
     "household_note": "CATATAN-KK-SENTINEL",
     "ai_key": "fake-byok-SENTINEL-0123456789abcdef",
+    # reporter / verifier contact + what a verifier says about a reporter (owner 2026-10-08)
+    "report_phone": "081111110008",
+    "report_email": "reporter.sentinel@test.rescue-net.local",
+    "verifier_phone": "081111110009",
+    "verifier_email": "verifier.sentinel@test.rescue-net.local",
+    "endorse_statement": "PERNYATAAN-SENTINEL-TENTANG-PELAPOR",
+    "reporter_title": "NAMA-PELAPOR-SENTINEL",
 }
 
 # Confirmed leaks reported to the owner but not fixed yet:
@@ -193,6 +200,20 @@ class TestGuestSweep(RNTestCase):
         self.flow = _insert("RN Distribution Flow", title="Beras", destination_posko=w.posko_a.name,
                             disaster_event=w.event.name, item_name="Beras", quantity=5, unit="karung",
                             flow_status="planned")
+        # a routed community report whose reporter agreed to be contacted, vouched for by a verifier
+        rep = make_actor(role="citizen", phone=s["report_phone"])
+        _insert("RN Community Report", title="Laporan sentinel", description="Sumur kering sentinel",
+                disaster_event=w.event.name, posko=w.posko_a.name, report_type="water_shortage", status="submitted",
+                reporter_name=s["reporter_title"], reporter_user=rep.account, reporter_phone=s["report_phone"],
+                reporter_email=s["report_email"], consent_to_contact=1, affected_people_count=7,
+                legacy_payload=json.dumps({"reporter_phone": s["report_phone"], "reporter_email": s["report_email"],
+                                           "reporter_name": s["reporter_title"],
+                                           "evidence": {"image": "/files/sentinel.jpg", "caption": "foto sentinel"}}))
+        ver = make_actor(role="citizen")
+        vprof = _insert("RN Verifier Profile", title="Verifikator Sentinel", user=ver.account, verifier_type="government",
+                        verifier_status="active", trust_level=1, phone=s["verifier_phone"], email=s["verifier_email"])
+        _insert("RN Verification Endorsement", title="Verifikasi sentinel", target_type="reporter", target_id=rep.account,
+                verifier=vprof.name, method="site_visit", statement=s["endorse_statement"], status="active")
         self.actor = make_actor(posko=w.posko_a, phone=s["account_phone"])
         with as_user(self.actor.user):
             api_ai.save_user_key(self.actor.user, s["ai_key"])

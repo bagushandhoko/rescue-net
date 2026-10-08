@@ -781,6 +781,11 @@ def public_dashboard(
         event
     )
 
+    from rescue_net.control_centre.map_evidence import public_safe_rows
+
+    public_safe_rows(report_rows, community_only=True)   # public dashboard: never who reported
+    public_safe_rows(evidence_rows)
+
     if isinstance(context, dict):
         context["trends"] = activity_trends(event)
         context["kpi_totals"] = kpi_totals(event, posko_total=len(points))

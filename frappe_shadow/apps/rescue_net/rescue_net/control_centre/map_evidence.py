@@ -275,6 +275,53 @@ def _annotate_share_mode(points):
             _hide_reasons(point)
 
 
+# ---- what the public may see of a community report (owner 2026-10-08) ----
+_PERSON_KEYS = ("reporter_phone", "reporter_email", "reporter_contact", "reporter_profile_legacy_id", "reporter_user")
+
+
+def names_allowed():
+    """May this viewer see who reported? System Manager or an operator-level Rescue-Net role."""
+    from rescue_net.access_policy import is_system_manager, rn_actor
+
+    if is_system_manager():
+        return True
+    actor = rn_actor(required=False)
+    if not actor or not actor.get("name"):
+        return False
+    from rescue_net.api_auth import ROLE_MATRIX
+
+    return any(r["role"] == actor.get("role") and r.get("can_view_sensitive") for r in ROLE_MATRIX)
+
+
+def _safe_payload(payload):
+    """The imported legacy JSON carries the reporter's phone / name / email. Keep only the photo block."""
+    import json
+
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except ValueError:
+            return None
+    if not isinstance(payload, dict) or not isinstance(payload.get("evidence"), dict):
+        return None
+    ev = payload["evidence"]
+    return {"evidence": {k: ev[k] for k in ("image", "caption", "details") if k in ev}}
+
+
+def public_safe_rows(rows, community_only=False):
+    """Strip personal data from report / evidence rows before they leave through a public endpoint.
+    `community_only`: rows are community reports themselves (every reporter_name is a person)."""
+    for row in rows:
+        for k in _PERSON_KEYS:
+            row.pop(k, None)
+        if "legacy_payload" in row:
+            row["legacy_payload"] = _safe_payload(row["legacy_payload"])
+        person = community_only or str(row.get("linked_object_type") or "") == "RN Community Report"
+        if person and "reporter_name" in row:
+            row["reporter_name"] = "Pelapor"
+    return rows
+
+
 def reports(event):
     doctype = (
         "RN Community Report"
@@ -677,6 +724,8 @@ def evidence_board(disaster_event=None, limit=300):
     """
     event = canonical_event(disaster_event) if disaster_event else None
     rows = event_evidence(event, limit=int(limit)) if event else []
+    if not names_allowed():
+        public_safe_rows(rows)
 
     today = frappe.utils.getdate()
 

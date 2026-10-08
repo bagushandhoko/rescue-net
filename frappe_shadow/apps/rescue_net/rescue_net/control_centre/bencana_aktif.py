@@ -326,7 +326,7 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
         filters=event_filters(cols("RN Community Report"), event_id),
         fields=_sf("RN Community Report", [
             "name", "title", "report_type", "affected_people_count",
-            "reporter_name", "city_name", "district_name", "village_name",
+            "city_name", "district_name", "village_name",
         ]),
         order_by="creation desc",
         limit_page_length=200,
@@ -340,9 +340,7 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
             {
                 "title": r.get("title") or r.get("report_type") or "Laporan Masyarakat",
                 "region": r.get("village_name") or r.get("district_name") or r.get("city_name") or "-",
-                "detail": "%d jiwa terdampak · pelapor: %s" % (
-                    int(_num(r.get("affected_people_count"))), r.get("reporter_name") or "warga",
-                ),
+                "detail": "%d jiwa terdampak · pelapor: warga" % int(_num(r.get("affected_people_count"))),
                 "count": int(_num(r.get("affected_people_count"))),
                 "href": "laporan-masyarakat.html?report=" + str(r["name"]) + "&event=" + short_ev,
             }

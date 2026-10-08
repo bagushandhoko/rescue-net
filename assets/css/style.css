@@ -7245,9 +7245,9 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 /* Antrian table: no overlapping headers, readable columns and chips (the old fixed widths were tuned for tiny type) */
 .vx-pane[data-sub="antrian"] .rn-vax-table { table-layout: fixed; width: 100%; }
 .vx-pane[data-sub="antrian"] .rn-vax-table colgroup { display: none; }
-.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(1) { width: 92px; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(1) { width: 112px; }
 .vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(3) { width: 150px; }
-.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(4) { width: 78px; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(4) { width: 96px; }
 .vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(5) { width: 84px; }
 .vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(6) { width: 104px; }
 .vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(7) { width: 28px; }

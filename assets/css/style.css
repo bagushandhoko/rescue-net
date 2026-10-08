@@ -7111,7 +7111,7 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-vbadge--off .rn-vbadge-n { background: #1f8a4c; }
 
 /* ===== Sistem Verifikasi (one page: Pengajuan Verifikasi / Verifikator / Data Hasil Verifikasi) ===== */
-.rn-vx-hub { --vx-brand: #e8755a; --vx-brand-dark: #c4442f; --vx-ink: #2b1d17; --vx-card: #fff; max-width: 1360px; }
+.rn-vx-hub { --vx-brand: #e8755a; --vx-brand-dark: #c4442f; --vx-ink: #2b1d17; --vx-card: #fff; }
 .rn-vx-hub, .rn-vx-hub input, .rn-vx-hub select, .rn-vx-hub textarea, .rn-vx-hub button { font-size: 14px; }
 
 /* page header */
@@ -7241,3 +7241,27 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
   .vf-grid { grid-template-columns: minmax(0, 1fr); }
   .vx-filter input[type=search] { max-width: none; }
 }
+
+/* Antrian table: no overlapping headers, readable columns and chips (the old fixed widths were tuned for tiny type) */
+.vx-pane[data-sub="antrian"] .rn-vax-table { table-layout: fixed; width: 100%; }
+.vx-pane[data-sub="antrian"] .rn-vax-table colgroup { display: none; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(1) { width: 92px; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(3) { width: 150px; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(4) { width: 78px; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(5) { width: 84px; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(6) { width: 104px; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th:nth-child(7) { width: 28px; }
+.vx-pane[data-sub="antrian"] .rn-vax-table th { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vx-pane[data-sub="antrian"] .rn-vax-table td { overflow-wrap: anywhere; word-break: normal; vertical-align: middle; }
+.vx-pane[data-sub="antrian"] .rn-vax-table .chip { padding: 3px 10px; font-size: 11.5px; line-height: 1.4; white-space: nowrap; overflow: visible; max-width: none; }
+.vx-pane[data-sub="antrian"] .rn-vax-kind { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; }
+.vx-pane[data-sub="antrian"] .rn-vax-go { color: var(--muted); font-size: 18px; }
+/* detail / flow / audit panels: normal reading size */
+.vx-pane[data-sub="antrian"] #detailBody, .vx-pane[data-sub="antrian"] #detailBody dl, .vx-pane[data-sub="antrian"] #detailBody dt, .vx-pane[data-sub="antrian"] #detailBody dd { font-size: 13px; line-height: 1.5; }
+.vx-pane[data-sub="antrian"] #detailBody dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 12px; margin: 10px 0; }
+.vx-pane[data-sub="antrian"] #detailBody dt { color: var(--muted); }
+.vx-pane[data-sub="antrian"] #detailBody dd { margin: 0; overflow-wrap: anywhere; font-weight: 600; }
+.vx-pane[data-sub="antrian"] .rn-va-steps li, .vx-pane[data-sub="antrian"] .rn-va-timeline li { font-size: 13px; }
+.vx-pane[data-sub="antrian"] .rn-vax-trust ul li { font-size: 12.5px; }
+.vx-actions-cell { white-space: nowrap; display: flex; gap: 6px; flex-wrap: wrap; }
+.vx-actions-cell .btn { padding: 6px 12px; font-size: 12.5px; border-radius: 9px; width: auto; }

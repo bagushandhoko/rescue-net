@@ -99,6 +99,27 @@
     });
   }
 
+  /* ---------- Objek Terverifikasi: one table, filter by type / status / text ---------- */
+  function applyObjects() {
+    var body = $("#vxObjectsBody"); if (!body) return;
+    var q = (($("#vxObjectsQ") || {}).value || "").trim().toLowerCase();
+    var type = ($("#vxObjectsType") || {}).value || "";
+    var st = ($("#vxObjectsStatus") || {}).value || "";
+    var rows = $$("tr.vx-row", body), shown = 0;
+    rows.forEach(function (tr) {
+      var ok = (!type || tr.dataset.type === type) && (!st || tr.dataset.vgroup === st) && (!q || tr.textContent.toLowerCase().indexOf(q) !== -1);
+      tr.hidden = !ok; if (ok) shown++;
+    });
+    var c = $("#vxObjectsCount");
+    if (c && rows.length) c.textContent = (q || type || st) ? shown + " dari " + rows.length + " objek" : rows.length + " objek";
+  }
+  function wireObjects() {
+    ["#vxObjectsQ", "#vxObjectsType", "#vxObjectsStatus"].forEach(function (sel) {
+      var el = $(sel); if (el) el.addEventListener(el.tagName === "INPUT" ? "input" : "change", applyObjects);
+    });
+    window.addEventListener("vx:objects", function () { applyObjects(); badges(); });
+  }
+
   /* ---------- Endorsement results (Data Hasil Verifikasi) ---------- */
   var timer = null;
   function loadEndorsements() {
@@ -113,14 +134,23 @@
         var link = r.verifier ? '<a href="verification-approval.html?cari=' + encodeURIComponent(r.verifier) + '#verifikator/direktori">' + who + "</a>" : who;
         return '<tr class="vx-row"><td>' + esc(r.target) + "<br><small>" + (r.target_type === "posko" ? "Posko" : "Pelapor") + "</small>" +
           (r.statement ? "<br><small>“" + esc(r.statement) + "”</small>" : "") + "</td><td>" + link + "</td><td>" + esc(r.verifier_type || "-") + "</td><td>" + esc(r.method || "-") +
-          "</td><td>" + esc(r.verified_at || "-") + '</td><td><span class="chip ' + (r.status === "active" ? "ok" : "danger") + '">' + (r.status === "active" ? "Aktif" : esc(r.status)) + "</span></td></tr>";
-      }).join("") : '<tr><td colspan="6"><em class="rn-muted">Tidak ada endorsement yang cocok.</em></td></tr>';
+          "</td><td>" + esc(r.verified_at || "-") + '</td><td><span class="chip ' + (r.status === "active" ? "ok" : "danger") + '">' + (r.status === "active" ? "Aktif" : "Dicabut") + "</span></td>" +
+          "<td>" + (r.can_revoke && r.status === "active" ? '<button type="button" class="btn mini" data-vx-revoke="' + esc(r.endorsement) + '">Cabut</button>' : "") + "</td></tr>";
+      }).join("") : '<tr><td colspan="7"><em class="rn-muted">Tidak ada endorsement yang cocok.</em></td></tr>';
       badges();
     }).catch(function (e) {
-      body.innerHTML = '<tr><td colspan="6"><em class="rn-muted">Gagal memuat: ' + esc(e && e.message || e) + "</em></td></tr>";
+      body.innerHTML = '<tr><td colspan="7"><em class="rn-muted">Gagal memuat: ' + esc(e && e.message || e) + "</em></td></tr>";
     });
   }
   function wireEndorse() {
+    document.addEventListener("click", function (e) {
+      var b = e.target.closest("[data-vx-revoke]"); if (!b) return;
+      var reason = prompt("Alasan mencabut endorsement (wajib):");
+      if (!reason || !reason.trim()) return;
+      b.disabled = true;
+      window.RN_FRAPPE.call("rescue_net.api_verifier.revoke_endorsement", { endorsement: b.getAttribute("data-vx-revoke"), reason: reason.trim() }, { method: "POST" })
+        .then(loadEndorsements).catch(function (err) { alert(err && err.message || err); b.disabled = false; });
+    });
     var f = function () { clearTimeout(timer); timer = setTimeout(loadEndorsements, 250); };
     ["#vxEndorseQ", "#vxEndorseType", "#vxEndorseStatus"].forEach(function (s) {
       var el = $(s); if (el) el.addEventListener(el.tagName === "INPUT" ? "input" : "change", f);
@@ -133,6 +163,7 @@
     window.addEventListener("hashchange", fromHash);
     wireFilters();
     wireEndorse();
+    wireObjects();
     fromHash();
     badges();
     // the page's own scripts fill lists / unhide sections asynchronously

@@ -17,12 +17,15 @@
   };
   var METHOD_LABEL = { site_visit: "Kunjungan langsung", network_vouch: "Rekomendasi jaringan", document_review: "Telaah dokumen" };
 
+  var STATUS_LABEL = { active: "Aktif", pending: "Menunggu", suspended: "Ditangguhkan", revoked: "Dicabut", accepted: "Diterima", completed: "Selesai", rejected: "Ditolak", cancelled: "Dibatalkan" };
+  function stl(s) { return STATUS_LABEL[s] || s; }
+
   var DIRECTORY = [];
 
   function verifierCard(v, opts) {
     opts = opts || {};
     var chips = '<span class="vf-chip ' + (v.verifier_type === "government" ? "gov" : "") + '">' + esc(TYPE_LABEL[v.verifier_type] || v.verifier_type) + "</span> " +
-      '<span class="vf-chip ' + (v.verifier_status === "active" ? "active" : "pending") + '">' + esc(v.verifier_status) + "</span>";
+      '<span class="vf-chip ' + (v.verifier_status === "active" ? "active" : "pending") + '">' + esc(stl(v.verifier_status)) + "</span>";
     var actions = "";
     if (opts.approvable) {
       actions = '<div class="vf-actions" data-vid="' + esc(v.name) + '">' +
@@ -61,7 +64,7 @@
         '<span class="rn-muted vf-msg"></span></div>';
     }
     return '<article class="vf-card"><h4>' + head + "</h4>" +
-      '<div class="vf-meta">Wilayah: ' + esc(r.wilayah || "-") + " · status: " + esc(r.status) + " · " + fmtDate(r.creation) + "</div>" +
+      '<div class="vf-meta">Wilayah: ' + esc(r.wilayah || "-") + " · status: " + esc(stl(r.status)) + " · " + fmtDate(r.creation) + "</div>" +
       (r.notes ? '<div class="vf-meta" style="margin-top:4px">' + esc(r.notes) + "</div>" : "") +
       actions + "</article>";
   }

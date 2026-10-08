@@ -659,6 +659,8 @@ def endorsements_overview(target_type=None, q=None, status="active", limit=200):
     actor = rn_actor(required=False)
     privileged = bool(is_system_manager() or (actor and actor.get("name") and _my_verifier(actor)
                                               and not _my_verifier(actor).get("_inactive")))
+    mine = _my_verifier(actor) if actor and actor.get("name") else None
+    mine_name = mine["name"] if mine and not mine.get("_inactive") else None
     filters = {}
     if target_type in ("posko", "reporter"):
         filters["target_type"] = target_type
@@ -695,6 +697,7 @@ def endorsements_overview(target_type=None, q=None, status="active", limit=200):
             "verified_at": str(r.verified_at)[:10] if r.verified_at else None,
             "revoked_at": str(r.revoked_at)[:10] if r.revoked_at else None,
             "statement": r.statement if (r.target_type == "posko" or privileged) else None,
+            "can_revoke": bool(is_system_manager() or (mine_name and r.verifier == mine_name)),
         }
         if needle and needle not in " ".join(str(item.get(k) or "") for k in
                                               ("target", "verifier", "verifier_type", "position", "wilayah", "method", "statement")).lower():

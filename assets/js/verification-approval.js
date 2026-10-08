@@ -489,55 +489,29 @@ function renderActions(items) {
   )).join("") : card("Belum ada verification action", "Aksi verifikasi akan tampil di sini.", "empty");
 }
 
-function renderTrustedVerifier(ctx) {
-  const requestsEl = document.getElementById("trustedVerifierRequests");
-  const endorsementsEl = document.getElementById("trustedEndorsements");
-  const registryEl = document.getElementById("trustedVerifierRegistry");
-  const revokedEl = document.getElementById("revokedVerifications");
-  const requests = ctx.verification_requests || [];
-  const endorsements = ctx.verification_endorsements || [];
-  const registry = ctx.verifier_profiles || [];
-
-  requestsEl.innerHTML = requests.length ? requests.map(r => card(
-    `${safe(r.target_type)}: ${safe(r.target_id)}`,
-    `Scope: ${safe(r.verification_scope)}<br>Verifier: ${safe(r.requested_verifier_name || r.requested_verifier_id)}<br>Hubungan: ${safe(r.relationship_description)}<br>Expires: ${safe(r.expires_at)}`,
-    r.status
-  )).join("") : card("Tidak ada request", "Permintaan verifikasi baru akan tampil di sini.", "empty");
-
-  endorsementsEl.innerHTML = endorsements.filter(x => x.status === "active").length
-    ? endorsements.filter(x => x.status === "active").map(e => card(
-      `${safe(e.target_type)}: ${safe(e.target_id)}`,
-      `Identitas/scope: ${safe(e.verification_scope)}<br>Diverifikasi oleh: ${safe(e.verifier_display_name)}<br>Peran: ${safe(e.verifier_role)}<br>${safe(e.statement, "")}`,
-      `level ${safe(e.verification_level)}`,
-      `<button class="btn" type="button" data-revoke-endorsement="${e.id}">Revoke</button>`
-    )).join("")
-    : card("Belum ada endorsement aktif", "Persetujuan Trusted Verifier akan tampil di sini.", "empty");
-
-  registryEl.innerHTML = registry.length ? registry.map(v => {
-    const actions = v.verifier_status === "candidate_verifier"
-      ? `<button class="btn primary" type="button" data-approve-verifier="${v.id}" data-verifier-type="${v.verifier_type}">Approve</button>`
-      : "";
-    return card(
-      safe(v.display_name),
-      `${safe(v.position_title || v.public_role_description)}<br>Type: ${safe(v.verifier_type)} | Trust: ${safe(v.trust_level)}<br>Scope: ${safe(JSON.stringify(v.allowed_verification_scope_json))}`,
-      v.verifier_status,
-      actions
-    );
-  }).join("") : card("Registry kosong", "Daftarkan calon verifikator melalui form.", "empty");
-
-  const revoked = endorsements.filter(x => x.status === "revoked");
-  const suspicious = registry.filter(x => Number(x.suspicious_activity_count || 0) > 0);
-  revokedEl.innerHTML = revoked.concat(suspicious).length
-    ? revoked.map(e => card(
-      `Revoked: ${safe(e.target_id)}`,
-      `${safe(e.verifier_display_name)}<br>Alasan: ${safe(e.revoke_reason)}`,
-      "revoked"
-    )).join("") + suspicious.map(v => card(
-      `Suspicious: ${safe(v.display_name)}`,
-      `Activity count: ${safe(v.suspicious_activity_count)}`,
-      "review"
-    )).join("")
-    : card("Tidak ada temuan", "Belum ada endorsement dicabut atau aktivitas mencurigakan.", "ok");
+/* One table for every verifiable object (replaces five separate lists). */
+function renderObjectsTable(ctx) {
+  const body = document.getElementById("vxObjectsBody");
+  if (!body) return;
+  const rows = [];
+  const add = (type, label, x, name, detail, status) => rows.push({ type, label, id: x.id, name, detail, status: String(status || "") });
+  (ctx.organizations || []).forEach(x => add("organization", "Organisasi", x, x.name || x.id, `${x.organization_type || "-"} · trust ${x.trust_level ?? "-"}`, x.status || x.trust_level));
+  (ctx.poskos || []).forEach(x => add("posko", "Posko", x, x.name || x.id, `${x.node_type || "-"} · ${x.location || "-"}`, x.verification_status));
+  (ctx.volunteers || []).forEach(x => add("volunteer", "Relawan", x, x.volunteer_name || x.id, `Keahlian: ${x.skill_tags || "-"}`, x.verification_status || x.availability_status));
+  (ctx.aid_offers || []).forEach(x => add("aid_offer", "Tawaran Bantuan", x, x.item_name || x.id, `${x.donor_name || "-"} · ${x.quantity ?? ""} ${x.unit || ""}`, x.status));
+  (ctx.work_tool_requests || []).forEach(x => add("work_tool_request", "Alat Kerja", x, x.tool_name || x.id, `${x.location || "-"} · untuk ${x.needed_for || "-"} · prioritas ${x.priority || "-"}`, x.status));
+  const group = st => /verified|approved|trusted/i.test(st) && !/un|not/i.test(st) ? "verified" : /reject|ditolak/i.test(st) ? "rejected" : "pending";
+  body.innerHTML = rows.length ? rows.map(r => {
+    const g = group(r.status);
+    const verified = g === "verified";
+    return `<tr class="vx-row" data-type="${safe(r.type)}" data-vgroup="${g}"><td>${safe(r.label)}</td>
+      <td><b>${safe(r.name)}</b><br><small>${safe(r.id)}</small></td><td>${safe(r.detail)}</td>
+      <td><span class="chip ${verified ? "ok" : g === "rejected" ? "danger" : "warning"}">${safe(r.status || "belum")}</span></td>
+      <td class="vx-actions-cell">${verified ? "" : verifyButton(r.type, r.id, r.type === "posko" ? "official_verified" : "verified", "trusted")}${evidenceButton(r.type, r.id)}</td></tr>`;
+  }).join("") : `<tr><td colspan="5"><em class="rn-muted">Belum ada objek untuk event ini.</em></td></tr>`;
+  const c = document.getElementById("vxObjectsCount");
+  if (c) c.textContent = rows.length + " objek";
+  window.dispatchEvent(new Event("vx:objects"));
 }
 
 async function loadVerification() {
@@ -547,103 +521,14 @@ async function loadVerification() {
 
   renderSummary(ctx.summary || {});
 
-  renderList(
-    "verifyOrganizations",
-    ctx.organizations || [],
-    "organization",
-    "name",
-    x => `Type: ${safe(x.organization_type)}<br>Status: ${safe(x.status)}<br>Trust: ${safe(x.trust_level)}`,
-    x => safe(x.status || x.trust_level)
-  );
-
-  renderList(
-    "verifyPoskos",
-    ctx.poskos || [],
-    "posko",
-    "name",
-    x => `Type: ${safe(x.node_type)}<br>Location: ${safe(x.location)}<br>Status: ${safe(x.verification_status)} ? ${safe(x.operational_status)}`,
-    x => safe(x.verification_status)
-  );
-
-  renderList(
-    "verifyVolunteers",
-    ctx.volunteers || [],
-    "volunteer",
-    "volunteer_name",
-    x => `Contact: ${safe(x.contact)}<br>Skills: ${safe(x.skill_tags)}<br>Status: ${safe(x.verification_status || x.availability_status)}`,
-    x => safe(x.verification_status || x.availability_status)
-  );
-
-  renderList(
-    "verifyAidOffers",
-    ctx.aid_offers || [],
-    "aid_offer",
-    "item_name",
-    x => `Donor: ${safe(x.donor_name)} ? ${safe(x.donor_contact)}<br>Qty: ${safe(x.quantity)} ${safe(x.unit)}<br>Status: ${safe(x.status)}`,
-    x => safe(x.status)
-  );
-
-  renderList(
-    "verifyWorkTools",
-    ctx.work_tool_requests || [],
-    "work_tool_request",
-    "tool_name",
-    x => `Location: ${safe(x.location)}<br>Needed for: ${safe(x.needed_for)}<br>Priority: ${safe(x.priority)}<br>Status: ${safe(x.status)}`,
-    x => safe(x.status)
-  );
+  renderObjectsTable(ctx);
 
   renderActions(ctx.verification_actions || []);
-  renderTrustedVerifier(ctx);
 
   statusMsg("Loaded: " + ctx.generated_at);
 }
 
 function setupTrustedVerifierActions() {
-  const form = document.getElementById("verifierRegistrationForm");
-  form?.addEventListener("submit", async e => {
-    e.preventDefault();
-    const data = new FormData(form);
-    await api("/public/verifier-profiles", {
-      method: "POST",
-      body: JSON.stringify(Object.fromEntries(data.entries()))
-    });
-    form.reset();
-    await loadVerification();
-  });
-
-  document.addEventListener("click", async e => {
-    const approve = e.target.closest("[data-approve-verifier]");
-    if (approve) {
-      const type = approve.dataset.verifierType;
-      const mapping = {
-        community: ["community_verifier", 1],
-        organization: ["organization_verifier", 2],
-        government: ["government_verifier", 3],
-        public_figure: ["trusted_public_verifier", 4],
-        rn_admin: ["official_verifier", 5]
-      };
-      const [status, level] = mapping[type] || ["community_verifier", 1];
-      await api(`/verifier-profiles/${approve.dataset.approveVerifier}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          verifier_status: status,
-          trust_level: level,
-          allowed_verification_scope: ["identity", "organization_membership", "posko_identity", "location", "report_source"]
-        })
-      });
-      await loadVerification();
-    }
-    const revoke = e.target.closest("[data-revoke-endorsement]");
-    if (revoke) {
-      const reason = prompt("Alasan mencabut endorsement") || "Dicabut oleh command center";
-      await api(`/verification-endorsements/${revoke.dataset.revokeEndorsement}/revoke`, {
-        method: "POST",
-        body: JSON.stringify({ reason })
-      });
-      await loadVerification();
-    }
-  });
-
   const token = new URLSearchParams(location.search).get("token");
   const tokenPanel = document.getElementById("tokenVerificationPanel");
   const tokenForm = document.getElementById("tokenVerificationForm");

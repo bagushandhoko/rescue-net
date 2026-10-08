@@ -3,6 +3,21 @@
 Satu fase dikerjakan pada satu waktu; berhenti di akhir tiap fase dan tunggu review owner.
 Status per fase yang sedang berjalan ada di `HANDOVER.md`.
 
+## STATUS RINGKAS SEMUA FASE (diperbarui 2026-10-08)
+| Fase | Isi | Status | Sisa / pemilik |
+|---|---|---|---|
+| 0 | Pisahkan lingkungan agent dari produksi | Sebagian di repo (`.claude/settings.json`, `rn-deploy-from-git.sh`, draf CI) | Inti Fase 0 (akun agent tanpa akses produksi) **bertentangan dengan perintah deploy otomatis owner 2026-10-08**; perlu keputusan owner: dipertahankan, diubah, atau dipensiunkan |
+| 1 | Fondasi test otomatis | SELESAI (329 tes, test stack terisolasi) | — |
+| 2 | Invariant bisnis ke controller/service + pecah `api_*.py` besar | SELESAI (grup A + B, split API, DATA-1) | review owner |
+| 3 | Pensiun FastAPI | SELESAI (cutover, DB lama dibuang, tag `fastapi-final`) | owner: arsipkan repo GitHub `rescue-net-api` |
+| 4 | Pecah modul tunggal "Rescue Net" jadi 12 modul per domain (`RN Core`, `RN Logistics`, …) | SELESAI + ter-deploy | — |
+| 5 | Pembersihan frontend: buang JS/halaman mati, helper bersama `RNUI`, keputusan web vs app → **website jadi aplikasi terpasang (PWA)**, `apps/rescue-net-shell` | SELESAI di kode | owner: bangun ulang APK dari `rescue-net-shell`, lalu hapus `apps/rescue-net-app/` |
+| 6 | Kebersihan repo (file rahasia terunduh publik, `.bak`, kata sandi di compose) | Bagian Claude selesai | owner: ganti password root MariaDB, hapus blok di `PHASE6_REPO_HYGIENE.md`, putuskan repo GitHub privat/publik |
+| 7 | AI (ADR-0002) | SELESAI (langkah 5 dihapus) | — |
+| 8 | (tidak ada) | DILEWATI | — |
+| 9 | Federasi, sinkron, standar data | ADR-0004/0005 **Accepted**; 9c D.1 (wilayah berkode) selesai di test stack; 9d kajian selesai | **Federasi ditunda ke belakang (owner)**; D.1 menunggu gerbang owner untuk produksi |
+| 10 | Backlog fitur baru (10a–10h) | Audit + desain 10b/10f/10a tertulis (`PHASE10_AUDIT.md`) | menunggu persetujuan owner per fitur |
+
 ## FASE 0 — Pisahkan lingkungan kerja agent dari produksi
 PRIORITAS: dikerjakan sebelum Fase 1 setelah owner perintahkan.
 Latar: agent saat ini bekerja di server yang juga menjalankan

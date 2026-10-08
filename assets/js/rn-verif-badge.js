@@ -24,12 +24,16 @@
     return MAP[String(status || "").toLowerCase()] || MAP.self_reported;
   }
   function label(status) { return info(status).label; }
-  function html(status, count) {
+  // Optional `text` = {label, hint} lets a caller word the same status for a different subject
+  // (e.g. a person who is only verified through their organisation).
+  function html(status, count, text) {
     var i = info(status);
     var n = Number(count || 0);
+    var label = (text && text.label) || i.label;
+    var hint = (text && text.hint) || i.hint;
     var extra = n > 0 ? ' <b class="rn-vbadge-n">' + n + "</b>" : "";
-    return '<span class="rn-vbadge rn-vbadge--' + i.cls + '" title="' + esc(i.hint) + '">' +
-      '<span class="rn-vbadge-dot"></span>' + esc(i.label) + extra + "</span>";
+    return '<span class="rn-vbadge rn-vbadge--' + i.cls + '" title="' + esc(hint) + '">' +
+      '<span class="rn-vbadge-dot"></span>' + esc(label) + extra + "</span>";
   }
   function decorate(root) {
     (root || document).querySelectorAll("[data-rn-verif]").forEach(function (el) {

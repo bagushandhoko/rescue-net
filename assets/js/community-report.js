@@ -859,12 +859,22 @@ function setupCommunityReportForm() {
 
 /* Same shared badge as the posko pages (RNVerifBadge): status from the Jaringan Verifikator.
    A reporter nobody has vouched for shows no badge. */
+/* A person verified only through their organisation is NOT personally vouched for: say so. */
+const REPORTER_TEXT = {
+  organization_verified: { label: "Anggota organisasi terverifikasi", hint: "Organisasinya terverifikasi; orangnya belum diverifikasi verifikator perorangan" },
+  community_verified: { label: "Diverifikasi verifikator", hint: "Dikenal / dijamin oleh verifikator di Jaringan Verifikator" },
+  official_verified: { label: "Diverifikasi resmi", hint: "Dijamin oleh 2+ verifikator atau verifikator pemerintah" }
+};
+function reporterBadgeHtml(status, count) {
+  return window.RNVerifBadge ? window.RNVerifBadge.html(status, count, REPORTER_TEXT[status]) : escHtml(status);
+}
+
 function isVerified(report) { return (report.reporter_verification_status || "self_reported") !== "self_reported"; }
 
 function verifiedBadge(report) {
   if (!isVerified(report) || !window.RNVerifBadge) return "";
   return ` <button type="button" class="rn-vb-btn" data-reporter-view="level" data-report-id="${report.id}" title="Lihat siapa yang memverifikasi">` +
-    window.RNVerifBadge.html(report.reporter_verification_status, report.reporter_verified_count) + "</button>";
+    reporterBadgeHtml(report.reporter_verification_status, report.reporter_verified_count) + "</button>";
 }
 
 function endorsementItem(e) {
@@ -895,7 +905,7 @@ function verifyFormHtml(d) {
 
 function reporterPanelHtml(d, view) {
   const v = d.verification || { status: "self_reported", count: 0, verifiers: [], evidence: [] };
-  const pill = window.RNVerifBadge ? window.RNVerifBadge.html(v.status, v.count) : escHtml(v.status);
+  const pill = reporterBadgeHtml(v.status, v.count);
   const contact = d.phone
     ? `<a class="btn primary mini" href="${escHtml(d.whatsapp_url)}" target="_blank" rel="noopener">WhatsApp</a>
        <a class="btn mini" href="${escHtml(d.tel_url)}">Telepon ${escHtml(d.phone)}</a>`
@@ -913,7 +923,7 @@ function reporterPanelHtml(d, view) {
     <div class="rn-rp-section" data-section="level" ${view === "level" || d.local ? "" : "hidden"}>
       <div class="rn-rp-title">Verifikasi pelapor: ${pill}</div>
       <div class="rn-rp-title">Diverifikasi oleh</div>
-      ${ends ? `<ul class="rn-rp-ends">${ends}</ul>` : `<p class="rn-muted">Belum ada verifikator yang memverifikasi pelapor ini.</p>`}
+      ${ends ? `<ul class="rn-rp-ends">${ends}</ul>` : `<p class="rn-muted">Belum ada verifikator perorangan yang memverifikasi pelapor ini.</p>`}
       ${evidence ? `<ul class="rn-rp-evidence">${evidence}</ul>` : ""}
       <small class="rn-muted">Status mengikuti Jaringan Verifikator yang sama dengan posko.
         <a href="verifikator.html">Lihat Jaringan Verifikator</a></small>

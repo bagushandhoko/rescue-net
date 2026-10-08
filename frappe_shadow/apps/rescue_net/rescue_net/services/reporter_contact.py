@@ -177,7 +177,7 @@ def verification_profile(account_name, detail=False):
                          "detail": "Terisi (belum dicek OTP)" if has_phone else "Belum diisi"})
     if org:
         evidence.append({"key": "org", "ok": org_ok, "label": "Organisasi",
-                         "detail": f"{org.title} — {'terverifikasi' if org_ok else 'belum terverifikasi'}"})
+                         "detail": f"{org.title} — organisasi {'terverifikasi' if org_ok else 'belum terverifikasi'}"})
     if verifier:
         evidence.append({"key": "verifier", "ok": cint(verifier.trust_level) >= 2, "label": "Anggota jaringan verifikator",
                          "detail": f"{TYPE_LABEL.get(verifier.verifier_type, verifier.verifier_type)}, trust {cint(verifier.trust_level)}"})
@@ -186,7 +186,7 @@ def verification_profile(account_name, detail=False):
     done = sum(1 for r in rows if r.status in DONE_STATUSES)
     rejected = sum(1 for r in rows if r.status == "rejected")
     evidence.append({"key": "history", "ok": done > 0 and rejected == 0, "label": "Riwayat laporan",
-                     "detail": f"{len(rows)} laporan · {done} terverifikasi · {rejected} ditolak"})
+                     "detail": f"{len(rows)} laporan · {done} sudah diverifikasi posko · {rejected} ditolak"})
     return {"status": status, "count": len(ends), "verifiers": verifiers, "evidence": evidence}
 
 

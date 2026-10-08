@@ -313,6 +313,18 @@ function escHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+const AI_STATUS_LABEL = {
+  pending_ai: "belum diproses AI",
+  ai_suggested: "saran AI menunggu keputusan posko",
+  ai_applied: "saran AI diterima",
+  ai_rejected: "saran AI ditolak"
+};
+
+function aiStatusLine(report) {
+  const label = AI_STATUS_LABEL[report.ai_status];
+  return label ? `<p class="community-report-predicted"><small><b>AI:</b> ${escHtml(label)}</small></p>` : "";
+}
+
 function routingLine(report) {
   if (!report.posko && !report.routing_reason) return "";
   const target = report.posko_title || report.posko;
@@ -444,6 +456,7 @@ function myReportCard(r) {
           <h4>${escHtml(r.title)}</h4>
           <p>${escHtml(r.location_text || "-")} | <b>${escHtml(r.report_type || "-")}</b> | ${escHtml(r.status)}</p>
           ${routingLine(r)}
+          ${r.ai_status === "pending_ai" ? aiStatusLine(r) : ""}
           ${thread ? `<div class="rn-report-thread">${thread}</div>` : ""}
         </div>
         <div class="chips"><span class="chip neutral">${escHtml(r.name)}</span></div>
@@ -508,6 +521,7 @@ function reportCard(report) {
           <p>${safeText(report.description)}</p>
           ${predictedNeedsLine(report.predicted_needs)}
           ${routingLine(report)}
+          ${aiStatusLine(report)}
           <small>${safeText(report.reporter_role)} | ${trustLabel(report.trust_score || 0)} (${report.trust_score || 0})</small>
         </div>
         <div class="chips">

@@ -7026,3 +7026,37 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   body.home-page .welcome-roles .role-card:nth-child(2) .role-icon, body.home-page .welcome-roles .role-card:nth-child(5) .role-icon { background: rgba(226, 244, 234, .9) !important; color: #2f8b61 !important; }
   body.home-page .welcome-roles .role-card:nth-child(4) .role-icon, body.home-page .welcome-roles .role-card:nth-child(6) .role-icon { background: rgba(255, 241, 224, .9) !important; color: #dd7431 !important; }
 }
+
+/* Laporan Masyarakat — compact hero, readable buttons, tidy operator queue (2026-10-08) */
+body.public-report-page .public-report-hero { padding: 20px 24px; gap: 20px; border-radius: 18px; grid-template-columns: minmax(0, 1fr) 320px; align-items: center; }
+body.public-report-page .public-report-hero h1 { font-size: 24px !important; line-height: 1.25; letter-spacing: -.01em; max-width: none; }
+body.public-report-page .public-report-hero p { font-size: 14px; line-height: 1.5; margin: 6px 0 0; max-width: 720px; }
+body.public-report-page .public-report-hero .eyebrow { margin: 0 0 4px; font-size: 12px; }
+body.public-report-page .public-report-card { padding: 12px 14px; gap: 4px; font-size: 13px; border-radius: 14px; }
+body.public-report-page .public-report-card strong { font-size: 14px; }
+body.public-report-page .public-report-panel { padding: 18px; border-radius: 18px; }
+body.public-report-page .public-report-panel h3 { font-size: 17px; margin: 0; }
+@media (max-width: 900px) { body.public-report-page .public-report-hero { grid-template-columns: 1fr; } }
+
+body.public-report-page .btn:disabled { opacity: .6; }
+body.public-report-page .btn.primary:not(:disabled) { opacity: 1; }
+.rn-report-login.is-attention { animation: rn-attn 1.6s ease; }
+@keyframes rn-attn { 0%, 100% { box-shadow: none; } 25%, 75% { box-shadow: 0 0 0 4px rgba(232,117,88,.35); } }
+
+.community-operator-panel .event-list { display: grid; gap: 12px; }
+.community-operator-panel .community-report-item { padding: 14px 16px; }
+.community-operator-panel .community-report-item .event-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; }
+.community-operator-panel .community-report-item h4 { margin: 0; font-size: 15px; }
+.community-operator-panel .community-report-item .chips { max-width: 360px; }
+.community-operator-panel .community-report-item small { display: block; margin-top: 6px; color: var(--muted); }
+.community-report-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.community-report-actions .btn { width: auto; flex: 0 0 auto; padding: 8px 14px; font-size: 13px; border-radius: 10px; cursor: pointer; }
+.community-report-actions .btn.primary { margin-left: auto; }
+.community-report-actions .btn.is-busy { opacity: .75; }
+[data-community-queue-message] { min-height: 18px; margin: 0 0 10px; }
+[data-community-queue-message].is-error { color: #b3261e; font-weight: 600; }
+@media (max-width: 720px) {
+  .community-operator-panel .community-report-item .event-main { grid-template-columns: 1fr; }
+  .community-operator-panel .community-report-item .chips { justify-content: flex-start; max-width: none; }
+  .community-report-actions .btn.primary { margin-left: 0; }
+}

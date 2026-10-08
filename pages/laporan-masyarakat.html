@@ -6,23 +6,22 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Laporan Masyarakat</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926-rp">
 </head>
 <body class="public-report-page">
   <main class="public-report-shell">
     <section class="public-report-hero">
       <div>
         <p class="eyebrow">Laporan Masyarakat</p>
-        <h1>Laporkan kondisi lapangan agar bantuan lebih cepat terkoordinasi.</h1>
+        <h1>Laporkan kondisi lapangan</h1>
         <p>
-          Warga terdampak, saksi lokasi, RT/RW, relawan lokal, posko, organisasi, dan tenaga medis
-          dapat mengirim sinyal lapangan. Semua laporan masuk sebagai data indikasi terlebih dahulu,
-          lalu diverifikasi sebelum memengaruhi data operasional resmi.
+          Warga, relawan, posko, dan tenaga medis dapat mengirim sinyal lapangan. Setiap laporan
+          diverifikasi dulu sebelum memengaruhi data operasional resmi.
         </p>
       </div>
       <div class="public-report-card">
         <strong>Status awal: belum terverifikasi</strong>
-        <span>Laporan masyarakat membantu Control Centre membaca kondisi cepat, tetapi diberi label trust score dan hanya naik ke logistik, medis, shelter, search & found, atau distribusi setelah diverifikasi.</span>
+        <span>Laporan diberi trust score dan baru naik ke logistik, medis, shelter, search & found, atau distribusi setelah diverifikasi.</span>
       </div>
     </section>
 
@@ -260,8 +259,8 @@
     <section class="public-report-panel community-operator-panel">
       <div class="panel-header">
         <div>
-          <h3>Queue Operator: Laporan Masyarakat</h3>
-          <p>Verifikasi bertingkat: triage, verify, escalate, reject, atau convert ke kebutuhan logistik.</p>
+          <h3>Antrian Laporan Masyarakat</h3>
+          <p>Triage, verifikasi, eskalasi, tolak, atau ubah menjadi kebutuhan logistik.</p>
         </div>
         <label>Status
           <select data-community-status-filter>
@@ -275,6 +274,7 @@
           </select>
         </label>
       </div>
+      <p class="form-message" data-community-queue-message role="status" aria-live="polite"></p>
       <div class="event-list" data-community-report-list></div>
     </section>
 
@@ -289,7 +289,7 @@
   <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-sync-engine.js?v=offlinereport-20260913"></script>
-<script src="../assets/js/community-report.js?v=aistatus-20261008"></script>
+<script src="../assets/js/community-report.js?v=queuefix-20261008"></script>
 <script src="../assets/js/rn-ai-suggestions.js?v=aisug-20261008"></script>
   <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
   <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

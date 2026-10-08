@@ -346,7 +346,8 @@ async function loadReporterSession(form) {
   RN_REPORTER = loggedIn ? session : null;
   const gate = document.querySelector("[data-report-login]");
   if (gate) gate.hidden = loggedIn;
-  form.querySelectorAll("button[type='submit'], [data-draft-report]").forEach((b) => { b.disabled = !loggedIn; });
+  // Buttons stay fully visible for guests; pressing one without a session shows the login box instead.
+  form.querySelectorAll("button[type='submit'], [data-draft-report]").forEach((b) => { b.disabled = false; });
   const rnLogin = document.querySelector("[data-login-rn]");
   if (rnLogin) rnLogin.href = "auth.html?next=" + encodeURIComponent(location.pathname + location.search);
   if (loggedIn && form.reporter_name && !form.reporter_name.value) {
@@ -355,6 +356,18 @@ async function loadReporterSession(form) {
   document.querySelector("[data-my-reports-panel]")?.toggleAttribute("hidden", !loggedIn);
   if (loggedIn) loadMyReports().catch(() => {});
   return loggedIn;
+}
+
+function requireLogin() {
+  if (RN_REPORTER) return true;
+  const gate = document.querySelector("[data-report-login]");
+  if (gate) {
+    gate.hidden = false;
+    gate.scrollIntoView({ behavior: "smooth", block: "center" });
+    gate.classList.add("is-attention");
+    setTimeout(() => gate.classList.remove("is-attention"), 1600);
+  }
+  return false;
 }
 
 async function loginWithGoogle(btn) {
@@ -612,7 +625,7 @@ function setupCommunityReportForm() {
     document.querySelector(".rn-report-mode")?.setAttribute("hidden", "");
   });
   form.narrative?.addEventListener("input", () => { delete form.dataset.drafted; });
-  document.querySelector("[data-draft-report]")?.addEventListener("click", () => draftReport(form));
+  document.querySelector("[data-draft-report]")?.addEventListener("click", () => { if (requireLogin()) draftReport(form); });
   document.querySelector("[data-login-google]")?.addEventListener("click", (e) => loginWithGoogle(e.currentTarget));
   loadReporterSession(form);
 
@@ -646,6 +659,7 @@ function setupCommunityReportForm() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!requireLogin()) return;
     const method = selectedLocationMethod(form);
     const lat = numberOrNull(form.lat.value);
     const lng = numberOrNull(form.lng.value);
@@ -777,37 +791,55 @@ function setupCommunityReportForm() {
 }
 
 function setupCommunityReportActions() {
+  const say = (text, isError) => {
+    const box = document.querySelector("[data-community-queue-message]");
+    if (!box) return;
+    box.textContent = text || "";
+    box.classList.toggle("is-error", !!isError);
+  };
+
   document.addEventListener("click", async (e) => {
     const statusButton = e.target.closest("[data-report-action]");
     const convertButton = e.target.closest("[data-report-convert]");
+    const button = statusButton || convertButton;
+    if (!button || button.disabled) return;
 
-    if (statusButton) {
-      const id = statusButton.getAttribute("data-report-id");
-      const status = statusButton.getAttribute("data-report-action");
-      await rnFetch(`/community-reports/${id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          status,
-          verifier_id: "operator-web",
-          verifier_role: "command_center",
-          notes: `Marked ${status} from operator UI`
-        })
-      });
+    const row = button.closest(".community-report-actions");
+    const buttons = row ? row.querySelectorAll("button") : [button];
+    buttons.forEach((b) => { b.disabled = true; });
+    button.classList.add("is-busy");
+    try {
+      if (statusButton) {
+        const id = statusButton.getAttribute("data-report-id");
+        const status = statusButton.getAttribute("data-report-action");
+        await rnFetch(`/community-reports/${id}/status`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            status,
+            verifier_id: "operator-web",
+            verifier_role: "command_center",
+            notes: `Marked ${status} from operator UI`
+          })
+        });
+        say(`Laporan ${id} ditandai ${status}.`);
+      } else {
+        const id = convertButton.getAttribute("data-report-convert");
+        await rnFetch(`/community-reports/${id}/convert`, {
+          method: "POST",
+          body: JSON.stringify({
+            target_type: "logistic_need",
+            quantity_needed: 1,
+            unit: "paket",
+            notes: "Converted from Laporan Masyarakat"
+          })
+        });
+        say(`Laporan ${id} dikonversi menjadi kebutuhan logistik.`);
+      }
       await loadCommunityReports();
-    }
-
-    if (convertButton) {
-      const id = convertButton.getAttribute("data-report-convert");
-      await rnFetch(`/community-reports/${id}/convert`, {
-        method: "POST",
-        body: JSON.stringify({
-          target_type: "logistic_need",
-          quantity_needed: 1,
-          unit: "paket",
-          notes: "Converted from Laporan Masyarakat"
-        })
-      });
-      await loadCommunityReports();
+    } catch (err) {
+      say(err && err.message ? err.message : "Aksi gagal. Pastikan Anda masuk sebagai operator posko.", true);
+      buttons.forEach((b) => { b.disabled = false; });
+      button.classList.remove("is-busy");
     }
   });
 

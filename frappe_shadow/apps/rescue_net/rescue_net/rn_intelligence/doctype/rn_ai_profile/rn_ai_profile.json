@@ -1,0 +1,106 @@
+{
+  "doctype": "DocType",
+  "name": "RN AI Profile",
+  "module": "RN Intelligence",
+  "custom": 0,
+  "track_changes": 1,
+  "field_order": [
+    "level",
+    "owner_id",
+    "provider",
+    "model_name",
+    "base_url",
+    "key_setting",
+    "allowed_tools",
+    "data_scope",
+    "daily_budget_tokens",
+    "monthly_budget_tokens",
+    "status",
+    "updated_by_user_id"
+  ],
+  "fields": [
+    {
+      "fieldname": "level",
+      "label": "Level",
+      "fieldtype": "Select",
+      "options": "personal\norganization\nplatform",
+      "reqd": 1
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "provider",
+      "label": "Provider",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "model_name",
+      "label": "Model",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "base_url",
+      "label": "Base URL (model lokal)",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "key_setting",
+      "label": "Key Setting",
+      "fieldtype": "Link",
+      "options": "RN AI User Setting",
+      "read_only": 1
+    },
+    {
+      "fieldname": "allowed_tools",
+      "label": "Allowed Tools (JSON list)",
+      "fieldtype": "Small Text",
+      "default": "[]"
+    },
+    {
+      "fieldname": "data_scope",
+      "label": "Data Scope",
+      "fieldtype": "Select",
+      "options": "user_permission\norganization\naggregate",
+      "read_only": 1
+    },
+    {
+      "fieldname": "daily_budget_tokens",
+      "label": "Daily Budget (tokens, 0 = none)",
+      "fieldtype": "Int",
+      "default": "0"
+    },
+    {
+      "fieldname": "monthly_budget_tokens",
+      "label": "Monthly Budget (tokens, 0 = none)",
+      "fieldtype": "Int",
+      "default": "0"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "active\ndisabled",
+      "default": "active"
+    },
+    {
+      "fieldname": "updated_by_user_id",
+      "label": "Updated By User",
+      "fieldtype": "Data",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

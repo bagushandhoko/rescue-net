@@ -26,7 +26,10 @@ def _prov(provider, allow_auto=False):
     if allow_auto and p in ("", "auto"):
         return "auto"
     try:
-        return llm.normalize_provider(p or "openai")
+        p = llm.normalize_provider(p or "openai")
+        if llm.PROVIDERS[p].get("profile_only"):
+            raise llm.LLMError("unsupported", p)
+        return p
     except llm.LLMError:
         frappe.throw("Provider AI tidak didukung. Pilih OpenAI, Claude, atau Gemini.")
 

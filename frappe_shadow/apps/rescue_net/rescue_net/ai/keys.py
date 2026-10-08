@@ -373,7 +373,7 @@ def save_platform_key(api_key, provider="openai", model_name=None, api_key_label
 def get_platform_key_status():
     _require_system_manager()
     out = []
-    for p in llm.PROVIDERS:
+    for p in llm.key_providers():
         d = _active_setting(_org_setting_name(PLATFORM_OWNER, p))
         out.append({"provider": p, "key_exists": bool(d),
                     "masked_key": ("****" + (d.api_key_last4 or "")) if d else None,
@@ -426,7 +426,7 @@ def _resolve_ai_key(user_id, provider):
     takes, at each level, the active key saved most recently. Returns
     (api_key, model_name, key_source, owner_type, owner_id, provider) or
     (None, ...)."""
-    providers = list(llm.PROVIDERS) if provider == "auto" else [provider]
+    providers = llm.key_providers() if provider == "auto" else [provider]
 
     d = _pick_latest([_setting_name(user_id, p) for p in providers])
     if d:
@@ -451,7 +451,7 @@ def _resolve_ai_key(user_id, provider):
 def resolve_platform_key():
     """The platform key a System Manager sets for public features (citizen
     report intake) — never used for personal chat. (key, model, provider)."""
-    d = _pick_latest([_org_setting_name(PLATFORM_OWNER, p) for p in llm.PROVIDERS])
+    d = _pick_latest([_org_setting_name(PLATFORM_OWNER, p) for p in llm.key_providers()])
     if not d:
         return None, None, None
     p = llm.normalize_provider(d.provider)

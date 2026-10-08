@@ -47,6 +47,16 @@ _Last updated: 2026-10-07 — Search & Found mock-up pass 2 (see CLAUDE.md statu
    `sudo sh scripts/rn-install-nginx-deny.sh`; run the delete block in the phase-6 doc (deletes were blocked for
    Claude); rotate the MariaDB root password; decide GitHub private/public; komando-tests hit production.
 
+## Fase 7 — AI (ADR-0002 section 11), owner ordered 2026-10-08
+
+Step 1 DONE (committed, NOT deployed): `services/llm.py` provider `local` (OpenAI-compatible endpoint, optional key,
+`validate_base_url` blocks link-local/metadata/credentials; `key_providers()` keeps it off the BYOK key pages);
+new DocType **RN AI Profile** (`rn_intelligence`, one per level+owner: personal/organization/platform, provider, model,
+base_url, key_setting reference, allowed_tools, data_scope derived from level, daily/monthly token budgets, status);
+endpoints `api_ai.save_ai_profile` / `get_ai_profile` (`ai/profiles.py`; local URL = org admin / System Manager only).
+Not yet used by key resolution (that is step 2). 244 tests pass. **Needs `bench migrate`** (new DocType) + deploy.
+Next: step 2 (key resolution per context, budget, usage log extension, 7-day retention) — wait for owner review.
+
 ## Known bugs found by the tests (2026-09-26)
 
 **BUG-1..6 FIXED 2026-09-26** (owner: "perbaiki BUG-1 sampai BUG-6 dulu"), each now has a positive + negative test

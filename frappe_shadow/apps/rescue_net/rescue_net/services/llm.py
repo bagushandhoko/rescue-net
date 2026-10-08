@@ -11,8 +11,10 @@ LLMError with a `kind` (network / auth / http / refusal / invalid) so the
 caller can log and show one message.
 """
 
+import ipaddress
 import json
 import re
+from urllib.parse import urlparse
 
 import requests
 
@@ -34,6 +36,17 @@ PROVIDERS = {
         "default_model": "gemini-2.5-flash",
         "models": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-lite"],
         "key_hint": "AIza...",
+    },
+    # Local / self-hosted model (Ollama, vLLM, llama.cpp ...) through an
+    # OpenAI-compatible endpoint. The URL comes from an AI Profile, so the
+    # key is optional and the base URL is validated (validate_base_url).
+    "local": {
+        "label": "Model lokal (OpenAI-compatible)",
+        "default_model": "llama3.1",
+        "models": [],
+        "key_hint": "(opsional)",
+        "needs_base_url": True,
+        "profile_only": True,  # configured through an RN AI Profile, not the BYOK key pages
     },
 }
 
@@ -64,12 +77,43 @@ def default_model(provider):
     return PROVIDERS[normalize_provider(provider)]["default_model"]
 
 
+def key_providers():
+    """Providers that have a BYOK key page (everything but profile-only ones)."""
+    return [k for k, v in PROVIDERS.items() if not v.get("profile_only")]
+
+
 def catalog():
     return [
         {"provider": k, "label": v["label"], "default_model": v["default_model"],
          "models": v["models"], "key_hint": v["key_hint"]}
-        for k, v in PROVIDERS.items()
+        for k, v in PROVIDERS.items() if not v.get("profile_only")
     ]
+
+
+def validate_base_url(url):
+    """Normalised base URL of a local model endpoint, or LLMError('url').
+
+    The server calls this URL, so it must not reach cloud metadata or link-local
+    services: http(s) only, no credentials in the URL, no link-local /
+    metadata address. A LAN or loopback host is allowed - that is where a
+    local model normally runs - which is why only an org admin or System
+    Manager may set it (checked where profiles are saved)."""
+    url = (url or "").strip().rstrip("/")
+    parts = urlparse(url)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        raise LLMError("url", "scheme/host")
+    if parts.username or parts.password:
+        raise LLMError("url", "credentials")
+    host = parts.hostname.lower()
+    if host in ("metadata.google.internal", "metadata"):
+        raise LLMError("url", "metadata")
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        ip = None
+    if ip is not None and (ip.is_link_local or ip.is_multicast or ip.is_unspecified):
+        raise LLMError("url", "address")
+    return url
 
 
 def _post(url, headers, payload):
@@ -87,7 +131,7 @@ def _post(url, headers, payload):
         raise LLMError("invalid", "non-json")
 
 
-def _openai(key, model, system, messages, temperature, json_mode, max_tokens):
+def _openai(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None):
     payload = {
         "model": model,
         "messages": [{"role": "system", "content": system}]
@@ -97,8 +141,11 @@ def _openai(key, model, system, messages, temperature, json_mode, max_tokens):
     }
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
-    data = _post("https://api.openai.com/v1/chat/completions",
-                 {"Authorization": "Bearer " + key, "Content-Type": "application/json"}, payload)
+    headers = {"Content-Type": "application/json"}
+    if key:
+        headers["Authorization"] = "Bearer " + key
+    root = validate_base_url(base_url) if base_url else "https://api.openai.com/v1"
+    data = _post(root + "/chat/completions", headers, payload)
     try:
         text = data["choices"][0]["message"]["content"]
     except Exception:
@@ -111,7 +158,7 @@ def _openai(key, model, system, messages, temperature, json_mode, max_tokens):
     }
 
 
-def _anthropic(key, model, system, messages, temperature, json_mode, max_tokens):
+def _anthropic(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None):
     # Claude 5 models take no temperature/top_p (400) and think adaptively
     # by default — the request stays minimal.
     payload = {
@@ -139,7 +186,7 @@ def _anthropic(key, model, system, messages, temperature, json_mode, max_tokens)
     return text, {"prompt_tokens": pin, "completion_tokens": pout, "total_tokens": pin + pout}
 
 
-def _gemini(key, model, system, messages, temperature, json_mode, max_tokens):
+def _gemini(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None):
     config = {"temperature": temperature, "maxOutputTokens": max_tokens}
     if json_mode:
         config["responseMimeType"] = "application/json"
@@ -164,23 +211,36 @@ def _gemini(key, model, system, messages, temperature, json_mode, max_tokens):
     }
 
 
-_CALLS = {"openai": _openai, "anthropic": _anthropic, "gemini": _gemini}
+_CALLS = {"openai": _openai, "anthropic": _anthropic, "gemini": _gemini, "local": _openai}
 
 
 def chat(provider, api_key, model, system, messages, temperature=0.2, json_mode=False,
-         max_tokens=16000):
-    """`messages` = list of user-turn strings (context first, question last)."""
+         max_tokens=16000, base_url=None):
+    """`messages` = list of user-turn strings (context first, question last).
+    `base_url` is required for provider 'local' (OpenAI-compatible endpoint)."""
     provider = normalize_provider(provider)
+    if provider == "local":
+        if not base_url:
+            raise LLMError("url", "base_url required")
+    else:
+        base_url = None
     if isinstance(messages, str):
         messages = [messages]
     model = (model or "").strip() or default_model(provider)
-    return _CALLS[provider](api_key, model, system, list(messages), temperature, json_mode, max_tokens)
+    return _CALLS[provider](api_key, model, system, list(messages), temperature, json_mode, max_tokens,
+                            base_url)
 
 
-def test_key(provider, api_key):
+def test_key(provider, api_key, base_url=None):
     """Cheap authenticated listing call; returns (ok, message). Never echoes the key."""
     provider = normalize_provider(provider)
-    if provider == "openai":
+    if provider == "local":
+        try:
+            root = validate_base_url(base_url)
+        except LLMError:
+            return False, "Alamat model lokal tidak valid."
+        url, headers = root + "/models", ({"Authorization": "Bearer " + api_key} if api_key else {})
+    elif provider == "openai":
         url, headers = "https://api.openai.com/v1/models", {"Authorization": "Bearer " + api_key}
     elif provider == "anthropic":
         url, headers = "https://api.anthropic.com/v1/models", {

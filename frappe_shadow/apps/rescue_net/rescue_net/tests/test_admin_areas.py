@@ -61,7 +61,6 @@ class TestImport(RNTestCase):
         self.assertFalse(frappe.db.exists("RN Admin Area", "91"))
         out = svc.import_rows(rows(), "uji", "https://contoh", dry_run=False)
         self.assertTrue(out["applied"])
-        self.assertEqual(frappe.db.get_value("RN Admin Area", "91.71.02.1001", "parent_code"), "91.71.02") if False else None
         self.assertEqual(frappe.db.get_value("RN Admin Area", "91.71.02.1001", "parent_code"), "91.71.02")
         self.assertEqual(frappe.db.get_value("RN Admin Area", "91.71", "source"), "uji")
         again = svc.import_rows(rows(), "uji", dry_run=False)

@@ -199,3 +199,16 @@ class TestEndorseReporter(RNTestCase):
 def api_call_as(user, report):
     with as_user(user):
         return api.reporter_contact(report)
+
+
+class TestOrgExplainsTheBadge(RNTestCase):
+    def test_verified_org_member_sees_the_org_under_verified_by(self):
+        org = make_org(verification_status="verified")
+        member = make_actor(role="citizen", org=org)
+        prof = rc.verification_profile(member.account)
+        self.assertEqual(prof["status"], "organization_verified")
+        self.assertEqual([v["role_label"] for v in prof["verifiers"]], ["Organisasi terverifikasi"])
+        self.assertEqual(prof["verifiers"][0]["verifier"], org.title)
+        quick = rc.quick_status([member.account])[member.account]
+        self.assertEqual(quick["status"], "organization_verified")
+        self.assertEqual(quick["verifiers"][0]["role_label"], "Organisasi terverifikasi")

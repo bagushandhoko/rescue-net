@@ -128,6 +128,13 @@ def _approver_item(acc):
             "verifier_id": None}
 
 
+def _org_item(title):
+    """A verified organisation vouches for its member: shown in 'Diverifikasi oleh' so the badge is explained."""
+    return {"verifier": title, "position": None, "role": "organization", "role_label": "Organisasi terverifikasi",
+            "method": "document_review", "method_label": "Keanggotaan organisasi", "verified_at": None,
+            "verifier_id": None}
+
+
 def verification_profile(account_name, detail=False):
     """Evidence + status of a reporter's account. `account_name` may be None (no account).
     `detail` adds contact-adjacent evidence (login method, phone) and the verifiers' statements — authorised only."""
@@ -157,7 +164,7 @@ def verification_profile(account_name, detail=False):
                                    ["verifier_type", "trust_level"], as_dict=True)
     status = _status(active, approved, org_ok, ends, verifier.trust_level if verifier else None)
 
-    verifiers = ([_approver_item(acc)] if approved else []) + [
+    verifiers = ([_approver_item(acc)] if approved else []) + ([_org_item(org.title)] if org_ok else []) + [
         {k: v for k, v in e.items() if k != "trust_level"} for e in ends]
 
     evidence = [{"key": "account", "ok": active, "label": "Akun Rescue-Net",
@@ -198,11 +205,12 @@ def quick_status(account_names):
                             fields=["user_account", "organization"], order_by="creation asc", limit_page_length=0):
         member_org.setdefault(m.user_account, m.organization)
     orgs = set(filter(None, [a.organization for a in accs.values()] + list(member_org.values())))
+    org_rows = frappe.get_all("RN Organization", filters={"name": ["in", list(orgs)]},
+                              fields=["name", "title", "verification_status", "identity_verification_status"],
+                              limit_page_length=0) if orgs else []
     org_ok = {o.name: (str(o.verification_status or "").lower() in VERIFIED_ORG or
-                       str(o.identity_verification_status or "").lower() in VERIFIED_ORG)
-              for o in frappe.get_all("RN Organization", filters={"name": ["in", list(orgs)]},
-                                      fields=["name", "verification_status", "identity_verification_status"],
-                                      limit_page_length=0)} if orgs else {}
+                       str(o.identity_verification_status or "").lower() in VERIFIED_ORG) for o in org_rows}
+    org_title = {o.name: o.title for o in org_rows}
     verifiers = {v.user: v for v in frappe.get_all(
         "RN Verifier Profile", filters={"user": ["in", accounts], "verifier_status": "active"},
         fields=["user", "trust_level"], limit_page_length=0)}
@@ -233,7 +241,8 @@ def quick_status(account_names):
         v = verifiers.get(name)
         status = _status(a.status == "active", approved, bool(org and org_ok.get(org)), e,
                          v.trust_level if v else None)
-        listing = ([_approver_item(a)] if approved else []) + [
+        listing = ([_approver_item(a)] if approved else []) + \
+            ([_org_item(org_title.get(org))] if org and org_ok.get(org) else []) + [
             {k: x for k, x in i.items() if k != "trust_level"} for i in e]
         out[name] = {"status": status, "count": len(e), "verifiers": listing}
     return out

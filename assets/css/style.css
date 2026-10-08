@@ -7101,3 +7101,11 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 
 .rn-vb-btn { background: none; border: 0; padding: 0; margin-left: 4px; cursor: pointer; vertical-align: middle; }
 .rn-reporter-panel .rn-rp-title .rn-vbadge { vertical-align: middle; }
+
+/* The count bubble used `background: currentColor` while setting its own colour to white = white on white. */
+.rn-vbadge--self .rn-vbadge-n { background: #8a7d74; }
+.rn-vbadge--warn .rn-vbadge-n { background: #a92f2f; }
+.rn-vbadge--pend .rn-vbadge-n { background: #995f14; }
+.rn-vbadge--comm .rn-vbadge-n { background: #2c6fb0; }
+.rn-vbadge--org .rn-vbadge-n { background: #1c7f6b; }
+.rn-vbadge--off .rn-vbadge-n { background: #1f8a4c; }

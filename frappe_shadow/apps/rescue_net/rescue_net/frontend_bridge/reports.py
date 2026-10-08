@@ -143,7 +143,28 @@ def community_reports(
 
         result.append(item)
 
-    return result
+    return _mask_reporters(result)
+
+
+def _mask_reporters(rows):
+    """The list is public: a reporter's phone / email / name never leave through it. Contact goes only
+    through api_reports.reporter_contact (audited). Viewers who may contact a reporter keep the name and
+    get `can_contact_reporter` so the page shows the contact / verification buttons."""
+    from rescue_net.access_policy import rn_actor
+    from rescue_net.services.reporter_contact import may_contact
+
+    actor = rn_actor(required=False)
+    allowed = {}
+    for row in rows:
+        posko = row.get("posko")
+        if posko not in allowed:
+            allowed[posko] = bool(actor) and may_contact(actor, posko)
+        row.pop("reporter_phone", None)
+        row.pop("reporter_email", None)
+        row["can_contact_reporter"] = allowed[posko]
+        if not allowed[posko]:
+            row["reporter_name"] = "Pelapor"
+    return rows
 
 
 @frappe.whitelist()

@@ -527,3 +527,41 @@ def reroute_community_report(report, posko):
         "routing_reason": f"Dialihkan manual ke {target.title}" + (f" dari {old}" if old else ""),
     })
     return {"report": doc.name, "posko": target.name, "posko_title": target.title, "previous_posko": old}
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(limit=120, seconds=60 * 60)
+def reporter_contact(report):
+    """Contact + verification level of a report's reporter, for the routed posko's managers, a System
+    Manager or an active verifier only. The phone appears only when the reporter agreed to be contacted;
+    every lookup is written to RN Verification Action."""
+    from rescue_net.access_policy import rn_actor
+    from rescue_net.api_verifier import _audit
+    from rescue_net.services import reporter_contact as rc
+    from rescue_net.services.reporter import normalize_phone
+
+    actor = rn_actor(required=True)
+    name = report if frappe.db.exists("RN Community Report", report) else frappe.db.get_value(
+        "RN Community Report", {"legacy_id": report}, "name")
+    if not name:
+        frappe.throw("Laporan tidak ditemukan", frappe.DoesNotExistError)
+    doc = frappe.get_doc("RN Community Report", name)
+    if not rc.may_contact(actor, doc.posko):
+        frappe.throw("Anda tidak berwenang membuka kontak pelapor ini.", frappe.PermissionError)
+
+    consent = bool(cint(doc.consent_to_contact))
+    phone = normalize_phone(doc.reporter_phone) if consent else None
+    _audit("community_report", doc.name, "view_reporter_contact", status="phone_shown" if phone else "no_phone",
+           notes="consent=%s" % int(consent), actor=actor)
+    greeting = "Halo, kami dari Rescue-Net terkait laporan Anda: %s." % (doc.title or doc.name)
+    return {
+        "report": doc.name,
+        "reporter_name": doc.reporter_name,
+        "consent_to_contact": consent,
+        "phone": phone,
+        "tel_url": ("tel:+62" + phone[1:]) if phone else None,
+        "whatsapp_url": rc.whatsapp_url(phone, greeting) if phone else None,
+        "reason_no_contact": None if phone else (
+            "Pelapor tidak bersedia dihubungi." if not consent else "Pelapor belum mengisi nomor HP."),
+        "verification": rc.verification_profile(doc.reporter_user),
+    }

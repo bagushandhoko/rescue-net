@@ -571,10 +571,19 @@ async function verifyObject(objectType, objectId, verificationStatus, trustLevel
   await loadVerification();
 }
 
+function objectsUnavailable(err) {
+  const body = document.getElementById("vxObjectsBody");
+  if (!body) return;
+  const guest = !err || /login|masuk|403|401|permission|izin/i.test(String(err.message || err));
+  body.innerHTML = `<tr><td colspan="5"><em class="rn-muted">${guest
+    ? "Daftar objek hanya tersedia untuk akun yang berwenang. Masuk sebagai pengelola posko, organisasi, atau verifikator."
+    : "Gagal memuat objek: " + safe(err.message || err)}</em></td></tr>`;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setupTrustedVerifierActions();
   const btn = document.getElementById("refreshVerification");
-  if (btn) btn.addEventListener("click", () => loadVerification().catch(err => statusMsg(err.message)));
+  if (btn) btn.addEventListener("click", () => loadVerification().catch(err => { statusMsg(err.message); objectsUnavailable(err); }));
 
-  loadVerification().catch(err => statusMsg(err.message));
+  loadVerification().catch(err => { statusMsg(err.message); objectsUnavailable(err); });
 });

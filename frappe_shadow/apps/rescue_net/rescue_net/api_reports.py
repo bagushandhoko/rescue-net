@@ -205,6 +205,12 @@ def submit_community_report(
     doc.village_name = village.area_name if village else None
 
     doc.reporter_phone = contact_phone
+    from rescue_net.services.reporter_contact import account_email
+
+    mine = frappe.db.get_value("RN User Account", {"frappe_user": frappe.session.user, "status": "active"}, "name")
+    doc.reporter_email = account_email(mine) or (frappe.session.user if "@" in frappe.session.user else None)
+    if not (doc.reporter_phone or doc.reporter_email):
+        frappe.throw("Laporan harus bisa dihubungi: isi nomor HP atau pastikan akun Anda punya email.")
     doc.consent_to_contact = cint(consent_to_contact or 0)
     doc.status = "submitted"
     doc.intake_mode = intake_mode
@@ -551,7 +557,9 @@ def reporter_contact(report):
 
     consent = bool(cint(doc.consent_to_contact))
     phone = normalize_phone(doc.reporter_phone) if consent else None
-    _audit("community_report", doc.name, "view_reporter_contact", status="phone_shown" if phone else "no_phone",
+    email = (rc.account_email(doc.reporter_user) or (doc.reporter_email or None)) if consent else None
+    _audit("community_report", doc.name, "view_reporter_contact",
+           status=("phone+email_shown" if phone and email else "phone_shown" if phone else "email_shown" if email else "no_contact"),
            notes="consent=%s" % int(consent), actor=actor)
     greeting = "Halo, kami dari Rescue-Net terkait laporan Anda: %s." % (doc.title or doc.name)
     return {
@@ -560,9 +568,12 @@ def reporter_contact(report):
         "consent_to_contact": consent,
         "phone": phone,
         "tel_url": ("tel:+62" + phone[1:]) if phone else None,
+        "email": email,
+        "mailto_url": rc.mailto_url(email, "Rescue-Net: laporan Anda — %s" % (doc.title or doc.name), greeting) if email else None,
+        "email_source": rc.email_source(doc.reporter_user) if email else None,
         "whatsapp_url": rc.whatsapp_url(phone, greeting) if phone else None,
-        "reason_no_contact": None if phone else (
-            "Pelapor tidak bersedia dihubungi." if not consent else "Pelapor belum mengisi nomor HP."),
+        "reason_no_contact": None if (phone or email) else (
+            "Pelapor tidak bersedia dihubungi." if not consent else "Pelapor belum mengisi nomor HP maupun email."),
         "reporter_account": doc.reporter_user,
         "viewer_is_verifier": bool(frappe.db.exists("RN Verifier Profile", {"user": actor.name, "verifier_status": "active"}))
         if actor.name else False,

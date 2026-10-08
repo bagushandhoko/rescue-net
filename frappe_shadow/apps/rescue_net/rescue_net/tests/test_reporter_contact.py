@@ -257,3 +257,85 @@ class TestEndorsementsOverview(RNTestCase):
         self.assertIn("kenal langsung", priv["rows"][0]["statement"])
         with as_guest():
             self.assertEqual(av.endorsements_overview(q="tidak-ada-ini")["total"], 0)
+
+
+class TestEmailChannel(RNTestCase):
+    def setUp(self):
+        super().setUp()
+        from rescue_net import api_verifier as av
+
+        self.av = av
+        self.event = make_event()
+        self.posko = make_posko(event=self.event, org=make_org())
+        self.operator = make_actor(posko=self.posko)
+
+    def reporter_report(self, consent=1, google=False):
+        reporter = make_actor(role="citizen")
+        if google:
+            from rescue_net.tests.test_reporter_phone import link_google
+
+            link_google(reporter.user)
+        with as_user(reporter.user):
+            out = api.submit_community_report(description=TEXT, intake_mode="narrative", reporter_phone="081234567890",
+                                              consent_to_contact=consent, disaster_event=self.event.name)
+        frappe.db.set_value("RN Community Report", out["name"], "posko", self.posko.name)
+        return reporter, out["name"]
+
+    def test_report_keeps_the_email_and_the_operator_can_mail_the_reporter(self):
+        reporter, name = self.reporter_report()
+        self.assertEqual(frappe.db.get_value("RN Community Report", name, "reporter_email"), reporter.user.lower())
+        with as_user(self.operator.user):
+            out = api.reporter_contact(name)
+        self.assertEqual(out["email"], reporter.user.lower())
+        self.assertTrue(out["mailto_url"].startswith("mailto:" + reporter.user.lower() + "?subject="))
+        self.assertEqual(out["email_source"], "registered")
+        mail_line = next(e for e in out["verification"]["evidence"] if e["key"] == "email")
+        self.assertIn("belum dicek", mail_line["detail"])
+
+    def test_google_login_email_is_marked_google_verified(self):
+        reporter, name = self.reporter_report(google=True)
+        with as_user(self.operator.user):
+            out = api.reporter_contact(name)
+        self.assertEqual(out["email_source"], "google")
+        mail_line = next(e for e in out["verification"]["evidence"] if e["key"] == "email")
+        self.assertEqual(mail_line["detail"], "Terverifikasi Google")
+
+    def test_no_consent_hides_phone_and_email(self):
+        _, name = self.reporter_report(consent=0)
+        with as_user(self.operator.user):
+            out = api.reporter_contact(name)
+        self.assertEqual((out["phone"], out["email"], out["mailto_url"]), (None, None, None))
+        self.assertIn("tidak bersedia", out["reason_no_contact"])
+
+    def test_the_public_list_never_carries_the_email(self):
+        reporter, name = self.reporter_report()
+        with as_guest():
+            rows = bridge.community_reports(disaster_event=self.event.name)
+        self.assertNotIn(reporter.user.lower(), str(rows).lower())
+
+    def test_verifier_contact_is_for_logged_in_accounts_and_audited(self):
+        verifier = make_actor(role="citizen")
+        prof = _insert("RN Verifier Profile", title="Pak Kades", user=verifier.account, verifier_type="government",
+                       verifier_status="active", trust_level=1, phone="+62 812-0000-1111", email="Kades@Desa.id")
+        asker = make_actor(role="citizen")
+        with as_guest(), self.assertRaises(frappe.PermissionError):
+            api_call("rescue_net.api_verifier.verifier_contact", verifier=prof.name)
+        with as_user(asker.user):
+            out = self.av.verifier_contact(prof.name)
+        self.assertEqual((out["phone"], out["email"]), ("081200001111", "kades@desa.id"))
+        self.assertTrue(out["whatsapp_url"].startswith("https://wa.me/6281200001111"))
+        self.assertEqual(out["mailto_url"].split("?")[0], "mailto:kades@desa.id")
+        self.assertTrue(frappe.db.exists("RN Verification Action", {
+            "object_type": "verifier", "object_id": prof.name, "action_type": "view_verifier_contact"}))
+        frappe.db.set_value("RN Verifier Profile", prof.name, "verifier_status", "suspended")
+        with as_user(asker.user), self.assertRaises(frappe.DoesNotExistError):
+            self.av.verifier_contact(prof.name)
+
+    def test_public_directory_has_no_contact_fields(self):
+        verifier = make_actor(role="citizen")
+        _insert("RN Verifier Profile", title="V", user=verifier.account, verifier_type="government",
+                verifier_status="active", trust_level=1, phone="081200001111", email="v@x.id")
+        with as_guest():
+            rows = self.av.verifier_directory()["verifiers"]
+        self.assertTrue(rows)
+        self.assertFalse(any(("phone" in r or "email" in r) for r in rows))

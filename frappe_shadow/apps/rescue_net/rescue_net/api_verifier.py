@@ -704,3 +704,31 @@ def endorsements_overview(target_type=None, q=None, status="active", limit=200):
             continue
         out.append(item)
     return {"rows": out, "total": len(out), "privileged": privileged}
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(limit=60, seconds=60 * 60)
+def verifier_contact(verifier):
+    """Phone / WhatsApp / email of a verifier, for any logged-in account (a verifier registers a contact precisely
+    so that posko operators and administrators can reach them to coordinate a verification). Never for guests;
+    every lookup is audited. The public directory never carries these fields."""
+    from rescue_net.access_policy import rn_actor
+    from rescue_net.services.reporter import normalize_phone
+    from rescue_net.services.reporter_contact import mailto_url, whatsapp_url
+
+    actor = rn_actor(required=True)
+    row = frappe.db.get_value("RN Verifier Profile", verifier,
+                              ["name", "title", "phone", "email", "verifier_status"], as_dict=True)
+    if not row or row.verifier_status != "active":
+        frappe.throw("Verifikator tidak ditemukan atau tidak aktif.", frappe.DoesNotExistError)
+    phone = normalize_phone(row.phone)
+    mail = (row.email or "").strip().lower()
+    mail = mail if "@" in mail else None
+    _audit("verifier", row.name, "view_verifier_contact", status="shown" if (phone or mail) else "no_contact", actor=actor)
+    return {
+        "verifier": row.name, "name": row.title, "phone": phone,
+        "tel_url": ("tel:+62" + phone[1:]) if phone else None,
+        "whatsapp_url": whatsapp_url(phone, "Halo, saya dari Rescue-Net terkait verifikasi.") if phone else None,
+        "email": mail, "mailto_url": mailto_url(mail, "Rescue-Net: permintaan verifikasi") if mail else None,
+        "reason_no_contact": None if (phone or mail) else "Verifikator belum mengisi kontak.",
+    }

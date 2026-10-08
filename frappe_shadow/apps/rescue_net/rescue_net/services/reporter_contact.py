@@ -51,6 +51,38 @@ def may_contact(actor, posko):
     return bool(frappe.db.exists("RN Verifier Profile", {"user": actor.name, "verifier_status": "active"}))
 
 
+def account_email(account_name):
+    """The account's email: RN User Account.email, else the Frappe user's login email."""
+    if not account_name:
+        return None
+    row = frappe.db.get_value("RN User Account", account_name, ["email", "frappe_user"], as_dict=True)
+    if not row:
+        return None
+    mail = (row.email or "").strip().lower()
+    if not mail and row.frappe_user and "@" in row.frappe_user:
+        mail = row.frappe_user.strip().lower()
+    return mail if "@" in mail else None
+
+
+def email_source(account_name):
+    """How trustworthy is the address: Google confirms the email it logs in with; otherwise it is only registered."""
+    user = frappe.db.get_value("RN User Account", account_name, "frappe_user") if account_name else None
+    return "google" if user and is_google_login(user) else "registered"
+
+
+def mailto_url(email, subject=None, body=None):
+    if not email:
+        return None
+    from urllib.parse import quote
+
+    parts = []
+    if subject:
+        parts.append("subject=" + quote(subject))
+    if body:
+        parts.append("body=" + quote(body))
+    return "mailto:" + email + ("?" + "&".join(parts) if parts else "")
+
+
 def whatsapp_url(phone, text=None):
     number = normalize_phone(phone)
     if not number:
@@ -188,6 +220,10 @@ def verification_profile(account_name, detail=False):
                          "detail": "Google" if is_google_login(acc.frappe_user) else "Kata sandi"})
         evidence.append({"key": "phone", "ok": has_phone, "label": "No HP",
                          "detail": "Terisi (belum dicek OTP)" if has_phone else "Belum diisi"})
+        mail = account_email(acc.name)
+        evidence.append({"key": "email", "ok": bool(mail), "label": "Email",
+                         "detail": ("Terverifikasi Google" if email_source(acc.name) == "google" else "Terdaftar (belum dicek)")
+                                   if mail else "Belum ada"})
     for m in memberships:
         title = org_titles.get(m.organization, m.organization)
         confirmed = bool(cint(m.member_verified))

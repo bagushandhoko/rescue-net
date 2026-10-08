@@ -283,6 +283,8 @@ class TestEmailChannel(RNTestCase):
 
     def test_the_operator_can_mail_the_reporter_from_the_account_email(self):
         reporter, name = self.reporter_report()
+        # permanent record on the report itself, lower-cased, independent of later account changes
+        self.assertEqual(frappe.db.get_value("RN Community Report", name, "reporter_email"), reporter.user.lower())
         with as_user(self.operator.user):
             out = api.reporter_contact(name)
         self.assertEqual(out["email"], reporter.user.lower())
@@ -338,3 +340,19 @@ class TestEmailChannel(RNTestCase):
             rows = self.av.verifier_directory()["verifiers"]
         self.assertTrue(rows)
         self.assertFalse(any(("phone" in r or "email" in r) for r in rows))
+
+
+    def test_stored_email_survives_a_later_account_email_change(self):
+        reporter, name = self.reporter_report()
+        stored = frappe.db.get_value("RN Community Report", name, "reporter_email")
+        frappe.db.set_value("RN User Account", reporter.account, "email", "changed@elsewhere.id")
+        with as_user(self.operator.user):
+            self.assertEqual(api.reporter_contact(name)["email"], stored)
+
+    def test_google_login_still_needs_a_phone_even_though_the_email_is_known(self):
+        from rescue_net.tests.test_reporter_phone import link_google
+
+        reporter = make_actor(role="citizen")
+        link_google(reporter.user)
+        with as_user(reporter.user), self.assertRaises(frappe.ValidationError):
+            api.submit_community_report(description=TEXT, intake_mode="narrative", disaster_event=self.event.name)

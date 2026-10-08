@@ -207,10 +207,11 @@ def submit_community_report(
     doc.reporter_phone = contact_phone
     from rescue_net.services.reporter_contact import account_email
 
-    # The email is not copied onto the report (no new column): it is read from the reporter's account when
-    # a posko opens the contact. Every report must still be reachable by phone or email.
+    # The reporter's email is written onto the report (permanent record, owner 2026-10-08) next to the phone;
+    # every report must be reachable by phone or email. Older reports fall back to the account's email.
     mine = frappe.db.get_value("RN User Account", {"frappe_user": frappe.session.user, "status": "active"}, "name")
-    if not (doc.reporter_phone or account_email(mine) or "@" in (frappe.session.user or "")):
+    doc.reporter_email = account_email(mine) or (frappe.session.user.strip().lower() if "@" in (frappe.session.user or "") else None)
+    if not (doc.reporter_phone or doc.reporter_email):
         frappe.throw("Laporan harus bisa dihubungi: isi nomor HP atau pastikan akun Anda punya email.")
     doc.consent_to_contact = cint(consent_to_contact or 0)
     doc.status = "submitted"
@@ -558,7 +559,7 @@ def reporter_contact(report):
 
     consent = bool(cint(doc.consent_to_contact))
     phone = normalize_phone(doc.reporter_phone) if consent else None
-    email = rc.account_email(doc.reporter_user) if consent else None
+    email = ((doc.reporter_email or "").strip().lower() or rc.account_email(doc.reporter_user) or None) if consent else None
     _audit("community_report", doc.name, "view_reporter_contact",
            status=("phone+email_shown" if phone and email else "phone_shown" if phone else "email_shown" if email else "no_contact"),
            notes="consent=%s" % int(consent), actor=actor)

@@ -232,3 +232,26 @@ class TestOrgRegistration(RNTestCase):
         member = self.member(make_org(verification_status="pending"), confirmed=True)
         self.assertEqual(rc.verification_profile(member.account)["status"], "self_reported")
         self.assertEqual(rc.quick_status([member.account])[member.account]["status"], "self_reported")
+
+
+class TestEndorsementsOverview(RNTestCase):
+    def test_public_overview_masks_reporters_and_hides_their_statements(self):
+        from rescue_net import api_verifier as av
+
+        reporter = make_actor(role="citizen")
+        verifier = make_actor(role="citizen")
+        _insert("RN Verifier Profile", title="Pak Kades", user=verifier.account, verifier_type="government",
+                position_title="Kepala Desa Sukamaju", wilayah="Sukamaju", verifier_status="active", trust_level=1)
+        with as_user(verifier.user):
+            av.endorse_reporter(reporter.account, statement="Warga desa saya, saya kenal langsung.")
+        with as_guest():
+            pub = av.endorsements_overview(target_type="reporter")
+        row = next(r for r in pub["rows"] if r["verifier"] == "Pak Kades")
+        self.assertEqual((row["target"], row["statement"]), ("Pelapor", None))
+        self.assertEqual((row["position"], row["verifier_type"]), ("Kepala Desa Sukamaju", "Pemerintah / aparat"))
+        with as_user(verifier.user):
+            priv = av.endorsements_overview(target_type="reporter", q="kenal langsung")
+        self.assertTrue(priv["privileged"])
+        self.assertIn("kenal langsung", priv["rows"][0]["statement"])
+        with as_guest():
+            self.assertEqual(av.endorsements_overview(q="tidak-ada-ini")["total"], 0)

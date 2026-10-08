@@ -644,3 +644,60 @@ def posko_verification_public(posko):
             } for e in ends
         ],
     }
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
+def endorsements_overview(target_type=None, q=None, status="active", limit=200):
+    """Data hasil verifikasi: every endorsement in the Jaringan Verifikator (posko + pelapor), searchable.
+    Public like the posko credibility panel: verifier name / position / type are public; a reporter target
+    stays 'Pelapor' and a verifier's statement about a reporter is shown only to a System Manager or an
+    active verifier."""
+    from rescue_net.access_policy import rn_actor
+    from rescue_net.services.reporter_contact import METHOD_LABEL, TYPE_LABEL
+
+    actor = rn_actor(required=False)
+    privileged = bool(is_system_manager() or (actor and actor.get("name") and _my_verifier(actor)
+                                              and not _my_verifier(actor).get("_inactive")))
+    filters = {}
+    if target_type in ("posko", "reporter"):
+        filters["target_type"] = target_type
+    if status in ("active", "revoked", "expired"):
+        filters["status"] = status
+    rows = frappe.get_all(
+        "RN Verification Endorsement", filters=filters,
+        fields=["name", "target_type", "target_id", "verifier", "verifier_display_name", "method", "statement",
+                "verification_level", "status", "verified_at", "revoked_at"],
+        order_by="verified_at desc", limit_page_length=min(cint(limit) or 200, 500))
+
+    verifiers = {v.name: v for v in frappe.get_all(
+        "RN Verifier Profile", filters={"name": ["in", list({r.verifier for r in rows if r.verifier})]},
+        fields=["name", "title", "verifier_type", "position_title", "wilayah", "verifier_status"], limit_page_length=0)} \
+        if rows else {}
+    poskos = dict(frappe.get_all(
+        "RN Posko", filters={"name": ["in", [r.target_id for r in rows if r.target_type == "posko"]]},
+        fields=["name", "title"], as_list=True)) if any(r.target_type == "posko" for r in rows) else {}
+
+    needle = (q or "").strip().lower()
+    out = []
+    for r in rows:
+        v = verifiers.get(r.verifier)
+        label = poskos.get(r.target_id, r.target_id) if r.target_type == "posko" else "Pelapor"
+        if r.target_type == "reporter" and privileged:
+            label = frappe.db.get_value("RN User Account", r.target_id, "title") or "Pelapor"
+        item = {
+            "endorsement": r.name, "target_type": r.target_type, "target_id": r.target_id if r.target_type == "posko" else None,
+            "target": label, "status": r.status,
+            "verifier": (v.title if v else r.verifier_display_name), "verifier_id": r.verifier,
+            "verifier_type": TYPE_LABEL.get(v.verifier_type, "Verifikator") if v else None,
+            "position": v.position_title if v else None, "wilayah": v.wilayah if v else None,
+            "method": METHOD_LABEL.get(r.method, r.method), "level": cint(r.verification_level),
+            "verified_at": str(r.verified_at)[:10] if r.verified_at else None,
+            "revoked_at": str(r.revoked_at)[:10] if r.revoked_at else None,
+            "statement": r.statement if (r.target_type == "posko" or privileged) else None,
+        }
+        if needle and needle not in " ".join(str(item.get(k) or "") for k in
+                                              ("target", "verifier", "verifier_type", "position", "wilayah", "method", "statement")).lower():
+            continue
+        out.append(item)
+    return {"rows": out, "total": len(out), "privileged": privileged}

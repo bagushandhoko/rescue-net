@@ -252,6 +252,8 @@ class TestEndorsementsOverview(RNTestCase):
         with as_user(verifier.user):
             priv = av.endorsements_overview(target_type="reporter", q="kenal langsung")
         self.assertTrue(priv["privileged"])
+        self.assertTrue(priv["rows"][0]["can_revoke"])                  # the verifier owns this endorsement
+        self.assertFalse(pub["rows"][0]["can_revoke"])                  # a guest never does
         self.assertIn("kenal langsung", priv["rows"][0]["statement"])
         with as_guest():
             self.assertEqual(av.endorsements_overview(q="tidak-ada-ini")["total"], 0)

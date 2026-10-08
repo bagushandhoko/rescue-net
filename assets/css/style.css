@@ -7271,3 +7271,4 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-vx-hub table.vx-table td small { font-size: 12px !important; }
 .rn-vx-hub table.vx-table th { padding: 11px 14px !important; }
 .rn-vx-hub table.vx-table .chip { font-size: 11.5px; padding: 3px 10px; }
+.rn-vx-hub table.vx-table td b, .rn-vx-hub table.vx-table td a { font-size: 13.5px !important; }

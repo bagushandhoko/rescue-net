@@ -47,6 +47,19 @@ _Last updated: 2026-10-07 — Search & Found mock-up pass 2 (see CLAUDE.md statu
    `sudo sh scripts/rn-install-nginx-deny.sh`; run the delete block in the phase-6 doc (deletes were blocked for
    Claude); rotate the MariaDB root password; decide GitHub private/public; komando-tests hit production.
 
+## Public domain rescue-net.online (owner order 2026-10-08, in progress)
+
+Done on the NAS (not in git; infra lives in `/volume1/docker/rescue-web/`): container `rescue-web` (nginx, `127.0.0.1:8182`, network `rescue-net-net`)
+serves ONLY `index.html`, `manifest`, `sw.js`, `pages/`, `assets/` under `/rescue-net/` (`/` redirects there) and proxies a whitelist to Frappe:
+`/rescue-net-frappe/api/method/rescue_net.api_*`, `login`, `logout`, and the Google callback `/api/method/frappe.integrations.oauth2_logins.login_via_google`
+(root path). Desk, `/api/resource`, `/login`, files, repo content, `*.zip|*.bak|@eaDir|dotfiles` = 404; login limited to 10/min per IP. 12 simulation
+accounts (10 `sim-*@example.org`, `ld1/ld2.demo@rescue-net.local`) set `enabled = 0` (not deleted; their RN User Account rows are still `active`).
+Production `site_config.json`: `allow_cors` `"*"` -> `"https://rescue-net.online"` (backup kept off-repo, 600). Tailscale access unaffected (same-origin).
+**Pending owner:** Cloudflare route `rescue-net.online` + `www` -> HTTP `localhost:8182` (+ DNS CNAME to the tunnel); then Claude changes `host_name`
+(still `https://osiun.tail251e1e.ts.net:8443`, decides the Google redirect_uri) to `https://rescue-net.online`, owner adds that redirect URI in Google Cloud.
+Known: the Frappe `sid` cookie has no `Secure` flag (gunicorn does not trust `X-Forwarded-Proto` from the docker network); old native builds that call the API
+cross-origin are blocked by the new CORS list.
+
 ## Fase 7 — AI (ADR-0002 section 11), owner ordered 2026-10-08
 
 Step 1 DONE (committed, DEPLOYED 2026-10-08 with step 2): `services/llm.py` provider `local` (OpenAI-compatible endpoint, optional key,

@@ -47,6 +47,13 @@ _Last updated: 2026-10-07 — Search & Found mock-up pass 2 (see CLAUDE.md statu
    `sudo sh scripts/rn-install-nginx-deny.sh`; run the delete block in the phase-6 doc (deletes were blocked for
    Claude); rotate the MariaDB root password; decide GitHub private/public; komando-tests hit production.
 
+## Session end 2026-10-08 (read this first next session)
+
+- Fase 7 steps 1-3 committed; 1+2 deployed, **3 not deployed** (needs `rn-deploy-app.sh`, then a real-login try of AI Analyst). Step 4 waits for an owner order.
+- 9+ local commits are **not pushed** (owner runs `sh scripts/rn-push-main.sh`; the agent does not push main).
+- Public domains + nginx hardening: see "Public domain rescue-net.online" below and memory `nas-public-domains`. OSIUN untouched on purpose.
+- Open: Google OAuth redirect URIs (owner, Google Cloud); DSM email "osiun-frappe-backend stopped unexpectedly" (events logged to `/volume1/docker/rescue-web/events/docker-events.log` from 2026-10-08, see below); `demo@demo.example` still open on the SAC portal.
+
 ## Public domain rescue-net.online (owner order 2026-10-08, in progress)
 
 Done on the NAS (not in git; infra lives in `/volume1/docker/rescue-web/`): container `rescue-web` (nginx, `127.0.0.1:8182`, network `rescue-net-net`)

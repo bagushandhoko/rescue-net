@@ -1,6 +1,6 @@
 # ADR-0005: Standar data kemanusiaan — P-code wilayah, HXL, CAP
 
-Status: **Proposed** (menunggu persetujuan owner — jangan implementasi sebelum Accepted)
+Status: **Accepted** (owner 2026-10-08). Jawaban owner 2026-10-08: pertanyaan 1-4 diterima sesuai rekomendasi (kode Kemendagri = kunci; HXL ekspor dulu; CAP hanya masuk, tampil saja). Mulai dari langkah D.1-D.2 (wilayah berkode) di test stack; sumber berkas wilayah dipilih saat implementasi dan hasil impor dilaporkan ke owner sebelum produksi.
 Tanggal: 2026-10-08
 Terkait: ADR-0004 (federasi), NEXT_STEPS Fase 9c
 

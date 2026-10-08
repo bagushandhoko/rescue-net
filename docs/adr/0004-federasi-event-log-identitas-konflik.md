@@ -1,6 +1,6 @@
 # ADR-0004: Federasi — event log (outbox), identitas global, aturan konflik
 
-Status: **Proposed** (menunggu persetujuan owner — jangan implementasi sebelum Accepted)
+Status: **Accepted** (owner 2026-10-08). Jawaban owner 2026-10-08: pertanyaan 1-3 diterima sesuai rekomendasi (pemilik data = server asal; klasifikasi C apa adanya; retensi outbox 90 hari). Implementasi bertahap, di test stack dulu; gerbang review owner sebelum produksi.
 Tanggal: 2026-10-08
 Terkait: ADR-0001, ADR-0003, NEXT_STEPS Fase 9a–9b
 

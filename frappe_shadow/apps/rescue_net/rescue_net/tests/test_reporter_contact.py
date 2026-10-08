@@ -85,20 +85,22 @@ class TestReporterContact(RNTestCase):
         _insert("RN Verifier Profile", title="V", user=verifier.account, verifier_type="community_leader",
                 verifier_status="active", trust_level=2)
         self.assertEqual(self.contact(verifier.user, name)["phone"], "081234567890")
-        self.assertEqual(rc.verification_profile(verifier.account)["level"], 4)
+        self.assertEqual(rc.verification_profile(verifier.account)["status"], "official_verified")
 
 
-class TestVerificationLevel(RNTestCase):
-    def test_levels_follow_the_evidence(self):
-        self.assertEqual(rc.verification_profile(None)["level"], 0)
-        plain = make_actor(role="citizen")
-        self.assertEqual(rc.verification_profile(plain.account)["level"], 1)
-        with_phone = make_actor(role="citizen", phone="081200000009")
-        self.assertEqual(rc.verification_profile(with_phone.account)["level"], 2)
-        verified = make_actor(role="verified_reporter", phone="081200000010")
-        prof = rc.verification_profile(verified.account)
-        self.assertEqual(prof["level"], 3)
-        self.assertTrue(any(e["key"] == "reporter" and e["ok"] for e in prof["evidence"]))
+class TestVerificationStatus(RNTestCase):
+    def test_status_follows_the_evidence_with_the_posko_vocabulary(self):
+        self.assertEqual(rc.verification_profile(None)["status"], "self_reported")
+        plain = make_actor(role="citizen", phone="081200000009")
+        self.assertEqual(rc.verification_profile(plain.account)["status"], "self_reported")  # phone alone is not verification
+        approved = make_actor(role="verified_reporter", phone="081200000010")
+        prof = rc.verification_profile(approved.account)
+        self.assertEqual(prof["status"], "community_verified")
+        self.assertEqual(prof["verifiers"][0]["role_label"], "Pelapor Terverifikasi (disetujui)")
+        junior = make_actor(role="citizen")
+        _insert("RN Verifier Profile", title="J", user=junior.account, verifier_type="community_leader",
+                verifier_status="active", trust_level=1)
+        self.assertEqual(rc.verification_profile(junior.account)["status"], "community_verified")
         self.assertTrue(all({"key", "ok", "label", "detail"} <= set(e) for e in prof["evidence"]))
 
 
@@ -130,23 +132,41 @@ class TestEndorseReporter(RNTestCase):
             rows = bridge.community_reports(disaster_event=self.event.name)
         return next(r for r in rows if r["name"] == self.report)
 
-    def test_endorsement_makes_it_level_3_and_shows_blue_check_data(self):
-        self.assertEqual(self.public_row()["reporter_level"], 2)
+    def test_one_endorsement_is_community_verified_and_public_sees_who(self):
+        self.assertEqual(self.public_row()["reporter_verification_status"], "self_reported")
         self.endorse()
         row = self.public_row()
-        self.assertEqual(row["reporter_level"], 3)
-        self.assertEqual(row["reporter_verified_types"], ["Pemerintah / aparat"])
+        self.assertEqual(row["reporter_verification_status"], "community_verified")
+        self.assertEqual(row["reporter_verified_count"], 1)
+        who = row["reporter_verifiers"][0]
+        self.assertEqual((who["verifier"], who["position"], who["role_label"]),
+                         ("Pak Kades", "Kepala Desa Sukamaju", "Pemerintah / aparat"))
         self.assertNotIn("reporter_user", row)
-        self.assertNotIn("Kades", str(row))  # the public sees the type, never the name
+        self.assertNotIn("statement", who)                    # what the verifier says about the person stays private
+        self.assertNotIn("Warga desa saya", str(row))
+
+    def test_two_endorsements_or_a_senior_government_one_is_official(self):
+        self.endorse()
+        second = make_actor(role="citizen")
+        _insert("RN Verifier Profile", title="Bu Rina", user=second.account, verifier_type="community_leader",
+                position_title="Ketua PKK", verifier_status="active", trust_level=1)
+        with as_user(second.user):
+            self.av.endorse_reporter(self.reporter.account, statement="Aktif membantu warga di PKK.")
+        self.assertEqual(self.public_row()["reporter_verification_status"], "official_verified")
+        self.assertEqual(self.public_row()["reporter_verified_count"], 2)
+        frappe.db.set_value("RN Verifier Profile", {"user": second.account}, "verifier_status", "revoked")
+        frappe.db.set_value("RN Verifier Profile", {"user": self.verifier.account}, "trust_level", 2)
+        self.assertEqual(self.public_row()["reporter_verification_status"], "official_verified")  # government, trust 2
 
     def test_operator_sees_who_verified_with_name_and_position(self):
         self.endorse()
         out = api_call_as(self.operator.user, self.report)
-        ends = out["verification"]["endorsements"]
+        ends = out["verification"]["verifiers"]
         self.assertEqual(len(ends), 1)
-        self.assertEqual(ends[0]["verifier_name"], "Pak Kades")
+        self.assertEqual(ends[0]["verifier"], "Pak Kades")
         self.assertEqual(ends[0]["position"], "Kepala Desa Sukamaju")
-        self.assertEqual(ends[0]["type_label"], "Pemerintah / aparat")
+        self.assertEqual(ends[0]["role_label"], "Pemerintah / aparat")
+        self.assertIn("Warga desa saya", ends[0]["statement"])      # authorised viewers read the statement
         self.assertFalse(out["viewer_is_verifier"])
         self.assertTrue(api_call_as(self.verifier.user, self.report)["viewer_is_verifier"])
 
@@ -165,14 +185,15 @@ class TestEndorseReporter(RNTestCase):
 
     def test_suspended_verifier_or_revoked_endorsement_no_longer_counts(self):
         out = self.endorse()
-        self.assertEqual(rc.verification_profile(self.reporter.account)["level"], 3)
+        status = lambda: rc.verification_profile(self.reporter.account)["status"]
+        self.assertEqual(status(), "community_verified")
         frappe.db.set_value("RN Verifier Profile", {"user": self.verifier.account}, "verifier_status", "suspended")
-        self.assertEqual(rc.verification_profile(self.reporter.account)["level"], 2)
+        self.assertEqual(status(), "self_reported")
         frappe.db.set_value("RN Verifier Profile", {"user": self.verifier.account}, "verifier_status", "active")
-        self.assertEqual(rc.verification_profile(self.reporter.account)["level"], 3)
+        self.assertEqual(status(), "community_verified")
         with as_user(self.verifier.user):
             self.av.revoke_endorsement(out["endorsement"], reason="salah orang")
-        self.assertEqual(rc.verification_profile(self.reporter.account)["level"], 2)
+        self.assertEqual(status(), "self_reported")
 
 
 def api_call_as(user, report):

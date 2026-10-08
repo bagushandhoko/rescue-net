@@ -154,10 +154,10 @@ def _mask_reporters(rows):
     from rescue_net.access_policy import rn_actor
     from rescue_net.services.reporter_contact import may_contact
 
-    from rescue_net.services.reporter_contact import quick_levels
+    from rescue_net.services.reporter_contact import quick_status
 
     actor = rn_actor(required=False)
-    levels = quick_levels(r.get("reporter_user") for r in rows)
+    levels = quick_status(r.get("reporter_user") for r in rows)
     allowed = {}
     for row in rows:
         posko = row.get("posko")
@@ -166,9 +166,9 @@ def _mask_reporters(rows):
         row.pop("reporter_phone", None)
         row.pop("reporter_email", None)
         info = levels.get(row.pop("reporter_user", None)) or {}
-        row["reporter_level"] = info.get("level", 0)
-        row["reporter_level_label"] = info.get("label", "Belum terverifikasi")
-        row["reporter_verified_types"] = info.get("types", [])
+        row["reporter_verification_status"] = info.get("status", "self_reported")
+        row["reporter_verified_count"] = info.get("count", 0)
+        row["reporter_verifiers"] = info.get("verifiers", [])
         row["can_contact_reporter"] = allowed[posko]
         if not allowed[posko]:
             row["reporter_name"] = "Pelapor"

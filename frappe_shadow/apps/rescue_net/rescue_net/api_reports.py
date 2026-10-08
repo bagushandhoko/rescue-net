@@ -566,5 +566,5 @@ def reporter_contact(report):
         "reporter_account": doc.reporter_user,
         "viewer_is_verifier": bool(frappe.db.exists("RN Verifier Profile", {"user": actor.name, "verifier_status": "active"}))
         if actor.name else False,
-        "verification": rc.verification_profile(doc.reporter_user, names=True),
+        "verification": rc.verification_profile(doc.reporter_user, detail=True),
     }

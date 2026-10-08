@@ -5,15 +5,15 @@ System Manager, pengelola posko tujuan laporan (can_manage_posko, termasuk koord
 komando), atau verifikator aktif yang dapat membukanya lewat `api_reports.reporter_contact`, dan hanya bila
 pelapor bersedia dihubungi (consent_to_contact). Setiap pembukaan dicatat di RN Verification Action.
 
-Level verifikasi pelapor dihitung dari bukti yang ada (bukan angka buatan): ditampilkan beserta buktinya.
-  0 Belum terverifikasi   — tidak ada akun Rescue-Net
-  1 Akun terdaftar        — akun aktif (login Google / kata sandi)
-  2 Kontak tersedia       — akun + no HP (belum dicek OTP)
-  3 Terverifikasi         — Pelapor Terverifikasi (disetujui), anggota organisasi terverifikasi, atau didukung
-                            minimal satu verifikator aktif (ketua organisasi, aparat, kepala desa, dst.)
-  4 Verifikator           — profil verifikator aktif (trust >= 2)
-Lencana centang biru = level >= 3. Daftar pendukung (siapa yang memverifikasi) hanya dengan nama untuk yang
-berwenang; publik hanya melihat jenisnya (mis. "Pemerintah / aparat").
+Status verifikasi pelapor memakai kosakata yang SAMA dengan posko (RN Posko.verification_status) dan lencana
+bersama RNVerifBadge — satu sistem dengan Jaringan Verifikator (RN Verifier Profile + RN Verification Endorsement):
+  self_reported         — belum ada yang memverifikasi (lencana disembunyikan)
+  organization_verified — anggota organisasi yang terverifikasi
+  community_verified    — Pelapor Terverifikasi (disetujui) atau didukung 1 verifikator aktif
+  official_verified     — didukung >= 2 verifikator aktif, atau 1 verifikator pemerintah (trust >= 2),
+                          atau pelapor sendiri verifikator senior (trust >= 2)
+Verifikator yang ditangguhkan / dicabut tidak dihitung. Nama + jabatan verifikator terlihat publik (seperti panel
+posko); pernyataan mereka tentang pelapor hanya untuk yang berwenang (bisa memuat ciri pelapor).
 """
 
 import frappe
@@ -21,7 +21,6 @@ from frappe.utils import cint
 
 from rescue_net.services.reporter import is_google_login, normalize_phone
 
-LEVELS = {0: "Belum terverifikasi", 1: "Akun terdaftar", 2: "Kontak tersedia", 3: "Terverifikasi", 4: "Verifikator"}
 DONE_STATUSES = ("verified", "converted_to_action")
 VERIFIED_ORG = ("verified", "approved", "trusted", "active_verified")
 TYPE_LABEL = {
@@ -59,15 +58,30 @@ def whatsapp_url(phone, text=None):
     return url + ("?text=" + quote(text) if text else "")
 
 
-def endorsements(account_name, names=False):
-    """Active endorsements of a reporter by verifiers who are still active. Names, positions,
-    organisations and statements only when `names` (authorised viewers); otherwise just the types."""
+def _verifier_item(r, v, detail):
+    item = {
+        "verifier": v.title, "position": v.position_title, "role": v.verifier_type,
+        "role_label": TYPE_LABEL.get(v.verifier_type, "Verifikator"),
+        "method": r.method, "method_label": METHOD_LABEL.get(r.method, r.method),
+        "verified_at": str(r.verified_at)[:10] if r.verified_at else None,
+        "verifier_id": r.verifier,
+    }
+    if detail:
+        item["endorsement"] = r.name
+        item["vouched_via"] = r.vouched_via
+        item["statement"] = r.statement
+    return item
+
+
+def endorsements(account_name, detail=False):
+    """Active endorsements of a reporter by verifiers who are still active (the Jaringan Verifikator).
+    `detail` (authorised viewers) adds the verifier's statement and who referred them."""
     if not account_name:
         return []
     rows = frappe.get_all(
         "RN Verification Endorsement",
         filters={"target_type": "reporter", "target_id": account_name, "status": "active"},
-        fields=["name", "verifier", "method", "verification_level", "statement", "verified_at", "expires_at"],
+        fields=["name", "verifier", "method", "vouched_via", "statement", "verified_at", "expires_at"],
         order_by="verified_at desc", limit_page_length=50)
     now = frappe.utils.now_datetime()
     out = []
@@ -75,39 +89,51 @@ def endorsements(account_name, names=False):
         if r.expires_at and frappe.utils.get_datetime(r.expires_at) < now:
             continue
         v = frappe.db.get_value("RN Verifier Profile", r.verifier,
-                                ["title", "verifier_type", "position_title", "organization", "verifier_status"],
+                                ["title", "verifier_type", "position_title", "verifier_status", "trust_level"],
                                 as_dict=True)
         if not v or v.verifier_status != "active":
             continue
-        item = {"type": v.verifier_type, "type_label": TYPE_LABEL.get(v.verifier_type, "Verifikator"),
-                "method_label": METHOD_LABEL.get(r.method, r.method), "level": cint(r.verification_level),
-                "verified_at": str(r.verified_at)[:10] if r.verified_at else None}
-        if names:
-            item.update({
-                "endorsement": r.name, "verifier_name": v.title, "position": v.position_title,
-                "organization": frappe.db.get_value("RN Organization", v.organization, "title") if v.organization else None,
-                "statement": r.statement})
+        item = _verifier_item(r, v, detail)
+        item["trust_level"] = cint(v.trust_level)
         out.append(item)
     return out
 
 
-def _decide_level(active, has_phone, verified_flag, org_ok, endorsed, verifier_trust):
-    level = 1 if active else 0
-    if level and has_phone:
-        level = 2
-    if level >= 1 and (verified_flag or org_ok or endorsed):
-        level = 3
-    if verifier_trust is not None and cint(verifier_trust) >= 2:
-        level = 4
-    return level
+def _status(active, approved_reporter, org_ok, ends, own_trust):
+    """Same rule as api_verifier._recompute_posko_credibility, plus the reporter's own standing."""
+    if not active:
+        return "self_reported"
+    n = len(ends)
+    gov = any(e["role"] == "government" and e.get("trust_level", 0) >= 2 for e in ends)
+    if n >= 2 or gov or (own_trust is not None and cint(own_trust) >= 2):
+        return "official_verified"
+    if n == 1 or approved_reporter or (own_trust is not None):
+        return "community_verified"
+    if org_ok:
+        return "organization_verified"
+    return "self_reported"
 
 
-def verification_profile(account_name, names=False):
-    """Evidence-based level of a reporter's account. `account_name` may be None (no account)."""
+def _approver_item(acc):
+    """The Pelapor Terverifikasi approval (system manager / senior verifier) as a 'verified by' line."""
+    who = acc.reporter_verified_by
+    prof = frappe.db.get_value("RN Verifier Profile", {"user": who}, ["title", "verifier_type", "position_title"],
+                               as_dict=True) if who else None
+    return {"verifier": (prof.title if prof else who) or "Admin Rescue-Net",
+            "position": (prof.position_title if prof else None) or acc.reporter_position,
+            "role": prof.verifier_type if prof else "other",
+            "role_label": "Pelapor Terverifikasi (disetujui)", "method": "document_review",
+            "method_label": "Persetujuan pendaftaran pelapor",
+            "verified_at": str(acc.reporter_verified_at)[:10] if acc.reporter_verified_at else None,
+            "verifier_id": None}
+
+
+def verification_profile(account_name, detail=False):
+    """Evidence + status of a reporter's account. `account_name` may be None (no account).
+    `detail` adds contact-adjacent evidence (login method, phone) and the verifiers' statements — authorised only."""
+    empty = {"status": "self_reported", "count": 0, "verifiers": [], "evidence": []}
     if not account_name:
-        return {"level": 0, "label": LEVELS[0], "endorsements": [], "evidence": [
-            {"key": "account", "ok": False, "label": "Akun Rescue-Net", "detail": "Pelapor tidak punya akun."}]}
-
+        return empty
     acc = frappe.db.get_value(
         "RN User Account", account_name,
         ["name", "frappe_user", "role", "status", "phone", "creation", "reporter_verified_by",
@@ -115,68 +141,58 @@ def verification_profile(account_name, names=False):
         as_dict=True,
     )
     if not acc:
-        return verification_profile(None)
+        return empty
 
-    evidence = []
     active = acc.status == "active"
-    evidence.append({"key": "account", "ok": active, "label": "Akun Rescue-Net",
-                     "detail": f"{'Aktif' if active else acc.status}, dibuat {str(acc.creation)[:10]}"})
-    google = is_google_login(acc.frappe_user)
-    evidence.append({"key": "login", "ok": True, "label": "Cara masuk", "detail": "Google" if google else "Kata sandi"})
-    has_phone = bool(normalize_phone(acc.phone))
-    evidence.append({"key": "phone", "ok": has_phone, "label": "No HP",
-                     "detail": "Terisi (belum dicek OTP)" if has_phone else "Belum diisi"})
-
-    verified_reporter = acc.role == "verified_reporter" or bool(acc.reporter_verified_by)
-    if verified_reporter:
-        who = acc.reporter_verified_by or "-"
-        evidence.append({"key": "reporter", "ok": True, "label": "Pelapor Terverifikasi",
-                         "detail": f"Disetujui oleh {who}" + (f" · {acc.reporter_agency}" if acc.reporter_agency else "")
-                                   + (f", {acc.reporter_position}" if acc.reporter_position else "")})
-
-    org_ok = False
+    approved = acc.role == "verified_reporter" or bool(acc.reporter_verified_by)
     org_name = acc.organization or frappe.db.get_value(
         "RN Organization Membership", {"user_account": acc.name, "status": "approved"}, "organization")
-    if org_name:
-        org = frappe.db.get_value("RN Organization", org_name,
-                                  ["title", "verification_status", "identity_verification_status"], as_dict=True)
-        if org:
-            org_ok = str(org.verification_status or "").lower() in VERIFIED_ORG or \
-                str(org.identity_verification_status or "").lower() in VERIFIED_ORG
-            evidence.append({"key": "org", "ok": org_ok, "label": "Organisasi",
-                             "detail": f"{org.title} — {'terverifikasi' if org_ok else 'belum terverifikasi'}"})
-
-    ends = endorsements(account_name, names=names)
-    evidence.append({"key": "endorsed", "ok": bool(ends), "label": "Didukung verifikator",
-                     "detail": f"{len(ends)} verifikator" if ends else "Belum ada"})
-
+    org = frappe.db.get_value("RN Organization", org_name,
+                              ["title", "verification_status", "identity_verification_status"],
+                              as_dict=True) if org_name else None
+    org_ok = bool(org) and (str(org.verification_status or "").lower() in VERIFIED_ORG or
+                            str(org.identity_verification_status or "").lower() in VERIFIED_ORG)
+    ends = endorsements(account_name, detail=detail)
     verifier = frappe.db.get_value("RN Verifier Profile", {"user": acc.name, "verifier_status": "active"},
                                    ["verifier_type", "trust_level"], as_dict=True)
-    if verifier:
-        evidence.append({"key": "verifier", "ok": cint(verifier.trust_level) >= 2, "label": "Verifikator",
-                         "detail": f"{TYPE_LABEL.get(verifier.verifier_type, verifier.verifier_type)}, trust {cint(verifier.trust_level)}"})
+    status = _status(active, approved, org_ok, ends, verifier.trust_level if verifier else None)
 
+    verifiers = ([_approver_item(acc)] if approved else []) + [
+        {k: v for k, v in e.items() if k != "trust_level"} for e in ends]
+
+    evidence = [{"key": "account", "ok": active, "label": "Akun Rescue-Net",
+                 "detail": f"{'Aktif' if active else acc.status}, dibuat {str(acc.creation)[:10]}"}]
+    if detail:
+        has_phone = bool(normalize_phone(acc.phone))
+        evidence.append({"key": "login", "ok": True, "label": "Cara masuk",
+                         "detail": "Google" if is_google_login(acc.frappe_user) else "Kata sandi"})
+        evidence.append({"key": "phone", "ok": has_phone, "label": "No HP",
+                         "detail": "Terisi (belum dicek OTP)" if has_phone else "Belum diisi"})
+    if org:
+        evidence.append({"key": "org", "ok": org_ok, "label": "Organisasi",
+                         "detail": f"{org.title} — {'terverifikasi' if org_ok else 'belum terverifikasi'}"})
+    if verifier:
+        evidence.append({"key": "verifier", "ok": cint(verifier.trust_level) >= 2, "label": "Anggota jaringan verifikator",
+                         "detail": f"{TYPE_LABEL.get(verifier.verifier_type, verifier.verifier_type)}, trust {cint(verifier.trust_level)}"})
     rows = frappe.get_all("RN Community Report", filters={"reporter_user": acc.name}, fields=["status"],
                           limit_page_length=500)
     done = sum(1 for r in rows if r.status in DONE_STATUSES)
     rejected = sum(1 for r in rows if r.status == "rejected")
     evidence.append({"key": "history", "ok": done > 0 and rejected == 0, "label": "Riwayat laporan",
                      "detail": f"{len(rows)} laporan · {done} terverifikasi · {rejected} ditolak"})
-
-    level = _decide_level(active, has_phone, verified_reporter, org_ok, bool(ends),
-                          verifier.trust_level if verifier else None)
-    return {"level": level, "label": LEVELS[level], "endorsements": ends, "evidence": evidence}
+    return {"status": status, "count": len(ends), "verifiers": verifiers, "evidence": evidence}
 
 
-def quick_levels(account_names):
-    """Level + public endorsement types for many accounts in a handful of queries (the public report
-    list). Same rule as verification_profile, without the evidence text."""
+def quick_status(account_names):
+    """Status, count and the public 'verified by' list for many accounts in a handful of queries
+    (the public report list). Same rule as verification_profile."""
     accounts = sorted({a for a in account_names if a})
     if not accounts:
         return {}
     accs = {a.name: a for a in frappe.get_all(
         "RN User Account", filters={"name": ["in", accounts]},
-        fields=["name", "role", "status", "phone", "reporter_verified_by", "organization"], limit_page_length=0)}
+        fields=["name", "role", "status", "reporter_verified_by", "reporter_verified_at", "reporter_position",
+                "organization"], limit_page_length=0)}
     member_org = {}
     for m in frappe.get_all("RN Organization Membership", filters={"user_account": ["in", accounts], "status": "approved"},
                             fields=["user_account", "organization"], order_by="creation asc", limit_page_length=0):
@@ -190,25 +206,34 @@ def quick_levels(account_names):
     verifiers = {v.user: v for v in frappe.get_all(
         "RN Verifier Profile", filters={"user": ["in", accounts], "verifier_status": "active"},
         fields=["user", "trust_level"], limit_page_length=0)}
-    types = {}
-    for e in frappe.get_all("RN Verification Endorsement",
+    ends = {}
+    now = frappe.utils.now_datetime()
+    for r in frappe.get_all("RN Verification Endorsement",
                             filters={"target_type": "reporter", "target_id": ["in", accounts], "status": "active"},
-                            fields=["target_id", "verifier", "expires_at"], limit_page_length=0):
-        v = frappe.db.get_value("RN Verifier Profile", e.verifier, ["verifier_type", "verifier_status"], as_dict=True)
+                            fields=["name", "target_id", "verifier", "method", "vouched_via", "statement", "verified_at",
+                                    "expires_at"], order_by="verified_at desc", limit_page_length=0):
+        if r.expires_at and frappe.utils.get_datetime(r.expires_at) < now:
+            continue
+        v = frappe.db.get_value("RN Verifier Profile", r.verifier,
+                                ["title", "verifier_type", "position_title", "verifier_status", "trust_level"],
+                                as_dict=True)
         if not v or v.verifier_status != "active":
             continue
-        if e.expires_at and frappe.utils.get_datetime(e.expires_at) < frappe.utils.now_datetime():
-            continue
-        types.setdefault(e.target_id, []).append(TYPE_LABEL.get(v.verifier_type, "Verifikator"))
+        item = _verifier_item(r, v, False)
+        item["trust_level"] = cint(v.trust_level)
+        ends.setdefault(r.target_id, []).append(item)
     out = {}
     for name in accounts:
         a = accs.get(name)
         if not a:
             continue
         org = a.organization or member_org.get(name)
+        e = ends.get(name, [])
+        approved = a.role == "verified_reporter" or bool(a.reporter_verified_by)
         v = verifiers.get(name)
-        level = _decide_level(a.status == "active", bool(normalize_phone(a.phone)),
-                              a.role == "verified_reporter" or bool(a.reporter_verified_by),
-                              bool(org and org_ok.get(org)), bool(types.get(name)), v.trust_level if v else None)
-        out[name] = {"level": level, "label": LEVELS[level], "types": sorted(set(types.get(name, [])))}
+        status = _status(a.status == "active", approved, bool(org and org_ok.get(org)), e,
+                         v.trust_level if v else None)
+        listing = ([_approver_item(a)] if approved else []) + [
+            {k: x for k, x in i.items() if k != "trust_level"} for i in e]
+        out[name] = {"status": status, "count": len(e), "verifiers": listing}
     return out

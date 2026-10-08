@@ -348,7 +348,21 @@ def session_info():
             data["can_verify"],
         "can_view_sensitive":
             data["can_view_sensitive"],
+        "login_provider": "google" if _is_google_login(data["frappe_user"]) else "password",
+        "phone": _account_phone(data["frappe_user"]),
     }
+
+
+def _is_google_login(user):
+    from rescue_net.services.reporter import is_google_login
+
+    return is_google_login(user)
+
+
+def _account_phone(user):
+    from rescue_net.services.reporter import account_phone, normalize_phone
+
+    return normalize_phone(account_phone(user))
 
 
 @frappe.whitelist(allow_guest=True)

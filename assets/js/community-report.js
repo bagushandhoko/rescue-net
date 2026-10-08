@@ -19,6 +19,7 @@ function communityReportBridgePayload(body) {
     district_code: body.district_code || null,
     village_code: body.village_code || null,
     consent_to_contact: body.consent_to_contact ? 1 : 0,
+    reporter_phone: body.reporter_phone || null,
     location_input_method: body.location_input_method || null,
     create_need: body.create_need ? 1 : 0,
     damage_scale_value: body.damage_scale_value ?? null,
@@ -345,6 +346,7 @@ async function loadReporterSession(form) {
   const loggedIn = !!(session && session.user && session.user !== "Guest");
   RN_REPORTER = loggedIn ? session : null;
   document.body.dataset.rnLogged = loggedIn ? "1" : "";
+  applyPhoneRule(form, loggedIn ? session : null);
   const gate = document.querySelector("[data-report-login]");
   if (gate) gate.hidden = loggedIn;
   // Buttons stay fully visible for guests; pressing one without a session shows the login box instead.
@@ -357,6 +359,25 @@ async function loadReporterSession(form) {
   document.querySelector("[data-my-reports-panel]")?.toggleAttribute("hidden", !loggedIn);
   if (loggedIn) loadMyReports().catch(() => {});
   return loggedIn;
+}
+
+/* Google logins must leave a phone number the verifier can call (owner 2026-10-08). */
+const PHONE_RE = /^(\+?62|0)8[0-9]{8,12}$/;
+function phoneOk(v) { return PHONE_RE.test(String(v || "").replace(/[\s\-.()]/g, "")); }
+
+function applyPhoneRule(form, session) {
+  const input = form.reporter_phone;
+  if (!input) return;
+  const must = !!(session && session.login_provider === "google");
+  form.dataset.phoneRequired = must ? "1" : "";
+  input.required = must;
+  input.placeholder = must ? "Wajib, mis. 081234567890" : "Opsional, menaikkan trust score";
+  const label = input.closest("label");
+  if (label && !label.dataset.phoneLabel) label.dataset.phoneLabel = label.firstChild ? label.firstChild.textContent : "";
+  if (label && label.firstChild && label.firstChild.nodeType === 3) {
+    label.firstChild.textContent = must ? "No HP / WhatsApp (wajib, untuk dihubungi verifikator) " : (label.dataset.phoneLabel || "No HP / WhatsApp ");
+  }
+  if (session && session.phone && !input.value) input.value = session.phone;
 }
 
 function requireLogin() {
@@ -690,6 +711,13 @@ function setupCommunityReportForm() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!requireLogin()) return;
+    if (form.dataset.phoneRequired === "1" && !phoneOk(form.reporter_phone.value)) {
+      showMsg(document.querySelector("[data-community-report-message]"),
+        "Nomor HP wajib diisi (08… atau +62…) agar verifikator dapat menghubungi Anda.", true);
+      form.reporter_phone.focus();
+      form.reporter_phone.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     const method = selectedLocationMethod(form);
     const lat = numberOrNull(form.lat.value);
     const lng = numberOrNull(form.lng.value);

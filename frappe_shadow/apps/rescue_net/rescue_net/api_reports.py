@@ -127,9 +127,14 @@ def submit_community_report(
     disaster_event=None,
     intake_mode="form",
     intake_parser=None,
+    reporter_phone=None,
 ):
     if frappe.session.user == "Guest":
         frappe.throw("Login diperlukan untuk mengirim laporan", frappe.PermissionError)
+
+    from rescue_net.services.reporter import resolve_reporter_phone
+
+    contact_phone = resolve_reporter_phone(reporter_phone)
 
     intake_mode = "narrative" if intake_mode == "narrative" else "form"
     if not (description or "").strip():
@@ -199,6 +204,7 @@ def submit_community_report(
     doc.district_name = district.area_name if district else None
     doc.village_name = village.area_name if village else None
 
+    doc.reporter_phone = contact_phone
     doc.consent_to_contact = cint(consent_to_contact or 0)
     doc.status = "submitted"
     doc.intake_mode = intake_mode

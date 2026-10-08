@@ -355,6 +355,7 @@ def submit_community_report_bridge(
     disaster_event=None,
     intake_mode="form",
     intake_parser=None,
+    reporter_phone=None,
 ):
     _actor()
 
@@ -384,4 +385,5 @@ def submit_community_report_bridge(
         disaster_event=disaster_event,
         intake_mode=intake_mode,
         intake_parser=intake_parser,
+        reporter_phone=reporter_phone,
     )

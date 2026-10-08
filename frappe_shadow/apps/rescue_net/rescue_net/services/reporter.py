@@ -63,3 +63,56 @@ def mark_need(doc, actor):
     doc.reporter_confirmation = "pending"
     doc.reporter_label = reporter_label(actor.name)
     doc.verification_status = "reporter_reported"
+
+
+# ---- Nomor HP pelapor (owner 2026-10-08: wajib bila masuk dengan Google) ----
+
+import re as _re
+
+
+def normalize_phone(raw):
+    """Indonesian mobile number -> '08…' digits only, or None when it cannot be one.
+    Accepts 08…, +62 8…, 62 8…, spaces/dashes/dots/brackets; 9-13 digits after the leading 0."""
+    digits = _re.sub(r"[\s\-\.\(\)]", "", str(raw or ""))
+    if digits.startswith("+"):
+        digits = digits[1:]
+    if not digits.isdigit():
+        return None
+    if digits.startswith("62"):
+        digits = "0" + digits[2:]
+    if not digits.startswith("08") or not 10 <= len(digits) <= 14:
+        return None
+    return digits
+
+
+def is_google_login(user=None):
+    """True when the Frappe user is linked to a Google social login."""
+    user = user or frappe.session.user
+    if user in (None, "", "Guest", "Administrator"):
+        return False
+    return bool(frappe.db.exists("User Social Login", {"parent": user, "provider": "google"}))
+
+
+def account_phone(user=None):
+    user = user or frappe.session.user
+    return frappe.db.get_value("RN User Account", {"frappe_user": user, "status": "active"}, "phone") or None
+
+
+def resolve_reporter_phone(phone, user=None):
+    """The number to store on a report. A Google login MUST have one (typed now or saved on the
+    account); other logins may leave it empty. A valid typed number is remembered on the account
+    when the account has none, so the next report is prefilled."""
+    user = user or frappe.session.user
+    typed = (phone or "").strip()
+    number = normalize_phone(typed) if typed else None
+    if typed and not number:
+        frappe.throw("Nomor HP tidak valid. Contoh: 081234567890 atau +6281234567890.")
+    saved = normalize_phone(account_phone(user))
+    number = number or saved
+    if not number and is_google_login(user):
+        frappe.throw("Nomor HP wajib diisi agar verifikator dapat menghubungi Anda (Anda masuk dengan Google).")
+    if number and not saved:
+        name = frappe.db.get_value("RN User Account", {"frappe_user": user, "status": "active"}, "name")
+        if name:
+            frappe.db.set_value("RN User Account", name, "phone", number, update_modified=False)
+    return number

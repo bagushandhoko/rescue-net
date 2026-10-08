@@ -7074,3 +7074,6 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-narrative-bar .form-message { flex: 1 1 auto; min-width: 0; font-size: 12.5px; }
 .rn-narrative-bar .btn { flex: 0 0 auto; width: auto; padding: 8px 16px; font-size: 13px; border-radius: 10px; cursor: pointer; }
 @media (max-width: 720px) { .rn-narrative-bar { flex-direction: column-reverse; align-items: stretch; padding: 10px; } .rn-narrative-bar .btn { width: 100%; } }
+
+.form-message.is-error { color: #b3261e; font-weight: 700; }
+.rn-narrative-bar .form-message.is-error { font-size: 13px; }

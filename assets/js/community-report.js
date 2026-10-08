@@ -425,15 +425,39 @@ function applyDraft(form, d) {
   form.dataset.drafted = "1";
 }
 
+/* A readable error line: the server's own message first, never a bare "Perlu login" for a logged-in user. */
+function readableError(err) {
+  const p = (err && err.payload) || {};
+  try {
+    const list = JSON.parse(p._server_messages || "[]");
+    const texts = list.map((m) => { try { return JSON.parse(m).message; } catch (_) { return String(m); } }).filter(Boolean);
+    if (texts.length) return texts.join(" ").replace(/<[^>]+>/g, "").trim();
+  } catch (_) { /* fall through */ }
+  if (err && err.status === 403 && RN_REPORTER) {
+    return "Akun Anda belum diizinkan melapor (403). Pastikan akun Rescue-Net Anda aktif atau hubungi admin posko.";
+  }
+  if (err && err.status === 429) return "Terlalu banyak percobaan. Tunggu beberapa menit lalu coba lagi.";
+  return (err && err.message) || "Terjadi kesalahan. Coba lagi.";
+}
+
+function showMsg(el, text, isError) {
+  if (!el) return;
+  el.textContent = text;
+  el.classList.toggle("is-error", !!isError);
+}
+
 async function draftReport(form) {
   const msg = document.querySelector("[data-draft-message]");
   const box = document.querySelector("[data-draft-result]");
   const narrative = form.narrative.value.trim();
   if (narrative.length < 15) {
-    msg.textContent = "Ceritakan sedikit lebih lengkap: apa yang terjadi, di mana, siapa terdampak, apa yang dibutuhkan.";
+    showMsg(msg, "Ceritakan sedikit lebih lengkap (min. 15 karakter): apa yang terjadi, di mana, siapa terdampak, apa yang dibutuhkan.", true);
+    form.narrative.focus();
     return;
   }
-  msg.textContent = "Mengolah uraian…";
+  showMsg(msg, "Mengolah uraian…", false);
+  const draftBtn = document.querySelector("[data-draft-report]");
+  if (draftBtn) { draftBtn.disabled = true; draftBtn.dataset.label = draftBtn.textContent; draftBtn.textContent = "Memproses…"; }
   try {
     const d = await RN_FRAPPE.call("rescue_net.api_reports.draft_community_report", {
       narrative,
@@ -448,9 +472,12 @@ async function draftReport(form) {
     applyDraft(form, d);
     box.innerHTML = draftSummary(d);
     box.hidden = false;
-    msg.textContent = "Form sudah terisi. Periksa lalu tekan Kirim Laporan.";
+    showMsg(msg, "Form sudah terisi. Periksa lalu tekan Kirim Laporan.", false);
+    document.querySelector("[data-report-fields]")?.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
-    msg.textContent = err.message;
+    showMsg(msg, readableError(err), true);
+  } finally {
+    if (draftBtn) { draftBtn.disabled = false; draftBtn.textContent = draftBtn.dataset.label || "Konversi ke Form"; }
   }
 }
 
@@ -770,7 +797,7 @@ function setupCommunityReportForm() {
           .join(", ");
         successText += ` Perkiraan kebutuhan (heuristik): ${list}.`;
       }
-      if (msg) msg.textContent = successText;
+      if (msg) showMsg(msg, successText, false);
       await loadCommunityReports();
       loadMyReports().catch(() => {});
     } catch (err) {
@@ -785,7 +812,7 @@ function setupCommunityReportForm() {
       if (isNetworkFailure && window.RNSync) {
         queueOffline();
       } else if (msg) {
-        msg.textContent = err.message;
+        showMsg(msg, readableError(err), true);
       }
     }
   });

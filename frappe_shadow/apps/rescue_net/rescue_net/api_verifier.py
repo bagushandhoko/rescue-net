@@ -545,6 +545,51 @@ def endorse_posko(request=None, posko=None, method=None, statement=None,
     }
 
 
+@frappe.whitelist(methods=["POST"])
+def endorse_reporter(user_account, method="site_visit", statement=None, vouched_via=None, verification_level=1):
+    """An active verifier (ketua organisasi, aparat, kepala desa, tokoh agama …) vouches for a reporter's
+    account. The statement is required: it says how the verifier knows the person."""
+    actor = _actor()
+    mine = _my_verifier(actor)
+    if not mine or mine.get("_inactive"):
+        frappe.throw("Hanya verifikator aktif yang dapat memverifikasi pelapor.", frappe.PermissionError)
+    if actor.name and actor.name == user_account:
+        frappe.throw("Tidak bisa memverifikasi akun Anda sendiri.", frappe.PermissionError)
+    target = frappe.db.get_value("RN User Account", user_account, ["name", "status", "title"], as_dict=True)
+    if not target or target.status != "active":
+        frappe.throw("Akun pelapor tidak ditemukan atau tidak aktif.")
+    if len((statement or "").strip()) < 10:
+        frappe.throw("Tulis pernyataan singkat: bagaimana Anda mengenal pelapor ini (min. 10 karakter).")
+    method = method if method in ("site_visit", "network_vouch", "document_review") else "site_visit"
+    if method == "network_vouch" and not (vouched_via and str(vouched_via).strip()):
+        frappe.throw("Untuk 'rekomendasi jaringan', isi 'direkomendasikan via' (nama kenalan / verifikator).")
+    if frappe.db.exists("RN Verification Endorsement", {
+        "target_type": "reporter", "target_id": user_account, "verifier": mine["name"], "status": "active",
+    }):
+        frappe.throw("Anda sudah memverifikasi pelapor ini.")
+
+    doc = frappe.new_doc("RN Verification Endorsement")
+    doc.title = f"Verifikasi pelapor: {target.title or user_account}"[:140]
+    doc.target_type = "reporter"
+    doc.target_id = user_account
+    doc.verifier = mine["name"]
+    doc.verifier_display_name = mine["title"]
+    doc.verifier_role = mine.get("verifier_type")
+    doc.method = method
+    doc.vouched_via = vouched_via
+    doc.verification_scope = "reporter_identity"
+    doc.verification_level = max(1, min(5, cint(verification_level)))
+    doc.statement = statement.strip()
+    doc.status = "active"
+    doc.visible_on_profile = 1
+    doc.verified_at = now_datetime()
+    doc.insert(ignore_permissions=True)
+    frappe.db.set_value("RN Verifier Profile", mine["name"], "endorsement_count",
+                        cint(mine.get("endorsement_count")) + 1)
+    _audit("reporter", user_account, "endorse:" + method, "active", statement, actor)
+    return {"endorsement": doc.name, "user_account": user_account, "method": method}
+
+
 @frappe.whitelist()
 def revoke_endorsement(endorsement, reason=None):
     actor = _actor()

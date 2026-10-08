@@ -563,5 +563,8 @@ def reporter_contact(report):
         "whatsapp_url": rc.whatsapp_url(phone, greeting) if phone else None,
         "reason_no_contact": None if phone else (
             "Pelapor tidak bersedia dihubungi." if not consent else "Pelapor belum mengisi nomor HP."),
-        "verification": rc.verification_profile(doc.reporter_user),
+        "reporter_account": doc.reporter_user,
+        "viewer_is_verifier": bool(frappe.db.exists("RN Verifier Profile", {"user": actor.name, "verifier_status": "active"}))
+        if actor.name else False,
+        "verification": rc.verification_profile(doc.reporter_user, names=True),
     }

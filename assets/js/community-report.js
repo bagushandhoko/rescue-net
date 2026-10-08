@@ -584,7 +584,13 @@ function reportCard(report) {
           ${predictedNeedsLine(report.predicted_needs)}
           ${routingLine(report)}
           ${aiStatusLine(report)}
-          <small>${safeText(report.reporter_role)} | ${trustLabel(report.trust_score || 0)} (${report.trust_score || 0})</small>
+          <small>${safeText(report.reporter_name)} · ${safeText(report.reporter_role)} | ${trustLabel(report.trust_score || 0)} (${report.trust_score || 0})</small>
+          ${report.can_contact_reporter ? `
+          <div class="rn-reporter-actions">
+            <button class="btn mini" type="button" data-reporter-view="contact" data-report-id="${report.id}">Hubungi pelapor</button>
+            <button class="rn-link-btn" type="button" data-reporter-view="level" data-report-id="${report.id}">Level verifikasi ›</button>
+          </div>
+          <div class="rn-reporter-panel" data-reporter-panel="${report.id}" hidden></div>` : ""}
         </div>
         <div class="chips">
           <span class="chip ${report.priority === "critical" ? "danger" : report.priority === "urgent" ? "warning" : "neutral"}">${report.priority}</span>
@@ -848,6 +854,52 @@ function setupCommunityReportForm() {
   updateLocationMessage();
 }
 
+function reporterPanelHtml(d, view) {
+  const v = d.verification || { level: 0, label: "", evidence: [] };
+  const steps = [0, 1, 2, 3, 4].map((n) => `<i class="${n <= v.level ? "on" : ""}"></i>`).join("");
+  const contact = d.phone
+    ? `<a class="btn primary mini" href="${escHtml(d.whatsapp_url)}" target="_blank" rel="noopener">WhatsApp</a>
+       <a class="btn mini" href="${escHtml(d.tel_url)}">Telepon ${escHtml(d.phone)}</a>`
+    : `<span class="rn-muted">${escHtml(d.reason_no_contact || "Kontak tidak tersedia.")}</span>`;
+  const evidence = (v.evidence || []).map((e) =>
+    `<li class="${e.ok ? "ok" : "no"}"><b>${escHtml(e.label)}</b> — ${escHtml(e.detail)}</li>`).join("");
+  return `
+    <div class="rn-rp-section" data-section="contact" ${view === "contact" ? "" : "hidden"}>
+      <div class="rn-rp-title">Hubungi ${escHtml(d.reporter_name || "pelapor")}</div>
+      <div class="rn-rp-row">${contact}</div>
+      <small class="rn-muted">Pembukaan kontak ini dicatat. Hubungi hanya untuk keperluan verifikasi laporan.</small>
+    </div>
+    <div class="rn-rp-section" data-section="level" ${view === "level" ? "" : "hidden"}>
+      <div class="rn-rp-title">Level verifikasi pelapor: <b>${v.level} · ${escHtml(v.label)}</b></div>
+      <div class="rn-rp-steps" aria-label="Level ${v.level} dari 4">${steps}</div>
+      <ul class="rn-rp-evidence">${evidence}</ul>
+      <small class="rn-muted">Dihitung dari bukti di atas. No HP belum dicek OTP.
+        <a href="verification-approval.html">Sistem verifikasi</a></small>
+    </div>`;
+}
+
+async function toggleReporterPanel(button) {
+  const id = button.getAttribute("data-report-id");
+  const view = button.getAttribute("data-reporter-view");
+  const panel = document.querySelector(`[data-reporter-panel="${CSS.escape(id)}"]`);
+  if (!panel) return;
+  if (!panel.hidden && panel.dataset.view === view) { panel.hidden = true; return; }
+  panel.dataset.view = view;
+  panel.hidden = false;
+  if (!panel.dataset.loaded) {
+    panel.innerHTML = '<span class="rn-muted">Memuat…</span>';
+    try {
+      const d = await RN_FRAPPE.call("rescue_net.api_reports.reporter_contact", { report: id }, { method: "POST" });
+      panel.dataset.data = JSON.stringify(d);
+      panel.dataset.loaded = "1";
+    } catch (err) {
+      panel.innerHTML = `<span class="rn-error">${escHtml(readableError(err))}</span>`;
+      return;
+    }
+  }
+  panel.innerHTML = reporterPanelHtml(JSON.parse(panel.dataset.data), view);
+}
+
 function setupCommunityReportActions() {
   const say = (text, isError) => {
     const box = document.querySelector("[data-community-queue-message]");
@@ -857,6 +909,8 @@ function setupCommunityReportActions() {
   };
 
   document.addEventListener("click", async (e) => {
+    const reporterBtn = e.target.closest("[data-reporter-view]");
+    if (reporterBtn) { toggleReporterPanel(reporterBtn); return; }
     const more = e.target.closest("[data-queue-more]");
     if (more) {
       const hidden = [...document.querySelectorAll(".community-report-item.is-later")];

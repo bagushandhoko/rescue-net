@@ -7077,3 +7077,19 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 
 .form-message.is-error { color: #b3261e; font-weight: 700; }
 .rn-narrative-bar .form-message.is-error { font-size: 13px; }
+
+/* Reporter contact + verification level inside a queue card */
+.rn-reporter-actions { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.rn-reporter-actions .btn.mini, .rn-reporter-panel .btn.mini { width: auto; padding: 5px 12px; font-size: 12.5px; border-radius: 9px; cursor: pointer; display: inline-block; text-decoration: none; }
+.rn-link-btn { background: none; border: 0; padding: 0; color: #c4442f; font-weight: 700; font-size: 13px; cursor: pointer; text-decoration: underline; }
+.rn-reporter-panel { margin-top: 8px; padding: 10px 12px; border: 1px dashed rgba(232,117,88,.55); border-radius: 10px; background: rgba(255,240,232,.55); font-size: 13px; }
+.rn-reporter-panel .rn-rp-title { font-weight: 700; margin-bottom: 6px; }
+.rn-reporter-panel .rn-rp-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+.rn-reporter-panel .rn-rp-steps { display: flex; gap: 4px; margin-bottom: 8px; }
+.rn-reporter-panel .rn-rp-steps i { flex: 1; height: 6px; border-radius: 3px; background: rgba(0,0,0,.12); }
+.rn-reporter-panel .rn-rp-steps i.on { background: #e8755a; }
+.rn-reporter-panel .rn-rp-evidence { margin: 0 0 6px; padding: 0; list-style: none; display: grid; gap: 3px; }
+.rn-reporter-panel .rn-rp-evidence li::before { content: "✓ "; color: #2f8f5b; font-weight: 700; }
+.rn-reporter-panel .rn-rp-evidence li.no::before { content: "– "; color: #999; }
+.rn-reporter-panel .rn-muted { color: var(--muted); font-size: 12.5px; }
+.rn-reporter-panel .rn-error { color: #b3261e; font-weight: 600; }

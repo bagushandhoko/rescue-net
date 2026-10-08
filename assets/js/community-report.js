@@ -859,9 +859,9 @@ function setupCommunityReportForm() {
 
 /* Same shared badge as the posko pages (RNVerifBadge): status from the Jaringan Verifikator.
    A reporter nobody has vouched for shows no badge. */
-/* A person verified only through their organisation is NOT personally vouched for: say so. */
+/* Wording for a person (the shared posko labels talk about a posko). */
 const REPORTER_TEXT = {
-  organization_verified: { label: "Anggota organisasi terverifikasi", hint: "Organisasinya terverifikasi; orangnya belum diverifikasi verifikator perorangan" },
+  organization_verified: { label: "Terverifikasi organisasi", hint: "Mendaftar lewat organisasi yang terverifikasi, identitasnya dikonfirmasi organisasi" },
   community_verified: { label: "Diverifikasi verifikator", hint: "Dikenal / dijamin oleh verifikator di Jaringan Verifikator" },
   official_verified: { label: "Diverifikasi resmi", hint: "Dijamin oleh 2+ verifikator atau verifikator pemerintah" }
 };
@@ -923,7 +923,7 @@ function reporterPanelHtml(d, view) {
     <div class="rn-rp-section" data-section="level" ${view === "level" || d.local ? "" : "hidden"}>
       <div class="rn-rp-title">Verifikasi pelapor: ${pill}</div>
       <div class="rn-rp-title">Diverifikasi oleh</div>
-      ${ends ? `<ul class="rn-rp-ends">${ends}</ul>` : `<p class="rn-muted">Belum ada verifikator perorangan yang memverifikasi pelapor ini.</p>`}
+      ${ends ? `<ul class="rn-rp-ends">${ends}</ul>` : `<p class="rn-muted">Belum ada organisasi atau verifikator yang memverifikasi pelapor ini.</p>`}
       ${evidence ? `<ul class="rn-rp-evidence">${evidence}</ul>` : ""}
       <small class="rn-muted">Status mengikuti Jaringan Verifikator yang sama dengan posko.
         <a href="verifikator.html">Lihat Jaringan Verifikator</a></small>

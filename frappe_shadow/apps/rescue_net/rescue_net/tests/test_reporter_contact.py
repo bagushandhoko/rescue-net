@@ -201,14 +201,34 @@ def api_call_as(user, report):
         return api.reporter_contact(report)
 
 
-class TestOrgExplainsTheBadge(RNTestCase):
-    def test_verified_org_member_sees_the_org_under_verified_by(self):
-        org = make_org(verification_status="verified")
+class TestOrgRegistration(RNTestCase):
+    """Verified through how they registered: member approved + identity confirmed by a verified organisation."""
+
+    def member(self, org, confirmed):
         member = make_actor(role="citizen", org=org)
+        frappe.db.set_value("RN Organization Membership", {"user_account": member.account}, "member_verified",
+                            1 if confirmed else 0)
+        return member
+
+    def test_confirmed_member_of_a_verified_org_is_verified_and_the_org_is_listed(self):
+        org = make_org(verification_status="verified")
+        member = self.member(org, confirmed=True)
         prof = rc.verification_profile(member.account)
         self.assertEqual(prof["status"], "organization_verified")
         self.assertEqual([v["role_label"] for v in prof["verifiers"]], ["Organisasi terverifikasi"])
         self.assertEqual(prof["verifiers"][0]["verifier"], org.title)
         quick = rc.quick_status([member.account])[member.account]
-        self.assertEqual(quick["status"], "organization_verified")
-        self.assertEqual(quick["verifiers"][0]["role_label"], "Organisasi terverifikasi")
+        self.assertEqual((quick["status"], quick["verifiers"][0]["role_label"]),
+                         ("organization_verified", "Organisasi terverifikasi"))
+
+    def test_joined_but_identity_not_confirmed_is_not_verified(self):
+        member = self.member(make_org(verification_status="verified"), confirmed=False)
+        self.assertEqual(rc.verification_profile(member.account)["status"], "self_reported")
+        self.assertEqual(rc.quick_status([member.account])[member.account]["status"], "self_reported")
+        org_line = next(e for e in rc.verification_profile(member.account)["evidence"] if e["key"] == "org")
+        self.assertIn("identitas belum dikonfirmasi", org_line["detail"])
+
+    def test_confirmed_by_an_unverified_org_is_not_verified(self):
+        member = self.member(make_org(verification_status="pending"), confirmed=True)
+        self.assertEqual(rc.verification_profile(member.account)["status"], "self_reported")
+        self.assertEqual(rc.quick_status([member.account])[member.account]["status"], "self_reported")

@@ -8,7 +8,9 @@ pelapor bersedia dihubungi (consent_to_contact). Setiap pembukaan dicatat di RN 
 Status verifikasi pelapor memakai kosakata yang SAMA dengan posko (RN Posko.verification_status) dan lencana
 bersama RNVerifBadge — satu sistem dengan Jaringan Verifikator (RN Verifier Profile + RN Verification Endorsement):
   self_reported         — belum ada yang memverifikasi (lencana disembunyikan)
-  organization_verified — anggota organisasi yang terverifikasi
+  organization_verified — registrasi lewat organisasi: keanggotaan disetujui DAN identitas anggota dikonfirmasi
+                          organisasi (RN Organization Membership.member_verified), dan organisasinya terverifikasi.
+                          Hanya bergabung / disetujui tanpa konfirmasi identitas TIDAK cukup
   community_verified    — Pelapor Terverifikasi (disetujui) atau didukung 1 verifikator aktif
   official_verified     — didukung >= 2 verifikator aktif, atau 1 verifikator pemerintah (trust >= 2),
                           atau pelapor sendiri verifikator senior (trust >= 2)
@@ -22,7 +24,8 @@ from frappe.utils import cint
 from rescue_net.services.reporter import is_google_login, normalize_phone
 
 DONE_STATUSES = ("verified", "converted_to_action")
-VERIFIED_ORG = ("verified", "approved", "trusted", "active_verified")
+VERIFIED_ORG = ("verified", "approved", "trusted", "active_verified", "community_verified", "organization_verified",
+                "official_verified")
 TYPE_LABEL = {
     "government": "Pemerintah / aparat",
     "community_leader": "Tokoh masyarakat / ketua organisasi",
@@ -128,11 +131,11 @@ def _approver_item(acc):
             "verifier_id": None}
 
 
-def _org_item(title):
-    """A verified organisation vouches for its member: shown in 'Diverifikasi oleh' so the badge is explained."""
+def _org_item(title, verified_at=None):
+    """A verified organisation confirmed this member's identity when they registered through it."""
     return {"verifier": title, "position": None, "role": "organization", "role_label": "Organisasi terverifikasi",
-            "method": "document_review", "method_label": "Keanggotaan organisasi", "verified_at": None,
-            "verifier_id": None}
+            "method": "document_review", "method_label": "Identitas anggota dikonfirmasi organisasi",
+            "verified_at": str(verified_at)[:10] if verified_at else None, "verifier_id": None}
 
 
 def verification_profile(account_name, detail=False):
@@ -152,19 +155,29 @@ def verification_profile(account_name, detail=False):
 
     active = acc.status == "active"
     approved = acc.role == "verified_reporter" or bool(acc.reporter_verified_by)
-    org_name = acc.organization or frappe.db.get_value(
-        "RN Organization Membership", {"user_account": acc.name, "status": "approved"}, "organization")
-    org = frappe.db.get_value("RN Organization", org_name,
-                              ["title", "verification_status", "identity_verification_status"],
-                              as_dict=True) if org_name else None
-    org_ok = bool(org) and (str(org.verification_status or "").lower() in VERIFIED_ORG or
-                            str(org.identity_verification_status or "").lower() in VERIFIED_ORG)
+    memberships = frappe.get_all(
+        "RN Organization Membership", filters={"user_account": acc.name, "status": "approved"},
+        fields=["organization", "member_verified", "verified_at", "approved_by"], order_by="creation asc",
+        limit_page_length=20)
+    org_titles = {}
+    org_flags = {}
+    for m in memberships:
+        o = frappe.db.get_value("RN Organization", m.organization,
+                                ["title", "verification_status", "identity_verification_status"], as_dict=True)
+        if o:
+            org_titles[m.organization] = o.title
+            org_flags[m.organization] = (str(o.verification_status or "").lower() in VERIFIED_ORG or
+                                         str(o.identity_verification_status or "").lower() in VERIFIED_ORG)
+    vouching = next((m for m in memberships if cint(m.member_verified) and org_flags.get(m.organization)), None)
+    org_ok = vouching is not None
+    org = frappe._dict(title=org_titles.get(vouching.organization)) if vouching else None
     ends = endorsements(account_name, detail=detail)
     verifier = frappe.db.get_value("RN Verifier Profile", {"user": acc.name, "verifier_status": "active"},
                                    ["verifier_type", "trust_level"], as_dict=True)
     status = _status(active, approved, org_ok, ends, verifier.trust_level if verifier else None)
 
-    verifiers = ([_approver_item(acc)] if approved else []) + ([_org_item(org.title)] if org_ok else []) + [
+    verifiers = ([_approver_item(acc)] if approved else []) + (
+        [_org_item(org.title, vouching.verified_at)] if org_ok else []) + [
         {k: v for k, v in e.items() if k != "trust_level"} for e in ends]
 
     evidence = [{"key": "account", "ok": active, "label": "Akun Rescue-Net",
@@ -200,17 +213,20 @@ def quick_status(account_names):
         "RN User Account", filters={"name": ["in", accounts]},
         fields=["name", "role", "status", "reporter_verified_by", "reporter_verified_at", "reporter_position",
                 "organization"], limit_page_length=0)}
-    member_org = {}
-    for m in frappe.get_all("RN Organization Membership", filters={"user_account": ["in", accounts], "status": "approved"},
-                            fields=["user_account", "organization"], order_by="creation asc", limit_page_length=0):
-        member_org.setdefault(m.user_account, m.organization)
-    orgs = set(filter(None, [a.organization for a in accs.values()] + list(member_org.values())))
+    mships = frappe.get_all(
+        "RN Organization Membership", filters={"user_account": ["in", accounts], "status": "approved", "member_verified": 1},
+        fields=["user_account", "organization", "verified_at"], order_by="creation asc", limit_page_length=0)
+    orgs = {m.organization for m in mships}
     org_rows = frappe.get_all("RN Organization", filters={"name": ["in", list(orgs)]},
                               fields=["name", "title", "verification_status", "identity_verification_status"],
                               limit_page_length=0) if orgs else []
     org_ok = {o.name: (str(o.verification_status or "").lower() in VERIFIED_ORG or
                        str(o.identity_verification_status or "").lower() in VERIFIED_ORG) for o in org_rows}
     org_title = {o.name: o.title for o in org_rows}
+    vouching = {}
+    for m in mships:
+        if org_ok.get(m.organization):
+            vouching.setdefault(m.user_account, m)
     verifiers = {v.user: v for v in frappe.get_all(
         "RN Verifier Profile", filters={"user": ["in", accounts], "verifier_status": "active"},
         fields=["user", "trust_level"], limit_page_length=0)}
@@ -235,14 +251,13 @@ def quick_status(account_names):
         a = accs.get(name)
         if not a:
             continue
-        org = a.organization or member_org.get(name)
+        vm = vouching.get(name)
         e = ends.get(name, [])
         approved = a.role == "verified_reporter" or bool(a.reporter_verified_by)
         v = verifiers.get(name)
-        status = _status(a.status == "active", approved, bool(org and org_ok.get(org)), e,
-                         v.trust_level if v else None)
+        status = _status(a.status == "active", approved, vm is not None, e, v.trust_level if v else None)
         listing = ([_approver_item(a)] if approved else []) + \
-            ([_org_item(org_title.get(org))] if org and org_ok.get(org) else []) + [
+            ([_org_item(org_title.get(vm.organization), vm.verified_at)] if vm else []) + [
             {k: x for k, x in i.items() if k != "trust_level"} for i in e]
         out[name] = {"status": status, "count": len(e), "verifiers": listing}
     return out

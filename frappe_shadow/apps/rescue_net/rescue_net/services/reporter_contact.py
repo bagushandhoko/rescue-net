@@ -188,9 +188,17 @@ def verification_profile(account_name, detail=False):
                          "detail": "Google" if is_google_login(acc.frappe_user) else "Kata sandi"})
         evidence.append({"key": "phone", "ok": has_phone, "label": "No HP",
                          "detail": "Terisi (belum dicek OTP)" if has_phone else "Belum diisi"})
-    if org:
-        evidence.append({"key": "org", "ok": org_ok, "label": "Organisasi",
-                         "detail": f"{org.title} — organisasi {'terverifikasi' if org_ok else 'belum terverifikasi'}"})
+    for m in memberships:
+        title = org_titles.get(m.organization, m.organization)
+        confirmed = bool(cint(m.member_verified))
+        if confirmed and org_flags.get(m.organization):
+            detail_txt = f"{title} — organisasi terverifikasi, identitas anggota dikonfirmasi organisasi"
+        elif confirmed:
+            detail_txt = f"{title} — identitas anggota dikonfirmasi, tetapi organisasinya belum terverifikasi"
+        else:
+            detail_txt = f"{title} — anggota disetujui bergabung, identitas belum dikonfirmasi organisasi"
+        evidence.append({"key": "org", "ok": confirmed and bool(org_flags.get(m.organization)),
+                         "label": "Organisasi", "detail": detail_txt})
     if verifier:
         evidence.append({"key": "verifier", "ok": cint(verifier.trust_level) >= 2, "label": "Anggota jaringan verifikator",
                          "detail": f"{TYPE_LABEL.get(verifier.verifier_type, verifier.verifier_type)}, trust {cint(verifier.trust_level)}"})

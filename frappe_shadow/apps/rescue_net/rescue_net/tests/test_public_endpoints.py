@@ -76,6 +76,7 @@ GUEST_ENDPOINTS = {
     "api_tender.submit_bid", "api_tender.tender_board", "api_tender.tender_detail",
     "api_verification.approval_item_detail", "api_verification.approval_queue",
     "api_verifier.posko_verification_public", "api_verifier.verifier_directory",
+    "api_verifier.endorsements_overview",  # reviewed: reporter targets masked, their statements only for SM/verifier (test_reporter_contact)
     "api_volunteer.dashboard", "api_volunteer.register_volunteer", "api_volunteer.volunteer_board",
 }
 

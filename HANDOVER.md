@@ -55,8 +55,10 @@ serves ONLY `index.html`, `manifest`, `sw.js`, `pages/`, `assets/` under `/rescu
 (root path). Desk, `/api/resource`, `/login`, files, repo content, `*.zip|*.bak|@eaDir|dotfiles` = 404; login limited to 10/min per IP. 12 simulation
 accounts (10 `sim-*@example.org`, `ld1/ld2.demo@rescue-net.local`) set `enabled = 0` (not deleted; their RN User Account rows are still `active`).
 Production `site_config.json`: `allow_cors` `"*"` -> `"https://rescue-net.online"` (backup kept off-repo, 600). Tailscale access unaffected (same-origin).
-**Pending owner:** Cloudflare route `rescue-net.online` + `www` -> HTTP `localhost:8182` (+ DNS CNAME to the tunnel); then Claude changes `host_name`
-(still `https://osiun.tail251e1e.ts.net:8443`, decides the Google redirect_uri) to `https://rescue-net.online`, owner adds that redirect URI in Google Cloud.
+Cloudflare route + DNS for `rescue-net.online` / `www` live (HTTP `localhost:8182`); site `host_name` changed 2026-10-08 13:05 to `https://rescue-net.online`
+(was `https://osiun.tail251e1e.ts.net:8443`; backup off-repo, 600), so the Google redirect_uri is now
+`https://rescue-net.online/api/method/frappe.integrations.oauth2_logins.login_via_google`.
+**Pending owner:** add that redirect URI (and origin `https://rescue-net.online`) in Google Cloud Console, then try a real Google login. Google login started from the old Tailscale host now returns to rescue-net.online.
 Known: the Frappe `sid` cookie has no `Secure` flag (gunicorn does not trust `X-Forwarded-Proto` from the docker network); old native builds that call the API
 cross-origin are blocked by the new CORS list.
 

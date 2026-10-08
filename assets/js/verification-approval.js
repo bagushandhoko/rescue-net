@@ -16,7 +16,7 @@
   function fmtTime(t) { return window.RNUI.fmtTime(t); }
 
   var PAGE_SIZE = 8;
-  var state = { queue: [], filtered: [], kind: "Semua", page: 0, selected: null };
+  var state = { queue: [], filtered: [], kind: "Semua", page: 0, selected: null, q: "", status: "", risk: "" };
   var QUEUE_CACHE = null;
 
   function statusPillClass(status) {
@@ -46,9 +46,26 @@
   }
 
   function applyFilter() {
-    state.filtered = state.kind === "Semua" ? state.queue : state.queue.filter(function (r) { return r.kind === state.kind; });
+    var q = state.q.trim().toLowerCase();
+    state.filtered = state.queue.filter(function (r) {
+      if (state.kind !== "Semua" && r.kind !== state.kind) return false;
+      if (state.status && String(r.status || "") !== state.status) return false;
+      if (state.risk && String(r.risk || "") !== state.risk) return false;
+      if (q && [r.title, r.owner, r.kind, r.name, r.status].join(" ").toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
     state.page = 0;
     renderQueue();
+  }
+
+  // search + status + risk bar above the queue (Pengajuan Verifikasi > Antrian Persetujuan)
+  function setupQueueFilters() {
+    var map = { "#vxQueueQ": "q", "#vxQueueStatus": "status", "#vxQueueRisk": "risk" };
+    Object.keys(map).forEach(function (sel) {
+      var el = $(sel);
+      if (!el) return;
+      el.addEventListener(el.tagName === "INPUT" ? "input" : "change", function () { state[map[sel]] = el.value; applyFilter(); });
+    });
   }
 
   function setupTabs() {
@@ -223,6 +240,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     if (!window.RN_FRAPPE) return;
     setupTabs();
+    setupQueueFilters();
     setupActions();
     loadQueue()
       .then(function () {

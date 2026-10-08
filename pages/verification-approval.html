@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
-  <title>Rescue-Net | Verification & Approval</title>
+  <title>Rescue-Net | Verifikasi</title>
   <link rel="stylesheet" href="../assets/css/style.css?v=vax-20261007">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
@@ -39,7 +39,7 @@
       <a href="alat-kerja.html?event=event-sim-001">Kebutuhan &amp; Manajemen Alat Kerja</a>
       <a href="resource-profile.html?event=event-sim-001">Profil Sumber Daya</a>
       <a href="evidence.html?event=event-sim-001">Evidence</a>
-      <a class="active" href="verification-approval.html?event=event-sim-001">Verification</a>
+      <a class="active" href="verification-approval.html?event=event-sim-001">Verifikasi</a>
       <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
       <a href="ai-settings.html">AI Settings</a>
       <a href="data-consolidation.html?event=event-sim-001">Sync Data Konsolidasi</a>
@@ -47,19 +47,32 @@
     </nav>
   </aside>
 
-  <main class="main rn-dense rn-vax-page">
+  <main class="main rn-dense rn-vax-page rn-vx-hub">
     <header class="topbar">
-      <div class="rn-page-mobile-title">Verification & Approval</div>
-
+      <div class="rn-page-mobile-title">Verifikasi</div>
       <div>
-        <p class="eyebrow">Verification & Approval</p>
-        <h2>Verification & Approval</h2>
-        <p class="subtitle">Pusat persetujuan untuk data, aktivitas, dan bukti di seluruh Rescue-Net.</p>
+        <p class="eyebrow">Verifikasi &amp; Jaringan Verifikator</p>
+        <h2>Verifikasi</h2>
+        <p class="subtitle">Satu tempat untuk pengajuan verifikasi, para verifikator, dan data hasil verifikasi — data operasional, posko, organisasi, dan pelapor.</p>
         <p class="subtitle" id="verifStatus">Memuat…</p>
+        <p class="subtitle" id="vfStatus"></p>
       </div>
-      <div class="status-pill" id="verifUpdated">Verifikasi · Live</div>
+      <div class="vx-pills"><div class="status-pill" id="verifUpdated">Verifikasi · Live</div><div class="status-pill" id="vfRole">—</div></div>
     </header>
 
+    <nav class="vx-groups" role="tablist" aria-label="Menu verifikasi">
+      <button type="button" class="vx-group-btn" data-group="pengajuan" role="tab"><span>Pengajuan Verifikasi</span><small>Antrian, permintaan, pendaftaran</small></button>
+      <button type="button" class="vx-group-btn" data-group="verifikator" role="tab"><span>Verifikator</span><small>Direktori, pendaftaran, registri</small></button>
+      <button type="button" class="vx-group-btn" data-group="hasil" role="tab"><span>Data Hasil Verifikasi</span><small>Endorsement, objek, jejak tindakan</small></button>
+    </nav>
+
+    <div class="vx-subnav" data-group="pengajuan"><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="antrian" data-count-for="#queueCount">Antrian Persetujuan<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="permintaan" data-count-for="#vfInbox">Permintaan ke Verifikator<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="pelapor" data-count-for="#vfReporters">Pelapor Terverifikasi<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="permohonan" data-count-for="#vfPending">Permohonan Jadi Verifikator<b class="vx-badge" hidden></b></button></div>
+    <div class="vx-subnav" data-group="verifikator" hidden><button type="button" class="vx-sub-btn" data-group="verifikator" data-sub="direktori" data-count-for="#vfDirectory">Direktori<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="verifikator" data-sub="daftar">Jadi Verifikator</button><button type="button" class="vx-sub-btn" data-group="verifikator" data-sub="registri">Registri (riwayat)</button></div>
+    <div class="vx-subnav" data-group="hasil" hidden><button type="button" class="vx-sub-btn" data-group="hasil" data-sub="endorsement" data-count-for="#vxEndorseBody">Endorsement<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="hasil" data-sub="objek">Posko, Organisasi &amp; Sumber Daya</button><button type="button" class="vx-sub-btn" data-group="hasil" data-sub="jejak">Jejak Tindakan &amp; Pencabutan</button></div>
+
+    <div class="vx-panes">
+<div class="vx-pane" data-group="pengajuan" data-sub="antrian">
+<div class="vx-pane-head"><h3>Antrian Persetujuan Data</h3><p>Pengajuan data yang menunggu keputusan: user, organisasi, posko, kebutuhan, pengeluaran, dan bukti. Pilih baris untuk detail, alur persetujuan, dan jejak audit.</p></div>
     <section class="kpi-grid rn-va-kpi">
       <button type="button" class="kpi-card rn-kpi-btn" data-kind="user">
         <span class="kpi-icon" data-icon="user"></span><span>User Pending</span><strong id="kpiUser">-</strong><small>menunggu review</small>
@@ -81,6 +94,7 @@
       </button>
     </section>
 
+<div class="vx-filter vx-filter-queue"><input type="search" id="vxQueueQ" placeholder="Cari nama / pembuat / jenis…" aria-label="Cari"><select id="vxQueueStatus" aria-label="Filter status"><option value="">Semua status</option><option value="pending">Menunggu</option><option value="needs_correction">Revisi</option><option value="escalated">Dieskalasi</option><option value="approved">Disetujui</option><option value="rejected">Ditolak</option></select><select id="vxQueueRisk" aria-label="Filter risiko"><option value="">Semua risiko</option><option value="Tinggi">Risiko tinggi</option><option value="Sedang">Sedang</option><option value="Rendah">Rendah</option></select></div>
     <section class="content-grid rn-va-row">
       <div class="panel">
         <div class="panel-header">
@@ -134,37 +148,104 @@
       <p class="rn-muted" id="actionMsg"></p>
     </section>
 
-    <details class="panel rn-input-drawer">
-  <summary>
-    <h3>Trusted Verifier Network (Riwayat)</h3>
-    <p>Jaringan endorsement identitas terpisah — verifikasi keanggotaan/identitas, bukan persetujuan data di atas.</p>
-  </summary>
 
-  <section class="content-grid">
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <h3>Verifier Requests</h3>
-          <p>Permintaan verifikasi identitas/keanggotaan. Ini tidak otomatis memverifikasi laporan atau kebutuhan.</p>
-        </div>
+</div>
+<div class="vx-pane" data-group="pengajuan" data-sub="permintaan" hidden>
+<div class="vx-pane-head"><h3>Permintaan ke Verifikator</h3><p>Permintaan verifikasi posko: kotak masuk untuk verifikator, dan pengajuan verifikasi untuk posko yang Anda kelola.</p></div>
+<div class="vx-filter" data-vx-for="#vfInbox"><input type="search" data-vx-q placeholder="Cari permintaan (posko, wilayah)…" aria-label="Cari"><select data-vx-s aria-label="Filter status"><option value="">Semua status</option><option value="pending">Menunggu</option><option value="accepted">Diterima</option><option value="completed">Selesai</option><option value="rejected">Ditolak</option><option value="cancelled">Dibatalkan</option></select><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide" id="vfInboxSection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Kotak Masuk Verifikator</h3><p id="vfInboxSub">Permintaan verifikasi yang ditujukan ke Anda + permintaan terbuka di wilayah Anda.</p></div><span class="chip neutral" id="vfInboxCount">—</span></div>
+        <div id="vfInbox"></div>
       </div>
-      <div class="event-list" id="trustedVerifierRequests"></div>
-    </div>
-    <div class="panel">
-      <h3>Endorsements</h3>
-      <div class="event-list" id="trustedEndorsements"></div>
-    </div>
-  </section>
-
-  <section class="content-grid">
-    <div class="panel">
-      <div class="panel-header">
-        <div>
-          <h3>Verifier Registry</h3>
-          <p>Calon verifikator harus disetujui dan diberi scope sebelum boleh memberikan endorsement.</p>
-        </div>
+    </section><div class="vx-filter" data-vx-for="#vfMyRequests"><input type="search" data-vx-q placeholder="Cari permintaan saya…" aria-label="Cari"><select data-vx-s aria-label="Filter status"><option value="">Semua status</option><option value="pending">Menunggu</option><option value="accepted">Diterima</option><option value="completed">Selesai</option><option value="rejected">Ditolak</option><option value="cancelled">Dibatalkan</option></select><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide" id="vfMyPoskoSection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Verifikasi Posko Saya</h3><p>Status permintaan verifikasi untuk posko yang Anda kelola.</p></div></div>
+        <form class="rn-form" id="vfRequestForm" style="margin-bottom:12px">
+          <div class="form-grid">
+            <label>Posko
+              <select name="posko" required></select>
+            </label>
+            <label>Verifikator (opsional — kosong = terbuka utk wilayah)
+              <select name="verifier"><option value="">— terbuka untuk wilayah —</option></select>
+            </label>
+            <label>Metode
+              <select name="method">
+                <option value="site_visit">Kunjungan langsung</option>
+                <option value="network_vouch">Rekomendasi jaringan (member-get-member)</option>
+              </select>
+            </label>
+            <label>Catatan<input name="note" placeholder="Alamat, kontak, waktu bisa dikunjungi…"></label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="submit">Minta Verifikasi</button><span class="rn-muted" data-req-msg></span></div>
+        </form>
+        <div id="vfMyRequests"></div>
       </div>
-      <form class="rn-form" id="verifierRegistrationForm">
+    </section>
+</div>
+<div class="vx-pane" data-group="pengajuan" data-sub="pelapor" hidden>
+<div class="vx-pane-head"><h3>Pendaftaran Pelapor Terverifikasi</h3><p>Petugas BNPB/BPBD, Polri, TNI, perangkat desa, atau warga peduli yang ingin melaporkan kebutuhan di semua posko.</p></div>
+<div class="vx-filter" data-vx-for="#vfReporters"><input type="search" data-vx-q placeholder="Cari nama / instansi / wilayah…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide" id="vfReporterSection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Permohonan Pelapor Terverifikasi</h3><p>Petugas BNPB/BPBD, Polri, TNI, perangkat desa, atau warga peduli yang ingin melaporkan kebutuhan di semua posko. Hubungi orangnya / referensinya dulu, lalu setujui. System Manager atau verifikator senior (trust ≥ 2).</p></div><span class="chip neutral" id="vfReporterCount">—</span></div>
+        <div id="vfReporters"></div>
+      </div>
+    </section>
+</div>
+<div class="vx-pane" data-group="pengajuan" data-sub="permohonan" hidden>
+<div class="vx-pane-head"><h3>Permohonan Jadi Verifikator</h3><p>System Manager atau verifikator senior (trust ≥ 2) menyetujui permohonan.</p></div>
+<div class="vx-filter" data-vx-for="#vfPending"><input type="search" data-vx-q placeholder="Cari nama / wilayah / jabatan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide" id="vfApproveSection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Permohonan Jadi Verifikator</h3><p>System Manager atau verifikator senior (trust ≥ 2) menyetujui.</p></div><span class="chip neutral" id="vfPendingCount">—</span></div>
+        <div id="vfPending"></div>
+      </div>
+    </section>
+</div>
+<div class="vx-pane" data-group="verifikator" data-sub="direktori" hidden>
+<div class="vx-pane-head"><h3>Direktori Verifikator</h3><p>Verifikator aktif per wilayah. Cari berdasarkan wilayah atau nama, dan saring menurut jenis.</p></div>
+<div class="vx-filter" data-vx-for="#vfDirectory"><input type="search" data-vx-q placeholder="Cari nama / jabatan / wilayah…" aria-label="Cari"><select data-vx-s aria-label="Filter status"><option value="">Semua status</option><option value="Pemerintah">Pemerintah</option><option value="Tokoh Masyarakat">Tokoh masyarakat</option><option value="Tokoh Agama">Tokoh agama</option><option value="Profesional">Profesional</option><option value="Tokoh Publik">Tokoh publik</option><option value="Lainnya">Lainnya</option><option value="active">Aktif</option><option value="pending">Menunggu</option></select><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide">
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3>Direktori Verifikator</h3><p>Cari verifikator aktif per wilayah.</p></div>
+          <input id="vfSearch" placeholder="Cari wilayah… (mis. Aceh Barat)" style="max-width:220px">
+        </div>
+        <div class="vf-grid" id="vfDirectory"></div>
+      </div>
+    </section>
+</div>
+<div class="vx-pane" data-group="verifikator" data-sub="daftar" hidden>
+<div class="vx-pane-head"><h3>Jadi Verifikator</h3><p>Untuk pemerintah setempat atau tokoh publik yang bersedia memverifikasi posko dan pelapor di wilayahnya.</p></div>
+<section class="content-grid rn-md-wide" id="vfApplySection">
+      <div class="panel">
+        <div class="panel-header"><div><h3>Jadi Verifikator</h3><p>Untuk pemerintah setempat atau tokoh publik yang bersedia memverifikasi posko di wilayahnya.</p></div></div>
+        <form class="rn-form" id="vfApplyForm">
+          <div class="form-grid">
+            <label>Nama / Sebutan<input name="display_name" required placeholder="Keuchik Gampong X / Kapolsek Y"></label>
+            <label>Jenis
+              <select name="verifier_type">
+                <option value="government">Pemerintah (lurah/desa/polsek/camat)</option>
+                <option value="community_leader">Tokoh masyarakat</option>
+                <option value="religious_leader">Tokoh agama</option>
+                <option value="professional">Profesional (dokter/insinyur/…)</option>
+                <option value="public_figure">Tokoh publik lain</option>
+              </select>
+            </label>
+            <label>Jabatan / Peran Publik<input name="position_title" placeholder="Keuchik, Kapolsek, Ketua RW…"></label>
+            <label>Wilayah Layanan<input name="wilayah" required placeholder="Kelurahan/Kecamatan, Kota"></label>
+            <label>HP / WhatsApp<input name="phone"></label>
+            <label>Email<input name="email"></label>
+          </div>
+          <label style="display:grid;gap:6px;margin-top:10px">Deskripsi peran<input name="public_role_description" placeholder="mis. Kepala pemerintahan gampong; verifikasi keberadaan posko warga"></label>
+          <label style="display:grid;gap:6px;margin-top:10px">Direkomendasikan oleh verifikator (opsional)
+            <select name="sponsor_verifier"><option value="">— tidak ada —</option></select>
+          </label>
+          <div class="form-actions"><button class="btn primary" type="submit">Ajukan</button><span class="rn-muted" data-apply-msg></span></div>
+        </form>
+      </div>
+    </section>
+</div>
+<div class="vx-pane" data-group="verifikator" data-sub="registri" hidden>
+<div class="vx-pane-head"><h3>Registri Verifikator (riwayat)</h3><p>Registri dan permintaan verifikasi identitas dari jaringan lama. Tetap tersedia untuk riwayat dan persetujuan.</p></div>
+<div class="content-grid"><div class="panel"><h3>Verifier Requests</h3><p class="rn-muted">Permintaan verifikasi identitas/keanggotaan.</p><div class="vx-filter" data-vx-for="#trustedVerifierRequests"><input type="search" data-vx-q placeholder="Cari permintaan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="trustedVerifierRequests"></div></div><div class="panel"><h3>Verifier Registry</h3><p class="rn-muted">Calon verifikator harus disetujui dan diberi scope.</p>      <form class="rn-form" id="verifierRegistrationForm">
         <div class="form-grid">
           <label>Nama<input name="display_name" required></label>
           <label>Jenis
@@ -182,16 +263,7 @@
           <label>Deskripsi peran<input name="public_role_description"></label>
         </div>
         <div class="form-actions"><button class="btn primary" type="submit">Daftar Calon Verifikator</button></div>
-      </form>
-      <div class="event-list" id="trustedVerifierRegistry"></div>
-    </div>
-    <div class="panel">
-      <h3>Revoked & Suspicious Activity</h3>
-      <div class="event-list" id="revokedVerifications"></div>
-    </div>
-  </section>
-
-  <section class="panel" id="tokenVerificationPanel" hidden>
+      </form><div class="vx-filter" data-vx-for="#trustedVerifierRegistry"><input type="search" data-vx-q placeholder="Cari verifikator terdaftar…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="trustedVerifierRegistry"></div></div></div>  <section class="panel" id="tokenVerificationPanel" hidden>
     <div class="panel-header">
       <div>
         <h3>Respons Permintaan Verifikasi</h3>
@@ -217,47 +289,29 @@
       <div class="form-actions"><button class="btn primary" type="submit">Kirim Keputusan</button></div>
     </form>
   </section>
-
-  <section class="content-grid">
-    <div class="panel">
-      <h3>Organizations</h3>
-      <div class="event-list" id="verifyOrganizations"></div>
+</div>
+<div class="vx-pane" data-group="hasil" data-sub="endorsement" hidden>
+<div class="vx-pane-head"><h3>Endorsement</h3><p>Hasil verifikasi dari Jaringan Verifikator: siapa memverifikasi siapa (posko dan pelapor), dengan jabatan, cara, dan tanggal. Nama pelapor disamarkan untuk publik.</p></div>
+<div class="vx-filter" id="vxEndorseFilter"><input type="search" id="vxEndorseQ" placeholder="Cari verifikator / posko / jabatan / wilayah…" aria-label="Cari"><select id="vxEndorseType" aria-label="Jenis target"><option value="">Semua target</option><option value="posko">Posko</option><option value="reporter">Pelapor</option></select><select id="vxEndorseStatus" aria-label="Status"><option value="active">Aktif</option><option value="revoked">Dicabut</option><option value="all">Semua</option></select><span class="vx-count" id="vxEndorseCount"></span></div><div class="vx-table-wrap"><table class="rn-table vx-table"><thead><tr><th>Target</th><th>Diverifikasi oleh</th><th>Jenis</th><th>Cara</th><th>Tanggal</th><th>Status</th></tr></thead><tbody id="vxEndorseBody"><tr><td colspan="6">Memuat…</td></tr></tbody></table></div><details class="vx-legacy"><summary>Endorsement jaringan lama (riwayat)</summary><div class="vx-filter" data-vx-for="#trustedEndorsements"><input type="search" data-vx-q placeholder="Cari endorsement lama…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="trustedEndorsements"></div></details>
+</div>
+<div class="vx-pane" data-group="hasil" data-sub="objek" hidden>
+<div class="vx-pane-head"><h3>Posko, Organisasi & Sumber Daya</h3><p>Status verifikasi objek: organisasi, posko, relawan, tawaran bantuan, dan permintaan alat kerja. Tombol verifikasi tetap tersedia di tiap kartu.</p></div>
+<div class="content-grid"><div class="panel"><h3>Organizations</h3><div class="vx-filter" data-vx-for="#verifyOrganizations"><input type="search" data-vx-q placeholder="Cari organisasi…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyOrganizations"></div></div><div class="panel"><h3>Poskos</h3><div class="vx-filter" data-vx-for="#verifyPoskos"><input type="search" data-vx-q placeholder="Cari posko…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyPoskos"></div></div></div><div class="content-grid"><div class="panel"><h3>Volunteers</h3><div class="vx-filter" data-vx-for="#verifyVolunteers"><input type="search" data-vx-q placeholder="Cari relawan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyVolunteers"></div></div><div class="panel"><h3>Aid Offers</h3><div class="vx-filter" data-vx-for="#verifyAidOffers"><input type="search" data-vx-q placeholder="Cari tawaran bantuan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyAidOffers"></div></div></div><div class="panel"><h3>Work Tool Requests</h3><div class="vx-filter" data-vx-for="#verifyWorkTools"><input type="search" data-vx-q placeholder="Cari permintaan alat…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyWorkTools"></div></div>
+</div>
+<div class="vx-pane" data-group="hasil" data-sub="jejak" hidden>
+<div class="vx-pane-head"><h3>Jejak Tindakan & Pencabutan</h3><p>Catatan tindakan verifikasi, endorsement yang dicabut, dan aktivitas mencurigakan.</p></div>
+<div class="content-grid"><div class="panel"><h3>Verification Actions</h3><div class="vx-filter" data-vx-for="#verificationActions"><input type="search" data-vx-q placeholder="Cari tindakan / objek / pelaksana…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verificationActions"></div></div><div class="panel"><h3>Revoked &amp; Suspicious Activity</h3><div class="vx-filter" data-vx-for="#revokedVerifications"><input type="search" data-vx-q placeholder="Cari…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="revokedVerifications"></div></div></div>
+</div>
     </div>
-    <div class="panel">
-      <h3>Poskos</h3>
-      <div class="event-list" id="verifyPoskos"></div>
-    </div>
-  </section>
-
-  <section class="content-grid">
-    <div class="panel">
-      <h3>Volunteers</h3>
-      <div class="event-list" id="verifyVolunteers"></div>
-    </div>
-    <div class="panel">
-      <h3>Aid Offers</h3>
-      <div class="event-list" id="verifyAidOffers"></div>
-    </div>
-  </section>
-
-  <section class="content-grid">
-    <div class="panel">
-      <h3>Work Tool Requests</h3>
-      <div class="event-list" id="verifyWorkTools"></div>
-    </div>
-    <div class="panel">
-      <h3>Verification Actions</h3>
-      <div class="event-list" id="verificationActions"></div>
-    </div>
-  </section>
-    </details>
   </main>
 </div>
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/verification-approval.js?v=verif-20260904"></script>
+<script src="../assets/js/verifikator.js?v=hub-20261008"></script>
+<script src="../assets/js/verification-approval.js?v=hub-20261008"></script>
+<script src="../assets/js/verifikasi-hub.js?v=hub-20261008"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

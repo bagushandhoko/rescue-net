@@ -13,6 +13,8 @@ from rescue_net.access_policy import (
     is_system_manager,
     rn_actor,
 )
+from rescue_net.ai import budget
+from rescue_net.rn_intelligence.doctype.rn_ai_profile.rn_ai_profile import profile_name
 from rescue_net.services import llm
 
 from rescue_net.ai.common import (  # noqa: F401
@@ -32,12 +34,16 @@ from rescue_net.ai.public import (  # noqa: F401
 )
 
 
+_LEVEL_OF_OWNER = {"user": "personal", "organization": "organization", "platform": "platform"}
+
+
 @frappe.whitelist()
 def ask(
     user_id,
     disaster_event_id,
     question,
     provider="auto",
+    organization_id=None,
 ):
     _actor, user_id = _assert_self(
         user_id
@@ -52,14 +58,14 @@ def ask(
 
     provider = _prov(provider, allow_auto=True)
 
-    # Personal key first, then the asker's approved-organisation key (BYOK).
+    # The context decides whose key pays: personal by default, the organisation's when organization_id is given.
     api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
-        user_id, provider
+        user_id, provider, organization_id
     )
 
-    if not api_key:
+    if not api_key and provider != "local":
         frappe.throw(
-            "Belum ada kunci AI aktif untuk Anda atau organisasi Anda. "
+            "Belum ada kunci AI aktif untuk konteks ini (pribadi atau organisasi yang dipilih). "
             "Tambahkan di AI Settings."
         )
 
@@ -178,7 +184,7 @@ operational facts.
         api_key, model_name, system_prompt,
         ["Rescue-Net context JSON:\n" + json.dumps(compact, default=str), question],
         user_id, key_source, key_owner_type, key_owner_id, provider,
-        disaster_event=disaster_event_id, q_chars=len(question), temperature=0.2,
+        disaster_event=disaster_event_id, q_chars=len(question), temperature=0.2, feature="ask",
     )
 
     return {
@@ -207,7 +213,7 @@ operational facts.
 
 @frappe.whitelist()
 @rate_limit(limit=20, seconds=60 * 60)
-def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="auto"):
+def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="auto", organization_id=None):
     """Manual, on-demand AI judgment for one duplicate-candidate pair from
     api_frontend_bridge.duplicate_candidates() (pure geo-distance + same-
     item matching, no AI). Owner's own choice: this is deliberately
@@ -220,12 +226,12 @@ def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="aut
     provider = _prov(provider, allow_auto=True)
 
     api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
-        user_id, provider
+        user_id, provider, organization_id
     )
 
-    if not api_key:
+    if not api_key and provider != "local":
         frappe.throw(
-            "Belum ada kunci AI aktif untuk Anda atau organisasi Anda. "
+            "Belum ada kunci AI aktif untuk konteks ini (pribadi atau organisasi yang dipilih). "
             "Tambahkan di Setting."
         )
 
@@ -282,7 +288,7 @@ Never expose API keys or credentials.
         "Kebutuhan A:\n" + json.dumps(need_a, default=str)
         + "\n\nKebutuhan B:\n" + json.dumps(need_b, default=str),
         user_id, key_source, key_owner_type, key_owner_id, provider,
-        disaster_event=need_a.get("disaster_event"), temperature=0.1,
+        disaster_event=need_a.get("disaster_event"), temperature=0.1, feature="duplicate_analysis",
     )
 
     first_line = (answer or "").strip().splitlines()[0].strip().upper() if answer else ""
@@ -306,16 +312,25 @@ Never expose API keys or credentials.
 def _llm_chat(api_key, model_name, system_prompt, user_content,
               user_id, key_source, key_owner_type, key_owner_id,
               provider, disaster_event=None, q_chars=0, temperature=0.1,
-              json_mode=False):
+              json_mode=False, feature=None):
     """One chat call for every AI feature, any provider (services/llm.py):
-    request, error mapping and the RN AI Usage Log row live here once."""
+    budget / kill-switch / rate gate, request, error mapping and the RN AI
+    Usage Log row live here once."""
     model_name = _model_for(provider, model_name)
     log = dict(owner_type=key_owner_type, owner_id=key_owner_id, user_id=user_id,
                key_source=key_source, provider=provider, model_name=model_name,
-               disaster_event=disaster_event, q_chars=q_chars)
+               disaster_event=disaster_event, q_chars=q_chars, feature=feature)
+    try:
+        budget.check_allowed(key_owner_type, key_owner_id, user_id)
+    except budget.AIUnavailable as e:
+        frappe.throw(e.message)
+    base_url = None
+    if provider == "local":
+        base_url = frappe.db.get_value(
+            "RN AI Profile", profile_name(_LEVEL_OF_OWNER[key_owner_type], key_owner_id), "base_url")
     try:
         answer, usage = llm.chat(provider, api_key, model_name, system_prompt, user_content,
-                                 temperature=temperature, json_mode=json_mode)
+                                 temperature=temperature, json_mode=json_mode, base_url=base_url)
     except llm.LLMError as e:
         _log_ai_usage(**log, outcome="auth_error" if e.kind == "auth" else "error",
                       error_note=f"{e.kind} {e.note}".strip())
@@ -330,7 +345,7 @@ def _llm_chat(api_key, model_name, system_prompt, user_content,
 
 
 @frappe.whitelist()
-def analyze_rollup_group(user_id, disaster_event, group_key, provider="auto"):
+def analyze_rollup_group(user_id, disaster_event, group_key, provider="auto", organization_id=None):
     """Manual, on-demand AI judgment for one Rollup Nasional group on
     Sync Data Konsolidasi's Konsolidasi Logistik tab — advisory only,
     never applied automatically. The operator reads the suggestion, then
@@ -342,11 +357,11 @@ def analyze_rollup_group(user_id, disaster_event, group_key, provider="auto"):
     provider = _prov(provider, allow_auto=True)
 
     api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
-        user_id, provider
+        user_id, provider, organization_id
     )
-    if not api_key:
+    if not api_key and provider != "local":
         frappe.throw(
-            "Belum ada kunci AI aktif untuk Anda atau organisasi Anda. "
+            "Belum ada kunci AI aktif untuk konteks ini (pribadi atau organisasi yang dipilih). "
             "Tambahkan di Setting."
         )
 
@@ -391,7 +406,7 @@ Never expose API keys or credentials.
     answer = _llm_chat(
         api_key, model_name, system_prompt, user_content,
         user_id, key_source, key_owner_type, key_owner_id, provider,
-        disaster_event=event,
+        disaster_event=event, feature="rollup_analysis",
     )
 
     # Cached onto the override doctype (even with no override set yet) so
@@ -421,7 +436,7 @@ Never expose API keys or credentials.
 
 
 @frappe.whitelist()
-def analyze_sync_conflict(user_id, sync_log_id, provider="auto"):
+def analyze_sync_conflict(user_id, sync_log_id, provider="auto", organization_id=None):
     """Manual, on-demand AI judgment for one entry in "Server Sync
     Conflicts" on Sync Data Konsolidasi's Sync Offline ↔ Online tab —
     advisory only. The operator still resolves the conflict themselves
@@ -432,11 +447,11 @@ def analyze_sync_conflict(user_id, sync_log_id, provider="auto"):
     provider = _prov(provider, allow_auto=True)
 
     api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
-        user_id, provider
+        user_id, provider, organization_id
     )
-    if not api_key:
+    if not api_key and provider != "local":
         frappe.throw(
-            "Belum ada kunci AI aktif untuk Anda atau organisasi Anda. "
+            "Belum ada kunci AI aktif untuk konteks ini (pribadi atau organisasi yang dipilih). "
             "Tambahkan di Setting."
         )
 
@@ -476,7 +491,7 @@ credentials.
     answer = _llm_chat(
         api_key, model_name, system_prompt, user_content,
         user_id, key_source, key_owner_type, key_owner_id, provider,
-        disaster_event=log.event_id,
+        disaster_event=log.event_id, feature="sync_conflict",
     )
 
     return {"sync_log_id": sync_log_id, "answer": answer, "model_name": model_name}

@@ -93,6 +93,23 @@
     return local.length >= points.length / 2 ? local : points;
   }
 
-  window.RNUI = { esc: esc, fmt: fmt, shortDate: shortDate, fmtTime: fmtTime, eventId: eventId,
+  // Whose AI key pays (ADR-0002): "" = the user's own key, else an organisation id.
+  // `call(method, args)` is the page's own API caller. A choice saved in
+  // localStorage wins while it is still valid; otherwise personal if the user
+  // has a key, else the first organisation that has one.
+  function aiContext(call) {
+    return call("rescue_net.api_ai.ai_contexts", {}).then(function (c) {
+      c = c && c.message ? c.message : (c || {});
+      var orgs = c.organizations || [], saved = "";
+      try { saved = localStorage.getItem("rn_ai_ctx") || ""; } catch (e) {}
+      var choice = "";
+      if (saved === "personal" && c.personal && c.personal.available) choice = "";
+      else if (saved && orgs.some(function (o) { return o.id === saved; })) choice = saved;
+      else if (!(c.personal && c.personal.available) && orgs.length) choice = orgs[0].id;
+      return { organization_id: choice, contexts: c };
+    }).catch(function () { return { organization_id: "", contexts: {} }; });
+  }
+
+  window.RNUI = { aiContext: aiContext, esc: esc, fmt: fmt, shortDate: shortDate, fmtTime: fmtTime, eventId: eventId,
                   chip: chip, kpiCard: kpiCard, modal: modal, localClusterBounds: localClusterBounds };
 })();

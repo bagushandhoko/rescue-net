@@ -269,3 +269,20 @@ def parse_json(text):
     except Exception:
         return None
     return value if isinstance(value, dict) else None
+
+
+# Approximate list prices in USD per 1M tokens (input, output), for the cost
+# ESTIMATE only. A model that is not listed (new releases, local models) is
+# estimated at 0 and the estimate says so; the token budget is what is enforced.
+PRICES = {
+    "gpt-4o-mini": (0.15, 0.60), "gpt-4.1-mini": (0.40, 1.60), "gpt-4.1": (2.0, 8.0), "gpt-4o": (2.5, 10.0),
+    "gemini-2.5-flash": (0.30, 2.50), "gemini-2.5-flash-lite": (0.10, 0.40), "gemini-2.5-pro": (1.25, 10.0),
+}
+
+
+def estimate_cost(model, usage):
+    price = PRICES.get((model or "").strip())
+    if not price or not usage:
+        return 0.0
+    return round((int(usage.get("prompt_tokens") or 0) * price[0]
+                  + int(usage.get("completion_tokens") or 0) * price[1]) / 1_000_000, 6)

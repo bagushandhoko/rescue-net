@@ -1,0 +1,81 @@
+{
+  "doctype": "DocType",
+  "name": "RN AI Usage Daily",
+  "module": "RN Intelligence",
+  "custom": 0,
+  "field_order": [
+    "usage_date",
+    "owner_type",
+    "owner_id",
+    "requests",
+    "errors",
+    "total_tokens",
+    "est_cost_usd",
+    "warned_80",
+    "warned_100"
+  ],
+  "fields": [
+    {
+      "fieldname": "usage_date",
+      "label": "Date",
+      "fieldtype": "Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Select",
+      "options": "user\norganization\nplatform",
+      "reqd": 1
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "requests",
+      "label": "Requests",
+      "fieldtype": "Int",
+      "default": "0"
+    },
+    {
+      "fieldname": "errors",
+      "label": "Errors",
+      "fieldtype": "Int",
+      "default": "0"
+    },
+    {
+      "fieldname": "total_tokens",
+      "label": "Total Tokens",
+      "fieldtype": "Int",
+      "default": "0"
+    },
+    {
+      "fieldname": "est_cost_usd",
+      "label": "Estimated Cost (USD)",
+      "fieldtype": "Float",
+      "precision": "6"
+    },
+    {
+      "fieldname": "warned_80",
+      "label": "Warned 80%",
+      "fieldtype": "Check"
+    },
+    {
+      "fieldname": "warned_100",
+      "label": "Warned Exhausted",
+      "fieldtype": "Check"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

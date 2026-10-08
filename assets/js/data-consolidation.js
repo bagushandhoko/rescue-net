@@ -912,7 +912,8 @@ function setupActions() {
         {
           user_id: session.user,
           object_id_a: btn.getAttribute("data-object-a"),
-          object_id_b: btn.getAttribute("data-object-b")
+          object_id_b: btn.getAttribute("data-object-b"),
+          organization_id: (await RNUI.aiContext((m, a) => RN_FRAPPE.call(m, a, { method: "GET" }))).organization_id
         },
         { method: "POST" }
       );
@@ -986,7 +987,8 @@ function setupActions() {
       if (!session || !session.user) throw new Error("Perlu login untuk fitur ini.");
       await RN_FRAPPE.call(
         "rescue_net.api_ai.analyze_rollup_group",
-        { user_id: session.user, disaster_event: EVENT_ID, group_key: groupKey },
+        { user_id: session.user, disaster_event: EVENT_ID, group_key: groupKey,
+          organization_id: (await RNUI.aiContext((m, a) => RN_FRAPPE.call(m, a, { method: "GET" }))).organization_id },
         { method: "POST" }
       );
       renderRollupTrace(RN_ROLLUP_SELECTED);

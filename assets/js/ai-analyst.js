@@ -221,12 +221,30 @@ function setupAiAsk() {
   const form = document.getElementById("aiAskForm");
   if (!form) return;
 
+  // Context picker: personal key or one of the user's organisations (only shown with a real choice).
+  RNUI.aiContext(frappeCall).then(ctx => {
+    const orgs = (ctx.contexts && ctx.contexts.organizations) || [];
+    const personal = ctx.contexts && ctx.contexts.personal && ctx.contexts.personal.available;
+    if (!orgs.length) return;
+    const sel = document.createElement("select");
+    sel.name = "ai_ctx";
+    sel.innerHTML = (personal ? '<option value="personal">AI pribadi (kunci saya)</option>' : "")
+      + orgs.map(o => `<option value="${RNUI.esc(o.id)}">AI organisasi: ${RNUI.esc(o.title)}</option>`).join("");
+    sel.value = ctx.organization_id || "personal";
+    sel.addEventListener("change", () => { try { localStorage.setItem("rn_ai_ctx", sel.value); } catch (e) {} });
+    const label = document.createElement("label");
+    label.append("Konteks AI ", sel);
+    form.insertBefore(label, form.querySelector("button"));
+  });
+
   form.addEventListener("submit", async e => {
     e.preventDefault();
     setText("aiAnswer", "Asking AI...");
 
     try {
       const session = await ensureSession();
+      const ctx = await RNUI.aiContext(frappeCall);
+      const picked = form.ai_ctx ? form.ai_ctx.value : ctx.organization_id;
 
       const res = await frappeCall(
         "rescue_net.api_ai.ask",
@@ -234,6 +252,7 @@ function setupAiAsk() {
           user_id: session.user,
           disaster_event_id: getEventId(),
           provider: "auto",
+          organization_id: picked && picked !== "personal" ? picked : "",
           question: form.question.value.trim()
         },
         true

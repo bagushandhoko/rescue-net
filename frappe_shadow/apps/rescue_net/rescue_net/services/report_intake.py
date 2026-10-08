@@ -188,17 +188,22 @@ def extract(text):
     import frappe
 
     from rescue_net import api_ai
+    from rescue_net.ai import budget
     from rescue_net.services import llm
 
     key, model, provider = api_ai.resolve_platform_key()
     if key:
         log = dict(owner_type="platform", owner_id=api_ai.PLATFORM_OWNER, user_id=frappe.session.user,
                    key_source="platform", provider=provider, model_name=model, disaster_event=None,
-                   q_chars=len(text or ""))
+                   q_chars=len(text or ""), feature="report_intake")
         try:
+            budget.check_allowed("platform", api_ai.PLATFORM_OWNER,
+                                 None if frappe.session.user == "Guest" else frappe.session.user)
             fields, usage = ai_extract(text, key, model, provider)
             api_ai._log_ai_usage(**log, usage=usage, outcome="ok")
             return fields, f"ai:{provider}"
         except llm.LLMError as e:
             api_ai._log_ai_usage(**log, outcome="error", error_note=f"{e.kind} {e.note}")
+        except budget.AIUnavailable:
+            pass  # switched off / out of budget: the rule parser below keeps intake running
     return rules_extract(text), "rules"

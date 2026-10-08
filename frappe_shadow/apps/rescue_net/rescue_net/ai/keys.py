@@ -13,6 +13,8 @@ from rescue_net.access_policy import (
     is_system_manager,
     rn_actor,
 )
+from rescue_net.rn_intelligence.doctype.rn_ai_profile.rn_ai_profile import profile_name
+from rescue_net.ai import budget
 from rescue_net.services import llm
 
 from rescue_net.ai.common import (  # noqa: F401
@@ -421,31 +423,61 @@ def _pick_latest(names):
     return max(found, key=lambda d: d.modified) if found else None
 
 
-def _resolve_ai_key(user_id, provider):
-    """Personal key first, then the asker's approved-org key. provider='auto'
-    takes, at each level, the active key saved most recently. Returns
-    (api_key, model_name, key_source, owner_type, owner_id, provider) or
-    (None, ...)."""
+def _profile_choice(level, owner_id, providers):
+    """The owner's active AI Profile, if it covers one of `providers` ('local'
+    counts when the caller asked for 'auto'): (provider, model, base_url, key_setting) or None.
+    A disabled profile switches AI off for that owner (checked in budget.check_allowed)."""
+    name = profile_name(level, owner_id)
+    row = frappe.db.get_value("RN AI Profile", name,
+                              ["provider", "model_name", "base_url", "key_setting", "status"], as_dict=True)
+    if not row or row.status != "active":
+        return None
+    if row.provider not in providers and not (row.provider == "local" and "auto" in providers):
+        return None
+    return row
+
+
+def resolve_ai(user_id, provider, organization_id=None):
+    """ADR-0002 section 5 key resolution. The CONTEXT decides whose key pays:
+    - `organization_id` given: that organisation's key (the asker must be an
+      approved member). None found -> unavailable. Never the platform key.
+    - otherwise: the asker's own key. None -> unavailable.
+    provider='auto' takes the owner's AI Profile provider, else the active key
+    saved last. Returns a dict (api_key may be '' for a local model) or None."""
     providers = llm.key_providers() if provider == "auto" else [provider]
+    want = ["auto"] if provider == "auto" else providers
 
-    d = _pick_latest([_setting_name(user_id, p) for p in providers])
-    if d:
-        p = llm.normalize_provider(d.provider)
-        return d.get_password("api_key"), _model_for(p, d.model_name), "user", "user", user_id, p
+    if organization_id:
+        actor = rn_actor(required=False)
+        allowed = set(_member_orgs(actor)) if actor else set()
+        if not (is_system_manager() or organization_id in allowed):
+            frappe.throw("Anda bukan anggota organisasi ini.", frappe.PermissionError)
+        level, owner_type, owner_id = "organization", "organization", organization_id
+        name_of = _org_setting_name
+    else:
+        level, owner_type, owner_id = "personal", "user", user_id
+        name_of = _setting_name
 
-    actor = rn_actor(required=False)
-    org_ids = []
-    if actor and actor.get("organization"):
-        org_ids.append(actor.get("organization"))
-    for o in _member_orgs(actor) if actor else []:
-        if o and o not in org_ids:
-            org_ids.append(o)
-    for oid in org_ids:
-        d = _pick_latest([_org_setting_name(oid, p) for p in providers])
-        if d:
-            p = llm.normalize_provider(d.provider)
-            return d.get_password("api_key"), _model_for(p, d.model_name), "organization", "organization", oid, p
-    return None, None, None, None, None, provider
+    prof = _profile_choice(level, owner_id, want + providers)
+    if prof and prof.provider == "local":
+        return {"api_key": "", "model": prof.model_name, "key_source": owner_type, "owner_type": owner_type,
+                "owner_id": owner_id, "provider": "local", "base_url": prof.base_url}
+    names = [name_of(owner_id, prof.provider)] if prof else [name_of(owner_id, p) for p in providers]
+    d = _pick_latest(names)
+    if not d:
+        return None
+    p = llm.normalize_provider(d.provider)
+    return {"api_key": d.get_password("api_key"), "model": _model_for(p, d.model_name), "key_source": owner_type,
+            "owner_type": owner_type, "owner_id": owner_id, "provider": p, "base_url": None}
+
+
+def _resolve_ai_key(user_id, provider, organization_id=None):
+    """Tuple form of resolve_ai: (api_key, model_name, key_source, owner_type,
+    owner_id, provider) or (None, ...)."""
+    r = resolve_ai(user_id, provider, organization_id)
+    if not r:
+        return None, None, None, None, None, provider
+    return r["api_key"], r["model"], r["key_source"], r["owner_type"], r["owner_id"], r["provider"]
 
 
 def resolve_platform_key():
@@ -460,9 +492,10 @@ def resolve_platform_key():
 
 def _log_ai_usage(*, owner_type, owner_id, user_id, key_source, provider,
                   model_name, disaster_event, q_chars=0, a_chars=0,
-                  usage=None, outcome="ok", error_note=None):
+                  usage=None, outcome="ok", error_note=None, feature=None):
     try:
         u = usage or {}
+        cost = llm.estimate_cost(model_name, u)
         doc = frappe.new_doc("RN AI Usage Log")
         doc.owner_type = owner_type or "user"
         doc.owner_id = owner_id
@@ -478,7 +511,12 @@ def _log_ai_usage(*, owner_type, owner_id, user_id, key_source, provider,
         doc.total_tokens = int(u.get("total_tokens") or 0)
         doc.outcome = outcome
         doc.error_note = (str(error_note)[:140] if error_note else None)
+        doc.feature = feature
+        doc.est_cost_usd = cost
         doc.insert(ignore_permissions=True)
+        from rescue_net.ai import budget
+
+        budget.record_usage(doc.owner_type, owner_id, doc.total_tokens, cost, outcome == "ok")
     except Exception:
         frappe.log_error(title="rn_ai _log_ai_usage failed")
 
@@ -524,7 +562,14 @@ def ai_usage_summary(user_id=None, organization_id=None, days=30):
                           fields=["outcome", "total_tokens", "provider",
                                   "model_name", "key_source", "creation"],
                           order_by="creation desc", limit_page_length=2000)
+    owner_type, owner_id = ("organization", organization_id) if organization_id else ("user", user_id)
     return {
+        "budget": budget.budget_status(owner_type, owner_id),
+        "daily": frappe.get_all(
+            "RN AI Usage Daily", filters={"owner_type": owner_type, "owner_id": owner_id,
+                                          "usage_date": [">=", frappe.utils.add_days(frappe.utils.nowdate(), -days)]},
+            fields=["usage_date", "requests", "errors", "total_tokens", "est_cost_usd"],
+            order_by="usage_date desc", limit_page_length=days),
         "days": days,
         "calls": len(rows),
         "ok": sum(1 for r in rows if r.outcome == "ok"),
@@ -537,3 +582,18 @@ def ai_usage_summary(user_id=None, organization_id=None, days=30):
         },
         "recent": rows[:15],
     }
+
+
+@frappe.whitelist()
+def ai_contexts():
+    """Whose key can the asker use right now? Personal, and each organisation
+    they belong to that has an active key. The page picks one and sends
+    organization_id (or nothing for personal) to the AI endpoints."""
+    user = _require_login()
+    out = {"personal": {"available": bool(resolve_ai(user, "auto"))}, "organizations": []}
+    actor = rn_actor(required=False)
+    for oid in sorted(_member_orgs(actor)) if actor else []:
+        if resolve_ai(user, "auto", oid):
+            out["organizations"].append({
+                "id": oid, "title": frappe.db.get_value("RN Organization", oid, "title") or oid})
+    return out

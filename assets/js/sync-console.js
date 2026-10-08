@@ -685,7 +685,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!session || !session.user) throw new Error("Perlu login untuk fitur ini.");
       const r = await RN_FRAPPE.call(
         "rescue_net.api_ai.analyze_sync_conflict",
-        { user_id: session.user, sync_log_id: logId },
+        { user_id: session.user, sync_log_id: logId,
+          organization_id: (await RNUI.aiContext((m, a) => RN_FRAPPE.call(m, a, { method: "GET" }))).organization_id },
         { method: "POST" }
       );
       if (out) out.textContent = "🤖 AI: " + (r.answer || "");

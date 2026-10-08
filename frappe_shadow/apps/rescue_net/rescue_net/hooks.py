@@ -26,6 +26,7 @@ after_install = [
 scheduler_events = {
     "daily": [
         "rescue_net.setup.db_backup.run_daily_backup",
+        "rescue_net.ai.budget.purge_usage_logs",
     ],
 }
 

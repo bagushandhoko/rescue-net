@@ -109,7 +109,7 @@
         icon: "search-found"
       },
       {
-        label: "Verifikasi",
+        label: "Sistem Verifikasi",
         href: "verification-approval.html",
         icon: "verification"
       },

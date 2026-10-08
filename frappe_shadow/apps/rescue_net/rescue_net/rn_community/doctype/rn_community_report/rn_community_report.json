@@ -130,13 +130,13 @@
       "fieldname": "damage_scale_value",
       "label": "Perkiraan Skala Kerusakan",
       "fieldtype": "Float",
-      "description": "Opsional: perkiraan skala kerusakan fisik untuk jalan/akses terputus, mis. 200 (meter). Dipakai untuk prediksi kebutuhan alat/logistik heuristik — bukan pengukuran teknis."
+      "description": "Opsional: perkiraan skala kerusakan fisik untuk jalan/akses terputus, mis. 200 (meter). Dipakai untuk prediksi kebutuhan alat/logistik heuristik \u2014 bukan pengukuran teknis."
     },
     {
       "fieldname": "damage_scale_unit",
       "label": "Satuan Skala",
       "fieldtype": "Data",
-      "description": "mis. meter, km — satuan untuk damage_scale_value."
+      "description": "mis. meter, km \u2014 satuan untuk damage_scale_value."
     },
     {
       "fieldname": "location_text",
@@ -229,7 +229,7 @@
       "label": "Posko Tujuan",
       "fieldtype": "Link",
       "options": "RN Posko",
-      "description": "Posko yang paling relevan (wilayah, jarak, fungsi) — dipilih otomatis, bisa dialihkan operator."
+      "description": "Posko yang paling relevan (wilayah, jarak, fungsi) \u2014 dipilih otomatis, bisa dialihkan operator."
     },
     {
       "fieldname": "routing_score",

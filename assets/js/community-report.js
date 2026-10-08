@@ -344,6 +344,7 @@ async function loadReporterSession(form) {
   }
   const loggedIn = !!(session && session.user && session.user !== "Guest");
   RN_REPORTER = loggedIn ? session : null;
+  document.body.dataset.rnLogged = loggedIn ? "1" : "";
   const gate = document.querySelector("[data-report-login]");
   if (gate) gate.hidden = loggedIn;
   // Buttons stay fully visible for guests; pressing one without a session shows the login box instead.
@@ -563,8 +564,10 @@ async function loadCommunityReports() {
     const status = document.querySelector("[data-community-status-filter]")?.value || "";
     const activeEvent = window.rnActiveEvent || "event-sim-001";
     const reports = await rnFetch(`/community-reports?disaster_event_id=${encodeURIComponent(activeEvent)}${status ? `&status=${status}` : ""}`);
+    const PAGE = 10;
     target.innerHTML = reports.length
-      ? reports.map(reportCard).join("")
+      ? reports.map((r, i) => reportCard(r).replace("community-report-item", `community-report-item${i >= PAGE ? " is-later" : ""}`)).join("")
+        + (reports.length > PAGE ? `<button class="btn queue-more" type="button" data-queue-more>Tampilkan lebih banyak (${reports.length - PAGE} lagi)</button>` : "")
       : "<p class=\"subtitle\">Belum ada laporan pada filter ini.</p>";
 
     // Deep link from another page (e.g. Data Konsolidasi's rollup source
@@ -799,6 +802,14 @@ function setupCommunityReportActions() {
   };
 
   document.addEventListener("click", async (e) => {
+    const more = e.target.closest("[data-queue-more]");
+    if (more) {
+      const hidden = [...document.querySelectorAll(".community-report-item.is-later")];
+      hidden.slice(0, 10).forEach((el) => el.classList.remove("is-later"));
+      const left = hidden.length - 10;
+      if (left > 0) more.textContent = `Tampilkan lebih banyak (${left} lagi)`; else more.remove();
+      return;
+    }
     const statusButton = e.target.closest("[data-report-action]");
     const convertButton = e.target.closest("[data-report-convert]");
     const button = statusButton || convertButton;

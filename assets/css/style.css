@@ -7060,3 +7060,7 @@ body.public-report-page .btn.primary:not(:disabled) { opacity: 1; }
   .community-operator-panel .community-report-item .chips { justify-content: flex-start; max-width: none; }
   .community-report-actions .btn.primary { margin-left: 0; }
 }
+
+.community-operator-panel .community-report-item.is-later { display: none; }
+.community-operator-panel .queue-more { justify-self: center; width: auto; padding: 8px 18px; font-size: 13px; cursor: pointer; }
+body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { display: none; }

@@ -7,6 +7,7 @@ if SITE == "osiun.localhost":
 BASE = os.environ.get("RN_BASE", "http://127.0.0.1:8000")
 PW = "CmdTest123"
 ORG, EVENT = os.environ["AI_ORG"], os.environ["AI_EVENT"]
+SUG, REPORT = os.environ["AI_SUG"], os.environ["AI_REPORT"]
 ok = fail = 0
 HITS = []
 
@@ -76,11 +77,11 @@ def good(r):
     return r[0] == 200
 
 
-owner, member, outsider, personal = (C(f"{k}@aitest.local") for k in ("owner", "member", "outsider", "personal"))
+owner, member, outsider, personal, operator, reporter = (C(f"{k}@aitest.local") for k in ("owner", "member", "outsider", "personal", "operator", "reporter"))
 guest = C()
-check("login 4 akun uji", all(c.login == 200 for c in (owner, member, outsider, personal)),
-      [c.login for c in (owner, member, outsider, personal)])
-U = {k: f"{k}@aitest.local" for k in ("owner", "member", "outsider", "personal")}
+check("login 6 akun uji", all(c.login == 200 for c in (owner, member, outsider, personal, operator, reporter)),
+      [c.login for c in (owner, member, outsider, personal, operator, reporter)])
+U = {k: f"{k}@aitest.local" for k in ("owner", "member", "outsider", "personal", "operator", "reporter")}
 URL = "http://127.0.0.1:9999/v1"
 
 # 1. who may set up the organisation's AI
@@ -124,5 +125,23 @@ check("4. anggota biasa tidak melihat ringkasan organisasi", member.call("ai_usa
 owner.call("save_ai_profile", level="organization", owner_id=ORG, provider="local", base_url=URL, status="disabled")
 r = ask(member, "member", organization_id=ORG)
 check("5. profil dinonaktifkan -> AI organisasi mati", not good(r) and "dinonaktifkan" in str(r[1]), r)
+
+# 6. fallback + queue (step 3)
+dup = personal.call("analyze_duplicate_candidate", user_id=U["personal"], object_id_a="x", object_id_b="y")
+check("6. tanpa key, analisis duplikat tidak memberi 'tidak ada key' (hanya data kebutuhan yang kurang)",
+      "kunci" not in str(dup[1]).lower(), dup)
+r = reporter._req("POST", "/api/method/rescue_net.api_reports.submit_community_report",
+                  {"description": "Banjir merendam Desa Sukamaju, 40 orang mengungsi ke masjid, butuh selimut dan makanan.",
+                   "intake_mode": "narrative", "disaster_event": EVENT})
+check("6. laporan narasi yang hanya dibaca aturan berlabel 'belum diproses AI'", good(r) and r[1].get("ai_status") == "pending_ai", r)
+check("6. orang luar tidak melihat saran AI laporan itu", outsider.call("list_ai_suggestions")[1] == [], outsider.call("list_ai_suggestions"))
+check("6. orang luar tidak bisa memutuskan saran", outsider.call("decide_ai_suggestion", suggestion=SUG, decision="accepted")[0] in (403, 417))
+check("6. guest tidak bisa memutuskan saran", guest.call("decide_ai_suggestion", suggestion=SUG, decision="accepted")[0] in (401, 403))
+check("6. pelapor tidak memutuskan saran atas laporannya sendiri", reporter.call("decide_ai_suggestion", suggestion=SUG, decision="accepted")[0] in (403, 417))
+l = operator.call("list_ai_suggestions")
+check("6. operator posko laporan melihat saran draft", good(l) and [x["name"] for x in l[1]] == [SUG], l)
+d = operator.call("decide_ai_suggestion", suggestion=SUG, decision="accepted")
+check("6. operator menerima saran -> field diterapkan", good(d) and d[1]["applied"].get("affected_people_count") == 55, d)
+check("6. saran hanya diputuskan sekali", not good(operator.call("decide_ai_suggestion", suggestion=SUG, decision="rejected")))
 
 print(f"\n{ok} lulus, {fail} gagal"); sys.exit(1 if fail else 0)

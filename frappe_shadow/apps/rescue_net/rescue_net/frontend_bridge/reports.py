@@ -86,6 +86,7 @@ def community_reports(
             "routing_reason",
             "intake_mode",
             "intake_parser",
+            "ai_status",
             "consent_to_contact",
             "reporter_name",
             "reporter_phone",

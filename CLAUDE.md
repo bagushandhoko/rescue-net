@@ -38,7 +38,7 @@ Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-07 malam.)
   Rencana Kerja Program Khusus. Celah tercatat: foto posko (Registrasi), KPI "dari kemarin" (butuh riwayat harian), "Merge" (sengaja tidak dibuat).
   Gotcha CSS: `.rn-ev-page` = tombol pager (halaman Evidence pakai `rn-evc-page`); aturan mobile site-wide membuat input/label lebar penuh. 234 test lulus.
 - **Fase 0 (mulai 2026-10-07, menunggu review owner):** `docs/PHASE0_ENV_SEPARATION.md` — `.claude/settings.json`, `scripts/rn-deploy-from-git.sh`, draf CI `.github/workflows/tests.yml` (belum pernah jalan di GitHub) ada di repo; inti (akun agent tanpa sudo/docker, web root bukan checkout, branch protection) butuh keputusan owner.
-- **Fase 7 (owner perintah 2026-10-08):** langkah 1 (provider `local` + RN AI Profile) dan langkah 2 (resolusi key per konteks, anggaran, rollup, retensi 7 hari; 259 test) selesai, ter-deploy 2026-10-08 (`rn-deploy-app.sh`, 6 probe 200). Langkah 3 menunggu review owner.
+- **Fase 7 (owner perintah 2026-10-08):** langkah 1 (provider `local` + RN AI Profile) dan langkah 2 (resolusi key per konteks, anggaran, rollup, retensi 7 hari; 259 test) selesai, ter-deploy 2026-10-08 (`rn-deploy-app.sh`, 6 probe 200). Langkah 3 (fallback aturan + antrian proses ulang + RN AI Suggestion; 275 test + `rn-test-stack.sh e2e-ai`) selesai, BELUM deploy (perlu migrate). Langkah 4 menunggu review owner.
 - **Fase berikutnya:** menunggu perintah owner. Kandidat prioritas: Fase 0 (pisahkan lingkungan agent dari
   produksi). Isi Fase 7–8 belum diberikan owner (Fase 7 wajib mengikuti ADR-0002 bagian 11).
 - **Produksi:** ter-deploy sampai Fase 4 (12 modul RN; `rn-deploy-app.sh` 2026-09-27 09:51, patch

@@ -225,15 +225,16 @@ def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="aut
 
     provider = _prov(provider, allow_auto=True)
 
-    api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
-        user_id, provider, organization_id
-    )
-
-    if not api_key and provider != "local":
-        frappe.throw(
-            "Belum ada kunci AI aktif untuk konteks ini (pribadi atau organisasi yang dipilih). "
-            "Tambahkan di Setting."
+    # No key / switched off / over budget must not stop the work: fall back to rules (ADR-0002 section 5).
+    try:
+        api_key, model_name, key_source, key_owner_type, key_owner_id, provider = _resolve_ai_key(
+            user_id, provider, organization_id
         )
+        unavailable = not api_key and provider != "local"
+        if not unavailable:
+            budget.check_allowed(key_owner_type, key_owner_id, user_id)
+    except (frappe.ValidationError, budget.AIUnavailable):
+        unavailable = True
 
     def _need_brief(name):
         if not frappe.db.exists("RN Logistic Need", name):
@@ -271,6 +272,14 @@ def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="aut
     if not need_a or not need_b:
         frappe.throw("Salah satu kebutuhan (RN Logistic Need) tidak ditemukan.")
 
+    if unavailable:
+        from rescue_net.services.duplicates import rule_verdict
+
+        r = rule_verdict(need_a, need_b)
+        return {"object_id_a": object_id_a, "object_id_b": object_id_b, "verdict": r["verdict"],
+                "answer": r["answer"], "reasons": r["reasons"], "processed_without_ai": True,
+                "label": "diproses tanpa AI", "model_name": None, "key_source": None}
+
     system_prompt = """
 You are Rescue-Net's duplicate-need reviewer. You are given two
 logistics need records already flagged as geographically close (or
@@ -306,6 +315,7 @@ Never expose API keys or credentials.
         "answer": answer,
         "model_name": model_name,
         "key_source": key_source,
+        "processed_without_ai": False,
     }
 
 

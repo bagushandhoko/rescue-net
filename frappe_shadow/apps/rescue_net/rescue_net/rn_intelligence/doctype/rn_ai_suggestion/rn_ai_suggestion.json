@@ -1,0 +1,94 @@
+{
+  "doctype": "DocType",
+  "name": "RN AI Suggestion",
+  "module": "RN Intelligence",
+  "custom": 0,
+  "track_changes": 1,
+  "field_order": [
+    "feature",
+    "ref_doctype",
+    "ref_name",
+    "owner_type",
+    "owner_id",
+    "provider",
+    "model_name",
+    "payload",
+    "status",
+    "decided_by",
+    "decided_at"
+  ],
+  "fields": [
+    {
+      "fieldname": "feature",
+      "label": "Feature",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "ref_doctype",
+      "label": "Ref DocType",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "ref_name",
+      "label": "Ref Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Select",
+      "options": "user\norganization\nplatform"
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "provider",
+      "label": "Provider",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "model_name",
+      "label": "Model",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "payload",
+      "label": "Payload (JSON)",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "draft\naccepted\nrejected",
+      "default": "draft"
+    },
+    {
+      "fieldname": "decided_by",
+      "label": "Decided By",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
+      "fieldname": "decided_at",
+      "label": "Decided At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

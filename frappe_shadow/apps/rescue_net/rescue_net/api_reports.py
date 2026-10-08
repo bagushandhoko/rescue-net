@@ -203,9 +203,20 @@ def submit_community_report(
     doc.status = "submitted"
     doc.intake_mode = intake_mode
     doc.intake_parser = parser
+    # A narrative that only the keyword rules could read waits for an AI pass (label
+    # "belum diproses AI"); the reporter and the posko work with the rules' draft meanwhile.
+    needs_ai_pass = intake_mode == "narrative" and (parser in (None, "rules"))
+    if needs_ai_pass:
+        doc.ai_status = "pending_ai"
 
     _route(doc)
     doc.insert(ignore_permissions=True)
+    if needs_ai_pass:
+        from rescue_net.ai import queue
+        from rescue_net.ai.common import PLATFORM_OWNER
+
+        queue.enqueue("report_intake", "platform", PLATFORM_OWNER, frappe.session.user,
+                      "RN Community Report", doc.name)
 
     community_need = None
 
@@ -308,6 +319,7 @@ def submit_community_report(
         "posko_title": frappe.db.get_value("RN Posko", doc.posko, "title") if doc.posko else None,
         "routing_reason": doc.routing_reason,
         "intake_parser": doc.intake_parser,
+        "ai_status": doc.ai_status,
         "predicted_needs": predicted_needs,
         "predicted_needs_note": (
             "Perkiraan heuristik dari skala kerusakan/jumlah terdampak yang dilaporkan — "
@@ -435,7 +447,7 @@ def my_community_reports():
     rows = frappe.get_all(
         "RN Community Report", filters={"reporter_user": actor.name},
         fields=["name", "title", "report_type", "priority", "status", "location_text", "affected_people_count",
-                "urgent_needs", "posko", "routing_reason", "intake_mode", "intake_parser", "creation"],
+                "urgent_needs", "posko", "routing_reason", "intake_mode", "intake_parser", "ai_status", "creation"],
         order_by="creation desc", limit_page_length=100,
     )
     for r in rows:

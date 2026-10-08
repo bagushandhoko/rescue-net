@@ -160,10 +160,12 @@ e2e_ai() {
   done
   kt() { $D exec -w $B/sites -e RN_SITE=$SITE -e RN_BASE=http://127.0.0.1:8000 $BENCH "$@"; }
   kt ../env/bin/python /tmp/komando-tests/clean_ai_data.py
-  ids=$(kt ../env/bin/python /tmp/komando-tests/setup_ai_users.py | grep '^AI_ORG=')
+  out=$(kt ../env/bin/python /tmp/komando-tests/setup_ai_users.py)
+  ids=$(echo "$out" | grep '^AI_ORG=')
   org=$(echo "$ids" | sed 's/^AI_ORG=\([^ ]*\) .*/\1/'); ev=$(echo "$ids" | sed 's/.*AI_EVENT=//')
+  sug=$(echo "$out" | sed -n 's/^AI_SUG=\([^ ]*\) .*/\1/p'); rep=$(echo "$out" | sed -n 's/.*AI_REPORT=//p')
   rc=0
-  $D exec -w $B/sites -e RN_SITE=$SITE -e RN_BASE=http://127.0.0.1:8000 -e AI_ORG="$org" -e AI_EVENT="$ev" $BENCH python3 /tmp/komando-tests/ai_e2e.py || rc=$?
+  $D exec -w $B/sites -e RN_SITE=$SITE -e RN_BASE=http://127.0.0.1:8000 -e AI_ORG="$org" -e AI_EVENT="$ev" -e AI_SUG="$sug" -e AI_REPORT="$rep" $BENCH python3 /tmp/komando-tests/ai_e2e.py || rc=$?
   kt ../env/bin/python /tmp/komando-tests/clean_ai_data.py
   stop_serve
   return $rc

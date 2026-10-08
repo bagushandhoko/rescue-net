@@ -22,6 +22,13 @@ gone("RN AI Profile", "owner_id", orgs + users)
 gone("RN AI Usage Log", "owner_id", orgs + users); gone("RN AI Usage Log", "user_id", users)
 gone("RN AI Usage Daily", "owner_id", orgs + users)
 gone("Notification Log", "for_user", users)
+reports = frappe.get_all("RN Community Report", filters={"title": ["like", "[UJI-AI]%"]}, pluck="name") + \
+    frappe.get_all("RN Community Report", filters={"reporter_user": ["in", accts or [""]]}, pluck="name")
+gone("RN AI Job", "ref_name", reports); gone("RN AI Suggestion", "ref_name", reports)
+poskos = frappe.get_all("RN Posko", filters={"title": ["like", "[UJI-AI]%"]}, pluck="name")
+gone("RN Posko Assignment", "posko", poskos)
+gone("RN Community Report", "name", reports)
+gone("RN Posko", "name", poskos)
 gone("RN User Account", "name", accts)
 for u in users:
     frappe.delete_doc("User", u, force=True, ignore_permissions=True)

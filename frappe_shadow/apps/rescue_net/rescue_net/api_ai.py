@@ -13,8 +13,9 @@ from rescue_net.ai import (  # noqa: F401
     keys,
     profiles,
     public,
+    queue,
 )
 
-for _module in (common, chat, context, keys, profiles, public,):
+for _module in (common, chat, context, keys, profiles, public, queue,):
     globals().update({k: v for k, v in vars(_module).items() if not k.startswith("__")})
 del _module

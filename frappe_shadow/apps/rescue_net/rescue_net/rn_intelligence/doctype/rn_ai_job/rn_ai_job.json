@@ -1,0 +1,96 @@
+{
+  "doctype": "DocType",
+  "name": "RN AI Job",
+  "module": "RN Intelligence",
+  "custom": 0,
+  "track_changes": 1,
+  "field_order": [
+    "feature",
+    "ref_doctype",
+    "ref_name",
+    "owner_type",
+    "owner_id",
+    "user_id",
+    "status",
+    "attempts",
+    "last_error",
+    "processed_at",
+    "suggestion"
+  ],
+  "fields": [
+    {
+      "fieldname": "feature",
+      "label": "Feature",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "ref_doctype",
+      "label": "Ref DocType",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "ref_name",
+      "label": "Ref Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "owner_type",
+      "label": "Owner Type",
+      "fieldtype": "Select",
+      "options": "user\norganization\nplatform"
+    },
+    {
+      "fieldname": "owner_id",
+      "label": "Owner ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "user_id",
+      "label": "User",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "pending\ndone\nfailed\ncancelled",
+      "default": "pending"
+    },
+    {
+      "fieldname": "attempts",
+      "label": "Attempts",
+      "fieldtype": "Int",
+      "default": "0"
+    },
+    {
+      "fieldname": "last_error",
+      "label": "Last Error",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "processed_at",
+      "label": "Processed At",
+      "fieldtype": "Datetime",
+      "read_only": 1
+    },
+    {
+      "fieldname": "suggestion",
+      "label": "Suggestion",
+      "fieldtype": "Link",
+      "options": "RN AI Suggestion",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

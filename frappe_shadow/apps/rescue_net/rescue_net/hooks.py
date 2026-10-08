@@ -24,6 +24,9 @@ after_install = [
 # backups were ever taken. See rescue_net.setup.db_backup for the caveats
 # (still same host volume, not genuine off-box backup).
 scheduler_events = {
+    "hourly": [
+        "rescue_net.ai.queue.process_pending",
+    ],
     "daily": [
         "rescue_net.setup.db_backup.run_daily_backup",
         "rescue_net.ai.budget.purge_usage_logs",

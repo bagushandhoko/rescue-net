@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Sistem Verifikasi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=vax-20261008g">
+  <link rel="stylesheet" href="../assets/css/style.css?v=vax-20261008h">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -66,13 +66,13 @@
       <button type="button" class="vx-group-btn" data-group="hasil" role="tab"><span>Data Hasil Verifikasi</span></button>
     </nav>
 
-    <div class="vx-subnav" data-group="pengajuan"><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="antrian" data-count-for="#queueCount">Antrian Persetujuan<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="permintaan" data-count-for="#vfInbox">Permintaan ke Verifikator<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="pelapor" data-count-for="#vfReporters">Pelapor Terverifikasi<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="permohonan" data-count-for="#vfPending">Permohonan Jadi Verifikator<b class="vx-badge" hidden></b></button></div>
-    <div class="vx-subnav" data-group="verifikator" hidden><button type="button" class="vx-sub-btn" data-group="verifikator" data-sub="direktori" data-count-for="#vfDirectory">Direktori<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="verifikator" data-sub="daftar">Jadi Verifikator</button></div>
+    <div class="vx-subnav" data-group="pengajuan"><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="antrian" data-count-for="#queueCount">Antrian Persetujuan<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="permintaan" data-count-for="#vfInbox">Permintaan ke Verifikator<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="pelapor" data-count-for="#vfReporters">Pelapor Terverifikasi<b class="vx-badge" hidden></b></button></div>
+    <div class="vx-subnav" data-group="verifikator" hidden><button type="button" class="vx-sub-btn" data-group="verifikator" data-sub="direktori" data-count-for="#vfDirectory">Direktori<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="verifikator" data-sub="daftar" data-count-for="#vfPending">Jadi Verifikator<b class="vx-badge" hidden></b></button></div>
     <div class="vx-subnav" data-group="hasil" hidden><button type="button" class="vx-sub-btn" data-group="hasil" data-sub="endorsement" data-count-for="#vxEndorseBody">Endorsement<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="hasil" data-sub="objek">Objek Terverifikasi</button><button type="button" class="vx-sub-btn" data-group="hasil" data-sub="jejak">Jejak Tindakan</button></div>
 
     <div class="vx-panes">
 <div class="vx-pane" data-group="pengajuan" data-sub="antrian">
-<div class="vx-pane-head"><h3>Antrian Persetujuan Data</h3><p>Pengajuan data yang menunggu keputusan: user, organisasi, posko, kebutuhan, pengeluaran, dan bukti. Pilih baris untuk detail, alur persetujuan, dan jejak audit.</p></div>
+
     <section class="kpi-grid rn-va-kpi">
       <button type="button" class="kpi-card rn-kpi-btn" data-kind="user">
         <span class="kpi-icon" data-icon="user"></span><span>User Pending</span><strong id="kpiUser">-</strong><small>menunggu review</small>
@@ -217,15 +217,6 @@
       </div>
     </section>
 </div>
-<div class="vx-pane" data-group="pengajuan" data-sub="permohonan" hidden>
-<div class="vx-pane-head"><h3>Permohonan Jadi Verifikator</h3><p>System Manager atau verifikator senior (trust ≥ 2) menyetujui permohonan.</p></div>
-<div class="vx-filter" data-vx-for="#vfPending"><input type="search" data-vx-q placeholder="Cari nama / wilayah / jabatan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide" id="vfApproveSection" hidden>
-      <div class="panel">
-        <div class="panel-header"><div><h3>Permohonan Jadi Verifikator</h3><p>System Manager atau verifikator senior (trust ≥ 2) menyetujui.</p></div><span class="chip neutral" id="vfPendingCount">—</span></div>
-        <div id="vfPending"></div>
-      </div>
-    </section>
-</div>
 <div class="vx-pane" data-group="verifikator" data-sub="direktori" hidden>
 <div class="vx-pane-head"><h3>Direktori Verifikator</h3><p>Verifikator aktif per wilayah. Cari berdasarkan wilayah atau nama, dan saring menurut jenis.</p></div>
 <div class="vx-filter" data-vx-for="#vfDirectory"><input type="search" id="vfSearch" placeholder="Cari wilayah atau nama… (mis. Aceh Barat)" aria-label="Cari verifikator"><select data-vx-s aria-label="Filter"><option value="">Semua jenis &amp; status</option><option value="Pemerintah">Pemerintah</option><option value="Tokoh Masyarakat">Tokoh masyarakat</option><option value="Tokoh Agama">Tokoh agama</option><option value="Profesional">Profesional</option><option value="Tokoh Publik">Tokoh publik</option><option value="active">Aktif</option><option value="pending">Menunggu</option></select><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide">
@@ -236,7 +227,15 @@
     </section>
 </div>
 <div class="vx-pane" data-group="verifikator" data-sub="daftar" hidden>
-<div class="vx-pane-head"><h3>Jadi Verifikator</h3><p>Untuk pemerintah setempat atau tokoh publik yang bersedia memverifikasi posko dan pelapor di wilayahnya.</p></div>
+<div class="vx-pane-head"><h3>Jadi Verifikator</h3><p>Ajukan diri sebagai verifikator (pemerintah setempat atau tokoh publik). Verifikator senior dan System Manager menyetujui permohonan yang masuk di bagian atas.</p></div>
+<div class="vx-filter" data-vx-for="#vfPending"><input type="search" data-vx-q placeholder="Cari nama / wilayah / jabatan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div>
+<section class="content-grid rn-md-wide" id="vfApproveSection" hidden>
+      <div class="panel">
+        <div class="panel-header"><div><h3>Permohonan Jadi Verifikator</h3><p>System Manager atau verifikator senior (trust ≥ 2) menyetujui.</p></div><span class="chip neutral" id="vfPendingCount">—</span></div>
+        <div id="vfPending"></div>
+      </div>
+    </section>
+
 <section class="content-grid rn-md-wide" id="vfApplySection">
       <div class="panel">
         <div class="panel-header"><div><h3>Jadi Verifikator</h3><p>Untuk pemerintah setempat atau tokoh publik yang bersedia memverifikasi posko di wilayahnya.</p></div></div>
@@ -292,7 +291,7 @@
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/verifikator.js?v=mail-20261008"></script>
 <script src="../assets/js/verification-approval.js?v=hub-20261008c"></script>
-<script src="../assets/js/verifikasi-hub.js?v=hub-20261008b"></script>
+<script src="../assets/js/verifikasi-hub.js?v=hub-20261008c"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

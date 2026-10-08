@@ -212,3 +212,70 @@ class TestReportQueue(RNTestCase):
         doc.status = "draft"
         with self.assertRaises(frappe.ValidationError):
             doc.save(ignore_permissions=True)
+
+
+class TestNeedNormalizationQueue(RNTestCase):
+    """Fase 7 step 4: the AI places a need the keyword rules could not group; a human decides."""
+
+    ANSWER = json.dumps({"category": "Pangan & Air", "group": "Bahan Pangan", "item": "Bahan Pangan", "confidence": 88})
+
+    def setUp(self):
+        super().setUp()
+        self.event = make_event()
+        self.posko = make_posko(self.event, make_org())
+        self.op = make_actor(posko=self.posko)
+        self.stranger = make_actor()
+        self.need = self._need("zzqx ransum kering").name
+
+    def _need(self, text):
+        return frappe.get_doc({"doctype": "RN Logistic Need", "title": text, "item_name": text, "raw_item_text": text,
+                               "quantity": 5, "unit": "dus", "posko": self.posko.name,
+                               "disaster_event": self.event.name, "observed_at": now_datetime()}
+                              ).insert(ignore_permissions=True)
+
+    def test_only_unmatched_needs_are_queued_once(self):
+        matched = self._need("beras 10 kg").name
+        self.assertEqual(queue.enqueue_unmatched_needs(), 1)
+        self.assertTrue(frappe.db.exists("RN AI Job", {"feature": "need_normalization", "ref_name": self.need}))
+        self.assertFalse(frappe.db.exists("RN AI Job", {"ref_name": matched}))
+        self.assertEqual(queue.enqueue_unmatched_needs(), 0)
+
+    def test_nothing_happens_without_a_platform_key(self):
+        self.assertEqual(queue.process_pending(), 0)
+        self.assertEqual(frappe.db.get_value("RN AI Job", {"ref_name": self.need}, "status"), "pending")
+
+    def test_ai_proposes_and_a_posko_manager_decides(self):
+        api_ai.save_platform_key(KEY, provider="openai")
+        with _provider(self.ANSWER):
+            self.assertEqual(queue.process_pending(), 1)
+        self.assertFalse(frappe.db.get_value("RN Logistic Need", self.need, "canonical_item"))  # untouched
+        sug = frappe.db.get_value("RN AI Suggestion", {"ref_name": self.need}, "name")
+        with as_user(self.stranger.user):
+            self.assertEqual(api_ai.list_ai_suggestions("RN Logistic Need"), [])
+            with self.assertRaises(frappe.PermissionError):
+                api_ai.decide_ai_suggestion(sug, "accepted")
+        with as_user(self.op.user):
+            self.assertEqual([s["name"] for s in api_ai.list_ai_suggestions("RN Logistic Need")], [sug])
+            out = api_ai.decide_ai_suggestion(sug, "accepted")
+        self.assertEqual(out["applied"]["canonical_group"], "Bahan Pangan")
+        n = frappe.db.get_value("RN Logistic Need", self.need,
+                                ["canonical_item", "normalization_source", "normalization_status", "normalization_confidence"],
+                                as_dict=True)
+        self.assertEqual((n.canonical_item, n.normalization_source, n.normalization_status, n.normalization_confidence),
+                         ("Bahan Pangan", "ai", "accepted", 88))
+
+    def test_a_reply_without_an_item_counts_as_a_failed_attempt(self):
+        api_ai.save_platform_key(KEY, provider="openai")
+        with _provider('{"category": "", "group": "", "item": ""}'):
+            queue.process_pending()
+        job = frappe.get_doc("RN AI Job", {"ref_name": self.need})
+        self.assertEqual((job.status, job.attempts), ("pending", 1))
+
+    def test_rejecting_changes_nothing(self):
+        api_ai.save_platform_key(KEY, provider="openai")
+        with _provider(self.ANSWER):
+            queue.process_pending()
+        sug = frappe.db.get_value("RN AI Suggestion", {"ref_name": self.need}, "name")
+        with as_user(self.op.user):
+            api_ai.decide_ai_suggestion(sug, "rejected")
+        self.assertFalse(frappe.db.get_value("RN Logistic Need", self.need, "canonical_item"))

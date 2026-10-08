@@ -42,14 +42,15 @@ hanya lewat alur Git yang disetujui owner.
 
 Detail dan progres: `HANDOVER.md` → "Architecture review".
 
-## FASE 7–8
-Semua fitur AI wajib mengikuti docs/adr/0002-kebijakan-ai.md. Urutan pengerjaan
-Fase 7 mengikuti bagian 11 ADR-0002 (Urutan implementasi).
+## FASE 7 (SELESAI) — Fase 8 DILEWATI
+Semua fitur AI wajib mengikuti docs/adr/0002-kebijakan-ai.md. Fase 7 mengikuti bagian 11 ADR-0002
+(Urutan implementasi); selesai 2026-10-08 (owner: langkah 5 dihapus).
 
-Belum tercatat di repo — isi saat owner menyampaikan rinciannya.
+Fase 8 TIDAK ADA: owner melewatinya (2026-10-08). Nomornya sengaja dibiarkan kosong supaya
+rujukan lain (9f, 9g, Fase 10) tidak bergeser; rujukan "Fase 8d/8e/8g" di bawah tidak berlaku.
 
 ## FASE 9 — Federasi, sinkronisasi & interoperabilitas
-Prasyarat: Fase 8 selesai. Fase ini dimulai dengan DOKUMEN DESAIN,
+Prasyarat: Fase 7 selesai (Fase 8 dilewati owner). Fase ini dimulai dengan DOKUMEN DESAIN,
 bukan kode. Setiap desain ditulis sebagai ADR berstatus Proposed
 dan harus disetujui owner sebelum implementasi.
 
@@ -137,7 +138,7 @@ Prasyarat: 9f selesai.
      atau cukup PWA terinstal.
    - Satu basis kode untuk web, Android, dan desktop sejauh mungkin
      (sejalan dengan Fase 5).
-   - Mode offline mengikuti hasil uji Fase 8e.
+   - Mode offline mengikuti desain sinkronisasi ADR-0004 (tidak ada "uji Fase 8e": Fase 8 dilewati).
 >>> BERHENTI, tunggu review owner.
 
 >>> BERHENTI di akhir tiap sub-fase, tunggu review owner.
@@ -182,7 +183,7 @@ persetujuan owner sebelum membangun. Prioritas owner-review: 10b,
 - Layer peta status jalan/jembatan (terbuka, rusak, putus), listrik,
   dan sinyal, dengan sumber dan waktu pembaruan.
 - Dipakai transport booking untuk memilih rute realistis.
-- Lihat batasan GIS di Fase 8d.
+- Batasan GIS ditetapkan saat fitur ini dikerjakan (rujukan lama "Fase 8d" tidak berlaku: Fase 8 dilewati).
 
 10f. Papan kebutuhan publik untuk donatur
 - Halaman publik kebutuhan aktual per wilayah/posko, termasuk barang
@@ -194,7 +195,7 @@ persetujuan owner sebelum membangun. Prioritas owner-review: 10b,
 - Perkuat mode simulasi (sudah ada jejak event-sim-001): data
   latihan ditandai jelas, terpisah dari data nyata, mudah dibersihkan
   tanpa risiko menyentuh data nyata.
-- Dipakai untuk uji lapangan Fase 8g.
+- Dipakai untuk uji lapangan yang dijadwalkan owner (rujukan lama "Fase 8g" tidak berlaku: Fase 8 dilewati).
 
 10h. Check-in/check-out relawan di zona bahaya
 - Koordinator selalu tahu siapa yang sedang di lapangan, dengan

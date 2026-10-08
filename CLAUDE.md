@@ -181,7 +181,7 @@ dengan ADR tanpa alasan kuat; jika perlu, tulis ADR baru berstatus Proposed dan 
 ## Next Steps
 
 Roadmap: `docs/NEXT_STEPS.md`. Fase 9 (federasi, sinkronisasi offline, standar data kemanusiaan P-code/HXL/CAP)
-dimulai dengan desain berupa ADR Proposed setelah Fase 8 selesai — jangan dikerjakan sebelum owner memerintahkan;
+dimulai dengan desain berupa ADR Proposed (Fase 8 dilewati owner; ADR-0004/0005 Accepted 2026-10-08, 9c D.1 jalan di test stack) — tiap sub-fase hanya atas perintah owner;
 9f–9g: distribusi server (image Docker, installer, perawatan) dan Rescue-Net Box + aplikasi klien (ADR-0003).
 Fase 0 (prioritas, sebelum Fase 1 setelah owner perintahkan): lingkungan kerja agent dipisah dari produksi dan
 deploy hanya lewat alur Git yang disetujui owner. Fase 10: backlog fitur baru (peringatan dini BMKG, QR bantuan &

@@ -856,7 +856,7 @@ function setupCommunityReportForm() {
 
 function reporterPanelHtml(d, view) {
   const v = d.verification || { level: 0, label: "", evidence: [] };
-  const steps = [0, 1, 2, 3, 4].map((n) => `<i class="${n <= v.level ? "on" : ""}"></i>`).join("");
+  const steps = [1, 2, 3, 4].map((n) => `<i class="${n <= v.level ? "on" : ""}"></i>`).join("");
   const contact = d.phone
     ? `<a class="btn primary mini" href="${escHtml(d.whatsapp_url)}" target="_blank" rel="noopener">WhatsApp</a>
        <a class="btn mini" href="${escHtml(d.tel_url)}">Telepon ${escHtml(d.phone)}</a>`

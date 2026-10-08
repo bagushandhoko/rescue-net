@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Sistem Verifikasi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=vax-20261007">
+  <link rel="stylesheet" href="../assets/css/style.css?v=vax-20261008b">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
 </head>
@@ -47,23 +47,23 @@
     </nav>
   </aside>
 
-  <main class="main rn-dense rn-vax-page rn-vx-hub">
-    <header class="topbar">
-      <div class="rn-page-mobile-title">Sistem Verifikasi</div>
-      <div>
-        <p class="eyebrow">Pengajuan · Verifikator · Hasil</p>
+  <main class="main rn-vax-page rn-vx-hub">
+    <header class="vx-header">
+      <div class="vx-title">
+        <p class="vx-eyebrow">Pengajuan · Verifikator · Hasil</p>
         <h2>Sistem Verifikasi</h2>
-        <p class="subtitle">Satu tempat untuk pengajuan verifikasi, para verifikator, dan data hasil verifikasi — data operasional, posko, organisasi, dan pelapor.</p>
-        <p class="subtitle" id="verifStatus">Memuat…</p>
-        <p class="subtitle" id="vfStatus"></p>
+        <p class="vx-lead">Satu tempat untuk mengajukan verifikasi, mengelola jaringan verifikator, dan melihat hasil verifikasi posko, organisasi, dan pelapor.</p>
       </div>
-      <div class="vx-pills"><div class="status-pill" id="verifUpdated">Verifikasi · Live</div><div class="status-pill" id="vfRole">—</div></div>
+      <div class="vx-status">
+        <div class="vx-pills"><span class="status-pill" id="verifUpdated">Verifikasi · Live</span><span class="status-pill" id="vfRole">—</span></div>
+        <p class="vx-statusline"><span id="verifStatus">Memuat…</span> <span id="vfStatus"></span></p>
+      </div>
     </header>
 
     <nav class="vx-groups" role="tablist" aria-label="Menu Sistem Verifikasi">
-      <button type="button" class="vx-group-btn" data-group="pengajuan" role="tab"><span>Pengajuan Verifikasi</span><small>Antrian, permintaan, pendaftaran</small></button>
-      <button type="button" class="vx-group-btn" data-group="verifikator" role="tab"><span>Verifikator</span><small>Direktori, pendaftaran, registri</small></button>
-      <button type="button" class="vx-group-btn" data-group="hasil" role="tab"><span>Data Hasil Verifikasi</span><small>Endorsement, objek, jejak tindakan</small></button>
+      <button type="button" class="vx-group-btn" data-group="pengajuan" role="tab"><span>Pengajuan Verifikasi</span></button>
+      <button type="button" class="vx-group-btn" data-group="verifikator" role="tab"><span>Verifikator</span></button>
+      <button type="button" class="vx-group-btn" data-group="hasil" role="tab"><span>Data Hasil Verifikasi</span></button>
     </nav>
 
     <div class="vx-subnav" data-group="pengajuan"><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="antrian" data-count-for="#queueCount">Antrian Persetujuan<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="permintaan" data-count-for="#vfInbox">Permintaan ke Verifikator<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="pelapor" data-count-for="#vfReporters">Pelapor Terverifikasi<b class="vx-badge" hidden></b></button><button type="button" class="vx-sub-btn" data-group="pengajuan" data-sub="permohonan" data-count-for="#vfPending">Permohonan Jadi Verifikator<b class="vx-badge" hidden></b></button></div>
@@ -202,12 +202,9 @@
 </div>
 <div class="vx-pane" data-group="verifikator" data-sub="direktori" hidden>
 <div class="vx-pane-head"><h3>Direktori Verifikator</h3><p>Verifikator aktif per wilayah. Cari berdasarkan wilayah atau nama, dan saring menurut jenis.</p></div>
-<div class="vx-filter" data-vx-for="#vfDirectory"><input type="search" data-vx-q placeholder="Cari nama / jabatan / wilayah…" aria-label="Cari"><select data-vx-s aria-label="Filter status"><option value="">Semua status</option><option value="Pemerintah">Pemerintah</option><option value="Tokoh Masyarakat">Tokoh masyarakat</option><option value="Tokoh Agama">Tokoh agama</option><option value="Profesional">Profesional</option><option value="Tokoh Publik">Tokoh publik</option><option value="Lainnya">Lainnya</option><option value="active">Aktif</option><option value="pending">Menunggu</option></select><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide">
+<div class="vx-filter" data-vx-for="#vfDirectory"><input type="search" id="vfSearch" placeholder="Cari wilayah atau nama… (mis. Aceh Barat)" aria-label="Cari verifikator"><select data-vx-s aria-label="Filter"><option value="">Semua jenis &amp; status</option><option value="Pemerintah">Pemerintah</option><option value="Tokoh Masyarakat">Tokoh masyarakat</option><option value="Tokoh Agama">Tokoh agama</option><option value="Profesional">Profesional</option><option value="Tokoh Publik">Tokoh publik</option><option value="active">Aktif</option><option value="pending">Menunggu</option></select><span class="vx-count" data-vx-count></span></div><section class="content-grid rn-md-wide">
       <div class="panel">
-        <div class="panel-header">
-          <div><h3>Direktori Verifikator</h3><p>Cari verifikator aktif per wilayah.</p></div>
-          <input id="vfSearch" placeholder="Cari wilayah… (mis. Aceh Barat)" style="max-width:220px">
-        </div>
+        
         <div class="vf-grid" id="vfDirectory"></div>
       </div>
     </section>
@@ -245,7 +242,7 @@
 </div>
 <div class="vx-pane" data-group="verifikator" data-sub="registri" hidden>
 <div class="vx-pane-head"><h3>Registri Verifikator (riwayat)</h3><p>Registri dan permintaan verifikasi identitas dari jaringan lama. Tetap tersedia untuk riwayat dan persetujuan.</p></div>
-<div class="content-grid"><div class="panel"><h3>Verifier Requests</h3><p class="rn-muted">Permintaan verifikasi identitas/keanggotaan.</p><div class="vx-filter" data-vx-for="#trustedVerifierRequests"><input type="search" data-vx-q placeholder="Cari permintaan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="trustedVerifierRequests"></div></div><div class="panel"><h3>Verifier Registry</h3><p class="rn-muted">Calon verifikator harus disetujui dan diberi scope.</p>      <form class="rn-form" id="verifierRegistrationForm">
+<div class="content-grid"><div class="panel"><h3>Permintaan Verifikasi Identitas</h3><p class="rn-muted">Permintaan verifikasi identitas/keanggotaan.</p><div class="vx-filter" data-vx-for="#trustedVerifierRequests"><input type="search" data-vx-q placeholder="Cari permintaan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="trustedVerifierRequests"></div></div><div class="panel"><h3>Registri Calon Verifikator</h3><p class="rn-muted">Calon verifikator harus disetujui dan diberi scope.</p>      <form class="rn-form" id="verifierRegistrationForm">
         <div class="form-grid">
           <label>Nama<input name="display_name" required></label>
           <label>Jenis
@@ -296,11 +293,11 @@
 </div>
 <div class="vx-pane" data-group="hasil" data-sub="objek" hidden>
 <div class="vx-pane-head"><h3>Posko, Organisasi & Sumber Daya</h3><p>Status verifikasi objek: organisasi, posko, relawan, tawaran bantuan, dan permintaan alat kerja. Tombol verifikasi tetap tersedia di tiap kartu.</p></div>
-<div class="content-grid"><div class="panel"><h3>Organizations</h3><div class="vx-filter" data-vx-for="#verifyOrganizations"><input type="search" data-vx-q placeholder="Cari organisasi…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyOrganizations"></div></div><div class="panel"><h3>Poskos</h3><div class="vx-filter" data-vx-for="#verifyPoskos"><input type="search" data-vx-q placeholder="Cari posko…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyPoskos"></div></div></div><div class="content-grid"><div class="panel"><h3>Volunteers</h3><div class="vx-filter" data-vx-for="#verifyVolunteers"><input type="search" data-vx-q placeholder="Cari relawan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyVolunteers"></div></div><div class="panel"><h3>Aid Offers</h3><div class="vx-filter" data-vx-for="#verifyAidOffers"><input type="search" data-vx-q placeholder="Cari tawaran bantuan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyAidOffers"></div></div></div><div class="panel"><h3>Work Tool Requests</h3><div class="vx-filter" data-vx-for="#verifyWorkTools"><input type="search" data-vx-q placeholder="Cari permintaan alat…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyWorkTools"></div></div>
+<div class="content-grid"><div class="panel"><h3>Organisasi</h3><div class="vx-filter" data-vx-for="#verifyOrganizations"><input type="search" data-vx-q placeholder="Cari organisasi…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyOrganizations"></div></div><div class="panel"><h3>Posko</h3><div class="vx-filter" data-vx-for="#verifyPoskos"><input type="search" data-vx-q placeholder="Cari posko…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyPoskos"></div></div></div><div class="content-grid"><div class="panel"><h3>Relawan</h3><div class="vx-filter" data-vx-for="#verifyVolunteers"><input type="search" data-vx-q placeholder="Cari relawan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyVolunteers"></div></div><div class="panel"><h3>Tawaran Bantuan</h3><div class="vx-filter" data-vx-for="#verifyAidOffers"><input type="search" data-vx-q placeholder="Cari tawaran bantuan…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyAidOffers"></div></div></div><div class="panel"><h3>Permintaan Alat Kerja</h3><div class="vx-filter" data-vx-for="#verifyWorkTools"><input type="search" data-vx-q placeholder="Cari permintaan alat…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verifyWorkTools"></div></div>
 </div>
 <div class="vx-pane" data-group="hasil" data-sub="jejak" hidden>
 <div class="vx-pane-head"><h3>Jejak Tindakan & Pencabutan</h3><p>Catatan tindakan verifikasi, endorsement yang dicabut, dan aktivitas mencurigakan.</p></div>
-<div class="content-grid"><div class="panel"><h3>Verification Actions</h3><div class="vx-filter" data-vx-for="#verificationActions"><input type="search" data-vx-q placeholder="Cari tindakan / objek / pelaksana…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verificationActions"></div></div><div class="panel"><h3>Revoked &amp; Suspicious Activity</h3><div class="vx-filter" data-vx-for="#revokedVerifications"><input type="search" data-vx-q placeholder="Cari…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="revokedVerifications"></div></div></div>
+<div class="content-grid"><div class="panel"><h3>Tindakan Verifikasi</h3><div class="vx-filter" data-vx-for="#verificationActions"><input type="search" data-vx-q placeholder="Cari tindakan / objek / pelaksana…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="verificationActions"></div></div><div class="panel"><h3>Dicabut &amp; Aktivitas Mencurigakan</h3><div class="vx-filter" data-vx-for="#revokedVerifications"><input type="search" data-vx-q placeholder="Cari…" aria-label="Cari"><span class="vx-count" data-vx-count></span></div><div class="event-list" id="revokedVerifications"></div></div></div>
 </div>
     </div>
   </main>

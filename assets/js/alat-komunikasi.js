@@ -143,10 +143,26 @@
 
   function freqCell(p) {
     var f = p.frequencies || [];
-    if (!f.length) return '<em class="rn-muted">-</em>';
+    if (!f.length) return '<em class="rn-muted">belum diisi</em>';
     return f.map(function (x) {
-      return '<span class="chip" title="' + esc((x.devices || []).join(", ")) + '">' + esc(x.channel) + "</span>";
-    }).join(" ");
+      var main = x.frequency ? "<b>" + esc(x.frequency) + "</b>" : '<em class="rn-muted">frekuensi belum diisi</em>';
+      return '<div title="' + esc((x.devices || []).join(", ")) + '">' + main + (x.channel ? " <small>" + esc(x.channel) + "</small>" : "") + "</div>";
+    }).join("");
+  }
+
+  function locationCell(p) {
+    var l = p.location || {};
+    var out = [];
+    if (l.address) out.push(esc(l.address));
+    if (l.area) out.push("<small>" + esc(l.area) + "</small>");
+    if (l.lat != null && l.lng != null) {
+      var c = Number(l.lat).toFixed(5) + ", " + Number(l.lng).toFixed(5);
+      out.push('<a href="https://www.openstreetmap.org/?mlat=' + l.lat + "&mlon=" + l.lng + "#map=15/" + l.lat + "/" + l.lng +
+        '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + esc(c) + "</a>");
+    } else {
+      out.push('<em class="rn-muted">koordinat belum diisi</em>');
+    }
+    return out.join("<br>");
   }
 
   function contactCell(p) {
@@ -187,12 +203,13 @@
             '<tr class="rn-ba-row" data-href="' + esc(p.href) + '">' +
             "<td><b>" + esc(p.title) + "</b></td>" +
             '<td><span class="chip ' + (chip[p.status] || "") + '">' + esc(p.status_label) + "</span></td>" +
+            "<td>" + locationCell(p) + "</td>" +
             "<td>" + freqCell(p) + "</td>" +
             "<td>" + contactCell(p) + "</td>" +
             "<td>" + esc(tsLabel(p.last_contact)) + "</td></tr>"
           );
         }).join("")
-      : '<tr><td colspan="5"><em class="rn-muted">Belum ada posko untuk event ini.</em></td></tr>';
+      : '<tr><td colspan="6"><em class="rn-muted">Belum ada posko untuk event ini.</em></td></tr>';
     body.querySelectorAll("tr[data-href]").forEach(function (tr) {
       tr.addEventListener("click", function () { window.location.href = tr.getAttribute("data-href"); });
     });

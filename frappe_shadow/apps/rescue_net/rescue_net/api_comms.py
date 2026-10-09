@@ -12,6 +12,8 @@ the board still works.
 way as every other create_* endpoint in the app (any authenticated RN actor).
 """
 
+import re
+
 import frappe
 from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime
@@ -103,6 +105,32 @@ def _posko_contact(p, actor):
     return out if any(out[k] for k in ("phone", "whatsapp", "email", "emergency")) else None
 
 
+_FREQ_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(khz|mhz|ghz)", re.I)
+_CHAN_RE = re.compile(r"\b(?:ch|chan(?:nel)?|kanal)\s*[-.:]?\s*(\w+)", re.I)
+
+
+def _split_radio(value):
+    """'146.020 MHz / CH 01' -> ('146.020 MHz', 'CH 01'); 'CH 03' -> ('', 'CH 03'); '-' -> ('', '')."""
+    text = (value or "").strip()
+    m, c = _FREQ_RE.search(text), _CHAN_RE.search(text)
+    freq = (m.group(1).replace(",", ".") + " " + {"khz": "kHz", "mhz": "MHz", "ghz": "GHz"}[m.group(2).lower()]) if m else ""
+    chan = ("CH " + c.group(1)) if c else ""
+    return freq, chan
+
+
+def _posko_location(p):
+    lat, lng = p.get("latitude"), p.get("longitude")
+    has = lat not in (None, "") and lng not in (None, "") and (float(lat) or float(lng))
+    admin = ", ".join(x for x in (p.get("village_name"), p.get("district_name"),
+                                  p.get("city_name"), p.get("province_name")) if x)
+    return {
+        "address": p.get("address") or "",
+        "area": admin,
+        "lat": float(lat) if has else None,
+        "lng": float(lng) if has else None,
+    }
+
+
 def _posko_has_comms_fields():
     meta = frappe.get_meta("RN Posko")
     return meta.has_field("rn_comms_status")
@@ -156,7 +184,8 @@ def comms_board(disaster_event=None):
     )
 
     # ---- poskos for this event (connectivity) ----
-    posko_fields = ["name", "title", "latitude", "longitude",
+    posko_fields = ["name", "title", "latitude", "longitude", "address", "province_name",
+                    "city_name", "district_name", "village_name",
                     "disaster_event", "disaster_event_legacy_id"]
     posko_fields += [f for f in _CONTACT_FIELDS if frappe.get_meta("RN Posko").has_field(f)]
     if _posko_has_comms_fields():
@@ -201,12 +230,13 @@ def comms_board(disaster_event=None):
             return "weak"
         return "connected"
 
-    # radio channels per posko, straight from the devices it holds (no personal data)
+    # radio per posko, straight from the devices it holds (no personal data). A real frequency
+    # ("146.020 MHz") and a channel ("CH 01") are different things: split what the device row holds.
     radio_by_posko = {}
     for d in devices:
-        ch = (d.frequency_channel or "").strip()
-        if d.posko and ch:
-            radio_by_posko.setdefault(d.posko, {}).setdefault(ch, []).append(d.device_name)
+        freq, chan = _split_radio(d.frequency_channel)
+        if d.posko and (freq or chan):
+            radio_by_posko.setdefault(d.posko, {}).setdefault((freq, chan), []).append(d.device_name)
 
     actor = rn_actor(required=False)
 
@@ -222,9 +252,10 @@ def comms_board(disaster_event=None):
             "status_label": _CONN_LABEL[c],
             "last_contact": p.get("rn_comms_last_contact") or "",
             "frequencies": [
-                {"channel": ch, "devices": names}
-                for ch, names in sorted(radio_by_posko.get(p.name, {}).items())
+                {"frequency": f, "channel": c, "devices": names}
+                for (f, c), names in sorted(radio_by_posko.get(p.name, {}).items())
             ],
+            "location": _posko_location(p),
             "contact": _posko_contact(p, actor),
             "lat": p.get("latitude"),
             "lng": p.get("longitude"),

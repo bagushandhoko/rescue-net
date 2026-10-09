@@ -27,7 +27,21 @@ class TestCommsContact(RNTestCase):
     def test_radio_channel_listed_for_everyone(self):
         with as_guest():
             row = self.row(api_comms.comms_board(disaster_event=self.w.event.name))
-        self.assertEqual(row["frequencies"][0]["channel"], "146.020 MHz / CH 01")
+        self.assertEqual(row["frequencies"][0]["frequency"], "146.020 MHz")
+        self.assertEqual(row["frequencies"][0]["channel"], "CH 01")
+
+    def test_channel_only_is_not_called_a_frequency(self):
+        from rescue_net.api_comms import _split_radio
+        self.assertEqual(_split_radio("CH 03"), ("", "CH 03"))
+        self.assertEqual(_split_radio("-"), ("", ""))
+
+    def test_location_and_coordinates_shown(self):
+        frappe.db.set_value("RN Posko", self.w.posko_a.name, {
+            "latitude": -6.2, "longitude": 106.8, "village_name": "Desa Uji", "city_name": "Kota Uji"})
+        with as_guest():
+            row = self.row(api_comms.comms_board(disaster_event=self.w.event.name))
+        self.assertEqual((row["location"]["lat"], row["location"]["lng"]), (-6.2, 106.8))
+        self.assertIn("Desa Uji", row["location"]["area"])
 
     def test_guest_gets_no_contact_in_summary_mode(self):
         with as_guest():

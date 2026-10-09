@@ -78,6 +78,30 @@ def _num(v):
         return 0.0
 
 
+_CONTACT_FIELDS = (
+    "officer_in_charge_name", "officer_in_charge_role", "officer_in_charge_phone",
+    "officer_in_charge_whatsapp", "officer_in_charge_email", "emergency_contact",
+)
+
+
+def _posko_contact(p, actor):
+    """Posko phone / WhatsApp / email for this public board — same rule as posko_detail:
+    only when the viewer may see the posko in "full" share mode, otherwise None."""
+    from rescue_net.visibility import posko_contacts_visible
+
+    if not posko_contacts_visible(p.name, actor):
+        return None
+    out = {
+        "name": p.get("officer_in_charge_name") or "",
+        "role": p.get("officer_in_charge_role") or "",
+        "phone": p.get("officer_in_charge_phone") or "",
+        "whatsapp": p.get("officer_in_charge_whatsapp") or "",
+        "email": p.get("officer_in_charge_email") or "",
+        "emergency": p.get("emergency_contact") or "",
+    }
+    return out if any(out.values()) else None
+
+
 def _posko_has_comms_fields():
     meta = frappe.get_meta("RN Posko")
     return meta.has_field("rn_comms_status")
@@ -133,6 +157,7 @@ def comms_board(disaster_event=None):
     # ---- poskos for this event (connectivity) ----
     posko_fields = ["name", "title", "latitude", "longitude",
                     "disaster_event", "disaster_event_legacy_id"]
+    posko_fields += [f for f in _CONTACT_FIELDS if frappe.get_meta("RN Posko").has_field(f)]
     if _posko_has_comms_fields():
         posko_fields += ["rn_comms_status", "rn_comms_last_contact"]
     if event:
@@ -175,6 +200,15 @@ def comms_board(disaster_event=None):
             return "weak"
         return "connected"
 
+    # radio channels per posko, straight from the devices it holds (no personal data)
+    radio_by_posko = {}
+    for d in devices:
+        ch = (d.frequency_channel or "").strip()
+        if d.posko and ch:
+            radio_by_posko.setdefault(d.posko, {}).setdefault(ch, []).append(d.device_name)
+
+    actor = rn_actor(required=False)
+
     konektivitas_poskos = []
     conn_count = {"connected": 0, "weak": 0, "disconnected": 0, "unknown": 0}
     for p in poskos:
@@ -186,6 +220,11 @@ def comms_board(disaster_event=None):
             "status": c,
             "status_label": _CONN_LABEL[c],
             "last_contact": p.get("rn_comms_last_contact") or "",
+            "frequencies": [
+                {"channel": ch, "devices": names}
+                for ch, names in sorted(radio_by_posko.get(p.name, {}).items())
+            ],
+            "contact": _posko_contact(p, actor),
             "lat": p.get("latitude"),
             "lng": p.get("longitude"),
             "href": "posko-detail.html?id=" + p.name + "&event=" + ev_q,

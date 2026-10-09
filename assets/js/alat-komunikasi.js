@@ -141,6 +141,27 @@
     setTimeout(function () { connMap.invalidateSize(); }, 50);
   }
 
+  function freqCell(p) {
+    var f = p.frequencies || [];
+    if (!f.length) return '<em class="rn-muted">-</em>';
+    return f.map(function (x) {
+      return '<span class="chip" title="' + esc((x.devices || []).join(", ")) + '">' + esc(x.channel) + "</span>";
+    }).join(" ");
+  }
+
+  function contactCell(p) {
+    var c = p.contact;
+    if (!c) return '<em class="rn-muted" title="Kontak hanya tampil bila posko membagikan detailnya">tidak dibagikan</em>';
+    var out = [];
+    if (c.name) out.push("<b>" + esc(c.name) + "</b>" + (c.role ? " <small>" + esc(c.role) + "</small>" : ""));
+    var tel = function (n) { return String(n).replace(/[^\d+]/g, ""); };
+    if (c.phone) out.push('<a href="tel:' + esc(tel(c.phone)) + '" onclick="event.stopPropagation()">' + esc(c.phone) + "</a>");
+    if (c.whatsapp && c.whatsapp !== c.phone) out.push('WA <a href="https://wa.me/' + esc(tel(c.whatsapp).replace(/^0/, "62")) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + esc(c.whatsapp) + "</a>");
+    if (c.emergency) out.push("Darurat: " + esc(c.emergency));
+    if (c.email) out.push('<a href="mailto:' + esc(c.email) + '" onclick="event.stopPropagation()">' + esc(c.email) + "</a>");
+    return out.join("<br>");
+  }
+
   function renderConnectivity(k) {
     k = k || {};
     function tile(cls, icon, n, label) {
@@ -166,10 +187,12 @@
             '<tr class="rn-ba-row" data-href="' + esc(p.href) + '">' +
             "<td><b>" + esc(p.title) + "</b></td>" +
             '<td><span class="chip ' + (chip[p.status] || "") + '">' + esc(p.status_label) + "</span></td>" +
+            "<td>" + freqCell(p) + "</td>" +
+            "<td>" + contactCell(p) + "</td>" +
             "<td>" + esc(tsLabel(p.last_contact)) + "</td></tr>"
           );
         }).join("")
-      : '<tr><td colspan="3"><em class="rn-muted">Belum ada posko untuk event ini.</em></td></tr>';
+      : '<tr><td colspan="5"><em class="rn-muted">Belum ada posko untuk event ini.</em></td></tr>';
     body.querySelectorAll("tr[data-href]").forEach(function (tr) {
       tr.addEventListener("click", function () { window.location.href = tr.getAttribute("data-href"); });
     });

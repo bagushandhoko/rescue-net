@@ -1,6 +1,6 @@
 # Impor wilayah berkode (ADR-0005 D.1)
 
-Status: **dibangun dan diuji di test stack; BELUM di produksi** (gerbang review owner, ADR-0005). Kunci kanonik =
+Status: **ter-impor di PRODUKSI 2026-10-09 15:20** (owner 'lanjut'; 91.587 baru, 8 nama demo → resmi, backup 15:13). Kunci kanonik =
 kode Kemendagri bertitik (`11`, `11.71`, `11.71.02`, `11.71.02.1001`).
 
 ## Yang sudah ada

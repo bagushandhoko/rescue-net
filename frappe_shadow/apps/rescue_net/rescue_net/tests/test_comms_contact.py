@@ -56,3 +56,42 @@ class TestCommsContact(RNTestCase):
             row = self.row(api_comms.comms_board(disaster_event=self.w.event.name))
         self.assertEqual(row["contact"]["phone"], PHONE)
         self.assertEqual(row["contact"]["email"], EMAIL)
+
+    def test_methods_list_every_way_to_reach_posko(self):
+        p = self.w.posko_a
+        frappe.db.set_value("RN Posko", p.name, "officer_in_charge_whatsapp", "0813-1111-2222")
+        _insert("RN Comms Device", device_name="Sat-1", category="telepon_satelit", status="active", posko=p.name,
+                disaster_event=self.w.event.name, contact_id="+881600000001")
+        _insert("RN Comms Device", device_name="Dish", category="starlink", status="active", posko=p.name,
+                disaster_event=self.w.event.name)
+        _insert("RN Comms Device", device_name="HT-9", category="ht", status="active", posko=p.name,
+                disaster_event=self.w.event.name, frequency_mhz="430.1", frequency_channel="CH 07", contact_id="YB0ABC")
+        with as_user(self.op.user):
+            row = self.row(api_comms.comms_board(disaster_event=self.w.event.name))
+        types = {m["type"] for m in row["methods"]}
+        self.assertTrue({"telepon", "wa", "email", "radio", "sat", "net"} <= types)
+        radio = [m["value"] for m in row["methods"] if m["type"] == "radio"]
+        self.assertTrue(any("430.100 MHz" in v and "CH 07" in v and "YB0ABC" in v for v in radio))
+        self.assertEqual(next(m for m in row["methods"] if m["type"] == "wa")["href"], "https://wa.me/6281311112222")
+
+    def test_guest_sees_radio_but_no_phone_or_satellite_number(self):
+        p = self.w.posko_a
+        _insert("RN Comms Device", device_name="Sat-2", category="telepon_satelit", status="active", posko=p.name,
+                disaster_event=self.w.event.name, contact_id="+881600000002")
+        with as_guest():
+            data = api_comms.comms_board(disaster_event=self.w.event.name)
+        blob = frappe.as_json(data)
+        self.assertNotIn("+881600000002", blob)
+        self.assertNotIn(PHONE, blob)
+        self.assertTrue(any(m["type"] == "radio" for m in self.row(data)["methods"]))
+
+    def test_posko_without_any_gear_says_so(self):
+        with as_guest():
+            data = api_comms.comms_board(disaster_event=self.w.event.name)
+        other = next(r for r in data["konektivitas"]["poskos"] if r["posko"] != self.w.posko_a.name)
+        self.assertEqual(other["methods"][0]["type"], "kosong")
+
+    def test_bad_frequency_refused(self):
+        with as_user(self.op.user):
+            with self.assertRaises(frappe.ValidationError):
+                api_comms.create_comms_device("X", "ht", disaster_event=self.w.event.name, frequency_mhz="abc")

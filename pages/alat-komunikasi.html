@@ -111,8 +111,8 @@
           <summary id="connListSummary">Daftar posko</summary>
           <div class="rn-table-wrap">
             <table class="rn-table">
-              <thead><tr><th>Posko</th><th>Status</th><th>Lokasi &amp; Koordinat</th><th>Frekuensi Radio</th><th>Kontak Posko</th><th>Kontak Terakhir</th></tr></thead>
-              <tbody id="connBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+              <thead><tr><th>Posko</th><th>Status</th><th>Lokasi &amp; Koordinat</th><th>Cara Dihubungi</th><th>Kontak Terakhir</th></tr></thead>
+              <tbody id="connBody"><tr><td colspan="5">Memuat…</td></tr></tbody>
             </table>
           </div>
         </details>
@@ -177,7 +177,9 @@
             </select>
           </label>
           <label>Baterai (%) <input name="battery_pct" type="number" min="0" max="100" placeholder="82"></label>
-          <label>Frekuensi / Channel <input name="frequency_channel" placeholder="146.020 MHz / CH 01"></label>
+          <label>Frekuensi (MHz) <input name="frequency_mhz" inputmode="decimal" placeholder="146.020"></label>
+          <label>Channel <input name="frequency_channel" placeholder="CH 01"></label>
+          <label>Call sign / Nomor / ID kontak <input name="contact_id" placeholder="YB0ABC · +8816xxxxxxx"></label>
           <label>Lokasi Saat Ini <input name="current_location" placeholder="Posko RW 04 Kampung Melayu"></label>
         </div>
         <div class="form-actions">
@@ -278,7 +280,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-ui.js?v=cluster-20260930"></script>
-<script src="../assets/js/alat-komunikasi.js?v=kontak-20261009b"></script>
+<script src="../assets/js/alat-komunikasi.js?v=kontak-20261009c"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

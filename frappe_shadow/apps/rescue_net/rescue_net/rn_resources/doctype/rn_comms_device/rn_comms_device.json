@@ -64,8 +64,20 @@
     },
     {
       "fieldname": "frequency_channel",
-      "label": "Frekuensi / Channel",
+      "label": "Channel (mis. CH 01)",
       "fieldtype": "Data"
+    },
+    {
+      "fieldname": "frequency_mhz",
+      "label": "Frekuensi (MHz)",
+      "fieldtype": "Data",
+      "description": "Frekuensi radio sebenarnya, mis. 146.020 (VHF), 430.100 (UHF), 7.120 (HF)."
+    },
+    {
+      "fieldname": "contact_id",
+      "label": "Call sign / Nomor / ID kontak",
+      "fieldtype": "Data",
+      "description": "Call sign radio, nomor telepon satelit, atau ID Starlink/VSAT."
     },
     {
       "fieldname": "current_location",

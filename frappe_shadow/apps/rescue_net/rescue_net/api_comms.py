@@ -118,6 +118,68 @@ def _split_radio(value):
     return freq, chan
 
 
+def _fmt_mhz(value):
+    """'146.020', '146,02 MHz' -> '146.020 MHz'; anything that is not a plausible 0.1-3000 MHz value -> ''."""
+    m = re.search(r"\d+(?:[.,]\d+)?", str(value or ""))
+    if not m:
+        return ""
+    n = float(m.group(0).replace(",", "."))
+    return ("%.3f MHz" % n) if 0.1 <= n <= 3000 else ""
+
+
+def _radio_kind(mhz):
+    n = float((mhz or "0").split()[0] or 0)
+    return "HF" if n < 30 else ("VHF" if n < 300 else "UHF")
+
+
+_INTERNET_HOW = "Internet tersedia — bisa lewat WhatsApp / email / video call"
+
+
+def _posko_methods(p, actor, devices, contact):
+    """Every way to reach a posko, one list: PIC phone / WhatsApp / email / emergency (only when the viewer
+    may see the posko in full share mode), radio with frequency + channel + call sign, satellite phone,
+    internet terminals. Inactive gear is not listed."""
+    out = []
+    if contact:
+        if contact["phone"]:
+            out.append({"type": "telepon", "label": "Telepon" + (" " + contact["name"] if contact["name"] else ""),
+                        "value": contact["phone"], "href": "tel:" + re.sub(r"[^\d+]", "", contact["phone"])})
+        if contact["whatsapp"]:
+            num = re.sub(r"\D", "", contact["whatsapp"])
+            num = "62" + num[1:] if num.startswith("0") else num
+            out.append({"type": "wa", "label": "WhatsApp", "value": contact["whatsapp"], "href": "https://wa.me/" + num})
+        if contact["email"]:
+            out.append({"type": "email", "label": "Email", "value": contact["email"], "href": "mailto:" + contact["email"]})
+        if contact["emergency"]:
+            out.append({"type": "darurat", "label": "Kontak darurat", "value": contact["emergency"]})
+    seen = set()
+    for d in devices:
+        if d.posko != p.name or d.status not in ("active", "spare"):
+            continue
+        freq, chan = _split_radio(d.frequency_channel)
+        if d.get("frequency_mhz"):
+            freq = _fmt_mhz(d.frequency_mhz) or freq
+        cid = (d.get("contact_id") or "").strip()
+        if d.category in ("ht", "repeater"):
+            kind = _radio_kind(freq) + " " if freq else ""
+            label = ("Repeater " if d.category == "repeater" else "Radio HT ") + kind.strip()
+            value = " · ".join(x for x in (freq or "frekuensi belum diisi", chan, ("call sign " + cid) if cid else "") if x)
+            key = ("radio", freq, chan, cid)
+        elif d.category == "telepon_satelit":
+            if not contact:  # a satellite number is a phone number: same visibility rule as the PIC's
+                cid = ""
+            label, value, key = "Telepon satelit", cid or "nomor belum diisi / tidak dibagikan", ("sat", cid)
+        elif d.category in ("starlink", "vsat", "router_4g5g"):
+            label, value, key = _CATEGORY_LABELS.get(d.category, d.category), _INTERNET_HOW, ("net", d.category)
+        else:
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"type": key[0], "label": label, "value": value, "device": d.device_name})
+    return out
+
+
 def _posko_location(p):
     lat, lng = p.get("latitude"), p.get("longitude")
     has = lat not in (None, "") and lng not in (None, "") and (float(lat) or float(lng))
@@ -154,7 +216,7 @@ def comms_board(disaster_event=None):
         filters=dfilt,
         fields=[
             "name", "device_name", "category", "status", "battery_pct",
-            "frequency_channel", "current_location", "posko", "owner_type",
+            "frequency_channel", "frequency_mhz", "contact_id", "current_location", "posko", "owner_type",
             "owner_id", "notes", "observed_at",
         ],
         order_by="category asc, device_name asc",
@@ -235,6 +297,8 @@ def comms_board(disaster_event=None):
     radio_by_posko = {}
     for d in devices:
         freq, chan = _split_radio(d.frequency_channel)
+        if d.get("frequency_mhz"):
+            freq = _fmt_mhz(d.frequency_mhz) or freq
         if d.posko and (freq or chan):
             radio_by_posko.setdefault(d.posko, {}).setdefault((freq, chan), []).append(d.device_name)
 
@@ -243,6 +307,7 @@ def comms_board(disaster_event=None):
     konektivitas_poskos = []
     conn_count = {"connected": 0, "weak": 0, "disconnected": 0, "unknown": 0}
     for p in poskos:
+        contact = _posko_contact(p, actor)
         c = _conn_for(p)
         conn_count[c] += 1
         konektivitas_poskos.append({
@@ -256,7 +321,10 @@ def comms_board(disaster_event=None):
                 for (f, c), names in sorted(radio_by_posko.get(p.name, {}).items())
             ],
             "location": _posko_location(p),
-            "contact": _posko_contact(p, actor),
+            "contact": contact,
+            "methods": _posko_methods(p, actor, devices, contact) or [{
+                "type": "kosong", "label": "Belum ada alat komunikasi terdata",
+                "value": "Hubungi lewat Control Centre / koordinator posko"}],
             "lat": p.get("latitude"),
             "lng": p.get("longitude"),
             "href": "posko-detail.html?id=" + p.name + "&event=" + ev_q,
@@ -477,6 +545,15 @@ _DEVICE_CATEGORIES = set(_CATEGORY_ORDER)
 _DEVICE_STATUS = {"active", "spare", "inactive", "needs_attention"}
 
 
+def _clean_mhz(value):
+    if value in (None, ""):
+        return None
+    out = _fmt_mhz(value)
+    if not out:
+        frappe.throw("Frekuensi harus berupa angka MHz antara 0,1 dan 3000 (mis. 146.020).")
+    return out.replace(" MHz", "")
+
+
 @frappe.whitelist()
 def create_comms_device(
     device_name,
@@ -487,6 +564,8 @@ def create_comms_device(
     battery_pct=None,
     frequency_channel=None,
     current_location=None,
+    frequency_mhz=None,
+    contact_id=None,
     owner_type="posko",
     owner_id=None,
     notes=None,
@@ -510,6 +589,8 @@ def create_comms_device(
     if battery_pct not in (None, ""):
         doc.battery_pct = int(battery_pct)
     doc.frequency_channel = frequency_channel
+    doc.frequency_mhz = _clean_mhz(frequency_mhz)
+    doc.contact_id = (contact_id or "").strip() or None
     doc.current_location = current_location
     doc.owner_type = owner_type
     doc.owner_id = owner_id
@@ -526,6 +607,8 @@ def update_comms_device(
     current_location=None,
     frequency_channel=None,
     notes=None,
+    frequency_mhz=None,
+    contact_id=None,
 ):
     rn_actor()
     doc = frappe.get_doc("RN Comms Device", comms_device)
@@ -538,6 +621,8 @@ def update_comms_device(
     for field, value in (
         ("current_location", current_location),
         ("frequency_channel", frequency_channel),
+        ("frequency_mhz", None if frequency_mhz is None else _clean_mhz(frequency_mhz)),
+        ("contact_id", None if contact_id is None else ((contact_id or "").strip() or None)),
         ("notes", notes),
     ):
         if value is not None:

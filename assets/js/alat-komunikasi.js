@@ -141,6 +141,22 @@
     setTimeout(function () { connMap.invalidateSize(); }, 50);
   }
 
+  var METHOD_ICON = { telepon: "📞", wa: "💬", email: "✉️", darurat: "🚨", radio: "📻", sat: "🛰️", net: "🌐", kosong: "⚠️" };
+
+  /* all the ways to reach a posko: phone / WhatsApp / email, radio frequency + channel + call sign, satellite, internet */
+  function methodsCell(p) {
+    var m = p.methods || [];
+    if (!m.length) return '<em class="rn-muted">-</em>';
+    return m.map(function (x) {
+      var val = x.href
+        ? '<a href="' + esc(x.href) + '"' + (x.href.indexOf("http") === 0 ? ' target="_blank" rel="noopener"' : "") +
+          ' onclick="event.stopPropagation()">' + esc(x.value) + "</a>"
+        : esc(x.value);
+      return '<div class="rn-kom-method' + (x.type === "kosong" ? " rn-muted" : "") + '"><span aria-hidden="true">' +
+        (METHOD_ICON[x.type] || "•") + "</span> <small>" + esc(x.label) + "</small> " + val + "</div>";
+    }).join("");
+  }
+
   function freqCell(p) {
     var f = p.frequencies || [];
     if (!f.length) return '<em class="rn-muted">belum diisi</em>';
@@ -204,12 +220,11 @@
             "<td><b>" + esc(p.title) + "</b></td>" +
             '<td><span class="chip ' + (chip[p.status] || "") + '">' + esc(p.status_label) + "</span></td>" +
             "<td>" + locationCell(p) + "</td>" +
-            "<td>" + freqCell(p) + "</td>" +
-            "<td>" + contactCell(p) + "</td>" +
+            "<td>" + methodsCell(p) + "</td>" +
             "<td>" + esc(tsLabel(p.last_contact)) + "</td></tr>"
           );
         }).join("")
-      : '<tr><td colspan="6"><em class="rn-muted">Belum ada posko untuk event ini.</em></td></tr>';
+      : '<tr><td colspan="5"><em class="rn-muted">Belum ada posko untuk event ini.</em></td></tr>';
     body.querySelectorAll("tr[data-href]").forEach(function (tr) {
       tr.addEventListener("click", function () { window.location.href = tr.getAttribute("data-href"); });
     });

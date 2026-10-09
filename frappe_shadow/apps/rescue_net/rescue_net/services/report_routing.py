@@ -69,12 +69,33 @@ def _candidates(report):
     return [r for r in rows if (r.operational_status or "").strip().lower() not in INACTIVE]
 
 
+def _shared_code_level(a, b):
+    """Kedalaman awalan kode bersama (1 provinsi .. 4 desa) bila KEDUA kode valid; None bila salah satunya kosong/tak valid."""
+    from rescue_net.services.admin_area_codes import validate_code
+
+    if not (a and b and validate_code(a) and validate_code(b)):
+        return None
+    n = 0
+    for x, y in zip(a.split("."), b.split(".")):
+        if x != y:
+            break
+        n += 1
+    return n
+
+
 def score(report, posko):
     """(points, [reasons]) for one posko."""
     pts, why = 0.0, []
 
     area_r, area_p = (report.get("admin_area_id") or ""), (posko.get("admin_area_id") or "")
-    if _same(report.get("village_name"), posko.get("village_name")) or (area_r and area_r == area_p and len(area_r) >= 10):
+    shared = _shared_code_level(area_r, area_p)
+    if shared is not None:
+        # kedua sisi berkode (ADR-0005 A.6): kode yang menentukan, bukan nama (nama kembar di kota lain tak cocok)
+        label = {4: ("desa", 40), 3: ("kecamatan", 30), 2: ("kabupaten/kota", 20), 1: ("provinsi", 5)}.get(shared)
+        if label:
+            pts += label[1]
+            why.append(f"{label[0]} sama (kode)" if shared > 1 else "provinsi sama (kode)")
+    elif _same(report.get("village_name"), posko.get("village_name")):
         pts += 40
         why.append(f"desa sama ({posko.get('village_name') or report.get('village_name')})")
     elif _same(report.get("district_name"), posko.get("district_name")):

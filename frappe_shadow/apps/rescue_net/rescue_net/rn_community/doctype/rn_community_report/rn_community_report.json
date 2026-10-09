@@ -1,365 +1,378 @@
 {
-  "doctype": "DocType",
-  "name": "RN Community Report",
-  "module": "RN Community",
-  "custom": 0,
-  "is_submittable": 0,
-  "naming_rule": "By fieldname",
-  "title_field": "title",
-  "fields": [
-    {
-      "fieldname": "legacy_id",
-      "label": "Legacy ID",
-      "fieldtype": "Data",
-      "unique": 1
-    },
-    {
-      "fieldname": "legacy_source",
-      "label": "Legacy Source",
-      "fieldtype": "Data",
-      "default": "rescue-net-fastapi"
-    },
-    {
-      "fieldname": "migration_status",
-      "label": "Migration Status",
-      "fieldtype": "Select",
-      "options": "Shadow Imported\nValidated\nNeeds Review",
-      "default": "Shadow Imported"
-    },
-    {
-      "fieldname": "title",
-      "label": "Report Title",
-      "fieldtype": "Data",
-      "reqd": 1
-    },
-    {
-      "fieldname": "disaster_event",
-      "label": "Disaster Event",
-      "fieldtype": "Link",
-      "options": "RN Disaster Event",
-      "description": "Disaster event associated with this record."
-    },
-    {
-      "fieldname": "disaster_event_legacy_id",
-      "label": "Disaster Event Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "reporter_user",
-      "label": "Reporter User",
-      "fieldtype": "Link",
-      "options": "RN User Account"
-    },
-    {
-      "fieldname": "reporter_user_legacy_id",
-      "label": "Reporter User Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "reporter_profile_legacy_id",
-      "label": "Reporter Profile Legacy ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "reporter_name",
-      "label": "Reporter Name",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "reporter_phone",
-      "label": "Reporter Phone",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "reporter_email",
-      "label": "Reporter Email",
-      "fieldtype": "Data",
-      "options": "Email"
-    },
-    {
-      "fieldname": "reporter_role",
-      "label": "Reporter Role",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "reporter_verification_level",
-      "label": "Reporter Verification Level",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "report_type",
-      "label": "Report Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "description",
-      "label": "Description",
-      "fieldtype": "Long Text"
-    },
-    {
-      "fieldname": "intake_mode",
-      "label": "Cara Lapor",
-      "fieldtype": "Select",
-      "options": "form\nnarrative",
-      "default": "form",
-      "description": "form = pelapor mengisi form; narrative = pelapor cukup menulis uraian, sistem mengisi form."
-    },
-    {
-      "fieldname": "intake_parser",
-      "label": "Pengolah Uraian",
-      "fieldtype": "Data",
-      "read_only": 1,
-      "description": "rules = aturan kata kunci; ai:<provider> = diolah AI (saran, ditinjau pelapor)."
-    },
-    {
-      "fieldname": "affected_people_count",
-      "label": "Affected People Count",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "priority",
-      "label": "Priority",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "urgent_needs",
-      "label": "Urgent Needs",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "damage_scale_value",
-      "label": "Perkiraan Skala Kerusakan",
-      "fieldtype": "Float",
-      "description": "Opsional: perkiraan skala kerusakan fisik untuk jalan/akses terputus, mis. 200 (meter). Dipakai untuk prediksi kebutuhan alat/logistik heuristik \u2014 bukan pengukuran teknis."
-    },
-    {
-      "fieldname": "damage_scale_unit",
-      "label": "Satuan Skala",
-      "fieldtype": "Data",
-      "description": "mis. meter, km \u2014 satuan untuk damage_scale_value."
-    },
-    {
-      "fieldname": "location_text",
-      "label": "Location Text",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "has_coordinates",
-      "label": "Has Coordinates",
-      "fieldtype": "Check",
-      "default": "0"
-    },
-    {
-      "fieldname": "latitude",
-      "label": "Latitude",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "longitude",
-      "label": "Longitude",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "location_accuracy_meters",
-      "label": "Location Accuracy Meters",
-      "fieldtype": "Float"
-    },
-    {
-      "fieldname": "location_input_method",
-      "label": "Location Input Method",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "location_source",
-      "label": "Location Source",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "location_status",
-      "label": "Location Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "admin_area_id",
-      "label": "Admin Area ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "admin_level",
-      "label": "Admin Level",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "area_level",
-      "label": "Area Level",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "province_name",
-      "label": "Provinsi",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "city_name",
-      "label": "Kabupaten/Kota",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "district_name",
-      "label": "Kecamatan",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "village_name",
-      "label": "Desa/Kelurahan",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "is_aggregate",
-      "label": "Aggregate Area",
-      "fieldtype": "Check"
-    },
-    {
-      "fieldname": "consolidation_status",
-      "label": "Consolidation Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "posko",
-      "label": "Posko Tujuan",
-      "fieldtype": "Link",
-      "options": "RN Posko",
-      "description": "Posko yang paling relevan (wilayah, jarak, fungsi) \u2014 dipilih otomatis, bisa dialihkan operator."
-    },
-    {
-      "fieldname": "routing_score",
-      "label": "Skor Kecocokan Posko",
-      "fieldtype": "Float",
-      "read_only": 1
-    },
-    {
-      "fieldname": "routing_reason",
-      "label": "Alasan Posko Tujuan",
-      "fieldtype": "Small Text",
-      "read_only": 1
-    },
-    {
-      "fieldname": "routing_mode",
-      "label": "Cara Penentuan Posko",
-      "fieldtype": "Select",
-      "options": "\nauto\nmanual",
-      "read_only": 1
-    },
-    {
-      "fieldname": "routed_at",
-      "label": "Diteruskan Pada",
-      "fieldtype": "Datetime",
-      "read_only": 1
-    },
-    {
-      "fieldname": "status",
-      "label": "Status",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "trust_score",
-      "label": "Trust Score",
-      "fieldtype": "Int"
-    },
-    {
-      "fieldname": "assigned_verifier_type",
-      "label": "Assigned Verifier Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "assigned_verifier_id",
-      "label": "Assigned Verifier ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "verified_by",
-      "label": "Verified By",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "verified_at",
-      "label": "Verified At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "converted_object_type",
-      "label": "Converted Object Type",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "converted_object_id",
-      "label": "Converted Object ID",
-      "fieldtype": "Data"
-    },
-    {
-      "fieldname": "consent_to_contact",
-      "label": "Consent To Contact",
-      "fieldtype": "Check"
-    },
-    {
-      "fieldname": "legacy_created_at",
-      "label": "Legacy Created At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "legacy_updated_at",
-      "label": "Legacy Updated At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "legacy_deleted_at",
-      "label": "Legacy Deleted At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "legacy_payload",
-      "label": "Legacy Payload",
-      "fieldtype": "Code",
-      "options": "JSON"
-    },
-    {
-      "fieldname": "observed_at",
-      "label": "Observed At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "source_updated_at",
-      "label": "Source Updated At",
-      "fieldtype": "Datetime"
-    },
-    {
-      "fieldname": "freshness_policy_minutes",
-      "label": "Freshness Policy Minutes",
-      "fieldtype": "Int",
-      "default": "360"
-    },
-    {
-      "fieldname": "data_quality_note",
-      "label": "Data Quality Note",
-      "fieldtype": "Small Text"
-    },
-    {
-      "fieldname": "ai_status",
-      "label": "AI Status",
-      "fieldtype": "Select",
-      "options": "\npending_ai\nai_suggested\nai_applied\nai_rejected"
-    }
-  ],
-  "permissions": [
-    {
-      "role": "System Manager",
-      "read": 1,
-      "write": 1,
-      "create": 1,
-      "delete": 1,
-      "submit": 0,
-      "cancel": 0,
-      "amend": 0
-    }
-  ]
+ "doctype": "DocType",
+ "name": "RN Community Report",
+ "module": "RN Community",
+ "custom": 0,
+ "is_submittable": 0,
+ "naming_rule": "By fieldname",
+ "title_field": "title",
+ "fields": [
+  {
+   "fieldname": "legacy_id",
+   "label": "Legacy ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "legacy_source",
+   "label": "Legacy Source",
+   "fieldtype": "Data",
+   "default": "rescue-net-fastapi"
+  },
+  {
+   "fieldname": "migration_status",
+   "label": "Migration Status",
+   "fieldtype": "Select",
+   "options": "Shadow Imported\nValidated\nNeeds Review",
+   "default": "Shadow Imported"
+  },
+  {
+   "fieldname": "title",
+   "label": "Report Title",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "description": "Disaster event associated with this record."
+  },
+  {
+   "fieldname": "disaster_event_legacy_id",
+   "label": "Disaster Event Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reporter_user",
+   "label": "Reporter User",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "reporter_user_legacy_id",
+   "label": "Reporter User Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reporter_profile_legacy_id",
+   "label": "Reporter Profile Legacy ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reporter_name",
+   "label": "Reporter Name",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reporter_phone",
+   "label": "Reporter Phone",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reporter_email",
+   "label": "Reporter Email",
+   "fieldtype": "Data",
+   "options": "Email"
+  },
+  {
+   "fieldname": "reporter_role",
+   "label": "Reporter Role",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reporter_verification_level",
+   "label": "Reporter Verification Level",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "report_type",
+   "label": "Report Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "description",
+   "label": "Description",
+   "fieldtype": "Long Text"
+  },
+  {
+   "fieldname": "intake_mode",
+   "label": "Cara Lapor",
+   "fieldtype": "Select",
+   "options": "form\nnarrative",
+   "default": "form",
+   "description": "form = pelapor mengisi form; narrative = pelapor cukup menulis uraian, sistem mengisi form."
+  },
+  {
+   "fieldname": "intake_parser",
+   "label": "Pengolah Uraian",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "description": "rules = aturan kata kunci; ai:<provider> = diolah AI (saran, ditinjau pelapor)."
+  },
+  {
+   "fieldname": "affected_people_count",
+   "label": "Affected People Count",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "priority",
+   "label": "Priority",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "urgent_needs",
+   "label": "Urgent Needs",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "damage_scale_value",
+   "label": "Perkiraan Skala Kerusakan",
+   "fieldtype": "Float",
+   "description": "Opsional: perkiraan skala kerusakan fisik untuk jalan/akses terputus, mis. 200 (meter). Dipakai untuk prediksi kebutuhan alat/logistik heuristik — bukan pengukuran teknis."
+  },
+  {
+   "fieldname": "damage_scale_unit",
+   "label": "Satuan Skala",
+   "fieldtype": "Data",
+   "description": "mis. meter, km — satuan untuk damage_scale_value."
+  },
+  {
+   "fieldname": "location_text",
+   "label": "Location Text",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "has_coordinates",
+   "label": "Has Coordinates",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "latitude",
+   "label": "Latitude",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "longitude",
+   "label": "Longitude",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "location_accuracy_meters",
+   "label": "Location Accuracy Meters",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "location_input_method",
+   "label": "Location Input Method",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "location_source",
+   "label": "Location Source",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "location_status",
+   "label": "Location Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "admin_area_id",
+   "label": "Wilayah (kode Kemendagri)",
+   "fieldtype": "Link",
+   "options": "RN Admin Area"
+  },
+  {
+   "fieldname": "area_unmatched",
+   "label": "Wilayah belum cocok (perlu diperbaiki manusia)",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "area_legacy_text",
+   "label": "Teks wilayah lama (tidak cocok)",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "admin_level",
+   "label": "Admin Level",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "area_level",
+   "label": "Area Level",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "province_name",
+   "label": "Provinsi",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "city_name",
+   "label": "Kabupaten/Kota",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "district_name",
+   "label": "Kecamatan",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "village_name",
+   "label": "Desa/Kelurahan",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "is_aggregate",
+   "label": "Aggregate Area",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "consolidation_status",
+   "label": "Consolidation Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko Tujuan",
+   "fieldtype": "Link",
+   "options": "RN Posko",
+   "description": "Posko yang paling relevan (wilayah, jarak, fungsi) — dipilih otomatis, bisa dialihkan operator."
+  },
+  {
+   "fieldname": "routing_score",
+   "label": "Skor Kecocokan Posko",
+   "fieldtype": "Float",
+   "read_only": 1
+  },
+  {
+   "fieldname": "routing_reason",
+   "label": "Alasan Posko Tujuan",
+   "fieldtype": "Small Text",
+   "read_only": 1
+  },
+  {
+   "fieldname": "routing_mode",
+   "label": "Cara Penentuan Posko",
+   "fieldtype": "Select",
+   "options": "\nauto\nmanual",
+   "read_only": 1
+  },
+  {
+   "fieldname": "routed_at",
+   "label": "Diteruskan Pada",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "trust_score",
+   "label": "Trust Score",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "assigned_verifier_type",
+   "label": "Assigned Verifier Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "assigned_verifier_id",
+   "label": "Assigned Verifier ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "verified_by",
+   "label": "Verified By",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "verified_at",
+   "label": "Verified At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "converted_object_type",
+   "label": "Converted Object Type",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "converted_object_id",
+   "label": "Converted Object ID",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "consent_to_contact",
+   "label": "Consent To Contact",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "legacy_created_at",
+   "label": "Legacy Created At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "legacy_updated_at",
+   "label": "Legacy Updated At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "legacy_deleted_at",
+   "label": "Legacy Deleted At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "legacy_payload",
+   "label": "Legacy Payload",
+   "fieldtype": "Code",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Observed At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "source_updated_at",
+   "label": "Source Updated At",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "freshness_policy_minutes",
+   "label": "Freshness Policy Minutes",
+   "fieldtype": "Int",
+   "default": "360"
+  },
+  {
+   "fieldname": "data_quality_note",
+   "label": "Data Quality Note",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "ai_status",
+   "label": "AI Status",
+   "fieldtype": "Select",
+   "options": "\npending_ai\nai_suggested\nai_applied\nai_rejected"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 0,
+   "cancel": 0,
+   "amend": 0
+  }
+ ]
 }

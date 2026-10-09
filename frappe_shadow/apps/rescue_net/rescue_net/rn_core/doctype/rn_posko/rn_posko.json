@@ -207,8 +207,21 @@
   },
   {
    "fieldname": "admin_area_id",
-   "label": "Admin Area ID",
-   "fieldtype": "Data"
+   "label": "Wilayah (kode Kemendagri)",
+   "fieldtype": "Link",
+   "options": "RN Admin Area"
+  },
+  {
+   "fieldname": "area_unmatched",
+   "label": "Wilayah belum cocok (perlu diperbaiki manusia)",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "area_legacy_text",
+   "label": "Teks wilayah lama (tidak cocok)",
+   "fieldtype": "Data",
+   "read_only": 1
   },
   {
    "fieldname": "admin_level",

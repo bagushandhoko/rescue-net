@@ -206,3 +206,63 @@ def ancestors(code):
         out.append(row)
         cur = row.parent_code
     return list(reversed(out))
+
+
+# ---------- ADR-0005 A.5: admin_area_id menjadi Link; yang tak cocok ditandai, tidak pernah memblokir simpan ----------
+_NAME_FIELDS = ("province_name", "city_name", "district_name", "village_name")
+
+
+def resolve_area(raw_id, names):
+    """(code | None, legacy_text | None, unmatched: bool). Kode valid dipakai apa adanya; kode tak dikenal dicoba lewat
+    nama; nama saja dicocokkan hanya bila tunggal (tak menebak). Tanpa id dan tanpa nama: tidak ada yang ditandai."""
+    raw = codes.clean(raw_id)
+    named = {k: codes.clean(v) for k, v in zip(("province", "city", "district", "village"), names)}
+    if raw:
+        code = codes.normalize_code(raw)
+        if frappe.db.exists(DOCTYPE, code):
+            return code, None, False
+    if any(named.values()):
+        m = match_by_names(**named)
+        if m.get("code"):
+            return m["code"], (raw or None), False
+    if raw:
+        return None, raw[:140], True
+    return None, None, bool(any(named.values()))
+
+
+def normalize_doc_area(doc):
+    """Dipanggil dari before_validate RN Posko / RN Community Report. Tidak pernah melempar (laporan warga selalu diterima)."""
+    try:
+        names = tuple(doc.get(f) for f in _NAME_FIELDS)
+        code, legacy, unmatched = resolve_area(doc.get("admin_area_id"), names)
+        doc.admin_area_id = code
+        doc.area_legacy_text = legacy
+        doc.area_unmatched = 1 if unmatched else 0
+    except Exception:  # noqa: BLE001
+        frappe.log_error(title="normalize_doc_area gagal")
+
+
+def remap_existing(dry_run=True):
+    """Petakan baris lama RN Posko / RN Community Report dari nama -> kode. Idempoten; tak menimpa kode valid.
+    -> {doctype: {mapped, unmatched, ok, empty}}."""
+    report = {}
+    for dt in ("RN Posko", "RN Community Report"):
+        res = {"mapped": 0, "unmatched": 0, "ok": 0, "empty": 0}
+        for r in frappe.get_all(dt, fields=["name", "admin_area_id", *_NAME_FIELDS], limit_page_length=0):
+            raw = codes.clean(r.admin_area_id)
+            if raw and frappe.db.exists(DOCTYPE, raw):
+                res["ok"] += 1
+                continue
+            code, legacy, unmatched = resolve_area(raw, tuple(r.get(f) for f in _NAME_FIELDS))
+            if code:
+                res["mapped"] += 1
+            elif unmatched:
+                res["unmatched"] += 1
+            else:
+                res["empty"] += 1
+                continue
+            if not dry_run:
+                frappe.db.set_value(dt, r.name, {"admin_area_id": code, "area_legacy_text": legacy,
+                                                 "area_unmatched": 1 if unmatched else 0}, update_modified=False)
+        report[dt] = res
+    return report

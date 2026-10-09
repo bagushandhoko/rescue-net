@@ -58,6 +58,14 @@ class RNCommunityReport(Document):
                 or user
             )
 
+    def _validate_links(self):
+        # Link wilayah divalidasi Frappe SEBELUM before_insert; normalkan dulu agar id tak dikenal ditandai,
+        # bukan menolak simpan (laporan warga/posko selalu diterima — ADR-0005 A.5).
+        from rescue_net.services.admin_areas import normalize_doc_area
+
+        normalize_doc_area(self)
+        super()._validate_links()
+
     def validate(self):
         from rescue_net.services.guards import assert_transition, bypass, changed, is_privileged
 

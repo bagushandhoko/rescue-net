@@ -309,6 +309,14 @@
    "fieldname": "transport_space_legacy_id",
    "label": "Transport Space Legacy ID",
    "fieldtype": "Data"
+  },
+  {
+   "fieldname": "trace_token",
+   "label": "Kode Lacak (acak)",
+   "fieldtype": "Data",
+   "unique": 1,
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "permissions": [

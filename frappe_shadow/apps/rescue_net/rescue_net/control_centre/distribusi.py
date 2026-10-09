@@ -47,17 +47,22 @@ def _distribusi_posko_titles(names):
 
 
 def _distribusi_trace(name):
-    return "RN-" + str(name or "")[-8:].upper()
+    """`RN-` + token acak Flow; kiriman lama yang belum punya token memakai kode lama (8 karakter terakhir nama)."""
+    token = frappe.db.get_value("RN Distribution Flow", name, "trace_token") if name else None
+    return "RN-" + (token or str(name or "")[-8:]).upper()
 
 
 def _resolve_flow_by_trace(code):
-    """`RN-XXXXXXXX` (or the bare 8 chars) -> RN Distribution Flow name."""
-    code = str(code or "").strip().upper()
-    if code.startswith("RN-"):
-        code = code[3:]
-    code = code.strip()
+    """`RN-XXXXXXXX` (or the bare 8 chars) -> RN Distribution Flow name. Token acak dicari lewat indeks;
+    kode lama (8 karakter terakhir nama) hanya dipindai bila tidak ada token yang cocok."""
+    from rescue_net.services.trace import normalize
+
+    code = normalize(code)
     if not code:
         return None
+    hit = frappe.db.get_value("RN Distribution Flow", {"trace_token": code}, "name")
+    if hit:
+        return hit
     for r in frappe.get_all(
         "RN Distribution Flow", fields=["name"],
         order_by="modified desc", limit_page_length=5000,

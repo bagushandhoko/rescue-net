@@ -100,6 +100,11 @@ class RNDistributionFlow(Document):
         ).hexdigest()[:20]
 
     def before_insert(self):
+        if not self.trace_token:
+            from rescue_net.services.trace import unique_token
+
+            self.trace_token = unique_token()
+
         if self.legacy_id:
             return
 

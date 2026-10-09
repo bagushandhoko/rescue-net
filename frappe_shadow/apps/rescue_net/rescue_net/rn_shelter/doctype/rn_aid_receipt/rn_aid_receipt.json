@@ -1,0 +1,83 @@
+{
+ "doctype": "DocType",
+ "name": "RN Aid Receipt",
+ "module": "RN Shelter",
+ "custom": 0,
+ "is_submittable": 0,
+ "autoname": "hash",
+ "title_field": "household",
+ "fields": [
+  {
+   "fieldname": "round",
+   "label": "Putaran",
+   "fieldtype": "Link",
+   "options": "RN Distribution Round",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "household",
+   "label": "Keluarga",
+   "fieldtype": "Link",
+   "options": "RN Shelter Household",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "card",
+   "label": "Kartu",
+   "fieldtype": "Link",
+   "options": "RN Household Card"
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "round_household",
+   "label": "Kunci (putaran:keluarga)",
+   "fieldtype": "Data",
+   "unique": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Waktu terima",
+   "fieldtype": "Datetime",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "received_at_server",
+   "label": "Dicatat server",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "received_by",
+   "label": "Petugas",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "items_note",
+   "label": "Barang diterima",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "offline_id",
+   "label": "ID offline",
+   "fieldtype": "Data",
+   "unique": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 1,
+   "delete": 0
+  }
+ ]
+}

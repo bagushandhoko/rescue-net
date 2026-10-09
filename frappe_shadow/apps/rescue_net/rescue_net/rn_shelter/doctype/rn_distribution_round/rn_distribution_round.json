@@ -1,0 +1,77 @@
+{
+ "doctype": "DocType",
+ "name": "RN Distribution Round",
+ "module": "RN Shelter",
+ "custom": 0,
+ "is_submittable": 0,
+ "autoname": "hash",
+ "title_field": "title",
+ "fields": [
+  {
+   "fieldname": "title",
+   "label": "Putaran",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko / Shelter",
+   "fieldtype": "Link",
+   "options": "RN Posko",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Bencana",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "item_note",
+   "label": "Bantuan yang dibagikan",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "round_status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "open\nclosed",
+   "default": "open",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "opens_at",
+   "label": "Mulai",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "closes_at",
+   "label": "Berakhir",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Ditetapkan oleh",
+   "fieldtype": "Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "closed_at",
+   "label": "Ditutup pada",
+   "fieldtype": "Datetime",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 1,
+   "delete": 0
+  }
+ ]
+}

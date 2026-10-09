@@ -1,0 +1,67 @@
+{
+ "doctype": "DocType",
+ "name": "RN Household Card",
+ "module": "RN Shelter",
+ "custom": 0,
+ "is_submittable": 0,
+ "autoname": "hash",
+ "title_field": "household",
+ "fields": [
+  {
+   "fieldname": "household",
+   "label": "Keluarga",
+   "fieldtype": "Link",
+   "options": "RN Shelter Household",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko / Shelter",
+   "fieldtype": "Link",
+   "options": "RN Posko",
+   "reqd": 1
+  },
+  {
+   "fieldname": "card_token",
+   "label": "Token Kartu (opaque, isi QR)",
+   "fieldtype": "Data",
+   "unique": 1,
+   "reqd": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "card_status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "active\nrevoked",
+   "default": "active",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "issued_at",
+   "label": "Diterbitkan",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "issued_by",
+   "label": "Diterbitkan oleh",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "revoked_at",
+   "label": "Dicabut",
+   "fieldtype": "Datetime"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 1,
+   "delete": 0
+  }
+ ]
+}

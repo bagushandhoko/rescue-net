@@ -547,3 +547,17 @@ document.addEventListener(
     setupEditAidForm();
   }
 );
+
+// Fase 10f: "Kirim ke posko ini" from kebutuhan-publik.html -> ?posko=<name>
+document.addEventListener("DOMContentLoaded", () => {
+  const posko = new URLSearchParams(location.search).get("posko");
+  if (!posko) return;
+  document.querySelectorAll("form").forEach(form => {
+    if (!form.target_node_id) return;
+    form.target_node_id.value = posko;
+    if (form.delivery_mode) {
+      form.delivery_mode.value = "self_deliver_to_posko";
+      form.delivery_mode.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
+});

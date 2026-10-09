@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Kebutuhan Aktual untuk Donatur</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <style>
+    body { background: var(--bg, #fff6ef); color: var(--text, #2d211b); margin: 0;
+      font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+    .kp-wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 48px; }
+    .kp-card { border: 1px solid var(--line, rgba(104,64,45,.14)); border-radius: 14px;
+      background: var(--panel2, #fff8f3); padding: 16px; margin-bottom: 14px; }
+    .kp-card h2 { margin: 0 0 4px; font-size: 16px; }
+    .kp-muted { color: var(--muted, #7c6458); font-size: 13px; }
+    .kp-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .kp-filters select, .kp-filters input { padding: 9px 11px; border-radius: 9px; flex: 1 1 180px; min-width: 0;
+      border: 1px solid var(--line, rgba(104,64,45,.14)); background: var(--panel, #fff); color: inherit; font: inherit; }
+    .kp-list { list-style: none; margin: 10px 0 0; padding: 0; }
+    .kp-item { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+      padding: 10px 0; border-top: 1px solid var(--line, rgba(104,64,45,.14)); }
+    .kp-item:first-child { border-top: 0; }
+    .kp-item b { font-size: 14px; }
+    .kp-qty { font-weight: 700; font-size: 15px; white-space: nowrap; }
+    .kp-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      border: 1px solid #c0392b; color: #c0392b; margin-left: 6px; }
+    .kp-btn { padding: 7px 12px; border-radius: 9px; background: var(--blue, #3b82c4); color: #fff;
+      font-weight: 600; text-decoration: none; font-size: 13px; }
+    .kp-enough { border-color: rgba(192,57,43,.4); }
+    .kp-enough h2 { color: #c0392b; }
+    .kp-x { color: #c0392b; font-weight: 700; margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <div class="kp-wrap">
+    <h1 style="font-size:20px;margin:0 0 4px">Kebutuhan Aktual untuk Donatur</h1>
+    <p class="kp-muted" style="margin:0 0 14px">Kirim yang benar-benar dibutuhkan. Jumlah kurang = kebutuhan terbuka − stok tersedia − bantuan yang sedang dalam perjalanan. Hanya posko yang dibuka untuk publik.</p>
+
+    <div class="kp-filters">
+      <select id="kpEvent" aria-label="Bencana"><option value="">Semua bencana</option></select>
+      <input id="kpRegion" placeholder="Filter wilayah (kota/provinsi)" autocomplete="off">
+    </div>
+
+    <div class="kp-card">
+      <h2>Dibutuhkan sekarang</h2>
+      <p class="kp-muted" id="kpMeta">Memuat…</p>
+      <ul class="kp-list" id="kpNeeds"></ul>
+    </div>
+
+    <div class="kp-card kp-enough">
+      <h2>Sudah cukup — jangan kirim lagi</h2>
+      <p class="kp-muted" style="margin:0">Stok dan kiriman yang sedang berjalan sudah menutup kebutuhan ini.</p>
+      <ul class="kp-list" id="kpEnough"></ul>
+    </div>
+  </div>
+
+  <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+  <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+  <script src="../assets/js/kebutuhan-publik.js?v=kp-20261009"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+</body>
+</html>

@@ -597,6 +597,9 @@ def revoke_endorsement(endorsement, reason=None):
     mine = _my_verifier(actor, statuses=None)
     if not (is_system_manager() or (mine and doc.verifier == mine["name"])):
         frappe.throw("Anda tidak dapat mencabut endorsement ini.", frappe.PermissionError)
+    if doc.status == "revoked":
+        # a second revoke used to overwrite revoked_at / revoked_by / revoke_reason of the first one
+        frappe.throw("Endorsement ini sudah dicabut.")
 
     doc.status = "revoked"
     doc.revoked_at = now_datetime()

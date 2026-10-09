@@ -7,6 +7,7 @@
 #   sh scripts/rn-test-stack.sh test [extra run-tests args]   # run the rescue_net test suite
 #   sh scripts/rn-test-stack.sh migrate # bench migrate on the test site (after DocType JSON changes)
 #   sh scripts/rn-test-stack.sh e2e     # scripts/komando-tests (real logins over HTTP) against the test site
+#   sh scripts/rn-test-stack.sh e2e-flows # real-login flow checks (Search&Found, Program plan, verifier, AI, reporter contact)
 #   sh scripts/rn-test-stack.sh down    # stop + remove containers (volumes kept)
 #   sh scripts/rn-test-stack.sh wipe    # down + delete the test volumes (fresh start)
 #
@@ -171,9 +172,36 @@ e2e_ai() {
   return $rc
 }
 
+e2e_flows() {
+  up
+  sync_app
+  prepare_site
+  bexec bench --site $SITE migrate >/dev/null
+  $D exec -u root $BENCH rm -rf /tmp/komando-tests
+  $D cp "$REPO/scripts/komando-tests" $BENCH:/tmp/komando-tests
+  $D exec -u root $BENCH sh -c "chown -R 1000:1000 /tmp/komando-tests && chmod -R u+rwX,go+rX /tmp/komando-tests"
+  stop_serve
+  kt() { $D exec -w $B/sites -e RN_SITE=$SITE -e RN_BASE=http://127.0.0.1:8000 $BENCH "$@"; }
+  kt ../env/bin/python /tmp/komando-tests/clean_flows_data.py
+  kt ../env/bin/python /tmp/komando-tests/setup_flows_users.py
+  bexec sh -c "nohup bench serve --port 8000 >/tmp/rn-serve.log 2>&1 & echo \$! > /tmp/rn-serve.pid"
+  i=0
+  until bexec curl -s -o /dev/null -H "Host: $SITE" http://127.0.0.1:8000/api/method/ping; do
+    i=$((i + 1)); [ $i -gt 30 ] && { echo "bench serve did not start" >&2; bexec tail -20 /tmp/rn-serve.log; exit 1; }
+    sleep 2
+  done
+  rc=0
+  kt python3 /tmp/komando-tests/flows_e2e.py || rc=$?
+  stop_serve
+  kt ../env/bin/python /tmp/komando-tests/clean_flows_data.py
+  $D exec $BENCH rm -f /tmp/flows_ids.json
+  return $rc
+}
+
 case "${1:-}" in
   up) up ;;
   e2e-ai) e2e_ai ;;
+  e2e-flows) e2e_flows ;;
   init) init ;;
   test)
     shift

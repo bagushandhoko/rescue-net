@@ -175,12 +175,28 @@ def _mask_reporters(rows):
     return rows
 
 
+def _assert_report_manager(actor, report):
+    """Who may move a community report through the operator queue (status / convert to need): System
+    Manager, Control Centre, or a manager of the posko the report is routed to. An unrouted report is
+    Control Centre / System Manager only. Found by the real-login e2e (flows_e2e.py): any logged-in
+    account used to pass `_actor()` and could do both to any report."""
+    posko = frappe.db.get_value("RN Community Report", report, "posko")
+    if is_system_manager() or (actor and actor.get("role") == "command_center"):
+        return
+    from rescue_net.access_policy import can_manage_posko
+
+    if posko and can_manage_posko(actor, posko):
+        return
+    frappe.throw("Hanya pengelola posko laporan ini atau Control Centre yang dapat mengubah laporan.",
+                 frappe.PermissionError)
+
+
 @frappe.whitelist()
 def set_community_report_status(
     report,
     status,
 ):
-    _actor()
+    actor = _actor()
 
     if not frappe.db.exists(
         "RN Community Report",
@@ -206,6 +222,8 @@ def set_community_report_status(
             "RN Community Report tidak memiliki field status"
         )
 
+    _assert_report_manager(actor, report)
+
     doc = frappe.get_doc(
         "RN Community Report",
         report,
@@ -224,7 +242,7 @@ def set_community_report_status(
 def convert_community_report(
     report,
 ):
-    _actor()
+    actor = _actor()
 
     if not frappe.db.exists(
         "RN Community Report",
@@ -240,6 +258,8 @@ def convert_community_report(
         frappe.throw(
             "Community Report tidak ditemukan"
         )
+
+    _assert_report_manager(actor, report)
 
     existing = frappe.db.get_value(
         "RN Community Need",

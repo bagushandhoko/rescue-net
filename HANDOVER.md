@@ -154,3 +154,6 @@ Owner answers to the questions (2026-09-26), implemented:
 - **Verification & Approval** (belum deploy): kolom Risk + Trust/Risk Score dari 3 sinyal nyata (`services/approval_risk.py`), Alur 4 langkah, Jejak Audit; DocType **RN Approval Log**
   (append-only, ditulis `approval_action`). "Merge" sengaja tidak dibuat.
 - **Organisasi & Posko** (belum deploy): pohon visual; `org_posko_board` (+`event_title`, `member_count`), `org_detail` (+`counts`, `resources`, `trust` A–D = 4 pemeriksaan × 25).
+
+## Real-login flows e2e (2026-10-09, committed, NOT deployed)
+`sh scripts/rn-test-stack.sh e2e-flows` — 153 real-login checks over HTTP (CSRF + cookie jar; `scripts/komando-tests/{setup_flows_users,flows_e2e,clean_flows_data}.py`; own org/event/poskos/users, all removed afterwards): Search & Found operator actions, Program Khusus plan, Sistem Verifikasi (endorse/revoke/overview/badges), AI suggestion decisions, Laporan Masyarakat queue + Hubungi pelapor. It found 2 bugs, fixed + `tests/test_flow_guards.py`: (1) `set_community_report_status` / `convert_community_report` only required a login — now System Manager / Control Centre / manager of the report's posko (unrouted reports: SM/Control Centre only); (2) `revoke_endorsement` could be repeated and overwrote the first revocation. **Needs a deploy (no migrate).** 353 unit tests green.

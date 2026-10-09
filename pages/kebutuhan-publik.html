@@ -31,6 +31,7 @@
     .kp-enough { border-color: rgba(192,57,43,.4); }
     .kp-enough h2 { color: #c0392b; }
     .kp-x { color: #c0392b; font-weight: 700; margin-right: 6px; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -54,11 +55,28 @@
       <p class="kp-muted" style="margin:0">Stok dan kiriman yang sedang berjalan sudah menutup kebutuhan ini.</p>
       <ul class="kp-list" id="kpEnough"></ul>
     </div>
+    <div class="kp-card kp-enough" id="kpNotesCard" hidden>
+      <h2>Tidak dibutuhkan / tidak diterima</h2>
+      <p class="kp-muted" style="margin:0">Catatan langsung dari posko: barang dan kemasan yang tidak perlu dikirim.</p>
+      <ul class="kp-list" id="kpNotes"></ul>
+    </div>
+
+    <div class="kp-card" id="kpEditor" hidden>
+      <h2>Catatan posko saya (pengelola)</h2>
+      <p class="kp-muted" style="margin:0 0 8px">Tulis apa yang <b>tidak</b> dibutuhkan agar donatur tidak salah kirim. Tampil publik bila posko Anda publik. Jangan tulis nomor telepon, email, atau tautan.</p>
+      <select id="kpEdPosko" aria-label="Posko" style="width:100%;margin-bottom:8px"></select>
+      <label class="kp-muted" for="kpEdNot">Barang yang tidak dibutuhkan</label>
+      <textarea id="kpEdNot" rows="2" maxlength="500" style="width:100%;margin:4px 0 8px" placeholder="mis. pakaian bekas, mi instan"></textarea>
+      <label class="kp-muted" for="kpEdPack">Kemasan yang tidak diterima</label>
+      <textarea id="kpEdPack" rows="2" maxlength="500" style="width:100%;margin:4px 0 8px" placeholder="mis. kardus basah, kemasan di atas 25 kg"></textarea>
+      <button type="button" class="kp-btn" id="kpEdSave" style="border:0;cursor:pointer">Simpan catatan</button>
+      <span class="kp-muted" id="kpEdMsg" style="margin-left:8px"></span>
+    </div>
   </div>
 
   <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
   <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-  <script src="../assets/js/kebutuhan-publik.js?v=kp-20261009"></script>
+  <script src="../assets/js/kebutuhan-publik.js?v=kp-20261010"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>
 </html>

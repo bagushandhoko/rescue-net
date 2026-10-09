@@ -34,6 +34,15 @@
       $("#kpMeta").textContent = b.poskos + " posko publik" + (b.needs.length ? "" : " — belum ada kekurangan tercatat.");
       $("#kpNeeds").innerHTML = b.needs.map(function (r) { return li(r, false); }).join("");
       $("#kpEnough").innerHTML = b.enough.map(function (r) { return li(r, true); }).join("");
+      var notes = b.notes || [];
+      $("#kpNotesCard").hidden = !notes.length;
+      $("#kpNotes").innerHTML = notes.map(function (n) {
+        return '<li class="kp-item"><div><b>' + esc(n.posko_title) + "</b>" +
+          '<div class="kp-muted">' + (n.region ? esc(n.region) + " · " : "") + esc(ago(n.updated_at)) + "</div>" +
+          (n.not_needed ? '<div><span class="kp-x">✕</span>Tidak dibutuhkan: ' + esc(n.not_needed) + "</div>" : "") +
+          (n.not_accepted_packaging ? '<div><span class="kp-x">✕</span>Kemasan tidak diterima: ' + esc(n.not_accepted_packaging) + "</div>" : "") +
+          "</div></li>";
+      }).join("");
     } catch (e) {
       $("#kpMeta").textContent = "Gagal memuat data kebutuhan.";
     }
@@ -52,5 +61,36 @@
     $("#kpEvent").addEventListener("change", load);
     var t; $("#kpRegion").addEventListener("input", function () { clearTimeout(t); t = setTimeout(load, 350); });
     load();
+    initEditor();
   });
+
+  var mine = [];
+  function fillEditor() {
+    var m = mine.filter(function (x) { return x.posko === $("#kpEdPosko").value; })[0] || {};
+    $("#kpEdNot").value = m.not_needed || "";
+    $("#kpEdPack").value = m.not_accepted_packaging || "";
+  }
+  async function initEditor() {
+    try {
+      mine = await window.RN_FRAPPE.call("rescue_net.api_public_needs.my_editable_poskos", {});
+    } catch (e) { return; /* tamu / bukan pengelola: editor tidak tampil */ }
+    if (!mine || !mine.length) return;
+    $("#kpEdPosko").innerHTML = mine.map(function (x) {
+      return '<option value="' + esc(x.posko) + '">' + esc(x.title) + (x.public ? "" : " (tidak publik)") + "</option>";
+    }).join("");
+    $("#kpEditor").hidden = false;
+    fillEditor();
+    $("#kpEdPosko").addEventListener("change", fillEditor);
+    $("#kpEdSave").addEventListener("click", async function () {
+      $("#kpEdMsg").textContent = "Menyimpan…";
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_public_needs.set_public_notes", {
+          posko: $("#kpEdPosko").value, not_needed: $("#kpEdNot").value, not_accepted_packaging: $("#kpEdPack").value
+        });
+        mine.forEach(function (x) { if (x.posko === r.posko) { x.not_needed = r.not_needed; x.not_accepted_packaging = r.not_accepted_packaging; } });
+        $("#kpEdMsg").textContent = r.public ? "Tersimpan dan tampil publik." : "Tersimpan (posko tidak publik, belum tampil).";
+        load();
+      } catch (e) { $("#kpEdMsg").textContent = (e && e.message) || "Gagal menyimpan."; }
+    });
+  }
 })();

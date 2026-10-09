@@ -360,6 +360,22 @@
    "label": "Freshness Policy Minutes",
    "fieldtype": "Int",
    "default": "180"
+  },
+  {
+   "fieldname": "public_not_needed",
+   "label": "Barang yang tidak dibutuhkan (tampil publik)",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "public_not_accepted_packaging",
+   "label": "Kemasan yang tidak diterima (tampil publik)",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "public_notes_updated",
+   "label": "Catatan publik diperbarui",
+   "fieldtype": "Datetime",
+   "read_only": 1
   }
  ],
  "permissions": [

@@ -323,7 +323,9 @@ def comms_board(disaster_event=None):
             "location": _posko_location(p),
             "contact": contact,
             "methods": _posko_methods(p, actor, devices, contact) or [{
-                "type": "kosong", "label": "Belum ada alat komunikasi terdata",
+                "type": "kosong",
+                "label": ("Alat komunikasi ada tapi tidak aktif" if p.name in dev_by_posko
+                          else "Belum ada alat komunikasi terdata"),
                 "value": "Hubungi lewat Control Centre / koordinator posko"}],
             "lat": p.get("latitude"),
             "lng": p.get("longitude"),

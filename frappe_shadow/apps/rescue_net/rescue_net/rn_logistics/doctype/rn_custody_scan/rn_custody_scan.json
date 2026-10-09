@@ -1,0 +1,27 @@
+{
+  "doctype": "DocType",
+  "name": "RN Custody Scan",
+  "module": "RN Logistics",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "flow",
+  "fields": [
+    { "fieldname": "flow", "label": "Distribution Flow", "fieldtype": "Link", "options": "RN Distribution Flow", "in_list_view": 1, "reqd": 1 },
+    { "fieldname": "scan_type", "label": "Jenis Scan", "fieldtype": "Select", "options": "dispatch\ntransit\nhandover\narrive\nreceive", "in_list_view": 1, "reqd": 1 },
+    { "fieldname": "outcome", "label": "Hasil", "fieldtype": "Select", "options": "applied\nalready\nrecorded\nrejected", "in_list_view": 1 },
+    { "fieldname": "actor", "label": "Petugas", "fieldtype": "Data" },
+    { "fieldname": "posko", "label": "Posko", "fieldtype": "Data" },
+    { "fieldname": "scanned_at", "label": "Waktu Scan", "fieldtype": "Datetime" },
+    { "fieldname": "received_at_server", "label": "Diterima Server", "fieldtype": "Datetime" },
+    { "fieldname": "latitude", "label": "Lat", "fieldtype": "Float", "precision": "8" },
+    { "fieldname": "longitude", "label": "Lng", "fieldtype": "Float", "precision": "8" },
+    { "fieldname": "offline_id", "label": "Offline ID", "fieldtype": "Data", "unique": 1 },
+    { "fieldname": "status_before", "label": "Status Sebelum", "fieldtype": "Data" },
+    { "fieldname": "status_after", "label": "Status Sesudah", "fieldtype": "Data" },
+    { "fieldname": "note", "label": "Catatan", "fieldtype": "Small Text" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 0, "create": 1, "delete": 0 }
+  ]
+}

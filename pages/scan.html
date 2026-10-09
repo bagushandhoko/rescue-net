@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Pindai Kiriman</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <style>
+    body { background: var(--bg, #fff6ef); color: var(--text, #2d211b); margin: 0;
+      font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+    .sc-wrap { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
+    .sc-card { border: 1px solid var(--line, rgba(104,64,45,.14)); border-radius: 14px;
+      background: var(--panel2, #fff8f3); padding: 16px; margin-bottom: 14px; }
+    .sc-card h2 { margin: 0 0 10px; font-size: 15px; }
+    .sc-muted { color: var(--muted, #7c6458); font-size: 13px; }
+    .sc-video { width: 100%; border-radius: 10px; background: #000; max-height: 280px; }
+    .sc-types { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin: 10px 0; }
+    .sc-types label { border: 1px solid var(--line2, rgba(120,80,60,.22)); border-radius: 10px; padding: 9px 6px;
+      text-align: center; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .sc-types input { display: none; }
+    .sc-types input:checked + span { color: var(--blue, #3b82c4); }
+    .sc-types label:has(input:checked) { border-color: var(--blue, #3b82c4); background: rgba(59,130,196,.08); }
+    .sc-row { display: flex; gap: 8px; margin-top: 8px; }
+    .sc-row input { flex: 1; min-width: 0; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line, rgba(104,64,45,.14));
+      background: var(--panel, #fff); color: inherit; font: inherit; }
+    .sc-btn { padding: 9px 14px; border-radius: 9px; border: 0; background: var(--blue, #3b82c4); color: #fff;
+      font-weight: 600; cursor: pointer; font: inherit; }
+    .sc-btn.alt { background: transparent; color: inherit; border: 1px solid var(--line2, rgba(120,80,60,.22)); }
+    .sc-msg { font-size: 14px; margin: 10px 0 0; }
+    .sc-msg.ok { color: #2f9e59; } .sc-msg.warn { color: #b88918; } .sc-msg.err { color: #c0392b; }
+    .sc-q { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+    .sc-q li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line, rgba(104,64,45,.14)); }
+    .sc-q li:first-child { border-top: 0; }
+  </style>
+</head>
+<body>
+  <div class="sc-wrap">
+    <h1 style="font-size:18px;margin:0 0 4px">Pindai Kiriman Bantuan</h1>
+    <p class="sc-muted" style="margin:0 0 14px">Catat serah-terima kiriman lewat QR. Tetap berfungsi tanpa sinyal; scan dikirim otomatis saat online.</p>
+
+    <div class="sc-card">
+      <h2>1. Jenis scan</h2>
+      <div class="sc-types" id="scTypes">
+        <label><input type="radio" name="scType" value="dispatch" checked><span>Kirim</span></label>
+        <label><input type="radio" name="scType" value="transit"><span>Di jalan</span></label>
+        <label><input type="radio" name="scType" value="handover"><span>Serah kurir</span></label>
+        <label><input type="radio" name="scType" value="arrive"><span>Tiba</span></label>
+        <label><input type="radio" name="scType" value="receive"><span>Terima</span></label>
+      </div>
+      <div class="sc-row" id="scRecvRow" hidden>
+        <input id="scQty" type="number" min="0" step="any" placeholder="Jumlah diterima">
+        <input id="scUnit" placeholder="Satuan">
+      </div>
+    </div>
+
+    <div class="sc-card">
+      <h2>2. Pindai QR</h2>
+      <video id="scVideo" class="sc-video" playsinline muted hidden></video>
+      <div class="sc-row">
+        <button class="sc-btn" id="scCamBtn" type="button">Buka kamera</button>
+        <button class="sc-btn alt" id="scStopBtn" type="button" hidden>Tutup kamera</button>
+      </div>
+      <p class="sc-muted" id="scCamNote" style="margin:8px 0 0"></p>
+      <p class="sc-muted" style="margin:12px 0 0">Atau ketik kode trace:</p>
+      <div class="sc-row">
+        <input id="scCode" placeholder="RN-XXXXXXXX" autocomplete="off">
+        <button class="sc-btn" id="scSendBtn" type="button">Catat</button>
+      </div>
+      <p class="sc-msg" id="scMsg" aria-live="polite"></p>
+    </div>
+
+    <div class="sc-card">
+      <h2>Antrean offline <span class="sc-muted" id="scQCount"></span></h2>
+      <ul class="sc-q" id="scQueue"></ul>
+      <div class="sc-row"><button class="sc-btn alt" id="scFlushBtn" type="button">Kirim sekarang</button></div>
+    </div>
+  </div>
+
+  <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+  <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+  <script src="../assets/js/scan.js?v=scan-20261009"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+</body>
+</html>

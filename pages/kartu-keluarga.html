@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Kartu Keluarga & Penerimaan Bantuan</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <style>
+    [hidden] { display: none !important; }
+    body { background: var(--bg, #fff6ef); color: var(--text, #2d211b); margin: 0; font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+    .kk-wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }
+    .kk-card { border: 1px solid var(--line, rgba(104,64,45,.14)); border-radius: 14px; background: var(--panel2, #fff8f3); padding: 16px; margin-bottom: 14px; }
+    .kk-card h2 { margin: 0 0 10px; font-size: 15px; }
+    .kk-muted { color: var(--muted, #7c6458); font-size: 13px; }
+    .kk-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .kk-row input, .kk-row select, .kk-wrap select, .kk-wrap textarea { flex: 1; min-width: 0; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line, rgba(104,64,45,.14)); background: var(--panel, #fff); color: inherit; font: inherit; }
+    .kk-btn { padding: 9px 14px; border-radius: 9px; border: 0; background: var(--blue, #3b82c4); color: #fff; font-weight: 600; cursor: pointer; font: inherit; }
+    .kk-btn.alt { background: transparent; color: inherit; border: 1px solid var(--line2, rgba(120,80,60,.22)); }
+    .kk-list { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    .kk-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--line, rgba(104,64,45,.14)); }
+    .kk-list li:first-child { border-top: 0; }
+    .kk-msg { font-size: 15px; margin: 10px 0 0; font-weight: 600; }
+    .kk-msg.ok { color: #2f9e59; } .kk-msg.warn { color: #b88918; } .kk-msg.err { color: #c0392b; }
+    .kk-video { width: 100%; border-radius: 10px; background: #000; max-height: 260px; }
+    #kkPrint { display: none; }
+    .kk-sheet { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .kk-tag { border: 1px dashed #555; border-radius: 8px; padding: 10px; text-align: center; page-break-inside: avoid; color: #000; background: #fff; }
+    .kk-tag b { display: block; font-size: 16px; margin: 6px 0 2px; }
+    .kk-tag .qr { display: inline-block; }
+    @media print { body > .kk-wrap { display: none; } #kkPrint { display: block; padding: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="kk-wrap">
+    <h1 style="font-size:18px;margin:0 0 4px">Kartu Keluarga &amp; Penerimaan Bantuan</h1>
+    <p class="kk-muted" style="margin:0 0 14px">Koordinator menetapkan putaran distribusi; setiap keluarga hanya bisa menerima satu kali per putaran. QR kartu hanya berisi kode acak — tanpa nama anggota.</p>
+
+    <div class="kk-card">
+      <h2>Shelter</h2>
+      <select id="kkPosko" aria-label="Shelter"></select>
+      <p class="kk-muted" id="kkAuth" style="margin:8px 0 0"></p>
+    </div>
+
+    <div id="kkMain" hidden>
+      <div class="kk-card">
+        <h2>1. Putaran distribusi <span class="kk-muted">(koordinator)</span></h2>
+        <div class="kk-row"><input id="kkRTitle" placeholder="Judul, mis. Sembako Hari 1" maxlength="140"></div>
+        <div class="kk-row"><input id="kkRNote" placeholder="Bantuan yang dibagikan (opsional)" maxlength="500">
+          <button class="kk-btn" id="kkRAdd" type="button">Buat putaran</button></div>
+        <ul class="kk-list" id="kkRounds"></ul>
+      </div>
+
+      <div class="kk-card">
+        <h2>2. Kartu keluarga</h2>
+        <div class="kk-row"><button class="kk-btn" id="kkIssueAll" type="button">Terbitkan &amp; cetak semua</button></div>
+        <ul class="kk-list" id="kkHouseholds"></ul>
+      </div>
+
+      <div class="kk-card">
+        <h2>3. Catat penerimaan</h2>
+        <select id="kkRoundSel" aria-label="Putaran"></select>
+        <video id="kkVideo" class="kk-video" playsinline muted hidden></video>
+        <div class="kk-row"><button class="kk-btn" id="kkCam" type="button">Buka kamera</button><button class="kk-btn alt" id="kkCamStop" type="button" hidden>Tutup kamera</button></div>
+        <p class="kk-muted" id="kkCamNote" style="margin:8px 0 0"></p>
+        <div class="kk-row"><input id="kkCode" placeholder="RNK-XXXXXXXX" autocomplete="off"><button class="kk-btn" id="kkCheck" type="button">Periksa</button></div>
+        <div class="kk-row"><input id="kkItems" placeholder="Barang diterima (opsional)" maxlength="500"><button class="kk-btn" id="kkRecord" type="button" hidden>Catat penerimaan</button></div>
+        <p class="kk-msg" id="kkMsg" aria-live="polite"></p>
+        <p class="kk-muted" id="kkQ" style="margin:6px 0 0"></p>
+      </div>
+
+      <div class="kk-card">
+        <h2>Riwayat penerimaan putaran terpilih <span class="kk-muted" id="kkCount"></span></h2>
+        <ul class="kk-list" id="kkReceipts"></ul>
+      </div>
+    </div>
+  </div>
+  <div id="kkPrint"></div>
+
+  <script src="../assets/vendor/qrcode/qrcode.min.js"></script>
+  <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+  <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+  <script src="../assets/js/kartu-keluarga.js?v=kk-20261010"></script>
+</body>
+</html>

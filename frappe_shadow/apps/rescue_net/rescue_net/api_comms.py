@@ -162,7 +162,7 @@ def _posko_methods(p, actor, devices, contact):
         cid = (d.get("contact_id") or "").strip()
         if d.category in ("ht", "repeater"):
             kind = _radio_kind(freq) + " " if freq else ""
-            label = ("Repeater " if d.category == "repeater" else "Radio HT ") + kind.strip()
+            label = (("Repeater " if d.category == "repeater" else "Radio HT ") + kind.strip()).strip()
             value = " · ".join(x for x in (freq or "frekuensi belum diisi", chan, ("call sign " + cid) if cid else "") if x)
             key = ("radio", freq, chan, cid)
         elif d.category == "telepon_satelit":

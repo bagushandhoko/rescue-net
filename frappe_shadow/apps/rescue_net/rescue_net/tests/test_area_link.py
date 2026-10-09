@@ -34,7 +34,7 @@ class TestAreaLink(RNTestCase):
         self.assertEqual(frappe.db.get_value("RN Posko", p.name, "admin_area_id"), "91.71.02.1001")
         amb = make_posko(self.ev, province_name="Provinsi Uji Satu", district_name="Kecamatan Tengah")
         row = frappe.db.get_value("RN Posko", amb.name, ["admin_area_id", "area_unmatched"], as_dict=True)
-        self.assertEqual((row.admin_area_id, row.area_unmatched), (None, 1))  # kecamatan tanpa kota: tak ditebak
+        self.assertEqual((row.admin_area_id, row.area_unmatched), ("91", 1))  # kecamatan tanpa kota: pakai provinsi yang pasti, ditandai untuk dilengkapi
 
     def test_report_with_unknown_area_is_still_accepted(self):
         r = _insert("RN Community Report", title="L", report_type="other", status="submitted", admin_area_id="xyz",
@@ -73,3 +73,8 @@ class TestAreaLink(RNTestCase):
         p = {"village_name": "Kelurahan Pusat"}
         self.assertEqual(rr.score(r, p)[0], 40)
         self.assertEqual(rr.score({"admin_area_id": "91.71", "village_name": "Kelurahan Pusat"}, p)[0], 40)
+
+    def test_partial_match_uses_deepest_certain_level(self):
+        p = make_posko(self.ev, province_name="Provinsi Uji Satu", city_name="Kota Contoh", village_name="Desa Tidak Ada")
+        row = frappe.db.get_value("RN Posko", p.name, ["admin_area_id", "area_unmatched"], as_dict=True)
+        self.assertEqual((row.admin_area_id, row.area_unmatched), ("91.71", 1))

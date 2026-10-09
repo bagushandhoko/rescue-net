@@ -225,6 +225,10 @@ def resolve_area(raw_id, names):
         m = match_by_names(**named)
         if m.get("code"):
             return m["code"], (raw or None), False
+        if m.get("path"):
+            # sebagian cocok: pakai tingkat terdalam yang PASTI (induk yang cocok persis); sisanya tetap teks,
+            # ditandai agar manusia melengkapi
+            return m["path"][-1], (raw or None), True
     if raw:
         return None, raw[:140], True
     return None, None, bool(any(named.values()))

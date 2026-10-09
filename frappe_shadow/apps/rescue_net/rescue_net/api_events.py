@@ -16,7 +16,8 @@ def disasters(limit=100):
     adapter returned, so the page renderers did not change."""
     meta = frappe.get_meta("RN Disaster Event")
     fields = [f for f in _EVENT_FIELDS if f == "name" or meta.has_field(f)]
-    rows = frappe.get_all("RN Disaster Event", fields=fields, order_by="modified desc",
+    # draft events (BMKG early-warning drafts) are unverified: never in the public list
+    rows = frappe.get_all("RN Disaster Event", filters={"event_status": ["!=", "draft"]}, fields=fields, order_by="modified desc",
                           limit_page_length=max(1, min(int(limit or 100), 500)))
     out = []
     for r in rows:

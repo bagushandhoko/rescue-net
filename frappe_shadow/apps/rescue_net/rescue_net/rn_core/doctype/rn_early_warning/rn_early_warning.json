@@ -1,0 +1,32 @@
+{
+  "doctype": "DocType",
+  "name": "RN Early Warning",
+  "module": "RN Core",
+  "custom": 0,
+  "is_submittable": 0,
+  "autoname": "hash",
+  "title_field": "title",
+  "fields": [
+    { "fieldname": "source", "label": "Sumber", "fieldtype": "Data", "in_list_view": 1 },
+    { "fieldname": "identifier", "label": "Identifier", "fieldtype": "Data", "unique": 1, "reqd": 1 },
+    { "fieldname": "kind", "label": "Jenis", "fieldtype": "Select", "options": "earthquake\nweather", "in_list_view": 1 },
+    { "fieldname": "severity", "label": "Tingkat", "fieldtype": "Data" },
+    { "fieldname": "title", "label": "Judul", "fieldtype": "Data" },
+    { "fieldname": "area_desc", "label": "Wilayah", "fieldtype": "Data" },
+    { "fieldname": "potential", "label": "Potensi", "fieldtype": "Data" },
+    { "fieldname": "latitude", "label": "Lat", "fieldtype": "Float", "precision": "6" },
+    { "fieldname": "longitude", "label": "Lng", "fieldtype": "Float", "precision": "6" },
+    { "fieldname": "magnitude", "label": "Magnitudo", "fieldtype": "Float", "in_list_view": 1 },
+    { "fieldname": "depth_km", "label": "Kedalaman (km)", "fieldtype": "Float" },
+    { "fieldname": "issued_at", "label": "Waktu Kejadian", "fieldtype": "Datetime", "in_list_view": 1 },
+    { "fieldname": "expires_at", "label": "Berakhir", "fieldtype": "Datetime" },
+    { "fieldname": "meets_threshold", "label": "Lewat Ambang", "fieldtype": "Check" },
+    { "fieldname": "nearby_poskos", "label": "Posko di Radius", "fieldtype": "JSON" },
+    { "fieldname": "status", "label": "Status", "fieldtype": "Select", "options": "new\nacknowledged\ndismissed", "default": "new", "in_list_view": 1 },
+    { "fieldname": "draft_event", "label": "Draf Disaster Event", "fieldtype": "Link", "options": "RN Disaster Event" },
+    { "fieldname": "raw", "label": "Data Mentah (terpotong)", "fieldtype": "Long Text" }
+  ],
+  "permissions": [
+    { "role": "System Manager", "read": 1, "write": 1, "create": 1, "delete": 1 }
+  ]
+}

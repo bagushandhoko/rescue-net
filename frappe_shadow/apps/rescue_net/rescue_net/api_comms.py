@@ -99,7 +99,8 @@ def _posko_contact(p, actor):
         "email": p.get("officer_in_charge_email") or "",
         "emergency": p.get("emergency_contact") or "",
     }
-    return out if any(out.values()) else None
+    # a name with no way to reach it is not a contact
+    return out if any(out[k] for k in ("phone", "whatsapp", "email", "emergency")) else None
 
 
 def _posko_has_comms_fields():

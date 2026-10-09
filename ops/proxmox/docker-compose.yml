@@ -1,0 +1,151 @@
+# Stack server baru (Proxmox VM + Docker) — meniru susunan di NAS:
+#   Rescue-Net : mariadb + 2 redis + backend/worker/scheduler (situs osiun.localhost) + rescue-web (nginx)
+#   SAC        : mariadb + 2 redis + backend (gunicorn, situs sac.localhost) + sac-web (nginx)
+#   cloudflared: network_mode host; ingress diatur di dashboard Cloudflare dan menunjuk ke 127.0.0.1:8180/8181/8182
+# Port loopback SAMA seperti di NAS: 8180 portal SAC, 8181 web SAC, 8182 web Rescue-Net.
+# Pakai:  cp .env.example .env && docker compose --env-file .env up -d   (setelah import-on-new-host.sh)
+name: sacrn
+
+x-frappe: &frappe
+  image: frappe/erpnext:v15
+  restart: unless-stopped
+
+networks:
+  rn-net: {}
+  sac-net: {}
+
+services:
+  # ------------------------------------------------------------------ Rescue-Net
+  mariadb:
+    image: mariadb:10.6
+    container_name: rn-mariadb
+    restart: unless-stopped
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --skip-character-set-client-handshake]
+    environment: { MYSQL_ROOT_PASSWORD: "${RN_DB_ROOT_PASSWORD}" }
+    volumes: ["${BASE}/rn/mariadb:/var/lib/mysql"]
+    networks: { rn-net: { aliases: [mariadb] } }
+    healthcheck: { test: ["CMD-SHELL", "mysqladmin ping -uroot -p$$MYSQL_ROOT_PASSWORD --silent"], interval: 10s, retries: 30 }
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: rn-redis-cache
+    restart: unless-stopped
+    networks: { rn-net: { aliases: [redis-cache] } }
+
+  redis-queue:
+    image: redis:7-alpine
+    container_name: rn-redis-queue
+    restart: unless-stopped
+    # common_site_config juga menyebut host "redis-socketio" (tidak dipakai): arahkan ke antrean yang sama
+    networks: { rn-net: { aliases: [redis-queue, redis-socketio] } }
+
+  # nama kontainer dipertahankan karena rescue-web.conf memakai http://osiun-frappe-backend:8000
+  backend:
+    <<: *frappe
+    container_name: osiun-frappe-backend
+    depends_on: { mariadb: { condition: service_healthy }, redis-cache: { condition: service_started }, redis-queue: { condition: service_started } }
+    volumes:
+      - ${BASE}/rn/sites:/home/frappe/frappe-bench/sites
+      - ${BASE}/rn/logs:/home/frappe/frappe-bench/logs
+      - ${BASE}/rn/apps/rescue_net:/home/frappe/frappe-bench/apps/rescue_net
+    command: >
+      bash -lc "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net &&
+      bench --site ${RN_SITE} serve --port 8000"
+    networks: [rn-net]
+
+  worker-default:
+    <<: *frappe
+    container_name: rn-worker-default
+    depends_on: [backend]
+    volumes:
+      - ${BASE}/rn/sites:/home/frappe/frappe-bench/sites
+      - ${BASE}/rn/logs:/home/frappe/frappe-bench/logs
+      - ${BASE}/rn/apps/rescue_net:/home/frappe/frappe-bench/apps/rescue_net
+    command: >
+      bash -lc "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net &&
+      bench --site ${RN_SITE} worker --queue default"
+    networks: [rn-net]
+
+  scheduler:
+    <<: *frappe
+    container_name: rn-scheduler
+    depends_on: [backend]
+    volumes:
+      - ${BASE}/rn/sites:/home/frappe/frappe-bench/sites
+      - ${BASE}/rn/logs:/home/frappe/frappe-bench/logs
+      - ${BASE}/rn/apps/rescue_net:/home/frappe/frappe-bench/apps/rescue_net
+    command: >
+      bash -lc "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net &&
+      bench --site ${RN_SITE} schedule"
+    networks: [rn-net]
+
+  rescue-web:
+    image: nginx:alpine
+    container_name: rescue-web
+    restart: unless-stopped
+    ports: ["127.0.0.1:8182:80"]
+    volumes:
+      - ${BASE}/src/rescue-net:/repo:ro
+      - ./nginx/rescue-web.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/rn-proxy.conf:/etc/nginx/rn-proxy.conf:ro
+    depends_on: [backend]
+    networks: [rn-net]
+
+  # ------------------------------------------------------------------ SAC
+  db:
+    image: mariadb:10.6
+    container_name: sac-frappe-db
+    restart: unless-stopped
+    command: [--character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --skip-character-set-client-handshake, --skip-innodb-read-only-compressed]
+    environment: { MYSQL_ROOT_PASSWORD: "${SAC_DB_ROOT_PASSWORD}" }
+    volumes: ["${BASE}/sac/mariadb:/var/lib/mysql"]
+    networks: { sac-net: { aliases: [db] } }
+    healthcheck: { test: ["CMD-SHELL", "mysqladmin ping -uroot -p$$MYSQL_ROOT_PASSWORD --silent"], interval: 10s, retries: 30 }
+
+  sac-redis-cache:
+    image: redis:7-alpine
+    container_name: sac-frappe-redis-cache
+    restart: unless-stopped
+    networks: { sac-net: { aliases: [redis-cache] } }
+
+  sac-redis-queue:
+    image: redis:7-alpine
+    container_name: sac-frappe-redis-queue
+    restart: unless-stopped
+    networks: { sac-net: { aliases: [redis-queue] } }
+
+  sac-backend:
+    <<: *frappe
+    container_name: sac-frappe-backend
+    depends_on: { db: { condition: service_healthy } }
+    environment:
+      PYTHONPATH: /home/frappe/frappe-bench/apps/sac_portal
+      SAC_SITE: ${SAC_SITE}
+    ports: ["127.0.0.1:8180:8000"]
+    volumes:
+      - ${BASE}/sac/apps/sac_portal:/home/frappe/frappe-bench/apps/sac_portal:ro
+      - ${BASE}/sac/sites:/home/frappe/frappe-bench/sites
+      - ${BASE}/sac/logs:/home/frappe/frappe-bench/logs
+    entrypoint: /home/frappe/frappe-bench/env/bin/gunicorn
+    command: [--chdir=/home/frappe/frappe-bench/sites, --bind=0.0.0.0:8000, --threads=4, --workers=2, --worker-class=gthread,
+              --worker-tmp-dir=/dev/shm, --timeout=120, --preload, "sac_portal.wsgi:application"]
+    networks: [sac-net]
+
+  sac-web:
+    image: nginx:alpine
+    container_name: sac-web
+    restart: unless-stopped
+    ports: ["127.0.0.1:8181:80"]
+    volumes:
+      - ${BASE}/src/sac-web:/usr/share/nginx/html:ro
+      - ./nginx/sac-web.conf:/etc/nginx/conf.d/default.conf:ro
+
+  # ------------------------------------------------------------------ pintu publik
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    network_mode: host            # agar 127.0.0.1:8180-8182 terjangkau persis seperti di NAS
+    command: tunnel --no-autoupdate run
+    environment: { TUNNEL_TOKEN: "${TUNNEL_TOKEN}" }
+    profiles: ["tunnel"]          # tidak ikut `up` biasa: nyalakan saat cutover: docker compose --profile tunnel up -d cloudflared

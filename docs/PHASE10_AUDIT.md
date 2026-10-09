@@ -85,5 +85,118 @@ Belum ada integrasi BMKG/inaRISK sama sekali (hanya `RN Disaster Event`). ADR-00
 3. Notifikasi WA ke admin organisasi langsung, atau banner saja dulu dan WA setelah Anda lihat hasilnya seminggu?
 
 ---
-## Tidak diaudit sekarang (bukan prioritas owner)
-10c SMS, 10d gudang/kedaluwarsa, 10e status akses/infrastruktur, 10g mode latihan, 10h check-in relawan: menunggu giliran; audit dilakukan saat dipilih.
+## 10c — notifikasi SMS (cadangan saat WA/internet tak ada)
+
+### Yang sudah ada (fakta kode)
+- `api_notify.py`: pengiriman WhatsApp lewat penyedia `fonnte` / `wablas` / `twilio` / `meta_cloud` / `simulasi`, konfigurasi per skop (global/organisasi/posko) di `RN Notification Setting`, log di `RN Notification Log`.
+  Tidak ada kata "SMS" di kode mana pun. Adaptor Twilio saat ini hanya mengirim ke `whatsapp:+nomor`.
+- Nomor kontak tersimpan di posko (`emergency_contact`, kontak PIC), pelapor (`RN Community Report` telepon), relawan (`contact`), dan kini no HP verifikasi.
+
+### Celah
+1. Di lokasi bencana internet/data sering mati tetapi sinyal seluler dasar masih ada: WA tidak sampai, SMS bisa.
+2. Tidak ada saluran cadangan (WA gagal → SMS), tidak ada kuota/biaya per pesan, tidak ada templat peringatan yang muat 160 karakter.
+
+### Rancangan singkat (usulan)
+- Tambah `channel` (`whatsapp`/`sms`) di `RN Notification Setting` dan `RN Notification Log`; adaptor SMS: Twilio (`From` nomor/alfanumerik, `To` biasa) dan satu penyedia lokal berbasis token (mis. Zenziva/Vonage — **dipilih owner**, tidak dikarang).
+- Aturan cadangan: kirim WA dulu; bila status `failed` setelah N menit → SMS ke nomor yang sama, hanya untuk jenis pesan `peringatan`/`penugasan` (bukan promosi/ringkasan).
+- Templat ringkas (≤160 karakter, tanpa emoji) dan batas harian per skop agar tagihan terkendali; log mencatat biaya bila penyedia mengembalikannya.
+- Privasi: isi SMS tidak memuat data sensitif (nama korban, kondisi medis); hanya "ada pesan baru di Rescue-Net" + kode.
+
+### Pertanyaan owner
+1. Penyedia SMS mana (punya akun/token)? Tanpa itu tahap 1 hanya kerangka + mode simulasi.
+2. Pesan apa yang boleh jatuh ke SMS (peringatan BMKG, penugasan relawan, status laporan)?
+3. Batas biaya harian/bulanan?
+
+---
+## 10d — gudang & kedaluwarsa
+
+### Yang sudah ada
+- `RN Aid Offer` punya `batch_no` dan `expiry_date` (hanya di tawaran bantuan). `RN Stock Observation` (`stock_state`: available/reserved/damaged/expired/unknown) **tidak** punya tanggal kedaluwarsa atau batch; stok = pengamatan berjenis "snapshot", bukan buku besar.
+- `services/stock.py` + `receive_flow_and_update_stock` menambah stok saat penerimaan; konversi kemasan di `packaging.py` / `RN Unit Conversion`.
+- Papan kebutuhan publik (10f) memakai stok `available` — barang kedaluwarsa tidak otomatis keluar dari hitungan.
+
+### Celah
+1. Tanggal kedaluwarsa/batch hilang begitu tawaran diterima menjadi stok; tidak ada peringatan "kedaluwarsa dalam N hari" dan tidak ada FEFO (yang paling dulu kedaluwarsa dikeluarkan dulu).
+2. Makanan/obat kedaluwarsa bisa terhitung "cukup" di papan kebutuhan (risiko: kebutuhan tertutup oleh stok tak layak pakai).
+3. Tidak ada konsep gudang (lokasi/rak) selain posko.
+
+### Rancangan singkat
+- Tambah `expiry_date`, `batch_no` di `RN Stock Observation`; `receive_flow_and_update_stock` menyalin dari tawaran/flow bila ada.
+- Turunan deterministik: `stock_state` efektif = `expired` bila `expiry_date < hari ini` (tanpa menulis ulang data); papan 10f dan KPI stok memakai stok efektif.
+- Panel "Segera kedaluwarsa" (≤30 hari) per posko + urutan FEFO di saran distribusi. Notifikasi lewat `api_notify` ke pengelola posko (berbatas laju).
+- Gudang sebagai posko bertipe `warehouse` (sudah ada tipe posko) — tanpa DocType rak/lokasi pada tahap 1.
+
+### Pertanyaan owner
+1. Kategori yang wajib punya kedaluwarsa (makanan, obat, air minum?) — barang lain boleh kosong?
+2. Ambang peringatan (30 hari? beda untuk obat?).
+3. Perlu stok per rak/lokasi di dalam gudang, atau cukup per posko?
+
+---
+## 10e — status akses & infrastruktur
+
+### Yang sudah ada
+- Tidak ada field/endpoint untuk jalan, jembatan, listrik, air, sinyal, bandara/pelabuhan. Hambatan hanya terlihat tidak langsung (flow `blocked`, "Peringatan & Hambatan" di Control Centre dari data flow/kebutuhan).
+- `RN Posko` punya koordinat dan radius; `RN Disaster Event` punya wilayah; GIS peta (`api_gis`) menampilkan posko.
+
+### Celah
+Perencana rute dan donatur tidak tahu jalan mana putus/jembatan rusak/listrik padam; kiriman dikirim ke jalur yang tak bisa dilewati. Tidak ada riwayat (kapan putus, kapan pulih).
+
+### Rancangan singkat
+- DocType `RN Access Status`: `disaster_event`, `kind` (road/bridge/power/water/telecom/airport/port), `name`, `status` (open/limited/closed/unknown), titik (lat/lng) atau segmen (teks), `admin_area_id` (kode, setelah D.2), `reported_by` (aktor), `verification_status`, `observed_at`, `valid_until`, `note` (tanpa kontak pribadi).
+- Pelaporan oleh pengelola posko/relawan terverifikasi; status kedaluwarsa otomatis (`valid_until`) agar data basi tidak menyesatkan ("data N jam lalu").
+- Tampil di peta GIS (lapisan) + banner di rencana pengiriman; flow ke tujuan di wilayah `closed` diberi peringatan (bukan dilarang). Ringkasan publik hanya agregat per wilayah/jenis (tanpa pelapor).
+- Riwayat append-only (seperti RN Custody Scan) agar bisa dilihat "kapan pulih".
+
+### Pertanyaan owner
+1. Jenis yang diprioritaskan (jalan+jembatan dulu, listrik/air/sinyal menyusul)?
+2. Siapa boleh melapor dan siapa yang memverifikasi (pengelola posko, verifikator jaringan)?
+3. Tampil publik atau hanya internal organisasi?
+
+---
+## 10g — mode latihan (drill/simulasi)
+
+### Yang sudah ada
+- Data simulasi (karhutla, kekeringan, Krakatau, dukungan nasional) ada sebagai event/posko biasa dengan label "Simulasi" di judul; tes memeriksa isinya. Tidak ada penanda sistem untuk "ini latihan": tidak ada flag di `RN Disaster Event`, dan tidak ada pemisahan dari angka nyata.
+- Penjadwal BMKG membuat event DRAF; belum ada konsep event latihan.
+
+### Celah
+1. Latihan dan bencana nyata bisa bercampur di KPI nasional, peta, papan kebutuhan publik, dan notifikasi WA (risiko: donatur menyumbang ke posko latihan; WA latihan terkirim sungguhan).
+2. Tidak ada tombol "reset latihan" yang aman (hapus data latihan tanpa menyentuh data nyata).
+
+### Rancangan singkat
+- Field `is_drill` (Check) + `drill_label` di `RN Disaster Event`; semua query publik/agregat nasional mengecualikan `is_drill=1` secara default (parameter eksplisit `include_drill` untuk panel internal). Satu fungsi pusat `real_events_filter()` agar tidak terselip di tiap endpoint (pelajaran BUG-1..6).
+- Notifikasi: `api_notify` memaksa `simulasi` untuk event latihan (tidak pernah mengirim ke WA/SMS sungguhan).
+- Banner merah "MODE LATIHAN" di semua halaman yang menampilkan event latihan; data latihan memakai awalan/penanda agar mudah dibersihkan.
+- Skrip "buat latihan dari templat" (skenario siap pakai) dan "bersihkan latihan" yang hanya menghapus baris berelasi ke event `is_drill` — pratinjau dulu, daftar kosong tidak boleh memicu hapus massal (lihat catatan insiden filter kosong).
+
+### Pertanyaan owner
+1. Latihan boleh tampil publik (dengan label jelas) atau selalu internal?
+2. Skenario templat mana yang pertama (banjir, gempa, karhutla)?
+3. Siapa yang boleh membuat/menghapus event latihan (System Manager saja)?
+
+---
+## 10h — check-in relawan
+
+### Yang sudah ada
+- `RN Volunteer Assignment` punya graf status (`accepted → checked_in → in_progress → completed`) dan `checked_in_at`; `update_assignment_status` mengizinkan relawan sendiri atau pengelola posko tujuan (V-4). Dasbor menghitung jam (`checked_in_at` sampai sekarang).
+- `RN Volunteer Accommodation`, `RN Safety Briefing` ada. Tidak ada check-out terpisah, tidak ada verifikasi lokasi, tidak ada QR/scan kehadiran, tidak ada absensi harian di luar penugasan.
+
+### Celah
+1. Check-in hanya klik tombol — bisa dari mana saja; tidak ada bukti hadir di posko. Tidak ada `checked_out_at` sehingga jam kerja = sampai "completed".
+2. Relawan tanpa penugasan (datang langsung) tidak tercatat; posko tak tahu siapa yang sedang ada di lokasi (keselamatan/evakuasi).
+3. Tidak ada briefing keselamatan wajib sebelum check-in.
+
+### Rancangan singkat
+- QR kehadiran per posko (token acak berputar, pola kartu 10b) dipindai relawan (`pages/scan.html` diperluas) → `RN Volunteer Presence` append-only: relawan, posko, `in_at`, `out_at`, koordinat opsional (lat/lng + jarak ke posko hanya sebagai penanda, bukan penolak), `offline_id` idempoten.
+- Check-in menautkan ke penugasan aktif bila ada; relawan tanpa penugasan → "walk-in" yang perlu ditinjau pengelola.
+- Daftar "sedang di lokasi" untuk pengelola posko; briefing keselamatan terbaru sebagai prasyarat lunak (peringatan, bukan blokir).
+- Privasi: kehadiran tidak tampil publik; hanya hitungan agregat "N relawan aktif".
+
+### Pertanyaan owner
+1. Check-in wajib dengan QR di posko, atau tombol di aplikasi tetap boleh (dengan koordinat)?
+2. Relawan walk-in diizinkan tercatat langsung, atau harus lewat penugasan?
+3. Check-out otomatis bila lupa (mis. setelah 12 jam)?
+
+---
+## Status audit 10c–10h
+Audit 10c, 10d, 10e, 10g, 10h ditulis 2026-10-10 (di atas); belum ada yang dibangun — tunggu jawaban owner.

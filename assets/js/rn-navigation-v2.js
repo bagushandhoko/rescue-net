@@ -124,11 +124,6 @@
         icon: "ai-analyst"
       },
       {
-        label: "Sync Data Konsolidasi",
-        href: "data-consolidation.html",
-        icon: "sync"
-      },
-      {
         label: "Contact Directory",
         href: "contact-directory.html",
         icon: "contact-directory"

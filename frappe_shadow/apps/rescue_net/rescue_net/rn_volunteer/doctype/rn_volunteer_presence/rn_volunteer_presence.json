@@ -1,0 +1,117 @@
+{
+ "doctype": "DocType",
+ "name": "RN Volunteer Presence",
+ "module": "RN Volunteer",
+ "custom": 0,
+ "is_submittable": 0,
+ "autoname": "hash",
+ "title_field": "volunteer",
+ "fields": [
+  {
+   "fieldname": "volunteer",
+   "label": "Relawan",
+   "fieldtype": "Link",
+   "options": "RN Volunteer Profile",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Bencana",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "assignment",
+   "label": "Penugasan",
+   "fieldtype": "Link",
+   "options": "RN Volunteer Assignment"
+  },
+  {
+   "fieldname": "in_at",
+   "label": "Check-in",
+   "fieldtype": "Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "out_at",
+   "label": "Check-out",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "method",
+   "label": "Cara",
+   "fieldtype": "Select",
+   "options": "qr\napp"
+  },
+  {
+   "fieldname": "walk_in",
+   "label": "Walk-in (tanpa penugasan)",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "review_status",
+   "label": "Tinjauan walk-in",
+   "fieldtype": "Select",
+   "options": "\npending\nreviewed"
+  },
+  {
+   "fieldname": "reviewed_by",
+   "label": "Ditinjau oleh",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "auto_closed",
+   "label": "Check-out otomatis",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "latitude",
+   "label": "Latitude",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "longitude",
+   "label": "Longitude",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "distance_m",
+   "label": "Jarak ke posko (m)",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "offline_id",
+   "label": "Offline ID",
+   "fieldtype": "Data",
+   "unique": 1
+  },
+  {
+   "fieldname": "briefing_missing",
+   "label": "Briefing keselamatan belum ada",
+   "fieldtype": "Check"
+  },
+  {
+   "fieldname": "note",
+   "label": "Catatan",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 1,
+   "delete": 0
+  }
+ ]
+}

@@ -164,9 +164,12 @@ def org_detail(organization):
 
     poskos = frappe.get_all(
         "RN Posko", filters={"organization": organization},
-        fields=["name", "title", "posko_type", "operational_status", "verification_status"],
+        fields=["name", "title", "posko_type", "operational_status", "verification_status", "disaster_event"],
         limit_page_length=200,
     )
+    from rescue_net.services.drill import real_rows
+
+    poskos = real_rows(poskos)  # posko latihan tidak terdaftar di detail organisasi (10g)
 
     members = frappe.get_all(
         "RN User Account", filters={"organization": organization},

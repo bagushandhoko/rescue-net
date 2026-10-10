@@ -160,6 +160,8 @@ def public_active_disasters():
         order_by="started_at desc",
         limit_page_length=100,
     )
+    from rescue_net.services.drill import real_rows
+    rows = real_rows(rows, key="name")  # latihan (10g) tidak pernah di daftar publik
 
     return [
         {

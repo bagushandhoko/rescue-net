@@ -250,6 +250,10 @@ def receive_flow_and_update_stock(
         ),
     )
 
+    _record_expiry_lot(destination, item_name, unit, qty, doc.disaster_event,
+                       frappe.db.get_value("RN Aid Offer", doc.get("aid_offer"), ["expiry_date", "batch_no"], as_dict=True)
+                       if doc.get("aid_offer") else None, "flow:" + str(flow))
+
     return {
         "flow": flow_result,
         "stock_observation": stock.name,
@@ -262,6 +266,18 @@ def receive_flow_and_update_stock(
         "destination_posko":
             destination,
     }
+
+
+def _record_expiry_lot(posko, item_name, unit, qty, disaster_event, offer, source):
+    """Salin tanggal kedaluwarsa/batch tawaran ke lot stok (10d). Tak pernah menggagalkan penerimaan."""
+    if not offer or not offer.get("expiry_date"):
+        return
+    from rescue_net.services.expiry import record_lot
+
+    try:
+        record_lot(posko, item_name, unit, qty, offer.get("expiry_date"), offer.get("batch_no"), disaster_event, source)
+    except Exception:
+        frappe.log_error(title="RN: lot kedaluwarsa gagal dicatat", message=frappe.get_traceback())
 
 
 @frappe.whitelist()
@@ -350,6 +366,9 @@ def receive_aid_offer_and_update_stock(
 
     doc.offer_status = "received"
     doc.save(ignore_permissions=True)
+
+    _record_expiry_lot(destination, item_name, unit, qty, doc.disaster_event,
+                       {"expiry_date": doc.get("expiry_date"), "batch_no": doc.get("batch_no")}, "offer:" + str(doc.name))
 
     return {
         "aid_offer": doc.name,

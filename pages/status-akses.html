@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Status Akses &amp; Infrastruktur</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <style>
+    body { background: var(--bg, #fff6ef); color: var(--text, #2d211b); margin: 0;
+      font-family: system-ui, "Segoe UI", Roboto, sans-serif; }
+    .ak-wrap { max-width: 560px; margin: 0 auto; padding: 20px 16px 48px; }
+    .ak-card { border: 1px solid var(--line, rgba(104,64,45,.14)); border-radius: 14px;
+      background: var(--panel2, #fff8f3); padding: 16px; margin-bottom: 14px; }
+    .ak-card h2 { margin: 0 0 10px; font-size: 15px; }
+    .ak-muted { color: var(--muted, #7c6458); font-size: 13px; }
+    .ak-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .ak-row input { flex: 1; min-width: 0; padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line, rgba(104,64,45,.14));
+      background: var(--panel, #fff); color: inherit; font: inherit; }
+    .ak-btn { padding: 9px 14px; border-radius: 9px; border: 0; background: var(--blue, #3b82c4); color: #fff; font-weight: 600; cursor: pointer; font: inherit; }
+    .ak-btn.out { background: #c0392b; } .ak-btn.alt { background: transparent; color: inherit; border: 1px solid var(--line2, rgba(120,80,60,.22)); }
+    .ak-msg { font-size: 14px; margin: 10px 0 0; } .ak-msg.ok { color: #2f9e59; } .ak-msg.warn { color: #b88918; } .ak-msg.err { color: #c0392b; }
+    .ak-list { list-style: none; margin: 8px 0 0; padding: 0; font-size: 13px; }
+    .ak-list li { display: flex; justify-content: space-between; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line, rgba(104,64,45,.14)); align-items: center; }
+    .ak-list li:first-child { border-top: 0; }
+    #khQr { display: flex; justify-content: center; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="ak-wrap">
+    <h1 style="font-size:18px;margin:0 0 4px">Status Akses &amp; Infrastruktur</h1>
+    <p class="ak-muted" style="margin:0 0 14px">Jalan, jembatan, listrik, air, sinyal, bandara, pelabuhan. Laporan kedaluwarsa otomatis; data basi ditandai, bukan dianggap masih berlaku.</p>
+
+    <div class="ak-card">
+      <h2>Bencana</h2>
+      <div class="ak-row"><select id="akEvent" style="flex:1;padding:9px 11px;border-radius:9px"></select></div>
+      <p class="ak-msg" id="akPubMsg" aria-live="polite"></p>
+      <ul class="ak-list" id="akSummary"></ul>
+      <ul class="ak-list" id="akItems"></ul>
+    </div>
+
+    <div class="ak-card" id="akFormCard">
+      <h2>Laporkan status (pengelola posko / pelapor terverifikasi)</h2>
+      <div class="ak-row">
+        <select id="akKind" style="padding:9px 11px;border-radius:9px"><option value="road">Jalan</option><option value="bridge">Jembatan</option><option value="power">Listrik</option><option value="water">Air</option><option value="telecom">Sinyal</option><option value="airport">Bandara</option><option value="port">Pelabuhan</option></select>
+        <select id="akStatus" style="padding:9px 11px;border-radius:9px"><option value="closed">Tertutup/putus</option><option value="limited">Terbatas</option><option value="open">Terbuka/normal</option><option value="unknown">Tidak diketahui</option></select>
+      </div>
+      <div class="ak-row"><input id="akPlace" placeholder="Nama tempat / ruas (mis. Jembatan Kali Besar)" maxlength="140"></div>
+      <div class="ak-row"><input id="akSegment" placeholder="Keterangan lokasi (opsional, tanpa nomor/tautan)" maxlength="140"></div>
+      <div class="ak-row"><input id="akPosko" placeholder="Kode posko Anda"><input id="akHours" type="number" min="1" max="720" value="48" style="max-width:110px" title="Berlaku (jam)"></div>
+      <div class="ak-row"><input id="akNote" placeholder="Catatan (opsional, tanpa nomor/tautan)" maxlength="500"></div>
+      <div class="ak-row"><button class="ak-btn" id="akSend" type="button">Kirim laporan</button></div>
+      <p class="ak-msg" id="akMsg" aria-live="polite"></p>
+      <ul class="ak-list" id="akMine"></ul>
+    </div>
+  </div>
+
+  <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+<script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
+  <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+  <script src="../assets/js/status-akses.js?v=ak-20261010"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+</body>
+</html>

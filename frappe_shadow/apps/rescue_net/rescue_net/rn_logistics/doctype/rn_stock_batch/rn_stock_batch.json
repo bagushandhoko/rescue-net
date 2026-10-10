@@ -1,0 +1,75 @@
+{
+ "doctype": "DocType",
+ "name": "RN Stock Batch",
+ "module": "RN Logistics",
+ "custom": 0,
+ "is_submittable": 0,
+ "autoname": "hash",
+ "title_field": "item_name",
+ "fields": [
+  {
+   "fieldname": "posko",
+   "label": "Posko",
+   "fieldtype": "Link",
+   "options": "RN Posko",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "label": "Bencana",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "item_name",
+   "label": "Barang",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "unit",
+   "label": "Satuan",
+   "fieldtype": "Data",
+   "reqd": 1
+  },
+  {
+   "fieldname": "quantity",
+   "label": "Jumlah diterima",
+   "fieldtype": "Float",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expiry_date",
+   "label": "Tanggal kedaluwarsa",
+   "fieldtype": "Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "batch_no",
+   "label": "No. batch",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "source",
+   "label": "Sumber",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "received_at",
+   "label": "Diterima pada",
+   "fieldtype": "Datetime"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 1,
+   "delete": 0
+  }
+ ]
+}

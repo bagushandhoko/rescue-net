@@ -212,10 +212,13 @@ def create_flow(
             update_modified=False,
         )
 
+    from rescue_net.services.access_status import access_warnings
+
     return {
         "flow":doc.name,
         "flow_status":doc.flow_status,
         "canonical_group":doc.canonical_group,
+        "access_warnings": access_warnings(destination_posko),  # nasihat saja (10e)
     }
 
 

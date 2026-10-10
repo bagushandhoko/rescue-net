@@ -17,14 +17,16 @@ def _sev_max(a, b):
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
-def national_situation(active_only=1):
+def national_situation(active_only=1, include_drill=None):
+    from rescue_net.services.drill import real_rows
+
     active_only = str(active_only).lower() in ("1", "true", "yes")
 
-    de = {d.name: d for d in frappe.get_all(
+    de = {d.name: d for d in real_rows(frappe.get_all(
         "RN Disaster Event",
         fields=["name", "title", "severity", "event_status", "location_summary"],
         limit_page_length=500,
-    )}
+    ), key="name", include_drill=include_drill)}
     active_events = {n for n, d in de.items()
                     if (not active_only or (d.event_status or "active") == "active")}
 
@@ -36,6 +38,7 @@ def national_situation(active_only=1):
                 "rn_beneficiary_count", "disaster_event"],
         limit_page_length=5000,
     )
+    poskos = real_rows(poskos, include_drill=include_drill)  # posko latihan tidak masuk angka nasional
 
     # open needs per posko (RN Logistic Need uses `need_status`, not `status`)
     need_by_posko = {}

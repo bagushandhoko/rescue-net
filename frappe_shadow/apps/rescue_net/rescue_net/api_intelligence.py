@@ -461,7 +461,12 @@ def _fetch_need_rows(disaster_event=None, names=None):
         row["need_type"] = row.get("item_name")
         row["raw_need_text"] = row.get("raw_item_text")
 
-    return community_rows + logistic_rows
+    rows = community_rows + logistic_rows
+    if names is None and not disaster_event:
+        from rescue_net.services.drill import real_rows
+
+        rows = real_rows(rows)  # rollup lintas-event tidak memuat kebutuhan latihan (10g)
+    return rows
 
 
 def _overlay_group_overrides(groups):

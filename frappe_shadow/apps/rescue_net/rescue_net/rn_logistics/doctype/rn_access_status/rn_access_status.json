@@ -1,0 +1,111 @@
+{
+ "doctype": "DocType",
+ "name": "RN Access Status",
+ "module": "RN Logistics",
+ "custom": 0,
+ "is_submittable": 0,
+ "autoname": "hash",
+ "title_field": "place_name",
+ "fields": [
+  {
+   "fieldname": "disaster_event",
+   "label": "Bencana",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "kind",
+   "label": "Jenis",
+   "fieldtype": "Select",
+   "options": "road\nbridge\npower\nwater\ntelecom\nairport\nport",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "place_name",
+   "label": "Nama tempat/ruas",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "open\nlimited\nclosed\nunknown",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "latitude",
+   "label": "Latitude",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "longitude",
+   "label": "Longitude",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "segment",
+   "label": "Ruas / keterangan lokasi",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "admin_area_id",
+   "label": "Wilayah (kode)",
+   "fieldtype": "Link",
+   "options": "RN Admin Area"
+  },
+  {
+   "fieldname": "posko",
+   "label": "Posko pelapor",
+   "fieldtype": "Link",
+   "options": "RN Posko"
+  },
+  {
+   "fieldname": "reported_by",
+   "label": "Pelapor (aktor)",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "verification_status",
+   "label": "Verifikasi",
+   "fieldtype": "Select",
+   "options": "reported\nverified"
+  },
+  {
+   "fieldname": "verified_by",
+   "label": "Diverifikasi oleh",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "observed_at",
+   "label": "Diamati pada",
+   "fieldtype": "Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "valid_until",
+   "label": "Berlaku sampai",
+   "fieldtype": "Datetime",
+   "reqd": 1
+  },
+  {
+   "fieldname": "note",
+   "label": "Catatan",
+   "fieldtype": "Small Text"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 0,
+   "create": 1,
+   "delete": 0
+  }
+ ]
+}

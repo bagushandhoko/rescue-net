@@ -5,6 +5,9 @@ app_description = "Rescue-Net shadow migration app"
 app_email = "bagushandhoko@gmail.com"
 app_license = "MIT"
 
+# Mode latihan (10g): tamu tidak bisa membuka event/posko latihan lewat id eksplisit
+before_request = ["rescue_net.services.drill.before_request"]
+
 # Rescue-Net authenticated identity bridge
 on_login = "rescue_net.identity_bridge.handle_identity_on_login"
 
@@ -31,10 +34,13 @@ scheduler_events = {
     },
     "hourly": [
         "rescue_net.ai.queue.process_pending",
+        "rescue_net.api_presence.close_stale_presence",
+        "rescue_net.services.sms.sweep_failed_whatsapp",
     ],
     "daily": [
         "rescue_net.setup.db_backup.run_daily_backup",
         "rescue_net.ai.budget.purge_usage_logs",
+        "rescue_net.services.expiry.daily_expiry_notify",
     ],
 }
 

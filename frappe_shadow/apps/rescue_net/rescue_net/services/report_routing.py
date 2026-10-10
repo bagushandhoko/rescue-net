@@ -61,7 +61,11 @@ def _candidates(report):
     if report.get("disaster_event"):
         filters["disaster_event"] = report.get("disaster_event")
     else:
-        active = frappe.get_all("RN Disaster Event", filters={"event_status": "active"}, pluck="name")
+        from rescue_net.services.drill import drill_event_names
+
+        # laporan nyata tak pernah otomatis diarahkan ke event latihan (10g)
+        active = [e for e in frappe.get_all("RN Disaster Event", filters={"event_status": "active"}, pluck="name")
+                  if e not in drill_event_names()]
         if not active:
             return []
         filters["disaster_event"] = ["in", active]

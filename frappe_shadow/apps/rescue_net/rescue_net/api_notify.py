@@ -223,6 +223,11 @@ def send_whatsapp(to, body, *, context_type=None, context_id=None,
     """
     num = _norm_msisdn(to)
     cfg = _resolve_setting(scope=scope, posko=posko)
+    from rescue_net.services.drill import is_drill_posko
+
+    ctx_posko = posko or (context_id if context_type == "posko" else None)
+    if is_drill_posko(ctx_posko):
+        cfg = dict(_SIM)  # latihan (10g): tidak pernah mengirim ke WA sungguhan
     provider = cfg["provider"]
 
     log = frappe.new_doc("RN Notification Log")
@@ -355,8 +360,12 @@ def save_notification_setting(scope=DEFAULT_SCOPE, provider="simulasi", enabled=
     _only_system_manager()
     scope = (scope or DEFAULT_SCOPE).strip()
     provider = (provider or "simulasi").strip().lower()
-    if provider not in ({"simulasi"} | set(_ADAPTERS)):
-        frappe.throw("Provider tidak dikenal: " + provider)
+    from rescue_net.services.sms import SMS_ADAPTERS
+
+    is_sms_scope = scope.startswith("sms:")          # skop SMS (10c) hanya penyedia SMS; skop WhatsApp tidak
+    allowed = {"simulasi"} | (set(SMS_ADAPTERS) if is_sms_scope else set(_ADAPTERS))
+    if provider not in allowed:
+        frappe.throw("Provider tidak dikenal untuk skop ini: " + provider)
 
     name = frappe.db.get_value(
         "RN Notification Setting", {"scope": scope, "status": "active"}, "name"
@@ -369,7 +378,7 @@ def save_notification_setting(scope=DEFAULT_SCOPE, provider="simulasi", enabled=
     creating = doc.is_new()
     if creating:
         doc.scope = scope
-        doc.channel = "whatsapp"
+        doc.channel = "sms" if is_sms_scope else "whatsapp"
         doc.created_by_user_id = frappe.session.user
 
     doc.provider = provider

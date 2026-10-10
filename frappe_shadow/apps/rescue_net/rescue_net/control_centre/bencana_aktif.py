@@ -367,6 +367,8 @@ def active_disasters_board(limit=60):
         order_by="started_at desc",
         limit_page_length=int(limit),
     )
+    from rescue_net.services.drill import real_rows
+    events = real_rows(events, key="name")  # latihan (10g) tidak pernah di papan publik
 
     posko_cols = cols("RN Posko")
     need_cols = cols("RN Logistic Need")

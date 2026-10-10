@@ -53,6 +53,7 @@ GUEST_ENDPOINTS = {
     "api_control_centre.posko_registry_board", "api_control_centre.posko_verification_checklist",
     "api_control_centre.public_dashboard",
     "api_early_warning.banner",  # reviewed: public quake facts only; no draft event / posko list / raw payload
+    "api_access_status.board",  # reviewed: per-jenis ringkasan + tempat tertutup/terbatas; tanpa pelapor/koordinat/catatan
     "api_public_needs.board",  # reviewed: public posko only; item/qty/unit/region/time, no contacts or notes
     "api_displacement.displacement_board",
     "api_donor_program.program_board", "api_donor_program.program_detail",
@@ -116,6 +117,8 @@ SECRETS = {
     "verifier_email": "verifier.sentinel@test.rescue-net.local",
     "endorse_statement": "PERNYATAAN-SENTINEL-TENTANG-PELAPOR",
     "reporter_title": "NAMA-PELAPOR-SENTINEL",
+    "access_note": "CATATAN-AKSES-SENTINEL",
+    "access_reporter": "PELAPOR-AKSES-SENTINEL",
 }
 
 # Confirmed leaks reported to the owner but not fixed yet:
@@ -212,6 +215,9 @@ class TestGuestSweep(RNTestCase):
                 legacy_payload=json.dumps({"reporter_phone": s["report_phone"], "reporter_email": s["report_email"],
                                            "reporter_name": s["reporter_title"],
                                            "evidence": {"image": "/files/sentinel.jpg", "caption": "foto sentinel"}}))
+        _insert("RN Access Status", disaster_event=w.event.name, kind="bridge", place_name="Jembatan Uji", status="closed",
+                note=s["access_note"], reported_by=s["access_reporter"], latitude=-6.123456, longitude=106.654321,
+                observed_at=now_datetime(), valid_until=frappe.utils.add_to_date(now_datetime(), hours=24))
         ver = make_actor(role="citizen")
         vprof = _insert("RN Verifier Profile", title="Verifikator Sentinel", user=ver.account, verifier_type="government",
                         verifier_status="active", trust_level=1, phone=s["verifier_phone"], email=s["verifier_email"])

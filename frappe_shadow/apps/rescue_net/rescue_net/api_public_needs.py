@@ -68,12 +68,18 @@ def board(event=None, wilayah=None):
             m["modified"] = n.modified
 
     stock = defaultdict(float)
+    lot_keys = {}
     for s in frappe.get_all(
             "RN Stock Observation",
             filters={"posko": ["in", names], "stock_state": "available"},
             fields=["posko", "item_name", "canonical_item", "unit", "quantity"],
             limit_page_length=5000):
         stock[(s.posko,) + _key(s)] += flt(s.quantity)
+        lot_keys[(s.posko, s.item_name, s.unit)] = (s.posko,) + _key(s)
+    from rescue_net.services.expiry import expired_quantity
+
+    for (lp, li, lu), k in lot_keys.items():          # barang kedaluwarsa bukan stok tersedia (10d)
+        stock[k] = max(stock[k] - expired_quantity(lp, li, lu), 0.0)
 
     incoming = defaultdict(float)
     for f in frappe.get_all(

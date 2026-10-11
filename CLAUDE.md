@@ -25,7 +25,8 @@ Detail status, item terbuka, dan gotcha ada di `HANDOVER.md`.
 
 ## Status saat ini
 
-Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-10.)
+Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-11.)
+- **LINGKUNGAN BARU (2026-10-11):** produksi rescue-net.online = VM Aspire `sac-vm` (192.168.100.51, `/srv/rescue-net`), BUKAN Synology. Repo kerja = clone di LXC 102 `/srv/rescue-net-src`; deploy = `git push` + `./scripts/deploy-vm.sh` (rsync tanpa --delete, restart backend bila perlu). `rn-deploy-app.sh`/`rn-deploy-from-git.sh` usang. Deploy key GitHub `aspire` (tulis). Detail: HANDOVER.md "2026-10-11". Posko Detail: KPI + baris daftar kini berlink (1cfef25, ter-deploy; link tabel Barang Masuk/Keluar belum terverifikasi).
 
 - **Selesai (belum deploy):** "pelapor terverifikasi" (owner 2026-10-01) — role `verified_reporter`, hanya menambah
   Kebutuhan di posko mana pun (label pelapor + "belum dikonfirmasi" sampai posko konfirmasi/tolak; batas 30/jam;

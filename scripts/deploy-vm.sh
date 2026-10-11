@@ -16,12 +16,12 @@ rsync -rlci $DRY --exclude='.git' \
   pages assets index.html manifest.webmanifest sw.js "$VM:/srv/rescue-net/repo/"
 
 echo "== backend -> /srv/rescue-net/apps/rescue_net"
-OUT=$(rsync -rlci $DRY --exclude='__pycache__' --exclude='*.pyc' \
+OUT=$(rsync -rlci $DRY --exclude='__pycache__' --exclude='*.pyc' --exclude=tests \
   frappe_shadow/apps/rescue_net/ "$VM:/srv/rescue-net/apps/rescue_net/")
 echo "$OUT"
 [ -n "$DRY" ] && exit 0
 
-if echo "$OUT" | grep -q '^>f'; then
+if echo "$OUT" | grep -q '^<f'; then
   echo "== backend berubah -> restart backend/worker/scheduler"
   ssh "$VM" 'cd /srv/rescue-net && docker compose restart backend worker-default scheduler'
 else

@@ -92,16 +92,58 @@ function setStatus(msg) {
 }
 
 
+function logistikHref(item) {
+  const q = new URLSearchParams(location.search);
+  return `posko-logistik.html?id=${encodeURIComponent(getPoskoId())}` +
+    `&event=${encodeURIComponent(currentEventParam())}` +
+    (item ? `&penuhi=${encodeURIComponent(item)}` : "");
+}
+
+
+function kirimHref() {
+  return `kirim-bantuan.html?event=${encodeURIComponent(currentEventParam())}`;
+}
+
+
+// KPI tiles → scroll to the matching section (or open a page).
+function wireKpiLinks() {
+  document.querySelectorAll(".kpi-card[data-go]").forEach(card => {
+    const go = () => {
+      const t = card.dataset.go;
+      if (t === "@logistik") {
+        location.href = logistikHref("");
+        return;
+      }
+      if (card.dataset.tab === "masuk") {
+        document.getElementById("movTabMasuk")?.click();
+      }
+      const el = document.querySelector(t);
+      if (!el) return;
+      (el.closest(".panel") || el).scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    card.addEventListener("click", go);
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+  });
+}
+
+
 function card(
   title,
   body,
-  chip = ""
+  chip = "",
+  href = ""
 ) {
   return `
     <article class="event-card">
       <div class="event-main">
         <div>
-          <h4>${safe(title)}</h4>
+          <h4>${
+            href
+              ? `<a href="${href}">${safe(title)}</a>`
+              : safe(title)
+          }</h4>
           <p>${body}</p>
         </div>
 
@@ -235,7 +277,8 @@ function renderStockSummary(items) {
           `${safe(s.unit)}<br>` +
           `Mode: ${safe(s.quantity_mode)}<br>` +
           `Observed: ${safe(s.observed_at)}`,
-          s.stock_state
+          s.stock_state,
+          logistikHref(s.item_name)
         )).join("")
       : card(
           "Belum ada stock observation",
@@ -262,7 +305,8 @@ function renderStockObservations(items) {
           `${safe(s.quantity)} ${safe(s.unit)}<br>` +
           `${safe(s.notes)}<br>` +
           `Observed: ${safe(s.observed_at)}`,
-          s.quantity_mode
+          s.quantity_mode,
+          logistikHref(s.item_name)
         )).join("")
       : card(
           "Belum ada observation",
@@ -289,7 +333,8 @@ function renderNeeds(items) {
           `Need: ${safe(n.quantity)} ${safe(n.unit)}<br>` +
           `Urgency: ${safe(n.urgency)}<br>` +
           `Status: ${safe(n.need_status)}`,
-          n.need_status
+          n.need_status,
+          logistikHref(n.item_name)
         )).join("")
       : card(
           "Belum ada kebutuhan",
@@ -316,7 +361,8 @@ function renderIncomingAid(items) {
           `${safe(a.quantity)} ${safe(a.unit)}<br>` +
           `Donor: ${safe(a.donor_name)}<br>` +
           `Status: ${safe(a.offer_status)}`,
-          a.offer_status
+          a.offer_status,
+          kirimHref()
         )).join("")
       : card(
           "Belum ada incoming aid",
@@ -371,7 +417,11 @@ function renderFlows(items) {
             <article class="event-card">
               <div class="event-main">
                 <div>
-                  <h4>${safe(f.item_name)}</h4>
+                  <h4>${
+                    id
+                      ? `<a href="lacak-logistik.html?flow=${encodeURIComponent(id)}" title="Lacak kiriman">${safe(f.item_name)}</a>`
+                      : safe(f.item_name)
+                  }</h4>
 
                   <p>
                     Flow: ${safe(id)}<br>
@@ -838,6 +888,7 @@ document.addEventListener(
 
     setupStockForm();
     setupTransferForm();
+    wireKpiLinks();
 
     loadPosko()
       .catch(

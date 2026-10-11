@@ -61,6 +61,13 @@ window.RNLogistikInfo = (function () {
     return `<span class="rn-habis"><i class="rn-habis-dot ${cls}"></i>${safe(s)}</span>`;
   }
 
+  function poskoLogistikUrl(item) {
+    const q = new URLSearchParams(location.search);
+    const id = q.get("id") || "posko-sim-logistik";
+    const ev = q.get("event") || q.get("disaster_event_id") || "";
+    return `posko-logistik.html?id=${encodeURIComponent(id)}&event=${encodeURIComponent(ev)}&penuhi=${encodeURIComponent(item || "")}`;
+  }
+
   function renderKpi(b) {
     const k = b.kpi || {};
     const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
@@ -106,7 +113,7 @@ window.RNLogistikInfo = (function () {
     }
     body.innerHTML = rows.map(r => `
       <tr>
-        <td><b>${safe(r.item_name)}</b> <small>${safe(r.unit)}</small>${r.report_channel
+        <td><a href="${poskoLogistikUrl(r.item_name)}" title="Buka Logistik Posko — penuhi kebutuhan"><b>${safe(r.item_name)}</b></a> <small>${safe(r.unit)}</small>${r.report_channel
           ? `<small class="rn-rep-badge ${safe(r.reporter_confirmation || "pending")}">Laporan pelapor terverifikasi · ${safe(r.reporter_label)} · ${
               r.reporter_confirmation === "confirmed" ? "dikonfirmasi posko" : "belum dikonfirmasi"}</small>` : ""}</td>
         <td>${fmt(r.stok_tersedia)} ${safe(r.unit)}</td>
@@ -154,7 +161,7 @@ window.RNLogistikInfo = (function () {
       ? rows.map(m => `
           <tr>
             <td>${safe(m[whoKey])}</td>
-            <td>${safe(m.item_name)}</td>
+            <td>${m.flow ? `<a href="lacak-logistik.html?flow=${encodeURIComponent(m.flow)}" title="Lacak kiriman">${safe(m.item_name)}</a>` : safe(m.item_name)}</td>
             <td>${fmt(m.quantity)} ${safe(m.unit)}</td>
             <td>${statusChip(m.status)}</td>
           </tr>

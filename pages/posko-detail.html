@@ -62,34 +62,34 @@
     <div id="poskoShareBanner" class="rn-share-banner" hidden></div>
 
     <section class="kpi-grid">
-      <div class="kpi-card danger"><span class="kpi-icon" data-icon="id-card"></span><span>Peran</span><strong id="kpiRole">-</strong><small>jenis node</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="alert-circle"></span><span>Kebutuhan</span><strong id="kpiNeeds">0</strong><small>kebutuhan terbuka</small></div>
-      <div class="kpi-card warning"><span class="kpi-icon" data-icon="box"></span><span>Item Stok</span><strong id="kpiStock">0</strong><small>baris ringkasan</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="truck"></span><span>Alur Distribusi</span><strong id="kpiFlows">0</strong><small>distribusi</small></div>
+      <div class="kpi-card danger rn-kpi-clickable" data-go="#poskoOverview" role="button" tabindex="0"><span class="kpi-icon" data-icon="id-card"></span><span>Peran</span><strong id="kpiRole">-</strong><small>jenis node</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#logisticNeeds" role="button" tabindex="0"><span class="kpi-icon" data-icon="alert-circle"></span><span>Kebutuhan</span><strong id="kpiNeeds">0</strong><small>kebutuhan terbuka</small></div>
+      <div class="kpi-card warning rn-kpi-clickable" data-go="#stockSummary" role="button" tabindex="0"><span class="kpi-icon" data-icon="box"></span><span>Item Stok</span><strong id="kpiStock">0</strong><small>baris ringkasan</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#distributionFlows" role="button" tabindex="0"><span class="kpi-icon" data-icon="truck"></span><span>Alur Distribusi</span><strong id="kpiFlows">0</strong><small>distribusi</small></div>
     </section>
 
     <h3 class="rn-sub-h">Kondisi Logistik</h3>
 
     <section class="kpi-grid">
-      <div class="kpi-card" id="kpiJiwaCard">
+      <div class="kpi-card rn-kpi-clickable" id="kpiJiwaCard" data-go="@logistik" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="users"></span>
         <span>Jiwa Dilayani</span>
         <strong id="kpiJiwa">-</strong>
         <small id="kpiJiwaHint">jumlah korban dilayani posko</small>
       </div>
-      <div class="kpi-card warning" id="kpiStokCard">
+      <div class="kpi-card warning rn-kpi-clickable" id="kpiStokCard" data-go="#stockSummary" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="box"></span>
         <span>Stok Menipis</span>
         <strong id="kpiStok">-</strong>
         <small id="kpiStokHint">item habis &lt; 3 hari</small>
       </div>
-      <div class="kpi-card danger" id="kpiKritisCard">
+      <div class="kpi-card danger rn-kpi-clickable" id="kpiKritisCard" data-go="#urgentNeedsBody" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="alert-circle"></span>
         <span>Kebutuhan Kritis</span>
         <strong id="kpiKritis">-</strong>
         <small id="kpiKritisHint">prioritas tertinggi</small>
       </div>
-      <div class="kpi-card" id="kpiMenujuCard">
+      <div class="kpi-card rn-kpi-clickable" id="kpiMenujuCard" data-go="#movBody" data-tab="masuk" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="truck"></span>
         <span>Bantuan Menuju Posko</span>
         <strong id="kpiMenuju">-</strong>
@@ -306,8 +306,8 @@
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20261008"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/rn-logistik-info.js?v=pelapor-20261001"></script>
-<script src="../assets/js/posko-detail.js?v=logistiksplit-20260905"></script>
+<script src="../assets/js/rn-logistik-info.js?v=links-20261011"></script>
+<script src="../assets/js/posko-detail.js?v=links-20261011"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

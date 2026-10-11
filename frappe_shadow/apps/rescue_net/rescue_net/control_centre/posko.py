@@ -418,6 +418,7 @@ def logistik_board(posko, disaster_event=None):
         out = []
         for f in rows or []:
             out.append({
+                "flow": f.get("name"),
                 who_label: f.get(who_key),
                 "item_name": f.get("item_name"),
                 "quantity": f.get("quantity"),

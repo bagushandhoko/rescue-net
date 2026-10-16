@@ -178,3 +178,107 @@
     display: none !important;
   }
 }
+
+/* =========================================================
+   Single-menu fold (added 2026-10-16)
+   On mobile the public header is folded INTO this one drawer
+   by rn-mobile-drawer.js, so there is one sticky bar + one
+   hamburger + one menu (no more two stacked header bars).
+   ========================================================= */
+@media (max-width: 1023px) {
+  /* The public header's content now lives inside the drawer. */
+  body.rn-drawer-folded .rn-public-header {
+    display: none !important;
+  }
+
+  /* Folded block: account + event picker, then the "Umum" links,
+     sitting just under the drawer brand and above the operational nav. */
+  .rn-drawer-public {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 4px 0 12px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--line, rgba(104, 64, 45, .14));
+  }
+
+  .rn-drawer-section-label {
+    margin: 2px 0 0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted, #8a5a45);
+  }
+
+  /* Account row (login / 👤 name / logout) + event picker, stacked full width. */
+  .rn-drawer-public .rn-public-actions {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    order: 0;
+  }
+
+  .rn-drawer-public .rn-event-picker {
+    display: inline-flex !important;
+    width: 100%;
+    order: 0;
+  }
+  .rn-drawer-public .rn-event-picker label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+  }
+  .rn-drawer-public .rn-event-picker select {
+    width: 100%;
+    max-width: none;
+    min-height: 44px;
+  }
+
+  .rn-drawer-public .rn-public-login,
+  .rn-drawer-public .rn-public-logout {
+    justify-content: center;
+    width: 100%;
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .rn-drawer-public .rn-public-user {
+    justify-content: center;
+    padding: 4px 0;
+    font-size: 14px;
+  }
+
+  /* "Umum" links: a clean vertical list that matches the operational
+     nav items (not the cramped 2-col grid the old collapsed bar used). */
+  .rn-drawer-public .rn-public-links {
+    display: flex !important;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  .rn-drawer-public .rn-public-links a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text, #2d211b);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    white-space: normal;
+  }
+  .rn-drawer-public .rn-public-links a:hover,
+  .rn-drawer-public .rn-public-links a:focus-visible {
+    background: rgba(104, 64, 45, .06);
+  }
+}

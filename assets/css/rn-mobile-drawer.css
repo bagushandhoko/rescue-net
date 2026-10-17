@@ -1,9 +1,13 @@
 /* =========================================================
    Rescue-Net Mobile Navigation Drawer
-   Off-canvas sidebar for internal pages, <1024px.
-   Loaded after style.css and rn-navigation-v2.css so these
-   rules win the cascade without needing to unpick the legacy
-   mobile overrides in style.css.
+   <1024px: one sticky top bar -> one FULL-SCREEN overlay menu.
+   Pattern referenced from totalenergies.com (full-screen overlay,
+   large bold accordion sections) rendered in Rescue-Net's warm
+   brand (cream + coral). The operational nav is already rendered
+   as <details>/<summary> accordion groups by rn-navigation-v2.js;
+   this file only styles them for the overlay. Loaded after
+   style.css and rn-navigation-v2.css so these rules win the cascade.
+   CSS-only: no DOM restructuring, reversible on resize to desktop.
    ========================================================= */
 
 .rn-drawer-topbar,
@@ -25,18 +29,20 @@
     min-height: 100vh !important;
   }
 
-  /* Sticky top bar: hamburger left, title center, logo right */
+  /* ---- Sticky top bar: brand/title + hamburger ---- */
   .rn-drawer-topbar {
     display: flex !important;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
     position: sticky;
-    top: 0;
-    z-index: 220;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 260;
     height: 56px;
-    padding: 0 10px;
-    background: var(--panel2, #fff8f3);
+    padding: 0 max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px));
+    background: rgba(255, 248, 243, .94);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line, rgba(104, 64, 45, .14));
   }
 
@@ -58,6 +64,7 @@
     width: auto;
   }
 
+  /* Hamburger that animates into an X while the overlay is open */
   .rn-drawer-hamburger {
     display: inline-flex;
     flex: 0 0 auto;
@@ -65,11 +72,11 @@
     justify-content: center;
     align-items: stretch;
     gap: 4px;
-    width: 40px;
-    height: 40px;
-    padding: 0;
+    width: 42px;
+    height: 42px;
+    padding: 0 10px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: transparent;
     cursor: pointer;
   }
@@ -81,9 +88,20 @@
 
   .rn-drawer-hamburger span {
     display: block;
-    height: 2px;
+    height: 2.4px;
     border-radius: 2px;
     background: var(--text, #2d211b);
+    transition: transform .26s ease, opacity .2s ease;
+  }
+
+  body.rn-drawer-open .rn-drawer-hamburger span:nth-child(1) {
+    transform: translateY(6.4px) rotate(45deg);
+  }
+  body.rn-drawer-open .rn-drawer-hamburger span:nth-child(2) {
+    opacity: 0;
+  }
+  body.rn-drawer-open .rn-drawer-hamburger span:nth-child(3) {
+    transform: translateY(-6.4px) rotate(-45deg);
   }
 
   /* The sticky top bar replaces the old fixed floating mobile title */
@@ -91,48 +109,115 @@
     display: none !important;
   }
 
-  /* Off-canvas drawer: reuse the existing .sidebar element as the panel */
+  /* ---- Full-screen overlay: the .sidebar element is the panel ---- */
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar {
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 280px !important;
-    max-width: 85vw !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
     height: 100vh !important;
     height: 100dvh !important;
     min-height: 0 !important;
     max-height: none !important;
-    padding: 16px 14px !important;
-    border-right: 1px solid var(--line, rgba(104, 64, 45, .14)) !important;
-    border-bottom: 0 !important;
+    padding: 0 !important;
+    padding-top: calc(72px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: max(20px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(20px, env(safe-area-inset-right, 0px)) !important;
+    border: 0 !important;
+    background: var(--bg, #fff6ef) !important;
     overflow-y: auto !important;
     overscroll-behavior: contain !important;
-    z-index: 210 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 220ms ease !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, .3) !important;
+    z-index: 240 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-10px) !important;
+    transition: opacity .28s ease, transform .34s cubic-bezier(.22, 1, .36, 1), visibility .28s !important;
+    box-shadow: none !important;
   }
 
   body.rn-drawer-open:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar {
-    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+
+  /* Hide the in-panel brand: the sticky top bar already shows it */
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar .brand {
+    display: none !important;
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar nav {
     display: flex !important;
     flex-direction: column !important;
-    gap: 4px !important;
+    gap: 0 !important;
     overflow: visible !important;
     padding: 0 !important;
   }
 
-  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar nav a,
-  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-link,
+  /* ---- Big bold accordion groups (totalenergies pattern) ---- */
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-group {
+    border: 0 !important;
+    border-top: 1px solid var(--line, rgba(104, 64, 45, .14)) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    margin: 0 !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-group:last-of-type {
+    border-bottom: 1px solid var(--line, rgba(104, 64, 45, .14)) !important;
+  }
+
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-summary {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-height: 0 !important;
+    padding: 17px 2px !important;
+    font-size: 21px !important;
+    font-weight: 800 !important;
+    letter-spacing: -.02em !important;
+    color: var(--text, #2d211b) !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-summary > span:first-child {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-group[open] .rn-nav-v2-summary {
+    color: var(--vx-brand-dark, #c4442f) !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-chevron {
+    font-size: 22px !important;
+    line-height: 1 !important;
+    color: var(--peach2, #e8835d) !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-children {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    padding: 0 0 10px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar nav a,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-link {
     flex: 0 0 auto !important;
-    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 11px !important;
+    min-height: 46px !important;
+    padding: 11px 10px !important;
     white-space: normal !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
+    border-radius: 10px !important;
+    font-size: 15.5px !important;
+    font-weight: 500 !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-link.active,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-link[aria-current="page"] {
+    background: rgba(232, 117, 90, .14) !important;
+    color: var(--vx-brand-dark, #c4442f) !important;
+    font-weight: 700 !important;
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .main {
@@ -141,16 +226,16 @@
     padding: 14px 12px 24px !important;
   }
 
-  /* Backdrop */
+  /* Backdrop kept for the fade but the overlay covers the page fully */
   .rn-drawer-backdrop {
     display: block !important;
     position: fixed;
     inset: 0;
-    z-index: 200;
-    background: rgba(0, 0, 0, .5);
+    z-index: 230;
+    background: rgba(36, 26, 21, .4);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 220ms ease;
+    transition: opacity .28s ease;
   }
 
   body.rn-drawer-open .rn-drawer-backdrop {
@@ -158,13 +243,14 @@
     pointer-events: auto;
   }
 
-  /* Lock page scroll while the drawer is open; main content itself never shifts */
+  /* Lock page scroll while the overlay is open */
   body.rn-drawer-open {
     overflow: hidden !important;
   }
 
   @media (prefers-reduced-motion: reduce) {
     body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar,
+    .rn-drawer-hamburger span,
     .rn-drawer-backdrop {
       transition: none !important;
     }
@@ -180,38 +266,33 @@
 }
 
 /* =========================================================
-   Single-menu fold (added 2026-10-16)
-   On mobile the public header is folded INTO this one drawer
-   by rn-mobile-drawer.js, so there is one sticky bar + one
-   hamburger + one menu (no more two stacked header bars).
+   Single-menu fold (public header folded INTO the overlay)
+   Account + event picker, then the "Umum" links, above the
+   operational accordion groups. rn-mobile-drawer.js does the fold.
    ========================================================= */
 @media (max-width: 1023px) {
-  /* The public header's content now lives inside the drawer. */
   body.rn-drawer-folded .rn-public-header {
     display: none !important;
   }
 
-  /* Folded block: account + event picker, then the "Umum" links,
-     sitting just under the drawer brand and above the operational nav. */
   .rn-drawer-public {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin: 4px 0 12px;
-    padding: 0 0 12px;
+    gap: 14px;
+    margin: 0 0 6px;
+    padding: 0 0 16px;
     border-bottom: 1px solid var(--line, rgba(104, 64, 45, .14));
   }
 
   .rn-drawer-section-label {
-    margin: 2px 0 0;
-    font-size: 11px;
+    margin: 10px 0 0;
+    font-size: 12px;
     font-weight: 800;
-    letter-spacing: .06em;
+    letter-spacing: .08em;
     text-transform: uppercase;
     color: var(--muted, #8a5a45);
   }
 
-  /* Account row (login / 👤 name / logout) + event picker, stacked full width. */
   .rn-drawer-public .rn-public-actions {
     display: flex !important;
     flex-direction: column;
@@ -237,28 +318,29 @@
   .rn-drawer-public .rn-event-picker select {
     width: 100%;
     max-width: none;
-    min-height: 44px;
+    min-height: 48px;
+    font-size: 15px;
   }
 
   .rn-drawer-public .rn-public-login,
   .rn-drawer-public .rn-public-logout {
     justify-content: center;
     width: 100%;
-    min-height: 44px;
-    font-size: 14px;
+    min-height: 48px;
+    font-size: 15px;
+    font-weight: 700;
   }
   .rn-drawer-public .rn-public-user {
     justify-content: center;
     padding: 4px 0;
-    font-size: 14px;
+    font-size: 15px;
   }
 
-  /* "Umum" links: a clean vertical list that matches the operational
-     nav items (not the cramped 2-col grid the old collapsed bar used). */
+  /* "Umum" links: clean vertical list matching the operational items */
   .rn-drawer-public .rn-public-links {
     display: flex !important;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     width: 100%;
     padding: 0;
     margin: 0;
@@ -266,13 +348,13 @@
   .rn-drawer-public .rn-public-links a {
     display: flex;
     align-items: center;
-    min-height: 44px;
-    padding: 8px 12px;
+    min-height: 46px;
+    padding: 10px 10px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: transparent;
     color: var(--text, #2d211b);
-    font-size: 14px;
+    font-size: 15.5px;
     font-weight: 600;
     text-align: left;
     white-space: normal;

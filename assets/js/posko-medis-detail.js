@@ -244,6 +244,19 @@ function renderActivePatients(cases, evacuations) {
   }).join("");
 }
 
+function wireKpiLinks() {
+  document.querySelectorAll(".kpi-card[data-go]").forEach(card => {
+    const go = () => {
+      const el = document.querySelector(card.dataset.go);
+      if (el) (el.closest(".panel") || el).scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    card.addEventListener("click", go);
+    card.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+  });
+}
+
 function renderUses(items) {
   const el =
     document.getElementById(
@@ -390,45 +403,23 @@ async function loadMedical() {
       `${safe(posko.verification_status)}`;
   }
 
-  const kpiPosko =
-    document.getElementById(
-      "kpiPosko"
-    );
-
-  const kpiStock =
-    document.getElementById(
-      "kpiStock"
-    );
-
-  const kpiCases =
-    document.getElementById(
-      "kpiCases"
-    );
-
-  const kpiUses =
-    document.getElementById(
-      "kpiUses"
-    );
-
-  if (kpiPosko) {
-    kpiPosko.textContent =
-      safe(posko.posko_type);
+  // KPI (owner 2026-10-18): angka yang berguna + bisa diklik ke bagiannya.
+  const setKpi = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const setHint = (id, v) => { const el = document.getElementById(id); if (el && v) el.textContent = v; };
+  if (ctx.cases) {
+    const active = ctx.cases.filter(c => !CASE_DONE.has(c.case_status));
+    setKpi("kpiActive", active.length);
+    setKpi("kpiRed", active.filter(c => c.triage_status === "red").length);
+    setHint("kpiActiveHint", ctx.cases.length + " kasus tercatat total");
+  } else {
+    setKpi("kpiActive", "-");
+    setKpi("kpiRed", "-");
+    setHint("kpiActiveHint", "khusus petugas posko");
+    setHint("kpiRedHint", "khusus petugas posko");
+    setHint("kpiUsesHint", "khusus petugas posko");
   }
-
-  if (kpiStock) {
-    kpiStock.textContent =
-      ctx.stocks.length;
-  }
-
-  if (kpiCases) {
-    kpiCases.textContent =
-      ctx.cases ? ctx.cases.length : "-";
-  }
-
-  if (kpiUses) {
-    kpiUses.textContent =
-      ctx.supply_uses ? ctx.supply_uses.length : "-";
-  }
+  setKpi("kpiStock", ctx.stocks.length);
+  setKpi("kpiUses", ctx.supply_uses ? ctx.supply_uses.length : "-");
 
   renderStock(ctx.stocks);
   renderActivePatients(ctx.cases, ctx.evacuations);
@@ -605,6 +596,7 @@ document.addEventListener(
 
     setupCaseForm();
     setupSupplyUseForm();
+    wireKpiLinks();
 
     const btn =
       document.getElementById(

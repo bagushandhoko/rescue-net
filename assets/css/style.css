@@ -291,6 +291,15 @@ a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3
   height: 22px;
 }
 
+/* `.kpi-card span { display:block }` below is more specific than `.kpi-icon`
+   and pushed the svg to the chip's top-left corner — keep the chip a centred grid. */
+.kpi-card .kpi-icon {
+  display: grid;
+  place-items: center;
+}
+.kpi-card .kpi-icon svg { display: block; }
+.rn-kpi-clickable:focus-visible { outline: 2px solid var(--coral); outline-offset: 3px; }
+
 .kpi-card:not(:has(.kpi-icon))::before {
   content: "";
   grid-column: 1;

@@ -6,11 +6,12 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Posko Medis Detail</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=kpiicon-20261018">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=rapat-20261018" />
 <style>
 .rn-md-active .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.rn-md-active .panel-header > .chip{flex:none;width:auto;align-self:flex-start;white-space:nowrap}
 .rn-md-table td{vertical-align:top}
 .rn-md-table .rn-md-code{font-weight:750;font-variant-numeric:tabular-nums}
 .rn-md-table .rn-md-meta{display:block;color:var(--muted);font-size:12px;margin-top:2px}
@@ -72,10 +73,10 @@
     </header>
 
     <section class="kpi-grid">
-      <div class="kpi-card danger"><span class="kpi-icon" data-icon="cross"></span><span>Posko</span><strong id="kpiPosko">-</strong><small>medical node</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="box"></span><span>Stock Items</span><strong id="kpiStock">0</strong><small>medical supplies</small></div>
-      <div class="kpi-card warning"><span class="kpi-icon" data-icon="clipboard-check"></span><span>Cases</span><strong id="kpiCases">0</strong><small>patient records</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="pill"></span><span>Supply Uses</span><strong id="kpiUses">0</strong><small>medicine usage</small></div>
+      <div class="kpi-card danger rn-kpi-clickable" data-go="#activePatientsPanel" role="button" tabindex="0"><span class="kpi-icon" data-icon="bed"></span><span>Pasien Aktif</span><strong id="kpiActive">-</strong><small id="kpiActiveHint">masih ditangani posko</small></div>
+      <div class="kpi-card danger rn-kpi-clickable" data-go="#activePatientsPanel" role="button" tabindex="0"><span class="kpi-icon" data-icon="alert-triangle"></span><span>Triase Merah</span><strong id="kpiRed">-</strong><small id="kpiRedHint">pasien gawat darurat</small></div>
+      <div class="kpi-card warning rn-kpi-clickable" data-go="#medicalStock" role="button" tabindex="0"><span class="kpi-icon" data-icon="package"></span><span>Stok Medis</span><strong id="kpiStock">-</strong><small>jenis obat &amp; alat</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#medicalUses" role="button" tabindex="0"><span class="kpi-icon" data-icon="pill"></span><span>Pemakaian Obat/Alat</span><strong id="kpiUses">-</strong><small id="kpiUsesHint">catatan pemakaian</small></div>
     </section>
 
     <section class="panel rn-md-active" id="activePatientsPanel">
@@ -227,7 +228,7 @@
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-contact.js?v=kontak-20261018"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/posko-medis-detail.js?v=pasienaktif-20261018"></script>
+<script src="../assets/js/posko-medis-detail.js?v=kpilink-20261018"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

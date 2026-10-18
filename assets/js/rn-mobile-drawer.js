@@ -11,11 +11,61 @@
     ).filter(el => el.offsetParent !== null);
   }
 
-  function init() {
-    if (document.body.classList.contains("home-page")) return;
+  const isHome = document.body.classList.contains("home-page");
+  const prefix = isHome ? "" : "../";
 
-    const sidebar = document.querySelector(".sidebar");
-    if (!sidebar) return;
+  // Fallback links for pages that carry neither the operational sidebar nor
+  // the public header (field pages opened from a QR / link: Scan, Kartu
+  // Keluarga, Lacak Logistik, ...). Mirrors rn-public-header.js's list.
+  function fallbackLinks() {
+    let ev = "event-sim-001";
+    try { ev = localStorage.getItem("rn_active_event") || ev; } catch (e) {}
+    ev = String(ev).replace(/^disaster_events:/, "");
+    const items = [
+      ["Home", "index.html"],
+      ["Bencana Aktif", "pages/bencana-aktif.html"],
+      ["Control Centre", "pages/war-room.html?event=" + encodeURIComponent(ev)],
+      ["Laporan Masyarakat", "pages/laporan-masyarakat.html"],
+      ["Kirim Bantuan", "pages/kirim-bantuan.html"],
+      ["Install App", "pages/install.html"],
+      ["About Us", "index.html#tentang"],
+      ["Login/registrasi", "pages/auth.html"]
+    ];
+    const nav = document.createElement("nav");
+    nav.className = "rn-public-links";
+    nav.setAttribute("aria-label", "Menu umum");
+    items.forEach(([label, href]) => {
+      const a = document.createElement("a");
+      a.href = prefix + href;
+      a.textContent = label;
+      nav.appendChild(a);
+    });
+    return nav;
+  }
+
+  // Pages without the operational .sidebar get a standalone overlay panel
+  // (hidden on desktop by CSS), so every page has the same mobile menu.
+  function makeStandalonePanel() {
+    const panel = document.createElement("aside");
+    panel.className = "sidebar rn-drawer-panel";
+    panel.setAttribute("aria-label", "Menu");
+    const brand = document.createElement("div");
+    brand.className = "brand";
+    const img = document.createElement("img");
+    img.className = "brand-logo";
+    img.alt = "Rescue-Net";
+    img.src = prefix + "assets/img/rn-logo-web.png";
+    brand.appendChild(img);
+    panel.appendChild(brand);
+    document.body.appendChild(panel);
+    document.body.classList.add("rn-drawer-standalone");
+    return panel;
+  }
+
+  function init() {
+    if (document.body.classList.contains("mockup-viewer")) return;
+
+    const sidebar = document.querySelector(".sidebar") || makeStandalonePanel();
 
     if (!sidebar.id) sidebar.id = "rn-mobile-drawer-sidebar";
 
@@ -37,10 +87,11 @@
 
     const title = document.createElement("div");
     title.className = "rn-drawer-title";
-    const sourceTitle =
+    const sourceTitle = isHome ? null :
       document.querySelector(".topbar .rn-page-mobile-title") ||
       document.querySelector(".topbar h2") ||
-      document.querySelector(".topbar h1");
+      document.querySelector(".topbar h1") ||
+      document.querySelector("main h1, h1");
     title.textContent = sourceTitle ? sourceTitle.textContent.trim() : "Rescue-Net";
 
     const logoSrc =
@@ -70,7 +121,11 @@
        public bar (CSS). Reversible so a resize back to desktop restores
        the original top bar untouched.
        --------------------------------------------------------------- */
-    const publicHeader = document.querySelector(".rn-public-header");
+    // Home keeps its own hand-built .welcome-nav; other pages use the
+    // .rn-public-header built by rn-public-header.js.
+    const publicHeader =
+      document.querySelector(".rn-public-header") ||
+      document.querySelector(".welcome-nav");
     let folded = false;
     let foldWrap = null;
     let movedLinks = null;
@@ -78,11 +133,13 @@
     let toggleAnchor = null;
 
     function foldPublicIntoDrawer() {
-      if (folded || !publicHeader) return;
+      if (folded) return;
 
-      const links = publicHeader.querySelector(".rn-public-links");
-      const actions = publicHeader.querySelector(".rn-public-actions");
-      toggleAnchor = publicHeader.querySelector(".rn-public-toggle");
+      const links = publicHeader
+        ? publicHeader.querySelector(".rn-public-links, .welcome-links")
+        : (movedLinks || fallbackLinks());
+      const actions = publicHeader && publicHeader.querySelector(".rn-public-actions");
+      toggleAnchor = publicHeader && publicHeader.querySelector(".rn-public-toggle, .welcome-menu-toggle");
 
       foldWrap = document.createElement("div");
       foldWrap.className = "rn-drawer-public";
@@ -121,7 +178,15 @@
     }
 
     function unfoldPublicFromDrawer() {
-      if (!folded || !publicHeader) return;
+      if (!folded) return;
+      if (!publicHeader) {
+        // Fallback links only live in the drawer; keep them for re-folding.
+        if (foldWrap && foldWrap.parentNode) foldWrap.parentNode.removeChild(foldWrap);
+        foldWrap = null;
+        document.body.classList.remove("rn-drawer-folded");
+        folded = false;
+        return;
+      }
 
       // Restore original order: links, then actions, then the toggle.
       if (movedLinks) {

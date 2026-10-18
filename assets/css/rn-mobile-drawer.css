@@ -364,3 +364,101 @@
     background: rgba(104, 64, 45, .06);
   }
 }
+
+/* =========================================================
+   Standalone overlay panel (rn-mobile-drawer.js makes it on pages
+   without the operational .sidebar: Home, public and field pages),
+   so every page shares the same mobile menu. Desktop: never shown.
+   ========================================================= */
+.sidebar.rn-drawer-panel {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  body .sidebar.rn-drawer-panel {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: calc(72px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(32px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)) !important;
+    background: var(--bg, #fff6ef) !important;
+    color: var(--text, #2d211b);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    z-index: 240 !important;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity .28s ease, transform .34s cubic-bezier(.22, 1, .36, 1), visibility .28s;
+  }
+  body.rn-drawer-open .sidebar.rn-drawer-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+  body .sidebar.rn-drawer-panel .brand {
+    display: none !important;
+  }
+  body .sidebar.rn-drawer-panel .rn-drawer-public {
+    border-bottom: 0;
+  }
+
+  /* Home's .welcome-links folded into the panel: same list as "Umum" */
+  .rn-drawer-public .welcome-links {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 2px !important;
+    width: 100% !important;
+    position: static !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .rn-drawer-public .welcome-links a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-height: 46px !important;
+    padding: 10px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: var(--text, #2d211b) !important;
+    font-size: 15.5px !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+  .rn-drawer-public .welcome-links .welcome-login-link,
+  .rn-drawer-public .welcome-links .rn-public-login {
+    justify-content: center !important;
+    margin-top: 8px !important;
+    background: var(--vx-brand, #e8755a) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+  }
+
+  /* Home: its own welcome bar + hamburger are replaced by the shared bar */
+  body.home-page.rn-drawer-folded .welcome-nav,
+  body.home-page .welcome-menu-toggle {
+    display: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body .sidebar.rn-drawer-panel {
+      transition: none !important;
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar.rn-drawer-panel {
+    display: none !important;
+  }
+}

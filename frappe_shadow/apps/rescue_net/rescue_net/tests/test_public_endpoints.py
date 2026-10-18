@@ -48,6 +48,7 @@ GUEST_ENDPOINTS = {
     "api_control_centre.logistik_open_needs", "api_control_centre.logistik_stock_cards",
     "api_control_centre.logistik_stock_sources", "api_control_centre.my_org_coordination",
     "api_control_centre.org_detail", "api_control_centre.org_posko_board",
+    "api_control_centre.posko_contact",  # reviewed: guest gets posko title only; numbers only when logged in
     "api_control_centre.posko_detail", "api_control_centre.posko_distribusi_board",
     "api_control_centre.posko_edit_scope", "api_control_centre.posko_functions",
     "api_control_centre.posko_registry_board", "api_control_centre.posko_verification_checklist",

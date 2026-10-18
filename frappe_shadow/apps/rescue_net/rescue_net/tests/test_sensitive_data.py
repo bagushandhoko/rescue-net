@@ -221,6 +221,21 @@ class TestPhoneNumbers(RNTestCase):
             data = api_call("rescue_net.api_control_centre.posko_detail", posko=self.w.posko_a.name)
         self.assertTrue(contains_value(data, PHONE))
 
+    def test_posko_contact_hides_number_from_guest(self):
+        with as_guest():
+            data = api_call("rescue_net.api_control_centre.posko_contact", posko=self.w.posko_a.name)
+        self.assertFalse(data["logged_in"])
+        self.assertFalse(contains_value(data, PHONE))
+
+    def test_posko_contact_shows_number_to_any_logged_in_user(self):
+        """Owner rule 2026-10-18: contact visible to every logged-in user, also another org's operator."""
+        other = make_actor(posko=self.w.posko_b)
+        with as_user(other.user):
+            data = api_call("rescue_net.api_control_centre.posko_contact", posko=self.w.posko_a.name)
+        self.assertTrue(data["logged_in"])
+        self.assertEqual(data["contact"]["phone"], PHONE)
+        self.assertEqual(data["contact"]["whatsapp"], PHONE)  # falls back to the phone
+
     def test_verification_checklist_hides_phone_from_guest(self):
         """BUG-2: posko_verification_checklist (allow_guest) returns the PIC's
         phone AND email as checklist values to anyone."""

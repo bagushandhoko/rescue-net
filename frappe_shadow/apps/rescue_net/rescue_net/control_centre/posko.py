@@ -45,6 +45,38 @@ def event_poskos(disaster_event):
 
 
 @frappe.whitelist(allow_guest=True)
+@rate_limit(limit=60, seconds=60)
+def posko_contact(posko):
+    """Contact bar at the top of every posko page (owner rule 2026-10-18):
+    any logged-in user sees the posko's phone / WhatsApp; a guest gets the
+    name only and `logged_in: False` — never a number, not even masked."""
+    name = _resolve_posko(posko)
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+    title = frappe.db.get_value("RN Posko", name, "title")
+    if frappe.session.user == "Guest":
+        return {"posko": name, "title": title, "logged_in": False}
+    p = frappe.db.get_value(
+        "RN Posko", name,
+        ["officer_in_charge_name", "officer_in_charge_role", "officer_in_charge_phone",
+         "officer_in_charge_whatsapp", "emergency_contact"],
+        as_dict=True,
+    ) or {}
+    return {
+        "posko": name,
+        "title": title,
+        "logged_in": True,
+        "contact": {
+            "name": p.get("officer_in_charge_name"),
+            "role": p.get("officer_in_charge_role"),
+            "phone": p.get("officer_in_charge_phone"),
+            "whatsapp": p.get("officer_in_charge_whatsapp") or p.get("officer_in_charge_phone"),
+            "emergency": p.get("emergency_contact"),
+        },
+    }
+
+
+@frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def posko_detail(posko, disaster_event=None):
     """Posko view for the Control Centre drill-down.

@@ -155,6 +155,95 @@ function renderCases(items) {
         );
 }
 
+// ---- Pasien aktif & kondisi terakhir (owner 2026-10-18) ----
+// Data = api_medical.dashboard (operator / pengelola posko saja). "Kondisi
+// terakhir" = status kasus + triase/tingkat + catatan penanganan terakhir +
+// evakuasi terbaru, dengan waktu pembaruan terakhir.
+const CASE_DONE = new Set(["discharged", "deceased", "closed"]);
+const TRIAGE_RANK = { red: 0, yellow: 1, green: 2, black: 3 };
+const TRIAGE_LABEL = { red: "Merah · gawat", yellow: "Kuning · sedang", green: "Hijau · ringan", black: "Hitam" };
+const CASE_LABEL = {
+  active: "Ditangani", stabilized: "Stabil", referred: "Dirujuk",
+  evacuating: "Sedang dievakuasi", admitted: "Dirawat di faskes"
+};
+const SEVERITY_LABEL = { mild: "ringan", minor: "ringan", moderate: "sedang", severe: "berat", critical: "kritis" };
+const AGE_LABEL = { infant: "bayi", child: "anak", adolescent: "remaja", adult: "dewasa", elderly: "lansia" };
+const GENDER_LABEL = { male: "L", female: "P", other: "lainnya" };
+const EVAC_LABEL = {
+  requested: "diminta", assigned: "armada ditugaskan", en_route_pickup: "menuju penjemputan",
+  patient_on_board: "pasien di kendaraan", arrived_hospital: "tiba di faskes",
+  handover_complete: "sudah diserahterimakan", cancelled: "batal"
+};
+
+function escHtml(v) {
+  return String(v == null ? "" : v).replace(/[&<>"']/g, ch =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+}
+
+function fmtWhen(v) {
+  if (!v) return "-";
+  const d = new Date(String(v).replace(" ", "T"));
+  if (isNaN(d)) return escHtml(v);
+  return d.toLocaleString("id-ID", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+function renderActivePatients(cases, evacuations) {
+  const body = document.getElementById("activePatientsBody");
+  const count = document.getElementById("activePatientsCount");
+  if (!body) return;
+
+  if (cases === null) {
+    if (count) count.textContent = "terkunci";
+    body.innerHTML = '<tr><td colspan="6">Daftar pasien hanya untuk petugas / pengelola posko medis ini yang sudah login.</td></tr>';
+    return;
+  }
+
+  const latestEvac = {};
+  (evacuations || []).forEach(e => {
+    const k = e.medical_case;
+    if (!k) return;
+    const t = e.handover_at || e.arrived_at || e.departed_at || e.requested_at || "";
+    if (!latestEvac[k] || t > latestEvac[k]._t) latestEvac[k] = Object.assign({ _t: t }, e);
+  });
+
+  const rows = (cases || [])
+    .filter(c => !CASE_DONE.has(c.case_status))
+    .sort((a, b) =>
+      (TRIAGE_RANK[a.triage_status] ?? 9) - (TRIAGE_RANK[b.triage_status] ?? 9) ||
+      String(b.source_updated_at || b.observed_at || "").localeCompare(String(a.source_updated_at || a.observed_at || ""))
+    );
+
+  if (count) count.textContent = rows.length + " pasien";
+
+  if (!rows.length) {
+    body.innerHTML = '<tr><td colspan="6">Tidak ada pasien aktif saat ini.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = rows.map(c => {
+    const meta = [AGE_LABEL[c.age_group], GENDER_LABEL[c.gender]].filter(Boolean).join(" · ");
+    const tri = c.triage_status || "";
+    const ev = latestEvac[c.name];
+    const evText = ev
+      ? escHtml(EVAC_LABEL[ev.evacuation_status] || ev.evacuation_status || "-") +
+        (ev.destination_facility ? '<span class="rn-md-meta">ke ' + escHtml(ev.destination_facility) + "</span>" : "")
+      : "-";
+    const note = c.treatment_notes || "";
+    const sev = SEVERITY_LABEL[c.severity] || c.severity;
+    return "<tr>" +
+      '<td><span class="rn-md-code">' + escHtml(c.patient_code || c.name) + "</span>" +
+        (meta ? '<span class="rn-md-meta">' + escHtml(meta) + "</span>" : "") +
+        (c.complaint ? '<span class="rn-md-meta">' + escHtml(c.complaint) + "</span>" : "") + "</td>" +
+      '<td><span class="chip rn-tri-' + escHtml(tri) + '">' + escHtml(TRIAGE_LABEL[tri] || tri || "-") + "</span>" +
+        (sev ? '<span class="rn-md-meta">tingkat ' + escHtml(sev) + "</span>" : "") + "</td>" +
+      "<td>" + escHtml(CASE_LABEL[c.case_status] || c.case_status || "-") + "</td>" +
+      '<td class="rn-md-note">' + (note ? escHtml(note) : '<span class="rn-md-meta">belum ada catatan penanganan</span>') + "</td>" +
+      "<td>" + evText + "</td>" +
+      '<td class="rn-md-when">' + fmtWhen(c.source_updated_at || c.observed_at) + "</td>" +
+      "</tr>";
+  }).join("");
+}
+
 function renderUses(items) {
   const el =
     document.getElementById(
@@ -333,15 +422,16 @@ async function loadMedical() {
 
   if (kpiCases) {
     kpiCases.textContent =
-      ctx.cases.length;
+      ctx.cases ? ctx.cases.length : "-";
   }
 
   if (kpiUses) {
     kpiUses.textContent =
-      ctx.supply_uses.length;
+      ctx.supply_uses ? ctx.supply_uses.length : "-";
   }
 
   renderStock(ctx.stocks);
+  renderActivePatients(ctx.cases, ctx.evacuations);
   renderCases(ctx.cases);
   renderUses(ctx.supply_uses);
   renderMovements();
@@ -368,7 +458,7 @@ async function loadMedical() {
     useForm &&
     useForm.medical_case_id &&
     !useForm.medical_case_id.value &&
-    ctx.cases.length
+    ctx.cases && ctx.cases.length
   ) {
     useForm.medical_case_id.value =
       rowId(ctx.cases[0]);

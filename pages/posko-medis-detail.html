@@ -9,6 +9,18 @@
   <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=rapat-20261018" />
+<style>
+.rn-md-active .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.rn-md-table td{vertical-align:top}
+.rn-md-table .rn-md-code{font-weight:750;font-variant-numeric:tabular-nums}
+.rn-md-table .rn-md-meta{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.rn-md-table .rn-md-note{min-width:220px;max-width:420px;white-space:pre-line}
+.rn-md-table .rn-md-when{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted)}
+.chip.rn-tri-red{color:#a92f2f;border-color:rgba(216,69,69,.35);background:rgba(255,235,232,.95)}
+.chip.rn-tri-yellow{color:#8a6500;border-color:rgba(184,137,24,.35);background:rgba(255,246,214,.95)}
+.chip.rn-tri-green{color:#1f7a50;border-color:rgba(47,155,104,.35);background:rgba(226,246,236,.95)}
+.chip.rn-tri-black{color:#fff;border-color:#2d211b;background:#2d211b}
+</style>
 </head>
 <body>
 <div class="app-shell">
@@ -64,6 +76,24 @@
       <div class="kpi-card"><span class="kpi-icon" data-icon="box"></span><span>Stock Items</span><strong id="kpiStock">0</strong><small>medical supplies</small></div>
       <div class="kpi-card warning"><span class="kpi-icon" data-icon="clipboard-check"></span><span>Cases</span><strong id="kpiCases">0</strong><small>patient records</small></div>
       <div class="kpi-card"><span class="kpi-icon" data-icon="pill"></span><span>Supply Uses</span><strong id="kpiUses">0</strong><small>medicine usage</small></div>
+    </section>
+
+    <section class="panel rn-md-active" id="activePatientsPanel">
+      <div class="panel-header">
+        <div>
+          <h3>Pasien Aktif &amp; Kondisi Terakhir</h3>
+          <p id="activePatientsHint">Pasien yang masih ditangani posko (belum pulang, meninggal, atau ditutup). Urut dari triase paling gawat.</p>
+        </div>
+        <span class="chip" id="activePatientsCount">-</span>
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table rn-md-table">
+          <thead>
+            <tr><th>Pasien</th><th>Triase</th><th>Status</th><th>Kondisi terakhir</th><th>Evakuasi</th><th>Diperbarui</th></tr>
+          </thead>
+          <tbody id="activePatientsBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+        </table>
+      </div>
     </section>
 
     <section class="content-grid">
@@ -197,7 +227,7 @@
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-contact.js?v=kontak-20261018"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/posko-medis-detail.js?v=jiwa-20260925"></script>
+<script src="../assets/js/posko-medis-detail.js?v=pasienaktif-20261018"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

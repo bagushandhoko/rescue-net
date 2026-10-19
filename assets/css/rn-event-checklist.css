@@ -67,3 +67,8 @@
 .rn-evc-field { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px 14px; margin: 14px 0 0; min-width: 0; }
 .rn-evc-field legend { font-weight: 700; padding: 0 6px; }
 .rn-evc-field legend small { font-weight: 400; color: var(--muted); }
+/* Kirim stok drawer (posko logistik) */
+.rn-dispatch-window { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#dispatchForm .rn-evc { gap: 6px; }
+#dispatchForm .rn-evc-grid { grid-template-columns: 1fr; max-height: 320px; }
+#dispatchForm .rn-evc-title small { font-weight: 400; }

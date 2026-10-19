@@ -46,6 +46,20 @@
    "reqd": 1
   },
   {
+   "fieldname": "served_events",
+   "label": "Disaster Events Served",
+   "fieldtype": "Table",
+   "options": "RN Transport Space Event",
+   "description": "Disasters this armada serves (owner 2026-10-19); disaster_event is always one of them."
+  },
+  {
+   "fieldname": "served_poskos",
+   "label": "Posko Logistik Served",
+   "fieldtype": "Table",
+   "options": "RN Transport Space Posko",
+   "description": "Posko logistik whose cargo this armada carries; empty = every posko logistik of the served disasters."
+  },
+  {
    "fieldname": "provider_name",
    "label": "Provider",
    "fieldtype": "Data",

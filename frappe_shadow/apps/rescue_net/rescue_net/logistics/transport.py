@@ -48,6 +48,8 @@ def create_transport_space(
     eta_at=None,
     service_mode=None,
     booking_policy=None,
+    served_events=None,
+    served_poskos=None,
 ):
     """Register an armada distribusi (kendaraan darat / kapal / pesawat) a
     posko puts on offer. Besides capacity + jadwal (berangkat / ETA) the
@@ -115,6 +117,7 @@ def create_transport_space(
         except Exception:
             doc.disaster_event_legacy_id = disaster_event
 
+    _apply_served(doc, served_events, served_poskos)
     doc.transport_status = "available"
     doc.insert(ignore_permissions=True)
 
@@ -143,6 +146,8 @@ def update_transport_space(
     handover_contact_person=None,
     handover_contact_phone=None,
     coordination_notes=None,
+    served_events=None,
+    served_poskos=None,
 ):
     """Let the coordinating posko keep an armada record current as the trip
     progresses (status, keberadaan, jam berangkat/ETA, titik & narahubung
@@ -189,6 +194,7 @@ def update_transport_space(
         if value is not None:
             doc.set(field, value)
 
+    _apply_served(doc, served_events, served_poskos)
     doc.observed_at = now_datetime()
     doc.save(ignore_permissions=True)
 
@@ -196,6 +202,42 @@ def update_transport_space(
         "transport": doc.name,
         "transport_status": doc.transport_status,
     }
+
+
+def _ids(value):
+    import json
+    if value is None:
+        return None
+    if isinstance(value, str):
+        value = value.strip()
+        try:
+            value = json.loads(value) if value.startswith("[") else value.split(",")
+        except ValueError:
+            value = value.split(",")
+    return [str(v).strip() for v in value or [] if str(v or "").strip()]
+
+
+def _apply_served(doc, served_events=None, served_poskos=None):
+    """Disasters the armada serves (at least one) and the posko logistik whose
+    cargo it carries (empty = all of them) — owner 2026-10-19. None = keep."""
+    evs = _ids(served_events)
+    if evs is not None:
+        from rescue_net.api_community_cluster import _parse_events
+        evs = _parse_events(evs)
+        if not evs:
+            frappe.throw("Pilih minimal satu bencana yang dilayani armada.")
+        doc.set("served_events", [{"disaster_event": e} for e in evs])
+        if doc.disaster_event not in evs:
+            doc.disaster_event = evs[0]
+    pks = _ids(served_poskos)
+    if pks is not None:
+        rows = []
+        for p in pks:
+            name = resolve_posko(p)
+            if not name or not frappe.db.exists("RN Posko", name):
+                frappe.throw("Posko logistik tidak ditemukan: %s" % p)
+            rows.append({"posko": name})
+        doc.set("served_poskos", rows)
 
 
 def _recompute_transport_committed(space_name):
@@ -329,7 +371,8 @@ def confirm_transport_booking(booking, pin=None):
 
     space = frappe.get_doc("RN Transport Space", doc.transport_space)
     policy = space.booking_policy or "pin_verify"
-    if policy == "pin_verify":
+    # shipment bookings from a posko carry no PIN (both sides logged in)
+    if policy == "pin_verify" and doc.verification_pin:
         if not pin or str(pin).strip().upper() != (doc.verification_pin or ""):
             frappe.throw("PIN verifikasi salah.")
 
@@ -339,6 +382,10 @@ def confirm_transport_booking(booking, pin=None):
     doc.confirmed_at = now_datetime()
     doc.save(ignore_permissions=True)
     _recompute_transport_committed(space.name)
+    if doc.get("distribution_flow"):
+        # the shipment now rides this armada (owner 2026-10-19)
+        from rescue_net.logistics.flows import _assign_flow_to_space
+        _assign_flow_to_space(doc.distribution_flow, space)
     return {"booking": doc.name, "status": doc.status}
 
 

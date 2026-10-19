@@ -977,6 +977,30 @@ def disaster_options(date_from=None, date_to=None):
 
 
 @frappe.whitelist()
+def logistik_poskos_for_events(disaster_events):
+    """Posko logistik (type logistics / collection hub, or logistics function)
+    that serve any of these disasters — the "posko logistik yang dilayani"
+    checklist on an armada (owner 2026-10-19)."""
+    from rescue_net.control_centre.common import serving_posko_names
+
+    names = set()
+    for ev in _parse_events(disaster_events):
+        names.update(serving_posko_names(ev))
+    if not names:
+        return []
+    rows = frappe.get_all("RN Posko", filters={"name": ["in", list(names)]},
+                          fields=["name", "title", "posko_type", "city_name", "rn_fn_logistics", "organization"],
+                          order_by="title asc", limit_page_length=500)
+    out = []
+    for r in rows:
+        if str(r.posko_type or "").lower() in ("logistics", "collection_hub") or r.get("rn_fn_logistics"):
+            out.append({"id": r.name, "title": (r.title or r.name).replace("[SIMULASI] ", ""),
+                        "city": r.city_name or "",
+                        "organization": frappe.db.get_value("RN Organization", r.organization, "title") if r.organization else ""})
+    return out
+
+
+@frappe.whitelist()
 def my_poskos_served_events():
     """Poskos the logged-in user manages, each with the disasters it handles
     (Setting > Bencana yang Ditangani)."""

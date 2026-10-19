@@ -185,5 +185,58 @@
     return api;
   }
 
-  window.RNEventChecklist = { mount: mount, load: load };
+  /* Posko logistik yang dilayani sebuah armada: kartu centang dari posko
+   * logistik di bencana terpilih. Kosong = semua posko logistik. */
+  function mountPoskos(root, opts) {
+    opts = opts || {};
+    var uid = "rnevp" + (++SEQ);
+    var st = { list: [], selected: (opts.selected || []).filter(Boolean).map(String), q: "" };
+    root.classList.add("rn-evc");
+    root.innerHTML =
+      '<div class="rn-evc-tools"><input type="search" class="rn-evc-search" placeholder="Cari posko logistik…" aria-label="Cari posko logistik"></div>' +
+      '<div class="rn-evc-summary" aria-live="polite"></div>' +
+      '<div class="rn-evc-grid"><div class="rn-evc-empty">Pilih bencana dulu.</div></div>';
+    var grid = root.querySelector(".rn-evc-grid"), summary = root.querySelector(".rn-evc-summary");
+    function render() {
+      var q = st.q.toLowerCase();
+      var rows = st.list.filter(function (p) { return !q || (p.title + " " + p.city + " " + p.organization).toLowerCase().indexOf(q) !== -1; });
+      grid.innerHTML = rows.length ? rows.map(function (p) {
+        var on = st.selected.indexOf(p.id) !== -1;
+        return '<label class="rn-evc-card' + (on ? " is-on" : "") + '">' +
+          '<input type="checkbox" name="' + uid + '" value="' + esc(p.id) + '"' + (on ? " checked" : "") + ">" +
+          '<span class="rn-evc-title">' + esc(p.title) + "</span>" +
+          '<span class="rn-evc-meta">' + esc(p.city || "-") + "</span>" +
+          '<span class="rn-evc-loc">' + esc(p.organization || "") + "</span></label>";
+      }).join("") : '<div class="rn-evc-empty">' + (st.list.length ? "Tidak ada yang cocok." : "Belum ada posko logistik di bencana terpilih.") + "</div>";
+      summary.innerHTML = st.selected.length
+        ? "<span><b>" + st.selected.length + '</b> posko logistik dipilih</span><button type="button" data-act="none">Layani semua posko logistik</button>'
+        : "<span><b>Semua</b> posko logistik di bencana terpilih dilayani (tidak ada yang dicentang)</span>";
+    }
+    grid.addEventListener("change", function (ev) {
+      var inp = ev.target; if (!inp || inp.name !== uid) return;
+      if (inp.checked) { if (st.selected.indexOf(inp.value) === -1) st.selected.push(inp.value); }
+      else st.selected = st.selected.filter(function (s) { return s !== inp.value; });
+      render();
+    });
+    summary.addEventListener("click", function (ev) {
+      if (ev.target && ev.target.getAttribute("data-act") === "none") { st.selected = []; render(); }
+    });
+    root.querySelector(".rn-evc-search").addEventListener("input", function (ev) { st.q = ev.target.value.trim(); render(); });
+    var api = {
+      getSelected: function () { return st.selected.slice(); },
+      setEvents: function (events) {
+        if (!events || !events.length) { st.list = []; render(); return Promise.resolve(); }
+        grid.innerHTML = '<div class="rn-evc-empty">Memuat posko logistik…</div>';
+        return window.RN_FRAPPE.call("rescue_net.api_community_cluster.logistik_poskos_for_events",
+          { disaster_events: JSON.stringify(events) })
+          .then(function (r) { st.list = Array.isArray(r) ? r : []; render(); })
+          .catch(function (e) { grid.innerHTML = '<div class="rn-evc-empty">Gagal memuat: ' + esc((e && e.message) || e) + "</div>"; });
+      },
+    };
+    render();
+    if (opts.events) api.setEvents(opts.events);
+    return api;
+  }
+
+  window.RNEventChecklist = { mount: mount, load: load, mountPoskos: mountPoskos };
 })();

@@ -70,9 +70,32 @@ class RNTransportSpace(Document):
             self.verification_status = "self_reported"
 
     def validate(self):
+        self._sync_served()
         if (
             not self.legacy_id
             and self.transport_status
             and self.transport_status not in VALID_STATUS
         ):
             frappe.throw("Status transport tidak valid")
+
+    def _sync_served(self):
+        """served_events = every disaster this armada serves (disaster_event
+        always included); served_poskos de-duplicated (owner 2026-10-19)."""
+        if not self.meta.has_field("served_events"):    # before migrate
+            return
+        seen, rows = set(), []
+        for row in self.get("served_events") or []:
+            if row.disaster_event and row.disaster_event not in seen:
+                seen.add(row.disaster_event)
+                rows.append(row)
+        self.set("served_events", rows)
+        if not self.disaster_event and rows:
+            self.disaster_event = rows[0].disaster_event
+        if self.disaster_event and self.disaster_event not in seen:
+            self.append("served_events", {"disaster_event": self.disaster_event})
+        seen, rows = set(), []
+        for row in self.get("served_poskos") or []:
+            if row.posko and row.posko not in seen:
+                seen.add(row.posko)
+                rows.append(row)
+        self.set("served_poskos", rows)

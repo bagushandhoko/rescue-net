@@ -53,6 +53,30 @@ def serving_posko_names(event):
     return sorted(names)
 
 
+def serving_transport_names(event, source_posko=None):
+    """Armada (RN Transport Space) that serve this disaster: disaster_event or
+    a served_events row. With `source_posko`, armada limited to other posko
+    logistik (served_poskos set, without this one) are left out."""
+    event = canonical_event(event)
+    if not event:
+        return []
+    names = set(frappe.get_all(
+        "RN Transport Space", or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
+        pluck="name", limit_page_length=0))
+    if frappe.db.table_exists("RN Transport Space Event"):
+        names.update(frappe.get_all(
+            "RN Transport Space Event", filters={"parenttype": "RN Transport Space", "disaster_event": event},
+            pluck="parent", limit_page_length=0))
+    if source_posko and names and frappe.db.table_exists("RN Transport Space Posko"):
+        limited = {}
+        for r in frappe.get_all("RN Transport Space Posko",
+                                filters={"parenttype": "RN Transport Space", "parent": ["in", list(names)]},
+                                fields=["parent", "posko"], limit_page_length=0):
+            limited.setdefault(r.parent, set()).add(r.posko)
+        names = {n for n in names if n not in limited or source_posko in limited[n]}
+    return sorted(names)
+
+
 def posko_served_events(posko):
     """Disasters a posko handles, main disaster_event first."""
     main = frappe.db.get_value("RN Posko", posko, "disaster_event")

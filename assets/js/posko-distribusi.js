@@ -471,6 +471,8 @@
       "</div>" +
       '<label>Muatan sendiri (deskripsi)<input name="own_cargo_desc" value="' + esc(clean(a.muatan_sendiri_desc)) + '"></label>' +
       '<label>Catatan koordinasi<textarea name="coordination_notes" rows="2">' + esc(clean(a.coordination_notes)) + "</textarea></label>" +
+      '<fieldset class="rn-evc-field"><legend>Bencana yang dilayani armada *</legend><div id="pdEditEventPicker"></div></fieldset>' +
+      '<fieldset class="rn-evc-field"><legend>Posko logistik yang dilayani <small>— kosong = semua</small></legend><div id="pdEditPoskoPicker"></div></fieldset>' +
       '<div class="form-actions"><button class="btn primary" type="submit">Simpan Perubahan</button>' +
       '<span class="rn-pd-bk-msg" data-armada-edit-msg></span></div>' +
       "</form></details>"
@@ -481,6 +483,9 @@
     var form = $("#pdArmadaEditForm");
     if (!form) return;
     var msg = form.querySelector("[data-armada-edit-msg]");
+    var a = ((CACHE && CACHE.armada) || []).filter(function (x) { return x.id === id; })[0] || {};
+    var served = mountServedPickers($("#pdEditEventPicker"), $("#pdEditPoskoPicker"),
+      (a.served_events && a.served_events.length) ? a.served_events : [getEvent()], a.served_poskos || []);
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       var v = function (n) { return form[n] ? String(form[n].value).trim() : ""; };
@@ -498,6 +503,12 @@
         handover_contact_phone: v("handover_contact_phone"),
         coordination_notes: v("coordination_notes"),
       };
+      if (served) {
+        var evs = served.ev.getSelected();
+        if (!evs.length) { if (msg) msg.textContent = " pilih minimal satu bencana"; return; }
+        payload.served_events = JSON.stringify(evs);
+        payload.served_poskos = JSON.stringify(served.pk.getSelected());
+      }
       var d1 = v("departure_at"), e1 = v("eta_at");
       if (d1) payload.departure_at = d1.replace("T", " ");
       if (e1) payload.eta_at = e1.replace("T", " ");
@@ -528,19 +539,23 @@
       if (b.status === "requested" && canManage) {
         act =
           '<div class="rn-pd-bk-act" data-booking="' + esc(b.id) + '">' +
-          '<input class="rn-pd-pin" placeholder="PIN" maxlength="8">' +
+          (b.needs_pin ? '<input class="rn-pd-pin" placeholder="PIN" maxlength="8">' : "") +
           '<button type="button" class="btn primary mini" data-do="confirm">Konfirmasi</button>' +
           '<button type="button" class="btn mini" data-do="reject">Tolak</button>' +
           '<span class="rn-pd-bk-msg"></span></div>';
       }
       return (
-        "<tr><td><b>" + esc(b.cargo) + "</b><small class=\"rn-muted\">" + esc(b.armada) + "</small></td>" +
+        "<tr><td><b>" + esc(b.cargo) + "</b><small class=\"rn-muted\">" + esc(b.armada) + "</small>" +
+          (b.is_shipment ? '<small class="rn-muted">Kiriman posko: ' + esc(b.pickup || "-") + " → " + esc(b.dropoff || "-") +
+            (b.event_title ? " · " + esc(b.event_title) : "") + "</small>" : "") +
+          (b.note ? '<small class="rn-muted">' + esc(b.note) + "</small>" : "") + "</td>" +
         "<td>" + fmt(b.qty_kg) + " kg" + (b.qty_m3 ? " · " + fmt(b.qty_m3) + " m³" : "") + "</td>" +
         "<td>" + esc(b.delivery_label) + "</td>" +
         "<td>" + esc(b.booker) + (b.is_guest ? ' <span class="chip">tamu</span>' : "") +
           (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
           "<small class=\"rn-muted\">" + tel(b.supplier_contact_phone) + "</small></td>" +
-        "<td>" + esc(b.requested_window || b.requested_at || "-") + "</td>" +
+        "<td>" + esc((b.window_from || b.window_to) ? (b.window_from || "…") + " s/d " + (b.window_to || "…")
+          : (b.requested_window || b.requested_at || "-")) + "</td>" +
         '<td><span class="chip ' + statusChip(b.status) + '">' + esc(b.status_label) + "</span></td>" +
         "<td>" + act + "</td></tr>"
       );
@@ -557,7 +572,7 @@
           try {
             if (doWhat === "confirm") {
               await window.RN_FRAPPE.call("rescue_net.api_logistics.confirm_transport_booking",
-                { booking: id, pin: pin.value.trim() }, { method: "POST" });
+                { booking: id, pin: pin ? pin.value.trim() : "" }, { method: "POST" });
             } else {
               await window.RN_FRAPPE.call("rescue_net.api_logistics.reject_transport_booking",
                 { booking: id }, { method: "POST" });
@@ -586,19 +601,37 @@
   }
 
   /* ---------- forms ---------- */
+  // owner 2026-10-19: every armada lists the disasters it serves and (optional)
+  // the posko logistik whose cargo it carries
+  function mountServedPickers(evEl, pkEl, events, poskos) {
+    if (!evEl || !pkEl || !window.RNEventChecklist) return null;
+    var pk = window.RNEventChecklist.mountPoskos(pkEl, { selected: poskos || [] });
+    var ev = window.RNEventChecklist.mount(evEl, {
+      selected: events, multiple: true,
+      onChange: function (sel) { pk.setEvents(ev ? ev.getSelected() : sel); },
+    });
+    ev.ready.then(function () { pk.setEvents(ev.getSelected()); });
+    return { ev: ev, pk: pk };
+  }
+
   function wireArmadaForm() {
     var form = $("[data-create-armada]"), msg = $("[data-armada-message]");
     if (!form) return;
+    var served = mountServedPickers($("#armadaEventPicker"), $("#armadaPoskoPicker"), [getEvent()], []);
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       var f = function (n) { return form[n] && form[n].value ? String(form[n].value).trim() : ""; };
       var posko = getPosko();
       if (!posko) { if (msg) msg.textContent = "Pilih posko distribusi dulu."; return; }
+      var events = served ? served.ev.getSelected() : [getEvent()];
+      if (!events.length) { if (msg) msg.textContent = "Pilih minimal satu bencana yang dilayani armada."; return; }
       if (msg) msg.textContent = "Menyimpan…";
       try {
         await window.RN_FRAPPE.call("rescue_net.api_logistics.create_transport_space", {
           coordination_posko: posko,
-          disaster_event: f("disaster_event") || getEvent(),
+          disaster_event: events[0],
+          served_events: JSON.stringify(events),
+          served_poskos: JSON.stringify(served ? served.pk.getSelected() : []),
           provider_name: f("provider_name"),
           transport_type: f("transport_type"),
           service_mode: f("service_mode"),
@@ -620,6 +653,7 @@
         }, { method: "POST" });
         if (msg) msg.textContent = "Armada tersimpan.";
         form.reset();
+        if (served) served.ev.setSelected([getEvent()]);
         await load();
       } catch (err) {
         var m = (err && err.message) || String(err);

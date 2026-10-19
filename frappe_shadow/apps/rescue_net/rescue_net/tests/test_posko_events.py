@@ -59,8 +59,9 @@ class TestPoskoServedEvents(RNTestCase):
         from rescue_net.api_control_centre import event_poskos, logistik_dispatch_options
         transport = make_posko(self.w.event, self.w.org_a, posko_type="transport")
         space = make_transport_space(transport)
-        for p in (self.w.posko_a, transport):
-            doc = frappe.get_doc("RN Posko", p.name)
+        for dt, name in (("RN Posko", self.w.posko_a.name), ("RN Posko", transport.name),
+                         ("RN Transport Space", space.name)):    # armada lists its own disasters
+            doc = frappe.get_doc(dt, name)
             doc.append("served_events", {"disaster_event": self.e2.name})
             doc.save(ignore_permissions=True)
         with as_guest():

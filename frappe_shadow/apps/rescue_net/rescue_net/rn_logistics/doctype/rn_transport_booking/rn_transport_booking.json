@@ -74,6 +74,23 @@
       "description": "Preferensi waktu jemput/berangkat dari pemesan."
     },
     {
+      "fieldname": "window_from",
+      "label": "Kirim Dari",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "window_to",
+      "label": "Kirim Sampai",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "distribution_flow",
+      "label": "Distribution Flow",
+      "fieldtype": "Link",
+      "options": "RN Distribution Flow",
+      "description": "Set when a posko logistik books this armada for a shipment; on confirm the flow is assigned to the armada."
+    },
+    {
       "fieldname": "qty_weight_kg",
       "label": "Berat (kg)",
       "fieldtype": "Float"

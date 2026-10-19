@@ -198,9 +198,12 @@ def pack(offset=0, limit=0):
                             limit_page_length=MAX_POSKO) if mine else []
     drills = drill_event_names()
     events = []
+    from rescue_net.control_centre.common import posko_served_events
+
     for p in poskos:
-        if p.disaster_event and p.disaster_event not in events and p.disaster_event not in drills:
-            events.append(p.disaster_event)
+        for ev in posko_served_events(p.name):        # every disaster the posko serves
+            if ev and ev not in events and ev not in drills:
+                events.append(ev)
 
     plan = [(method, {}) for method, _ in PACK_GLOBAL]
     for e in events:

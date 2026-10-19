@@ -8,3 +8,4 @@ rescue_net.patches.v2026_10.backfill_ai_usage_daily
 rescue_net.patches.v2026_10.backfill_trace_tokens
 rescue_net.patches.v2026_10.map_admin_areas_by_code
 rescue_net.patches.v2026_10.map_admin_areas_partial
+rescue_net.patches.v2026_10.backfill_posko_served_events

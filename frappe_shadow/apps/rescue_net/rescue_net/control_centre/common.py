@@ -36,6 +36,36 @@ def canonical_event(value):
     return resolve_disaster_event(value) or value
 
 
+def serving_posko_names(event):
+    """Every posko that handles this disaster: its main disaster_event (or
+    legacy id) OR a row in served_events (owner 2026-10-19: a posko logistik /
+    distribusi can serve several disasters at once)."""
+    event = canonical_event(event)
+    if not event:
+        return []
+    names = set(frappe.get_all(
+        "RN Posko", or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
+        pluck="name", limit_page_length=0))
+    if frappe.db.table_exists("RN Posko Served Event"):
+        names.update(frappe.get_all(
+            "RN Posko Served Event", filters={"parenttype": "RN Posko", "disaster_event": event},
+            pluck="parent", limit_page_length=0))
+    return sorted(names)
+
+
+def posko_served_events(posko):
+    """Disasters a posko handles, main disaster_event first."""
+    main = frappe.db.get_value("RN Posko", posko, "disaster_event")
+    out = [main] if main else []
+    if frappe.db.table_exists("RN Posko Served Event"):
+        for ev in frappe.get_all("RN Posko Served Event",
+                                 filters={"parenttype": "RN Posko", "parent": posko},
+                                 pluck="disaster_event", order_by="idx asc"):
+            if ev and ev not in out:
+                out.append(ev)
+    return out
+
+
 def first(row, *names):
     for name in names:
         value = row.get(name)

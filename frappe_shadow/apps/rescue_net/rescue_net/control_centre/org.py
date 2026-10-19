@@ -19,6 +19,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     _resolve_posko,
     _sf,
     canonical_event,
+    serving_posko_names,
 )
 
 
@@ -292,7 +293,7 @@ def posko_verification_checklist(posko):
 def posko_registry_board(disaster_event=None, limit=200):
     """KPI totals + Daftar Posko table for the mock-up, guest read-only."""
     event = canonical_event(disaster_event) if disaster_event else None
-    filters = {"disaster_event": event} if event else {}
+    filters = {"name": ["in", serving_posko_names(event) or [""]]} if event else {}
 
     rows = frappe.get_all(
         "RN Posko", filters=filters,

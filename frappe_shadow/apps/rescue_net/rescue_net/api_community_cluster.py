@@ -778,7 +778,7 @@ def create_posko(
     officer_in_charge_name=None, officer_in_charge_role=None,
     officer_in_charge_phone=None, officer_in_charge_email=None,
     emergency_contact=None, facilities=None, rn_beneficiary_count=None,
-    public_detail=None, functions=None, logistics_role=None,
+    public_detail=None, functions=None, logistics_role=None, disaster_events=None,
 ):
     """Also backs the "Registrasi & Verifikasi Posko" mock-up's form — the
     extra kwargs are all optional so existing callers (Organisasi & Posko's
@@ -824,6 +824,7 @@ def create_posko(
                     "rn_beneficiary_count": rn_beneficiary_count, "public_detail": public_detail,
                     # the requested functions travel with the request and are set on approval
                     "functions": functions, "logistics_role": logistics_role,
+                    "disaster_events": disaster_events,
                 },
                 "Tambah posko: %s" % title + (" (fungsi: %s)" % _functions_label(functions) if _functions_label(functions) else ""),
             )
@@ -833,6 +834,7 @@ def create_posko(
         latitude, longitude, officer_in_charge_name, officer_in_charge_role,
         officer_in_charge_phone, officer_in_charge_email, emergency_contact,
         facilities, rn_beneficiary_count, public_detail,
+        disaster_events=disaster_events,
     )
     # the creator's own form choice, applied at creation — afterwards
     # functions change only through someone who manages the posko (O-9)
@@ -858,7 +860,7 @@ def _create_posko_impl(
     officer_in_charge_name=None, officer_in_charge_role=None,
     officer_in_charge_phone=None, officer_in_charge_email=None,
     emergency_contact=None, facilities=None, rn_beneficiary_count=None,
-    public_detail=None, assignment_status=None,
+    public_detail=None, assignment_status=None, disaster_events=None,
 ):
     """Create the posko + the creator's assignment. `actor` is whoever the
     posko is created FOR (the requester when the pusat approves a request)."""
@@ -870,6 +872,13 @@ def _create_posko_impl(
     posko.address = address
     posko.organization = organization
     posko.disaster_event = resolve_disaster_event(disaster_event) if disaster_event else None
+    # every disaster ticked on the form (posko logistik / distribusi can serve
+    # several); the first one is the main disaster_event when none was given
+    served = _parse_events(disaster_events)
+    if served and not posko.disaster_event:
+        posko.disaster_event = served[0]
+    for ev in served:
+        posko.append("served_events", {"disaster_event": ev})
     posko.operational_status = "active"
     posko.verification_status = "self_reported"
     posko.identity_verification_status = "self_reported"
@@ -911,6 +920,122 @@ def _create_posko_impl(
         "verification_status": posko.verification_status,
         "assignment_status": assignment.status,
     }
+
+
+def _parse_events(value):
+    """List / JSON list / comma text of disaster refs -> existing RN Disaster
+    Event names (unknown refs are rejected, duplicates dropped)."""
+    import json
+    from rescue_net.reference_resolver import resolve_disaster_event
+
+    if isinstance(value, str):
+        value = value.strip()
+        try:
+            value = json.loads(value) if value.startswith("[") else value.split(",")
+        except ValueError:
+            value = value.split(",")
+    out = []
+    for ref in value or []:
+        ref = str(ref or "").strip()
+        if not ref:
+            continue
+        ev = resolve_disaster_event(ref)
+        if not ev or not frappe.db.exists("RN Disaster Event", ev):
+            frappe.throw("Bencana tidak ditemukan: %s" % ref)
+        if ev not in out:
+            out.append(ev)
+    return out
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
+def disaster_options(date_from=None, date_to=None):
+    """Disasters to tick on the posko forms: all of them by default (active
+    first, newest first), optionally only those that started in a date range.
+    Drills never appear."""
+    from frappe.utils import getdate
+    from rescue_net.services.drill import real_rows
+
+    filters = []
+    if date_from:
+        filters.append(["started_at", ">=", str(getdate(date_from)) + " 00:00:00"])
+    if date_to:
+        filters.append(["started_at", "<=", str(getdate(date_to)) + " 23:59:59"])
+    rows = frappe.get_all(
+        "RN Disaster Event", filters=filters,
+        fields=["name", "legacy_id", "title", "severity", "event_status", "started_at", "location_summary"],
+        order_by="started_at desc", limit_page_length=300,
+    )
+    rows = real_rows(rows, key="name")
+    active = ("active", "aktif")
+    rows.sort(key=lambda r: str(r.event_status or "").lower() not in active)   # stable: active first
+    return [{
+        "id": r.name, "short_id": r.legacy_id or r.name, "title": r.title or r.name,
+        "severity": r.severity, "status": r.event_status, "active": str(r.event_status or "").lower() in active,
+        "started_at": r.started_at, "location": (r.location_summary or "")[:120],
+    } for r in rows]
+
+
+@frappe.whitelist()
+def my_poskos_served_events():
+    """Poskos the logged-in user manages, each with the disasters it handles
+    (Setting > Bencana yang Ditangani)."""
+    from rescue_net.api_offline import _my_poskos
+    from rescue_net.control_centre.common import posko_served_events as _served
+
+    actor = _actor()
+    out = []
+    for name in _my_poskos(actor):
+        doc = frappe.get_doc("RN Posko", name)
+        if not _can_edit_posko(actor, doc):
+            continue
+        out.append({"posko": name, "title": doc.title, "posko_type": doc.posko_type,
+                    "main_event": doc.disaster_event, "events": _served(name)})
+    return out
+
+
+@frappe.whitelist()
+def posko_served_events(posko):
+    """Disasters this posko handles (for the Setting checklist)."""
+    from rescue_net.control_centre.common import posko_served_events as _served
+    from rescue_net.reference_resolver import resolve_posko
+
+    name = resolve_posko(posko)
+    if not name or not frappe.db.exists("RN Posko", name):
+        frappe.throw("Posko tidak ditemukan")
+    doc = frappe.get_doc("RN Posko", name)
+    return {"posko": name, "title": doc.title, "posko_type": doc.posko_type,
+            "main_event": doc.disaster_event, "events": _served(name),
+            "can_manage": _can_edit_posko(_actor(), doc)}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_posko_served_events(posko, disaster_events):
+    """Add / remove the disasters a posko handles (Setting page). Only the
+    posko's own managers (or a System Manager); at least one must remain. If
+    the main disaster_event is removed, the first remaining one becomes main."""
+    from rescue_net.reference_resolver import resolve_posko
+
+    name = resolve_posko(posko)
+    if not name or not frappe.db.exists("RN Posko", name):
+        frappe.throw("Posko tidak ditemukan")
+    doc = frappe.get_doc("RN Posko", name)
+    if not _can_edit_posko(_actor(), doc):
+        frappe.throw("Hanya pengelola posko ini yang bisa mengubah bencana yang ditangani.",
+                     frappe.PermissionError)
+    events = _parse_events(disaster_events)
+    if not events:
+        frappe.throw("Pilih minimal satu bencana yang ditangani posko.")
+    keep = {r.disaster_event: r for r in doc.served_events if r.disaster_event in events}
+    doc.set("served_events", [])
+    for ev in events:
+        old = keep.get(ev)
+        doc.append("served_events", {"disaster_event": ev, "added_on": old.added_on if old else None})
+    if doc.disaster_event not in events:
+        doc.disaster_event = events[0]
+    doc.save(ignore_permissions=True)
+    return {"posko": name, "main_event": doc.disaster_event,
+            "events": [r.disaster_event for r in doc.served_events]}
 
 
 def _can_edit_posko(actor, posko_doc):

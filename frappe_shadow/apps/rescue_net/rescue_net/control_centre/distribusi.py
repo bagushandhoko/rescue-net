@@ -27,6 +27,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     canonical_event,
     cols,
     event_filters,
+    serving_posko_names,
 )
 from rescue_net.control_centre.critical import (  # noqa: F401
     _event_posko_names,
@@ -640,14 +641,19 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             as_dict=True,
         )
 
-    tfilter = {}
+    tfilter, tor = {}, None
     if posko:
         tfilter["coordination_posko"] = posko
     elif event:
-        tfilter = event_filters(cols("RN Transport Space"), event)
+        # armada tagged with the event, or run by a posko that serves it
+        tcols = cols("RN Transport Space")
+        tor = [["RN Transport Space", k, "=", v] for k, v in event_filters(tcols, event).items()]
+        if "coordination_posko" in tcols:
+            tor.append(["RN Transport Space", "coordination_posko", "in",
+                        serving_posko_names(event) or [""]])
 
     transports = frappe.get_all(
-        "RN Transport Space", filters=tfilter,
+        "RN Transport Space", filters=tfilter, or_filters=tor,
         fields=_sf("RN Transport Space", [
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3",
@@ -788,9 +794,9 @@ def posko_distribusi_board(posko=None, disaster_event=None):
     tp_filter = {"posko_type": "transport"}
     _tp_fields = ["name", "title", "city_name", "organization", "public_participation"]
     if event:
+        tp_filter["name"] = ["in", serving_posko_names(event) or [""]]
         tp_rows = frappe.get_all(
             "RN Posko",
-            or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
             filters=tp_filter, fields=_tp_fields,
             limit_page_length=200,
         )
@@ -907,7 +913,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
 
         dest_rows = frappe.get_all(
             "RN Posko",
-            or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
+            filters={"name": ["in", serving_posko_names(event) or [""]]},
             fields=["name", "title", "posko_type", "city_name"],
             limit_page_length=300,
         )

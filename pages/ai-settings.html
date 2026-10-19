@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=opsgroups-20261019b" />
+  <link rel="stylesheet" href="../assets/css/rn-event-checklist.css?v=evc-20261019" />
 </head>
 <body>
 <div class="app-shell">
@@ -58,11 +59,19 @@
       <div>
         <p class="eyebrow">Akun & AI</p>
         <h2>Setting</h2>
-        <p class="subtitle">Ganti password akun Anda, kelola API key AI, dan (System Manager) reset password user &amp; backup/restore database.</p>
+        <p class="subtitle">Atur bencana yang ditangani posko Anda, ganti password akun, kelola API key AI, dan (System Manager) reset password user &amp; backup/restore database.</p>
         <p class="subtitle" id="aiSettingsStatus">Ready.</p>
       </div>
       <div class="status-pill">Akun Anda</div>
     </header>
+
+    <div class="rn-settings-group" id="poskoEventsGroup" hidden>
+      <div class="rn-settings-group-title">
+        <h2>Bencana yang Ditangani Posko</h2>
+        <p>Tambah atau hilangkan bencana yang dilayani posko Anda. Posko tampil sebagai tujuan kirim dan pilihan distribusi hanya di bencana yang dicentang.</p>
+      </div>
+      <section class="panel" id="poskoEventsPanel"><p class="rn-muted">Memuat posko Anda…</p></section>
+    </div>
 
     <div class="rn-settings-group">
       <div class="rn-settings-group-title">
@@ -327,6 +336,8 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
 <script src="../assets/js/rn-password-settings.js?v=orgfilter-20260914"></script>
+<script src="../assets/js/rn-event-checklist.js?v=evc-20261019"></script>
+<script src="../assets/js/rn-posko-events-settings.js?v=evc-20261019"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/system-admin.js?v=backuprestore-20260913"></script>
 <script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>

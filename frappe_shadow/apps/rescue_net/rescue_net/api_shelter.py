@@ -1048,7 +1048,9 @@ _WATER_KEYWORDS = ("air bersih", "air minum")
 
 
 def _event_shelters(event):
-    filters = [["disaster_event", "=", event]]
+    from rescue_net.control_centre.common import serving_posko_names
+
+    filters = [["name", "in", serving_posko_names(event) or [""]]]
     or_filters = [["posko_type", "=", "shelter"], ["rn_fn_shelter", "=", 1]]
     return frappe.get_all(
         "RN Posko",

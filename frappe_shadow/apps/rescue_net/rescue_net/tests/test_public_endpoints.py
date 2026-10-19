@@ -39,7 +39,7 @@ GUEST_ENDPOINTS = {
     "api_ai.ai_providers", "api_ai.public_active_disasters", "api_ai.public_context", "api_ai.public_map_context",
     "api_auth.register", "api_auth.session_info", "api_auth.social_login_url",
     "api_comms.comms_board",
-    "api_community_cluster.get_posko_settings",
+    "api_community_cluster.disaster_options", "api_community_cluster.get_posko_settings",
     "api_control_centre.active_disasters_board", "api_control_centre.distribusi_board",
     "api_control_centre.event_poskos", "api_control_centre.evidence_board",
     "api_control_centre.flow_trace", "api_control_centre.fulfill_need",

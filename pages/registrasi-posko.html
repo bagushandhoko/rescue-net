@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=opsgroups-20261019b" />
   <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="../assets/css/rn-event-checklist.css?v=evc-20261019" />
   <style>
     /* size fields to their content instead of a rigid 4-col grid */
     #regForm .form-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); align-items: start; }
@@ -111,11 +112,6 @@
                 <option value="collection_hub">Collection Hub</option>
               </select>
             </label>
-            <label>Event Bencana *
-              <select name="disaster_event" id="regDisasterEvent" required>
-                <option value="">Memuat daftar bencana…</option>
-              </select>
-            </label>
             <label>Lokasi GPS * (lat, lng)
               <input name="latlng" id="regLatlng" placeholder="-6.228889, 106.871111" autocomplete="off">
             </label>
@@ -158,6 +154,10 @@
               </select>
             </label>
           </div>
+          <fieldset class="rn-evc-field">
+            <legend>Bencana yang Ditangani * <small id="regEventHint">— centang semua bencana yang dilayani posko ini</small></legend>
+            <div id="regEventPicker"></div>
+          </fieldset>
           <div class="form-actions">
             <button class="btn primary" type="submit">Simpan Posko</button>
             <button class="btn" type="button" id="regResetBtn">Reset</button>
@@ -216,7 +216,8 @@
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20261008"></script>
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
-<script src="../assets/js/registrasi-posko.js?v=komando-20260920"></script>
+<script src="../assets/js/rn-event-checklist.js?v=evc-20261019"></script>
+<script src="../assets/js/registrasi-posko.js?v=evc-20261019"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -737,12 +737,15 @@ def my_landing():
     own = [p for p in dict.fromkeys(own) if p and frappe.db.exists("RN Posko", p)]
     poskos = list(dict.fromkeys(own + _my_poskos(actor)))
 
+    from rescue_net.control_centre.common import posko_served_events
+
     drills = set() if is_system_manager() else drill_event_names()
+    served = {p: posko_served_events(p) for p in poskos}   # a posko can serve several disasters
     ev_names = []
     for p in poskos:
-        ev = frappe.db.get_value("RN Posko", p, "disaster_event")
-        if ev and ev not in drills and ev not in ev_names:
-            ev_names.append(ev)
+        for ev in served[p]:
+            if ev and ev not in drills and ev not in ev_names:
+                ev_names.append(ev)
     events = frappe.get_all("RN Disaster Event", filters={"name": ["in", ev_names]},
                             fields=["name", "title", "event_status", "started_at", "severity"]) if ev_names else []
     active = [e for e in events if str(e.event_status or "").lower() in ("active", "aktif")]
@@ -755,11 +758,11 @@ def my_landing():
     href, posko_info = None, None
     if own:
         # the user's own posko on the newest disaster it serves
-        by_event = {p: _short_event(frappe.db.get_value("RN Posko", p, "disaster_event")) for p in own}
-        primary = next((p for p in own if by_event[p] == latest), own[0])
+        serves = {p: [_short_event(e) for e in served[p]] for p in own}
+        primary = next((p for p in own if latest in serves[p]), own[0])
         row = frappe.db.get_value("RN Posko", primary, ["name", "title", "posko_type"], as_dict=True)
         page = _POSKO_PAGE.get(str(row.posko_type or "").lower(), "posko-detail.html")
-        ev = by_event[primary] or latest
+        ev = latest if latest in serves[primary] else (serves[primary][0] if serves[primary] else latest)
         from urllib.parse import quote
         href = page + "?id=" + quote(primary, safe="") + ("&event=" + quote(ev, safe="") if ev else "")
         posko_info = {"name": row.name, "title": row.title, "posko_type": row.posko_type}

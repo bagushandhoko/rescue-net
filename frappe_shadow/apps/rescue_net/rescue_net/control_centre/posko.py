@@ -22,6 +22,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     canonical_event,
     cols,
     event_filters,
+    serving_posko_names,
 )
 from rescue_net.control_centre.map_evidence import (  # noqa: F401
     event_evidence,
@@ -952,10 +953,11 @@ def logistik_dispatch_options(disaster_event, source_posko=None):
     event = canonical_event(disaster_event) if disaster_event else None
     src = _resolve_posko(source_posko) if source_posko else None
 
+    # destinations = poskos that handle THIS disaster (main or served_events)
+    serving = serving_posko_names(event) if event else []
     prow = frappe.get_all(
         "RN Posko",
-        or_filters={"disaster_event": event, "disaster_event_legacy_id": event}
-        if event else None,
+        filters={"name": ["in", serving or [""]]} if event else None,
         fields=["name", "title", "posko_type", "city_name", "rn_logistics_role",
                 "rn_beneficiary_count"],
         limit_page_length=500,
@@ -973,9 +975,17 @@ def logistik_dispatch_options(disaster_event, source_posko=None):
     ]
     destinations.sort(key=lambda d: (d["role"] != "receiver", -d["jiwa"], d["title"]))
 
+    # armada for this disaster: tagged with the event, or run by a posko
+    # distribusi that serves it
+    tcols = cols("RN Transport Space")
+    tor = None
+    if event:
+        tor = [["RN Transport Space", k, "=", v] for k, v in event_filters(tcols, event).items()]
+        if serving and "coordination_posko" in tcols:
+            tor.append(["RN Transport Space", "coordination_posko", "in", serving])
     trow = frappe.get_all(
         "RN Transport Space",
-        filters=event_filters(cols("RN Transport Space"), event) if event else {},
+        or_filters=tor,
         fields=_sf("RN Transport Space", [
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3", "coordination_posko",

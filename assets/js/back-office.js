@@ -1,10 +1,10 @@
 /* ============================================================
- * back-office.js — Back Office Penanganan (owner 2026-10-19).
+ * back-office.js — Ekosistem Penanganan (owner 2026-10-19).
  * One disaster from the support side: who helps (Pemerintah /
  * Organisasi / Masyarakat Umum / Program Donasi), what they bring,
  * and the gap to posko needs. Backend:
  * rescue_net.api_control_centre.ecosystem_board (guest, counts only).
- * Opened from the Control Centre header ("Back Office Penanganan").
+ * Opened from the Control Centre header ("Ekosistem Penanganan").
  * ============================================================ */
 (function () {
   "use strict";
@@ -177,7 +177,7 @@
       $("#boStatus").textContent = "Gagal memuat: " + ((err && err.message) || err);
       return;
     }
-    $("#boTitle").textContent = "Back Office — " + (DATA.event_title || ev);
+    $("#boTitle").textContent = "Ekosistem Penanganan — " + (DATA.event_title || ev);
     $("#boStatus").textContent = "Diperbarui " + window.RNUI.fmtTime(DATA.generated_at);
     renderKpi(DATA.totals || {});
     renderGroups(DATA.groups || []);

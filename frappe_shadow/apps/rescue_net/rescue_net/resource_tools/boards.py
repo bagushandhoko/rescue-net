@@ -416,6 +416,27 @@ def _tb_drill(title, sub, href=""):
     return {"title": title, "sub": sub, "href": href}
 
 
+def _provider_labels(rows):
+    """(owner_type, owner_id) -> public label of who provides a resource:
+    organisation / posko title, or a generic word for private people (never
+    their name — an individual's account name stays private)."""
+    org_ids = {r.owner_id for r in rows if r.owner_type == "organization" and r.owner_id}
+    posko_ids = {r.owner_id for r in rows if r.owner_type == "posko" and r.owner_id}
+    orgs = dict(frappe.get_all("RN Organization", filters={"name": ["in", list(org_ids)]},
+                               fields=["name", "title"], as_list=True)) if org_ids else {}
+    poskos = dict(frappe.get_all("RN Posko", filters={"name": ["in", list(posko_ids)]},
+                                 fields=["name", "title"], as_list=True)) if posko_ids else {}
+    generic = {"individual": "Perorangan", "community": "Komunitas", "community_group": "Komunitas"}
+
+    def label(r):
+        if r.owner_type == "organization":
+            return orgs.get(r.owner_id) or "Organisasi"
+        if r.owner_type == "posko":
+            return poskos.get(r.owner_id) or "Posko"
+        return generic.get(r.owner_type or "", "Lainnya")
+    return label
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def tools_board(disaster_event=None):
@@ -459,6 +480,7 @@ def tools_board(disaster_event=None):
 
     resource_names = {r.name for r in resources}
     request_names = {r.name for r in requests}
+    provider_of = _provider_labels(resources)
 
     all_deployments = frappe.get_all(
         "RN Work Tool Deployment",
@@ -829,6 +851,13 @@ def tools_board(disaster_event=None):
                 "category": _CATEGORY_LABELS.get(r.category, r.category),
                 "status": r.availability_status,
                 "location": r.current_location or "-",
+                # Recovery dan Alat Kerja: who provides it, where it can work
+                "provider": provider_of(r),
+                "provider_type": r.owner_type or "",
+                "coverage": r.coverage_area or "",
+                "quantity": r.quantity,
+                "unit": r.unit,
+                "verification_status": r.verification_status or "self_reported",
             }
             for r in resources
         ],

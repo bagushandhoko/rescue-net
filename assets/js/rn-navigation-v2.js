@@ -6,6 +6,11 @@
 
     posko: [
       {
+        label: "Manajemen Distribusi",
+        href: "management-distribusi.html",
+        icon: "distribusi"
+      },
+      {
         label: "Dashboard Posko",
         href: "organisasi-posko.html",
         icon: "organisasi"
@@ -41,7 +46,7 @@
         icon: "relawan"
       },
       {
-        label: "Kebutuhan & Manajemen Alat Kerja",
+        label: "Recovery dan Alat Kerja",
         href: "alat-kerja.html?event=event-sim-001",
         icon: "alat-kerja"
       },
@@ -76,11 +81,6 @@
         icon: "evidence"
       },
       {
-        label: "Posko Recovery",
-        href: "recovery-reconstruction.html?event=event-sim-001",
-        icon: "recovery"
-      },
-      {
         label: "Perencanaan Pengungsi",
         href: "perencanaan-pengungsi.html?event=event-sim-001",
         icon: "clipboard-check"
@@ -88,11 +88,6 @@
     ],
 
     modules: [
-      {
-        label: "Manajemen Distribusi",
-        href: "management-distribusi.html",
-        icon: "distribusi"
-      },
       {
         label: "Peta Nasional",
         href: "peta-nasional.html",

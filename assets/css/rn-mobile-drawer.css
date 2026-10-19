@@ -483,6 +483,11 @@
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
+    padding: 0 !important;
+  }
+  /* Home: login on top like every other page */
+  body .sidebar .rn-drawer-public nav.welcome-links .welcome-login-link {
+    order: -1; margin: 0 0 8px !important; min-height: 40px !important;
   }
 
   /* the Bencana Aktif group looks exactly like the operational groups,

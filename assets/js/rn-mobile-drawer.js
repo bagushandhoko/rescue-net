@@ -68,6 +68,9 @@
     // a closed group like "Posko": opens only when tapped
     const sec = document.createElement("details");
     sec.className = "rn-nav-v2-group rn-drawer-group rn-drawer-disasters";
+    // the operational CSS gives the last group a bottom line; the Posko group
+    // below already draws a top line -> no double line
+    sec.style.setProperty("border-bottom", "0", "important");
     sec.setAttribute("data-rn-group", "bencana");
     const summary = document.createElement("summary");
     summary.className = "rn-nav-v2-summary";

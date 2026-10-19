@@ -7,7 +7,7 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v2";
+const CACHE = "rescue-net-web-v3";
 const PRECACHE = [
  "/rescue-net/index.html",
  "/rescue-net/pages/laporan-masyarakat.html",
@@ -16,6 +16,28 @@ const PRECACHE = [
  "/rescue-net/pages/shelter-detail.html",
  "/rescue-net/pages/bencana-aktif.html",
  "/rescue-net/pages/offline.html",
+ "/rescue-net/pages/posko-detail.html",
+ "/rescue-net/pages/posko-medis-detail.html",
+ "/rescue-net/pages/dapur-umum.html",
+ "/rescue-net/pages/alat-kerja.html",
+ "/rescue-net/pages/kehadiran-relawan.html",
+ "/rescue-net/pages/kartu-keluarga.html",
+ "/rescue-net/pages/scan.html",
+ "/rescue-net/pages/posko-distribusi.html",
+ "/rescue-net/assets/js/rn-offline-outbox.js",
+ "/rescue-net/assets/js/posko-detail.js",
+ "/rescue-net/assets/js/posko-medis-detail.js",
+ "/rescue-net/assets/js/dapur-umum.js",
+ "/rescue-net/assets/js/alat-kerja.js",
+ "/rescue-net/assets/js/recovery-alat.js",
+ "/rescue-net/assets/js/kehadiran-relawan.js",
+ "/rescue-net/assets/js/kartu-keluarga.js",
+ "/rescue-net/assets/js/scan.js",
+ "/rescue-net/assets/js/rn-posko-contact.js",
+ "/rescue-net/assets/js/rn-kpi-go.js",
+ "/rescue-net/assets/js/rn-drill-banner.js",
+ "/rescue-net/assets/js/rn-pwa.js",
+ "/rescue-net/assets/js/posko-distribusi.js",
  "/rescue-net/pages/install.html",
  "/rescue-net/assets/css/rn-lightbox.css",
  "/rescue-net/assets/css/rn-mobile-drawer.css",

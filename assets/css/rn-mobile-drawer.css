@@ -463,25 +463,46 @@
   }
 }
 
-/* Bencana Aktif -> Control Centre list in the phone menu (owner 2026-10-19) */
+/* Phone menu tidy-up (owner 2026-10-19): login, main links like the header,
+   then closed groups (Bencana Aktif, Posko, Donasi, Modul, Pengaturan). */
 @media (max-width: 1023px) {
-  .rn-drawer-disasters { margin: 4px 0 10px; }
-  .rn-drawer-disasters[hidden] { display: none !important; }
-  .rn-drawer-disaster-list { display: grid; gap: 2px; }
-  .rn-drawer-disaster {
-    display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 10px;
-    border-radius: 10px; color: inherit; text-decoration: none; font-weight: 600; font-size: 15px; line-height: 1.25;
+  .rn-drawer-public .rn-event-picker { display: none !important; }
+  .rn-drawer-public .rn-public-links a[href$="bencana-aktif.html"],
+  .rn-drawer-public .welcome-links a[href$="bencana-aktif.html"] { display: none !important; }
+  .rn-drawer-public .rn-public-links a,
+  .rn-drawer-public .welcome-links a:not(.welcome-login-link):not(.rn-public-login) {
+    justify-content: flex-start !important; text-align: left !important;
   }
-  .rn-drawer-disaster:hover, .rn-drawer-disaster:focus-visible { background: rgba(239, 82, 61, .08); }
-  .rn-drawer-disaster.is-current { background: rgba(239, 82, 61, .12); }
+  .rn-drawer-public .rn-drawer-public-links { margin-top: 2px; }
+
+  /* the Bencana Aktif group looks exactly like the operational groups,
+     also on pages that have no operational sidebar (Home, public pages) */
+  .rn-drawer-public details.rn-drawer-group {
+    border: 0; border-top: 1px solid var(--line, rgba(104, 64, 45, .14)); margin: 4px 0 0;
+  }
+  .rn-drawer-public details.rn-drawer-group > summary {
+    display: flex; align-items: center; gap: 12px; padding: 11px 2px; cursor: pointer; list-style: none;
+    font-size: 18px; font-weight: 800; letter-spacing: -.02em; color: var(--text, #2d211b);
+  }
+  .rn-drawer-public details.rn-drawer-group > summary::-webkit-details-marker { display: none; }
+  .rn-drawer-public details.rn-drawer-group > summary > span:first-child { flex: 1; min-width: 0; }
+  .rn-drawer-public details.rn-drawer-group[open] > summary { color: var(--vx-brand-dark, #c4442f); }
+  .rn-drawer-public details.rn-drawer-group .rn-nav-v2-chevron { font-size: 22px; line-height: 1; color: var(--peach2, #e8835d); transition: transform .2s; }
+  .rn-drawer-public details.rn-drawer-group[open] .rn-nav-v2-chevron { transform: rotate(180deg); }
+  .rn-drawer-public .rn-drawer-disaster-list { display: flex; flex-direction: column; gap: 0; padding: 0 0 6px; }
+  .rn-drawer-public .rn-drawer-disaster {
+    display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 10px; border-radius: 10px;
+    color: inherit; text-decoration: none; font-size: 15px; font-weight: 500; line-height: 1.25;
+  }
+  .rn-drawer-public .rn-drawer-disaster.is-current { background: rgba(232, 117, 90, .14); font-weight: 700; }
+  .rn-drawer-public .rn-drawer-all { font-weight: 700; }
   .rn-drawer-disaster .rn-sev-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #b88918; }
   .rn-drawer-disaster .rn-sev-dot.crit { background: #d84545; }
   .rn-drawer-disaster .rn-sev-dot.high { background: #dd8a2f; }
+  /* no double line between the public block and the first operational group */
+  .rn-drawer-public { border-bottom: 0 !important; padding-bottom: 0 !important; }
 }
 
 /* Leaflet panes use z-index 200-1000; keep them inside the map box so the
    phone menu (z-index ~240) always covers a map (owner 2026-10-19). */
 .leaflet-container { isolation: isolate; z-index: 0; }
-@media (max-width: 1023px) {
-  .rn-drawer-disasters { padding-bottom: 8px; border-bottom: 1px solid rgba(104, 64, 45, .12); }
-}

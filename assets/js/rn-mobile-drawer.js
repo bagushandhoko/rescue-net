@@ -65,16 +65,17 @@
   // "Bencana Aktif" section of the phone menu: each active disaster links to
   // war-room.html?event=<id> and becomes the remembered active event.
   function disasterSection() {
-    const sec = document.createElement("div");
-    sec.className = "rn-drawer-disasters";
-    sec.hidden = true;
-    const heading = document.createElement("p");
-    heading.className = "rn-drawer-section-label";
-    heading.textContent = "Bencana Aktif → Control Centre";
+    // a closed group like "Posko": opens only when tapped
+    const sec = document.createElement("details");
+    sec.className = "rn-nav-v2-group rn-drawer-group rn-drawer-disasters";
+    sec.setAttribute("data-rn-group", "bencana");
+    const summary = document.createElement("summary");
+    summary.className = "rn-nav-v2-summary";
+    summary.innerHTML = '<span>Bencana Aktif</span><span class="rn-nav-v2-chevron" aria-hidden="true">⌄</span>';
     const list = document.createElement("nav");
-    list.className = "rn-drawer-disaster-list";
+    list.className = "rn-nav-v2-children rn-drawer-disaster-list";
     list.setAttribute("aria-label", "Control Centre per bencana aktif");
-    sec.appendChild(heading);
+    sec.appendChild(summary);
     sec.appendChild(list);
     let current = "";
     try { current = String(localStorage.getItem("rn_active_event") || "").replace(/^disaster_events:/, ""); } catch (e) {}
@@ -82,13 +83,18 @@
 
     function fill(rows) {
       list.innerHTML = "";
+      const all = document.createElement("a");
+      all.href = prefix + "pages/bencana-aktif.html";
+      all.className = "rn-nav-v2-link rn-drawer-disaster rn-drawer-all";
+      all.textContent = "Semua bencana aktif (peta & daftar)";
+      list.appendChild(all);
       rows.forEach(row => {
         const id = String(row.legacy_id || row.id || row.name || "").replace(/^disaster_events:/, "");
         if (!id) return;
         const a = document.createElement("a");
         a.href = prefix + "pages/war-room.html?event=" + encodeURIComponent(id);
         const sev = String(row.severity || "").toLowerCase();
-        a.className = "rn-drawer-disaster" + (id === current ? " is-current" : "");
+        a.className = "rn-nav-v2-link rn-drawer-disaster" + (id === current ? " is-current" : "");
         const dot = document.createElement("i");
         dot.className = "rn-sev-dot " + (/(critical|kritis)/.test(sev) ? "crit" : /(high|tinggi|urgent)/.test(sev) ? "high" : "mid");
         dot.setAttribute("aria-hidden", "true");
@@ -99,10 +105,10 @@
         a.addEventListener("click", () => { try { localStorage.setItem("rn_active_event", id); } catch (e) {} });
         list.appendChild(a);
       });
-      sec.hidden = !list.children.length;
     }
 
-    // shown at once from the last list this phone saw (also offline) ...
+    fill([]);                                   // "Semua bencana aktif" even before the list arrives
+    // filled at once from the last list this phone saw (also offline) ...
     try { const cached = JSON.parse(localStorage.getItem(CACHE) || "[]"); if (cached.length) fill(cached); } catch (e) {}
     // ... and refreshed from the server
     fetch(location.origin + "/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters", { credentials: "omit" })
@@ -201,10 +207,8 @@
       foldWrap = document.createElement("div");
       foldWrap.className = "rn-drawer-public";
 
-      // Every active disaster first, one tap -> its own Control Centre (owner 2026-10-19).
-      foldWrap.appendChild(disasterSection());
-
-      // Account + event picker (who am I / which disaster).
+      // Account first (login / who am I). The event picker is hidden in the
+      // phone menu by CSS: the "Bencana Aktif" group below replaces it.
       if (actions) {
         movedActions = actions;
         foldWrap.appendChild(actions);
@@ -215,13 +219,14 @@
         movedLinks = links;
         const sec = document.createElement("div");
         sec.className = "rn-drawer-public-links";
-        const heading = document.createElement("p");
-        heading.className = "rn-drawer-section-label";
-        heading.textContent = "Umum";
-        sec.appendChild(heading);
         sec.appendChild(links);
         foldWrap.appendChild(sec);
       }
+
+      // Groups with sub-menus, all closed until tapped (owner 2026-10-19):
+      // Bencana Aktif (each disaster -> its Control Centre), then the
+      // operational groups (Posko, Donasi, Modul, Pengaturan) below.
+      foldWrap.appendChild(disasterSection());
 
       // Place just under the drawer brand, above the operational nav.
       const brand = sidebar.querySelector(".brand");
@@ -235,6 +240,21 @@
 
       document.body.classList.add("rn-drawer-folded");
       folded = true;
+      collapseGroups();
+    }
+
+    // phone menu: every group closed, and only one open at a time
+    function collapseGroups() {
+      const groups = Array.from(sidebar.querySelectorAll("details.rn-nav-v2-group"));
+      groups.forEach(g => {
+        g.open = false;
+        if (g.dataset.rnDrawerAccordion) return;
+        g.dataset.rnDrawerAccordion = "1";
+        g.addEventListener("toggle", () => {
+          if (!g.open) return;
+          sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(o => { if (o !== g) o.open = false; });
+        });
+      });
     }
 
     function unfoldPublicFromDrawer() {

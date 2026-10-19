@@ -141,7 +141,7 @@ def ecosystem_board(disaster_event):
     # ---- relawan ---------------------------------------------------------
     vols = frappe.get_all(
         "RN Volunteer Profile", filters={"disaster_event": event},
-        fields=["user_account", "assigned_posko", "availability_status", "skill_category"],
+        fields=["user_account", "assigned_posko", "availability_status", "skill_category", "main_skill"],
         limit_page_length=5000,
     )
     acc_org = _account_orgs([v.user_account for v in vols])
@@ -150,7 +150,8 @@ def ecosystem_board(disaster_event):
     for v in vols:
         org = acc_org.get(v.user_account) or posko_org.get(v.assigned_posko)
         bump(org, "relawan")
-        skills[v.skill_category or "Lainnya"] = skills.get(v.skill_category or "Lainnya", 0) + 1
+        skill = (v.skill_category or v.main_skill or "Lainnya").strip() or "Lainnya"
+        skills[skill] = skills.get(skill, 0) + 1
         if str(v.availability_status or "") == "available":
             vol_available += 1
 

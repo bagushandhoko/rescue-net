@@ -13,6 +13,14 @@
   var esc = function (s) { return window.RNUI.esc(s); };
   var fmt = function (n) { return window.RNUI.fmt(Math.round(Number(n || 0) * 100) / 100); };
   var rp = function (n) { return "Rp " + window.RNUI.fmt(Math.round(Number(n || 0))); };
+  // short money for KPI cards / group cards (a full "Rp 262.000.000" overflows a phone card)
+  var rpShort = function (n) {
+    n = Number(n || 0);
+    if (n >= 1e12) return "Rp " + fmt(n / 1e12) + " T";
+    if (n >= 1e9) return "Rp " + fmt(Math.round(n / 1e7) / 100) + " M";
+    if (n >= 1e6) return "Rp " + fmt(Math.round(n / 1e4) / 100) + " jt";
+    return rp(n);
+  };
   var GROUP_LABEL = { pemerintah: "Pemerintah", organisasi: "Organisasi Masyarakat & Lembaga",
                       masyarakat: "Masyarakat Umum", program: "Program Donasi" };
   var TYPE_LABEL = { government: "Pemerintah", community: "Komunitas", ngo: "LSM / NGO", academic: "Kampus",
@@ -43,7 +51,8 @@
     $("#kGap").textContent = fmt(t.kebutuhan_gap);
     $("#kGapSub").textContent = "dari " + fmt(t.kebutuhan_terbuka) + " jenis barang dibutuhkan";
     $("#kAlat").textContent = fmt(t.peralatan);
-    $("#kDana").textContent = rp(t.dana_terkumpul);
+    $("#kDana").textContent = rpShort(t.dana_terkumpul);
+    $("#kDana").title = rp(t.dana_terkumpul);
     $("#kDanaSub").textContent = fmt(t.program) + " program donasi";
   }
 
@@ -51,7 +60,7 @@
     var el = $("#boGroups");
     el.innerHTML = groups.map(function (g) {
       var rows = g.key === "program"
-        ? [["Program", g.program], ["Dana terkumpul", rp(g.dana_terkumpul)]]
+        ? [["Program", g.program], ["Dana terkumpul", rpShort(g.dana_terkumpul)]]
         : [[g.key === "masyarakat" ? "Perorangan" : "Organisasi", g.key === "masyarakat" ? "—" : g.orgs],
            ["Posko", g.posko], ["Relawan", g.relawan],
            ["Sumbangan barang", g.sumbangan + (g.sumbangan_diterima ? " (" + g.sumbangan_diterima + " diterima)" : "")],
@@ -104,7 +113,7 @@
     var rows = (DATA.orgs || []).filter(function (o) { return FILTER === "semua" || o.group === FILTER; });
     if (!rows.length) { body.innerHTML = '<tr><td colspan="8">Belum ada pihak di kelompok ini.</td></tr>'; return; }
     body.innerHTML = rows.map(function (o) {
-      var type = TYPE_LABEL[o.organization_type] || o.organization_type || "-";
+      var type = TYPE_LABEL[o.organization_type] || "Lainnya";
       return "<tr>" +
         '<td><a href="' + esc(o.href) + "&event=" + ev + '">' + esc(o.title) + "</a>" +
           (o.posko ? '<span class="rn-bo-pct">' + fmt(o.posko_aktif) + " posko aktif</span>" : "") + "</td>" +

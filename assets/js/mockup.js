@@ -16,7 +16,6 @@ const MOCKUP_ITEMS = [
   ["evidence-centre", "Evidence Centre", "evidence centre.png"],
   ["verification-approval", "Verification & Approval", "verification & Approval.png"],
   ["komunikasi", "Alat Komunikasi", "alat komunikasi.png"],
-  ["mobile", "Tampilan HP", "kompilasi tampilan HP.png"],
   ["login", "Login & Registrasi", "login & registrasi.png"]
 ].map(([key, title, file]) => ({
   key,
@@ -26,7 +25,7 @@ const MOCKUP_ITEMS = [
   // only the phone portion. "mobile" is already an HP-only compilation.
   hpImage: key === "mobile"
     ? `../assets/img/mockup/${file}`
-    : `../assets/img/mockup/hp/${file}?v=crop-20261019c`,   // re-cropped per image (phone frame only)
+    : `../assets/img/mockup/hp/${file}?v=crop-20261019d`,   // re-cropped per image (phone frame only)
   file
 }));
 

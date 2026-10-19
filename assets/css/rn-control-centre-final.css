@@ -2486,3 +2486,31 @@ body {
   border-left-color: #9ca3af;
   background: rgba(107, 114, 128, 0.08);
 }
+
+/* ---- Header fixes after the Roboto/Nunito font change (owner 2026-10-19) ----
+   Desktop: "Control Centre —" must not break into two lines and the disaster
+   name may wrap instead of being cut with "…". Phone: the shared phone menu
+   bar replaces the page's own mobile bar; the actions wrap instead of
+   running off the screen. */
+.cc-header h1 { flex-wrap: wrap; }
+.cc-header h1 > .desktop-only { white-space: nowrap; }
+.cc-header h1 #disasterName { white-space: normal; overflow: visible; text-overflow: clip; }
+.cc-header-actions { flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 760px) {
+  body.rn-drawer-standalone .cc-mobile-bar { display: none !important; }
+  .cc-header { height: auto !important; text-align: left; }
+  .cc-header h1 { justify-content: flex-start; font-size: 18px; }
+  .cc-mobile-disaster { font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .cc-header-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .cc-header-actions .cc-event-pick { grid-column: 1 / -1; width: 100%; }
+  .cc-header .cc-event-pick select,
+  .cc-header select { width: 100% !important; height: 34px !important; font-size: 13px !important; }
+  .cc-header-actions .cc-share-btn { justify-content: center; min-height: 36px; font-size: 13px; white-space: nowrap; }
+  .cc-header-actions .cc-share-msg:empty { display: none; }
+}

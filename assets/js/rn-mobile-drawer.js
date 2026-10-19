@@ -187,11 +187,21 @@
     const title = document.createElement("div");
     title.className = "rn-drawer-title";
     const sourceTitle = isHome ? null :
+      document.querySelector("[data-rn-mobile-title]") ||
       document.querySelector(".topbar .rn-page-mobile-title") ||
       document.querySelector(".topbar h2") ||
       document.querySelector(".topbar h1") ||
       document.querySelector("main h1, h1");
-    title.textContent = sourceTitle ? sourceTitle.textContent.trim() : "Rescue-Net";
+    const readTitle = () => {
+      const src = sourceTitle && (sourceTitle.getAttribute("data-rn-mobile-title") || sourceTitle.textContent);
+      return src ? src.replace(/\s+/g, " ").trim() : "Rescue-Net";
+    };
+    title.textContent = readTitle();
+    // pages fill their title after loading data ("Memuat…" -> real name)
+    if (sourceTitle && window.MutationObserver) {
+      new MutationObserver(() => { title.textContent = readTitle(); })
+        .observe(sourceTitle, { childList: true, subtree: true, characterData: true });
+    }
 
     const logoSrc =
       sidebar.querySelector(".brand-logo")?.getAttribute("src") ||

@@ -26,7 +26,7 @@ const MOCKUP_ITEMS = [
   // only the phone portion. "mobile" is already an HP-only compilation.
   hpImage: key === "mobile"
     ? `../assets/img/mockup/${file}`
-    : `../assets/img/mockup/hp/${file}`,
+    : `../assets/img/mockup/hp/${file}?v=crop-20261019`,   // re-cropped per image (phone frame only)
   file
 }));
 

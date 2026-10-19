@@ -75,7 +75,7 @@
       return localStorage.getItem(APP_KEY) === "1";
     } catch (e) { return false; }
   }
-  var flushing = false, packing = false;
+  var flushing = false, packing = false, progress = null, sessionUser = null;
 
   // ---- small helpers ----------------------------------------------------
   function lsGet(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
@@ -187,26 +187,43 @@
   // ---- data pack ----------------------------------------------------------
   function checkUser(s) {
     var meta = lsGet(META_KEY, {}) || {}, user = s && s.user;
-    if (!user || user === "Guest") { if (meta.user) { wipe(); } return; }
-    if (meta.user && meta.user !== user) wipe();
-    if (!isApp()) return;
-    if (!meta.user || meta.user !== user || !meta.at || Date.now() - meta.at > PACK_MAX_AGE) downloadPack();
+    sessionUser = user && user !== "Guest" ? user : null;
+    if (!sessionUser) { if (meta.user) wipe(); render(); return; }
+    if (meta.user && meta.user !== user) { wipe(); meta = {}; }
+    render();
+    // the first download is the user's choice (button); an existing pack is kept fresh
+    if (isApp() && meta.user === user && (!meta.at || Date.now() - meta.at > PACK_MAX_AGE)) downloadPack(false);
   }
 
-  async function downloadPack(force) {
+  // downloads the whole pack in parts so the button can show progress;
+  // `visible` = the user pressed the button (show the progress bar)
+  async function downloadPack(visible) {
     if (packing || !navigator.onLine || !isApp()) return null;
     packing = true;
+    progress = visible ? { done: 0, total: 0, refresh: !!(lsGet(META_KEY, {}) || {}).user } : null;
+    render();
     try {
-      var p = await original("rescue_net.api_offline.pack", {});
-      for (var i = 0; i < p.entries.length; i++) {
-        var e = p.entries[i];
-        await put(keyOf(e.method, e.args), { at: Date.now(), data: e.data, method: e.method, args: e.args });
+      var off = 0, first = null, all = [];
+      while (off !== null && off !== undefined) {
+        var part = await original("rescue_net.api_offline.pack", { offset: off, limit: 4 });
+        if (!first) first = part;
+        for (var i = 0; i < part.entries.length; i++) {
+          var e = part.entries[i];
+          await put(keyOf(e.method, e.args), { at: Date.now(), data: e.data, method: e.method, args: e.args });
+          all.push(e);
+        }
+        off = part.next_offset;
+        if (progress) { progress.done = Math.min(part.total, (part.offset || 0) + part.entries.length + part.skipped); progress.total = part.total; render(); }
       }
-      lsSet(META_KEY, { user: p.user, at: Date.now(), poskos: p.poskos, events: p.events, count: p.entries.length });
-      render();
-      return p;
-    } catch (err) { return null; }
-    finally { packing = false; }
+      lsSet(META_KEY, { user: first.user, at: Date.now(), poskos: first.poskos, organizations: first.organizations || [],
+                        events: first.events, count: all.length });
+      if (visible) toast("Data offline siap: " + first.poskos.length + " posko" +
+        ((first.organizations || []).length ? ", " + first.organizations.length + " organisasi" : "") + ". Aplikasi bisa dipakai tanpa sinyal.");
+      return { user: first.user, poskos: first.poskos, entries: all };
+    } catch (err) {
+      if (visible) toast("Gagal mengunduh data offline: " + ((err && err.message) || err) + ". Coba lagi saat sinyal stabil.");
+      return null;
+    } finally { packing = false; progress = null; render(); }
   }
 
   // ---- compare old (offline) data with the fresh server data ----------------
@@ -279,7 +296,7 @@
         }
       }
       if (stopped) return;
-      var fresh = await downloadPack(true);
+      var fresh = (lsGet(META_KEY, {}) || {}).user ? await downloadPack(false) : null;   // only refresh a pack the user chose to keep
       var changes = [];
       if (fresh) {
         fresh.entries.forEach(function (e) {
@@ -308,7 +325,8 @@
 
   // ---- UI ---------------------------------------------------------------------
   var CSS = ".rn-ob-badge{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:9998;border:0;border-radius:999px;padding:10px 14px;background:#2d211b;color:#fff;font:600 13px/1.2 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25);cursor:pointer}" +
-    ".rn-ob-badge.ok{background:#1f7a50}.rn-ob-badge.has-failed{background:#a92f2f}" +
+    ".rn-ob-badge.ok{background:#1f7a50}.rn-ob-badge.has-failed{background:#a92f2f}.rn-ob-badge.get{background:#ef523d}" +
+    ".rn-ob-badge[disabled]{cursor:progress;display:grid;gap:6px;min-width:230px;text-align:left}.rn-ob-bar{display:block;height:6px;border-radius:999px;background:rgba(255,255,255,.25);overflow:hidden}.rn-ob-bar i{display:block;height:100%;background:#fff;border-radius:999px;transition:width .2s}" +
     ".rn-ob-panel{position:fixed;right:14px;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:9999;width:min(420px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:#fff;color:#2d211b;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.25);padding:14px;font:13px/1.45 system-ui,sans-serif}" +
     ".rn-ob-panel h4{margin:0 0 6px;font-size:15px}.rn-ob-panel h5{margin:12px 0 4px;font-size:13px}.rn-ob-row{border-top:1px solid #eee;padding:7px 0;display:grid;gap:3px}" +
     ".rn-ob-row small,.rn-ob-muted{color:#7c6458}.rn-ob-err{color:#a92f2f}.rn-ob-ok{color:#1f7a50}.rn-ob-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}" +
@@ -323,14 +341,26 @@
     ensureCss();
     var q = load(), meta = lsGet(META_KEY, {}) || {}, badge = document.getElementById("rnObBadge");
     var failed = q.filter(function (x) { return x.status === "failed"; }).length, waiting = q.length - failed;
-    var show = q.length > 0 || (isApp() && meta.user && !navigator.onLine);
-    if (!show) { if (badge) badge.remove(); var p0 = document.getElementById("rnObPanel"); if (p0 && !p0.dataset.summary) p0.remove(); return; }
-    if (!badge) { badge = document.createElement("button"); badge.type = "button"; badge.id = "rnObBadge"; badge.className = "rn-ob-badge"; badge.addEventListener("click", togglePanel); document.body.appendChild(badge); }
-    badge.classList.toggle("has-failed", failed > 0);
-    badge.classList.toggle("ok", !q.length);
-    badge.textContent = q.length
-      ? (waiting ? waiting + " data menunggu sinyal" : "") + (failed ? (waiting ? " · " : "") + failed + " ditolak" : "")
-      : "Mode offline · " + (meta.poskos || []).length + " posko tersimpan";
+    var app = isApp(), ready = app && meta.user && meta.user === (sessionUser || meta.user);
+    var mode = q.length ? "queue" : progress ? "progress" : ready ? "ready" : (app && sessionUser && navigator.onLine) ? "button" : "";
+    if (!mode) { if (badge) badge.remove(); return; }
+    if (!badge) { badge = document.createElement("button"); badge.type = "button"; badge.id = "rnObBadge"; badge.className = "rn-ob-badge"; document.body.appendChild(badge); }
+    badge.className = "rn-ob-badge" + (failed ? " has-failed" : mode === "ready" ? " ok" : mode === "button" ? " get" : "");
+    badge.disabled = mode === "progress";
+    if (mode === "queue") {
+      badge.textContent = (waiting ? waiting + " data menunggu sinyal" : "") + (failed ? (waiting ? " · " : "") + failed + " ditolak" : "");
+      badge.onclick = togglePanel;
+    } else if (mode === "progress") {
+      var pct = progress.total ? Math.round(progress.done / progress.total * 100) : 0;
+      badge.innerHTML = '<span>' + (progress.refresh ? "Memperbarui" : "Mengunduh") + " data offline… " +
+        (progress.total ? progress.done + "/" + progress.total + " (" + pct + "%)" : "") + '</span><span class="rn-ob-bar"><i style="width:' + pct + '%"></i></span>';
+    } else if (mode === "button") {
+      badge.textContent = "⬇ Siapkan data offline";
+      badge.onclick = function () { downloadPack(true); };
+    } else {
+      badge.textContent = (navigator.onLine ? "Data offline siap · " : "Mode offline · ") + (meta.poskos || []).length + " posko";
+      badge.onclick = togglePanel;
+    }
     if (document.getElementById("rnObPanel") && !document.getElementById("rnObPanel").dataset.summary) fillPanel();
   }
 
@@ -348,7 +378,8 @@
     p.innerHTML = "<h4>Mode offline</h4>" +
       '<div class="rn-ob-muted">' + (meta.user
         ? "Data " + (meta.poskos || []).length + " posko Anda tersimpan di HP (diunduh " + esc(when(meta.at)) + ")." +
-          ((meta.poskos || []).length ? "<br>" + (meta.poskos || []).slice(0, 6).map(function (x) { return esc(x.title || x.name); }).join(", ") + ((meta.poskos || []).length > 6 ? ", …" : "") : "")
+          ((meta.organizations || []).length ? "<br>Organisasi: " + meta.organizations.map(function (x) { return esc(x.title || x.name); }).join(", ") : "") +
+          ((meta.poskos || []).length ? "<br>Posko: " + (meta.poskos || []).slice(0, 8).map(function (x) { return esc(x.title || x.name); }).join(", ") + ((meta.poskos || []).length > 8 ? ", …" : "") : "")
         : "Login dulu agar data posko Anda diunduh ke HP.") + "</div>" +
       "<h5>Menunggu dikirim (" + q.length + ")</h5>" +
       (q.length ? q.map(function (x) {
@@ -357,9 +388,11 @@
           (x.status === "failed" ? '<div><button type="button" data-ob-retry="' + esc(x.id) + '">Coba lagi</button> <button type="button" data-ob-drop="' + esc(x.id) + '">Hapus</button></div>' : "") + "</div>";
       }).join("") : '<div class="rn-ob-muted">Tidak ada.</div>') +
       '<div class="rn-ob-actions"><button type="button" id="rnObSend">Sinkronkan sekarang</button>' +
+      (isApp() && sessionUser ? '<button type="button" id="rnObRefresh">Perbarui data offline</button>' : "") +
       (last ? '<button type="button" id="rnObLast">Ringkasan sinkron terakhir</button>' : "") +
       '<button type="button" id="rnObClose">Tutup</button></div>';
     p.querySelector("#rnObSend").onclick = function () { flush({ refresh: true }); };
+    var rf = p.querySelector("#rnObRefresh"); if (rf) rf.onclick = function () { p.remove(); downloadPack(true); };
     p.querySelector("#rnObClose").onclick = function () { p.remove(); };
     if (last) p.querySelector("#rnObLast").onclick = function () { showSummary(last); };
     p.querySelectorAll("[data-ob-drop]").forEach(function (b) { b.onclick = function () { store(load().filter(function (x) { return x.id !== b.getAttribute("data-ob-drop"); })); }; });

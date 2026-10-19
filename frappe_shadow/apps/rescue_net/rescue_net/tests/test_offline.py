@@ -100,3 +100,18 @@ class TestOfflinePack(RNTestCase):
             data = pack()
         self.assertFalse([e for e in data["entries"] if e["method"] == "rescue_net.api_medical.dashboard"
                           and e["args"].get("posko") == w.posko_b.name])
+
+    def test_pack_in_parts_covers_the_whole_plan(self):
+        from rescue_net.api_offline import pack
+        from rescue_net.tests.factories import make_world
+        w = make_world()
+        op = make_actor(posko=w.posko_a)
+        with as_user(op.user):
+            whole = pack()
+            parts, off = [], 0
+            while off is not None:
+                r = pack(offset=off, limit=4)
+                parts += r["entries"]
+                off = r["next_offset"]
+        self.assertEqual(whole["total"], r["total"])
+        self.assertEqual([e["method"] for e in parts], [e["method"] for e in whole["entries"]])

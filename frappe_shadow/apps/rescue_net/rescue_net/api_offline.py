@@ -181,7 +181,10 @@ def _run(method, args):
 
 
 @frappe.whitelist()
-def pack():
+def pack(offset=0, limit=0):
+    """All data of the user's posko/organisation for offline work.
+    The app downloads it in parts (offset/limit) to show progress; limit=0
+    returns everything at once. `total` = number of entries in the plan."""
     from rescue_net.access_policy import rn_actor
     from rescue_net.services.drill import drill_event_names
 
@@ -199,10 +202,21 @@ def pack():
         if p.disaster_event and p.disaster_event not in events and p.disaster_event not in drills:
             events.append(p.disaster_event)
 
-    entries, skipped = [], 0
+    plan = [(method, {}) for method, _ in PACK_GLOBAL]
+    for e in events:
+        plan += [(method, {"disaster_event": e}) for method, _ in PACK_EVENT]
+    for p in poskos:
+        extra = PACK_BY_TYPE.get(str(p.posko_type or "").lower(), [])
+        for method, needs in PACK_POSKO + extra:
+            args = {"posko": p.name}
+            if "disaster_event" in needs and p.disaster_event:
+                args["disaster_event"] = p.disaster_event
+            plan.append((method, args))
 
-    def add(method, args):
-        nonlocal skipped
+    offset, limit = max(0, int(offset or 0)), max(0, int(limit or 0))
+    part = plan[offset:offset + limit] if limit else plan[offset:]
+    entries, skipped = [], 0
+    for method, args in part:
         frappe.db.savepoint("rn_pack")
         try:
             entries.append({"method": method, "args": args, "data": _run(method, args)})
@@ -211,25 +225,17 @@ def pack():
             frappe.local.message_log = []
             skipped += 1                       # not allowed / not applicable for this posko
 
-    for method, _ in PACK_GLOBAL:
-        add(method, {})
-    for e in events:
-        for method, _ in PACK_EVENT:
-            add(method, {"disaster_event": e})
-    for p in poskos:
-        extra = PACK_BY_TYPE.get(str(p.posko_type or "").lower(), [])
-        for method, needs in PACK_POSKO + extra:
-            args = {"posko": p.name}
-            if "disaster_event" in needs and p.disaster_event:
-                args["disaster_event"] = p.disaster_event
-            add(method, args)
-
+    orgs = sorted({p.organization for p in poskos if p.organization})
     return {
         "user": user,
         "generated_at": now_datetime(),
         "poskos": [{"name": p.name, "title": p.title, "posko_type": p.posko_type,
                     "disaster_event": p.disaster_event} for p in poskos],
+        "organizations": [{"name": o, "title": frappe.db.get_value("RN Organization", o, "title")} for o in orgs],
         "events": events,
+        "total": len(plan),
+        "offset": offset,
+        "next_offset": offset + len(part) if offset + len(part) < len(plan) else None,
         "entries": entries,
         "skipped": skipped,
     }

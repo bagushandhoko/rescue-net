@@ -194,6 +194,7 @@
     let movedLinks = null;
     let movedActions = null;
     let toggleAnchor = null;
+    let hiddenLinks = [];
 
     function foldPublicIntoDrawer() {
       if (folded) return;
@@ -222,6 +223,12 @@
         sec.appendChild(links);
         foldWrap.appendChild(sec);
       }
+
+      // "Bencana Aktif" becomes the group below -> hide the plain link (inline
+      // !important: an operational rule forces every drawer link visible)
+      hiddenLinks = Array.from(foldWrap.querySelectorAll('a[href$="bencana-aktif.html"]'))
+        .filter(a => !a.closest(".rn-drawer-disasters"));
+      hiddenLinks.forEach(a => a.style.setProperty("display", "none", "important"));
 
       // Groups with sub-menus, all closed until tapped (owner 2026-10-19):
       // Bencana Aktif (each disaster -> its Control Centre), then the
@@ -259,6 +266,8 @@
 
     function unfoldPublicFromDrawer() {
       if (!folded) return;
+      hiddenLinks.forEach(a => a.style.removeProperty("display"));
+      hiddenLinks = [];
       if (!publicHeader) {
         // Fallback links only live in the drawer; keep them for re-folding.
         if (foldWrap && foldWrap.parentNode) foldWrap.parentNode.removeChild(foldWrap);

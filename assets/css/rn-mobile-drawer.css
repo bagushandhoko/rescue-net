@@ -474,6 +474,16 @@
     justify-content: flex-start !important; text-align: left !important;
   }
   .rn-drawer-public .rn-drawer-public-links { margin-top: 2px; }
+  /* header CSS centres the links (align-items/justify-content: center) and
+     Home's list keeps a fixed height -> list them top-down, left-aligned */
+  body .sidebar .rn-drawer-public nav.rn-public-links,
+  body .sidebar .rn-drawer-public nav.welcome-links {
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
 
   /* the Bencana Aktif group looks exactly like the operational groups,
      also on pages that have no operational sidebar (Home, public pages) */

@@ -62,6 +62,50 @@
     return panel;
   }
 
+  // "Bencana Aktif" section of the phone menu: each active disaster links to
+  // war-room.html?event=<id> and becomes the remembered active event.
+  function disasterSection() {
+    const sec = document.createElement("div");
+    sec.className = "rn-drawer-disasters";
+    sec.hidden = true;
+    const heading = document.createElement("p");
+    heading.className = "rn-drawer-section-label";
+    heading.textContent = "Bencana Aktif → Control Centre";
+    const list = document.createElement("nav");
+    list.className = "rn-drawer-disaster-list";
+    list.setAttribute("aria-label", "Control Centre per bencana aktif");
+    sec.appendChild(heading);
+    sec.appendChild(list);
+    let current = "";
+    try { current = String(localStorage.getItem("rn_active_event") || "").replace(/^disaster_events:/, ""); } catch (e) {}
+    fetch(location.origin + "/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters", { credentials: "omit" })
+      .then(r => r.json())
+      .then(payload => {
+        const rows = (payload && payload.message) || [];
+        if (!rows.length) return;
+        rows.forEach(row => {
+          const id = String(row.legacy_id || row.id || row.name || "").replace(/^disaster_events:/, "");
+          if (!id) return;
+          const a = document.createElement("a");
+          a.href = prefix + "pages/war-room.html?event=" + encodeURIComponent(id);
+          const sev = String(row.severity || "").toLowerCase();
+          a.className = "rn-drawer-disaster" + (id === current ? " is-current" : "");
+          const dot = document.createElement("i");
+          dot.className = "rn-sev-dot " + (/(critical|kritis)/.test(sev) ? "crit" : /(high|tinggi|urgent)/.test(sev) ? "high" : "mid");
+          dot.setAttribute("aria-hidden", "true");
+          const label = document.createElement("span");
+          label.textContent = row.title || id;
+          a.appendChild(dot);
+          a.appendChild(label);
+          a.addEventListener("click", () => { try { localStorage.setItem("rn_active_event", id); } catch (e) {} });
+          list.appendChild(a);
+        });
+        sec.hidden = false;
+      })
+      .catch(() => { /* offline: section stays hidden */ });
+    return sec;
+  }
+
   function init() {
     if (document.body.classList.contains("mockup-viewer")) return;
 
@@ -149,6 +193,9 @@
         movedActions = actions;
         foldWrap.appendChild(actions);
       }
+
+      // Every active disaster, one tap -> its own Control Centre (owner 2026-10-19).
+      foldWrap.appendChild(disasterSection());
 
       // Public links as a labelled section, matching the operational groups.
       if (links) {

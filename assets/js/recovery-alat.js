@@ -16,7 +16,8 @@
   var STATUS = { planned: "Direncanakan", in_progress: "Berjalan", active: "Berjalan", on_hold: "Tertunda",
                  completed: "Selesai", selesai: "Selesai", cancelled: "Batal" };
   var AVAIL = { available: "Siap", ready: "Siap", assigned: "Sedang dipakai", in_use: "Sedang dipakai",
-                maintenance: "Perawatan", unavailable: "Tidak tersedia", broken: "Rusak" };
+                maintenance: "Perawatan", unavailable: "Tidak tersedia", broken: "Rusak", limited: "Terbatas" };
+  var SHOW_ALL = false;
   var PROJECTS = [];
   var REGISTRY = [];
   var SESSION = null;
@@ -67,7 +68,11 @@
     var rows = REGISTRY.filter(function (r) {
       return !q || [r.resource_name, r.category, r.provider, r.location, r.coverage].join(" ").toLowerCase().indexOf(q) >= 0;
     });
-    $("#raProvBody").innerHTML = rows.length ? rows.map(function (r) {
+    var total = rows.length;
+    if (!SHOW_ALL && !q) rows = rows.slice(0, 10);
+    var more = total > rows.length
+      ? '<tr><td colspan="6"><button type="button" class="btn ghost" id="raProvMore">Lihat semua ' + fmt(total) + " alat</button></td></tr>" : "";
+    $("#raProvBody").innerHTML = (rows.length ? rows.map(function (r) {
       return "<tr>" +
         "<td><b>" + esc(r.resource_name) + '</b><span class="rn-ra-sub">' + esc(r.category || "") + "</span></td>" +
         '<td class="num">' + fmt(r.quantity || 1) + " " + esc(r.unit || "") + "</td>" +
@@ -75,7 +80,9 @@
         "<td>" + esc(r.location && r.location !== "-" ? r.location : "-") + "</td>" +
         "<td>" + esc(r.coverage || "-") + "</td>" +
         "<td>" + esc(AVAIL[r.status] || r.status || "-") + "</td></tr>";
-    }).join("") : '<tr><td colspan="6">' + (REGISTRY.length ? "Tidak ada yang cocok." : "Belum ada alat terdaftar untuk bencana ini.") + "</td></tr>";
+    }).join("") : '<tr><td colspan="6">' + (REGISTRY.length ? "Tidak ada yang cocok." : "Belum ada alat terdaftar untuk bencana ini.") + "</td></tr>") + more;
+    var btn = $("#raProvMore");
+    if (btn) btn.addEventListener("click", function () { SHOW_ALL = true; renderProviders(); });
   }
 
   async function loadRecovery() {

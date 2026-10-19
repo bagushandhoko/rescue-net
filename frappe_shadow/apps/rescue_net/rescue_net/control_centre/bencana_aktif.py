@@ -387,6 +387,7 @@ def active_disasters_board(limit=60):
                 "name", "title", "city_name", "province_name", "address",
                 "posko_type", "operational_status", "organization",
                 "rn_beneficiary_count", "rn_fn_shelter", "modified",
+                "latitude", "longitude",
             ]),
             limit_page_length=500,
         )
@@ -613,8 +614,25 @@ def active_disasters_board(limit=60):
             for row in coll:
                 last_updated = _ba_max_dt(last_updated, row.get("modified"))
 
+        # map (owner 2026-10-19): event marker = centre of its poskos, plus posko dots
+        posko_points = []
+        for p in poskos:
+            try:
+                lat, lng = float(p.get("latitude") or 0), float(p.get("longitude") or 0)
+            except (TypeError, ValueError):
+                continue
+            if lat and lng and -90 <= lat <= 90 and -180 <= lng <= 180:
+                posko_points.append({"name": p["name"], "title": p.get("title"), "posko_type": p.get("posko_type"),
+                                     "lat": lat, "lng": lng, "href": "posko-detail.html?id=" + p["name"]})
+        center = None
+        if posko_points:
+            center = {"lat": sum(x["lat"] for x in posko_points) / len(posko_points),
+                      "lng": sum(x["lng"] for x in posko_points) / len(posko_points)}
+
         sev = str(ev.get("severity") or "normal").lower()
         out_events.append({
+            "center": center,
+            "posko_points": posko_points,
             "id": ev.get("legacy_id") or ev["name"],
             "event_id": ev["name"],
             "name": ev.get("title") or ev["name"],

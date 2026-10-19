@@ -49,9 +49,21 @@
 @media (max-width: 480px) {
   .rn-evc-grid { grid-template-columns: 1fr; max-height: 360px; }
 }
-/* page form rules set inputs to width:100% — keep the picker's own sizes */
-.rn-evc .rn-evc-card input { width: 18px !important; min-width: 18px; padding: 0; }
-.rn-evc .rn-evc-dates input { width: auto !important; }
+.rn-evc-dates[hidden] { display: none; }
+/* page form rules (.rn-form label / input) must not restyle the picker */
+.rn-evc label.rn-evc-card {
+  display: grid !important; grid-template-columns: auto 1fr; gap: 4px 10px;
+  font-size: 14px !important; font-weight: 400 !important; color: var(--text) !important; margin: 0;
+}
+.rn-evc .rn-evc-card input {
+  width: 18px !important; height: 18px !important; min-width: 18px !important; min-height: 0 !important;
+  padding: 0 !important; margin: 3px 0 0; border-radius: 4px;
+}
+.rn-evc .rn-evc-title { font-size: 14.5px; font-weight: 700; }
+.rn-evc .rn-evc-meta, .rn-evc .rn-evc-loc { font-size: 12.5px; font-weight: 400; }
+.rn-evc .rn-evc-dates label { display: flex !important; gap: 6px; align-items: center; font-size: 13px !important; font-weight: 400 !important; }
+.rn-evc .rn-evc-dates input { width: auto !important; min-height: 0 !important; padding: 6px 8px !important; }
+.rn-evc .rn-evc-search { min-height: 0 !important; }
 .rn-evc-field { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px 14px; margin: 14px 0 0; min-width: 0; }
 .rn-evc-field legend { font-weight: 700; padding: 0 6px; }
 .rn-evc-field legend small { font-weight: 400; color: var(--muted); }

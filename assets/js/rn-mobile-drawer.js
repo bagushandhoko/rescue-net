@@ -78,31 +78,44 @@
     sec.appendChild(list);
     let current = "";
     try { current = String(localStorage.getItem("rn_active_event") || "").replace(/^disaster_events:/, ""); } catch (e) {}
+    const CACHE = "rn_active_disasters_menu_v1";
+
+    function fill(rows) {
+      list.innerHTML = "";
+      rows.forEach(row => {
+        const id = String(row.legacy_id || row.id || row.name || "").replace(/^disaster_events:/, "");
+        if (!id) return;
+        const a = document.createElement("a");
+        a.href = prefix + "pages/war-room.html?event=" + encodeURIComponent(id);
+        const sev = String(row.severity || "").toLowerCase();
+        a.className = "rn-drawer-disaster" + (id === current ? " is-current" : "");
+        const dot = document.createElement("i");
+        dot.className = "rn-sev-dot " + (/(critical|kritis)/.test(sev) ? "crit" : /(high|tinggi|urgent)/.test(sev) ? "high" : "mid");
+        dot.setAttribute("aria-hidden", "true");
+        const label = document.createElement("span");
+        label.textContent = row.title || id;
+        a.appendChild(dot);
+        a.appendChild(label);
+        a.addEventListener("click", () => { try { localStorage.setItem("rn_active_event", id); } catch (e) {} });
+        list.appendChild(a);
+      });
+      sec.hidden = !list.children.length;
+    }
+
+    // shown at once from the last list this phone saw (also offline) ...
+    try { const cached = JSON.parse(localStorage.getItem(CACHE) || "[]"); if (cached.length) fill(cached); } catch (e) {}
+    // ... and refreshed from the server
     fetch(location.origin + "/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters", { credentials: "omit" })
       .then(r => r.json())
       .then(payload => {
-        const rows = (payload && payload.message) || [];
+        const rows = ((payload && payload.message) || []).map(r => ({
+          legacy_id: r.legacy_id, id: r.id, name: r.name, title: r.title, severity: r.severity
+        }));
         if (!rows.length) return;
-        rows.forEach(row => {
-          const id = String(row.legacy_id || row.id || row.name || "").replace(/^disaster_events:/, "");
-          if (!id) return;
-          const a = document.createElement("a");
-          a.href = prefix + "pages/war-room.html?event=" + encodeURIComponent(id);
-          const sev = String(row.severity || "").toLowerCase();
-          a.className = "rn-drawer-disaster" + (id === current ? " is-current" : "");
-          const dot = document.createElement("i");
-          dot.className = "rn-sev-dot " + (/(critical|kritis)/.test(sev) ? "crit" : /(high|tinggi|urgent)/.test(sev) ? "high" : "mid");
-          dot.setAttribute("aria-hidden", "true");
-          const label = document.createElement("span");
-          label.textContent = row.title || id;
-          a.appendChild(dot);
-          a.appendChild(label);
-          a.addEventListener("click", () => { try { localStorage.setItem("rn_active_event", id); } catch (e) {} });
-          list.appendChild(a);
-        });
-        sec.hidden = false;
+        try { localStorage.setItem(CACHE, JSON.stringify(rows)); } catch (e) {}
+        fill(rows);
       })
-      .catch(() => { /* offline: section stays hidden */ });
+      .catch(() => { /* offline: keep the cached list */ });
     return sec;
   }
 
@@ -188,14 +201,14 @@
       foldWrap = document.createElement("div");
       foldWrap.className = "rn-drawer-public";
 
-      // Account + event picker first (who am I / which disaster).
+      // Every active disaster first, one tap -> its own Control Centre (owner 2026-10-19).
+      foldWrap.appendChild(disasterSection());
+
+      // Account + event picker (who am I / which disaster).
       if (actions) {
         movedActions = actions;
         foldWrap.appendChild(actions);
       }
-
-      // Every active disaster, one tap -> its own Control Centre (owner 2026-10-19).
-      foldWrap.appendChild(disasterSection());
 
       // Public links as a labelled section, matching the operational groups.
       if (links) {

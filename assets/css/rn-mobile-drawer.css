@@ -478,3 +478,10 @@
   .rn-drawer-disaster .rn-sev-dot.crit { background: #d84545; }
   .rn-drawer-disaster .rn-sev-dot.high { background: #dd8a2f; }
 }
+
+/* Leaflet panes use z-index 200-1000; keep them inside the map box so the
+   phone menu (z-index ~240) always covers a map (owner 2026-10-19). */
+.leaflet-container { isolation: isolate; z-index: 0; }
+@media (max-width: 1023px) {
+  .rn-drawer-disasters { padding-bottom: 8px; border-bottom: 1px solid rgba(104, 64, 45, .12); }
+}

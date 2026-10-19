@@ -83,8 +83,9 @@
         $("#baUpdated").textContent =
           "Diperbarui " + relTime(data.generated_at);
         applyFilter();
+        renderMap();
         if (!state.selectedId && state.events.length) {
-          select(state.events[0].id);
+          select(state.events[0].id, true);
         }
         setStatus("");
       })
@@ -492,10 +493,74 @@
 
   /* ---------- selection + right rail ---------- */
 
-  function select(id) {
+  function select(id, quiet) {
     state.selectedId = id;
     renderTable();
     renderSummary();
+    focusMap(quiet);
+  }
+
+  /* ---------- map (owner 2026-10-19): one marker per disaster at the
+     centre of its poskos; the selected one also shows its posko dots ---------- */
+
+  var map = null, eventLayer = null, poskoLayer = null;
+  var SEV_COLOR = { critical: "#d84545", kritis: "#d84545", high: "#dd8a2f", tinggi: "#dd8a2f" };
+
+  function sevColor(ev) { return SEV_COLOR[String(ev.severity || "").toLowerCase()] || "#b88918"; }
+
+  function renderMap() {
+    var host = $("#baMap");
+    if (!host || !window.L) return;
+    var withCenter = state.events.filter(function (e) { return e.center; });
+    $("#baMapCount").textContent = withCenter.length;
+    var note = $("#baMapNote");
+    var missing = state.events.length - withCenter.length;
+    if (note) {
+      note.hidden = !missing;
+      note.textContent = missing ? missing + " bencana belum tampil di peta karena posko-poskonya belum punya koordinat." : "";
+    }
+    if (!map) {
+      map = L.map(host, { zoomControl: true, scrollWheelZoom: false }).setView([-2.5, 118], 5);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+      eventLayer = L.layerGroup().addTo(map);
+      poskoLayer = L.layerGroup().addTo(map);
+    }
+    eventLayer.clearLayers();
+    var bounds = [];
+    withCenter.forEach(function (ev) {
+      var ll = [ev.center.lat, ev.center.lng];
+      bounds.push(ll);
+      var m = L.circleMarker(ll, {
+        radius: Math.min(22, 9 + Math.sqrt(ev.jiwa_berisiko || 0) / 2),
+        color: "#fff", weight: 2, fillColor: sevColor(ev), fillOpacity: .9
+      });
+      m.bindTooltip(esc(ev.name), { direction: "top" });
+      m.bindPopup('<div class="rn-ba-pop"><b>' + esc(ev.name) + "</b>" + esc(ev.location || "") +
+        "<br>" + fmt(ev.jiwa_berisiko) + " jiwa berisiko · " + fmt(ev.posko_count) + " posko" +
+        '<br><a href="war-room.html?event=' + encodeURIComponent(shortId(ev.id)) + '">Buka Control Centre ↗</a></div>');
+      m.on("click", function () { select(ev.id); });
+      m.addTo(eventLayer);
+    });
+    if (bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 9 });
+    setTimeout(function () { map.invalidateSize(); }, 50);
+    focusMap(true);
+  }
+
+  function focusMap(quiet) {
+    if (!map || !poskoLayer) return;
+    poskoLayer.clearLayers();
+    var ev = selectedEvent();
+    if (!ev) return;
+    var pts = (ev.posko_points || []).map(function (p) {
+      L.circleMarker([p.lat, p.lng], { radius: 5, color: sevColor(ev), weight: 2, fillColor: "#fff", fillOpacity: 1 })
+        .bindTooltip(esc(p.title || p.name), { direction: "top" })
+        .on("click", function () { location.href = p.href + "&event=" + encodeURIComponent(shortId(ev.id)); })
+        .addTo(poskoLayer);
+      return [p.lat, p.lng];
+    });
+    if (quiet) return;                          // first load: keep the overview of all disasters
+    if (pts.length > 1) map.flyToBounds(pts, { padding: [40, 40], maxZoom: 12, duration: .6 });
+    else if (ev.center) map.flyTo([ev.center.lat, ev.center.lng], 10, { duration: .6 });
   }
 
   function selectedEvent() {

@@ -1074,15 +1074,14 @@ def _bare(v):
 
 
 def _shelter_href(posko, event):
-    # link every shelter row to the canonical posko detail page (same as the
-    # rest of the app) — shelter-detail.html has no per-posko view, only the
-    # event-wide overview, so ?id= there looked like it did nothing.
-    return "posko-detail.html?id=" + _bare(posko) + "&event=" + _bare(event or "")
+    # each shelter row opens that shelter's own workspace (shelter_board with
+    # posko=, owner 2026-10-19); without ?id= the page is the event overview.
+    return "shelter-detail.html?id=" + _bare(posko) + "&event=" + _bare(event or "")
 
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
-def shelter_board(disaster_event=None):
+def shelter_board(disaster_event=None, posko=None):
     """Shelter & Akomodasi overview (matches the DMS mock-up), guest read-only.
 
     Cross-shelter dashboard for one disaster event: KPI totals + drill
@@ -1095,10 +1094,19 @@ def shelter_board(disaster_event=None):
     Akomodasi Relawan/Petugas (RN Volunteer Accommodation — separate from
     the disaster-victim shelters above). Sanitasi & Air = reported toilet /
     water-point counts on RN Shelter Occupancy vs the Sphere standards.
+
+    With `posko` the board is that one shelter's workspace (owner 2026-10-19:
+    a posko page shows only the posko's own items); without it, all shelters
+    of the event. Volunteer accommodation is event-level -> overview only.
     """
+    scope_posko = resolve_posko(posko) if posko else None
+    if scope_posko and not disaster_event:
+        disaster_event = frappe.db.get_value("RN Posko", scope_posko, "disaster_event")
     event = resolve_disaster_event(disaster_event) or disaster_event
 
     shelters = _event_shelters(event)
+    if scope_posko:
+        shelters = [s for s in shelters if s.name == scope_posko]
     posko_names = [s.name for s in shelters]
     posko_by_name = {s.name: s for s in shelters}
 
@@ -1110,7 +1118,7 @@ def shelter_board(disaster_event=None):
             "kapasitas_okupansi": {}, "kebutuhan_dasar": [],
             "kelompok_rentan": [], "checkin_checkout": {},
             "peringatan": [], "bukti": [], "bukti_total": 0,
-            "akomodasi_relawan": [],
+            "akomodasi_relawan": [], "scope_posko": scope_posko,
         }
 
     latest = _latest_occupancies(posko_names)
@@ -1380,7 +1388,8 @@ def shelter_board(disaster_event=None):
         "peringatan": peringatan,
         "bukti": bukti,
         "bukti_total": len(bukti),
-        "akomodasi_relawan": _akomodasi_relawan(event),
+        "akomodasi_relawan": [] if scope_posko else _akomodasi_relawan(event),
+        "scope_posko": scope_posko,
     }
 
 

@@ -90,3 +90,32 @@ class TestShelterRules(RNTestCase):
         with as_user(self.op.user):
             out = api.create_occupancy(self.shelter.name, "Aula API", capacity_total=10, current_occupancy=12)
         self.assertTrue(out["over_capacity"])
+
+
+class TestShelterBoardScope(RNTestCase):
+    """Owner 2026-10-19: a posko page shows that posko's own items only;
+    without a posko the board stays the event-wide overview."""
+
+    def setUp(self):
+        super().setUp()
+        self.w = make_world()
+        self.a = make_posko(self.w.event, self.w.org_a, posko_type="shelter")
+        self.b = make_posko(self.w.event, self.w.org_a, posko_type="shelter")
+        for p, item in ((self.a, "Selimut A"), (self.b, "Tikar B")):
+            _insert("RN Shelter Need", posko=p.name, item_name=item,
+                    quantity_mode="unknown", need_status="open")
+
+    def test_scoped_board_lists_only_that_shelter(self):
+        frappe.set_user("Guest")
+        board = api.shelter_board(self.w.event.name, posko=self.a.name)
+        self.assertEqual(board["scope_posko"], self.a.name)
+        self.assertEqual([r["posko"] for r in board["daftar_shelter"]], [self.a.name])
+        self.assertEqual(board["akomodasi_relawan"], [])
+        self.assertIn("shelter-detail.html?id=", board["daftar_shelter"][0]["href"])
+
+    def test_event_board_lists_all_shelters(self):
+        frappe.set_user("Guest")
+        board = api.shelter_board(self.w.event.name)
+        self.assertIsNone(board["scope_posko"])
+        names = {r["posko"] for r in board["daftar_shelter"]}
+        self.assertTrue({self.a.name, self.b.name} <= names)

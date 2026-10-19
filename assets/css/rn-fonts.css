@@ -1,0 +1,15 @@
+/* Typography like sac-energi.online (owner 2026-10-19): body/menu Roboto,
+   headings + big numbers Nunito. Loaded on every page right after style.css.
+   Offline (no Google Fonts) falls back to the system font. */
+body, button, input, select, textarea, nav, nav a {
+  font-family: 'Roboto', system-ui, -apple-system, "Segoe UI", sans-serif !important;
+}
+h1, h2, h3, h4,
+.kpi-card strong, .cc-kpis strong, .rn-ba-sumcard strong,
+.welcome-copy h1, .rn-public-brand-name, .brand h1,
+.rn-nav-v2-summary, .rn-drawer-group > summary {
+  font-family: 'Nunito', 'Roboto', system-ui, sans-serif !important;
+}
+code, pre, kbd, samp, .mono, [class*="monospace"] {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+}

@@ -95,6 +95,7 @@
 
   async function buildEventPicker(header) {
     const active = window.rnActiveEvent;
+    const hadEventInUrl = !!new URL(location.href).searchParams.get("event");
     ensureEventInUrl(active);
 
     const wrap = document.createElement("div");
@@ -155,6 +156,27 @@
     } catch (e) {
       /* offline / not reachable -> leave the single current option */
     }
+
+    // Logged-in user (owner 2026-10-19): only the disasters this user is
+    // handling, newest first; a page opened without ?event= uses the newest.
+    try {
+      const res = await fetch(RN_API + "rescue_net.api_auth.my_landing", { credentials: "include" });
+      const mine = res.ok ? (((await res.json()) || {}).message || {}) : {};
+      const evs = mine.events || [];
+      if (evs.length) {
+        const ids = evs.map(e => e.id);
+        const pick = ids.includes(active) ? active : (hadEventInUrl ? active : mine.latest_event);
+        select.innerHTML = evs.map(e =>
+          `<option value="${e.id}"${e.id === pick ? " selected" : ""}>${e.title || prettifyEventId(e.id)}</option>`
+        ).join("");
+        if (!ids.includes(pick)) {          // a page opened on another disaster keeps showing which one
+          const opt = document.createElement("option");
+          opt.value = pick; opt.textContent = prettifyEventId(pick) + " (dilihat)"; opt.selected = true;
+          select.insertBefore(opt, select.firstChild);
+        }
+        if (pick !== active) goToEvent(pick);  // no ?event= and the stored one isn't theirs -> newest
+      }
+    } catch (e) { /* guest / offline: keep the public list */ }
   }
 
   function closeMenu(header, button) {

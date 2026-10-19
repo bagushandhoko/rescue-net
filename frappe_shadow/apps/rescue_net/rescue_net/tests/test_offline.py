@@ -115,3 +115,26 @@ class TestOfflinePack(RNTestCase):
                 off = r["next_offset"]
         self.assertEqual(whole["total"], r["total"])
         self.assertEqual([e["method"] for e in parts], [e["method"] for e in whole["entries"]])
+
+
+class TestLanding(RNTestCase):
+    """api_auth.my_landing: own posko page on the newest disaster; only the
+    user's disasters."""
+
+    def test_operator_lands_on_own_posko_page(self):
+        from rescue_net.api_auth import my_landing
+        from rescue_net.tests.factories import make_world
+        w = make_world()
+        frappe.db.set_value("RN Posko", w.posko_a.name, "posko_type", "logistics")
+        frappe.db.set_value("RN Disaster Event", w.event.name, "event_status", "active")
+        op = make_actor(posko=w.posko_a)
+        with as_user(op.user):
+            r = my_landing()
+        self.assertTrue(r["href"].startswith("posko-logistik.html?id="))
+        self.assertIn(w.posko_a.name.replace(":", "%3A"), r["href"])
+        self.assertEqual([e["id"] for e in r["events"]], [w.event.name.replace("disaster_events:", "")])
+
+    def test_guest_gets_no_landing(self):
+        from rescue_net.api_auth import my_landing
+        with as_guest():
+            self.assertEqual(my_landing(), {"logged_in": False})

@@ -36,6 +36,22 @@
     return "../index.html";
   }
 
+  // After login (owner 2026-10-19): straight to the user's own posko page on
+  // the newest disaster they handle. An explicit ?next= still wins.
+  async function landingTarget() {
+    try {
+      var raw = new URLSearchParams(location.search).get("next") || "";
+      if (raw && decodeURIComponent(raw).indexOf("//") === -1) return decodeURIComponent(raw);
+    } catch (e) {}
+    try {
+      var res = await fetch(FRAPPE_BASE + "/api/method/rescue_net.api_auth.my_landing", { credentials: "include" });
+      var m = res.ok ? ((await res.json()) || {}).message || {} : {};
+      if (m.latest_event) { try { localStorage.setItem("rn_active_event", m.latest_event); } catch (e) {} }
+      if (m.href) return m.href;
+    } catch (e) {}
+    return nextTarget();
+  }
+
   // A fresh registrant's very next task depends on their chosen role: a
   // Petugas Posko exists to register a real posko, a Donatur exists to
   // give — send them straight there instead of a generic homepage. An
@@ -353,7 +369,7 @@
         try {
           await login(email, pass);
           setMessage("loginMessage", "Berhasil. Mengalihkan…");
-          window.location.href = nextTarget();
+          window.location.href = await landingTarget();
         } catch (err) {
           setMessage("loginMessage", cleanServerMessage(err) || "Email atau password salah.", true);
           btn.disabled = false;

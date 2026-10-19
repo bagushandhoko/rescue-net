@@ -415,10 +415,11 @@ async function openStockSources(item) {
    serves) and the send window; destinations + armada follow that disaster,
    armada also the window. Picking an armada = a booking — same organisation
    is approved at once, another organisation's posko distribusi confirms. */
-function isoDay(offset) {
+function isoDay(offset) {          // local date, YYYY-MM-DD
   const d = new Date(); d.setDate(d.getDate() + offset);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+const val = v => (v === null || v === undefined || v === "") ? "" : safe(v);   // form value (no "-")
 
 async function openDispatch(item, unit, stok) {
   const st = { event: eventParam(), from: isoDay(0), to: isoDay(3), dest: "", armada: "", qty: "", unit: unit || "", note: "", kg: "" };
@@ -460,11 +461,11 @@ async function openDispatch(item, unit, stok) {
           : `<input value="${safe((events[0] && events[0].title) || st.event)}" readonly>`}
       </label>
       <div class="rn-dispatch-window">
-        <label>Kirim dari<input type="date" name="window_from" value="${safe(st.from)}" required></label>
-        <label>Sampai<input type="date" name="window_to" value="${safe(st.to)}" required></label>
+        <label>Kirim dari<input type="date" name="window_from" value="${val(st.from)}" required></label>
+        <label>Sampai<input type="date" name="window_to" value="${val(st.to)}" required></label>
       </div>
-      <label>Jumlah dikirim<input name="quantity" type="number" step="0.01" required value="${safe(st.qty)}"></label>
-      <label>Satuan<input name="unit" value="${safe(st.unit)}"></label>
+      <label>Jumlah dikirim<input name="quantity" type="number" step="0.01" required value="${val(st.qty)}"></label>
+      <label>Satuan<input name="unit" value="${val(st.unit)}"></label>
       <label>Tujuan (posko penerima di bencana ini)
         <select name="destination_posko" required>
           <option value="">— pilih posko tujuan —</option>
@@ -474,8 +475,8 @@ async function openDispatch(item, unit, stok) {
       <div class="rn-evc"><b>Lewat armada</b> <small class="rn-muted">${armada.length} armada melayani bencana ini & berangkat dalam rentang kirim</small>
         <div class="rn-evc-grid">${armadaCards}</div></div>
       <label>Perkiraan berat (kg) <small class="rn-muted">— wajib bila lewat armada (dipakai untuk kapasitas)</small>
-        <input name="weight_kg" type="number" step="0.1" min="0" value="${safe(st.kg)}"></label>
-      <label>Catatan<input name="note" placeholder="opsional" value="${safe(st.note)}"></label>
+        <input name="weight_kg" type="number" step="0.1" min="0" value="${val(st.kg)}"></label>
+      <label>Catatan<input name="note" placeholder="opsional" value="${val(st.note)}"></label>
       <div class="form-actions">
         <button class="btn primary" type="submit">Kirim</button>
         <span class="form-message" id="dispatchMsg"></span>

@@ -62,6 +62,19 @@
   var NO_CACHE = /\.(create|update|record|set_|confirm|receive|claim|assign|book|cancel|reject|fulfill|issue|delete|save|check_in|check_out|review|replay|pack|login|logout|upload|send|posko_broadcast)/;
 
   var original = window.RN_FRAPPE.call.bind(window.RN_FRAPPE);
+
+  // The data pack + offline menu are for the INSTALLED app (APK opens
+  // index.html?source=app; Install App runs standalone). In a normal browser
+  // only unsent form data is kept and shown (owner 2026-10-19).
+  var APP_KEY = "rn_app_mode";
+  try { if (/[?&]source=app\b/.test(location.search)) localStorage.setItem(APP_KEY, "1"); } catch (e) {}
+  function isApp() {
+    try {
+      if (window.Capacitor || navigator.standalone) return true;
+      if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) return true;
+      return localStorage.getItem(APP_KEY) === "1";
+    } catch (e) { return false; }
+  }
   var flushing = false, packing = false;
 
   // ---- small helpers ----------------------------------------------------
@@ -157,7 +170,7 @@
       }
       try {
         var res = await original(method, args, options);
-        if (meta.user && meta.user !== "Guest") put(keyOf(method, args), { at: Date.now(), data: res, method: method });
+        if (isApp() && meta.user && meta.user !== "Guest") put(keyOf(method, args), { at: Date.now(), data: res, method: method });
         if (method === "rescue_net.api_auth.session_info") checkUser(res);
         return res;
       } catch (err) {
@@ -176,11 +189,12 @@
     var meta = lsGet(META_KEY, {}) || {}, user = s && s.user;
     if (!user || user === "Guest") { if (meta.user) { wipe(); } return; }
     if (meta.user && meta.user !== user) wipe();
+    if (!isApp()) return;
     if (!meta.user || meta.user !== user || !meta.at || Date.now() - meta.at > PACK_MAX_AGE) downloadPack();
   }
 
   async function downloadPack(force) {
-    if (packing || !navigator.onLine) return null;
+    if (packing || !navigator.onLine || !isApp()) return null;
     packing = true;
     try {
       var p = await original("rescue_net.api_offline.pack", {});
@@ -309,13 +323,14 @@
     ensureCss();
     var q = load(), meta = lsGet(META_KEY, {}) || {}, badge = document.getElementById("rnObBadge");
     var failed = q.filter(function (x) { return x.status === "failed"; }).length, waiting = q.length - failed;
-    if (!q.length && !meta.user) { if (badge) badge.remove(); return; }
+    var show = q.length > 0 || (isApp() && meta.user && !navigator.onLine);
+    if (!show) { if (badge) badge.remove(); var p0 = document.getElementById("rnObPanel"); if (p0 && !p0.dataset.summary) p0.remove(); return; }
     if (!badge) { badge = document.createElement("button"); badge.type = "button"; badge.id = "rnObBadge"; badge.className = "rn-ob-badge"; badge.addEventListener("click", togglePanel); document.body.appendChild(badge); }
     badge.classList.toggle("has-failed", failed > 0);
     badge.classList.toggle("ok", !q.length);
     badge.textContent = q.length
       ? (waiting ? waiting + " data menunggu sinyal" : "") + (failed ? (waiting ? " · " : "") + failed + " ditolak" : "")
-      : "Offline siap · " + (meta.poskos || []).length + " posko";
+      : "Mode offline · " + (meta.poskos || []).length + " posko tersimpan";
     if (document.getElementById("rnObPanel") && !document.getElementById("rnObPanel").dataset.summary) fillPanel();
   }
 
@@ -414,12 +429,13 @@
   }
 
   window.addEventListener("online", function () {
+    render();
     var pend = load().filter(function (x) { return x.status === "pending"; }).length;
     banner(pend ? "Sinyal kembali — " + pend + " data siap disinkron." : "Sinyal kembali — memperbarui data posko.", true);
     notify("Sinyal kembali", pend ? pend + " data dari HP siap disinkron." : "Data posko diperbarui.");
     setTimeout(function () { flush({ refresh: true }); }, 4000);
   });
-  window.addEventListener("offline", function () { banner("Tidak ada sinyal. Data posko Anda tetap terbuka dari HP; isian baru disimpan dan dikirim nanti."); });
+  window.addEventListener("offline", function () { render(); banner("Tidak ada sinyal. Data posko Anda tetap terbuka dari HP; isian baru disimpan dan dikirim nanti."); });
   document.addEventListener("DOMContentLoaded", function () {
     render();
     if (!navigator.onLine) { banner("Tidak ada sinyal. Data posko Anda tetap terbuka dari HP; isian baru disimpan dan dikirim nanti."); return; }

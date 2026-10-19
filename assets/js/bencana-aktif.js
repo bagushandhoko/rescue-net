@@ -575,7 +575,7 @@
 
     var evParam = "event=" + encodeURIComponent(shortId(ev.id));
     $("#baOpenWarRoom").href = "war-room.html?" + evParam;
-    $("#baOpenDetail").href = "disaster-detail.html?" + evParam;
+    $("#baOpenDetail").href = "back-office.html?" + evParam;
     $("#baOpenConsolidation").href = "data-consolidation.html?" + evParam;
   }
 

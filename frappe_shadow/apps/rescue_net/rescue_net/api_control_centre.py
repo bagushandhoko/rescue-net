@@ -13,12 +13,13 @@ from rescue_net.control_centre import (  # noqa: F401
     common,
     critical,
     distribusi,
+    ecosystem,
     kpi,
     map_evidence,
     org,
     posko,
 )
 
-for _module in (common, critical, map_evidence, posko, kpi, bencana_aktif, distribusi, org):
+for _module in (common, critical, map_evidence, posko, kpi, bencana_aktif, distribusi, org, ecosystem):
     globals().update({k: v for k, v in vars(_module).items() if not k.startswith("__")})
 del _module

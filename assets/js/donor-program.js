@@ -201,6 +201,9 @@
     $("#donorUpdated").textContent = "Donor Program · Diperbarui " + String(data.generated_at || "").slice(11, 16);
     $("#donorStatus").textContent = fmt((data.programs || []).length) + " program ditemukan.";
     renderList();
+    // ?id=<program> (link dari Back Office Penanganan) langsung membuka programnya
+    var wantId = new URLSearchParams(location.search).get("id");
+    if (!SELECTED && wantId && (data.programs || []).some(function (p) { return p.name === wantId; })) await selectProgram(wantId);
   }
 
   function wireDonateForm() {

@@ -532,6 +532,13 @@ function renderEventSelector(
   const current =
     eventId();
 
+  const backOffice =
+    document.getElementById("ccBackOfficeLink");
+  if (backOffice) {
+    backOffice.href =
+      "back-office.html?event=" + encodeURIComponent(current);
+  }
+
   select.innerHTML =
     (
       dashboard.active_disasters

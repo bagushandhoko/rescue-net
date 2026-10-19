@@ -492,6 +492,13 @@
   html.rn-external-access body:not(.mockup-viewer) .sidebar .rn-drawer-public nav.rn-drawer-disaster-list {
     padding-bottom: 0 !important;
   }
+  /* same size/spacing on every page (some page CSS restyles header links) */
+  body .sidebar .rn-drawer-public nav.rn-public-links a:not(.rn-public-login),
+  body .sidebar .rn-drawer-public nav.welcome-links a:not(.welcome-login-link) {
+    min-height: 36px !important; padding: 6px 10px !important; margin: 0 !important;
+    font-size: 15px !important; font-weight: 600 !important; line-height: 1.25 !important;
+    border: 0 !important; background: transparent !important; box-shadow: none !important;
+  }
   /* Home: login on top like every other page */
   body .sidebar .rn-drawer-public nav.welcome-links .welcome-login-link {
     order: -1; margin: 0 0 8px !important; min-height: 40px !important;

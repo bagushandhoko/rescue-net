@@ -65,3 +65,38 @@ class TestOfflineReplay(RNTestCase):
         self.assertFalse(frappe.db.exists("RN Sync Log", {"event_id": "offline:" + cid}))
         self.assertFalse(self.replay(cid)["duplicate"])
         self.assertEqual(self.count(), 1)
+
+
+class TestOfflinePack(RNTestCase):
+    """api_offline.pack: the user's own posko data, through the same read
+    methods (same permissions) the pages use."""
+
+    def test_operator_gets_own_posko_entries(self):
+        from rescue_net.api_offline import pack
+        from rescue_net.tests.factories import make_world
+        w = make_world()
+        op = make_actor(posko=w.posko_a)
+        with as_user(op.user):
+            data = pack()
+        names = [p["name"] for p in data["poskos"]]
+        self.assertIn(w.posko_a.name, names)
+        self.assertNotIn(w.posko_b.name, names)          # other organisation's posko not in my pack
+        methods = {(e["method"], e["args"].get("posko")) for e in data["entries"]}
+        self.assertIn(("rescue_net.api_control_centre.posko_detail", w.posko_a.name), methods)
+        self.assertIn(("rescue_net.api_auth.session_info", None), methods)
+
+    def test_guest_refused(self):
+        from rescue_net.api_offline import pack
+        with as_guest(), self.assertRaises(frappe.PermissionError):
+            pack()
+
+    def test_pack_has_no_medical_data_for_a_non_medical_operator(self):
+        from rescue_net.api_offline import pack
+        from rescue_net.tests.factories import make_world
+        w = make_world()
+        frappe.db.set_value("RN Posko", w.posko_b.name, "posko_type", "medical")
+        op = make_actor(posko=w.posko_a)
+        with as_user(op.user):
+            data = pack()
+        self.assertFalse([e for e in data["entries"] if e["method"] == "rescue_net.api_medical.dashboard"
+                          and e["args"].get("posko") == w.posko_b.name])

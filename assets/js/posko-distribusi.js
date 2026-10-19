@@ -837,6 +837,19 @@
     if (shown) shown.textContent = "Menampilkan " + list.length + " bantuan menunggu jemput";
   }
 
+  // KPI -> bagian yang menjelaskan angkanya (sebelumnya tombol tanpa aksi).
+  var KPI_TARGET = { armada: "#armadaBody", kapasitas: "#armadaBody", terpakai: "#armadaBody", menunggu: "#bookingBody" };
+  function wireKpiLinks() {
+    document.querySelectorAll(".rn-pd-kpi .rn-kpi-btn[data-kpi]").forEach(function (btn) {
+      var target = KPI_TARGET[btn.getAttribute("data-kpi")];
+      if (!target) return;
+      btn.addEventListener("click", function () {
+        var el = $(target);
+        if (el) (el.closest(".panel") || el).scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     if (!window.RN_FRAPPE) { console.error("RN_FRAPPE unavailable"); return; }
     document.querySelectorAll("#pdDrill [data-close]").forEach(function (el) { el.addEventListener("click", closeDrill); });
@@ -854,6 +867,7 @@
     wireArmadaForm();
     wireAssignForm();
     wireGuestTrack();
+    wireKpiLinks();
     load().catch(function (err) {
       console.error("[posko distribusi]", err);
       $("#pdStatus").textContent = "Gagal memuat: " + (err && err.message || err);

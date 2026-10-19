@@ -524,6 +524,10 @@
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
       eventLayer = L.layerGroup().addTo(map);
       poskoLayer = L.layerGroup().addTo(map);
+      // the panel stretches to the summary's height after the map is built:
+      // re-measure whenever the box changes size, or tiles stay grey
+      if (window.ResizeObserver) new ResizeObserver(function () { map.invalidateSize(); }).observe(host);
+      window.addEventListener("load", function () { map.invalidateSize(); });
     }
     eventLayer.clearLayers();
     var bounds = [];

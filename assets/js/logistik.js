@@ -204,7 +204,7 @@ function renderPublicShipments(b) {
   body.innerHTML = rows.map(s => `
     <tr>
       <td><b>${safe(s.donor_name)}</b></td>
-      <td>${safe(s.item_name)}</td>
+      <td>${s.flow ? `<a href="lacak-logistik.html?flow=${encodeURIComponent(s.flow)}" title="Lacak kiriman">${safe(s.item_name)}</a>` : safe(s.item_name)}</td>
       <td>${fmt(s.quantity)} ${safe(s.unit)}</td>
       <td>${s.wave ? "Gel. " + s.wave : (safe(s.ready_at) || "—")}</td>
       <td>${statusChip(s.status)}</td>

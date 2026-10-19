@@ -568,15 +568,26 @@ def _public_shipments(name):
         "offer_status", "handling_mode", "ready_at", "pickup_location",
         "legacy_payload", "creation", "modified",
     ])
-    out = []
-    for o in frappe.get_all(
+    offers = frappe.get_all(
         "RN Aid Offer",
         filters={
             "target_posko": name,
             "offer_status": ["not in", ["received", "received_verified", "cancelled"]],
         },
         fields=fields, order_by="creation desc", limit_page_length=100,
-    ):
+    )
+    # newest non-cancelled flow carrying each offer -> "Lacak" link on the page
+    flow_of = {}
+    offer_names = [o["name"] for o in offers]
+    if offer_names:
+        for fl in frappe.get_all(
+            "RN Distribution Flow",
+            filters={"aid_offer": ["in", offer_names], "flow_status": ["!=", "cancelled"]},
+            fields=["name", "aid_offer"], order_by="creation asc", limit_page_length=500,
+        ):
+            flow_of[fl["aid_offer"]] = fl["name"]
+    out = []
+    for o in offers:
         wave = None
         p = o.get("legacy_payload")
         if isinstance(p, str) and p.strip():
@@ -594,6 +605,7 @@ def _public_shipments(name):
             "ready_at": o.get("ready_at"),
             "pickup_location": o.get("pickup_location"),
             "wave": wave,
+            "flow": flow_of.get(o["name"]),
         })
     return out
 

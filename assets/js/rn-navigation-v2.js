@@ -443,6 +443,24 @@
     );
   }
 
+  // Phone menu on pages without the operational sidebar (Home, public and
+  // field pages): the same groups, closed, for rn-mobile-drawer.js. Posko
+  // pages are readable by everyone; adding data still needs a login.
+  window.RNNav = {
+    groupsHtml(prefix) {
+      const pre = prefix || "";
+      const fix = items => items.map(it => Object.assign({}, it, { href: pre + it.href }));
+      return [
+        ["Posko", CONFIG.posko, "posko"],
+        ["Donasi & Program Khusus", CONFIG.donasi, "donasi"],
+        ["Modul", CONFIG.modules, "modul"],
+        ["Pengaturan", CONFIG.pengaturan, "pengaturan"]
+      ].map(([label, items, id]) =>
+        groupHtml(label, fix(items), id, false).replace('class="rn-nav-v2-group"', 'class="rn-nav-v2-group rn-drawer-group"').replace(" open>", ">")
+      ).join("");
+    }
+  };
+
   // Let a page (e.g. posko-logistik.html's posko dropdown) refresh the top
   // function group after it changes the active posko / URL.
   window.rnRefreshPoskoFunctionGroup = function () {

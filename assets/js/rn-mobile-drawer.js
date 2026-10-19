@@ -128,6 +128,39 @@
     return sec;
   }
 
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const el = document.createElement("script");
+      el.src = src; el.onload = resolve; el.onerror = reject;
+      document.head.appendChild(el);
+    });
+  }
+
+  async function mountOperationalGroups(container) {
+    if (container.querySelector(".rn-drawer-ops")) return;
+    try {
+      if (!window.RNIcon) await loadScript(prefix + "assets/js/rn-icons.js?v=kpiicon-20260904").catch(() => {});
+      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=opsgroups-20261019");
+    } catch (e) { return; }
+    if (!window.RNNav || container.querySelector(".rn-drawer-ops")) return;
+    const wrap = document.createElement("div");
+    wrap.className = "rn-drawer-ops";
+    // CONFIG hrefs are relative to pages/: Home (root) needs the folder
+    wrap.innerHTML = window.RNNav.groupsHtml(isHome ? "pages/" : "");
+    container.appendChild(wrap);
+    if (window.RNIconFill) window.RNIconFill(wrap);
+    const sidebar = container.closest(".sidebar") || document;
+    sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(g => {
+      g.open = false;
+      if (g.dataset.rnDrawerAccordion) return;
+      g.dataset.rnDrawerAccordion = "1";
+      g.addEventListener("toggle", () => {
+        if (!g.open) return;
+        sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(o => { if (o !== g) o.open = false; });
+      });
+    });
+  }
+
   function init() {
     if (document.body.classList.contains("mockup-viewer")) return;
 
@@ -237,6 +270,10 @@
       // Bencana Aktif (each disaster -> its Control Centre), then the
       // operational groups (Posko, Donasi, Modul, Pengaturan) below.
       foldWrap.appendChild(disasterSection());
+
+      // pages without the operational sidebar get the same groups (Posko,
+      // Donasi, Modul, Pengaturan) in the phone menu (owner 2026-10-19)
+      if (!sidebar.querySelector("nav.rn-nav-v2")) mountOperationalGroups(foldWrap);
 
       // Place just under the drawer brand, above the operational nav.
       const brand = sidebar.querySelector(".brand");

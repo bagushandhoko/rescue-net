@@ -461,6 +461,8 @@ def tools_board(disaster_event=None):
             "verification_status", "modified", "owner_type", "owner_id",
             "canonical_category", "canonical_group", "canonical_item",
             "normalization_source", "normalization_confidence",
+            "available_from", "available_until", "support_transport", "support_operator",
+            "support_fuel", "daily_operating_cost", "support_notes",
         ],
         order_by="category asc, resource_name asc",
         limit_page_length=2000,
@@ -858,6 +860,14 @@ def tools_board(disaster_event=None):
                 "quantity": r.quantity,
                 "unit": r.unit,
                 "verification_status": r.verification_status or "self_reported",
+                # masa pakai + dukungan agar alat bisa dipakai
+                "available_from": r.available_from,
+                "available_until": r.available_until,
+                "support": [k for k, on in (("transport", r.support_transport),
+                                            ("operator", r.support_operator),
+                                            ("bbm", r.support_fuel)) if on],
+                "daily_cost": flt(r.daily_operating_cost) or None,
+                "support_notes": r.support_notes or "",
             }
             for r in resources
         ],
@@ -1003,6 +1013,13 @@ def add_personal_resource(
     current_location=None,
     notes=None,
     disaster_event=None,
+    available_from=None,
+    available_until=None,
+    support_transport=0,
+    support_operator=0,
+    support_fuel=0,
+    daily_operating_cost=None,
+    support_notes=None,
 ):
     """Self-service add for Profil Sumber Daya's Kendaraan/Fasilitas/Bantuan
     Barang cards — an individual manages their own RN Resource Profile rows
@@ -1031,6 +1048,9 @@ def add_personal_resource(
     doc.availability_status = availability_status
     doc.current_location = current_location
     doc.notes = notes
+    from rescue_net.resource_tools.resources import _apply_usage_support
+    _apply_usage_support(doc, available_from, available_until, support_transport,
+                         support_operator, support_fuel, daily_operating_cost, support_notes)
     doc.verification_status = "self_reported"
     doc.insert(ignore_permissions=True)
 

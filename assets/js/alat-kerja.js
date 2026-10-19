@@ -494,6 +494,7 @@
           size_unit: form.size_unit.value.trim(),
           work_days_target: $("#daysField").hidden ? null : (Number(form.work_days_target.value) || null),
           posko: form.posko.value || null,
+          recovery_project: (form.recovery_project && form.recovery_project.value) || null,
           location: form.location.value.trim(),
           notes: form.notes.value.trim(),
           disaster_event: getEventId(),

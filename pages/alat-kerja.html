@@ -25,6 +25,12 @@
   .rn-ra-forms h4{margin:0 0 6px}
   .rn-ra-filter input{min-width:220px;max-width:100%}
   .rn-ra-note{margin:10px 0 0;font-size:12px}
+  .rn-ra-edit{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .rn-ra-edit h4{margin:0 0 8px}
+  .rn-ra-checks{display:flex;flex-wrap:wrap;gap:8px 18px;margin:8px 0}
+  .rn-ra-checks label{display:flex;align-items:center;gap:6px;font-weight:600}
+  .rn-ra-tags{display:flex;flex-wrap:wrap;gap:4px}
+  .rn-ra-tags .chip{height:22px;font-size:11px;padding:0 8px}
   </style>
 </head>
 <body>
@@ -104,8 +110,8 @@
       <div class="rn-ra-sum" id="raSum"></div>
       <div class="rn-table-wrap">
         <table class="rn-table rn-ra-table">
-          <thead><tr><th>Proyek / Obyek</th><th>Lokasi</th><th>Pengelola</th><th>Progres</th><th>Target Selesai</th><th>Update Terakhir</th></tr></thead>
-          <tbody id="raBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+          <thead><tr><th>Proyek / Obyek</th><th>Lokasi</th><th>Pengelola</th><th>Progres</th><th>Alat</th><th>Target Selesai</th><th>Update Terakhir</th></tr></thead>
+          <tbody id="raBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
         </table>
       </div>
       <details class="rn-input-drawer rn-ra-drawer" id="raDrawer">
@@ -173,11 +179,27 @@
       </div>
       <div class="rn-table-wrap">
         <table class="rn-table rn-ra-table">
-          <thead><tr><th>Alat</th><th class="num">Jumlah</th><th>Penyedia</th><th>Posisi Sekarang</th><th>Area Layanan</th><th>Status</th></tr></thead>
-          <tbody id="raProvBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+          <thead><tr><th>Alat</th><th class="num">Jumlah</th><th>Penyedia</th><th>Posisi &amp; Area Layanan</th><th>Bisa Dipakai</th><th>Butuh Dukungan</th><th>Status</th><th></th></tr></thead>
+          <tbody id="raProvBody"><tr><td colspan="8">Memuat…</td></tr></tbody>
         </table>
       </div>
-      <p class="rn-muted rn-ra-note">Lama alat bisa dipakai dan kebutuhan dukungan per alat (transport, biaya operasional, operator) belum tercatat per alat — lihat Jadwal Dispatch &amp; Dukungan Operasional di bawah.</p>
+      <p class="rn-muted rn-ra-note">"Bisa dipakai" dan "Butuh dukungan" diisi oleh pemilik/pengelola alat lewat tombol Ubah (perlu login). Nomor PIC tidak ditampilkan di sini.</p>
+      <form class="rn-form rn-ra-edit" id="raEditForm" hidden>
+        <h4 id="raEditTitle">Ubah masa pakai &amp; dukungan</h4>
+        <input type="hidden" name="resource_profile">
+        <div class="form-grid">
+          <label>Bisa dipakai mulai <input type="date" name="available_from"></label>
+          <label>Bisa dipakai sampai <input type="date" name="available_until"></label>
+          <label>Biaya operasional per hari (Rp) <input type="number" min="0" step="1000" name="daily_operating_cost"></label>
+          <label>Dukungan lain <input name="support_notes" placeholder="mis. butuh trailer, izin jalan"></label>
+        </div>
+        <div class="rn-ra-checks">
+          <label><input type="checkbox" name="support_transport"> Butuh transport / mobilisasi</label>
+          <label><input type="checkbox" name="support_operator"> Butuh operator</label>
+          <label><input type="checkbox" name="support_fuel"> Butuh BBM</label>
+        </div>
+        <div class="form-actions"><button class="btn primary" type="submit">Simpan</button> <button class="btn ghost" type="button" id="raEditCancel">Batal</button> <span class="rn-muted" id="raEditMsg" role="status"></span></div>
+      </form>
     </section>
 
     <section class="content-grid rn-ak-r2">
@@ -247,6 +269,7 @@
           <label>Satuan<input name="size_unit" placeholder="m3"></label>
           <label id="daysField">Target selesai (hari kerja)<input name="work_days_target" type="number" min="1" placeholder="mis. 2"></label>
           <label>Posko penanggung jawab<select name="posko" id="objectPoskoSelect"><option value="">— Control Centre —</option></select></label>
+          <label>Bagian dari proyek recovery<select name="recovery_project" id="objectRecoverySelect"><option value="">— tidak terkait proyek —</option></select></label>
           <label>Lokasi<input name="location" placeholder="Desa / ruas jalan / titik"></label>
           <label>Catatan<input name="notes" placeholder="opsional"></label>
         </div>
@@ -377,8 +400,8 @@
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/recovery-alat.js?v=ra-20261019b"></script>
-<script src="../assets/js/alat-kerja.js?v=recovery-20261019"></script>
+<script src="../assets/js/recovery-alat.js?v=ra-20261019c"></script>
+<script src="../assets/js/alat-kerja.js?v=recovery-20261019b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

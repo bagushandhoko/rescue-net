@@ -82,6 +82,44 @@
    "fieldtype": "Small Text"
   },
   {
+   "fieldname": "available_from",
+   "fieldtype": "Date",
+   "label": "Bisa dipakai mulai"
+  },
+  {
+   "fieldname": "available_until",
+   "fieldtype": "Date",
+   "label": "Bisa dipakai sampai"
+  },
+  {
+   "fieldname": "support_transport",
+   "fieldtype": "Check",
+   "label": "Butuh transport / mobilisasi",
+   "default": "0"
+  },
+  {
+   "fieldname": "support_operator",
+   "fieldtype": "Check",
+   "label": "Butuh operator",
+   "default": "0"
+  },
+  {
+   "fieldname": "support_fuel",
+   "fieldtype": "Check",
+   "label": "Butuh BBM",
+   "default": "0"
+  },
+  {
+   "fieldname": "daily_operating_cost",
+   "fieldtype": "Currency",
+   "label": "Biaya operasional per hari (Rp)"
+  },
+  {
+   "fieldname": "support_notes",
+   "fieldtype": "Small Text",
+   "label": "Dukungan lain yang dibutuhkan"
+  },
+  {
    "fieldname": "pic_name",
    "label": "PIC Name",
    "fieldtype": "Data"
@@ -145,5 +183,38 @@
    "create": 1,
    "delete": 1
   }
- ]
+ ],
+ "field_order": [
+  "legacy_id",
+  "disaster_event",
+  "owner_type",
+  "owner_id",
+  "resource_name",
+  "resource_type",
+  "category",
+  "quantity",
+  "unit",
+  "capacity_description",
+  "availability_status",
+  "current_location",
+  "coverage_area",
+  "available_from",
+  "available_until",
+  "support_transport",
+  "support_operator",
+  "support_fuel",
+  "daily_operating_cost",
+  "support_notes",
+  "pic_name",
+  "pic_phone",
+  "verification_status",
+  "notes",
+  "canonical_category",
+  "canonical_group",
+  "canonical_item",
+  "normalization_source",
+  "normalization_confidence",
+  "normalization_status"
+ ],
+ "modified": "2026-10-19 12:00:00.000000"
 }

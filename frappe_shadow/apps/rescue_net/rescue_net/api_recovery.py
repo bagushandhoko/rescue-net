@@ -534,6 +534,29 @@ def recovery_board(disaster_event=None):
             order_by="creation asc", limit_page_length=5000,
         ):
             last[u.project] = u
+    # obyek kerja lapangan per proyek -> alat diminta vs dikerahkan
+    tools = {}
+    if rows and frappe.get_meta("RN Work Object").has_field("recovery_project"):
+        wos = frappe.get_all("RN Work Object",
+                             filters={"recovery_project": ["in", [r.name for r in rows]]},
+                             fields=["name", "recovery_project", "status"], limit_page_length=2000)
+        wo_proj = {w.name: w.recovery_project for w in wos}
+        for w in wos:
+            t = tools.setdefault(w.recovery_project, {"obyek": 0, "diminta": 0.0, "dikerahkan": 0.0})
+            t["obyek"] += 1
+        reqs = frappe.get_all("RN Work Tool Request",
+                              filters={"work_object": ["in", list(wo_proj)],
+                                       "request_status": ["not in", ["cancelled", "rejected"]]},
+                              fields=["name", "work_object", "quantity"], limit_page_length=5000) if wo_proj else []
+        req_proj = {q.name: wo_proj.get(q.work_object) for q in reqs}
+        for q in reqs:
+            tools[req_proj[q.name]]["diminta"] += flt(q.quantity) or 1.0
+        if reqs:
+            for d in frappe.get_all("RN Work Tool Deployment",
+                                    filters={"work_tool_request": ["in", list(req_proj)],
+                                             "deployment_status": ["not in", ["cancelled", "returned_cancelled"]]},
+                                    fields=["work_tool_request", "quantity_assigned"], limit_page_length=5000):
+                tools[req_proj[d.work_tool_request]]["dikerahkan"] += flt(d.quantity_assigned)
     projects = []
     for r in rows:
         u = last.get(r.name)
@@ -547,6 +570,7 @@ def recovery_board(disaster_event=None):
             "last_update": {"title": u.update_title, "at": u.observed_at or u.creation,
                             "progress": flt(u.progress_percent)} if u else None,
             "updated_at": r.modified,
+            "alat": tools.get(r.name) or {"obyek": 0, "diminta": 0.0, "dikerahkan": 0.0},
         })
     projects.sort(key=lambda p: (str(p["status"] or "") in ("completed", "selesai"), -p["progress"]))
     n = len(projects)

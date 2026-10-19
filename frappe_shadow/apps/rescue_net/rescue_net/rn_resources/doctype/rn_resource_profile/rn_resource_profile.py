@@ -2,7 +2,7 @@ import hashlib
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import flt, getdate
 
 
 class RNResourceProfile(Document):
@@ -48,3 +48,11 @@ class RNResourceProfile(Document):
             frappe.throw(
                 "Quantity resource harus lebih dari 0"
             )
+
+        # masa pakai & dukungan (Recovery dan Alat Kerja, owner 2026-10-19)
+        if (self.available_from and self.available_until
+                and getdate(self.available_until) < getdate(self.available_from)):
+            frappe.throw("Tanggal 'bisa dipakai sampai' tidak boleh sebelum tanggal mulai")
+
+        if flt(self.daily_operating_cost) < 0:
+            frappe.throw("Biaya operasional per hari tidak boleh negatif")

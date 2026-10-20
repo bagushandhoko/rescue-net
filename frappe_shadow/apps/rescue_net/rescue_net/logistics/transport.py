@@ -385,7 +385,7 @@ def confirm_transport_booking(booking, pin=None):
     if doc.get("distribution_flow"):
         # the shipment now rides this armada (owner 2026-10-19)
         from rescue_net.logistics.flows import _assign_flow_to_space
-        _assign_flow_to_space(doc.distribution_flow, space)
+        _assign_flow_to_space(doc.distribution_flow, space, doc.get("booking_leg") or "main")
     return {"booking": doc.name, "status": doc.status}
 
 
@@ -560,6 +560,29 @@ def claim_distribution_flow(flow, transport_space=None, eta=None, note=None):
     how "posko distribusi temennya" books it."""
     actor = rn_actor()
     doc = frappe.get_doc("RN Distribution Flow", flow)
+
+    # owner 2026-10-20: a flow already booked on a main armada whose sender
+    # chose "masuk antrean" -> the claim is the first leg to its handover point
+    first_leg = bool(doc.get("first_mile") == "queue" and doc.transport_space and not doc.get("first_mile_space"))
+    if first_leg:
+        if not transport_space:
+            frappe.throw("Pilih armada untuk menjemput alur ini.")
+        from rescue_net.services.transport import assert_bookable, lock_space
+        assert_bookable(lock_space(transport_space))
+        space = frappe.get_doc("RN Transport Space", transport_space)
+        if not _can_contribute(actor, space.coordination_posko):
+            frappe.throw("Anda bukan petugas / anggota posko distribusi armada ini.",
+                         frappe.PermissionError)
+        doc.first_mile_space = space.name
+        if "assigned_pickup" in TRANSITIONS.get(doc.flow_status or "planned", set()):
+            doc.flow_status = "assigned_pickup"
+            if hasattr(doc, "assigned_pickup_at"):
+                doc.assigned_pickup_at = now_datetime()
+        if eta:
+            doc.eta_final = eta
+        doc.save(ignore_permissions=True)
+        return {"flow": doc.name, "flow_status": doc.flow_status, "first_mile_space": space.name,
+                "transport_space": doc.transport_space, "transport_provider": doc.transport_provider}
 
     if doc.transport_space:
         frappe.throw("Alur ini sudah punya armada.")

@@ -11,7 +11,7 @@ from rescue_net.tests.factories import (RNTestCase, as_guest, as_user, make_acto
                                         make_posko, make_transport_space, make_world)
 
 
-class TestShipmentBooking(RNTestCase):
+class _ShipmentWorld(RNTestCase):
     def setUp(self):
         super().setUp()
         self.w = make_world()
@@ -31,6 +31,8 @@ class TestShipmentBooking(RNTestCase):
                                quantity_mode="exact", source_posko=self.src.name,
                                transport_space=armada.name, weight_kg=kw.pop("weight_kg", 500), **kw)
 
+
+class TestShipmentBooking(_ShipmentWorld):
     def test_same_org_armada_is_a_confirmed_booking(self):
         r = self.send(self.arm_a, window_from="2026-11-01 00:00:00", window_to="2026-11-03 23:59:59")
         self.assertEqual(r["booking_status"], "confirmed")
@@ -93,3 +95,61 @@ class TestShipmentBooking(RNTestCase):
             ids = [a["id"] for a in logistik_dispatch_options(self.w.event.name, source_posko=self.src.name)["armada"]]
         self.assertNotIn(self.arm_b.name, ids)
         self.assertIn(self.arm_a.name, ids)
+
+
+class TestFirstMile(_ShipmentWorld):
+    """Langkah 3 (owner 2026-10-20): how the cargo reaches the main armada's
+    handover point — antar sendiri / antrean / transporter."""
+
+    def test_transporter_books_a_second_leg(self):
+        courier = make_transport_space(self.tp_a, disaster_event=self.w.event.name)
+        r = self.send(self.arm_b, first_mile="transporter", first_mile_space=courier.name)
+        self.assertEqual(r["booking_status"], "requested")             # main armada, other org
+        self.assertEqual(r["first_mile_status"], "confirmed")          # courier, same org
+        fb = frappe.get_doc("RN Transport Booking", r["first_mile_booking"])
+        self.assertEqual(fb.booking_leg, "first_mile")
+        self.assertEqual(frappe.db.get_value("RN Distribution Flow", r["flow"], "first_mile_space"), courier.name)
+        self.assertEqual(frappe.db.get_value("RN Transport Booking", r["booking"], "delivery_method"), "self_deliver")
+        # confirming the main booking sets the main armada, not the courier
+        coord = make_actor(posko=self.tp_b)
+        with as_user(coord.user):
+            confirm_transport_booking(r["booking"])
+        flow = frappe.get_doc("RN Distribution Flow", r["flow"])
+        self.assertEqual((flow.transport_space, flow.first_mile_space), (self.arm_b.name, courier.name))
+
+    def test_transporter_without_main_armada_is_the_main_leg(self):
+        r = self.send_direct(first_mile="transporter", first_mile_space=self.arm_b.name)
+        self.assertEqual(frappe.db.get_value("RN Transport Booking", r["booking"], "booking_leg"), "main")
+        self.assertIsNone(r["first_mile_booking"])
+
+    def test_queue_waits_for_a_posko_distribusi_then_claim_sets_first_leg(self):
+        from rescue_net.api_control_centre import posko_distribusi_board
+        from rescue_net.logistics.transport import claim_distribution_flow
+        r = self.send(self.arm_a, first_mile="queue")                   # main: same org, confirmed
+        self.assertEqual(frappe.db.get_value("RN Distribution Flow", r["flow"], "transport_space"), self.arm_a.name)
+        with as_guest():
+            q = posko_distribusi_board(disaster_event=self.w.event.name)["pickup_queue"]
+        row = [x for x in q if x.get("flow") == r["flow"]]
+        self.assertTrue(row and row[0]["first_leg"])
+        courier = make_transport_space(self.tp_b, disaster_event=self.w.event.name)
+        coord = make_actor(posko=self.tp_b)
+        with as_user(coord.user):
+            claim_distribution_flow(r["flow"], transport_space=courier.name)
+        self.assertEqual(frappe.db.get_value("RN Distribution Flow", r["flow"], "first_mile_space"), courier.name)
+        with as_guest():
+            q = posko_distribusi_board(disaster_event=self.w.event.name)["pickup_queue"]
+        self.assertNotIn(r["flow"], [x.get("flow") for x in q])
+
+    def test_self_delivery_and_pending_booking_stay_out_of_the_queue(self):
+        from rescue_net.api_control_centre import posko_distribusi_board
+        own = self.send_direct(first_mile="self_deliver")
+        booked = self.send(self.arm_b)                                  # requested, no armada yet
+        with as_guest():
+            q = [x.get("flow") for x in posko_distribusi_board(disaster_event=self.w.event.name)["pickup_queue"]]
+        self.assertNotIn(own["flow"], q)
+        self.assertNotIn(booked["flow"], q)
+
+    def send_direct(self, **kw):
+        with as_user(self.op.user):
+            return create_flow(destination_posko=self.dst.name, item_text="Beras", quantity=10, unit="karung",
+                               quantity_mode="exact", source_posko=self.src.name, weight_kg=500, **kw)

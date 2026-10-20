@@ -1007,6 +1007,7 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
             "capacity_weight_kg", "capacity_volume_m3", "coordination_posko",
             "departure_at", "eta_at", "departure_time", "eta", "service_mode",
             "capacity_committed_kg", "route_origin", "route_destination", "booking_policy",
+            "handover_location",
         ]),
         order_by="departure_at asc", limit_page_length=200,
     )
@@ -1040,6 +1041,9 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
             "rute": " → ".join(x for x in (t.get("route_origin"), t.get("route_destination")) if x),
             "jadwal_kosong": not dep,
             "status": t.transport_status,
+            "handover": t.get("handover_location") or "",
+            # jemput-antar antar posko / titik distribusi (step 3 "transporter")
+            "courier": (t.get("service_mode") or "both") in ("courier_pickup", "both"),
             # same organisation -> booking approved at once; else the armada's posko confirms
             "same_org": bool(src_org and src_org == frappe.db.get_value("RN Posko", t.coordination_posko, "organization")),
         })

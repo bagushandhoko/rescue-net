@@ -91,6 +91,13 @@
       "description": "Set when a posko logistik books this armada for a shipment; on confirm the flow is assigned to the armada."
     },
     {
+      "fieldname": "booking_leg",
+      "label": "Leg",
+      "fieldtype": "Select",
+      "options": "\nmain\nfirst_mile",
+      "description": "main = the shipment's main armada; first_mile = courier to the main armada's handover point."
+    },
+    {
       "fieldname": "qty_weight_kg",
       "label": "Berat (kg)",
       "fieldtype": "Float"

@@ -411,50 +411,71 @@ async function openStockSources(item) {
    api_logistics.create_flow. If "Lewat" is left "Langsung — cari transporter",
    no armada is set and the flow shows up in Posko Distribusi's pickup queue
    for any transport posko to claim. */
-/* "Kirim stok" (owner 2026-10-19): pick the disaster (of those this posko
-   serves) and the send window; destinations + armada follow that disaster,
-   armada also the window. Picking an armada = a booking — same organisation
-   is approved at once, another organisation's posko distribusi confirms. */
+/* "Kirim stok" — 3 langkah (owner 2026-10-19/20):
+   1. Tujuan & barang (bencana yang dilayani posko ini, rentang kirim, jumlah,
+      berat, posko tujuan di bencana itu)
+   2. Booking space distribusi utama (armada yang melayani bencana + posko
+      ini + berangkat dalam rentang) — atau langsung ke tujuan
+   3. Cara barang sampai ke titik serah armada utama (atau ke tujuan):
+      antar sendiri / masuk antrean (posko distribusi yang menjalankan) /
+      pilih posko distribusi transporter (booking jemput-antar)
+   Booking armada posko lain: satu organisasi disetujui otomatis, beda
+   organisasi menunggu konfirmasi posko distribusinya. */
 function isoDay(offset) {          // local date, YYYY-MM-DD
   const d = new Date(); d.setDate(d.getDate() + offset);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 const val = v => (v === null || v === undefined || v === "") ? "" : safe(v);   // form value (no "-")
 
+function armadaCard(a, name, on) {
+  return `<label class="rn-evc-card${on ? " is-on" : ""}">
+    <input type="radio" name="${name}" value="${safe(a.id)}"${on ? " checked" : ""}>
+    <span class="rn-evc-title">${safe(a.provider)} <small class="rn-muted">${safe(a.jenis)}</small></span>
+    <span class="rn-evc-meta">Berangkat ${safe(a.berangkat)} · tiba ${safe(a.eta)}${a.sisa_kg != null ? ` · sisa ${fmt(a.sisa_kg)} kg` : ""}
+      <span class="rn-evc-badge${a.same_org ? "" : " closed"}">${a.same_org ? "Satu organisasi · langsung disetujui" : "Perlu konfirmasi posko"}</span></span>
+    <span class="rn-evc-loc">${safe(a.posko_title)}${a.rute ? " · " + safe(a.rute) : ""}${a.handover ? " · serah terima: " + safe(a.handover) : ""}${a.jadwal_kosong ? " · jadwal belum diisi" : ""}</span></label>`;
+}
+function plainCard(name, value, title, sub, on) {
+  return `<label class="rn-evc-card${on ? " is-on" : ""}">
+    <input type="radio" name="${name}" value="${safe(value)}"${on ? " checked" : ""}>
+    <span class="rn-evc-title">${title}</span><span class="rn-evc-meta">${sub}</span><span></span></label>`;
+}
+
 async function openDispatch(item, unit, stok) {
-  const st = { event: eventParam(), from: isoDay(0), to: isoDay(3), dest: "", armada: "", qty: "", unit: unit || "", note: "", kg: "" };
-  showDrawer(`Kirim stok — ${item}`, `<p class="rn-muted">Memuat pilihan…</p>`);
+  const st = { step: 1, event: eventParam(), from: isoDay(0), to: isoDay(3), dest: "", main: "",
+    first: "", courier: "", qty: "", unit: unit || "", note: "", kg: "", opt: null, optKey: "" };
+  const T = `Kirim stok — ${item}`;
+  showDrawer(T, `<p class="rn-muted">Memuat pilihan…</p>`);
+
+  async function options() {
+    const key = [st.event, st.from, st.to].join("|");
+    if (st.opt && st.optKey === key) return st.opt;
+    st.opt = await RN_FRAPPE.call("rescue_net.api_control_centre.logistik_dispatch_options", {
+      disaster_event: st.event, source_posko: poskoParam(), window_from: st.from, window_to: st.to,
+    });
+    st.optKey = key;
+    st.event = st.opt.disaster_event || st.event;
+    return st.opt;
+  }
+
+  const steps = () => `<ol class="rn-dispatch-steps">${["Tujuan & barang", "Distribusi utama", "Ke titik serah"]
+    .map((t, i) => `<li class="${st.step === i + 1 ? "is-on" : st.step > i + 1 ? "is-done" : ""}">${i + 1}. ${t}</li>`).join("")}</ol>`;
 
   async function render() {
     let opt;
-    try {
-      opt = await RN_FRAPPE.call("rescue_net.api_control_centre.logistik_dispatch_options", {
-        disaster_event: st.event, source_posko: poskoParam(), window_from: st.from, window_to: st.to,
-      });
-    } catch (e) {
-      showDrawer(`Kirim stok — ${item}`, `<p class="rn-muted">Gagal: ${safe(e && e.message || e)}</p>`);
-      return;
+    try { opt = await options(); } catch (e) {
+      showDrawer(T, `<p class="rn-muted">Gagal: ${safe(e && e.message || e)}</p>`); return;
     }
-    st.event = opt.disaster_event || st.event;
-    const events = opt.events || [];
-    const dests = opt.destinations || [];
-    const armada = opt.armada || [];
+    const events = opt.events || [], dests = opt.destinations || [], armada = opt.armada || [];
     if (!dests.some(d => d.id === st.dest)) st.dest = "";
-    if (!armada.some(a => a.id === st.armada)) st.armada = "";
-    const armadaCards = [`<label class="rn-evc-card${st.armada ? "" : " is-on"}">
-        <input type="radio" name="transport_space" value=""${st.armada ? "" : " checked"}>
-        <span class="rn-evc-title">Langsung / cari transporter</span>
-        <span class="rn-evc-meta">Masuk antrean Posko Distribusi bencana ini</span><span></span></label>`]
-      .concat(armada.map(a => `<label class="rn-evc-card${st.armada === a.id ? " is-on" : ""}">
-        <input type="radio" name="transport_space" value="${safe(a.id)}"${st.armada === a.id ? " checked" : ""}>
-        <span class="rn-evc-title">${safe(a.provider)} <small class="rn-muted">${safe(a.jenis)}</small></span>
-        <span class="rn-evc-meta">Berangkat ${safe(a.berangkat)} · tiba ${safe(a.eta)}${a.sisa_kg != null ? ` · sisa ${fmt(a.sisa_kg)} kg` : ""}
-          <span class="rn-evc-badge${a.same_org ? "" : " closed"}">${a.same_org ? "Satu organisasi · langsung disetujui" : "Perlu konfirmasi posko"}</span></span>
-        <span class="rn-evc-loc">${safe(a.posko_title)}${a.rute ? " · " + safe(a.rute) : ""}${a.jadwal_kosong ? " · jadwal belum diisi" : ""}</span></label>`)).join("");
-    const html = `
-    <form id="dispatchForm" class="rn-form">
+    if (!armada.some(a => a.id === st.main)) st.main = "";
+    const destT = (dests.find(d => d.id === st.dest) || {}).title || "";
+    const main = armada.find(a => a.id === st.main);
+    const summary = `<p class="rn-dispatch-sum"><b>${safe(item)}</b> · ${val(st.qty)} ${val(st.unit)}${st.kg ? ` · ${val(st.kg)} kg` : ""} → <b>${safe(destT)}</b></p>`;
+    let body = "";
+    if (st.step === 1) {
+      body = `
       <p class="rn-muted">Stok tersedia: <b>${fmt(stok)} ${safe(unit)}</b></p>
-      <label>Item<input value="${safe(item)}" readonly></label>
       <label>Bencana yang dilayani
         ${events.length > 1
           ? `<select name="disaster_event">${events.map(ev => `<option value="${safe(ev.id)}"${ev.id === st.event ? " selected" : ""}>${safe(ev.title)}</option>`).join("")}</select>`
@@ -464,69 +485,115 @@ async function openDispatch(item, unit, stok) {
         <label>Kirim dari<input type="date" name="window_from" value="${val(st.from)}" required></label>
         <label>Sampai<input type="date" name="window_to" value="${val(st.to)}" required></label>
       </div>
-      <label>Jumlah dikirim<input name="quantity" type="number" step="0.01" required value="${val(st.qty)}"></label>
-      <label>Satuan<input name="unit" value="${val(st.unit)}"></label>
+      <div class="rn-dispatch-window">
+        <label>Jumlah dikirim<input name="quantity" type="number" step="0.01" min="0" required value="${val(st.qty)}"></label>
+        <label>Satuan<input name="unit" value="${val(st.unit)}"></label>
+      </div>
+      <label>Perkiraan berat (kg) <small class="rn-muted">— wajib bila memakai armada / transporter</small>
+        <input name="weight_kg" type="number" step="0.1" min="0" value="${val(st.kg)}"></label>
       <label>Tujuan (posko penerima di bencana ini)
         <select name="destination_posko" required>
           <option value="">— pilih posko tujuan —</option>
           ${dests.map(d => `<option value="${safe(d.id)}"${d.id === st.dest ? " selected" : ""}>${safe(d.title)}${d.city ? " — " + safe(d.city) : ""}${d.role === "receiver" ? " · penerima" : ""}${d.jiwa ? " · " + fmt(d.jiwa) + " jiwa" : ""}</option>`).join("")}
         </select>
       </label>
-      <div class="rn-evc"><b>Lewat armada</b> <small class="rn-muted">${armada.length} armada melayani bencana ini & berangkat dalam rentang kirim</small>
-        <div class="rn-evc-grid">${armadaCards}</div></div>
-      <label>Perkiraan berat (kg) <small class="rn-muted">— wajib bila lewat armada (dipakai untuk kapasitas)</small>
-        <input name="weight_kg" type="number" step="0.1" min="0" value="${val(st.kg)}"></label>
+      <div class="form-actions"><button class="btn primary" type="submit">Lanjut →</button><span class="form-message" id="dispatchMsg"></span></div>`;
+    } else if (st.step === 2) {
+      body = summary + `
+      <div class="rn-evc"><b>Booking space distribusi utama</b>
+        <small class="rn-muted">${armada.length} armada melayani bencana ini & posko Anda, berangkat ${safe(st.from)} s/d ${safe(st.to)}</small>
+        <div class="rn-evc-grid">${plainCard("main", "", "Langsung ke tujuan", "Tanpa armada utama", !st.main)}${armada.map(a => armadaCard(a, "main", st.main === a.id)).join("")}</div></div>
+      <div class="form-actions"><button class="btn ghost" type="button" data-back>← Kembali</button>
+        <button class="btn primary" type="submit">Lanjut →</button><span class="form-message" id="dispatchMsg"></span></div>`;
+    } else {
+      const target = main ? `titik serah terima ${safe(main.provider)}${main.handover ? " (" + safe(main.handover) + ")" : ""}` : `tujuan ${safe(destT)}`;
+      const couriers = armada.filter(a => a.courier && a.id !== st.main);
+      if (!couriers.some(a => a.id === st.courier)) st.courier = "";
+      body = summary + (main ? `<p class="rn-muted">Distribusi utama: <b>${safe(main.provider)}</b> — ${main.same_org ? "satu organisasi, langsung disetujui" : "menunggu konfirmasi posko distribusi"}</p>` : "") + `
+      <div class="rn-evc"><b>Barang sampai ke ${target} dengan cara</b>
+        <div class="rn-evc-grid">
+          ${plainCard("first", "self_deliver", "Antar sendiri", "Posko Anda mengantar barang ke " + target, st.first === "self_deliver")}
+          ${plainCard("first", "queue", "Masuk antrean", "Tunggu — posko distribusi memilih untuk menjemput & menjalankan", st.first === "queue")}
+          ${plainCard("first", "transporter", "Pilih posko distribusi transporter", "Jemput-antar antar posko & titik distribusi", st.first === "transporter")}
+        </div></div>
+      <div class="rn-evc" data-couriers${st.first === "transporter" ? "" : " hidden"}><b>Transporter</b>
+        <small class="rn-muted">${couriers.length} transporter jemput-antar melayani bencana ini</small>
+        <div class="rn-evc-grid">${couriers.length ? couriers.map(a => armadaCard(a, "courier", st.courier === a.id)).join("")
+          : `<div class="rn-evc-empty">Belum ada transporter jemput-antar di rentang ini.</div>`}</div></div>
       <label>Catatan<input name="note" placeholder="opsional" value="${val(st.note)}"></label>
-      <div class="form-actions">
-        <button class="btn primary" type="submit">Kirim</button>
-        <span class="form-message" id="dispatchMsg"></span>
-      </div>
-    </form>`;
-    showDrawer(`Kirim stok — ${item}`, html);
-    const form = document.getElementById("dispatchForm");
-    const keep = () => {
-      st.qty = form.quantity.value; st.unit = form.unit.value; st.note = form.note.value; st.kg = form.weight_kg.value;
-      st.dest = form.destination_posko.value;
-      const r = form.querySelector('input[name="transport_space"]:checked'); st.armada = r ? r.value : "";
-    };
-    const reload = () => { keep(); render(); };
-    if (form.disaster_event && form.disaster_event.tagName === "SELECT") {
-      form.disaster_event.addEventListener("change", () => { st.event = form.disaster_event.value; reload(); });
+      <div class="form-actions"><button class="btn ghost" type="button" data-back>← Kembali</button>
+        <button class="btn primary" type="submit">Kirim</button><span class="form-message" id="dispatchMsg"></span></div>`;
     }
-    form.window_from.addEventListener("change", () => { st.from = form.window_from.value; reload(); });
-    form.window_to.addEventListener("change", () => { st.to = form.window_to.value; reload(); });
-    form.querySelectorAll('input[name="transport_space"]').forEach(r => r.addEventListener("change", () => {
-      form.querySelectorAll(".rn-evc-card").forEach(c => c.classList.toggle("is-on", c.contains(r) && r.checked));
+    showDrawer(T, `<form id="dispatchForm" class="rn-form">${steps()}${body}</form>`);
+    wire();
+  }
+
+  function keep(form) {
+    const v = n => form.elements[n] ? form.elements[n].value : undefined;
+    const r = n => { const x = form.querySelector(`input[name="${n}"]:checked`); return x ? x.value : undefined; };
+    if (st.step === 1) {
+      st.qty = v("quantity"); st.unit = v("unit"); st.kg = v("weight_kg"); st.dest = v("destination_posko");
+      st.from = v("window_from"); st.to = v("window_to");
+      if (form.elements.disaster_event && form.elements.disaster_event.tagName === "SELECT") st.event = v("disaster_event");
+    } else if (st.step === 2) {
+      st.main = r("main") || "";
+    } else {
+      st.first = r("first") || ""; st.courier = r("courier") || ""; st.note = v("note") || "";
+    }
+  }
+
+  function wire() {
+    const form = document.getElementById("dispatchForm");
+    const msg = () => document.getElementById("dispatchMsg");
+    form.querySelectorAll('input[type="radio"]').forEach(x => x.addEventListener("change", () => {
+      form.querySelectorAll(`input[name="${x.name}"]`).forEach(y => y.closest(".rn-evc-card").classList.toggle("is-on", y.checked));
+      if (x.name === "first") form.querySelector("[data-couriers]").hidden = x.value !== "transporter";
     }));
+    if (st.step === 1) {
+      ["disaster_event", "window_from", "window_to"].forEach(n => {
+        const el = form.elements[n];
+        if (el && el.tagName !== "INPUT" || (el && el.type === "date")) el.addEventListener("change", () => { keep(form); render(); });
+      });
+    }
+    const back = form.querySelector("[data-back]");
+    if (back) back.addEventListener("click", () => { keep(form); st.step -= 1; render(); });
     form.addEventListener("submit", async e => {
       e.preventDefault();
-      keep();
-      const msg = document.getElementById("dispatchMsg");
-      if (st.from && st.to && st.to < st.from) { msg.textContent = "Tanggal 'Sampai' harus setelah 'Kirim dari'."; return; }
-      if (st.armada && !(Number(st.kg) > 0)) { msg.textContent = "Isi perkiraan berat (kg) untuk booking armada."; return; }
-      msg.textContent = "Mengirim…";
+      keep(form);
+      if (st.step === 1) {
+        if (st.from && st.to && st.to < st.from) { msg().textContent = "Tanggal 'Sampai' harus setelah 'Kirim dari'."; return; }
+        if (!(Number(st.qty) > 0)) { msg().textContent = "Isi jumlah dikirim."; return; }
+        if (!st.dest) { msg().textContent = "Pilih posko tujuan."; return; }
+        st.step = 2; render(); return;
+      }
+      if (st.step === 2) {
+        if (st.main && !(Number(st.kg) > 0)) { msg().textContent = "Isi perkiraan berat (kg) di langkah 1 untuk booking armada."; return; }
+        st.step = 3; render(); return;
+      }
+      if (!st.first) { msg().textContent = "Pilih cara barang sampai."; return; }
+      if (st.first === "transporter" && !st.courier) { msg().textContent = "Pilih transporter."; return; }
+      if (st.first === "transporter" && !(Number(st.kg) > 0)) { msg().textContent = "Isi perkiraan berat (kg) di langkah 1."; return; }
+      msg().textContent = "Mengirim…";
       try {
         const r = await RN_FRAPPE.call("rescue_net.api_logistics.create_flow", {
-          destination_posko: st.dest,
-          item_text: item,
-          quantity: Number(st.qty || 0),
-          unit: String(st.unit || "").trim(),
-          quantity_mode: "exact",
-          source_posko: poskoParam(),
-          transport_space: st.armada || undefined,
-          disaster_event: st.event,
+          destination_posko: st.dest, item_text: item, quantity: Number(st.qty || 0),
+          unit: String(st.unit || "").trim(), quantity_mode: "exact", source_posko: poskoParam(),
+          transport_space: st.main || undefined, disaster_event: st.event,
           window_from: st.from ? st.from + " 00:00:00" : undefined,
           window_to: st.to ? st.to + " 23:59:59" : undefined,
-          weight_kg: st.armada ? Number(st.kg) : undefined,
+          weight_kg: Number(st.kg) > 0 ? Number(st.kg) : undefined,
+          first_mile: st.first, first_mile_space: st.first === "transporter" ? st.courier : undefined,
         }, { method: "POST" });
-        msg.textContent = !r.booking
-          ? "Terkirim — menunggu transporter di antrean Posko Distribusi."
-          : r.booking_status === "confirmed"
-            ? "Terkirim — booking armada disetujui otomatis (satu organisasi)."
-            : "Terkirim — booking armada menunggu konfirmasi posko distribusi.";
-        setTimeout(() => { hideDrawer(); loadBoard(); }, 1800);
+        const bk = s => s === "confirmed" ? "disetujui otomatis (satu organisasi)" : "menunggu konfirmasi posko distribusi";
+        const parts = ["Terkirim."];
+        if (r.booking) parts.push(`Booking distribusi utama ${bk(r.booking_status)}.`);
+        if (r.first_mile_booking) parts.push(`Booking transporter ${bk(r.first_mile_status)}.`);
+        if (st.first === "queue") parts.push("Masuk antrean jemput Posko Distribusi.");
+        if (st.first === "self_deliver") parts.push(`Antar sendiri ke ${st.main ? "titik serah terima armada" : "posko tujuan"}.`);
+        msg().textContent = parts.join(" ");
+        setTimeout(() => { hideDrawer(); loadBoard(); }, 2200);
       } catch (err) {
-        msg.textContent = (err && err.message) || String(err);
+        msg().textContent = (err && err.message) || String(err);
       }
     });
   }

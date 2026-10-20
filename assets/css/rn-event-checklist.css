@@ -72,3 +72,9 @@
 #dispatchForm .rn-evc { gap: 6px; }
 #dispatchForm .rn-evc-grid { grid-template-columns: 1fr; max-height: 320px; }
 #dispatchForm .rn-evc-title small { font-weight: 400; }
+.rn-evc[hidden] { display: none; }
+.rn-dispatch-steps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 12px; font-size: 12.5px; }
+.rn-dispatch-steps li { padding: 5px 10px; border-radius: 999px; background: var(--panel2); color: var(--muted); border: 1px solid var(--line); }
+.rn-dispatch-steps li.is-on { background: var(--peach2); border-color: var(--peach2); color: #fff; font-weight: 700; }
+.rn-dispatch-steps li.is-done { color: var(--green); border-color: rgba(47,155,104,.35); }
+.rn-dispatch-sum { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); font-size: 13px; }

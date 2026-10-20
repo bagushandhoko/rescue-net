@@ -546,7 +546,8 @@
       }
       return (
         "<tr><td><b>" + esc(b.cargo) + "</b><small class=\"rn-muted\">" + esc(b.armada) + "</small>" +
-          (b.is_shipment ? '<small class="rn-muted">Kiriman posko: ' + esc(b.pickup || "-") + " → " + esc(b.dropoff || "-") +
+          (b.is_shipment ? '<small class="rn-muted">' + (b.leg === "first_mile" ? "Jemput ke titik serah: " : "Kiriman posko: ") +
+            esc(b.pickup || "-") + " → " + esc(b.dropoff || "-") +
             (b.event_title ? " · " + esc(b.event_title) : "") + "</small>" : "") +
           (b.note ? '<small class="rn-muted">' + esc(b.note) + "</small>" : "") + "</td>" +
         "<td>" + fmt(b.qty_kg) + " kg" + (b.qty_m3 ? " · " + fmt(b.qty_m3) + " m³" : "") + "</td>" +
@@ -808,7 +809,10 @@
       return (
         "<tr>" +
         '<td><b>' + esc(r.item) + '</b><small class="rn-muted">' +
-          (isFlow ? "alur distribusi" : esc(r.aid_offer)) + "</small></td>" +
+          (r.first_leg
+            ? "jemput ke titik serah " + esc((r.handover_to && r.handover_to.provider_name) || "armada utama") +
+              (r.handover_to && r.handover_to.handover_location ? " (" + esc(r.handover_to.handover_location) + ")" : "")
+            : (isFlow ? "alur distribusi" : esc(r.aid_offer))) + "</small></td>" +
         "<td>" + fmt(r.quantity) + " " + esc(r.unit) + "</td>" +
         "<td>" + esc(r.donor) + (r.donor_contact ? "<small class=\"rn-muted\">" + tel(r.donor_contact) + "</small>" : "") + "</td>" +
         "<td>" + esc(r.pickup_location) + "</td>" +

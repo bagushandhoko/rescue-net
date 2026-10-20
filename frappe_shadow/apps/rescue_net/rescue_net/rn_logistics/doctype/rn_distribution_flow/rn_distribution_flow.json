@@ -306,6 +306,19 @@
    "options": "RN Transport Space"
   },
   {
+   "fieldname": "first_mile",
+   "label": "Ke Titik Serah / Tujuan",
+   "fieldtype": "Select",
+   "options": "\nself_deliver\nqueue\ntransporter",
+   "description": "How the cargo reaches the main armada's handover point (or the destination without one): self_deliver, queue (a posko distribusi picks it up), transporter (booked courier). Owner 2026-10-20."
+  },
+  {
+   "fieldname": "first_mile_space",
+   "label": "Armada Jemput",
+   "fieldtype": "Link",
+   "options": "RN Transport Space"
+  },
+  {
    "fieldname": "transport_space_legacy_id",
    "label": "Transport Space Legacy ID",
    "fieldtype": "Data"

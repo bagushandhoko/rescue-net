@@ -1011,8 +1011,13 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
         order_by="departure_at asc", limit_page_length=200,
     )
     armada = []
+    from rescue_net.services.transport import BOOKABLE
     for t in trow:
-        if (t.transport_status or "") in ("completed", "cancelled"):
+        # only armada that can still take cargo (not in transit / done) and
+        # that declare a capacity — anything else cannot be booked
+        if (t.transport_status or "available") not in BOOKABLE:
+            continue
+        if not (_num(t.capacity_weight_kg) > 0 or _num(t.get("capacity_volume_m3")) > 0):
             continue
         dep = _dt(t.get("departure_at"))
         if dep and ((w_from and dep < w_from) or (w_to and dep > w_to)):

@@ -86,3 +86,10 @@ class TestShipmentBooking(RNTestCase):
             self.assertNotIn(self.arm_a.name, ids())
             opt = logistik_dispatch_options(e2.name)
         self.assertIn(self.arm_a.name, [a["id"] for a in opt["armada"]])
+
+    def test_armada_that_cannot_take_cargo_is_not_offered(self):
+        frappe.db.set_value("RN Transport Space", self.arm_b.name, "transport_status", "in_transit")
+        with as_guest():
+            ids = [a["id"] for a in logistik_dispatch_options(self.w.event.name, source_posko=self.src.name)["armada"]]
+        self.assertNotIn(self.arm_b.name, ids)
+        self.assertIn(self.arm_a.name, ids)

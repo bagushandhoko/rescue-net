@@ -583,7 +583,9 @@ def _book_for_flow(actor, flow, transport_space, window_from=None, window_to=Non
     b.booker_name = title(flow.source_posko) or "Posko"
     b.logistic_need = flow.logistic_need or None
     b.aid_offer = flow.aid_offer or None
-    b.cargo_desc = " ".join(str(x) for x in (flow.item_name, flt(flow.quantity) or "", flow.unit or "") if x != "").strip()
+    qty = flt(flow.quantity)
+    qty = ("%g" % qty) if qty else ""
+    b.cargo_desc = " ".join(x for x in (flow.item_name or "", qty, flow.unit or "") if x).strip()
     b.pickup_location = title(flow.source_posko)
     b.dropoff_location = title(flow.destination_posko)
     b.qty_weight_kg = flt(weight_kg) if weight_kg not in (None, "") else 0.0

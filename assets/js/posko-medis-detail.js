@@ -209,6 +209,11 @@ function renderCases(items) {
               Treatment: ${safe(c.treatment_notes)}<br>
               Case ID: ${safe(id)}${evidenceLink("medical_case", id)}</p>
               ${statusControl(id, current)}
+              <p class="rn-case-actions">
+                <button type="button" class="rn-card-btn" data-case="${safe(id)}">
+                  Buka kartu pasien
+                </button>
+              </p>
             </div>
             <div class="chips">
               <span class="chip warning">${caseStatusLabel(current)}</span>
@@ -218,6 +223,133 @@ function renderCases(items) {
       `;
     })
     .join("");
+}
+
+// ---- Patient card modal (history timeline + add note) ---------------------
+
+function fmtTime(s) {
+  if (!s) return "";
+  return String(s).replace("T", " ").slice(0, 16);
+}
+
+function caseCardHtml(data) {
+  const c = data.case || {};
+  const hist = data.history || [];
+
+  const rows = hist.length
+    ? hist
+        .map(h => {
+          const when = fmtTime(h.observed_at);
+          const by = safe(h.author_name);
+
+          if (h.update_type === "status") {
+            return (
+              `<li><b>${caseStatusLabel(h.previous_status)} ` +
+              `&rarr; ${caseStatusLabel(h.new_status)}</b>` +
+              (h.note ? `<br><span>${safe(h.note)}</span>` : "") +
+              `<br><small>${when} &middot; ${by}</small></li>`
+            );
+          }
+
+          return (
+            `<li>Catatan: ${safe(h.note)}` +
+            `<br><small>${when} &middot; ${by}</small></li>`
+          );
+        })
+        .join("")
+    : `<li><small>Belum ada riwayat.</small></li>`;
+
+  return `
+    <h3 style="margin:0 0 .25rem">${safe(c.patient_code)}</h3>
+    <p style="margin:.1rem 0">${safe(c.complaint)}</p>
+    <p style="margin:.1rem 0"><small>Severity: ${safe(c.severity)} &middot;
+      Triage: ${safe(c.triage_status)} &middot;
+      Umur: ${safe(c.age_group)} &middot; ${safe(c.gender)}</small></p>
+    <p style="margin:.1rem 0"><b>Status: ${caseStatusLabel(c.case_status)}</b></p>
+    <hr>
+    <h4 style="margin:.4rem 0">Riwayat</h4>
+    <ul class="rn-card-history"
+        style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+      ${rows}
+    </ul>
+    <hr>
+    <form class="rn-card-note-form" data-case="${safe(c.name)}">
+      <textarea class="rn-card-note" rows="2"
+        placeholder="Tambah catatan pasien..."
+        style="width:100%;box-sizing:border-box"></textarea>
+      <button type="submit">Tambah catatan</button>
+    </form>
+  `;
+}
+
+function openCaseCard(id) {
+  statusMsg("Membuka kartu pasien...");
+
+  return RN_FRAPPE.call(
+    "rescue_net.api_medical.case_card",
+    { medical_case: id }
+  )
+    .then(data => {
+      let overlay =
+        document.getElementById("rnCaseCardOverlay");
+
+      if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "rnCaseCardOverlay";
+        overlay.style.cssText =
+          "position:fixed;inset:0;background:rgba(0,0,0,.5);" +
+          "display:flex;align-items:flex-start;justify-content:center;" +
+          "padding:4vh 1rem;z-index:9999;overflow:auto";
+
+        overlay.addEventListener("click", e => {
+          if (e.target === overlay) { overlay.remove(); return; }
+          if (e.target.closest(".rn-card-close")) overlay.remove();
+        });
+
+        overlay.addEventListener("submit", async e => {
+          const form = e.target.closest(".rn-card-note-form");
+          if (!form) return;
+          e.preventDefault();
+
+          const caseId = form.getAttribute("data-case");
+          const ta = form.querySelector(".rn-card-note");
+          const note = (ta && ta.value.trim()) || "";
+
+          if (!note) { statusMsg("Catatan kosong."); return; }
+
+          try {
+            await RN_FRAPPE.call(
+              "rescue_net.api_medical.add_case_note",
+              { medical_case: caseId, note },
+              { method: "POST" }
+            );
+            await openCaseCard(caseId);
+          } catch (err) {
+            statusMsg(err.message || "Gagal menambah catatan.");
+          }
+        });
+
+        document.body.appendChild(overlay);
+      }
+
+      overlay.innerHTML = `
+        <div style="background:#fff;color:#111;max-width:560px;width:100%;
+          border-radius:12px;padding:1.25rem;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+          <div style="display:flex;justify-content:flex-end">
+            <button type="button" class="rn-card-close" aria-label="Tutup"
+              style="font-size:1.2rem;background:none;border:none;cursor:pointer">
+              &times;
+            </button>
+          </div>
+          <div class="rn-card-body">${caseCardHtml(data)}</div>
+        </div>
+      `;
+
+      statusMsg("Kartu pasien dibuka.");
+    })
+    .catch(err =>
+      statusMsg(err.message || "Gagal membuka kartu pasien.")
+    );
 }
 
 // Delegated handler: the listener lives on the #medicalCases container, which
@@ -232,6 +364,12 @@ function setupCaseStatusControls() {
   el.dataset.statusWired = "1";
 
   el.addEventListener("click", async e => {
+    const cardBtn = e.target.closest(".rn-card-btn");
+    if (cardBtn) {
+      openCaseCard(cardBtn.getAttribute("data-case"));
+      return;
+    }
+
     const btn = e.target.closest(".rn-status-btn");
     if (!btn) return;
 

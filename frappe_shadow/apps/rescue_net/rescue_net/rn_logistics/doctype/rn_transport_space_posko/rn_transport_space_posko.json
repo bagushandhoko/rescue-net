@@ -1,0 +1,13 @@
+{
+ "doctype": "DocType",
+ "name": "RN Transport Space Posko",
+ "module": "RN Logistics",
+ "custom": 0,
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {"fieldname": "posko", "label": "Posko Logistik", "fieldtype": "Link", "options": "RN Posko", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "posko_title", "label": "Posko Title", "fieldtype": "Data", "fetch_from": "posko.title", "read_only": 1, "in_list_view": 1}
+ ],
+ "permissions": []
+}

@@ -27,6 +27,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     canonical_event,
     cols,
     event_filters,
+    serving_posko_names,
 )
 from rescue_net.control_centre.critical import (  # noqa: F401
     _event_posko_names,
@@ -594,6 +595,13 @@ def distribusi_board(disaster_event=None):
     }
 
 
+def _served_rows(child, parent, field):
+    if not frappe.db.table_exists(child):
+        return []
+    return frappe.get_all(child, filters={"parenttype": "RN Transport Space", "parent": parent},
+                          pluck=field, order_by="idx asc")
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def posko_distribusi_board(posko=None, disaster_event=None):
@@ -640,14 +648,16 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             as_dict=True,
         )
 
-    tfilter = {}
+    tfilter, tor = {}, None
     if posko:
         tfilter["coordination_posko"] = posko
     elif event:
-        tfilter = event_filters(cols("RN Transport Space"), event)
+        # armada that serve this disaster (disaster_event or served_events)
+        from rescue_net.control_centre.common import serving_transport_names
+        tfilter = {"name": ["in", serving_transport_names(event) or [""]]}
 
     transports = frappe.get_all(
-        "RN Transport Space", filters=tfilter,
+        "RN Transport Space", filters=tfilter, or_filters=tor,
         fields=_sf("RN Transport Space", [
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3",
@@ -674,6 +684,8 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "contact_phone", "verification_pin", "requested_at",
                 "confirmed_at", "delivery_method", "requested_window",
                 "logistic_need", "aid_offer", "submitted_channel",
+                "window_from", "window_to", "distribution_flow", "disaster_event", "notes",
+                "booking_leg",
             ]),
             order_by="creation desc", limit_page_length=1000,
         )
@@ -734,6 +746,9 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "pickup_volunteer": t.pickup_volunteer or "",
             "pickup_volunteer_name": t.pickup_volunteer_name or "",
             "bookings_count": sum(1 for b in mine if b.status in ("requested", "confirmed")),
+            "served_events": _served_rows("RN Transport Space Event", t.name, "disaster_event") or
+                             ([t.disaster_event] if t.get("disaster_event") else []),
+            "served_poskos": _served_rows("RN Transport Space Posko", t.name, "posko"),
         })
 
     inbox = []
@@ -758,6 +773,15 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "dropoff": b.dropoff_location or "",
             "verification_pin": (b.verification_pin or "") if _di_contacts else "",
             "requested_at": _dt(b.requested_at),
+            "needs_pin": bool(b.verification_pin),
+            # shipment booked from a posko logistik (owner 2026-10-19)
+            "is_shipment": bool(b.get("distribution_flow")),
+            "leg": b.get("booking_leg") or "main",
+            "flow": b.get("distribution_flow") or "",
+            "window_from": _dt(b.get("window_from")), "window_to": _dt(b.get("window_to")),
+            "event_title": (frappe.db.get_value("RN Disaster Event", b.disaster_event, "title")
+                            if b.get("disaster_event") else ""),
+            "note": b.get("notes") or "",
         })
 
     # relawan pickup candidates (distribution assignments at this posko / event)
@@ -788,9 +812,9 @@ def posko_distribusi_board(posko=None, disaster_event=None):
     tp_filter = {"posko_type": "transport"}
     _tp_fields = ["name", "title", "city_name", "organization", "public_participation"]
     if event:
+        tp_filter["name"] = ["in", serving_posko_names(event) or [""]]
         tp_rows = frappe.get_all(
             "RN Posko",
-            or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
             filters=tp_filter, fields=_tp_fields,
             limit_page_length=200,
         )
@@ -882,9 +906,47 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             ):
                 if fr.name not in _seen:
                     _flow_rows.append(fr)
+        # owner 2026-10-20: flows whose sender chose "masuk antrean" to reach
+        # the main armada's handover point also wait here (first leg only)
+        if frappe.db.has_column("RN Distribution Flow", "first_mile"):
+            _seen = {r.name for r in _flow_rows}
+            for fr in frappe.get_all(
+                "RN Distribution Flow",
+                filters={"first_mile": "queue", "first_mile_space": ["in", ["", None]],
+                         "transport_space": ["is", "set"]},
+                or_filters=(
+                    {"disaster_event": event, "disaster_event_legacy_id": event}
+                    if event else None
+                ),
+                fields=_sf("RN Distribution Flow", [
+                    "name", "item_name", "raw_item_text", "quantity", "unit",
+                    "source_posko", "destination_posko", "flow_status",
+                    "transport_space", "eta_final", "disaster_event",
+                ]),
+                order_by="modified desc", limit_page_length=200,
+            ):
+                if fr.name not in _seen:
+                    fr["first_leg"] = True
+                    _flow_rows.append(fr)
+        fm = {}
+        if frappe.db.has_column("RN Distribution Flow", "first_mile") and _flow_rows:
+            fm = {r.name: r.first_mile for r in frappe.get_all(
+                "RN Distribution Flow", filters={"name": ["in", [r.name for r in _flow_rows]]},
+                fields=["name", "first_mile"], limit_page_length=0)}
+        waiting_booking = set()
+        if _flow_rows and frappe.db.has_column("RN Transport Booking", "distribution_flow"):
+            waiting_booking = set(frappe.get_all(
+                "RN Transport Booking",
+                filters={"distribution_flow": ["in", [r.name for r in _flow_rows]],
+                         "status": "requested", "booking_leg": ["!=", "first_mile"]},
+                pluck="distribution_flow", limit_page_length=0))
         for fr in _flow_rows:
-            if fr.get("transport_space"):
+            first_leg = bool(fr.get("first_leg"))
+            if fr.get("transport_space") and not first_leg:
                 continue
+            if not first_leg and (fm.get(fr.name) in ("self_deliver", "transporter")
+                                  or fr.name in waiting_booking):
+                continue            # sender delivers / courier booked / armada booking pending
             if str(fr.get("flow_status") or "").lower() not in (
                 "", "created", "pending", "planned", "needs_transport",
                 "awaiting_transport", "requested",
@@ -903,11 +965,16 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "pickup_location": (src_t or fr.source_posko or "-"),
                 "ready_at": fr.get("eta_final") or "-",
                 "suggested_destination": fr.destination_posko or "",
+                # first leg: carry it to the main armada's handover point
+                "first_leg": first_leg,
+                "handover_to": (frappe.db.get_value("RN Transport Space", fr.transport_space,
+                                                    ["provider_name", "handover_location"], as_dict=True)
+                                if first_leg else None),
             })
 
         dest_rows = frappe.get_all(
             "RN Posko",
-            or_filters={"disaster_event": event, "disaster_event_legacy_id": event},
+            filters={"name": ["in", serving_posko_names(event) or [""]]},
             fields=["name", "title", "posko_type", "city_name"],
             limit_page_length=300,
         )

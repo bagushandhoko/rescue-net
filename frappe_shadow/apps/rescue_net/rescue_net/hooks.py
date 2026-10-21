@@ -31,6 +31,10 @@ scheduler_events = {
         "*/10 * * * *": [
             "rescue_net.services.early_warning.fetch_and_process",
         ],
+        # Dipindah dari 00:00 ke 11:30 (owner 2026-10-11: Aspire kadang dimatikan malam).
+        "30 11 * * *": [
+            "rescue_net.setup.db_backup.run_daily_backup",
+        ],
     },
     "hourly": [
         "rescue_net.ai.queue.process_pending",
@@ -38,7 +42,6 @@ scheduler_events = {
         "rescue_net.services.sms.sweep_failed_whatsapp",
     ],
     "daily": [
-        "rescue_net.setup.db_backup.run_daily_backup",
         "rescue_net.ai.budget.purge_usage_logs",
         "rescue_net.services.expiry.daily_expiry_notify",
     ],

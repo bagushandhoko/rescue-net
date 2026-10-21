@@ -330,7 +330,11 @@
   async function loadBoard() {
     statusMsg("Memuat dashboard shelter…");
     var eventId = getEventId();
-    var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: eventId });
+    // ?id= -> this shelter's own workspace; no id -> all shelters of the event
+    var scopeId = new URLSearchParams(window.location.search).get("id") || "";
+    var args = { disaster_event: eventId };
+    if (scopeId) args.posko = scopeId;
+    var data = await window.RN_FRAPPE.call(BOARD_METHOD, args);
     BOARD_CACHE = data;
 
     $("#shelterUpdated").textContent = "Shelter · Diperbarui " + String(data.generated_at || "").slice(11, 16);
@@ -344,6 +348,8 @@
     renderKelompokRentan(data.kelompok_rentan || []);
     renderPeringatan(data.peringatan || []);
     renderAkomodasiRelawan(data.akomodasi_relawan || []);
+    var akPanel = $("#akomodasiRelawanBody") && $("#akomodasiRelawanBody").closest(".panel");
+    if (akPanel) akPanel.hidden = !!data.scope_posko;
 
     var evidenceHref =
       "evidence.html?event=" + encodeURIComponent(data.disaster_event || "") + "&object_type=shelter";
@@ -352,6 +358,14 @@
     if (seeAll) seeAll.href = evidenceHref;
 
     statusMsg("Dimuat pukul " + String(data.generated_at || "").slice(11, 16));
+    var st = document.getElementById("shelterStatus");
+    if (st) {
+      var allHref = "shelter-detail.html?event=" + encodeURIComponent(data.disaster_event || eventId || "");
+      var name = (data.daftar_shelter && data.daftar_shelter[0] && (data.daftar_shelter[0].title)) || scopeId;
+      st.insertAdjacentHTML("beforeend", scopeId
+        ? ' · Data shelter ini saja (' + esc(safe(name)) + '). <a href="' + esc(allHref) + '">Semua shelter di bencana ini →</a>'
+        : " · Ringkasan semua shelter di bencana ini.");
+    }
   }
 
   /* ---------- legacy per-posko panels (unchanged behaviour) ---------- */

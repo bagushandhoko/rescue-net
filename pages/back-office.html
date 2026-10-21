@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Ekosistem Penanganan</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=kpiicon-20261018">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=opsgroups-20261019b" />
+  <style>
+  .rn-bo-back{text-decoration:none;white-space:nowrap}
+  .rn-bo-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:0 0 18px}
+  .rn-bo-group{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:14px 16px;display:grid;gap:8px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+  .rn-bo-group:hover,.rn-bo-group.is-active{border-color:var(--coral);box-shadow:var(--shadow)}
+  .rn-bo-group:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+  .rn-bo-group h4{margin:0;font-size:15px}
+  .rn-bo-group dl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;margin:0;font-size:13px}
+  .rn-bo-group dt{color:var(--muted)}
+  .rn-bo-group dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+  .rn-bo-tabs{display:flex;flex-wrap:wrap;gap:6px}
+  .rn-bo-tabs button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:12px;cursor:pointer}
+  .rn-bo-tabs button[aria-selected="true"]{background:var(--coral);border-color:var(--coral);color:#fff}
+  .rn-bo-table td.num,.rn-bo-table th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .rn-bo-table td.gap-pos{color:var(--red);font-weight:750}
+  .rn-bo-bar{position:relative;height:8px;min-width:90px;border-radius:999px;background:rgba(120,80,60,.12);overflow:hidden}
+  .rn-bo-bar span{position:absolute;inset:0 auto 0 0;background:var(--green);border-radius:999px}
+  .rn-bo-bar.low span{background:var(--red)} .rn-bo-bar.mid span{background:var(--orange)}
+  .rn-bo-pct{display:block;font-size:11px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+  .rn-bo-skills{display:flex;flex-wrap:wrap;gap:8px}
+  .rn-bo-note{margin:10px 0 0;font-size:12px}
+  .rn-bo-panel-header,.rn-bo-page .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div><h1>Rescue-Net</h1><p>Disaster Management System</p></div>
+    </div>
+    <nav>
+      <a href="war-room.html?event=event-sim-001" data-bo-event>Control Centre</a>
+      <a class="active" href="back-office.html?event=event-sim-001" data-bo-event>Ekosistem Penanganan</a>
+      <a href="organisasi-posko.html?event=event-sim-001" data-bo-event>Organisasi &amp; Posko</a>
+      <a href="donor-program.html?event=event-sim-001" data-bo-event>Donor Program</a>
+      <a href="alat-kerja.html?event=event-sim-001" data-bo-event>Recovery dan Alat Kerja</a>
+    </nav>
+  </aside>
+
+  <main class="main rn-bo-page">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Ekosistem Penanganan</div>
+      <div>
+        <p class="eyebrow">Control Centre · Siapa ikut menangani & apa yang dibawa</p>
+        <h2 id="boTitle">Ekosistem Penanganan</h2>
+        <p class="subtitle">Pihak yang ikut menangani bencana ini — pemerintah, organisasi masyarakat, masyarakat umum, dan program donasi — beserta sumber daya yang mereka bawa dan selisih (gap) dengan kebutuhan posko.</p>
+        <p class="subtitle" id="boStatus">Memuat…</p>
+      </div>
+      <a class="btn ghost rn-bo-back" id="boBackLink" href="war-room.html">&larr; Kembali ke Control Centre</a>
+    </header>
+
+    <section class="kpi-grid rn-bo-kpi">
+      <div class="kpi-card rn-kpi-clickable" data-go="#boOrgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="building"></span><span>Pihak Terlibat</span><strong id="kPihak">-</strong><small>organisasi &amp; lembaga</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#boOrgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="map-pin"></span><span>Posko</span><strong id="kPosko">-</strong><small id="kPoskoSub">jiwa dilayani</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#boSkills" role="button" tabindex="0"><span class="kpi-icon" data-icon="users"></span><span>Relawan</span><strong id="kRelawan">-</strong><small id="kRelawanSub">siaga</small></div>
+      <div class="kpi-card warning rn-kpi-clickable" data-go="#boNeedBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="package"></span><span>Kebutuhan Belum Tertutup</span><strong id="kGap">-</strong><small id="kGapSub">jenis barang</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#boToolBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="wrench"></span><span>Peralatan</span><strong id="kAlat">-</strong><small>aset terdaftar</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#boProgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="heart"></span><span>Dana Terkumpul</span><strong id="kDana">-</strong><small id="kDanaSub">program donasi</small></div>
+    </section>
+
+    <section class="rn-bo-groups" id="boGroups" aria-label="Ringkasan per kelompok"></section>
+
+    <section class="panel" id="boOrgPanel">
+      <div class="panel-header">
+        <div><h3>Pihak yang Terlibat</h3><p>Siapa membawa apa. Klik nama untuk detail organisasi.</p></div>
+        <div class="rn-bo-tabs" role="tablist" id="boOrgTabs"></div>
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table rn-bo-table">
+          <thead><tr><th>Pihak</th><th>Kelompok</th><th class="num">Posko</th><th class="num">Relawan</th><th class="num">Sumbangan</th><th class="num">Peralatan</th><th class="num">Program</th><th class="num">Dana (Rp)</th></tr></thead>
+          <tbody id="boOrgBody"><tr><td colspan="8">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="rn-muted rn-bo-note">Masyarakat umum (perorangan) hanya dihitung jumlahnya — nama dan kontak pribadi tidak ditampilkan.</p>
+    </section>
+
+    <section class="panel" id="boNeedPanel">
+      <div class="panel-header">
+        <div><h3>Gap Kebutuhan Barang</h3><p>Kebutuhan terbuka di semua posko bencana ini dibanding yang sudah terpenuhi dan bantuan yang sedang menuju posko.</p></div>
+        <span class="chip" id="boNeedCount">-</span>
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table rn-bo-table">
+          <thead><tr><th>Barang</th><th class="num">Dibutuhkan</th><th class="num">Terpenuhi</th><th class="num">Menuju Posko</th><th class="num">Gap</th><th>Tertutup</th></tr></thead>
+          <tbody id="boNeedBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-grid">
+      <div class="panel" id="boToolPanel">
+        <div class="panel-header"><div><h3>Peralatan: Tersedia vs Diminta</h3><p>Aset ekosistem dibanding permintaan alat kerja di lapangan.</p></div></div>
+        <div class="rn-table-wrap">
+          <table class="rn-table rn-bo-table">
+            <thead><tr><th>Jenis</th><th class="num">Tersedia</th><th class="num">Diminta</th><th class="num">Dikerahkan</th><th class="num">Gap</th></tr></thead>
+            <tbody id="boToolBody"><tr><td colspan="5">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel" id="boSkillPanel">
+        <div class="panel-header"><div><h3>Relawan per Keahlian</h3><p>Relawan terdaftar untuk bencana ini.</p></div></div>
+        <div class="rn-bo-skills" id="boSkills"><p class="rn-muted">Memuat…</p></div>
+      </div>
+    </section>
+
+    <section class="panel" id="boProgPanel">
+      <div class="panel-header"><div><h3>Program Donasi</h3><p>Target dana dibanding yang sudah terkumpul. Klik program untuk detail.</p></div></div>
+      <div class="rn-table-wrap">
+        <table class="rn-table rn-bo-table">
+          <thead><tr><th>Program</th><th>Pengelola</th><th>Status</th><th class="num">Target (Rp)</th><th class="num">Terkumpul (Rp)</th><th class="num">Gap (Rp)</th><th>Capaian</th></tr></thead>
+          <tbody id="boProgBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+<script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+<script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
+<script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
+<script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+<script src="../assets/js/back-office.js?v=ekosistem-20261019"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
+<script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=opsgroups-20261019"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=title-20261019"></script>
+<script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+<script src="../assets/js/rn-kpi-go.js?v=kpigo-20261019"></script>
+</body>
+</html>

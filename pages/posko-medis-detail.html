@@ -6,10 +6,27 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Posko Medis Detail</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/css/style.css?v=kpiicon-20261018">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
-  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=opsgroups-20261019b" />
   <style>
+    /* Pasien aktif + triase (dari cabang Aspire) */
+    .rn-md-active .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    body .rn-md-active .panel-header > .chip{flex:none !important;width:auto !important;max-width:max-content !important;align-self:flex-start;white-space:nowrap}
+    .rn-md-table td{vertical-align:top}
+    .rn-md-table .rn-md-code{font-weight:750;font-variant-numeric:tabular-nums}
+    .rn-md-table .rn-md-meta{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+    .rn-md-table .rn-md-note{min-width:220px;max-width:420px;white-space:pre-line}
+    .rn-md-table .rn-md-when{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted)}
+    .chip.rn-tri-red{color:#a92f2f;border-color:rgba(216,69,69,.35);background:rgba(255,235,232,.95)}
+    .chip.rn-tri-yellow{color:#8a6500;border-color:rgba(184,137,24,.35);background:rgba(255,246,214,.95)}
+    .chip.rn-tri-green{color:#1f7a50;border-color:rgba(47,155,104,.35);background:rgba(226,246,236,.95)}
+    .chip.rn-tri-black{color:#fff;border-color:#2d211b;background:#2d211b}
+    /* Kebutuhan kategori + form inline + penerimaan (dari cabang posko-medis) */
     .panel-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .rn-inline-form { margin: 0 0 14px; padding: 14px; border: 1px solid var(--border, rgba(128,128,128,.25));
       border-radius: 12px; background: var(--surface-2, rgba(128,128,128,.06)); }
@@ -72,10 +89,28 @@
     </header>
 
     <section class="kpi-grid">
-      <div class="kpi-card danger"><span class="kpi-icon" data-icon="cross"></span><span>Posko</span><strong id="kpiPosko">-</strong><small>medical node</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="box"></span><span>Stok Item</span><strong id="kpiStock">0</strong><small>stok medis</small></div>
-      <div class="kpi-card warning"><span class="kpi-icon" data-icon="clipboard-check"></span><span>Kasus</span><strong id="kpiCases">0</strong><small>catatan pasien</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="pill"></span><span>Pemakaian</span><strong id="kpiUses">0</strong><small>obat/alat dipakai</small></div>
+      <div class="kpi-card danger rn-kpi-clickable" data-go="#activePatientsPanel" role="button" tabindex="0"><span class="kpi-icon" data-icon="bed"></span><span>Pasien Aktif</span><strong id="kpiActive">-</strong><small id="kpiActiveHint">masih ditangani posko</small></div>
+      <div class="kpi-card danger rn-kpi-clickable" data-go="#activePatientsPanel" role="button" tabindex="0"><span class="kpi-icon" data-icon="alert-triangle"></span><span>Triase Merah</span><strong id="kpiRed">-</strong><small id="kpiRedHint">pasien gawat darurat</small></div>
+      <div class="kpi-card warning rn-kpi-clickable" data-go="#medicalStock" role="button" tabindex="0"><span class="kpi-icon" data-icon="package"></span><span>Stok Medis</span><strong id="kpiStock">-</strong><small>jenis obat &amp; alat</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#medicalUses" role="button" tabindex="0"><span class="kpi-icon" data-icon="clipboard-check"></span><span>Pemakaian Obat/Alat</span><strong id="kpiUses">-</strong><small id="kpiUsesHint">catatan pemakaian</small></div>
+    </section>
+
+    <section class="panel rn-md-active" id="activePatientsPanel">
+      <div class="panel-header">
+        <div>
+          <h3>Pasien Aktif &amp; Kondisi Terakhir</h3>
+          <p id="activePatientsHint">Pasien yang masih ditangani posko (belum pulang, meninggal, atau ditutup). Urut dari triase paling gawat.</p>
+        </div>
+        <span class="chip" id="activePatientsCount">-</span>
+      </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table rn-md-table">
+          <thead>
+            <tr><th>Pasien</th><th>Triase</th><th>Status</th><th>Kondisi terakhir</th><th>Evakuasi</th><th>Diperbarui</th></tr>
+          </thead>
+          <tbody id="activePatientsBody"><tr><td colspan="6">Memuat…</td></tr></tbody>
+        </table>
+      </div>
     </section>
 
     <!-- Stok medis + penerimaan bantuan (bantuan masuk menambah stok) -->
@@ -273,16 +308,18 @@
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+<script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
+<script src="../assets/js/rn-posko-contact.js?v=kontak-20261018"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/posko-medis-detail.js?v=kategori-penerimaan-20261021"></script>
+<script src="../assets/js/posko-medis-detail.js?v=merge-kpilink-kategori-20261021"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
-<script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
+<script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=sistemverif-20261008"></script>
-<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=opsgroups-20261019"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=title-20261019"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>
 </html>

@@ -41,6 +41,13 @@ def create_flow(
     transport_provider=None,
     transport_space=None,
     eta_final=None,
+    disaster_event=None,
+    window_from=None,
+    window_to=None,
+    weight_kg=None,
+    volume_m3=None,
+    first_mile=None,
+    first_mile_space=None,
 ):
     # RN_CANONICAL_REF destination_posko = resolve_posko(destination_posko)
     destination_posko = resolve_posko(destination_posko)
@@ -56,6 +63,24 @@ def create_flow(
             )
 
     transport_doc = None
+    book_space = None       # another posko's armada -> booking (see _book_for_flow)
+
+    # owner 2026-10-20: after the main armada, how the cargo reaches its
+    # handover point (or the destination without one): self_deliver / queue
+    # (a posko distribusi picks it up) / transporter (a booked courier)
+    first_mile = (first_mile or "").strip() or None
+    if first_mile not in (None, "self_deliver", "queue", "transporter"):
+        frappe.throw("Pilihan cara kirim tidak valid.")
+    if first_mile == "transporter":
+        if not first_mile_space:
+            frappe.throw("Pilih posko distribusi transporter.")
+        if not (flt(weight_kg) > 0 or flt(volume_m3) > 0):
+            frappe.throw("Isi perkiraan berat (kg) atau volume (m3) muatan untuk booking transporter.")
+        if not transport_space:
+            # no main armada: the courier carries it all the way = the main leg
+            transport_space, first_mile_space = first_mile_space, None
+    else:
+        first_mile_space = None
 
     if transport_space:
         locked = frappe.db.sql(
@@ -72,24 +97,22 @@ def create_flow(
         if not locked:
             frappe.throw("Transport tidak ditemukan")
 
-        if locked[0].transport_status != "available":
-            frappe.throw(
-                "Transport sudah dipakai atau tidak tersedia"
-            )
-
-        transport_doc = frappe.get_doc(
-            "RN Transport Space",
-            transport_space,
-        )
-
-        if not _can_contribute(
-            actor,
-            transport_doc.coordination_posko,
-        ):
-            frappe.throw(
-                "Anda tidak dapat menggunakan transport ini",
-                frappe.PermissionError,
-            )
+        space_posko = frappe.db.get_value("RN Transport Space", transport_space, "coordination_posko")
+        if _can_contribute(actor, space_posko):
+            # the armada's own posko puts the shipment on it directly
+            if locked[0].transport_status != "available":
+                frappe.throw(
+                    "Transport sudah dipakai atau tidak tersedia"
+                )
+            transport_doc = frappe.get_doc("RN Transport Space", transport_space)
+        else:
+            # owner 2026-10-19: another posko's armada is BOOKED — same
+            # organisation approved at once, else that posko confirms
+            if locked[0].transport_status in ("completed", "cancelled"):
+                frappe.throw("Armada ini sudah selesai / dibatalkan.")
+            if not (flt(weight_kg) > 0 or flt(volume_m3) > 0):
+                frappe.throw("Isi perkiraan berat (kg) atau volume (m3) muatan untuk booking armada.")
+            book_space = transport_space
 
     aid_doc = None
 
@@ -158,7 +181,8 @@ def create_flow(
     doc.source_posko = source_posko
     # event-scope the flow so it shows on the event dashboards / pickup queue
     doc.disaster_event = (
-        frappe.db.get_value("RN Posko", source_posko, "disaster_event")
+        _flow_event(disaster_event, source_posko, destination_posko)
+        or frappe.db.get_value("RN Posko", source_posko, "disaster_event")
         or frappe.db.get_value("RN Posko", destination_posko, "disaster_event")
     )
     doc.item_name = item_text
@@ -173,7 +197,9 @@ def create_flow(
     doc.aid_offer = aid_offer
     doc.transport_reference = transport_reference
     doc.transport_provider = transport_provider
-    doc.transport_space = transport_space
+    doc.transport_space = transport_doc.name if transport_doc else None   # booking: set on confirm
+    if doc.meta.has_field("first_mile"):
+        doc.first_mile = first_mile
     doc.eta_final = eta_final
     doc.flow_status = "planned"
     doc.insert(ignore_permissions=True)
@@ -188,6 +214,18 @@ def create_flow(
             },
             update_modified=False,
         )
+
+    main_drop = None
+    if transport_space and first_mile:
+        main_drop = frappe.db.get_value("RN Transport Space", transport_space, "handover_location") or None
+    booking = (_book_for_flow(actor, doc, book_space, window_from, window_to, weight_kg, volume_m3,
+                              brought_in=bool(first_mile))
+               if book_space else None)
+    first_booking = None
+    if first_mile_space:
+        # courier to the main armada's handover point
+        first_booking = _book_for_flow(actor, doc, first_mile_space, window_from, window_to, weight_kg,
+                                       volume_m3, leg="first_mile", dropoff=main_drop)
 
     if aid_doc:
         frappe.db.set_value(
@@ -219,6 +257,12 @@ def create_flow(
         "flow_status":doc.flow_status,
         "canonical_group":doc.canonical_group,
         "access_warnings": access_warnings(destination_posko),  # nasihat saja (10e)
+        "booking": booking.name if booking else None,
+        "booking_status": booking.status if booking else None,
+        "verification_pin": booking.verification_pin if booking else None,
+        "first_mile": first_mile,
+        "first_mile_booking": first_booking.name if first_booking else None,
+        "first_mile_status": first_booking.status if first_booking else None,
     }
 
 
@@ -531,3 +575,87 @@ def control_centre_logistics():
             "are separate states. Received flow never creates available stock automatically."
         ),
     }
+
+
+def _flow_event(disaster_event, source_posko, destination_posko):
+    """The disaster picked on the send form, if the sending posko serves it."""
+    if not disaster_event:
+        return None
+    from rescue_net.control_centre.common import posko_served_events
+    from rescue_net.reference_resolver import resolve_disaster_event
+
+    ev = resolve_disaster_event(disaster_event) or disaster_event
+    for p in (source_posko, destination_posko):
+        if p and ev in posko_served_events(p):
+            return ev
+    frappe.throw("Posko ini tidak menangani bencana yang dipilih.")
+
+
+def _same_org_armada(actor, source_posko, space):
+    """Armada of the sender's own organisation."""
+    org_src = frappe.db.get_value("RN Posko", source_posko, "organization") if source_posko else None
+    org_arm = frappe.db.get_value("RN Posko", space.coordination_posko, "organization")
+    return bool(org_src and org_src == org_arm)
+
+
+def _book_for_flow(actor, flow, transport_space, window_from=None, window_to=None,
+                   weight_kg=None, volume_m3=None, leg="main", dropoff=None, brought_in=False):
+    """Booking for a shipment (owner 2026-10-19). Same organisation ->
+    confirmed at once and the flow rides the armada; otherwise `requested`
+    until the armada's posko confirms (confirm_transport_booking assigns the
+    flow then)."""
+    space = frappe.get_doc("RN Transport Space", transport_space)
+    auto = _same_org_armada(actor, flow.source_posko, space)
+    title = lambda p: (frappe.db.get_value("RN Posko", p, "title") or p) if p else None
+    window = " – ".join(str(x)[:16] for x in (window_from, window_to) if x) or None
+    b = frappe.new_doc("RN Transport Booking")
+    b.transport_space = space.name
+    b.disaster_event = flow.disaster_event or space.disaster_event
+    b.booked_by_type = "posko"
+    b.booked_by_id = flow.source_posko
+    b.booker_name = title(flow.source_posko) or "Posko"
+    b.logistic_need = flow.logistic_need or None
+    b.aid_offer = flow.aid_offer or None
+    qty = flt(flow.quantity)
+    qty = ("%g" % qty) if qty else ""
+    b.cargo_desc = " ".join(x for x in (flow.item_name or "", qty, flow.unit or "") if x).strip()
+    b.pickup_location = title(flow.source_posko)
+    b.dropoff_location = dropoff or title(flow.destination_posko)
+    b.qty_weight_kg = flt(weight_kg) if weight_kg not in (None, "") else 0.0
+    b.qty_volume_m3 = flt(volume_m3) if volume_m3 not in (None, "") else 0.0
+    # main armada with a first-mile choice: cargo is brought to its handover point
+    b.delivery_method = ("self_deliver" if brought_in or (space.service_mode or "both") == "space_only"
+                         else "use_transporter")
+    if b.meta.has_field("booking_leg"):
+        b.booking_leg = leg
+    b.requested_window = window
+    if window_from:
+        b.window_from = window_from
+    if window_to:
+        b.window_to = window_to
+    b.distribution_flow = flow.name
+    b.created_by_user = actor.name if actor else None
+    if auto:
+        b.status = "confirmed"
+        b.confirmed_at = now_datetime()
+        b.notes = "Disetujui otomatis (organisasi yang sama)."
+    else:
+        # posko-to-posko: both sides are logged-in operators, so the armada's
+        # posko confirms in its Booking Masuk list without a PIN
+        b.status = "requested"
+    b.insert(ignore_permissions=True)
+    if auto:
+        _assign_flow_to_space(flow.name, space, leg)
+        from rescue_net.logistics.transport import _recompute_transport_committed
+        _recompute_transport_committed(space.name)
+    return b
+
+
+def _assign_flow_to_space(flow_name, space, leg="main"):
+    if leg == "first_mile":
+        frappe.db.set_value("RN Distribution Flow", flow_name, "first_mile_space", space.name)
+        return
+    frappe.db.set_value("RN Distribution Flow", flow_name, {
+        "transport_space": space.name,
+        "transport_provider": space.provider_name,
+    })

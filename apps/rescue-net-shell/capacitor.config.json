@@ -4,12 +4,18 @@
   "webDir": "www",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://osiun.tail251e1e.ts.net/rescue-net/index.html?source=app",
+    "url": "https://rescue-net.online/rescue-net/index.html?source=app",
     "androidScheme": "https",
     "cleartext": false,
-    "allowNavigation": ["osiun.tail251e1e.ts.net"]
+    "allowNavigation": [
+      "rescue-net.online"
+    ]
   },
   "plugins": {
-    "SplashScreen": { "launchShowDuration": 1200, "backgroundColor": "#fff7f0", "showSpinner": false }
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#fff7f0",
+      "showSpinner": false
+    }
   }
 }

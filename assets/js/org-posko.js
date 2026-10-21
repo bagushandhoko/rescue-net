@@ -196,7 +196,10 @@
     $("#orgUpdated").textContent = "Organisasi · Diperbarui " + fmtTime(data.generated_at).slice(11, 16);
     renderKpi(data.totals || {});
     renderTree(state.orgs);
-    if (state.orgs.length && !state.selected) selectOrg(state.orgs[0].name);
+    // ?org=<name> (link dari Ekosistem Penanganan) membuka organisasi itu
+    var wantOrg = new URLSearchParams(location.search).get("org");
+    if (!state.selected && wantOrg && state.orgs.some(function (o) { return o.name === wantOrg; })) selectOrg(wantOrg);
+    else if (state.orgs.length && !state.selected) selectOrg(state.orgs[0].name);
   }
 
   document.addEventListener("DOMContentLoaded", function () {

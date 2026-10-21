@@ -17,6 +17,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     cols,
     event_filters,
     first,
+    serving_posko_names,
 )
 from rescue_net.control_centre.critical import (  # noqa: F401
     _derived_critical_reasons,
@@ -64,11 +65,12 @@ def map_points(event):
         )
     ]
 
+    # poskos that handle this event, incl. served_events (multi-disaster posko)
     rows = frappe.get_all(
         doctype,
-        filters=event_filters(
-            columns,
-            event,
+        filters=(
+            {"name": ["in", serving_posko_names(event) or [""]]}
+            if event else event_filters(columns, event)
         ),
         fields=fields,
         limit_page_length=500,

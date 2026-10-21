@@ -694,3 +694,81 @@ def admin_reset_password(user=None, new_password=None):
     )
 
     return {"ok": True, "message": "Password user berhasil direset."}
+
+
+# ---------------------------------------------------------------------------
+# Landing after login (owner 2026-10-19): open the user's own posko page and
+# only offer the disasters this user is handling, newest first.
+# ---------------------------------------------------------------------------
+_POSKO_PAGE = {
+    "logistics": "posko-logistik.html", "medical": "posko-medis-detail.html",
+    "shelter": "shelter-detail.html", "kitchen": "dapur-umum.html",
+    "transport": "posko-distribusi.html",
+}
+
+
+def _short_event(name):
+    return str(name or "").replace("disaster_events:", "")
+
+
+@frappe.whitelist()
+def my_landing():
+    """{href, posko, events[]} for the logged-in user. `events` = disasters of
+    the user's poskos (own + organisation), newest first; `href` = the page of
+    the user's own posko (by posko type) on the newest disaster, else the
+    organisation page, else None (stay on the normal home page)."""
+    from rescue_net.access_policy import is_system_manager, rn_actor
+    from rescue_net.api_offline import _my_poskos
+    from rescue_net.services.drill import drill_event_names
+
+    user = frappe.session.user
+    if not user or user == "Guest":
+        return {"logged_in": False}
+    actor = rn_actor(required=False)
+    if not actor or not actor.get("name"):
+        return {"logged_in": True, "events": [], "href": None}
+
+    own = []
+    if actor.get("posko"):
+        own.append(actor.posko)
+    own += frappe.get_all("RN Posko Assignment",
+                          filters={"user_account": actor.name, "status": "approved"},
+                          pluck="posko", order_by="modified desc")
+    own = [p for p in dict.fromkeys(own) if p and frappe.db.exists("RN Posko", p)]
+    poskos = list(dict.fromkeys(own + _my_poskos(actor)))
+
+    from rescue_net.control_centre.common import posko_served_events
+
+    drills = set() if is_system_manager() else drill_event_names()
+    served = {p: posko_served_events(p) for p in poskos}   # a posko can serve several disasters
+    ev_names = []
+    for p in poskos:
+        for ev in served[p]:
+            if ev and ev not in drills and ev not in ev_names:
+                ev_names.append(ev)
+    events = frappe.get_all("RN Disaster Event", filters={"name": ["in", ev_names]},
+                            fields=["name", "title", "event_status", "started_at", "severity"]) if ev_names else []
+    active = [e for e in events if str(e.event_status or "").lower() in ("active", "aktif")]
+    events = active or events                     # the disasters being handled now
+    events.sort(key=lambda e: str(e.started_at or ""), reverse=True)
+    out_events = [{"id": _short_event(e.name), "title": e.title, "severity": e.severity,
+                   "started_at": e.started_at} for e in events]
+    latest = out_events[0]["id"] if out_events else None
+
+    href, posko_info = None, None
+    if own:
+        # the user's own posko on the newest disaster it serves
+        serves = {p: [_short_event(e) for e in served[p]] for p in own}
+        primary = next((p for p in own if latest in serves[p]), own[0])
+        row = frappe.db.get_value("RN Posko", primary, ["name", "title", "posko_type"], as_dict=True)
+        page = _POSKO_PAGE.get(str(row.posko_type or "").lower(), "posko-detail.html")
+        ev = latest if latest in serves[primary] else (serves[primary][0] if serves[primary] else latest)
+        from urllib.parse import quote
+        href = page + "?id=" + quote(primary, safe="") + ("&event=" + quote(ev, safe="") if ev else "")
+        posko_info = {"name": row.name, "title": row.title, "posko_type": row.posko_type}
+    elif actor.get("organization"):
+        from urllib.parse import quote
+        href = ("organisasi-posko.html?org=" + quote(actor.organization, safe="") +
+                ("&event=" + quote(latest, safe="") if latest else ""))
+
+    return {"logged_in": True, "href": href, "posko": posko_info, "events": out_events, "latest_event": latest}

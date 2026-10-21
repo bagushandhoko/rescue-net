@@ -2,6 +2,7 @@
 never public, banner is guest-safe."""
 
 import json
+from datetime import datetime, timedelta, timezone
 
 import frappe
 
@@ -11,7 +12,14 @@ from rescue_net.services import early_warning as ew
 from rescue_net.tests.factories import RNTestCase, as_guest, make_event, make_posko
 
 
-def payload(mag="5.6", depth="10 km", coords="-6.20,106.80", dt="2026-10-09T01:02:03+00:00", area="Pusat gempa di laut 30 km Barat Daya Banten"):
+# A warning expires 48 h after the quake: a fixed date made this suite fail
+# from 2026-10-11 on. One fixed "one hour ago" per run keeps the identifier
+# stable between payload() calls (idempotency tests send the same quake twice).
+RECENT = (datetime.now(timezone.utc) - timedelta(hours=1)).replace(second=3, microsecond=0).isoformat()
+
+
+def payload(mag="5.6", depth="10 km", coords="-6.20,106.80", dt=None, area="Pusat gempa di laut 30 km Barat Daya Banten"):
+    dt = dt or RECENT
     return {"Infogempa": {"gempa": {"DateTime": dt, "Coordinates": coords, "Magnitude": mag,
                                      "Kedalaman": depth, "Wilayah": area, "Potensi": "tidak berpotensi tsunami"}}}
 

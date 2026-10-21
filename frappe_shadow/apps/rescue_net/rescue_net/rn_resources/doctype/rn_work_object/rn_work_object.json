@@ -64,6 +64,12 @@
    "options": "RN Posko"
   },
   {
+   "fieldname": "recovery_project",
+   "fieldtype": "Link",
+   "options": "RN Recovery Project",
+   "label": "Proyek Recovery"
+  },
+  {
    "fieldname": "status",
    "label": "Status Penanganan",
    "fieldtype": "Select",
@@ -106,5 +112,24 @@
    "create": 1,
    "delete": 1
   }
- ]
+ ],
+ "field_order": [
+  "legacy_id",
+  "disaster_event",
+  "title",
+  "object_type",
+  "location",
+  "size_value",
+  "size_unit",
+  "work_days_target",
+  "posko",
+  "recovery_project",
+  "status",
+  "reported_by",
+  "notes",
+  "observed_at",
+  "verification_status",
+  "created_by_user"
+ ],
+ "modified": "2026-10-19 12:00:00.000000"
 }

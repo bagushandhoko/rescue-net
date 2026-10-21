@@ -1,0 +1,16 @@
+{
+  "name": "rescue-net-shell",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Capacitor wrapper: the Rescue-Net website as an Android app",
+  "scripts": {
+    "prepare-www": "mkdir -p www && cp index.html manifest.webmanifest www/"
+  },
+  "dependencies": {
+    "@capacitor/android": "6.1.2",
+    "@capacitor/core": "6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "6.1.2"
+  }
+}

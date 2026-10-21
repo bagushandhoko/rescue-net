@@ -6,6 +6,11 @@
 
     posko: [
       {
+        label: "Manajemen Distribusi",
+        href: "management-distribusi.html",
+        icon: "distribusi"
+      },
+      {
         label: "Dashboard Posko",
         href: "organisasi-posko.html",
         icon: "organisasi"
@@ -41,7 +46,7 @@
         icon: "relawan"
       },
       {
-        label: "Kebutuhan & Manajemen Alat Kerja",
+        label: "Recovery dan Alat Kerja",
         href: "alat-kerja.html?event=event-sim-001",
         icon: "alat-kerja"
       },
@@ -76,11 +81,6 @@
         icon: "evidence"
       },
       {
-        label: "Posko Recovery",
-        href: "recovery-reconstruction.html?event=event-sim-001",
-        icon: "recovery"
-      },
-      {
         label: "Perencanaan Pengungsi",
         href: "perencanaan-pengungsi.html?event=event-sim-001",
         icon: "clipboard-check"
@@ -88,11 +88,6 @@
     ],
 
     modules: [
-      {
-        label: "Manajemen Distribusi",
-        href: "management-distribusi.html",
-        icon: "distribusi"
-      },
       {
         label: "Peta Nasional",
         href: "peta-nasional.html",
@@ -447,6 +442,24 @@
       currentFile()
     );
   }
+
+  // Phone menu on pages without the operational sidebar (Home, public and
+  // field pages): the same groups, closed, for rn-mobile-drawer.js. Posko
+  // pages are readable by everyone; adding data still needs a login.
+  window.RNNav = {
+    groupsHtml(prefix) {
+      const pre = prefix || "";
+      const fix = items => items.map(it => Object.assign({}, it, { href: pre + it.href }));
+      return [
+        ["Posko", CONFIG.posko, "posko"],
+        ["Donasi & Program Khusus", CONFIG.donasi, "donasi"],
+        ["Modul", CONFIG.modules, "modul"],
+        ["Pengaturan", CONFIG.pengaturan, "pengaturan"]
+      ].map(([label, items, id]) =>
+        groupHtml(label, fix(items), id, false).replace('class="rn-nav-v2-group"', 'class="rn-nav-v2-group rn-drawer-group"').replace(" open>", ">")
+      ).join("");
+    }
+  };
 
   // Let a page (e.g. posko-logistik.html's posko dropdown) refresh the top
   // function group after it changes the active posko / URL.

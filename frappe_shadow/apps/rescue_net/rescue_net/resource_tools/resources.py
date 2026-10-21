@@ -41,6 +41,30 @@ from rescue_net.resource_tools.common import (  # noqa: F401
 )
 
 
+def _apply_usage_support(doc, available_from, available_until, support_transport,
+                         support_operator, support_fuel, daily_operating_cost, support_notes,
+                         partial=False):
+    """How long a tool can be used and what it needs to be used (transport,
+    operator, fuel, daily cost, other). `partial` = only fields actually sent
+    are changed (update); an empty string clears a date / note."""
+    values = {
+        "available_from": available_from, "available_until": available_until,
+        "support_transport": support_transport, "support_operator": support_operator,
+        "support_fuel": support_fuel, "daily_operating_cost": daily_operating_cost,
+        "support_notes": support_notes,
+    }
+    for field, value in values.items():
+        if partial and value is None:
+            continue
+        if field.startswith("support_") and field != "support_notes":
+            value = 1 if str(value or "").lower() in ("1", "true", "yes", "on") else 0
+        elif field == "daily_operating_cost":
+            value = flt(value) if value not in (None, "") else None
+        elif value == "":
+            value = None
+        setattr(doc, field, value)
+
+
 @frappe.whitelist()
 def create_resource_profile(
     resource_name,
@@ -58,6 +82,13 @@ def create_resource_profile(
     pic_name=None,
     pic_phone=None,
     notes=None,
+    available_from=None,
+    available_until=None,
+    support_transport=0,
+    support_operator=0,
+    support_fuel=0,
+    daily_operating_cost=None,
+    support_notes=None,
 ):
     # RN_CANONICAL_EVENT disaster_event = resolve_disaster_event(disaster_event)
     disaster_event = resolve_disaster_event(disaster_event)
@@ -100,6 +131,8 @@ def create_resource_profile(
     doc.pic_name = pic_name
     doc.pic_phone = pic_phone
     doc.notes = notes
+    _apply_usage_support(doc, available_from, available_until, support_transport,
+                         support_operator, support_fuel, daily_operating_cost, support_notes)
     doc.verification_status = (
         "self_reported"
     )
@@ -125,6 +158,13 @@ def update_resource_profile(
     pic_name=None,
     pic_phone=None,
     notes=None,
+    available_from=None,
+    available_until=None,
+    support_transport=None,
+    support_operator=None,
+    support_fuel=None,
+    daily_operating_cost=None,
+    support_notes=None,
 ):
     actor = rn_actor()
 
@@ -162,6 +202,10 @@ def update_resource_profile(
     for field, value in updates.items():
         if value is not None:
             setattr(doc, field, value)
+
+    _apply_usage_support(doc, available_from, available_until, support_transport,
+                         support_operator, support_fuel, daily_operating_cost, support_notes,
+                         partial=True)
 
     doc.save(ignore_permissions=True)
 

@@ -291,6 +291,15 @@ a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3
   height: 22px;
 }
 
+/* `.kpi-card span { display:block }` below is more specific than `.kpi-icon`
+   and pushed the svg to the chip's top-left corner — keep the chip a centred grid. */
+.kpi-card .kpi-icon {
+  display: grid;
+  place-items: center;
+}
+.kpi-card .kpi-icon svg { display: block; }
+.rn-kpi-clickable:focus-visible { outline: 2px solid var(--coral); outline-offset: 3px; }
+
 .kpi-card:not(:has(.kpi-icon))::before {
   content: "";
   grid-column: 1;
@@ -860,6 +869,28 @@ body.home-page {
 .welcome-cta .help {
   color: #2f7c55;
   border-color: rgba(47,155,104,.28);
+}
+
+/* Home: "Lihat Bencana Aktif" + "Saya Ingin Membantu" always on ONE row,
+   desktop and phone (owner 2026-10-19). */
+.welcome-cta.secondary {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: start;
+}
+.welcome-cta.secondary .btn { white-space: nowrap; }
+@media (max-width: 760px) {
+  .welcome-cta.secondary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    gap: 8px;
+  }
+  .welcome-cta.secondary .btn {
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 12.5px;
+    justify-content: center;
+  }
 }
 
 .welcome-visual {

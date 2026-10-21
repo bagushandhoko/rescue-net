@@ -1,0 +1,80 @@
+/* Pilihan bencana yang ditangani posko (RNEventChecklist) — kartu, bukan
+   baris panjang; dipakai di Registrasi Posko dan Setting. */
+.rn-evc { display: grid; gap: 12px; }
+.rn-evc-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.rn-evc-search {
+  flex: 1 1 220px; min-width: 0; padding: 9px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: #fff; font: inherit; color: var(--text);
+}
+.rn-evc-range { display: flex; flex-wrap: wrap; gap: 6px; }
+.rn-evc-range button {
+  border: 1px solid var(--line); background: #fff; color: var(--muted);
+  border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer;
+}
+.rn-evc-range button[aria-pressed="true"] { background: var(--peach2); border-color: var(--peach2); color: #fff; font-weight: 600; }
+.rn-evc-dates { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.rn-evc-dates input { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); font: inherit; font-size: 13px; background: #fff; }
+.rn-evc-summary { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 13px; color: var(--muted); }
+.rn-evc-summary b { color: var(--text); }
+.rn-evc-summary button { border: 0; background: none; color: var(--blue); font: inherit; font-size: 13px; cursor: pointer; padding: 0; }
+.rn-evc-grid {
+  display: grid; gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  max-height: 420px; overflow-y: auto; padding: 2px;
+}
+.rn-evc-card {
+  position: relative; display: grid; grid-template-columns: auto 1fr; gap: 4px 10px;
+  align-items: start; padding: 12px; border-radius: 12px; cursor: pointer;
+  border: 1.5px solid var(--line); background: #fff; transition: border-color .15s, background .15s;
+}
+.rn-evc-card:hover { border-color: var(--line2); }
+.rn-evc-card input { grid-row: 1 / span 3; margin-top: 3px; width: 18px; height: 18px; accent-color: var(--peach2); }
+.rn-evc-card.is-on { border-color: var(--peach2); background: var(--panel2); }
+.rn-evc-card:focus-within { outline: 2px solid var(--blue); outline-offset: 2px; }
+.rn-evc-title { font-weight: 700; line-height: 1.3; color: var(--text); overflow-wrap: anywhere; }
+.rn-evc-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; font-size: 12px; color: var(--muted); }
+.rn-evc-loc { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.rn-evc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); display: inline-block; }
+.rn-evc-dot.critical { background: var(--red); }
+.rn-evc-dot.high { background: var(--orange); }
+.rn-evc-badge { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: rgba(47,155,104,.12); color: var(--green); }
+.rn-evc-badge.closed { background: rgba(124,100,88,.12); color: var(--muted); }
+.rn-evc-empty { grid-column: 1 / -1; padding: 16px; text-align: center; color: var(--muted); }
+/* Setting: one block per posko */
+.rn-pse-posko { display: grid; gap: 10px; }
+.rn-pse-posko + .rn-pse-posko { border-top: 1px solid var(--line); padding-top: 16px; margin-top: 4px; }
+.rn-pse-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; justify-content: space-between; }
+.rn-pse-head h3 { margin: 0; }
+.rn-pse-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+@media (max-width: 480px) {
+  .rn-evc-grid { grid-template-columns: 1fr; max-height: 360px; }
+}
+.rn-evc-dates[hidden] { display: none; }
+/* page form rules (.rn-form label / input) must not restyle the picker */
+.rn-evc label.rn-evc-card {
+  display: grid !important; grid-template-columns: auto 1fr; gap: 4px 10px;
+  font-size: 14px !important; font-weight: 400 !important; color: var(--text) !important; margin: 0;
+}
+.rn-evc .rn-evc-card input {
+  width: 18px !important; height: 18px !important; min-width: 18px !important; min-height: 0 !important;
+  padding: 0 !important; margin: 3px 0 0; border-radius: 4px;
+}
+.rn-evc .rn-evc-title { font-size: 14.5px; font-weight: 700; }
+.rn-evc .rn-evc-meta, .rn-evc .rn-evc-loc { font-size: 12.5px; font-weight: 400; }
+.rn-evc .rn-evc-dates label { display: flex !important; gap: 6px; align-items: center; font-size: 13px !important; font-weight: 400 !important; }
+.rn-evc .rn-evc-dates input { width: auto !important; min-height: 0 !important; padding: 6px 8px !important; }
+.rn-evc .rn-evc-search { min-height: 0 !important; }
+.rn-evc-field { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px 14px; margin: 14px 0 0; min-width: 0; }
+.rn-evc-field legend { font-weight: 700; padding: 0 6px; }
+.rn-evc-field legend small { font-weight: 400; color: var(--muted); }
+/* Kirim stok drawer (posko logistik) */
+.rn-dispatch-window { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#dispatchForm .rn-evc { gap: 6px; }
+#dispatchForm .rn-evc-grid { grid-template-columns: 1fr; max-height: 320px; }
+#dispatchForm .rn-evc-title small { font-weight: 400; }
+.rn-evc[hidden] { display: none; }
+.rn-dispatch-steps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 12px; font-size: 12.5px; }
+.rn-dispatch-steps li { padding: 5px 10px; border-radius: 999px; background: var(--panel2); color: var(--muted); border: 1px solid var(--line); }
+.rn-dispatch-steps li.is-on { background: var(--peach2); border-color: var(--peach2); color: #fff; font-weight: 700; }
+.rn-dispatch-steps li.is-done { color: var(--green); border-color: rgba(47,155,104,.35); }
+.rn-dispatch-sum { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); font-size: 13px; }

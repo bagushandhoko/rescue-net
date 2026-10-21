@@ -539,8 +539,10 @@ async function loadPosko() {
   renderShareBanner(res);
   renderSummaryRollup(res.summary);
 
-  // Summary-only viewers cannot record/transfer for this posko.
-  const canEdit = !!res.detail_allowed;
+  // Only the posko's own operators / organisation (or a System Manager) may
+  // record or transfer here; everyone else views it read-only (owner
+  // 2026-10-19: an open posko is visible to all, editable only by its owner).
+  const canEdit = !!res.can_manage;
   document
     .querySelectorAll(".create-panel")
     .forEach(el => { el.hidden = !canEdit; });
@@ -551,7 +553,7 @@ async function loadPosko() {
 
   const manageLink = document.getElementById("logistikManageLink");
   if (manageLink) {
-    manageLink.hidden = !canEdit;
+    manageLink.hidden = !res.detail_allowed;      // the logistics board itself is viewable
     const a = document.getElementById("logistikManageLinkHref");
     if (a) {
       a.href = `posko-logistik.html?id=${encodeURIComponent(getPoskoId())}&event=${encodeURIComponent(currentEventParam())}`;
@@ -631,9 +633,10 @@ async function loadPosko() {
   renderFlows(ctx.flows);
 
   setStatus(
-    res.detail_allowed
-      ? "Loaded from Frappe - detail penuh"
-      : "Loaded from Frappe - ringkasan (koordinasi organisasi tertutup)"
+    (res.detail_allowed
+      ? "Detail penuh"
+      : "Ringkasan (koordinasi organisasi tertutup)") +
+    (res.can_manage ? "" : " · mode lihat saja (bukan posko Anda)")
   );
 }
 

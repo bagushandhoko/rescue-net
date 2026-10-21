@@ -72,7 +72,7 @@ def work_objects_board(disaster_event=None):
         fields=[
             "name", "title", "object_type", "location", "size_value",
             "size_unit", "status", "reported_by", "notes", "observed_at",
-            "work_days_target", "posko",
+            "work_days_target", "posko", "recovery_project",
         ],
         order_by="creation desc",
         limit_page_length=200,
@@ -118,6 +118,7 @@ def work_objects_board(disaster_event=None):
             "observed_at": o.observed_at,
             "work_days_target": o.work_days_target,
             "posko": o.posko,
+            "recovery_project": o.recovery_project,
             "predictions": predictions,
             "total_gap": sum(p["gap"] for p in predictions),
             "to_request": sum(p["to_request"] for p in predictions),
@@ -149,6 +150,7 @@ def create_work_object(
     disaster_event=None,
     work_days_target=None,
     posko=None,
+    recovery_project=None,
 ):
     disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor()
@@ -171,6 +173,16 @@ def create_work_object(
     doc.size_unit = size_unit or tool_needs.CONDITIONS[object_type]["unit"]
     doc.work_days_target = cint(work_days_target) or tool_needs.CONDITIONS[object_type]["default_days"]
     doc.posko = posko
+    if recovery_project:
+        # obyek kerja bagian dari rencana rekonstruksi bencana yang sama
+        rp_event = frappe.db.get_value("RN Recovery Project", recovery_project, "disaster_event")
+        if not rp_event:
+            frappe.throw("Proyek recovery tidak ditemukan")
+        if disaster_event and rp_event != disaster_event:
+            frappe.throw("Proyek recovery itu milik bencana lain")
+        disaster_event = disaster_event or rp_event
+        doc.disaster_event = disaster_event
+        doc.recovery_project = recovery_project
     doc.location = location
     doc.status = "open"
     doc.reported_by = _actor_name(actor) or "Guest"

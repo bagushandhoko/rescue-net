@@ -39,7 +39,7 @@ GUEST_ENDPOINTS = {
     "api_ai.ai_providers", "api_ai.public_active_disasters", "api_ai.public_context", "api_ai.public_map_context",
     "api_auth.register", "api_auth.session_info", "api_auth.social_login_url",
     "api_comms.comms_board",
-    "api_community_cluster.get_posko_settings",
+    "api_community_cluster.disaster_options", "api_community_cluster.get_posko_settings",
     "api_control_centre.active_disasters_board", "api_control_centre.distribusi_board",
     "api_control_centre.event_poskos", "api_control_centre.evidence_board",
     "api_control_centre.flow_trace", "api_control_centre.fulfill_need",
@@ -48,6 +48,9 @@ GUEST_ENDPOINTS = {
     "api_control_centre.logistik_open_needs", "api_control_centre.logistik_stock_cards",
     "api_control_centre.logistik_stock_sources", "api_control_centre.my_org_coordination",
     "api_control_centre.org_detail", "api_control_centre.org_posko_board",
+    "api_recovery.recovery_board",  # reviewed: plan + progress + owner label; no PIC/notes/creator, drill hidden
+    "api_control_centre.ecosystem_board",  # reviewed: org names + counts/totals only; no person names, contacts or donor identities
+    "api_control_centre.posko_contact",  # reviewed: guest gets posko title only; numbers only when logged in
     "api_control_centre.posko_detail", "api_control_centre.posko_distribusi_board",
     "api_control_centre.posko_edit_scope", "api_control_centre.posko_functions",
     "api_control_centre.posko_registry_board", "api_control_centre.posko_verification_checklist",

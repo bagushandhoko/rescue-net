@@ -22,6 +22,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     canonical_event,
     cols,
     event_filters,
+    serving_posko_names,
 )
 from rescue_net.control_centre.map_evidence import (  # noqa: F401
     event_evidence,
@@ -41,6 +42,38 @@ def event_poskos(disaster_event):
     return {
         "points": map_points(canonical_event(disaster_event)),
         "viewer": _poskos_viewer_context(),
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=60, seconds=60)
+def posko_contact(posko):
+    """Contact bar at the top of every posko page (owner rule 2026-10-18):
+    any logged-in user sees the posko's phone / WhatsApp; a guest gets the
+    name only and `logged_in: False` — never a number, not even masked."""
+    name = _resolve_posko(posko)
+    if not name:
+        frappe.throw("Posko tidak ditemukan")
+    title = frappe.db.get_value("RN Posko", name, "title")
+    if frappe.session.user == "Guest":
+        return {"posko": name, "title": title, "logged_in": False}
+    p = frappe.db.get_value(
+        "RN Posko", name,
+        ["officer_in_charge_name", "officer_in_charge_role", "officer_in_charge_phone",
+         "officer_in_charge_whatsapp", "emergency_contact"],
+        as_dict=True,
+    ) or {}
+    return {
+        "posko": name,
+        "title": title,
+        "logged_in": True,
+        "contact": {
+            "name": p.get("officer_in_charge_name"),
+            "role": p.get("officer_in_charge_role"),
+            "phone": p.get("officer_in_charge_phone"),
+            "whatsapp": p.get("officer_in_charge_whatsapp") or p.get("officer_in_charge_phone"),
+            "emergency": p.get("emergency_contact"),
+        },
     }
 
 
@@ -536,15 +569,26 @@ def _public_shipments(name):
         "offer_status", "handling_mode", "ready_at", "pickup_location",
         "legacy_payload", "creation", "modified",
     ])
-    out = []
-    for o in frappe.get_all(
+    offers = frappe.get_all(
         "RN Aid Offer",
         filters={
             "target_posko": name,
             "offer_status": ["not in", ["received", "received_verified", "cancelled"]],
         },
         fields=fields, order_by="creation desc", limit_page_length=100,
-    ):
+    )
+    # newest non-cancelled flow carrying each offer -> "Lacak" link on the page
+    flow_of = {}
+    offer_names = [o["name"] for o in offers]
+    if offer_names:
+        for fl in frappe.get_all(
+            "RN Distribution Flow",
+            filters={"aid_offer": ["in", offer_names], "flow_status": ["!=", "cancelled"]},
+            fields=["name", "aid_offer"], order_by="creation asc", limit_page_length=500,
+        ):
+            flow_of[fl["aid_offer"]] = fl["name"]
+    out = []
+    for o in offers:
         wave = None
         p = o.get("legacy_payload")
         if isinstance(p, str) and p.strip():
@@ -562,6 +606,7 @@ def _public_shipments(name):
             "ready_at": o.get("ready_at"),
             "pickup_location": o.get("pickup_location"),
             "wave": wave,
+            "flow": flow_of.get(o["name"]),
         })
     return out
 
@@ -900,18 +945,32 @@ def logistik_stock_sources(posko, item=None):
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
-def logistik_dispatch_options(disaster_event, source_posko=None):
-    """Choices for the "Kirim stok" form on Posko Logistik:
-      destinations = receiver poskos of this event (not transport, not self)
-      armada       = available RN Transport Space (route the shipment through
-                     a kapal TNI AL / Land Rover club / … instead of direct)."""
+def logistik_dispatch_options(disaster_event, source_posko=None, window_from=None, window_to=None):
+    """Choices for the "Kirim stok" form on Posko Logistik (owner 2026-10-19):
+      events       = disasters the source posko serves (pick one per shipment)
+      destinations = poskos that handle THIS disaster (not transport, not self)
+      armada       = RN Transport Space serving this disaster (and this posko
+                     logistik, when the armada lists the poskos it serves),
+                     departing inside the requested send window if given.
+    Picking an armada of another posko = a booking that posko must confirm."""
+    from frappe.utils import get_datetime
+    from rescue_net.control_centre.common import posko_served_events, serving_transport_names
+
     event = canonical_event(disaster_event) if disaster_event else None
     src = _resolve_posko(source_posko) if source_posko else None
 
+    events = []
+    if src:
+        for ev in posko_served_events(src):
+            row = frappe.db.get_value("RN Disaster Event", ev, ["title", "event_status"], as_dict=True) or {}
+            events.append({"id": ev, "title": row.get("title") or ev, "status": row.get("event_status")})
+        if events and (not event or event not in [x["id"] for x in events]):
+            event = events[0]["id"]
+
+    serving = serving_posko_names(event) if event else []
     prow = frappe.get_all(
         "RN Posko",
-        or_filters={"disaster_event": event, "disaster_event_legacy_id": event}
-        if event else None,
+        filters={"name": ["in", serving or [""]]} if event else None,
         fields=["name", "title", "posko_type", "city_name", "rn_logistics_role",
                 "rn_beneficiary_count"],
         limit_page_length=500,
@@ -929,35 +988,68 @@ def logistik_dispatch_options(disaster_event, source_posko=None):
     ]
     destinations.sort(key=lambda d: (d["role"] != "receiver", -d["jiwa"], d["title"]))
 
+    def _dt(v):
+        try:
+            return get_datetime(v) if v else None
+        except Exception:
+            return None
+
+    w_from, w_to = _dt(window_from), _dt(window_to)
+    if w_to and len(str(window_to)) <= 10:          # a bare date = until the end of that day
+        w_to = w_to.replace(hour=23, minute=59, second=59)
+    tnames = serving_transport_names(event, src) if event else []
+    src_org = frappe.db.get_value("RN Posko", src, "organization") if src else None
     trow = frappe.get_all(
         "RN Transport Space",
-        filters=event_filters(cols("RN Transport Space"), event) if event else {},
+        filters={"name": ["in", tnames or [""]]} if event else {},
         fields=_sf("RN Transport Space", [
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3", "coordination_posko",
             "departure_at", "eta_at", "departure_time", "eta", "service_mode",
+            "capacity_committed_kg", "route_origin", "route_destination", "booking_policy",
+            "handover_location",
         ]),
-        order_by="modified desc", limit_page_length=200,
+        order_by="departure_at asc", limit_page_length=200,
     )
     armada = []
+    from rescue_net.services.transport import BOOKABLE
     for t in trow:
-        if (t.transport_status or "") in ("completed", "cancelled"):
+        # only armada that can still take cargo (not in transit / done) and
+        # that declare a capacity — anything else cannot be booked
+        if (t.transport_status or "available") not in BOOKABLE:
             continue
+        if not (_num(t.capacity_weight_kg) > 0 or _num(t.get("capacity_volume_m3")) > 0):
+            continue
+        dep = _dt(t.get("departure_at"))
+        if dep and ((w_from and dep < w_from) or (w_to and dep > w_to)):
+            continue                                    # leaves outside the send window
         posko_title = (
             frappe.db.get_value("RN Posko", t.coordination_posko, "title")
             or t.coordination_posko or "-"
         )
+        cap = _num(t.capacity_weight_kg)
         armada.append({
             "id": t.name,
             "provider": t.provider_name or "-",
             "jenis": t.transport_type or "-",
+            "posko": t.coordination_posko,
             "posko_title": (posko_title or "").replace("[SIMULASI] ", "").strip(),
-            "kapasitas_kg": _num(t.capacity_weight_kg),
-            "berangkat": (str(t.departure_at or "")[:16] or t.departure_time or "-"),
-            "eta": (str(t.eta_at or "")[:16] or t.eta or "-"),
+            "kapasitas_kg": cap,
+            "sisa_kg": max(0.0, cap - _num(t.get("capacity_committed_kg"))) if cap else None,
+            "berangkat": (str(t.departure_at or "")[:16] or str(t.departure_time or "")[:16] or "-"),
+            "eta": (str(t.eta_at or "")[:16] or str(t.eta or "")[:16] or "-"),
+            "rute": " → ".join(x for x in (t.get("route_origin"), t.get("route_destination")) if x),
+            "jadwal_kosong": not dep,
+            "status": t.transport_status,
+            "handover": t.get("handover_location") or "",
+            # jemput-antar antar posko / titik distribusi (step 3 "transporter")
+            "courier": (t.get("service_mode") or "both") in ("courier_pickup", "both"),
+            # same organisation -> booking approved at once; else the armada's posko confirms
+            "same_org": bool(src_org and src_org == frappe.db.get_value("RN Posko", t.coordination_posko, "organization")),
         })
 
-    return {"destinations": destinations, "armada": armada}
+    return {"disaster_event": event, "events": events, "destinations": destinations, "armada": armada,
+            "window_from": window_from, "window_to": window_to}
 
 
 @frappe.whitelist(allow_guest=True)

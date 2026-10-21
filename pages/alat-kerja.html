@@ -5,10 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
-  <title>Rescue-Net | Kebutuhan & Manajemen Alat Kerja</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=bbmpic-20261001">
+  <title>Rescue-Net | Recovery dan Alat Kerja</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=kpiicon-20261018">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
-  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=opsgroups-20261019b" />
+  <style>
+  .rn-step{display:inline-grid;place-items:center;width:22px;height:22px;margin-right:8px;border-radius:50%;background:var(--coral);color:#fff;font-size:12px;font-weight:800;vertical-align:2px}
+  .rn-ra-recovery,.rn-ra-providers{margin-bottom:18px}
+  .rn-ra-recovery .panel-header,.rn-ra-providers .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+  .rn-ra-sum{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
+  .rn-ra-table td.num,.rn-ra-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .rn-ra-sub{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+  .rn-ra-bar{position:relative;height:8px;min-width:90px;border-radius:999px;background:rgba(120,80,60,.12);overflow:hidden}
+  .rn-ra-bar span{position:absolute;inset:0 auto 0 0;background:var(--green);border-radius:999px}
+  .rn-ra-bar.low span{background:var(--red)} .rn-ra-bar.mid span{background:var(--orange)}
+  .rn-ra-drawer{margin-top:12px;border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+  .rn-ra-drawer summary{cursor:pointer}
+  .rn-ra-forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:10px}
+  .rn-ra-forms h4{margin:0 0 6px}
+  .rn-ra-filter input{min-width:220px;max-width:100%}
+  .rn-ra-note{margin:10px 0 0;font-size:12px}
+  .rn-ra-edit{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:12px}
+  .rn-ra-edit h4{margin:0 0 8px}
+  .rn-ra-checks{display:flex;flex-wrap:wrap;gap:8px 18px;margin:8px 0}
+  .rn-ra-checks label{display:flex;align-items:center;gap:6px;font-weight:600}
+  .rn-ra-tags{display:flex;flex-wrap:wrap;gap:4px}
+  .rn-ra-tags .chip{height:22px;font-size:11px;padding:0 8px}
+  </style>
 </head>
 <body>
 <div class="app-shell">
@@ -34,9 +61,8 @@
       <a href="search-found.html?event=event-sim-001"><span class="nav-icon" data-icon="search-found"></span>Search & Found</a>
       <a href="program-khusus.html?event=event-sim-001"><span class="nav-icon" data-icon="program"></span>Program Khusus</a>
       <a href="donor-program.html?event=event-sim-001"><span class="nav-icon" data-icon="donor"></span>Donor Program</a>
-      <a href="recovery-reconstruction.html?event=event-sim-001"><span class="nav-icon" data-icon="recovery"></span>Recovery</a>
-<a href="management-relawan.html"><span class="nav-icon" data-icon="relawan"></span>Relawan</a>
-      <a class="active" href="alat-kerja.html?event=event-sim-001"><span class="nav-icon" data-icon="alat-kerja"></span>Kebutuhan &amp; Manajemen Alat Kerja</a>
+      <a href="management-relawan.html"><span class="nav-icon" data-icon="relawan"></span>Relawan</a>
+      <a class="active" href="alat-kerja.html?event=event-sim-001"><span class="nav-icon" data-icon="alat-kerja"></span>Recovery dan Alat Kerja</a>
       <a href="resource-profile.html?event=event-sim-001"><span class="nav-icon" data-icon="resource"></span>Profil Sumber Daya</a>
       <a href="evidence.html?event=event-sim-001"><span class="nav-icon" data-icon="evidence"></span>Evidence</a>
       <a href="verification-approval.html?event=event-sim-001"><span class="nav-icon" data-icon="verification"></span>Sistem Verifikasi</a>
@@ -48,12 +74,12 @@
 
   <main class="main rn-dense rn-ak-page">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Kebutuhan & Manajemen Alat Kerja</div>
+    <div class="rn-page-mobile-title">Recovery dan Alat Kerja</div>
 
       <div>
-        <p class="eyebrow">Kondisi Lapangan → Kebutuhan Alat → Manajemen Alat</p>
-        <h2>Kebutuhan &amp; Manajemen Alat Kerja</h2>
-        <p class="subtitle">Kelola alat kerja, operator, dan dukungan operasional — kebutuhan alat dihitung dari kondisi lapangan.</p>
+        <p class="eyebrow">Obyek Recovery → Kebutuhan Alat → Penyedia &amp; Ketersediaan → Dukungan agar Alat Dipakai</p>
+        <h2>Recovery dan Alat Kerja</h2>
+        <p class="subtitle">Mulai dari obyek yang harus dipulihkan dan rencana rekonstruksinya, lalu alat apa yang dibutuhkan, siapa yang menyediakan dan di mana, serta dukungan (operator, BBM, transport, biaya) agar alat itu benar-benar bisa dipakai.</p>
         <p class="subtitle" id="workToolMeta">Memuat…</p>
       </div>
       <div class="status-pill" id="workToolUpdated">Alat Kerja · Live</div>
@@ -80,10 +106,58 @@
       </button>
     </section>
 
+    <section class="panel rn-ra-recovery" id="recovery">
+      <div class="panel-header">
+        <div><h3><span class="rn-step">1</span>Obyek Recovery &amp; Rencana Rekonstruksi</h3><p>Apa yang harus dipulihkan, siapa pengelolanya, dan sejauh mana progresnya sekarang.</p></div>
+        <span class="chip" id="raCount">-</span>
+      </div>
+      <div class="rn-ra-sum" id="raSum"></div>
+      <div class="rn-table-wrap">
+        <table class="rn-table rn-ra-table">
+          <thead><tr><th>Proyek / Obyek</th><th>Lokasi</th><th>Pengelola</th><th>Progres</th><th>Alat</th><th>Target Selesai</th><th>Update Terakhir</th></tr></thead>
+          <tbody id="raBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+      <details class="rn-input-drawer rn-ra-drawer" id="raDrawer">
+        <summary><b>+ Tambah rencana rekonstruksi / catat progres</b> <span class="rn-muted">(perlu login sebagai anggota organisasi)</span></summary>
+        <div class="rn-ra-forms">
+          <form class="rn-form" id="raCreateForm">
+            <h4>Rencana rekonstruksi baru</h4>
+            <label>Nama proyek / obyek <input name="project_name" required placeholder="Perbaikan jembatan Desa ..."></label>
+            <label>Jenis <select name="project_type"><option value="infrastruktur">Infrastruktur (jalan, jembatan)</option><option value="hunian">Hunian</option><option value="fasilitas_umum">Fasilitas umum</option><option value="air_sanitasi">Air &amp; sanitasi</option><option value="ekonomi">Pemulihan ekonomi</option><option value="lainnya">Lainnya</option></select></label>
+            <label>Lokasi <input name="location" placeholder="Desa / kecamatan"></label>
+            <label>Target / lingkup pekerjaan <input name="target_description" placeholder="Misal: 2 bentang 12 m"></label>
+            <label>Anggaran (Rp) <input name="target_amount" type="number" min="0" step="1000"></label>
+            <label>Target selesai <input name="target_finish_date" type="date"></label>
+            <button class="btn primary" type="submit">Simpan rencana</button>
+            <p class="rn-muted" id="raCreateMsg" role="status"></p>
+          </form>
+          <form class="rn-form" id="raUpdateForm">
+            <h4>Catat progres</h4>
+            <label>Proyek <select name="project_id" id="raUpdateProject"></select></label>
+            <label>Progres sekarang (%) <input name="progress_percent" type="number" min="0" max="100" required></label>
+            <label>Judul update <input name="update_title" required placeholder="Pondasi selesai"></label>
+            <label>Catatan <textarea name="update_notes" rows="2"></textarea></label>
+            <button class="btn primary" type="submit">Simpan progres</button>
+            <p class="rn-muted" id="raUpdateMsg" role="status"></p>
+          </form>
+        </div>
+      </details>
+    </section>
+
     <section class="content-grid rn-ak-r1">
       <div class="panel">
         <div class="panel-header">
-          <div><h3>Inventaris Alat per Kategori</h3></div>
+          <div><h3><span class="rn-step">2</span>Kebutuhan Alat</h3><p id="needsNote">Dihitung dari kondisi lapangan (obyek kerja) dan permintaan alat.</p></div>
+          <button type="button" class="rn-ak-link" data-ak-more="needList">Lihat semua</button>
+        </div>
+        <div class="rn-ak-need-list" id="needList"></div>
+        <button class="btn rn-ak-add" type="button" id="objectAddBtn">+ Catat Kondisi Lapangan</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div><h3><span class="rn-step">3</span>Ketersediaan Alat per Kategori</h3><p>Stok alat seluruh penyedia di bencana ini.</p></div>
           <button type="button" class="rn-ak-link" data-ak-more="categoryGrid">Lihat semua ›</button>
         </div>
         <div class="rn-ak-cat-grid" id="categoryGrid"></div>
@@ -95,26 +169,47 @@
 
       <div class="panel">
         <div class="panel-header">
-          <div><h3>Operator &amp; Tenaga Teknis</h3></div>
+          <div><h3><span class="rn-step">4</span>Operator &amp; Tenaga Teknis</h3><p>Orang yang menjalankan alat.</p></div>
           <button type="button" class="rn-ak-link" data-ak-more="operatorList">Lihat semua</button>
         </div>
         <div class="rn-ak-op-list" id="operatorList"></div>
       </div>
+    </section>
 
-      <div class="panel">
-        <div class="panel-header">
-          <div><h3>Matching Kebutuhan Alat</h3><p id="needsNote">Dari kondisi lapangan dan permintaan alat.</p></div>
-          <button type="button" class="rn-ak-link" data-ak-more="needList">Lihat semua</button>
-        </div>
-        <div class="rn-ak-need-list" id="needList"></div>
-        <button class="btn rn-ak-add" type="button" id="objectAddBtn">+ Catat Kondisi Lapangan</button>
+    <section class="panel rn-ra-providers" id="penyedia">
+      <div class="panel-header">
+        <div><h3><span class="rn-step">3</span>Penyedia Alat — siapa, di mana</h3><p>Setiap alat terdaftar: siapa penyedianya, posisi sekarang, area yang bisa dilayani, dan statusnya.</p></div>
+        <div class="rn-ra-filter"><input type="search" id="raProvSearch" placeholder="Cari alat / penyedia / lokasi" aria-label="Cari alat"></div>
       </div>
+      <div class="rn-table-wrap">
+        <table class="rn-table rn-ra-table">
+          <thead><tr><th>Alat</th><th class="num">Jumlah</th><th>Penyedia</th><th>Posisi &amp; Area Layanan</th><th>Bisa Dipakai</th><th>Butuh Dukungan</th><th>Status</th><th></th></tr></thead>
+          <tbody id="raProvBody"><tr><td colspan="8">Memuat…</td></tr></tbody>
+        </table>
+      </div>
+      <p class="rn-muted rn-ra-note">"Bisa dipakai" dan "Butuh dukungan" diisi oleh pemilik/pengelola alat lewat tombol Ubah (perlu login). Nomor PIC tidak ditampilkan di sini.</p>
+      <form class="rn-form rn-ra-edit" id="raEditForm" hidden>
+        <h4 id="raEditTitle">Ubah masa pakai &amp; dukungan</h4>
+        <input type="hidden" name="resource_profile">
+        <div class="form-grid">
+          <label>Bisa dipakai mulai <input type="date" name="available_from"></label>
+          <label>Bisa dipakai sampai <input type="date" name="available_until"></label>
+          <label>Biaya operasional per hari (Rp) <input type="number" min="0" step="1000" name="daily_operating_cost"></label>
+          <label>Dukungan lain <input name="support_notes" placeholder="mis. butuh trailer, izin jalan"></label>
+        </div>
+        <div class="rn-ra-checks">
+          <label><input type="checkbox" name="support_transport"> Butuh transport / mobilisasi</label>
+          <label><input type="checkbox" name="support_operator"> Butuh operator</label>
+          <label><input type="checkbox" name="support_fuel"> Butuh BBM</label>
+        </div>
+        <div class="form-actions"><button class="btn primary" type="submit">Simpan</button> <button class="btn ghost" type="button" id="raEditCancel">Batal</button> <span class="rn-muted" id="raEditMsg" role="status"></span></div>
+      </form>
     </section>
 
     <section class="content-grid rn-ak-r2">
       <div class="panel">
         <div class="panel-header">
-          <div><h3>Jadwal Dispatch Alat</h3></div>
+          <div><h3><span class="rn-step">4</span>Jadwal Dispatch Alat</h3><p>Alat dipakai di mana, sejak kapan, sampai kapan.</p></div>
           <button type="button" class="rn-ak-link" data-ak-more="dispatchList">Lihat semua</button>
         </div>
         <div class="rn-ak-disp-list" id="dispatchList"></div>
@@ -131,7 +226,7 @@
       <div class="rn-ak-stack">
         <div class="panel">
           <div class="panel-header">
-            <div><h3>BBM &amp; Support Operasional</h3></div>
+            <div><h3><span class="rn-step">4</span>Dukungan Operasional: BBM &amp; Biaya</h3></div>
             <button type="button" class="rn-ak-link" data-ak-more="fuelList">Lihat semua</button>
           </div>
           <div class="rn-ak-fuel-list" id="fuelList"></div>
@@ -146,7 +241,7 @@
     <section class="content-grid rn-ak-r3">
       <div class="panel">
         <div class="panel-header">
-          <div><h3>Hambatan Alat Kerja</h3></div>
+          <div><h3><span class="rn-step">4</span>Hambatan agar Alat Bisa Dipakai</h3></div>
           <button type="button" class="rn-ak-link" data-ak-more="blockerBody">Lihat semua ›</button>
         </div>
         <div class="rn-table-wrap">
@@ -178,6 +273,7 @@
           <label>Satuan<input name="size_unit" placeholder="m3"></label>
           <label id="daysField">Target selesai (hari kerja)<input name="work_days_target" type="number" min="1" placeholder="mis. 2"></label>
           <label>Posko penanggung jawab<select name="posko" id="objectPoskoSelect"><option value="">— Control Centre —</option></select></label>
+          <label>Bagian dari proyek recovery<select name="recovery_project" id="objectRecoverySelect"><option value="">— tidak terkait proyek —</option></select></label>
           <label>Lokasi<input name="location" placeholder="Desa / ruas jalan / titik"></label>
           <label>Catatan<input name="notes" placeholder="opsional"></label>
         </div>
@@ -306,14 +402,16 @@
 
 <script src="../assets/js/rn-icons.js?v=tools-20261001"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+<script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/alat-kerja.js?v=bbmpic-20261001"></script>
+<script src="../assets/js/recovery-alat.js?v=ra-20261019c"></script>
+<script src="../assets/js/alat-kerja.js?v=recovery-20261019b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
-<script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
+<script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=sistemverif-20261008"></script>
-<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=opsgroups-20261019"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=title-20261019"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>
 </html>

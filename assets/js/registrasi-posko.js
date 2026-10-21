@@ -193,33 +193,30 @@
     });
   }
 
-  function bareEvent(x) { return String(x || "").replace(/^disaster_events:/, ""); }
+  // Bencana yang ditangani (owner 2026-10-19): posko logistik / distribusi /
+  // collection hub boleh melayani beberapa bencana sekaligus (kotak centang);
+  // jenis lain memilih satu. Default bencana dari tautan (?event=).
+  var MULTI_TYPES = ["logistics", "transport", "collection_hub"];
+  var EVENT_PICKER = null;
 
-  async function populateDisasterEvents() {
-    var sel = document.getElementById("regDisasterEvent");
-    if (!sel) return;
-    var want = getEventId();
-    var list = [];
-    try {
-      list = await window.RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters");
-    } catch (e) { /* keep the fallback option below */ }
-    list = Array.isArray(list) ? list : [];
+  function syncEventMode() {
+    var type = ($("#regForm") && $("#regForm").posko_type.value) || "";
+    var multi = MULTI_TYPES.indexOf(type) !== -1;
+    if (EVENT_PICKER) EVENT_PICKER.setMultiple(multi);
+    var hint = $("#regEventHint");
+    if (hint) hint.textContent = multi
+      ? "— centang semua bencana yang dilayani posko ini (bisa lebih dari satu)"
+      : "— pilih satu bencana yang dilayani posko ini";
+  }
 
-    var matched = list.some(function (ev) { return bareEvent(ev.id || ev.name) === bareEvent(want); });
-    var opts = list.map(function (ev) {
-      var v = ev.id || ev.name;
-      var label = (ev.title || v) + (ev.severity ? " — " + ev.severity : "");
-      var s = bareEvent(v) === bareEvent(want) ? " selected" : "";
-      return '<option value="' + esc(v) + '"' + s + ">" + esc(label) + "</option>";
-    });
-    if (!matched && want) {
-      opts.unshift('<option value="' + esc(want) + '" selected>' + esc(want) + " (dari tautan)</option>");
-    }
-    if (!opts.length) {
-      var fb = want || "event-sim-001";
-      opts.push('<option value="' + esc(fb) + '" selected>' + esc(fb) + "</option>");
-    }
-    sel.innerHTML = opts.join("");
+  function populateDisasterEvents() {
+    var el = document.getElementById("regEventPicker");
+    if (!el || !window.RNEventChecklist) return;
+    var want = new URLSearchParams(location.search).get("event");
+    EVENT_PICKER = window.RNEventChecklist.mount(el, { selected: want ? [want] : [], multiple: true });
+    var typeSel = $("#regForm") && $("#regForm").posko_type;
+    if (typeSel) typeSel.addEventListener("change", syncEventMode);
+    syncEventMode();
   }
 
   /* ---------- Lokasi GPS: lokasi saat ini / pilih di peta / manual ---------- */
@@ -306,6 +303,7 @@
   function setupForm() {
     var form = $("#regForm");
     $("#regResetBtn").addEventListener("click", function () { form.reset(); });
+    form.addEventListener("reset", function () { setTimeout(syncEventMode, 0); });
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -313,6 +311,8 @@
       var fd = new FormData(form);
       var latlng = String(fd.get("latlng") || "").split(",").map(function (s) { return s.trim(); });
 
+      var events = EVENT_PICKER ? EVENT_PICKER.getSelected() : [];
+      if (!events.length) { msg.textContent = "Pilih minimal satu bencana yang ditangani posko."; return; }
       msg.textContent = "Menyimpan…";
       // fungsi posko (boleh > 1): checkbox + fallback ke jenis utama
       var functions = [];
@@ -328,7 +328,8 @@
           title: fd.get("title"),
           posko_type: fd.get("posko_type"),
           address: fd.get("address"),
-          disaster_event: fd.get("disaster_event"),
+          disaster_event: events[0],
+          disaster_events: JSON.stringify(events),
           latitude: latlng[0] || null,
           longitude: latlng[1] || null,
           officer_in_charge_name: fd.get("officer_in_charge_name"),

@@ -39,6 +39,13 @@
    "description": "Disaster event associated with this record."
   },
   {
+   "fieldname": "served_events",
+   "label": "Disaster Events Served",
+   "fieldtype": "Table",
+   "options": "RN Posko Served Event",
+   "description": "All disasters this posko handles (owner 2026-10-19). Disaster Event above = the main one; it is always in this list."
+  },
+  {
    "fieldname": "organization",
    "label": "Organization",
    "fieldtype": "Link",

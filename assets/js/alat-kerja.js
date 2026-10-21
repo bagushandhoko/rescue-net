@@ -494,6 +494,7 @@
           size_unit: form.size_unit.value.trim(),
           work_days_target: $("#daysField").hidden ? null : (Number(form.work_days_target.value) || null),
           posko: form.posko.value || null,
+          recovery_project: (form.recovery_project && form.recovery_project.value) || null,
           location: form.location.value.trim(),
           notes: form.notes.value.trim(),
           disaster_event: getEventId(),
@@ -530,6 +531,8 @@
   async function loadBoard() {
     var data = await window.RN_FRAPPE.call(BOARD_METHOD, { disaster_event: getEventId() });
     BOARD_CACHE = data;
+    // recovery-alat.js renders "Penyedia Alat" from the same payload
+    document.dispatchEvent(new CustomEvent("rn:ak-board", { detail: data }));
     var t = shortTime(data.generated_at);
     $("#workToolUpdated").textContent = "Alat Kerja · Diperbarui " + t;
     $("#workToolMeta").textContent = "Diperbarui " + dayMonth(data.generated_at) + " " + t + " · " +

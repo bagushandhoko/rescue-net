@@ -1,4 +1,5 @@
 import frappe
+from frappe.rate_limiter import rate_limit
 from frappe.utils import flt, now_datetime
 
 from rescue_net.api_donor_program import (
@@ -498,3 +499,89 @@ def list_updates(
             result.append(dict(x))
 
     return result
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=60, seconds=60)
+def recovery_board(disaster_event=None):
+    """Recovery dan Alat Kerja (owner 2026-10-19), guest read-only: the
+    reconstruction plan of one disaster and how far it is. Public-safe subset
+    only — no PIC name/phone, no notes, no creator; private owners are a
+    generic word. Full rows stay behind list_projects (login)."""
+    from rescue_net.reference_resolver import resolve_disaster_event
+    from rescue_net.resource_tools.boards import _provider_labels
+
+    event = resolve_disaster_event(disaster_event) if disaster_event else None
+    filters = {"is_deleted": 0}
+    if event:
+        filters["disaster_event"] = event
+    rows = frappe.get_all(
+        "RN Recovery Project", filters=filters,
+        fields=["name", "disaster_event", "project_name", "project_type", "owner_type", "owner_id", "target_description",
+                "location", "priority", "target_amount", "current_amount", "progress_percent", "status",
+                "start_date", "target_finish_date", "modified"],
+        order_by="modified desc", limit_page_length=500,
+    )
+    from rescue_net.services.drill import real_rows
+    rows = real_rows(rows)  # drill (latihan) projects never reach a guest / non-admin
+    owner_of = _provider_labels(rows)
+    last = {}
+    if rows:
+        for u in frappe.get_all(
+            "RN Recovery Project Update",
+            filters={"project": ["in", [r.name for r in rows]], "is_deleted": 0},
+            fields=["project", "update_title", "progress_percent", "observed_at", "creation"],
+            order_by="creation asc", limit_page_length=5000,
+        ):
+            last[u.project] = u
+    # obyek kerja lapangan per proyek -> alat diminta vs dikerahkan
+    tools = {}
+    if rows and frappe.get_meta("RN Work Object").has_field("recovery_project"):
+        wos = frappe.get_all("RN Work Object",
+                             filters={"recovery_project": ["in", [r.name for r in rows]]},
+                             fields=["name", "recovery_project", "status"], limit_page_length=2000)
+        wo_proj = {w.name: w.recovery_project for w in wos}
+        for w in wos:
+            t = tools.setdefault(w.recovery_project, {"obyek": 0, "diminta": 0.0, "dikerahkan": 0.0})
+            t["obyek"] += 1
+        reqs = frappe.get_all("RN Work Tool Request",
+                              filters={"work_object": ["in", list(wo_proj)],
+                                       "request_status": ["not in", ["cancelled", "rejected"]]},
+                              fields=["name", "work_object", "quantity"], limit_page_length=5000) if wo_proj else []
+        req_proj = {q.name: wo_proj.get(q.work_object) for q in reqs}
+        for q in reqs:
+            tools[req_proj[q.name]]["diminta"] += flt(q.quantity) or 1.0
+        if reqs:
+            for d in frappe.get_all("RN Work Tool Deployment",
+                                    filters={"work_tool_request": ["in", list(req_proj)],
+                                             "deployment_status": ["not in", ["cancelled", "returned_cancelled"]]},
+                                    fields=["work_tool_request", "quantity_assigned"], limit_page_length=5000):
+                tools[req_proj[d.work_tool_request]]["dikerahkan"] += flt(d.quantity_assigned)
+    projects = []
+    for r in rows:
+        u = last.get(r.name)
+        projects.append({
+            "name": r.name, "title": r.project_name, "type": r.project_type,
+            "target": r.target_description, "location": r.location, "priority": r.priority,
+            "owner": owner_of(r), "status": r.status,
+            "progress": flt(r.progress_percent),
+            "budget_target": flt(r.target_amount), "budget_current": flt(r.current_amount),
+            "start_date": r.start_date, "target_finish_date": r.target_finish_date,
+            "last_update": {"title": u.update_title, "at": u.observed_at or u.creation,
+                            "progress": flt(u.progress_percent)} if u else None,
+            "updated_at": r.modified,
+            "alat": tools.get(r.name) or {"obyek": 0, "diminta": 0.0, "dikerahkan": 0.0},
+        })
+    projects.sort(key=lambda p: (str(p["status"] or "") in ("completed", "selesai"), -p["progress"]))
+    n = len(projects)
+    return {
+        "disaster_event": event,
+        "projects": projects,
+        "totals": {
+            "projects": n,
+            "selesai": sum(1 for p in projects if str(p["status"] or "") in ("completed", "selesai")),
+            "rata_progress": round(sum(p["progress"] for p in projects) / n, 1) if n else 0,
+            "anggaran_target": sum(p["budget_target"] for p in projects),
+            "anggaran_terkumpul": sum(p["budget_current"] for p in projects),
+        },
+    }

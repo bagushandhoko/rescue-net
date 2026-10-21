@@ -105,10 +105,17 @@ class TestSimKekeringanKupang(RNTestCase):
             offer = logistics.create_aid_offer(self.p_oebelo.name, "BPBD Kupang (gudang)", "Air bersih",
                                                quantity=5000, unit="liter")["aid_offer"]
         tanker = make_transport_space(self.p_kab, title="Truk Tangki 5.000 L")
-        # the tanker belongs to the district posko: its operator sends it
-        with as_user(self.op_oebelo.user), self.assertRaises(frappe.PermissionError):
+        # the tanker belongs to the district posko: another posko can only BOOK
+        # it (owner 2026-10-19) — needs the cargo weight, then waits for the
+        # district posko's confirmation
+        with as_user(self.op_oebelo.user), self.assertRaisesRegex(frappe.ValidationError, "berat"):
             logistics.create_flow(self.p_oebelo.name, "Air bersih", quantity=5000, unit="liter",
                                   transport_space=tanker.name)
+        with as_user(self.op_oebelo.user):
+            booked = logistics.create_flow(self.p_oebelo.name, "Air bersih", quantity=100, unit="liter",
+                                           transport_space=tanker.name, weight_kg=100)
+        self.assertIn(booked["booking_status"], ("requested", "confirmed"))
+        self.assertEqual(frappe.db.get_value("RN Transport Space", tanker.name, "transport_status"), "available")
         with as_user(self.op_kab.user):
             flow = logistics.create_flow(self.p_oebelo.name, "Air bersih", quantity=5000, unit="liter",
                                          source_posko=self.p_kab.name, logistic_need=need, aid_offer=offer,

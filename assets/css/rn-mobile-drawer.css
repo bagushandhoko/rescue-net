@@ -1,9 +1,13 @@
 /* =========================================================
    Rescue-Net Mobile Navigation Drawer
-   Off-canvas sidebar for internal pages, <1024px.
-   Loaded after style.css and rn-navigation-v2.css so these
-   rules win the cascade without needing to unpick the legacy
-   mobile overrides in style.css.
+   <1024px: one sticky top bar -> one FULL-SCREEN overlay menu.
+   Pattern referenced from totalenergies.com (full-screen overlay,
+   large bold accordion sections) rendered in Rescue-Net's warm
+   brand (cream + coral). The operational nav is already rendered
+   as <details>/<summary> accordion groups by rn-navigation-v2.js;
+   this file only styles them for the overlay. Loaded after
+   style.css and rn-navigation-v2.css so these rules win the cascade.
+   CSS-only: no DOM restructuring, reversible on resize to desktop.
    ========================================================= */
 
 .rn-drawer-topbar,
@@ -25,18 +29,20 @@
     min-height: 100vh !important;
   }
 
-  /* Sticky top bar: hamburger left, title center, logo right */
+  /* ---- Sticky top bar: brand/title + hamburger ---- */
   .rn-drawer-topbar {
     display: flex !important;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
     position: sticky;
-    top: 0;
-    z-index: 220;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 260;
     height: 56px;
-    padding: 0 10px;
-    background: var(--panel2, #fff8f3);
+    padding: 0 max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px));
+    background: rgba(255, 248, 243, .94);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line, rgba(104, 64, 45, .14));
   }
 
@@ -58,6 +64,7 @@
     width: auto;
   }
 
+  /* Hamburger that animates into an X while the overlay is open */
   .rn-drawer-hamburger {
     display: inline-flex;
     flex: 0 0 auto;
@@ -65,11 +72,11 @@
     justify-content: center;
     align-items: stretch;
     gap: 4px;
-    width: 40px;
-    height: 40px;
-    padding: 0;
+    width: 42px;
+    height: 42px;
+    padding: 0 10px;
     border: 0;
-    border-radius: 8px;
+    border-radius: 10px;
     background: transparent;
     cursor: pointer;
   }
@@ -81,9 +88,20 @@
 
   .rn-drawer-hamburger span {
     display: block;
-    height: 2px;
+    height: 2.4px;
     border-radius: 2px;
     background: var(--text, #2d211b);
+    transition: transform .26s ease, opacity .2s ease;
+  }
+
+  body.rn-drawer-open .rn-drawer-hamburger span:nth-child(1) {
+    transform: translateY(6.4px) rotate(45deg);
+  }
+  body.rn-drawer-open .rn-drawer-hamburger span:nth-child(2) {
+    opacity: 0;
+  }
+  body.rn-drawer-open .rn-drawer-hamburger span:nth-child(3) {
+    transform: translateY(-6.4px) rotate(-45deg);
   }
 
   /* The sticky top bar replaces the old fixed floating mobile title */
@@ -91,48 +109,115 @@
     display: none !important;
   }
 
-  /* Off-canvas drawer: reuse the existing .sidebar element as the panel */
+  /* ---- Full-screen overlay: the .sidebar element is the panel ---- */
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar {
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 280px !important;
-    max-width: 85vw !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
     height: 100vh !important;
     height: 100dvh !important;
     min-height: 0 !important;
     max-height: none !important;
-    padding: 16px 14px !important;
-    border-right: 1px solid var(--line, rgba(104, 64, 45, .14)) !important;
-    border-bottom: 0 !important;
+    padding: 0 !important;
+    padding-top: calc(64px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: max(20px, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(20px, env(safe-area-inset-right, 0px)) !important;
+    border: 0 !important;
+    background: var(--bg, #fff6ef) !important;
     overflow-y: auto !important;
     overscroll-behavior: contain !important;
-    z-index: 210 !important;
-    transform: translateX(-100%) !important;
-    transition: transform 220ms ease !important;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, .3) !important;
+    z-index: 240 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-10px) !important;
+    transition: opacity .28s ease, transform .34s cubic-bezier(.22, 1, .36, 1), visibility .28s !important;
+    box-shadow: none !important;
   }
 
   body.rn-drawer-open:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar {
-    transform: translateX(0) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+  }
+
+  /* Hide the in-panel brand: the sticky top bar already shows it */
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar .brand {
+    display: none !important;
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar nav {
     display: flex !important;
     flex-direction: column !important;
-    gap: 4px !important;
+    gap: 0 !important;
     overflow: visible !important;
     padding: 0 !important;
   }
 
-  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar nav a,
-  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-link,
+  /* ---- Big bold accordion groups (totalenergies pattern) ---- */
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-group {
+    border: 0 !important;
+    border-top: 1px solid var(--line, rgba(104, 64, 45, .14)) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    margin: 0 !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-group:last-of-type {
+    border-bottom: 1px solid var(--line, rgba(104, 64, 45, .14)) !important;
+  }
+
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-summary {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-height: 0 !important;
+    padding: 11px 2px !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    letter-spacing: -.02em !important;
+    color: var(--text, #2d211b) !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-summary > span:first-child {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-group[open] .rn-nav-v2-summary {
+    color: var(--vx-brand-dark, #c4442f) !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-chevron {
+    font-size: 22px !important;
+    line-height: 1 !important;
+    color: var(--peach2, #e8835d) !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-children {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    padding: 0 0 6px !important;
+  }
+
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar nav a,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-link {
     flex: 0 0 auto !important;
-    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-height: 36px !important;
+    padding: 6px 10px !important;
     white-space: normal !important;
-    border-radius: 8px !important;
-    font-size: 14px !important;
+    border-radius: 10px !important;
+    font-size: 15px !important;
+    font-weight: 500 !important;
+  }
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-link.active,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .rn-nav-v2-link[aria-current="page"] {
+    background: rgba(232, 117, 90, .14) !important;
+    color: var(--vx-brand-dark, #c4442f) !important;
+    font-weight: 700 !important;
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .main {
@@ -141,16 +226,16 @@
     padding: 14px 12px 24px !important;
   }
 
-  /* Backdrop */
+  /* Backdrop kept for the fade but the overlay covers the page fully */
   .rn-drawer-backdrop {
     display: block !important;
     position: fixed;
     inset: 0;
-    z-index: 200;
-    background: rgba(0, 0, 0, .5);
+    z-index: 230;
+    background: rgba(36, 26, 21, .4);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 220ms ease;
+    transition: opacity .28s ease;
   }
 
   body.rn-drawer-open .rn-drawer-backdrop {
@@ -158,13 +243,14 @@
     pointer-events: auto;
   }
 
-  /* Lock page scroll while the drawer is open; main content itself never shifts */
+  /* Lock page scroll while the overlay is open */
   body.rn-drawer-open {
     overflow: hidden !important;
   }
 
   @media (prefers-reduced-motion: reduce) {
     body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar,
+    .rn-drawer-hamburger span,
     .rn-drawer-backdrop {
       transition: none !important;
     }
@@ -178,3 +264,283 @@
     display: none !important;
   }
 }
+
+/* =========================================================
+   Single-menu fold (public header folded INTO the overlay)
+   Account + event picker, then the "Umum" links, above the
+   operational accordion groups. rn-mobile-drawer.js does the fold.
+   ========================================================= */
+@media (max-width: 1023px) {
+  body.rn-drawer-folded .rn-public-header {
+    display: none !important;
+  }
+
+  .rn-drawer-public {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 4px;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--line, rgba(104, 64, 45, .14));
+  }
+
+  .rn-drawer-section-label {
+    margin: 4px 0 0;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted, #8a5a45);
+  }
+
+  .rn-drawer-public .rn-public-actions {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    order: 0;
+  }
+
+  .rn-drawer-public .rn-event-picker {
+    display: inline-flex !important;
+    width: 100%;
+    order: 0;
+  }
+  .rn-drawer-public .rn-event-picker label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+  }
+  .rn-drawer-public .rn-event-picker select {
+    width: 100%;
+    max-width: none;
+    min-height: 40px;
+    font-size: 15px;
+  }
+
+  .rn-drawer-public .rn-public-login,
+  .rn-drawer-public .rn-public-logout {
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .rn-drawer-public .rn-public-user {
+    justify-content: center;
+    padding: 4px 0;
+    font-size: 15px;
+  }
+
+  /* "Umum" links: clean vertical list matching the operational items */
+  .rn-drawer-public .rn-public-links {
+    display: flex !important;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  .rn-drawer-public .rn-public-links a {
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text, #2d211b);
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    white-space: normal;
+  }
+  .rn-drawer-public .rn-public-links a:hover,
+  .rn-drawer-public .rn-public-links a:focus-visible {
+    background: rgba(104, 64, 45, .06);
+  }
+}
+
+/* =========================================================
+   Standalone overlay panel (rn-mobile-drawer.js makes it on pages
+   without the operational .sidebar: Home, public and field pages),
+   so every page shares the same mobile menu. Desktop: never shown.
+   ========================================================= */
+.sidebar.rn-drawer-panel {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  body .sidebar.rn-drawer-panel {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    margin: 0 !important;
+    padding: calc(64px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) calc(32px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)) !important;
+    background: var(--bg, #fff6ef) !important;
+    color: var(--text, #2d211b);
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    z-index: 240 !important;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity .28s ease, transform .34s cubic-bezier(.22, 1, .36, 1), visibility .28s;
+  }
+  body.rn-drawer-open .sidebar.rn-drawer-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+  body .sidebar.rn-drawer-panel .brand {
+    display: none !important;
+  }
+  body .sidebar.rn-drawer-panel .rn-drawer-public {
+    border-bottom: 0;
+  }
+
+  /* Home's .welcome-links folded into the panel: same list as "Umum" */
+  .rn-drawer-public .welcome-links {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 2px !important;
+    width: 100% !important;
+    position: static !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+  .rn-drawer-public .welcome-links a {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-height: 36px !important;
+    padding: 6px 10px !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    color: var(--text, #2d211b) !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+  .rn-drawer-public .welcome-links .welcome-login-link,
+  .rn-drawer-public .welcome-links .rn-public-login {
+    justify-content: center !important;
+    margin-top: 8px !important;
+    background: var(--vx-brand, #e8755a) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+  }
+
+  /* Home: its own welcome bar + hamburger are replaced by the shared bar */
+  body.home-page.rn-drawer-folded .welcome-nav,
+  body.home-page .welcome-menu-toggle {
+    display: none !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body .sidebar.rn-drawer-panel {
+      transition: none !important;
+    }
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar.rn-drawer-panel {
+    display: none !important;
+  }
+}
+
+/* Phone menu tidy-up (owner 2026-10-19): login, main links like the header,
+   then closed groups (Bencana Aktif, Posko, Donasi, Modul, Pengaturan). */
+@media (max-width: 1023px) {
+  .rn-drawer-public .rn-event-picker { display: none !important; }
+  .rn-drawer-public .rn-public-links a[href$="bencana-aktif.html"],
+  .rn-drawer-public .welcome-links a[href$="bencana-aktif.html"] { display: none !important; }
+  .rn-drawer-public .rn-public-links a,
+  .rn-drawer-public .welcome-links a:not(.welcome-login-link):not(.rn-public-login) {
+    justify-content: flex-start !important; text-align: left !important;
+  }
+  .rn-drawer-public .rn-drawer-public-links { margin-top: 2px; }
+  /* header CSS centres the links (align-items/justify-content: center) and
+     Home's list keeps a fixed height -> list them top-down, left-aligned */
+  body .sidebar .rn-drawer-public nav.rn-public-links,
+  body .sidebar .rn-drawer-public nav.welcome-links {
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+  }
+  /* style.css adds padding-bottom:80px to every sidebar nav on the
+     external-access layout; not for the folded public links */
+  html.rn-external-access body:not(.mockup-viewer) .sidebar .rn-drawer-public nav.welcome-links,
+  html.rn-external-access body:not(.mockup-viewer) .sidebar .rn-drawer-public nav.rn-public-links,
+  html.rn-external-access body:not(.mockup-viewer) .sidebar .rn-drawer-public nav.rn-drawer-disaster-list {
+    padding-bottom: 0 !important;
+  }
+  /* same size/spacing on every page (some page CSS restyles header links) */
+  body .sidebar .rn-drawer-public nav.rn-public-links a:not(.rn-public-login),
+  body .sidebar .rn-drawer-public nav.welcome-links a:not(.welcome-login-link) {
+    min-height: 36px !important; padding: 6px 10px !important; margin: 0 !important;
+    font-size: 15px !important; font-weight: 600 !important; line-height: 1.25 !important;
+    border: 0 !important; background: transparent !important; box-shadow: none !important;
+  }
+  /* Home: login on top like every other page */
+  body .sidebar .rn-drawer-public nav.welcome-links .welcome-login-link {
+    order: -1; margin: 0 0 8px !important; min-height: 40px !important;
+  }
+
+  /* the Bencana Aktif group looks exactly like the operational groups,
+     also on pages that have no operational sidebar (Home, public pages) */
+  .rn-drawer-public details.rn-drawer-group {
+    border: 0; border-top: 1px solid var(--line, rgba(104, 64, 45, .14)); margin: 4px 0 0;
+  }
+  .rn-drawer-public details.rn-drawer-group > summary {
+    display: flex; align-items: center; gap: 12px; padding: 11px 2px; cursor: pointer; list-style: none;
+    font-size: 18px; font-weight: 800; letter-spacing: -.02em; color: var(--text, #2d211b);
+  }
+  .rn-drawer-public details.rn-drawer-group > summary::-webkit-details-marker { display: none; }
+  .rn-drawer-public details.rn-drawer-group > summary > span:first-child { flex: 1; min-width: 0; }
+  .rn-drawer-public details.rn-drawer-group[open] > summary { color: var(--vx-brand-dark, #c4442f); }
+  .rn-drawer-public details.rn-drawer-group .rn-nav-v2-chevron { font-size: 22px; line-height: 1; color: var(--peach2, #e8835d); transition: transform .2s; }
+  .rn-drawer-public details.rn-drawer-group[open] .rn-nav-v2-chevron { transform: rotate(180deg); }
+  .rn-drawer-public .rn-drawer-disaster-list { display: flex; flex-direction: column; gap: 0; padding: 0 0 6px; }
+  /* operational groups mounted in the phone menu of pages without a sidebar */
+  .rn-drawer-public .rn-drawer-ops details.rn-drawer-group .rn-nav-v2-children { display: flex; flex-direction: column; gap: 0; padding: 0 0 6px; }
+  .rn-drawer-public .rn-drawer-ops .rn-nav-v2-link {
+    display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 10px; border-radius: 10px;
+    color: inherit; text-decoration: none; font-size: 15px; font-weight: 500; line-height: 1.25;
+  }
+  .rn-drawer-public .rn-drawer-ops .rn-nav-v2-icon { display: inline-grid; place-items: center; width: 18px; color: var(--muted, #8a5a45); }
+  .rn-drawer-public .rn-drawer-ops .rn-nav-v2-icon svg { width: 16px; height: 16px; }
+  .rn-drawer-public .rn-drawer-ops details.rn-drawer-group:last-child { border-bottom: 1px solid var(--line, rgba(104, 64, 45, .14)); }
+  .rn-drawer-public .rn-drawer-disaster {
+    display: flex; align-items: center; gap: 10px; min-height: 36px; padding: 6px 10px; border-radius: 10px;
+    color: inherit; text-decoration: none; font-size: 15px; font-weight: 500; line-height: 1.25;
+  }
+  .rn-drawer-public .rn-drawer-disaster.is-current { background: rgba(232, 117, 90, .14); font-weight: 700; }
+  .rn-drawer-public .rn-drawer-all { font-weight: 700; }
+  .rn-drawer-disaster .rn-sev-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: #b88918; }
+  .rn-drawer-disaster .rn-sev-dot.crit { background: #d84545; }
+  .rn-drawer-disaster .rn-sev-dot.high { background: #dd8a2f; }
+  /* no double line between the public block and the first operational group */
+  .rn-drawer-public { border-bottom: 0 !important; padding-bottom: 0 !important; }
+}
+
+/* Leaflet panes use z-index 200-1000; keep them inside the map box so the
+   phone menu (z-index ~240) always covers a map (owner 2026-10-19). */
+.leaflet-container { isolation: isolate; z-index: 0; }

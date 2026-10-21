@@ -6,9 +6,26 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Bencana Aktif</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
+  <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="../assets/css/style.css?v=kpiicon-20261018">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
-  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=bencana-20260901" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=opsgroups-20261019b" />
+  <style>
+  .rn-ba-map-panel{display:flex;flex-direction:column}
+  .rn-ba-map{flex:1 1 auto;min-height:380px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#eef3f4;z-index:0}
+  .rn-ba-map-panel .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .rn-ba-map-legend{display:flex;gap:10px;font-size:12px;color:var(--muted)}
+  .rn-ba-map-legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+  .rn-ba-map-legend .crit{background:#d84545}.rn-ba-map-legend .high{background:#dd8a2f}.rn-ba-map-legend .mid{background:#b88918}
+  .rn-ba-map-note{margin:8px 0 0;font-size:12px}
+  .rn-ba-list-wrap{margin-top:18px}
+  .rn-ba-pop b{display:block;margin-bottom:2px}.rn-ba-pop a{display:inline-block;margin-top:6px;font-weight:700}
+  @media (max-width:900px){.rn-ba-map{min-height:300px}}
+  </style>
 </head>
 <body>
 <div class="app-shell">
@@ -95,7 +112,43 @@
       </button>
     </section>
 
-    <section class="content-grid rn-ba-grid">
+    <section class="content-grid rn-ba-grid rn-ba-top">
+      <div class="panel rn-ba-map-panel">
+        <div class="panel-header">
+          <div>
+            <h3>Peta Lokasi Bencana <span class="chip" id="baMapCount">0</span></h3>
+            <p>Klik titik bencana untuk melihat ringkasannya. Titik kecil = posko bencana yang dipilih.</p>
+          </div>
+          <div class="rn-ba-map-legend" aria-hidden="true">
+            <span><i class="crit"></i>Kritis</span><span><i class="high"></i>Tinggi</span><span><i class="mid"></i>Waspada</span>
+          </div>
+        </div>
+        <div id="baMap" class="rn-ba-map" role="region" aria-label="Peta lokasi bencana aktif"></div>
+        <p class="rn-muted rn-ba-map-note" id="baMapNote" hidden></p>
+      </div>
+
+      <aside class="panel summary rn-ba-summary">
+        <div class="panel-header">
+          <div><h3>Ringkasan Bencana</h3></div>
+          <span class="chip danger" id="baSummaryStatus" hidden>–</span>
+        </div>
+
+        <div id="baSummaryCard" class="rn-ba-sumcard">
+          <p class="rn-muted">Pilih bencana dari daftar.</p>
+        </div>
+
+        <h3 class="rn-sub-h">Isu Kritis Teratas</h3>
+        <div id="baIsuList" class="rn-ba-isu"><p class="rn-muted">—</p></div>
+
+        <div class="rn-ba-sum-actions">
+          <a class="btn primary" id="baOpenWarRoom" href="#">Buka Control Centre ↗</a>
+          <a class="btn ghost" id="baOpenDetail" href="back-office.html">Ekosistem Penanganan</a>
+          <a class="btn ghost" id="baOpenConsolidation" href="#" title="Rincian MAX/AI per kelompok kebutuhan + sumber data mentah">Data Konsolidasi (AI) ↗</a>
+        </div>
+      </aside>
+    </section>
+
+    <section class="rn-ba-list-wrap">
       <div class="panel rn-ba-list-panel">
         <div class="panel-header">
           <div>
@@ -130,26 +183,6 @@
           <div class="rn-ba-pager" id="baPager"></div>
         </div>
       </div>
-
-      <aside class="panel summary rn-ba-summary">
-        <div class="panel-header">
-          <div><h3>Ringkasan Bencana</h3></div>
-          <span class="chip danger" id="baSummaryStatus" hidden>–</span>
-        </div>
-
-        <div id="baSummaryCard" class="rn-ba-sumcard">
-          <p class="rn-muted">Pilih bencana dari daftar.</p>
-        </div>
-
-        <h3 class="rn-sub-h">Isu Kritis Teratas</h3>
-        <div id="baIsuList" class="rn-ba-isu"><p class="rn-muted">—</p></div>
-
-        <div class="rn-ba-sum-actions">
-          <a class="btn primary" id="baOpenWarRoom" href="#">Buka Control Centre ↗</a>
-          <a class="btn ghost" id="baOpenDetail" href="#">Lihat Detail</a>
-          <a class="btn ghost" id="baOpenConsolidation" href="#" title="Rincian MAX/AI per kelompok kebutuhan + sumber data mentah">Data Konsolidasi (AI) ↗</a>
-        </div>
-      </aside>
     </section>
 
     <div class="rn-page-status" id="baStatus"></div>
@@ -170,13 +203,15 @@
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+<script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
-<script src="../assets/js/bencana-aktif.js?v=jiwaposko-20260926"></script>
+<script src="../assets/vendor/leaflet/leaflet.js"></script>
+<script src="../assets/js/bencana-aktif.js?v=petaba-20261019b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
-<script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
+<script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=sistemverif-20261008"></script>
-<script src="../assets/js/rn-mobile-drawer.js?v=single-nav-20260822a"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=opsgroups-20261019"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=title-20261019"></script>
 <script src="../assets/js/rn-early-warning.js?v=ew-20261009"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>

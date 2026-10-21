@@ -143,13 +143,11 @@ def update_organization(
     doc.public_activity_summary = cint(
         public_activity_summary
     )
-
-    if privacy_mode == "closed":
-        doc.allow_posko_public_choice = 0
-    else:
-        doc.allow_posko_public_choice = cint(
-            allow_posko_public_choice
-        )
+    # allow_posko_public_choice is independent of privacy_mode: a closed org may
+    # still permit specific poskos to be public (see rn_organization.on_update).
+    doc.allow_posko_public_choice = cint(
+        allow_posko_public_choice
+    )
 
     doc.save(ignore_permissions=True)
 
@@ -165,6 +163,64 @@ def update_organization(
         "public_activity_summary": (
             doc.public_activity_summary
         ),
+    }
+
+
+@frappe.whitelist()
+def set_org_visibility(organization, open_to_public):
+    """One-click Terbuka/Tertutup switch for the org-admin console.
+
+    `open_to_public` truthy -> privacy_mode="open",   control_centre_share="full_authorized"
+    `open_to_public` falsy  -> privacy_mode="closed",  control_centre_share="aggregate"
+
+    `allow_posko_public_choice` is left untouched, so a posko the org set to
+    "public" (e.g. a shared TNI ship) stays public even after the org closes.
+    A closed org keeps its activity private from outsiders while its own
+    members still see full detail of their poskos.
+    """
+    actor = rn_actor()
+
+    if not can_manage_organization(actor, organization):
+        frappe.throw(
+            "Anda tidak dapat mengubah kebijakan Kelompok ini",
+            frappe.PermissionError,
+        )
+
+    is_open = cint(open_to_public)
+
+    doc = frappe.get_doc("RN Organization", organization)
+    doc.privacy_mode = "open" if is_open else "closed"
+    doc.control_centre_share = "full_authorized" if is_open else "aggregate"
+    doc.save(ignore_permissions=True)
+
+    return {
+        "organization": doc.name,
+        "privacy_mode": doc.privacy_mode,
+        "control_centre_share": doc.control_centre_share,
+        "allow_posko_public_choice": doc.allow_posko_public_choice,
+    }
+
+
+@frappe.whitelist()
+def set_posko_public_choice(organization, allow):
+    """Flip only `allow_posko_public_choice` — the org's permission for its
+    poskos to publish their own detail. Turning it off makes any currently
+    "public" posko fall back to "inherit" (rn_organization.on_update cascade)."""
+    actor = rn_actor()
+
+    if not can_manage_organization(actor, organization):
+        frappe.throw(
+            "Anda tidak dapat mengubah kebijakan Kelompok ini",
+            frappe.PermissionError,
+        )
+
+    doc = frappe.get_doc("RN Organization", organization)
+    doc.allow_posko_public_choice = cint(allow)
+    doc.save(ignore_permissions=True)
+
+    return {
+        "organization": doc.name,
+        "allow_posko_public_choice": doc.allow_posko_public_choice,
     }
 
 

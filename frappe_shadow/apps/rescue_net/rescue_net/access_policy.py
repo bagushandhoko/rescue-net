@@ -281,9 +281,11 @@ def public_posko_allowed(posko_name):
         )
 
         if org:
-            if org.privacy_mode != "open":
-                return False
-
+            # A posko is public when the org permits posko-level choice AND the
+            # posko chose "public". This holds even when the org's own default
+            # (privacy_mode) is closed — closing the org keeps its activity
+            # private by default while still letting it expose specific poskos
+            # (e.g. a shared TNI ship) that it deliberately set public.
             if not cint(org.allow_posko_public_choice):
                 return False
 

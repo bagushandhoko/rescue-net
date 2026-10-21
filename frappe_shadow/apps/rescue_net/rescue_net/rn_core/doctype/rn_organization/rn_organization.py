@@ -25,28 +25,29 @@ class RNOrganization(Document):
             self.identity_verification_status = "unverified"
 
 
-    # RN_PRIVACY_GUARD_V1
+    # RN_PRIVACY_GUARD_V2
     def validate(self):
         if not self.privacy_mode:
             self.privacy_mode = "closed"
-
-        if self.privacy_mode == "closed":
-            self.allow_posko_public_choice = 0
 
         if not self.control_centre_share:
             self.control_centre_share = "aggregate"
 
     def on_update(self):
-        """O-1 cascade: once the organisation no longer lets its poskos open
-        detail to the public (closed, or the choice switched off), a posko
-        that had chosen 'public' goes back to 'inherit'. Read-time checks
-        (access_policy.public_posko_allowed) already hid it; this keeps the
-        stored value honest so it does not reappear if the org reopens."""
-        if self.privacy_mode == "open" and self.allow_posko_public_choice:
+        """O-1 cascade: `allow_posko_public_choice` is the org's permission for
+        its poskos to publish their own detail. When the org REVOKES that
+        permission, a posko that had chosen 'public' goes back to 'inherit' so
+        the stored value stays honest.
+
+        Note: closing the org's own default (`privacy_mode`) no longer strips a
+        posko the org deliberately keeps public — a closed org may still expose
+        specific poskos (e.g. a shared TNI ship) as long as it allows posko
+        choice. Only turning the choice OFF cascades."""
+        if self.allow_posko_public_choice:
             return
         before = self.get_doc_before_save()
-        if before and not (before.privacy_mode == "open" and before.allow_posko_public_choice):
-            return  # already closed before this save
+        if not before or not before.allow_posko_public_choice:
+            return  # choice was already off before this save (or a fresh insert)
         frappe.db.sql(
             "UPDATE `tabRN Posko` SET public_detail='inherit' WHERE organization=%s AND public_detail='public'",
             (self.name,),

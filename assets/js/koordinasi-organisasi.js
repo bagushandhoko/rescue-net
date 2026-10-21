@@ -422,7 +422,83 @@
 
     renderPendingRequests(d.pending_requests || []);
     wireOrgAdminActions();
+    loadOrgVisibility(d);
     refreshAiKeyStatus();
+  }
+
+  // --- Keterbukaan organisasi: tombol Terbuka/Tertutup satu-klik ----------
+  function visCard(name, title, p) {
+    var isOpen = !!(p && p.privacy_mode === "open");
+    var choice = !!(p && Number(p.allow_posko_public_choice));
+    var stateChip = isOpen
+      ? '<span class="chip success">Terbuka ke publik</span>'
+      : '<span class="chip neutral">Tertutup (hanya organisasi)</span>';
+    var desc = isOpen
+      ? "Detail posko tampil penuh di Control Centre untuk semua orang."
+      : "Control Centre hanya menampilkan ringkasan ke luar. Organisasi Anda tetap melihat detail poskonya sendiri.";
+    return (
+      '<div class="rn-vis-card" data-org="' + esc(name) +
+        '" style="border:1px solid var(--line,#e3e3e3);border-radius:10px;padding:12px;margin:0 0 10px">' +
+      '<div class="rn-row" style="justify-content:space-between;align-items:center">' +
+        "<b>" + esc(title || name) + "</b>" + stateChip +
+      "</div>" +
+      '<p class="rn-muted" style="font-size:12px;margin:6px 0">' + esc(desc) + "</p>" +
+      '<button type="button" class="btn ' + (isOpen ? "ghost" : "primary") +
+        ' koVisToggle" data-open="' + (isOpen ? "1" : "0") + '">' +
+        (isOpen ? "Tutup — hanya organisasi" : "Buka ke publik") +
+      "</button>" +
+      '<label class="rn-rw-checkbox-label" style="margin-top:8px">' +
+        '<input type="checkbox" class="koVisChoice"' + (choice ? " checked" : "") + "> " +
+        'Izinkan posko tertentu tetap tampil publik sendiri (mis. kapal bersama) meski organisasi tertutup' +
+      "</label>" +
+      '<span class="form-message koVisMsg" style="display:block;margin-top:4px"></span>' +
+      "</div>"
+    );
+  }
+
+  async function loadOrgVisibility(d) {
+    var host = $("#koOrgVisibility");
+    if (!host) return;
+    var mine = (d && d.organizations) || [];
+    if (!mine.length) { host.innerHTML = '<div class="rn-muted">Tidak ada organisasi yang Anda kelola.</div>'; return; }
+    host.innerHTML = '<div class="rn-muted">Memuat status keterbukaan…</div>';
+    var privMap = {};
+    try {
+      var r = await window.RN_FRAPPE.call("rescue_net.api_privacy.dashboard");
+      ((r && r.organizations) || []).forEach(function (o) { privMap[o.name] = o; });
+    } catch (e) {}
+    host.innerHTML = mine.map(function (o) { return visCard(o.name, o.title, privMap[o.name]); }).join("");
+    wireVisActions();
+  }
+
+  function wireVisActions() {
+    document.querySelectorAll("#koOrgVisibility .rn-vis-card").forEach(function (cardEl) {
+      var org = cardEl.getAttribute("data-org");
+      var msg = cardEl.querySelector(".koVisMsg");
+      var toggle = cardEl.querySelector(".koVisToggle");
+      var choice = cardEl.querySelector(".koVisChoice");
+      if (toggle) toggle.addEventListener("click", async function () {
+        var goOpen = toggle.getAttribute("data-open") !== "1";
+        if (!window.confirm(goOpen
+          ? "Buka organisasi ini ke publik? Detail posko akan tampil penuh di Control Centre untuk semua."
+          : "Tutup organisasi ini? Control Centre hanya menampilkan ringkasan ke luar (posko yang Anda set 'publik' tetap publik).")) return;
+        toggle.disabled = true;
+        msg.textContent = " memproses…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_privacy.set_org_visibility",
+            { organization: org, open_to_public: goOpen ? 1 : 0 }, { method: "POST" });
+          await loadOrgVisibility(ORG_ADMIN);
+        } catch (err) { toggle.disabled = false; msg.textContent = " gagal: " + ((err && err.message) || err); }
+      });
+      if (choice) choice.addEventListener("change", async function () {
+        msg.textContent = " menyimpan…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_privacy.set_posko_public_choice",
+            { organization: org, allow: choice.checked ? 1 : 0 }, { method: "POST" });
+          await loadOrgVisibility(ORG_ADMIN);
+        } catch (err) { choice.checked = !choice.checked; msg.textContent = " gagal: " + ((err && err.message) || err); }
+      });
+    });
   }
 
   async function setParent(organization, parent, note, msgEl) {

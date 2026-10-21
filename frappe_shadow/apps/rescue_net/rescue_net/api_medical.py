@@ -898,6 +898,7 @@ def add_posko_need(
         "doctype": "RN Logistic Need",
         "posko": posko,
         "disaster_event": event,
+        "title": item_name,
         "item_name": item_name,
         "quantity": flt(quantity),
         "unit": (unit or "").strip(),

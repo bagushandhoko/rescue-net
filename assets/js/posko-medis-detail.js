@@ -1,4 +1,5 @@
 let MEDICAL_CONTEXT_CACHE = null;
+let RESOLVED_POSKO_ID = null;
 
 function getMedicalPoskoId() {
   const params =
@@ -233,31 +234,60 @@ async function fetchMedicalOrLocked(poskoId) {
 }
 
 async function loadMedical() {
-  const poskoId =
+  const requestedId =
     getMedicalPoskoId();
 
   statusMsg(
     "Loading medical context..."
   );
 
-  const [
-    medical,
-    logistics
-  ] = await Promise.all([
-    fetchMedicalOrLocked(poskoId),
+  // Try the posko in the URL first. If it is forbidden or empty for this
+  // user (e.g. a stale "?id=posko-sim-medis" link that is not theirs), fall
+  // back to "my accessible medical poskos" (dashboard with no posko) so an
+  // operator always lands on their own posko's patients instead of an empty
+  // or login-locked view.
+  let medical =
+    await fetchMedicalOrLocked(requestedId);
 
-    RN_FRAPPE.call(
-      "rescue_net.api_logistics.dashboard",
-      {
-        posko: poskoId
-      }
-    )
-  ]);
+  if (
+    medical === null ||
+    !(medical.poskos && medical.poskos.length)
+  ) {
+    const mine =
+      await fetchMedicalOrLocked(null);
+
+    if (mine && mine.poskos && mine.poskos.length) {
+      medical = mine;
+    }
+  }
 
   const medicalLocked = medical === null;
 
+  const resolvedPosko =
+    medical && medical.poskos && medical.poskos[0];
+
+  const poskoId =
+    (resolvedPosko && resolvedPosko.name) ||
+    requestedId;
+
+  RESOLVED_POSKO_ID = poskoId;
+
+  // Stock is secondary: keep patient data visible even if logistics fails.
+  let logistics = { poskos: [], stocks: [] };
+  try {
+    logistics =
+      await RN_FRAPPE.call(
+        "rescue_net.api_logistics.dashboard",
+        {
+          posko: poskoId
+        }
+      );
+  } catch (e) {
+    /* stock optional */
+  }
+
   const posko =
-    medical?.poskos?.[0] ||
+    resolvedPosko ||
     logistics.poskos?.[0] ||
     {
       name: poskoId
@@ -467,6 +497,7 @@ function setupSupplyUseForm() {
         "rescue_net.api_medical.record_supply_use",
         {
           posko:
+            RESOLVED_POSKO_ID ||
             getMedicalPoskoId(),
 
           medical_case:

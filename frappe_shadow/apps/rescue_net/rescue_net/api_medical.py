@@ -3,11 +3,13 @@ from collections import defaultdict
 import frappe
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import flt, now_datetime
+from frappe.rate_limiter import rate_limit
 
 from rescue_net.access_policy import (
     can_manage_organization,
     can_manage_posko,
     is_system_manager,
+    public_posko_allowed,
     rn_actor,
 )
 
@@ -205,6 +207,7 @@ def dashboard(posko=None):
             "name",
             "posko",
             "patient_code",
+            "patient_name",
             "age_group",
             "gender",
             "complaint",
@@ -272,6 +275,107 @@ def dashboard(posko=None):
     }
 
 
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
+def public_patients(posko=None):
+    """Guest-safe patient roster for a PUBLIC medical posko.
+
+    Purpose is family reunification: so relatives can look for a victim and
+    see what happened to them. It exposes identity + outcome only — patient
+    code, name, age group, gender, triage colour, case status and the latest
+    evacuation destination. It NEVER exposes the complaint, treatment notes,
+    supply use or officer contact (those stay behind api_medical.dashboard,
+    which is actor-gated). Returns {allowed, posko, patients}; allowed is
+    False when the posko is not a public medical posko, and the frontend then
+    shows the petugas-only notice instead.
+    """
+    posko = resolve_posko(posko)
+    if not posko:
+        return {"allowed": False, "posko": None, "patients": []}
+
+    if frappe.db.get_value("RN Posko", posko, "posko_type") != "medical":
+        return {"allowed": False, "posko": posko, "patients": []}
+
+    if not public_posko_allowed(posko):
+        return {"allowed": False, "posko": posko, "patients": []}
+
+    info = frappe.db.get_value(
+        "RN Posko", posko, ["name", "title"], as_dict=True
+    )
+
+    cases = frappe.get_all(
+        "RN Medical Case",
+        filters={"posko": posko},
+        fields=[
+            "name",
+            "patient_code",
+            "patient_name",
+            "patient_kind",
+            "age_group",
+            "gender",
+            "triage_status",
+            "case_status",
+            "observed_at",
+            "source_updated_at",
+        ],
+        order_by="creation desc",
+        limit_page_length=1000,
+    )
+
+    latest_evac = {}
+    for e in frappe.get_all(
+        "RN Medical Evacuation",
+        filters={"posko": posko},
+        fields=[
+            "medical_case",
+            "evacuation_status",
+            "destination_facility",
+            "requested_at",
+            "departed_at",
+            "arrived_at",
+            "handover_at",
+        ],
+        order_by="creation desc",
+        limit_page_length=1000,
+    ):
+        k = e.get("medical_case")
+        if not k:
+            continue
+        t = str(
+            e.get("handover_at")
+            or e.get("arrived_at")
+            or e.get("departed_at")
+            or e.get("requested_at")
+            or ""
+        )
+        if k not in latest_evac or t > latest_evac[k]["_t"]:
+            latest_evac[k] = {
+                "_t": t,
+                "evacuation_status": e.get("evacuation_status"),
+                "destination_facility": e.get("destination_facility"),
+            }
+
+    patients = []
+    for c in cases:
+        ev = latest_evac.get(c["name"])
+        patients.append(
+            {
+                "patient_code": c.get("patient_code"),
+                "patient_name": c.get("patient_name"),
+                "patient_kind": c.get("patient_kind"),
+                "age_group": c.get("age_group"),
+                "gender": c.get("gender"),
+                "triage_status": c.get("triage_status"),
+                "case_status": c.get("case_status"),
+                "updated_at": c.get("source_updated_at") or c.get("observed_at"),
+                "evacuation_status": ev["evacuation_status"] if ev else None,
+                "destination_facility": ev["destination_facility"] if ev else None,
+            }
+        )
+
+    return {"allowed": True, "posko": info, "patients": patients}
+
+
 @frappe.whitelist()
 def create_case(
     posko,
@@ -283,6 +387,7 @@ def create_case(
     triage_status="green",
     treatment_notes=None,
     patient_kind="manusia",
+    patient_name=None,
 ):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -309,6 +414,7 @@ def create_case(
 
     doc.posko = posko
     doc.patient_code = patient_code
+    doc.patient_name = (str(patient_name).strip() or None) if patient_name else None
     doc.complaint = complaint
     doc.age_group = age_group
     doc.gender = gender
@@ -826,6 +932,7 @@ def case_card(medical_case):
         "case": {
             "name": doc.name,
             "patient_code": doc.patient_code,
+            "patient_name": doc.patient_name,
             "complaint": doc.complaint,
             "severity": doc.severity,
             "triage_status": doc.triage_status,

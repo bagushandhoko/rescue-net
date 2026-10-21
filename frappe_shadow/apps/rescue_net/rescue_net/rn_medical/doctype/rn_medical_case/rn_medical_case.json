@@ -43,6 +43,12 @@
    "reqd": 1
   },
   {
+   "fieldname": "patient_name",
+   "label": "Nama Pasien",
+   "fieldtype": "Data",
+   "description": "Nama pasien (opsional). Ditampilkan publik untuk membantu keluarga menemukan korban."
+  },
+  {
    "fieldname": "patient_kind",
    "label": "Jenis Pasien",
    "fieldtype": "Select",

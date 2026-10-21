@@ -203,7 +203,7 @@ function renderCases(items) {
         <article class="event-card">
           <div class="event-main">
             <div>
-              <h4>${safe(c.patient_code)}</h4>
+              <h4>${safe(c.patient_code)}${c.patient_name ? " · " + safe(c.patient_name) : ""}</h4>
               <p>Complaint: ${safe(c.complaint)}<br>
               Severity: ${safe(c.severity)} · Triage: ${safe(c.triage_status)}<br>
               Treatment: ${safe(c.treatment_notes)}<br>
@@ -373,7 +373,7 @@ function caseCardHtml(data) {
     : `<li><small>Belum ada riwayat.</small></li>`;
 
   return `
-    <h3 style="margin:0 0 .25rem">${safe(c.patient_code)}</h3>
+    <h3 style="margin:0 0 .25rem">${safe(c.patient_code)}${c.patient_name ? " · " + safe(c.patient_name) : ""}</h3>
     <p style="margin:.1rem 0">${safe(c.complaint)}</p>
     <p style="margin:.1rem 0"><small>Severity: ${safe(c.severity)} &middot;
       Triage: ${safe(c.triage_status)} &middot;
@@ -598,6 +598,7 @@ function renderActivePatients(cases, evacuations) {
     const sev = SEVERITY_LABEL[c.severity] || c.severity;
     return "<tr>" +
       '<td><span class="rn-md-code">' + escHtml(c.patient_code || c.name) + "</span>" +
+        (c.patient_name ? '<span class="rn-md-meta">' + escHtml(c.patient_name) + "</span>" : "") +
         (meta ? '<span class="rn-md-meta">' + escHtml(meta) + "</span>" : "") +
         (c.complaint ? '<span class="rn-md-meta">' + escHtml(c.complaint) + "</span>" : "") + "</td>" +
       '<td><span class="chip rn-tri-' + escHtml(tri) + '">' + escHtml(TRIAGE_LABEL[tri] || tri || "-") + "</span>" +
@@ -606,6 +607,84 @@ function renderActivePatients(cases, evacuations) {
       '<td class="rn-md-note">' + (note ? escHtml(note) : '<span class="rn-md-meta">belum ada catatan penanganan</span>') + "</td>" +
       "<td>" + evText + "</td>" +
       '<td class="rn-md-when">' + fmtWhen(c.source_updated_at || c.observed_at) + "</td>" +
+      "</tr>";
+  }).join("");
+}
+
+// Unit 4 (owner): a guest-safe "find your relative" roster for a PUBLIC
+// medical posko. Data = api_medical.public_patients — identity + outcome only
+// (name, code, age/gender, triase, status, latest evacuation), NEVER the
+// complaint, treatment notes or supply use. No card opens here. Shown only
+// when the private (petugas) dashboard is locked AND the posko is public.
+const PUBLIC_OUTCOME = {
+  active: "Masih ditangani", stabilized: "Kondisi stabil", referred: "Dirujuk",
+  evacuating: "Sedang dievakuasi", admitted: "Dirawat di faskes",
+  discharged: "Sudah dipulangkan", deceased: "Meninggal dunia", closed: "Selesai ditangani"
+};
+
+function publicOutcome(c) {
+  let t = PUBLIC_OUTCOME[c.case_status] || c.case_status || "-";
+  if (c.destination_facility && (c.case_status === "referred" || c.case_status === "admitted" || c.case_status === "evacuating")) {
+    t += " ke " + c.destination_facility;
+  }
+  return t;
+}
+
+async function loadPublicPatients(poskoId) {
+  if (!poskoId) return;
+  let res;
+  try {
+    res = await RN_FRAPPE.call(
+      "rescue_net.api_medical.public_patients",
+      { posko: poskoId }
+    );
+  } catch (e) {
+    return; // keep the petugas-only notice already shown
+  }
+  if (res && res.allowed) renderPublicPatients(res.patients || []);
+}
+
+function renderPublicPatients(patients) {
+  const body = document.getElementById("activePatientsBody");
+  const count = document.getElementById("activePatientsCount");
+  const hint = document.getElementById("activePatientsHint");
+  if (!body) return;
+
+  if (hint) {
+    hint.textContent =
+      "Daftar publik untuk membantu keluarga menemukan korban: nama, kondisi, dan tujuan rujukan. " +
+      "Keluhan dan catatan penanganan hanya untuk petugas posko.";
+  }
+  if (count) count.textContent = patients.length + " pasien";
+
+  if (!patients.length) {
+    body.innerHTML = '<tr><td colspan="6">Belum ada data pasien yang dipublikasikan posko ini.</td></tr>';
+    return;
+  }
+
+  const rank = c => (TRIAGE_RANK[c.triage_status] ?? 9);
+  const rows = patients.slice().sort((a, b) =>
+    rank(a) - rank(b) ||
+    String(b.updated_at || "").localeCompare(String(a.updated_at || ""))
+  );
+
+  body.innerHTML = rows.map(c => {
+    const name = c.patient_name ? escHtml(c.patient_name) : '<span class="rn-md-meta">tanpa nama</span>';
+    const meta = [AGE_LABEL[c.age_group], GENDER_LABEL[c.gender]].filter(Boolean).join(" · ");
+    const tri = c.triage_status || "";
+    const evText = c.evacuation_status
+      ? escHtml(EVAC_LABEL[c.evacuation_status] || c.evacuation_status) +
+        (c.destination_facility ? '<span class="rn-md-meta">ke ' + escHtml(c.destination_facility) + "</span>" : "")
+      : "-";
+    return "<tr>" +
+      "<td><strong>" + name + "</strong>" +
+        '<span class="rn-md-meta">' + escHtml(c.patient_code || "") + "</span>" +
+        (meta ? '<span class="rn-md-meta">' + escHtml(meta) + "</span>" : "") + "</td>" +
+      '<td><span class="chip rn-tri-' + escHtml(tri) + '">' + escHtml(TRIAGE_LABEL[tri] || tri || "-") + "</span></td>" +
+      "<td>" + escHtml(CASE_LABEL[c.case_status] || PUBLIC_OUTCOME[c.case_status] || c.case_status || "-") + "</td>" +
+      '<td class="rn-md-note">' + escHtml(publicOutcome(c)) + "</td>" +
+      "<td>" + evText + "</td>" +
+      '<td class="rn-md-when">' + fmtWhen(c.updated_at) + "</td>" +
       "</tr>";
   }).join("");
 }
@@ -818,6 +897,11 @@ async function loadMedical() {
 
   renderStock(ctx.stocks);
   renderActivePatients(ctx.cases, ctx.evacuations);
+  // Locked for this (guest/non-petugas) viewer? Try the public family-finding
+  // roster so a relative can still look for a victim by name + outcome.
+  if (medicalLocked && poskoId) {
+    loadPublicPatients(poskoId);
+  }
   renderCases(ctx.cases);
   renderUses(ctx.supply_uses);
   renderMovements();
@@ -883,6 +967,9 @@ function setupCaseForm() {
 
             patient_code:
               form.patient_code.value.trim(),
+
+            patient_name:
+              form.patient_name ? form.patient_name.value.trim() : "",
 
             complaint:
               form.complaint.value.trim(),

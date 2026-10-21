@@ -381,6 +381,14 @@ def update_case_status(
         ignore_permissions=True
     )
 
+    _log_case_update(
+        doc,
+        "status",
+        note=treatment_notes,
+        previous_status=current,
+        new_status=doc.case_status,
+    )
+
     return {
         "medical_case": doc.name,
         "previous_status": current,
@@ -721,4 +729,115 @@ def control_centre_medical():
             "Aggregate only; patient code "
             "and complaint are not exposed."
         ),
+    }
+
+
+# --- Patient card: history timeline (status changes + notes) ---------------
+
+def _case_author():
+    user = frappe.session.user
+    return (
+        frappe.db.get_value("User", user, "full_name")
+        or user
+    )
+
+
+def _log_case_update(
+    case_doc,
+    update_type,
+    note=None,
+    previous_status=None,
+    new_status=None,
+):
+    """Append one row to a patient's history timeline. Best-effort: a logging
+    failure must never break the clinical action it records."""
+    try:
+        actor = rn_actor()
+    except Exception:
+        actor = None
+
+    try:
+        frappe.get_doc({
+            "doctype": "RN Medical Case Update",
+            "medical_case": case_doc.name,
+            "posko": case_doc.posko,
+            "update_type": update_type,
+            "previous_status": previous_status,
+            "new_status": new_status,
+            "note": note,
+            "author_name": _case_author(),
+            "created_by_user": getattr(actor, "name", None),
+            "observed_at": now_datetime(),
+        }).insert(ignore_permissions=True)
+    except Exception:
+        frappe.log_error(
+            frappe.get_traceback(),
+            "RN medical case update log failed",
+        )
+
+
+@frappe.whitelist()
+def add_case_note(medical_case, note):
+    note = (note or "").strip()
+
+    if not note:
+        frappe.throw("Catatan kosong")
+
+    actor = rn_actor()
+
+    doc = frappe.get_doc(
+        "RN Medical Case",
+        medical_case,
+    )
+
+    _assert_medical_access(actor, doc.posko)
+    _log_case_update(doc, "note", note=note)
+
+    return {"medical_case": doc.name}
+
+
+@frappe.whitelist()
+def case_card(medical_case):
+    actor = rn_actor()
+
+    doc = frappe.get_doc(
+        "RN Medical Case",
+        medical_case,
+    )
+
+    _assert_medical_access(actor, doc.posko)
+
+    history = frappe.get_all(
+        "RN Medical Case Update",
+        filters={"medical_case": doc.name},
+        fields=[
+            "update_type",
+            "previous_status",
+            "new_status",
+            "note",
+            "author_name",
+            "observed_at",
+        ],
+        order_by="observed_at desc",
+        limit_page_length=200,
+    )
+
+    return {
+        "case": {
+            "name": doc.name,
+            "patient_code": doc.patient_code,
+            "complaint": doc.complaint,
+            "severity": doc.severity,
+            "triage_status": doc.triage_status,
+            "case_status": doc.case_status,
+            "treatment_notes": doc.treatment_notes,
+            "age_group": doc.age_group,
+            "gender": doc.gender,
+            "observed_at": (
+                str(doc.observed_at)
+                if doc.observed_at
+                else None
+            ),
+        },
+        "history": history,
     }

@@ -1,0 +1,70 @@
+{
+  "doctype": "DocType",
+  "name": "RN Medical Case Update",
+  "module": "RN Medical",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "medical_case",
+  "fields": [
+    {
+      "fieldname": "medical_case",
+      "label": "Medical Case",
+      "fieldtype": "Link",
+      "options": "RN Medical Case",
+      "reqd": 1
+    },
+    {
+      "fieldname": "posko",
+      "label": "Posko Medis",
+      "fieldtype": "Link",
+      "options": "RN Posko"
+    },
+    {
+      "fieldname": "update_type",
+      "label": "Jenis",
+      "fieldtype": "Select",
+      "options": "status\nnote",
+      "default": "note"
+    },
+    {
+      "fieldname": "previous_status",
+      "label": "Status Sebelumnya",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "new_status",
+      "label": "Status Baru",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "note",
+      "label": "Catatan",
+      "fieldtype": "Text"
+    },
+    {
+      "fieldname": "author_name",
+      "label": "Oleh",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Waktu",
+      "fieldtype": "Datetime"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
+}

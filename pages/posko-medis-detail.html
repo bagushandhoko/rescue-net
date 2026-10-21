@@ -9,6 +9,18 @@
   <link rel="stylesheet" href="../assets/css/style.css?v=pwa-20260926">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=poskofn-20260831" />
+  <style>
+    .panel-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .rn-inline-form { margin: 0 0 14px; padding: 14px; border: 1px solid var(--border, rgba(128,128,128,.25));
+      border-radius: 12px; background: var(--surface-2, rgba(128,128,128,.06)); }
+    .rn-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .rn-form-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+    .rn-form-grid .rn-col-full { grid-column: 1 / -1; }
+    .rn-inline-form .form-actions { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .rn-need-group { margin-top: 8px; }
+    .rn-need-group h4 { margin: 14px 0 6px; font-size: 14px; }
+    @media (max-width: 560px) { .rn-form-grid { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
 <div class="app-shell">
@@ -61,32 +73,68 @@
 
     <section class="kpi-grid">
       <div class="kpi-card danger"><span class="kpi-icon" data-icon="cross"></span><span>Posko</span><strong id="kpiPosko">-</strong><small>medical node</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="box"></span><span>Stock Items</span><strong id="kpiStock">0</strong><small>medical supplies</small></div>
-      <div class="kpi-card warning"><span class="kpi-icon" data-icon="clipboard-check"></span><span>Cases</span><strong id="kpiCases">0</strong><small>patient records</small></div>
-      <div class="kpi-card"><span class="kpi-icon" data-icon="pill"></span><span>Supply Uses</span><strong id="kpiUses">0</strong><small>medicine usage</small></div>
+      <div class="kpi-card"><span class="kpi-icon" data-icon="box"></span><span>Stok Item</span><strong id="kpiStock">0</strong><small>stok medis</small></div>
+      <div class="kpi-card warning"><span class="kpi-icon" data-icon="clipboard-check"></span><span>Kasus</span><strong id="kpiCases">0</strong><small>catatan pasien</small></div>
+      <div class="kpi-card"><span class="kpi-icon" data-icon="pill"></span><span>Pemakaian</span><strong id="kpiUses">0</strong><small>obat/alat dipakai</small></div>
     </section>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Medical Stock</h3>
-            <p>Stok obat dan alat medis di posko.</p>
-          </div>
+    <!-- Stok medis + penerimaan bantuan (bantuan masuk menambah stok) -->
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Stok Medis &amp; Penerimaan Bantuan</h3>
+          <p>Stok obat/alat posko. Bantuan yang diterima langsung menambah stok di sini.</p>
         </div>
-        <div class="event-list" id="medicalStock"></div>
+        <div class="panel-actions">
+          <button class="btn primary mini" type="button" data-toggle="#aidForm">+ Catat Penerimaan</button>
+          <button class="btn ghost mini" type="button" id="refreshMedical">Refresh</button>
+        </div>
       </div>
 
-      <aside class="panel summary">
-        <h3>Add Medical Case</h3>
-        <p class="subtitle">Catat pasien dengan kode anonim, bukan nama asli.</p>
-
-        <form class="rn-form" id="caseForm">
-          <label>Medical Posko ID
-            <input name="posko_id" value="posko-medis-aceh" required>
+      <form class="rn-form rn-inline-form" id="aidForm" hidden>
+        <div class="rn-form-grid">
+          <label>Nama item bantuan
+            <input name="item_name" placeholder="mis. Paracetamol / Masker N95" required>
           </label>
-          <label>Patient Code
-            <input name="patient_code" value="PAT-002" required>
+          <label>Jumlah
+            <input name="quantity" type="number" min="0" step="any" value="1" required>
+          </label>
+          <label>Satuan
+            <input name="unit" value="unit" required>
+          </label>
+          <label>Pemberi / Donatur
+            <input name="donor" placeholder="mis. BNPB / Warga RW 05">
+          </label>
+          <label class="rn-col-full">Catatan
+            <input name="notes" placeholder="opsional">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Penerimaan</button>
+          <button class="btn ghost" type="button" data-toggle="#aidForm">Tutup</button>
+        </div>
+      </form>
+
+      <div class="event-list" id="medicalStock"></div>
+    </section>
+
+    <!-- Kasus medis -->
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Kasus Medis</h3>
+          <p>Catat pasien dengan kode anonim, bukan nama asli.</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn primary mini" type="button" data-toggle="#caseForm">+ Tambah Kasus</button>
+        </div>
+      </div>
+
+      <form class="rn-form rn-inline-form" id="caseForm" hidden>
+        <input type="hidden" name="posko_id" value="">
+        <div class="rn-form-grid">
+          <label>Kode Pasien
+            <input name="patient_code" placeholder="mis. PAT-002" required>
           </label>
           <label>Jenis Pasien
             <select name="patient_kind">
@@ -94,14 +142,11 @@
               <option value="satwa">Satwa (tidak dihitung jiwa berisiko)</option>
             </select>
           </label>
-          <label>Age Group
+          <label>Kelompok Umur
             <input name="age_group" value="adult">
           </label>
           <label>Gender
             <input name="gender" value="unknown">
-          </label>
-          <label>Complaint
-            <input name="complaint" value="Demam dan pusing setelah evakuasi." required>
           </label>
           <label>Severity
             <select name="severity">
@@ -111,7 +156,7 @@
               <option value="critical">critical</option>
             </select>
           </label>
-          <label>Triage Status
+          <label>Triage
             <select name="triage_status">
               <option value="green">green</option>
               <option value="yellow">yellow</option>
@@ -119,87 +164,51 @@
               <option value="black">black</option>
             </select>
           </label>
-          <label>Treatment Notes
-            <input name="treatment_notes" value="Diberi pemeriksaan awal dan istirahat.">
+          <label class="rn-col-full">Keluhan / Kondisi
+            <input name="complaint" placeholder="mis. Demam dan pusing setelah evakuasi." required>
           </label>
+          <label class="rn-col-full">Catatan Penanganan
+            <input name="treatment_notes" placeholder="opsional">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Kasus</button>
+          <button class="btn ghost" type="button" data-toggle="#caseForm">Tutup</button>
+        </div>
+      </form>
 
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Save Medical Case</button>
-            <button class="btn" type="button" id="refreshMedical">Refresh</button>
-          </div>
-        </form>
-      </aside>
+      <div class="event-list" id="medicalCases"></div>
     </section>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Medical Cases</h3>
-            <p>Daftar kasus medis yang tercatat di posko.</p>
-          </div>
+    <!-- Kebutuhan posko medis (kategori kebutuhan logistik bencana) -->
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Kebutuhan Posko Medis</h3>
+          <p>Kebutuhan logistik bencana per kategori — obat, alat, logistik umum, makanan/air, sanitasi.</p>
         </div>
-        <div class="event-list" id="medicalCases"></div>
+        <div class="panel-actions">
+          <button class="btn primary mini" type="button" data-toggle="#needForm">+ Tambah Kebutuhan</button>
+        </div>
       </div>
 
-      <aside class="panel summary">
-        <h3>Use Medical Supply</h3>
-        <p class="subtitle">Catat pemakaian obat/alat dan otomatis kurangi stok.</p>
-
-        <form class="rn-form" id="supplyUseForm">
-          <label>Medical Case ID
-            <input name="medical_case_id" placeholder="boleh kosong / isi dari case id">
-          </label>
-          <label>Item Name
-            <input name="item_name" value="Paracetamol" required>
-          </label>
-          <label>Quantity
-            <input name="quantity" type="number" value="1" required>
-          </label>
-          <label>Unit
-            <input name="unit" value="strip" required>
-          </label>
-          <label>Notes
-            <input name="notes" value="Diberikan untuk pasien demam.">
-          </label>
-
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Save Supply Use</button>
-          </div>
-        </form>
-      </aside>
-    </section>
-
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Kebutuhan Posko Medis</h3>
-            <p>Dipisah antara kebutuhan obat/bahan medis dan alat/peralatan.</p>
-          </div>
-        </div>
-        <h4>Kebutuhan Obat &amp; Bahan Medis</h4>
-        <div class="event-list" id="needObat"></div>
-        <h4 style="margin-top:1rem">Kebutuhan Alat &amp; Peralatan</h4>
-        <div class="event-list" id="needAlat"></div>
-      </div>
-
-      <aside class="panel summary">
-        <h3>Tambah Kebutuhan</h3>
-        <p class="subtitle">Catat kebutuhan obat atau alat yang kurang di posko.</p>
-
-        <form class="rn-form" id="needForm">
-          <label>Jenis
+      <form class="rn-form rn-inline-form" id="needForm" hidden>
+        <div class="rn-form-grid">
+          <label>Kategori
             <select name="need_kind">
-              <option value="obat">Obat / bahan medis</option>
-              <option value="alat">Alat / peralatan</option>
+              <option value="obat">Obat &amp; Bahan Medis</option>
+              <option value="alat">Alat &amp; Peralatan Medis</option>
+              <option value="logistik">Logistik Umum</option>
+              <option value="makanan_air">Makanan &amp; Air</option>
+              <option value="sanitasi">Sanitasi &amp; Higiene</option>
+              <option value="lainnya">Lainnya</option>
             </select>
           </label>
           <label>Nama item
-            <input name="item_name" placeholder="mis. Oksigen tabung / Tandu" required>
+            <input name="item_name" placeholder="mis. Oksigen tabung / Tandu / Selimut" required>
           </label>
           <label>Jumlah
-            <input name="quantity" type="number" value="1" required>
+            <input name="quantity" type="number" min="0" step="any" value="1" required>
           </label>
           <label>Satuan
             <input name="unit" value="unit" required>
@@ -211,30 +220,53 @@
               <option value="critical">critical</option>
             </select>
           </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Tambah Kebutuhan</button>
+          <button class="btn ghost" type="button" data-toggle="#needForm">Tutup</button>
+        </div>
+      </form>
 
-          <div class="form-actions">
-            <button class="btn primary" type="submit">Tambah Kebutuhan</button>
-          </div>
-        </form>
-      </aside>
+      <div class="event-list" id="needList"></div>
     </section>
 
-    <section class="content-grid">
-      <div class="panel">
-        <div class="panel-header">
-          <div>
-            <h3>Medical Supply Uses</h3>
-            <p>Riwayat pemakaian obat dan alat medis.</p>
-          </div>
+    <!-- Pemakaian obat/alat -->
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Pemakaian Obat / Alat</h3>
+          <p>Riwayat pemakaian obat dan alat medis.</p>
         </div>
-        <div class="event-list" id="medicalUses"></div>
+        <div class="panel-actions">
+          <button class="btn primary mini" type="button" data-toggle="#supplyUseForm">+ Catat Pemakaian</button>
+        </div>
       </div>
 
-      <aside class="panel summary">
-        <h3>Stock Movements</h3>
-        <p class="subtitle">Pergerakan stok medis, termasuk medical_use.</p>
-        <div class="event-list" id="medicalMovements"></div>
-      </aside>
+      <form class="rn-form rn-inline-form" id="supplyUseForm" hidden>
+        <div class="rn-form-grid">
+          <label>Kasus (opsional)
+            <input name="medical_case_id" placeholder="boleh kosong / isi dari case id">
+          </label>
+          <label>Nama item
+            <input name="item_name" placeholder="mis. Paracetamol" required>
+          </label>
+          <label>Jumlah
+            <input name="quantity" type="number" min="0" step="any" value="1" required>
+          </label>
+          <label>Satuan
+            <input name="unit" value="strip" required>
+          </label>
+          <label class="rn-col-full">Catatan
+            <input name="notes" placeholder="opsional">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Pemakaian</button>
+          <button class="btn ghost" type="button" data-toggle="#supplyUseForm">Tutup</button>
+        </div>
+      </form>
+
+      <div class="event-list" id="medicalUses"></div>
     </section>
   </main>
 </div>
@@ -245,7 +277,7 @@
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/posko-medis-detail.js?v=needs-20261021"></script>
+<script src="../assets/js/posko-medis-detail.js?v=kategori-penerimaan-20261021"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=installapp-20260926"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

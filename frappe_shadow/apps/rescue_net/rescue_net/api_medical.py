@@ -843,7 +843,19 @@ def case_card(medical_case):
     }
 
 
-# --- Posko medical needs: obat vs alat (separate groups) --------------------
+# --- Posko medical needs: kategori kebutuhan logistik bencana ----------------
+
+# Keep in sync with RN Logistic Need.need_kind Select options and the label map
+# in assets/js/posko-medis-detail.js (NEED_KIND_LABEL).
+NEED_KINDS = {
+    "obat": "Obat & Bahan Medis",
+    "alat": "Alat & Peralatan Medis",
+    "logistik": "Logistik Umum",
+    "makanan_air": "Makanan & Air",
+    "sanitasi": "Sanitasi & Higiene",
+    "lainnya": "Lainnya",
+}
+
 
 @frappe.whitelist()
 def posko_needs(posko=None):
@@ -867,11 +879,17 @@ def posko_needs(posko=None):
         limit_page_length=500,
     )
 
-    obat, alat = [], []
     for r in rows:
-        (alat if r.get("need_kind") == "alat" else obat).append(r)
+        if r.get("need_kind") not in NEED_KINDS:
+            r["need_kind"] = "obat"
 
-    return {"obat": obat, "alat": alat}
+    # Flat list + the category order/labels so the UI can group generically.
+    return {
+        "needs": rows,
+        "kinds": [
+            {"key": k, "label": v} for k, v in NEED_KINDS.items()
+        ],
+    }
 
 
 @frappe.whitelist()
@@ -891,7 +909,7 @@ def add_posko_need(
     if not item_name:
         frappe.throw("Nama item kosong")
 
-    kind = "alat" if need_kind == "alat" else "obat"
+    kind = need_kind if need_kind in NEED_KINDS else "obat"
     event = frappe.db.get_value("RN Posko", posko, "disaster_event")
 
     doc = frappe.get_doc({
@@ -911,3 +929,65 @@ def add_posko_need(
     }).insert(ignore_permissions=True)
 
     return {"name": doc.name, "need_kind": kind}
+
+
+# --- Penerimaan bantuan: masuk ke stok medis (RN Stock Observation) ----------
+
+@frappe.whitelist()
+def record_aid_received(
+    posko,
+    item_name,
+    quantity,
+    unit,
+    donor=None,
+    notes=None,
+):
+    """Catat bantuan yang diterima posko medis. Bantuan langsung menambah
+    RN Stock Observation sehingga tampil di Medical Stock. Pemberi/donor dan
+    catatan disimpan di field notes (tidak ada doctype terpisah)."""
+    posko = resolve_posko(posko)
+    actor = rn_actor()
+    _assert_medical_access(actor, posko)
+
+    item_name = (item_name or "").strip()
+    if not item_name:
+        frappe.throw("Nama item bantuan kosong")
+
+    qty = flt(quantity)
+    if qty <= 0:
+        frappe.throw("Jumlah bantuan harus lebih dari 0")
+
+    donor = (donor or "").strip()
+    extra = (notes or "").strip()
+    note_parts = ["Penerimaan bantuan"]
+    if donor:
+        note_parts.append(f"dari {donor}")
+    full_note = " ".join(note_parts)
+    if extra:
+        full_note = f"{full_note}. {extra}"
+
+    event = frappe.db.get_value("RN Posko", posko, "disaster_event")
+
+    doc = frappe.new_doc("RN Stock Observation")
+    doc.title = item_name
+    doc.posko = posko
+    doc.disaster_event = event
+    doc.item_name = item_name
+    doc.raw_item_text = item_name
+    doc.quantity = qty
+    doc.unit = (unit or "").strip()
+    doc.quantity_mode = "exact"
+    doc.stock_state = "available"
+    doc.notes = full_note
+    doc.observed_at = now_datetime()
+    doc.source_updated_at = doc.observed_at
+    doc.created_by_user = getattr(actor, "name", None)
+    doc.verification_status = "self_reported"
+    doc.insert(ignore_permissions=True)
+
+    return {
+        "stock_observation": doc.name,
+        "item_name": doc.item_name,
+        "quantity": doc.quantity,
+        "unit": doc.unit,
+    }

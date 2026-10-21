@@ -225,7 +225,25 @@ function renderCases(items) {
     .join("");
 }
 
-// ---- Posko needs: obat vs alat (separate groups) --------------------------
+// ---- Posko needs: kategori kebutuhan logistik bencana ---------------------
+
+// Keep in sync with rescue_net.api_medical.NEED_KINDS and the RN Logistic Need
+// need_kind Select options.
+const NEED_KIND_LABEL = {
+  obat: "Obat & Bahan Medis",
+  alat: "Alat & Peralatan Medis",
+  logistik: "Logistik Umum",
+  makanan_air: "Makanan & Air",
+  sanitasi: "Sanitasi & Higiene",
+  lainnya: "Lainnya"
+};
+
+const NEED_KIND_ORDER =
+  ["obat", "alat", "logistik", "makanan_air", "sanitasi", "lainnya"];
+
+function needKindLabel(k) {
+  return NEED_KIND_LABEL[k] || k || "Lainnya";
+}
 
 function needCard(n) {
   return card(
@@ -236,27 +254,39 @@ function needCard(n) {
   );
 }
 
-function renderNeeds(obat, alat) {
-  const elO = document.getElementById("needObat");
-  const elA = document.getElementById("needAlat");
+// `needs` is the flat list from posko_needs; null = login required.
+function renderNeeds(needs) {
+  const el = document.getElementById("needList");
+  if (!el) return;
 
-  if (elO) {
-    elO.innerHTML =
-      obat === null
-        ? card("Login diperlukan", "Kebutuhan hanya untuk tim posko.", "empty")
-        : obat.length
-          ? obat.map(needCard).join("")
-          : card("Belum ada kebutuhan obat", "Tambah lewat form di samping.", "empty");
+  if (needs === null) {
+    el.innerHTML =
+      card("Login diperlukan", "Kebutuhan hanya untuk tim posko.", "empty");
+    return;
   }
 
-  if (elA) {
-    elA.innerHTML =
-      alat === null
-        ? ""
-        : alat.length
-          ? alat.map(needCard).join("")
-          : card("Belum ada kebutuhan alat", "Tambah lewat form di samping.", "empty");
+  if (!needs.length) {
+    el.innerHTML =
+      card("Belum ada kebutuhan", "Tambah lewat tombol “+ Tambah Kebutuhan”.", "empty");
+    return;
   }
+
+  const byKind = {};
+  needs.forEach(n => {
+    const k = NEED_KIND_LABEL[n.need_kind] ? n.need_kind : "lainnya";
+    (byKind[k] = byKind[k] || []).push(n);
+  });
+
+  const kinds = NEED_KIND_ORDER.filter(k => byKind[k] && byKind[k].length);
+
+  el.innerHTML = kinds
+    .map(k =>
+      `<div class="rn-need-group"><h4>${needKindLabel(k)} ` +
+      `<span class="chip">${byKind[k].length}</span></h4>` +
+      byKind[k].map(needCard).join("") +
+      `</div>`
+    )
+    .join("");
 }
 
 async function loadPoskoNeeds(poskoId) {
@@ -266,9 +296,9 @@ async function loadPoskoNeeds(poskoId) {
         "rescue_net.api_medical.posko_needs",
         { posko: poskoId }
       );
-    renderNeeds(res.obat || [], res.alat || []);
+    renderNeeds(res.needs || []);
   } catch (e) {
-    renderNeeds(null, null);
+    renderNeeds(null);
   }
 }
 
@@ -300,6 +330,7 @@ function setupNeedForm() {
 
       statusMsg("Kebutuhan ditambahkan.");
       form.item_name.value = "";
+      form.hidden = true;
       await loadPoskoNeeds(posko);
     } catch (err) {
       statusMsg(err.message || "Gagal menambah kebutuhan.");
@@ -711,7 +742,7 @@ async function loadMedical() {
   renderMovements();
 
   if (medicalLocked) {
-    renderNeeds(null, null);
+    renderNeeds(null);
   } else {
     loadPoskoNeeds(poskoId);
   }
@@ -815,6 +846,7 @@ function setupCaseForm() {
         "Medical case saved."
       );
 
+      form.hidden = true;
       await loadMedical();
     }
   );
@@ -869,9 +901,66 @@ function setupSupplyUseForm() {
         "Medical supply use saved."
       );
 
+      form.hidden = true;
       await loadMedical();
     }
   );
+}
+
+// ---- Penerimaan bantuan: masuk ke stok medis ------------------------------
+
+function setupAidForm() {
+  const form = document.getElementById("aidForm");
+  if (!form) return;
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const posko =
+      RESOLVED_POSKO_ID || getMedicalPoskoId();
+
+    try {
+      await RN_FRAPPE.call(
+        "rescue_net.api_medical.record_aid_received",
+        {
+          posko,
+          item_name: form.item_name.value.trim(),
+          quantity: Number(form.quantity.value || 0),
+          unit: form.unit.value.trim(),
+          donor: form.donor.value.trim(),
+          notes: form.notes.value.trim()
+        },
+        { method: "POST" }
+      );
+
+      statusMsg("Penerimaan bantuan dicatat (masuk ke stok).");
+      form.item_name.value = "";
+      form.donor.value = "";
+      form.notes.value = "";
+      form.hidden = true;
+      await loadMedical();
+    } catch (err) {
+      statusMsg(err.message || "Gagal mencatat penerimaan bantuan.");
+    }
+  });
+}
+
+// Generic "+ Tambah / Tutup" toggles: a button with data-toggle="#formId"
+// shows/hides that inline form and focuses its first field.
+function setupToggles() {
+  document.querySelectorAll("[data-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target =
+        document.querySelector(btn.getAttribute("data-toggle"));
+      if (!target) return;
+
+      target.hidden = !target.hidden;
+      if (!target.hidden) {
+        const first = target.querySelector("input, select, textarea");
+        if (first) first.focus();
+      }
+    });
+  });
 }
 
 document.addEventListener(
@@ -888,6 +977,8 @@ document.addEventListener(
     setupSupplyUseForm();
     setupCaseStatusControls();
     setupNeedForm();
+    setupAidForm();
+    setupToggles();
 
     const btn =
       document.getElementById(

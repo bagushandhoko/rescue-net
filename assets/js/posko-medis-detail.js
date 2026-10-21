@@ -1,6 +1,34 @@
 let MEDICAL_CONTEXT_CACHE = null;
 let RESOLVED_POSKO_ID = null;
 
+// Mirror of rescue_net.rn_medical...CASE_TRANSITIONS (backend is the source
+// of truth and re-validates; this only decides which options we offer).
+const CASE_TRANSITIONS = {
+  active: ["stabilized", "referred", "evacuating", "discharged", "deceased", "closed"],
+  stabilized: ["referred", "evacuating", "admitted", "discharged", "closed"],
+  referred: ["evacuating", "admitted", "closed"],
+  evacuating: ["admitted", "discharged", "deceased", "closed"],
+  admitted: ["discharged", "deceased", "closed"],
+  discharged: ["closed"],
+  deceased: ["closed"],
+  closed: []
+};
+
+const CASE_STATUS_LABEL = {
+  active: "Aktif / ditangani",
+  stabilized: "Stabil",
+  referred: "Dirujuk",
+  evacuating: "Evakuasi",
+  admitted: "Masuk RS",
+  discharged: "Pulang",
+  deceased: "Meninggal",
+  closed: "Ditutup"
+};
+
+function caseStatusLabel(s) {
+  return CASE_STATUS_LABEL[s] || s || "n/a";
+}
+
 function getMedicalPoskoId() {
   const params =
     new URLSearchParams(
@@ -116,6 +144,34 @@ const MEDICAL_LOGIN_NOTICE = card(
   "empty"
 );
 
+// Inline "update status" control for one case. Only the transitions the
+// backend will accept are offered; a terminal status shows no control.
+function statusControl(id, current) {
+  const next = CASE_TRANSITIONS[current] || [];
+
+  if (!next.length) {
+    return (
+      `<p class="rn-status-done"><small>Status final: ` +
+      `${caseStatusLabel(current)} (tidak bisa diubah)</small></p>`
+    );
+  }
+
+  const opts = next
+    .map(s => `<option value="${s}">${caseStatusLabel(s)}</option>`)
+    .join("");
+
+  return `
+    <div class="rn-status-ctl" data-case="${safe(id)}" data-current="${safe(current)}">
+      <select class="rn-status-select" aria-label="Status baru">
+        <option value="">— ubah status —</option>
+        ${opts}
+      </select>
+      <input class="rn-status-note" type="text" placeholder="catatan (opsional)">
+      <button type="button" class="rn-status-btn">Perbarui</button>
+    </div>
+  `;
+}
+
 function renderCases(items) {
   const el =
     document.getElementById(
@@ -129,31 +185,89 @@ function renderCases(items) {
     return;
   }
 
-  el.innerHTML =
-    items.length
-      ? items.map(c => {
-          const id = rowId(c);
+  if (!items.length) {
+    el.innerHTML = card(
+      "Belum ada kasus medis",
+      "Catat kasus medis pertama.",
+      "empty"
+    );
+    return;
+  }
 
-          return card(
-            c.patient_code,
-            `Complaint: ${safe(c.complaint)}<br>` +
-            `Severity: ${safe(c.severity)} · ` +
-            `Triage: ${safe(c.triage_status)}<br>` +
-            `Treatment: ${safe(c.treatment_notes)}<br>` +
-            `Case ID: ${safe(id)}` +
-            evidenceLink(
-              "medical_case",
-              id
-            ),
-            c.case_status ||
-            c.status
-          );
-        }).join("")
-      : card(
-          "Belum ada kasus medis",
-          "Catat kasus medis pertama.",
-          "empty"
-        );
+  el.innerHTML = items
+    .map(c => {
+      const id = rowId(c);
+      const current = c.case_status || c.status;
+
+      return `
+        <article class="event-card">
+          <div class="event-main">
+            <div>
+              <h4>${safe(c.patient_code)}</h4>
+              <p>Complaint: ${safe(c.complaint)}<br>
+              Severity: ${safe(c.severity)} · Triage: ${safe(c.triage_status)}<br>
+              Treatment: ${safe(c.treatment_notes)}<br>
+              Case ID: ${safe(id)}${evidenceLink("medical_case", id)}</p>
+              ${statusControl(id, current)}
+            </div>
+            <div class="chips">
+              <span class="chip warning">${caseStatusLabel(current)}</span>
+            </div>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+// Delegated handler: the listener lives on the #medicalCases container, which
+// survives loadMedical() re-renders (only its innerHTML is replaced).
+function setupCaseStatusControls() {
+  const el =
+    document.getElementById(
+      "medicalCases"
+    );
+
+  if (!el || el.dataset.statusWired) return;
+  el.dataset.statusWired = "1";
+
+  el.addEventListener("click", async e => {
+    const btn = e.target.closest(".rn-status-btn");
+    if (!btn) return;
+
+    const ctl = btn.closest(".rn-status-ctl");
+    if (!ctl) return;
+
+    const id = ctl.getAttribute("data-case");
+    const sel = ctl.querySelector(".rn-status-select");
+    const note = ctl.querySelector(".rn-status-note");
+    const newStatus = sel && sel.value;
+
+    if (!newStatus) {
+      statusMsg("Pilih status baru dulu.");
+      return;
+    }
+
+    btn.disabled = true;
+
+    try {
+      await RN_FRAPPE.call(
+        "rescue_net.api_medical.update_case_status",
+        {
+          medical_case: id,
+          new_status: newStatus,
+          treatment_notes: (note && note.value.trim()) || null
+        },
+        { method: "POST" }
+      );
+
+      statusMsg("Status pasien diperbarui.");
+      await loadMedical();
+    } catch (err) {
+      statusMsg(err.message || "Gagal memperbarui status.");
+      btn.disabled = false;
+    }
+  });
 }
 
 function renderUses(items) {
@@ -546,6 +660,7 @@ document.addEventListener(
 
     setupCaseForm();
     setupSupplyUseForm();
+    setupCaseStatusControls();
 
     const btn =
       document.getElementById(

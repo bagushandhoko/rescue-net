@@ -225,6 +225,88 @@ function renderCases(items) {
     .join("");
 }
 
+// ---- Posko needs: obat vs alat (separate groups) --------------------------
+
+function needCard(n) {
+  return card(
+    n.item_name,
+    `Butuh: <b>${safe(n.quantity)}</b> ${safe(n.unit)}` +
+    (n.need_status ? `<br>Status: ${safe(n.need_status)}` : ""),
+    n.urgency || "need"
+  );
+}
+
+function renderNeeds(obat, alat) {
+  const elO = document.getElementById("needObat");
+  const elA = document.getElementById("needAlat");
+
+  if (elO) {
+    elO.innerHTML =
+      obat === null
+        ? card("Login diperlukan", "Kebutuhan hanya untuk tim posko.", "empty")
+        : obat.length
+          ? obat.map(needCard).join("")
+          : card("Belum ada kebutuhan obat", "Tambah lewat form di samping.", "empty");
+  }
+
+  if (elA) {
+    elA.innerHTML =
+      alat === null
+        ? ""
+        : alat.length
+          ? alat.map(needCard).join("")
+          : card("Belum ada kebutuhan alat", "Tambah lewat form di samping.", "empty");
+  }
+}
+
+async function loadPoskoNeeds(poskoId) {
+  try {
+    const res =
+      await RN_FRAPPE.call(
+        "rescue_net.api_medical.posko_needs",
+        { posko: poskoId }
+      );
+    renderNeeds(res.obat || [], res.alat || []);
+  } catch (e) {
+    renderNeeds(null, null);
+  }
+}
+
+function setupNeedForm() {
+  const form =
+    document.getElementById("needForm");
+
+  if (!form) return;
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const posko =
+      RESOLVED_POSKO_ID || getMedicalPoskoId();
+
+    try {
+      await RN_FRAPPE.call(
+        "rescue_net.api_medical.add_posko_need",
+        {
+          posko,
+          item_name: form.item_name.value.trim(),
+          quantity: Number(form.quantity.value || 0),
+          unit: form.unit.value.trim(),
+          need_kind: form.need_kind.value,
+          urgency: form.urgency.value
+        },
+        { method: "POST" }
+      );
+
+      statusMsg("Kebutuhan ditambahkan.");
+      form.item_name.value = "";
+      await loadPoskoNeeds(posko);
+    } catch (err) {
+      statusMsg(err.message || "Gagal menambah kebutuhan.");
+    }
+  });
+}
+
 // ---- Patient card modal (history timeline + add note) ---------------------
 
 function fmtTime(s) {
@@ -628,6 +710,12 @@ async function loadMedical() {
   renderUses(ctx.supply_uses);
   renderMovements();
 
+  if (medicalLocked) {
+    renderNeeds(null, null);
+  } else {
+    loadPoskoNeeds(poskoId);
+  }
+
   const caseForm =
     document.getElementById(
       "caseForm"
@@ -799,6 +887,7 @@ document.addEventListener(
     setupCaseForm();
     setupSupplyUseForm();
     setupCaseStatusControls();
+    setupNeedForm();
 
     const btn =
       document.getElementById(

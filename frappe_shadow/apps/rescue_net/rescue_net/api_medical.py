@@ -841,3 +841,72 @@ def case_card(medical_case):
         },
         "history": history,
     }
+
+
+# --- Posko medical needs: obat vs alat (separate groups) --------------------
+
+@frappe.whitelist()
+def posko_needs(posko=None):
+    posko = resolve_posko(posko)
+    actor = rn_actor()
+    _assert_medical_access(actor, posko)
+
+    rows = frappe.get_all(
+        "RN Logistic Need",
+        filters={"posko": posko},
+        fields=[
+            "name",
+            "item_name",
+            "quantity",
+            "unit",
+            "urgency",
+            "need_status",
+            "need_kind",
+        ],
+        order_by="observed_at desc",
+        limit_page_length=500,
+    )
+
+    obat, alat = [], []
+    for r in rows:
+        (alat if r.get("need_kind") == "alat" else obat).append(r)
+
+    return {"obat": obat, "alat": alat}
+
+
+@frappe.whitelist()
+def add_posko_need(
+    posko,
+    item_name,
+    quantity,
+    unit,
+    need_kind="obat",
+    urgency="normal",
+):
+    posko = resolve_posko(posko)
+    actor = rn_actor()
+    _assert_medical_access(actor, posko)
+
+    item_name = (item_name or "").strip()
+    if not item_name:
+        frappe.throw("Nama item kosong")
+
+    kind = "alat" if need_kind == "alat" else "obat"
+    event = frappe.db.get_value("RN Posko", posko, "disaster_event")
+
+    doc = frappe.get_doc({
+        "doctype": "RN Logistic Need",
+        "posko": posko,
+        "disaster_event": event,
+        "item_name": item_name,
+        "quantity": flt(quantity),
+        "unit": (unit or "").strip(),
+        "urgency": urgency,
+        "need_kind": kind,
+        "need_status": "open",
+        "observed_at": now_datetime(),
+        "created_by_user": getattr(actor, "name", None),
+        "verification_status": "self_reported",
+    }).insert(ignore_permissions=True)
+
+    return {"name": doc.name, "need_kind": kind}

@@ -65,6 +65,13 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "need_kind",
+   "label": "Jenis Kebutuhan",
+   "fieldtype": "Select",
+   "options": "\nobat\nalat",
+   "description": "Untuk posko medis: pisahkan kebutuhan obat/bahan medis dari alat/peralatan."
+  },
+  {
    "fieldname": "jiwa_terdampak",
    "label": "Jiwa yang Membutuhkan",
    "fieldtype": "Int",

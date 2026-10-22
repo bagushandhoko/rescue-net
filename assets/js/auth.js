@@ -307,10 +307,12 @@
     var chk = document.getElementById("consentVerificationChk");
     var refs = document.getElementById("referenceFields");
     var typeWrap = document.getElementById("poskoTypeFields");
+    var orgWrap = document.getElementById("orgFields");
     if (!wrap) return;
     $all('input[name="role"]').forEach(function (r) {
       r.addEventListener("change", function () {
         if (typeWrap && r.checked) typeWrap.hidden = r.value !== "petugas_posko";
+        if (orgWrap && r.checked) orgWrap.hidden = r.value !== "organisasi";
         var on = r.value === "pelapor" && r.checked;
         if (r.checked) wrap.hidden = !on;
         if (on && chk && !chk.checked) { chk.checked = true; if (refs) refs.hidden = false; }
@@ -412,6 +414,11 @@
           setMessage("registerMessage", "Pelapor terverifikasi wajib mengisi instansi/kelompok dan jabatan/peran.", true);
           return;
         }
+        var orgTitle = role === "organisasi" ? (f.org_title.value || "").trim() : "";
+        if (role === "organisasi" && !orgTitle) {
+          setMessage("registerMessage", "Nama organisasi wajib diisi.", true);
+          return;
+        }
         var c = pwChecks(pass);
         if (!c.len || !c.upper || !c.digit) {
           setMessage("registerMessage", "Password belum memenuhi semua syarat.", true);
@@ -440,6 +447,18 @@
           });
           setMessage("registerMessage", (out && out.message) || "Akun dibuat. Masuk…");
           await login(email, pass);
+          if (orgTitle) {
+            try {
+              await RN_FRAPPE.call("rescue_net.api_community_cluster.create_organization", {
+                title: orgTitle,
+                organization_type: f.org_type.value || "community",
+                contact_person: (f.org_contact.value || "").trim() || null
+              });
+            } catch (orgErr) {
+              setMessage("registerMessage", "Akun dibuat, tetapi organisasi belum tersimpan: " + cleanServerMessage(orgErr) + " Lengkapi di halaman Organisasi.", true);
+              await new Promise(function (ok) { setTimeout(ok, 2500); });
+            }
+          }
           var typeEl = f.posko_type;
           window.location.href = registerLandingTarget(role, typeEl ? typeEl.value : "");
         } catch (err) {

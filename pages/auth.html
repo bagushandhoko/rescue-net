@@ -177,6 +177,25 @@
             </label>
           </div>
 
+          <div id="orgFields" class="rn-auth-reference" hidden>
+            <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Akun Anda dan organisasi didaftarkan sekaligus. Anda otomatis menjadi pemilik (admin) organisasi ini; organisasi menunggu verifikasi.</p>
+            <label>Nama organisasi
+              <input name="org_title" type="text" placeholder="mis. Komunitas Rescue Lokal">
+            </label>
+            <label>Jenis organisasi
+              <select name="org_type">
+                <option value="community">Komunitas</option>
+                <option value="ngo">NGO / LSM</option>
+                <option value="government">Pemerintah</option>
+                <option value="company">Perusahaan / CSR</option>
+                <option value="school">Sekolah / Kampus</option>
+              </select>
+            </label>
+            <label>Penanggung jawab (opsional)
+              <input name="org_contact" type="text" placeholder="Nama kontak organisasi">
+            </label>
+          </div>
+
           <div id="reporterFields" class="rn-auth-reference" hidden>
             <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Untuk petugas resmi (BNPB/BPBD, Polri, TNI, perangkat desa) atau warga yang mendedikasikan diri memantau kondisi sekitar. Setelah diverifikasi admin atau verifikator senior, Anda bisa <b>melaporkan kebutuhan di semua posko</b> — laporan langsung tampil di posko itu dengan nama/instansi Anda dan ditandai “belum dikonfirmasi” sampai petugas posko memastikannya. Pelapor tidak bisa mengubah stok atau data posko.</p>
             <label>Instansi / kelompok

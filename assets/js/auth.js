@@ -455,7 +455,7 @@
                 contact_person: (f.org_contact.value || "").trim() || null,
                 notes: (f.org_notes.value || "").trim() || null,
                 coordination_scheme: (registerForm.querySelector('input[name="org_scheme"]:checked') || {}).value || "mandiri"
-              });
+              }, { method: "POST" });
             } catch (orgErr) {
               setMessage("registerMessage", "Akun dibuat, tetapi organisasi belum tersimpan: " + cleanServerMessage(orgErr) + " Lengkapi di halaman Organisasi.", true);
               await new Promise(function (ok) { setTimeout(ok, 2500); });

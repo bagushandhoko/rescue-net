@@ -452,7 +452,9 @@
               await RN_FRAPPE.call("rescue_net.api_community_cluster.create_organization", {
                 title: orgTitle,
                 organization_type: f.org_type.value || "community",
-                contact_person: (f.org_contact.value || "").trim() || null
+                contact_person: (f.org_contact.value || "").trim() || null,
+                notes: (f.org_notes.value || "").trim() || null,
+                coordination_scheme: (registerForm.querySelector('input[name="org_scheme"]:checked') || {}).value || "mandiri"
               });
             } catch (orgErr) {
               setMessage("registerMessage", "Akun dibuat, tetapi organisasi belum tersimpan: " + cleanServerMessage(orgErr) + " Lengkapi di halaman Organisasi.", true);

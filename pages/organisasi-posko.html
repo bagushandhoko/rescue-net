@@ -100,7 +100,15 @@
           <form class="rn-form" data-rn-create-org>
             <div class="form-grid">
               <label>Nama Kelompok<input name="name" placeholder="Contoh: Komunitas Rescue Lokal" required></label>
-              <label>Jenis Kelompok<input name="organization_type" placeholder="government / ngo / community" required></label>
+              <label>Jenis Kelompok
+                <select name="organization_type" required>
+                  <option value="community">Komunitas</option>
+                  <option value="ngo">NGO / LSM</option>
+                  <option value="government">Pemerintah</option>
+                  <option value="company">Perusahaan / CSR</option>
+                  <option value="school">Sekolah / Kampus</option>
+                </select>
+              </label>
             </div>
             <label>Bagian dari organisasi (opsional)
               <select name="parent_organization"><option value="">Berdiri sendiri (bukan sub-organisasi)</option></select>

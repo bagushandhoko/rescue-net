@@ -194,6 +194,21 @@
             <label>Penanggung jawab (opsional)
               <input name="org_contact" type="text" placeholder="Nama kontak organisasi">
             </label>
+            <label>Catatan / deskripsi singkat (opsional)
+              <input name="org_notes" type="text" placeholder="Bidang kerja, wilayah, dll.">
+            </label>
+            <fieldset class="rn-scheme" style="border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0">
+              <legend style="font-size:12px;color:var(--muted);padding:0 6px">Skema koordinasi (dipilih sekali)</legend>
+              <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
+                <input type="radio" name="org_scheme" value="mandiri" checked style="margin-top:3px">
+                <span><b>Mandiri</b> — tiap posko dan anggota mengelola dirinya sendiri.</span>
+              </label>
+              <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
+                <input type="radio" name="org_scheme" value="terpusat" style="margin-top:3px">
+                <span><b>Komando terpusat</b> — pusat membuat akun posko dan menyetujui perubahan level bawah.</span>
+              </label>
+            </fieldset>
+            <p class="rn-muted" style="font-size:12px;margin:0">Cabang/sub dari organisasi lain? Ajukan induknya nanti di halaman Organisasi &amp; Posko.</p>
           </div>
 
           <div id="reporterFields" class="rn-auth-reference" hidden>
@@ -290,7 +305,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
-<script src="../assets/js/auth.js?v=roles-20261022"></script>
+<script src="../assets/js/auth.js?v=orgmerge-20261022"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

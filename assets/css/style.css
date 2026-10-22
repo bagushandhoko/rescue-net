@@ -7322,3 +7322,26 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-auth-roles .rn-auth-reference input:not([type="radio"]),
 .rn-auth-roles .rn-auth-reference select { width: 100% !important; max-width: none !important; box-sizing: border-box; }
 .rn-auth-roles .rn-auth-reference > label { grid-template-columns: minmax(0, 1fr); justify-content: stretch; }
+
+/* HP: aturan mobile site-wide membuat label/input penuh & terpusat; kembalikan baris radio/centang rata kiri */
+@media (max-width: 1023px) {
+  .rn-auth-roles > label,
+  .rn-auth-form .rn-auth-check {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  .rn-auth-roles > label > input[type="radio"],
+  .rn-auth-form .rn-auth-check > input[type="checkbox"] {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    min-height: 0 !important;
+    flex: 0 0 18px !important;
+    margin: 0 !important;
+  }
+}

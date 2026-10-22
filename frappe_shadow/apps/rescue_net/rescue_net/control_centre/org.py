@@ -60,8 +60,12 @@ def org_posko_board(disaster_event=None):
     )
 
     org_names = sorted({p.organization for p in poskos if p.organization})
-    if not org_names and not event:
-        org_names = frappe.get_all("RN Organization", pluck="name", limit_page_length=200)
+    # Organisasi yang punya posko di bencana ini = "ikut bencana" (dipakai KPI);
+    # organisasi lain (mis. baru mendaftar, belum punya posko) tetap DIDAFTARKAN
+    # supaya bisa ditemukan & diajukan keanggotaannya.
+    in_event = set(org_names)
+    if not event:
+        in_event = set(frappe.get_all("RN Organization", pluck="name", limit_page_length=500))
 
     posko_by_org = {}
     for p in poskos:
@@ -77,7 +81,7 @@ def org_posko_board(disaster_event=None):
             member_by_posko[r.posko] = r.n
 
     orgs_raw = frappe.get_all(
-        "RN Organization", filters={"name": ["in", org_names]} if org_names else {},
+        "RN Organization",
         fields=["name", "title", "organization_type", "verification_status",
                 "trust_level", "trusted_verifier_count", "status", "modified"],
         limit_page_length=500,
@@ -98,15 +102,14 @@ def org_posko_board(disaster_event=None):
             for p in org_poskos
         ]
         active_poskos = sum(1 for p in org_poskos if str(p.operational_status or "").lower() not in _POSKO_INACTIVE_TERMS)
-        posko_aktif_total += active_poskos
-
         members = _org_member_count(o.name)
-        anggota_total += members
         programs = _org_program_count(o.name)
-
         org_pending = str(o.verification_status or "") in _ORG_PENDING_TERMS
         posko_pending = sum(1 for p in org_poskos if str(p.verification_status or "") in _ORG_PENDING_TERMS)
-        pending_total += posko_pending + (1 if org_pending else 0)
+        if o.name in in_event:
+            posko_aktif_total += active_poskos
+            anggota_total += members
+            pending_total += posko_pending + (1 if org_pending else 0)
 
         orgs.append({
             "name": o.name, "title": o.title, "organization_type": o.organization_type,
@@ -118,9 +121,10 @@ def org_posko_board(disaster_event=None):
             "posko_count": len(org_poskos), "posko_active_count": active_poskos,
             "member_count": members, "program_count": programs,
             "poskos": posko_list,
+            "in_event": o.name in in_event,
         })
 
-    orgs.sort(key=lambda r: -r["posko_count"])
+    orgs.sort(key=lambda r: (-r["posko_count"], str(r["title"] or "").lower()))
 
     event_row = frappe.db.get_value("RN Disaster Event", event, ["title", "event_status", "started_at"], as_dict=True) if event else None
 
@@ -131,7 +135,7 @@ def org_posko_board(disaster_event=None):
         "event_since": str(event_row.started_at)[:10] if event_row and event_row.get("started_at") else None,
         "generated_at": frappe.utils.now_datetime(),
         "totals": {
-            "organisasi_aktif": sum(1 for o in orgs if o["status"] == "active" or o["verification_status"] not in _ORG_PENDING_TERMS),
+            "organisasi_aktif": sum(1 for o in orgs if o["in_event"] and (o["status"] == "active" or o["verification_status"] not in _ORG_PENDING_TERMS)),
             "posko_aktif": posko_aktif_total,
             "pending_verifikasi": pending_total,
             "anggota_terdaftar": anggota_total,

@@ -93,6 +93,32 @@
     return '<div class="rn-opx-stat"><span><small>' + esc(label) + "</small><b>" + esc(value) + "</b>" + (sub ? "<em>" + sub + "</em>" : "") + '</span><i data-icon="' + icon + '"></i></div>';
   }
 
+  // "Ajukan Keanggotaan" ada di panel detail organisasi (bukan di laci tersembunyi):
+  // status pengguna menentukan label; tamu diarahkan masuk dulu.
+  var MY_MEM = null;
+  async function fillJoinSlot(orgName) {
+    var slot = document.querySelector('[data-join-slot="' + (window.CSS && CSS.escape ? CSS.escape(orgName) : orgName) + '"]');
+    if (!slot) return;
+    if (MY_MEM === null) {
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.my_memberships");
+        MY_MEM = {};
+        ((r && r.memberships) || []).forEach(function (m) { if (m.organization && !MY_MEM[m.organization]) MY_MEM[m.organization] = m; });
+      } catch (e) { MY_MEM = false; }
+    }
+    var m = MY_MEM && MY_MEM[orgName];
+    var st = m && m.status;
+    if (MY_MEM === false) {
+      slot.innerHTML = '<a class="btn ghost mini" href="auth.html?next=' + encodeURIComponent(location.pathname.split("/").pop() + location.search) + '">Masuk untuk mengajukan keanggotaan</a>';
+    } else if (st === "approved") {
+      slot.innerHTML = '<span class="chip ok">' + (m.membership_role === "owner" ? "Anda pengelola" : "Anda anggota") + "</span>";
+    } else if (st === "pending") {
+      slot.innerHTML = '<span class="chip warning">Pengajuan menunggu persetujuan</span>';
+    } else {
+      slot.innerHTML = '<button type="button" class="btn primary mini" data-join-org="' + esc(orgName) + '">' + (st === "rejected" || st === "revoked" ? "Ajukan Lagi" : "Ajukan Keanggotaan") + '</button> <span class="rn-muted" data-join-msg="' + esc(orgName) + '"></span>';
+    }
+  }
+
   function renderDetail(detail) {
     var org = detail.org;
     var poskos = detail.poskos || [];
@@ -133,6 +159,7 @@
     $("#orgDetailPanel").innerHTML =
       '<div class="rn-opx-dhead"><span class="rn-opx-logo">' + esc((org.title || "?").replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()) + "</span><div><h3>" + esc(org.title) +
       '</h3><small>' + esc(org.organization_type) + " · " + esc(org.contact_person || "-") + '</small></div><span class="chip ' + statusPillClass(org.verification_status) + '">' + esc(org.verification_status) + "</span></div>" +
+      '<div class="rn-op-join" data-join-slot="' + esc(org.name) + '"></div>' +
       '<div class="rn-tabs rn-op-detail-tabs">' +
       '<button type="button" class="rn-tab is-active" data-tab="ringkasan">Ringkasan</button>' +
       '<button type="button" class="rn-tab" data-tab="posko">Posko (' + poskos.length + ')</button>' +
@@ -153,6 +180,8 @@
       '<div class="rn-op-tabpane" data-pane="posko" hidden>' + poskoRows + "</div>" +
       '<div class="rn-op-tabpane" data-pane="anggota" hidden>' + memberRows + "</div>" +
       '<div class="rn-op-tabpane" data-pane="program" hidden>' + programRows + "</div>";
+
+    fillJoinSlot(org.name);
 
     var panel = $("#orgDetailPanel");
     function showTab(name) {

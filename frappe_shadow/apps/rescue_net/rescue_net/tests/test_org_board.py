@@ -28,3 +28,19 @@ class TestOrgBoard(RNTestCase):
         self.assertEqual(t["score"], 25 * sum(1 for c in t["checks"] if c["done"]))
         self.assertIn(t["grade"], "ABCD")
         self.assertTrue(next(c for c in t["checks"] if c["key"] == "anggota")["done"])
+
+
+class TestOrgBoardListsAllOrgs(RNTestCase):
+    def test_org_without_posko_is_listed_but_not_counted_in_event_kpi(self):
+        w = make_world()
+        totals_before = cc.org_posko_board(w.event.name)["totals"]
+        lone = _insert("RN Organization", title="Org Baru Tanpa Posko", status="pending",
+                       verification_status="pending")
+        data = cc.org_posko_board(w.event.name)
+        names = {o["name"]: o for o in data["orgs"]}
+        self.assertIn(lone.name, names)
+        self.assertEqual(names[lone.name]["posko_count"], 0)
+        self.assertFalse(names[lone.name]["in_event"])
+        self.assertTrue(names[w.org_a.name]["in_event"])
+        # KPI bencana tidak berubah oleh organisasi yang belum punya posko
+        self.assertEqual(data["totals"], totals_before)

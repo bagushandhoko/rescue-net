@@ -498,7 +498,10 @@ def register(
                 "role": "",
                 "requested_role": role_key,
                 "role_request_status": "pending",
-                "status": "pending_verification",
+                # Aktif langsung supaya pendaftar bisa masuk & memakai akunnya; peran
+                # operasional tetap menunggu persetujuan (role kosong = viewer).
+                # Pelapor terverifikasi baru aktif setelah disetujui (reporter.activate).
+                "status": "pending_verification" if role_key == "pelapor" else "active",
                 "consent_verification": consent_verification,
                 "reporter_agency": reporter_agency,
                 "reporter_position": reporter_position,

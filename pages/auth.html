@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Auth, Registration & Verification</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=roles-20261022">
+  <link rel="stylesheet" href="../assets/css/style.css?v=authsub-20261022">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -159,24 +159,6 @@
             <label><input type="radio" name="role" value="relawan" checked> Relawan</label>
             <label><input type="radio" name="role" value="donatur"> Donatur</label>
             <label><input type="radio" name="role" value="organisasi"> Organisasi</label>
-            <label><input type="radio" name="role" value="petugas_posko"> Petugas Posko</label>
-            <label><input type="radio" name="role" value="pelapor"> Pelapor Terverifikasi</label>
-          </fieldset>
-
-          <div id="poskoTypeFields" class="rn-auth-reference" hidden>
-            <label>Posko apa yang akan Anda kelola?
-              <select name="posko_type">
-                <option value="logistics">Posko Logistik</option>
-                <option value="medical">Posko Medis</option>
-                <option value="kitchen">Dapur Umum</option>
-                <option value="shelter">Shelter</option>
-                <option value="transport">Transport</option>
-                <option value="collection_hub">Collection Hub</option>
-                <option value="field_assessment">Field Assessment</option>
-              </select>
-            </label>
-          </div>
-
           <div id="orgFields" class="rn-auth-reference" hidden>
             <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Akun Anda dan organisasi didaftarkan sekaligus. Anda otomatis menjadi pemilik (admin) organisasi ini; organisasi menunggu verifikasi.</p>
             <label>Nama organisasi
@@ -210,6 +192,24 @@
             </fieldset>
             <p class="rn-muted" style="font-size:12px;margin:0">Cabang/sub dari organisasi lain? Ajukan induknya nanti di halaman Organisasi &amp; Posko.</p>
           </div>
+            <label><input type="radio" name="role" value="petugas_posko"> Petugas Posko</label>
+          <div id="poskoTypeFields" class="rn-auth-reference" hidden>
+            <label>Posko apa yang akan Anda kelola?
+              <select name="posko_type">
+                <option value="logistics">Posko Logistik</option>
+                <option value="medical">Posko Medis</option>
+                <option value="kitchen">Dapur Umum</option>
+                <option value="shelter">Shelter</option>
+                <option value="transport">Transport</option>
+                <option value="collection_hub">Collection Hub</option>
+                <option value="field_assessment">Field Assessment</option>
+              </select>
+            </label>
+          </div>
+            <label><input type="radio" name="role" value="pelapor"> Pelapor Terverifikasi</label>
+          </fieldset>
+
+
 
           <div id="reporterFields" class="rn-auth-reference" hidden>
             <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Untuk petugas resmi (BNPB/BPBD, Polri, TNI, perangkat desa) atau warga yang mendedikasikan diri memantau kondisi sekitar. Setelah diverifikasi admin atau verifikator senior, Anda bisa <b>melaporkan kebutuhan di semua posko</b> — laporan langsung tampil di posko itu dengan nama/instansi Anda dan ditandai “belum dikonfirmasi” sampai petugas posko memastikannya. Pelapor tidak bisa mengubah stok atau data posko.</p>

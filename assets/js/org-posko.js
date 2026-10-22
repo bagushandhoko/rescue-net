@@ -348,6 +348,35 @@ function card(
 }
 
 
+// Status keanggotaan pengguna saat ini per organisasi (kosong untuk tamu).
+let MY_MEMBERSHIP = {};
+
+async function loadMyMemberships() {
+  MY_MEMBERSHIP = {};
+  try {
+    const r = await window.RN_FRAPPE.call(
+      "rescue_net.api_community_cluster.my_memberships"
+    );
+    ((r && r.memberships) || []).forEach(m => {
+      if (m.organization && !MY_MEMBERSHIP[m.organization]) MY_MEMBERSHIP[m.organization] = m;
+    });
+  } catch (e) { /* tamu / belum login: tombol ajukan tetap tampil */ }
+}
+
+function joinControl(orgName) {
+  const m = MY_MEMBERSHIP[orgName];
+  const st = m && m.status;
+  if (st === "approved") {
+    return `<br><span class="chip">${m.membership_role === "owner" ? "Anda pengelola" : "Anda anggota"}</span>`;
+  }
+  if (st === "pending") {
+    return `<br><span class="chip warning">Pengajuan menunggu persetujuan</span>`;
+  }
+  const label = st === "rejected" || st === "revoked" ? "Ajukan Lagi" : "Ajukan Keanggotaan";
+  return `<br><button type="button" class="btn ghost mini" data-join-org="${safe(orgName)}" style="margin-top:6px">${label}</button>` +
+    `<span class="rn-muted" data-join-msg="${safe(orgName)}"></span>`;
+}
+
 function renderOrganizations(items) {
   const target =
     document.querySelector(
@@ -372,8 +401,7 @@ function renderOrganizations(items) {
             ? `Induk: ${safe(o.parent_organization)}<br>`
             : "") +
           `Contact: ${safe(o.contact_person)}` +
-          `<br><button type="button" class="btn ghost mini" data-join-org="${safe(o.name)}" style="margin-top:6px">Ajukan Keanggotaan</button>` +
-          `<span class="rn-muted" data-join-msg="${safe(o.name)}"></span>`,
+          joinControl(o.name),
 
           o.verification_status ||
           o.status
@@ -396,8 +424,9 @@ document.addEventListener("click", async function (e) {
       "rescue_net.api_community_cluster.request_membership",
       { organization: org }, { method: "POST" }
     );
-    if (msg) msg.textContent = " status: " + ((r && r.status) || "terkirim");
-    btn.disabled = true;
+    MY_MEMBERSHIP[org] = Object.assign({}, MY_MEMBERSHIP[org], { organization: org, status: (r && r.status) || "pending" });
+    btn.outerHTML = `<span class="chip warning">Pengajuan menunggu persetujuan</span>`;
+    if (msg) msg.textContent = "";
   } catch (err) {
     const m = (err && err.message) || String(err);
     if (msg) msg.textContent = " gagal: " + m + (/login|masuk/i.test(m) ? " (masuk dulu)" : "");
@@ -601,6 +630,8 @@ async function loadOrgPosko() {
   if (!poskoDisplay.length && currentEventParam()) {
     poskoDisplay = await publicEventPoskos();
   }
+
+  await loadMyMemberships();
 
   renderOrganizations(
     orgRows

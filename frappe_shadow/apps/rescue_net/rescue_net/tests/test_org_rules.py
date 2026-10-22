@@ -137,3 +137,49 @@ class TestPoskoRightsNeedApprovedAssignment(RNTestCase):
         self.assertFalse(frappe.db.exists("RN Posko", empty))
         self.assertFalse(frappe.db.exists("RN Posko Assignment", {"posko": empty}))
         self.assertTrue(frappe.db.exists("RN Posko", busy))
+
+
+class TestOrgRegistrationAndJoin(RNTestCase):
+    def create(self, **kw):
+        user = make_actor()
+        with as_user(user.user):
+            res = api.create_organization(title="Uji Daftar Org", **kw)
+        return user, frappe.get_doc("RN Organization", res["organization"])
+
+    def test_registration_can_choose_open(self):
+        _, org = self.create(open_to_public="1")
+        self.assertEqual((org.privacy_mode, org.control_centre_share), ("open", "full_authorized"))
+
+    def test_registration_can_choose_closed(self):
+        _, org = self.create(open_to_public="0")
+        self.assertEqual((org.privacy_mode, org.control_centre_share), ("closed", "aggregate"))
+
+    def test_registration_default_stays_closed(self):
+        _, org = self.create()
+        self.assertEqual(org.privacy_mode, "closed")
+
+    def test_registrant_becomes_approved_owner(self):
+        user, org = self.create(open_to_public="1")
+        row = frappe.db.get_value(
+            "RN Organization Membership",
+            {"organization": org.name, "user_account": user.account},
+            ["membership_role", "status"], as_dict=True)
+        self.assertEqual((row.membership_role, row.status), ("owner", "approved"))
+
+    def test_join_request_needs_existing_organization(self):
+        applicant = make_actor()
+        with as_user(applicant.user), self.assertRaises(frappe.ValidationError):
+            api.request_membership("rn-org-tidak-ada")
+
+    def test_join_request_to_open_org_still_waits_for_owner(self):
+        _, org = self.create(open_to_public="1")
+        applicant = make_actor()
+        with as_user(applicant.user):
+            res = api.request_membership(org.name)
+        self.assertEqual(res["status"], "pending")
+
+    def test_rejected_org_takes_no_new_members(self):
+        org = make_org(status="rejected")
+        applicant = make_actor()
+        with as_user(applicant.user), self.assertRaises(frappe.ValidationError):
+            api.request_membership(org.name)

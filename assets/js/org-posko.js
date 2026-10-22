@@ -744,6 +744,11 @@ function setupOrganizationForm() {
               ?.trim() ||
             null,
 
+          open_to_public:
+            form.elements.open_to_public
+              ?.value ||
+            "0",
+
           coordination_scheme:
             form.elements.coordination_scheme
               ?.value ||

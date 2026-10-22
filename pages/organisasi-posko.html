@@ -113,6 +113,12 @@
             <label>Bagian dari organisasi (opsional)
               <select name="parent_organization"><option value="">Berdiri sendiri (bukan sub-organisasi)</option></select>
             </label>
+            <label>Keterbukaan
+              <select name="open_to_public">
+                <option value="0">Tertutup (bawaan) — publik hanya melihat ringkasan</option>
+                <option value="1">Terbuka — detail kegiatan terlihat publik</option>
+              </select>
+            </label>
             <fieldset class="rn-scheme" style="border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0">
               <legend style="font-size:12px;color:var(--muted);padding:0 6px">Skema koordinasi (dipilih sekali saat mendaftar)</legend>
               <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
@@ -184,7 +190,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/org-posko.js?v=deeplink-20261019"></script>
+<script src="../assets/js/org-posko.js?v=orgopen-20261022"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

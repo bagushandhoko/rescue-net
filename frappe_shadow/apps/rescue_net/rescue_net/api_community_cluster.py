@@ -54,7 +54,8 @@ def list_organizations():
 def create_organization(title, organization_type="community",
                         contact_person=None, notes=None,
                         parent_organization=None,
-                        coordination_scheme="mandiri"):
+                        coordination_scheme="mandiri",
+                        open_to_public=None):
     actor = _actor()
 
     # Komando terpusat is chosen here, once, when the pusat registers itself.
@@ -80,6 +81,12 @@ def create_organization(title, organization_type="community",
     org.contact_person = contact_person
     org.notes = notes
     org.coordination_scheme = coordination_scheme
+    # Terbuka/Tertutup dipilih saat mendaftar (sama dengan api_privacy.set_org_visibility);
+    # tanpa pilihan = bawaan doctype (tertutup).
+    if open_to_public is not None and str(open_to_public) != "":
+        is_open = str(open_to_public).strip().lower() in ("1", "true", "yes", "open", "terbuka")
+        org.privacy_mode = "open" if is_open else "closed"
+        org.control_centre_share = "full_authorized" if is_open else "aggregate"
     org.insert(ignore_permissions=True)
 
     membership = frappe.new_doc("RN Organization Membership")
@@ -119,6 +126,12 @@ def create_organization(title, organization_type="community",
 @frappe.whitelist()
 def request_membership(organization):
     actor = _actor()
+
+    org_status = frappe.db.get_value("RN Organization", organization, "status") if organization else None
+    if not organization or not frappe.db.exists("RN Organization", organization):
+        frappe.throw("Organisasi tidak ditemukan.")
+    if (org_status or "").lower() in ("rejected", "suspended", "inactive"):
+        frappe.throw("Organisasi ini tidak menerima anggota baru.")
 
     existing = frappe.db.get_value(
         "RN Organization Membership",

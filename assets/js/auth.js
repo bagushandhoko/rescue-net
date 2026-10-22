@@ -468,7 +468,8 @@
                 organization_type: f.org_type.value || "community",
                 contact_person: (f.org_contact.value || "").trim() || null,
                 notes: (f.org_notes.value || "").trim() || null,
-                coordination_scheme: (registerForm.querySelector('input[name="org_scheme"]:checked') || {}).value || "mandiri"
+                coordination_scheme: (registerForm.querySelector('input[name="org_scheme"]:checked') || {}).value || "mandiri",
+                open_to_public: (registerForm.querySelector('input[name="org_open"]:checked') || {}).value || "0"
               }, { method: "POST" });
             } catch (orgErr) {
               setMessage("registerMessage", "Akun dibuat, tetapi organisasi belum tersimpan: " + cleanServerMessage(orgErr) + " Lengkapi di halaman Organisasi.", true);

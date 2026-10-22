@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Auth, Registration & Verification</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=poskomulti-20261022">
+  <link rel="stylesheet" href="../assets/css/style.css?v=orgopen-20261022">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -180,6 +180,17 @@
               <input name="org_notes" type="text" placeholder="Bidang kerja, wilayah, dll.">
             </label>
             <fieldset class="rn-scheme" style="border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0">
+              <legend style="font-size:12px;color:var(--muted);padding:0 6px">Keterbukaan organisasi (bisa diubah kapan saja)</legend>
+              <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
+                <input type="radio" name="org_open" value="0" checked style="margin-top:3px">
+                <span><b>Tertutup</b> (bawaan) — kegiatan hanya terlihat ringkas oleh publik; anggota melihat detail. Anggota baru perlu disetujui pengelola.</span>
+              </label>
+              <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
+                <input type="radio" name="org_open" value="1" style="margin-top:3px">
+                <span><b>Terbuka</b> — detail kegiatan dan posko terlihat publik. Anggota baru tetap perlu disetujui pengelola.</span>
+              </label>
+            </fieldset>
+            <fieldset class="rn-scheme" style="border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0">
               <legend style="font-size:12px;color:var(--muted);padding:0 6px">Skema koordinasi (dipilih sekali)</legend>
               <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
                 <input type="radio" name="org_scheme" value="mandiri" checked style="margin-top:3px">
@@ -304,7 +315,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
-<script src="../assets/js/auth.js?v=poskomulti-20261022"></script>
+<script src="../assets/js/auth.js?v=orgopen-20261022"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

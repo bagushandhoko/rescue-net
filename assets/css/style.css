@@ -4858,8 +4858,10 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   border-radius: 13px;
   padding: 12px 14px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 14px;
+  grid-template-columns: 1fr;
+  justify-items: start;
+  text-align: left;
+  gap: 10px;
 }
 .rn-auth-roles legend {
   padding: 0 6px;
@@ -4869,6 +4871,8 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 }
 .rn-auth-roles label {
   display: flex;
+  justify-content: flex-start;
+  width: 100%;
   flex-direction: row;
   align-items: center;
   gap: 8px;

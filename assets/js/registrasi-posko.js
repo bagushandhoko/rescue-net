@@ -215,6 +215,8 @@
     var want = new URLSearchParams(location.search).get("event");
     EVENT_PICKER = window.RNEventChecklist.mount(el, { selected: want ? [want] : [], multiple: true });
     var typeSel = $("#regForm") && $("#regForm").posko_type;
+    var wantType = new URLSearchParams(location.search).get("type");
+    if (typeSel && wantType && typeSel.querySelector('option[value="' + wantType + '"]')) typeSel.value = wantType;
     if (typeSel) typeSel.addEventListener("change", syncEventMode);
     syncEventMode();
   }

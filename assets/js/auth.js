@@ -57,17 +57,21 @@
   // give — send them straight there instead of a generic homepage. An
   // explicit ?next= (e.g. they were bounced here mid-flow) still wins.
   var ROLE_LANDING_PAGE = {
+    relawan: "management-relawan.html",
     petugas_posko: "registrasi-posko.html",
     donatur: "program-khusus.html",
+    organisasi: "organisasi-posko.html",
     pelapor: "posko-logistik.html"
   };
-  function registerLandingTarget(role) {
+  function registerLandingTarget(role, poskoType) {
     try {
       var raw = new URLSearchParams(location.search).get("next") || "";
       raw = decodeURIComponent(raw);
       if (raw && raw.indexOf("//") === -1) return raw;
     } catch (e) {}
-    return ROLE_LANDING_PAGE[role] || "../index.html";
+    var page = ROLE_LANDING_PAGE[role] || "../index.html";
+    if (role === "petugas_posko" && poskoType) page += "?type=" + encodeURIComponent(poskoType);
+    return page;
   }
 
   /* ---------- Frappe requests ---------- */
@@ -302,9 +306,11 @@
     var wrap = document.getElementById("reporterFields");
     var chk = document.getElementById("consentVerificationChk");
     var refs = document.getElementById("referenceFields");
+    var typeWrap = document.getElementById("poskoTypeFields");
     if (!wrap) return;
     $all('input[name="role"]').forEach(function (r) {
       r.addEventListener("change", function () {
+        if (typeWrap && r.checked) typeWrap.hidden = r.value !== "petugas_posko";
         var on = r.value === "pelapor" && r.checked;
         if (r.checked) wrap.hidden = !on;
         if (on && chk && !chk.checked) { chk.checked = true; if (refs) refs.hidden = false; }
@@ -434,7 +440,8 @@
           });
           setMessage("registerMessage", (out && out.message) || "Akun dibuat. Masuk…");
           await login(email, pass);
-          window.location.href = registerLandingTarget(role);
+          var typeEl = f.posko_type;
+          window.location.href = registerLandingTarget(role, typeEl ? typeEl.value : "");
         } catch (err) {
           setMessage("registerMessage", cleanServerMessage(err), true);
           btn.disabled = false;

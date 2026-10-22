@@ -163,6 +163,20 @@
             <label><input type="radio" name="role" value="pelapor"> Pelapor Terverifikasi</label>
           </fieldset>
 
+          <div id="poskoTypeFields" class="rn-auth-reference" hidden>
+            <label>Posko apa yang akan Anda kelola?
+              <select name="posko_type">
+                <option value="logistics">Posko Logistik</option>
+                <option value="medical">Posko Medis</option>
+                <option value="kitchen">Dapur Umum</option>
+                <option value="shelter">Shelter</option>
+                <option value="transport">Transport</option>
+                <option value="collection_hub">Collection Hub</option>
+                <option value="field_assessment">Field Assessment</option>
+              </select>
+            </label>
+          </div>
+
           <div id="reporterFields" class="rn-auth-reference" hidden>
             <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Untuk petugas resmi (BNPB/BPBD, Polri, TNI, perangkat desa) atau warga yang mendedikasikan diri memantau kondisi sekitar. Setelah diverifikasi admin atau verifikator senior, Anda bisa <b>melaporkan kebutuhan di semua posko</b> — laporan langsung tampil di posko itu dengan nama/instansi Anda dan ditandai “belum dikonfirmasi” sampai petugas posko memastikannya. Pelapor tidak bisa mengubah stok atau data posko.</p>
             <label>Instansi / kelompok

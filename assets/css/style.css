@@ -7321,3 +7321,4 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-auth-roles .rn-auth-reference > label { justify-items: stretch; }
 .rn-auth-roles .rn-auth-reference input:not([type="radio"]),
 .rn-auth-roles .rn-auth-reference select { width: 100% !important; max-width: none !important; box-sizing: border-box; }
+.rn-auth-roles .rn-auth-reference > label { grid-template-columns: minmax(0, 1fr); justify-content: stretch; }

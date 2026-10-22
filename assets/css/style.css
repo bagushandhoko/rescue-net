@@ -7345,3 +7345,15 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
     margin: 0 !important;
   }
 }
+
+/* Daftar: pilih beberapa jenis posko (kotak centang, rata kiri, juga di HP) */
+.rn-auth-roles .rn-auth-posko-types { display: grid; gap: 8px; justify-items: start; }
+.rn-auth-roles .rn-auth-reference .rn-auth-posko-types > label {
+  display: flex !important; flex-direction: row !important; align-items: center !important;
+  justify-content: flex-start !important; text-align: left !important; gap: 10px !important;
+  width: 100% !important; font-weight: 600; grid-template-columns: none;
+}
+.rn-auth-roles .rn-auth-reference .rn-auth-posko-types > label > input[type="checkbox"] {
+  width: 18px !important; min-width: 18px !important; height: 18px !important; min-height: 0 !important;
+  flex: 0 0 18px !important; margin: 0 !important;
+}

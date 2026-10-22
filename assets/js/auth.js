@@ -70,7 +70,14 @@
       if (raw && raw.indexOf("//") === -1) return raw;
     } catch (e) {}
     var page = ROLE_LANDING_PAGE[role] || "../index.html";
-    if (role === "petugas_posko" && poskoType) page += "?type=" + encodeURIComponent(poskoType);
+    if (role === "petugas_posko" && poskoType) {
+      // poskoType = daftar jenis terpilih (array) atau satu jenis (string)
+      var list = Array.isArray(poskoType) ? poskoType : [poskoType];
+      if (list.length) {
+        page += "?type=" + encodeURIComponent(list[0]);
+        if (list.length > 1) page += "&more=" + encodeURIComponent(list.slice(1).join(","));
+      }
+    }
     return page;
   }
 
@@ -414,6 +421,13 @@
           setMessage("registerMessage", "Pelapor terverifikasi wajib mengisi instansi/kelompok dan jabatan/peran.", true);
           return;
         }
+        var poskoTypes = role === "petugas_posko"
+          ? $all('input[name="posko_types"]:checked', registerForm).map(function (c) { return c.value; })
+          : [];
+        if (role === "petugas_posko" && !poskoTypes.length) {
+          setMessage("registerMessage", "Pilih minimal satu jenis posko yang akan Anda kelola.", true);
+          return;
+        }
         var orgTitle = role === "organisasi" ? (f.org_title.value || "").trim() : "";
         if (role === "organisasi" && !orgTitle) {
           setMessage("registerMessage", "Nama organisasi wajib diisi.", true);
@@ -461,8 +475,7 @@
               await new Promise(function (ok) { setTimeout(ok, 2500); });
             }
           }
-          var typeEl = f.posko_type;
-          window.location.href = registerLandingTarget(role, typeEl ? typeEl.value : "");
+          window.location.href = registerLandingTarget(role, poskoTypes);
         } catch (err) {
           setMessage("registerMessage", cleanServerMessage(err), true);
           btn.disabled = false;

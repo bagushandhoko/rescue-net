@@ -209,6 +209,30 @@
       : "— pilih satu bencana yang dilayani posko ini";
   }
 
+  // Beberapa jenis posko dipilih saat daftar (?type=a&more=b,c): form dijalankan
+  // berurutan — setelah satu posko tersimpan, jenis berikutnya langsung diisi.
+  var TYPE_LABEL = { logistics: "Posko Logistik", medical: "Posko Medis", kitchen: "Dapur Umum", shelter: "Shelter", transport: "Transport", collection_hub: "Collection Hub", field_assessment: "Field Assessment" };
+  var QUEUE = (new URLSearchParams(location.search).get("more") || "").split(",").filter(function (t) { return TYPE_LABEL[t]; });
+
+  function renderQueueHint() {
+    var el = $("#regQueueHint");
+    if (!el) return;
+    if (!QUEUE.length) { el.hidden = true; return; }
+    el.hidden = false;
+    el.textContent = "Anda memilih lebih dari satu posko. Setelah posko ini tersimpan, lanjut mendaftarkan: " +
+      QUEUE.map(function (t) { return TYPE_LABEL[t]; }).join(", ") + ".";
+  }
+
+  function advanceQueue() {
+    if (!QUEUE.length) return false;
+    var next = QUEUE.shift();
+    var sel = $("#regForm") && $("#regForm").posko_type;
+    if (sel && sel.querySelector('option[value="' + next + '"]')) sel.value = next;
+    syncEventMode();
+    renderQueueHint();
+    return true;
+  }
+
   function populateDisasterEvents() {
     var el = document.getElementById("regEventPicker");
     if (!el || !window.RNEventChecklist) return;
@@ -219,6 +243,7 @@
     if (typeSel && wantType && typeSel.querySelector('option[value="' + wantType + '"]')) typeSel.value = wantType;
     if (typeSel) typeSel.addEventListener("change", syncEventMode);
     syncEventMode();
+    renderQueueHint();
   }
 
   /* ---------- Lokasi GPS: lokasi saat ini / pilih di peta / manual ---------- */
@@ -351,6 +376,7 @@
         if (res && res.pending) {
           msg.textContent = "Permintaan tambah posko diajukan ke pusat komando dan menunggu persetujuan" + (functions.length ? " (fungsi: " + functions.join(", ") + " ikut diajukan)." : ".");
           form.reset();
+          advanceQueue();
           return;
         }
 
@@ -358,6 +384,7 @@
           (functions.length ? " (fungsi: " + functions.join(", ") + ")" : "") +
           (res.assignment_status === "pending" ? ". Hak kelola posko aktif setelah penugasan Anda disetujui admin." : "");
         form.reset();
+        if (advanceQueue()) msg.textContent += " — lanjut isi posko berikutnya.";
         await loadRegistry();
         await selectPosko(res.posko);
       } catch (err) {

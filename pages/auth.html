@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Auth, Registration & Verification</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=authmobile-20261022">
+  <link rel="stylesheet" href="../assets/css/style.css?v=poskomulti-20261022">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -194,17 +194,16 @@
           </div>
             <label><input type="radio" name="role" value="petugas_posko"> Petugas Posko</label>
           <div id="poskoTypeFields" class="rn-auth-reference" hidden>
-            <label>Posko apa yang akan Anda kelola?
-              <select name="posko_type">
-                <option value="logistics">Posko Logistik</option>
-                <option value="medical">Posko Medis</option>
-                <option value="kitchen">Dapur Umum</option>
-                <option value="shelter">Shelter</option>
-                <option value="transport">Transport</option>
-                <option value="collection_hub">Collection Hub</option>
-                <option value="field_assessment">Field Assessment</option>
-              </select>
-            </label>
+            <p style="font-size:13px;font-weight:700;margin:0 0 6px">Posko apa yang akan Anda kelola? <small class="rn-muted" style="font-weight:400">(boleh lebih dari satu)</small></p>
+            <div class="rn-auth-posko-types">
+              <label><input type="checkbox" name="posko_types" value="logistics" checked> Posko Logistik</label>
+              <label><input type="checkbox" name="posko_types" value="medical"> Posko Medis</label>
+              <label><input type="checkbox" name="posko_types" value="kitchen"> Dapur Umum</label>
+              <label><input type="checkbox" name="posko_types" value="shelter"> Shelter</label>
+              <label><input type="checkbox" name="posko_types" value="transport"> Transport</label>
+              <label><input type="checkbox" name="posko_types" value="collection_hub"> Collection Hub</label>
+              <label><input type="checkbox" name="posko_types" value="field_assessment"> Field Assessment</label>
+            </div>
           </div>
             <label><input type="radio" name="role" value="pelapor"> Pelapor Terverifikasi</label>
           </fieldset>
@@ -305,7 +304,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
-<script src="../assets/js/auth.js?v=orgpost-20261022"></script>
+<script src="../assets/js/auth.js?v=poskomulti-20261022"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=landing-20261019"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -627,10 +627,34 @@ def ai_contexts():
         except frappe.ValidationError:  # switched off by its owner
             return False
 
-    out = {"personal": {"available": usable()}, "organizations": []}
+    try:
+        mine = resolve_ai(user, "auto")
+    except frappe.ValidationError:
+        mine = None
+    # source: whose key answers a personal-context question (own / shared organisation / platform)
+    out = {"personal": {"available": bool(mine), "source": mine["owner_type"] if mine else None},
+           "organizations": []}
     actor = rn_actor(required=False)
     for oid in sorted(_member_orgs(actor)) if actor else []:
         if usable(oid):
             out["organizations"].append({
                 "id": oid, "title": frappe.db.get_value("RN Organization", oid, "title") or oid})
     return out
+
+
+@frappe.whitelist()
+def my_ai_notices():
+    """Unread "shared AI quota spent" notices for the logged-in user (shown as a
+    banner by rn-ai-notice.js, pointing to Setting to add their own key)."""
+    user = _require_login()
+    rows = frappe.get_all("Notification Log", filters={"for_user": user, "read": 0, "subject": ["like", "Kuota AI%"]},
+                          fields=["name", "subject", "creation"], order_by="creation desc", limit_page_length=5)
+    return {"notices": [{"id": r.name, "message": r.subject} for r in rows]}
+
+
+@frappe.whitelist()
+def dismiss_ai_notice(notice):
+    user = _require_login()
+    if frappe.db.get_value("Notification Log", notice, "for_user") == user:
+        frappe.db.set_value("Notification Log", notice, "read", 1)
+    return {"ok": True}

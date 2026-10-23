@@ -331,6 +331,42 @@ async function usageOrg() {
   renderUsage(u, "Organisasi " + orgId());
 }
 
+/* ---- Pembagian kunci ke anggota + batas token (RN AI Profile) ---- */
+async function profileLoad(formId, level, ownerId) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+  const d = await frappeCall("rescue_net.api_ai.get_ai_profile", { level, owner_id: ownerId || null });
+  const p = d.exists ? d.profile : {};
+  form.daily_budget_tokens.value = p.daily_budget_tokens || 0;
+  form.monthly_budget_tokens.value = p.monthly_budget_tokens || 0;
+  if (form.share_with_members) form.share_with_members.checked = !!p.share_with_members;
+  if (form.disabled) form.disabled.checked = p.status === "disabled";
+  form.dataset.provider = p.provider || "openai";
+  form.dataset.model = p.model_name || "";
+}
+function profileBind(formId, msgId, level, ownerGetter) {
+  const form = document.getElementById(formId);
+  const msg = document.getElementById(msgId);
+  if (!form) return;
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    msg.textContent = "Menyimpan…";
+    try {
+      const args = {
+        level, owner_id: ownerGetter() || null, provider: form.dataset.provider || "openai",
+        model_name: form.dataset.model || null,
+        daily_budget_tokens: Number(form.daily_budget_tokens.value || 0),
+        monthly_budget_tokens: Number(form.monthly_budget_tokens.value || 0),
+        status: form.disabled && form.disabled.checked ? "disabled" : "active",
+      };
+      if (form.share_with_members) args.share_with_members = form.share_with_members.checked ? 1 : 0;
+      await frappeCall("rescue_net.api_ai.save_ai_profile", args, true);
+      msg.textContent = "✓ Tersimpan";
+    } catch (err) { msg.textContent = "✗ " + err.message; }
+  });
+  profileLoad(formId, level, ownerGetter()).catch(() => {});
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const form = getForm();
   form.addEventListener("submit", saveKey);
@@ -338,8 +374,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   form.provider.addEventListener("change", () => checkKeyStatus().catch(err => statusMsg(err.message)));
   document.getElementById("orgKeyForm").provider.addEventListener("change", () => orgCheck().catch(() => {}));
 
+  profileBind("orgProfileForm", "orgProfileMsg", "organization", orgId);
   // Platform key: the section appears only when the System Manager check passes.
   platformCheck().then(() => {
+    profileBind("platformProfileForm", "platformProfileMsg", "platform", () => null);
     const pf = document.getElementById("platformKeyForm");
     const pmsg = document.getElementById("platformKeyMsg");
     pf.addEventListener("submit", e => platformSave(e).catch(err => { pmsg.textContent = "✗ " + err.message; }));

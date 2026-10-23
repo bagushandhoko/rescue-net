@@ -105,7 +105,15 @@ Alur satu permintaan:
 Resolusi key:
 - Konteks organisasi: key organisasi. Jika tidak ada atau habis, AI
   nonaktif untuk konteks itu. TIDAK pindah ke key platform.
-- Konteks personal: key personal. Jika tidak ada atau habis, nonaktif.
+- Konteks personal: key personal. Jika tidak ada: key organisasi milik
+  organisasi user yang admin-nya menyalakan "bagikan ke anggota"
+  (`RN AI Profile.share_with_members`), lalu key platform (super admin,
+  berlaku untuk semua bencana). **Perubahan keputusan owner 2026-10-23**
+  (sebelumnya: nonaktif, tanpa fallback). Saat kuota bersama (organisasi/
+  platform) habis, AI ditolak dengan pesan dan setiap user terkait menerima
+  notifikasi (maks 1/hari) untuk memasang key pribadi sendiri; banner
+  `rn-ai-notice.js` menampilkannya. Konteks organisasi eksplisit tetap
+  hanya key organisasi.
 - Fungsi dasar untuk data tingkat platform (mis. laporan masyarakat
   yang belum ditangani organisasi mana pun): key platform, sebagai
   biaya operasional platform.
@@ -203,7 +211,8 @@ Sudah sesuai:
 - Key disimpan di field Password (`RN AI User Setting.api_key`); response hanya
   memberi 4 digit terakhir (`_safe_setting`). Key platform hanya dipakai untuk
   intake laporan masyarakat, tidak untuk chat (`resolve_platform_key`).
-- Tidak ada fallback ke key platform untuk chat user/organisasi.
+- Fallback key platform untuk chat konteks personal ditambahkan 2026-10-23
+  (lihat bagian 5); konteks organisasi eksplisit tetap tanpa fallback.
 - Lapisan provider sudah ada untuk OpenAI, Anthropic, dan Gemini
   (`services/llm.py`, HTTP langsung).
 - Saran yang mengubah data sudah melalui suggest/accept di jalur yang ada:

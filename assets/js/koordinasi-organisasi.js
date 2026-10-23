@@ -196,6 +196,8 @@
     // ---- admin: pending requests + roster for orgs the caller owns ----
     if (adminData && adminData.is_org_admin) {
       admin.hidden = false;
+      var owns = adminData.can_manage_staff || [];
+      var isOwnerOf = function (org) { return owns.indexOf(org) >= 0; };
       var all = adminData.memberships || [];
       var pending = all.filter(function (m) { return m.status === "pending"; });
       var roster = all.filter(function (m) { return m.status === "approved"; });
@@ -206,7 +208,7 @@
           "<h4>" + esc(m.user_name) + "</h4>" +
           '<div class="ko-posko-meta">Kontak: ' + esc(m.user_email || "-") + (m.user_phone ? " · " + esc(m.user_phone) : "") +
           " · minta " + fmtDate(m.requested_at) + " · " + esc(m.organization_title) + "</div>" +
-          '<label class="rn-row" style="font-size:12px"><input type="checkbox" class="koVerifyChk"> Identitas terverifikasi pusat</label>' +
+          (isOwnerOf(m.organization) ? '<label class="rn-row" style="font-size:12px"><input type="checkbox" class="koVerifyChk"> Identitas terverifikasi pusat</label>' : "") +
           '<div class="ko-card-actions">' +
           '<button type="button" class="btn primary mini" data-act="approve">Setujui</button>' +
           '<button type="button" class="btn ghost mini" data-act="reject">Tolak</button>' +
@@ -218,14 +220,22 @@
           ? '<span class="ko-tag full">Terverifikasi pusat</span>'
           : '<span class="ko-tag view">Belum diverifikasi</span>';
         return '<article class="ko-posko-card" data-mid="' + esc(m.name) + '">' +
-          '<div class="rn-row">' + vtag + (m.membership_role === "owner" ? '<span class="ko-tag edit">Owner</span>' : "") + "</div>" +
+          '<div class="rn-row">' + vtag + (m.membership_role === "owner" ? '<span class="ko-tag edit">Owner</span>' : "") +
+          (m.membership_role === "staff" ? '<span class="ko-tag edit">Staf</span>' : "") + "</div>" +
           "<h4>" + esc(m.user_name) + "</h4>" +
           '<div class="ko-posko-meta">' + esc(m.user_email || m.user_phone || "-") + " · " + esc(m.organization_title) + "</div>" +
+          (m.membership_role === "staff" ? '<div class="ko-posko-meta"><b>Wilayah/bagian:</b> ' + esc(m.staff_area || "-") +
+            (m.staff_note ? " · " + esc(m.staff_note) : "") + "</div>" : "") +
           (m.membership_role === "owner" ? "" :
             '<div class="ko-card-actions">' +
-            '<button type="button" class="btn ghost mini" data-act="toggle-verify">' +
-            (m.member_verified ? "Cabut verifikasi" : "Verifikasi identitas") + "</button>" +
-            '<button type="button" class="btn ghost mini" data-act="revoke">Keluarkan</button>' +
+            (isOwnerOf(m.organization) ?
+              '<button type="button" class="btn ghost mini" data-act="toggle-verify">' +
+              (m.member_verified ? "Cabut verifikasi" : "Verifikasi identitas") + "</button>" +
+              (m.membership_role === "deputy" ? "" :
+                '<button type="button" class="btn ghost mini" data-act="staff">' +
+                (m.membership_role === "staff" ? "Cabut staf" : "Jadikan staf") + "</button>") : "") +
+            (isOwnerOf(m.organization) || m.membership_role === "member" ?
+              '<button type="button" class="btn ghost mini" data-act="revoke">Keluarkan</button>' : "") +
             '<span class="rn-muted koMsg"></span></div>') +
           "</article>";
       }).join("") + "</div>" : '<p class="ko-empty">Belum ada anggota disetujui.</p>';
@@ -255,7 +265,17 @@
         }
         if (msg) msg.textContent = " memproses…";
         try {
-          if (act === "toggle-verify") {
+          if (act === "staff") {
+            var makeStaff = /Jadikan staf/.test(btn.textContent), area = "", note = "";
+            if (makeStaff) {
+              area = window.prompt("Wilayah / bagian yang ditangani staf ini (mis. BPBD Provinsi Kalbar, Kodim 1204/Sanggau, Posko Wilayah Utara):", "");
+              if (area === null) { if (msg) msg.textContent = ""; return; }
+              if (!area.trim()) { if (msg) msg.textContent = " wilayah/bagian wajib diisi"; return; }
+              note = window.prompt("Tugas staf (opsional, mis. menyetujui anggota baru):", "") || "";
+            }
+            await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_org_staff",
+              { membership: mid, active: makeStaff ? 1 : 0, area: area, note: note }, { method: "POST" });
+          } else if (act === "toggle-verify") {
             var on = /Verifikasi identitas/.test(btn.textContent);
             await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_member_verified",
               { membership: mid, verified: on ? 1 : 0 }, { method: "POST" });

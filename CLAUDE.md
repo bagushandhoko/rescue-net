@@ -25,7 +25,8 @@ Detail status, item terbuka, dan gotcha ada di `HANDOVER.md`.
 
 ## Status saat ini
 
-Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-21.)
+Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-23.)
+- **AI bersama + staf organisasi SELESAI, tes lulus, BELUM deploy (2026-10-23, butuh `bench migrate`):** key chat personal = pribadi → organisasi (admin nyalakan `share_with_members` di RN AI Profile) → platform (super admin, semua bencana); kuota bersama habis → notifikasi + banner `rn-ai-notice.js` agar user pasang key sendiri (ADR-0002 §5 diubah). Staf organisasi: `membership_role="staff"` + `staff_area`/`staff_note` (field baru RN Organization Membership), hanya boleh setujui/tolak permohonan anggota; owner menunjuk lewat `set_org_staff` (UI di Koordinasi Organisasi → Keanggotaan). Tes: `test_ai_shared_fallback`, `test_org_staff`.
 - **Organisasi Terbuka/Tertutup satu-klik SELESAI + TER-DEPLOY (2026-10-21):** tombol Terbuka/Tertutup di konsol admin organisasi (`koordinasi-organisasi`), backend `api_privacy.set_org_visibility` + `set_posko_public_choice`; org tertutup tetap boleh menjaga posko tertentu publik (pilihan posko dipisah dari `privacy_mode`). Commit `a36f1fd`+`fe84f40`+test `f9b5c46`. 43 test terkait hijau di test-stack VM; prod terverifikasi (fungsi termuat, guest→403, tanpa import error). Belum di-push ke GitHub.
 - **LINGKUNGAN BARU (2026-10-11):** produksi rescue-net.online = VM Aspire `sac-vm` (192.168.100.51, `/srv/rescue-net`), BUKAN Synology. Repo kerja = clone di LXC 102 `/srv/rescue-net-src`; deploy = `git push` + `./scripts/deploy-vm.sh` (rsync tanpa --delete, restart backend bila perlu). `rn-deploy-app.sh`/`rn-deploy-from-git.sh` usang. Deploy key GitHub `aspire` (tulis). Detail: HANDOVER.md "2026-10-11". Posko Detail: KPI + baris daftar kini berlink (1cfef25, ter-deploy; link tabel Barang Masuk/Keluar belum terverifikasi).
 

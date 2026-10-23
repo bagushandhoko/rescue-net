@@ -247,6 +247,19 @@
             <button class="btn" type="button" id="orgDeleteBtn">Hapus Kunci Org</button>
           </div>
           <p class="subtitle" id="orgKeyMsg"></p>
+          <form class="rn-form" id="orgProfileForm" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+            <h4 style="margin:0 0 6px">Bagikan ke anggota &amp; batas token</h4>
+            <label style="display:flex;gap:10px;align-items:flex-start;flex-direction:row">
+              <input type="checkbox" name="share_with_members" style="width:18px;min-width:18px;margin-top:3px">
+              <span>Anggota yang sudah disetujui boleh memakai kunci organisasi ini bila belum punya kunci pribadi.</span>
+            </label>
+            <div class="form-grid">
+              <label>Batas token harian<input name="daily_budget_tokens" type="number" min="0" value="0"></label>
+              <label>Batas token bulanan<input name="monthly_budget_tokens" type="number" min="0" value="0"></label>
+            </div>
+            <p class="subtitle">0 = tanpa batas. Saat batas habis, admin dan anggota mendapat notifikasi untuk memasang kunci sendiri.</p>
+            <div class="form-actions"><button class="btn primary" type="submit">Simpan Pembagian &amp; Batas</button><span class="form-message" id="orgProfileMsg"></span></div>
+          </form>
         </div>
         <aside class="panel summary">
           <h3>Simpan Kunci AI Organisasi</h3>
@@ -270,6 +283,18 @@
             <button class="btn" type="button" id="platformDeleteBtn">Hapus Kunci</button>
           </div>
           <p class="subtitle" id="platformKeyMsg"></p>
+          <form class="rn-form" id="platformProfileForm" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+            <h4 style="margin:0 0 6px">Kunci platform untuk semua bencana</h4>
+            <p class="subtitle">User yang belum punya kunci pribadi (dan organisasinya tidak membagikan kunci) otomatis memakai kunci platform ini di semua bencana. Saat batas token habis, setiap user yang memakainya mendapat notifikasi untuk memasang kunci sendiri.</p>
+            <div class="form-grid">
+              <label>Batas token harian<input name="daily_budget_tokens" type="number" min="0" value="0"></label>
+              <label>Batas token bulanan<input name="monthly_budget_tokens" type="number" min="0" value="0"></label>
+            </div>
+            <label style="display:flex;gap:10px;align-items:center;flex-direction:row">
+              <input type="checkbox" name="disabled" style="width:18px;min-width:18px"> <span>Matikan kunci platform (AI bersama nonaktif)</span>
+            </label>
+            <div class="form-actions"><button class="btn primary" type="submit">Simpan Batas Platform</button><span class="form-message" id="platformProfileMsg"></span></div>
+          </form>
         </div>
         <aside class="panel summary">
           <h3>Simpan Kunci AI Platform</h3>
@@ -331,7 +356,7 @@
   </main>
 </div>
 
-<script src="../assets/js/ai-settings.js?v=multiprovider-20260926"></script>
+<script src="../assets/js/ai-settings.js?v=shared-20261023-multiprovider-20260926"></script>
 <script src="../assets/js/rn-frappe-client.js?v=nonjson-20260903"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
@@ -344,7 +369,7 @@
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 
-<script src="../assets/js/rn-navigation-v2.js?v=opsgroups-20261019"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=aiNotice-20261023"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=title-20261019"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>

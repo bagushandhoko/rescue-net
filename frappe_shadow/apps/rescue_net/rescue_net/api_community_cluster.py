@@ -723,6 +723,8 @@ def decide_membership(membership, action, member_verified=None, note=None):
         doc.status = "revoked"
 
     want_verified = str(member_verified).lower() in ("1", "true", "yes") if member_verified is not None else None
+    if staff_only:
+        want_verified = None   # identity attestation stays with the owner
     if action == "approve" and want_verified:
         doc.member_verified = 1
         doc.verified_at = now_datetime()

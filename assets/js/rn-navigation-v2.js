@@ -479,3 +479,14 @@
     initialize();
   }
 })();
+
+// Banner "kuota AI bersama habis" (pasang kunci sendiri) — dimuat sekali di semua halaman aplikasi.
+(function () {
+  if (document.querySelector("script[data-rn-ai-notice]")) return;
+  var s = document.createElement("script");
+  s.src = (document.currentScript && document.currentScript.src
+    ? document.currentScript.src.replace(/rn-navigation-v2\.js.*$/, "")
+    : "../assets/js/") + "rn-ai-notice.js?v=notice-20261023";
+  s.defer = true; s.setAttribute("data-rn-ai-notice", "1");
+  document.head.appendChild(s);
+})();

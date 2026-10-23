@@ -67,7 +67,7 @@ def check_allowed(owner_type, owner_id, user_id=None):
         if limit and used >= limit:
             if owner_type in ("organization", "platform"):
                 notify_replace_key(user_id, owner_type)
-                raise AIUnavailable("budget", f"Kuota AI bersama ({label}) habis. Pasang kunci AI Anda sendiri di Setting "
+                raise AIUnavailable("budget", f"Anggaran AI bersama ({label}) habis. Pasang kunci AI Anda sendiri di Setting "
                                               "agar AI tetap bisa dipakai, atau tunggu periode berikutnya.")
             raise AIUnavailable("budget", f"Anggaran AI {label} habis. Perbarui batas atau tunggu periode berikutnya.")
     since = add_days(now_datetime(), -1 / 24)

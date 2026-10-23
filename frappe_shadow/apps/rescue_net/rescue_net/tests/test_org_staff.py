@@ -20,7 +20,7 @@ class TestOrgStaff(RNTestCase):
 
     def mid(self, who):
         return frappe.db.get_value("RN Organization Membership",
-                                   {"user_account": who.account.name, "organization": self.org.name}, "name")
+                                   {"user_account": who.account, "organization": self.org.name}, "name")
 
     def appoint(self):
         with as_user(self.owner.user):
@@ -61,7 +61,7 @@ class TestOrgStaff(RNTestCase):
         with as_user(self.member.user):
             self.assertFalse(cc.org_membership_admin()["is_org_admin"])
             pend = frappe.db.get_value("RN Organization Membership",
-                                       {"user_account": self.applicant.account.name}, "name")
+                                       {"user_account": self.applicant.account}, "name")
             with self.assertRaises(frappe.PermissionError):
                 cc.decide_membership(pend, "approve")
 

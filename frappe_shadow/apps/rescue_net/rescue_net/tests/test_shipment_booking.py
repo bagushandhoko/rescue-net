@@ -24,7 +24,7 @@ class _ShipmentWorld(RNTestCase):
         self.arm_b = make_transport_space(self.tp_b, disaster_event=self.w.event.name,
                                           departure_at="2026-11-05 08:00:00")
         self.op = make_actor(posko=self.src)
-        _insert("RN Stock Observation", posko=self.src.name, item_name="Beras", quantity=1000, unit="karung",
+        _insert("RN Stock Observation", title="Stok Beras", posko=self.src.name, item_name="Beras", quantity=1000, unit="karung",
                 observed_at="2026-10-01 08:00:00")
 
     def send(self, armada, **kw):

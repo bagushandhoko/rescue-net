@@ -146,7 +146,7 @@ class TestPublicAndOthersBooking(_Sim):
         with as_guest():
             sub = submit_guest_aid_offer_multi(
                 self.ev.name, "Donatur Tamu", "081355500011",
-                json.dumps([{"item_name": "Air mineral", "quantity": 20, "unit": "dus"}]),
+                json.dumps([{"item_text": "Air mineral", "quantity": 20, "unit": "dus"}]),
                 handling_mode="need_pickup", pickup_location="Jl. Mawar 3", target_posko=self.d_near.name)
         offer = (sub.get("aid_offers") or sub.get("offers") or sub.get("aid_ids") or [None])[0]
         offer = offer["name"] if isinstance(offer, dict) else offer

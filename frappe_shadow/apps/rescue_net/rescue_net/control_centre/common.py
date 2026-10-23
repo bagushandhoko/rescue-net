@@ -519,3 +519,43 @@ def _operate_href(posko_row, event):
         "kitchen": "dapur-umum.html",
     }.get(ptype, "posko-detail.html")
     return page + "?id=" + pid + "&event=" + ev
+
+
+_FLOW_VOID = {"cancelled", "rejected", "failed"}
+
+
+def stock_available(posko, item):
+    """What a posko can still send of one item (owner 2026-10-20: never send
+    beyond stock): the latest stock observation minus every outgoing flow
+    (same item + unit, not cancelled) created after that observation — a
+    dispatch does not write a new observation, so it is subtracted here.
+    None when the posko has no stock observation for the item."""
+    from frappe.utils import get_datetime
+
+    key = _norm_item(item)
+    if not posko or not key:
+        return None
+    obs = None
+    for o in frappe.get_all("RN Stock Observation", filters={"posko": posko},
+                            fields=["item_name", "canonical_item", "quantity", "unit", "observed_at", "creation"],
+                            order_by="observed_at desc", limit_page_length=500):
+        if _norm_item(o.get("canonical_item") or o.get("item_name")) == key or _norm_item(o.item_name) == key:
+            obs = o
+            break
+    if not obs:
+        return None
+    since = get_datetime(obs.observed_at or obs.creation)
+    unit = _norm_item(obs.unit)
+    sent = 0.0
+    for f in frappe.get_all("RN Distribution Flow", filters={"source_posko": posko},
+                            fields=["item_name", "quantity", "unit", "flow_status", "creation"],
+                            limit_page_length=1000):
+        if _norm_item(f.item_name) != key or _norm_item(f.unit) != unit:
+            continue
+        if str(f.flow_status or "").lower() in _FLOW_VOID:
+            continue
+        if f.creation and get_datetime(f.creation) > since:
+            sent += _num(f.quantity)
+    stok = _num(obs.quantity)
+    return {"item": obs.item_name, "unit": obs.unit or "", "observed": stok, "observed_at": obs.observed_at,
+            "sent_since": round(sent, 3), "available": round(max(0.0, stok - sent), 3)}

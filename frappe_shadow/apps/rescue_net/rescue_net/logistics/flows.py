@@ -62,6 +62,9 @@ def create_flow(
                 frappe.PermissionError,
             )
 
+    if source_posko and not aid_offer:
+        _assert_in_stock(source_posko, item_text, quantity, unit)
+
     transport_doc = None
     book_space = None       # another posko's armada -> booking (see _book_for_flow)
 
@@ -659,3 +662,22 @@ def _assign_flow_to_space(flow_name, space, leg="main"):
         "transport_space": space.name,
         "transport_provider": space.provider_name,
     })
+
+
+def _assert_in_stock(posko, item, quantity, unit):
+    """Owner 2026-10-20: a posko never sends more than it holds (stock
+    observation minus what already left since; see stock_available). A
+    donor's aid offer is not the posko's stock, so it is not checked."""
+    from rescue_net.control_centre.common import _norm_item, stock_available
+
+    av = stock_available(posko, item)
+    if av is None:
+        frappe.throw("Belum ada stok tercatat untuk '%s' di posko asal — catat stok dulu." % item)
+    if unit and av["unit"] and _norm_item(unit) != _norm_item(av["unit"]):
+        frappe.throw("Satuan harus sama dengan kartu stok: %s." % av["unit"])
+    qty = flt(quantity)
+    if qty <= 0:
+        frappe.throw("Isi jumlah yang dikirim.")
+    if qty > av["available"] + 1e-9:
+        frappe.throw("Stok tidak cukup: tersedia %g %s untuk dikirim (tercatat %g, sudah dikirim %g sejak pencatatan)."
+                     % (av["available"], av["unit"], av["observed"], av["sent_since"]))

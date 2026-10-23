@@ -943,9 +943,20 @@ def logistik_stock_sources(posko, item=None):
     return {"posko": name, "item": item, "sources": out}
 
 
+def _can_see_stock(posko):
+    """Stock figures in the send form only for the posko's own managers."""
+    if frappe.session.user == "Guest":
+        return False
+    from rescue_net.access_policy import can_manage_posko, is_system_manager, rn_actor
+    if is_system_manager():
+        return True
+    actor = rn_actor(required=False)
+    return bool(actor and can_manage_posko(actor, posko))
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
-def logistik_dispatch_options(disaster_event, source_posko=None, window_from=None, window_to=None):
+def logistik_dispatch_options(disaster_event, source_posko=None, window_from=None, window_to=None, item=None):
     """Choices for the "Kirim stok" form on Posko Logistik (owner 2026-10-19):
       events       = disasters the source posko serves (pick one per shipment)
       destinations = poskos that handle THIS disaster (not transport, not self)
@@ -1048,7 +1059,12 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
             "same_org": bool(src_org and src_org == frappe.db.get_value("RN Posko", t.coordination_posko, "organization")),
         })
 
+    from rescue_net.control_centre.common import stock_available
+    stock = stock_available(src, item) if (src and item) else None
+    if stock and not _can_see_stock(src):
+        stock = None
     return {"disaster_event": event, "events": events, "destinations": destinations, "armada": armada,
+            "stock": stock,
             "window_from": window_from, "window_to": window_to}
 
 

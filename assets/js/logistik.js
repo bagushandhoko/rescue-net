@@ -451,7 +451,7 @@ async function openDispatch(item, unit, stok) {
     const key = [st.event, st.from, st.to].join("|");
     if (st.opt && st.optKey === key) return st.opt;
     st.opt = await RN_FRAPPE.call("rescue_net.api_control_centre.logistik_dispatch_options", {
-      disaster_event: st.event, source_posko: poskoParam(), window_from: st.from, window_to: st.to,
+      disaster_event: st.event, source_posko: poskoParam(), window_from: st.from, window_to: st.to, item,
     });
     st.optKey = key;
     st.event = st.opt.disaster_event || st.event;
@@ -473,9 +473,19 @@ async function openDispatch(item, unit, stok) {
     const main = armada.find(a => a.id === st.main);
     const summary = `<p class="rn-dispatch-sum"><b>${safe(item)}</b> · ${val(st.qty)} ${val(st.unit)}${st.kg ? ` · ${val(st.kg)} kg` : ""} → <b>${safe(destT)}</b></p>`;
     let body = "";
+    // owner 2026-10-20: never send beyond stock — the server checks it too
+    const sk = opt.stock;
+    const avail = sk ? Number(sk.available) : Number(stok || 0);
+    const sUnit = (sk && sk.unit) || unit || "";
+    if (sUnit) st.unit = sUnit;
     if (st.step === 1) {
       body = `
-      <p class="rn-muted">Stok tersedia: <b>${fmt(stok)} ${safe(unit)}</b></p>
+      <div class="rn-dispatch-stock${avail > 0 ? "" : " is-empty"}">
+        <span>Stok tersedia untuk dikirim</span>
+        <b>${fmt(avail)} ${safe(sUnit)}</b>
+        ${sk ? `<small>Tercatat ${fmt(sk.observed)} ${safe(sUnit)}${sk.observed_at ? " (" + safe(String(sk.observed_at).slice(0, 16)) + ")" : ""}${Number(sk.sent_since) ? ` · sudah dikirim ${fmt(sk.sent_since)} ${safe(sUnit)} sejak itu` : ""}</small>` : ""}
+        ${avail > 0 ? "" : `<small>Stok habis — catat stok baru dulu sebelum mengirim.</small>`}
+      </div>
       <label>Bencana yang dilayani
         ${events.length > 1
           ? `<select name="disaster_event">${events.map(ev => `<option value="${safe(ev.id)}"${ev.id === st.event ? " selected" : ""}>${safe(ev.title)}</option>`).join("")}</select>`
@@ -486,8 +496,9 @@ async function openDispatch(item, unit, stok) {
         <label>Sampai<input type="date" name="window_to" value="${val(st.to)}" required></label>
       </div>
       <div class="rn-dispatch-window">
-        <label>Jumlah dikirim<input name="quantity" type="number" step="0.01" min="0" required value="${val(st.qty)}"></label>
-        <label>Satuan<input name="unit" value="${val(st.unit)}"></label>
+        <label>Jumlah dikirim <small class="rn-muted">maks ${fmt(avail)}</small>
+          <input name="quantity" type="number" step="0.01" min="0" max="${avail}" required value="${val(st.qty)}"></label>
+        <label>Satuan<input name="unit" value="${val(st.unit)}" readonly></label>
       </div>
       <label>Perkiraan berat (kg) <small class="rn-muted">— wajib bila memakai armada / transporter</small>
         <input name="weight_kg" type="number" step="0.1" min="0" value="${val(st.kg)}"></label>
@@ -497,7 +508,7 @@ async function openDispatch(item, unit, stok) {
           ${dests.map(d => `<option value="${safe(d.id)}"${d.id === st.dest ? " selected" : ""}>${safe(d.title)}${d.city ? " — " + safe(d.city) : ""}${d.role === "receiver" ? " · penerima" : ""}${d.jiwa ? " · " + fmt(d.jiwa) + " jiwa" : ""}</option>`).join("")}
         </select>
       </label>
-      <div class="form-actions"><button class="btn primary" type="submit">Lanjut →</button><span class="form-message" id="dispatchMsg"></span></div>`;
+      <div class="form-actions"><button class="btn primary" type="submit"${avail > 0 ? "" : " disabled"}>Lanjut →</button><span class="form-message" id="dispatchMsg"></span></div>`;
     } else if (st.step === 2) {
       body = summary + `
       <div class="rn-evc"><b>Booking space distribusi utama</b>
@@ -563,6 +574,8 @@ async function openDispatch(item, unit, stok) {
       if (st.step === 1) {
         if (st.from && st.to && st.to < st.from) { msg().textContent = "Tanggal 'Sampai' harus setelah 'Kirim dari'."; return; }
         if (!(Number(st.qty) > 0)) { msg().textContent = "Isi jumlah dikirim."; return; }
+        const sk1 = st.opt && st.opt.stock, max1 = sk1 ? Number(sk1.available) : Number(stok || 0);
+        if (Number(st.qty) > max1) { msg().textContent = `Melebihi stok: maksimal ${fmt(max1)} ${st.unit || ""}.`; return; }
         if (!st.dest) { msg().textContent = "Pilih posko tujuan."; return; }
         st.step = 2; render(); return;
       }

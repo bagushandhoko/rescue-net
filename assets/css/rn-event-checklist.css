@@ -78,3 +78,10 @@
 .rn-dispatch-steps li.is-on { background: var(--peach2); border-color: var(--peach2); color: #fff; font-weight: 700; }
 .rn-dispatch-steps li.is-done { color: var(--green); border-color: rgba(47,155,104,.35); }
 .rn-dispatch-sum { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); font-size: 13px; }
+.rn-dispatch-stock { display: grid; gap: 2px; padding: 10px 12px; margin: 0 0 12px; border-radius: 12px;
+  background: rgba(47,155,104,.08); border: 1px solid rgba(47,155,104,.3); }
+.rn-dispatch-stock span { font-size: 12.5px; color: var(--muted); }
+.rn-dispatch-stock b { font-size: 20px; color: var(--green); }
+.rn-dispatch-stock small { font-size: 12px; color: var(--muted); }
+.rn-dispatch-stock.is-empty { background: rgba(216,69,69,.07); border-color: rgba(216,69,69,.3); }
+.rn-dispatch-stock.is-empty b { color: var(--red); }

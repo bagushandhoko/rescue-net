@@ -7,7 +7,7 @@ import frappe
 from rescue_net.api_control_centre import logistik_dispatch_options
 from rescue_net.logistics.flows import create_flow
 from rescue_net.logistics.transport import confirm_transport_booking, update_transport_space
-from rescue_net.tests.factories import (RNTestCase, as_guest, as_user, make_actor, make_event,
+from rescue_net.tests.factories import (RNTestCase, _insert, as_guest, as_user, make_actor, make_event,
                                         make_posko, make_transport_space, make_world)
 
 
@@ -24,6 +24,8 @@ class _ShipmentWorld(RNTestCase):
         self.arm_b = make_transport_space(self.tp_b, disaster_event=self.w.event.name,
                                           departure_at="2026-11-05 08:00:00")
         self.op = make_actor(posko=self.src)
+        _insert("RN Stock Observation", posko=self.src.name, item_name="Beras", quantity=1000, unit="karung",
+                observed_at="2026-10-01 08:00:00")
 
     def send(self, armada, **kw):
         with as_user(self.op.user):
@@ -153,3 +155,43 @@ class TestFirstMile(_ShipmentWorld):
         with as_user(self.op.user):
             return create_flow(destination_posko=self.dst.name, item_text="Beras", quantity=10, unit="karung",
                                quantity_mode="exact", source_posko=self.src.name, weight_kg=500, **kw)
+
+
+class TestSendWithinStock(_ShipmentWorld):
+    """Owner 2026-10-20: a posko never sends beyond its stock."""
+
+    def direct(self, qty, unit="karung"):
+        with as_user(self.op.user):
+            return create_flow(destination_posko=self.dst.name, item_text="Beras", quantity=qty, unit=unit,
+                               quantity_mode="exact", source_posko=self.src.name)
+
+    def test_cannot_send_more_than_available(self):
+        with self.assertRaisesRegex(frappe.ValidationError, "Stok tidak cukup"):
+            self.direct(1001)
+        self.direct(600)
+        with self.assertRaisesRegex(frappe.ValidationError, "tersedia 400"):
+            self.direct(500)                       # 1000 - 600 already sent
+        self.direct(400)
+
+    def test_cancelled_flow_returns_to_available(self):
+        from rescue_net.logistics.flows import update_flow_status
+        flow = self.direct(1000)["flow"]
+        with as_user(self.op.user):
+            update_flow_status(flow, "cancelled")
+        self.direct(1000)
+
+    def test_unit_and_unknown_item(self):
+        with self.assertRaisesRegex(frappe.ValidationError, "Satuan"):
+            self.direct(1, unit="kg")
+        with as_user(self.op.user), self.assertRaisesRegex(frappe.ValidationError, "Belum ada stok"):
+            create_flow(destination_posko=self.dst.name, item_text="Tenda", quantity=1, unit="unit",
+                        quantity_mode="exact", source_posko=self.src.name)
+
+    def test_send_form_shows_available_to_the_posko_only(self):
+        self.direct(250)
+        with as_user(self.op.user):
+            st = logistik_dispatch_options(self.w.event.name, source_posko=self.src.name, item="Beras")["stock"]
+        self.assertEqual((st["observed"], st["sent_since"], st["available"]), (1000, 250, 750))
+        with as_guest():
+            self.assertIsNone(logistik_dispatch_options(self.w.event.name, source_posko=self.src.name,
+                                                        item="Beras")["stock"])

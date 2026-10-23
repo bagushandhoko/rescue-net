@@ -158,6 +158,11 @@
         label: "Setting",
         href: "ai-settings.html",
         icon: "ai-settings"
+      },
+      {
+        label: "Persetujuan Anggota",
+        href: "koordinasi-organisasi.html#koMemberSection",
+        icon: "relawan"
       }
     ]
   };

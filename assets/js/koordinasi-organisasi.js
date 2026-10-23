@@ -236,6 +236,7 @@
       $("#koMemberCount").textContent = ms.length + " keanggotaan";
     }
     sec.hidden = false;
+    if (location.hash === "#koMemberSection") sec.scrollIntoView({ block: "start" });
   }
 
   function wireMemberActions() {

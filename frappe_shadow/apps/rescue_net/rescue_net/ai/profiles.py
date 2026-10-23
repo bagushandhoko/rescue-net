@@ -38,13 +38,15 @@ def _safe_profile(doc):
         "has_key": bool(doc.key_setting), "allowed_tools": json.loads(doc.allowed_tools or "[]"),
         "data_scope": doc.data_scope, "daily_budget_tokens": doc.daily_budget_tokens,
         "monthly_budget_tokens": doc.monthly_budget_tokens, "status": doc.status,
+        "share_with_members": bool(doc.get("share_with_members")),
         "updated_at": doc.modified,
     }
 
 
 @frappe.whitelist()
 def save_ai_profile(level, owner_id=None, provider="openai", model_name=None, base_url=None,
-                    allowed_tools=None, daily_budget_tokens=0, monthly_budget_tokens=0, status="active"):
+                    allowed_tools=None, daily_budget_tokens=0, monthly_budget_tokens=0, status="active",
+                    share_with_members=None):
     _require_login()
     owner_id = _authorise(level, owner_id, local=(provider or "").strip().lower() == "local")
     name = profile_name(level, owner_id)
@@ -57,6 +59,8 @@ def save_ai_profile(level, owner_id=None, provider="openai", model_name=None, ba
     doc.daily_budget_tokens = int(daily_budget_tokens or 0)
     doc.monthly_budget_tokens = int(monthly_budget_tokens or 0)
     doc.status = status if status in ("active", "disabled") else "active"
+    if share_with_members is not None and level == "organization":
+        doc.share_with_members = 1 if str(share_with_members).lower() in ("1", "true", "yes") else 0
     doc.updated_by_user_id = frappe.session.user
     doc.save(ignore_permissions=True)
     return {"status": "saved", "profile": _safe_profile(doc)}

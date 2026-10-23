@@ -578,6 +578,30 @@ def _owns_org(actor, organization):
     return bool(actor and organization and can_manage_organization(actor, organization))
 
 
+STAFF_ROLE = "staff"
+
+
+def _is_staff(actor, organization):
+    """Approved staff of the organisation (appointed by its owner; may decide join requests only)."""
+    return bool(actor and actor.get("name") and organization and frappe.db.exists(
+        "RN Organization Membership",
+        {"user_account": actor.name, "organization": organization, "membership_role": STAFF_ROLE,
+         "status": "approved"}))
+
+
+def _can_decide_members(actor, organization):
+    return _owns_org(actor, organization) or _is_staff(actor, organization)
+
+
+def _staff_org_names(actor):
+    if not actor or not actor.get("name"):
+        return []
+    rows = frappe.get_all("RN Organization Membership",
+                          filters={"user_account": actor.name, "membership_role": STAFF_ROLE, "status": "approved"},
+                          fields=["organization"], limit_page_length=200)
+    return sorted({r.organization for r in rows if r.organization})
+
+
 def _owned_org_names(actor):
     if not actor or not actor.get("name"):
         return []
@@ -597,11 +621,11 @@ def org_membership_admin(organization=None):
     from rescue_net.access_policy import is_system_manager
 
     if organization:
-        if not (is_system_manager() or _owns_org(actor, organization)):
-            frappe.throw("Anda bukan pengelola organisasi ini", frappe.PermissionError)
+        if not (is_system_manager() or _can_decide_members(actor, organization)):
+            frappe.throw("Anda bukan pengelola atau staf organisasi ini", frappe.PermissionError)
         orgs = [organization]
     else:
-        orgs = _owned_org_names(actor)
+        orgs = sorted(set(_owned_org_names(actor)) | set(_staff_org_names(actor)))
 
     if not orgs:
         return {"is_org_admin": False, "organizations": [], "memberships": []}
@@ -611,7 +635,7 @@ def org_membership_admin(organization=None):
         filters={"organization": ["in", orgs]},
         fields=["name", "user_account", "organization", "membership_role",
                 "status", "member_verified", "requested_at", "approved_at",
-                "approved_by", "verified_at", "decision_note"],
+                "approved_by", "verified_at", "decision_note", "staff_area", "staff_note"],
         order_by="requested_at desc, creation desc",
         limit_page_length=1000,
     )
@@ -649,10 +673,14 @@ def org_membership_admin(organization=None):
             "approved_at": r.approved_at,
             "verified_at": r.verified_at,
             "decision_note": r.decision_note,
+            "staff_area": r.staff_area,
+            "staff_note": r.staff_note,
         })
 
+    owner_orgs = set(_owned_org_names(actor)) if not is_system_manager() else set(orgs)
     return {
         "is_org_admin": True,
+        "can_manage_staff": [o for o in orgs if o in owner_orgs or is_system_manager()],
         "organizations": [{"name": n, "title": org_titles.get(n, n)} for n in orgs],
         "memberships": out,
         "pending_count": sum(1 for m in out if m["status"] == "pending"),
@@ -669,8 +697,11 @@ def decide_membership(membership, action, member_verified=None, note=None):
 
     doc = frappe.get_doc("RN Organization Membership", membership)
 
-    if not (is_system_manager() or _owns_org(actor, doc.organization)):
-        frappe.throw("Anda bukan pengelola organisasi ini", frappe.PermissionError)
+    if not (is_system_manager() or _can_decide_members(actor, doc.organization)):
+        frappe.throw("Anda bukan pengelola atau staf organisasi ini", frappe.PermissionError)
+    staff_only = not (is_system_manager() or _owns_org(actor, doc.organization))
+    if staff_only and doc.membership_role in ("owner", STAFF_ROLE, "deputy"):
+        frappe.throw("Staf tidak bisa memutuskan permohonan pengelola atau sesama staf.", frappe.PermissionError)
 
     action = str(action or "").strip().lower()
     if action not in ("approve", "reject", "revoke"):
@@ -709,6 +740,31 @@ def decide_membership(membership, action, member_verified=None, note=None):
         "status": doc.status,
         "member_verified": bool(doc.member_verified),
     }
+
+
+@frappe.whitelist()
+def set_org_staff(membership, active=1, area=None, note=None):
+    """Organisation owner appoints / dismisses a staff member. Staff may approve or
+    reject join requests (not appoint staff, not touch settings or AI keys). `area`
+    and `note` say which wilayah / bagian they handle (e.g. "BPBD Provinsi Kalbar -
+    verifikasi relawan")."""
+    actor = _actor()
+    from rescue_net.access_policy import is_system_manager
+
+    doc = frappe.get_doc("RN Organization Membership", membership)
+    if not (is_system_manager() or _owns_org(actor, doc.organization)):
+        frappe.throw("Hanya pengelola organisasi yang bisa menunjuk staf", frappe.PermissionError)
+    if doc.status != "approved":
+        frappe.throw("Hanya anggota yang sudah disetujui yang bisa dijadikan staf")
+    if doc.membership_role in ("owner", "deputy"):
+        frappe.throw("Pengelola/wakil tidak bisa dijadikan atau dicabut sebagai staf")
+    on = str(active).lower() in ("1", "true", "yes")
+    doc.membership_role = STAFF_ROLE if on else "member"
+    doc.staff_area = (str(area).strip()[:140] if area else None) if on else None
+    doc.staff_note = (str(note).strip()[:500] if note else None) if on else None
+    doc.save(ignore_permissions=True)
+    return {"membership": doc.name, "membership_role": doc.membership_role,
+            "staff_area": doc.staff_area, "staff_note": doc.staff_note}
 
 
 @frappe.whitelist()

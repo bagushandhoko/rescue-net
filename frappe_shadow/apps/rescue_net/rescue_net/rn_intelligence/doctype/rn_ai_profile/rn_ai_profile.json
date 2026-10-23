@@ -92,6 +92,13 @@
       "label": "Updated By User",
       "fieldtype": "Data",
       "read_only": 1
+    },
+    {
+      "fieldname": "share_with_members",
+      "fieldtype": "Check",
+      "label": "Bagikan ke anggota",
+      "default": "0",
+      "description": "Level organisasi: anggota yang disetujui memakai key organisasi bila belum punya key pribadi."
     }
   ],
   "permissions": [

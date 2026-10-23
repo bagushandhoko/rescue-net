@@ -467,10 +467,39 @@ def resolve_ai(user_id, provider, organization_id=None):
     names = [name_of(owner_id, prof.provider)] if prof else [name_of(owner_id, p) for p in providers]
     d = _pick_latest(names)
     if not d:
+        if owner_type == "user":
+            return _shared_fallback(user_id, providers)
         return None
     p = llm.normalize_provider(d.provider)
     return {"api_key": d.get_password("api_key"), "model": _model_for(p, d.model_name), "key_source": owner_type,
             "owner_type": owner_type, "owner_id": owner_id, "provider": p, "base_url": None}
+
+
+def _shared_fallback(user_id, providers):
+    """Owner decision 2026-10-23 (supersedes ADR-0002 "no platform fallback for chat"):
+    a user without a personal key falls back to (1) the key of an organisation
+    they belong to whose admin shares it with members, then (2) the platform key
+    a System Manager set, valid for every disaster. When that shared budget runs
+    out, budget.check_allowed refuses and the user is told to add their own key."""
+    actor = rn_actor(required=False)
+    for org in (sorted(set(_member_orgs(actor))) if actor else []):
+        prof = frappe.db.get_value("RN AI Profile", profile_name("organization", org),
+                                   ["share_with_members", "status"], as_dict=True)
+        if not (prof and prof.share_with_members and prof.status == "active"):
+            continue
+        d = _pick_latest([_org_setting_name(org, p) for p in providers])
+        if d:
+            p = llm.normalize_provider(d.provider)
+            return {"api_key": d.get_password("api_key"), "model": _model_for(p, d.model_name),
+                    "key_source": "organization", "owner_type": "organization", "owner_id": org,
+                    "provider": p, "base_url": None}
+    if frappe.db.get_value("RN AI Profile", profile_name("platform", PLATFORM_OWNER), "status") == "disabled":
+        return None
+    key, model, p = resolve_platform_key()
+    if not key:
+        return None
+    return {"api_key": key, "model": model, "key_source": "platform", "owner_type": "platform",
+            "owner_id": PLATFORM_OWNER, "provider": p, "base_url": None}
 
 
 def _resolve_ai_key(user_id, provider, organization_id=None):

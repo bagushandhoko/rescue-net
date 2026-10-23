@@ -82,6 +82,16 @@
       "label": "Legacy Payload",
       "fieldtype": "Code",
       "options": "JSON"
+    },
+    {
+      "fieldname": "staff_area",
+      "fieldtype": "Data",
+      "label": "Wilayah/bagian staf"
+    },
+    {
+      "fieldname": "staff_note",
+      "fieldtype": "Small Text",
+      "label": "Keterangan tugas staf"
     }
   ],
   "permissions": [

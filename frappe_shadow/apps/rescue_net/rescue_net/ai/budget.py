@@ -65,6 +65,10 @@ def check_allowed(owner_type, owner_id, user_id=None):
     for limit, used, label in ((st["daily_limit"], st["daily_used"], "harian"),
                                (st["monthly_limit"], st["monthly_used"], "bulanan")):
         if limit and used >= limit:
+            if owner_type in ("organization", "platform"):
+                notify_replace_key(user_id, owner_type)
+                raise AIUnavailable("budget", f"Kuota AI bersama ({label}) habis. Pasang kunci AI Anda sendiri di Setting "
+                                              "agar AI tetap bisa dipakai, atau tunggu periode berikutnya.")
             raise AIUnavailable("budget", f"Anggaran AI {label} habis. Perbarui batas atau tunggu periode berikutnya.")
     since = add_days(now_datetime(), -1 / 24)
     recent = frappe.db.count("RN AI Usage Log", {"owner_type": owner_type, "owner_id": owner_id,
@@ -99,12 +103,53 @@ def _warn_if_needed(owner_type, owner_id, daily_row):
             continue
         if used >= limit and not flags.warned_100:
             _notify(owner_type, owner_id, f"Anggaran AI {label} habis ({used}/{limit} token).")
+            if owner_type in ("organization", "platform"):
+                for u in _shared_key_users(owner_type, owner_id):
+                    notify_replace_key(u, owner_type)
             frappe.db.set_value("RN AI Usage Daily", daily_row, "warned_100", 1)
             flags.warned_100 = 1
         elif used >= 0.8 * limit and not flags.warned_80:
             _notify(owner_type, owner_id, f"Anggaran AI {label} mencapai 80% ({used}/{limit} token).")
             frappe.db.set_value("RN AI Usage Daily", daily_row, "warned_80", 1)
             flags.warned_80 = 1
+
+
+REPLACE_KEY_SUBJECT = {
+    "platform": "Kuota AI platform habis. Pasang kunci AI Anda sendiri di Setting \u2192 Kunci AI agar AI tetap bisa dipakai.",
+    "organization": "Kuota AI organisasi habis. Pasang kunci AI Anda sendiri di Setting \u2192 Kunci AI agar AI tetap bisa dipakai.",
+}
+
+
+def notify_replace_key(user_id, owner_type):
+    """Tell one user their shared (organisation / platform) AI quota is spent and
+    that they can add their own key. At most one notice per user per day."""
+    try:
+        if not user_id or user_id == "Guest" or not frappe.db.exists("User", user_id):
+            return
+        subject = REPLACE_KEY_SUBJECT[owner_type]
+        if frappe.db.exists("Notification Log", {"for_user": user_id, "subject": subject,
+                                                 "creation": [">=", nowdate()]}):
+            return
+        frappe.get_doc({"doctype": "Notification Log", "for_user": user_id, "type": "Alert",
+                        "subject": subject}).insert(ignore_permissions=True)
+    except Exception:
+        frappe.log_error(title="rn_ai replace-key notify failed")
+
+
+def _shared_key_users(owner_type, owner_id):
+    """Users who ran AI on this shared key in the last week (platform) or the
+    approved members who may use it (organisation)."""
+    if owner_type == "platform":
+        return set(frappe.get_all("RN AI Usage Log", filters={"key_source": "platform",
+                                                              "creation": [">=", add_days(now_datetime(), -7)]},
+                                  pluck="user_id", limit_page_length=500))
+    users = set()
+    for a in frappe.get_all("RN Organization Membership", filters={"organization": owner_id, "status": "approved"},
+                            pluck="user_account", limit_page_length=500):
+        u = frappe.db.get_value("RN User Account", a, "frappe_user")
+        if u:
+            users.add(u)
+    return users
 
 
 def _notify(owner_type, owner_id, subject):

@@ -195,3 +195,48 @@ class TestSendWithinStock(_ShipmentWorld):
         with as_guest():
             self.assertIsNone(logistik_dispatch_options(self.w.event.name, source_posko=self.src.name,
                                                         item="Beras")["stock"])
+
+
+class TestCargoTerms(_ShipmentWorld):
+    """Owner 2026-10-23: an armada owner records syarat barang (packing, per-koli cap,
+    prohibited items, documents, cut-off); senders see them in the send form."""
+
+    def test_create_with_terms_and_they_reach_the_send_form(self):
+        from rescue_net.logistics.transport import create_transport_space
+        owner = make_actor(posko=self.tp_a)
+        with as_user(owner.user):
+            out = create_transport_space(
+                self.tp_a.name, "Garuda Cargo GA-1204", transport_type="udara", disaster_event=self.w.event.name,
+                capacity_weight_kg=5000, departure_at="2026-11-02 08:00:00",
+                packing_required="wajib", packing_spec="Dus tertutup, label isi + tujuan", max_piece_weight_kg=25,
+                prohibited_items="BBM, baterai lepas", documents_required="Surat jalan, packing list",
+                cargo_requirements="Maks 1 palet per pengirim", cargo_cutoff_at="2026-11-02 04:00:00")
+        d = frappe.get_doc("RN Transport Space", out["transport"])
+        self.assertEqual((d.packing_required, d.max_piece_weight_kg), ("wajib", 25))
+        with as_user(self.op.user):
+            opt = logistik_dispatch_options(self.w.event.name, source_posko=self.src.name, item="Beras",
+                                            window_from="2026-11-01", window_to="2026-11-03")
+        row = next(a for a in opt["armada"] if a["id"] == d.name)
+        t = row["syarat"]
+        self.assertTrue(t["ada"])
+        self.assertEqual((t["packing_label"], t["maks_koli_kg"], t["terlarang"], t["batas_serah"]),
+                         ("Packing wajib", 25.0, "BBM, baterai lepas", "2026-11-02 04:00"))
+        plain = next(a for a in opt["armada"] if a["id"] == self.arm_a.name)
+        self.assertFalse(plain["syarat"]["ada"])
+
+    def test_update_changes_only_given_terms_and_validates(self):
+        owner = make_actor(posko=self.tp_a)
+        with as_user(owner.user):
+            update_transport_space(self.arm_a.name, packing_required="dianjurkan", prohibited_items="Aerosol")
+            update_transport_space(self.arm_a.name, max_piece_weight_kg=20)
+        d = frappe.get_doc("RN Transport Space", self.arm_a.name)
+        self.assertEqual((d.packing_required, d.prohibited_items, d.max_piece_weight_kg), ("dianjurkan", "Aerosol", 20))
+        with as_user(owner.user), self.assertRaises(frappe.ValidationError):
+            update_transport_space(self.arm_a.name, packing_required="mungkin")
+        with as_user(owner.user), self.assertRaisesRegex(frappe.ValidationError, "sebelum waktu berangkat"):
+            update_transport_space(self.arm_a.name, cargo_cutoff_at="2026-11-09 00:00:00")
+
+    def test_only_the_posko_team_may_set_terms(self):
+        stranger = make_actor()
+        with as_user(stranger.user), self.assertRaises(frappe.PermissionError):
+            update_transport_space(self.arm_a.name, packing_required="wajib")

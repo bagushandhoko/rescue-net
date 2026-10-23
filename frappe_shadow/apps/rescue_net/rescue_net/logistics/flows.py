@@ -652,6 +652,7 @@ def _book_for_flow(actor, flow, transport_space, window_from=None, window_to=Non
         # posko-to-posko: both sides are logged-in operators, so the armada's
         # posko confirms in its Booking Masuk list without a PIN
         b.status = "requested"
+    print("DBG2", b.qty_weight_kg, b.qty_volume_m3, b.transport_space, b.status, leg)
     b.insert(ignore_permissions=True)
     if auto:
         _assign_flow_to_space(flow.name, space, leg)

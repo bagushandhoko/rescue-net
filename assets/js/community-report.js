@@ -643,6 +643,64 @@ async function loadCommunityReports() {
   }
 }
 
+// Pilih titik di peta (Leaflet/OSM): ketuk peta atau geser pin → isi lat/lng.
+function setupMapPicker(form, onChange) {
+  const wrap = document.getElementById("reportMapWrap");
+  const host = document.getElementById("reportMap");
+  if (!wrap || !host) return;
+  let map = null;
+  let marker = null;
+
+  function current() {
+    const lat = numberOrNull(form.lat.value);
+    const lng = numberOrNull(form.lng.value);
+    return lat !== null && lng !== null ? [lat, lng] : null;
+  }
+  function put(lat, lng) {
+    form.lat.value = Number(lat).toFixed(6);
+    form.lng.value = Number(lng).toFixed(6);
+    form.area_level.value = "point";
+    form.querySelector("input[name='location_input_method'][value='manual_map_pin']").checked = true;
+    if (marker) marker.setLatLng([lat, lng]); else marker = L.marker([lat, lng], { draggable: true }).addTo(map).on("dragend", () => {
+      const p = marker.getLatLng();
+      put(p.lat, p.lng);
+    });
+    onChange();
+  }
+  function init() {
+    if (map) return;
+    if (typeof L === "undefined") {
+      wrap.hidden = false;
+      host.innerHTML = '<p class="rn-muted" style="padding:12px">Peta tidak bisa dimuat. Isi latitude/longitude secara manual.</p>';
+      return;
+    }
+    const start = current();
+    map = L.map(host).setView(start || [-2.5, 118], start ? 16 : 5);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+    if (start) put(start[0], start[1]);
+    map.on("click", (e) => put(e.latlng.lat, e.latlng.lng));
+  }
+  function sync() {
+    const on = selectedLocationMethod(form) === "manual_map_pin";
+    wrap.hidden = !on;
+    if (!on) return;
+    init();
+    setTimeout(() => {
+      if (!map) return;
+      map.invalidateSize();
+      const c = current();
+      if (c) { map.setView(c, Math.max(map.getZoom(), 15)); put(c[0], c[1]); }
+    }, 80);
+  }
+  form.querySelectorAll("input[name='location_input_method']").forEach((r) => r.addEventListener("change", sync));
+  // titik dari GPS ikut tampil di peta bila peta sedang terbuka
+  ["lat", "lng"].forEach((n) => form[n].addEventListener("change", () => {
+    const c = current();
+    if (map && c && !wrap.hidden) { marker ? marker.setLatLng(c) : put(c[0], c[1]); map.setView(c, 16); }
+  }));
+  sync();
+}
+
 function setupCommunityReportForm() {
   const form = document.querySelector("[data-community-report-form]");
   const msg = document.querySelector("[data-community-report-message]");
@@ -694,6 +752,7 @@ function setupCommunityReportForm() {
     field.addEventListener("input", updateLocationMessage);
   });
   setupAdminAreaTree(form, updateLocationMessage);
+  setupMapPicker(form, updateLocationMessage);
 
   currentLocationButton?.addEventListener("click", () => {
     if (!navigator.geolocation) {

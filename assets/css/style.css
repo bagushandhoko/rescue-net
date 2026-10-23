@@ -7370,3 +7370,17 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
   flex: 0 0 18px !important; margin: 2px 0 0 !important; padding: 0 !important;
 }
 .rn-auth-roles .rn-auth-reference .rn-scheme > label > span { flex: 1 1 0; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
+
+/* Peta Leaflet: tombol layar penuh + tutup (rn-map-fullscreen.js) */
+.rn-mapfs-btn, .rn-mapfs-close {
+  position: absolute; z-index: 1200; border: 1px solid rgba(0,0,0,.25); border-radius: 8px;
+  background: #fff; color: #222; font: 600 13px/1 inherit; padding: 8px 12px; cursor: pointer;
+  box-shadow: 0 1px 5px rgba(0,0,0,.3);
+}
+.rn-mapfs-btn { top: 10px; right: 10px; }
+.rn-mapfs-close { top: 12px; left: 12px; font-size: 15px; padding: 11px 16px; background: #c0392b; color: #fff; border-color: #c0392b; }
+.leaflet-container.rn-mapfs {
+  position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100vh !important;
+  height: 100dvh !important; max-width: none !important; z-index: 99999 !important; border-radius: 0 !important; margin: 0 !important;
+}
+html.rn-mapfs-lock, html.rn-mapfs-lock body { overflow: hidden; }

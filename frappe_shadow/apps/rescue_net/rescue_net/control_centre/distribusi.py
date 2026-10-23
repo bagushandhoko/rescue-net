@@ -9,6 +9,7 @@ from rescue_net.api_ai import (
 )
 
 from rescue_net.control_centre.common import (  # noqa: F401
+    cargo_terms,
     _ARMADA_STATUS_LABEL,
     _BOOKING_STATUS_LABEL,
     _DELIVERY_LABEL,
@@ -667,6 +668,8 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "booking_policy", "current_location", "handover_location",
             "handover_contact_person", "handover_contact_phone",
             "coordination_notes", "pickup_volunteer", "pickup_volunteer_name",
+            "cargo_requirements", "packing_required", "packing_spec", "max_piece_weight_kg",
+            "prohibited_items", "documents_required", "cargo_cutoff_at",
         ]),
         order_by="modified desc", limit_page_length=200,
     )
@@ -743,6 +746,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "handover_contact_person": t.handover_contact_person or "-",
             "handover_contact_phone": t.handover_contact_phone or "-",
             "coordination_notes": t.coordination_notes or "",
+            "syarat": cargo_terms(t),
             "pickup_volunteer": t.pickup_volunteer or "",
             "pickup_volunteer_name": t.pickup_volunteer_name or "",
             "bookings_count": sum(1 for b in mine if b.status in ("requested", "confirmed")),

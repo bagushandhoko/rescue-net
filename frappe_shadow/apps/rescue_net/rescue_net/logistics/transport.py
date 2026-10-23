@@ -50,6 +50,13 @@ def create_transport_space(
     booking_policy=None,
     served_events=None,
     served_poskos=None,
+    cargo_requirements=None,
+    packing_required=None,
+    packing_spec=None,
+    max_piece_weight_kg=None,
+    prohibited_items=None,
+    documents_required=None,
+    cargo_cutoff_at=None,
 ):
     """Register an armada distribusi (kendaraan darat / kapal / pesawat) a
     posko puts on offer. Besides capacity + jadwal (berangkat / ETA) the
@@ -117,6 +124,7 @@ def create_transport_space(
         except Exception:
             doc.disaster_event_legacy_id = disaster_event
 
+    _apply_cargo_terms(doc, cargo_requirements=cargo_requirements, packing_required=packing_required, packing_spec=packing_spec, max_piece_weight_kg=max_piece_weight_kg, prohibited_items=prohibited_items, documents_required=documents_required, cargo_cutoff_at=cargo_cutoff_at)
     _apply_served(doc, served_events, served_poskos)
     doc.transport_status = "available"
     doc.insert(ignore_permissions=True)
@@ -148,6 +156,13 @@ def update_transport_space(
     coordination_notes=None,
     served_events=None,
     served_poskos=None,
+    cargo_requirements=None,
+    packing_required=None,
+    packing_spec=None,
+    max_piece_weight_kg=None,
+    prohibited_items=None,
+    documents_required=None,
+    cargo_cutoff_at=None,
 ):
     """Let the coordinating posko keep an armada record current as the trip
     progresses (status, keberadaan, jam berangkat/ETA, titik & narahubung
@@ -194,6 +209,7 @@ def update_transport_space(
         if value is not None:
             doc.set(field, value)
 
+    _apply_cargo_terms(doc, cargo_requirements=cargo_requirements, packing_required=packing_required, packing_spec=packing_spec, max_piece_weight_kg=max_piece_weight_kg, prohibited_items=prohibited_items, documents_required=documents_required, cargo_cutoff_at=cargo_cutoff_at)
     _apply_served(doc, served_events, served_poskos)
     doc.observed_at = now_datetime()
     doc.save(ignore_permissions=True)
@@ -202,6 +218,29 @@ def update_transport_space(
         "transport": doc.name,
         "transport_status": doc.transport_status,
     }
+
+
+def _apply_cargo_terms(doc, cargo_requirements=None, packing_required=None, packing_spec=None,
+                       max_piece_weight_kg=None, prohibited_items=None, documents_required=None,
+                       cargo_cutoff_at=None):
+    """Syarat barang an armada sets (owner 2026-10-23): e.g. an airline may demand
+    packing, a per-koli weight cap, a prohibited list and documents, and a cut-off
+    time for handing over the cargo. Only fields that are passed change."""
+    if packing_required not in (None, "") and packing_required not in ("tidak", "dianjurkan", "wajib"):
+        frappe.throw("Packing harus tidak / dianjurkan / wajib")
+    for field, value in (("cargo_requirements", cargo_requirements), ("packing_spec", packing_spec),
+                         ("prohibited_items", prohibited_items), ("documents_required", documents_required)):
+        if value is not None:
+            doc.set(field, str(value).strip()[:1000] or None)
+    if packing_required is not None:
+        doc.packing_required = packing_required or None
+    if max_piece_weight_kg is not None:
+        doc.max_piece_weight_kg = flt(max_piece_weight_kg) if max_piece_weight_kg != "" else None
+    if cargo_cutoff_at is not None:
+        doc.cargo_cutoff_at = cargo_cutoff_at or None
+    cutoff, dep = doc.get("cargo_cutoff_at"), doc.get("departure_at")
+    if cutoff and dep and str(cutoff) > str(dep):
+        frappe.throw("Batas serah barang harus sebelum waktu berangkat")
 
 
 def _ids(value):

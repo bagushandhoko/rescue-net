@@ -427,12 +427,26 @@ function isoDay(offset) {          // local date, YYYY-MM-DD
 }
 const val = v => (v === null || v === undefined || v === "") ? "" : safe(v);   // form value (no "-")
 
+function termsBlock(a) {
+  const t = a.syarat || {};
+  const li = [];
+  if (t.packing_label) li.push(`<b>${safe(t.packing_label)}</b>${t.packing_spec ? " — " + safe(t.packing_spec) : ""}`);
+  else if (t.packing_spec) li.push(safe(t.packing_spec));
+  if (t.maks_koli_kg) li.push(`Berat maksimal <b>${fmt(t.maks_koli_kg)} kg</b> per koli`);
+  if (t.batas_serah) li.push(`Serahkan barang paling lambat <b>${safe(t.batas_serah)}</b>`);
+  if (t.terlarang) li.push(`Terlarang / dibatasi: ${safe(t.terlarang)}`);
+  if (t.dokumen) li.push(`Dokumen: ${safe(t.dokumen)}`);
+  if (t.syarat) li.push(safe(t.syarat));
+  return `<div class="rn-dispatch-terms" data-terms="${safe(a.id)}"><b>Syarat barang — ${safe(a.provider)}</b>
+    <ul>${li.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+}
 function armadaCard(a, name, on) {
   return `<label class="rn-evc-card${on ? " is-on" : ""}">
     <input type="radio" name="${name}" value="${safe(a.id)}"${on ? " checked" : ""}>
     <span class="rn-evc-title">${safe(a.provider)} <small class="rn-muted">${safe(a.jenis)}</small></span>
     <span class="rn-evc-meta">Berangkat ${safe(a.berangkat)} · tiba ${safe(a.eta)}${a.sisa_kg != null ? ` · sisa ${fmt(a.sisa_kg)} kg` : ""}
-      <span class="rn-evc-badge${a.same_org ? "" : " closed"}">${a.same_org ? "Satu organisasi · langsung disetujui" : "Perlu konfirmasi posko"}</span></span>
+      <span class="rn-evc-badge${a.same_org ? "" : " closed"}">${a.same_org ? "Satu organisasi · langsung disetujui" : "Perlu konfirmasi posko"}</span>
+      ${a.syarat && a.syarat.ada ? `<span class="rn-evc-badge closed">Ada syarat barang${a.syarat.packing === "wajib" ? " · packing wajib" : ""}</span>` : ""}</span>
     <span class="rn-evc-loc">${safe(a.posko_title)}${a.rute ? " · " + safe(a.rute) : ""}${a.handover ? " · serah terima: " + safe(a.handover) : ""}${a.jadwal_kosong ? " · jadwal belum diisi" : ""}</span></label>`;
 }
 function plainCard(name, value, title, sub, on) {
@@ -514,6 +528,10 @@ async function openDispatch(item, unit, stok) {
       <div class="rn-evc"><b>Booking space distribusi utama</b>
         <small class="rn-muted">${armada.length} armada melayani bencana ini & posko Anda, berangkat ${safe(st.from)} s/d ${safe(st.to)}</small>
         <div class="rn-evc-grid">${plainCard("main", "", "Langsung ke tujuan", "Tanpa armada utama", !st.main)}${armada.map(a => armadaCard(a, "main", st.main === a.id)).join("")}</div></div>
+      <div data-terms-wrap${main && main.syarat && main.syarat.ada ? "" : " hidden"}>
+        ${armada.filter(a => a.syarat && a.syarat.ada).map(termsBlock).join("")}
+        <label class="rn-dispatch-ack"><input type="checkbox" name="ack"${st.ack ? " checked" : ""}> Barang kami memenuhi syarat di atas (packing, berat per koli, dokumen).</label>
+      </div>
       <div class="form-actions"><button class="btn ghost" type="button" data-back>← Kembali</button>
         <button class="btn primary" type="submit">Lanjut →</button><span class="form-message" id="dispatchMsg"></span></div>`;
     } else {
@@ -559,7 +577,17 @@ async function openDispatch(item, unit, stok) {
     form.querySelectorAll('input[type="radio"]').forEach(x => x.addEventListener("change", () => {
       form.querySelectorAll(`input[name="${x.name}"]`).forEach(y => y.closest(".rn-evc-card").classList.toggle("is-on", y.checked));
       if (x.name === "first") form.querySelector("[data-couriers]").hidden = x.value !== "transporter";
+      if (x.name === "main") {
+        const wrap = form.querySelector("[data-terms-wrap]");
+        if (wrap) {
+          const blocks = wrap.querySelectorAll("[data-terms]");
+          let any = false;
+          blocks.forEach(b => { const on = b.dataset.terms === x.value; b.hidden = !on; any = any || on; });
+          wrap.hidden = !any;
+        }
+      }
     }));
+    form.querySelectorAll("[data-terms]").forEach(b => { b.hidden = b.dataset.terms !== st.main; });
     if (st.step === 1) {
       ["disaster_event", "window_from", "window_to"].forEach(n => {
         const el = form.elements[n];
@@ -581,6 +609,9 @@ async function openDispatch(item, unit, stok) {
       }
       if (st.step === 2) {
         if (st.main && !(Number(st.kg) > 0)) { msg().textContent = "Isi perkiraan berat (kg) di langkah 1 untuk booking armada."; return; }
+        const mainA = ((st.opt && st.opt.armada) || []).find(a => a.id === st.main);
+        st.ack = !!(form.elements.ack && form.elements.ack.checked);
+        if (mainA && mainA.syarat && mainA.syarat.ada && !st.ack) { msg().textContent = "Centang pernyataan bahwa barang memenuhi syarat armada."; return; }
         st.step = 3; render(); return;
       }
       if (!st.first) { msg().textContent = "Pilih cara barang sampai."; return; }

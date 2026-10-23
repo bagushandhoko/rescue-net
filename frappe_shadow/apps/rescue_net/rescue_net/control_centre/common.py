@@ -559,3 +559,27 @@ def stock_available(posko, item):
     stok = _num(obs.quantity)
     return {"item": obs.item_name, "unit": obs.unit or "", "observed": stok, "observed_at": obs.observed_at,
             "sent_since": round(sent, 3), "available": round(max(0.0, stok - sent), 3)}
+
+
+_PACKING_LABEL = {"wajib": "Packing wajib", "dianjurkan": "Packing dianjurkan", "tidak": "Tanpa syarat packing"}
+
+
+def cargo_terms(t):
+    """Syarat barang of one RN Transport Space row (owner 2026-10-23) in the shape
+    the pages show: free-text terms, packing level + spec, per-koli cap, prohibited
+    items, documents, cut-off time. `ada` is True when any term is set."""
+    g = (lambda k: (t.get(k) if hasattr(t, "get") else getattr(t, k, None)))
+    packing = g("packing_required") or ""
+    out = {
+        "syarat": g("cargo_requirements") or "",
+        "packing": packing,
+        "packing_label": _PACKING_LABEL.get(packing, ""),
+        "packing_spec": g("packing_spec") or "",
+        "maks_koli_kg": _num(g("max_piece_weight_kg")) or None,
+        "terlarang": g("prohibited_items") or "",
+        "dokumen": g("documents_required") or "",
+        "batas_serah": str(g("cargo_cutoff_at") or "")[:16].replace("T", " "),
+    }
+    out["ada"] = bool(out["syarat"] or out["packing_spec"] or out["maks_koli_kg"] or out["terlarang"]
+                      or out["dokumen"] or out["batas_serah"] or packing in ("wajib", "dianjurkan"))
+    return out

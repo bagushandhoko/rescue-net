@@ -1,253 +1,289 @@
 {
- "doctype": "DocType",
- "name": "RN Transport Space",
- "module": "RN Logistics",
- "custom": 0,
- "is_submittable": 0,
- "title_field": "title",
- "fields": [
-  {
-   "fieldname": "legacy_id",
-   "label": "Legacy ID",
-   "fieldtype": "Data",
-   "unique": 1
-  },
-  {
-   "fieldname": "legacy_source",
-   "label": "Legacy Source",
-   "fieldtype": "Data",
-   "default": "rescue-net-fastapi"
-  },
-  {
-   "fieldname": "migration_status",
-   "label": "Migration Status",
-   "fieldtype": "Select",
-   "options": "Shadow Imported\nValidated\nNeeds Review",
-   "default": "Shadow Imported"
-  },
-  {
-   "fieldname": "title",
-   "label": "Transport Space",
-   "fieldtype": "Data",
-   "reqd": 1
-  },
-  {
-   "fieldname": "disaster_event",
-   "label": "Disaster Event",
-   "fieldtype": "Link",
-   "options": "RN Disaster Event",
-   "description": "Disaster event associated with this record."
-  },
-  {
-   "fieldname": "coordination_posko",
-   "label": "Coordination Posko",
-   "fieldtype": "Link",
-   "options": "RN Posko",
-   "reqd": 1
-  },
-  {
-   "fieldname": "served_events",
-   "label": "Disaster Events Served",
-   "fieldtype": "Table",
-   "options": "RN Transport Space Event",
-   "description": "Disasters this armada serves (owner 2026-10-19); disaster_event is always one of them."
-  },
-  {
-   "fieldname": "served_poskos",
-   "label": "Posko Logistik Served",
-   "fieldtype": "Table",
-   "options": "RN Transport Space Posko",
-   "description": "Posko logistik whose cargo this armada carries; empty = every posko logistik of the served disasters."
-  },
-  {
-   "fieldname": "provider_name",
-   "label": "Provider",
-   "fieldtype": "Data",
-   "reqd": 1
-  },
-  {
-   "fieldname": "transport_type",
-   "label": "Jenis Transport",
-   "fieldtype": "Select",
-   "options": "darat\nlaut\nudara\nlainnya"
-  },
-  {
-   "fieldname": "route_origin",
-   "label": "Asal",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "route_destination",
-   "label": "Tujuan",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "capacity_weight_kg",
-   "label": "Kapasitas KG",
-   "fieldtype": "Float"
-  },
-  {
-   "fieldname": "capacity_volume_m3",
-   "label": "Kapasitas M3",
-   "fieldtype": "Float"
-  },
-  {
-   "fieldname": "own_load_kg",
-   "label": "Muatan Sendiri KG",
-   "fieldtype": "Float",
-   "description": "Berat barang milik penyedia sendiri yang ikut dibawa. Kapasitas yang ditawarkan ke pihak luar = Kapasitas KG - Muatan Sendiri KG."
-  },
-  {
-   "fieldname": "own_load_m3",
-   "label": "Muatan Sendiri M3",
-   "fieldtype": "Float"
-  },
-  {
-   "fieldname": "own_cargo_desc",
-   "label": "Muatan Sendiri (deskripsi)",
-   "fieldtype": "Small Text"
-  },
-  {
-   "fieldname": "departure_time",
-   "label": "Berangkat (teks)",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "eta",
-   "label": "ETA (teks)",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "departure_at",
-   "label": "Waktu Berangkat",
-   "fieldtype": "Datetime"
-  },
-  {
-   "fieldname": "eta_at",
-   "label": "Estimasi Tiba",
-   "fieldtype": "Datetime"
-  },
-  {
-   "fieldname": "service_mode",
-   "label": "Mode Layanan",
-   "fieldtype": "Select",
-   "options": "space_only\ncourier_pickup\nboth",
-   "default": "both",
-   "description": "space_only = hanya menyediakan ruang; courier_pickup = jemput + antar barang; both = keduanya."
-  },
-  {
-   "fieldname": "booking_policy",
-   "label": "Kebijakan Booking",
-   "fieldtype": "Select",
-   "options": "pin_verify\nopen",
-   "default": "pin_verify",
-   "description": "pin_verify = booking harus dikonfirmasi koordinator dengan PIN; open = langsung terkonfirmasi."
-  },
-  {
-   "fieldname": "capacity_committed_kg",
-   "label": "Kapasitas Terpakai KG",
-   "fieldtype": "Float",
-   "read_only": 1,
-   "description": "Total berat booking terkonfirmasi (dihitung otomatis)."
-  },
-  {
-   "fieldname": "capacity_committed_m3",
-   "label": "Kapasitas Terpakai M3",
-   "fieldtype": "Float",
-   "read_only": 1
-  },
-  {
-   "fieldname": "pickup_volunteer",
-   "label": "Relawan Pickup",
-   "fieldtype": "Link",
-   "options": "RN Volunteer Profile"
-  },
-  {
-   "fieldname": "pickup_volunteer_name",
-   "label": "Nama Relawan Pickup",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "current_location",
-   "label": "Lokasi Saat Ini",
-   "fieldtype": "Data",
-   "description": "Keberadaan armada saat ini (kota / titik kumpul / koordinat)."
-  },
-  {
-   "fieldname": "handover_location",
-   "label": "Lokasi Serah Terima",
-   "fieldtype": "Data",
-   "description": "Titik penyerahan barang ke posko tujuan."
-  },
-  {
-   "fieldname": "handover_contact_person",
-   "label": "Narahubung Koordinasi",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "handover_contact_phone",
-   "label": "No. Kontak Koordinasi Penyerahan",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "coordination_notes",
-   "label": "Catatan Koordinasi Penyerahan",
-   "fieldtype": "Small Text"
-  },
-  {
-   "fieldname": "transport_status",
-   "label": "Status",
-   "fieldtype": "Select",
-   "options": "available\nreserved\nassigned\nin_transit\narrived\ncompleted\ncancelled",
-   "default": "available"
-  },
-  {
-   "fieldname": "observed_at",
-   "label": "Observed At",
-   "fieldtype": "Datetime"
-  },
-  {
-   "fieldname": "source_updated_at",
-   "label": "Source Updated At",
-   "fieldtype": "Datetime"
-  },
-  {
-   "fieldname": "freshness_policy_minutes",
-   "label": "Freshness Policy Minutes",
-   "fieldtype": "Int",
-   "default": "180"
-  },
-  {
-   "fieldname": "verification_status",
-   "label": "Verification Status",
-   "fieldtype": "Data",
-   "default": "self_reported"
-  },
-  {
-   "fieldname": "created_by_user",
-   "label": "Created By",
-   "fieldtype": "Link",
-   "options": "RN User Account"
-  },
-  {
-   "fieldname": "disaster_event_legacy_id",
-   "label": "Disaster Event Legacy ID",
-   "fieldtype": "Data"
-  },
-  {
-   "fieldname": "legacy_payload",
-   "label": "Legacy Payload",
-   "fieldtype": "Code",
-   "options": "JSON"
-  }
- ],
- "permissions": [
-  {
-   "role": "System Manager",
-   "read": 1,
-   "write": 1,
-   "create": 1,
-   "delete": 1
-  }
- ]
+  "doctype": "DocType",
+  "name": "RN Transport Space",
+  "module": "RN Logistics",
+  "custom": 0,
+  "is_submittable": 0,
+  "title_field": "title",
+  "fields": [
+    {
+      "fieldname": "legacy_id",
+      "label": "Legacy ID",
+      "fieldtype": "Data",
+      "unique": 1
+    },
+    {
+      "fieldname": "legacy_source",
+      "label": "Legacy Source",
+      "fieldtype": "Data",
+      "default": "rescue-net-fastapi"
+    },
+    {
+      "fieldname": "migration_status",
+      "label": "Migration Status",
+      "fieldtype": "Select",
+      "options": "Shadow Imported\nValidated\nNeeds Review",
+      "default": "Shadow Imported"
+    },
+    {
+      "fieldname": "title",
+      "label": "Transport Space",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "disaster_event",
+      "label": "Disaster Event",
+      "fieldtype": "Link",
+      "options": "RN Disaster Event",
+      "description": "Disaster event associated with this record."
+    },
+    {
+      "fieldname": "coordination_posko",
+      "label": "Coordination Posko",
+      "fieldtype": "Link",
+      "options": "RN Posko",
+      "reqd": 1
+    },
+    {
+      "fieldname": "served_events",
+      "label": "Disaster Events Served",
+      "fieldtype": "Table",
+      "options": "RN Transport Space Event",
+      "description": "Disasters this armada serves (owner 2026-10-19); disaster_event is always one of them."
+    },
+    {
+      "fieldname": "served_poskos",
+      "label": "Posko Logistik Served",
+      "fieldtype": "Table",
+      "options": "RN Transport Space Posko",
+      "description": "Posko logistik whose cargo this armada carries; empty = every posko logistik of the served disasters."
+    },
+    {
+      "fieldname": "provider_name",
+      "label": "Provider",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "transport_type",
+      "label": "Jenis Transport",
+      "fieldtype": "Select",
+      "options": "darat\nlaut\nudara\nlainnya"
+    },
+    {
+      "fieldname": "route_origin",
+      "label": "Asal",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "route_destination",
+      "label": "Tujuan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "capacity_weight_kg",
+      "label": "Kapasitas KG",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "capacity_volume_m3",
+      "label": "Kapasitas M3",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "own_load_kg",
+      "label": "Muatan Sendiri KG",
+      "fieldtype": "Float",
+      "description": "Berat barang milik penyedia sendiri yang ikut dibawa. Kapasitas yang ditawarkan ke pihak luar = Kapasitas KG - Muatan Sendiri KG."
+    },
+    {
+      "fieldname": "own_load_m3",
+      "label": "Muatan Sendiri M3",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "own_cargo_desc",
+      "label": "Muatan Sendiri (deskripsi)",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "departure_time",
+      "label": "Berangkat (teks)",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "eta",
+      "label": "ETA (teks)",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "departure_at",
+      "label": "Waktu Berangkat",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "eta_at",
+      "label": "Estimasi Tiba",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "service_mode",
+      "label": "Mode Layanan",
+      "fieldtype": "Select",
+      "options": "space_only\ncourier_pickup\nboth",
+      "default": "both",
+      "description": "space_only = hanya menyediakan ruang; courier_pickup = jemput + antar barang; both = keduanya."
+    },
+    {
+      "fieldname": "booking_policy",
+      "label": "Kebijakan Booking",
+      "fieldtype": "Select",
+      "options": "pin_verify\nopen",
+      "default": "pin_verify",
+      "description": "pin_verify = booking harus dikonfirmasi koordinator dengan PIN; open = langsung terkonfirmasi."
+    },
+    {
+      "fieldname": "capacity_committed_kg",
+      "label": "Kapasitas Terpakai KG",
+      "fieldtype": "Float",
+      "read_only": 1,
+      "description": "Total berat booking terkonfirmasi (dihitung otomatis)."
+    },
+    {
+      "fieldname": "capacity_committed_m3",
+      "label": "Kapasitas Terpakai M3",
+      "fieldtype": "Float",
+      "read_only": 1
+    },
+    {
+      "fieldname": "pickup_volunteer",
+      "label": "Relawan Pickup",
+      "fieldtype": "Link",
+      "options": "RN Volunteer Profile"
+    },
+    {
+      "fieldname": "pickup_volunteer_name",
+      "label": "Nama Relawan Pickup",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "current_location",
+      "label": "Lokasi Saat Ini",
+      "fieldtype": "Data",
+      "description": "Keberadaan armada saat ini (kota / titik kumpul / koordinat)."
+    },
+    {
+      "fieldname": "handover_location",
+      "label": "Lokasi Serah Terima",
+      "fieldtype": "Data",
+      "description": "Titik penyerahan barang ke posko tujuan."
+    },
+    {
+      "fieldname": "handover_contact_person",
+      "label": "Narahubung Koordinasi",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "handover_contact_phone",
+      "label": "No. Kontak Koordinasi Penyerahan",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "coordination_notes",
+      "label": "Catatan Koordinasi Penyerahan",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "transport_status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "available\nreserved\nassigned\nin_transit\narrived\ncompleted\ncancelled",
+      "default": "available"
+    },
+    {
+      "fieldname": "observed_at",
+      "label": "Observed At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "source_updated_at",
+      "label": "Source Updated At",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "freshness_policy_minutes",
+      "label": "Freshness Policy Minutes",
+      "fieldtype": "Int",
+      "default": "180"
+    },
+    {
+      "fieldname": "verification_status",
+      "label": "Verification Status",
+      "fieldtype": "Data",
+      "default": "self_reported"
+    },
+    {
+      "fieldname": "created_by_user",
+      "label": "Created By",
+      "fieldtype": "Link",
+      "options": "RN User Account"
+    },
+    {
+      "fieldname": "disaster_event_legacy_id",
+      "label": "Disaster Event Legacy ID",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "legacy_payload",
+      "label": "Legacy Payload",
+      "fieldtype": "Code",
+      "options": "JSON"
+    },
+    {
+      "fieldname": "cargo_requirements",
+      "fieldtype": "Small Text",
+      "label": "Syarat barang"
+    },
+    {
+      "fieldname": "packing_required",
+      "fieldtype": "Select",
+      "label": "Packing",
+      "options": "\ntidak\ndianjurkan\nwajib"
+    },
+    {
+      "fieldname": "packing_spec",
+      "fieldtype": "Small Text",
+      "label": "Spesifikasi packing"
+    },
+    {
+      "fieldname": "max_piece_weight_kg",
+      "fieldtype": "Float",
+      "label": "Berat maks per koli (kg)"
+    },
+    {
+      "fieldname": "prohibited_items",
+      "fieldtype": "Small Text",
+      "label": "Barang terlarang / dibatasi"
+    },
+    {
+      "fieldname": "documents_required",
+      "fieldtype": "Small Text",
+      "label": "Dokumen yang diperlukan"
+    },
+    {
+      "fieldname": "cargo_cutoff_at",
+      "fieldtype": "Datetime",
+      "label": "Batas serah barang"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ]
 }

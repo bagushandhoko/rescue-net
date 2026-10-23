@@ -7405,3 +7405,10 @@ html.rn-mapfs-lock, html.rn-mapfs-lock body { overflow: hidden; }
   .rn-ev-pop { right: auto; left: 0; width: min(260px, calc(100vw - 32px)); }
   .rn-ev-pop select { font-size: 16px; padding: 8px; }
 }
+
+/* Syarat barang armada (posko distribusi + wizard kirim stok) */
+.rn-dispatch-terms { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: rgba(230, 160, 40, .1); border: 1px solid rgba(200, 130, 20, .35); font-size: 13px; }
+.rn-dispatch-terms ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+.rn-dispatch-ack { display: flex; gap: 10px; align-items: flex-start; flex-direction: row; margin: 8px 0; font-size: 13px; font-weight: 600; }
+.rn-dispatch-ack input { width: 18px; min-width: 18px; margin-top: 2px; }
+.rn-pd-terms .form-grid { margin-top: 6px; }

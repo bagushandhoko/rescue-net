@@ -965,7 +965,7 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
                      departing inside the requested send window if given.
     Picking an armada of another posko = a booking that posko must confirm."""
     from frappe.utils import get_datetime
-    from rescue_net.control_centre.common import posko_served_events, serving_transport_names
+    from rescue_net.control_centre.common import cargo_terms, posko_served_events, serving_transport_names
 
     event = canonical_event(disaster_event) if disaster_event else None
     src = _resolve_posko(source_posko) if source_posko else None
@@ -1018,7 +1018,8 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
             "capacity_weight_kg", "capacity_volume_m3", "coordination_posko",
             "departure_at", "eta_at", "departure_time", "eta", "service_mode",
             "capacity_committed_kg", "route_origin", "route_destination", "booking_policy",
-            "handover_location",
+            "handover_location", "cargo_requirements", "packing_required", "packing_spec",
+            "max_piece_weight_kg", "prohibited_items", "documents_required", "cargo_cutoff_at",
         ]),
         order_by="departure_at asc", limit_page_length=200,
     )
@@ -1053,6 +1054,7 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
             "jadwal_kosong": not dep,
             "status": t.transport_status,
             "handover": t.get("handover_location") or "",
+            "syarat": cargo_terms(t),
             # jemput-antar antar posko / titik distribusi (step 3 "transporter")
             "courier": (t.get("service_mode") or "both") in ("courier_pickup", "both"),
             # same organisation -> booking approved at once; else the armada's posko confirms

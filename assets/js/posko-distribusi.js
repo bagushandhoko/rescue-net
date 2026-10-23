@@ -201,6 +201,7 @@
         : "") +
       row("Sisa kapasitas", fmt(a.kapasitas_tersedia_kg) + " kg" + (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_tersedia_m3) + " m³" : "")) +
       row("Jadwal", esc(a.berangkat) + " → " + esc(a.eta)) +
+      termsRows(a.syarat) +
       row("Lokasi saat ini", mapsLink(a.current_location)) +
       row("Rute", esc(a.rute)) +
       row("Titik serah terima", mapsLink(a.handover_location)) +
@@ -452,6 +453,21 @@
     });
   }
 
+  // Syarat barang (packing, berat per koli, terlarang, dokumen, batas serah) — satu blok untuk detail armada.
+  function termsRows(t) {
+    if (!t || !t.ada) return '<div class="rn-md-dl"><span>Syarat barang</span><b class="rn-muted">Belum diatur penyedia</b></div>';
+    var parts = [];
+    if (t.packing_label) parts.push("<b>" + esc(t.packing_label) + "</b>" + (t.packing_spec ? " — " + esc(t.packing_spec) : ""));
+    else if (t.packing_spec) parts.push(esc(t.packing_spec));
+    if (t.maks_koli_kg) parts.push("Maks " + fmt(t.maks_koli_kg) + " kg per koli");
+    if (t.batas_serah) parts.push("Serah barang paling lambat " + esc(t.batas_serah));
+    if (t.terlarang) parts.push("Terlarang/dibatasi: " + esc(t.terlarang));
+    if (t.dokumen) parts.push("Dokumen: " + esc(t.dokumen));
+    if (t.syarat) parts.push(esc(t.syarat));
+    return '<div class="rn-md-dl"><span>Syarat barang</span><b style="font-weight:500">' +
+      parts.map(function (p) { return '<span style="display:block;margin:0 0 4px">' + p + "</span>"; }).join("") + "</b></div>";
+  }
+
   function armadaEditForm(a) {
     return (
       '<details class="rn-pd-edit"><summary>Perbarui armada</summary>' +
@@ -471,6 +487,15 @@
       "</div>" +
       '<label>Muatan sendiri (deskripsi)<input name="own_cargo_desc" value="' + esc(clean(a.muatan_sendiri_desc)) + '"></label>' +
       '<label>Catatan koordinasi<textarea name="coordination_notes" rows="2">' + esc(clean(a.coordination_notes)) + "</textarea></label>" +
+      '<fieldset class="rn-evc-field rn-pd-terms"><legend>Syarat barang</legend><div class="form-grid">' +
+      '<label>Packing<select name="packing_required">' + optionList([["", "Tidak diatur"], ["dianjurkan", "Dianjurkan"], ["wajib", "Wajib"]], (a.syarat && a.syarat.packing) || "") + "</select></label>" +
+      '<label>Berat maks per koli (kg)<input type="number" step="0.1" min="0" name="max_piece_weight_kg" value="' + esc((a.syarat && a.syarat.maks_koli_kg) || "") + '"></label>' +
+      '<label>Batas serah barang<input type="datetime-local" name="cargo_cutoff_at" value="' + esc(toLocalDT((a.syarat && a.syarat.batas_serah) || "")) + '"></label>' +
+      '<label class="rn-form-wide">Spesifikasi packing<input name="packing_spec" value="' + esc((a.syarat && a.syarat.packing_spec) || "") + '"></label>' +
+      '<label class="rn-form-wide">Syarat lain<textarea name="cargo_requirements" rows="2">' + esc((a.syarat && a.syarat.syarat) || "") + "</textarea></label>" +
+      '<label class="rn-form-wide">Barang terlarang / dibatasi<input name="prohibited_items" value="' + esc((a.syarat && a.syarat.terlarang) || "") + '"></label>' +
+      '<label class="rn-form-wide">Dokumen yang diperlukan<input name="documents_required" value="' + esc((a.syarat && a.syarat.dokumen) || "") + '"></label>' +
+      "</div></fieldset>" +
       '<fieldset class="rn-evc-field"><legend>Bencana yang dilayani armada *</legend><div id="pdEditEventPicker"></div></fieldset>' +
       '<fieldset class="rn-evc-field"><legend>Posko logistik yang dilayani <small>— kosong = semua</small></legend><div id="pdEditPoskoPicker"></div></fieldset>' +
       '<div class="form-actions"><button class="btn primary" type="submit">Simpan Perubahan</button>' +
@@ -502,6 +527,13 @@
         handover_contact_person: v("handover_contact_person"),
         handover_contact_phone: v("handover_contact_phone"),
         coordination_notes: v("coordination_notes"),
+        packing_required: v("packing_required"),
+        max_piece_weight_kg: v("max_piece_weight_kg"),
+        cargo_cutoff_at: v("cargo_cutoff_at").replace("T", " "),
+        packing_spec: v("packing_spec"),
+        cargo_requirements: v("cargo_requirements"),
+        prohibited_items: v("prohibited_items"),
+        documents_required: v("documents_required"),
       };
       if (served) {
         var evs = served.ev.getSelected();
@@ -651,6 +683,13 @@
           handover_contact_person: f("handover_contact_person"),
           handover_contact_phone: f("handover_contact_phone"),
           coordination_notes: f("coordination_notes"),
+          packing_required: f("packing_required"),
+          max_piece_weight_kg: f("max_piece_weight_kg"),
+          cargo_cutoff_at: f("cargo_cutoff_at").replace("T", " "),
+          packing_spec: f("packing_spec"),
+          cargo_requirements: f("cargo_requirements"),
+          prohibited_items: f("prohibited_items"),
+          documents_required: f("documents_required"),
         }, { method: "POST" });
         if (msg) msg.textContent = "Armada tersimpan.";
         form.reset();

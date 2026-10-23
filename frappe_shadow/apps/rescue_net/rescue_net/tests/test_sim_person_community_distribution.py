@@ -110,3 +110,47 @@ class TestDistribusiToDistribusi(_Sim):
         self.assertTrue(armada, "komunitas truck offered")
         self.assertIsNotNone(armada[0].get("jarak_km"))
         self.assertLess(armada[0]["jarak_km"], 5)
+
+
+class TestPublicAndOthersBooking(_Sim):
+    """How the public / another user books: bring it yourself, or ask a distributor to fetch it."""
+
+    def setUp(self):
+        super().setUp()
+        frappe.db.set_value("RN Posko", self.d_near.name, {"public_participation": 1, "public_detail": "public"})
+
+    def test_guest_books_the_komunitas_truck_and_brings_the_cargo_themselves(self):
+        from rescue_net.logistics.guest import book_transport_space_public
+        with as_guest():
+            out = book_transport_space_public(self.truck.name, "Warga Ani", "081234567890", cargo_desc="Beras 5 karung",
+                                              qty_weight_kg=200, delivery_method="self_deliver")
+        self.assertTrue(out.get("edit_code"))
+        b = frappe.get_doc("RN Transport Booking", out["booking"])
+        self.assertEqual((b.delivery_method, b.status), ("self_deliver", "requested"))     # komunitas confirms with the PIN
+        with as_user(self.com_op.user):
+            confirm_transport_booking(b.name, pin=b.verification_pin)
+        self.assertEqual(frappe.db.get_value("RN Transport Booking", b.name, "status"), "confirmed")
+
+    def test_space_only_truck_cannot_be_asked_to_fetch(self):
+        from rescue_net.logistics.guest import book_transport_space_public
+        with as_guest(), self.assertRaisesRegex(frappe.ValidationError, "ruang muat|space"):
+            book_transport_space_public(self.truck.name, "Warga Ani", "081234567890", cargo_desc="Beras",
+                                        qty_weight_kg=50, delivery_method="use_transporter")
+
+    def test_guest_donor_asks_for_pickup_and_a_person_carries_it_to_the_nearest_posko(self):
+        import json
+        from rescue_net.logistics.guest import submit_guest_aid_offer_multi
+        from rescue_net.logistics.transport import claim_aid_pickup
+        with as_guest():
+            sub = submit_guest_aid_offer_multi(
+                self.ev.name, "Donatur Tamu", "081355500011",
+                json.dumps([{"item_name": "Air mineral", "quantity": 20, "unit": "dus"}]),
+                handling_mode="need_pickup", pickup_location="Jl. Mawar 3", target_posko=self.d_near.name)
+        offer = (sub.get("aid_offers") or sub.get("offers") or sub.get("aid_ids") or [None])[0]
+        offer = offer["name"] if isinstance(offer, dict) else offer
+        self.assertTrue(offer, sub)
+        with as_user(self.person.user):
+            out = claim_aid_pickup(self.p_posko.name, offer, self.d_near.name)
+        self.assertEqual(out["destination_posko"], self.d_near.name)
+        self.assertEqual(frappe.db.get_value("RN Aid Offer", offer, "offer_status"), "pickup_claimed")
+        self.assertEqual(frappe.db.get_value("RN Distribution Flow", out["flow"], "flow_status"), "pickup_claimed")

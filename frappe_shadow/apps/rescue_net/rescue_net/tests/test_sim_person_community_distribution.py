@@ -117,7 +117,9 @@ class TestPublicAndOthersBooking(_Sim):
 
     def setUp(self):
         super().setUp()
-        frappe.db.set_value("RN Posko", self.d_near.name, {"public_participation": 1, "public_detail": "public"})
+        frappe.db.set_value("RN Organization", self.com.name, "allow_posko_public_choice", 1)
+        frappe.db.set_value("RN Posko", self.d_near.name,
+                            {"public_participation": 1, "public_detail": "public", "accept_goods": 1})
 
     def test_guest_books_the_komunitas_truck_and_brings_the_cargo_themselves(self):
         from rescue_net.logistics.guest import book_transport_space_public

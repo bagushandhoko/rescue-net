@@ -98,8 +98,10 @@ class TestDistribusiToDistribusi(_Sim):
                             transport_space=self.truck.name, weight_kg=60,
                             window_from="2026-11-05 00:00:00", window_to="2026-11-07 23:59:59")
         with as_user(self.person.user):
-            out = claim_distribution_flow(r["flow"], transport_space=self.bike.name)
+            out = claim_distribution_flow(r["flow"], transport_space=self.bike.name, weight_kg=60)
         self.assertEqual(out["first_mile_space"], self.bike.name)
+        with as_user(self.person.user), self.assertRaisesRegex(frappe.ValidationError, "sudah"):
+            claim_distribution_flow(r["flow"], transport_space=self.bike.name, weight_kg=60)   # no double claim
 
     def test_nearest_distribusi_is_listed_first_with_distance(self):
         with as_user(self.op_log.user):

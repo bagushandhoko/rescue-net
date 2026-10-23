@@ -602,7 +602,7 @@ def claim_aid_pickup(transporter_posko, aid_offer, destination_posko,
 
 
 @frappe.whitelist()
-def claim_distribution_flow(flow, transport_space=None, eta=None, note=None):
+def claim_distribution_flow(flow, transport_space=None, eta=None, note=None, weight_kg=None, volume_m3=None):
     """A Posko Distribusi operator claims an outgoing RN Distribution Flow
     that has no transporter yet (a collector posko dispatched stock and left
     "lewat" empty) and commits one of their armada to carry it. Mirrors
@@ -632,11 +632,15 @@ def claim_distribution_flow(flow, transport_space=None, eta=None, note=None):
         # the claimer's own armada must hold the cargo: book the first-mile leg (confirmed at once, the
         # claimer is that armada's own posko) so capacity is checked and committed (person / komunitas bikes)
         from rescue_net.logistics.flows import _book_for_flow
+        w_kg = (main_bk.qty_weight_kg if main_bk else None) or weight_kg
+        v_m3 = (main_bk.qty_volume_m3 if main_bk else None) or volume_m3
+        if not (flt(w_kg) > 0 or flt(v_m3) > 0):
+            frappe.throw("Isi perkiraan berat (kg) atau volume (m3) muatan yang dijemput.")
+        print("DBG", w_kg, v_m3, main_bk, weight_kg)
         main_space = doc.transport_space or (main_bk and main_bk.transport_space)
         drop = frappe.db.get_value("RN Transport Space", main_space, "handover_location") if main_space else None
         _book_for_flow(actor, doc, space.name,
-                       weight_kg=main_bk.qty_weight_kg if main_bk else None,
-                       volume_m3=main_bk.qty_volume_m3 if main_bk else None,
+                       weight_kg=w_kg, volume_m3=v_m3,
                        leg="first_mile", dropoff=drop, force_confirm=True)
         doc.reload()
         if "assigned_pickup" in TRANSITIONS.get(doc.flow_status or "planned", set()):

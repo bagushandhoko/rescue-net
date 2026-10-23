@@ -849,7 +849,8 @@
           // OUR armada. api_logistics.claim_distribution_flow.
           claimCells =
             '<td><select class="rn-pd-arm" data-flow="' + key + '">' +
-              '<option value="">— pilih armada —</option>' + armadaOpts + "</select></td>" +
+              '<option value="">— pilih armada —</option>' + armadaOpts + "</select>" +
+              (r.first_leg ? '<input class="rn-pd-kg" data-flow="' + key + '" type="number" step="0.1" min="0" placeholder="berat muatan (kg)">' : "") + "</td>" +
             '<td><button type="button" class="btn primary mini rn-pd-claimflow" data-flow="' + key + '">Booking</button>' +
             '<span class="rn-pd-bk-msg" data-msg="' + key + '"></span></td>';
         } else {
@@ -913,11 +914,12 @@
         var sel = body.querySelector('.rn-pd-arm[data-flow="' + CSS.escape(flow) + '"]');
         var msg = body.querySelector('[data-msg="' + CSS.escape(flow) + '"]');
         var arm = sel && sel.value;
+        var kgIn = body.querySelector('.rn-pd-kg[data-flow="' + CSS.escape(flow) + '"]');
         if (!arm) { if (msg) msg.textContent = " pilih armada dulu"; return; }
         if (msg) msg.textContent = " memproses…";
         try {
           await window.RN_FRAPPE.call("rescue_net.api_logistics.claim_distribution_flow",
-            { flow: flow, transport_space: arm }, { method: "POST" });
+            { flow: flow, transport_space: arm, weight_kg: kgIn && kgIn.value ? Number(kgIn.value) : undefined }, { method: "POST" });
           if (msg) msg.textContent = " dibooking ✓";
           await load();
         } catch (err) {

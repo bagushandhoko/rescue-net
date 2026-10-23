@@ -688,7 +688,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "confirmed_at", "delivery_method", "requested_window",
                 "logistic_need", "aid_offer", "submitted_channel",
                 "window_from", "window_to", "distribution_flow", "disaster_event", "notes",
-                "booking_leg",
+                "booking_leg", "terms_ack",
             ]),
             order_by="creation desc", limit_page_length=1000,
         )
@@ -786,6 +786,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "event_title": (frappe.db.get_value("RN Disaster Event", b.disaster_event, "title")
                             if b.get("disaster_event") else ""),
             "note": b.get("notes") or "",
+            "terms_ack": bool(b.get("terms_ack")),
         })
 
     # relawan pickup candidates (distribution assignments at this posko / event)

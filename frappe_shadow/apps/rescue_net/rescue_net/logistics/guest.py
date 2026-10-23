@@ -307,6 +307,7 @@ def book_transport_space_public(
     dropoff_location=None,
     requested_window=None,
     delivery_method="self_deliver",
+    terms_ack=None,
 ):
     """Warga tanpa akun memesan ruang muat / titip barang ke posko transport
     yang membuka partisipasi publik. Mengembalikan Kode Edit (sekali tampil)
@@ -330,6 +331,9 @@ def book_transport_space_public(
             "Posko transport ini tidak membuka pemesanan ruang muat untuk publik.",
             frappe.PermissionError,
         )
+
+    from rescue_net.logistics.transport import require_terms_ack
+    acked = require_terms_ack(space, terms_ack)
 
     if delivery_method not in ("use_transporter", "self_deliver"):
         delivery_method = "self_deliver"
@@ -364,6 +368,7 @@ def book_transport_space_public(
     doc.contact_phone = phone
     doc.delivery_method = delivery_method
     doc.requested_window = requested_window
+    doc.terms_ack = acked
     doc.verification_pin = pin
     doc.submitted_channel = "guest"
     doc.edit_code_hash = _guest_booking_code_hash(code)

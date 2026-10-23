@@ -627,6 +627,7 @@ async function openDispatch(item, unit, stok) {
           window_to: st.to ? st.to + " 23:59:59" : undefined,
           weight_kg: Number(st.kg) > 0 ? Number(st.kg) : undefined,
           first_mile: st.first, first_mile_space: st.first === "transporter" ? st.courier : undefined,
+          terms_ack: st.ack ? 1 : 0,
         }, { method: "POST" });
         const bk = s => s === "confirmed" ? "disetujui otomatis (satu organisasi)" : "menunggu konfirmasi posko distribusi";
         const parts = ["Terkirim."];

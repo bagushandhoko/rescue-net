@@ -229,6 +229,14 @@
 
   /* "Pesan Slot" — any logged-in user, on an open transport posko.
      api_logistics.book_transport_space (PIN back unless policy = open). */
+  // Syarat barang + pernyataan pemesan (wajib dicentang bila armada punya syarat).
+  function termsAckBlock(a) {
+    var t = a.syarat;
+    if (!t || !t.ada) return "";
+    return '<div class="rn-dispatch-terms">' + '<b>Syarat barang armada ini</b>' + termsRows(t).replace(/rn-md-dl/g, "rn-md-dl") +
+      '<label class="rn-dispatch-ack"><input type="checkbox" name="terms_ack"> Barang saya memenuhi syarat di atas (packing, berat per koli, dokumen).</label></div>';
+  }
+
   function bookingForm(a) {
     var courierOk = (a.service_mode || "both") !== "space_only";
     return (
@@ -252,6 +260,7 @@
       '<label>No. HP<input name="contact_phone" placeholder="0812-…"></label>' +
       '<label>Perkiraan waktu<input name="requested_window" placeholder="Besok pagi"></label>' +
       "</div>" +
+      termsAckBlock(a) +
       '<div class="form-actions"><button class="btn primary" type="submit">Pesan Slot</button>' +
       '<span class="rn-pd-bk-msg" data-book-msg></span></div>' +
       "</form></details>"
@@ -265,6 +274,7 @@
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       var v = function (n) { return form[n] ? String(form[n].value).trim() : ""; };
+      if (form.terms_ack && !form.terms_ack.checked) { if (msg) msg.textContent = " centang pernyataan memenuhi syarat barang"; return; }
       if (msg) msg.textContent = " memesan…";
       try {
         var r = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_transport_space", {
@@ -279,6 +289,7 @@
           contact_person: v("contact_person"),
           contact_phone: v("contact_phone"),
           requested_window: v("requested_window"),
+          terms_ack: form.terms_ack && form.terms_ack.checked ? 1 : 0,
         }, { method: "POST" });
         var pin = r && (r.verification_pin || r.pin);
         if (msg) msg.textContent = pin
@@ -313,6 +324,7 @@
       '<label>Tujuan / dropoff<input name="dropoff_location" placeholder="Posko tujuan"></label>' +
       '<label>Perkiraan waktu<input name="requested_window" placeholder="Besok pagi"></label>' +
       "</div>" +
+      termsAckBlock(a) +
       '<div class="form-actions"><button class="btn primary" type="submit">Pesan (tanpa akun)</button>' +
       '<span class="rn-pd-bk-msg" data-pub-msg></span></div>' +
       '<p class="rn-muted rn-pd-code" data-pub-code hidden></p>' +
@@ -328,6 +340,7 @@
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       var v = function (n) { return form[n] ? String(form[n].value).trim() : ""; };
+      if (form.terms_ack && !form.terms_ack.checked) { if (msg) msg.textContent = " centang pernyataan memenuhi syarat barang"; return; }
       if (msg) msg.textContent = " memesan…";
       try {
         var r = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_transport_space_public", {
@@ -341,6 +354,7 @@
           pickup_location: v("pickup_location"),
           dropoff_location: v("dropoff_location"),
           requested_window: v("requested_window"),
+                  terms_ack: form.terms_ack && form.terms_ack.checked ? 1 : 0,
         }, { method: "POST" });
         if (msg) msg.textContent = " terkirim ✓";
         if (codeBox) {
@@ -581,7 +595,8 @@
           (b.is_shipment ? '<small class="rn-muted">' + (b.leg === "first_mile" ? "Jemput ke titik serah: " : "Kiriman posko: ") +
             esc(b.pickup || "-") + " → " + esc(b.dropoff || "-") +
             (b.event_title ? " · " + esc(b.event_title) : "") + "</small>" : "") +
-          (b.note ? '<small class="rn-muted">' + esc(b.note) + "</small>" : "") + "</td>" +
+          (b.note ? '<small class="rn-muted">' + esc(b.note) + "</small>" : "") +
+          (b.terms_ack ? '<small class="rn-muted">✓ Pemesan menyatakan memenuhi syarat barang</small>' : "") + "</td>" +
         "<td>" + fmt(b.qty_kg) + " kg" + (b.qty_m3 ? " · " + fmt(b.qty_m3) + " m³" : "") + "</td>" +
         "<td>" + esc(b.delivery_label) + "</td>" +
         "<td>" + esc(b.booker) + (b.is_guest ? ' <span class="chip">tamu</span>' : "") +

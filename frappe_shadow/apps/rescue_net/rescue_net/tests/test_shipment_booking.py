@@ -240,3 +240,33 @@ class TestCargoTerms(_ShipmentWorld):
         stranger = make_actor()
         with as_user(stranger.user), self.assertRaises(frappe.PermissionError):
             update_transport_space(self.arm_a.name, packing_required="wajib")
+
+
+class TestTermsAck(_ShipmentWorld):
+    """A sender must confirm the armada's syarat barang before booking (owner 2026-10-23)."""
+
+    def setUp(self):
+        super().setUp()
+        with as_user(make_actor(posko=self.tp_b).user):
+            update_transport_space(self.arm_b.name, packing_required="wajib", prohibited_items="BBM")
+
+    def test_booking_without_ack_is_refused_and_with_ack_is_recorded(self):
+        from rescue_net.logistics.transport import book_transport_space
+        with as_user(self.op.user), self.assertRaisesRegex(frappe.ValidationError, "memenuhi syarat"):
+            book_transport_space(self.arm_b.name, cargo_desc="Beras", qty_weight_kg=10, delivery_method="self_deliver")
+        with as_user(self.op.user):
+            r = book_transport_space(self.arm_b.name, cargo_desc="Beras", qty_weight_kg=10,
+                                     delivery_method="self_deliver", terms_ack=1)
+        self.assertEqual(frappe.db.get_value("RN Transport Booking", r["booking"], "terms_ack"), 1)
+
+    def test_armada_without_terms_needs_no_ack(self):
+        from rescue_net.logistics.transport import book_transport_space
+        with as_user(self.op.user):
+            r = book_transport_space(self.arm_a.name, cargo_desc="Beras", qty_weight_kg=10, delivery_method="self_deliver")
+        self.assertEqual(frappe.db.get_value("RN Transport Booking", r["booking"], "terms_ack"), 0)
+
+    def test_send_stock_wizard_requires_ack_on_the_main_armada(self):
+        with self.assertRaisesRegex(frappe.ValidationError, "memenuhi syarat"):
+            self.send(self.arm_b, window_from="2026-11-04 00:00:00", window_to="2026-11-06 23:59:59")
+        r = self.send(self.arm_b, window_from="2026-11-04 00:00:00", window_to="2026-11-06 23:59:59", terms_ack=1)
+        self.assertEqual(frappe.db.get_value("RN Transport Booking", r["booking"], "terms_ack"), 1)

@@ -220,6 +220,14 @@ def update_transport_space(
     }
 
 
+def require_terms_ack(space, terms_ack):
+    """A sender must confirm the armada's syarat barang (when it has any) before booking."""
+    from rescue_net.control_centre.common import cargo_terms
+    if cargo_terms(space)["ada"] and str(terms_ack).lower() not in ("1", "true", "yes"):
+        frappe.throw("Centang pernyataan bahwa barang memenuhi syarat armada (packing, berat per koli, dokumen).")
+    return 1 if cargo_terms(space)["ada"] else 0
+
+
 def _apply_cargo_terms(doc, cargo_requirements=None, packing_required=None, packing_spec=None,
                        max_piece_weight_kg=None, prohibited_items=None, documents_required=None,
                        cargo_cutoff_at=None):
@@ -308,6 +316,7 @@ def book_transport_space(
     notes=None,
     delivery_method="use_transporter",
     requested_window=None,
+    terms_ack=None,
 ):
     """Reserve space on an armada. Any logged-in RN actor may request one.
     If the armada's `booking_policy` is `open` the booking is confirmed
@@ -320,6 +329,7 @@ def book_transport_space(
     `use_transporter` is only valid on a courier-capable armada."""
     actor = rn_actor()
     space = frappe.get_doc("RN Transport Space", transport_space)
+    acked = require_terms_ack(space, terms_ack)
 
     if delivery_method not in ("use_transporter", "self_deliver"):
         delivery_method = "use_transporter"
@@ -359,6 +369,7 @@ def book_transport_space(
     doc.delivery_method = delivery_method
     doc.requested_window = requested_window
     doc.notes = notes
+    doc.terms_ack = acked
     doc.verification_pin = pin
     doc.status = "confirmed" if policy == "open" else "requested"
     if doc.status == "confirmed":

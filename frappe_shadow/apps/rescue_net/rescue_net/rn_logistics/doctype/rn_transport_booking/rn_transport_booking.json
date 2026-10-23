@@ -178,6 +178,11 @@
       "label": "Created By",
       "fieldtype": "Link",
       "options": "RN User Account"
+    },
+    {
+      "fieldname": "terms_ack",
+      "fieldtype": "Check",
+      "label": "Pemesan menyatakan memenuhi syarat barang"
     }
   ],
   "permissions": [

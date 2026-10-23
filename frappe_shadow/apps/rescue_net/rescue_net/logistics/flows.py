@@ -48,6 +48,7 @@ def create_flow(
     volume_m3=None,
     first_mile=None,
     first_mile_space=None,
+    terms_ack=None,
 ):
     # RN_CANONICAL_REF destination_posko = resolve_posko(destination_posko)
     destination_posko = resolve_posko(destination_posko)
@@ -221,8 +222,11 @@ def create_flow(
     main_drop = None
     if transport_space and first_mile:
         main_drop = frappe.db.get_value("RN Transport Space", transport_space, "handover_location") or None
+    if book_space:
+        from rescue_net.logistics.transport import require_terms_ack
+        require_terms_ack(frappe.get_doc("RN Transport Space", book_space), terms_ack)
     booking = (_book_for_flow(actor, doc, book_space, window_from, window_to, weight_kg, volume_m3,
-                              brought_in=bool(first_mile))
+                              brought_in=bool(first_mile), terms_ack=terms_ack)
                if book_space else None)
     first_booking = None
     if first_mile_space:
@@ -602,7 +606,7 @@ def _same_org_armada(actor, source_posko, space):
 
 
 def _book_for_flow(actor, flow, transport_space, window_from=None, window_to=None,
-                   weight_kg=None, volume_m3=None, leg="main", dropoff=None, brought_in=False):
+                   weight_kg=None, volume_m3=None, leg="main", dropoff=None, brought_in=False, terms_ack=None):
     """Booking for a shipment (owner 2026-10-19). Same organisation ->
     confirmed at once and the flow rides the armada; otherwise `requested`
     until the armada's posko confirms (confirm_transport_booking assigns the
@@ -637,6 +641,7 @@ def _book_for_flow(actor, flow, transport_space, window_from=None, window_to=Non
     if window_to:
         b.window_to = window_to
     b.distribution_flow = flow.name
+    b.terms_ack = 1 if str(terms_ack).lower() in ("1", "true", "yes") else 0
     b.created_by_user = actor.name if actor else None
     if auto:
         b.status = "confirmed"

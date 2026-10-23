@@ -7384,3 +7384,24 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
   height: 100dvh !important; max-width: none !important; z-index: 99999 !important; border-radius: 0 !important; margin: 0 !important;
 }
 html.rn-mapfs-lock, html.rn-mapfs-lock body { overflow: hidden; }
+
+/* ===== HP: form & kontrol rapi (audit layout 2026-10-23) ===== */
+@media (max-width: 768px) {
+  /* font 16px = iOS tidak zoom saat fokus; tinggi 44px = mudah diketuk */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="color"]),
+  select, textarea {
+    font-size: 16px !important; min-height: 44px; box-sizing: border-box; max-width: 100%;
+  }
+  textarea { min-height: 88px; }
+  .leaflet-container input, .leaflet-container select { min-height: 0; font-size: inherit !important; }
+  .btn, button.btn, a.btn { min-height: 44px; }
+  .btn.mini, button.mini, a.btn.mini { min-height: 36px; }
+  /* gambar/tabel/kode tidak melebar melewati layar */
+  img, video, iframe, canvas { max-width: 100%; }
+  table { max-width: 100%; }
+  .panel table, .table-wrap, .rn-table-wrap { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  pre, code { overflow-wrap: anywhere; white-space: pre-wrap; }
+  /* popover filter Evidence: jangan keluar layar kiri */
+  .rn-ev-pop { right: auto; left: 0; width: min(260px, calc(100vw - 32px)); }
+  .rn-ev-pop select { font-size: 16px; padding: 8px; }
+}

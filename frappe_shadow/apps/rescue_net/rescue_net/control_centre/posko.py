@@ -965,7 +965,7 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
                      departing inside the requested send window if given.
     Picking an armada of another posko = a booking that posko must confirm."""
     from frappe.utils import get_datetime
-    from rescue_net.control_centre.common import cargo_terms, posko_served_events, serving_transport_names
+    from rescue_net.control_centre.common import cargo_terms, distance_km, posko_served_events, serving_transport_names
 
     event = canonical_event(disaster_event) if disaster_event else None
     src = _resolve_posko(source_posko) if source_posko else None
@@ -993,6 +993,7 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
             "city": p.get("city_name") or "",
             "role": p.get("rn_logistics_role") or "",
             "jiwa": _num(p.get("rn_beneficiary_count")),
+            "jarak_km": distance_km(src, p.name) if src else None,
         }
         for p in prow
         if p.name != src and (p.posko_type or "").lower() != "transport"
@@ -1055,12 +1056,14 @@ def logistik_dispatch_options(disaster_event, source_posko=None, window_from=Non
             "status": t.transport_status,
             "handover": t.get("handover_location") or "",
             "syarat": cargo_terms(t),
+            "jarak_km": distance_km(src, t.coordination_posko) if src else None,
             # jemput-antar antar posko / titik distribusi (step 3 "transporter")
             "courier": (t.get("service_mode") or "both") in ("courier_pickup", "both"),
             # same organisation -> booking approved at once; else the armada's posko confirms
             "same_org": bool(src_org and src_org == frappe.db.get_value("RN Posko", t.coordination_posko, "organization")),
         })
 
+    armada.sort(key=lambda a: (a["jarak_km"] is None, a["jarak_km"] or 0))   # terdekat dulu (urutan jadwal dipertahankan)
     from rescue_net.control_centre.common import stock_available
     stock = stock_available(src, item) if (src and item) else None
     if stock and not _can_see_stock(src):

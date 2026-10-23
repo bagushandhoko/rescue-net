@@ -583,3 +583,22 @@ def cargo_terms(t):
     out["ada"] = bool(out["syarat"] or out["packing_spec"] or out["maks_koli_kg"] or out["terlarang"]
                       or out["dokumen"] or out["batas_serah"] or packing in ("wajib", "dianjurkan"))
     return out
+
+
+def distance_km(a_posko, b_posko):
+    """Straight-line km between two poskos (haversine), None when either has no coordinates."""
+    import math
+
+    if not a_posko or not b_posko:
+        return None
+    pa = frappe.db.get_value("RN Posko", a_posko, ["latitude", "longitude"], as_dict=True)
+    pb = frappe.db.get_value("RN Posko", b_posko, ["latitude", "longitude"], as_dict=True)
+    try:
+        la1, lo1, la2, lo2 = (float(x) for x in (pa.latitude, pa.longitude, pb.latitude, pb.longitude))
+    except (TypeError, ValueError, AttributeError):
+        return None
+    if None in (pa.latitude, pa.longitude, pb.latitude, pb.longitude):
+        return None
+    p1, p2 = math.radians(la1), math.radians(la2)
+    h = math.sin((p2 - p1) / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lo2 - lo1) / 2) ** 2
+    return round(2 * 6371.0 * math.asin(math.sqrt(h)), 1)

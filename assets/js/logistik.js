@@ -447,7 +447,7 @@ function armadaCard(a, name, on) {
     <span class="rn-evc-meta">Berangkat ${safe(a.berangkat)} · tiba ${safe(a.eta)}${a.sisa_kg != null ? ` · sisa ${fmt(a.sisa_kg)} kg` : ""}
       <span class="rn-evc-badge${a.same_org ? "" : " closed"}">${a.same_org ? "Satu organisasi · langsung disetujui" : "Perlu konfirmasi posko"}</span>
       ${a.syarat && a.syarat.ada ? `<span class="rn-evc-badge closed">Ada syarat barang${a.syarat.packing === "wajib" ? " · packing wajib" : ""}</span>` : ""}</span>
-    <span class="rn-evc-loc">${safe(a.posko_title)}${a.rute ? " · " + safe(a.rute) : ""}${a.handover ? " · serah terima: " + safe(a.handover) : ""}${a.jadwal_kosong ? " · jadwal belum diisi" : ""}</span></label>`;
+    <span class="rn-evc-loc">${a.jarak_km != null ? `<b>${fmt(a.jarak_km)} km</b> dari posko Anda · ` : ""}${safe(a.posko_title)}${a.rute ? " · " + safe(a.rute) : ""}${a.handover ? " · serah terima: " + safe(a.handover) : ""}${a.jadwal_kosong ? " · jadwal belum diisi" : ""}</span></label>`;
 }
 function plainCard(name, value, title, sub, on) {
   return `<label class="rn-evc-card${on ? " is-on" : ""}">

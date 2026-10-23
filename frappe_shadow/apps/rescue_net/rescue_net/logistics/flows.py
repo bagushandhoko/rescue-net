@@ -606,13 +606,14 @@ def _same_org_armada(actor, source_posko, space):
 
 
 def _book_for_flow(actor, flow, transport_space, window_from=None, window_to=None,
-                   weight_kg=None, volume_m3=None, leg="main", dropoff=None, brought_in=False, terms_ack=None):
+                   weight_kg=None, volume_m3=None, leg="main", dropoff=None, brought_in=False, terms_ack=None,
+                   force_confirm=False):
     """Booking for a shipment (owner 2026-10-19). Same organisation ->
     confirmed at once and the flow rides the armada; otherwise `requested`
     until the armada's posko confirms (confirm_transport_booking assigns the
     flow then)."""
     space = frappe.get_doc("RN Transport Space", transport_space)
-    auto = _same_org_armada(actor, flow.source_posko, space)
+    auto = bool(force_confirm) or _same_org_armada(actor, flow.source_posko, space)
     title = lambda p: (frappe.db.get_value("RN Posko", p, "title") or p) if p else None
     window = " – ".join(str(x)[:16] for x in (window_from, window_to) if x) or None
     b = frappe.new_doc("RN Transport Booking")

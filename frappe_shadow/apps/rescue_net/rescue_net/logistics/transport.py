@@ -613,7 +613,13 @@ def claim_distribution_flow(flow, transport_space=None, eta=None, note=None):
 
     # owner 2026-10-20: a flow already booked on a main armada whose sender
     # chose "masuk antrean" -> the claim is the first leg to its handover point
-    first_leg = bool(doc.get("first_mile") == "queue" and doc.transport_space and not doc.get("first_mile_space"))
+    main_bk = frappe.db.get_value(
+        "RN Transport Booking",
+        {"distribution_flow": doc.name, "booking_leg": "main", "status": ["in", ["requested", "confirmed"]]},
+        ["name", "transport_space", "qty_weight_kg", "qty_volume_m3"], as_dict=True)
+    # the main booking may still await its armada's confirmation (flow.transport_space empty until then)
+    first_leg = bool(doc.get("first_mile") == "queue" and (doc.transport_space or main_bk)
+                     and not doc.get("first_mile_space"))
     if first_leg:
         if not transport_space:
             frappe.throw("Pilih armada untuk menjemput alur ini.")
@@ -623,7 +629,16 @@ def claim_distribution_flow(flow, transport_space=None, eta=None, note=None):
         if not _can_contribute(actor, space.coordination_posko):
             frappe.throw("Anda bukan petugas / anggota posko distribusi armada ini.",
                          frappe.PermissionError)
-        doc.first_mile_space = space.name
+        # the claimer's own armada must hold the cargo: book the first-mile leg (confirmed at once, the
+        # claimer is that armada's own posko) so capacity is checked and committed (person / komunitas bikes)
+        from rescue_net.logistics.flows import _book_for_flow
+        main_space = doc.transport_space or (main_bk and main_bk.transport_space)
+        drop = frappe.db.get_value("RN Transport Space", main_space, "handover_location") if main_space else None
+        _book_for_flow(actor, doc, space.name,
+                       weight_kg=main_bk.qty_weight_kg if main_bk else None,
+                       volume_m3=main_bk.qty_volume_m3 if main_bk else None,
+                       leg="first_mile", dropoff=drop, force_confirm=True)
+        doc.reload()
         if "assigned_pickup" in TRANSITIONS.get(doc.flow_status or "planned", set()):
             doc.flow_status = "assigned_pickup"
             if hasattr(doc, "assigned_pickup_at"):

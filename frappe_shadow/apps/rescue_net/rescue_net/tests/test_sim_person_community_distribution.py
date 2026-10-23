@@ -60,11 +60,19 @@ class TestPersonFirstMile(_Sim):
 
     def test_person_cannot_carry_more_than_the_bike_holds(self):
         r = self.ship_to_hub(kg=300)
+        with as_user(self.person.user), self.assertRaisesRegex(frappe.ValidationError, "kapasitas|muat|penuh|cukup"):
+            claim_distribution_flow(r["flow"], transport_space=self.bike.name)
+        self.assertFalse(frappe.db.get_value("RN Distribution Flow", r["flow"], "first_mile_space"))
+        self.assertEqual(frappe.db.get_value("RN Transport Space", self.bike.name, "capacity_committed_kg") or 0, 0)
+
+    def test_claim_commits_the_bike_capacity_and_records_the_leg(self):
+        r = self.ship_to_hub(kg=60)
         with as_user(self.person.user):
-            claim_distribution_flow(r["flow"], transport_space=self.bike.name)   # claim itself is allowed
-        # the bike's booking leg would exceed 80 kg -> capacity must not be committed over the limit
-        committed = frappe.db.get_value("RN Transport Space", self.bike.name, "capacity_committed_kg") or 0
-        self.assertLessEqual(committed, 80)
+            claim_distribution_flow(r["flow"], transport_space=self.bike.name)
+        leg = frappe.get_all("RN Transport Booking", filters={"distribution_flow": r["flow"], "booking_leg": "first_mile"},
+                             fields=["status", "qty_weight_kg", "transport_space"])
+        self.assertEqual([(b.status, b.qty_weight_kg, b.transport_space) for b in leg], [("confirmed", 60, self.bike.name)])
+        self.assertEqual(frappe.db.get_value("RN Transport Space", self.bike.name, "capacity_committed_kg"), 60)
 
     def test_a_stranger_cannot_claim_with_someones_bike(self):
         r = self.ship_to_hub()

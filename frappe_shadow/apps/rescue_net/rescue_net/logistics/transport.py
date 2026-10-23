@@ -636,7 +636,6 @@ def claim_distribution_flow(flow, transport_space=None, eta=None, note=None, wei
         v_m3 = (main_bk.qty_volume_m3 if main_bk else None) or volume_m3
         if not (flt(w_kg) > 0 or flt(v_m3) > 0):
             frappe.throw("Isi perkiraan berat (kg) atau volume (m3) muatan yang dijemput.")
-        print("DBG", w_kg, v_m3, main_bk, weight_kg)
         main_space = doc.transport_space or (main_bk and main_bk.transport_space)
         drop = frappe.db.get_value("RN Transport Space", main_space, "handover_location") if main_space else None
         _book_for_flow(actor, doc, space.name,

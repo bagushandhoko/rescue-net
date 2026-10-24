@@ -544,3 +544,13 @@
 /* Leaflet panes use z-index 200-1000; keep them inside the map box so the
    phone menu (z-index ~240) always covers a map (owner 2026-10-19). */
 .leaflet-container { isolation: isolate; z-index: 0; }
+
+/* Mobile drawer: rn-menu-item / rn-submenu (About Us dropdown) */
+@media (max-width: 1023px) {
+  .rn-drawer-public .rn-menu-item { width: 100%; }
+  .rn-drawer-public .rn-menu-link {
+    min-height: 36px; justify-content: space-between; padding: 6px 10px; font-size: 15px;
+  }
+  .rn-drawer-public .rn-submenu { position: static; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; display: flex; flex-direction: column; gap: 0; }
+  .rn-drawer-public .rn-submenu-link { min-height: 36px; padding: 6px 20px; border: 0; font-size: 15px; }
+}

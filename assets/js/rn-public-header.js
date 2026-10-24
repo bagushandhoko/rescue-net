@@ -1,99 +1,38 @@
 (function () {
-  console.log("rn-public-header.js loaded");
   function isHome() { return document.body?.classList?.contains("home-page") || false; }
   const prefix = isHome() ? "" : "..";
 
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
-  // ---- Shared disaster-event picker -----------------------------------------
   const RN_EVENT_DEFAULT = "event-sim-001";
   const RN_EVENT_STORE_KEY = "rn_active_event";
-  const RN_API =
-    location.origin + "/rescue-net-frappe/api/method/";
+  const RN_API = location.origin + "/rescue-net-frappe/api/method/";
 
-  function stripEventPrefix(v) {
-    return String(v || "").replace(/^disaster_events:/, "");
-  }
+  function stripEventPrefix(v) { return String(v || "").replace(/^disaster_events:/, ""); }
 
-  // Best-effort readable label for a raw event id/slug when no real title
-  // is available yet (initial render) or ever (event not in the active
-  // list and no guest-safe single-event lookup exists): "event-krakatau-
-  // 2026" -> "Krakatau 2026".
   function prettifyEventId(id) {
-    return String(id || "")
-      .replace(/^event[-_]/i, "")
-      .replace(/[-_]+/g, " ")
-      .replace(/\b\w/g, c => c.toUpperCase())
-      .trim() || id;
+    return String(id || "").replace(/^event[-_]/i, "").replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()).trim() || id;
   }
 
-  function readStoredEvent() {
-    try {
-      return localStorage.getItem(RN_EVENT_STORE_KEY) || "";
-    } catch (e) {
-      return "";
-    }
-  }
-
-  function writeStoredEvent(v) {
-    try {
-      localStorage.setItem(RN_EVENT_STORE_KEY, v);
-    } catch (e) {}
-  }
-
+  function readStoredEvent() { try { return localStorage.getItem(RN_EVENT_STORE_KEY) || ""; } catch (e) { return ""; } }
+  function writeStoredEvent(v) { try { localStorage.setItem(RN_EVENT_STORE_KEY, v); } catch (e) {} }
   function currentEventId() {
     const url = new URL(location.href);
-    const fromUrl = stripEventPrefix(
-      url.searchParams.get("event") ||
-      url.searchParams.get("disaster_event_id") ||
-      ""
-    );
-
+    const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || "");
     if (fromUrl) return fromUrl;
-
-    return stripEventPrefix(readStoredEvent()) || RN_EVENT_DEFAULT;
+    return stripEventPrefix(readStoredEvent()) || "event-sim-001";
   }
-
-  // Make sure ?event= is present so every page's own JS can read it.
   function ensureEventInUrl(eventId) {
     const url = new URL(location.href);
-
-    if (!url.searchParams.get("event")) {
-      url.searchParams.set("event", eventId);
-
-      try {
-        history.replaceState(null, "", url.toString());
-      } catch (e) {}
-    }
+    if (!url.searchParams.get("event")) { url.searchParams.set("event", eventId); try { history.replaceState(null, "", url.toString()); } catch (e) {} }
   }
-
-  function goToEvent(eventId) {
-    writeStoredEvent(eventId);
-
-    const url = new URL(location.href);
-    url.searchParams.set("event", eventId);
-    url.searchParams.delete("disaster_event_id");
-
-    location.href = url.toString();
-  }
+  function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); location.href = url.toString(); }
 
   window.rnActiveEvent = currentEventId();
 
-  // Built AFTER rnActiveEvent so Control Centre / Data Konsolidasi carry
-  // whatever event is actually active instead of always reopening
-  // event-sim-001 — the two links used to hardcode that, so navigating
-  // away from a different active disaster silently switched context.
   const links = [
-    {
-      label: "About Us",
-      children: [
-        { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` },
-        { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` },
-        { label: "Kembali", href: "javascript:history.back()" }
-      ]
-    },
-    { label: "Home", href: `${prefix}index.html` },
-    { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
+    { label: "About Us", children: [ { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` }, { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` }, { label: "Kembali", href: "javascript:history.back()" } ] },
+    { label: "Home", href: `${prefix}index.html` }, { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
     { label: "Control Centre", href: `${prefix}pages/war-room.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
     { label: "Install App", href: `${prefix}pages/install.html` },
     { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
@@ -111,211 +50,67 @@
     const active = window.rnActiveEvent;
     const hadEventInUrl = !!new URL(location.href).searchParams.get("event");
     ensureEventInUrl(active);
-
     const wrap = document.createElement("div");
     wrap.className = "rn-event-picker";
-    wrap.innerHTML = `
-      <label>
-        <span>Bencana</span>
-        <select aria-label="Pilih bencana aktif">
-          <option value="${active}">${prettifyEventId(active)}</option>
-        </select>
-      </label>
-    `;
-
-    const actions = header.querySelector(".rn-public-actions") || header;
-    actions.appendChild(wrap);
-
+    wrap.innerHTML = `<label><span>Bencana</span><select aria-label="Pilih bencana aktif"><option value="${active}">${prettifyEventId(active)}</option></select></label>`;
+    const actions = header.querySelector(".rn-public-actions") || header; actions.appendChild(wrap);
     const select = wrap.querySelector("select");
-
-    select.addEventListener("change", () => {
-      if (select.value && select.value !== active) {
-        goToEvent(select.value);
-      }
-    });
-
+    select.addEventListener("change", () => { if (select.value && select.value !== active) goToEvent(select.value); });
     try {
-      const res = await fetch(
-        RN_API + "rescue_net.api_ai.public_active_disasters",
-        { credentials: "omit" }
-      );
-      const payload = await res.json();
-      const rows = (payload && payload.message) || [];
-
+      const res = await fetch(RN_API + "rescue_net.api_ai.public_active_disasters", { credentials: "omit" });
+      const payload = await res.json(); const rows = (payload && payload.message) || [];
       if (rows.length) {
-        select.innerHTML = rows
-          .map(row => {
-            const id = stripEventPrefix(
-              row.legacy_id || row.id || row.name || ""
-            );
-            const title = row.title || id;
-            const sev = row.severity ? ` (${row.severity})` : "";
-            const sel = id === active ? " selected" : "";
-            return `<option value="${id}"${sel}>${title}${sev}</option>`;
-          })
-          .join("");
-
-        // active event not in the active list (e.g. not currently marked
-        // "active" status) -> keep it as an extra option. No guest-safe
-        // single-event title lookup exists, so at least don't show the raw
-        // technical slug — "event-krakatau-2026" -> "Krakatau 2026".
-        if (![...select.options].some(o => o.value === active)) {
-          const opt = document.createElement("option");
-          opt.value = active;
-          opt.textContent = prettifyEventId(active);
-          opt.selected = true;
-          select.insertBefore(opt, select.firstChild);
-        }
+        select.innerHTML = rows.map(row => { const id = stripEventPrefix(row.legacy_id || row.id || row.name || ""); const title = row.title || id; const sev = row.severity ? ` (${row.severity})` : ""; const sel = id === active ? " selected" : ""; return `<option value="${id}"${sel}>${title}${sev}</option>`; }).join("");
+        if (![...select.options].some(o => o.value === active)) { const opt = document.createElement("option"); opt.value = active; opt.textContent = prettifyEventId(active); opt.selected = true; select.insertBefore(opt, select.firstChild); }
       }
-    } catch (e) {
-      /* offline / not reachable -> leave the single current option */
-    }
-
-    // Logged-in user (owner 2026-10-19): only the disasters this user is
-    // handling, newest first; a page opened without ?event= uses the newest.
+    } catch (e) { }
     try {
       const res = await fetch(RN_API + "rescue_net.api_auth.my_landing", { credentials: "include" });
-      const mine = res.ok ? (((await res.json()) || {}).message || {}) : {};
-      const evs = mine.events || [];
+      const mine = res.ok ? (((await res.json()) || {}).message || {}) : {}; const evs = mine.events || [];
       if (evs.length) {
-        const ids = evs.map(e => e.id);
-        const pick = ids.includes(active) ? active : (hadEventInUrl ? active : mine.latest_event);
-        select.innerHTML = evs.map(e =>
-          `<option value="${e.id}"${e.id === pick ? " selected" : ""}>${e.title || prettifyEventId(e.id)}</option>`
-        ).join("");
-        if (!ids.includes(pick)) {          // a page opened on another disaster keeps showing which one
-          const opt = document.createElement("option");
-          opt.value = pick; opt.textContent = prettifyEventId(pick) + " (dilihat)"; opt.selected = true;
-          select.insertBefore(opt, select.firstChild);
-        }
-        if (pick !== active) goToEvent(pick);  // no ?event= and the stored one isn't theirs -> newest
+        const ids = evs.map(e => e.id); const pick = ids.includes(active) ? active : (hadEventInUrl ? active : mine.latest_event);
+        select.innerHTML = evs.map(e => `<option value="${e.id}"${e.id === pick ? " selected" : ""}>${e.title || prettifyEventId(e.id)}</option>`).join("");
+        if (!ids.includes(pick)) { const opt = document.createElement("option"); opt.value = pick; opt.textContent = prettifyEventId(pick) + " (dilihat)"; opt.selected = true; select.insertBefore(opt, select.firstChild); }
+        if (pick !== active) goToEvent(pick);
       }
-    } catch (e) { /* guest / offline: keep the public list */ }
+    } catch (e) { }
   }
 
-  function closeMenu(header, button) {
-    header.classList.remove("is-open");
-    button.setAttribute("aria-expanded", "false");
-  }
+  function stripEventPrefix(v) { return String(v || "").replace(/^disaster_events:/, ""); }
+  function prettifyEventId(id) { return String(id || "").replace(/^event[-_]/i, "").replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()).trim() || id; }
+  function readStoredEvent() { try { return localStorage.getItem(RN_EVENT_STORE_KEY) || ""; } catch (e) { return ""; } }
+  function writeStoredEvent(v) { try { localStorage.setItem(RN_EVENT_STORE_KEY, v); } catch (e) {} }
+  function currentEventId() { const url = new URL(location.href); const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || ""); if (fromUrl) return fromUrl; return stripEventPrefix(readStoredEvent()) || "event-sim-001"; }
+  function ensureEventInUrl(eventId) { const url = new URL(location.href); if (!url.searchParams.get("event")) { url.searchParams.set("event", eventId); try { history.replaceState(null, "", url.toString()); } catch (e) {} } }
+  function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); location.href = url.toString(); }
+  window.rnActiveEvent = currentEventId();
 
-  function readCookie(name) {
-    const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
-    try { return m ? decodeURIComponent(m[1]) : ""; } catch (e) { return m ? m[1] : ""; }
-  }
+  function closeMenu(header, button) { header.classList.remove("is-open"); button.setAttribute("aria-expanded", "false"); }
+  function readCookie(name) { const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)")); try { return m ? decodeURIComponent(m[1]) : ""; } catch (e) { return m ? m[1] : ""; } }
 
-  // Login pill by default; after login → "👤 <nama>" + a Logout link.
-  // `existingLoginEl` lets a page with its own hand-built login link (the
-  // home page's static ".welcome-login-link") reuse this same session check
-  // instead of getting a duplicate dynamically-built one.
   async function buildAuthArea(container, existingLoginEl) {
     const actions = existingLoginEl ? container : (container.querySelector(".rn-public-actions") || container);
-
     const loginEl = existingLoginEl || document.createElement("a");
-    if (!existingLoginEl) {
-      loginEl.className = LOGIN_LINK.className;
-      loginEl.href = LOGIN_LINK.href;
-      loginEl.textContent = LOGIN_LINK.label;
-      actions.appendChild(loginEl);
-    }
-
-    let sess = null;
-    try {
-      const res = await fetch(
-        RN_API + "rescue_net.api_auth.session_info",
-        { credentials: "include" }
-      );
-      if (res.ok) sess = ((await res.json()) || {}).message || null;
-    } catch (e) { /* offline → keep the Login pill */ }
-
+    if (!existingLoginEl) { loginEl.className = LOGIN_LINK.className; loginEl.href = LOGIN_LINK.href; loginEl.textContent = LOGIN_LINK.label; actions.appendChild(loginEl); }
+    let sess = null; try { const res = await fetch(RN_API + "rescue_net.api_auth.session_info", { credentials: "include" }); if (res.ok) sess = ((await res.json()) || {}).message || null; } catch (e) { }
     if (!sess || !sess.user || sess.user === "Guest") return;
-
     const name = sess.full_name || readCookie("full_name") || sess.user;
-
-    const userEl = document.createElement("span");
-    userEl.className = "rn-public-user";
-    userEl.title = sess.user + (sess.role ? " · " + sess.role : "");
-    userEl.textContent = "👤 " + name;
-
-    const logoutEl = document.createElement("a");
-    logoutEl.className = "rn-public-login rn-public-logout";
-    logoutEl.href = "#";
-    logoutEl.textContent = "Logout";
-    logoutEl.addEventListener("click", async (e) => {
-      e.preventDefault();
-      logoutEl.textContent = "Keluar…";
-      try {
-        await fetch(RN_API + "logout", { method: "POST", credentials: "include" });
-      } catch (err) {}
-      try { localStorage.removeItem("RN_USER"); } catch (err) {}
-      location.reload();
-    });
-
-    loginEl.replaceWith(userEl);
-    userEl.insertAdjacentElement("afterend", logoutEl);
+    const userEl = document.createElement("span"); userEl.className = "rn-public-user"; userEl.title = sess.user + (sess.role ? " · " + sess.role : ""); userEl.textContent = "👤 " + name;
+    const logoutEl = document.createElement("a"); logoutEl.className = "rn-public-login rn-public-logout"; logoutEl.href = "#"; logoutEl.textContent = "Logout"; logoutEl.addEventListener("click", async (e) => { e.preventDefault(); logoutEl.textContent = "Keluar…"; try { await fetch(RN_API + "logout", { method: "POST", credentials: "include" }); } catch (err) {} try { localStorage.removeItem("RN_USER"); } catch (err) {} location.reload(); });
+    loginEl.replaceWith(userEl); userEl.insertAdjacentElement("afterend", logoutEl);
   }
-
-  // Home page keeps its own hand-built ".welcome-nav" markup (buildHeader()
-  // below skips it entirely) — wire its static login link to the same
-  // session check so it also flips to "👤 <nama>" + Logout once logged in.
-  function wireHomeAuthArea() {
-    const nav = document.querySelector(".welcome-links");
-    const loginLink = document.querySelector(".welcome-login-link");
-    if (!nav || !loginLink) return;
-    buildAuthArea(nav, loginLink);
-  }
+  function wireHomeAuthArea() { const nav = document.querySelector(".welcome-links"); const loginLink = document.querySelector(".welcome-login-link"); if (!nav || !loginLink) return; buildAuthArea(nav, loginLink); }
 
   function buildHeader() {
-    console.log("buildHeader called, isHome:", isHome());
-    if (isHome()) {
-      console.log("isHome true, skipping header build");
-      wireHomeAuthArea();
-      return;
-    }
-
-    if (
-      document.body.classList.contains("mockup-viewer") ||
-      document.querySelector(".rn-public-header")
-    ) {
-      console.log("mockup-viewer or header already exists, skipping");
-      return;
-    }
-
-    const header = document.createElement("header");
-    header.className = "rn-public-header";
-    header.innerHTML = `
-      <a class="rn-public-brand" href="${prefix}index.html" aria-label="Rescue-Net Home">
-        <img src="${prefix}assets/img/rn-logo-web.png" alt="">
-        <span class="rn-public-brand-name">Rescue-Net</span>
-      </a>
-      <nav class="rn-public-links" aria-label="Rescue-Net public navigation">
-        ${links.map(renderPublicLink).join("")}
-      </nav>
-      <div class="rn-public-actions"></div>
-      <button class="rn-public-toggle" type="button" aria-label="Buka menu" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
-    `;
-
+    if (document.body.classList.contains("home-page")) { wireHomeAuthArea(); return; }
+    if (document.body.classList.contains("mockup-viewer") || document.querySelector(".rn-public-header")) return;
+    const header = document.createElement("header"); header.className = "rn-public-header";
+    header.innerHTML = `<a class="rn-public-brand" href="${prefix}index.html" aria-label="Rescue-Net Home"><img src="${prefix}assets/img/rn-logo-web.png" alt=""><span class="rn-public-brand-name">Rescue-Net</span></a><nav class="rn-public-links" aria-label="Rescue-Net public navigation">${links.map(l => l.children ? `<div class="rn-menu-item rn-has-submenu" role="none"><a href="#" class="rn-menu-link" aria-haspopup="true" aria-expanded="false">${l.label}</a><ul class="rn-submenu" role="menu">${l.children.map(c => `<li role="none"><a href="${c.href}" class="rn-submenu-link" role="menuitem">${c.label}</a></li>`).join("")}</ul></div>` : `<a class="${l.className || ""}" href="${l.href}">${l.label}</a>`).join("")}</nav><div class="rn-public-actions"></div><button class="rn-public-toggle" type="button" aria-label="Buka menu" aria-expanded="false"><span></span><span></span><span></span></button>`;
     document.body.insertBefore(header, document.body.firstChild);
-
-    buildEventPicker(header);
-    buildAuthArea(header);
-
+    buildEventPicker(header); buildAuthArea(header);
     const button = header.querySelector(".rn-public-toggle");
-    button.addEventListener("click", () => {
-      const open = header.classList.toggle("is-open");
-      button.setAttribute("aria-expanded", open ? "true" : "false");
-    });
-
-    header.querySelectorAll("a").forEach(link => {
-      link.addEventListener("click", () => closeMenu(header, button));
-    });
+    button.addEventListener("click", () => { const open = header.classList.toggle("is-open"); button.setAttribute("aria-expanded", open ? "true" : "false"); });
+    header.querySelectorAll("a").forEach(link => { link.addEventListener("click", () => closeMenu(header, button)); });
   }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", buildHeader);
-  } else {
-    buildHeader();
-  }
-  console.log("rn-public-header.js executing");
+  if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", buildHeader); } else { buildHeader(); }
 })();

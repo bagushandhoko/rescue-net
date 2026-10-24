@@ -275,6 +275,26 @@
       "fieldname": "cargo_cutoff_at",
       "fieldtype": "Datetime",
       "label": "Batas serah barang"
+    },
+    {
+      "fieldname": "volunteer_capacity_seats",
+      "label": "Kapasitas Tempat Duduk Relawan",
+      "fieldtype": "Int",
+      "default": "0",
+      "description": "Jumlah kursi untuk relawan (selain driver)."
+    },
+    {
+      "fieldname": "volunteer_needs_pickup",
+      "label": "Jemput Relawan",
+      "fieldtype": "Check",
+      "default": "0",
+      "description": "Armada bisa jemput relawan di titik kumpul."
+    },
+    {
+      "fieldname": "volunteer_pickup_location",
+      "label": "Titik Jemput Relawan",
+      "fieldtype": "Data",
+      "description": "Titik kumpul relawan jika armada jemput."
     }
   ],
   "permissions": [

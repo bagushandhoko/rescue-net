@@ -54,7 +54,6 @@
       nav.appendChild(a);
     });
     return nav;
-    return nav;
   }
 
   // Pages without the operational .sidebar get a standalone overlay panel

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Manual Pengguna</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=manual-20261023">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=about-menu-20261023">
+  <style>
+    body { margin: 0; background: var(--bg, #fff6ef); color: var(--text, #2d211b); }
+    .manual { width: min(1120px, calc(100% - 32px)); margin: 30px auto 56px; }
+    .manual-hero, .manual-card { background: #fff; border: 1px solid var(--line, rgba(104,64,45,.14)); border-radius: 18px; box-shadow: 0 8px 24px rgba(145,84,54,.06); }
+    .manual-hero { padding: 26px; margin-bottom: 18px; }
+    .manual-hero .eyebrow { margin: 0 0 6px; color: #b94b35; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .manual h1 { margin: 0; font-size: clamp(26px, 4vw, 38px); }
+    .manual h2 { margin: 0 0 12px; font-size: 21px; }
+    .manual h3 { margin: 18px 0 6px; font-size: 16px; }
+    .manual p, .manual li { font-size: 15px; line-height: 1.65; }
+    .manual p { margin: 8px 0; }
+    .manual-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: start; }
+    .manual-card { padding: 20px; }
+    .manual-toc { position: sticky; top: 76px; }
+    .manual-toc ol { margin: 0; padding-left: 20px; }
+    .manual-toc li { margin: 6px 0; }
+    .manual a { color: #a93f2d; font-weight: 600; }
+    .manual a:hover { color: #75291e; }
+    .manual .note { padding: 12px 14px; border-left: 4px solid #e8755a; border-radius: 8px; background: #fff4ef; }
+    .manual .steps { padding-left: 22px; }
+    .manual .steps li { padding-left: 3px; margin: 5px 0; }
+    .manual .back-top { display: inline-block; margin-top: 10px; font-size: 13px; }
+    @media (max-width: 760px) {
+      .manual { width: min(100% - 20px, 680px); margin: 16px auto 36px; }
+      .manual-grid { grid-template-columns: 1fr; }
+      .manual-toc { position: static; }
+      .manual-hero, .manual-card { padding: 16px; border-radius: 14px; }
+    }
+  </style>
+</head>
+<body class="public-report-page">
+  <main class="manual" id="top">
+    <section class="manual-hero">
+      <p class="eyebrow">Panduan pengguna</p>
+      <h1>Manual Rescue-Net</h1>
+      <p>Langkah praktis memakai Rescue-Net untuk melihat bencana, mengirim laporan, mengoordinasikan posko, dan menyalurkan bantuan.</p>
+      <p class="note">Menu dan tindakan yang tersedia mengikuti peran serta izin akun. Data sensitif—terutama data medis dan kontak—hanya ditampilkan kepada pengguna yang berwenang.</p>
+    </section>
+    <div class="manual-grid">
+      <nav class="manual-card manual-toc" aria-label="Daftar isi manual">
+        <h2>Daftar isi</h2>
+        <ol>
+          <li><a href="#mulai">Mulai menggunakan</a></li>
+          <li><a href="#bencana">Memilih bencana</a></li>
+          <li><a href="#laporan">Mengirim laporan masyarakat</a></li>
+          <li><a href="#bantuan">Menyalurkan bantuan</a></li>
+          <li><a href="#posko">Mengelola posko</a></li>
+          <li><a href="#distribusi">Mengirim stok dan mengatur distribusi</a></li>
+          <li><a href="#operasional">Fitur operasional</a></li>
+          <li><a href="#hp-offline">HP, instalasi, dan mode offline</a></li>
+          <li><a href="#privasi">Privasi dan praktik aman</a></li>
+        </ol>
+      </nav>
+      <article class="manual-card">
+        <section id="mulai">
+          <h2>1. Mulai menggunakan</h2>
+          <ol class="steps">
+            <li>Buka <a href="../index.html">Beranda</a>, lalu pilih <a href="auth.html">Login/registrasi</a>.</li>
+            <li>Gunakan akun yang sudah terdaftar atau buat akun. Simpan kata sandi dengan aman.</li>
+            <li>Setelah masuk, halaman awal dan menu menyesuaikan peran serta posko/organisasi yang terkait dengan akun.</li>
+          </ol>
+          <p>Pengunjung tanpa login dapat melihat halaman dan data yang memang dibuka untuk publik. Menambah atau mengubah data operasional memerlukan login dan izin yang sesuai.</p>
+        </section>
+        <section id="bencana">
+          <h2>2. Memilih bencana</h2>
+          <ol class="steps">
+            <li>Buka <a href="bencana-aktif.html">Bencana Aktif</a> untuk melihat peta dan daftar kejadian publik.</li>
+            <li>Pilih bencana untuk membuka <a href="war-room.html">Control Centre</a> terkait.</li>
+            <li>Pengguna login memilih bencana yang ditangani oleh posko atau organisasinya dari pemilih bencana.</li>
+          </ol>
+          <p>Jika bencana yang dibutuhkan tidak terlihat, akun mungkin belum ditautkan ke posko/organisasi yang menanganinya. Hubungi administrator Rescue-Net.</p>
+        </section>
+        <section id="laporan">
+          <h2>3. Mengirim laporan masyarakat</h2>
+          <ol class="steps">
+            <li>Buka <a href="laporan-masyarakat.html">Laporan Masyarakat</a> dan login.</li>
+            <li>Pilih cara mengisi: ceritakan kejadian atau isi formulir. Periksa kembali kategori, lokasi, dampak, dan kebutuhan sebelum mengirim.</li>
+            <li>Kirim laporan. Laporan dapat diarahkan ke posko yang sesuai; laporan yang belum terarah ditinjau petugas.</li>
+            <li>Gunakan bagian laporan/antrian yang tersedia untuk melihat status atau tindak lanjut sesuai izin akun.</li>
+          </ol>
+          <p class="note">Tulis fakta yang diperlukan saja. Jangan masukkan kata sandi, data keuangan, atau informasi pribadi orang lain yang tidak diperlukan.</p>
+        </section>
+        <section id="bantuan">
+          <h2>4. Menyalurkan bantuan</h2>
+          <ol class="steps">
+            <li>Buka <a href="kebutuhan-publik.html">Kebutuhan Aktual</a> untuk memeriksa barang yang masih dibutuhkan. Perhatikan catatan barang/kemasan yang tidak diterima.</li>
+            <li>Buka <a href="kirim-bantuan.html">Kirim Bantuan</a>, pilih bencana dan posko tujuan yang tersedia.</li>
+            <li>Isi jenis serta jumlah barang dengan benar, lalu ikuti instruksi halaman. Simpan kode pelacakan jika ditampilkan.</li>
+            <li>Pantau status melalui tautan pelacakan atau halaman distribusi yang diberikan.</li>
+          </ol>
+          <p>Jangan mengirim barang sebelum memeriksa kebutuhan dan kesesuaian kemasan. Pilihan publik hanya menampilkan posko yang mengizinkan partisipasi publik.</p>
+        </section>
+        <section id="posko">
+          <h2>5. Mengelola posko</h2>
+          <p>Pengelola yang berwenang dapat membuka <a href="registrasi-posko.html">Registrasi Posko</a> untuk mendaftarkan posko. Isi nama, jenis, lokasi, bencana yang dilayani, dan informasi operasional secara akurat.</p>
+          <p>Di halaman posko, operator mengelola kebutuhan, stok, relawan, dan layanan sesuai jenis posko. Jika posko tidak muncul atau tombol ubah tidak tersedia, minta administrator memeriksa penugasan dan izin akun—jangan memakai akun orang lain.</p>
+          <p>Pengaturan keterbukaan organisasi dan posko dilakukan oleh pemilik/admin organisasi. Data yang dibagikan ke publik bergantung pada pengaturan tersebut.</p>
+        </section>
+        <section id="distribusi">
+          <h2>6. Mengirim stok dan mengatur distribusi</h2>
+          <p>Operator posko logistik dapat memulai dari <a href="posko-logistik.html">Posko Logistik</a> → Kirim Stok. Alur umumnya:</p>
+          <ol class="steps">
+            <li><b>Tujuan dan barang:</b> pilih bencana, posko asal/tujuan, barang, jumlah, waktu, dan berat yang diminta.</li>
+            <li><b>Armada utama:</b> pilih armada yang sesuai syarat barang, kapasitas, jadwal, dan cakupan layanan. Baca lalu setujui syarat pengangkutan.</li>
+            <li><b>Titik serah:</b> pilih antar sendiri, masukkan ke antrean penjemputan posko distribusi, atau pilih transporter/armada penjemput bila tersedia.</li>
+          </ol>
+          <p>Booking lintas organisasi dapat menunggu konfirmasi posko pemilik armada. Pantau Booking Masuk dan status alur; jangan membuat kiriman kedua jika permintaan pertama masih diproses.</p>
+          <p>Gunakan <a href="lacak-logistik.html">Lacak Logistik</a> untuk meninjau alur dan status kiriman yang memiliki kode/tautan pelacakan.</p>
+        </section>
+        <section id="operasional">
+          <h2>7. Fitur operasional</h2>
+          <ul>
+            <li><b>Control Centre:</b> ringkasan dan koordinasi bencana sesuai izin.</li>
+            <li><b>Posko Medis:</b> kasus dan layanan pasien hanya untuk petugas berwenang.</li>
+            <li><b>Shelter dan Dapur Umum:</b> kapasitas, kebutuhan, dan operasional pengungsian/pangan.</li>
+            <li><b>Relawan:</b> pendaftaran, penugasan, dan kehadiran sesuai persetujuan posko.</li>
+            <li><b>Alat Kerja dan Recovery:</b> kebutuhan alat, ketersediaan sumber daya, dan progres pemulihan.</li>
+            <li><b>Verification &amp; Approval:</b> pemeriksaan serta keputusan oleh pihak yang ditugaskan.</li>
+          </ul>
+          <p>Gunakan menu halaman untuk membuka fitur. Tombol yang tidak tersedia biasanya menandakan fitur memerlukan peran atau persetujuan tertentu.</p>
+        </section>
+        <section id="hp-offline">
+          <h2>8. HP, instalasi, dan mode offline</h2>
+          <p>Buka <a href="install.html">Install App</a> untuk memasang Rescue-Net sebagai aplikasi web (PWA) atau mengunduh APK Android. PWA memakai situs yang sama; gunakan domain resmi Rescue-Net.</p>
+          <p>Di aplikasi, setelah login dan saat masih tersambung, tekan <b>Siapkan data offline</b> untuk mengunduh data posko/organisasi yang diizinkan. Beberapa halaman lapangan dan antrean formulir dapat dipakai saat sinyal terputus; data antrean dikirim kembali saat online.</p>
+          <p class="note">Login pertama memerlukan koneksi. Mode offline tidak mencakup semua halaman/data, dan data yang ditampilkan mungkin merupakan salinan terakhir yang tersimpan di perangkat.</p>
+        </section>
+        <section id="privasi">
+          <h2>9. Privasi dan praktik aman</h2>
+          <ul>
+            <li>Gunakan akun sendiri dan jangan membagikan kata sandi, kode login, atau kunci akses.</li>
+            <li>Isi hanya data yang diperlukan untuk respons bencana; periksa izin berbagi sebelum memasukkan informasi sensitif.</li>
+            <li>Data pasien, kontak pribadi, dan informasi terbatas tidak selalu tersedia untuk publik.</li>
+            <li>Periksa kembali bencana, posko, jumlah, satuan, dan tujuan sebelum menyimpan atau mengirim data.</li>
+            <li>Laporkan kesalahan data kepada pengelola posko atau administrator; jangan membuat data pengganti yang mengubah catatan nyata.</li>
+          </ul>
+        </section>
+        <a class="back-top" href="#top">Kembali ke atas</a>
+      </article>
+    </div>
+  </main>
+  <script src="../assets/js/rn-public-header.js?v=about-menu-20261023"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+  <script src="../assets/js/rn-mobile-drawer.js?v=about-menu-20261023"></script>
+</body>
+</html>

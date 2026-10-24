@@ -83,8 +83,13 @@
   // event-sim-001 — the two links used to hardcode that, so navigating
   // away from a different active disaster silently switched context.
   const links = [
-    { label: "About Us", href: `${prefix}index.html#tentang` },
-    { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` },
+    {
+      label: "About Us",
+      children: [
+        { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` },
+        { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` }
+      ]
+    },
     { label: "Home", href: `${prefix}index.html` },
     { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
     { label: "Control Centre", href: `${prefix}pages/war-room.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
@@ -92,6 +97,13 @@
     { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
     { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` }
   ];
+
+  function renderPublicLink(link) {
+    if (link.children) {
+      return `<details class="rn-public-dropdown"><summary>${link.label}<span aria-hidden="true">⌄</span></summary><div class="rn-public-dropdown-menu">${link.children.map(child => `<a href="${child.href}">${child.label}</a>`).join("")}</div></details>`;
+    }
+    return `<a class="${link.className || ""}" href="${link.href}">${link.label}</a>`;
+  }
 
   async function buildEventPicker(header) {
     const active = window.rnActiveEvent;
@@ -269,7 +281,7 @@
         <span class="rn-public-brand-name">Rescue-Net</span>
       </a>
       <nav class="rn-public-links" aria-label="Rescue-Net public navigation">
-        ${links.map(link => `<a class="${link.className || ""}" href="${link.href}">${link.label}</a>`).join("")}
+        ${links.map(renderPublicLink).join("")}
       </nav>
       <div class="rn-public-actions"></div>
       <button class="rn-public-toggle" type="button" aria-label="Buka menu" aria-expanded="false">

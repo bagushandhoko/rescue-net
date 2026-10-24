@@ -28,18 +28,32 @@
       ["Laporan Masyarakat", "pages/laporan-masyarakat.html"],
       ["Kirim Bantuan", "pages/kirim-bantuan.html"],
       ["Install App", "pages/install.html"],
-      ["About Us", "index.html#tentang"],
       ["Login/registrasi", "pages/auth.html"]
     ];
     const nav = document.createElement("nav");
     nav.className = "rn-public-links";
     nav.setAttribute("aria-label", "Menu umum");
+    const about = document.createElement("details");
+    about.className = "rn-public-dropdown";
+    const summary = document.createElement("summary");
+    summary.innerHTML = 'About Us <span aria-hidden="true">⌄</span>';
+    const submenu = document.createElement("div");
+    submenu.className = "rn-public-dropdown-menu";
+    [["Fitur/Mock up", "pages/mockup.html?screen=welcome"], ["Manual Rescue Net", "pages/manual.html"]].forEach(([label, href]) => {
+      const a = document.createElement("a");
+      a.href = prefix + href;
+      a.textContent = label;
+      submenu.appendChild(a);
+    });
+    about.append(summary, submenu);
+    nav.appendChild(about);
     items.forEach(([label, href]) => {
       const a = document.createElement("a");
       a.href = prefix + href;
       a.textContent = label;
       nav.appendChild(a);
     });
+    return nav;
     return nav;
   }
 

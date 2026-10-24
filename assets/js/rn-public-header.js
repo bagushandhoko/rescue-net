@@ -31,7 +31,7 @@
   window.rnActiveEvent = currentEventId();
 
   const links = [
-    { label: "About Us", children: [ { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` }, { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` }, { label: "Kembali", href: "javascript:history.back()" } ] },
+    { label: "About Us", children: [ { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` }, { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` } ] },
     { label: "Home", href: `${prefix}index.html` }, { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
     { label: "Control Centre", href: `${prefix}pages/war-room.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
     { label: "Install App", href: `${prefix}pages/install.html` },

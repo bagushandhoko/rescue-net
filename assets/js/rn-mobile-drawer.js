@@ -39,7 +39,7 @@
     summary.innerHTML = 'About Us <span aria-hidden="true">⌄</span>';
     const submenu = document.createElement("div");
     submenu.className = "rn-public-dropdown-menu";
-    [["Fitur/Mock up", "pages/mockup.html?screen=welcome"], ["Manual Rescue Net", "pages/manual.html"]].forEach(([label, href]) => {
+    [["Fitur/Mock up", "pages/mockup.html?screen=welcome"], ["Manual Rescue Net", "pages/manual.html"], ["Kembali", "javascript:history.back()"]].forEach(([label, href]) => {
       const a = document.createElement("a");
       a.href = prefix + href;
       a.textContent = label;

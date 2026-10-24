@@ -87,7 +87,8 @@
       label: "About Us",
       children: [
         { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` },
-        { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` }
+        { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` },
+        { label: "Kembali", href: "javascript:history.back()" }
       ]
     },
     { label: "Home", href: `${prefix}index.html` },

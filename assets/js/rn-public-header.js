@@ -1,4 +1,5 @@
 (function () {
+  console.log("rn-public-header.js loaded");
   function isHome() { return document.body?.classList?.contains("home-page") || false; }
   const prefix = isHome() ? "" : "..";
 
@@ -204,8 +205,8 @@
 
   // Login pill by default; after login → "👤 <nama>" + a Logout link.
   // `existingLoginEl` lets a page with its own hand-built login link (the
-  // home page's static ".welcome-login-link") reuse this same session
-  // check instead of getting a duplicate dynamically-built one.
+  // home page's static ".welcome-login-link") reuse this same session check
+  // instead of getting a duplicate dynamically-built one.
   async function buildAuthArea(container, existingLoginEl) {
     const actions = existingLoginEl ? container : (container.querySelector(".rn-public-actions") || container);
 
@@ -264,7 +265,9 @@
   }
 
   function buildHeader() {
+    console.log("buildHeader called, isHome:", isHome());
     if (isHome()) {
+      console.log("isHome true, skipping header build");
       wireHomeAuthArea();
       return;
     }
@@ -272,7 +275,10 @@
     if (
       document.body.classList.contains("mockup-viewer") ||
       document.querySelector(".rn-public-header")
-    ) return;
+    ) {
+      console.log("mockup-viewer or header already exists, skipping");
+      return;
+    }
 
     const header = document.createElement("header");
     header.className = "rn-public-header";
@@ -311,4 +317,5 @@
   } else {
     buildHeader();
   }
+  console.log("rn-public-header.js executing");
 })();

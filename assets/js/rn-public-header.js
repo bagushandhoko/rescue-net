@@ -1,6 +1,6 @@
 (function () {
-  const isHome = document.body.classList.contains("home-page");
-  const prefix = isHome ? "" : "../";
+  function isHome() { return document.body?.classList?.contains("home-page") || false; }
+  const prefix = isHome() ? "" : "..";
 
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
@@ -264,7 +264,7 @@
   }
 
   function buildHeader() {
-    if (isHome) {
+    if (isHome()) {
       wireHomeAuthArea();
       return;
     }

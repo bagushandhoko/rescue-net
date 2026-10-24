@@ -101,7 +101,7 @@
 
   function renderPublicLink(link) {
     if (link.children) {
-      return `<details class="rn-public-dropdown"><summary>${link.label}<span aria-hidden="true">⌄</span></summary><div class="rn-public-dropdown-menu">${link.children.map(child => `<a href="${child.href}">${child.label}</a>`).join("")}</div></details>`;
+      return `<div class="rn-menu-item rn-has-submenu" role="none"><a href="#" class="rn-menu-link" aria-haspopup="true" aria-expanded="false">${link.label}</a><ul class="rn-submenu" role="menu">${link.children.map(child => `<li role="none"><a href="${child.href}" class="rn-submenu-link" role="menuitem">${child.label}</a></li>`).join("")}</ul></div>`;
     }
     return `<a class="${link.className || ""}" href="${link.href}">${link.label}</a>`;
   }

@@ -28,9 +28,14 @@
         <span>Management System</span>
       </div>
       <nav class="welcome-links" aria-label="Welcome navigation">
-        <details class="rn-public-dropdown"><summary>About Us<span aria-hidden="true">⌄</span></summary>
-          <div class="rn-public-dropdown-menu"><a href="pages/mockup.html?screen=welcome">Fitur/Mock up</a><a href="pages/manual.html">Manual Rescue Net</a><a href="javascript:history.back()">Kembali</a></div>
-        </details>
+        <div class="rn-menu-item rn-has-submenu" role="none">
+          <a href="#tentang" class="rn-menu-link" aria-haspopup="true" aria-expanded="false">About Us</a>
+          <ul class="rn-submenu" role="menu">
+            <li role="none"><a href="pages/mockup.html?screen=welcome" class="rn-submenu-link" role="menuitem">Fitur/Mock up</a></li>
+            <li role="none"><a href="pages/manual.html" class="rn-submenu-link" role="menuitem">Manual Rescue Net</a></li>
+            <li role="none"><a href="javascript:history.back()" class="rn-submenu-link" role="menuitem">Kembali</a></li>
+          </ul>
+        </div>
         <a href="index.html">Home</a>
         <a href="pages/laporan-masyarakat.html">Laporan Masyarakat</a>
         <a href="pages/kirim-bantuan.html">Kirim Bantuan</a>

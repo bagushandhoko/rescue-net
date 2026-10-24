@@ -43,12 +43,28 @@
     .manual-back { margin-bottom: 14px; }
     .manual-back .btn.back { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; background: var(--panel2, #fff8f3); border: 1px solid var(--line, rgba(104,64,45,.14)); color: var(--text, #2d211b); font-size: 14px; font-weight: 600; text-decoration: none; }
     .manual-back .btn.back:hover { background: var(--vx-brand, #e8755a); color: #fff; border-color: var(--vx-brand, #e8755a); }
+    .manual-back-dropdown { position: relative; display: inline-block; }
+    .manual-back-dropdown > summary { cursor: pointer; list-style: none; }
+    .manual-back-dropdown > summary::-webkit-details-marker { display: none; }
+    .manual-back-dropdown > summary::marker { content: ""; }
+    .manual-back-dropdown[open] > summary { background: var(--vx-brand, #e8755a); color: #fff; border-color: var(--vx-brand, #e8755a); }
+    .manual-back-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 50; display: none; min-width: 200px; padding: 6px; background: #fff; border: 1px solid var(--line, rgba(104,64,45,.18)); border-radius: 10px; box-shadow: 0 8px 24px rgba(145,84,54,.12); }
+    .manual-back-dropdown[open] .manual-back-menu { display: flex; flex-direction: column; gap: 2px; }
+    .manual-back-menu a { display: flex; align-items: center; min-height: 40px; padding: 8px 12px; border-radius: 8px; color: var(--text, #2d211b); font-size: 14px; font-weight: 600; text-decoration: none; }
+    .manual-back-menu a:hover { background: rgba(232,117,88,.12); color: var(--vx-brand-dark, #c4442f); }
+    @media (max-width: 760px) { .manual-back-menu { position: static; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; } .manual-back-menu a { min-height: 44px; padding: 12px 14px; border-radius: 0; border-bottom: 1px solid var(--line, rgba(104,64,45,.14)); } .manual-back-menu a:last-child { border-bottom: 0; } }
   </style>
 </head>
 <body class="public-report-page">
   <main class="manual" id="top">
     <div class="manual-back">
-      <a href="javascript:history.back()" class="btn back">← Kembali</a>
+      <details class="manual-back-dropdown">
+        <summary class="btn back" aria-label="Tutup panel kembali">← Kembali</summary>
+        <div class="manual-back-menu">
+          <a href="javascript:history.back()">Kembali ke halaman sebelumnya</a>
+          <a href="../index.html">Beranda</a>
+        </div>
+      </details>
     </div>
     <section class="manual-hero">
       <p class="eyebrow">Panduan pengguna</p>

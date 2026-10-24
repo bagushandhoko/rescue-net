@@ -1236,6 +1236,74 @@ def volunteer_board(disaster_event=None):
             "preferensi": p.preferences or "-",
             "peralatan": p.equipment_owned or "-",
             "butuh_transport": bool(p.needs_transport),
+            "butuh_jemput": bool(p.needs_pickup),
+            "transport_vehicle": p.transport_vehicle or "-",
+            "kendaraan_bawaan": p.transport_vehicle or "-",
+            "jadwal_tersedia": p.availability_schedule or "-",
+            "preferensi": p.preferences or "-",
+            "preferensi_penempatan": p.preferences or "-",
+            "posko_distribusi_preferensi": getattr(p, "service_areas", "-") or "-",
+            "butuh_transport_panitia": bool(p.needs_transport),
+            "butuh_jemput_posko": bool(p.needs_pickup),
+            "kendaraan_bawaan": p.transport_vehicle or "-",
+            "status": p.availability_status,
+            "href": None,
+        })
+
+    # Tambahkan section relawan tersedia (available) dengan detail kapasitas dan kesiapan
+    relawan_tersedia = []
+    for p in available:
+        skills = [s.strip() for s in (str(p.main_skill or "")).split(",") if s.strip()]
+        skills += [s.strip() for s in (str(p.skill_tags or "")).split(",") if s.strip() and s.strip() not in skills]
+        relawan_tersedia.append({
+            "name": p.name,
+            "volunteer_name": p.volunteer_name,
+            "organisasi": org_by_user.get(p.user_account) or "-",
+            "skill_category": p.skill_category or "-",
+            "skills": skills[:4],
+            "lokasi": p.current_location or posko_titles.get(p.assigned_posko) or "-",
+            "durasi": p.duration_available or "-",
+            "jadwal_tersedia": p.availability_schedule or "-",
+            "preferensi_penempatan": p.preferences or "-",
+            "peralatan": p.equipment_owned or "-",
+            "kendaraan_bawaan": p.transport_vehicle or "-",
+            "butuh_transport": bool(p.needs_transport),
+            "butuh_jemput": bool(p.needs_pickup),
+            "kendaraan_bawaan": p.transport_vehicle or "-",
+            "posko_distribusi_preferensi": getattr(p, "service_areas", "-") or "-",
+            "butuh_transport_panitia": bool(p.needs_transport),
+            "butuh_jemput_posko": bool(p.needs_pickup),
+            "kendaraan_bawaan": p.transport_vehicle or "-",
+            "status": p.availability_status,
+            "href": None,
+        })
+
+    # Relawan yang sudah ditempatkan (assigned) dengan info posko dan tugas
+    relawan_ditempatkan = []
+    for p in sedang_bertugas:
+        # Cari assignment yang relevan
+        vol_assignments = [a for a in assignments if a.volunteer == p.name]
+        assignment_info = []
+        for a in vol_assignments:
+            assignment_info.append({
+                "task_title": a.task_title,
+                "posko": posko_titles.get(a.posko) or a.posko,
+                "priority": a.priority,
+                "assignment_status": a.assignment_status,
+            })
+        skills = [s.strip() for s in (str(p.main_skill or "")).split(",") if s.strip()]
+        skills += [s.strip() for s in (str(p.skill_tags or "")).split(",") if s.strip() and s.strip() not in skills]
+        relawan_ditempatkan.append({
+            "name": p.name,
+            "volunteer_name": p.volunteer_name,
+            "organisasi": org_by_user.get(p.user_account) or "-",
+            "skill_category": p.skill_category or "-",
+            "skills": skills[:4],
+            "lokasi": p.current_location or posko_titles.get(p.assigned_posko) or "-",
+            "durasi": p.duration_available or "-",
+            "posko_ditempatkan": posko_titles.get(p.assigned_posko) or "-",
+            "tugas": [ai["task_title"] for ai in assignment_info],
+            "status_penugasan": [ai["assignment_status"] for ai in assignment_info],
             "status": p.availability_status,
             "href": None,
         })

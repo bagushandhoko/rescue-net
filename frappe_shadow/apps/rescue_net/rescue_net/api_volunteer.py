@@ -1193,8 +1193,10 @@ def volunteer_board(disaster_event=None):
         fields=["name", "volunteer_name", "contact", "main_skill", "skill_tags",
                 "skill_category", "preferences", "equipment_owned", "needs_transport",
                 "availability_status", "duration_available", "current_location",
-                "assigned_posko", "user_account", "verification_status",
-                "needs_pickup", "transport_vehicle", "availability_schedule", "service_areas"],
+                "assigned_posko", "user_account", "verification_status"] + [
+                # readiness columns exist only after the migrate that added them
+                f for f in ("needs_pickup", "transport_vehicle", "availability_schedule", "service_areas")
+                if frappe.db.has_column("RN Volunteer Profile", f)],
         order_by="availability_status asc, volunteer_name asc",
         limit_page_length=2000,
     )

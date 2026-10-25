@@ -283,3 +283,16 @@ class TestSameOrgMemberBooks(_ShipmentWorld):
                             quantity_mode="exact", source_posko=self.src.name, transport_space=self.arm_a.name, weight_kg=100)
         self.assertEqual(r["booking_status"], "confirmed")
         self.assertEqual(frappe.db.get_value("RN Distribution Flow", r["flow"], "transport_space"), self.arm_a.name)
+
+
+class TestMovementsReadable(_ShipmentWorld):
+    def test_outgoing_rows_show_posko_title_and_status_name(self):
+        from rescue_net.api_control_centre import logistik_board
+        r = self.send(self.arm_a)
+        with as_user(self.op.user):
+            b = logistik_board(posko=self.src.name, disaster_event=self.w.event.name)
+        row = next(m for m in b["movements_out"] if m["flow"] == r["flow"])
+        self.assertEqual(row["tujuan"], self.dst.title)
+        self.assertEqual(row["tujuan_posko"], self.dst.name)
+        self.assertTrue(row["status_label"])
+        self.assertNotIn("_", row["status_label"])

@@ -447,16 +447,27 @@ def logistik_board(posko, disaster_event=None):
     urgent_show = urgent_rows[: (8 if full else 3)]
 
     # In / out movements.
+    # show posko titles and Indonesian status names, not ids / raw codes
+    from rescue_net.control_centre.common import _DISTRIBUSI_STATUS_LABEL
+    mv_poskos = {f.get(k) for k, rows in (("source_posko", detail.get("incoming_flows")),
+                                          ("destination_posko", detail.get("outgoing_flows")))
+                 for f in rows or [] if f.get(k)}
+    mv_titles = dict(frappe.get_all("RN Posko", filters={"name": ["in", list(mv_poskos)]},
+                                    fields=["name", "title"], as_list=True)) if mv_poskos else {}
+
     def _mv(rows, who_key, who_label):
         out = []
         for f in rows or []:
+            who = f.get(who_key)
             out.append({
                 "flow": f.get("name"),
-                who_label: f.get(who_key),
+                who_label: mv_titles.get(who) or who,
+                who_label + "_posko": who,
                 "item_name": f.get("item_name"),
                 "quantity": f.get("quantity"),
                 "unit": f.get("unit"),
                 "status": f.get("flow_status"),
+                "status_label": _DISTRIBUSI_STATUS_LABEL.get(f.get("flow_status")) or f.get("flow_status"),
             })
         return out
 

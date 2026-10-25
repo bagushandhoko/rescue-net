@@ -72,6 +72,8 @@ class TestEarlyWarning(RNTestCase):
         with as_guest():
             b = ew_api.banner()
         self.assertEqual(len(b["warnings"]), 1)
+        self.assertEqual(len(b["latest"]), 1)   # live strip, any magnitude
+        self.assertEqual(set(b["latest"][0]), {"title", "magnitude", "depth_km", "issued_at"})
         w = b["warnings"][0]
         self.assertTrue(w["unverified"])
         blob = json.dumps(b)

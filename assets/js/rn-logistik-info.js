@@ -31,12 +31,12 @@ window.RNLogistikInfo = (function () {
     return `<span class="chip ${cls}">${safe(label)}</span>`;
   }
 
-  function statusChip(status) {
+  function statusChip(status, text) {
     const s = String(status || "").toLowerCase();
     let cls = "neutral";
     if (/(received|completed|diterima|closed|arrived)/.test(s)) cls = "good";
     else if (/(transit|dispatch|jalan|pickup)/.test(s)) cls = "warning";
-    return `<span class="chip ${cls}">${safe(status)}</span>`;
+    return `<span class="chip ${cls}">${safe(text || status)}</span>`;
   }
 
   function etaChip(txt) {
@@ -168,7 +168,7 @@ window.RNLogistikInfo = (function () {
             <td>${safe(m[whoKey])}</td>
             <td>${m.flow ? `<a href="lacak-logistik.html?flow=${encodeURIComponent(m.flow)}" title="Lacak kiriman">${safe(m.item_name)}</a>` : safe(m.item_name)}</td>
             <td>${fmt(m.quantity)} ${safe(m.unit)}</td>
-            <td>${statusChip(m.status)}${label(m)}${m.flow ? ` <a class="rn-mov-label" href="lacak-logistik.html?flow=${encodeURIComponent(m.flow)}" title="Lacak perjalanan kiriman">📍 Lacak</a>` : ""}</td>
+            <td>${statusChip(m.status, m.status_label)}${label(m)}${m.flow ? ` <a class="rn-mov-label" href="lacak-logistik.html?flow=${encodeURIComponent(m.flow)}" title="Lacak perjalanan kiriman">📍 Lacak</a>` : ""}</td>
           </tr>
         `).join("")
       : `<tr><td colspan="4">Belum ada pergerakan ${movTab}.${movTab === "keluar" && manage ? " Label 🖨 muncul di sini setelah barang dikirim." : ""}</td></tr>`;

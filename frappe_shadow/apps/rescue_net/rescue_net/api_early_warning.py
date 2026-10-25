@@ -19,9 +19,16 @@ def banner():
         fields=["name", "title", "area_desc", "potential", "magnitude", "depth_km",
                 "issued_at", "severity", "source"],
         order_by="issued_at desc", limit_page_length=5)
+    # every recent quake (any magnitude) so the page always shows the live feed
+    latest = frappe.get_all(
+        "RN Early Warning",
+        filters={"status": ["!=", "dismissed"], "expires_at": [">", now_datetime()]},
+        fields=["title", "magnitude", "depth_km", "issued_at"],
+        order_by="issued_at desc", limit_page_length=3)
     st = frappe.cache().get_value(STATUS_KEY) or {}
     return {
         "warnings": [dict(r, issued_at=str(r.issued_at), unverified=True) for r in rows],
+        "latest": [dict(r, issued_at=str(r.issued_at)) for r in latest],
         "source_ok": st.get("ok", True),
         "checked_at": st.get("checked_at"),
         "attribution": "Sumber: BMKG (data.bmkg.go.id). Belum diverifikasi oleh Rescue-Net.",

@@ -2012,9 +2012,10 @@ function renderModules(ctx) {
     window.RN_FRAPPE.call("rescue_net.api_donor_program.donation_summary", { disaster_event: eventId() })
       .then(d => {
         if (!d || !d.program_count) return;
-        const rp = v => "Rp " + new Intl.NumberFormat("id-ID", { notation: v >= 1e9 ? "compact" : "standard", maximumFractionDigits: 1 }).format(v || 0);
-        setText("moduleProgramDetail", `${format(d.program_count)} program · ${rp(d.received_total)} terkumpul` +
-          (d.target_total ? ` dari ${rp(d.target_total)}` : ""));
+        const rp = v => "Rp " + new Intl.NumberFormat("id-ID", { notation: "compact", maximumFractionDigits: 1 }).format(v || 0);
+        setText("moduleProgramDetail", `${rp(d.received_total)} terkumpul dari ${rp(d.target_total)}`);
+        const el = document.getElementById("moduleProgramDetail");
+        if (el) el.title = `${format(d.program_count)} program donasi · ${d.organisers.length} penyelenggara — klik untuk rincian per penyelenggara`;
       })
       .catch(() => {});
   }

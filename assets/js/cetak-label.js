@@ -62,6 +62,8 @@
       }
     }
     render();
+    // ?print=1 (the 🖨 buttons): open the printer dialog once labels are drawn
+    if (qs.get("print") === "1" && FLOWS.length) setTimeout(function () { window.print(); }, 700);
   }
 
   document.addEventListener("DOMContentLoaded", function () {

@@ -161,7 +161,7 @@ window.RNLogistikInfo = (function () {
     // shipment; managers get "Pindai barcode" for the custody scanner
     const manage = !!b.can_manage;
     const label = m => (manage && movTab !== "masuk" && m.flow)
-      ? ` <a class="rn-mov-label" href="cetak-label.html?flow=${encodeURIComponent(m.flow)}" title="Cetak label kiriman (QR + barcode)">🖨 Label</a>` : "";
+      ? ` <a class="rn-mov-label" href="cetak-label.html?print=1&flow=${encodeURIComponent(m.flow)}" title="Cetak label kiriman (QR + barcode)">🖨 Label</a>` : "";
     body.innerHTML = rows.length
       ? rows.map(m => `
           <tr>
@@ -197,17 +197,16 @@ window.RNLogistikInfo = (function () {
     const page = location.pathname.split("/").pop() + location.search;
     scan.href = "scan.html?back=" + encodeURIComponent(page);
     scan.hidden = !manage;
-    // labels live on the outgoing rows: this opens the Keluar tab
-    const print = toolButton(tabs.parentNode, "movPrintBtn", "🖨 Cetak label", "Cetak label kiriman keluar (QR + barcode)");
-    print.href = "#";
-    print.hidden = !manage || movTab === "keluar";
-    if (!print.dataset.wired) {
-      print.dataset.wired = "1";
-      print.addEventListener("click", e => {
-        e.preventDefault();
-        document.getElementById("movTabKeluar")?.click();
-      });
-    }
+    // owner 2026-10-25: straight to the printer with the labels of every
+    // outgoing shipment still on its way (not cancelled / already received)
+    const print = toolButton(tabs.parentNode, "movPrintBtn", "🖨 Cetak label", "Cetak label semua kiriman keluar yang masih berjalan");
+    const live = (b.movements_out || []).filter(m => m.flow &&
+      !/^(cancelled|received|received_verified|stock_transferred)$/.test(String(m.status || "")));
+    print.href = live.length
+      ? "cetak-label.html?print=1&" + live.slice(0, 30).map(m => "flow=" + encodeURIComponent(m.flow)).join("&")
+      : "cetak-label.html";
+    print.title = live.length ? `Cetak ${Math.min(live.length, 30)} label kiriman keluar` : "Belum ada kiriman keluar yang berjalan";
+    print.hidden = !manage;
     const track = toolButton(tabs.parentNode, "movTrackBtn", "📍 Lacak resi", "Lacak kiriman dengan nomor resi RN-XXXXXXXX");
     track.href = "lacak-logistik.html";
     track.hidden = false;

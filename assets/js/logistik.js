@@ -636,7 +636,7 @@ async function openDispatch(item, unit, stok) {
         if (st.first === "queue") parts.push("Masuk antrean jemput Posko Distribusi.");
         if (st.first === "self_deliver") parts.push(`Antar sendiri ke ${st.main ? "titik serah terima armada" : "posko tujuan"}.`);
         msg().innerHTML = safe(parts.join(" ")) + (r.flow
-          ? ` <a href="cetak-label.html?flow=${encodeURIComponent(r.flow)}">🖨 Cetak label</a>` : "");
+          ? ` <a href="cetak-label.html?print=1&flow=${encodeURIComponent(r.flow)}">🖨 Cetak label</a>` : "");
         setTimeout(loadBoard, 800);       // drawer stays open so the label link can be tapped
       } catch (err) {
         msg().textContent = (err && err.message) || String(err);

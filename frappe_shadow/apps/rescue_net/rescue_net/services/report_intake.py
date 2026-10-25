@@ -29,8 +29,9 @@ PRIORITIES = ("normal", "urgent", "critical")
 
 # report_type -> keywords (lower-case substrings); most hits wins
 _TYPE_WORDS = {
+    # "obat" is a NEED item ("butuh obat diare"), not a sign of a medical case
     "medical_case": ("luka", "sakit", "demam", "diare", "pingsan", "patah tulang", "medis", "dokter",
-                     "obat", "ambulans", "meninggal", "tewas", "jenazah", "sesak"),
+                     "ambulans", "meninggal", "tewas", "jenazah", "sesak"),
     "missing_or_found": ("hilang", "belum ditemukan", "terseret", "mencari keluarga", "ditemukan selamat"),
     "shelter_need": ("mengungsi", "pengungsi", "pengungsian", "tenda", "rumah rusak", "kehilangan rumah",
                      "tempat tinggal", "hunian", "rumah roboh"),
@@ -42,6 +43,10 @@ _TYPE_WORDS = {
                    "awan panas", "api"),
     "available_stock": ("tersedia", "bisa menyumbang", "siap kirim", "stok kami"),
 }
+# strong signals count double: a dry well with some diarrhoea is still a water
+# crisis first (E2E 2026-10-25: "sumur kering ... obat diare" became medical_case)
+_STRONG = {"sumur kering": 2, "kekeringan": 2, "krisis air": 2, "tidak ada air": 2, "kekurangan air": 2,
+           "air bersih habis": 2, "terseret": 2, "jembatan putus": 2, "jalan putus": 2}
 _CRITICAL = ("meninggal", "tewas", "tertimbun", "terjebak", "kritis", "darurat", "tenggelam", "sesak napas",
              "tidak sadar")
 _URGENT = ("segera", "mendesak", "tolong", "bayi", "lansia", "belum makan", "cepat", "urgent")
@@ -51,7 +56,9 @@ _NEED_ITEMS = ("air bersih", "air minum", "beras", "makanan", "mie instan", "sel
                "genset", "senter", "kantong jenazah", "excavator", "ekskavator", "buldoser", "alat berat",
                "tangki air", "jerigen", "toren", "pompa air", "sembako", "hygiene kit", "tenaga medis")
 
-_PEOPLE = re.compile(r"(\d[\d.]*)\s*(orang|jiwa|warga|penduduk|korban|anak|lansia|balita)\b", re.I)
+_PEOPLE = re.compile(r"(\d[\d.]*)\s*(orang|jiwa|warga|penduduk|korban)\b", re.I)
+# sub-groups ("30 anak dan 10 lansia") are PART of the total, never added to it
+_PEOPLE_SUB = re.compile(r"(\d[\d.]*)\s*(anak|lansia|balita|bayi|ibu hamil)\b", re.I)
 _FAMILIES = re.compile(r"(\d[\d.]*)\s*(kk|kepala keluarga|keluarga)\b", re.I)
 _SCALE = re.compile(r"(\d[\d.,]*)\s*(m3|m³|meter kubik|kubik|km|kilometer|meter|ha|hektar|hektare|m)\b", re.I)
 _PLACE = re.compile(r"\b(?:di\s+)?((?i:desa|dusun|kampung|kelurahan|kecamatan|kec\.|kabupaten|kab\.|kota)"
@@ -74,7 +81,14 @@ def rules_extract(text):
     low = text.lower()
     notes = []
 
-    hits = {t: sum(1 for w in words if w in low) for t, words in _TYPE_WORDS.items()}
+    hits = {}
+    for t, words in _TYPE_WORDS.items():
+        found = [w for w in words if w in low]
+        # one word counted once: "pengungsian" also contains "pengungsi"
+        found = [w for w in found if not any(w != o and w in o for o in found)]
+        hits[t] = sum(_STRONG.get(w, 1) for w in found)
+    if re.search(r"sumur(?:\s+\w+){0,2}\s+(?:kering|habis|mati)", low):   # "sumur warga kering"
+        hits["water_shortage"] = hits.get("water_shortage", 0) + (0 if "sumur kering" in low else 2)
     best = max(hits, key=lambda t: hits[t])
     report_type = best if hits[best] else "affected_need_help"
 
@@ -85,7 +99,15 @@ def rules_extract(text):
     else:
         priority = "normal"
 
-    people = sum(int(_num(m.group(1)) or 0) for m in _PEOPLE.finditer(text))
+    # MAX, not SUM: "120 jiwa ... 30 anak dan 10 lansia" = 120 (owner principle:
+    # the same people are never counted twice)
+    totals = [int(_num(m.group(1)) or 0) for m in _PEOPLE.finditer(text)]
+    subs = [int(_num(m.group(1)) or 0) for m in _PEOPLE_SUB.finditer(text)]
+    people = max(totals) if totals else sum(subs)
+    if totals and subs:
+        notes.append("Anak/lansia/balita dihitung sebagai bagian dari %d jiwa (tidak ditambahkan)." % people)
+    elif subs and not totals:
+        notes.append("Jumlah jiwa = jumlah kelompok yang disebut (%d); bisa lebih bila ada orang dewasa lain." % people)
     if not people:
         families = sum(int(_num(m.group(1)) or 0) for m in _FAMILIES.finditer(text))
         if families:

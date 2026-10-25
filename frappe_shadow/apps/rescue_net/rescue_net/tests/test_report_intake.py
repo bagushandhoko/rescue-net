@@ -162,3 +162,26 @@ class TestIntakeAndRouting(RNTestCase):
         by = {n["category"]: n for n in needs}
         self.assertEqual(by["air_bersih"]["predicted_qty"], 15000)
         self.assertEqual(by["truk_tangki_air"]["predicted_qty"], 3)
+
+
+class TestRulesNoDoubleCount(RNTestCase):
+    """E2E 2026-10-25: '120 jiwa, 30 anak dan 10 lansia' was read as 160, and a dry
+    well with 'obat diare' became a medical case."""
+
+    def test_subgroups_are_part_of_the_total(self):
+        from rescue_net.services.report_intake import rules_extract
+        r = rules_extract("Di Desa Suak, sumur warga kering. Ada sekitar 120 jiwa, 30 anak dan 10 lansia. "
+                          "Butuh air bersih dan obat diare.")
+        self.assertEqual(r["affected_people_count"], 120)
+        self.assertEqual(r["report_type"], "water_shortage")
+
+    def test_only_subgroups_are_added(self):
+        from rescue_net.services.report_intake import rules_extract
+        r = rules_extract("Ada 15 anak dan 5 lansia demam tinggi di pengungsian")
+        self.assertEqual(r["affected_people_count"], 20)
+        self.assertEqual(r["report_type"], "medical_case")
+
+    def test_two_totals_take_the_larger(self):
+        from rescue_net.services.report_intake import rules_extract
+        r = rules_extract("200 orang mengungsi. Posko mencatat 150 jiwa di tenda.")
+        self.assertEqual(r["affected_people_count"], 200)

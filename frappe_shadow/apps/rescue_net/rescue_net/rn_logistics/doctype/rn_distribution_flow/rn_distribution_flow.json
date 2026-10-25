@@ -319,6 +319,15 @@
    "options": "RN Transport Space"
   },
   {
+   "fieldname": "package_flow",
+   "fieldtype": "Link",
+   "options": "RN Distribution Flow",
+   "label": "Paket (kiriman utama)",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "Diisi bila barang ini bagian dari paket: kiriman utama yang membawa resi, label dan armada paket."
+  },
+  {
    "fieldname": "transport_space_legacy_id",
    "label": "Transport Space Legacy ID",
    "fieldtype": "Data"

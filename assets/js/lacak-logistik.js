@@ -57,10 +57,20 @@
         row("Catatan terima", p.receipt_note) +
         (p.updated_at ? row("Diperbarui", fmtDateTime(p.updated_at)) : "") +
       "</div>" +
+      packageCard(p) +
       '<div class="ll-card"><ul class="ll-timeline">' + steps + "</ul></div>";
 
     $("#llBody").innerHTML = html;
     $("#llFindCard").hidden = false;
+  }
+
+  // paket (owner 2026-10-26): every item travelling under this resi
+  function packageCard(p) {
+    var k = p.package;
+    if (!k || !k.items || k.items.length < 2) return "";
+    return '<div class="ll-card"><b>Isi paket (' + k.items.length + " barang)</b>" +
+      (k.is_main ? "" : '<p class="ll-muted" style="margin:4px 0 0">Barang ini bagian dari paket resi ' + esc(k.trace) + ".</p>") +
+      k.items.map(function (i) { return row(i.item, i.quantity_text + " · " + i.status_label); }).join("") + "</div>";
   }
 
   function showError(text) {

@@ -300,6 +300,9 @@ def update_flow_status(
 
     current = doc.flow_status or "planned"
 
+    from rescue_net.logistics.package import assert_member_change
+    assert_member_change(doc, new_status)
+
     if new_status not in TRANSITIONS.get(current, set()):
         frappe.throw(
             f"Transisi {current} → {new_status} tidak diperbolehkan"
@@ -663,13 +666,15 @@ def _book_for_flow(actor, flow, transport_space, window_from=None, window_to=Non
 
 
 def _assign_flow_to_space(flow_name, space, leg="main"):
+    from rescue_net.logistics.package import sync_package
     if leg == "first_mile":
         frappe.db.set_value("RN Distribution Flow", flow_name, "first_mile_space", space.name)
-        return
-    frappe.db.set_value("RN Distribution Flow", flow_name, {
-        "transport_space": space.name,
-        "transport_provider": space.provider_name,
-    })
+    else:
+        frappe.db.set_value("RN Distribution Flow", flow_name, {
+            "transport_space": space.name,
+            "transport_provider": space.provider_name,
+        })
+    sync_package(flow_name)     # the other items of a package ride along
 
 
 def _assert_in_stock(posko, item, quantity, unit):

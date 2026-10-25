@@ -728,7 +728,9 @@ def _stock_cards(name):
         "RN Stock Observation", filters={"posko": name},
         fields=obs_fields, order_by="observed_at desc", limit_page_length=500,
     ):
-        key = _norm_item(o.get("canonical_item") or o.get("item_name"))
+        # keyed by the item name like flows / needs / stock_available: the AI
+        # canonical name split one item into two cards (Kelompok Barang groups)
+        key = _norm_item(o.get("item_name") or o.get("canonical_item"))
         if key and key not in latest:
             latest[key] = o
 

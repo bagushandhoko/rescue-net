@@ -155,6 +155,10 @@ class RNDistributionFlow(Document):
         """The armada and the aid offer follow the flow on every status change."""
         from rescue_net.services.guards import bypass
 
+        if not bypass(self) and not self.get("package_flow"):
+            # paket: the other items follow the main flow (armada, status)
+            from rescue_net.logistics.package import sync_package
+            sync_package(self.name)
         before = self.get_doc_before_save()
         if bypass(self) or not before or before.flow_status == self.flow_status:
             return

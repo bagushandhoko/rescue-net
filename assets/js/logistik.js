@@ -562,7 +562,11 @@ function plainCard(name, value, title, sub, on) {
 
 async function openDispatch(item, unit, stok) {
   const st = { step: 1, event: eventParam(), from: isoDay(0), to: isoDay(3), dest: "", main: "",
-    first: "", courier: "", qty: "", unit: unit || "", note: "", kg: "", opt: null, optKey: "" };
+    first: "", courier: "", qty: "", unit: unit || "", note: "", kg: "", opt: null, optKey: "",
+    extra: [] };   // paket (owner 2026-10-26): other items riding in the same shipment
+  // stock cards this posko can add to the package (server re-checks the stock)
+  const packable = () => ((LOGISTIK_BOARD && LOGISTIK_BOARD.stock_cards) || [])
+    .filter(c => Number(c.stok_ada) > 0 && normItem(c.item) !== normItem(item));
   const T = `Kirim stok — ${item}`;
   showDrawer(T, `<p class="rn-muted">Memuat pilihan…</p>`);
 
@@ -590,7 +594,8 @@ async function openDispatch(item, unit, stok) {
     if (!armada.some(a => a.id === st.main)) st.main = "";
     const destT = (dests.find(d => d.id === st.dest) || {}).title || "";
     const main = armada.find(a => a.id === st.main);
-    const summary = `<p class="rn-dispatch-sum"><b>${safe(item)}</b> · ${val(st.qty)} ${val(st.unit)}${st.kg ? ` · ${val(st.kg)} kg` : ""} → <b>${safe(destT)}</b></p>`;
+    const extraTxt = st.extra.length ? ` <small>+ ${st.extra.length} barang lain (paket): ${st.extra.map(x => safe(x.item) + " " + val(x.qty) + " " + safe(x.unit)).join(", ")}</small>` : "";
+    const summary = `<p class="rn-dispatch-sum"><b>${safe(item)}</b> · ${val(st.qty)} ${val(st.unit)}${st.kg ? ` · ${val(st.kg)} kg` : ""} → <b>${safe(destT)}</b>${extraTxt}</p>`;
     let body = "";
     // owner 2026-10-20: never send beyond stock — the server checks it too
     const sk = opt.stock;
@@ -619,7 +624,23 @@ async function openDispatch(item, unit, stok) {
           <input name="quantity" type="number" step="0.01" min="0" max="${avail}" required value="${val(st.qty)}"></label>
         <label>Satuan<input name="unit" value="${val(st.unit)}" readonly></label>
       </div>
-      <label>Perkiraan berat (kg) <small class="rn-muted">— wajib bila memakai armada / transporter</small>
+      <div class="rn-dispatch-pkg">
+        <b>Barang lain dalam paket ini</b> <small class="rn-muted">— satu resi, satu label, satu armada</small>
+        ${st.extra.map((x, i) => `
+          <div class="rn-dispatch-window" data-extra="${i}">
+            <label>Barang
+              <select name="extra_item_${i}">
+                <option value="">— pilih —</option>
+                ${packable().map(c => `<option value="${safe(c.item)}" data-unit="${safe(c.unit)}" data-max="${safe(c.stok_ada)}"${normItem(c.item) === normItem(x.item) ? " selected" : ""}>${safe(c.item)} (stok ${fmt(c.stok_ada)} ${safe(c.unit)})</option>`).join("")}
+              </select></label>
+            <label>Jumlah <small class="rn-muted">${x.unit ? safe(x.unit) : ""}</small>
+              <input name="extra_qty_${i}" type="number" step="0.01" min="0" value="${val(x.qty)}"></label>
+            <button class="btn ghost mini" type="button" data-extra-del="${i}" aria-label="Hapus barang">✕</button>
+          </div>`).join("")}
+        ${packable().length ? `<button class="btn ghost mini" type="button" data-extra-add>＋ Tambah barang lain ke paket ini</button>`
+          : `<small class="rn-muted">Tidak ada barang lain yang berstok di posko ini.</small>`}
+      </div>
+      <label>Perkiraan berat (kg) <small class="rn-muted">— wajib bila memakai armada / transporter${st.extra.length ? "; total seluruh paket" : ""}</small>
         <input name="weight_kg" type="number" step="0.1" min="0" value="${val(st.kg)}"></label>
       <label>Tujuan (posko penerima di bencana ini)
         <select name="destination_posko" required>
@@ -668,6 +689,12 @@ async function openDispatch(item, unit, stok) {
     if (st.step === 1) {
       st.qty = v("quantity"); st.unit = v("unit"); st.kg = v("weight_kg"); st.dest = v("destination_posko");
       st.from = v("window_from"); st.to = v("window_to");
+      st.extra = st.extra.map((x, i) => {
+        const sel = form.elements["extra_item_" + i];
+        const opt = sel && sel.selectedOptions[0];
+        return { item: sel ? sel.value : x.item, unit: opt && opt.value ? opt.dataset.unit || "" : "",
+                 max: opt && opt.value ? Number(opt.dataset.max) : 0, qty: v("extra_qty_" + i) };
+      });
       if (form.elements.disaster_event && form.elements.disaster_event.tagName === "SELECT") st.event = v("disaster_event");
     } else if (st.step === 2) {
       st.main = r("main") || "";
@@ -699,6 +726,13 @@ async function openDispatch(item, unit, stok) {
         if (el && el.tagName !== "INPUT" || (el && el.type === "date")) el.addEventListener("change", () => { keep(form); render(); });
       });
     }
+    form.querySelector("[data-extra-add]")?.addEventListener("click", () => {
+      keep(form); st.extra.push({ item: "", unit: "", qty: "" }); render();
+    });
+    form.querySelectorAll("[data-extra-del]").forEach(b => b.addEventListener("click", () => {
+      keep(form); st.extra.splice(Number(b.dataset.extraDel), 1); render();
+    }));
+    form.querySelectorAll('select[name^="extra_item_"]').forEach(sel => sel.addEventListener("change", () => { keep(form); render(); }));
     const back = form.querySelector("[data-back]");
     if (back) back.addEventListener("click", () => { keep(form); st.step -= 1; render(); });
     form.addEventListener("submit", async e => {
@@ -710,6 +744,18 @@ async function openDispatch(item, unit, stok) {
         const sk1 = st.opt && st.opt.stock, max1 = sk1 ? Number(sk1.available) : Number(stok || 0);
         if (Number(st.qty) > max1) { msg().textContent = `Melebihi stok: maksimal ${fmt(max1)} ${st.unit || ""}.`; return; }
         if (!st.dest) { msg().textContent = "Pilih posko tujuan."; return; }
+        st.extra = st.extra.filter(x => x.item || Number(x.qty) > 0);
+        for (const x of st.extra) {
+          if (!x.item) { msg().textContent = "Pilih barang untuk setiap baris paket."; return; }
+          if (!(Number(x.qty) > 0)) { msg().textContent = `Isi jumlah ${x.item}.`; return; }
+          if (Number(x.qty) > x.max) { msg().textContent = `${x.item} melebihi stok: maksimal ${fmt(x.max)} ${x.unit}.`; return; }
+        }
+        if (new Set(st.extra.map(x => normItem(x.item))).size < st.extra.length) { msg().textContent = "Ada barang yang tercantum dua kali di paket."; return; }
+        // the same item, amount and destination already on its way: ask first
+        const twin = ((LOGISTIK_BOARD && LOGISTIK_BOARD.movements_out) || []).find(m =>
+          LIVE_FLOW(m) && normItem(m.item_name) === normItem(item) && Number(m.quantity) === Number(st.qty)
+          && (m.tujuan_posko || "") === st.dest);
+        if (twin && !window.confirm(`Kiriman yang sama (${item} ${fmt(st.qty)} ${st.unit} ke posko ini) sudah ada dan masih berjalan.\n\nKirim lagi sebagai kiriman baru?`)) return;
         st.step = 2; render(); return;
       }
       if (st.step === 2) {
@@ -724,9 +770,13 @@ async function openDispatch(item, unit, stok) {
       if (st.first === "transporter" && !(Number(st.kg) > 0)) { msg().textContent = "Isi perkiraan berat (kg) di langkah 1."; return; }
       msg().textContent = "Mengirim…";
       try {
-        const r = await RN_FRAPPE.call("rescue_net.api_logistics.create_flow", {
-          destination_posko: st.dest, item_text: item, quantity: Number(st.qty || 0),
-          unit: String(st.unit || "").trim(), quantity_mode: "exact", source_posko: poskoParam(),
+        const pkg = st.extra.length > 0;
+        const items = [{ item_text: item, quantity: Number(st.qty || 0), unit: String(st.unit || "").trim() }]
+          .concat(st.extra.map(x => ({ item_text: x.item, quantity: Number(x.qty), unit: x.unit })));
+        const r = await RN_FRAPPE.call(pkg ? "rescue_net.api_logistics.create_package" : "rescue_net.api_logistics.create_flow", {
+          ...(pkg ? { items: JSON.stringify(items) }
+                  : { item_text: item, quantity: Number(st.qty || 0), unit: String(st.unit || "").trim(), quantity_mode: "exact" }),
+          destination_posko: st.dest, source_posko: poskoParam(),
           transport_space: st.main || undefined, disaster_event: st.event,
           window_from: st.from ? st.from + " 00:00:00" : undefined,
           window_to: st.to ? st.to + " 23:59:59" : undefined,
@@ -735,13 +785,14 @@ async function openDispatch(item, unit, stok) {
           terms_ack: st.ack ? 1 : 0,
         }, { method: "POST" });
         const bk = s => s === "confirmed" ? "disetujui otomatis (satu organisasi)" : "menunggu konfirmasi posko distribusi";
-        const parts = ["Terkirim."];
+        const parts = [pkg ? `Paket ${items.length} barang terkirim.` : "Terkirim."];
         if (r.booking) parts.push(`Booking distribusi utama ${bk(r.booking_status)}.`);
         if (r.first_mile_booking) parts.push(`Booking transporter ${bk(r.first_mile_status)}.`);
         if (st.first === "queue") parts.push("Masuk antrean jemput Posko Distribusi.");
         if (st.first === "self_deliver") parts.push(`Antar sendiri ke ${st.main ? "titik serah terima armada" : "posko tujuan"}.`);
         msg().innerHTML = safe(parts.join(" ")) + (r.flow
-          ? ` <a href="cetak-label.html?print=1&flow=${encodeURIComponent(r.flow)}">🖨 Cetak label</a>` : "");
+          ? ` <a href="cetak-label.html?print=1&flow=${encodeURIComponent(r.flow)}">🖨 Cetak label${pkg ? " paket" : ""}</a>` : "");
+        st.extra = [];
         setTimeout(loadBoard, 800);       // drawer stays open so the label link can be tapped
       } catch (err) {
         msg().textContent = (err && err.message) || String(err);

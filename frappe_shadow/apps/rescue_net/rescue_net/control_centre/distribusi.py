@@ -133,8 +133,9 @@ def flow_trace(flow=None, trace=None):
     return {
         "trace": _distribusi_trace(f.get("name")),
         "flow": f.get("name"),
-        "item": (f.get("canonical_item") or f.get("item_name")
-                 or f.get("raw_item_text") or "-"),
+        # the name the posko typed (matches its Daftar Barang), not the AI group
+        "item": (f.get("item_name") or f.get("raw_item_text")
+                 or f.get("canonical_item") or "-"),
         "quantity_text": (qty_text + " " + (f.get("unit") or "")).strip() or "-",
         "status": status,
         "status_label": _DISTRIBUSI_STATUS_LABEL.get(status, status),
@@ -154,6 +155,23 @@ def flow_trace(flow=None, trace=None):
         "receipt_note": (f.get("receipt_note") or "").strip() or None,
         "steps": steps,
         "updated_at": str(f.get("modified")) if f.get("modified") else None,
+        "package": _trace_package(f.get("name")),
+    }
+
+
+def _trace_package(flow):
+    """Paket: the items travelling together, with the main flow's resi (the
+    one on the label). None for a single-item shipment."""
+    from rescue_net.logistics.package import package_items
+    items, lead = package_items(flow)
+    if not items:
+        return None
+    return {
+        "trace": _distribusi_trace(lead),
+        "flow": lead,
+        "is_main": lead == flow,
+        "items": [{"item": i["item"] or "-", "quantity_text": (_qty_fmt(i["quantity"]) + " " + (i["unit"] or "")).strip(),
+                   "status_label": _DISTRIBUSI_STATUS_LABEL.get(i["status"], i["status"])} for i in items],
     }
 
 
@@ -938,6 +956,17 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             fm = {r.name: r.first_mile for r in frappe.get_all(
                 "RN Distribution Flow", filters={"name": ["in", [r.name for r in _flow_rows]]},
                 fields=["name", "first_mile"], limit_page_length=0)}
+        # paket: only the main flow waits in the queue, named after its items
+        pkg_member, pkg_size = set(), {}
+        if _flow_rows and frappe.db.has_column("RN Distribution Flow", "package_flow"):
+            for r in frappe.get_all("RN Distribution Flow",
+                                    filters={"package_flow": ["in", [x.name for x in _flow_rows]]},
+                                    fields=["package_flow"], limit_page_length=0):
+                pkg_size[r.package_flow] = pkg_size.get(r.package_flow, 1) + 1
+            pkg_member = set(frappe.get_all("RN Distribution Flow",
+                                            filters={"name": ["in", [x.name for x in _flow_rows]],
+                                                     "package_flow": ["is", "set"]},
+                                            pluck="name", limit_page_length=0))
         waiting_booking = set()
         if _flow_rows and frappe.db.has_column("RN Transport Booking", "distribution_flow"):
             waiting_booking = set(frappe.get_all(
@@ -947,6 +976,8 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 pluck="distribution_flow", limit_page_length=0))
         for fr in _flow_rows:
             first_leg = bool(fr.get("first_leg"))
+            if fr.name in pkg_member:
+                continue            # travels inside its package's main flow
             if fr.get("transport_space") and not first_leg:
                 continue
             if not first_leg and (fm.get(fr.name) in ("self_deliver", "transporter")
@@ -962,9 +993,11 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "kind": "flow",
                 "flow": fr.name,
                 "aid_offer": fr.name,  # reused as the row key on the frontend
-                "item": fr.item_name or fr.raw_item_text or "-",
+                "item": (("Paket %d barang — " % pkg_size[fr.name]) if fr.name in pkg_size else "")
+                        + (fr.item_name or fr.raw_item_text or "-"),
                 "quantity": fr.quantity,
                 "unit": fr.unit or "",
+                "package_items": pkg_size.get(fr.name) or 0,
                 "donor": (src_t or fr.source_posko or "Posko pengumpul"),
                 "donor_contact": "",
                 "pickup_location": (src_t or fr.source_posko or "-"),

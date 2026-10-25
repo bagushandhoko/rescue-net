@@ -27,7 +27,7 @@
           '<div class="cl-label">' +
             '<div class="cl-top"><span>RESCUE-NET · KIRIMAN BANTUAN</span><span>Koli ' + k + "/" + koli + "</span></div>" +
             '<div class="cl-body"><div class="cl-qr" id="clQr' + fi + "_" + k + '"></div>' +
-              "<div><div class=\"cl-item\">" + esc(f.item) + '</div><div class="cl-qty">' + esc(f.quantity_text) + "</div>" +
+              "<div>" + itemBlock(f) +
               '<div class="cl-route"><b>Dari:</b> ' + esc(f.source_posko || "-") + "<br><b>Ke:</b> " + esc(f.destination_posko || "-") + "</div></div></div>" +
             '<div class="cl-bar"><svg id="clBar' + fi + "_" + k + '"></svg></div>' +
             '<div class="cl-trace">' + esc(f.trace) + "</div>" +
@@ -60,6 +60,16 @@
     });
   }
 
+  // paket: one label listing every item; else the single item + quantity
+  function itemBlock(f) {
+    var p = f.package;
+    if (!p || !p.items || p.items.length < 2) {
+      return '<div class="cl-item">' + esc(f.item) + '</div><div class="cl-qty">' + esc(f.quantity_text) + "</div>";
+    }
+    return '<div class="cl-item">Paket ' + p.items.length + " barang</div>" +
+      '<ul class="cl-pkg">' + p.items.map(function (i) { return "<li>" + esc(i.item) + " — " + esc(i.quantity_text) + "</li>"; }).join("") + "</ul>";
+  }
+
   // more than one shipment: a checklist, so only the chosen labels print
   function renderPicker() {
     var box = $("#clPick");
@@ -71,7 +81,7 @@
       '<button type="button" class="cl-link" data-all="1">Pilih semua</button> · <button type="button" class="cl-link" data-all="0">Kosongkan</button></div>' +
       FLOWS.map(function (f) {
         return '<label class="cl-pick-row"><input type="checkbox" data-trace="' + esc(f.trace) + '"' + (PICKED[f.trace] ? " checked" : "") + "> " +
-          "<span><b>" + esc(f.item) + "</b> · " + esc(f.quantity_text) + "<br><small>Ke " + esc(f.destination_posko || "-") + " · " + esc(f.trace) + "</small></span></label>";
+          "<span><b>" + esc(f.package && f.package.items.length > 1 ? "Paket " + f.package.items.length + " barang: " + f.package.items.map(function (i) { return i.item; }).join(", ") : f.item) + "</b> · " + esc(f.quantity_text) + "<br><small>Ke " + esc(f.destination_posko || "-") + " · " + esc(f.trace) + "</small></span></label>";
       }).join("");
     box.querySelectorAll("input[data-trace]").forEach(function (cb) {
       cb.addEventListener("change", function () { PICKED[cb.dataset.trace] = cb.checked; render(); });
@@ -102,7 +112,11 @@
     for (var i = 0; i < calls.length; i++) {
       try {
         var r = await window.RN_FRAPPE.call("rescue_net.api_control_centre.flow_trace", calls[i]);
-        if (r && r.trace) FLOWS.push(r);
+        // an item inside a package prints the package's label (main resi)
+        if (r && r.package && !r.package.is_main) {
+          r = await window.RN_FRAPPE.call("rescue_net.api_control_centre.flow_trace", { flow: r.package.flow });
+        }
+        if (r && r.trace && !FLOWS.some(function (x) { return x.trace === r.trace; })) FLOWS.push(r);
       } catch (e) {
         $("#clMsg").textContent = "Sebagian kiriman tidak ditemukan: " + ((e && e.message) || e);
       }

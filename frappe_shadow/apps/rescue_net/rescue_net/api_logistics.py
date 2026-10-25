@@ -12,11 +12,12 @@ from rescue_net.logistics import (  # noqa: F401
     guest,
     item_groups,
     needs_offers,
+    package,
     receipts,
     transport,
     user_aid,
 )
 
-for _module in (common, flows, guest, item_groups, needs_offers, receipts, transport, user_aid,):
+for _module in (common, flows, guest, item_groups, needs_offers, package, receipts, transport, user_aid,):
     globals().update({k: v for k, v in vars(_module).items() if not k.startswith("__")})
 del _module

@@ -8,6 +8,7 @@
   var $ = function (s) { return document.querySelector(s); };
   var esc = function (s) { return window.RNUI ? window.RNUI.esc(s) : String(s == null ? "" : s); };
   var FLOWS = [];
+  var PICKED = {};   // trace -> true: labels chosen for printing (owner: not all at once)
 
   function lacakUrl(trace) {
     return location.origin + "/rescue-net/pages/lacak-logistik.html?trace=" + encodeURIComponent(trace);
@@ -17,8 +18,10 @@
     var koli = Math.max(1, Math.min(200, parseInt($("#clKoli").value, 10) || 1));
     var sheet = $("#clSheet");
     if (!FLOWS.length) { sheet.innerHTML = "<p>Tidak ada kiriman untuk dicetak.</p>"; return; }
+    renderPicker();
     var html = [];
     FLOWS.forEach(function (f, fi) {
+      if (!PICKED[f.trace]) return;
       for (var k = 1; k <= koli; k++) {
         html.push(
           '<div class="cl-label">' +
@@ -32,8 +35,9 @@
           "</div>");
       }
     });
-    sheet.innerHTML = html.join("");
+    sheet.innerHTML = html.join("") || "<p>Centang kiriman yang mau dicetak labelnya.</p>";
     FLOWS.forEach(function (f, fi) {
+      if (!PICKED[f.trace]) return;
       for (var k = 1; k <= koli; k++) {
         if (typeof QRCode === "function") {
           var box = document.getElementById("clQr" + fi + "_" + k);
@@ -53,6 +57,30 @@
           JsBarcode("#clBar" + fi + "_" + k, f.trace, { format: "CODE128", displayValue: false, margin: 0, height: 54, width: 2 });
         }
       }
+    });
+  }
+
+  // more than one shipment: a checklist, so only the chosen labels print
+  function renderPicker() {
+    var box = $("#clPick");
+    if (!box) return;
+    box.hidden = FLOWS.length < 2;
+    if (FLOWS.length < 2) return;
+    var n = FLOWS.filter(function (f) { return PICKED[f.trace]; }).length;
+    box.innerHTML = '<div class="cl-pick-head"><b>Pilih kiriman (' + n + " dari " + FLOWS.length + ")</b> " +
+      '<button type="button" class="cl-link" data-all="1">Pilih semua</button> · <button type="button" class="cl-link" data-all="0">Kosongkan</button></div>' +
+      FLOWS.map(function (f) {
+        return '<label class="cl-pick-row"><input type="checkbox" data-trace="' + esc(f.trace) + '"' + (PICKED[f.trace] ? " checked" : "") + "> " +
+          "<span><b>" + esc(f.item) + "</b> · " + esc(f.quantity_text) + "<br><small>Ke " + esc(f.destination_posko || "-") + " · " + esc(f.trace) + "</small></span></label>";
+      }).join("");
+    box.querySelectorAll("input[data-trace]").forEach(function (cb) {
+      cb.addEventListener("change", function () { PICKED[cb.dataset.trace] = cb.checked; render(); });
+    });
+    box.querySelectorAll("[data-all]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        FLOWS.forEach(function (f) { PICKED[f.trace] = b.dataset.all === "1"; });
+        render();
+      });
     });
   }
 
@@ -79,14 +107,20 @@
         $("#clMsg").textContent = "Sebagian kiriman tidak ditemukan: " + ((e && e.message) || e);
       }
     }
+    // one shipment: ready to print; several: the user ticks which ones first
+    FLOWS.forEach(function (f) { PICKED[f.trace] = FLOWS.length === 1; });
     render();
-    // ?print=1 (the 🖨 buttons): open the printer dialog once labels are drawn
-    if (qs.get("print") === "1" && FLOWS.length) printWhenReady();
+    // ?print=1 (the 🖨 buttons): straight to the printer for a single label
+    if (qs.get("print") === "1" && FLOWS.length === 1) printWhenReady();
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     $("#clKoli").addEventListener("input", render);
-    $("#clPrint").addEventListener("click", printWhenReady);
+    $("#clPrint").addEventListener("click", function () {
+      if (!document.querySelector("#clSheet .cl-label")) { $("#clMsg").textContent = "Centang dulu kiriman yang mau dicetak."; return; }
+      $("#clMsg").textContent = "";
+      printWhenReady();
+    });
     boot();
   });
 })();

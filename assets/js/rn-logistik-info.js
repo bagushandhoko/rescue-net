@@ -206,7 +206,7 @@ window.RNLogistikInfo = (function () {
     print.href = live.length
       ? "cetak-label.html?print=1&" + live.slice(0, 30).map(m => "flow=" + encodeURIComponent(m.flow)).join("&")
       : "cetak-label.html";
-    print.title = live.length ? `Cetak ${Math.min(live.length, 30)} label kiriman keluar` : "Belum ada kiriman keluar yang berjalan";
+    print.title = live.length ? `Pilih label dari ${Math.min(live.length, 30)} kiriman keluar` : "Belum ada kiriman keluar yang berjalan";
     print.hidden = !manage;
     const track = toolButton(parent, "movTrackBtn", "📍 Lacak resi", "Lacak kiriman dengan nomor resi RN-XXXXXXXX");
     track.href = "lacak-logistik.html";

@@ -31,7 +31,13 @@
     .cl-trace { font-family: "Roboto Mono", ui-monospace, monospace; font-size: 18px; font-weight: 800; letter-spacing: 1.5px; text-align: center; }
     .cl-bar svg { width: 100%; height: 54px; display: block; }
     .cl-foot { display: flex; justify-content: space-between; font-size: 10px; color: #555; }
+    .cl-pick { display: grid; gap: 6px; margin: 0 0 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .cl-pick-head { font-size: 14px; }
+    .cl-link { background: none; border: 0; padding: 0; color: #c0583a; font: inherit; font-size: 13px; text-decoration: underline; cursor: pointer; }
+    .cl-pick-row { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.35; padding: 6px 0; border-top: 1px solid var(--line); cursor: pointer; }
+    .cl-pick-row input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
     @media print {
+      .cl-pick { display: none !important; }
       @page { margin: 8mm; }
       body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .cl-qr img { display: block !important; }
@@ -54,12 +60,13 @@
       <a class="cl-btn alt" id="clBack" href="javascript:history.back()">← Kembali</a>
       <p class="cl-msg" id="clMsg" aria-live="polite"></p>
     </div>
+    <div class="cl-pick" id="clPick" hidden></div>
     <div class="cl-sheet" id="clSheet"><p>Memuat label…</p></div>
   </div>
   <script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
   <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
   <script src="../assets/vendor/qrcode/qrcode.min.js"></script>
   <script src="../assets/vendor/jsbarcode/JsBarcode.code128.min.js"></script>
-  <script src="../assets/js/cetak-label.js?v=qrimg-20261025b"></script>
+  <script src="../assets/js/cetak-label.js?v=pick-20261025"></script>
 </body>
 </html>

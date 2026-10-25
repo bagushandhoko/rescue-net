@@ -80,6 +80,14 @@ class TestEarlyWarning(RNTestCase):
         for secret in ("draft_event", "nearby_poskos", "raw", "legacy"):
             self.assertNotIn(secret, blob)
 
+    def test_warning_stays_up_the_full_48_hours(self):
+        # BMKG time is UTC; the site clock is WIB in production (was ~41 h)
+        old = (datetime.now(timezone.utc) - timedelta(hours=44)).replace(microsecond=0).isoformat()
+        ew.process([payload(dt=old)])
+        with as_guest():
+            b = ew_api.banner()
+        self.assertEqual(len(b["warnings"]), 1)
+
     def test_review_is_system_manager_only(self):
         ew.process([payload()])
         name = frappe.get_all("RN Early Warning", pluck="name")[0]

@@ -34,6 +34,8 @@ MANAGER_ROLES = {
     "medical_operator",
     "shelter_operator",
 }
+from rescue_net.access_policy import POSKO_WORKER_ROLES as _PWR  # noqa: E402
+MANAGER_ROLES = MANAGER_ROLES | _PWR
 
 
 ACTIVE_DEPLOYMENT = {

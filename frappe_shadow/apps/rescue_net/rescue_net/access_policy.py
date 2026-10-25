@@ -290,3 +290,14 @@ def public_posko_allowed(posko_name):
                 return False
 
     return posko.public_detail == "public"
+
+
+# Every role that runs a posko (E2E 2026-10-25: logistics_operator and
+# distribution_operator — 13 accounts — were unknown to the volunteer, work-tool
+# and Search & Found role gates and got "Hak operator diperlukan" on their own
+# posko). The posko-level check (can_manage_posko / organisation) still decides.
+POSKO_WORKER_ROLES = {
+    "command_center", "posko_operator", "medical_operator", "shelter_operator",
+    "logistics_operator", "distribution_operator", "kitchen_operator", "field_assessment",
+    "org_admin", "community_coordinator",
+}

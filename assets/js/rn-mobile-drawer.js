@@ -86,6 +86,32 @@
     return panel;
   }
 
+  // "About Us" in the phone menu = a closed group like Posko (owner 2026-10-25:
+  // the sub-items used to show flat among the main links). Built from the
+  // header's About Us sub-menu so desktop and phone list the same items.
+  function aboutSection(item) {
+    const sec = document.createElement("details");
+    sec.className = "rn-nav-v2-group rn-drawer-group rn-drawer-about";
+    sec.style.setProperty("border-bottom", "0", "important");
+    sec.setAttribute("data-rn-group", "about");
+    const summary = document.createElement("summary");
+    summary.className = "rn-nav-v2-summary";
+    summary.innerHTML = '<span>About Us</span><span class="rn-nav-v2-chevron" aria-hidden="true">⌄</span>';
+    const list = document.createElement("nav");
+    list.className = "rn-nav-v2-children";
+    list.setAttribute("aria-label", "About Us");
+    item.querySelectorAll(".rn-submenu a[href]").forEach(src => {
+      const a = document.createElement("a");
+      a.href = src.getAttribute("href");
+      a.className = "rn-nav-v2-link";
+      a.textContent = src.textContent.trim();
+      list.appendChild(a);
+    });
+    sec.appendChild(summary);
+    sec.appendChild(list);
+    return sec;
+  }
+
   // "Bencana Aktif" section of the phone menu: each active disaster links to
   // war-room.html?event=<id> and becomes the remembered active event.
   function disasterSection() {
@@ -299,6 +325,14 @@
       hiddenLinks = Array.from(foldWrap.querySelectorAll('a[href$="bencana-aktif.html"]'))
         .filter(a => !a.closest(".rn-drawer-disasters"));
       hiddenLinks.forEach(a => a.style.setProperty("display", "none", "important"));
+
+      // About Us: hide the flat header item, show it as a closed group
+      const aboutItem = foldWrap.querySelector(".rn-drawer-public-links .rn-has-submenu");
+      if (aboutItem) {
+        aboutItem.style.setProperty("display", "none", "important");
+        hiddenLinks.push(aboutItem);
+        foldWrap.appendChild(aboutSection(aboutItem));
+      }
 
       // Groups with sub-menus, all closed until tapped (owner 2026-10-19):
       // Bencana Aktif (each disaster -> its Control Centre), then the

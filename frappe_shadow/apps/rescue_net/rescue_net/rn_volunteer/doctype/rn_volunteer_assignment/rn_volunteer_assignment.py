@@ -40,6 +40,7 @@ class RNVolunteerAssignment(Document):
         )
 
     def validate(self):
+        self._fill_event()
         if self.assignment_status not in STATUS:
             frappe.throw(
                 "Status penugasan tidak valid"
@@ -69,3 +70,15 @@ class RNVolunteerAssignment(Document):
         )
         if other:
             frappe.throw("Relawan sudah memiliki penugasan aktif")
+
+    def _fill_event(self):
+        """An assignment belongs to a disaster (the Relawan boards filter on it;
+        E2E 2026-10-25: create_assignment left it empty, so new assignments
+        never showed). The volunteer's own disaster when the posko serves it,
+        else the posko's main disaster."""
+        if self.disaster_event or not self.posko:
+            return
+        from rescue_net.control_centre.common import posko_served_events
+        served = posko_served_events(self.posko)
+        vol_ev = frappe.db.get_value("RN Volunteer Profile", self.volunteer, "disaster_event") if self.volunteer else None
+        self.disaster_event = vol_ev if vol_ev in served else (served[0] if served else None)

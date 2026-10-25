@@ -25,3 +25,13 @@ class TestPoskoWorkerRoles(RNTestCase):
         op = make_actor(role="distribution_operator", posko=self.w.posko_a)
         with as_user(op.user), self.assertRaises(frappe.PermissionError):
             api_volunteer.create_assignment(self.vol, self.w.posko_b.name, "Bongkar muat")
+
+    def test_assignment_gets_the_disaster_and_shows_on_the_board(self):
+        op = make_actor(role="logistics_operator", posko=self.w.posko_a)
+        with as_user(op.user):
+            r = api_volunteer.create_assignment(self.vol, self.w.posko_a.name, "Angkut terpal")
+        name = r.get("assignment") or r.get("name")
+        self.assertEqual(frappe.db.get_value("RN Volunteer Assignment", name, "disaster_event"), self.w.event.name)
+        with as_guest():
+            board = api_volunteer.volunteer_board(self.w.event.name)
+        self.assertIn("Angkut terpal", [p["task_title"] for p in board["papan_penugasan"]])

@@ -36,7 +36,12 @@
         '<span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></div>" +
       '<div class="rn-pk-card-meta">' + esc(p.category) + " · " + esc(p.location) + "</div>" +
       '<div class="rn-pk-bar"><div style="width:' + p.progress_percent + '%"></div></div>' +
-      '<div class="rn-pk-bar-label"><span>' + p.progress_percent + "%</span></div></button>"
+      '<div class="rn-pk-bar-label"><span>' + p.progress_percent + "%</span>" +
+        // owner 2026-10-25: nilai donasi masuk langsung terlihat di daftar
+        (p.budget_received || p.budget_target
+          ? '<span class="rn-dp-received"><b>' + rp(p.budget_received || 0) + "</b> terkumpul" +
+            (p.budget_target ? " dari " + rp(p.budget_target) : "") + "</span>" : "") +
+      "</div></button>"
     );
   }
 
@@ -93,6 +98,10 @@
   function renderDonations(d) {
     var wall = $("#ddDonationWall");
     var pub = (d && d.public) || [];
+    var head = $("#ddDonationHead");
+    if (head) head.textContent = pub.length
+      ? "Donasi Masuk — " + pub.length + " donatur terkonfirmasi · total " + rp(d.total_received || 0)
+      : "Donasi Masuk";
     wall.innerHTML = pub.length
       ? pub.map(function (r) {
           return '<article class="event-card"><div class="event-main"><div>' +

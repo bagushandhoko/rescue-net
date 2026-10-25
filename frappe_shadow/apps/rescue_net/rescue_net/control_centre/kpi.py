@@ -421,13 +421,17 @@ def _drill_program(event, res, limit):
         fields=_sf("RN Donor Program", [
             "name", "program_name", "program_type", "owner_type", "owner_id",
             "status", "target_amount", "target_unit", "current_amount",
+            "budget_target", "budget_received",
             "location", "priority", "modified",
         ]),
         order_by="modified desc",
         limit_page_length=limit,
     ):
-        tgt = _num(d.get("target_amount"))
-        cur = _num(d.get("current_amount"))
+        # money programs keep their numbers in budget_target / budget_received
+        # (the generic target_amount / current_amount were always empty here)
+        money = bool(d.get("budget_target") or d.get("budget_received"))
+        tgt = _num(d.get("budget_target") or d.get("target_amount"))
+        cur = _num(d.get("budget_received") or d.get("current_amount"))
         owner_is_org = str(d.get("owner_type") or "").lower() in {
             "organization", "org", "rn organization", "kelompok",
         }
@@ -436,8 +440,9 @@ def _drill_program(event, res, limit):
             "title": d.get("program_name") or "Program",
             "detail": " · ".join(x for x in [
                 d.get("program_type"),
-                (f"target {_fmt(tgt)} {d.get('target_unit') or ''}".strip() if tgt else None),
-                (f"terkumpul {_fmt(cur)}" if cur else None),
+                ((f"terkumpul Rp {_fmt(cur)} dari Rp {_fmt(tgt)}" + (f" ({round(100.0 * cur / tgt)}%)" if tgt else ""))
+                 if money else (f"target {_fmt(tgt)} {d.get('target_unit') or ''}".strip() if tgt else None)),
+                (f"terkumpul {_fmt(cur)}" if cur and not money else None),
                 d.get("location"),
             ] if x),
             "quantity": tgt,

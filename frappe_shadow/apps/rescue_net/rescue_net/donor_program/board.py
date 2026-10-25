@@ -491,3 +491,66 @@ def recheck_and_publish(donor_program):
             opened.append(t.name)
 
     return {"donor_program": donor_program, "public_visibility": "summary_public", "tenders_opened": opened}
+
+
+def _organiser_title(owner_type, owner_id):
+    if not owner_id:
+        return "-"
+    t = str(owner_type or "").lower()
+    if t in ("organization", "org", "rn organization", "kelompok"):
+        return frappe.db.get_value("RN Organization", owner_id, "title") or owner_id
+    if t == "posko":
+        return frappe.db.get_value("RN Posko", owner_id, "title") or owner_id
+    return frappe.db.get_value("RN User Account", owner_id, "title") or "Perorangan"
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
+def donation_summary(disaster_event=None):
+    """Nilai program donasi yang masuk untuk Control Centre (owner 2026-10-25):
+    total terkumpul + per program: penyelenggara, terkumpul sekarang, target,
+    persen, jumlah donatur terkonfirmasi. Hanya program yang publik
+    (public_visibility = summary_public) — sama dengan program_board."""
+    event = resolve_disaster_event(disaster_event)
+    filters = {"public_visibility": "summary_public"}
+    if event:
+        filters["disaster_event"] = event
+    rows = frappe.get_all(
+        "RN Donor Program", filters=filters,
+        fields=["name", "program_name", "program_type", "owner_type", "owner_id", "status",
+                "budget_target", "budget_received", "budget_spent"],
+        order_by="budget_received desc", limit_page_length=500, ignore_permissions=True,
+    )
+    donors = {}
+    if rows:
+        for d in frappe.get_all("RN Cash Donation",
+                                filters={"donor_program": ["in", [r.name for r in rows]], "status": "received"},
+                                fields=["donor_program", "amount"], limit_page_length=0):
+            c = donors.setdefault(d.donor_program, [0, 0.0])
+            c[0] += 1
+            c[1] += flt(d.amount)
+    programs, by_org = [], {}
+    for r in rows:
+        rec, tgt = flt(r.budget_received), flt(r.budget_target)
+        org = _organiser_title(r.owner_type, r.owner_id)
+        programs.append({
+            "id": r.name, "title": r.program_name or r.name, "kind": r.program_type,
+            "organiser": org, "status": r.status,
+            "received": rec, "target": tgt, "spent": flt(r.budget_spent),
+            "percent": round(100.0 * rec / tgt, 1) if tgt else None,
+            "donor_count": (donors.get(r.name) or [0])[0],
+            "href": "donor-program.html?id=" + r.name,
+        })
+        g = by_org.setdefault(org, {"organiser": org, "programs": 0, "received": 0.0, "target": 0.0})
+        g["programs"] += 1
+        g["received"] += rec
+        g["target"] += tgt
+    return {
+        "disaster_event": event,
+        "program_count": len(programs),
+        "received_total": sum(p["received"] for p in programs),
+        "target_total": sum(p["target"] for p in programs),
+        "donor_count": sum(p["donor_count"] for p in programs),
+        "organisers": sorted(by_org.values(), key=lambda g: -g["received"]),
+        "programs": programs,
+    }

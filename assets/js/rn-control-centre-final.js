@@ -2007,6 +2007,17 @@ function renderModules(ctx) {
   const prog = val("program", s.program_count || 0);
   mod("Program", prog, "program berjalan", prog ? "Berjalan" : "Belum ada", prog ? "ok" : "",
     "Berjalan bila ada program khusus / donasi terarah.");
+  // owner 2026-10-25: nilai program donasi yang masuk; klik = penyelenggara + nilainya
+  if (window.RN_FRAPPE) {
+    window.RN_FRAPPE.call("rescue_net.api_donor_program.donation_summary", { disaster_event: eventId() })
+      .then(d => {
+        if (!d || !d.program_count) return;
+        const rp = v => "Rp " + new Intl.NumberFormat("id-ID", { notation: v >= 1e9 ? "compact" : "standard", maximumFractionDigits: 1 }).format(v || 0);
+        setText("moduleProgramDetail", `${format(d.program_count)} program · ${rp(d.received_total)} terkumpul` +
+          (d.target_total ? ` dari ${rp(d.target_total)}` : ""));
+      })
+      .catch(() => {});
+  }
 
   const sf = val("search", num(s.missing_person_count) + num(s.found_person_count));
   mod("Search", sf, "laporan hilang & ditemukan", sf ? "Aktif" : "Belum ada", sf ? "warn" : "",

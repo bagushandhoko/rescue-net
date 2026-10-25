@@ -7496,3 +7496,7 @@ html.rn-mapfs-lock, html.rn-mapfs-lock body { overflow: hidden; }
   .rn-dp-target-modal { flex-wrap: wrap; }
   .rn-dp-target-modal > div { flex: 1 1 140px; min-width: 0; }
 }
+/* Donor Program: nilai terkumpul di kartu daftar (2026-10-25) */
+.rn-pk-bar-label { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.rn-dp-received { font-size: 12px; color: var(--muted); }
+.rn-dp-received b { color: var(--green, #2f9b68); }

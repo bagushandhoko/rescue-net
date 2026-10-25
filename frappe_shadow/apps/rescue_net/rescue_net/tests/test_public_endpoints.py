@@ -60,7 +60,7 @@ GUEST_ENDPOINTS = {
     "api_access_status.board",  # reviewed: per-jenis ringkasan + tempat tertutup/terbatas; tanpa pelapor/koordinat/catatan
     "api_public_needs.board",  # reviewed: public posko only; item/qty/unit/region/time, no contacts or notes
     "api_displacement.displacement_board",
-    "api_donor_program.program_board", "api_donor_program.program_detail",
+    "api_donor_program.donation_summary", "api_donor_program.program_board", "api_donor_program.program_detail",
     "api_donor_program.program_donations", "api_donor_program.public_context",
     "api_forum.feedback_threads", "api_forum.post_feedback", "api_forum.upvote_feedback",
     "api_frontend_bridge.community_reports", "api_frontend_bridge.consolidated_needs",

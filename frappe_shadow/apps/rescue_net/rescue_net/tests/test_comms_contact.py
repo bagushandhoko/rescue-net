@@ -95,3 +95,27 @@ class TestCommsContact(RNTestCase):
         with as_user(self.op.user):
             with self.assertRaises(frappe.ValidationError):
                 api_comms.create_comms_device("X", "ht", disaster_event=self.w.event.name, frequency_mhz="abc")
+
+
+class TestCommsOperatorPhone(RNTestCase):
+    """CT103 audit 2026-10-26: guests saw every radio operator's phone."""
+
+    def setUp(self):
+        super().setUp()
+        self.w = make_world()
+        _insert("RN Comms Operator", operator_name="Op Uji", posko=self.w.posko_a.name, status="siaga",
+                disaster_event=self.w.event.name, contact_phone="0812-0000-8888")
+
+    def op_row(self, data):
+        return next(r for r in data["operators"] if r["name"] == "Op Uji")
+
+    def test_guest_does_not_see_operator_phone(self):
+        with as_guest():
+            data = api_comms.comms_board(disaster_event=self.w.event.name)
+        self.assertEqual(self.op_row(data)["contact"], "")
+        self.assertNotIn("0812-0000-8888", frappe.as_json(data))
+
+    def test_posko_operator_sees_operator_phone(self):
+        with as_user(make_actor(posko=self.w.posko_a).user):
+            data = api_comms.comms_board(disaster_event=self.w.event.name)
+        self.assertEqual(self.op_row(data)["contact"], "0812-0000-8888")

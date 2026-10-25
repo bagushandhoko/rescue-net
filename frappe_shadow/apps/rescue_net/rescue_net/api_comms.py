@@ -368,6 +368,7 @@ def comms_board(disaster_event=None):
     }
 
     # ---- operators ----
+    from rescue_net.visibility import posko_contacts_visible
     op_rows = []
     for o in operators:
         op_rows.append({
@@ -378,7 +379,10 @@ def comms_board(disaster_event=None):
             "status": o.status or "siaga",
             "status_label": _OPERATOR_STATUS_LABEL.get(o.status, o.status or "Siaga"),
             "posko": posko_title.get(o.posko, o.posko or "-"),
-            "contact": o.contact_phone or "",
+            # same rule as the posko PIC's phone (CT103 audit 2026-10-26: guests
+            # saw every operator's number); no posko -> logged-in actors only
+            "contact": (o.contact_phone or "") if (
+                posko_contacts_visible(o.posko, actor) if o.posko else bool(actor)) else "",
             "skills": o.skills or "",
         })
     operator_active = sum(1 for o in operators if o.status in ("online", "siaga"))

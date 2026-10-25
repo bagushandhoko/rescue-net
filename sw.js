@@ -7,7 +7,7 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v4";
+const CACHE = "rescue-net-web-v5";
 const PRECACHE = [
  "/rescue-net/index.html",
  "/rescue-net/pages/laporan-masyarakat.html",
@@ -40,6 +40,7 @@ const PRECACHE = [
  "/rescue-net/assets/js/posko-distribusi.js",
  "/rescue-net/pages/install.html",
  "/rescue-net/pages/manual.html",
+ "/rescue-net/pages/manual-teknis.html",
  "/rescue-net/assets/css/rn-lightbox.css",
  "/rescue-net/assets/css/rn-mobile-drawer.css",
  "/rescue-net/assets/css/rn-navigation-v2.css",

@@ -1,0 +1,63 @@
+/* Manual Rescue-Net + Manual Teknis (2026-10-25). Shared by pages/manual.html
+   and pages/manual-teknis.html. Same palette as the site (style.css tokens). */
+body { margin: 0; background: var(--bg, #fff6ef); color: var(--text, #2d211b); }
+.manual { width: min(1120px, calc(100% - 32px)); margin: 30px auto 56px; }
+.manual-hero, .manual-card { background: #fff; border: 1px solid var(--line, rgba(104,64,45,.14)); border-radius: 18px; box-shadow: 0 8px 24px rgba(145,84,54,.06); }
+.manual-hero { padding: 26px; margin-bottom: 18px; }
+.manual-hero .eyebrow { margin: 0 0 6px; color: #b94b35; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.manual h1 { margin: 0; font-size: clamp(26px, 4vw, 38px); text-wrap: balance; }
+.manual h2 { margin: 0 0 8px; font-size: 22px; text-wrap: balance; }
+.manual h3 { margin: 0 0 8px; font-size: 18px; }
+.manual h4 { margin: 14px 0 6px; font-size: 15px; }
+.manual p, .manual li, .manual td, .manual th { font-size: 15px; line-height: 1.65; }
+.manual p { margin: 8px 0; max-width: 72ch; }
+.manual ul, .manual ol { max-width: 76ch; }
+.manual-grid { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 18px; align-items: start; }
+.manual-card { padding: 22px; }
+.manual-toc { position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow-y: auto; }
+.manual-toc h2 { font-size: 18px; }
+.manual-toc ol { margin: 0 0 6px; padding-left: 22px; }
+.manual-toc li { margin: 4px 0; font-size: 14px; line-height: 1.45; }
+.manual-toc .toc-group { margin: 14px 0 4px; font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #b94b35; }
+.manual-toc .toc-tech { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line, rgba(104,64,45,.14)); }
+.manual a { color: #a93f2d; font-weight: 600; }
+.manual a:hover { color: #75291e; }
+.manual section { padding-block: 14px; border-top: 1px solid var(--line, rgba(104,64,45,.1)); scroll-margin-top: 80px; }
+.manual .group-head { padding: 20px 0 8px; scroll-margin-top: 80px; }
+.manual .group-head:not(:first-child) { margin-top: 18px; border-top: 3px solid #f4a786; }
+.manual .group-label { margin: 0 0 2px; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #b94b35; }
+.manual .note { padding: 12px 14px; border-left: 4px solid #e8755a; border-radius: 8px; background: #fff4ef; }
+.manual .plan { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: rgba(124,100,88,.12); color: #7c6458; font-size: 12px; font-weight: 700; vertical-align: middle; }
+.manual .steps { padding-left: 22px; }
+.manual .steps li { padding-left: 3px; margin: 6px 0; }
+.manual .back-top { display: inline-block; margin-top: 14px; font-size: 13px; }
+.manual .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 14px 0 4px; }
+.manual .facts div { display: grid; gap: 2px; padding: 12px 14px; border-radius: 12px; background: #fff8f3; border: 1px solid var(--line, rgba(104,64,45,.14)); }
+.manual .facts b { font-size: 18px; font-variant-numeric: tabular-nums; color: #c4442f; }
+.manual .facts span { font-size: 13px; color: var(--muted, #7c6458); line-height: 1.4; }
+.manual .table-wrap { overflow-x: auto; margin: 10px 0; }
+.manual table { width: 100%; border-collapse: collapse; min-width: 520px; }
+.manual th, .manual td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line, rgba(104,64,45,.14)); }
+.manual th { font-size: 13px; color: var(--muted, #7c6458); font-weight: 700; background: #fff8f3; }
+.manual pre { overflow-x: auto; padding: 12px 14px; border-radius: 10px; background: #2d211b; color: #fff6ef; font-size: 13px; line-height: 1.5; }
+.manual code { font-size: 13px; padding: 1px 5px; border-radius: 5px; background: #fff1e8; }
+.manual pre code { padding: 0; background: none; }
+.manual a:focus-visible { outline: 2px solid #c4442f; outline-offset: 2px; }
+@media (max-width: 760px) {
+  .manual { width: min(100% - 20px, 680px); margin: 16px auto 36px; }
+  .manual-grid { grid-template-columns: 1fr; }
+  .manual-toc { position: static; max-height: none; }
+  .manual-hero, .manual-card { padding: 16px; border-radius: 14px; }
+}
+.manual-back { margin-bottom: 14px; }
+.rn-public-dropdown { position: relative; display: inline-block; }
+.rn-public-dropdown > summary { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; background: var(--panel2, #fff8f3); border: 1px solid var(--line, rgba(104,64,45,.14)); color: var(--text, #2d211b); font-size: 14px; font-weight: 600; cursor: pointer; list-style: none; }
+.rn-public-dropdown > summary::-webkit-details-marker { display: none; }
+.rn-public-dropdown > summary::marker { content: ""; }
+.rn-public-dropdown[open] > summary { background: var(--vx-brand, #e8755a); color: #fff; border-color: var(--vx-brand, #e8755a); }
+.rn-public-dropdown-menu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 50; display: none; min-width: 200px; padding: 6px; background: #fff; border: 1px solid var(--line, rgba(104,64,45,.18)); border-radius: 10px; box-shadow: 0 8px 24px rgba(145,84,54,.12); }
+.rn-public-dropdown[open] > .rn-public-dropdown-menu { display: flex; flex-direction: column; gap: 2px; }
+.rn-public-dropdown-menu a { display: flex; align-items: center; min-height: 40px; padding: 8px 12px; border-radius: 8px; color: var(--text, #2d211b); font-size: 14px; font-weight: 600; text-decoration: none; }
+.rn-public-dropdown-menu a:hover { background: rgba(232,117,88,.12); color: var(--vx-brand-dark, #c4442f); }
+@media (max-width: 760px) { .rn-public-dropdown-menu { position: static; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; } .rn-public-dropdown-menu a { min-height: 44px; padding: 12px 14px; border-radius: 0; border-bottom: 1px solid var(--line, rgba(104,64,45,.14)); } .rn-public-dropdown-menu a:last-child { border-bottom: 0; } }
+@media print { .manual-toc, .manual-back { display: none; } .manual-grid { grid-template-columns: 1fr; } }

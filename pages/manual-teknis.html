@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Manual Teknis</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=manual-20261025">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=about-menu-20261023">
+  <link rel="stylesheet" href="../assets/css/rn-manual.css?v=manual-20261025">
+</head>
+<body class="public-report-page">
+  <main class="manual" id="top">
+    <div class="manual-back">
+      <details class="rn-public-dropdown">
+        <summary class="btn back" aria-label="Tutup panel kembali">← Kembali</summary>
+        <div class="rn-public-dropdown-menu">
+          <a href="javascript:history.back()">Kembali ke halaman sebelumnya</a>
+          <a href="manual.html">Manual Rescue-Net</a>
+          <a href="../index.html">Beranda</a>
+        </div>
+      </details>
+    </div>
+
+    <section class="manual-hero">
+      <p class="eyebrow">Untuk developer, mitra integrasi, dan auditor</p>
+      <h1>Manual Teknis Rescue-Net</h1>
+      <p>Arsitektur, model data, aturan bisnis, keamanan, mesin AI, sinkronisasi offline, dan cara integrasi. Ringkasan dari Blueprint Volume 01–14, disesuaikan dengan sistem yang berjalan sekarang.</p>
+      <p class="note">Bagian bertanda <span class="plan">rencana</span> ada di blueprint tetapi belum dibangun. Detail infrastruktur internal (alamat server, kredensial, jalur file) sengaja tidak dimuat di halaman publik ini. Panduan pemakaian ada di <a href="manual.html">Manual Rescue-Net</a>.</p>
+    </section>
+
+    <div class="manual-grid">
+      <nav class="manual-card manual-toc" aria-label="Daftar isi manual teknis">
+        <h2>Daftar isi</h2>
+        <ol>
+          <li><a href="#arsitektur">Arsitektur sistem</a></li>
+          <li><a href="#data">Model data</a></li>
+          <li><a href="#aturan">Aturan bisnis di server</a></li>
+          <li><a href="#akses">Hak akses &amp; berbagi data</a></li>
+          <li><a href="#logistik">Mesin logistik</a></li>
+          <li><a href="#konsolidasi">Konsolidasi data</a></li>
+          <li><a href="#ai">Mesin AI</a></li>
+          <li><a href="#offline">Offline &amp; sinkronisasi</a></li>
+          <li><a href="#gis">Wilayah &amp; peta</a></li>
+          <li><a href="#api">Integrasi API</a></li>
+          <li><a href="#kualitas">Pengujian, rilis, operasi</a></li>
+          <li><a href="#roadmap">Peta jalan</a></li>
+        </ol>
+        <p class="toc-tech"><a href="manual.html">← Manual pengguna</a></p>
+      </nav>
+
+      <article class="manual-card">
+        <section id="arsitektur">
+          <h2>1. Arsitektur sistem</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Lapisan</th><th>Teknologi</th><th>Peran</th></tr></thead>
+              <tbody>
+                <tr><td>Antarmuka web</td><td>HTML, CSS, JavaScript tanpa framework; Leaflet untuk peta</td><td>Semua halaman publik dan operasional. Satu basis kode untuk browser, PWA, dan aplikasi Android.</td></tr>
+                <tr><td>Aplikasi terpasang</td><td>PWA (manifest + service worker) dan pembungkus Android Capacitor</td><td>Aplikasi membuka situs yang sama, jadi pembaruan situs langsung sampai ke aplikasi tanpa instal ulang.</td></tr>
+                <tr><td>API</td><td>Metode <code>@frappe.whitelist</code> di app <code>rescue_net</code></td><td>Setiap layar memanggil metode <code>rescue_net.api_*</code>. Reverse proxy hanya meneruskan metode itu serta login/logout; Desk dan <code>/api/resource</code> tertutup untuk publik.</td></tr>
+                <tr><td>Sistem pencatat</td><td>Frappe 15 + MariaDB</td><td>Sekitar 80 DocType dalam 12 modul domain. Aturan status dan kapasitas dijaga di controller DocType.</td></tr>
+                <tr><td>Pekerjaan latar</td><td>Frappe scheduler + worker</td><td>Antrean AI tiap jam, pengelompokan kebutuhan, backup harian, pembersihan log pemakaian AI.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Prinsip pemisahan: klien boleh memvalidasi awal, tetapi keputusan — izin, kapasitas, status, kebenaran operasional — selalu di server.</p>
+        </section>
+
+        <section id="data">
+          <h2>2. Model data</h2>
+          <p>DocType dikelompokkan per domain (<code>rescue_net/rn_&lt;domain&gt;/doctype/</code>):</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Modul</th><th>Contoh DocType</th></tr></thead>
+              <tbody>
+                <tr><td>RN Core</td><td>Disaster Event, Posko (+ Served Event), Organization, User Account, Posko Assignment, Organization Membership</td></tr>
+                <tr><td>RN Logistics</td><td>Logistic Need, Stock Observation, Aid Offer, Distribution Flow, Transport Space (+ Served Event/Posko), Transport Booking, Normalization Rule</td></tr>
+                <tr><td>RN Medical</td><td>Medical Case, riwayat kartu pasien, pemakaian obat/alat</td></tr>
+                <tr><td>RN Shelter</td><td>Shelter Occupancy, Shelter Household, Shelter Need</td></tr>
+                <tr><td>RN Volunteer</td><td>Volunteer Profile, Volunteer Assignment, Volunteer Accommodation, Safety Briefing</td></tr>
+                <tr><td>RN Community</td><td>Community Report, Community Report Update</td></tr>
+                <tr><td>RN Verification</td><td>Profil verifikator, permintaan, endorsement</td></tr>
+                <tr><td>RN Intelligence</td><td>AI Profile, AI Job, AI Suggestion, AI Usage Daily, AI Usage Log</td></tr>
+                <tr><td>RN Resources</td><td>Resource Profile, Work Object, Work Tool Request</td></tr>
+                <tr><td>RN Search Found</td><td>Missing / Found Person Report</td></tr>
+                <tr><td>RN Donor</td><td>Program khusus, donasi, tender dan penawaran</td></tr>
+                <tr><td>RN Command</td><td>Permintaan komando terpusat, Sync Log</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Kelas data: <b>publik</b> (agregat aman), <b>internal</b> (operasional mitra), <b>terbatas</b> (lokasi stok, penugasan, kontak operasional), <b>rahasia</b> (identitas korban, data kesehatan), dan <b>kredensial</b> (token, kunci, kata sandi — tidak pernah masuk repo).</p>
+        </section>
+
+        <section id="aturan">
+          <h2>3. Aturan bisnis di server</h2>
+          <ul>
+            <li><b>Graf status di controller.</b> Alur distribusi, booking armada, kasus medis, rumah tangga shelter, laporan masyarakat, penugasan relawan, dan tender memakai graf transisi yang dicek juga saat simpan langsung, bukan hanya lewat API.</li>
+            <li><b>Kapasitas armada dikunci.</b> Booking menahan ruang sejak diminta. Kapasitas dicek dengan kunci baris pada armada, dan armada tanpa kapasitas tidak bisa dipesan.</li>
+            <li><b>Satu penugasan aktif per relawan</b>, dicek di bawah kunci baris profil relawan.</li>
+            <li><b>Jumlah dijaga.</b> Kuantitas harus &gt; 0, stok ≥ 0, dan kiriman tidak boleh diterima melebihi yang dikirim pada satuan yang sama.</li>
+            <li><b>Kirim tidak melebihi stok.</b> Tersedia = observasi stok terakhir − alur keluar (barang &amp; satuan sama, tidak batal) yang dibuat setelah observasi itu.</li>
+            <li><b>Hak posko lewat penugasan.</b> Pembuat posko tidak otomatis menjadi pengelola; haknya datang dari penugasan yang disetujui.</li>
+          </ul>
+        </section>
+
+        <section id="akses">
+          <h2>4. Hak akses &amp; berbagi data</h2>
+          <ul>
+            <li><b>Tamu</b> hanya mendapat metode bertanda <code>allow_guest</code>, semuanya dibatasi laju (<code>rate_limit</code>). Daftar metode tamu ditinjau oleh uji otomatis yang menyapu semua metode publik untuk mencari kebocoran data sensitif.</li>
+            <li><b>Mode berbagi organisasi:</b> <code>full</code> (detail penuh) atau ringkasan (<code>aggregate</code>). Organisasi tertutup bisa membuka posko tertentu (<code>public_detail</code>).</li>
+            <li><b><code>can_manage</code></b> menentukan siapa yang boleh menulis ke posko: System Manager, operator posko, anggota organisasi, atau penugasan posko yang disetujui.</li>
+            <li>Kontak posko hanya untuk pengguna login. PIN booking, kontak donatur, dan kontak pemesan hanya untuk operator posko armada. Kontak relawan dan data pasien tidak pernah sampai ke tamu.</li>
+            <li>Komando terpusat: aksi tertentu anggota non-pusat menjadi permintaan yang harus disetujui pusat organisasi.</li>
+          </ul>
+        </section>
+
+        <section id="logistik">
+          <h2>5. Mesin logistik</h2>
+          <pre><code>Kebutuhan (Logistic Need) ──┐
+Stok (Stock Observation) ───┼─► Alur Distribusi (Distribution Flow)
+Tawaran donatur (Aid Offer) ┘        │
+                                     ├─ armada utama   → Booking (leg main)
+                                     └─ ke titik serah → antar sendiri | antrean | Booking (leg first_mile)
+planned → assigned_pickup → in_transit → arrived_at_posko → received</code></pre>
+          <ul>
+            <li><b>Posko &amp; armada multi-bencana:</b> tabel anak <code>served_events</code>. Helper <code>serving_posko_names(event)</code> dan <code>serving_transport_names(event, source_posko)</code> dipakai daftar posko, peta, tujuan kirim, armada, dan landing.</li>
+            <li><b>Booking:</b> armada satu organisasi langsung <code>confirmed</code>; organisasi lain <code>requested</code> sampai posko armada mengonfirmasi. Konfirmasi leg <code>main</code> mengisi <code>transport_space</code>, leg <code>first_mile</code> mengisi <code>first_mile_space</code>.</li>
+            <li><b>Antrean jemput:</b> alur tanpa armada, atau alur berarmada utama yang memilih "masuk antrean", sampai ada posko distribusi yang mengklaimnya.</li>
+            <li><b>Normalisasi barang:</b> aturan kata kunci (RN Normalization Rule) memetakan nama barang ke kategori/kelompok kanonik. Satuan asli selalu disimpan; konversi hanya bila diketahui.</li>
+            <li><b>Kalkulator berbasis aturan:</b> air (Sphere 15 L/orang/hari, perjalanan truk tangki) dan kebutuhan alat kerja dari kondisi lapangan, dengan aturannya ditampilkan di samping angka.</li>
+          </ul>
+        </section>
+
+        <section id="konsolidasi">
+          <h2>6. Konsolidasi data</h2>
+          <ul>
+            <li><b>Raw report ≠ operational truth.</b> Data mentah tidak dihapus; hanya ditandai invalid, duplicate, rejected, atau archived.</li>
+            <li><b>MAX, bukan SUM,</b> untuk laporan yang sama lokasi, kebutuhan, dan penerimanya. SUM hanya dengan konfirmasi operator, disertai alasan dan nama peninjau.</li>
+            <li><b>Laporan agregat</b> (tingkat provinsi/organisasi besar) tidak boleh mengalahkan detail desa atau posko.</li>
+            <li><b>Koreksi komando</b> tercatat terpisah: nilai mesin + koreksi = total operasional, dengan alasan dan pelaku.</li>
+            <li>Kandidat duplikasi dinilai dari jarak, waktu, kategori, kelompok penerima, kemiripan teks, dan sumber. Skor tinggi berarti prioritas tinjau, bukan penggabungan otomatis.</li>
+            <li>Skenario minimum / optimal / maksimum di Control Centre <span class="plan">rencana</span></li>
+          </ul>
+        </section>
+
+        <section id="ai">
+          <h2>7. Mesin AI</h2>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Komponen</th><th>Fungsi</th></tr></thead>
+              <tbody>
+                <tr><td><code>services/llm.py</code></td><td>Satu pintu panggilan chat untuk OpenAI, Anthropic Claude, Google Gemini, dan model lokal (endpoint kompatibel OpenAI; URL lokal divalidasi supaya tidak menembak alamat internal).</td></tr>
+                <tr><td><code>ai/keys.py</code> · <code>resolve_ai</code></td><td>Konteks menentukan kunci: tanpa organisasi = kunci pribadi; dengan organisasi = kunci organisasi (penanya harus anggota); fitur publik = kunci platform. Tidak pernah dicampur. Kunci organisasi bisa dibagikan ke anggota dengan batas token.</td></tr>
+                <tr><td><code>ai/budget.py</code></td><td>Batas token harian/bulanan per profil; batas 60/300/600 permintaan per jam (pengguna/organisasi/platform); pemberitahuan pada 80% dan saat habis. Profil nonaktif = tombol mati.</td></tr>
+                <tr><td><code>ai/queue.py</code></td><td>RN AI Job diproses tiap jam (20 per putaran, maksimal 5 percobaan). Hasilnya RN AI Suggestion berstatus draft.</td></tr>
+                <tr><td>Saran &amp; keputusan</td><td><code>list_ai_suggestions</code> / <code>decide_ai_suggestion</code>. Hanya field tertentu yang bisa diterapkan (judul, jenis, prioritas, jumlah orang, kebutuhan, lokasi, kerusakan) — tidak pernah status, verifikasi, atau routing. Pelapor tidak memutuskan saran atas laporannya sendiri.</td></tr>
+                <tr><td>Fallback aturan</td><td>Tanpa AI: kata kunci untuk laporan; aturan duplikasi (selisih jumlah ≤ 10% dan ≤ 48 jam = duplikat; &gt; 3× atau jauh waktunya = berbeda), diberi label <code>processed_without_ai</code>.</td></tr>
+                <tr><td>Jejak</td><td>Log pemakaian mencatat fitur, model, token, dan perkiraan biaya — tanpa isi percakapan. Detail dihapus setelah 7 hari; ringkasan harian disimpan.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Prinsip: teks laporan diperlakukan sebagai data tak tepercaya (melawan prompt injection), hanya data minimum yang dikirim ke model, dan kegagalan AI tidak pernah menghentikan laporan atau operasi.</p>
+          <p>OCR dokumen, laporan suara, analisis foto, dan prakiraan kebutuhan <span class="plan">rencana</span></p>
+        </section>
+
+        <section id="offline">
+          <h2>8. Offline &amp; sinkronisasi</h2>
+          <ul>
+            <li><b>Service worker</b> menyimpan kerangka aplikasi dan aset halaman lapangan (cache tepat per URL berversi <code>?v=</code>). Respons API tidak pernah di-cache oleh service worker.</li>
+            <li><b>Outbox</b> (<code>rn-offline-outbox.js</code>) membungkus pemanggil API. POST ke 13 metode formulir lapangan disimpan di HP saat offline, lalu dikirim lewat <code>api_offline.replay</code>.</li>
+            <li><b>Idempoten:</b> setiap item membawa id klien yang diklaim sebagai <code>event_id</code> unik RN Sync Log dalam transaksi yang sama. Kirim ulang mengembalikan hasil tersimpan, tidak mencatat dua kali. Id milik pengguna lain ditolak.</li>
+            <li><b>Paket offline:</b> <code>api_offline.pack(offset, limit)</code> mengembalikan jawaban metode baca yang <i>sama</i> dengan halaman, dihitung sebagai pengguna itu, jadi izinnya sama persis. Diunduh bertahap ke IndexedDB.</li>
+            <li><b>Ringkasan sinkron:</b> membandingkan paket lama dan baru — terkirim, ditolak server, bentrok (record yang diubah offline juga berubah di server), dan perubahan per papan.</li>
+          </ul>
+        </section>
+
+        <section id="gis">
+          <h2>9. Wilayah &amp; peta</h2>
+          <ul>
+            <li>Master wilayah resmi Kemendagri sampai desa/kelurahan (91.599 wilayah) untuk formulir dan pencocokan.</li>
+            <li>Peta Leaflet (OpenStreetMap) di Bencana Aktif, Control Centre, Laporan Masyarakat, dan Registrasi Posko, dengan tombol layar penuh.</li>
+            <li>Routing laporan memakai kecocokan wilayah, jarak ke posko, dan fungsi posko. Skor dan alasannya disimpan; skor rendah masuk triase Control Centre.</li>
+            <li>Batas wilayah (boundary) untuk cek-balik GPS <span class="plan">rencana</span></li>
+          </ul>
+        </section>
+
+        <section id="api">
+          <h2>10. Integrasi API</h2>
+          <p>Semua metode dipanggil lewat jalur metode Frappe:</p>
+          <pre><code>GET  https://rescue-net.online/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters
+POST https://rescue-net.online/rescue-net-frappe/api/method/rescue_net.api_logistics.create_need
+     (sesi login + token CSRF; isi form-encoded atau JSON)</code></pre>
+          <ul>
+            <li>Jawaban dibungkus <code>{"message": ...}</code>; galat dikembalikan sebagai <code>exc_type</code> + pesan.</li>
+            <li>Metode publik dibatasi laju; metode tulis memerlukan login dan izin posko/organisasi.</li>
+            <li>Origin lintas situs dibatasi ke domain resmi Rescue-Net. Mitra integrasi menghubungi pengelola untuk akses.</li>
+          </ul>
+        </section>
+
+        <section id="kualitas">
+          <h2>11. Pengujian, rilis, operasi</h2>
+          <ul>
+            <li><b>Uji otomatis:</b> sekitar 550 uji di stack uji terpisah (database dan site sendiri, tidak menyentuh produksi), termasuk sapuan kebocoran data ke tamu. Semua harus lulus sebelum backend dipasang.</li>
+            <li><b>Perubahan struktur data</b> (DocType/field) memerlukan izin pemilik, backup database, lalu <code>bench migrate</code>.</li>
+            <li><b>Backup</b> database harian, plus backup tambahan sebelum setiap migrate.</li>
+            <li><b>Pemindaian rahasia</b> sebelum setiap commit; kredensial tidak pernah masuk repo.</li>
+            <li>Setiap pekerjaan dicatat di dokumen serah-terima dalam commit yang sama.</li>
+          </ul>
+        </section>
+
+        <section id="roadmap">
+          <h2>12. Peta jalan</h2>
+          <ul>
+            <li>Skenario minimum / optimal / maksimum dan jejak koreksi komando di Control Centre <span class="plan">rencana</span></li>
+            <li>OCR, laporan suara, analisis foto, prakiraan stok dan kebutuhan relawan <span class="plan">rencana</span></li>
+            <li>Kunci rilis Android tetap; iOS lewat jalur signing resmi <span class="plan">rencana</span></li>
+            <li>Federasi antar-server untuk posko yang terputus <span class="plan">rencana</span></li>
+            <li>Pilot pada satu wilayah/mitra, pelatihan operator, after-action review <span class="plan">rencana</span></li>
+            <li>Tata kelola multi-wilayah, ketersediaan tinggi, interoperabilitas nasional <span class="plan">rencana</span></li>
+          </ul>
+        </section>
+
+        <a class="back-top" href="#top">Kembali ke atas</a>
+      </article>
+    </div>
+  </main>
+  <script src="../assets/js/rn-public-header.js?v=manualtek-20261025"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+  <script src="../assets/js/rn-mobile-drawer.js?v=manualtek-20261025"></script>
+</body>
+</html>

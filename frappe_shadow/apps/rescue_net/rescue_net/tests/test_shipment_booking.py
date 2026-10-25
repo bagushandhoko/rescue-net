@@ -270,3 +270,16 @@ class TestTermsAck(_ShipmentWorld):
             self.send(self.arm_b, window_from="2026-11-04 00:00:00", window_to="2026-11-06 23:59:59")
         r = self.send(self.arm_b, window_from="2026-11-04 00:00:00", window_to="2026-11-06 23:59:59", terms_ack=1)
         self.assertEqual(frappe.db.get_value("RN Transport Booking", r["booking"], "terms_ack"), 1)
+
+
+class TestSameOrgMemberBooks(_ShipmentWorld):
+    """A plain member of the armada's organisation books (auto-confirmed) instead
+    of taking the armada directly (E2E 2026-10-25)."""
+
+    def test_member_gets_confirmed_booking(self):
+        member = make_actor(posko=self.src, org=self.w.org_a)          # member of org_a, operator of src only
+        with as_user(member.user):
+            r = create_flow(destination_posko=self.dst.name, item_text="Beras", quantity=10, unit="karung",
+                            quantity_mode="exact", source_posko=self.src.name, transport_space=self.arm_a.name, weight_kg=100)
+        self.assertEqual(r["booking_status"], "confirmed")
+        self.assertEqual(frappe.db.get_value("RN Distribution Flow", r["flow"], "transport_space"), self.arm_a.name)

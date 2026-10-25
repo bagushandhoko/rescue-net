@@ -102,8 +102,10 @@ def create_flow(
             frappe.throw("Transport tidak ditemukan")
 
         space_posko = frappe.db.get_value("RN Transport Space", transport_space, "coordination_posko")
-        if _can_contribute(actor, space_posko):
-            # the armada's own posko puts the shipment on it directly
+        if _can_operate(actor, space_posko):
+            # the armada's own posko (its operators/managers) puts the shipment on
+            # it directly; a plain member of the same organisation books it and
+            # the booking is approved at once (owner 2026-10-20, E2E 2026-10-25)
             if locked[0].transport_status != "available":
                 frappe.throw(
                     "Transport sudah dipakai atau tidak tersedia"

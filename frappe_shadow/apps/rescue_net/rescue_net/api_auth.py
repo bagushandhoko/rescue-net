@@ -349,6 +349,12 @@ def session_info():
         "can_view_sensitive":
             data["can_view_sensitive"],
         "login_provider": "google" if _is_google_login(data["frappe_user"]) else "password",
+        # 2026-10-25: a session that went through a Frappe-rendered page (e.g.
+        # Google login) carries a CSRF token, and Frappe then refuses every
+        # POST without it (HTTP 400: logout, member approval ...). Hand back the
+        # token the session ALREADY has (never create one) so rn-frappe-client
+        # can send it; same-origin only (CORS limits the site to rescue-net.online).
+        "csrf_token": (frappe.session.data or {}).get("csrf_token") or None,
         "phone": _account_phone(data["frappe_user"]),
     }
 

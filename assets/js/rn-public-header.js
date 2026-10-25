@@ -96,7 +96,7 @@
     if (!sess || !sess.user || sess.user === "Guest") return;
     const name = sess.full_name || readCookie("full_name") || sess.user;
     const userEl = document.createElement("span"); userEl.className = "rn-public-user"; userEl.title = sess.user + (sess.role ? " · " + sess.role : ""); userEl.textContent = "👤 " + name;
-    const logoutEl = document.createElement("a"); logoutEl.className = "rn-public-login rn-public-logout"; logoutEl.href = "#"; logoutEl.textContent = "Logout"; logoutEl.addEventListener("click", async (e) => { e.preventDefault(); logoutEl.textContent = "Keluar…"; try { await fetch(RN_API + "logout", { method: "POST", credentials: "include" }); } catch (err) {} try { localStorage.removeItem("RN_USER"); } catch (err) {} location.reload(); });
+    const logoutEl = document.createElement("a"); logoutEl.className = "rn-public-login rn-public-logout"; logoutEl.href = "#"; logoutEl.textContent = "Logout"; logoutEl.addEventListener("click", async (e) => { e.preventDefault(); logoutEl.textContent = "Keluar…"; try { await fetch(RN_API + "logout", { method: "POST", credentials: "include", headers: sess.csrf_token ? { "X-Frappe-CSRF-Token": sess.csrf_token } : {} }); } catch (err) {} try { localStorage.removeItem("RN_USER"); } catch (err) {} location.reload(); });
     loginEl.replaceWith(userEl); userEl.insertAdjacentElement("afterend", logoutEl);
   }
   function wireHomeAuthArea() { const nav = document.querySelector(".welcome-links"); const loginLink = document.querySelector(".welcome-login-link"); if (!nav || !loginLink) return; buildAuthArea(nav, loginLink); }

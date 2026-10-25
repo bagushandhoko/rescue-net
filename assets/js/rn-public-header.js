@@ -1,6 +1,6 @@
 (function () {
   function isHome() { return document.body?.classList?.contains("home-page") || false; }
-  const prefix = isHome() ? "" : "..";
+  const prefix = isHome() ? "" : "../";
 
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 

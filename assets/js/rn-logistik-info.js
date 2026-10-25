@@ -63,7 +63,13 @@ window.RNLogistikInfo = (function () {
     const live = m => String(m.status || "") !== "cancelled";
     (b.movements_in || []).forEach(m => { const r = get(m.item_name, m.unit, live(m)); if (r) r.masuk.push(m); });
     (b.movements_out || []).forEach(m => { const r = get(m.item_name, m.unit, live(m)); if (r) r.keluar.push(m); });
-    const list = Array.from(rows.values());
+    // a card that exists only because of cancelled shipments (no stock, no
+    // need, nothing live) is noise — e.g. a cancelled test send
+    const onlyCancelled = r => {
+      const mv = r.masuk.concat(r.keluar);
+      return mv.length && mv.every(m => !live(m)) && (!r.card || (!Number(r.card.stok_ada) && !Number(r.card.kebutuhan)));
+    };
+    const list = Array.from(rows.values()).filter(r => !onlyCancelled(r));
     return keep ? list.filter(keep) : list;
   }
 

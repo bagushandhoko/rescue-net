@@ -341,6 +341,18 @@
       });
     });
 
+    // deep links from the manual (2026-10-26): auth.html#daftar opens the
+    // Daftar tab; #daftar-<peran> also picks that role (organisasi, relawan…)
+    var hm = /^#daftar(?:-([a-z_]+))?$/.exec(location.hash || "");
+    if (hm) {
+      switchTab("register");
+      var roleRadio = hm[1] && document.querySelector('#registerForm input[name="role"][value="' + hm[1].replace("-", "_") + '"]');
+      if (roleRadio) {
+        roleRadio.checked = true;
+        roleRadio.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    }
+
     var regPw = document.querySelector('#registerForm input[name="password"]');
     if (regPw) {
       regPw.addEventListener("input", function () {

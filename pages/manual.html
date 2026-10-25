@@ -57,6 +57,7 @@
         </ol>
         <p class="toc-group">C. Cara penggunaan</p>
         <ol start="14">
+          <li><a href="#registrasi">Registrasi akun &amp; organisasi</a></li>
           <li><a href="#mulai">Mulai &amp; memilih bencana</a></li>
           <li><a href="#laporan">Mengirim laporan masyarakat</a></li>
           <li><a href="#bantuan">Menyalurkan bantuan</a></li>
@@ -252,10 +253,89 @@
           <h2>Cara penggunaan</h2>
         </header>
 
-        <section id="mulai">
-          <h3>14. Mulai &amp; memilih bencana</h3>
+        <section id="registrasi">
+          <h3>14. Registrasi akun &amp; organisasi</h3>
+          <p>Semua pendaftaran dimulai dari satu halaman: <a href="auth.html#daftar">Masuk &amp; Registrasi → tab Daftar</a>. Satu akun bisa dipakai untuk melapor, berdonasi, menjadi relawan, atau mengelola organisasi dan posko. Peran yang dipilih saat daftar menentukan apa yang disiapkan untuk Anda.</p>
+
+          <h4>A. Membuat akun</h4>
           <ol class="steps">
-            <li>Buka <a href="../index.html">Beranda</a>, lalu pilih <a href="auth.html">Login/registrasi</a>. Daftar bisa sekaligus mendaftarkan organisasi dan memilih peran.</li>
+            <li>Buka <a href="auth.html#daftar">tab Daftar</a>. Isi nama lengkap, email, nomor HP, dan kata sandi (minimal 8 karakter, dengan minimal 1 huruf besar dan 1 angka). Bisa juga memakai tombol <b>Google</b>.</li>
+            <li>Pilih peran:
+              <div class="table-wrap"><table>
+                <thead><tr><th>Peran</th><th>Untuk siapa</th><th>Yang terjadi setelah daftar</th></tr></thead>
+                <tbody>
+                  <tr><td><a href="auth.html#daftar-relawan">Relawan</a></td><td>Perorangan yang ingin membantu atau bergabung ke organisasi yang sudah ada</td><td>Akun aktif. Lengkapi profil relawan, lalu ajukan keanggotaan organisasi bila perlu.</td></tr>
+                  <tr><td><a href="auth.html#daftar-donatur">Donatur</a></td><td>Penyumbang barang atau dana</td><td>Akun aktif. Bisa langsung <a href="kirim-bantuan.html">Kirim Bantuan</a> dan berdonasi ke program.</td></tr>
+                  <tr><td><a href="auth.html#daftar-organisasi">Organisasi</a></td><td>Pengurus komunitas, NGO, instansi pemerintah, perusahaan, kampus</td><td>Akun <b>dan</b> organisasi dibuat sekaligus. Anda menjadi pemilik (admin) organisasi. Organisasi menunggu verifikasi.</td></tr>
+                  <tr><td><a href="auth.html#daftar-petugas_posko">Petugas Posko</a></td><td>Operator posko lapangan</td><td>Pilih jenis posko yang Anda jalankan, lalu daftarkan poskonya di <a href="registrasi-posko.html">Registrasi Posko</a>.</td></tr>
+                  <tr><td><a href="auth.html#daftar-pelapor">Pelapor Terverifikasi</a></td><td>Petugas resmi (BNPB/BPBD, Polri, TNI, perangkat desa) atau warga pemantau</td><td>Mengisi instansi, jabatan, wilayah, dan referensi. Setelah disetujui, bisa melapor kebutuhan ke semua posko.</td></tr>
+                </tbody>
+              </table></div>
+            </li>
+            <li>Tekan <b>Daftar</b>. Setelah berhasil, Anda langsung masuk dan diarahkan ke halaman yang sesuai peran.</li>
+          </ol>
+
+          <h4>B. Mendaftarkan organisasi baru</h4>
+          <ol class="steps">
+            <li>Buka <a href="auth.html#daftar-organisasi">Daftar sebagai Organisasi</a>. Isi data akun Anda sebagai pengurus.</li>
+            <li>Isi <b>Nama organisasi</b> dan <b>Jenis organisasi</b>: Komunitas, NGO / LSM, Pemerintah, Perusahaan / CSR, atau Sekolah / Kampus. Penanggung jawab dan deskripsi singkat boleh diisi belakangan.</li>
+            <li>Pilih <b>Keterbukaan</b> (bisa diubah kapan saja):
+              <ul>
+                <li><b>Tertutup</b> (bawaan): publik dan Control Centre hanya melihat ringkasan. Anggota melihat detail. Cocok untuk TNI, instansi, atau organisasi yang datanya sensitif. Lihat <a href="#organisasi">Organisasi terbuka &amp; tertutup</a>.</li>
+                <li><b>Terbuka</b>: detail kegiatan dan posko terlihat publik.</li>
+              </ul>
+              Di kedua mode, anggota baru tetap harus disetujui pengelola.
+            </li>
+            <li>Pilih <b>Skema koordinasi</b> (dipilih sekali saat daftar):
+              <ul>
+                <li><b>Mandiri</b>: setiap posko dan anggota mengelola dirinya sendiri. Cocok untuk komunitas dan NGO.</li>
+                <li><b>Komando terpusat</b>: pusat membuat akun posko dan menyetujui perubahan dari level bawah. Cocok untuk organisasi berjenjang seperti TNI (Kodam → Kodim → posko) atau BNPB/BPBD.</li>
+              </ul>
+            </li>
+            <li>Tekan <b>Daftar</b>. Organisasi berstatus <b>menunggu verifikasi</b>. Verifikasi dilakukan oleh admin Rescue-Net dan verifikator di <a href="verification-approval.html">Verifikasi &amp; Persetujuan</a>. Anda bisa mempercepatnya dengan meminta dukungan verifikator di halaman itu (bagian <b>Permintaan ke Verifikator</b>).</li>
+            <li>Sambil menunggu, siapkan posko di <a href="registrasi-posko.html">Registrasi Posko</a> dan lengkapi profil organisasi di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a>.</li>
+          </ol>
+          <p class="note">Organisasi Anda cabang atau sub-unit dari organisasi lain? Pilih induknya saat menambah kelompok di <a href="organisasi-posko.html">Organisasi &amp; Posko</a>. Kalau awalnya berdiri sendiri, gabungkan belakangan lewat <b>permintaan merger</b> di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a>.</p>
+
+          <h4>C. Bergabung ke organisasi yang sudah ada</h4>
+          <ol class="steps">
+            <li>Daftar dulu sebagai <a href="auth.html#daftar-relawan">Relawan</a>, atau masuk bila sudah punya akun.</li>
+            <li>Buka <a href="organisasi-posko.html">Organisasi &amp; Posko</a>, pilih organisasi Anda, lalu tekan <b>Ajukan Keanggotaan</b>.</li>
+            <li>Pengelola organisasi menyetujui di <a href="koordinasi-organisasi.html#koMemberSection">Pengaturan → Persetujuan Anggota</a>. Setelah disetujui, posko dan data organisasi terbuka untuk Anda sesuai peran yang diberikan.</li>
+            <li>Ditolak atau dicabut? Tombol berubah menjadi <b>Ajukan Lagi</b>.</li>
+          </ol>
+
+          <h4>D. Organisasi komando terpusat: pusat membuat akun anggota</h4>
+          <p>Untuk organisasi tertutup berjenjang, anggota daerah tidak perlu mendaftar sendiri. Pengelola pusat membuka <a href="komando-pusat.html">Komando Pusat</a> (menu Pengaturan → Komando Pusat), lalu:</p>
+          <ul>
+            <li><b>Buat Akun Posko</b>: membuat akun dan posko untuk unit di bawahnya (misalnya Kodim atau Babinsa) sekaligus. Sistem menampilkan <b>password sementara satu kali saja</b>: salin dan sampaikan ke petugas, lalu minta petugas menggantinya di <a href="ai-settings.html">Setting</a> setelah login pertama.</li>
+            <li><b>Antrean Persetujuan</b>: menyetujui atau menolak pengajuan dari level bawah, misalnya tambah posko atau ubah fungsi posko.</li>
+            <li><b>Akun</b>: reset kata sandi atau menonaktifkan akun anggota.</li>
+            <li><b>Struktur &amp; Posko di Bawah Komando</b> dan <b>Riwayat Keputusan</b>: melihat seluruh jenjang dan jejak keputusan.</li>
+          </ul>
+          <p>Anggota daerah mengajukan permintaan ke pusat lewat <b>Permintaan Saya ke Pusat</b> di halaman yang sama.</p>
+
+          <h4>E. Setelah terdaftar</h4>
+          <ol class="steps">
+            <li>Daftarkan posko di <a href="registrasi-posko.html">Registrasi Posko</a>, lalu centang bencana yang ditangani. Lihat <a href="#posko">Mendaftar &amp; mengelola posko</a>.</li>
+            <li>Atur keterbukaan, anggota, dan posko organisasi di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a>.</li>
+            <li>Atur kunci AI organisasi, notifikasi, dan kata sandi di <a href="ai-settings.html">Setting</a> dan <a href="notifikasi-settings.html">Notifikasi</a>.</li>
+            <li>Ingin mencoba dulu? Di halaman <a href="auth.html">Masuk</a> tersedia daftar <b>akun demo</b> (posko, organisasi, TNI, BNPB, masyarakat) dengan kata sandi <b>Demo12345</b>.</li>
+          </ol>
+
+          <h4>Masalah yang sering terjadi</h4>
+          <ul>
+            <li><b>Email sudah terdaftar:</b> pakai <a href="auth.html">Masuk</a>, atau tombol lupa kata sandi di halaman itu.</li>
+            <li><b>Organisasi belum bisa dipakai penuh:</b> organisasi masih menunggu verifikasi. Cek statusnya di <a href="verification-approval.html">Verifikasi &amp; Persetujuan</a>.</li>
+            <li><b>Tidak melihat posko organisasi:</b> keanggotaan Anda belum disetujui. Hubungi pengelola organisasi.</li>
+            <li><b>Bencana tidak muncul di pemilih:</b> posko atau organisasi Anda belum menangani bencana itu. Tambahkan di <a href="ai-settings.html">Setting</a> → Bencana yang Ditangani Posko.</li>
+          </ul>
+        </section>
+
+        <section id="mulai">
+          <h3>15. Mulai &amp; memilih bencana</h3>
+          <ol class="steps">
+            <li>Buka <a href="../index.html">Beranda</a>, lalu pilih <a href="auth.html">Login/registrasi</a>. Belum punya akun? Ikuti <a href="#registrasi">Registrasi akun &amp; organisasi</a>.</li>
             <li>Setelah login, Anda langsung dibawa ke halaman posko milik Anda. Bila belum punya posko tetapi tergabung di organisasi, Anda dibawa ke halaman organisasi.</li>
             <li>Pemilih <b>Bencana</b> di header hanya menampilkan bencana yang Anda tangani, dengan yang terbaru sebagai pilihan awal.</li>
             <li>Pengunjung tanpa login bisa membuka <a href="bencana-aktif.html">Bencana Aktif</a> dan <a href="war-room.html">Control Centre</a> untuk data yang dibuka ke publik.</li>
@@ -264,7 +344,7 @@
         </section>
 
         <section id="laporan">
-          <h3>15. Mengirim laporan masyarakat</h3>
+          <h3>16. Mengirim laporan masyarakat</h3>
           <ol class="steps">
             <li>Buka <a href="laporan-masyarakat.html">Laporan Masyarakat</a> dan login.</li>
             <li>Pilih <b>Cukup ceritakan</b> (tulis kejadian, AI mengisi formulir) atau <b>Isi form</b>. Pilih titik lokasi di peta bila perlu.</li>
@@ -275,7 +355,7 @@
         </section>
 
         <section id="bantuan">
-          <h3>16. Menyalurkan bantuan</h3>
+          <h3>17. Menyalurkan bantuan</h3>
           <ol class="steps">
             <li>Buka <a href="kebutuhan-publik.html">Kebutuhan Aktual</a> untuk melihat barang yang masih dibutuhkan dan catatan barang yang tidak diterima.</li>
             <li>Buka <a href="kirim-bantuan.html">Kirim Bantuan</a>, pilih bencana dan posko tujuan. Hanya posko yang menerima partisipasi publik yang tampil.</li>
@@ -285,7 +365,7 @@
         </section>
 
         <section id="posko">
-          <h3>17. Mendaftar &amp; mengelola posko</h3>
+          <h3>18. Mendaftar &amp; mengelola posko</h3>
           <ol class="steps">
             <li>Buka <a href="registrasi-posko.html">Registrasi Posko</a>. Isi nama, jenis, lokasi GPS, kontak penanggung jawab, dan fungsi posko.</li>
             <li>Centang <b>bencana yang ditangani</b>. Cari dengan nama atau lokasi, atau saring rentang waktu. Secara awal semua bencana tampil.</li>
@@ -296,7 +376,7 @@
         </section>
 
         <section id="kirim">
-          <h3>18. Mengirim stok</h3>
+          <h3>19. Mengirim stok</h3>
           <p>Di <a href="posko-logistik.html">Posko Logistik</a>, tekan <b>Kirim</b> pada kartu stok.</p>
           <ol class="steps">
             <li><b>Tujuan &amp; barang:</b> pilih bencana, rentang tanggal kirim, jumlah (maksimal sesuai stok yang tersedia), perkiraan berat, dan posko tujuan.</li>
@@ -307,7 +387,7 @@
         </section>
 
         <section id="distribusi">
-          <h3>19. Posko distribusi &amp; armada</h3>
+          <h3>20. Posko distribusi &amp; armada</h3>
           <ol class="steps">
             <li>Di <a href="posko-distribusi.html">Posko Distribusi</a>, tambah armada: kapasitas, jadwal berangkat dan tiba, titik serah terima, dan syarat barang.</li>
             <li>Centang <b>bencana yang dilayani</b> armada dan, bila perlu, <b>posko logistik yang dilayani</b>. Kosong berarti semua posko logistik di bencana itu.</li>
@@ -317,7 +397,7 @@
         </section>
 
         <section id="layanan">
-          <h3>20. Medis, shelter, dapur, relawan</h3>
+          <h3>21. Medis, shelter, dapur, relawan</h3>
           <ul>
             <li><a href="posko-medis-detail.html">Posko Medis</a>: pasien aktif dan kondisi terakhir, kartu pasien, pemakaian obat dan alat.</li>
             <li><a href="shelter-detail.html">Shelter</a>: okupansi, kebutuhan dasar, kelompok rentan, check-in dan check-out penghuni.</li>
@@ -327,7 +407,7 @@
         </section>
 
         <section id="hp">
-          <h3>21. Memasang aplikasi &amp; mode offline</h3>
+          <h3>22. Memasang aplikasi &amp; mode offline</h3>
           <ol class="steps">
             <li>Buka <a href="install.html">Install App</a>. Pasang sebagai aplikasi web (PWA) atau unduh APK Android.</li>
             <li>Login sekali saat ada sinyal, lalu tekan <b>Siapkan data offline</b> di kanan bawah.</li>
@@ -338,7 +418,7 @@
         </section>
 
         <section id="privasi">
-          <h3>22. Privasi &amp; praktik aman</h3>
+          <h3>23. Privasi &amp; praktik aman</h3>
           <ul>
             <li>Pakai akun sendiri. Jangan membagikan kata sandi atau kunci AI.</li>
             <li>Isi hanya data yang diperlukan untuk penanganan bencana.</li>

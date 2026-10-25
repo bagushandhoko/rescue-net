@@ -1159,6 +1159,16 @@ def _num_i(v):
         return 0
 
 
+def _kesiapan(p):
+    """Readiness details a coordinator needs to place a volunteer."""
+    return {
+        "jadwal_tersedia": p.get("availability_schedule") or "-",
+        "kendaraan_bawaan": p.get("transport_vehicle") or "-",
+        "butuh_jemput": bool(p.get("needs_pickup")),
+        "area_layanan": p.get("service_areas") or "-",
+    }
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def volunteer_board(disaster_event=None):
@@ -1183,7 +1193,8 @@ def volunteer_board(disaster_event=None):
         fields=["name", "volunteer_name", "contact", "main_skill", "skill_tags",
                 "skill_category", "preferences", "equipment_owned", "needs_transport",
                 "availability_status", "duration_available", "current_location",
-                "assigned_posko", "user_account", "verification_status"],
+                "assigned_posko", "user_account", "verification_status",
+                "needs_pickup", "transport_vehicle", "availability_schedule", "service_areas"],
         order_by="availability_status asc, volunteer_name asc",
         limit_page_length=2000,
     )
@@ -1236,16 +1247,7 @@ def volunteer_board(disaster_event=None):
             "preferensi": p.preferences or "-",
             "peralatan": p.equipment_owned or "-",
             "butuh_transport": bool(p.needs_transport),
-            "butuh_jemput": bool(p.needs_pickup),
-            "transport_vehicle": p.transport_vehicle or "-",
-            "kendaraan_bawaan": p.transport_vehicle or "-",
-            "jadwal_tersedia": p.availability_schedule or "-",
-            "preferensi": p.preferences or "-",
-            "preferensi_penempatan": p.preferences or "-",
-            "posko_distribusi_preferensi": getattr(p, "service_areas", "-") or "-",
-            "butuh_transport_panitia": bool(p.needs_transport),
-            "butuh_jemput_posko": bool(p.needs_pickup),
-            "kendaraan_bawaan": p.transport_vehicle or "-",
+            **_kesiapan(p),
             "status": p.availability_status,
             "href": None,
         })
@@ -1263,17 +1265,10 @@ def volunteer_board(disaster_event=None):
             "skills": skills[:4],
             "lokasi": p.current_location or posko_titles.get(p.assigned_posko) or "-",
             "durasi": p.duration_available or "-",
-            "jadwal_tersedia": p.availability_schedule or "-",
-            "preferensi_penempatan": p.preferences or "-",
+            "preferensi": p.preferences or "-",
             "peralatan": p.equipment_owned or "-",
-            "kendaraan_bawaan": p.transport_vehicle or "-",
             "butuh_transport": bool(p.needs_transport),
-            "butuh_jemput": bool(p.needs_pickup),
-            "kendaraan_bawaan": p.transport_vehicle or "-",
-            "posko_distribusi_preferensi": getattr(p, "service_areas", "-") or "-",
-            "butuh_transport_panitia": bool(p.needs_transport),
-            "butuh_jemput_posko": bool(p.needs_pickup),
-            "kendaraan_bawaan": p.transport_vehicle or "-",
+            **_kesiapan(p),
             "status": p.availability_status,
             "href": None,
         })
@@ -1304,6 +1299,7 @@ def volunteer_board(disaster_event=None):
             "posko_ditempatkan": posko_titles.get(p.assigned_posko) or "-",
             "tugas": [ai["task_title"] for ai in assignment_info],
             "status_penugasan": [ai["assignment_status"] for ai in assignment_info],
+            "penugasan": assignment_info,
             "status": p.availability_status,
             "href": None,
         })
@@ -1376,6 +1372,10 @@ def volunteer_board(disaster_event=None):
     return {
         "disaster_event": event,
         "generated_at": now,
+        # 2026-10-25: these two were built but never returned in the repo (the
+        # VM had a hand patch) — Relawan Tersedia / Ditempatkan sections
+        "relawan_tersedia": relawan_tersedia,
+        "relawan_ditempatkan": relawan_ditempatkan,
         "totals": {
             "terdaftar": len(profiles),
             "available_hari_ini": len(available),

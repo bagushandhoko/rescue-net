@@ -217,6 +217,57 @@
     });
   }
 
+  /* Relawan Tersedia / Ditempatkan (owner 2026-10-25) */
+  function yes(v) { return v && v !== "-"; }
+  var VEHICLE = { motor: "Motor", mobil: "Mobil", truck: "Truk", lainnya: "Lainnya" };
+  function vehicle(v) { return VEHICLE[v] || v; }
+  function readyLines(r) {
+    return [
+      yes(r.jadwal_tersedia) ? "<div><span>Jadwal</span><b>" + esc(r.jadwal_tersedia) + "</b></div>" : "",
+      yes(r.kendaraan_bawaan) ? "<div><span>Kendaraan</span><b>" + esc(vehicle(r.kendaraan_bawaan)) + "</b></div>" : "",
+      yes(r.area_layanan) ? "<div><span>Area layanan</span><b>" + esc(r.area_layanan) + "</b></div>" : "",
+      yes(r.peralatan) ? "<div><span>Peralatan</span><b>" + esc(r.peralatan) + "</b></div>" : "",
+      yes(r.preferensi) ? "<div><span>Preferensi</span><b>" + esc(r.preferensi) + "</b></div>" : "",
+    ].join("");
+  }
+  function personHead(r) {
+    return '<div class="rn-rw-card-head"><span class="rn-rw-avatar">' + esc(initials(r.volunteer_name)) + "</span>" +
+      "<div><b>" + esc(r.volunteer_name) + '</b><small class="rn-muted">' + esc(r.organisasi) +
+      (yes(r.lokasi) ? " · " + esc(r.lokasi) : "") + "</small></div></div>";
+  }
+  function renderTersedia(rows) {
+    var el = $("#relawanTersedia");
+    if (!el) return;
+    $("#tersediaCount").textContent = rows.length + " siap ditempatkan";
+    el.innerHTML = rows.length ? rows.map(function (r) {
+      var flags = (r.butuh_jemput ? '<span class="chip warning">Butuh dijemput</span>' : "") +
+        (r.butuh_transport ? '<span class="chip warning">Butuh transport</span>' : "") +
+        (yes(r.kendaraan_bawaan) ? '<span class="chip good">Bawa kendaraan</span>' : "");
+      return '<article class="rn-rw-card">' + personHead(r) +
+        '<div class="rn-rw-card-tags">' + (r.skills || []).slice(0, 3).map(function (s) {
+          return '<span class="chip rn-rw-skill">' + esc(skillLabel(s)) + "</span>"; }).join("") + flags + "</div>" +
+        '<div class="rn-rw-card-dl">' + readyLines(r) +
+          (yes(r.durasi) ? "<div><span>Durasi</span><b>" + esc(durasiLabel(r.durasi)) + "</b></div>" : "") + "</div></article>";
+    }).join("") : '<p class="rn-muted">Belum ada relawan yang tersedia di bencana ini.</p>';
+  }
+  var TASK_LABEL = { planned: "Menunggu konfirmasi", accepted: "Diterima", checked_in: "Check-in",
+    in_progress: "Berjalan", completed: "Selesai", cancelled: "Batal" };
+  function renderDitempatkan(rows) {
+    var el = $("#relawanDitempatkan");
+    if (!el) return;
+    $("#ditempatkanCount").textContent = rows.length + " sedang bertugas";
+    el.innerHTML = rows.length ? rows.map(function (r) {
+      var tasks = (r.penugasan || []).map(function (a) {
+        return "<li><b>" + esc(a.task_title || "Tugas") + "</b>" + (a.posko ? ' <small class="rn-muted">' + esc(a.posko) + "</small>" : "") +
+          ' <span class="chip ' + (/progress|checked/.test(a.assignment_status || "") ? "good" : "neutral") + '">' +
+          esc(TASK_LABEL[a.assignment_status] || a.assignment_status || "-") + "</span></li>";
+      }).join("");
+      return '<article class="rn-rw-card">' + personHead(r) +
+        '<div class="rn-rw-card-dl"><div><span>Ditempatkan di</span><b>' + esc(r.posko_ditempatkan) + "</b></div></div>" +
+        (tasks ? '<ul class="rn-rw-tasks">' + tasks + "</ul>" : '<p class="rn-muted">Belum ada tugas tercatat.</p>') + "</article>";
+    }).join("") : '<p class="rn-muted">Belum ada relawan yang ditempatkan di bencana ini.</p>';
+  }
+
   function renderPapan(rows) {
     $("#papanCount").textContent = rows.length + " tugas menunggu konfirmasi";
     var el = $("#papanPenugasan");
@@ -240,6 +291,8 @@
     $("#relawanUpdated").textContent = "Diperbarui " + String(data.generated_at || "").slice(11, 16);
     renderKpi(data.totals || {});
     renderDaftarRelawan(data.daftar_relawan || []);
+    renderTersedia(data.relawan_tersedia || []);
+    renderDitempatkan(data.relawan_ditempatkan || []);
     renderFilterKeterampilan(data.filter_keterampilan || []);
     renderJenisRelawan(data.jenis_relawan || []);
     renderPapan(data.papan_penugasan || []);
@@ -249,7 +302,13 @@
   document.addEventListener("DOMContentLoaded", function () {
     if (!window.RN_FRAPPE) return;
     document.querySelectorAll(".rn-rw-kpi .rn-kpi-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () { openDrill(btn.getAttribute("data-kpi")); });
+      btn.addEventListener("click", function () {
+        var kind = btn.getAttribute("data-kpi");
+        // Available / Bertugas -> the detailed panels below
+        var panel = { available: "#panelTersedia", bertugas: "#panelDitempatkan" }[kind];
+        if (panel && $(panel)) { $(panel).scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+        openDrill(kind);
+      });
     });
     document.querySelectorAll("#relawanDrill [data-close]").forEach(function (el) { el.addEventListener("click", closeDrill); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Cetak Label Kiriman</title>
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
+  <style>
+    :root { --text: #2d211b; --muted: #7c6458; --line: rgba(104,64,45,.18); --brand: #e8755a; --bg: #fff6ef; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: Roboto, system-ui, "Segoe UI", sans-serif; }
+    .cl-wrap { max-width: 880px; margin: 0 auto; padding: 20px 16px 48px; }
+    .cl-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; padding: 14px; margin-bottom: 16px;
+      background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+    .cl-tools h1 { flex: 1 1 100%; margin: 0; font-size: 18px; }
+    .cl-tools p { flex: 1 1 100%; margin: 0; font-size: 13px; color: var(--muted); }
+    .cl-tools label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+    .cl-tools input, .cl-tools select { padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); font: inherit; background: #fff; }
+    .cl-btn { padding: 10px 16px; border-radius: 10px; border: 0; background: var(--brand); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+    .cl-btn.alt { background: #fff; color: var(--text); border: 1px solid var(--line); text-decoration: none; display: inline-flex; align-items: center; }
+    .cl-msg { flex: 1 1 100%; font-size: 13px; color: #c0392b; margin: 0; }
+    .cl-sheet { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+    .cl-label { box-sizing: border-box; width: 100%; max-width: 380px; padding: 10px 12px; background: #fff; color: #111;
+      border: 1.5px dashed #999; border-radius: 6px; break-inside: avoid; page-break-inside: avoid; display: grid; gap: 4px; }
+    .cl-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 11px; font-weight: 800; letter-spacing: .06em; }
+    .cl-body { display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: center; }
+    .cl-qr canvas, .cl-qr img { width: 112px !important; height: 112px !important; }
+    .cl-item { font-size: 15px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+    .cl-qty { font-size: 14px; font-weight: 700; }
+    .cl-route { font-size: 11px; line-height: 1.35; color: #333; overflow-wrap: anywhere; }
+    .cl-trace { font-family: "Roboto Mono", ui-monospace, monospace; font-size: 18px; font-weight: 800; letter-spacing: 1.5px; text-align: center; }
+    .cl-bar svg { width: 100%; height: 54px; display: block; }
+    .cl-foot { display: flex; justify-content: space-between; font-size: 10px; color: #555; }
+    @media print {
+      @page { margin: 8mm; }
+      body { background: #fff; }
+      .cl-wrap { max-width: none; padding: 0; }
+      .cl-tools { display: none; }
+      .cl-sheet { grid-template-columns: repeat(2, 1fr); gap: 6mm; }
+      .cl-label { border-style: solid; border-color: #000; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cl-wrap">
+    <div class="cl-tools">
+      <h1>Cetak Label Kiriman</h1>
+      <p>Tempel satu label di setiap koli. Label dibaca dengan kamera HP biasa di halaman <b>Pindai Barcode / QR</b>, atau dengan alat scan barcode.</p>
+      <label for="clKoli">Jumlah koli / label
+        <input type="number" id="clKoli" min="1" max="200" value="1">
+      </label>
+      <button class="cl-btn" id="clPrint" type="button">🖨 Cetak</button>
+      <a class="cl-btn alt" id="clBack" href="javascript:history.back()">← Kembali</a>
+      <p class="cl-msg" id="clMsg" aria-live="polite"></p>
+    </div>
+    <div class="cl-sheet" id="clSheet"><p>Memuat label…</p></div>
+  </div>
+  <script src="../assets/js/rn-frappe-client.js?v=cleanerr-20260912"></script>
+  <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+  <script src="../assets/vendor/qrcode/qrcode.min.js"></script>
+  <script src="../assets/vendor/jsbarcode/JsBarcode.code128.min.js"></script>
+  <script src="../assets/js/cetak-label.js?v=label-20261025"></script>
+</body>
+</html>

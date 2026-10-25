@@ -778,6 +778,11 @@
     renderKpi(data.totals || {}, data.posko_info);
     renderArmada(data.armada || []);
     renderBookings(data.booking_inbox || []);
+    var scanBtn = $("#pdScanBtn");     // kurir memindai label saat jemput / serah (owner 2026-10-25)
+    if (scanBtn) {
+      scanBtn.hidden = !data.can_manage;
+      scanBtn.href = "scan.html?back=" + encodeURIComponent(location.pathname.split("/").pop() + location.search);
+    }
     renderPickupQueue(data.pickup_queue || [], data.destination_options || []);
     renderRelawan(data.relawan_candidates || []);
   }

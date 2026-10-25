@@ -28,7 +28,7 @@ TENDERS = [
         "location": "Samatiga, Aceh Barat",
         "scope_description": "Perbaikan atap, kuda-kuda, plafon, lantai, dan pengecatan 2 ruang kelas. Termasuk instalasi listrik dasar.",
         "rab_total": 185000000,
-        "rab_document_url": "https://osiun.tail251e1e.ts.net/rescue-net/blueprint/DISASTER%20MANAGEMENT%20SYSTEM.docx.pdf",
+        "rab_document_url": None,  # dokumen RAB simulasi tidak dipublikasikan
         "status": "open", "days_to_close": 14,
         "contact_person": "Panitia Rehab Sekolah", "contact_phone": "0651-700123",
         "bids": [
@@ -45,7 +45,7 @@ TENDERS = [
         "location": "Johan Pahlawan, Aceh Barat",
         "scope_description": "Sumur bor dalam 60 m, pompa submersible, tandon 5.000 L + rangka, jaringan pipa 200 m ke titik distribusi.",
         "rab_total": 95000000,
-        "rab_document_url": "https://osiun.tail251e1e.ts.net/rescue-net/blueprint/DISASTER%20MANAGEMENT%20SYSTEM.docx.pdf",
+        "rab_document_url": None,  # dokumen RAB simulasi tidak dipublikasikan
         "status": "evaluation", "days_to_close": -1,
         "contact_person": "Pokja Air Bersih", "contact_phone": "0651-700456",
         "bids": [

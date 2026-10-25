@@ -482,7 +482,9 @@ def logistik_board(posko, disaster_event=None):
             "quantity": f.get("quantity"),
             "unit": f.get("unit"),
             "status": f.get("flow_status"),
-            "resi": "RN-" + str(f.get("name") or "")[-10:].upper(),
+            # same code as the printed label / scanner (owner 2026-10-25)
+            "resi": "RN-" + (frappe.db.get_value("RN Distribution Flow", f.get("name"), "trace_token")
+                             or str(f.get("name") or "")[-8:]).upper(),
             "step": step,
         }
 

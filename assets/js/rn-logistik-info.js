@@ -157,16 +157,39 @@ window.RNLogistikInfo = (function () {
     const whoKey = movTab === "masuk" ? "dari" : "tujuan";
     if (head) head.textContent = movTab === "masuk" ? "Dari" : "Tujuan";
 
+    // owner 2026-10-25: the sending posko prints a label (QR + barcode) per
+    // shipment; managers get "Pindai barcode" for the custody scanner
+    const manage = !!b.can_manage;
+    const label = m => (manage && movTab !== "masuk" && m.flow)
+      ? ` <a class="rn-mov-label" href="cetak-label.html?flow=${encodeURIComponent(m.flow)}" title="Cetak label kiriman (QR + barcode)">🖨 Label</a>` : "";
     body.innerHTML = rows.length
       ? rows.map(m => `
           <tr>
             <td>${safe(m[whoKey])}</td>
             <td>${m.flow ? `<a href="lacak-logistik.html?flow=${encodeURIComponent(m.flow)}" title="Lacak kiriman">${safe(m.item_name)}</a>` : safe(m.item_name)}</td>
             <td>${fmt(m.quantity)} ${safe(m.unit)}</td>
-            <td>${statusChip(m.status)}</td>
+            <td>${statusChip(m.status)}${label(m)}</td>
           </tr>
         `).join("")
       : `<tr><td colspan="4">Belum ada pergerakan ${movTab}.</td></tr>`;
+    scanButton(b);
+  }
+
+  function scanButton(b) {
+    const tabs = document.getElementById("movTabMasuk");
+    if (!tabs || !tabs.parentNode) return;
+    let a = document.getElementById("movScanBtn");
+    if (!b.can_manage) { if (a) a.hidden = true; return; }
+    if (!a) {
+      a = document.createElement("a");
+      a.id = "movScanBtn";
+      a.className = "btn ghost mini rn-mov-scan";
+      a.textContent = "📷 Pindai barcode";
+      tabs.parentNode.appendChild(a);
+    }
+    const page = location.pathname.split("/").pop() + location.search;
+    a.href = "scan.html?back=" + encodeURIComponent(page);
+    a.hidden = false;
   }
 
   function wireMovementsTabs(getBoard) {

@@ -1,7 +1,8 @@
 /* ============================================================
  * scan.js — chain-of-custody scanner (pages/scan.html).
  * Reads a shipment QR (lacak-logistik URL or RN-XXXXXXXX) with the
- * camera (BarcodeDetector) or typed code, and posts it to
+ * camera (BarcodeDetector, or the vendored html5-qrcode on iPhone/Safari —
+ * QR and 1D barcodes), a handheld scanner / typed code, and posts it to
  * rescue_net.api_custody.record_scan. Scans are queued in
  * localStorage first (offline-safe) and replayed with a stable
  * offline_id, so a retry can never double-record.
@@ -114,26 +115,58 @@
     $("#scCode").value = "";
   }
 
+  // Kamera HP biasa membaca QR DAN barcode batang (owner 2026-10-25).
+  // Chrome Android: BarcodeDetector bawaan. iPhone/Safari & peramban lain:
+  // pustaka html5-qrcode (disimpan di server sendiri, dimuat saat perlu).
+  var FORMATS = ["qr_code", "code_128", "code_39", "ean_13", "ean_8", "itf", "upc_a"];
+  var h5 = null;
+
+  function loadScript(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function startNative() {
+    var supported = FORMATS;
+    try { if (window.BarcodeDetector.getSupportedFormats) supported = (await window.BarcodeDetector.getSupportedFormats()).filter(function (f) { return FORMATS.indexOf(f) !== -1; }); } catch (e) {}
+    var det = new window.BarcodeDetector({ formats: supported.length ? supported : ["qr_code"] });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    var v = $("#scVideo"); v.srcObject = stream; v.hidden = false; await v.play();
+    var busy = false;
+    timer = setInterval(async function () {
+      if (busy) return; busy = true;
+      try {
+        var codes = await det.detect(v);
+        if (codes.length) { stopCamera(); await submit(codes[0].rawValue); }
+      } catch (e) { /* frame not ready */ }
+      busy = false;
+    }, 300);
+  }
+
+  async function startFallback() {
+    if (!window.Html5Qrcode) await loadScript("../assets/vendor/html5-qrcode/html5-qrcode.min.js");
+    var box = $("#scReader"); box.hidden = false;
+    var F = window.Html5QrcodeSupportedFormats || {};
+    var fmts = [F.QR_CODE, F.CODE_128, F.CODE_39, F.EAN_13, F.EAN_8, F.ITF, F.UPC_A].filter(function (x) { return x !== undefined; });
+    h5 = new window.Html5Qrcode("scReader", fmts.length ? { formatsToSupport: fmts, verbose: false } : undefined);
+    await h5.start({ facingMode: "environment" }, { fps: 10, qrbox: function (w, hh) { return { width: Math.floor(w * 0.85), height: Math.floor(Math.min(hh, w) * 0.55) }; } },
+      function (text) { stopCamera(); submit(text); }, function () { /* belum terbaca */ });
+  }
+
   async function startCamera() {
-    if (!("BarcodeDetector" in window) || !navigator.mediaDevices) {
-      $("#scCamNote").textContent = "Peramban ini belum mendukung pemindai kamera. Ketik kode trace di bawah.";
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      $("#scCamNote").textContent = "Peramban ini tidak bisa membuka kamera. Ketik kode trace di bawah.";
       return;
     }
+    $("#scCamNote").textContent = "Arahkan kamera ke QR atau barcode label kiriman.";
+    $("#scStopBtn").hidden = false; $("#scCamBtn").hidden = true;
     try {
-      var det = new window.BarcodeDetector({ formats: ["qr_code"] });
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      var v = $("#scVideo"); v.srcObject = stream; v.hidden = false; await v.play();
-      $("#scStopBtn").hidden = false; $("#scCamBtn").hidden = true;
-      var busy = false;
-      timer = setInterval(async function () {
-        if (busy) return; busy = true;
-        try {
-          var codes = await det.detect(v);
-          if (codes.length) { stopCamera(); await submit(codes[0].rawValue); }
-        } catch (e) { /* frame not ready */ }
-        busy = false;
-      }, 400);
+      if ("BarcodeDetector" in window) await startNative();
+      else await startFallback();
     } catch (e) {
+      stopCamera();
       $("#scCamNote").textContent = "Kamera tidak bisa dibuka (izin ditolak?). Ketik kode trace di bawah.";
     }
   }
@@ -141,11 +174,21 @@
   function stopCamera() {
     if (timer) { clearInterval(timer); timer = null; }
     if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
-    $("#scVideo").hidden = true; $("#scStopBtn").hidden = true; $("#scCamBtn").hidden = false;
+    if (h5) { var x = h5; h5 = null; try { x.stop().then(function () { x.clear(); }).catch(function () {}); } catch (e) {} }
+    $("#scVideo").hidden = true; $("#scReader").hidden = true;
+    $("#scStopBtn").hidden = true; $("#scCamBtn").hidden = false;
+  }
+
+  // ?posko=<id>&back=<halaman> dari tombol "Pindai barcode" di halaman posko
+  function setupBack() {
+    var qs = new URLSearchParams(location.search), back = qs.get("back");
+    if (!back || !/^[a-z0-9-]+\.html(\?[^#]*)?$/i.test(back)) return;
+    var el = $("#scBack"); el.hidden = false; el.querySelector("a").href = back;
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     renderQueue();
+    setupBack();
     $("#scCamBtn").addEventListener("click", startCamera);
     $("#scStopBtn").addEventListener("click", stopCamera);
     $("#scSendBtn").addEventListener("click", function () { submit($("#scCode").value); });

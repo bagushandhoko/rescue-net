@@ -11,6 +11,12 @@
         icon: "distribusi"
       },
       {
+        // kamera HP biasa membaca QR / barcode label kiriman (owner 2026-10-25)
+        label: "Pindai Barcode / QR",
+        href: "scan.html",
+        icon: "search"
+      },
+      {
         label: "Dashboard Posko",
         href: "organisasi-posko.html",
         icon: "organisasi"

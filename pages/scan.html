@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
-  <title>Rescue-Net | Pindai Kiriman</title>
+  <title>Rescue-Net | Pindai Barcode / QR</title>
   <link rel="stylesheet" href="../assets/css/style.css?v=about-menu-20261024af">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,12 +38,13 @@
     .sc-q li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line, rgba(104,64,45,.14)); }
     .sc-q li:first-child { border-top: 0; }
   </style>
-  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=about-menu-20261024af" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=label-20261025" />
 </head>
 <body>
   <div class="sc-wrap">
-    <h1 style="font-size:18px;margin:0 0 4px">Pindai Kiriman Bantuan</h1>
-    <p class="sc-muted" style="margin:0 0 14px">Catat serah-terima kiriman lewat QR. Tetap berfungsi tanpa sinyal; scan dikirim otomatis saat online.</p>
+    <p class="sc-muted" id="scBack" hidden style="margin:0 0 8px"><a href="#">← Kembali ke posko</a></p>
+    <h1 style="font-size:18px;margin:0 0 4px">Pindai Barcode / QR Kiriman</h1>
+    <p class="sc-muted" style="margin:0 0 14px">Catat serah-terima kiriman dengan memindai QR atau barcode label kiriman memakai kamera HP biasa. Tetap berfungsi tanpa sinyal; scan dikirim otomatis saat online.</p>
 
     <p class="sc-muted" style="margin:0 0 12px">Membagikan bantuan ke keluarga di shelter? Pakai <a href="kartu-keluarga.html"><b>Kartu Keluarga</b></a>.</p>
 
@@ -63,14 +64,15 @@
     </div>
 
     <div class="sc-card">
-      <h2>2. Pindai QR</h2>
+      <h2>2. Pindai QR / barcode</h2>
       <video id="scVideo" class="sc-video" playsinline muted hidden></video>
+      <div id="scReader" hidden style="width:100%;border-radius:10px;overflow:hidden"></div>
       <div class="sc-row">
         <button class="sc-btn" id="scCamBtn" type="button">Buka kamera</button>
         <button class="sc-btn alt" id="scStopBtn" type="button" hidden>Tutup kamera</button>
       </div>
       <p class="sc-muted" id="scCamNote" style="margin:8px 0 0"></p>
-      <p class="sc-muted" style="margin:12px 0 0">Atau ketik kode trace:</p>
+      <p class="sc-muted" style="margin:12px 0 0">Atau ketik kode trace. Alat scan barcode genggam (USB/Bluetooth) juga bisa: klik kolom ini lalu pindai.</p>
       <div class="sc-row">
         <input id="scCode" placeholder="RN-XXXXXXXX" autocomplete="off">
         <button class="sc-btn" id="scSendBtn" type="button">Catat</button>
@@ -89,7 +91,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
   <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-  <script src="../assets/js/scan.js?v=scan-20261009"></script>
+  <script src="../assets/js/scan.js?v=barcode-20261025"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=aboutgroup-20261025"></script>
 </body>

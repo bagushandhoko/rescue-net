@@ -554,3 +554,6 @@
   .rn-drawer-public .rn-submenu { position: static; min-width: 0; padding: 0; border: 0; background: transparent; box-shadow: none; display: flex; flex-direction: column; gap: 0; }
   .rn-drawer-public .rn-submenu-link { min-height: 36px; padding: 6px 20px; border: 0; font-size: 15px; }
 }
+/* Barang Keluar: cetak label + pindai barcode (2026-10-25) */
+.rn-mov-label { margin-left: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.rn-mov-scan { margin-left: auto; white-space: nowrap; }

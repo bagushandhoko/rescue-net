@@ -163,6 +163,13 @@
         label: "Persetujuan Anggota",
         href: "koordinasi-organisasi.html#koMemberSection",
         icon: "relawan"
+      },
+      {
+        // organisasi berskema Terpusat (mis. TNI): pusat membuat akun anggota
+        // daerah, reset/nonaktifkan, dan memutus pengajuan (owner 2026-10-25)
+        label: "Komando Pusat",
+        href: "komando-pusat.html",
+        icon: "verification"
       }
     ]
   };

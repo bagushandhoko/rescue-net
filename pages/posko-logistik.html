@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Posko Logistik</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=donasi-20261025">
+  <link rel="stylesheet" href="../assets/css/style.css?v=daftarbarang-20261025">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -155,18 +155,17 @@
         </div>
       </section>
 
-      <section class="panel">
+      <!-- owner 2026-10-25: one "Daftar Barang" instead of Masuk/Keluar +
+           Kartu Stok Rinci; a row opens that item's Kartu Stok -->
+      <section class="panel" id="itemListPanel">
         <div class="panel-header">
-          <div><h3>Barang Masuk / Keluar</h3><p>Pergerakan logistik dari &amp; menuju posko ini.</p></div>
-          <div class="rn-tabs" role="tablist">
-            <button class="rn-tab is-active" id="movTabMasuk" type="button">Masuk</button>
-            <button class="rn-tab" id="movTabKeluar" type="button">Keluar</button>
-          </div>
+          <div><h3>Daftar Barang <span class="chip" id="itemListCount">0 item</span></h3><p>Klik barang untuk membuka kartu stoknya: stok, barang masuk &amp; keluar, label dan lacak kiriman.</p></div>
+          <div class="rn-item-tools" id="itemListTools"></div>
         </div>
         <div class="rn-table-wrap">
-          <table class="rn-table">
-            <thead><tr><th id="movWhoHead">Dari</th><th>Item</th><th>Jumlah</th><th>Status</th></tr></thead>
-            <tbody id="movBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
+          <table class="rn-table rn-item-list">
+            <thead><tr><th>Barang</th><th>Stok</th><th>Masuk / Keluar 7h</th><th>Estimasi Habis</th></tr></thead>
+            <tbody id="itemListBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
           </table>
         </div>
       </section>
@@ -218,39 +217,7 @@
       <p class="rn-muted" data-ig-note style="font-size:11px;margin-top:8px;"></p>
     </section>
 
-    <details class="panel rn-input-drawer rn-stockcards-panel" id="stockCardsPanel" hidden>
-      <summary>
-        <h3>Kartu Stok Rinci <span class="chip" id="stockCardsCount">0 item</span></h3>
-        <p>Per item: stok ada, masuk/keluar 7 hari, OTW, kebutuhan, gap, laju konsumsi &amp; estimasi habis (stok ÷ laju).</p>
-      </summary>
-
-      <div class="rn-table-wrap">
-        <table class="rn-table">
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Stok Ada</th>
-              <th>Masuk 7h</th>
-              <th>Keluar 7h</th>
-              <th>OTW</th>
-              <th>Kebutuhan</th>
-              <th>Gap</th>
-              <th>Laju/hari</th>
-              <th>Estimasi Habis</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="stockCardsBody">
-            <tr><td colspan="10">Memuat…</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="rn-table-foot">
-        <span id="stockCardsShown">—</span>
-        <a class="btn ghost" id="stockCardsMore" href="#">Buka Posko Detail</a>
-      </div>
-    </details>
+    <!-- Kartu Stok Rinci now opens per item from Daftar Barang -->
 
     <details class="panel create-panel rn-input-drawer" id="aidOfferPanel" hidden>
       <summary>
@@ -351,8 +318,8 @@
 <script src="../assets/js/rn-posko-contact.js?v=kontak-20261018"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
 <script src="../assets/js/rn-posko-picker.js?v=poskopicker-20260906c"></script>
-<script src="../assets/js/rn-logistik-info.js?v=print-20261025"></script>
-<script src="../assets/js/logistik.js?v=autoprint-20261025"></script>
+<script src="../assets/js/rn-logistik-info.js?v=daftarbarang-20261025"></script>
+<script src="../assets/js/logistik.js?v=daftarbarang-20261025"></script>
 <script src="../assets/js/rn-item-groups.js?v=itemgroups-20260903c"></script>
 <script src="../assets/js/rn-ai-suggestions.js?v=aisug-20261008"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>

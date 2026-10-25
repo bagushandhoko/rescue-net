@@ -382,6 +382,111 @@ function renderStockCards(b) {
   });
 }
 
+/* "Daftar Barang" (owner 2026-10-25): one row per item of this posko — its
+   stock card plus anything that only moved in/out — replacing the separate
+   Masuk/Keluar table and Kartu Stok Rinci. A row opens the item's Kartu Stok. */
+function itemListRows(b) {
+  const rows = new Map();
+  const add = (item, unit) => {
+    const key = normItem(item);
+    if (!key) return null;
+    if (!rows.has(key)) rows.set(key, { item, unit, card: null, masuk: [], keluar: [] });
+    return rows.get(key);
+  };
+  (b.stock_cards || []).forEach(c => { const r = add(c.item, c.unit); if (r) r.card = c; });
+  (b.movements_in || []).forEach(m => { const r = add(m.item_name, m.unit); if (r) r.masuk.push(m); });
+  (b.movements_out || []).forEach(m => { const r = add(m.item_name, m.unit); if (r) r.keluar.push(m); });
+  let list = Array.from(rows.values());
+  if (KATEGORI) list = list.filter(r => itemCategory(r.item) === KATEGORI);
+  return list;
+}
+
+function renderItemList(b) {
+  const body = document.getElementById("itemListBody");
+  if (!body) return;
+  const tools = document.getElementById("itemListTools");
+  if (tools && window.RNLogistikInfo && RNLogistikInfo.renderTools) RNLogistikInfo.renderTools(b, tools);
+  const list = itemListRows(b);
+  const cnt = document.getElementById("itemListCount");
+  if (cnt) cnt.textContent = `${list.length} item`;
+  if (!list.length) {
+    body.innerHTML = `<tr><td colspan="4" class="rn-muted">${KATEGORI ? `Tidak ada barang untuk kategori "${safe(KATEGORI)}".` : "Belum ada barang di posko ini."}</td></tr>`;
+    return;
+  }
+  body.innerHTML = list.map((r, i) => {
+    const c = r.card;
+    const moving = r.keluar.filter(m => !/^(cancelled|received|received_verified|stock_transferred)$/.test(String(m.status || ""))).length;
+    return `
+      <tr class="rn-item-row" data-i="${i}" tabindex="0" role="button" title="Buka kartu stok">
+        <td><a href="#" class="rn-item-open" data-i="${i}"><b>${safe(r.item)}</b></a> <small>${safe(r.unit)}</small>
+          ${moving ? `<br><small class="rn-muted">${moving} kiriman keluar berjalan</small>` : ""}</td>
+        <td>${c ? fmt(c.stok_ada) : (b.detail_allowed ? "—" : `<span class="rn-muted">terkunci</span>`)}</td>
+        <td>${c && (c.masuk_7h || c.keluar_7h)
+          ? `<span class="rn-in">${c.masuk_7h ? "+" + fmt(c.masuk_7h) : "0"}</span> / <span class="rn-out">${c.keluar_7h ? "−" + fmt(c.keluar_7h) : "0"}</span>`
+          : `${r.masuk.length} masuk · ${r.keluar.length} keluar`}</td>
+        <td>${c ? habisChip(c.estimasi_habis_hari) : "—"}</td>
+      </tr>`;
+  }).join("");
+  const open = i => openItemCard(list[Number(i)]);
+  body.querySelectorAll(".rn-item-row").forEach(tr => {
+    tr.addEventListener("click", e => { e.preventDefault(); open(tr.dataset.i); });
+    tr.addEventListener("keydown", e => { if (e.key === "Enter") open(tr.dataset.i); });
+  });
+}
+
+const LIVE_FLOW = m => !/^(cancelled|received|received_verified|stock_transferred)$/.test(String(m.status || ""));
+
+function itemMoveRows(rows, whoKey, manage, outgoing) {
+  if (!rows.length) return `<p class="rn-muted">Belum ada.</p>`;
+  const chip = m => window.RNLogistikInfo && RNLogistikInfo.statusChip
+    ? RNLogistikInfo.statusChip(m.status, m.status_label) : safe(m.status_label || m.status);
+  return `<div class="rn-drawer-list">${rows.map(m => `
+    <div class="rn-drawer-row">
+      <div>
+        <b>${safe(m[whoKey])}</b> · ${fmt(m.quantity)} ${safe(m.unit)}<br>
+        ${chip(m)}
+        ${m.flow ? ` <a class="rn-mov-label" href="lacak-logistik.html?flow=${encodeURIComponent(m.flow)}">📍 Lacak</a>` : ""}
+        ${m.flow && manage && outgoing ? ` <a class="rn-mov-label" href="cetak-label.html?print=1&flow=${encodeURIComponent(m.flow)}">🖨 Label</a>` : ""}
+      </div>
+    </div>`).join("")}</div>`;
+}
+
+/* Kartu Stok of one item: the numbers of the old Kartu Stok Rinci row, its
+   actions, and its own incoming / outgoing shipments with label + track. */
+function openItemCard(r) {
+  if (!r) return;
+  const b = LOGISTIK_BOARD || {};
+  const manage = !!b.can_manage;
+  const c = r.card;
+  const fact = (label, value) => `<div><span class="rn-muted">${label}</span><br><b>${value}</b></div>`;
+  const facts = c ? `<div class="rn-item-facts" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-bottom:12px">
+      ${fact("Stok ada", fmt(c.stok_ada) + " " + safe(c.unit))}
+      ${fact("Masuk 7 hari", c.masuk_7h ? "+" + fmt(c.masuk_7h) : "—")}
+      ${fact("Keluar 7 hari", c.keluar_7h ? "−" + fmt(c.keluar_7h) : "—")}
+      ${fact("OTW", c.otw ? fmt(c.otw) + " (" + c.otw_count + ")" : "—")}
+      ${fact("Kebutuhan", c.kebutuhan ? fmt(c.kebutuhan) : "—")}
+      ${fact("Gap", c.gap ? fmt(c.gap) : "—")}
+      ${fact("Laju/hari", c.laju_harian ? fmt(c.laju_harian) : "—")}
+      ${fact("Estimasi habis", habisChip(c.estimasi_habis_hari))}
+    </div>` : `<p class="rn-muted">${b.detail_allowed ? "Belum ada kartu stok untuk barang ini (hanya tercatat di kiriman)." : "Angka stok hanya tampil untuk operator posko / organisasi yang membuka koordinasi."}</p>`;
+  const live = r.keluar.filter(m => m.flow && LIVE_FLOW(m));
+  const actions = `<div class="form-actions" style="flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      ${c ? `<button class="btn ghost mini" type="button" data-act="asal">Asal barang</button>` : ""}
+      ${c ? `<button class="btn ghost mini" type="button" data-act="penuhi">Penuhi</button>` : ""}
+      ${c && manage ? `<button class="btn primary mini" type="button" data-act="kirim">Kirim</button>` : ""}
+      ${manage && live.length ? `<a class="btn ghost mini" href="cetak-label.html?print=1&${live.slice(0, 30).map(m => "flow=" + encodeURIComponent(m.flow)).join("&")}">🖨 Cetak ${live.length} label</a>` : ""}
+    </div>`;
+  const title = `Kartu Stok — ${r.item}`;
+  showDrawer(title, facts + actions +
+    `<h4 style="margin:8px 0 4px">Barang keluar (${r.keluar.length})</h4>` + itemMoveRows(r.keluar, "tujuan", manage, true) +
+    `<h4 style="margin:12px 0 4px">Barang masuk (${r.masuk.length})</h4>` + itemMoveRows(r.masuk, "dari", manage, false));
+  const d = document.getElementById("rnDrawerBody");
+  const on = (act, fn) => d.querySelector(`[data-act="${act}"]`)?.addEventListener("click", fn);
+  on("asal", () => openStockSources(r.item));
+  on("penuhi", () => { hideDrawer(); openFulfill(r.item, c.unit || ""); });
+  on("kirim", () => { hideDrawer(); openDispatch(r.item, c.unit || "", c.stok_ada); });
+}
+
 /* "Asal item" — where the stock for this item came from (donations +
    arrived kiriman from other poskos). */
 async function openStockSources(item) {
@@ -1086,6 +1191,7 @@ async function loadBoard() {
     renderManageAccess(b);      // toggles the operator inline actions on top
     renderKategoriOptions(b);
     renderStockCards(b);
+    renderItemList(b);
     renderPublicShipments(b);
     renderTrace(b);
     renderConversions(b);
@@ -1342,7 +1448,7 @@ async function boot() {
 
   document.getElementById("logistikKategori")?.addEventListener("change", e => {
     KATEGORI = e.target.value || "";
-    if (LOGISTIK_BOARD) renderStockCards(LOGISTIK_BOARD);
+    if (LOGISTIK_BOARD) { renderStockCards(LOGISTIK_BOARD); renderItemList(LOGISTIK_BOARD); }
   });
 
   document.getElementById("buktiModalClose")?.addEventListener("click", closeBuktiModal);

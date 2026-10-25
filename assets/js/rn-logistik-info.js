@@ -189,17 +189,18 @@ window.RNLogistikInfo = (function () {
     return a;
   }
 
-  function scanButton(b) {
+  function scanButton(b, host) {
     const tabs = document.getElementById("movTabMasuk");
-    if (!tabs || !tabs.parentNode) return;
+    const parent = host || (tabs && tabs.parentNode);
+    if (!parent) return;
     const manage = !!b.can_manage;
-    const scan = toolButton(tabs.parentNode, "movScanBtn", "📷 Pindai barcode", "Pindai QR / barcode label kiriman");
+    const scan = toolButton(parent, "movScanBtn", "📷 Pindai barcode", "Pindai QR / barcode label kiriman");
     const page = location.pathname.split("/").pop() + location.search;
     scan.href = "scan.html?back=" + encodeURIComponent(page);
     scan.hidden = !manage;
     // owner 2026-10-25: straight to the printer with the labels of every
     // outgoing shipment still on its way (not cancelled / already received)
-    const print = toolButton(tabs.parentNode, "movPrintBtn", "🖨 Cetak label", "Cetak label semua kiriman keluar yang masih berjalan");
+    const print = toolButton(parent, "movPrintBtn", "🖨 Cetak label", "Cetak label semua kiriman keluar yang masih berjalan");
     const live = (b.movements_out || []).filter(m => m.flow &&
       !/^(cancelled|received|received_verified|stock_transferred)$/.test(String(m.status || "")));
     print.href = live.length
@@ -207,7 +208,7 @@ window.RNLogistikInfo = (function () {
       : "cetak-label.html";
     print.title = live.length ? `Cetak ${Math.min(live.length, 30)} label kiriman keluar` : "Belum ada kiriman keluar yang berjalan";
     print.hidden = !manage;
-    const track = toolButton(tabs.parentNode, "movTrackBtn", "📍 Lacak resi", "Lacak kiriman dengan nomor resi RN-XXXXXXXX");
+    const track = toolButton(parent, "movTrackBtn", "📍 Lacak resi", "Lacak kiriman dengan nomor resi RN-XXXXXXXX");
     track.href = "lacak-logistik.html";
     track.hidden = false;
   }
@@ -235,5 +236,7 @@ window.RNLogistikInfo = (function () {
     renderPublicShipmentsInfo,
     renderMovements,
     wireMovementsTabs,
+    renderTools: scanButton,
+    statusChip,
   };
 })();

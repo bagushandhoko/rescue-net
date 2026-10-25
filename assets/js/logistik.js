@@ -385,53 +385,20 @@ function renderStockCards(b) {
 /* "Daftar Barang" (owner 2026-10-25): one row per item of this posko — its
    stock card plus anything that only moved in/out — replacing the separate
    Masuk/Keluar table and Kartu Stok Rinci. A row opens the item's Kartu Stok. */
-function itemListRows(b) {
-  const rows = new Map();
-  const add = (item, unit) => {
-    const key = normItem(item);
-    if (!key) return null;
-    if (!rows.has(key)) rows.set(key, { item, unit, card: null, masuk: [], keluar: [] });
-    return rows.get(key);
-  };
-  (b.stock_cards || []).forEach(c => { const r = add(c.item, c.unit); if (r) r.card = c; });
-  (b.movements_in || []).forEach(m => { const r = add(m.item_name, m.unit); if (r) r.masuk.push(m); });
-  (b.movements_out || []).forEach(m => { const r = add(m.item_name, m.unit); if (r) r.keluar.push(m); });
-  let list = Array.from(rows.values());
-  if (KATEGORI) list = list.filter(r => itemCategory(r.item) === KATEGORI);
-  return list;
-}
-
 function renderItemList(b) {
-  const body = document.getElementById("itemListBody");
-  if (!body) return;
-  const tools = document.getElementById("itemListTools");
-  if (tools && window.RNLogistikInfo && RNLogistikInfo.renderTools) RNLogistikInfo.renderTools(b, tools);
-  const list = itemListRows(b);
-  const cnt = document.getElementById("itemListCount");
-  if (cnt) cnt.textContent = `${list.length} item`;
-  if (!list.length) {
-    body.innerHTML = `<tr><td colspan="4" class="rn-muted">${KATEGORI ? `Tidak ada barang untuk kategori "${safe(KATEGORI)}".` : "Belum ada barang di posko ini."}</td></tr>`;
-    return;
-  }
-  body.innerHTML = list.map((r, i) => {
-    const c = r.card;
-    const moving = r.keluar.filter(m => !/^(cancelled|received|received_verified|stock_transferred)$/.test(String(m.status || ""))).length;
-    return `
-      <tr class="rn-item-row" data-i="${i}" tabindex="0" role="button" title="Buka kartu stok">
-        <td><a href="#" class="rn-item-open" data-i="${i}"><b>${safe(r.item)}</b></a> <small>${safe(r.unit)}</small>
-          ${moving ? `<br><small class="rn-muted">${moving} kiriman keluar berjalan</small>` : ""}</td>
-        <td>${c ? fmt(c.stok_ada) : (b.detail_allowed ? "—" : `<span class="rn-muted">terkunci</span>`)}</td>
-        <td>${c && (c.masuk_7h || c.keluar_7h)
-          ? `<span class="rn-in">${c.masuk_7h ? "+" + fmt(c.masuk_7h) : "0"}</span> / <span class="rn-out">${c.keluar_7h ? "−" + fmt(c.keluar_7h) : "0"}</span>`
-          : `${r.masuk.length} masuk · ${r.keluar.length} keluar`}</td>
-        <td>${c ? habisChip(c.estimasi_habis_hari) : "—"}</td>
-      </tr>`;
-  }).join("");
-  const open = i => openItemCard(list[Number(i)]);
-  body.querySelectorAll(".rn-item-row").forEach(tr => {
-    tr.addEventListener("click", e => { e.preventDefault(); open(tr.dataset.i); });
-    tr.addEventListener("keydown", e => { if (e.key === "Enter") open(tr.dataset.i); });
+  if (!window.RNLogistikInfo || !RNLogistikInfo.renderItemList) return;
+  RNLogistikInfo.renderItemList(b, {
+    keep: KATEGORI ? r => itemCategory(r.item) === KATEGORI : null,
+    emptyText: KATEGORI ? `Tidak ada barang untuk kategori "${KATEGORI}".` : "Belum ada barang di posko ini.",
+    onOpen: openItemCard,
   });
+  // Posko Detail links here with ?item= to open that item's Kartu Stok
+  const want = new URLSearchParams(location.search).get("item");
+  if (want && !renderItemList.opened) {
+    renderItemList.opened = true;
+    const r = RNLogistikInfo.itemListRows(b).find(x => normItem(x.item) === normItem(want));
+    if (r) openItemCard(r);
+  }
 }
 
 const LIVE_FLOW = m => !/^(cancelled|received|received_verified|stock_transferred)$/.test(String(m.status || ""));

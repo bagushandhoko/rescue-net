@@ -569,8 +569,13 @@ async function loadPosko() {
       RNLogistikInfo.renderKpi(logBoard);
       RNLogistikInfo.renderUrgentNeeds(logBoard);
       RNLogistikInfo.renderPublicShipmentsInfo(logBoard);
-      RNLogistikInfo.renderMovements(logBoard);
-      RNLogistikInfo.wireMovementsTabs(() => logBoard);
+      RNLogistikInfo.renderItemList(logBoard, {
+        onOpen: r => {
+          const q = new URLSearchParams({ id: getPoskoId(), item: r.item });
+          if (currentEventParam()) q.set("event", currentEventParam());
+          location.href = "posko-logistik.html?" + q.toString();
+        },
+      });
     }
   } catch (e) {
     // Kondisi Logistik is supplementary info — a failure here shouldn't

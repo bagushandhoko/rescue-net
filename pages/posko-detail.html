@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Posko Detail</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=donasi-20261025">
+  <link rel="stylesheet" href="../assets/css/style.css?v=daftar-20261026">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -93,7 +93,7 @@
         <strong id="kpiKritis">-</strong>
         <small id="kpiKritisHint">prioritas tertinggi</small>
       </div>
-      <div class="kpi-card rn-kpi-clickable" id="kpiMenujuCard" data-go="#movBody" data-tab="masuk" role="button" tabindex="0">
+      <div class="kpi-card rn-kpi-clickable" id="kpiMenujuCard" data-go="#itemListPanel" role="button" tabindex="0">
         <span class="kpi-icon" data-icon="truck"></span>
         <span>Bantuan Menuju Posko</span>
         <strong id="kpiMenuju">-</strong>
@@ -145,30 +145,20 @@
       </div>
     </section>
 
-    <section class="panel">
+    <!-- owner 2026-10-26: same Daftar Barang as Posko Logistik (shared
+         RNLogistikInfo.renderItemList); an item opens its Kartu Stok there -->
+    <section class="panel" id="itemListPanel">
       <div class="panel-header">
         <div>
-          <h3>Barang Masuk / Keluar</h3>
-          <p>Pergerakan logistik dari &amp; menuju posko ini.</p>
+          <h3>Daftar Barang <span class="chip" id="itemListCount">0 item</span></h3>
+          <p>Klik barang untuk membuka kartu stoknya di Posko Logistik: stok, barang masuk &amp; keluar, label dan lacak kiriman.</p>
         </div>
-        <div class="rn-tabs" role="tablist">
-          <button class="rn-tab is-active" id="movTabMasuk" type="button">Masuk</button>
-          <button class="rn-tab" id="movTabKeluar" type="button">Keluar</button>
-        </div>
+        <div class="rn-item-tools" id="itemListTools"></div>
       </div>
       <div class="rn-table-wrap">
-        <table class="rn-table">
-          <thead>
-            <tr>
-              <th id="movWhoHead">Dari</th>
-              <th>Item</th>
-              <th>Jumlah</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="movBody">
-            <tr><td colspan="4">Memuat…</td></tr>
-          </tbody>
+        <table class="rn-table rn-item-list">
+          <thead><tr><th>Barang</th><th>Stok</th><th>Masuk / Keluar 7h</th><th>Estimasi Habis</th></tr></thead>
+          <tbody id="itemListBody"><tr><td colspan="4">Memuat…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -312,8 +302,8 @@
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-contact.js?v=kontak-20261018"></script>
 <script src="../assets/js/rn-posko-settings.js?v=komando-20260920"></script>
-<script src="../assets/js/rn-logistik-info.js?v=pick-20261025"></script>
-<script src="../assets/js/posko-detail.js?v=viewer-20261019"></script>
+<script src="../assets/js/rn-logistik-info.js?v=daftar-20261026"></script>
+<script src="../assets/js/posko-detail.js?v=daftar-20261026"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=csrf-20261025"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

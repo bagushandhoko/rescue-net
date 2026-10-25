@@ -39,6 +39,69 @@ window.RNLogistikInfo = (function () {
     return `<span class="chip ${cls}">${safe(text || status)}</span>`;
   }
 
+  /* "Daftar Barang" (owner 2026-10-25/26): one row per item — its stock card
+     plus items that moved in/out — shared by Posko Logistik and Posko Detail.
+     An item seen only in cancelled shipments is left out. */
+  const DONE = /^(cancelled|received|received_verified|stock_transferred)$/;
+  const normItem = s => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+
+  function habisChip(days) {
+    if (days === null || days === undefined) return `<span class="rn-muted">—</span>`;
+    const cls = days < 3 ? "danger" : days < 7 ? "warning" : "good";
+    return `<span class="chip ${cls}">${fmt(days)} hari</span>`;
+  }
+
+  function itemListRows(b, keep) {
+    const rows = new Map();
+    const get = (item, unit, create) => {
+      const key = normItem(item);
+      if (!key) return null;
+      if (!rows.has(key) && create) rows.set(key, { item, unit, card: null, masuk: [], keluar: [] });
+      return rows.get(key) || null;
+    };
+    (b.stock_cards || []).forEach(c => { const r = get(c.item, c.unit, true); if (r) r.card = c; });
+    const live = m => String(m.status || "") !== "cancelled";
+    (b.movements_in || []).forEach(m => { const r = get(m.item_name, m.unit, live(m)); if (r) r.masuk.push(m); });
+    (b.movements_out || []).forEach(m => { const r = get(m.item_name, m.unit, live(m)); if (r) r.keluar.push(m); });
+    const list = Array.from(rows.values());
+    return keep ? list.filter(keep) : list;
+  }
+
+  function renderItemList(b, opts) {
+    opts = opts || {};
+    const body = document.getElementById("itemListBody");
+    if (!body) return [];
+    const tools = document.getElementById("itemListTools");
+    if (tools) scanButton(b, tools);
+    const list = itemListRows(b, opts.keep);
+    const cnt = document.getElementById("itemListCount");
+    if (cnt) cnt.textContent = `${list.length} item`;
+    if (!list.length) {
+      body.innerHTML = `<tr><td colspan="4" class="rn-muted">${safe(opts.emptyText || "Belum ada barang di posko ini.")}</td></tr>`;
+      return list;
+    }
+    body.innerHTML = list.map((r, i) => {
+      const c = r.card;
+      const moving = r.keluar.filter(m => !DONE.test(String(m.status || ""))).length;
+      return `
+        <tr class="rn-item-row" data-i="${i}" tabindex="0" role="button" title="Buka kartu stok">
+          <td><a href="#" class="rn-item-open"><b>${safe(r.item)}</b></a> <small>${r.unit ? safe(r.unit) : ""}</small>
+            ${moving ? `<br><small class="rn-muted">${moving} kiriman keluar berjalan</small>` : ""}</td>
+          <td>${c ? fmt(c.stok_ada) : (b.detail_allowed ? "—" : `<span class="rn-muted">terkunci</span>`)}</td>
+          <td>${c && (c.masuk_7h || c.keluar_7h)
+            ? `<span class="rn-in">${c.masuk_7h ? "+" + fmt(c.masuk_7h) : "0"}</span> / <span class="rn-out">${c.keluar_7h ? "−" + fmt(c.keluar_7h) : "0"}</span>`
+            : `${r.masuk.length} masuk · ${r.keluar.length} keluar`}</td>
+          <td>${c ? habisChip(c.estimasi_habis_hari) : "—"}</td>
+        </tr>`;
+    }).join("");
+    const open = i => opts.onOpen && opts.onOpen(list[Number(i)]);
+    body.querySelectorAll(".rn-item-row").forEach(tr => {
+      tr.addEventListener("click", e => { e.preventDefault(); open(tr.dataset.i); });
+      tr.addEventListener("keydown", e => { if (e.key === "Enter") open(tr.dataset.i); });
+    });
+    return list;
+  }
+
   function etaChip(txt) {
     const s = String(txt || "").trim();
     if (!s || s === "-") return `<span class="rn-muted">—</span>`;
@@ -237,6 +300,8 @@ window.RNLogistikInfo = (function () {
     renderMovements,
     wireMovementsTabs,
     renderTools: scanButton,
+    renderItemList,
+    itemListRows,
     statusChip,
   };
 })();

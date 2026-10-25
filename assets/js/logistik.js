@@ -1143,6 +1143,11 @@ function setupLogisticNeedForm() {
       form.jiwa_terdampak && form.jiwa_terdampak.focus();
       return;
     }
+    const unitWarn = needUnitWarning(form);
+    if (unitWarn && !unitWarn.startsWith("Mirip") && !window.confirm(unitWarn + "\n\nTetap simpan dengan satuan ini?")) {
+      form.unit.focus();
+      return;
+    }
     try {
       if (msg) msg.textContent = "Menyimpan kebutuhan…";
       await RN_FRAPPE.call(
@@ -1172,9 +1177,91 @@ function setupLogisticNeedForm() {
   });
 }
 
+/* Items this posko already knows (stock cards + open needs) with their unit,
+   so the need form offers them instead of a fresh spelling, and warns when a
+   known item gets a different unit (liter vs dus never merge into one row). */
+function knownNeedItems() {
+  const b = LOGISTIK_BOARD || {};
+  const seen = new Map();
+  (b.stock_cards || []).map(c => [c.item, c.unit])
+    .concat((b.urgent_needs || []).map(r => [r.item_name, r.unit]))
+    .forEach(([item, unit]) => {
+      const key = normItem(item);
+      if (!key) return;
+      if (!seen.has(key)) seen.set(key, { item, units: [] });
+      const u = String(unit || "").trim();
+      if (u && !seen.get(key).units.includes(u)) seen.get(key).units.push(u);
+    });
+  return Array.from(seen.values());
+}
+
+function normItem(s) {
+  return String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+// the known item this name refers to: the same name, else one that contains it
+function matchNeedItem(name) {
+  const n = normItem(name);
+  if (n.length < 3) return null;
+  const items = knownNeedItems();
+  const same = items.find(x => normItem(x.item) === n);
+  if (same) return { ...same, exact: true };
+  const like = items.find(x => normItem(x.item).includes(n) || n.includes(normItem(x.item)));
+  return like ? { ...like, exact: false } : null;
+}
+
+// warning text for the current name/unit, "" when nothing to warn about
+function needUnitWarning(form) {
+  const m = matchNeedItem(form.item_name.value);
+  const unit = normItem(form.unit.value);
+  if (!m || !m.units.length || !unit) return "";
+  if (m.units.some(u => normItem(u) === unit)) {
+    return m.exact ? "" : `Mirip dengan "${m.item}" (${m.units.join(" / ")}) yang sudah ada di posko ini — pilih dari daftar agar tercatat di baris yang sama.`;
+  }
+  return `"${m.item}" di posko ini tercatat dalam satuan ${m.units.join(" / ")}, bukan ${form.unit.value.trim()}. ` +
+    "Satuan berbeda dicatat sebagai baris terpisah dan tidak digabung dengan stok.";
+}
+
+function setupNeedItemPicker(form) {
+  if (!form || form.dataset.picker) return;
+  form.dataset.picker = "1";
+  const list = document.createElement("datalist");
+  list.id = "needItemList";
+  form.appendChild(list);
+  form.item_name.setAttribute("list", list.id);
+  form.item_name.setAttribute("autocomplete", "off");
+  const warn = document.createElement("small");
+  warn.className = "rn-need-unit-warn";
+  warn.hidden = true;
+  warn.style.cssText = "display:block;color:#b45309;margin-top:4px";
+  form.unit.closest("label").appendChild(warn);
+  const check = () => {
+    const t = needUnitWarning(form);
+    warn.textContent = t;
+    warn.hidden = !t;
+  };
+  form.item_name.addEventListener("input", () => {
+    const m = matchNeedItem(form.item_name.value);
+    // a picked known item brings its unit along (only into an empty unit box)
+    if (m && m.exact && m.units.length === 1 && !form.unit.value.trim()) form.unit.value = m.units[0];
+    check();
+  });
+  form.unit.addEventListener("input", check);
+  form.addEventListener("reset", () => { warn.hidden = true; });
+}
+
+function fillNeedItemList() {
+  const list = document.getElementById("needItemList");
+  if (!list) return;
+  list.innerHTML = knownNeedItems().map(x =>
+    `<option value="${safe(x.item)}">${safe(x.units.join(" / "))}</option>`).join("");
+}
+
 function openAddNeedModal() {
   const modal = document.getElementById("addNeedModal");
   if (!modal) return;
+  setupNeedItemPicker(modal.querySelector("[data-rn-create-logistic-need]"));
+  fillNeedItemList();
   modal.hidden = false;
   modal.querySelector("[name='item_name']")?.focus();
 }

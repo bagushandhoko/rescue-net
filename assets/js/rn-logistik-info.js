@@ -168,28 +168,49 @@ window.RNLogistikInfo = (function () {
             <td>${safe(m[whoKey])}</td>
             <td>${m.flow ? `<a href="lacak-logistik.html?flow=${encodeURIComponent(m.flow)}" title="Lacak kiriman">${safe(m.item_name)}</a>` : safe(m.item_name)}</td>
             <td>${fmt(m.quantity)} ${safe(m.unit)}</td>
-            <td>${statusChip(m.status)}${label(m)}</td>
+            <td>${statusChip(m.status)}${label(m)}${m.flow ? ` <a class="rn-mov-label" href="lacak-logistik.html?flow=${encodeURIComponent(m.flow)}" title="Lacak perjalanan kiriman">📍 Lacak</a>` : ""}</td>
           </tr>
         `).join("")
-      : `<tr><td colspan="4">Belum ada pergerakan ${movTab}.</td></tr>`;
+      : `<tr><td colspan="4">Belum ada pergerakan ${movTab}.${movTab === "keluar" && manage ? " Label 🖨 muncul di sini setelah barang dikirim." : ""}</td></tr>`;
     scanButton(b);
+  }
+
+  // toolbar beside the Masuk/Keluar tabs: scan + print (managers), track (all)
+  function toolButton(parent, id, text, title) {
+    let a = document.getElementById(id);
+    if (!a) {
+      a = document.createElement("a");
+      a.id = id;
+      a.className = "btn ghost mini rn-mov-scan";
+      a.textContent = text;
+      a.title = title;
+      parent.appendChild(a);
+    }
+    return a;
   }
 
   function scanButton(b) {
     const tabs = document.getElementById("movTabMasuk");
     if (!tabs || !tabs.parentNode) return;
-    let a = document.getElementById("movScanBtn");
-    if (!b.can_manage) { if (a) a.hidden = true; return; }
-    if (!a) {
-      a = document.createElement("a");
-      a.id = "movScanBtn";
-      a.className = "btn ghost mini rn-mov-scan";
-      a.textContent = "📷 Pindai barcode";
-      tabs.parentNode.appendChild(a);
-    }
+    const manage = !!b.can_manage;
+    const scan = toolButton(tabs.parentNode, "movScanBtn", "📷 Pindai barcode", "Pindai QR / barcode label kiriman");
     const page = location.pathname.split("/").pop() + location.search;
-    a.href = "scan.html?back=" + encodeURIComponent(page);
-    a.hidden = false;
+    scan.href = "scan.html?back=" + encodeURIComponent(page);
+    scan.hidden = !manage;
+    // labels live on the outgoing rows: this opens the Keluar tab
+    const print = toolButton(tabs.parentNode, "movPrintBtn", "🖨 Cetak label", "Cetak label kiriman keluar (QR + barcode)");
+    print.href = "#";
+    print.hidden = !manage || movTab === "keluar";
+    if (!print.dataset.wired) {
+      print.dataset.wired = "1";
+      print.addEventListener("click", e => {
+        e.preventDefault();
+        document.getElementById("movTabKeluar")?.click();
+      });
+    }
+    const track = toolButton(tabs.parentNode, "movTrackBtn", "📍 Lacak resi", "Lacak kiriman dengan nomor resi RN-XXXXXXXX");
+    track.href = "lacak-logistik.html";
+    track.hidden = false;
   }
 
   function wireMovementsTabs(getBoard) {

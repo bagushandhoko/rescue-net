@@ -493,12 +493,14 @@ def recheck_and_publish(donor_program):
     return {"donor_program": donor_program, "public_visibility": "summary_public", "tenders_opened": opened}
 
 
-def _organiser_title(owner_type, owner_id):
+def _organiser_title(owner_type, owner_id, officer=None):
     if not owner_id:
-        return "-"
+        return officer or "Penyelenggara belum diisi"
     t = str(owner_type or "").lower()
-    if t in ("organization", "org", "rn organization", "kelompok"):
-        return frappe.db.get_value("RN Organization", owner_id, "title") or owner_id
+    if t in ("organization", "org", "rn organization", "kelompok", "community_group"):
+        return (frappe.db.get_value("RN Organization", owner_id, "title")
+                or frappe.db.get_value("RN Organization", {"legacy_id": owner_id}, "title")
+                or officer or owner_id)
     if t == "posko":
         return frappe.db.get_value("RN Posko", owner_id, "title") or owner_id
     return frappe.db.get_value("RN User Account", owner_id, "title") or "Perorangan"
@@ -518,7 +520,7 @@ def donation_summary(disaster_event=None):
     rows = frappe.get_all(
         "RN Donor Program", filters=filters,
         fields=["name", "program_name", "program_type", "owner_type", "owner_id", "status",
-                "budget_target", "budget_received", "budget_spent"],
+                "budget_target", "budget_received", "budget_spent", "officer_in_charge_name"],
         order_by="budget_received desc", limit_page_length=500, ignore_permissions=True,
     )
     donors = {}
@@ -532,7 +534,7 @@ def donation_summary(disaster_event=None):
     programs, by_org = [], {}
     for r in rows:
         rec, tgt = flt(r.budget_received), flt(r.budget_target)
-        org = _organiser_title(r.owner_type, r.owner_id)
+        org = _organiser_title(r.owner_type, r.owner_id, r.officer_in_charge_name)
         programs.append({
             "id": r.name, "title": r.program_name or r.name, "kind": r.program_type,
             "organiser": org, "status": r.status,

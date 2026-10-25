@@ -1,0 +1,24 @@
+/* Bencana Aktif in the Control Centre look (owner 2026-10-25: "bencana aktif
+   dan control centre layout nya belum sama") — compact header and KPI tiles
+   like Control Centre, the map right after the KPIs. Page-scoped. */
+.rn-ba-topbar [data-rn-session-pill] { display: none !important; }
+.rn-ba-topbar h2 { font-size: 26px; }
+
+@media (max-width: 760px) {
+  .rn-ba-topbar { gap: 8px !important; padding-block: 4px !important; }
+  .rn-ba-topbar .eyebrow, .rn-ba-topbar .subtitle { display: none !important; }
+  .rn-ba-controls { display: flex !important; gap: 8px; align-items: center; width: 100%; flex-wrap: nowrap; }
+  .rn-ba-search { flex: 1 1 auto; min-width: 0; }
+  .rn-ba-search input { min-height: 40px !important; height: 40px; padding: 6px 10px 6px 30px !important; font-size: 14px !important; }
+  #baUpdated { font-size: 11px !important; white-space: nowrap; padding: 6px 10px !important; }
+
+  body .main > .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px !important; margin-block: 8px !important; }
+  body .main > .kpi-grid .kpi-card {
+    display: flex !important; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; padding: 10px 8px !important; min-height: 0 !important; text-align: center; border-radius: 12px !important;
+  }
+  body .main > .kpi-grid .kpi-card .kpi-icon { position: static !important; margin: 0 !important; width: 30px; height: 30px; }
+  body .main > .kpi-grid .kpi-card > span:not(.kpi-icon) { font-size: 12px !important; font-weight: 700 !important; }
+  body .main > .kpi-grid .kpi-card strong { font-size: 24px !important; line-height: 1.1; }
+  body .main > .kpi-grid .kpi-card small { display: none !important; }
+}

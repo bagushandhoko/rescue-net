@@ -171,6 +171,12 @@
         icon: "relawan"
       },
       {
+        // System Manager & Control Centre: who changed sensitive data (2026-10-26)
+        label: "Jejak Audit",
+        href: "jejak-audit.html",
+        icon: "verification"
+      },
+      {
         // organisasi berskema Terpusat (mis. TNI): pusat membuat akun anggota
         // daerah, reset/nonaktifkan, dan memutus pengajuan (owner 2026-10-25)
         label: "Komando Pusat",

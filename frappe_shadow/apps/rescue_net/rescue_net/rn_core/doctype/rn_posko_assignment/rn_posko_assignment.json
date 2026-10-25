@@ -67,5 +67,6 @@
       "create": 1,
       "delete": 1
     }
-  ]
+  ],
+  "track_changes": 1
 }

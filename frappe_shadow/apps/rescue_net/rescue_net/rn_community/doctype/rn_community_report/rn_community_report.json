@@ -374,5 +374,6 @@
    "cancel": 0,
    "amend": 0
   }
- ]
+ ],
+ "track_changes": 1
 }

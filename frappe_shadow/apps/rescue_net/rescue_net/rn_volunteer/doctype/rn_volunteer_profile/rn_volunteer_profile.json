@@ -60,12 +60,6 @@
       "fieldtype": "Data"
     },
     {
-      "fieldname": "availability_schedule",
-      "label": "Jadwal Ketersediaan",
-      "fieldtype": "Small Text",
-      "description": "Satu jadwal per baris, format 'Hari - Jam' (mis. 'Senin - Jumat: 08:00-20:00')."
-    },
-    {
       "fieldname": "current_location",
       "label": "Lokasi Saat Ini",
       "fieldtype": "Data"

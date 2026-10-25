@@ -36,14 +36,32 @@
     FLOWS.forEach(function (f, fi) {
       for (var k = 1; k <= koli; k++) {
         if (typeof QRCode === "function") {
-          new QRCode(document.getElementById("clQr" + fi + "_" + k),
-            { text: lacakUrl(f.trace), width: 112, height: 112, correctLevel: QRCode.CorrectLevel.M });
+          var box = document.getElementById("clQr" + fi + "_" + k);
+          new QRCode(box, { text: lacakUrl(f.trace), width: 224, height: 224, correctLevel: QRCode.CorrectLevel.M });
+          // a <canvas> prints blank on many phones (Chrome Android): swap it
+          // for a plain PNG <img>, which every print preview shows
+          var cv = box.querySelector("canvas");
+          if (cv) {
+            var img = new Image();
+            img.alt = "QR " + f.trace;
+            img.src = cv.toDataURL("image/png");
+            box.innerHTML = "";
+            box.appendChild(img);
+          }
         }
         if (typeof JsBarcode === "function") {
           JsBarcode("#clBar" + fi + "_" + k, f.trace, { format: "CODE128", displayValue: false, margin: 0, height: 54, width: 2 });
         }
       }
     });
+  }
+
+  // wait until every QR image has loaded, so the preview is never blank
+  function printWhenReady() {
+    var imgs = Array.prototype.slice.call(document.querySelectorAll("#clSheet img"));
+    Promise.all(imgs.map(function (im) {
+      return im.complete ? null : new Promise(function (ok) { im.onload = im.onerror = ok; });
+    })).then(function () { setTimeout(function () { window.print(); }, 300); });
   }
 
   async function boot() {
@@ -63,12 +81,12 @@
     }
     render();
     // ?print=1 (the 🖨 buttons): open the printer dialog once labels are drawn
-    if (qs.get("print") === "1" && FLOWS.length) setTimeout(function () { window.print(); }, 700);
+    if (qs.get("print") === "1" && FLOWS.length) printWhenReady();
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     $("#clKoli").addEventListener("input", render);
-    $("#clPrint").addEventListener("click", function () { window.print(); });
+    $("#clPrint").addEventListener("click", printWhenReady);
     boot();
   });
 })();

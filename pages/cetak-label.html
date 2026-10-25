@@ -33,7 +33,8 @@
     .cl-foot { display: flex; justify-content: space-between; font-size: 10px; color: #555; }
     @media print {
       @page { margin: 8mm; }
-      body { background: #fff; }
+      body { background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cl-qr img { display: block !important; }
       .cl-wrap { max-width: none; padding: 0; }
       .cl-tools { display: none; }
       .cl-sheet { grid-template-columns: repeat(2, 1fr); gap: 6mm; }
@@ -59,6 +60,6 @@
   <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
   <script src="../assets/vendor/qrcode/qrcode.min.js"></script>
   <script src="../assets/vendor/jsbarcode/JsBarcode.code128.min.js"></script>
-  <script src="../assets/js/cetak-label.js?v=autoprint-20261025"></script>
+  <script src="../assets/js/cetak-label.js?v=qrimg-20261025"></script>
 </body>
 </html>

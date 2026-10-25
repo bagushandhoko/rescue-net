@@ -69,7 +69,7 @@
     var ids = qs.getAll("flow").filter(Boolean);
     var traces = qs.getAll("trace").filter(Boolean);
     if (qs.get("koli")) $("#clKoli").value = qs.get("koli");
-    if (!ids.length && !traces.length) { $("#clSheet").innerHTML = "<p>Buka halaman ini dari tombol <b>Cetak label</b> di daftar Barang Keluar.</p>"; return; }
+    if (!ids.length && !traces.length) { $("#clSheet").innerHTML = "<p><b>Belum ada kiriman keluar yang sedang berjalan di posko ini.</b><br>Label (QR + barcode) dibuat untuk setiap kiriman: kirim barang dulu lewat <b>Kirim Stok</b> di Posko Logistik, lalu tekan 🖨 Cetak label.</p>"; return; }
     var calls = ids.map(function (id) { return { flow: id }; }).concat(traces.map(function (t) { return { trace: t }; }));
     for (var i = 0; i < calls.length; i++) {
       try {

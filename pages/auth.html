@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=about-menu-20261024af" />
+  <link rel="stylesheet" href="../assets/css/rn-demo-accounts.css?v=demo-20261025" />
 </head>
 <body>
 <div class="app-shell">
@@ -302,6 +303,69 @@
       </aside>
     </section>
 
+    <!-- Akun demo (owner 2026-10-25): supaya orang bisa memahami cara kerja
+         Rescue-Net dari tiap peran. Semua akun hanya terhubung ke data [SIMULASI]. -->
+    <section class="panel rn-demo" id="demoAccounts" aria-labelledby="demoTitle">
+      <div class="rn-demo-head">
+        <div>
+          <p class="eyebrow">Coba tanpa mendaftar</p>
+          <h3 id="demoTitle">Coba Rescue-Net dengan akun demo</h3>
+          <p class="subtitle">Pilih peran, tekan <b>Pakai akun ini</b>, lalu <b>Masuk</b>. Semua akun demo memakai kata sandi <code>Demo12345</code> dan hanya terhubung ke data latihan <b>[SIMULASI]</b>.</p>
+        </div>
+      </div>
+      <div class="rn-demo-groups">
+        <div class="rn-demo-group">
+          <h4>Masyarakat umum</h4>
+          <div class="rn-demo-card" data-demo-email="masyarakat.demo@rescue-net.local">
+            <b>Masyarakat Demo</b><span>Melapor kejadian, melihat bencana aktif, mengirim bantuan, melacak kiriman.</span>
+          </div>
+        </div>
+        <div class="rn-demo-group">
+          <h4>Petugas posko</h4>
+          <div class="rn-demo-card" data-demo-email="ld2.demo@rescue-net.local">
+            <b>Posko Logistik — LD2 Meulaboh</b><span>Kartu stok, kebutuhan, Kirim stok 3 langkah, booking armada.</span>
+          </div>
+          <div class="rn-demo-card" data-demo-email="ld3.demo@rescue-net.local">
+            <b>Posko Distribusi — Landrover Transport</b><span>Armada, syarat barang, Booking Masuk, antrean jemput.</span>
+          </div>
+          <div class="rn-demo-card" data-demo-email="ld4.demo@rescue-net.local">
+            <b>Posko Medis — Landrover Medis</b><span>Pasien aktif, kartu pasien, pemakaian obat &amp; alat.</span>
+          </div>
+          <div class="rn-demo-card" data-demo-email="ld5.demo@rescue-net.local">
+            <b>Shelter — Landrover Shelter</b><span>Okupansi, penghuni, kelompok rentan, kebutuhan dasar.</span>
+          </div>
+          <div class="rn-demo-card" data-demo-email="warga.demo@rescue-net.local">
+            <b>Posko Logistik Warga</b><span>Posko komunitas yang menerima bantuan masyarakat.</span>
+          </div>
+          <div class="rn-demo-card" data-demo-email="sim-anton@example.org">
+            <b>Gudang Pengumpul — Klub Mercy</b><span>Collection hub: mengumpulkan donasi lalu mengirim ke posko.</span>
+          </div>
+        </div>
+        <div class="rn-demo-group">
+          <h4>Pengelola organisasi</h4>
+          <div class="rn-demo-card" data-demo-email="ld1.demo@rescue-net.local">
+            <b>Pemilik — Komunitas Landrover</b><span>Anggota, posko organisasi, Terbuka/Tertutup, kunci AI organisasi.</span>
+          </div>
+          <div class="rn-demo-card" data-demo-email="sim-retno@example.org">
+            <b>BNPB Pusat (Pusdalops)</b><span>Posko komando nasional dan pantauan Control Centre.</span>
+          </div>
+          <div class="rn-demo-card" data-demo-email="sim-kompastv@example.org">
+            <b>Program Donasi — Kompas TV</b><span>Program khusus dan koordinasi donasi.</span>
+          </div>
+        </div>
+        <div class="rn-demo-group">
+          <h4>Organisasi tertutup — komando terpusat (TNI)</h4>
+          <div class="rn-demo-card" data-demo-email="tni.pusat.demo@rescue-net.local">
+            <b>Admin Pusat — Kodam Iskandar Muda</b><span>Komando Pusat: buat akun anggota daerah, reset &amp; nonaktifkan, setujui pengajuan.</span>
+          </div>
+          <div class="rn-demo-card" data-demo-email="tni.kodim.demo@rescue-net.local">
+            <b>Anggota daerah — Posko Kodim 0105</b><span>Menjalankan posko; perubahan struktur &amp; akun baru diajukan ke pusat.</span>
+          </div>
+        </div>
+      </div>
+      <p class="rn-demo-note">Data latihan bisa diubah oleh siapa pun yang mencoba. Jangan memasukkan data pribadi sungguhan ke akun demo.</p>
+    </section>
+
     <footer class="rn-auth-footer">
       <div><i aria-hidden="true" data-icon="shield-check"></i><div><b>Data Anda Aman</b><span>Kami menggunakan enkripsi dan standar keamanan tinggi.</span></div></div>
       <div><i aria-hidden="true" data-icon="clock"></i><div><b>Aksi Cepat &amp; Terkoordinasi</b><span>Informasi real-time untuk respons yang lebih efektif.</span></div></div>
@@ -315,6 +379,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=drill-20261010"></script>
 <script src="../assets/js/auth.js?v=orgopen-20261022"></script>
+<script src="../assets/js/rn-demo-accounts.js?v=demo-20261025"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=manualtek-20261025"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

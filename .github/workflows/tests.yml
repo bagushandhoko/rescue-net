@@ -1,39 +1,22 @@
-# DRAFT (Fase 0 step 5) — not yet run on GitHub. Runs the rescue_net test suite on every PR / push to main.
+# Runs the rescue_net test suite on every PR / push to main, with the same
+# isolated stack used locally on the VM (scripts/rn-test-stack.sh):
+# MariaDB (utf8mb4) + Redis + a frappe/erpnext:v15 bench, app source from git.
 name: tests
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 jobs:
   rescue-net-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
-    container:
-      image: frappe/erpnext:v15
-      options: --user root
-    services:
-      mariadb:
-        image: mariadb:10.6
-        env: { MYSQL_ROOT_PASSWORD: rn_test_root }
-        options: >-
-          --health-cmd="mysqladmin ping -uroot -prn_test_root" --health-interval=5s --health-retries=20
-      redis:
-        image: redis:7-alpine
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Install app into the bench
-        run: |
-          B=/home/frappe/frappe-bench
-          rm -rf $B/apps/rescue_net && cp -r frappe_shadow/apps/rescue_net $B/apps/rescue_net
-          chown -R frappe:frappe $B/apps/rescue_net
-          printf 'frappe\nerpnext\nrescue_net\n' > $B/sites/apps.txt
-          cat > $B/sites/common_site_config.json <<JSON
-          {"db_host":"mariadb","redis_cache":"redis://redis:6379/0","redis_queue":"redis://redis:6379/1","redis_socketio":"redis://redis:6379/2","default_site":"ci.localhost"}
-          JSON
-      - name: Create site + run tests
-        run: |
-          su frappe -c "cd /home/frappe/frappe-bench && \
-            bench new-site ci.localhost --db-root-password rn_test_root --admin-password ci --mariadb-user-host-login-scope='%' --install-app rescue_net && \
-            bench --site ci.localhost set-config allow_tests true && \
-            bench --site ci.localhost set-config --parse throttle_user_limit 100000 && \
-            bench --site ci.localhost run-tests --app rescue_net"
+      - name: Start test stack + create site
+        run: sh scripts/rn-test-stack.sh init
+      - name: Run tests
+        run: sh scripts/rn-test-stack.sh test
+      - name: Stop test stack
+        if: always()
+        run: sh scripts/rn-test-stack.sh down

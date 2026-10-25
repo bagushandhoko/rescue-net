@@ -208,7 +208,8 @@ case "${1:-}" in
     up
     sync_app
     prepare_site
-    bexec bench --site $SITE run-tests --app rescue_net "$@"
+    # CI=1: without it bench run-tests exits 0 even when tests fail
+    $D exec -e CI=1 -w $B $BENCH bench --site $SITE run-tests --app rescue_net "$@"
     ;;
   migrate) up; sync_app; bexec bench --site $SITE migrate ;;
   e2e) e2e ;;

@@ -3,6 +3,47 @@
  "diperbarui": "2026-10-26",
  "uji": [
   {
+   "id": "S7",
+   "tanggal": "2026-10-26",
+   "kategori": "Ketepatan data",
+   "judul": "Kiriman dibatalkan di tengah jalan → stok pengirim kembali",
+   "tujuan": "Memastikan barang yang batal dikirim kembali tercatat sebagai stok posko asal dan tidak bisa diterima posko tujuan.",
+   "akun": [
+    "ld2.demo (posko LD2)"
+   ],
+   "langkah": [
+    "Kiriman 10 karung dari S4 diubah ke dijemput, lalu dalam perjalanan",
+    "Kiriman dibatalkan saat dalam perjalanan",
+    "Cek sisa stok LD2",
+    "Coba tandai kiriman batal sebagai diterima",
+    "Kirim ulang 10 karung yang sama"
+   ],
+   "hasil": "Lulus",
+   "skor": "9/9 langkah lulus (gabungan S4+S7)",
+   "status": "lulus",
+   "temuan": []
+  },
+  {
+   "id": "S4",
+   "tanggal": "2026-10-26",
+   "kategori": "Ketepatan data",
+   "judul": "Beberapa petugas mengirim stok yang sama bersamaan → hanya satu yang lolos",
+   "tujuan": "Memastikan stok posko tidak bisa terkirim dua kali saat beberapa petugas menekan Kirim pada detik yang sama.",
+   "akun": [
+    "ld2.demo (posko LD2), 2–4 sesi login sekaligus"
+   ],
+   "langkah": [
+    "LD2 mencatat stok 10 karung beras uji",
+    "2 sesi mengirim 10 karung ke posko LD3 pada saat bersamaan",
+    "Diulang lebih keras: 3 putaran, tiap putaran 4 sesi mengirim 10 karung serentak (dilepas dengan satu aba-aba)",
+    "Cek sisa stok di kartu stok"
+   ],
+   "hasil": "Lulus",
+   "skor": "4 dari 4 percobaan: tepat 1 kiriman lolos, sisanya ditolak \"Stok tidak cukup\"; sisa stok 0",
+   "status": "lulus",
+   "temuan": []
+  },
+  {
    "id": "S10",
    "tanggal": "2026-10-26",
    "kategori": "Keandalan",
@@ -413,20 +454,12 @@
    "judul": "Laporan ganda: 3 warga melaporkan kejadian sama → jiwa tidak dihitung dobel"
   },
   {
-   "id": "S4",
-   "judul": "Dua petugas mengirim stok yang sama bersamaan → hanya satu lolos"
-  },
-  {
    "id": "S5",
    "judul": "Posko offline lalu sinyal kembali → data tidak dobel"
   },
   {
    "id": "S6",
    "judul": "Armada/kapal penuh → booking ditolak atau antre"
-  },
-  {
-   "id": "S7",
-   "judul": "Paket dibatalkan di tengah jalan → stok pengirim kembali"
   },
   {
    "id": "S8",

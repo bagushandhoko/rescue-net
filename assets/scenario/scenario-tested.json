@@ -3,6 +3,91 @@
  "diperbarui": "2026-10-26",
  "uji": [
   {
+   "id": "POSKO-ALL-2",
+   "tanggal": "2026-10-27",
+   "kategori": "Posko",
+   "judul": "Semua posko simulasi terisi & bergerak (20 posko), 9 akun demo baru",
+   "tujuan": "Tidak ada posko yang kosong; tiap fitur posko diuji dengan input petugas & warga.",
+   "akun": [
+    "9 akun demo baru (*.demo@rescue-net.local) untuk TNI AL kapal/RS, Pelajar, BNPB, Gudang Jogja, Shelter/Logistik/Medis Simulasi, Garuda Cargo",
+    "ld2–ld6.demo",
+    "sim-kompastv, sim-ui-peduli"
+   ],
+   "langkah": [
+    "Akun demo daftar lewat web → minta gabung organisasi → disetujui & ditempatkan di posko",
+    "Gudang Jogja → pesawat Garuda → BNPB → motor Pelajar → Shelter Simulasi; BNPB → kapal TNI AL → Pos Medis TNI AL",
+    "Logistik Simulasi → Medis Simulasi; pasien, rujukan, obat, KK, okupansi, kebutuhan",
+    "Motor Budi (80 kg): syarat armada wajib dicentang; muatan lebih ditolak",
+    "Posko transport: stok & kebutuhan BBM"
+   ],
+   "hasil": "Lulus setelah 3 perbaikan: (1) posko pemilik armada kini bisa memajukan status perjalanan kiriman yang dibawanya; (2) balasan penerimaan tidak lagi bilang stok tidak diperbarui; (3) Avtur/Pertalite/Pertamax/Dexlite/minyak tanah dikenali sebagai Bahan Bakar. Sesuai desain: posko organisasi tertutup menolak sumbangan publik; barang dalam paket mengikuti status kiriman utama.",
+   "skor": "",
+   "status": "",
+   "temuan": []
+  },
+  {
+   "id": "S6",
+   "tanggal": "2026-10-27",
+   "kategori": "Logistik",
+   "judul": "S6 Armada penuh: pesanan melebihi kapasitas ditolak",
+   "tujuan": "Kapasitas armada tidak bisa dilampaui.",
+   "akun": [
+    "ld2.demo",
+    "ld3.demo"
+   ],
+   "langkah": [
+    "LD3 buka pikap 500 kg",
+    "LD2 pesan 400 kg",
+    "Pesan 300 kg lagi",
+    "Motor Budi 80 kg: 60 kg lalu 40 kg"
+   ],
+   "hasil": "Lulus: 'Kapasitas berat tidak cukup: sisa 20 kg, diminta 40 kg'.",
+   "skor": "",
+   "status": "",
+   "temuan": []
+  },
+  {
+   "id": "S11",
+   "tanggal": "2026-10-27",
+   "kategori": "Donasi",
+   "judul": "S11 Donasi uang → program → dana terkumpul",
+   "tujuan": "Sumbangan uang tercatat di program dan terlihat.",
+   "akun": [
+    "sim-kompastv",
+    "sim-ui-peduli",
+    "masyarakat.demo"
+   ],
+   "langkah": [
+    "Posko koordinasi buat program donasi",
+    "Warga menyumbang Rp 250.000",
+    "Pengelola konfirmasi",
+    "Publikasi oleh organisasi belum terverifikasi"
+   ],
+   "hasil": "Lulus: dana terkumpul Rp 250.000 di 2 program, tampil di papan program; organisasi belum terverifikasi ditolak saat publikasi (sesuai desain).",
+   "skor": "",
+   "status": "",
+   "temuan": []
+  },
+  {
+   "id": "S8",
+   "tanggal": "2026-10-26",
+   "kategori": "Logistik",
+   "judul": "S8 Penerimaan sebagian: 10 dikirim, 8 diterima",
+   "tujuan": "Selisih penerimaan tercatat dan stok benar.",
+   "akun": [
+    "ld2.demo",
+    "ld5.demo"
+   ],
+   "langkah": [
+    "LD2 kirim 10 tenda ke LD5",
+    "LD5 terima 8 (2 rusak)"
+   ],
+   "hasil": "Lulus: stok LD5 = 8, kiriman tercatat dengan jumlah diterima 8.",
+   "skor": "",
+   "status": "",
+   "temuan": []
+  },
+  {
    "id": "S10-3",
    "tanggal": "2026-10-26",
    "kategori": "Kapasitas",

@@ -52,8 +52,8 @@ def effective_quantity(posko, item_name, unit, what="penerimaan"):
     prev_unit = (prev.unit or "").strip()
     if prev_unit and prev_unit != unit:
         frappe.throw(
-            f"Unit stok terakhir berbeda: {prev_unit} != {unit}. "
-            f"Normalisasi unit diperlukan sebelum {what}."
+            f"Stok {item_name} di posko ini dicatat dalam satuan {prev_unit}, bukan {unit}. "
+            f"Isi {what} dalam {prev_unit} (konversikan jumlahnya, mis. 1 karung beras = 25 kg)."
         )
     if (prev.quantity_mode or "unknown") != "exact" and prev.quantity not in (None, ""):
         frappe.throw(

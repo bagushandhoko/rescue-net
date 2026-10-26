@@ -238,6 +238,52 @@ def set_community_report_status(
     }
 
 
+_CLOSED_REPORT = {"rejected"}   # REPORT_TRANSITIONS: submitted → triaged → verified / rejected
+
+
+@frappe.whitelist()
+def take_community_report(report, posko, note=None):
+    """Simulasi owner 2026-10-26: a report routed to the nearest posko (e.g. a
+    medical one) could not be answered by the logistics posko that actually had
+    the goods. A manager of any posko serving the report's disaster may now take
+    the report over: it is re-routed to that posko (who may then set its status
+    and convert it), and a follow-up "Ditangani oleh …" is added so the reporter
+    and the previous posko see who handles it. Recorded in Jejak Audit."""
+    from rescue_net.access_policy import can_manage_posko
+    from rescue_net.control_centre.common import serving_posko_names
+
+    actor = _actor()
+    posko = resolve_posko(posko)
+    if not frappe.db.exists("RN Community Report", report):
+        frappe.throw("Laporan tidak ditemukan.", frappe.DoesNotExistError)
+    if not posko or not can_manage_posko(actor, posko):
+        frappe.throw("Anda bukan pengelola posko ini.", frappe.PermissionError)
+    doc = frappe.get_doc("RN Community Report", report)
+    if str(doc.get("status") or "").lower() in _CLOSED_REPORT:
+        frappe.throw("Laporan ini sudah ditolak.")
+    event = doc.get("disaster_event")
+    if event and posko not in (serving_posko_names(event) or []):
+        frappe.throw("Posko ini tidak menangani bencana laporan tersebut.")
+    previous = doc.get("posko")
+    title = lambda p: (frappe.db.get_value("RN Posko", p, "title") or p) if p else "belum ada posko"
+    doc.posko = posko
+    if str(doc.get("status") or "submitted").lower() == "submitted":
+        doc.status = "triaged"
+    doc.save(ignore_permissions=True)
+    if frappe.db.table_exists("RN Community Report Update"):
+        frappe.get_doc({
+            "doctype": "RN Community Report Update",
+            "report": doc.name,
+            "update_type": "info",
+            "body": ("Ditangani oleh %s (sebelumnya %s)." % (title(posko), title(previous))
+                     + ((" " + str(note).strip()[:400]) if note else "")),
+            "author_user": actor.get("name") if hasattr(actor, "get") else None,
+            "author_role": "posko",
+            "posted_at": now_datetime(),
+        }).insert(ignore_permissions=True)
+    return {"report": doc.name, "posko": posko, "previous_posko": previous, "status": doc.status}
+
+
 @frappe.whitelist()
 def convert_community_report(
     report,

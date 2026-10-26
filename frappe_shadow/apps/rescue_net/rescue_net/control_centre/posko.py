@@ -789,6 +789,15 @@ def _stock_cards(name):
              if _norm_item(f.get("item_name")) == k), "")
 
         stok_ada = _num(o.get("quantity"))
+        stok_tercatat = stok_ada
+        if o:
+            # simulasi 2026-10-26: the card showed the last count (640 kg) while
+            # sending refused ("tersedia 0") — what left since that count is
+            # subtracted here too, the same number the send form uses
+            from rescue_net.control_centre.common import stock_available
+            av = stock_available(name, o.get("item_name") or label)
+            if av is not None:
+                stok_ada = max(0.0, _num(av.get("available")))
 
         masuk_7h = sum(
             _num(f.get("received_quantity") or f.get("quantity"))
@@ -831,6 +840,7 @@ def _stock_cards(name):
             "item": label,
             "unit": unit,
             "stok_ada": stok_ada,
+            "stok_tercatat": stok_tercatat,
             "masuk_7h": masuk_7h,
             "keluar_7h": keluar_7h,
             "otw": otw,

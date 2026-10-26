@@ -618,7 +618,10 @@ def _book_for_flow(actor, flow, transport_space, window_from=None, window_to=Non
     until the armada's posko confirms (confirm_transport_booking assigns the
     flow then)."""
     space = frappe.get_doc("RN Transport Space", transport_space)
-    auto = bool(force_confirm) or _same_org_armada(actor, flow.source_posko, space)
+    # an armada opened to everyone (booking_policy "open", e.g. a TNI ship for
+    # the public) confirms shipments at once, like book_transport_space does
+    auto = (bool(force_confirm) or _same_org_armada(actor, flow.source_posko, space)
+            or (space.get("booking_policy") or "") == "open")
     title = lambda p: (frappe.db.get_value("RN Posko", p, "title") or p) if p else None
     window = " – ".join(str(x)[:16] for x in (window_from, window_to) if x) or None
     b = frappe.new_doc("RN Transport Booking")

@@ -608,6 +608,7 @@ function reportCard(report) {
         <button class="btn" type="button" data-report-action="escalated" data-report-id="${report.id}">Escalate</button>
         <button class="btn" type="button" data-report-action="rejected" data-report-id="${report.id}">Reject</button>
         <button class="btn primary" type="button" data-report-convert="${report.id}">Convert Logistik</button>
+        <button class="btn ghost" type="button" data-report-take="${report.id}" title="Alihkan laporan ke posko Anda dan tangani dari sana">Tangani laporan ini (posko saya)</button>
       </div>
     </article>
   `;
@@ -1067,6 +1068,23 @@ function setupCommunityReportActions() {
       hidden.slice(0, 10).forEach((el) => el.classList.remove("is-later"));
       const left = hidden.length - 10;
       if (left > 0) more.textContent = `Tampilkan lebih banyak (${left} lagi)`; else more.remove();
+      return;
+    }
+    const takeBtn = e.target.closest("[data-report-take]");
+    if (takeBtn) {
+      // simulasi 2026-10-26: another posko (e.g. logistics with the goods) takes the report over
+      takeBtn.disabled = true;
+      try {
+        const sess = await RN_FRAPPE.call("rescue_net.api_auth.session_info");
+        if (!sess || !sess.posko_id) throw new Error("Akun Anda belum terhubung ke posko.");
+        const r = await RN_FRAPPE.call("rescue_net.api_frontend_bridge.take_community_report",
+          { report: takeBtn.dataset.reportTake, posko: sess.posko_id }, { method: "POST" });
+        say(`Laporan kini ditangani posko Anda (status ${r.status}). Lanjutkan dengan Convert Logistik bila perlu.`);
+        await loadCommunityReports();
+      } catch (err) {
+        say(err && err.message ? err.message : "Gagal mengambil laporan.", true);
+        takeBtn.disabled = false;
+      }
       return;
     }
     const statusButton = e.target.closest("[data-report-action]");

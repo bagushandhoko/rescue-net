@@ -89,3 +89,17 @@ class TestPlaceMemberOnPosko(RNTestCase):
             assign_member_to_posko(w.posko_a.name, member.account, remove=1)
         with as_user(member.user):
             self.assertFalse(can_manage_posko(rn_actor(), w.posko_a.name))
+
+
+class TestCommandAccountRequestNeedsPosko(RNTestCase):
+    def test_request_without_posko_refused_up_front(self):
+        from rescue_net.api_command import request_command_account
+        from rescue_net.tests.factories import make_org
+        w = make_world()
+        frappe.db.set_value("RN Organization", w.org_a.name, "coordination_scheme", "terpusat")
+        member = make_actor(org=w.org_a)
+        with as_user(member.user):
+            with self.assertRaisesRegex(frappe.ValidationError, "Pilih posko"):
+                request_command_account(w.org_a.name, "Serda Uji", "serda-uji@example.org")
+            r = request_command_account(w.org_a.name, "Serda Uji", "serda-uji@example.org", posko=w.posko_a.name)
+        self.assertTrue(r.get("pending"))

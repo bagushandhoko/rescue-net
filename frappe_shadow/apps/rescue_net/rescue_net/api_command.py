@@ -235,6 +235,15 @@ def request_command_account(organization, full_name, email, posko=None, role="po
         frappe.throw("Anda bukan anggota organisasi ini.", frappe.PermissionError)
     if not (email or "").strip() or not (full_name or "").strip():
         frappe.throw("Nama lengkap dan email wajib diisi.")
+    # uji S16 2026-10-26: checked here, not only when the pusat approves (the
+    # request used to fail at approval: "harus ditempatkan pada satu posko")
+    if role != "community_coordinator":
+        if not posko:
+            frappe.throw("Pilih posko tempat akun ini bertugas.")
+        if command.posko_org(posko) != organization:
+            frappe.throw("Posko tersebut bukan milik organisasi ini.")
+    if frappe.db.exists("User", (email or "").strip().lower()):
+        frappe.throw("Email sudah terdaftar sebagai pengguna.")
     return command.file_request(
         actor, organization, "create_account",
         {"full_name": full_name, "email": email, "posko": posko, "role": role,

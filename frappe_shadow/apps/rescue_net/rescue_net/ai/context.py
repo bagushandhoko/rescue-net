@@ -363,6 +363,21 @@ def _disaster_summary(name):
 
 # Private helper — NOT whitelisted: with public=True it skips the AI scope and
 # returns data before _public_scrub. Callers: context() / public_context().
+def _add_posko_titles(*row_lists):
+    ids = list({r.get("posko") for rows in row_lists for r in rows if r.get("posko")})
+    if not ids:
+        return
+    titles = {}
+    for key in ("name", "legacy_id"):
+        if key == "name" or frappe.get_meta("RN Posko").has_field(key):
+            for n, t in frappe.get_all("RN Posko", filters={key: ["in", ids]}, fields=[key, "title"], as_list=True):
+                titles.setdefault(n, t)
+    for rows in row_lists:
+        for r in rows:
+            if r.get("posko") in titles:
+                r["posko_name"] = titles[r["posko"]]
+
+
 def _build_context(disaster_event_id, public=False):
     # RN_CANONICAL_REF disaster_event_id = resolve_disaster_event(disaster_event_id)
     disaster_event_id = resolve_disaster_event(disaster_event_id)
@@ -577,6 +592,10 @@ def _build_context(disaster_event_id, public=False):
         ],
         80,
     )
+
+    # 2026-10-26: the AI quoted internal ids ("posko_nodes:posko-sim-dapur");
+    # give it the posko title next to the id.
+    _add_posko_titles(stock, medical, volunteers)
 
     recovery = _rows(
         "RN Recovery Project",

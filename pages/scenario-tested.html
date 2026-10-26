@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Scenario Tested</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=donasi-20261025">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=label-20261025">
+  <link rel="stylesheet" href="../assets/css/rn-manual.css?v=minw-20261026">
+  <style>
+    .st-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+    .st-filters button { font: inherit; font-size: 13px; padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(104,64,45,.25); background: #fff; cursor: pointer; }
+    .st-filters button.is-on { background: #e8755a; color: #fff; border-color: #e8755a; }
+    .st-sum { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 10px 0; }
+    .st-sum div { border: 1px solid rgba(104,64,45,.15); border-radius: 10px; padding: 10px 12px; background: #fff; }
+    .st-sum b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+    .st-card { border: 1px solid rgba(104,64,45,.15); border-radius: 12px; padding: 14px 16px; background: #fff; margin: 12px 0; }
+    .st-card h3 { margin: 4px 0 6px; font-size: 17px; text-wrap: balance; }
+    .st-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: #7c6458; }
+    .st-chip { border-radius: 999px; padding: 2px 9px; border: 1px solid currentColor; font-weight: 600; }
+    .st-ok { color: #2f7a4f; } .st-fix { color: #a06a12; } .st-plan { color: #6d665e; }
+    .st-card ol, .st-card ul { padding-left: 20px; margin: 6px 0; }
+    .st-find { border-left: 3px solid #e8755a; padding: 6px 10px; margin: 6px 0; background: #fff8f4; border-radius: 6px; font-size: 14px; }
+    .st-find b { display: block; }
+  </style>
+</head>
+<body class="public-report-page">
+  <main class="manual" id="top">
+    <div class="manual-back">
+      <details class="rn-public-dropdown">
+        <summary class="btn back" aria-label="Tutup panel kembali">← Kembali</summary>
+        <div class="rn-public-dropdown-menu">
+          <a href="javascript:history.back()">Kembali ke halaman sebelumnya</a>
+          <a href="manual.html">Manual Rescue-Net</a>
+          <a href="../index.html">Beranda</a>
+        </div>
+      </details>
+    </div>
+
+    <section class="manual-hero">
+      <p class="eyebrow">About Us</p>
+      <h1>Scenario Tested</h1>
+      <p>Semua skenario uji Rescue-Net: tujuan, akun demo yang dipakai, langkah, hasil, masalah yang ditemukan, dan perbaikannya. Pengujian dijalankan di sistem yang berjalan (rescue-net.online) dengan akun demo; data uji berawalan [SIMULASI] atau [UJI-E2E].</p>
+      <p class="note">Terakhir diperbarui <b id="stUpdated">–</b>. Selain uji skenario di halaman ini, setiap perubahan kode melewati uji otomatis (lebih dari 600 tes) sebelum dipasang.</p>
+    </section>
+
+    <div class="manual-grid" style="grid-template-columns: minmax(0, 1fr)">
+      <article class="manual-card">
+        <div class="st-sum" id="stSum"></div>
+        <div class="st-filters" id="stFilters" role="group" aria-label="Saring kategori"></div>
+        <div id="stList"><p>Memuat…</p></div>
+        <h2 style="margin-top:22px">Rencana uji berikutnya</h2>
+        <ul id="stPlan"></ul>
+        <a class="back-top" href="#top">Kembali ke atas</a>
+      </article>
+    </div>
+  </main>
+  <script src="../assets/js/scenario-tested.js?v=st-20261026"></script>
+  <script src="../assets/js/rn-public-header.js?v=scen-20261026"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+  <script src="../assets/js/rn-mobile-drawer.js?v=scen-20261026"></script>
+</body>
+</html>

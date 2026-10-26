@@ -59,6 +59,12 @@ class TestVolunteerBooking(RNTestCase):
             self.assertEqual(vb.cancel_booking(b["booking"])["status"], "cancelled")
             self.assertEqual(vb.my_volunteer()["bookings"][0]["status"], "cancelled")
 
+    def test_finished_armada_cannot_be_booked(self):
+        self.offer(self.rel, [self.w.event.name])
+        frappe.db.set_value("RN Transport Space", self.arm.name, "transport_status", "completed")
+        with as_user(self.rel.user), self.assertRaisesRegex(frappe.ValidationError, "selesai"):
+            vb.book("transport", self.arm.name, self.w.event.name)
+
     def test_guest_refused(self):
         with as_guest(), self.assertRaises(frappe.PermissionError):
             vb.my_volunteer()

@@ -190,6 +190,8 @@ def book(kind, target, disaster_event, date_from=None, date_to=None, pickup_loca
     if kind == "transport":
         if target not in _served_spaces(event):
             frappe.throw("Armada ini tidak melayani bencana tersebut.")
+        if frappe.db.get_value("RN Transport Space", target, "transport_status") in ("completed", "cancelled"):
+            frappe.throw("Armada ini sudah selesai atau dibatalkan.")
         posko = frappe.db.get_value("RN Transport Space", target, "coordination_posko")
     else:
         row = frappe.db.get_value("RN Volunteer Accommodation", target, ["disaster_event", "posko"], as_dict=True)

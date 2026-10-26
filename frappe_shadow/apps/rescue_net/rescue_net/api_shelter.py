@@ -332,6 +332,8 @@ def create_occupancy(
     elderly_count=0,
     pregnant_count=0,
     disability_count=0,
+    female_count=None,
+    male_count=None,
     toilet_total=None,
     toilet_functional=None,
     water_point_total=None,
@@ -376,6 +378,14 @@ def create_occupancy(
     doc.disability_count = cint(
         disability_count
     )
+    # data terpilah (owner 2026-10-26): penghuni per jenis kelamin
+    if doc.meta.has_field("female_count"):
+        if female_count not in (None, ""):
+            doc.female_count = cint(female_count)
+        if male_count not in (None, ""):
+            doc.male_count = cint(male_count)
+        if cint(current_occupancy) and (cint(female_count) + cint(male_count)) > cint(current_occupancy):
+            frappe.throw("Jumlah perempuan + laki-laki melebihi jumlah penghuni.")
     # Sanitasi & air: left empty (not 0) when the shelter did not report them,
     # so "not reported" never reads as "zero toilets".
     for field, value in (

@@ -388,6 +388,7 @@ def create_case(
     treatment_notes=None,
     patient_kind="manusia",
     patient_name=None,
+    has_disability=0,
 ):
     # RN_CANONICAL_REF posko = resolve_posko(posko)
     posko = resolve_posko(posko)
@@ -418,6 +419,8 @@ def create_case(
     doc.complaint = complaint
     doc.age_group = age_group
     doc.gender = gender
+    if doc.meta.has_field("has_disability"):
+        doc.has_disability = 1 if str(has_disability).lower() in ("1", "true", "yes", "ya") else 0
     doc.severity = severity
     doc.triage_status = triage_status
     doc.patient_kind = "satwa" if str(patient_kind or "").strip().lower() == "satwa" else "manusia"

@@ -99,6 +99,20 @@ def sitrep(disaster_event, hours=24):
         med[st] = med.get(st, 0) + 1
     portions = int(sum(flt(k.get("portions")) for k in ctx.get("kitchen_productions") or []))
 
+    # data terpilah (2026-10-26): vulnerable groups from reports + shelters
+    rentan = {}
+    for dt, keys in (("RN Community Report", ("female_count", "children_count", "elderly_count", "disability_count", "pregnant_count")),
+                     ("RN Shelter Occupancy", ("female_count", "male_count", "children_count", "elderly_count", "disability_count",
+                                               "pregnant_count", "infants_count"))):
+        c = cols(dt)
+        sc = _scope(dt, event, poskos)
+        have = [k for k in keys if k in c]
+        if not have or sc is None:
+            continue
+        base, ors = sc
+        rows = frappe.get_all(dt, filters=base, or_filters=ors, fields=have, limit_page_length=0)
+        rentan[dt] = {k: int(sum(flt(r.get(k)) for r in rows)) for k in have}
+
     quakes = []
     try:
         from rescue_net.api_early_warning import banner
@@ -129,6 +143,8 @@ def sitrep(disaster_event, hours=24):
         "logistik": {"kiriman_total": kpi.get("distribusi"), "kiriman_terhambat": kpi.get("distribusi_terhambat"),
                      "tawaran_bantuan": summary.get("aid_offer_count")},
         "layanan": {"shelter": shelter, "medis_per_status": med, "porsi_dapur": portions},
+        "kelompok_rentan": {"laporan_warga": rentan.get("RN Community Report") or {},
+                            "shelter": rentan.get("RN Shelter Occupancy") or {}},
         "peringatan": [a.get("message") for a in (ctx.get("alerts") or []) if a.get("message")],
         "gempa_bmkg": quakes,
         "catatan": "Disusun otomatis dari data Rescue-Net. Organisasi tertutup hanya terhitung sebagai ringkasan.",

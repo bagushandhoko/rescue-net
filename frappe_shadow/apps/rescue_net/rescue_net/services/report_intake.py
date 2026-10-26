@@ -59,6 +59,8 @@ _NEED_ITEMS = ("air bersih", "air minum", "beras", "makanan", "mie instan", "sel
 _PEOPLE = re.compile(r"(\d[\d.]*)\s*(orang|jiwa|warga|penduduk|korban)\b", re.I)
 # sub-groups ("30 anak dan 10 lansia") are PART of the total, never added to it
 _PEOPLE_SUB = re.compile(r"(\d[\d.]*)\s*(anak|lansia|balita|bayi|ibu hamil)\b", re.I)
+_PEOPLE_FEMALE = re.compile(r"(\d[\d.]*)\s*(?:orang\s+)?(perempuan|wanita)\b", re.I)
+_PEOPLE_DISAB = re.compile(r"(\d[\d.]*)\s*(?:orang\s+)?(penyandang disabilitas|disabilitas|difabel)\b", re.I)
 _FAMILIES = re.compile(r"(\d[\d.]*)\s*(kk|kepala keluarga|keluarga)\b", re.I)
 _SCALE = re.compile(r"(\d[\d.,]*)\s*(m3|m³|meter kubik|kubik|km|kilometer|meter|ha|hektar|hektare|m)\b", re.I)
 _PLACE = re.compile(r"\b(?:di\s+)?((?i:desa|dusun|kampung|kelurahan|kecamatan|kec\.|kabupaten|kab\.|kota)"
@@ -114,6 +116,17 @@ def rules_extract(text):
             people = families * PEOPLE_PER_FAMILY
             notes.append(f"{families} KK dihitung ≈ {people} jiwa ({PEOPLE_PER_FAMILY} jiwa/KK).")
 
+    # data terpilah (owner 2026-10-26): the sub-groups, kept apart from the total
+    groups = {"children_count": 0, "elderly_count": 0, "pregnant_count": 0, "female_count": 0, "disability_count": 0}
+    for m in _PEOPLE_SUB.finditer(text):
+        word = m.group(2).lower()
+        key = "elderly_count" if word == "lansia" else "pregnant_count" if word == "ibu hamil" else "children_count"
+        groups[key] += int(_num(m.group(1)) or 0)
+    for m in _PEOPLE_FEMALE.finditer(text):
+        groups["female_count"] += int(_num(m.group(1)) or 0)
+    for m in _PEOPLE_DISAB.finditer(text):
+        groups["disability_count"] += int(_num(m.group(1)) or 0)
+
     scale_value = scale_unit = None
     for m in _SCALE.finditer(text):
         # "200 orang" is people, not a scale; the unit regex already excludes it
@@ -142,6 +155,7 @@ def rules_extract(text):
         "damage_scale_unit": scale_unit,
         "location_text": location_text,
         "notes": notes,
+        **{k: (v or None) for k, v in groups.items()},
     }
 
 

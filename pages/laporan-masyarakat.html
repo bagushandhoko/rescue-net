@@ -124,6 +124,18 @@
             </label>
           </div>
 
+          <details class="rn-sadd" style="margin:4px 0 10px">
+            <summary style="cursor:pointer;font-weight:600">Rincian jiwa terdampak (opsional)</summary>
+            <p class="subtitle" style="margin:4px 0 8px">Semua angka adalah <b>bagian dari</b> jumlah terdampak di atas, tidak ditambahkan.</p>
+            <div class="form-grid event-form-grid">
+              <label>Perempuan<input name="female_count" type="number" min="0" placeholder="0"></label>
+              <label>Anak (&lt;18)<input name="children_count" type="number" min="0" placeholder="0"></label>
+              <label>Lansia (60+)<input name="elderly_count" type="number" min="0" placeholder="0"></label>
+              <label>Penyandang disabilitas<input name="disability_count" type="number" min="0" placeholder="0"></label>
+              <label>Ibu hamil / menyusui<input name="pregnant_count" type="number" min="0" placeholder="0"></label>
+            </div>
+          </details>
+
           <div class="form-grid event-form-grid">
             <label>Perkiraan skala kerusakan (opsional)
               <input name="damage_scale_value" type="number" min="0" step="any" placeholder="mis. 200">
@@ -306,7 +318,7 @@
 <script src="../assets/js/rn-sync-engine.js?v=offlinereport-20260913"></script>
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
-<script src="../assets/js/community-report.js?v=take-20261026"></script>
+<script src="../assets/js/community-report.js?v=sadd-20261026"></script>
 <script src="../assets/js/rn-ai-suggestions.js?v=aisug-20261008"></script>
   <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
   <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

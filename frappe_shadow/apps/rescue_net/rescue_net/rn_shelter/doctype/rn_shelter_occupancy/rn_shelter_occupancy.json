@@ -72,6 +72,18 @@
    "default": 0
   },
   {
+   "fieldname": "female_count",
+   "fieldtype": "Int",
+   "label": "Penghuni perempuan",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "male_count",
+   "fieldtype": "Int",
+   "label": "Penghuni laki-laki",
+   "non_negative": 1
+  },
+  {
    "fieldname": "infants_count",
    "label": "Bayi / Balita",
    "fieldtype": "Int",

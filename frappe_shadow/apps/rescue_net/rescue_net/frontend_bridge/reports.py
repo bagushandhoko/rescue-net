@@ -451,6 +451,11 @@ def submit_community_report_bridge(
     intake_mode="form",
     intake_parser=None,
     reporter_phone=None,
+    female_count=None,
+    children_count=None,
+    elderly_count=None,
+    disability_count=None,
+    pregnant_count=None,
 ):
     _actor()
 
@@ -458,7 +463,7 @@ def submit_community_report_bridge(
         submit_community_report,
     )
 
-    return submit_community_report(
+    out = submit_community_report(
         title=title,
         description=description,
         report_type=report_type,
@@ -482,3 +487,27 @@ def submit_community_report_bridge(
         intake_parser=intake_parser,
         reporter_phone=reporter_phone,
     )
+    _set_groups(out, affected_people_count, female_count=female_count, children_count=children_count,
+                elderly_count=elderly_count, disability_count=disability_count, pregnant_count=pregnant_count)
+    return out
+
+
+def _set_groups(out, total, **groups):
+    """Data terpilah (owner 2026-10-26, standar IFRC): sub-groups of the people
+    affected; each is part of the total, so it can never exceed it."""
+    name = (out or {}).get("name") if isinstance(out, dict) else None
+    if not name or not frappe.db.has_column("RN Community Report", "female_count"):
+        return
+    total = int(flt(total or 0))
+    vals = {}
+    for k, v in groups.items():
+        if v in (None, ""):
+            continue
+        n = max(0, int(flt(v)))
+        if total and n > total:
+            frappe.throw("Jumlah %s (%d) tidak boleh melebihi jumlah jiwa terdampak (%d)." % (
+                k.replace("_count", "").replace("_", " "), n, total))
+        vals[k] = n
+    if vals:
+        frappe.db.set_value("RN Community Report", name, vals)
+        out.update(vals)

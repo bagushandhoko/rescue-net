@@ -117,6 +117,41 @@
    "fieldtype": "Int"
   },
   {
+   "fieldname": "female_count",
+   "fieldtype": "Int",
+   "label": "Perempuan",
+   "non_negative": 1,
+   "description": "Bagian dari jumlah jiwa terdampak"
+  },
+  {
+   "fieldname": "children_count",
+   "fieldtype": "Int",
+   "label": "Anak (<18)",
+   "non_negative": 1,
+   "description": "Bagian dari jumlah jiwa terdampak"
+  },
+  {
+   "fieldname": "elderly_count",
+   "fieldtype": "Int",
+   "label": "Lansia (60+)",
+   "non_negative": 1,
+   "description": "Bagian dari jumlah jiwa terdampak"
+  },
+  {
+   "fieldname": "disability_count",
+   "fieldtype": "Int",
+   "label": "Penyandang disabilitas",
+   "non_negative": 1,
+   "description": "Bagian dari jumlah jiwa terdampak"
+  },
+  {
+   "fieldname": "pregnant_count",
+   "fieldtype": "Int",
+   "label": "Ibu hamil / menyusui",
+   "non_negative": 1,
+   "description": "Bagian dari jumlah jiwa terdampak"
+  },
+  {
    "fieldname": "priority",
    "label": "Priority",
    "fieldtype": "Data"

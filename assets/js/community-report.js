@@ -26,7 +26,13 @@ function communityReportBridgePayload(body) {
     damage_scale_unit: body.damage_scale_unit || null,
     disaster_event: body.disaster_event_id || null,
     intake_mode: body.intake_mode || "form",
-    intake_parser: body.intake_parser || null
+    intake_parser: body.intake_parser || null,
+    // data terpilah (2026-10-26): parts of the people affected
+    female_count: body.female_count ?? null,
+    children_count: body.children_count ?? null,
+    elderly_count: body.elderly_count ?? null,
+    disability_count: body.disability_count ?? null,
+    pregnant_count: body.pregnant_count ?? null,
   };
 }
 
@@ -437,6 +443,11 @@ function applyDraft(form, d) {
   set("report_type", f.report_type);
   set("priority", f.priority);
   set("affected_people_count", f.affected_people_count);
+  set("female_count", f.female_count);
+  set("children_count", f.children_count);
+  set("elderly_count", f.elderly_count);
+  set("disability_count", f.disability_count);
+  set("pregnant_count", f.pregnant_count);
   set("urgent_needs", f.urgent_needs);
   set("damage_scale_value", f.damage_scale_value);
   set("damage_scale_unit", f.damage_scale_unit);
@@ -813,6 +824,11 @@ function setupCommunityReportForm() {
       district_name: selectText(form.district_name),
       village_name: selectText(form.village_name),
       affected_people_count: Number(form.affected_people_count.value || 0),
+      female_count: form.female_count ? numberOrNull(form.female_count.value) : null,
+      children_count: form.children_count ? numberOrNull(form.children_count.value) : null,
+      elderly_count: form.elderly_count ? numberOrNull(form.elderly_count.value) : null,
+      disability_count: form.disability_count ? numberOrNull(form.disability_count.value) : null,
+      pregnant_count: form.pregnant_count ? numberOrNull(form.pregnant_count.value) : null,
       priority: form.priority.value,
       urgent_needs: form.urgent_needs.value.trim(),
       evidence_url: form.evidence_url.value.trim(),

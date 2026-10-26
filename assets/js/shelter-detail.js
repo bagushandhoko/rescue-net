@@ -468,6 +468,8 @@
         children_count: Number(form.children_count.value || 0),
         elderly_count: Number(form.elderly_count.value || 0),
         disability_count: Number(form.disabled_count.value || 0),
+        female_count: form.female_count && form.female_count.value !== "" ? Number(form.female_count.value) : null,
+        male_count: form.male_count && form.male_count.value !== "" ? Number(form.male_count.value) : null,
         toilet_total: form.toilet_total && form.toilet_total.value !== "" ? Number(form.toilet_total.value) : null,
         toilet_functional: form.toilet_functional && form.toilet_functional.value !== "" ? Number(form.toilet_functional.value) : null,
         water_point_total: form.water_point_total && form.water_point_total.value !== "" ? Number(form.water_point_total.value) : null,

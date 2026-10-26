@@ -49,3 +49,21 @@ class TestSimulationFixes(RNTestCase):
             r = create_flow(destination_posko=self.medis.name, item_text="Air", quantity=5, unit="dus",
                             quantity_mode="exact", source_posko=self.logi.name, transport_space=ship.name, weight_kg=50)
         self.assertEqual(r["booking_status"], "confirmed")
+
+
+class TestDisaggregatedData(RNTestCase):
+    def test_intake_finds_groups_and_submit_caps_them(self):
+        from rescue_net.services.report_intake import rules_extract as extract_rules
+        f = extract_rules("Ada 120 jiwa mengungsi, 30 anak, 10 lansia, 5 ibu hamil, 60 perempuan dan 4 penyandang disabilitas.")
+        self.assertEqual((f["affected_people_count"], f["children_count"], f["elderly_count"], f["pregnant_count"],
+                          f["female_count"], f["disability_count"]), (120, 30, 10, 5, 60, 4))
+
+    def test_group_larger_than_total_refused(self):
+        from rescue_net.frontend_bridge.reports import _set_groups
+        w = make_world()
+        rep = _insert("RN Community Report", title="x", disaster_event=w.event.name, status="submitted")
+        with self.assertRaisesRegex(frappe.ValidationError, "melebihi"):
+            _set_groups({"name": rep.name}, 10, children_count=11)
+        out = {"name": rep.name}
+        _set_groups(out, 10, children_count=4, female_count=6)
+        self.assertEqual(frappe.db.get_value("RN Community Report", rep.name, "children_count"), 4)

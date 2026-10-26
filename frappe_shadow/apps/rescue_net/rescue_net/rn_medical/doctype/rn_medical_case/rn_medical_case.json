@@ -71,6 +71,11 @@
    "default": "unknown"
   },
   {
+   "fieldname": "has_disability",
+   "fieldtype": "Check",
+   "label": "Penyandang disabilitas"
+  },
+  {
    "fieldname": "complaint",
    "label": "Keluhan / Kondisi",
    "fieldtype": "Small Text",

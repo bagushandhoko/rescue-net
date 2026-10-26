@@ -983,6 +983,9 @@ function setupCaseForm() {
             gender:
               form.gender.value.trim(),
 
+            has_disability:
+              form.has_disability && form.has_disability.checked ? 1 : 0,
+
             severity:
               form.severity.value,
 

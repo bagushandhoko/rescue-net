@@ -36,3 +36,13 @@ class TestAccountMenuFlags(RNTestCase):
         self.assertFalse(s["manages_org"])
         with as_user(owner.user):
             self.assertTrue(session_info()["manages_org"])
+
+
+class TestWeakPasswordMessage(RNTestCase):
+    def test_common_password_refused_in_indonesian(self):
+        from rescue_net.api_auth import _check_password_strength
+        frappe.db.set_single_value("System Settings", "enable_password_policy", 1)
+        frappe.db.set_single_value("System Settings", "minimum_password_score", 2)
+        with self.assertRaisesRegex(frappe.ValidationError, "terlalu mudah ditebak"):
+            _check_password_strength("Demo12345")
+        _check_password_strength("Banjir-Meulaboh-27x")

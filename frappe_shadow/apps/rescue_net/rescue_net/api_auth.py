@@ -422,6 +422,15 @@ def _check_password_strength(password):
     if not re.search(r"[0-9]", password):
         frappe.throw("Password harus mengandung minimal 1 angka.")
 
+    # uji S16 2026-10-26: Frappe's own strength check then failed in English
+    # ("This is similar to a commonly used password") — say it first, plainly
+    if int(frappe.db.get_single_value("System Settings", "enable_password_policy") or 0):
+        from frappe.utils.password_strength import test_password_strength
+        need = int(frappe.db.get_single_value("System Settings", "minimum_password_score") or 0)
+        if need and int((test_password_strength(password) or {}).get("score") or 0) < need:
+            frappe.throw("Kata sandi terlalu mudah ditebak (mirip kata sandi umum, mis. 'Nama12345'). "
+                         "Gabungkan beberapa kata yang tidak umum dengan angka, mis. 'Banjir-Meulaboh-27'.")
+
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(key="email", limit=6, seconds=60 * 60)

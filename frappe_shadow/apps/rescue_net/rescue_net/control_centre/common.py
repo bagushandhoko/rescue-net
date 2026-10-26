@@ -565,8 +565,12 @@ def stock_available(posko, item):
             if c:
                 sent += _num(c["quantity"])
     stok = _num(obs.quantity)
+    # simulasi S2: what the kitchen cooked since the count is gone too
+    from rescue_net.services.stock import consumed_after
+    used = consumed_after(posko, obs.item_name, obs.unit, obs.observed_at or obs.creation)
     return {"item": obs.item_name, "unit": obs.unit or "", "observed": stok, "observed_at": obs.observed_at,
-            "sent_since": round(sent, 3), "available": round(max(0.0, stok - sent), 3)}
+            "sent_since": round(sent, 3), "used_since": round(used, 3),
+            "available": round(max(0.0, stok - sent - used), 3)}
 
 
 _PACKING_LABEL = {"wajib": "Packing wajib", "dianjurkan": "Packing dianjurkan", "tidak": "Tanpa syarat packing"}

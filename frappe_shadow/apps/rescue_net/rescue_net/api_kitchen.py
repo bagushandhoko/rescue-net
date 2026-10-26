@@ -225,6 +225,27 @@ def _latest_stock(
     )
 
 
+def _to_stock_units(posko, ingredients):
+    """Simulasi S2 2026-10-26: the cook writes "30 butir" while the stock is
+    counted in tray → convert with RN Unit Conversion to the unit the posko's
+    stock uses (only when that item has no stock in the written unit)."""
+    from rescue_net.services.units import convert, stock_unit
+
+    merged = defaultdict(float)
+    notes = {}
+    for ing in ingredients:
+        item, unit, qty = ing["item_name"], ing["unit"], ing["quantity"]
+        if not _latest_stock(posko, item, unit):
+            su = stock_unit(posko, item)
+            c = convert(item, qty, unit, su) if su and su != unit else None
+            if c:
+                notes[(item, su)] = c["note"]
+                unit, qty = su, c["quantity"]
+        merged[(item, unit)] += qty
+    return [{"item_name": i, "unit": u, "quantity": q, **({"converted": notes[(i, u)]} if (i, u) in notes else {})}
+            for (i, u), q in sorted(merged.items())]
+
+
 def _stock_state(
     posko,
     item_name,
@@ -361,10 +382,11 @@ def create_production(
             "Jumlah porsi harus lebih dari 0"
         )
 
-    ingredients = (
+    ingredients = _to_stock_units(
+        posko,
         _parse_ingredients(
             ingredients
-        )
+        ),
     )
 
     when = (

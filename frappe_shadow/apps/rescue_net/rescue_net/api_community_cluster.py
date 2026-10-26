@@ -677,15 +677,67 @@ def org_membership_admin(organization=None):
             "staff_note": r.staff_note,
         })
 
+    # S16: the org's poskos and where each member is placed (Tempatkan di posko)
+    org_poskos = {}
+    for p in frappe.get_all("RN Posko", filters={"organization": ["in", orgs]}, fields=["name", "title", "organization"],
+                            order_by="title asc", limit_page_length=500):
+        org_poskos.setdefault(p.organization, []).append({"id": p.name, "title": p.title or p.name})
+    titles = {p["id"]: p["title"] for ps in org_poskos.values() for p in ps}
+    accounts = [m["user_account"] for m in out if m.get("user_account")]
+    placed = {}
+    for a in frappe.get_all("RN Posko Assignment", filters={"user_account": ["in", accounts or [""]], "status": "approved",
+                                                          "posko": ["in", list(titles) or [""]]},
+                            fields=["user_account", "posko"], limit_page_length=0):
+        placed.setdefault(a.user_account, []).append({"id": a.posko, "title": titles.get(a.posko, a.posko)})
+    for m in out:
+        m["poskos"] = placed.get(m.get("user_account"), [])
+
     owner_orgs = set(_owned_org_names(actor)) if not is_system_manager() else set(orgs)
     return {
         "is_org_admin": True,
+        "org_poskos": org_poskos,
         "can_manage_staff": [o for o in orgs if o in owner_orgs or is_system_manager()],
         "organizations": [{"name": n, "title": org_titles.get(n, n)} for n in orgs],
         "memberships": out,
         "pending_count": sum(1 for m in out if m["status"] == "pending"),
         "member_count": sum(1 for m in out if m["status"] == "approved"),
     }
+
+
+@frappe.whitelist()
+def assign_member_to_posko(posko, user_account, assignment_role="operator", remove=0):
+    """Uji S16 2026-10-26: an approved member of an independent organisation
+    could never be placed on its posko (assignments came only from creating a
+    posko or from Komando Pusat). The organisation's owner/staff or a manager
+    of the posko places (or removes) an approved member of the SAME
+    organisation; the assignment is approved at once."""
+    from frappe.utils import cint
+    from rescue_net.access_policy import approved_member, can_manage_posko, is_system_manager
+    from rescue_net.reference_resolver import resolve_posko
+    actor = _actor()
+    posko = resolve_posko(posko)
+    org = frappe.db.get_value("RN Posko", posko, "organization") if posko else None
+    if not org:
+        frappe.throw("Posko tidak ditemukan atau tidak punya organisasi.")
+    if not (is_system_manager() or _can_decide_members(actor, org) or can_manage_posko(actor, posko)):
+        frappe.throw("Hanya pengelola organisasi atau posko yang dapat menempatkan anggota.", frappe.PermissionError)
+    existing = frappe.db.get_value("RN Posko Assignment", {"user_account": user_account, "posko": posko}, "name")
+    if cint(remove):
+        if existing:
+            frappe.db.set_value("RN Posko Assignment", existing, "status", "revoked")
+        return {"posko": posko, "user_account": user_account, "status": "revoked"}
+    if not approved_member(user_account, org):
+        frappe.throw("Orang ini belum menjadi anggota organisasi yang disetujui.")
+    role = assignment_role if assignment_role in ("operator", "coordinator", "member") else "operator"
+    if existing:
+        frappe.db.set_value("RN Posko Assignment", existing, {"status": "approved", "assignment_role": role})
+        name = existing
+    else:
+        a = frappe.new_doc("RN Posko Assignment")
+        a.user_account, a.posko, a.assignment_role, a.status = user_account, posko, role, "approved"
+        a.insert(ignore_permissions=True)
+        name = a.name
+    return {"assignment": name, "posko": posko, "user_account": user_account, "status": "approved"}
 
 
 @frappe.whitelist()

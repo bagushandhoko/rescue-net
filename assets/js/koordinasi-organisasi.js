@@ -226,6 +226,12 @@
           '<div class="ko-posko-meta">' + esc(m.user_email || m.user_phone || "-") + " · " + esc(m.organization_title) + "</div>" +
           (m.membership_role === "staff" ? '<div class="ko-posko-meta"><b>Wilayah/bagian:</b> ' + esc(m.staff_area || "-") +
             (m.staff_note ? " · " + esc(m.staff_note) : "") + "</div>" : "") +
+          // S16 2026-10-26: place an approved member on one of the org's poskos
+          (((adminData.org_poskos || {})[m.organization] || []).length ? '<div class="ko-posko-meta"><b>Posko:</b> ' +
+            ((m.poskos || []).map(function (p) { return esc(p.title) + ' <button type="button" class="rn-link-btn" data-unplace="' + esc(p.id) + '">lepas</button>'; }).join(", ") || "belum ditempatkan") +
+            '</div><div class="ko-card-actions"><select class="koPlaceSel"><option value="">— pilih posko —</option>' +
+            adminData.org_poskos[m.organization].map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.title) + "</option>"; }).join("") +
+            '</select><button type="button" class="btn ghost mini" data-place="' + esc(m.user_account) + '">Tempatkan di posko</button></div>' : "") +
           (m.membership_role === "owner" ? "" :
             '<div class="ko-card-actions">' +
             (isOwnerOf(m.organization) ?
@@ -249,7 +255,26 @@
     if (location.hash === "#koMemberSection") sec.scrollIntoView({ block: "start" });
   }
 
+  function wirePlacement() {
+    document.querySelectorAll("#koMemberAdmin [data-place], #koMemberAdmin [data-unplace]").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        var card = btn.closest("[data-mid]");
+        var msg = card.querySelector(".koMsg");
+        var place = btn.hasAttribute("data-place");
+        var posko = place ? card.querySelector(".koPlaceSel").value : btn.getAttribute("data-unplace");
+        var acct = place ? btn.getAttribute("data-place") : card.querySelector("[data-place]").getAttribute("data-place");
+        if (!posko) { if (msg) msg.textContent = " pilih posko dulu"; return; }
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_community_cluster.assign_member_to_posko",
+            { posko: posko, user_account: acct, remove: place ? 0 : 1 }, { method: "POST" });
+          await loadMembers();
+        } catch (err) { if (msg) msg.textContent = " gagal: " + ((err && err.message) || err); }
+      });
+    });
+  }
+
   function wireMemberActions() {
+    wirePlacement();
     document.querySelectorAll("#koMemberAdmin [data-act]").forEach(function (btn) {
       btn.addEventListener("click", async function () {
         var card = btn.closest("[data-mid]");

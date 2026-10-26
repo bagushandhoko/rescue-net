@@ -67,3 +67,25 @@ class TestDisaggregatedData(RNTestCase):
         out = {"name": rep.name}
         _set_groups(out, 10, children_count=4, female_count=6)
         self.assertEqual(frappe.db.get_value("RN Community Report", rep.name, "children_count"), 4)
+
+
+class TestPlaceMemberOnPosko(RNTestCase):
+    def test_org_owner_places_and_removes_an_approved_member(self):
+        from rescue_net.access_policy import can_manage_posko, rn_actor
+        from rescue_net.api_community_cluster import assign_member_to_posko
+        w = make_world()
+        owner = make_actor(org=w.org_a, org_role="owner")
+        member = make_actor(org=w.org_a)
+        outsider = make_actor(org=w.org_b)
+        with as_user(owner.user):
+            assign_member_to_posko(w.posko_a.name, member.account)
+            with self.assertRaisesRegex(frappe.ValidationError, "belum menjadi anggota"):
+                assign_member_to_posko(w.posko_a.name, outsider.account)
+        with as_user(member.user):
+            self.assertTrue(can_manage_posko(rn_actor(), w.posko_a.name))
+        with as_user(outsider.user), self.assertRaises(frappe.PermissionError):
+            assign_member_to_posko(w.posko_a.name, outsider.account)
+        with as_user(owner.user):
+            assign_member_to_posko(w.posko_a.name, member.account, remove=1)
+        with as_user(member.user):
+            self.assertFalse(can_manage_posko(rn_actor(), w.posko_a.name))

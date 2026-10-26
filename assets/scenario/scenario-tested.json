@@ -3,6 +3,26 @@
  "diperbarui": "2026-10-26",
  "uji": [
   {
+   "id": "S10-3",
+   "tanggal": "2026-10-26",
+   "kategori": "Kapasitas",
+   "judul": "Uji beban ulang setelah server diturunkan ke 6 vCPU",
+   "tujuan": "Menyisakan 2 thread untuk mesin induk (Proxmox, Home Assistant, LXC) tanpa mengorbankan kapasitas.",
+   "akun": [
+    "tamu acak (200–1200 pengunjung serentak)",
+    "akun demo login & posko"
+   ],
+   "langkah": [
+    "VM 101: 8 → 6 vCPU, restart ±3,5 menit",
+    "Uji 200, 400, 800, 1200 tamu × 40 detik",
+    "Ulang tahap 200 setelah cache hangat"
+   ],
+   "hasil": "Lulus. 1200 tamu: feed publik p95 21 ms (1013 permintaan/dtk), login p95 0,5 dtk, posko p95 0,19 dtk, 0 gagal. Hampir sama dengan 8 vCPU. Catatan: 1–2 menit pertama setelah restart lambat (cache kosong).",
+   "skor": "",
+   "status": "",
+   "temuan": []
+  },
+  {
    "id": "POSKO-ALL-1",
    "tanggal": "2026-10-26",
    "kategori": "Posko",

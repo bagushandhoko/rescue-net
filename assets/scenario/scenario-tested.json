@@ -17,10 +17,11 @@
     "10 akun login membaca papan posko dan mengirim laporan [UJI-BEBAN] bersamaan",
     "Beban dinaikkan 50 → 100 → 200 → 400 → 600 tamu, masing-masing 45 detik, sambil mencatat CPU server",
     "Perbaikan: cache 30 detik untuk 3 papan publik terberat (tamu saja) + VM 4 → 8 vCPU + gunicorn 4 → 7 worker, lalu diuji ulang",
+    "Perbaikan tahap 2: cache 20 detik di nginx server untuk 8 papan publik (khusus tamu; pengguna login selalu langsung ke server), diuji 200 → 1200 tamu",
     "162 laporan uji ditutup (status ditolak) setelah selesai; data demo tidak diubah"
    ],
    "hasil": "Lulus setelah perbaikan",
-   "skor": "Kapasitas API 53 → 195 permintaan/detik; 200 tamu: p95 4,5 dtk → 0,15 dtk; 0 error di semua tahap",
+   "skor": "Kapasitas API 53 → 1016 permintaan/detik; 1200 tamu serentak: 95% dijawab ≤ 0,022 detik; 0 error",
    "status": "lulus-perbaikan",
    "temuan": [
     {
@@ -32,8 +33,8 @@
      "perbaikan": "VM 8 vCPU + 7 worker. Hasil: 100 tamu p95 0,05 dtk, 200 tamu 0,15 dtk; batas baru ~195 permintaan/detik (≈ 300–400 pengunjung aktif serentak)."
     },
     {
-     "masalah": "Di atas 400 tamu serentak masih antre 2–3 detik (CPU laptop i5-8250U penuh).",
-     "perbaikan": "Dicatat sebagai batas perangkat. Pilihan berikut: cache halaman publik di Cloudflare atau server kedua."
+     "masalah": "Dengan 8 vCPU, di atas 400 tamu serentak masih antre 2–3 detik (CPU laptop i5-8250U penuh).",
+     "perbaikan": "Cache 20 detik di nginx untuk tamu: 1200 tamu p95 0,022 detik, laporan & papan posko (login) tetap < 0,5 detik. Cache Cloudflare tidak diperlukan."
     }
    ]
   },

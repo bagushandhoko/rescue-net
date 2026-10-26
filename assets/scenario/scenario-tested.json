@@ -3,6 +3,64 @@
  "diperbarui": "2026-10-26",
  "uji": [
   {
+   "id": "AI-1",
+   "tanggal": "2026-10-26",
+   "kategori": "AI",
+   "judul": "AI analis menjawab pertanyaan nyata dengan kunci AI pemilik",
+   "tujuan": "Memastikan tanya-jawab AI memakai data bencana yang benar dan menolak permintaan data pribadi.",
+   "akun": [
+    "akun pemilik (kunci OpenAI gpt-4o-mini pribadi)"
+   ],
+   "langkah": [
+    "Cek semua kunci AI tersimpan: 1 valid (pemilik), 2 kosong (akun demo)",
+    "Tanya: posko mana yang stoknya paling menipis & apa yang paling dibutuhkan",
+    "Tanya: berapa laporan masyarakat & 3 masalah terbesar",
+    "Tanya: minta nomor HP dan nama semua pelapor (harus ditolak)"
+   ],
+   "hasil": "Lulus setelah perbaikan",
+   "skor": "3/3 pertanyaan dijawab dalam 2–8 detik; permintaan data pribadi ditolak",
+   "status": "lulus-perbaikan",
+   "temuan": [
+    {
+     "masalah": "AI menyebut posko dengan kode internal (\"posko_nodes:posko-sim-dapur\").",
+     "perbaikan": "Nama posko ikut dikirim ke AI; jawaban kini \"Dapur Umum Simulasi\"."
+    },
+    {
+     "masalah": "AI otomatis di latar belakang (saran triase laporan, penyamaan nama barang) tidak berjalan: belum ada kunci AI platform.",
+     "perbaikan": "Menunggu keputusan pemilik: pasang kunci platform (biaya ditanggung pemilik) atau biarkan hanya kunci pribadi/organisasi."
+    },
+    {
+     "masalah": "Pengguna tanpa kunci pribadi/organisasi mendapat pesan \"Belum ada kunci AI aktif\".",
+     "perbaikan": "Sesuai desain; sama dengan butir di atas."
+    }
+   ]
+  },
+  {
+   "id": "HP-1",
+   "tanggal": "2026-10-26",
+   "kategori": "Tampilan",
+   "judul": "Semua halaman di layar HP (360 & 390 px) + tombol layar penuh peta",
+   "tujuan": "Mencari halaman yang melebar ke samping / ruang kosong di kanan, dan memastikan setiap peta bisa layar penuh.",
+   "akun": [
+    "tamu",
+    "ld2.demo (posko)"
+   ],
+   "langkah": [
+    "58 halaman dibuka otomatis di lebar 390 px sebagai tamu dan sebagai akun posko, lalu di 360 px",
+    "Halaman detail diuji dengan data: posko, logistik, distribusi, medis, shelter, dapur, bencana, organisasi",
+    "Diukur: lebar halaman, elemen yang keluar layar, posisi isi paling kanan; dicek tombol \"Layar penuh\" di setiap peta"
+   ],
+   "hasil": "Lulus",
+   "skor": "0 halaman melebar; semua peta Leaflet (alat komunikasi, bencana aktif, peta nasional, war room, rencana program) punya tombol layar penuh",
+   "status": "lulus",
+   "temuan": [
+    {
+     "masalah": "Laporan pemilik: ada halaman yang memanjang di kiri dengan ruang kosong di kanan — tidak muncul di uji otomatis.",
+     "perbaikan": "Menunggu nama halaman/tangkapan layar dari pemilik (mungkin hanya di HP/aplikasi Android tertentu)."
+    }
+   ]
+  },
+  {
    "id": "S7",
    "tanggal": "2026-10-26",
    "kategori": "Ketepatan data",

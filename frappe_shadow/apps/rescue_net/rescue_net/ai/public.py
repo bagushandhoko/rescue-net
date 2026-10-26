@@ -19,10 +19,12 @@ from rescue_net.ai.context import (  # noqa: F401
     _build_context,
     _public_scrub,
 )
+from rescue_net.services.guest_cache import guest_cache
 
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
+@guest_cache(30)
 def public_context(disaster_event_id):
     ctx = _build_context(
         disaster_event_id,

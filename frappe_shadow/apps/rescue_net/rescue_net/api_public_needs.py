@@ -17,6 +17,7 @@ from frappe.utils import flt
 
 from rescue_net.access_policy import can_manage_organization, can_manage_posko, is_system_manager, public_posko_allowed, rn_actor
 from rescue_net.control_centre.common import _CLOSED_NEED, canonical_event
+from rescue_net.services.guest_cache import guest_cache
 
 _FLOW_DONE = {"received", "cancelled"}
 
@@ -34,6 +35,7 @@ def _event_filter(event):
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=60, seconds=60)
+@guest_cache(30)
 def board(event=None, wilayah=None):
     ef = _event_filter(event)
     pf = {"public_detail": "public", **ef}

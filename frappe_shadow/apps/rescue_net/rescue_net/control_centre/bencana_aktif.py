@@ -38,6 +38,7 @@ from rescue_net.control_centre.critical import (  # noqa: F401
 from rescue_net.control_centre.map_evidence import (  # noqa: F401
     reports,
 )
+from rescue_net.services.guest_cache import guest_cache
 
 
 def _ba_region_key(posko):
@@ -353,6 +354,7 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
 
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
+@guest_cache(30)
 def active_disasters_board(limit=60):
     """Public 'Bencana Aktif' dashboard feed: every active RN Disaster Event
     with a per-region (kabupaten/kota) breakdown, rolled-up KPI totals, and a

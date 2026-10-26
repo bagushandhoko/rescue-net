@@ -2724,7 +2724,7 @@ html.rn-external-access body:not(.mockup-viewer) .main {
   }
 
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .search,
-  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) input,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer) input:not([type="checkbox"]):not([type="radio"]),
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer) select,
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer) textarea {
     width: 100% !important;

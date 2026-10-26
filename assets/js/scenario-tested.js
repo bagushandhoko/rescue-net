@@ -1,4 +1,4 @@
-/* Scenario Tested (owner 2026-10-26): renders assets/data/scenario-tested.json.
+/* Scenario Tested (owner 2026-10-26): renders assets/scenario/scenario-tested.json.
    Add every new test run to that file (newest first). */
 (function () {
   "use strict";
@@ -25,7 +25,7 @@
     $("stList").innerHTML = rows.map(card).join("") || "<p>Belum ada uji di kategori ini.</p>";
   }
 
-  fetch("../assets/data/scenario-tested.json?v=" + Date.now().toString().slice(0, -5))
+  fetch("../assets/scenario/scenario-tested.json?v=" + Date.now().toString().slice(0, -5))
     .then(function (r) { return r.json(); })
     .then(function (d) {
       DATA = d;

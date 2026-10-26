@@ -1,0 +1,424 @@
+{
+  "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
+  "diperbarui": "2026-10-26",
+  "uji": [
+    {
+      "id": "S16",
+      "tanggal": "2026-10-26",
+      "kategori": "AI & verifikasi",
+      "judul": "Fungsi AI, verifikator posko & pengaju, pelapor terverifikasi, organisasi, Komando Pusat TNI, Search & Found",
+      "tujuan": "Menguji fungsi di luar logistik: bantuan AI, jaringan verifikasi, keanggotaan organisasi, jenjang komando, dan pencarian orang hilang.",
+      "akun": [
+        "masyarakat.demo",
+        "ld1.demo",
+        "ld2.demo",
+        "ld5.demo",
+        "sim-retno (BNPB, verifikator)",
+        "tni.babinsa.demo",
+        "tni.pusat.demo",
+        "akun pelapor baru"
+      ],
+      "langkah": [
+        "AI isi form dari 4 cerita sulit: KK → jiwa (45 KK = 180 jiwa), rincian 200 jiwa / 25 balita / 12 lansia / 3 disabilitas, longsor menutup jalan, anak demam di tenda",
+        "Saran AI untuk kebutuhan dari laporan warga; ringkasan AI Control Centre; daftar penyedia AI",
+        "BNPB mengajukan diri jadi verifikator → disetujui (verifikator senior pertama untuk demo)",
+        "LD2 meminta verifikasi posko → masuk kotak verifikator → endorsement kunjungan lapangan; warga biasa ditolak; endorsement tidak bisa digandakan",
+        "Pendaftaran Pelapor Terverifikasi (Keuchik) → disetujui verifikator → melapor kebutuhan di posko mana pun; tidak bisa mengubah stok",
+        "Warga mengajukan keanggotaan organisasi LD → disetujui admin → admin menempatkannya di posko LD5 → bisa bekerja → penempatan dilepas → stok ditolak",
+        "Babinsa mengajukan akun petugas baru ke Komando Pusat: tanpa posko langsung ditolak; dengan posko → pusat menyetujui → akun dibuat",
+        "Search & Found: anak hilang dilaporkan warga, ditemukan di shelter LD5, kecocokan diusulkan & dikonfirmasi; kontak pelapor tidak tampil publik",
+        "AI tanya-jawab untuk pengguna login"
+      ],
+      "hasil": "Lulus setelah perbaikan",
+      "skor": "semua fungsi lulus setelah 5 perbaikan; tanya-jawab AI menunggu kunci AI",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "AI salah jenis: 'anak demam di tenda' → shelter; 'longsor menutup jalan, rumah rusak' → shelter.",
+          "perbaikan": "Gejala & jalan tertutup berbobot lebih, dan bila seri dipilih jenis yang paling menyelamatkan nyawa (medis, orang hilang, akses jalan, air, bahaya, shelter)."
+        },
+        {
+          "masalah": "Belum ada satu pun verifikator, sehingga verifikasi posko & pelapor tidak bisa berjalan.",
+          "perbaikan": "Akun demo BNPB dijadikan verifikator senior (lewat pengajuan resmi + persetujuan System Manager)."
+        },
+        {
+          "masalah": "Kata sandi umum ditolak dengan pesan teknis berbahasa Inggris.",
+          "perbaikan": "Pesan Indonesia yang jelas + contoh kata sandi yang baik di form daftar."
+        },
+        {
+          "masalah": "Anggota organisasi mandiri yang sudah disetujui tidak pernah bisa ditempatkan di posko organisasinya.",
+          "perbaikan": "Tombol 'Tempatkan di posko' / 'lepas' untuk pemilik, staf organisasi, atau pengelola posko."
+        },
+        {
+          "masalah": "Pengajuan akun ke Komando Pusat tanpa posko diterima, lalu gagal saat disetujui pusat.",
+          "perbaikan": "Posko wajib dipilih saat pengajuan; email yang sudah terdaftar ditolak di awal."
+        },
+        {
+          "masalah": "Tanya-jawab AI belum bisa dipakai karena belum ada kunci AI (pribadi/organisasi/platform).",
+          "perbaikan": "Menunggu pemilik memasang kunci AI di AI Settings; pesan error sudah jelas."
+        }
+      ]
+    },
+    {
+      "id": "S15",
+      "tanggal": "2026-10-26",
+      "kategori": "Relawan",
+      "judul": "Relawan menawarkan diri untuk beberapa bencana dan memesan kursi armada serta tempat menginap",
+      "tujuan": "Memastikan relawan terdaftar bisa membantu lebih dari satu bencana dan memesan transport (posko distribusi) maupun akomodasi (posko shelter), dengan persetujuan posko penyedia.",
+      "akun": [
+        "masyarakat.demo (relawan)",
+        "ld3.demo (posko distribusi LD3)"
+      ],
+      "langkah": [
+        "Tamu membuka Manajemen Relawan → tombol Daftar sebagai Relawan membuka registrasi dengan peran Relawan",
+        "Relawan mencentang 2 bencana (Gempa Simulasi, Krakatau) → 2 profil relawan untuk akun yang sama",
+        "LD3 membuka Bus Relawan 10 kursi + titik jemput",
+        "Relawan memesan kursi bus dan tempat menginap di posko shelter",
+        "LD3 menyetujui kursi; posko lain tidak bisa memutuskan booking akomodasi",
+        "Sisa kursi berkurang dari 10 menjadi 9"
+      ],
+      "hasil": "Lulus setelah perbaikan",
+      "skor": "17/17 (dua putaran)",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Posko distribusi tidak bisa mengisi jumlah kursi relawan di armada (kolom ada, form & API belum).",
+          "perbaikan": "Form tambah/ubah armada dan API menerima Kursi relawan & Titik jemput."
+        },
+        {
+          "masalah": "Relawan masih bisa memesan armada yang sudah selesai.",
+          "perbaikan": "Booking ke armada selesai/dibatalkan ditolak."
+        },
+        {
+          "masalah": "Satu akomodasi demo (Tenda Relawan Cadangan) tidak punya posko pemilik, jadi hanya System Manager yang bisa menyetujui.",
+          "perbaikan": "Dicatat — perlu ditautkan ke posko shelter."
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "tanggal": "2026-10-26",
+      "kategori": "Logistik",
+      "judul": "Satuan campuran: kirim karung, terima kg; telur tray dipakai dapur dalam butir",
+      "tujuan": "Memastikan stok tetap benar saat posko memakai satuan berbeda.",
+      "akun": [
+        "ld2.demo (logistik)",
+        "ld1.demo (Dapur Umum Simulasi)"
+      ],
+      "langkah": [
+        "LD2 (stok beras dalam karung) mengirim 4 karung ke dapur (stok dalam kg) → dapur +100 kg",
+        "LD2 mengirim 50 kg → stok LD2 berkurang 2 karung",
+        "Kirim dalam satuan tanpa konversi (ikat) → ditolak dengan pesan jelas",
+        "LD2 mengirim 2 tray telur → dapur memasak memakai 30 butir → stok dapur −1 tray"
+      ],
+      "hasil": "Lulus setelah perbaikan",
+      "skor": "11/11 (putaran 2)",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Penerimaan ditolak bila satuan beda (karung vs kg).",
+          "perbaikan": "Konversi otomatis memakai tabel konversi (32 baris: beras, gula, terigu, telur, minyak, air, dll.)."
+        },
+        {
+          "masalah": "Stok dapur tidak dikurangi pemakaian memasak (bisa 'mengirim' beras yang sudah dimasak).",
+          "perbaikan": "Stok tersedia = tercatat − terkirim − dipakai dapur."
+        },
+        {
+          "masalah": "Dapur tidak bisa memakai bahan dalam satuan lain (butir vs tray).",
+          "perbaikan": "Bahan dapur dikonversi ke satuan stok."
+        }
+      ]
+    },
+    {
+      "id": "S1",
+      "tanggal": "2026-10-26",
+      "kategori": "Lintas posko",
+      "judul": "Laporan warga → posko logistik → sumbangan Asosiasi Apotik → 2 posko distribusi (darat & kapal TNI) → Dapur Umum & Posko Medis",
+      "tujuan": "Menguji alur bantuan lengkap lintas posko dan organisasi, termasuk kapal TNI yang dibuka untuk umum.",
+      "akun": [
+        "masyarakat.demo",
+        "ld2.demo",
+        "ld3.demo",
+        "tni.kodim.demo",
+        "warga.demo",
+        "ld4.demo",
+        "ld1.demo"
+      ],
+      "langkah": [
+        "Warga melapor 150 jiwa diare di Suak Pandan → form terisi otomatis, laporan diarahkan ke posko medis terdekat",
+        "LD2 mengambil alih laporan, menjadikannya kebutuhan resmi, memverifikasi",
+        "Asosiasi Apotik menyumbang 60 paket obat ke LD2 → stok bertambah",
+        "LD3 membuka armada darat, Kodim membuka KRI untuk umum (booking terbuka)",
+        "Paket A obat → Posko Medis LD4 (RN-AQ7BUR98); paket B beras+makanan → Dapur (RN-HX83NMTJ); paket C posko warga antar ke dermaga → kapal TNI → Dapur (RN-CW89DKTW)",
+        "Semua barang diterima per barang; dapur memasak 400 porsi; LD4 mencatat pasien diare; SITREP mencatat semuanya"
+      ],
+      "hasil": "Lulus setelah perbaikan",
+      "skor": "21/31 → 15/16 (putaran 2, 1 gagal = kesalahan skrip)",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Posko lain tidak bisa menanggapi laporan yang dirouting ke posko terdekat.",
+          "perbaikan": "Tombol 'Tangani laporan ini (posko saya)' — laporan dialihkan, tercatat di tindak lanjut & Jejak Audit."
+        },
+        {
+          "masalah": "Kartu stok menampilkan angka hitung (640 kg) padahal semua sudah terkirim.",
+          "perbaikan": "Kartu stok menampilkan sisa yang benar-benar tersedia."
+        },
+        {
+          "masalah": "Armada 'terbuka untuk umum' tetap meminta konfirmasi untuk kiriman.",
+          "perbaikan": "Kiriman ke armada terbuka langsung disetujui."
+        },
+        {
+          "masalah": "Satuan beda (karung vs kg) menahan penerimaan.",
+          "perbaikan": "Pesan jelas, lalu konversi otomatis (lihat S2)."
+        }
+      ]
+    },
+    {
+      "id": "BEBAN",
+      "tanggal": "2026-10-26",
+      "kategori": "Keandalan",
+      "judul": "Uji beban: 1–50 pengguna serentak ke papan publik dan papan posko",
+      "tujuan": "Mengukur kemampuan server saat lonjakan pengguna bencana.",
+      "akun": [
+        "(tanpa login, simulasi banyak alamat IP)"
+      ],
+      "langkah": [
+        "Mengukur Control Centre publik, Posko Logistik, Papan Relawan, Banner BMKG pada 1/10/25/50 pengguna serentak",
+        "Mengganti server pengembangan dengan gunicorn 4 worker + cache 30 detik untuk tamu, lalu diukur ulang"
+      ],
+      "hasil": "Lulus setelah perbaikan",
+      "skor": "Control Centre 50 serentak: 15 detik → 0,25 detik",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Backend produksi memakai server pengembangan (satu permintaan sekaligus): Control Centre 15 detik untuk 50 pengguna.",
+          "perbaikan": "Gunicorn 4 worker + cache tamu: 167 permintaan/detik, Posko Logistik 4,3 → 1,2 detik, Relawan 1,5 → 0,3 detik."
+        },
+        {
+          "masalah": "Batas 120 permintaan/menit per IP bisa dirasakan posko yang berbagi satu WiFi/operator seluler.",
+          "perbaikan": "Dicatat sebagai risiko."
+        }
+      ]
+    },
+    {
+      "id": "TAMU",
+      "tanggal": "2026-10-26",
+      "kategori": "Keamanan",
+      "judul": "Audit endpoint publik: apakah data sensitif bocor ke pengunjung tanpa login",
+      "tujuan": "Memeriksa 100 endpoint publik terhadap kontak, data pasien, PIN dan stok rinci.",
+      "akun": [
+        "(tamu)"
+      ],
+      "langkah": [
+        "Penyisiran awal oleh asisten CT103 (20 endpoint), setiap klaim diverifikasi Claude di kode dan langsung di produksi"
+      ],
+      "hasil": "1 temuan nyata diperbaiki; 6 klaim lain terbukti salah",
+      "skor": "-",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Papan Komunikasi menampilkan nomor HP setiap operator radio ke tamu.",
+          "perbaikan": "Nomor operator kini mengikuti aturan kontak posko (hanya yang berwenang)."
+        }
+      ]
+    },
+    {
+      "id": "DAPUR",
+      "tanggal": "2026-10-26",
+      "kategori": "Posko",
+      "judul": "Dapur Umum Simulasi dioperasikan akun demo",
+      "tujuan": "Memastikan setiap jenis posko bisa didemokan dengan akun demo.",
+      "akun": [
+        "ld1.demo (admin organisasi LD)"
+      ],
+      "langkah": [
+        "Dapur Umum Simulasi dimasukkan ke organisasi demo LD (izin owner)",
+        "Produksi 100 porsi memakai 10 kg beras; bahan melebihi stok ditolak; tamu ditolak; produksi tampil di papan dapur"
+      ],
+      "hasil": "Lulus",
+      "skor": "4/4 (1 gagal = kesalahan skrip)",
+      "status": "lulus",
+      "temuan": [
+        {
+          "masalah": "Posko dapur demo tidak punya organisasi sehingga tak ada akun demo yang bisa mengoperasikannya.",
+          "perbaikan": "Dimasukkan ke organisasi demo LD."
+        }
+      ]
+    },
+    {
+      "id": "E2E-3",
+      "tanggal": "2026-10-26",
+      "kategori": "End-to-end",
+      "judul": "Semua jenis posko + TNI (organisasi tertutup) + BNPB, dengan akun demo",
+      "tujuan": "Memastikan semua posko siap dioperasikan, termasuk skenario TNI tertutup dengan kapal untuk umum.",
+      "akun": [
+        "22 akun demo (semua bisa login)",
+        "masyarakat, ld1–ld6, warga, tni.pusat/kodim/babinsa, sim-retno (BNPB), dll."
+      ],
+      "langkah": [
+        "Laporan warga: cerita → form 80 jiwa, tamu ditolak",
+        "Paket 2 barang LD2 → LD5: lebih stok ditolak, lacak tamu menampilkan isi paket, barang kedua ikut status, diterima per barang",
+        "Relawan daftar → ditugaskan LD2 → tampil di papan tanpa nomor HP",
+        "Posko medis LD4: pasien baru & ubah status; tamu dan posko lain ditolak",
+        "Shelter LD5: okupansi 80/150, kelompok rentan 21",
+        "Akses lintas organisasi ditolak",
+        "Kodim membuka kapal untuk umum: booking warga & LD2 langsung disetujui; posko Kodim tertutup (tamu/organisasi lain hanya ringkasan); TNI Pusat bisa mengelola; Babinsa melapor kebutuhan",
+        "BNPB mencatat kebutuhan & membuka ekosistem bencana Krakatau"
+      ],
+      "hasil": "Lulus",
+      "skor": "38/38 setelah koreksi skrip uji",
+      "status": "lulus",
+      "temuan": [
+        {
+          "masalah": "Asisten CT103 menulis laporan template palsu ('semua berhasil') sebelum uji berjalan.",
+          "perbaikan": "Uji dijalankan ulang oleh Claude; setiap hasil CT103 selalu diverifikasi."
+        }
+      ]
+    },
+    {
+      "id": "E2E-2",
+      "tanggal": "2026-10-25",
+      "kategori": "End-to-end",
+      "judul": "Donasi tunai, relawan, Search & Found, mode offline, kondisi lapangan",
+      "tujuan": "Menguji fitur di luar logistik inti.",
+      "akun": [
+        "masyarakat.demo",
+        "sim-kompastv (penyelenggara program)",
+        "ld2.demo",
+        "sim-anton (gudang pengumpul)"
+      ],
+      "langkah": [
+        "Donasi Rp250.000 ke program Kompas TV: menunggu → penyelenggara konfirmasi → tampil di daftar publik, total naik; orang lain tidak bisa konfirmasi",
+        "Relawan daftar → posko menugaskan → tampil di papan penugasan",
+        "Lapor orang hilang: tampil publik tanpa kontak pelapor",
+        "Kebutuhan yang disimpan offline dikirim ulang dua kali → tidak dobel; aksi di luar daftar offline ditolak",
+        "Kondisi lapangan longsor 200 m³ → perkiraan alat",
+        "Gudang pengumpul menerima tawaran langsung → ditolak (sesuai aturan)"
+      ],
+      "hasil": "Lulus setelah perbaikan",
+      "skor": "semua lulus setelah 2 perbaikan",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Petugas logistik/distribusi tidak dikenali gerbang relawan, alat kerja, dan Search & Found.",
+          "perbaikan": "Peran petugas posko dikenali di semua gerbang."
+        },
+        {
+          "masalah": "Penugasan relawan baru tidak tampil di papan (tanpa bencana).",
+          "perbaikan": "Penugasan otomatis mendapat bencana posko."
+        }
+      ]
+    },
+    {
+      "id": "E2E-1",
+      "tanggal": "2026-10-25",
+      "kategori": "End-to-end",
+      "judul": "Registrasi, laporan, bantuan, stok & kirim, armada & booking, layanan posko, hak akses",
+      "tujuan": "Uji kesiapan menyeluruh pertama lewat API publik.",
+      "akun": [
+        "akun uji baru (organisasi mandiri & terpusat, 7 jenis posko)",
+        "akun demo LD2, LD3"
+      ],
+      "langkah": [
+        "A Registrasi akun + organisasi mandiri/terpusat + 7 jenis posko + posko 2 bencana (19/19)",
+        "B Laporan: cerita → form, routing ke posko yang cocok, Laporan Saya, tamu ditolak",
+        "C Bantuan publik ke posko terbuka",
+        "D Stok & kirim: melebihi stok ditolak, antar sendiri",
+        "E Armada & booking: satu organisasi disetujui, organisasi lain diminta → dikonfirmasi → naik armada; antrean jemput → klaim; status sampai diterima; stok bertambah; lacak",
+        "G Medis/shelter/dapur; H akses: posko lain hanya lihat, tamu tanpa kontak/pasien"
+      ],
+      "hasil": "Lulus setelah perbaikan",
+      "skor": "semua lulus setelah 3 perbaikan",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Laporan dari cerita menjumlah orang ganda (160 seharusnya 120) dan salah jenis (sumur kering → medis).",
+          "perbaikan": "Subkelompok dihitung sebagai bagian dari total; aturan jenis diperbaiki."
+        },
+        {
+          "masalah": "Dapur menolak pengelola organisasi.",
+          "perbaikan": "Pengelola organisasi bisa mengoperasikan dapur."
+        },
+        {
+          "masalah": "Anggota satu organisasi memakai armada tanpa booking.",
+          "perbaikan": "Selalu tercatat sebagai booking (langsung disetujui)."
+        }
+      ]
+    },
+    {
+      "id": "BNPB",
+      "tanggal": "2026-10-25",
+      "kategori": "Organisasi",
+      "judul": "Akun demo BNPB",
+      "tujuan": "Memastikan BNPB melihat ekosistem bencana dan tidak bisa menulis ke posko organisasi tertutup.",
+      "akun": [
+        "sim-retno (BNPB)"
+      ],
+      "langkah": [
+        "Login → Posko Komando BNPB Pusat",
+        "Ekosistem Krakatau: pemerintah, ormas, masyarakat, program, kebutuhan gap",
+        "Posko BPBD (tertutup) hanya ringkasan, tulis ditolak"
+      ],
+      "hasil": "Lulus",
+      "skor": "-",
+      "status": "lulus",
+      "temuan": [
+        {
+          "masalah": "Belum diputuskan: apakah BNPB perlu melihat detail organisasi tertutup.",
+          "perbaikan": "Usulan: ringkasan otomatis + permintaan akses berbatas waktu."
+        }
+      ]
+    }
+  ],
+  "rencana": [
+    {
+      "id": "S3",
+      "judul": "Laporan ganda: 3 warga melaporkan kejadian sama → jiwa tidak dihitung dobel"
+    },
+    {
+      "id": "S4",
+      "judul": "Dua petugas mengirim stok yang sama bersamaan → hanya satu lolos"
+    },
+    {
+      "id": "S5",
+      "judul": "Posko offline lalu sinyal kembali → data tidak dobel"
+    },
+    {
+      "id": "S6",
+      "judul": "Armada/kapal penuh → booking ditolak atau antre"
+    },
+    {
+      "id": "S7",
+      "judul": "Paket dibatalkan di tengah jalan → stok pengirim kembali"
+    },
+    {
+      "id": "S8",
+      "judul": "Penerimaan sebagian (10 dikirim, 8 diterima)"
+    },
+    {
+      "id": "S9",
+      "judul": "TNI berjenjang lewat Komando Pusat; BNPB hanya ringkasan"
+    },
+    {
+      "id": "S10",
+      "judul": "Lonjakan campuran: 200 tamu + 20 posko menulis bersamaan"
+    },
+    {
+      "id": "S11",
+      "judul": "Donasi uang → program → laporan penggunaan dana"
+    },
+    {
+      "id": "S12",
+      "judul": "Relawan butuh jemput → armada jemput → check-in"
+    },
+    {
+      "id": "S13",
+      "judul": "Gempa BMKG besar → draf bencana → aktivasi"
+    },
+    {
+      "id": "S14",
+      "judul": "Obat mendekati kedaluwarsa → peringatan"
+    }
+  ]
+}

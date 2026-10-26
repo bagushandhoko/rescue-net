@@ -3,6 +3,32 @@
  "diperbarui": "2026-10-26",
  "uji": [
   {
+   "id": "POSKO-ALL-1",
+   "tanggal": "2026-10-26",
+   "kategori": "Posko",
+   "judul": "Semua fungsi posko bergerak: warga → shelter, medis, logistik, transport, dapur, assessment, relawan (termasuk S8 penerimaan sebagian)",
+   "tujuan": "Memastikan posko yang kosong benar-benar bekerja sesuai desain dengan input warga dan petugas posko.",
+   "akun": [
+    "masyarakat.demo",
+    "warga.demo",
+    "ld1–ld6.demo",
+    "tni.babinsa.demo"
+   ],
+   "langkah": [
+    "Warga lapor 40 KK pengungsi baru",
+    "Shelter LD5: okupansi, check-in KK, kebutuhan susu bayi, KK pindah",
+    "Medis LD4: 3 pasien (merah/kuning/hijau), pakai obat, rujuk, pulang, kebutuhan oralit",
+    "Logistik LD2: stok, kebutuhan terpal, kirim ke LD5 & LD4, status perjalanan",
+    "S8: LD5 terima tenda 8 dari 10 → stok 8, selisih tercatat",
+    "Dapur 220 porsi, LD6 lapor jembatan putus, Kodim & Posko Warga catat stok",
+    "Relawan check-in di LD5 dengan QR"
+   ],
+   "hasil": "48/53 lulus. 5 gagal karena sambungan Cloudflare putus sesaat (connection reset, Error 1001) saat uji, bukan bug aplikasi. Perlu diulang: ambil alih laporan oleh LD5 dan 2 check-in KK.",
+   "skor": "",
+   "status": "",
+   "temuan": []
+  },
+  {
    "id": "AI-1",
    "tanggal": "2026-10-26",
    "kategori": "AI",

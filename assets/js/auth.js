@@ -143,15 +143,32 @@
     }
   }
 
-  async function login(email, password) {
+  // 2FA (2026-10-26): Frappe answers the password step with {verification,
+  // tmp_id} when the account needs an authenticator code; the code is sent in
+  // a second login call with that tmp_id
+  var PENDING_2FA = null;
+
+  async function login(email, password, otp) {
     var body = new URLSearchParams();
-    body.set("usr", String(email || "").trim());
-    body.set("pwd", String(password || ""));
-    await frappeRequest("/api/method/login", {
+    if (otp && PENDING_2FA) {
+      body.set("otp", String(otp).replace(/\s+/g, ""));
+      body.set("tmp_id", PENDING_2FA);
+    } else {
+      body.set("usr", String(email || "").trim());
+      body.set("pwd", String(password || ""));
+    }
+    var res = await frappeRequest("/api/method/login", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: body.toString()
     });
+    if (res && res.verification && res.tmp_id) {
+      PENDING_2FA = res.tmp_id;
+      var e2 = new Error("Masukkan kode 6 digit dari aplikasi authenticator Anda.");
+      e2.needOtp = true;
+      throw e2;
+    }
+    PENDING_2FA = null;
     var user = await loadSession();
     if (!user) throw new Error("Login berhasil tetapi sesi tidak terbentuk.");
     window.dispatchEvent(new CustomEvent("rn:session-changed", { detail: { user: user } }));
@@ -393,12 +410,26 @@
         var btn = loginForm.querySelector('button[type="submit"]');
         btn.disabled = true;
         setMessage("loginMessage", "Memproses…");
+        var otpEl = document.getElementById("loginOtp");
         try {
-          await login(email, pass);
+          await login(email, pass, otpEl && !otpEl.hidden ? otpEl.querySelector("input").value : null);
           setMessage("loginMessage", "Berhasil. Mengalihkan…");
           window.location.href = await landingTarget();
         } catch (err) {
-          setMessage("loginMessage", cleanServerMessage(err) || "Email atau password salah.", true);
+          if (err.needOtp) {
+            if (!otpEl) {
+              otpEl = document.createElement("label");
+              otpEl.id = "loginOtp";
+              otpEl.innerHTML = 'Kode verifikasi (6 digit)<input name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="123456">';
+              btn.parentNode.insertBefore(otpEl, btn);
+            }
+            otpEl.hidden = false;
+            otpEl.querySelector("input").value = "";
+            otpEl.querySelector("input").focus();
+            setMessage("loginMessage", err.message);
+          } else {
+            setMessage("loginMessage", cleanServerMessage(err) || "Email atau password salah.", true);
+          }
           btn.disabled = false;
         }
       });

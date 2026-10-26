@@ -99,6 +99,33 @@
       </section>
     </div>
 
+    <div class="rn-settings-group" id="twofaSection">
+      <div class="rn-settings-group-title">
+        <h2>Verifikasi Dua Langkah (2FA)</h2>
+        <p>Setelah kata sandi, login meminta kode 6 digit dari aplikasi authenticator di HP Anda (Google Authenticator, Microsoft Authenticator, dsb.). Disarankan untuk admin dan komandan posko.</p>
+      </div>
+      <section class="panel">
+        <p class="subtitle" id="twofaStatus">Memuat…</p>
+        <div id="twofaSetup" hidden>
+          <ol class="rn-twofa-steps" style="margin:0 0 10px;padding-left:20px">
+            <li>Buka aplikasi authenticator, pilih tambah akun, lalu pindai QR ini.</li>
+            <li>Tidak bisa memindai? Masukkan kunci manual: <code id="twofaSecret"></code></li>
+            <li>Masukkan kode 6 digit yang muncul di aplikasi.</li>
+          </ol>
+          <img id="twofaQr" alt="QR verifikasi dua langkah" style="width:180px;height:180px;background:#eee;border-radius:8px">
+          <form class="rn-form" id="twofaVerifyForm">
+            <label>Kode dari aplikasi<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required placeholder="123456"></label>
+            <div class="form-actions"><button class="btn primary" type="submit">Aktifkan untuk akun saya</button></div>
+          </form>
+        </div>
+        <div class="form-actions">
+          <button class="btn ghost" type="button" id="twofaStart">Siapkan aplikasi authenticator</button>
+          <button class="btn ghost" type="button" id="twofaEnforce" hidden></button>
+        </div>
+        <p class="subtitle" id="twofaMsg" role="status" aria-live="polite"></p>
+      </section>
+    </div>
+
     <div class="rn-settings-group" id="adminResetPasswordSection" hidden>
       <div class="rn-settings-group-title">
         <h2>Reset Password</h2>
@@ -372,5 +399,6 @@
 <script src="../assets/js/rn-navigation-v2.js?v=sitrep-20261026"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=aboutgroup-20261025"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+<script src="../assets/js/rn-twofa-settings.js?v=twofa-20261026"></script>
 </body>
 </html>

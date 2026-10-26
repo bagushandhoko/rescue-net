@@ -81,7 +81,8 @@ RULES = [
         "item": "BBM",
         "terms": [
             "solar", "bensin", "bbm",
-            "bahan bakar"
+            "bahan bakar", "avtur", "pertalite", "pertamax", "dexlite",
+            "minyak tanah"
         ],
     },
     {

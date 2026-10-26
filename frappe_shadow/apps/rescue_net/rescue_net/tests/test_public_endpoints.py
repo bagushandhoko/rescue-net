@@ -57,6 +57,9 @@ GUEST_ENDPOINTS = {
     "api_control_centre.posko_registry_board", "api_control_centre.posko_verification_checklist",
     "api_control_centre.public_dashboard",
     "api_early_warning.banner",  # reviewed: public quake facts only; no draft event / posko list / raw payload
+    "api_sitrep.sitrep",  # reviewed 2026-10-26: public_dashboard snapshot + period COUNTS only; no names/contacts
+    "api_export.cap_alert", "api_export.cap_alerts",  # reviewed: CAP of public BMKG quake facts (same as banner)
+    "api_export.hxl_needs",  # reviewed: public needs board as HXL CSV (posko title, item, gap); no contacts
     "api_access_status.board",  # reviewed: per-jenis ringkasan + tempat tertutup/terbatas; tanpa pelapor/koordinat/catatan
     "api_public_needs.board",  # reviewed: public posko only; item/qty/unit/region/time, no contacts or notes
     "api_displacement.displacement_board",

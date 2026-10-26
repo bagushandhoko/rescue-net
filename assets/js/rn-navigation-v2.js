@@ -95,6 +95,12 @@
 
     modules: [
       {
+        // automatic situation report per operational period (2026-10-26)
+        label: "Laporan Situasi (SITREP)",
+        href: "sitrep.html",
+        icon: "program"
+      },
+      {
         label: "Peta Nasional",
         href: "peta-nasional.html",
         icon: "map"

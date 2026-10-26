@@ -45,7 +45,7 @@
     const submenu = document.createElement("ul");
     submenu.className = "rn-submenu";
     submenu.setAttribute("role", "menu");
-    [["Fitur/Mock up", "pages/mockup.html?screen=welcome"], ["Manual Rescue Net", "pages/manual.html"], ["Manual Teknis", "pages/manual-teknis.html"], ["Scenario Tested", "pages/scenario-tested.html"]].forEach(([label, href]) => {
+    [["Fitur/Mock up", "pages/mockup.html?screen=welcome"], ["Manual Rescue Net", "pages/manual.html"], ["Manual Teknis", "pages/manual-teknis.html"], ["Scenario Tested", "pages/scenario-tested.html"], ["Kebijakan Privasi", "pages/kebijakan-privasi.html"]].forEach(([label, href]) => {
       const li = document.createElement("li");
       li.setAttribute("role", "none");
       const a = document.createElement("a");

@@ -32,3 +32,12 @@ class TestSitrep(RNTestCase):
         with as_guest():
             blob = frappe.as_json(sitrep(self.w.event.name))
         self.assertNotIn("0812-0000-5555", blob)
+
+    def test_untagged_record_of_a_serving_posko_is_counted(self):
+        from rescue_net.api_sitrep import _count, _scope
+        from frappe.utils import add_to_date, now_datetime
+        _insert("RN Logistic Need", title="Air", posko=self.w.posko_a.name, item_name="Air", quantity=1, unit="dus")
+        from rescue_net.control_centre.common import serving_posko_names
+        n = _count("RN Logistic Need", _scope("RN Logistic Need", self.w.event.name, serving_posko_names(self.w.event.name)),
+                   add_to_date(now_datetime(), hours=-1), now_datetime())
+        self.assertGreaterEqual(n, 1)

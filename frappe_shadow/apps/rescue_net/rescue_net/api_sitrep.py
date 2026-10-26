@@ -26,22 +26,31 @@ _PERIOD_COUNTS = [
 
 
 def _scope(doctype, event, poskos):
+    """(filters, or_filters): the disaster's records — tagged with the disaster
+    OR belonging to a posko that serves it (older rows lack the tag)."""
     c = cols(doctype)
     f = event_filters(c, event)
+    has_posko = "posko" in c and poskos
+    if f and has_posko:
+        (k, v), = f.items()
+        return {}, [[k, "=", v], ["posko", "in", poskos]]
     if f:
-        return f
-    if "posko" in c and poskos:
-        return {"posko": ["in", poskos]}
+        return f, None
+    if has_posko:
+        return {"posko": ["in", poskos]}, None
     return None
 
 
 def _count(doctype, scope, since, until, field="creation", extra=None):
     if scope is None:
         return None
-    f = dict(scope)
+    base, ors = scope
+    f = dict(base)
     f[field] = ["between", [since, until]]
     if extra:
         f.update(extra)
+    if ors:
+        return len(frappe.get_all(doctype, filters=f, or_filters=ors, pluck="name", limit_page_length=0))
     return frappe.db.count(doctype, f)
 
 

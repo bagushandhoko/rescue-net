@@ -7508,3 +7508,9 @@ html.rn-mapfs-lock, html.rn-mapfs-lock body { overflow: hidden; }
 @media (max-width: 480px) {
   .rn-item-list th:nth-child(4), .rn-item-list td:nth-child(4) { display: none; }
 }
+
+/* Relawan Saya (2026-10-26) */
+.rs-events { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 4px 0 10px; }
+.rs-ev { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
+.rs-opt { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(104, 64, 45, .12); flex-wrap: wrap; }
+.rs-opt > div:first-child { min-width: 0; flex: 1 1 220px; }

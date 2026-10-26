@@ -1,0 +1,112 @@
+{
+ "doctype": "DocType",
+ "name": "RN Volunteer Booking",
+ "module": "RN Volunteer",
+ "custom": 0,
+ "is_submittable": 0,
+ "track_changes": 1,
+ "description": "Relawan memesan kursi armada posko distribusi atau tempat menginap di posko shelter (owner 2026-10-26).",
+ "fields": [
+  {
+   "fieldname": "booking_kind",
+   "fieldtype": "Select",
+   "label": "Jenis",
+   "options": "transport\nakomodasi",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "requested\nconfirmed\nrejected\ncancelled",
+   "default": "requested",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "volunteer",
+   "fieldtype": "Link",
+   "label": "Relawan",
+   "options": "RN Volunteer Profile",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "user_account",
+   "fieldtype": "Link",
+   "label": "Akun",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "disaster_event",
+   "fieldtype": "Link",
+   "label": "Bencana",
+   "options": "RN Disaster Event",
+   "reqd": 1
+  },
+  {
+   "fieldname": "posko",
+   "fieldtype": "Link",
+   "label": "Posko penyedia",
+   "options": "RN Posko",
+   "search_index": 1
+  },
+  {
+   "fieldname": "transport_space",
+   "fieldtype": "Link",
+   "label": "Armada",
+   "options": "RN Transport Space"
+  },
+  {
+   "fieldname": "accommodation",
+   "fieldtype": "Link",
+   "label": "Akomodasi",
+   "options": "RN Volunteer Accommodation"
+  },
+  {
+   "fieldname": "date_from",
+   "fieldtype": "Date",
+   "label": "Dari tanggal"
+  },
+  {
+   "fieldname": "date_to",
+   "fieldtype": "Date",
+   "label": "Sampai tanggal"
+  },
+  {
+   "fieldname": "pickup_location",
+   "fieldtype": "Data",
+   "label": "Lokasi jemput"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Catatan relawan"
+  },
+  {
+   "fieldname": "decision_note",
+   "fieldtype": "Small Text",
+   "label": "Catatan posko"
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Diputuskan oleh",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Waktu keputusan"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

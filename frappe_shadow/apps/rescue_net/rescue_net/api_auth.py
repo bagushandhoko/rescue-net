@@ -356,7 +356,18 @@ def session_info():
         # can send it; same-origin only (CORS limits the site to rescue-net.online).
         "csrf_token": (frappe.session.data or {}).get("csrf_token") or None,
         "phone": _account_phone(data["frappe_user"]),
+        # account menu in the header (2026-10-26): which settings to offer
+        "is_system_manager": bool(is_system_manager()),
+        "manages_org": _manages_org(data["id"]),
     }
+
+
+def _manages_org(user_account):
+    """Owner of an approved organisation membership (Persetujuan Anggota)."""
+    if not user_account:
+        return False
+    return bool(frappe.db.exists("RN Organization Membership", {
+        "user_account": user_account, "membership_role": "owner", "status": "approved"}))
 
 
 def _is_google_login(user):

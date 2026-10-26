@@ -95,8 +95,41 @@
     let sess = null; try { const res = await fetch(RN_API + "rescue_net.api_auth.session_info", { credentials: "include" }); if (res.ok) sess = ((await res.json()) || {}).message || null; } catch (e) { }
     if (!sess || !sess.user || sess.user === "Guest") return;
     const name = sess.full_name || readCookie("full_name") || sess.user;
-    const userEl = document.createElement("span"); userEl.className = "rn-public-user"; userEl.title = sess.user + (sess.role ? " · " + sess.role : ""); userEl.textContent = "👤 " + name;
-    const logoutEl = document.createElement("a"); logoutEl.className = "rn-public-login rn-public-logout"; logoutEl.href = "#"; logoutEl.textContent = "Logout"; logoutEl.addEventListener("click", async (e) => { e.preventDefault(); logoutEl.textContent = "Keluar…"; try { await fetch(RN_API + "logout", { method: "POST", credentials: "include", headers: sess.csrf_token ? { "X-Frappe-CSRF-Token": sess.csrf_token } : {} }); } catch (err) {} try { localStorage.removeItem("RN_USER"); } catch (err) {} location.reload(); });
+    const doLogout = async (el) => { el.textContent = "Keluar…"; try { await fetch(RN_API + "logout", { method: "POST", credentials: "include", headers: sess.csrf_token ? { "X-Frappe-CSRF-Token": sess.csrf_token } : {} }); } catch (err) {} try { localStorage.removeItem("RN_USER"); } catch (err) {} location.reload(); };
+    // owner 2026-10-26: clicking the name opens the account's own settings
+    if (!document.getElementById("rnUserMenuCss")) {
+      const st = document.createElement("style"); st.id = "rnUserMenuCss";
+      st.textContent = "/* account menu on the user name (2026-10-26) */ .rn-user-wrap { position: relative; display: inline-flex; } .rn-user-btn { font: inherit; color: inherit; background: none; border: 0; padding: 4px 6px; cursor: pointer; border-radius: 8px; } .rn-user-btn:hover, .rn-user-btn:focus-visible { background: rgba(232, 117, 90, .12); outline: none; } .rn-user-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 1000; min-width: 240px; max-width: min(320px, 92vw);   background: #fff; color: #2d211b; border: 1px solid rgba(104, 64, 45, .18); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .14);   padding: 6px; display: grid; } .rn-user-menu[hidden] { display: none; } .rn-user-menu-head { display: grid; gap: 2px; padding: 8px 10px 10px; border-bottom: 1px solid rgba(104, 64, 45, .12); margin-bottom: 4px; } .rn-user-menu-head small { color: #7c6458; font-size: 12px; overflow-wrap: anywhere; } .rn-user-menu a { display: block; padding: 9px 10px; border-radius: 8px; color: inherit; text-decoration: none; font-size: 14px; } .rn-user-menu a:hover, .rn-user-menu a:focus-visible { background: #fff4ef; outline: none; } .rn-user-menu .rn-user-logout { color: #c0392b; border-top: 1px solid rgba(104, 64, 45, .12); margin-top: 4px; } .rn-drawer-public .rn-user-wrap { display: grid; } .rn-drawer-public .rn-user-menu { position: static; box-shadow: none; margin-top: 6px; min-width: 0; max-width: none; }";
+      document.head.appendChild(st);
+    }
+    const userEl = document.createElement("span"); userEl.className = "rn-public-user rn-user-wrap";
+    const btn = document.createElement("button"); btn.type = "button"; btn.className = "rn-user-btn"; btn.title = sess.user + (sess.role ? " · " + sess.role : "");
+    btn.setAttribute("aria-haspopup", "true"); btn.setAttribute("aria-expanded", "false"); btn.textContent = "👤 " + name + " ▾";
+    userEl.appendChild(btn);
+    const pfx = location.pathname.indexOf("/pages/") !== -1 ? "" : "pages/";
+    const items = [
+      ["Setting akun", "ai-settings.html", true],
+      ["Ganti kata sandi", "ai-settings.html#changePasswordForm", sess.login_provider !== "google"],
+      ["Verifikasi dua langkah (2FA)", "ai-settings.html#twofaSection", true],
+      ["Bencana yang ditangani posko", "ai-settings.html#poskoEventsPanel", !!sess.posko_id],
+      ["Persetujuan anggota", "koordinasi-organisasi.html#koMemberSection", !!(sess.manages_org || sess.is_system_manager)],
+      ["Komando Pusat", "komando-pusat.html", !!(sess.manages_org || sess.is_system_manager)],
+      ["Jejak Audit", "jejak-audit.html", !!(sess.is_system_manager || sess.role === "command_center")],
+      ["Notifikasi WhatsApp", "notifikasi-settings.html", !!sess.is_system_manager],
+    ].filter(x => x[2]);
+    const menu = document.createElement("div"); menu.className = "rn-user-menu"; menu.hidden = true; menu.setAttribute("role", "menu");
+    const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
+    menu.innerHTML = '<div class="rn-user-menu-head"><b>' + esc(name) + "</b><small>" + esc(sess.user) + "</small><small>" +
+      esc(sess.login_provider === "google" ? "Masuk dengan Google" : "Masuk dengan kata sandi") + (sess.role ? " · " + esc(sess.role) : "") + "</small></div>" +
+      items.map(x => '<a role="menuitem" href="' + pfx + x[1] + '">' + esc(x[0]) + "</a>").join("") +
+      '<a role="menuitem" href="#" class="rn-user-logout">Logout</a>';
+    userEl.appendChild(menu);
+    const setOpen = (on) => { menu.hidden = !on; btn.setAttribute("aria-expanded", on ? "true" : "false"); };
+    btn.addEventListener("click", (e) => { e.stopPropagation(); setOpen(menu.hidden); });
+    document.addEventListener("click", (e) => { if (!userEl.contains(e.target)) setOpen(false); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") setOpen(false); });
+    menu.querySelector(".rn-user-logout").addEventListener("click", (e) => { e.preventDefault(); doLogout(e.target); });
+    const logoutEl = document.createElement("a"); logoutEl.className = "rn-public-login rn-public-logout"; logoutEl.href = "#"; logoutEl.textContent = "Logout"; logoutEl.addEventListener("click", (e) => { e.preventDefault(); doLogout(logoutEl); });
     loginEl.replaceWith(userEl); userEl.insertAdjacentElement("afterend", logoutEl);
   }
   function wireHomeAuthArea() { const nav = document.querySelector(".welcome-links"); const loginLink = document.querySelector(".welcome-login-link"); if (!nav || !loginLink) return; buildAuthArea(nav, loginLink); }

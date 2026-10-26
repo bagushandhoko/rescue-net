@@ -19,6 +19,8 @@ from rescue_net.intelligence.freshness import freshness
 from rescue_net.rn_logistics.doctype.rn_distribution_flow.rn_distribution_flow import TRANSITIONS
 from rescue_net.intelligence.normalization import normalize_unit
 
+TRANSIT_STATUSES = {"assigned_pickup", "in_transit", "arrived_at_posko"}
+
 from rescue_net.logistics.common import (  # noqa: F401
     ALLOWED_EVIDENCE_DOCTYPES,
     OPERATOR_ROLES,
@@ -291,6 +293,11 @@ def update_flow_status(
         or
         (doc.destination_posko and _can_operate(actor, doc.destination_posko))
     )
+
+    # The armada's posko moves the trip along (pickup -> transit -> arrived); receiving/cancelling stays with the poskos.
+    if not allowed_actor and doc.transport_space and new_status in TRANSIT_STATUSES:
+        space_posko = frappe.db.get_value("RN Transport Space", doc.transport_space, "coordination_posko")
+        allowed_actor = bool(space_posko and _can_operate(actor, space_posko))
 
     if not allowed_actor:
         frappe.throw(

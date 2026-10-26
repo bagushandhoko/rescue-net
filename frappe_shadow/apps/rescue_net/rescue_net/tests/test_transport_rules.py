@@ -94,3 +94,32 @@ class TestDistribusiCapacityPct(LogisticsTestCase):
         self.assertEqual((darat["terpakai_m3"], darat["total_m3"]), (10, 40))
         self.assertEqual(data["totals"]["kapasitas_darat_pct"], 25.0)   # by weight it would be 90.9
         self.assertEqual(data["totals"]["transport_space_pct"], 25.0)
+
+
+class TestArmadaPoskoMovesTheTrip(LogisticsTestCase):
+    """The posko that runs the armada updates pickup/transit/arrival of flows it carries; it never receives or cancels them."""
+
+    def setUp(self):
+        super().setUp()
+        from rescue_net.tests.factories import make_actor, make_org, make_posko
+        self.armada_posko = make_posko(event=self.w.event, org=make_org())
+        self.armada_op = make_actor(posko=self.armada_posko)
+        self.outsider = make_actor(posko=make_posko(event=self.w.event, org=make_org()))
+        space = make_transport_space(self.armada_posko)
+        self.flow = _insert("RN Distribution Flow", title="Tenda", source_posko=self.w.posko_a.name,
+                            destination_posko=self.w.posko_b.name, disaster_event=self.w.event.name, item_name="Tenda",
+                            quantity=1, unit="unit", flow_status="planned", transport_space=space.name).name
+
+    def test_armada_operator_moves_the_trip_but_cannot_receive_or_cancel(self):
+        with as_user(self.armada_op.user):
+            for st in ("assigned_pickup", "in_transit"):
+                self.assertEqual(api.update_flow_status(self.flow, st)["flow_status"], st)
+            with self.assertRaises(frappe.PermissionError):
+                api.update_flow_status(self.flow, "cancelled")
+            api.update_flow_status(self.flow, "arrived_at_posko")
+            with self.assertRaises(frappe.PermissionError):
+                api.update_flow_status(self.flow, "received", received_quantity=1)
+
+    def test_an_unrelated_posko_still_cannot_touch_the_flow(self):
+        with as_user(self.outsider.user), self.assertRaises(frappe.PermissionError):
+            api.update_flow_status(self.flow, "assigned_pickup")

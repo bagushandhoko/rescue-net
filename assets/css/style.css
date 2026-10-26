@@ -3789,7 +3789,7 @@ body:not(.home-page):not(.viewer-page):not(.mockup-viewer) .rn-public-header + .
     position: static !important;
   }
 
-  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) input,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) input:not([type="checkbox"]):not([type="radio"]),
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) select,
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) textarea,
   body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) label,

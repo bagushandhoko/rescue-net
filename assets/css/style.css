@@ -1508,6 +1508,16 @@ body.viewer-page {
   font: inherit;
 }
 
+/* checkbox/radio in a form stay small and sit beside their label (was 100% wide, stacked left) */
+.rn-form input[type="checkbox"],
+.rn-form input[type="radio"] {
+  width: 18px; min-width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0; flex: 0 0 auto;
+}
+.rn-form label:has(> input[type="checkbox"]),
+.rn-form label:has(> input[type="radio"]) {
+  display: flex; flex-direction: row; align-items: center; gap: 8px;
+}
+
 .rn-form textarea {
   resize: vertical;
 }

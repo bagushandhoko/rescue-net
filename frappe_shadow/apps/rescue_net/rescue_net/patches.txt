@@ -10,3 +10,4 @@ rescue_net.patches.v2026_10.map_admin_areas_by_code
 rescue_net.patches.v2026_10.map_admin_areas_partial
 rescue_net.patches.v2026_10.backfill_posko_served_events
 rescue_net.patches.v2026_10.backfill_transport_served_events
+rescue_net.patches.v2026_10.more_unit_conversions

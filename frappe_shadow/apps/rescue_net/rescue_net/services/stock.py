@@ -70,6 +70,15 @@ def receive_into_stock(posko, item_name, unit, qty, disaster_event, notes, what=
     """Lock, compute the effective stock, append the new snapshot. Returns
     (stock_observation, previous_effective_quantity, used_since_snapshot)."""
     _lock_posko(posko)
+    # owner 2026-10-26: goods arriving in another unit than this posko counts
+    # them in (10 karung for a kg stock) are converted with RN Unit Conversion
+    from rescue_net.services.units import convert, stock_unit
+    conv_note = None
+    su = stock_unit(posko, item_name)
+    if su and su != (unit or "").strip():
+        c = convert(item_name, qty, unit, su)
+        if c:
+            qty, unit, conv_note = c["quantity"], su, c["note"]
     previous, used = effective_quantity(posko, item_name, unit, what)
     now = now_datetime()
     stock = frappe.new_doc("RN Stock Observation")
@@ -82,7 +91,9 @@ def receive_into_stock(posko, item_name, unit, qty, disaster_event, notes, what=
     stock.quantity_mode = "exact"
     stock.unit = unit
     stock.stock_state = "available"
-    stock.notes = notes(previous, used) if callable(notes) else notes
+    stock.notes = (notes(previous, used) if callable(notes) else notes) or ""
+    if conv_note:
+        stock.notes = (stock.notes + " Dikonversi: " + conv_note).strip()
     stock.observed_at = now
     stock.source_updated_at = now
     stock.insert(ignore_permissions=True)

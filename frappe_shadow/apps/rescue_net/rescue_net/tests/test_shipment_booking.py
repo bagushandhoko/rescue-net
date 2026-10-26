@@ -182,7 +182,7 @@ class TestSendWithinStock(_ShipmentWorld):
 
     def test_unit_and_unknown_item(self):
         with self.assertRaisesRegex(frappe.ValidationError, "Satuan"):
-            self.direct(1, unit="kg")
+            self.direct(1, unit="ikat")   # no conversion row (kg now converts via the table)
         with as_user(self.op.user), self.assertRaisesRegex(frappe.ValidationError, "Belum ada stok"):
             create_flow(destination_posko=self.dst.name, item_text="Tenda", quantity=1, unit="unit",
                         quantity_mode="exact", source_posko=self.src.name)

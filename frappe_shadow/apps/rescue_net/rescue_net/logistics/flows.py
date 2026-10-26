@@ -689,9 +689,14 @@ def _assert_in_stock(posko, item, quantity, unit):
     av = stock_available(posko, item)
     if av is None:
         frappe.throw("Belum ada stok tercatat untuk '%s' di posko asal — catat stok dulu." % item)
-    if unit and av["unit"] and _norm_item(unit) != _norm_item(av["unit"]):
-        frappe.throw("Satuan harus sama dengan kartu stok: %s." % av["unit"])
     qty = flt(quantity)
+    if unit and av["unit"] and _norm_item(unit) != _norm_item(av["unit"]):
+        from rescue_net.services.units import convert
+        c = convert(item, qty, unit, av["unit"])
+        if not c:
+            frappe.throw("Satuan harus sama dengan kartu stok (%s), atau tambahkan konversi %s → %s di tabel konversi."
+                         % (av["unit"], unit, av["unit"]))
+        qty = flt(c["quantity"])      # compared in the stock card's unit
     if qty <= 0:
         frappe.throw("Isi jumlah yang dikirim.")
     if qty > av["available"] + 1e-9:

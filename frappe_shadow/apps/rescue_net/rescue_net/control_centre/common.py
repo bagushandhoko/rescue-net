@@ -550,12 +550,20 @@ def stock_available(posko, item):
     for f in frappe.get_all("RN Distribution Flow", filters={"source_posko": posko},
                             fields=["item_name", "quantity", "unit", "flow_status", "creation"],
                             limit_page_length=1000):
-        if _norm_item(f.item_name) != key or _norm_item(f.unit) != unit:
+        if _norm_item(f.item_name) != key:
             continue
         if str(f.flow_status or "").lower() in _FLOW_VOID:
             continue
-        if f.creation and get_datetime(f.creation) > since:
+        if not (f.creation and get_datetime(f.creation) > since):
+            continue
+        if _norm_item(f.unit) == unit:
             sent += _num(f.quantity)
+        else:
+            # sent in another unit (karung from a kg stock): count it converted
+            from rescue_net.services.units import convert
+            c = convert(obs.item_name, f.quantity, f.unit, obs.unit)
+            if c:
+                sent += _num(c["quantity"])
     stok = _num(obs.quantity)
     return {"item": obs.item_name, "unit": obs.unit or "", "observed": stok, "observed_at": obs.observed_at,
             "sent_since": round(sent, 3), "available": round(max(0.0, stok - sent), 3)}

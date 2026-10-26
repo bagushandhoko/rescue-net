@@ -1,0 +1,30 @@
+# Pemantau rescue-net.online dari luar (2026-10-26). Tiap 15 menit GitHub
+# memeriksa beranda, API, dan halaman login. Bila gagal, run ini MERAH dan
+# GitHub mengirim email kegagalan workflow ke pemilik repo (atur di GitHub:
+# Settings -> Notifications -> Actions). Riwayat: tab Actions -> uptime.
+name: uptime
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cek rescue-net.online
+        run: |
+          fail=0
+          check() {
+            name=$1; url=$2; shift 2
+            out=$(curl -s -o /dev/null -A "rn-uptime/1" -m 30 -w "%{http_code} %{time_total}" "$url" || echo "000 0")
+            code=${out% *}; t=${out#* }
+            ok=0; for c in "$@"; do [ "$code" = "$c" ] && ok=1; done
+            echo "$name: HTTP $code dalam ${t}s"
+            [ "$ok" = 1 ] || { echo "::error::$name gagal (HTTP $code)"; fail=1; }
+            awk -v t="$t" 'BEGIN{exit !(t>10)}' && echo "::warning::$name lambat (${t}s)"
+          }
+          check beranda https://rescue-net.online/ 200 302
+          check api "https://rescue-net.online/rescue-net-frappe/api/method/rescue_net.api_early_warning.banner" 200
+          check login https://rescue-net.online/rescue-net/pages/auth.html 200
+          exit $fail

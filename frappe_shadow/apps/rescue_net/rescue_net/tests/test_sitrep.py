@@ -41,3 +41,10 @@ class TestSitrep(RNTestCase):
         n = _count("RN Logistic Need", _scope("RN Logistic Need", self.w.event.name, serving_posko_names(self.w.event.name)),
                    add_to_date(now_datetime(), hours=-1), now_datetime())
         self.assertGreaterEqual(n, 1)
+
+
+class TestWsgiEntry(RNTestCase):
+    def test_wsgi_entry_imports_with_statics(self):
+        import importlib
+        mod = importlib.import_module("rescue_net.wsgi")
+        self.assertTrue(callable(mod.application))

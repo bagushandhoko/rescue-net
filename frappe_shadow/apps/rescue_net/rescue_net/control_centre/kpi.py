@@ -761,6 +761,23 @@ def activity_trends(event, buckets=14):
 def public_dashboard(
     disaster_event_id
 ):
+    # load test 2026-10-26: this is the heaviest public page (~0.26 s) and
+    # identical for every guest -> 30 s cache for guests (logged-in viewers
+    # always get a fresh build)
+    if frappe.session.user != "Guest" or frappe.flags.in_test:
+        return _build_public_dashboard(disaster_event_id)
+    key = "rn_public_dashboard:" + str(canonical_event(disaster_event_id) or disaster_event_id)
+    hit = frappe.cache().get_value(key)
+    if hit is not None:
+        return hit
+    out = _build_public_dashboard(disaster_event_id)
+    frappe.cache().set_value(key, out, expires_in_sec=30)
+    return out
+
+
+def _build_public_dashboard(
+    disaster_event_id
+):
     event = canonical_event(
         disaster_event_id
     )

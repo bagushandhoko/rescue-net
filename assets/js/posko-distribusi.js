@@ -490,6 +490,8 @@
       '<label>Status<select name="transport_status">' + optionList(ARMADA_STATUS, a.status) + "</select></label>" +
       '<label>Mode layanan<select name="service_mode">' + optionList(SERVICE_MODE, a.service_mode) + "</select></label>" +
       '<label>Kebijakan booking<select name="booking_policy">' + optionList(BOOKING_POLICY, a.booking_policy) + "</select></label>" +
+      '<label>Kursi relawan<input type="number" min="0" name="volunteer_capacity_seats" value="' + esc(a.kursi_relawan || 0) + '"></label>' +
+      '<label>Titik jemput relawan<input name="volunteer_pickup_location" value="' + esc(clean(a.jemput_relawan || "")) + '"></label>' +
       '<label>Muatan sendiri (kg)<input type="number" step="0.01" name="own_load_kg" value="' + esc(a.muatan_sendiri_kg || "") + '"></label>' +
       '<label>Muatan sendiri (m³)<input type="number" step="0.01" name="own_load_m3" value="' + esc(a.muatan_sendiri_m3 || "") + '"></label>' +
       '<label>Lokasi saat ini<input name="current_location" value="' + esc(clean(a.current_location)) + '"></label>' +
@@ -533,6 +535,8 @@
         transport_status: v("transport_status"),
         service_mode: v("service_mode"),
         booking_policy: v("booking_policy"),
+        volunteer_capacity_seats: v("volunteer_capacity_seats"),
+        volunteer_pickup_location: v("volunteer_pickup_location"),
         current_location: v("current_location"),
         own_load_kg: v("own_load_kg"),
         own_load_m3: v("own_load_m3"),
@@ -684,6 +688,8 @@
           transport_type: f("transport_type"),
           service_mode: f("service_mode"),
           booking_policy: f("booking_policy"),
+          volunteer_capacity_seats: Number((form.volunteer_capacity_seats && form.volunteer_capacity_seats.value) || 0),
+          volunteer_pickup_location: form.volunteer_pickup_location ? form.volunteer_pickup_location.value.trim() : "",
           route_origin: f("route_origin"),
           route_destination: f("route_destination"),
           capacity_weight_kg: Number(form.capacity_weight_kg.value || 0),

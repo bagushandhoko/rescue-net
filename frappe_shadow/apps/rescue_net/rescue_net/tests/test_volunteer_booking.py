@@ -62,3 +62,18 @@ class TestVolunteerBooking(RNTestCase):
     def test_guest_refused(self):
         with as_guest(), self.assertRaises(frappe.PermissionError):
             vb.my_volunteer()
+
+
+class TestArmadaVolunteerSeats(RNTestCase):
+    def test_posko_sets_volunteer_seats_on_create_and_update(self):
+        from rescue_net.logistics.transport import create_transport_space, update_transport_space
+        w = make_world()
+        tp = make_posko(w.event, w.org_a, posko_type="transport")
+        with as_user(make_actor(posko=tp).user):
+            r = create_transport_space(coordination_posko=tp.name, provider_name="Truk Relawan", transport_type="darat",
+                                       capacity_weight_kg=1000, disaster_event=w.event.name, volunteer_capacity_seats=4,
+                                       volunteer_pickup_location="Halaman posko")
+            name = r["transport"]
+            self.assertEqual(frappe.db.get_value("RN Transport Space", name, "volunteer_capacity_seats"), 4)
+            update_transport_space(name, volunteer_capacity_seats=6)
+        self.assertEqual(frappe.db.get_value("RN Transport Space", name, "volunteer_capacity_seats"), 6)

@@ -57,6 +57,9 @@ def create_transport_space(
     prohibited_items=None,
     documents_required=None,
     cargo_cutoff_at=None,
+    volunteer_capacity_seats=None,
+    volunteer_needs_pickup=None,
+    volunteer_pickup_location=None,
 ):
     """Register an armada distribusi (kendaraan darat / kapal / pesawat) a
     posko puts on offer. Besides capacity + jadwal (berangkat / ETA) the
@@ -112,6 +115,7 @@ def create_transport_space(
         doc.service_mode = service_mode
     if booking_policy in ("pin_verify", "open"):
         doc.booking_policy = booking_policy
+    _apply_volunteer_seats(doc, volunteer_capacity_seats, volunteer_needs_pickup, volunteer_pickup_location)
     doc.current_location = current_location
     doc.handover_location = handover_location
     doc.handover_contact_person = handover_contact_person
@@ -163,6 +167,9 @@ def update_transport_space(
     prohibited_items=None,
     documents_required=None,
     cargo_cutoff_at=None,
+    volunteer_capacity_seats=None,
+    volunteer_needs_pickup=None,
+    volunteer_pickup_location=None,
 ):
     """Let the coordinating posko keep an armada record current as the trip
     progresses (status, keberadaan, jam berangkat/ETA, titik & narahubung
@@ -189,6 +196,7 @@ def update_transport_space(
         frappe.throw("Mode layanan tidak valid")
     if booking_policy and booking_policy not in ("pin_verify", "open"):
         frappe.throw("Kebijakan booking tidak valid")
+    _apply_volunteer_seats(doc, volunteer_capacity_seats, volunteer_needs_pickup, volunteer_pickup_location)
 
     for field, value in (
         ("current_location", current_location),
@@ -218,6 +226,18 @@ def update_transport_space(
         "transport": doc.name,
         "transport_status": doc.transport_status,
     }
+
+
+def _apply_volunteer_seats(doc, seats=None, needs_pickup=None, pickup_location=None):
+    """Relawan booking (owner 2026-10-26): the armada's seats for volunteers."""
+    if seats not in (None, "") and doc.meta.has_field("volunteer_capacity_seats"):
+        if cint(seats) < 0:
+            frappe.throw("Kursi relawan tidak boleh negatif")
+        doc.volunteer_capacity_seats = cint(seats)
+    if needs_pickup not in (None, "") and doc.meta.has_field("volunteer_needs_pickup"):
+        doc.volunteer_needs_pickup = 1 if str(needs_pickup).lower() in ("1", "true", "yes", "on") else 0
+    if pickup_location is not None and doc.meta.has_field("volunteer_pickup_location"):
+        doc.volunteer_pickup_location = (pickup_location or "").strip()[:140] or None
 
 
 def require_terms_ack(space, terms_ack):

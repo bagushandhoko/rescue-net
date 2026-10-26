@@ -214,7 +214,7 @@ def distribusi_board(disaster_event=None):
     transport_filter = event_filters(cols("RN Transport Space"), event) if event else {}
     transports = frappe.get_all(
         "RN Transport Space", filters=transport_filter,
-        fields=_sf("RN Transport Space", [
+        fields=_sf("RN Transport Space", ["volunteer_capacity_seats", "volunteer_pickup_location", 
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3", "route_origin",
             "route_destination", "observed_at", "coordination_posko",
@@ -532,6 +532,8 @@ def distribusi_board(disaster_event=None):
             "service_mode": smode,
             "service_mode_label": _SERVICE_MODE_LABEL.get(smode, smode),
             "booking_policy": t.get("booking_policy") or "pin_verify",
+            "kursi_relawan": int(t.get("volunteer_capacity_seats") or 0),
+            "jemput_relawan": t.get("volunteer_pickup_location") or "",
             "kapasitas": " · ".join(cap_bits) or "-",
             "kapasitas_total_kg": cap_kg,
             "kapasitas_total_m3": cap_m3,
@@ -677,7 +679,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
 
     transports = frappe.get_all(
         "RN Transport Space", filters=tfilter, or_filters=tor,
-        fields=_sf("RN Transport Space", [
+        fields=_sf("RN Transport Space", ["volunteer_capacity_seats", "volunteer_pickup_location", 
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3",
             "own_load_kg", "own_load_m3", "own_cargo_desc", "route_origin",
@@ -745,6 +747,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "service_mode": smode,
             "service_mode_label": _SERVICE_MODE_LABEL.get(smode, smode),
             "booking_policy": t.booking_policy or "pin_verify",
+            "kursi_relawan": int(t.get("volunteer_capacity_seats") or 0),
             "status": t.transport_status or "-",
             "status_label": _ARMADA_STATUS_LABEL.get(t.transport_status, t.transport_status or "-"),
             "kapasitas_total_kg": cap_kg, "kapasitas_total_m3": cap_m3,

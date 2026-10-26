@@ -254,6 +254,9 @@ def receive_flow_and_update_stock(
                        frappe.db.get_value("RN Aid Offer", doc.get("aid_offer"), ["expiry_date", "batch_no"], as_dict=True)
                        if doc.get("aid_offer") else None, "flow:" + str(flow))
 
+    # update_flow_status alone does not touch stock; this path just did
+    flow_result.update(stock_created=True, note="Stok posko tujuan sudah diperbarui dari penerimaan ini.")
+
     return {
         "flow": flow_result,
         "stock_observation": stock.name,

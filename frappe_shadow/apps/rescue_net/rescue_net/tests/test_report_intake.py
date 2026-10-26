@@ -185,3 +185,17 @@ class TestRulesNoDoubleCount(RNTestCase):
         from rescue_net.services.report_intake import rules_extract
         r = rules_extract("200 orang mengungsi. Posko mencatat 150 jiwa di tenda.")
         self.assertEqual(r["affected_people_count"], 200)
+
+
+class TestRulesTypeTies(RNTestCase):
+    """Uji S16 2026-10-26: ties go to the life-critical type."""
+
+    def test_sick_child_in_a_tent_is_medical(self):
+        from rescue_net.services.report_intake import rules_extract
+        self.assertEqual(rules_extract("Tolong!! anak saya demam tinggi sudah 3 hari di tenda pengungsian")["report_type"],
+                         "medical_case")
+
+    def test_landslide_over_the_road_with_damaged_houses_is_blocked_access(self):
+        from rescue_net.services.report_intake import rules_extract
+        self.assertEqual(rules_extract("Longsor menutup jalan desa sepanjang 50 meter, 3 rumah rusak berat.")["report_type"],
+                         "blocked_access")

@@ -46,7 +46,13 @@ _TYPE_WORDS = {
 # strong signals count double: a dry well with some diarrhoea is still a water
 # crisis first (E2E 2026-10-25: "sumur kering ... obat diare" became medical_case)
 _STRONG = {"sumur kering": 2, "kekeringan": 2, "krisis air": 2, "tidak ada air": 2, "kekurangan air": 2,
-           "air bersih habis": 2, "terseret": 2, "jembatan putus": 2, "jalan putus": 2}
+           "air bersih habis": 2, "terseret": 2, "jembatan putus": 2, "jalan putus": 2,
+           # uji S16 2026-10-26: a sick person in a tent is a medical case, a slide
+           # over the road is blocked access — not a shelter need
+           "demam": 2, "pingsan": 2, "sesak": 2, "patah tulang": 2, "menutup jalan": 2, "tertutup longsor": 2}
+# a tie goes to the more life-critical type, not to dict order
+_TYPE_PRIORITY = ("medical_case", "missing_or_found", "blocked_access", "water_shortage", "new_hazard",
+                  "shelter_need", "available_stock", "location_needs_help", "affected_need_help")
 _CRITICAL = ("meninggal", "tewas", "tertimbun", "terjebak", "kritis", "darurat", "tenggelam", "sesak napas",
              "tidak sadar")
 _URGENT = ("segera", "mendesak", "tolong", "bayi", "lansia", "belum makan", "cepat", "urgent")
@@ -91,7 +97,7 @@ def rules_extract(text):
         hits[t] = sum(_STRONG.get(w, 1) for w in found)
     if re.search(r"sumur(?:\s+\w+){0,2}\s+(?:kering|habis|mati)", low):   # "sumur warga kering"
         hits["water_shortage"] = hits.get("water_shortage", 0) + (0 if "sumur kering" in low else 2)
-    best = max(hits, key=lambda t: hits[t])
+    best = max(hits, key=lambda t: (hits[t], -_TYPE_PRIORITY.index(t) if t in _TYPE_PRIORITY else -99))
     report_type = best if hits[best] else "affected_need_help"
 
     if any(w in low for w in _CRITICAL):

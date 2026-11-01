@@ -1,7 +1,7 @@
 import frappe
 from frappe.model.document import Document
 
-KINDS = {"transport", "akomodasi"}
+KINDS = {"transport", "akomodasi", "posko"}  # posko = offer to work at a posko (2026-11-01)
 
 
 class RNVolunteerBooking(Document):
@@ -15,5 +15,7 @@ class RNVolunteerBooking(Document):
             frappe.throw("Pilih armada")
         if self.booking_kind == "akomodasi" and not self.accommodation:
             frappe.throw("Pilih tempat menginap")
+        if self.booking_kind == "posko" and not self.posko:
+            frappe.throw("Pilih posko")
         if self.date_from and self.date_to and str(self.date_to) < str(self.date_from):
             frappe.throw("Tanggal selesai harus setelah tanggal mulai")

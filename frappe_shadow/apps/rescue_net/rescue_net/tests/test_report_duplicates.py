@@ -36,6 +36,10 @@ class TestReportDuplicates(RNTestCase):
             rd.mark_report_duplicate(self.b.name, self.a.name)
         with as_user(self.warga.user), self.assertRaises(frappe.PermissionError):
             rd.report_duplicate_candidates(self.a.name)
+        # a manager of another posko serving the same disaster may look, but not link reports it does not handle
+        frappe.db.set_value("RN Community Report", self.c.name, "posko", self.w.posko_b.name)
+        with as_user(make_actor(posko=self.w.posko_b).user):
+            self.assertTrue(rd.report_duplicate_candidates(self.a.name)["candidates"])
 
     def test_people_counted_once_and_board(self):
         with as_user(self.mgr.user):

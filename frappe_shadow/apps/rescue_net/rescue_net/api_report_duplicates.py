@@ -60,6 +60,14 @@ def _may_manage(actor, report_row):
     return bool(report_row.posko and actor and can_manage_posko(actor, report_row.posko))
 
 
+def _serves_event(actor, event):
+    """Manager of any posko serving this disaster may LOOK for duplicates (titles / places / counts only)."""
+    if not (actor and event):
+        return False
+    from rescue_net.control_centre.common import serving_posko_names
+    return any(can_manage_posko(actor, p) for p in serving_posko_names(event))
+
+
 def _row(name):
     row = frappe.db.get_value("RN Community Report", name, _FIELDS, as_dict=True)
     if not row:
@@ -71,8 +79,8 @@ def _row(name):
 def report_duplicate_candidates(report):
     actor = rn_actor()
     me = _row(report)
-    if not _may_manage(actor, me):
-        frappe.throw("Hanya pengelola posko laporan ini atau Control Centre.", frappe.PermissionError)
+    if not (_may_manage(actor, me) or _serves_event(actor, me.disaster_event)):
+        frappe.throw("Hanya pengelola posko bencana ini atau Control Centre.", frappe.PermissionError)
     if not me.disaster_event:
         return {"report": me.name, "candidates": []}
     t0 = get_datetime(me.creation)

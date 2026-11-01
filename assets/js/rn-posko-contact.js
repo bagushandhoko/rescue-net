@@ -13,9 +13,20 @@
 
   if (!window.RN_FRAPPE || !window.RN_FRAPPE.call) return;
 
-  var qs = new URLSearchParams(location.search);
-  var posko = qs.get("id") || qs.get("posko") || "";
-  if (!posko) return;
+  // Pages opened without ?id= show their default posko (same defaults as each page's own JS),
+  // and Posko Logistik / Distribusi write ?id= with history.replaceState when another posko is
+  // picked -> the bar follows the URL (owner 2026-11-01: "belum semua posko ada").
+  var PAGE_DEFAULT = {
+    "posko-detail.html": "posko-sim-logistik",
+    "posko-medis-detail.html": "posko-sim-medis",
+    "shelter-detail.html": "posko-sim-shelter",
+    "dapur-umum.html": "posko_nodes:posko-sim-dapur"
+  };
+  function currentPosko() {
+    var qs = new URLSearchParams(location.search);
+    var page = location.pathname.split("/").pop();
+    return qs.get("id") || qs.get("posko") || PAGE_DEFAULT[page] || "";
+  }
 
   function esc(s) { return window.RNUI ? window.RNUI.esc(s) : String(s == null ? "" : s); }
   function digits(n) { return String(n || "").replace(/[^\d+]/g, ""); }
@@ -87,11 +98,25 @@
     bar.innerHTML = parts.join("");
   }
 
-  function start() {
-    var bar = mount();
+  var bar = null, shown = null;
+  function load() {
+    var posko = currentPosko();
+    if (!posko || posko === shown) return;
+    shown = posko;
+    if (!bar) bar = mount();
+    bar.hidden = false;
     window.RN_FRAPPE.call("rescue_net.api_control_centre.posko_contact", { posko: posko })
-      .then(function (res) { render(bar, res); })
-      .catch(function () { bar.remove(); });
+      .then(function (res) { if (shown === posko) render(bar, res); })
+      .catch(function () { if (shown === posko) bar.hidden = true; });
+  }
+
+  function start() {
+    load();
+    ["pushState", "replaceState"].forEach(function (m) {
+      var orig = history[m];
+      history[m] = function () { var r = orig.apply(this, arguments); setTimeout(load, 0); return r; };
+    });
+    window.addEventListener("popstate", load);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);

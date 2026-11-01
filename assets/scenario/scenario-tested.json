@@ -718,6 +718,32 @@
      "perbaikan": "Dibatasi ke pengelola posko / pembuat / pemilik alat (6a6cd91)."
     }
    ]
+  },
+  {
+   "id": "KP-1",
+   "tanggal": "2026-11-01",
+   "kategori": "Posko",
+   "judul": "Kelola Posko tahap 1 (halaman khusus pengelola)",
+   "tujuan": "Pisahkan halaman publik / Control Centre posko dari halaman pemilik/pengelola posko.",
+   "akun": [
+    "akun uji otomatis (pengelola posko A/B, relawan, tamu)",
+    "gudang.demo (produksi, hanya melihat)"
+   ],
+   "langkah": [
+    "Tamu: halaman minta login; tombol 🔧 Kelola Posko tidak tampil",
+    "Pengelola posko B tidak bisa membuka hub posko A (403)",
+    "Pengelola A: daftar posko hanya miliknya; hitungan relawan menunggu = 1; peringatan kontak kosong hilang setelah nomor diisi",
+    "Produksi HP: gudang.demo langsung masuk hub Gudang Jogja (ringkasan, kontak, alat kerja); tombol 🔧 Kelola Posko + ⚙ Pengaturan tampil di halaman posko"
+   ],
+   "hasil": "Lulus (3 tes baru, suite 643 hijau, Playwright HP)",
+   "skor": "3/3",
+   "status": "lulus",
+   "temuan": [
+    {
+     "masalah": "Tombol Pengaturan di halaman tanpa header publik: tulisan putih di atas putih (tak terbaca di HP).",
+     "perbaikan": "Diperbaiki (13caebe)."
+    }
+   ]
   }
  ],
  "rencana": [

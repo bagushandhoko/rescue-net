@@ -4517,8 +4517,9 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 
 .rn-input-drawer > summary { list-style: none; cursor: pointer; }
 .rn-input-drawer > summary::-webkit-details-marker { display: none; }
-.rn-input-drawer > summary h3::after { content: " ⌄"; }
-.rn-input-drawer[open] > summary h3::after { content: " ⌃"; }
+/* owner 2026-11-02: every submenu arrow points sideways (›), turns down when open */
+.rn-input-drawer > summary h3::after { content: "›"; display: inline-block; margin-left: 8px; color: #e8835d; transition: transform .16s ease; }
+.rn-input-drawer[open] > summary h3::after { transform: rotate(90deg); }
 .rn-input-drawer .rn-form h4 { margin: 18px 0 8px; font-size: 13px; }
 
 .rn-page-status { margin-top: 14px; font-size: 12px; color: #8c827c; }

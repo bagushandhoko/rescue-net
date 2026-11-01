@@ -32,6 +32,12 @@
         icon: "registrasi-posko"
       },
       {
+        // owner 2026-11-02: buat / daftarkan bencana dari menu registrasi
+        label: "Registrasi Bencana Baru",
+        href: "kelola-bencana.html#kbCreatePanel",
+        icon: "registrasi-posko"
+      },
+      {
         label: "Posko Detail",
         href: "posko-detail.html?id=posko-sim-logistik",
         icon: "posko"

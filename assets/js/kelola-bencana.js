@@ -162,6 +162,7 @@
     $("kbLiveNote").textContent = opt.goes_live ? "Akun/organisasi Anda terverifikasi: bencana langsung aktif (super admin tetap diberi tahu)."
       : "Organisasi Anda belum terverifikasi: bencana masuk sebagai usulan dan tampil setelah disetujui super admin.";
     $("kbCreatePanel").hidden = false;
+    if (location.hash === "#kbCreatePanel") setTimeout(function () { $("kbCreatePanel").scrollIntoView({ block: "start" }); var t = document.querySelector("#kbForm input, #kbForm select"); if (t) t.focus(); }, 100);
     f.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(probe, 700); });
     f.addEventListener("submit", function (e) { e.preventDefault(); submit(false); });
     $("kbGeo").addEventListener("click", function () {

@@ -557,3 +557,11 @@
 /* Barang Keluar: cetak label + pindai barcode (2026-10-25) */
 .rn-mov-label { margin-left: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
 .rn-mov-scan { margin-left: auto; white-space: nowrap; }
+
+/* owner 2026-11-02: room under the last group so its submenu can scroll fully above the browser toolbar */
+@media (max-width: 1023px) {
+  body .sidebar.rn-drawer-panel::after,
+  body:not(.home-page):not(.viewer-page):not(.mockup-viewer):not(.public-report-page) .sidebar::after {
+    content: ""; display: block; height: 96px;
+  }
+}

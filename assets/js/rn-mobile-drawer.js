@@ -1,6 +1,16 @@
 (function () {
   "use strict";
 
+  // owner 2026-11-02: a group opened near the bottom of the phone menu (e.g. Pengaturan) opened below the
+  // screen edge and looked like nothing happened — scroll the opened submenu into view
+  function showOpened(g) {
+    setTimeout(() => {
+      const r = g.getBoundingClientRect();
+      const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      if (r.bottom > vh - 16) g.scrollIntoView({ behavior: "smooth", block: r.height > vh - 80 ? "start" : "end" });
+    }, 60);
+  }
+
   const MOBILE_QUERY = "(max-width: 1023px)";
 
   function focusableEls(container) {
@@ -207,6 +217,7 @@
       g.addEventListener("toggle", () => {
         if (!g.open) return;
         sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(o => { if (o !== g) o.open = false; });
+        showOpened(g);
       });
     });
   }
@@ -368,6 +379,7 @@
         g.addEventListener("toggle", () => {
           if (!g.open) return;
           sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(o => { if (o !== g) o.open = false; });
+          showOpened(g);
         });
       });
     }

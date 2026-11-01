@@ -38,6 +38,7 @@
       "border:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.85);font:inherit;font-size:13px;",
       "cursor:pointer;color:#3a2c22}",
       ".rn-ps-btn:hover{background:#fff}",
+      "a.rn-ps-btn.rn-public-login{color:#3a2c22!important;background:#fff!important;font-weight:700;text-decoration:none}",
       ".rn-ps-ov{position:fixed;inset:0;background:rgba(20,14,10,.5);display:flex;align-items:flex-start;",
       "justify-content:center;padding:32px 16px;z-index:9999;overflow:auto}",
       ".rn-ps-card{background:#fff;max-width:720px;width:100%;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);",

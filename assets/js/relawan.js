@@ -82,56 +82,61 @@
     $("#kpiFatigue").textContent = fmt(t.fatigue_risk);
   }
 
-  function renderDaftarRelawan(rows) {
-    var body = $("#daftarRelawanBody");
-    if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="6"><em class="rn-muted">Belum ada relawan tercatat untuk event ini.</em></td></tr>';
-      $("#daftarRelawanShown").textContent = "0 relawan";
-      return;
+  /* owner 2026-11-01: filters for the two lists (bencana, kesediaan waktu, keahlian, cari) */
+  var FILTER = { waktu: "", skill: "", q: "" };
+  function waktuKey(r) { return yes(r.durasi) ? durasiLabel(r.durasi) : ""; }
+  function matches(r) {
+    if (FILTER.waktu && waktuKey(r) !== FILTER.waktu) return false;
+    if (FILTER.skill && (r.skills || []).map(skillLabel).indexOf(FILTER.skill) === -1) return false;
+    if (FILTER.q) {
+      var hay = [r.volunteer_name, r.organisasi, r.lokasi, r.posko_ditempatkan, r.jadwal_tersedia, r.peralatan,
+        (r.skills || []).join(" ")].join(" ").toLowerCase();
+      if (hay.indexOf(FILTER.q) === -1) return false;
     }
-    body.innerHTML = rows.map(function (r) {
-      var shown = r.skills.slice(0, 1);
-      var more = r.skills.length - shown.length;
-      var skills = shown.map(function (s) { return '<span class="chip rn-rw-skill">' + esc(skillLabel(s)) + "</span>"; }).join("") +
-        (more > 0 ? '<span class="rn-rw-more" title="' + esc(r.skills.map(skillLabel).join(", ")) + '">+' + more + "</span>" : "");
-      return (
-        '<tr><td><span class="rn-rw-person"><span class="rn-rw-avatar">' + esc(BOARD_CACHE && BOARD_CACHE.logged_in === false ? "R" : initials(r.volunteer_name)) + "</span><b>" +
-          esc(BOARD_CACHE && BOARD_CACHE.logged_in === false ? "Relawan" : r.volunteer_name) + "</b>" +
-          (r.kontak ? '<br><small><a href="tel:' + esc(String(r.kontak).replace(/[^\d+]/g, "")) + '">' + esc(r.kontak) + "</a></small>" : "") + "</span></td>" +
-        '<td title="' + esc(r.organisasi) + '">' + esc(r.organisasi) + "</td>" +
-        '<td><span class="rn-rw-skills">' + skills + "</span></td>" +
-        '<td title="' + esc(r.lokasi) + '">' + esc(r.lokasi) + "</td>" +
-        '<td title="' + esc(r.durasi) + '">' + esc(durasiLabel(r.durasi)) + "</td>" +
-        '<td><span class="chip ' + statusPillClass(r.status) + '">' + esc(STATUS_LABEL[r.status] || r.status) + "</span></td></tr>"
-      );
-    }).join("");
-    $("#daftarRelawanShown").textContent = "Menampilkan " + rows.length + " dari " + rows.length + " relawan";
+    return true;
   }
-
-  function setupSearch() {
-    var input = $("#relawanSearch");
-    if (!input) return;
-    input.addEventListener("input", function () {
-      var q = input.value.trim().toLowerCase();
-      var rows = (BOARD_CACHE && BOARD_CACHE.daftar_relawan) || [];
-      var filtered = !q ? rows : rows.filter(function (r) {
-        return (r.volunteer_name + " " + r.organisasi + " " + r.skills.join(" ")).toLowerCase().indexOf(q) !== -1;
-      });
-      renderDaftarRelawan(filtered);
+  function fillSelect(sel, values) {
+    var el = $(sel);
+    if (!el) return;
+    var cur = el.value;
+    el.innerHTML = '<option value="">Semua</option>' + values.map(function (v) {
+      return '<option value="' + esc(v) + '">' + esc(v) + "</option>"; }).join("");
+    if (values.indexOf(cur) !== -1) el.value = cur;
+  }
+  function uniq(list) { return list.filter(function (v, i) { return v && list.indexOf(v) === i; }).sort(); }
+  function buildFilters(data) {
+    var all = (data.relawan_tersedia || []).concat(data.relawan_ditempatkan || []);
+    fillSelect("#fWaktu", uniq(all.map(waktuKey)));
+    fillSelect("#fSkill", uniq([].concat.apply([], all.map(function (r) { return (r.skills || []).map(skillLabel); }))));
+  }
+  function applyFilters() {
+    if (!BOARD_CACHE) return;
+    renderTersedia((BOARD_CACHE.relawan_tersedia || []).filter(matches), (BOARD_CACHE.relawan_tersedia || []).length);
+    renderDitempatkan((BOARD_CACHE.relawan_ditempatkan || []).filter(matches), (BOARD_CACHE.relawan_ditempatkan || []).length);
+  }
+  async function setupFilters() {
+    var fw = $("#fWaktu"), fs = $("#fSkill"), q = $("#relawanSearch"), fb = $("#fBencana");
+    if (fw) fw.addEventListener("change", function () { FILTER.waktu = fw.value; applyFilters(); });
+    if (fs) fs.addEventListener("change", function () { FILTER.skill = fs.value; applyFilters(); });
+    if (q) q.addEventListener("input", function () { FILTER.q = q.value.trim().toLowerCase(); applyFilters(); });
+    if (!fb) return;
+    fb.addEventListener("change", function () {
+      var u = new URL(location.href);
+      u.searchParams.set("event", fb.value);
+      history.replaceState(null, "", u);
+      loadBoard().catch(function (err) { console.error("[relawan board]", err); });
     });
-  }
-
-  function renderFilterKeterampilan(rows) {
-    var el = $("#filterKeterampilan");
-    if (!rows.length) { el.innerHTML = '<p class="rn-muted">Belum ada data skill.</p>'; return; }
-    var max = Math.max.apply(null, rows.map(function (r) { return r.count; }));
-    el.innerHTML = rows.map(function (r) {
-      var pct = max ? Math.round((100 * r.count) / max) : 0;
-      return (
-        '<div class="rn-rw-skill-row"><div class="rn-rw-skill-head"><span>' + esc(r.label) + "</span><b>" + fmt(r.count) + "</b></div>" +
-        '<div class="rn-rw-skill-bar"><i style="width:' + pct + '%"></i></div></div>'
-      );
-    }).join("");
+    try {
+      var r = await window.RN_FRAPPE.call("rescue_net.api_events.disasters", { limit: 100 });
+      var cur = getEventId();
+      var bare = function (n) { return String(n || "").replace(/^disaster_events:/, ""); };
+      cur = bare(cur);
+      var list = ((r && r.disasters) || []).map(function (d) { return { name: bare(d.name), title: d.title }; });
+      if (!list.some(function (d) { return d.name === cur; })) list.unshift({ name: cur, title: cur });
+      fb.innerHTML = list.map(function (d) {
+        return '<option value="' + esc(d.name) + '"' + (d.name === cur ? " selected" : "") + ">" + esc(d.title || d.name) + "</option>";
+      }).join("");
+    } catch (e) { fb.innerHTML = '<option value="' + esc(getEventId()) + '">' + esc(getEventId()) + "</option>"; }
   }
 
   function renderJenisRelawan(rows) {
@@ -249,40 +254,53 @@
       "<div><b>" + esc(guest ? "Relawan" : r.volunteer_name) + '</b><small class="rn-muted">' + esc(r.organisasi) +
       (yes(r.lokasi) ? " · " + esc(r.lokasi) : "") + "</small>" + contact + "</div></div>";
   }
-  function renderTersedia(rows) {
+  /* one line per volunteer; click opens the detail (owner 2026-11-01) */
+  function rowLine(r, sub, chips) {
+    var guest = BOARD_CACHE && BOARD_CACHE.logged_in === false;
+    var skill = (r.skills || [])[0];
+    return '<summary class="rn-rw-line"><span class="rn-rw-avatar">' + esc(guest ? "R" : initials(r.volunteer_name)) + "</span>" +
+      '<b class="rn-rw-line-name">' + esc(guest ? "Relawan" : r.volunteer_name) + "</b>" +
+      (skill ? '<span class="chip rn-rw-skill">' + esc(skillLabel(skill)) + "</span>" : "") +
+      '<span class="rn-rw-line-sub rn-muted">' + esc(sub || "") + "</span>" + (chips || "") + "</summary>";
+  }
+  function countText(shown, total, word) {
+    return (shown === total ? total : shown + " dari " + total) + " " + word;
+  }
+  function renderTersedia(rows, total) {
     var el = $("#relawanTersedia");
     if (!el) return;
-    $("#tersediaCount").textContent = rows.length + " siap ditempatkan";
+    $("#tersediaCount").textContent = countText(rows.length, total == null ? rows.length : total, "siap ditempatkan");
     el.innerHTML = rows.length ? rows.map(function (r) {
       var flags = (r.butuh_jemput ? '<span class="chip warning">Butuh dijemput</span>' : "") +
         (r.butuh_transport ? '<span class="chip warning">Butuh transport</span>' : "") +
         (yes(r.kendaraan_bawaan) ? '<span class="chip good">Bawa kendaraan</span>' : "");
-      return '<article class="rn-rw-card">' + personHead(r) +
-        '<div class="rn-rw-card-tags">' + (r.skills || []).slice(0, 3).map(function (s) {
+      var sub = [yes(r.lokasi) ? r.lokasi : "", yes(r.durasi) ? durasiLabel(r.durasi) : ""].filter(Boolean).join(" · ");
+      return '<details class="rn-rw-item">' + rowLine(r, sub) + '<div class="rn-rw-item-body">' + personHead(r) +
+        '<div class="rn-rw-card-tags">' + (r.skills || []).map(function (s) {
           return '<span class="chip rn-rw-skill">' + esc(skillLabel(s)) + "</span>"; }).join("") + flags + "</div>" +
         '<div class="rn-rw-card-dl">' + readyLines(r) +
-          (yes(r.durasi) ? "<div><span>Durasi</span><b>" + esc(durasiLabel(r.durasi)) + "</b></div>" : "") + "</div></article>";
-    }).join("") : '<p class="rn-muted">Belum ada relawan yang tersedia di bencana ini.</p>';
+          (yes(r.durasi) ? "<div><span>Durasi</span><b>" + esc(durasiLabel(r.durasi)) + "</b></div>" : "") + "</div></div></details>";
+    }).join("") : '<p class="rn-muted">' + (total ? "Tidak ada relawan yang cocok dengan filter." : "Belum ada relawan yang tersedia di bencana ini.") + "</p>";
   }
   var TASK_LABEL = { planned: "Menunggu konfirmasi", accepted: "Diterima", checked_in: "Check-in",
     in_progress: "Berjalan", completed: "Selesai", cancelled: "Batal" };
-  function renderDitempatkan(rows) {
+  function renderDitempatkan(rows, total) {
     var el = $("#relawanDitempatkan");
     if (!el) return;
-    $("#ditempatkanCount").textContent = rows.length + " sedang bertugas";
+    $("#ditempatkanCount").textContent = countText(rows.length, total == null ? rows.length : total, "sedang bertugas");
     el.innerHTML = rows.length ? rows.map(function (r) {
       var tasks = (r.penugasan || []).map(function (a) {
         return "<li><b>" + esc(a.task_title || "Tugas") + "</b>" + (a.posko ? ' <small class="rn-muted">' + esc(a.posko) + "</small>" : "") +
           ' <span class="chip ' + (/progress|checked/.test(a.assignment_status || "") ? "good" : "neutral") + '">' +
           esc(TASK_LABEL[a.assignment_status] || a.assignment_status || "-") + "</span></li>";
       }).join("");
-      return '<article class="rn-rw-card">' + personHead(r) +
-        '<div class="rn-rw-card-tags">' + (r.skills || []).slice(0, 3).map(function (s) {
+      return '<details class="rn-rw-item">' + rowLine(r, "📍 " + (r.posko_ditempatkan || "-")) + '<div class="rn-rw-item-body">' + personHead(r) +
+        '<div class="rn-rw-card-tags">' + (r.skills || []).map(function (s) {
           return '<span class="chip rn-rw-skill">' + esc(skillLabel(s)) + "</span>"; }).join("") + "</div>" +
         '<div class="rn-rw-card-dl"><div><span>Ditempatkan di</span><b>' + esc(r.posko_ditempatkan) + "</b></div>" + readyLines(r) +
           (yes(r.durasi) ? "<div><span>Durasi</span><b>" + esc(durasiLabel(r.durasi)) + "</b></div>" : "") + "</div>" +
-        (tasks ? '<ul class="rn-rw-tasks">' + tasks + "</ul>" : '<p class="rn-muted">Belum ada tugas tercatat.</p>') + "</article>";
-    }).join("") : '<p class="rn-muted">Belum ada relawan yang ditempatkan di bencana ini.</p>';
+        (tasks ? '<ul class="rn-rw-tasks">' + tasks + "</ul>" : '<p class="rn-muted">Belum ada tugas tercatat.</p>') + "</div></details>";
+    }).join("") : '<p class="rn-muted">' + (total ? "Tidak ada relawan yang cocok dengan filter." : "Belum ada relawan yang ditempatkan di bencana ini.") + "</p>";
   }
 
   function renderPapan(rows) {
@@ -307,10 +325,8 @@
     BOARD_CACHE = data;
     $("#relawanUpdated").textContent = "Diperbarui " + String(data.generated_at || "").slice(11, 16);
     renderKpi(data.totals || {});
-    renderDaftarRelawan(data.daftar_relawan || []);
-    renderTersedia(data.relawan_tersedia || []);
-    renderDitempatkan(data.relawan_ditempatkan || []);
-    renderFilterKeterampilan(data.filter_keterampilan || []);
+    buildFilters(data);
+    applyFilters();
     renderJenisRelawan(data.jenis_relawan || []);
     renderPapan(data.papan_penugasan || []);
     renderSafety(data.akomodasi_keselamatan || { tempat_tidur_tersedia: 0, relawan_menginap: 0, titik_aman: 0, briefing_hari_ini: 0, briefing_list: [] });
@@ -329,7 +345,7 @@
     });
     document.querySelectorAll("#relawanDrill [data-close]").forEach(function (el) { el.addEventListener("click", closeDrill); });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
-    setupSearch();
+    setupFilters();
     setupRegisterModal();
     loadBoard().catch(function (err) { console.error("[relawan board]", err); });
   });

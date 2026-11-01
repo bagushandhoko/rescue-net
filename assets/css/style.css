@@ -7524,3 +7524,13 @@ html.rn-mapfs-lock, html.rn-mapfs-lock body { overflow: hidden; }
 .rs-ev { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; }
 .rs-opt { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid rgba(104, 64, 45, .12); flex-wrap: wrap; }
 .rs-opt > div:first-child { min-width: 0; flex: 1 1 220px; }
+
+/* KPI berisi kata (mis. "Pengumpul", "Gudang Pengumpul"), bukan angka: huruf lebih kecil
+   dan boleh turun baris agar tidak menembus kotak (owner 2026-11-01, desktop & HP). */
+.kpi-card { min-width: 0; }
+.kpi-card strong { overflow-wrap: anywhere; }
+.kpi-card strong.rn-kpi-word {
+  font-size: clamp(20px, 2.1vw, 26px);
+  line-height: 1.15;
+  letter-spacing: -.02em;
+}

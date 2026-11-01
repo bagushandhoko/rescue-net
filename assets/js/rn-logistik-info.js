@@ -149,6 +149,8 @@ window.RNLogistikInfo = (function () {
       }
     }
     set("kpiJiwa", collector ? "Pengumpul" : fmt(k.jiwa_dilayani || 0));
+    const kj = document.getElementById("kpiJiwa");
+    if (kj) kj.classList.toggle("rn-kpi-word", collector);
     set("kpiStok", fmt(k.stok_menipis || 0));
     set("kpiKritis", fmt(k.kebutuhan_kritis || 0));
     set("kpiMenuju", fmt(k.bantuan_menuju || 0));

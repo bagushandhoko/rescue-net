@@ -1,6 +1,14 @@
 let POSKO_CONTEXT_CACHE = null;
 
 
+// jenis posko untuk manusia (kode mentah seperti "collection_hub" melebar keluar kotak KPI)
+const RN_POSKO_TYPE_LABEL = {
+  logistics: "Logistik", collection_hub: "Gudang Pengumpul", collector: "Pengumpul", receiver: "Penerima",
+  transport: "Transport", medical: "Medis", shelter: "Shelter", kitchen: "Dapur Umum",
+  field_assessment: "Assessment Lapangan", command: "Komando", communication: "Komunikasi"
+};
+function poskoTypeLabel(t) { return RN_POSKO_TYPE_LABEL[String(t || "").toLowerCase()] || t || "-"; }
+
 function getPoskoId() {
   const params =
     new URLSearchParams(
@@ -186,7 +194,7 @@ function renderOverview(ctx) {
       ? window.RNVerifBadge.html(posko.verification_status, posko.trusted_verifier_count)
       : safe(posko.verification_status);
     subtitle.innerHTML =
-      `${safe(posko.posko_type)} · ` +
+      `${safe(poskoTypeLabel(posko.posko_type))} · ` +
       `${safe(posko.operational_status)} &nbsp; ${vb}`;
   }
 
@@ -209,7 +217,7 @@ function renderOverview(ctx) {
 
       <div>
         <span>Type</span>
-        <b>${safe(posko.posko_type)}</b>
+        <b>${safe(poskoTypeLabel(posko.posko_type))}</b>
       </div>
 
       <div>
@@ -233,7 +241,7 @@ function renderOverview(ctx) {
 
   const values = {
     kpiRole:
-      posko.posko_type || "-",
+      poskoTypeLabel(posko.posko_type),
 
     kpiNeeds:
       (ctx.needs || []).length,
@@ -253,6 +261,8 @@ function renderOverview(ctx) {
 
         if (el) {
           el.textContent = value;
+          // a word (not a number) gets a smaller font so it stays inside the card
+          el.classList.toggle("rn-kpi-word", !/^[\d.,\s%-]*$/.test(String(value)));
         }
       }
     );

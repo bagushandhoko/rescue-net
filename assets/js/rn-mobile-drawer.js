@@ -190,7 +190,7 @@
     if (container.querySelector(".rn-drawer-ops")) return;
     try {
       if (!window.RNIcon) await loadScript(prefix + "assets/js/rn-icons.js?v=kpiicon-20260904").catch(() => {});
-      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=opsgroups-20261019");
+      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=regbencana-20261102"); // KEEP IN SYNC with pages' rn-navigation-v2.js ?v= (PWA caches by exact URL)
     } catch (e) { return; }
     if (!window.RNNav || container.querySelector(".rn-drawer-ops")) return;
     const wrap = document.createElement("div");

@@ -2308,7 +2308,10 @@ html.rn-local-access body.mockup-viewer .mock-header {
   }
 }
 
-/* Sidebar full-height fix for zoomed external live layout */
+/* Sidebar full-height fix for zoomed external live layout.
+   2026-11-02: only where rn-layout-mode.js actually zooms (innerWidth > 900). On phones it made the
+   menu panel 133% of the screen tall, so the last submenu (Pengaturan) sat below the screen edge. */
+@media (min-width: 901px) {
 html.rn-external-access body:not(.mockup-viewer) .sidebar {
   height: 133.333vh !important;
   min-height: 133.333vh !important;
@@ -2322,6 +2325,7 @@ html.rn-external-access body:not(.mockup-viewer) .sidebar nav {
 
 html.rn-external-access body:not(.mockup-viewer) .main {
   min-height: 133.333vh !important;
+}
 }
 
 /* Final welcome polish: floating logo/icons and integrated mobile menu */

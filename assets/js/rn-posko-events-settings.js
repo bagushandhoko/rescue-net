@@ -5,9 +5,10 @@
 (function () {
   "use strict";
 
-  var MULTI_TYPES = ["logistics", "transport", "collection_hub"];
+  var MULTI_TYPES = ["logistics", "transport", "collection_hub", "communication"];
   var TYPE_LABEL = { logistics: "Posko Logistik", transport: "Posko Distribusi", collection_hub: "Collection Hub",
-    shelter: "Shelter", kitchen: "Dapur Umum", medical: "Posko Medis", field_assessment: "Field Assessment" };
+    shelter: "Shelter", kitchen: "Dapur Umum", medical: "Posko Medis", field_assessment: "Field Assessment",
+    communication: "Posko Komunikasi" };
 
   function esc(v) {
     return String(v == null ? "" : v).replace(/[&<>"']/g, function (c) {

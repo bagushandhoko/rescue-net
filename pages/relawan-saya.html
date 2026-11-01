@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Relawan Saya</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=kpiword-20261101">
+  <link rel="stylesheet" href="../assets/css/style.css?v=komnet-20261101">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -111,6 +111,36 @@
         <div class="panel-header"><div><h3>Tawaran &amp; booking saya</h3></div></div>
         <div id="rsBookings" class="rn-muted">Belum ada booking.</div>
       </section>
+
+      <section class="panel" id="node">
+        <div class="panel-header"><div><h3>4. Jadi node komunikasi (radio)</h3>
+          <p>Untuk anggota ORARI / RAPI / pemilik radio: tawarkan diri jadi titik komunikasi di daerah bencana, atau siaga di luar bencana, untuk membantu koordinasi posko pengumpul. Tampil di halaman <a href="alat-komunikasi.html">Alat Komunikasi</a>. Nama, call sign, dan nomor HP hanya terlihat oleh pengguna yang login.</p></div></div>
+        <div id="cnList" class="rn-kom-net-list"><p class="rn-muted">Memuat…</p></div>
+        <form class="rn-form" id="cnForm">
+          <input type="hidden" name="comms_device">
+          <div class="form-grid">
+            <label>Bencana <select name="disaster_event"><option value="">Siaga (di luar bencana)</option></select></label>
+            <label>Jenis alat <select name="category">
+              <option value="ht">Radio HT</option><option value="repeater">Repeater / radio rig</option>
+              <option value="telepon_satelit">Telepon satelit</option><option value="starlink">Starlink</option>
+              <option value="router_4g5g">Router 4G/5G</option></select></label>
+            <label>Lokasi node <input name="current_location" required placeholder="Kec. Cianjur, Kab. Cianjur"></label>
+            <label>Frekuensi (MHz) <input name="frequency_mhz" inputmode="decimal" placeholder="145.700"></label>
+            <label>Channel <input name="frequency_channel" placeholder="CH 05"></label>
+            <label>Call sign <input name="contact_id" placeholder="YB1ABC"></label>
+            <label>No. HP <input name="contact_phone" inputmode="tel" placeholder="0812-xxxx-xxxx"></label>
+            <label>Jangkauan (km) <input name="coverage_km" type="number" min="0" step="0.1" placeholder="20"></label>
+            <label>Sumber energi <select name="power_source"><option value="">— pilih —</option>
+              <option value="baterai">Baterai</option><option value="aki">Aki</option><option value="plts">PLTS (surya)</option>
+              <option value="pln">Listrik PLN</option><option value="genset">Genset</option><option value="lainnya">Lainnya</option></select></label>
+            <label>Tahan berapa jam <input name="power_endurance_hours" type="number" min="0" step="0.5" placeholder="24"></label>
+            <label>Catatan <input name="notes" maxlength="500" placeholder="Siaga malam, bisa relay ke HF"></label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="submit" id="cnSubmit">Daftarkan node</button>
+            <button class="btn" type="button" id="cnReset" hidden>Batal ubah</button>
+            <span class="form-message" id="cnMsg"></span></div>
+        </form>
+      </section>
     </div>
   </main>
 </div>
@@ -118,6 +148,7 @@
 
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/rn-relawan-saya.js?v=rs-20261101"></script>
+<script src="../assets/js/rn-comms-node.js?v=node-20261101"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

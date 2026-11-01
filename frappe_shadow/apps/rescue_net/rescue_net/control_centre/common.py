@@ -379,6 +379,7 @@ _BA_POSKO_TYPE_LABEL = {
     "logistics": "Posko Logistik",
     "collection_hub": "Posko Logistik",
     "transport": "Posko Distribusi",
+    "communication": "Posko Komunikasi",
 }
 
 

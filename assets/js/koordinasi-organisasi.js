@@ -19,7 +19,7 @@
   var TYPE_LABEL = {
     logistics: "Logistik", collection_hub: "Gudang Pengumpul", transport: "Transport / Distribusi",
     medical: "Medis", shelter: "Shelter", kitchen: "Dapur Umum",
-    field_assessment: "Assessment Lapangan", posko_operator: "Operator Posko", org_admin: "Admin Organisasi"
+    field_assessment: "Assessment Lapangan", communication: "Komunikasi", posko_operator: "Operator Posko", org_admin: "Admin Organisasi"
   };
   function typeLabel(t) { return TYPE_LABEL[String(t || "").toLowerCase()] || (t || "Posko"); }
 

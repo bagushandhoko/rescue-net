@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Alat Komunikasi</title>
   <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="../assets/css/style.css?v=kpiword-20261101">
+  <link rel="stylesheet" href="../assets/css/style.css?v=komnet-20261101">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -149,6 +149,19 @@
       </aside>
     </section>
 
+    <section class="panel rn-kom-net" id="komNet">
+      <div class="panel-header">
+        <div><h3>Jaringan Komunikasi</h3>
+          <p>Posko komunikasi (ORARI / RAPI / radio), posko yang butuh alat komunikasi, posko yang menyediakan dukungan, dan relawan yang siap jadi node komunikasi.</p></div>
+        <a class="btn mini" href="relawan-saya.html#node">+ Jadi Node Komunikasi</a>
+      </div>
+      <div class="rn-kom-net-grid">
+        <div><h4>📻 Posko Komunikasi</h4><div id="netKomunikasi" class="rn-kom-net-list"><p class="rn-muted">Memuat…</p></div></div>
+        <div><h4>🆘 Butuh Alat / Jalur Komunikasi</h4><div id="netButuh" class="rn-kom-net-list"></div></div>
+        <div><h4>🤝 Menyediakan Dukungan</h4><div id="netMenyediakan" class="rn-kom-net-list"></div></div>
+        <div><h4>🧑‍🔧 Node Komunikasi Relawan</h4><div id="netNode" class="rn-kom-net-list"></div></div>
+      </div>
+    </section>
     <p class="rn-muted rn-kom-footnote" id="komFootnote"></p>
 
     <details class="panel create-panel rn-input-drawer" id="deviceForm">
@@ -185,6 +198,19 @@
           <label>Channel <input name="frequency_channel" placeholder="CH 01"></label>
           <label>Call sign / Nomor / ID kontak <input name="contact_id" placeholder="YB0ABC · +8816xxxxxxx"></label>
           <label>Lokasi Saat Ini <input name="current_location" placeholder="Posko RW 04 Kampung Melayu"></label>
+          <label>Jangkauan (km) <input name="coverage_km" type="number" min="0" step="0.1" placeholder="15"></label>
+          <label>Sumber Energi
+            <select name="power_source">
+              <option value="">— pilih —</option>
+              <option value="baterai">Baterai</option>
+              <option value="aki">Aki</option>
+              <option value="plts">PLTS (surya)</option>
+              <option value="pln">Listrik PLN</option>
+              <option value="genset">Genset</option>
+              <option value="lainnya">Lainnya</option>
+            </select>
+          </label>
+          <label>Ketahanan Energi (jam) <input name="power_endurance_hours" type="number" min="0" step="0.5" placeholder="12"></label>
         </div>
         <div class="form-actions">
           <button class="btn primary" type="submit">Simpan Alat</button>
@@ -193,6 +219,23 @@
       </form>
     </details>
 
+    <details class="panel create-panel rn-input-drawer" id="supportForm">
+      <summary>
+        <h3>Dukungan Komunikasi Posko</h3>
+        <p>Pengelola posko: tulis dukungan yang posko Anda tawarkan (mis. relay radio, pinjam HT, operator, genset) dan yang dibutuhkan.</p>
+      </summary>
+      <form class="rn-form" data-comms-support>
+        <div class="form-grid">
+          <label>Posko <input name="posko" placeholder="ID posko Anda" required></label>
+          <label>Dukungan yang ditawarkan <textarea name="offered" rows="2" maxlength="1000" placeholder="Relay VHF 24 jam, 5 HT pinjaman, 2 operator, genset 3 kVA"></textarea></label>
+          <label>Dukungan yang dibutuhkan <textarea name="needed" rows="2" maxlength="1000" placeholder="Repeater, aki cadangan, operator malam"></textarea></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit">Simpan Dukungan</button>
+          <span class="form-message" data-support-message></span>
+        </div>
+      </form>
+    </details>
     <details class="panel create-panel rn-input-drawer" id="operatorForm">
       <summary>
         <h3>Tambah Operator Radio</h3>
@@ -287,7 +330,7 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=cluster-20260930"></script>
-<script src="../assets/js/alat-komunikasi.js?v=kontak-20261009c"></script>
+<script src="../assets/js/alat-komunikasi.js?v=jaringan-20261101"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -10,6 +10,7 @@ CATEGORIES = {
     "vsat", "router_4g5g", "antena_mast",
 }
 STATUS = {"active", "spare", "inactive", "needs_attention"}
+POWER_SOURCES = {"baterai", "aki", "plts", "pln", "genset", "lainnya"}
 
 
 def actor_name():
@@ -55,3 +56,14 @@ class RNCommsDevice(Document):
 
         if self.battery_pct is not None and not (0 <= float(self.battery_pct) <= 100):
             frappe.throw("Baterai harus antara 0-100%")
+
+        if self.power_source and self.power_source not in POWER_SOURCES:
+            frappe.throw("Sumber energi tidak valid")
+
+        for field, label, top in (("coverage_km", "Jangkauan", 5000), ("power_endurance_hours", "Ketahanan energi", 10000)):
+            v = self.get(field)
+            if v not in (None, "") and not (0 <= float(v) <= top):
+                frappe.throw(f"{label} harus antara 0 dan {top}")
+
+        if not self.disaster_event and self.owner_type != "relawan":
+            frappe.throw("Disaster event wajib diisi")

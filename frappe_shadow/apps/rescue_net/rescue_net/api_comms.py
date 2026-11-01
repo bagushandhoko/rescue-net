@@ -217,11 +217,13 @@ def comms_board(disaster_event=None):
         fields=[
             "name", "device_name", "category", "status", "battery_pct",
             "frequency_channel", "frequency_mhz", "contact_id", "current_location", "posko", "owner_type",
-            "owner_id", "notes", "observed_at",
+            "owner_id", "notes", "observed_at", "coverage_km", "power_source", "power_endurance_hours",
         ],
         order_by="category asc, device_name asc",
         limit_page_length=3000,
     )
+    # volunteer nodes are listed in jaringan.node_relawan, not as posko inventory (owner_type may be NULL)
+    devices = [d for d in devices if d.owner_type != "relawan"]
 
     operators = frappe.get_all(
         "RN Comms Operator",
@@ -252,6 +254,8 @@ def comms_board(disaster_event=None):
     posko_fields += [f for f in _CONTACT_FIELDS if frappe.get_meta("RN Posko").has_field(f)]
     if _posko_has_comms_fields():
         posko_fields += ["rn_comms_status", "rn_comms_last_contact"]
+    posko_fields += [f for f in ("posko_type", "comms_support_offered", "comms_support_needed", "organization")
+                     if frappe.get_meta("RN Posko").has_field(f)]
     if event:
         poskos = frappe.get_all(
             "RN Posko",
@@ -541,6 +545,7 @@ def comms_board(disaster_event=None):
         "daya_baterai": batt_rows,
         "frekuensi": freq_rows,
         "peringatan": peringatan,
+        "jaringan": _network(event, poskos, devices, konektivitas_poskos, actor),
         "posko_field_backed": _posko_has_comms_fields(),
     }
 
@@ -575,8 +580,13 @@ def create_comms_device(
     owner_type="posko",
     owner_id=None,
     notes=None,
+    coverage_km=None,
+    power_source=None,
+    power_endurance_hours=None,
 ):
     rn_actor()  # 403 for Guest
+    if owner_type not in ("organization", "posko", "external"):
+        frappe.throw("Jenis pemilik alat tidak valid (node relawan didaftarkan lewat Relawan Saya)")
     event = resolve_disaster_event(disaster_event)
     if not event:
         frappe.throw("Disaster event wajib diisi")
@@ -601,6 +611,7 @@ def create_comms_device(
     doc.owner_type = owner_type
     doc.owner_id = owner_id
     doc.notes = notes
+    _set_power(doc, coverage_km, power_source, power_endurance_hours)
     doc.insert(ignore_permissions=True)
     return {"comms_device": doc.name, "status": doc.status}
 
@@ -615,9 +626,15 @@ def update_comms_device(
     notes=None,
     frequency_mhz=None,
     contact_id=None,
+    coverage_km=None,
+    power_source=None,
+    power_endurance_hours=None,
 ):
-    rn_actor()
+    actor = rn_actor()
     doc = frappe.get_doc("RN Comms Device", comms_device)
+    if not _can_edit_device(doc, actor):
+        frappe.throw("Hanya pengelola posko / pemilik alat yang boleh mengubah alat ini", frappe.PermissionError)
+    _set_power(doc, coverage_km, power_source, power_endurance_hours)
     if status is not None:
         if status not in _DEVICE_STATUS:
             frappe.throw("Status alat tidak valid")
@@ -712,13 +729,276 @@ def create_comms_frequency(
 def set_posko_comms_status(posko, status, last_contact=None):
     """Update a posko's connectivity flag (needs the RN Posko custom fields —
     added by the seed/setup script)."""
-    rn_actor()
+    actor = rn_actor()
     if status not in _CONN_LABEL:
         frappe.throw("Status konektivitas tidak valid")
     posko = resolve_posko(posko)
+    _require_posko_manager(actor, posko)
     if not _posko_has_comms_fields():
         frappe.throw("Field konektivitas posko belum aktif di instance ini")
     values = {"rn_comms_status": status}
     values["rn_comms_last_contact"] = last_contact or frappe.utils.now_datetime()
     frappe.db.set_value("RN Posko", posko, values, update_modified=False)
     return {"posko": posko, "status": status}
+
+
+# --- jaringan komunikasi: posko komunikasi (ORARI/RAPI), butuh vs menyediakan, node relawan ---
+# (owner 2026-11-01)
+
+_POWER_LABEL = {"baterai": "Baterai", "aki": "Aki", "plts": "PLTS (surya)", "pln": "Listrik PLN",
+                "genset": "Genset", "lainnya": "Lainnya"}
+COMMS_POSKO_TYPE = "communication"
+MAX_NODES_PER_ACCOUNT = 5
+GUEST_NODE_NAME = "Relawan komunikasi (login untuk melihat nama & call sign)"
+
+
+def _float_or_none(value, label, top):
+    if value in (None, ""):
+        return None
+    try:
+        n = float(str(value).replace(",", "."))
+    except ValueError:
+        frappe.throw(f"{label} harus berupa angka")
+    if not 0 <= n <= top:
+        frappe.throw(f"{label} harus antara 0 dan {top}")
+    return n
+
+
+def _set_power(doc, coverage_km=None, power_source=None, power_endurance_hours=None):
+    if coverage_km is not None:
+        doc.coverage_km = _float_or_none(coverage_km, "Jangkauan", 5000)
+    if power_source is not None:
+        if power_source and power_source not in _POWER_LABEL:
+            frappe.throw("Sumber energi tidak valid")
+        doc.power_source = power_source or None
+    if power_endurance_hours is not None:
+        doc.power_endurance_hours = _float_or_none(power_endurance_hours, "Ketahanan energi", 10000)
+
+
+def _require_posko_manager(actor, posko):
+    from rescue_net.access_policy import can_manage_posko
+    if not can_manage_posko(actor, posko):
+        frappe.throw("Hanya pengelola posko ini yang boleh mengubahnya", frappe.PermissionError)
+
+
+def _can_edit_device(doc, actor):
+    from rescue_net.access_policy import can_manage_posko, is_system_manager
+    if is_system_manager():
+        return True
+    if not actor or not actor.name:
+        return False
+    if doc.owner_type == "relawan":
+        return doc.owner_id == actor.name
+    if doc.created_by_user and doc.created_by_user == actor.name:
+        return True
+    return bool(doc.posko) and can_manage_posko(actor, doc.posko)
+
+
+def _power_text(d):
+    parts = []
+    if d.get("power_source"):
+        parts.append(_POWER_LABEL.get(d.power_source, d.power_source))
+    if d.get("power_endurance_hours"):
+        parts.append("tahan ±%g jam" % float(d.power_endurance_hours))
+    return " · ".join(parts)
+
+
+def _device_summary(d):
+    freq, chan = _split_radio(d.get("frequency_channel"))
+    if d.get("frequency_mhz"):
+        freq = _fmt_mhz(d.frequency_mhz) or freq
+    return {
+        "device": d.device_name,
+        "category_label": _CATEGORY_LABELS.get(d.category, d.category or "-"),
+        "frequency": freq,
+        "channel": chan,
+        "coverage_km": float(d.coverage_km) if d.get("coverage_km") else None,
+        "power": _power_text(d),
+        "power_source": d.get("power_source") or "",
+        "endurance_hours": float(d.power_endurance_hours) if d.get("power_endurance_hours") else None,
+    }
+
+
+def _network(event, poskos, devices, konektivitas_poskos, actor):
+    conn = {r["posko"]: r for r in konektivitas_poskos}
+    dev_by_posko = {}
+    for d in devices:
+        if d.posko and d.status in ("active", "spare"):
+            dev_by_posko.setdefault(d.posko, []).append(_device_summary(d))
+
+    def row(p, **extra):
+        devs = dev_by_posko.get(p.name, [])
+        cov = [x["coverage_km"] for x in devs if x["coverage_km"]]
+        return dict({
+            "posko": p.name,
+            "title": p.get("title") or p.name,
+            "href": (conn.get(p.name) or {}).get("href") or ("posko-detail.html?id=" + p.name),
+            "status_label": (conn.get(p.name) or {}).get("status_label") or "",
+            "offered": (p.get("comms_support_offered") or "").strip(),
+            "needed": (p.get("comms_support_needed") or "").strip(),
+            "devices": devs,
+            "max_coverage_km": max(cov) if cov else None,
+            "power": sorted({x["power"] for x in devs if x["power"]}),
+        }, **extra)
+
+    komunikasi, butuh, menyediakan = [], [], []
+    for p in poskos:
+        is_comms = str(p.get("posko_type") or "").lower() == COMMS_POSKO_TYPE
+        if is_comms:
+            komunikasi.append(row(p))
+        if (p.get("comms_support_offered") or "").strip():
+            menyediakan.append(row(p, is_comms_posko=is_comms))
+        status = (conn.get(p.name) or {}).get("status")
+        needed = (p.get("comms_support_needed") or "").strip()
+        if needed or status == "disconnected":
+            butuh.append(row(p, reason=needed or "Tidak terhubung — perlu alat / jalur komunikasi"))
+
+    return {
+        "posko_komunikasi": komunikasi,
+        "butuh": butuh,
+        "menyediakan": menyediakan,
+        "node_relawan": _volunteer_nodes(event, actor),
+    }
+
+
+def _node_row(d, actor, owner=False):
+    show = bool(actor) or owner
+    out = _device_summary(d)
+    out.update({
+        "name": d.name,
+        "status": d.status,
+        "location": d.current_location or "",
+        "disaster_event": d.disaster_event or "",
+        "scope": "Bencana" if d.disaster_event else "Non-bencana (siaga)",
+        "volunteer_name": (frappe.db.get_value("RN User Account", d.owner_id, "title") or "") if show else GUEST_NODE_NAME,
+        "call_sign": (d.contact_id or "") if show else None,
+        "phone": (d.contact_phone or "") if show else None,
+        "notes": (d.notes or "") if show else None,
+    })
+    return out
+
+
+def _volunteer_nodes(event, actor):
+    filters = {"owner_type": "relawan", "status": ["in", ["active", "spare"]]}
+    fields = ["name", "device_name", "category", "status", "frequency_channel", "frequency_mhz", "contact_id",
+              "contact_phone", "current_location", "coverage_km", "power_source", "power_endurance_hours",
+              "disaster_event", "owner_id", "notes"]
+    rows = frappe.get_all("RN Comms Device", filters=filters, fields=fields, order_by="modified desc",
+                          limit_page_length=500)
+    if event:  # nodes for this disaster + standby nodes (no disaster) that can be called in
+        rows = [r for r in rows if not r.disaster_event or r.disaster_event == event]
+    return [_node_row(r, actor) for r in rows]
+
+
+@frappe.whitelist()
+def set_posko_comms_support(posko, offered=None, needed=None):
+    """Posko manager states what comms support the posko offers (e.g. ORARI/RAPI: radio relay, operators,
+    HT loan, genset) and what it needs (HT, repeater, operator, power)."""
+    actor = rn_actor()
+    posko = resolve_posko(posko)
+    if not posko:
+        frappe.throw("Posko tidak ditemukan")
+    _require_posko_manager(actor, posko)
+    values = {}
+    for field, value in (("comms_support_offered", offered), ("comms_support_needed", needed)):
+        if value is not None:
+            value = (value or "").strip()
+            if len(value) > 1000:
+                frappe.throw("Teks dukungan terlalu panjang (maks. 1000 huruf)")
+            values[field] = value or None
+    if values:
+        frappe.db.set_value("RN Posko", posko, values)
+    row = frappe.db.get_value("RN Posko", posko, ["comms_support_offered", "comms_support_needed"], as_dict=True)
+    return {"posko": posko, "offered": row.comms_support_offered or "", "needed": row.comms_support_needed or ""}
+
+
+@frappe.whitelist()
+@rate_limit(limit=30, seconds=3600)
+def offer_comms_node(
+    category="ht",
+    current_location=None,
+    frequency_mhz=None,
+    frequency_channel=None,
+    contact_id=None,
+    contact_phone=None,
+    coverage_km=None,
+    power_source=None,
+    power_endurance_hours=None,
+    disaster_event=None,
+    notes=None,
+    comms_device=None,
+):
+    """A volunteer (e.g. ORARI/RAPI member) offers to be a communication node, for a disaster or on
+    standby outside one. Phone, call sign and name are shown to logged-in users only."""
+    actor = rn_actor()
+    if comms_device:
+        doc = frappe.get_doc("RN Comms Device", comms_device)
+        if doc.owner_type != "relawan" or doc.owner_id != actor.name:
+            frappe.throw("Ini bukan node komunikasi Anda", frappe.PermissionError)
+    else:
+        mine = frappe.db.count("RN Comms Device", {"owner_type": "relawan", "owner_id": actor.name,
+                                                   "status": ["in", ["active", "spare"]]})
+        if mine >= MAX_NODES_PER_ACCOUNT:
+            frappe.throw(f"Maksimal {MAX_NODES_PER_ACCOUNT} node aktif per akun. Tarik node lama dulu.")
+        doc = frappe.new_doc("RN Comms Device")
+        doc.owner_type = "relawan"
+        doc.owner_id = actor.name
+        doc.status = "active"
+    if category not in _DEVICE_CATEGORIES:
+        frappe.throw("Jenis alat tidak valid")
+    location = (current_location or "").strip()
+    if len(location) < 3:
+        frappe.throw("Lokasi node wajib diisi (kota / kecamatan / desa)")
+    if not (frequency_mhz or (frequency_channel or "").strip() or (contact_id or "").strip()
+            or (contact_phone or "").strip()):
+        frappe.throw("Isi minimal satu cara dihubungi: frekuensi, channel, call sign, atau nomor HP")
+    event = None
+    if disaster_event:
+        event = resolve_disaster_event(disaster_event)
+        if not event:
+            frappe.throw("Bencana tidak ditemukan")
+        if frappe.db.get_value("RN Disaster Event", event, "event_status") in ("proposed", "rejected", "merged"):
+            frappe.throw("Bencana ini belum aktif / sudah digabung")
+    doc.disaster_event = event
+    doc.category = category
+    doc.device_name = "Node relawan · " + _CATEGORY_LABELS.get(category, category)
+    doc.current_location = location[:140]
+    doc.frequency_mhz = _clean_mhz(frequency_mhz)
+    doc.frequency_channel = (frequency_channel or "").strip()[:60] or None
+    doc.contact_id = (contact_id or "").strip()[:60] or None
+    doc.contact_phone = (contact_phone or "").strip()[:30] or None
+    doc.notes = (notes or "").strip()[:500] or None
+    _set_power(doc, coverage_km if coverage_km is not None else "", power_source or "",
+               power_endurance_hours if power_endurance_hours is not None else "")
+    doc.observed_at = now_datetime()
+    doc.save(ignore_permissions=True) if comms_device else doc.insert(ignore_permissions=True)
+    return {"comms_device": doc.name, "node": _node_row(doc, actor, owner=True)}
+
+
+@frappe.whitelist()
+def my_comms_nodes():
+    actor = rn_actor()
+    rows = frappe.get_all("RN Comms Device", filters={"owner_type": "relawan", "owner_id": actor.name,
+                                                      "status": ["in", ["active", "spare"]]},
+                          fields=["name", "device_name", "category", "status", "frequency_channel", "frequency_mhz",
+                                  "contact_id", "contact_phone", "current_location", "coverage_km", "power_source",
+                                  "power_endurance_hours", "disaster_event", "owner_id", "notes"],
+                          order_by="modified desc")
+    out = []
+    for r in rows:
+        n = _node_row(r, actor, owner=True)
+        n.update({"category": r.category, "frequency_mhz": r.frequency_mhz or "",
+                  "frequency_channel": r.frequency_channel or ""})
+        out.append(n)
+    return {"nodes": out, "power_sources": _POWER_LABEL, "categories": _CATEGORY_LABELS}
+
+
+@frappe.whitelist()
+def withdraw_comms_node(comms_device):
+    actor = rn_actor()
+    doc = frappe.get_doc("RN Comms Device", comms_device)
+    if doc.owner_type != "relawan" or doc.owner_id != actor.name:
+        frappe.throw("Ini bukan node komunikasi Anda", frappe.PermissionError)
+    doc.status = "inactive"
+    doc.save(ignore_permissions=True)
+    return {"comms_device": doc.name, "status": doc.status}

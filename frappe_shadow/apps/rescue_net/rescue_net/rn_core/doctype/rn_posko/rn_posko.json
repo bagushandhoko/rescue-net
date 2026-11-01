@@ -157,6 +157,16 @@
    "fieldtype": "Datetime"
   },
   {
+   "fieldname": "comms_support_offered",
+   "label": "Dukungan Komunikasi yang Ditawarkan",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "comms_support_needed",
+   "label": "Dukungan Komunikasi yang Dibutuhkan",
+   "fieldtype": "Small Text"
+  },
+  {
    "fieldname": "owner_type",
    "label": "Owner Type",
    "fieldtype": "Data"
@@ -410,5 +420,6 @@
    "amend": 0
   }
  ],
- "track_changes": 1
+ "track_changes": 1,
+ "modified": "2026-11-01 22:00:00.000000"
 }

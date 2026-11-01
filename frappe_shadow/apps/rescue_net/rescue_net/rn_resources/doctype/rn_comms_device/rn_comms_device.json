@@ -17,7 +17,7 @@
       "label": "Disaster Event",
       "fieldtype": "Link",
       "options": "RN Disaster Event",
-      "reqd": 1
+      "description": "Kosong untuk node komunikasi relawan di luar bencana."
     },
     {
       "fieldname": "posko",
@@ -29,7 +29,7 @@
       "fieldname": "owner_type",
       "label": "Owner Type",
       "fieldtype": "Select",
-      "options": "organization\nposko\nexternal",
+      "options": "organization\nposko\nexternal\nrelawan",
       "default": "organization"
     },
     {
@@ -85,6 +85,27 @@
       "fieldtype": "Data"
     },
     {
+      "fieldname": "coverage_km",
+      "label": "Jangkauan (km)",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "power_source",
+      "label": "Sumber Energi",
+      "fieldtype": "Select",
+      "options": "\nbaterai\naki\nplts\npln\ngenset\nlainnya"
+    },
+    {
+      "fieldname": "power_endurance_hours",
+      "label": "Ketahanan Energi (jam)",
+      "fieldtype": "Float"
+    },
+    {
+      "fieldname": "contact_phone",
+      "label": "No. HP (hanya untuk yang login)",
+      "fieldtype": "Data"
+    },
+    {
       "fieldname": "notes",
       "label": "Catatan",
       "fieldtype": "Small Text"
@@ -115,5 +136,6 @@
       "create": 1,
       "delete": 1
     }
-  ]
+  ],
+  "modified": "2026-11-01 22:00:00.000000"
 }

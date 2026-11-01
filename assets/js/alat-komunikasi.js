@@ -317,6 +317,81 @@
     if (window.RNIconFill) window.RNIconFill(el);
   }
 
+  /* ---------- jaringan komunikasi (owner 2026-11-01) ---------- */
+  function devLine(d) {
+    var bits = [];
+    bits.push("<b>" + esc(d.category_label) + "</b>");
+    if (d.frequency || d.channel) bits.push(esc([d.frequency, d.channel].filter(Boolean).join(" · ")));
+    if (d.coverage_km) bits.push("jangkauan ±" + esc(d.coverage_km) + " km");
+    if (d.power) bits.push("⚡ " + esc(d.power));
+    return '<div class="rn-kom-net-dev">' + bits.join(" · ") + "</div>";
+  }
+
+  function poskoCard(p, text) {
+    return (
+      '<a class="rn-kom-net-card" href="' + esc(p.href) + '">' +
+      "<b>" + esc(p.title) + "</b>" + (p.status_label ? ' <small class="rn-muted">' + esc(p.status_label) + "</small>" : "") +
+      (text ? "<p>" + esc(text) + "</p>" : "") +
+      (p.devices || []).slice(0, 4).map(devLine).join("") +
+      "</a>"
+    );
+  }
+
+  function nodeCard(n) {
+    var tel = function (x) { return String(x).replace(/[^\d+]/g, ""); };
+    var who = n.call_sign == null
+      ? '<b>' + esc(n.volunteer_name) + "</b>"
+      : "<b>" + esc(n.volunteer_name || "Relawan") + "</b>" + (n.call_sign ? " · " + esc(n.call_sign) : "");
+    var phone = n.phone ? '<div>📞 <a href="tel:' + esc(tel(n.phone)) + '">' + esc(n.phone) + '</a> · <a href="https://wa.me/' +
+      esc(tel(n.phone).replace(/^0/, "62").replace(/^\+/, "")) + '" target="_blank" rel="noopener">WA</a></div>' : "";
+    return (
+      '<div class="rn-kom-net-card">' + who + ' <small class="rn-muted">' + esc(n.scope) + "</small>" +
+      "<p>📍 " + esc(n.location) + "</p>" + devLine(n) + phone +
+      (n.notes ? "<p><small>" + esc(n.notes) + "</small></p>" : "") + "</div>"
+    );
+  }
+
+  function listInto(sel, rows, render, empty) {
+    var el = $(sel);
+    if (!el) return;
+    el.innerHTML = rows && rows.length ? rows.map(render).join("") : '<p class="rn-muted">' + empty + "</p>";
+  }
+
+  function renderNetwork(j) {
+    j = j || {};
+    listInto("#netKomunikasi", j.posko_komunikasi, function (p) { return poskoCard(p, p.offered); },
+      'Belum ada posko komunikasi. Daftarkan posko dengan jenis "Posko Komunikasi" di Registrasi Posko.');
+    listInto("#netButuh", j.butuh, function (p) { return poskoCard(p, p.reason); }, "Tidak ada posko yang menyatakan butuh.");
+    listInto("#netMenyediakan", j.menyediakan, function (p) { return poskoCard(p, p.offered); },
+      "Belum ada posko yang menawarkan dukungan komunikasi.");
+    var nodes = j.node_relawan || [];
+    listInto("#netNode", nodes, nodeCard, "Belum ada relawan yang mendaftar sebagai node komunikasi.");
+    if (nodes.length && nodes[0].call_sign == null) {
+      $("#netNode").insertAdjacentHTML("beforeend", '<p class="rn-muted"><small>Login untuk melihat nama, call sign, dan nomor HP.</small></p>');
+    }
+  }
+
+  function setupSupportForm() {
+    var form = $("[data-comms-support]");
+    if (!form) return;
+    var q = new URLSearchParams(location.search).get("posko");
+    if (q) { form.posko.value = q; var det = $("#supportForm"); if (det) det.open = true; }
+    var msg = $("[data-support-message]");
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      msg.textContent = "Menyimpan…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_comms.set_posko_comms_support",
+          { posko: form.posko.value.trim(), offered: form.offered.value, needed: form.needed.value }, { method: "POST" });
+        msg.textContent = "Tersimpan.";
+        await load();
+      } catch (err) {
+        var m = (err && err.message) || String(err);
+        msg.textContent = "Gagal: " + m;
+      }
+    });
+  }
+
   /* ---------- forms ---------- */
   function wireDetailsButton(btnSel, detailsSel, focusName) {
     var btn = $(btnSel), det = $(detailsSel);
@@ -370,6 +445,7 @@
     renderBattery(data.daya_baterai || []);
     renderFrequency(data.frekuensi || []);
     renderAlerts(data.peringatan || []);
+    renderNetwork(data.jaringan);
 
     var ev = getEventId();
     var ml = $("#mapLink"); if (ml) ml.href = "map.html?event=" + encodeURIComponent(ev);
@@ -401,6 +477,7 @@
     setupForm("[data-create-device]", "rescue_net.api_comms.create_comms_device", "[data-device-message]");
     setupForm("[data-create-operator]", "rescue_net.api_comms.create_comms_operator", "[data-operator-message]");
     setupForm("[data-create-freq]", "rescue_net.api_comms.create_comms_frequency", "[data-freq-message]");
+    setupSupportForm();
 
     load().catch(function (err) { console.error("[comms board]", err); $("#komStatus").textContent = "Gagal memuat: " + (err && err.message || err); });
   });

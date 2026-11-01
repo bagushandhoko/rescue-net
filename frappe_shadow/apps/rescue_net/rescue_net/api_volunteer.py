@@ -1166,6 +1166,9 @@ def _kesiapan(p):
     """Readiness details a coordinator needs to place a volunteer."""
     return {
         "jadwal_tersedia": p.get("availability_schedule") or "-",
+        # owner 2026-11-02: date range a volunteer is available (filter "Kesediaan waktu")
+        "tersedia_dari": str(p.get("available_from") or "") or None,
+        "tersedia_sampai": str(p.get("available_until") or "") or None,
         "kendaraan_bawaan": p.get("transport_vehicle") or "-",
         "butuh_jemput": bool(p.get("needs_pickup")),
         "area_layanan": p.get("service_areas") or "-",
@@ -1198,7 +1201,8 @@ def volunteer_board(disaster_event=None):
                 "availability_status", "duration_available", "current_location",
                 "assigned_posko", "user_account", "verification_status"] + [
                 # readiness columns exist only after the migrate that added them
-                f for f in ("needs_pickup", "transport_vehicle", "availability_schedule", "service_areas")
+                f for f in ("needs_pickup", "transport_vehicle", "availability_schedule", "service_areas",
+                            "available_from", "available_until")
                 if frappe.db.has_column("RN Volunteer Profile", f)],
         order_by="availability_status asc, volunteer_name asc",
         limit_page_length=2000,

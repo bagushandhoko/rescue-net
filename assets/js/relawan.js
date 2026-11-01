@@ -83,11 +83,23 @@
   }
 
   /* owner 2026-11-01: filters for the two lists (bencana, kesediaan waktu, keahlian, cari) */
-  var FILTER = { waktu: "", skill: "", q: "" };
-  function waktuKey(r) { return yes(r.durasi) ? durasiLabel(r.durasi) : ""; }
+  var FILTER = { dari: "", sampai: "", skill: "", q: "" };
+  // owner 2026-11-02: date range — a volunteer matches when their available dates overlap the range;
+  // volunteers who have not filled in dates are left out while a range is set
+  function matchesDates(r) {
+    if (!FILTER.dari && !FILTER.sampai) return true;
+    if (!r.tersedia_dari && !r.tersedia_sampai) return false;
+    var from = r.tersedia_dari || "0000-01-01", until = r.tersedia_sampai || "9999-12-31";
+    if (FILTER.dari && until < FILTER.dari) return false;
+    if (FILTER.sampai && from > FILTER.sampai) return false;
+    return true;
+  }
   function matches(r) {
-    if (FILTER.waktu && waktuKey(r) !== FILTER.waktu) return false;
-    if (FILTER.skill && (r.skills || []).map(skillLabel).indexOf(FILTER.skill) === -1) return false;
+    if (!matchesDates(r)) return false;
+    if (FILTER.skill) {   // typed freely: any skill / tag / main skill containing the text
+      var sk = ((r.skills || []).join(" ") + " " + (r.main_skill || "")).toLowerCase();
+      if (sk.indexOf(FILTER.skill) === -1) return false;
+    }
     if (FILTER.q) {
       var hay = [r.volunteer_name, r.organisasi, r.lokasi, r.posko_ditempatkan, r.jadwal_tersedia, r.peralatan,
         (r.skills || []).join(" ")].join(" ").toLowerCase();
@@ -95,19 +107,12 @@
     }
     return true;
   }
-  function fillSelect(sel, values) {
-    var el = $(sel);
-    if (!el) return;
-    var cur = el.value;
-    el.innerHTML = '<option value="">Semua</option>' + values.map(function (v) {
-      return '<option value="' + esc(v) + '">' + esc(v) + "</option>"; }).join("");
-    if (values.indexOf(cur) !== -1) el.value = cur;
-  }
   function uniq(list) { return list.filter(function (v, i) { return v && list.indexOf(v) === i; }).sort(); }
   function buildFilters(data) {
     var all = (data.relawan_tersedia || []).concat(data.relawan_ditempatkan || []);
-    fillSelect("#fWaktu", uniq(all.map(waktuKey)));
-    fillSelect("#fSkill", uniq([].concat.apply([], all.map(function (r) { return (r.skills || []).map(skillLabel); }))));
+    var dl = $("#fSkillList");
+    if (dl) dl.innerHTML = uniq([].concat.apply([], all.map(function (r) { return (r.skills || []).map(skillLabel); })))
+      .map(function (v) { return '<option value="' + esc(v) + '">'; }).join("");
   }
   function applyFilters() {
     if (!BOARD_CACHE) return;
@@ -115,9 +120,10 @@
     renderDitempatkan((BOARD_CACHE.relawan_ditempatkan || []).filter(matches), (BOARD_CACHE.relawan_ditempatkan || []).length);
   }
   async function setupFilters() {
-    var fw = $("#fWaktu"), fs = $("#fSkill"), q = $("#relawanSearch"), fb = $("#fBencana");
-    if (fw) fw.addEventListener("change", function () { FILTER.waktu = fw.value; applyFilters(); });
-    if (fs) fs.addEventListener("change", function () { FILTER.skill = fs.value; applyFilters(); });
+    var fd = $("#fDari"), fu = $("#fSampai"), fs = $("#fSkill"), q = $("#relawanSearch"), fb = $("#fBencana");
+    if (fd) fd.addEventListener("change", function () { FILTER.dari = fd.value; applyFilters(); });
+    if (fu) fu.addEventListener("change", function () { FILTER.sampai = fu.value; applyFilters(); });
+    if (fs) fs.addEventListener("input", function () { FILTER.skill = fs.value.trim().toLowerCase(); applyFilters(); });
     if (q) q.addEventListener("input", function () { FILTER.q = q.value.trim().toLowerCase(); applyFilters(); });
     if (!fb) return;
     fb.addEventListener("change", function () {
@@ -231,6 +237,7 @@
   function readyLines(r) {
     return [
       yes(r.jadwal_tersedia) ? "<div><span>Jadwal</span><b>" + esc(r.jadwal_tersedia) + "</b></div>" : "",
+      (r.tersedia_dari || r.tersedia_sampai) ? "<div><span>Tersedia</span><b>" + esc((r.tersedia_dari || "…") + " s/d " + (r.tersedia_sampai || "…")) + "</b></div>" : "",
       yes(r.kendaraan_bawaan) ? "<div><span>Kendaraan</span><b>" + esc(vehicle(r.kendaraan_bawaan)) + "</b></div>" : "",
       yes(r.area_layanan) ? "<div><span>Area layanan</span><b>" + esc(r.area_layanan) + "</b></div>" : "",
       yes(r.peralatan) ? "<div><span>Peralatan</span><b>" + esc(r.peralatan) + "</b></div>" : "",

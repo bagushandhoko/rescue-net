@@ -7565,9 +7565,10 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-pk-docmanage form { margin-top: 8px; }
 
 /* Relawan: filter bar + one-line rows (owner 2026-11-01) */
-.rn-rw-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 14px; padding: 12px 14px; margin-bottom: 14px;
+.rn-rw-filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px 20px; padding: 18px 20px; margin-bottom: 18px;
   background: #fff; border: 1px solid rgba(104,64,45,.12); border-radius: 16px; }
-.rn-rw-filters label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; min-width: 0; }
+.rn-rw-filters label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; min-width: 0; }
+.rn-rw-filters input, .rn-rw-filters select { min-height: 42px; padding: 8px 12px; border-radius: 10px; font-weight: 400; }
 .rn-rw-filters select, .rn-rw-filters input { width: 100%; min-width: 0; }
 .rn-rw-rows { display: flex; flex-direction: column; gap: 6px; max-height: 640px; overflow-y: auto; }
 .rn-rw-item { border: 1px solid rgba(104,64,45,.14); border-radius: 10px; background: #fff; }
@@ -7582,5 +7583,6 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-rw-line .chip { flex: 0 0 auto; }
 .rn-rw-item-body { padding: 4px 12px 12px; border-top: 1px dashed rgba(104,64,45,.14); }
 .rn-rw-filters label > select, .rn-rw-filters label > input { display: block; box-sizing: border-box; }
-@media (max-width: 760px) { .rn-rw-filters { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .rn-rw-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .rn-rw-filters { grid-template-columns: 1fr; gap: 14px; padding: 16px; } }
 @media (max-width: 420px) { .rn-rw-line .chip { display: none; } .rn-rw-line-name { max-width: 60%; } }

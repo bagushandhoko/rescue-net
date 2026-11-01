@@ -121,6 +121,16 @@
       "description": "Satu jadwal per baris, format 'Hari - Jam' (mis. 'Senin - Jumat: 08:00-20:00')."
     },
     {
+      "fieldname": "available_from",
+      "label": "Tersedia dari (tanggal)",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "available_until",
+      "label": "Tersedia sampai (tanggal)",
+      "fieldtype": "Date"
+    },
+    {
       "fieldname": "notes",
       "label": "Catatan",
       "fieldtype": "Small Text"
@@ -151,5 +161,6 @@
       "delete": 1
     }
   ],
-  "track_changes": 1
+  "track_changes": 1,
+  "modified": "2026-11-02 01:00:00.000000"
 }

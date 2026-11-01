@@ -85,3 +85,14 @@ class TestVolunteerOffer(RNTestCase):
         row = [r for r in u["relawan_tersedia"] if r["name"] == self.prof][0]
         self.assertEqual(row["kontak"], "0812-7777-1234")
         self.assertNotEqual(row["volunteer_name"], av.GUEST_VOLUNTEER_NAME)
+
+    def test_available_dates_saved_and_on_board(self):
+        with as_user(self.rel.user):
+            with self.assertRaisesRegex(frappe.ValidationError, "sebelum"):
+                vb.update_my_profile(available_from="2026-11-10", available_until="2026-11-05")
+            vb.update_my_profile(available_from="2026-11-05", available_until="2026-11-20")
+            self.assertEqual(str(vb.my_volunteer()["profile"]["available_from"]), "2026-11-05")
+        with as_guest():
+            g = av.volunteer_board(self.w.event.name)
+        row = [r for r in g["relawan_tersedia"] if r["name"] == self.prof][0]
+        self.assertEqual((row["tersedia_dari"], row["tersedia_sampai"]), ("2026-11-05", "2026-11-20"))

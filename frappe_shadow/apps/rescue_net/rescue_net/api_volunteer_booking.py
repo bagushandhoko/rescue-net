@@ -10,6 +10,7 @@ request and again on confirm."""
 import json
 
 import frappe
+from frappe.utils import getdate
 from frappe.utils import cint, now_datetime
 
 from rescue_net.access_policy import can_manage_posko, is_system_manager, rn_actor
@@ -73,6 +74,7 @@ def my_volunteer():
 
 
 EDITABLE = ("contact", "main_skill", "skill_tags", "equipment_owned", "availability_schedule", "duration_available",
+            "available_from", "available_until",
             "current_location", "service_areas", "transport_vehicle", "needs_pickup", "preferences")
 
 
@@ -97,8 +99,12 @@ def update_my_profile(**kw):
             v = kw.get(f)
             if f == "needs_pickup":
                 values[f] = 1 if str(v).lower() in ("1", "true", "on", "yes") else 0
+            elif f in ("available_from", "available_until"):
+                values[f] = getdate(v) if v not in (None, "") else None
             else:
                 values[f] = (str(v).strip()[:500] or None) if v is not None else None
+    if values.get("available_from") and values.get("available_until") and values["available_until"] < values["available_from"]:
+        frappe.throw("Tanggal 'sampai' tidak boleh sebelum tanggal 'dari'.")
     if "contact" in values and not values["contact"]:
         frappe.throw("Nomor HP / WhatsApp wajib diisi agar posko bisa menghubungi Anda.")
     profiles = _profiles(actor)

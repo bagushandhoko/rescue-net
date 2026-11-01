@@ -81,6 +81,7 @@ def community_reports(
             "village_name",
             "area_level",
             "consolidation_status",
+            "duplicate_of",
             "trust_score",
             "posko",
             "routing_reason",

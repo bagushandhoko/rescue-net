@@ -273,6 +273,13 @@
    "fieldtype": "Data"
   },
   {
+   "fieldname": "duplicate_of",
+   "label": "Duplikat dari laporan",
+   "fieldtype": "Link",
+   "options": "RN Community Report",
+   "description": "Diisi pengelola posko / Control Centre: laporan ini kejadian yang sama dengan laporan utama; jiwa tidak dihitung dua kali."
+  },
+  {
    "fieldname": "posko",
    "label": "Posko Tujuan",
    "fieldtype": "Link",
@@ -410,5 +417,6 @@
    "amend": 0
   }
  ],
- "track_changes": 1
+ "track_changes": 1,
+ "modified": "2026-11-02 02:00:00.000000"
 }

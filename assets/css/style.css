@@ -7588,3 +7588,10 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 @media (max-width: 1100px) { .rn-rw-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .rn-rw-filters { grid-template-columns: 1fr; gap: 14px; padding: 16px; } }
 @media (max-width: 420px) { .rn-rw-line .chip { display: none; } .rn-rw-line-name { max-width: 60%; } }
+
+/* S3 laporan ganda (2026-11-02) */
+.rn-dup-box { margin-top: 10px; padding: 10px 12px; border: 1px dashed rgba(224,138,30,.5); border-radius: 10px; background: #fffaf2; font-size: 13px; }
+.rn-dup-box[hidden] { display: none; }
+.rn-dup-row { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; padding: 6px 0;
+  border-top: 1px solid rgba(104,64,45,.1); overflow-wrap: anywhere; }
+.rn-dup-row > span:first-child { flex: 1 1 220px; min-width: 0; }

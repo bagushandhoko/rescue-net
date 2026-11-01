@@ -327,11 +327,22 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
         filters=event_filters(cols("RN Community Report"), event_id),
         fields=_sf("RN Community Report", [
             "name", "title", "report_type", "affected_people_count",
-            "city_name", "district_name", "village_name",
+            "city_name", "district_name", "village_name", "duplicate_of",
         ]),
         order_by="creation desc",
         limit_page_length=200,
     )
+    # S3 (2026-11-02): copies marked "duplikat dari" are folded into their main report — the main report
+    # shows the LARGEST count of its group (never the sum), so people are not counted twice.
+    group_max = {}
+    for r in reports:
+        if r.get("duplicate_of"):
+            group_max[r["duplicate_of"]] = max(group_max.get(r["duplicate_of"], 0), _num(r.get("affected_people_count")))
+    reports = [r for r in reports if not r.get("duplicate_of")]
+    for r in reports:
+        if r["name"] in group_max:
+            r["affected_people_count"] = max(_num(r.get("affected_people_count")), group_max[r["name"]])
+            r["dup_count"] = sum(1 for x in group_max if x == r["name"])
     victim_reports = [r for r in reports if _num(r.get("affected_people_count")) > 0]
     categories.append({
         "key": "laporan_korban",
@@ -341,7 +352,8 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
             {
                 "title": r.get("title") or r.get("report_type") or "Laporan Masyarakat",
                 "region": r.get("village_name") or r.get("district_name") or r.get("city_name") or "-",
-                "detail": "%d jiwa terdampak · pelapor: warga" % int(_num(r.get("affected_people_count"))),
+                "detail": "%d jiwa terdampak · pelapor: warga" % int(_num(r.get("affected_people_count")))
+                          + (" · digabung dari beberapa laporan" if r.get("dup_count") else ""),
                 "count": int(_num(r.get("affected_people_count"))),
                 "href": "laporan-masyarakat.html?report=" + str(r["name"]) + "&event=" + short_ev,
             }

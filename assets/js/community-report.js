@@ -620,7 +620,11 @@ function reportCard(report) {
         <button class="btn" type="button" data-report-action="rejected" data-report-id="${report.id}">Reject</button>
         <button class="btn primary" type="button" data-report-convert="${report.id}">Convert Logistik</button>
         <button class="btn ghost" type="button" data-report-take="${report.id}" title="Alihkan laporan ke posko Anda dan tangani dari sana">Tangani laporan ini (posko saya)</button>
+        ${report.duplicate_of
+          ? `<span class="chip warning">Duplikat dari ${safeText(report.duplicate_of)}</span> <button class="btn ghost" type="button" data-dup-unmark="${report.id}">Batalkan duplikat</button>`
+          : `<button class="btn ghost" type="button" data-dup-check="${report.id}" title="Cari laporan lain untuk kejadian yang sama">Cek laporan ganda</button>`}
       </div>
+      <div class="rn-dup-box" data-dup-box="${report.id}" hidden></div>
     </article>
   `;
 }
@@ -1084,6 +1088,40 @@ function setupCommunityReportActions() {
       hidden.slice(0, 10).forEach((el) => el.classList.remove("is-later"));
       const left = hidden.length - 10;
       if (left > 0) more.textContent = `Tampilkan lebih banyak (${left} lagi)`; else more.remove();
+      return;
+    }
+    // S3 (2026-11-02): laporan ganda — link copies of the same incident to one main report
+    const dupCheck = e.target.closest("[data-dup-check]");
+    if (dupCheck) {
+      const id = dupCheck.dataset.dupCheck;
+      const box = document.querySelector(`[data-dup-box="${CSS.escape(id)}"]`);
+      box.hidden = false;
+      box.textContent = "Mencari laporan yang mirip…";
+      try {
+        const r = await RN_FRAPPE.call("rescue_net.api_report_duplicates.report_duplicate_candidates", { report: id });
+        box.innerHTML = r.candidates.length
+          ? `<p><b>Kemungkinan kejadian yang sama</b> (bencana sama, ≤48 jam, lokasi berdekatan):</p>` + r.candidates.map((c) => `
+            <div class="rn-dup-row"><span><b>${safeText(c.title)}</b><br><small>${safeText(c.location)} · ${safeText(c.created)} · ${c.people} jiwa · ${safeText(c.why)}</small></span>
+              <span><button class="btn mini" type="button" data-dup-mark="${id}" data-dup-main="${c.name}">Laporan ini duplikat dari itu</button>
+              <button class="btn mini" type="button" data-dup-mark="${c.name}" data-dup-main="${id}">Itu duplikat dari laporan ini</button></span></div>`).join("")
+          : "<p>Tidak ditemukan laporan lain yang mirip.</p>";
+      } catch (err) { box.textContent = err && err.message ? err.message : "Gagal mencari laporan ganda."; }
+      return;
+    }
+    const dupMark = e.target.closest("[data-dup-mark]");
+    const dupUnmark = e.target.closest("[data-dup-unmark]");
+    if (dupMark || dupUnmark) {
+      try {
+        if (dupMark) {
+          const r = await RN_FRAPPE.call("rescue_net.api_report_duplicates.mark_report_duplicate",
+            { report: dupMark.dataset.dupMark, duplicate_of: dupMark.dataset.dupMain }, { method: "POST" });
+          say(`Ditandai duplikat. Laporan utama: ${r.duplicate_of} · jiwa dihitung sekali (${r.group_people}).`);
+        } else {
+          await RN_FRAPPE.call("rescue_net.api_report_duplicates.unmark_report_duplicate", { report: dupUnmark.dataset.dupUnmark }, { method: "POST" });
+          say("Tanda duplikat dibatalkan.");
+        }
+        await loadCommunityReports();
+      } catch (err) { say(err && err.message ? err.message : "Gagal menyimpan.", true); }
       return;
     }
     const takeBtn = e.target.closest("[data-report-take]");

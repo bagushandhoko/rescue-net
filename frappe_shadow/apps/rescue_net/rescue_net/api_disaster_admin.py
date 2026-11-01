@@ -204,11 +204,36 @@ def _event_row(name):
     return r
 
 
+def _bmkg_drafts():
+    """S13 (2026-11-02): draft events the BMKG feed created (status draft) with the quake and the poskos
+    within its radius — before this they could only be activated from Desk."""
+    import json
+
+    out = []
+    for n in frappe.get_all(EVENT, filters={"event_status": "draft"}, order_by="creation desc", pluck="name",
+                            limit_page_length=50):
+        row = _event_row(n)
+        w = frappe.db.get_value("RN Early Warning", {"draft_event": n},
+                                ["name", "magnitude", "depth_km", "area_desc", "potential", "issued_at", "status",
+                                 "nearby_poskos"], as_dict=True)
+        if w:
+            try:
+                near = json.loads(w.nearby_poskos or "[]")
+            except ValueError:
+                near = []
+            row["quake"] = {"warning": w.name, "magnitude": w.magnitude, "depth_km": w.depth_km, "area": w.area_desc,
+                            "potential": w.potential, "issued_at": str(w.issued_at or ""), "status": w.status,
+                            "nearby_count": len(near), "nearby": near[:8]}
+        out.append(row)
+    return out
+
+
 @frappe.whitelist()
 def admin_queue():
     _require_super_admin()
     proposed = [_event_row(n) for n in frappe.get_all(EVENT, filters={"event_status": "proposed"},
                                                          order_by="creation desc", pluck="name")]
+    bmkg_drafts = _bmkg_drafts()
     recent_live = [_event_row(n) for n in frappe.get_all(
         EVENT, filters={"event_status": "active", "legacy_source": "kelola-bencana",
                         "reviewed_by": ["in", ["", None]]}, order_by="creation desc", pluck="name")]
@@ -231,7 +256,7 @@ def admin_queue():
     events = frappe.get_all(EVENT, filters={"event_status": ["in", ["active", "proposed", "draft"]]},
                             fields=["name", "title", "event_status", "is_drill"], order_by="modified desc",
                             limit_page_length=500)
-    return {"proposed": proposed, "recent_live": recent_live, "suggestions": sugs, "logs": logs,
+    return {"proposed": proposed, "bmkg_drafts": bmkg_drafts, "recent_live": recent_live, "suggestions": sugs, "logs": logs,
             "events": events}
 
 
@@ -262,6 +287,12 @@ def review_event(event, decision, note=None):
              "ok": "diperiksa"}[decision]
     if decision != "ok":
         em.notify_user(row.created_by_user, f"Bencana '{row.title}' {label}." + (f" Catatan: {note}" if note else ""))
+    if row.event_status == "draft":
+        w = frappe.db.get_value("RN Early Warning", {"draft_event": event}, "name")
+        if decision == "approve" and (row.title or "").startswith("[DRAF BMKG] "):
+            frappe.db.set_value(EVENT, event, "title", row.title[len("[DRAF BMKG] "):])
+        if w:
+            frappe.db.set_value("RN Early Warning", w, "status", "acknowledged" if decision == "approve" else "dismissed")
     if decision == "approve":
         em.suggest_for(event)
     return {"event": event, "event_status": new_status}

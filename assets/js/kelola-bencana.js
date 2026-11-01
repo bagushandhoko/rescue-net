@@ -94,6 +94,18 @@
 
   async function loadAdmin() {
     var q = await call("admin_queue");
+    // S13 (2026-11-02): BMKG drafts — quake details + poskos within its radius
+    var bm = q.bmkg_drafts || [];
+    $("kbBmkgCount").textContent = bm.length;
+    $("kbBmkg").innerHTML = bm.length ? bm.map(function (e) {
+      var w = e.quake || {};
+      var near = (w.nearby || []).map(function (p) { return esc(p.title) + " (" + esc(p.km) + " km)"; }).join(", ");
+      return '<div class="rn-callout"><b>' + esc(e.title) + "</b>" +
+        (w.magnitude ? "<div>M" + esc(w.magnitude) + " · kedalaman " + esc(w.depth_km) + " km · " + esc(w.area || e.location_summary || "") +
+          (w.potential ? " · " + esc(w.potential) : "") + " · " + esc(String(w.issued_at || e.started_at || "").slice(0, 16)) + "</div>" : "") +
+        "<div>Posko dalam jangkauan: <b>" + (w.nearby_count || 0) + "</b>" + (near ? " — " + near + (w.nearby_count > 8 ? ", …" : "") : "") + "</div>" +
+        '<div class="form-actions">' + btn("review", { ev: e.name, d: "approve" }, "Aktifkan bencana", true) + btn("review", { ev: e.name, d: "reject" }, "Tolak") + "</div></div>";
+    }).join("") : '<p class="rn-muted">Tidak ada draf dari BMKG.</p>';
     $("kbPropCount").textContent = q.proposed.length;
     $("kbProposed").innerHTML = q.proposed.length ? q.proposed.map(function (e) {
       return evRow(e, btn("review", { ev: e.name, d: "approve" }, "Setujui", true) + btn("review", { ev: e.name, d: "reject" }, "Tolak"));

@@ -64,3 +64,17 @@ class TestReportDuplicates(RNTestCase):
             rd.mark_report_duplicate(self.b.name, self.a.name)
             with self.assertRaisesRegex(frappe.ValidationError, "dirinya"):
                 rd.mark_report_duplicate(self.a.name, self.b.name)
+
+
+class TestRoutingServedEvents(RNTestCase):
+    def test_posko_serving_event_via_served_events_gets_report(self):
+        from rescue_net.services.report_routing import best_posko
+        from rescue_net.tests.factories import make_event, make_org, make_posko
+
+        main_ev, other_ev = make_event(event_status="active"), make_event(event_status="active")
+        p = make_posko(other_ev, make_org(), latitude=4.1446, longitude=96.1269, posko_type="logistics")
+        p.append("served_events", {"disaster_event": main_ev.name})
+        p.save(ignore_permissions=True)
+        posko, score, reason = best_posko({"disaster_event": main_ev.name, "latitude": 4.1440, "longitude": 96.1290,
+                                            "report_type": "affected_need_help"})
+        self.assertEqual(posko, p.name, reason)

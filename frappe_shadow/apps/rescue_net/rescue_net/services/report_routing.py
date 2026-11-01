@@ -59,7 +59,11 @@ def _candidates(report):
     flags = [f for f in ("rn_fn_medical", "rn_fn_shelter", "rn_fn_logistics", "rn_fn_kitchen") if meta.has_field(f)]
     filters = {}
     if report.get("disaster_event"):
-        filters["disaster_event"] = report.get("disaster_event")
+        # S3 (2026-11-02): every posko SERVING the disaster (main event, legacy id or a served_events row),
+        # not only poskos whose main disaster_event matches
+        from rescue_net.control_centre.common import serving_posko_names
+
+        filters["name"] = ["in", serving_posko_names(report.get("disaster_event")) or ["__none__"]]
     else:
         from rescue_net.services.drill import drill_event_names
 

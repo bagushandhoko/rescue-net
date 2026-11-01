@@ -308,7 +308,7 @@
       <details class="rn-nav-v2-group" data-rn-group="${groupId}" ${active ? "open" : ""}>
         <summary class="rn-nav-v2-summary">
           <span>${escapeHtml(label)}</span>
-          <span class="rn-nav-v2-chevron" aria-hidden="true">⌄</span>
+          <span class="rn-nav-v2-chevron" aria-hidden="true">›</span>
         </summary>
 
         <div class="rn-nav-v2-children">

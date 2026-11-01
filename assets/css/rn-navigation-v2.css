@@ -59,8 +59,9 @@
   transition: transform 160ms ease;
 }
 
+/* owner 2026-11-02: arrow points sideways (›), turns down when the submenu is open */
 .rn-nav-v2-group[open] .rn-nav-v2-chevron {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 
 .rn-nav-v2-children {

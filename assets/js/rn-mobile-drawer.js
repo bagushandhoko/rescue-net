@@ -96,7 +96,7 @@
     sec.setAttribute("data-rn-group", "about");
     const summary = document.createElement("summary");
     summary.className = "rn-nav-v2-summary";
-    summary.innerHTML = '<span>About Us</span><span class="rn-nav-v2-chevron" aria-hidden="true">⌄</span>';
+    summary.innerHTML = '<span>About Us</span><span class="rn-nav-v2-chevron" aria-hidden="true">›</span>';
     const list = document.createElement("nav");
     list.className = "rn-nav-v2-children";
     list.setAttribute("aria-label", "About Us");
@@ -124,7 +124,7 @@
     sec.setAttribute("data-rn-group", "bencana");
     const summary = document.createElement("summary");
     summary.className = "rn-nav-v2-summary";
-    summary.innerHTML = '<span>Bencana Aktif</span><span class="rn-nav-v2-chevron" aria-hidden="true">⌄</span>';
+    summary.innerHTML = '<span>Bencana Aktif</span><span class="rn-nav-v2-chevron" aria-hidden="true">›</span>';
     const list = document.createElement("nav");
     list.className = "rn-nav-v2-children rn-drawer-disaster-list";
     list.setAttribute("aria-label", "Control Centre per bencana aktif");

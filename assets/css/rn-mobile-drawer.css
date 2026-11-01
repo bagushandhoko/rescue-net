@@ -517,7 +517,7 @@
   .rn-drawer-public details.rn-drawer-group > summary > span:first-child { flex: 1; min-width: 0; }
   .rn-drawer-public details.rn-drawer-group[open] > summary { color: var(--vx-brand-dark, #c4442f); }
   .rn-drawer-public details.rn-drawer-group .rn-nav-v2-chevron { font-size: 22px; line-height: 1; color: var(--peach2, #e8835d); transition: transform .2s; }
-  .rn-drawer-public details.rn-drawer-group[open] .rn-nav-v2-chevron { transform: rotate(180deg); }
+  .rn-drawer-public details.rn-drawer-group[open] .rn-nav-v2-chevron { transform: rotate(90deg); }
   .rn-drawer-public .rn-drawer-disaster-list { display: flex; flex-direction: column; gap: 0; padding: 0 0 6px; }
   /* operational groups mounted in the phone menu of pages without a sidebar */
   .rn-drawer-public .rn-drawer-ops details.rn-drawer-group .rn-nav-v2-children { display: flex; flex-direction: column; gap: 0; padding: 0 0 6px; }

@@ -5930,6 +5930,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-va-tabs .rn-tab { padding: 6px 12px; font-size: 11px; }
 
 .rn-va-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+.rn-va-fields[hidden] { display: none !important; } /* program "belum publik" banner showed to everyone */
 .rn-va-fields div { background: var(--panel2); border-radius: 8px; padding: 6px 8px; }
 .rn-va-fields span { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; }
 .rn-va-fields b { font-size: 12px; }

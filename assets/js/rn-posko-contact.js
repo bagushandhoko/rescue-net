@@ -44,6 +44,7 @@
     ".rn-posko-contact .rn-pc-who{color:var(--muted,#7c6458)}" +
     ".rn-posko-contact .rn-pc-num{font-weight:700;font-variant-numeric:tabular-nums;color:inherit}" +
     ".rn-posko-contact .rn-pc-hidden{color:var(--muted,#7c6458)}" +
+    ".rn-posko-contact .rn-pc-radio{flex-basis:100%;overflow-wrap:anywhere}" +
     ".rn-posko-contact .rn-pc-btn{display:inline-flex;align-items:center;min-height:32px;padding:4px 12px;border-radius:999px;" +
     "border:1px solid var(--line,rgba(104,64,45,.2));text-decoration:none;font-weight:600;color:var(--text,#2d211b);background:#fff}" +
     ".rn-posko-contact .rn-pc-wa{background:#25d366;border-color:#25d366;color:#fff}" +
@@ -66,13 +67,21 @@
     return bar;
   }
 
+  function radioHtml(res) {
+    // frequency / channel / call sign: public (owner 2026-11-01)
+    return ((res && res.radio) || []).map(function (r) {
+      var parts = [r.frequency, r.channel, r.call_sign ? "call sign " + r.call_sign : ""].filter(Boolean).map(esc).join(" · ");
+      return '<span class="rn-pc-radio">📻 ' + esc(String(r.kind || "Radio").trim()) + ": <b>" + parts + "</b></span>";
+    }).join("");
+  }
+
   function render(bar, res) {
     var label = '<span class="rn-pc-label">Kontak Posko</span>';
     if (!res || !res.logged_in) {
       var next = encodeURIComponent(location.pathname + location.search);
       bar.innerHTML = label +
         '<span class="rn-pc-hidden">Nomor HP / WhatsApp hanya terlihat setelah login.</span>' +
-        '<a class="rn-pc-btn" href="auth.html?next=' + next + '">Login untuk melihat</a>';
+        '<a class="rn-pc-btn" href="auth.html?next=' + next + '">Login untuk melihat</a>' + radioHtml(res);
       return;
     }
     var c = res.contact || {};
@@ -95,6 +104,7 @@
     if (!c.phone && !c.whatsapp && !c.emergency) {
       parts.push('<span class="rn-pc-hidden">Nomor kontak belum diisi pengelola posko.</span>');
     }
+    parts.push(radioHtml(res));
     bar.innerHTML = parts.join("");
   }
 

@@ -55,8 +55,9 @@ def posko_contact(posko):
     if not name:
         frappe.throw("Posko tidak ditemukan")
     title = frappe.db.get_value("RN Posko", name, "title")
+    radio = _posko_radio(name)
     if frappe.session.user == "Guest":
-        return {"posko": name, "title": title, "logged_in": False}
+        return {"posko": name, "title": title, "logged_in": False, "radio": radio}
     p = frappe.db.get_value(
         "RN Posko", name,
         ["officer_in_charge_name", "officer_in_charge_role", "officer_in_charge_phone",
@@ -74,7 +75,34 @@ def posko_contact(posko):
             "whatsapp": p.get("officer_in_charge_whatsapp") or p.get("officer_in_charge_phone"),
             "emergency": p.get("emergency_contact"),
         },
+        "radio": radio,
     }
+
+
+def _posko_radio(posko):
+    """Radio of a posko for the contact bar (owner 2026-11-01): frequency / channel / call sign of
+    active or spare HT & repeaters. Shown to everyone — a frequency is how anyone with a radio
+    reaches the posko; phone numbers stay login-only."""
+    if not frappe.db.table_exists("RN Comms Device"):
+        return []
+    from rescue_net.api_comms import _fmt_mhz, _radio_kind, _split_radio
+    out, seen = [], set()
+    for d in frappe.get_all("RN Comms Device", filters={"posko": posko, "status": ["in", ["active", "spare"]],
+                                                        "category": ["in", ["ht", "repeater"]]},
+                            fields=["category", "frequency_channel", "frequency_mhz", "contact_id"],
+                            order_by="category desc, modified desc", limit_page_length=20):
+        freq, chan = _split_radio(d.frequency_channel)
+        if d.frequency_mhz:
+            freq = _fmt_mhz(d.frequency_mhz) or freq
+        if not chan and d.frequency_channel and not freq:
+            chan = d.frequency_channel.strip()[:30]
+        key = (freq, chan, (d.contact_id or "").strip())
+        if not (freq or chan) or key in seen:
+            continue
+        seen.add(key)
+        out.append({"kind": ("Repeater " if d.category == "repeater" else "Radio ") + (_radio_kind(freq) if freq else ""),
+                    "frequency": freq, "channel": chan, "call_sign": key[2]})
+    return out[:4]
 
 
 @frappe.whitelist(allow_guest=True)

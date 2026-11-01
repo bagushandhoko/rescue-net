@@ -10,6 +10,13 @@
       if (r.bottom > vh - 16) g.scrollIntoView({ behavior: "smooth", block: r.height > vh - 80 ? "start" : "end" });
     }, 60);
   }
+  // every phone-menu group, however it was built (home page builds its own): "toggle" does not bubble,
+  // so listen in the capture phase
+  document.addEventListener("toggle", (e) => {
+    const g = e.target;
+    if (!(g instanceof HTMLDetailsElement) || !g.open || window.innerWidth > 1023) return;
+    if (g.matches("details.rn-nav-v2-group, details.rn-drawer-group")) showOpened(g);
+  }, true);
 
   const MOBILE_QUERY = "(max-width: 1023px)";
 

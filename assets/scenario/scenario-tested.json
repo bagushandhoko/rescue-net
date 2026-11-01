@@ -771,6 +771,33 @@
      "perbaikan": "Kini terlihat lewat badge; keputusan owner apakah disembunyikan."
     }
    ]
+  },
+  {
+   "id": "RW-2",
+   "tanggal": "2026-11-01",
+   "kategori": "Relawan",
+   "judul": "Halaman relawan: dua daftar, filter, satu baris per relawan",
+   "tujuan": "Daftar gabungan dihapus; Relawan Tersedia & Ditempatkan bisa difilter bencana, kesediaan waktu, keahlian; klik baris untuk detail.",
+   "akun": [
+    "tamu (desktop)",
+    "ld1.demo (HP)"
+   ],
+   "langkah": [
+    "Tabel Daftar Relawan & Filter Keterampilan hilang",
+    "Filter bencana berisi 7 bencana, pilihan aktif sesuai URL",
+    "Filter keahlian '4x4 transport' → 0 dari 3 tersedia, 1 dari 7 ditempatkan",
+    "Klik baris → detail terbuka; tamu tanpa nama/HP, login tampil nama + HP + WhatsApp",
+    "HP 390px: filter satu kolom, tanpa geser samping, tanpa error"
+   ],
+   "hasil": "Lulus (Playwright desktop + HP di produksi)",
+   "skor": "5/5",
+   "status": "lulus",
+   "temuan": [
+    {
+     "masalah": "Di HP filter terjepit dua kolom (aturan .panel lain menang).",
+     "perbaikan": "Filter diberi kotak sendiri (c82844b)."
+    }
+   ]
   }
  ],
  "rencana": [

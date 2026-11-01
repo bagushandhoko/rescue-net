@@ -44,7 +44,12 @@
   "output_verified",
   "output_verification_status",
   "output_verifier",
-  "output_estimated_done"
+  "output_estimated_done",
+  "bank_name",
+  "bank_account_number",
+  "bank_account_holder",
+  "rab_file_url",
+  "work_drawings"
  ],
  "fields": [
   {
@@ -259,6 +264,31 @@
    "fieldname": "output_estimated_done",
    "label": "Estimasi Selesai Verifikasi",
    "fieldtype": "Date"
+  },
+  {
+   "fieldname": "bank_name",
+   "label": "Bank",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "bank_account_number",
+   "label": "No. Rekening",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "bank_account_holder",
+   "label": "Atas Nama Rekening",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "rab_file_url",
+   "label": "Dokumen RAB (PDF)",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "work_drawings",
+   "label": "Gambar Kerja (JSON)",
+   "fieldtype": "Small Text"
   }
  ],
  "permissions": [
@@ -269,5 +299,6 @@
    "create": 1,
    "delete": 1
   }
- ]
+ ],
+ "modified": "2026-11-01 23:30:00.000000"
 }

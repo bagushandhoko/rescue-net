@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=kpiword-20261101">
+  <link rel="stylesheet" href="../assets/css/style.css?v=rab-20261101">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -106,7 +106,7 @@
             <div class="rn-pk-cover" id="detailCover"></div>
             <div class="rn-pk-hero-main">
               <h3 id="detailName">-</h3>
-              <div class="rn-pk-hero-chips"><span class="chip" id="detailCategory"></span><span class="chip" id="detailStatus"></span></div>
+              <div class="rn-pk-hero-chips"><span class="chip" id="detailCategory"></span><span class="chip" id="detailStatus"></span><span class="chip" id="detailVerified" hidden></span></div>
               <ul class="rn-pk-hero-meta" id="detailMeta"></ul>
             </div>
             <div class="rn-pk-overall">
@@ -156,6 +156,28 @@
               <div><span>Sasaran</span><b id="detailBeneficiaries">-</b></div>
             </div>
 
+            <div class="rn-pk-docs" id="docBox">
+              <h4 style="margin-top:16px;">Dokumen Program</h4>
+              <div id="docRab" class="rn-muted">Dokumen RAB belum diunggah.</div>
+              <div id="docDrawings" class="rn-pk-drawings"></div>
+            </div>
+            <div class="rn-pk-docmanage" id="docManage" hidden>
+              <h4 style="margin-top:16px;">Kelola Dokumen &amp; Rekening <small class="rn-muted">(hanya pemrakarsa / Control Centre)</small></h4>
+              <form class="rn-form" id="rabForm"><label>Rencana Anggaran Biaya (RAB) — PDF, maks. 10 MB
+                <input type="file" name="file" accept="application/pdf,.pdf" required></label>
+                <div class="form-actions"><button class="btn primary" type="submit">Unggah RAB</button><span class="form-message" id="rabMsg"></span></div></form>
+              <form class="rn-form" id="drawForm"><label>Gambar kerja — PNG / JPG / WEBP / PDF, maks. 10 MB
+                <input type="file" name="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" required></label>
+                <label>Keterangan (opsional)<input name="label" maxlength="120" placeholder="Denah lantai 1"></label>
+                <div class="form-actions"><button class="btn primary" type="submit">Unggah Gambar Kerja</button><span class="form-message" id="drawMsg"></span></div></form>
+              <form class="rn-form" id="bankForm"><div class="form-grid">
+                <label>Bank <input name="bank_name" maxlength="60" placeholder="BRI / BCA / Mandiri / BSI"></label>
+                <label>No. Rekening <input name="account_number" inputmode="numeric" maxlength="30" placeholder="1234567890"></label>
+                <label>Atas Nama <input name="account_holder" maxlength="120" placeholder="Yayasan / nama pemrakarsa"></label></div>
+                <p class="rn-muted" style="font-size:12px;margin:4px 0">Nomor rekening tampil ke publik hanya bila pemrakarsa sudah terverifikasi. Kosongkan nomor untuk menghapus.</p>
+                <div class="form-actions"><button class="btn primary" type="submit">Simpan Rekening</button><span class="form-message" id="bankMsg"></span></div></form>
+            </div>
+
             <div id="detailProject" hidden>
               <h4 style="margin-top:16px;">Detail Proyek (Project Base)</h4>
               <div id="projectDesignWrap" hidden style="margin-bottom:10px">
@@ -194,6 +216,7 @@
             <p class="rn-muted">Anggaran dicatat per program dari donasi/alokasi yang diterima; belum ada rincian per-baris belanja terpisah.</p>
 
             <h4 class="rn-md-detail-h">Sumbang ke Program Ini</h4>
+            <div id="bankBox" class="rn-pk-bank" hidden></div>
             <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Donasi tercatat "menunggu" sampai lembaga penerima (pengelola program) mengonfirmasi dana benar diterima — baru setelah itu masuk ke Papan Donasi &amp; Anggaran Diterima.</p>
             <form class="rn-form" id="donateForm" autocomplete="off">
               <label>Nominal (Rp)<input name="amount" type="number" min="1" step="1000" required placeholder="mis. 100000"></label>
@@ -325,7 +348,7 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=pk2-20261007"></script>
+<script src="../assets/js/program-khusus.js?v=rab-20261101"></script>
 <script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>

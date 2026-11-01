@@ -87,6 +87,8 @@
         '<span class="rn-pk-card-body">' +
         '<span class="rn-pk-card-head"><b>' + esc(p.program_name) + '</b>' +
           (p.is_own_hidden ? '<span class="chip danger">Belum Publik</span>' : "") +
+          (p.initiator_verified ? '<span class="chip ok" title="Pemrakarsa terverifikasi">✔ Terverifikasi</span>'
+            : '<span class="chip warning" title="Pemrakarsa belum terverifikasi">Belum terverifikasi</span>') +
           '<span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></span>" +
         '<span class="rn-pk-card-meta">' + esc(p.category) + "<br>" + esc(p.location) +
           ' · <i class="rn-pk-kind">' + (p.program_kind === "project" ? "Project Base" : "Cash Base") + "</i></span>" +
@@ -404,7 +406,122 @@
     renderUpdates(data.updates || []);
     renderNotPublicBanner(data);
     renderDonations(data.donations || {});
+    renderDocs(data);
+    renderBank(data);
     if (window.RNIconFill) window.RNIconFill(document);
+  }
+
+  /* ---------- dokumen RAB, gambar kerja, rekening, badge (owner 2026-11-01) ---------- */
+  function renderDocs(data) {
+    var docs = data.documents || {}, manage = !!data.can_manage;
+    var badge = $("#detailVerified");
+    if (badge) {
+      badge.hidden = false;
+      badge.className = "chip " + (data.initiator_verified ? "ok" : "warning");
+      badge.textContent = data.initiator_verified ? "✔ Pemrakarsa terverifikasi" : "Pemrakarsa belum terverifikasi";
+    }
+    $("#docRab").innerHTML = docs.rab
+      ? '📄 <a href="' + esc(docs.rab) + '" target="_blank" rel="noopener">Rencana Anggaran Biaya (RAB) — PDF ↓</a>' +
+        (manage ? ' <button type="button" class="btn mini" data-doc-del="rab">Hapus</button>' : "")
+      : '<span class="rn-muted">Dokumen RAB (PDF) belum diunggah.</span>';
+    var dr = docs.drawings || [];
+    $("#docDrawings").innerHTML = dr.length ? dr.map(function (d) {
+      var thumb = d.pdf ? '<span class="rn-pk-pdf">📄</span>' : '<img src="' + esc(d.url) + '" alt="' + esc(d.label || d.name) + '" loading="lazy">';
+      return '<a class="rn-pk-drawing" href="' + esc(d.url) + '" target="_blank" rel="noopener">' + thumb +
+        "<span>" + esc(d.label || d.name) + "</span>" +
+        (manage ? '<button type="button" data-doc-del="gambar" data-url="' + esc(d.url) + '" title="Hapus">✕</button>' : "") + "</a>";
+    }).join("") : '<span class="rn-muted">Belum ada gambar kerja.</span>';
+    $("#docManage").hidden = !manage;
+  }
+
+  function renderBank(data) {
+    var b = data.bank || {}, box = $("#bankBox");
+    if (!box) return;
+    if (b.account_number) {
+      box.hidden = false;
+      box.className = "rn-pk-bank" + (b.shown_publicly ? "" : " warn");
+      box.innerHTML = "Transfer ke rekening pemrakarsa:<br><b>" + esc(b.bank_name) + " " + esc(b.account_number) + "</b>" +
+        ' <button type="button" class="btn mini" data-copy="' + esc(b.account_number) + '">Salin</button><br>a.n. ' + esc(b.account_holder) +
+        "<br><small>" + (b.shown_publicly
+          ? "Setelah transfer, isi formulir di bawah. Donasi tampil di daftar setelah dicek & dikonfirmasi pemrakarsa."
+          : "Hanya Anda (pengelola) yang melihat rekening ini — tampil ke publik setelah pemrakarsa terverifikasi.") + "</small>";
+    } else if (b.available) {
+      box.hidden = false; box.className = "rn-pk-bank warn";
+      box.textContent = "Rekening pemrakarsa disembunyikan sampai pemrakarsa terverifikasi. Jangan transfer ke rekening yang dikirim lewat pesan pribadi.";
+    } else {
+      box.hidden = true;
+    }
+    var f = $("#bankForm");
+    if (f && data.can_manage && b.account_number) {
+      f.bank_name.value = b.bank_name; f.account_number.value = b.account_number; f.account_holder.value = b.account_holder;
+    }
+  }
+
+  function readBase64(file) {
+    return new Promise(function (ok, bad) {
+      var r = new FileReader();
+      r.onload = function () { ok(String(r.result).split(",")[1] || ""); };
+      r.onerror = function () { bad(new Error("Gagal membaca file")); };
+      r.readAsDataURL(file);
+    });
+  }
+
+  function wireDocForms() {
+    var API = "rescue_net.api_donor_program.";
+    function upload(formId, msgId, kind) {
+      var f = $(formId);
+      if (!f || f.dataset.wired) return;
+      f.dataset.wired = "1";
+      f.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var m = $(msgId), file = f.file.files[0];
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) { m.textContent = "File terlalu besar (maks. 10 MB)."; return; }
+        m.textContent = "Mengunggah…";
+        try {
+          await window.RN_FRAPPE.call(API + "upload_program_file", { donor_program: SELECTED, kind: kind, filename: file.name,
+            content_base64: await readBase64(file), label: f.label ? f.label.value : "" }, { method: "POST" });
+          m.textContent = "Terunggah."; f.reset();
+          await selectProgram(SELECTED);
+        } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
+      });
+    }
+    upload("#rabForm", "#rabMsg", "rab");
+    upload("#drawForm", "#drawMsg", "gambar");
+    var bf = $("#bankForm");
+    if (bf && !bf.dataset.wired) {
+      bf.dataset.wired = "1";
+      bf.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var m = $("#bankMsg"); m.textContent = "Menyimpan…";
+        try {
+          await window.RN_FRAPPE.call(API + "set_program_bank", { donor_program: SELECTED, bank_name: bf.bank_name.value,
+            account_number: bf.account_number.value, account_holder: bf.account_holder.value }, { method: "POST" });
+          m.textContent = "Tersimpan.";
+          await selectProgram(SELECTED);
+        } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
+      });
+    }
+    if (!document.body.dataset.docWired) {
+      document.body.dataset.docWired = "1";
+      document.addEventListener("click", async function (e) {
+        var cp = e.target.closest("[data-copy]");
+        if (cp) {
+          e.preventDefault();
+          try { await navigator.clipboard.writeText(cp.dataset.copy); cp.textContent = "Tersalin"; } catch (x) { window.prompt("Salin nomor rekening:", cp.dataset.copy); }
+          return;
+        }
+        var del = e.target.closest("[data-doc-del]");
+        if (!del) return;
+        e.preventDefault();
+        if (window.confirm && !window.confirm("Hapus dokumen ini?")) return;
+        try {
+          await window.RN_FRAPPE.call(API + "remove_program_file", { donor_program: SELECTED, kind: del.dataset.docDel,
+            file_url: del.dataset.url || null }, { method: "POST" });
+          await selectProgram(SELECTED);
+        } catch (err) { window.alert((err && err.message) || err); }
+      });
+    }
   }
 
   function renderDonations(d) {
@@ -534,6 +651,7 @@
     setupFilterTabs();
     setupDetailTabs();
     wireDonationActions();
+    wireDocForms();
     wirePlanEditing();
     loadBoard().catch(function (err) { console.error("[program board]", err); });
   });

@@ -114,6 +114,8 @@ def program_board(disaster_event=None):
 
     today = nowdate()
     stats = board_stats(names)
+    from rescue_net.donor_program.documents import initiator_verified
+    _verified_cache = {}
     programs = []
     for r in rows:
         prog_updates = updates_by_program.get(r.name, [])
@@ -159,6 +161,8 @@ def program_board(disaster_event=None):
             "unserved_locations": list(plan["unserved_locations"]) if plan else [],
             "support_gap": bool(plan and plan["support_gap"]),
             "locations_total": plan["locations"] if plan else 0,
+            "initiator_verified": _verified_cache.setdefault((r.owner_type, r.owner_id, r.created_by_user),
+                                                             initiator_verified(r)),
         })
 
     active = [p for p in programs if p["status"] == "active"]
@@ -439,6 +443,7 @@ def program_detail(program):
         detail_actor = None
     can_manage = bool(detail_actor and (_is_control(detail_actor) or _allowed_owner(detail_actor, row.owner_type, row.owner_id)))
     owner_verified = _campaign_owner_verified(detail_actor, row.owner_type, row.owner_id) if can_manage else None
+    from rescue_net.donor_program.documents import bank_for, documents_for, initiator_verified
 
     return {
         "program": {
@@ -454,6 +459,10 @@ def program_detail(program):
         "project": project,
         "can_manage": can_manage,
         "owner_verified": owner_verified,
+        # owner 2026-11-01: public badge, RAB PDF + gambar kerja, initiator's bank account (verified only)
+        "initiator_verified": initiator_verified(row),
+        "documents": documents_for(program),
+        "bank": bank_for(row, can_manage),
         "note": (
             "Rencana Kerja/Dokumen tidak dimodelkan sebagai daftar rinci "
             "terpisah — gunakan Anggaran (target/diterima/terpakai) dan "

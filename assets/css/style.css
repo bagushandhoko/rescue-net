@@ -7578,5 +7578,6 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-rw-line-sub { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto; }
 .rn-rw-line .chip { flex: 0 0 auto; }
 .rn-rw-item-body { padding: 4px 12px 12px; border-top: 1px dashed rgba(104,64,45,.14); }
-@media (max-width: 760px) { .rn-rw-filters { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 420px) { .rn-rw-line .chip { display: none; } }
+.rn-rw-filters label > select, .rn-rw-filters label > input { display: block; box-sizing: border-box; }
+@media (max-width: 760px) { .rn-rw-filters { grid-template-columns: 1fr; } }
+@media (max-width: 420px) { .rn-rw-line .chip { display: none; } .rn-rw-line-name { max-width: 60%; } }

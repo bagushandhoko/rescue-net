@@ -3054,6 +3054,7 @@ html.rn-external-access body:not(.mockup-viewer) .main {
 .rn-public-actions > .rn-event-picker    { order: 1; }
 .rn-public-actions > .rn-public-user     { order: 2; }
 .rn-public-actions > #rnPoskoSettingsBtn { order: 3; }
+.rn-public-actions > #rnKelolaPoskoBtn { order: 3; }
 .rn-public-actions > .rn-public-login    { order: 4; }
 .rn-public-actions > .rn-public-logout   { order: 5; }
 

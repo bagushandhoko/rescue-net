@@ -58,6 +58,12 @@
         icon: "relawan"
       },
       {
+        // hub khusus pemilik / pengelola posko (owner 2026-11-01)
+        label: "Kelola Posko Saya",
+        href: "kelola-posko.html",
+        icon: "posko"
+      },
+      {
         label: "Recovery dan Alat Kerja",
         href: "alat-kerja.html?event=event-sim-001",
         icon: "alat-kerja"

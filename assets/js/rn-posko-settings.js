@@ -250,24 +250,30 @@
     var btn = el('<a href="#" id="rnPoskoSettingsBtn" class="rn-public-login" ' +
       'title="Ubah data posko ini">⚙ Pengaturan</a>');
     btn.addEventListener("click", function (e) { e.preventDefault(); openModal(p); });
+    // Kelola Posko (owner 2026-11-01): managers' own hub, only shown to people who can edit this posko
+    var kelola = el('<a id="rnKelolaPoskoBtn" class="rn-public-login" title="Halaman khusus pengelola posko" href="kelola-posko.html?id=' +
+      encodeURIComponent(POSKO) + '">🔧 Kelola Posko</a>');
+    if (qs.get("settings") === "1") setTimeout(function () { openModal(p); }, 300);
 
     var tries = 0;
     (function place() {
       if (document.getElementById("rnPoskoSettingsBtn")) return;
       var actions = document.querySelector(".rn-public-header .rn-public-actions");
-      if (actions) { actions.appendChild(btn); return; }
+      if (actions) { actions.appendChild(kelola); actions.appendChild(btn); return; }
       if (++tries <= 24) { setTimeout(place, 250); return; }
       // no public header on this page — fall back to the page's own topbar
       btn.classList.add("rn-ps-btn");
+      kelola.classList.add("rn-ps-btn");
       var host =
         document.querySelector("header.topbar .rn-logistik-controls") ||
         document.querySelector("header.topbar") ||
         document.querySelector(".topbar") ||
         document.querySelector("main.main") || document.body;
       if (host.classList && host.classList.contains("main")) {
-        btn.style.margin = "8px 0"; host.insertBefore(btn, host.firstChild);
+        btn.style.margin = "8px 0"; kelola.style.margin = "8px 8px 8px 0";
+        host.insertBefore(btn, host.firstChild); host.insertBefore(kelola, btn);
       } else {
-        host.appendChild(btn);
+        host.appendChild(kelola); host.appendChild(btn);
       }
     })();
   }

@@ -29,10 +29,17 @@ def _managed(actor):
 
 
 def _pending(posko):
-    return {
+    out = {
         "relawan": frappe.db.count("RN Volunteer Booking", {"posko": posko, "status": "requested"}),
         "operator": frappe.db.count("RN Posko Assignment", {"posko": posko, "status": "pending"}),
+        "kedaluwarsa": 0,
     }
+    # S14 (2026-11-02): stock already expired or expiring soon
+    if frappe.db.exists("RN Stock Batch", {"posko": posko}):
+        from rescue_net.services.expiry import expiring_report
+        rep = expiring_report(posko)
+        out["kedaluwarsa"] = rep["expired"] + rep["soon"]
+    return out
 
 
 def _tools(p, ev):

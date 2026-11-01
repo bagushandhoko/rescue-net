@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Kelola Posko</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=regdaftar-20261102">
+  <link rel="stylesheet" href="../assets/css/style.css?v=expiry-20261102">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -95,6 +95,26 @@
         <div class="kp-tools" id="kpTools"></div>
       </section>
 
+      <section class="panel" id="kpExpiry">
+        <div class="panel-header"><div><h3>Stok kedaluwarsa</h3><p>Obat / makanan yang sudah atau segera kedaluwarsa (obat: 60 hari, lainnya: 30 hari). Keluarkan yang paling dulu kedaluwarsa.</p></div></div>
+        <div class="rn-table-wrap"><table class="rn-table">
+          <thead><tr><th>Barang</th><th>Lot</th><th>Kedaluwarsa</th><th>Sisa</th><th>Status</th></tr></thead>
+          <tbody id="kpExpiryBody"><tr><td colspan="5" class="rn-muted">Memuat…</td></tr></tbody>
+        </table></div>
+        <details class="kp-addlot"><summary>+ Beri tanggal kedaluwarsa pada stok</summary>
+          <form class="rn-form" id="kpLotForm">
+            <div class="form-grid">
+              <label>Barang <input name="item_name" list="kpItems" required placeholder="mis. Oralit"><datalist id="kpItems"></datalist></label>
+              <label>Satuan <input name="unit" required placeholder="sachet / paket / box"></label>
+              <label>Jumlah <input name="quantity" type="number" min="1" step="any" required></label>
+              <label>Tanggal kedaluwarsa <input name="expiry_date" type="date" required></label>
+              <label>No. batch (opsional) <input name="batch_no" maxlength="60"></label>
+            </div>
+            <div class="form-actions"><button class="btn primary" type="submit">Simpan</button><span class="form-message" id="kpLotMsg"></span></div>
+          </form>
+        </details>
+      </section>
+
       <section class="panel">
         <div class="panel-header"><div><h3>Dukungan komunikasi</h3><p>Tampil di halaman Alat Komunikasi → Jaringan Komunikasi. Kosongkan bila sudah tidak berlaku.</p></div></div>
         <form class="rn-form" id="kpComms">
@@ -110,7 +130,7 @@
 </div>
 <script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/kelola-posko.js?v=kelola-20261101"></script>
+<script src="../assets/js/kelola-posko.js?v=expiry-20261102"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

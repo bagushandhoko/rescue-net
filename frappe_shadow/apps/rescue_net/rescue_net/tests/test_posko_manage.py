@@ -47,3 +47,13 @@ class TestPoskoManage(RNTestCase):
         self.assertNotIn(self.w.posko_b.name, names)
         self.assertEqual(h["pending"]["relawan"], 1)
         self.assertFalse(any("kontak" in w for w in h["warnings"]))
+
+    def test_expiring_stock_counted(self):
+        from frappe.utils import add_days, nowdate
+        from rescue_net.services.expiry import record_lot
+        frappe.get_doc({"doctype": "RN Stock Observation", "title": "Oralit uji", "posko": self.w.posko_a.name, "item_name": "Oralit",
+                        "unit": "sachet", "quantity": 100, "observed_at": frappe.utils.now_datetime()}).insert(ignore_permissions=True)
+        record_lot(self.w.posko_a.name, "Oralit", "sachet", 30, add_days(nowdate(), -1))
+        with as_user(self.mgr.user):
+            h = pm.manage_hub(self.w.posko_a.name)
+        self.assertGreaterEqual(h["pending"]["kedaluwarsa"], 1)

@@ -7601,3 +7601,4 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-dup-row { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; padding: 6px 0;
   border-top: 1px solid rgba(104,64,45,.1); overflow-wrap: anywhere; }
 .rn-dup-row > span:first-child { flex: 1 1 220px; min-width: 0; }
+.kp-addlot { margin-top: 10px; } .kp-addlot > summary { cursor: pointer; font-weight: 700; color: #c4442f; }

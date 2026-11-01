@@ -51,7 +51,9 @@
     var relawan = (h.tools || []).filter(function (t) { return t.key === "relawan"; })[0];
     $("kpPending").innerHTML =
       '<a class="kp-item" href="' + esc(relawan ? relawan.href : "management-relawan.html") + '"><span>Relawan menawarkan diri / minta jemputan &amp; shelter</span>' + badge(h.pending.relawan) + "</a>" +
-      '<div class="kp-item"><span>Permintaan jadi operator posko <small class="rn-muted">(disetujui super admin)</small></span>' + badge(h.pending.operator) + "</div>";
+      '<div class="kp-item"><span>Permintaan jadi operator posko <small class="rn-muted">(disetujui super admin)</small></span>' + badge(h.pending.operator) + "</div>" +
+      '<a class="kp-item" href="#kpExpiry"><span>Stok sudah / segera kedaluwarsa</span>' + badge(h.pending.kedaluwarsa) + "</a>";
+    loadExpiry();
 
     var ev = (h.events || []).map(function (e) { return esc(e.title); }).join(", ") || "—";
     $("kpInfo").innerHTML =
@@ -72,6 +74,21 @@
     status("");
   }
 
+  /* S14 (2026-11-02): expiring stock + give stock an expiry date */
+  var STATE = { expired: ["Sudah kedaluwarsa", "danger"], soon: ["Segera kedaluwarsa", "warning"], ok: ["Aman", "ok"] };
+  async function loadExpiry() {
+    var body = $("kpExpiryBody");
+    try {
+      var r = await window.RN_FRAPPE.call("rescue_net.api_stock_expiry.expiring", { posko: POSKO });
+      var rows = r.rows || [];
+      body.innerHTML = rows.length ? rows.map(function (x) {
+        var st = STATE[x.state] || [x.state, ""];
+        return "<tr><td>" + esc(x.item_name) + "</td><td>" + esc(x.batch_no || "-") + "</td><td>" + esc(x.expiry_date) + "</td><td>" +
+          esc(x.quantity != null ? x.quantity : "") + " " + esc(x.unit || "") + '</td><td><span class="chip ' + st[1] + '">' + esc(st[0]) + "</span></td></tr>";
+      }).join("") : '<tr><td colspan="5" class="rn-muted">Belum ada stok bertanggal kedaluwarsa.</td></tr>';
+    } catch (e) { body.innerHTML = '<tr><td colspan="5" class="rn-muted">' + esc((e && e.message) || e) + "</td></tr>"; }
+  }
+
   document.addEventListener("DOMContentLoaded", async function () {
     if (!window.RN_FRAPPE) return;
     var sess = null;
@@ -85,6 +102,18 @@
         await window.RN_FRAPPE.call("rescue_net.api_comms.set_posko_comms_support",
           { posko: POSKO, offered: e.target.offered.value, needed: e.target.needed.value }, { method: "POST" });
         m.textContent = "Tersimpan.";
+      } catch (err) { m.textContent = (err && err.message) || err; }
+    });
+
+    var lf = $("kpLotForm");
+    if (lf) lf.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var m = $("kpLotMsg"); m.textContent = "Menyimpan…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_stock_expiry.add_lot", { posko: POSKO, item_name: lf.item_name.value.trim(),
+          unit: lf.unit.value.trim(), quantity: lf.quantity.value, expiry_date: lf.expiry_date.value, batch_no: lf.batch_no.value.trim() || null },
+          { method: "POST" });
+        m.textContent = "Tersimpan."; lf.reset(); loadExpiry();
       } catch (err) { m.textContent = (err && err.message) || err; }
     });
 

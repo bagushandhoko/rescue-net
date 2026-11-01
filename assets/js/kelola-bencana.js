@@ -163,7 +163,7 @@
   async function init() {
     var opt;
     try { opt = await call("create_options"); }
-    catch (e) { $("kbStatus").innerHTML = 'Silakan <a href="auth.html">login</a> untuk membuat atau mengusulkan bencana.'; return; }
+    catch (e) { $("kbStatus").innerHTML = 'Silakan <a href="auth.html?next=' + encodeURIComponent("kelola-bencana.html#kbCreatePanel") + '">login</a> untuk membuat atau mengusulkan bencana.'; return; }
     $("kbStatus").textContent = "";
     var f = $("kbForm");
     f.event_type.innerHTML = opt.event_types.map(function (t) { return '<option value="' + esc(t) + '">' + esc(TYPE[t] || t) + "</option>"; }).join("");

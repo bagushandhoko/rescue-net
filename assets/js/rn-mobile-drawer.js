@@ -45,7 +45,8 @@
       ["Laporan Masyarakat", "pages/laporan-masyarakat.html"],
       ["Kirim Bantuan", "pages/kirim-bantuan.html"],
       ["Install App", "pages/install.html"],
-      ["Login/registrasi", "pages/auth.html"]
+      ["Login/registrasi", "pages/auth.html"],
+      ["Daftarkan Bencana", "pages/kelola-bencana.html#kbCreatePanel"]
     ];
     const nav = document.createElement("nav");
     nav.className = "rn-public-links";

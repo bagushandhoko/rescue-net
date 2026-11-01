@@ -744,6 +744,33 @@
      "perbaikan": "Diperbaiki (13caebe)."
     }
    ]
+  },
+  {
+   "id": "PK-RAB-1",
+   "tanggal": "2026-11-01",
+   "kategori": "Program Khusus",
+   "judul": "RAB PDF, gambar kerja, rekening pemrakarsa, badge terverifikasi",
+   "tujuan": "Transparansi program: dokumen RAB & gambar kerja, rekening hanya tampil bila pemrakarsa terverifikasi, daftar donasi nama/anonim setelah dicek pemrakarsa.",
+   "akun": [
+    "akun uji otomatis (pemrakarsa org terverifikasi, orang lain, donatur, tamu)",
+    "tamu di produksi (hanya melihat)"
+   ],
+   "langkah": [
+    "RAB: hanya PDF asli diterima; gambar kerja PNG/PDF diterima, file .exe ditolak; hapus gambar",
+    "Orang lain tidak bisa unggah / isi rekening",
+    "Rekening tampil publik saat org terverifikasi; saat status org dicabut → badge berubah & nomor hilang dari publik, pemrakarsa tetap melihat",
+    "Donasi bernama & anonim baru tampil setelah dikonfirmasi pemrakarsa; nama asli donatur anonim tidak bocor",
+    "Produksi desktop & HP: badge tampil, tanpa error"
+   ],
+   "hasil": "Lulus (5 tes baru, suite 648 hijau)",
+   "skor": "5/5",
+   "status": "lulus",
+   "temuan": [
+    {
+     "masalah": "2 program simulasi publik ternyata pemrakarsanya belum terverifikasi.",
+     "perbaikan": "Kini terlihat lewat badge; keputusan owner apakah disembunyikan."
+    }
+   ]
   }
  ],
  "rencana": [

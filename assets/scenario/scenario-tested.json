@@ -820,6 +820,47 @@
    "skor": "5/5",
    "status": "lulus",
    "temuan": []
+  },
+  {
+   "id": "S3",
+   "tanggal": "2026-11-02",
+   "kategori": "Laporan Masyarakat",
+   "judul": "Laporan ganda: 3 warga melaporkan kejadian yang sama",
+   "tujuan": "Jiwa tidak dihitung dobel; satu posko menangani.",
+   "akun": [
+    "masyarakat.demo, ld3.demo, ld5.demo (pelapor)",
+    "tni.kodim.demo (pengelola Posko Kodim 0105 Meulaboh)",
+    "tamu (Control Centre)"
+   ],
+   "langkah": [
+    "3 laporan [SIMULASI] 'Rumah roboh di Lorong Mesjid' (40, 55, 38 jiwa) berjarak ±0,1 km → diarahkan ke Posko Kodim 0105 Meulaboh",
+    "Pengelola melihat kandidat laporan ganda (bencana sama, ≤48 jam, ≤2 km)",
+    "Laporan 2 & 3 ditandai duplikat dari laporan 1",
+    "Control Centre (Bencana Aktif): hanya laporan utama tampil, 55 jiwa (angka terbesar), bukan 133",
+    "Pelapor laporan 2 & 3 menerima tindak lanjut 'dicatat sama dengan laporan lain'",
+    "Batalkan lalu tandai lagi → berfungsi"
+   ],
+   "hasil": "Lulus setelah perbaikan (9 langkah di produksi, 5 tes baru, suite 654 hijau)",
+   "skor": "9/9",
+   "status": "lulus",
+   "temuan": [
+    {
+     "masalah": "Belum ada cara menandai laporan warga sebagai duplikat — tiap laporan tampil terpisah dengan jiwanya sendiri.",
+     "perbaikan": "Field 'duplikat dari', kandidat otomatis, tandai/batal di Laporan Masyarakat, Control Centre melipat duplikat (ea359a4)."
+    },
+    {
+     "masalah": "Laporan tidak diarahkan ke posko yang melayani bencana lewat daftar 'bencana yang dilayani'.",
+     "perbaikan": "Pemilihan posko memakai semua posko yang melayani bencana (3aa7224)."
+    },
+    {
+     "masalah": "Pengelola posko lain di bencana yang sama tidak bisa melihat kandidat duplikat.",
+     "perbaikan": "Boleh melihat; menandai tetap hanya pengelola laporan / Control Centre (e85878c)."
+    },
+    {
+     "masalah": "Uji pertama memakai koordinat salah (−4,14; seharusnya +4,14) → 3 laporan [SIMULASI] tidak terarah.",
+     "perbaikan": "Kesalahan skrip uji; laporan dibiarkan (data simulasi tidak dihapus)."
+    }
+   ]
   }
  ],
  "rencana": [

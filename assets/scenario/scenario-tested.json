@@ -663,6 +663,33 @@
      "perbaikan": "Ditutup (commit 794beef)."
     }
    ]
+  },
+  {
+   "id": "RS-1",
+   "tanggal": "2026-11-01",
+   "kategori": "Relawan",
+   "judul": "Relawan Saya + privasi papan relawan",
+   "tujuan": "Relawan punya halaman sendiri (tawarkan diri ke posko, jemputan, shelter, pilih bencana, profil); publik melihat keahlian/peralatan/waktu tanpa nama & HP.",
+   "akun": [
+    "akun uji otomatis (relawan, pengelola posko A/B, tamu)",
+    "ld1.demo (tampilan HP)"
+   ],
+   "langkah": [
+    "Relawan tawarkan diri ke posko A → posko B tidak bisa memutuskan → posko A setujui → penugasan 'accepted', relawan 'assigned' di posko A",
+    "Posko dari bencana lain ditolak; tawaran ganda ditolak",
+    "Ubah profil (peralatan, jadwal, perlu dijemput, HP) → tersimpan di semua profil bencana",
+    "Tamu: papan relawan & dashboard tanpa nama dan tanpa HP; keahlian/peralatan/jadwal tetap tampil (dicek juga di produksi: 10 relawan, 0 nomor HP)",
+    "Login: nama + HP + tombol WhatsApp tampil (8 kontak di event-sim-001)"
+   ],
+   "hasil": "Lulus (4 tes baru, suite 632 hijau, Playwright HP)",
+   "skor": "4/4",
+   "status": "lulus",
+   "temuan": [
+    {
+     "masalah": "Tamu melihat nama relawan di papan & dashboard.",
+     "perbaikan": "Ditutup (29c4ce6)."
+    }
+   ]
   }
  ],
  "rencana": [

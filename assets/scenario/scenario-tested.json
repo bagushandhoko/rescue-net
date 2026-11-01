@@ -866,19 +866,19 @@
    "id": "S13",
    "tanggal": "2026-11-02",
    "kategori": "Peringatan dini",
-   "judul": "Gempa BMKG besar → draf bencana → posko terdekat → admin mengaktifkan",
-   "tujuan": "Gempa besar dari BMKG langsung menjadi draf bencana yang bisa diaktifkan super admin dengan satu klik.",
+   "judul": "Gempa BMKG besar → pengumuman → super admin menjadikannya bencana bila sudah dinyatakan",
+   "tujuan": "Owner 2026-11-02: pengumuman BMKG bukan bencana; hanya dijadikan bencana Rescue-Net bila sudah dinyatakan.",
    "akun": [
     "akun uji otomatis (super admin, pengguna biasa)"
    ],
    "langkah": [
-    "Data BMKG M6.1 di laut Banten → peringatan + draf '[DRAF BMKG] Gempa M6.1 …' dengan koordinat & jenis 'gempa'",
-    "Super admin menerima notifikasi 'Draf bencana dari BMKG'",
-    "Kelola Bencana → 'Draf dari BMKG': magnitudo, kedalaman, wilayah, posko dalam jangkauan",
-    "Pengguna biasa tidak bisa membuka antrean admin",
-    "Aktifkan → status aktif, awalan [DRAF BMKG] hilang, peringatan 'acknowledged'; Tolak → 'rejected' + peringatan 'dismissed'"
+    "Data BMKG M6.1 → pengumuman (banner) + daftar posko dalam jangkauan; TIDAK ada draf bencana otomatis",
+    "Super admin mendapat notifikasi 'Pengumuman BMKG'",
+    "Kelola Bencana → Pengumuman BMKG: magnitudo, kedalaman, wilayah, posko dalam jangkauan",
+    "Jadikan bencana → bencana aktif dengan koordinat & jenis gempa; tidak bisa dua kali",
+    "Abaikan → pengumuman hilang dari daftar; pengguna biasa ditolak"
    ],
-   "hasil": "Lulus setelah perbaikan (3 tes baru, suite 657 hijau). Belum diuji dengan gempa BMKG sungguhan.",
+   "hasil": "Lulus setelah perbaikan (3 tes, suite 658 hijau). Belum dengan gempa BMKG sungguhan.",
    "skor": "5/5",
    "status": "lulus-perbaikan",
    "temuan": [
@@ -889,6 +889,42 @@
     {
      "masalah": "Draf dibuat tanpa koordinat & jenis bencana, super admin tidak diberi tahu, posko terdekat tidak terlihat.",
      "perbaikan": "Koordinat + jenis 'gempa', notifikasi admin, daftar posko dalam jangkauan (78cd7de)."
+    },
+    {
+     "masalah": "Pengumuman BMKG otomatis dijadikan draf bencana (owner: pengumuman bukan bencana).",
+     "perbaikan": "Tidak ada draf otomatis; tombol Jadikan bencana / Abaikan (8c7030c)."
+    }
+   ]
+  },
+  {
+   "id": "S14",
+   "tanggal": "2026-11-02",
+   "kategori": "Logistik",
+   "judul": "Obat dengan tanggal kedaluwarsa → peringatan sebelum kedaluwarsa",
+   "tujuan": "Posko tahu obat/makanan yang sudah atau segera kedaluwarsa.",
+   "akun": [
+    "ld4.demo (Posko Medis LD4)",
+    "ld2.demo (posko lain)",
+    "tamu"
+   ],
+   "langkah": [
+    "Lot Oralit 50 sachet kedaluwarsa +20 hari → 'segera' (obat: jendela 60 hari)",
+    "Lot Obat Diare & Oralit 10 paket kedaluwarsa kemarin → 'kedaluwarsa'",
+    "Tamu & posko lain ditolak melihat stok kedaluwarsa LD4",
+    "Tanpa tanggal kedaluwarsa ditolak",
+    "Kelola Posko: panel Stok kedaluwarsa + jumlahnya di 'Perlu tindakan'"
+   ],
+   "hasil": "Lulus (8/8 di produksi, 1 tes baru, suite 658 hijau)",
+   "skor": "8/8",
+   "status": "lulus-perbaikan",
+   "temuan": [
+    {
+     "masalah": "Peringatan kedaluwarsa hanya notifikasi harian; tidak ada halaman yang menampilkan daftar & tidak ada form memberi tanggal.",
+     "perbaikan": "Panel Stok kedaluwarsa di Kelola Posko (8c7030c)."
+    },
+    {
+     "masalah": "Skrip uji buatan Hermes (GLM) gagal: sesi login tidak dibawa antar-permintaan, diagnosis keliru.",
+     "perbaikan": "Uji dijalankan Claude; hasil Hermes selalu diverifikasi."
     }
    ]
   }

@@ -116,6 +116,8 @@
   }
   function applyFilters() {
     if (!BOARD_CACHE) return;
+    var note = $("#fNote");
+    if (note) note.hidden = !(FILTER.dari || FILTER.sampai);
     renderTersedia((BOARD_CACHE.relawan_tersedia || []).filter(matches), (BOARD_CACHE.relawan_tersedia || []).length);
     renderDitempatkan((BOARD_CACHE.relawan_ditempatkan || []).filter(matches), (BOARD_CACHE.relawan_ditempatkan || []).length);
   }

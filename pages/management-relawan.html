@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Manajemen Relawan</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=rwfilter-20261102">
+  <link rel="stylesheet" href="../assets/css/style.css?v=rwfilter-20261102b">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -95,6 +95,7 @@
       <label>Tersedia sampai <input type="date" id="fSampai"></label>
       <label>Keahlian <input id="fSkill" list="fSkillList" placeholder="Ketik atau pilih, mis. medis"><datalist id="fSkillList"></datalist></label>
       <label>Cari <input type="search" id="relawanSearch" placeholder="Nama, organisasi, lokasi…"></label>
+      <p class="rn-muted rn-rw-fnote" id="fNote" hidden>Filter tanggal hanya menampilkan relawan yang sudah mengisi tanggal kesediaan di halaman Relawan Saya.</p>
     </section>
 
     <!-- owner 2026-10-25: kesiapan relawan tersedia + siapa ditempatkan di mana -->
@@ -309,7 +310,7 @@
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/relawan.js?v=rwfilter-20261102"></script>
+<script src="../assets/js/relawan.js?v=rwfilter-20261102b"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>

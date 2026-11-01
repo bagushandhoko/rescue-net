@@ -798,6 +798,28 @@
      "perbaikan": "Filter diberi kotak sendiri (c82844b)."
     }
    ]
+  },
+  {
+   "id": "RW-3",
+   "tanggal": "2026-11-02",
+   "kategori": "Relawan",
+   "judul": "Filter relawan: rentang tanggal & keahlian diketik bebas",
+   "tujuan": "Owner: kesediaan waktu berupa rentang tanggal; keahlian bisa diketik di luar pilihan; kotak filter lebih lega.",
+   "akun": [
+    "akun uji otomatis (relawan, tamu)",
+    "tamu produksi desktop + HP"
+   ],
+   "langkah": [
+    "Relawan isi Tersedia dari/sampai di Relawan Saya; 'sampai' sebelum 'dari' ditolak",
+    "Papan relawan mengirim tanggal; tamu tetap tanpa nama/HP",
+    "Ketik 'med' → 1 tersedia + 1 ditempatkan; teks bebas yang tidak ada → 0",
+    "Filter tanggal: relawan tanpa tanggal tidak ikut (ada keterangan)",
+    "Desktop 5 kolom, HP 1 kolom, tanpa geser samping"
+   ],
+   "hasil": "Lulus (1 tes baru, suite 649 hijau, Playwright)",
+   "skor": "5/5",
+   "status": "lulus",
+   "temuan": []
   }
  ],
  "rencana": [

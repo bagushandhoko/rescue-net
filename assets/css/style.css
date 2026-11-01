@@ -7570,6 +7570,8 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-rw-filters label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; min-width: 0; }
 .rn-rw-filters input, .rn-rw-filters select { min-height: 42px; padding: 8px 12px; border-radius: 10px; font-weight: 400; }
 .rn-rw-filters select, .rn-rw-filters input { width: 100%; min-width: 0; }
+.rn-rw-fnote { grid-column: 1 / -1; margin: 0; font-size: 12px; }
+.rn-rw-fnote[hidden] { display: none; }
 .rn-rw-rows { display: flex; flex-direction: column; gap: 6px; max-height: 640px; overflow-y: auto; }
 .rn-rw-item { border: 1px solid rgba(104,64,45,.14); border-radius: 10px; background: #fff; }
 .rn-rw-item[open] { border-color: #ef523d; }

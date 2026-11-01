@@ -690,6 +690,34 @@
      "perbaikan": "Ditutup (29c4ce6)."
     }
    ]
+  },
+  {
+   "id": "KOM-1",
+   "tanggal": "2026-11-01",
+   "kategori": "Komunikasi",
+   "judul": "Jaringan komunikasi: posko komunikasi (ORARI/RAPI), dukungan, node relawan",
+   "tujuan": "Alat radio mencatat jangkauan & energi; posko menyatakan dukungan komunikasi yang ditawarkan/dibutuhkan; relawan radio bisa jadi node komunikasi di daerah bencana atau siaga.",
+   "akun": [
+    "akun uji otomatis (pengelola posko A/B, posko komunikasi, relawan, tamu)",
+    "ld1.demo (tampilan HP, tanpa membuat data)"
+   ],
+   "langkah": [
+    "Alat dengan jangkauan 25 km, PLTS, tahan 48 jam tersimpan; sumber energi/jangkauan tidak valid ditolak",
+    "Pengelola posko B tidak bisa mengubah alat/status/dukungan posko A; pengelola A bisa",
+    "Posko jenis 'Komunikasi' tampil di papan dengan jangkauan terjauh dan energi; posko yang butuh & yang menyediakan tampil; mengosongkan kebutuhan menghapusnya dari daftar",
+    "Relawan daftar node (bencana + siaga): tamu tidak melihat call sign/HP, pengguna login melihat; node bencana lain tidak ikut; node tidak dihitung sebagai inventaris posko",
+    "Hanya pemilik node yang bisa ubah/tarik; maks. 5 node aktif; bencana usulan ditolak",
+    "Produksi: papan tampil desktop & HP tanpa error dan tanpa geser samping; panel node di Relawan Saya tampil"
+   ],
+   "hasil": "Lulus (7 tes baru, suite 640 hijau, Playwright desktop + HP)",
+   "skor": "7/7",
+   "status": "lulus",
+   "temuan": [
+    {
+     "masalah": "Siapa pun yang login bisa mengubah alat komunikasi & status konektivitas posko mana pun.",
+     "perbaikan": "Dibatasi ke pengelola posko / pembuat / pemilik alat (6a6cd91)."
+    }
+   ]
   }
  ],
  "rencana": [

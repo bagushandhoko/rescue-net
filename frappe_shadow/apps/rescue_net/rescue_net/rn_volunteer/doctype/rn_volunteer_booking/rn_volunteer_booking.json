@@ -11,7 +11,7 @@
    "fieldname": "booking_kind",
    "fieldtype": "Select",
    "label": "Jenis",
-   "options": "transport\nakomodasi",
+   "options": "transport\nakomodasi\nposko",
    "reqd": 1,
    "in_list_view": 1
   },
@@ -98,6 +98,12 @@
    "fieldname": "decided_at",
    "fieldtype": "Datetime",
    "label": "Waktu keputusan"
+  },
+  {
+   "fieldname": "assignment",
+   "fieldtype": "Link",
+   "label": "Penugasan",
+   "options": "RN Volunteer Assignment"
   }
  ],
  "permissions": [
@@ -108,5 +114,6 @@
    "create": 1,
    "delete": 1
   }
- ]
+ ],
+ "modified": "2026-11-01 20:00:00.000000"
 }

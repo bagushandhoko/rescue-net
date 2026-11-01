@@ -95,7 +95,9 @@
       var skills = shown.map(function (s) { return '<span class="chip rn-rw-skill">' + esc(skillLabel(s)) + "</span>"; }).join("") +
         (more > 0 ? '<span class="rn-rw-more" title="' + esc(r.skills.map(skillLabel).join(", ")) + '">+' + more + "</span>" : "");
       return (
-        '<tr><td><span class="rn-rw-person"><span class="rn-rw-avatar">' + esc(initials(r.volunteer_name)) + "</span><b>" + esc(r.volunteer_name) + "</b></span></td>" +
+        '<tr><td><span class="rn-rw-person"><span class="rn-rw-avatar">' + esc(BOARD_CACHE && BOARD_CACHE.logged_in === false ? "R" : initials(r.volunteer_name)) + "</span><b>" +
+          esc(BOARD_CACHE && BOARD_CACHE.logged_in === false ? "Relawan" : r.volunteer_name) + "</b>" +
+          (r.kontak ? '<br><small><a href="tel:' + esc(String(r.kontak).replace(/[^\d+]/g, "")) + '">' + esc(r.kontak) + "</a></small>" : "") + "</span></td>" +
         '<td title="' + esc(r.organisasi) + '">' + esc(r.organisasi) + "</td>" +
         '<td><span class="rn-rw-skills">' + skills + "</span></td>" +
         '<td title="' + esc(r.lokasi) + '">' + esc(r.lokasi) + "</td>" +
@@ -230,10 +232,22 @@
       yes(r.preferensi) ? "<div><span>Preferensi</span><b>" + esc(r.preferensi) + "</b></div>" : "",
     ].join("");
   }
+  function waLink(n) {
+    var d = String(n || "").replace(/[^\d]/g, "");
+    if (d.indexOf("0") === 0) d = "62" + d.slice(1);
+    return d ? "https://wa.me/" + d : "";
+  }
   function personHead(r) {
-    return '<div class="rn-rw-card-head"><span class="rn-rw-avatar">' + esc(initials(r.volunteer_name)) + "</span>" +
-      "<div><b>" + esc(r.volunteer_name) + '</b><small class="rn-muted">' + esc(r.organisasi) +
-      (yes(r.lokasi) ? " · " + esc(r.lokasi) : "") + "</small></div></div>";
+    // owner 2026-11-01: name + phone only after login (server sends neither to a guest)
+    var guest = BOARD_CACHE && BOARD_CACHE.logged_in === false;
+    var contact = r.kontak
+      ? '<div class="rn-rw-contact"><a href="tel:' + esc(String(r.kontak).replace(/[^\d+]/g, "")) + '">' + esc(r.kontak) + "</a>" +
+        (waLink(r.kontak) ? ' <a class="chip good" target="_blank" rel="noopener" href="' + esc(waLink(r.kontak)) + '">WhatsApp</a>' : "") + "</div>"
+      : (guest ? '<div class="rn-rw-contact rn-muted"><a href="auth.html?next=' + encodeURIComponent(location.pathname + location.search) +
+          '">Login</a> untuk melihat nama &amp; nomor HP</div>' : "");
+    return '<div class="rn-rw-card-head"><span class="rn-rw-avatar">' + esc(guest ? "R" : initials(r.volunteer_name)) + "</span>" +
+      "<div><b>" + esc(guest ? "Relawan" : r.volunteer_name) + '</b><small class="rn-muted">' + esc(r.organisasi) +
+      (yes(r.lokasi) ? " · " + esc(r.lokasi) : "") + "</small>" + contact + "</div></div>";
   }
   function renderTersedia(rows) {
     var el = $("#relawanTersedia");
@@ -263,7 +277,10 @@
           esc(TASK_LABEL[a.assignment_status] || a.assignment_status || "-") + "</span></li>";
       }).join("");
       return '<article class="rn-rw-card">' + personHead(r) +
-        '<div class="rn-rw-card-dl"><div><span>Ditempatkan di</span><b>' + esc(r.posko_ditempatkan) + "</b></div></div>" +
+        '<div class="rn-rw-card-tags">' + (r.skills || []).slice(0, 3).map(function (s) {
+          return '<span class="chip rn-rw-skill">' + esc(skillLabel(s)) + "</span>"; }).join("") + "</div>" +
+        '<div class="rn-rw-card-dl"><div><span>Ditempatkan di</span><b>' + esc(r.posko_ditempatkan) + "</b></div>" + readyLines(r) +
+          (yes(r.durasi) ? "<div><span>Durasi</span><b>" + esc(durasiLabel(r.durasi)) + "</b></div>" : "") + "</div>" +
         (tasks ? '<ul class="rn-rw-tasks">' + tasks + "</ul>" : '<p class="rn-muted">Belum ada tugas tercatat.</p>') + "</article>";
     }).join("") : '<p class="rn-muted">Belum ada relawan yang ditempatkan di bencana ini.</p>';
   }

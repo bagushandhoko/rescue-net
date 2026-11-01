@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Relawan Saya</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=kpiword-20261101">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=label-20261025" />
+  <style>
+    .rs-events{display:grid;gap:8px;margin:6px 0 12px}
+    .rs-ev{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line,rgba(104,64,45,.14));border-radius:12px;background:#fff}
+    .rs-ev input{width:auto!important;flex:0 0 auto}
+    .rs-opt{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--line,rgba(104,64,45,.1));overflow-wrap:anywhere}
+    .rs-opt>div:first-child{flex:1 1 220px;min-width:0}
+    .rs-ev-opts h5{margin:12px 0 4px;font-size:14px}
+    .rs-check{display:flex;gap:8px;align-items:center}.rs-check input{width:auto!important}
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="notifikasi-settings.html">Notifikasi WhatsApp</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Relawan Saya</div>
+      <div>
+        <p class="eyebrow">Relawan</p>
+        <h2>Relawan Saya</h2>
+        <p class="subtitle">Halaman pribadi relawan: isi keahlian, peralatan dan waktu yang Anda sediakan, pilih bencana yang ingin Anda bantu, tawarkan diri ke posko, pesan kursi armada (jemputan) atau tempat menginap.</p>
+        <p class="subtitle" id="rsStatus" role="status" aria-live="polite">Memuat…</p>
+      </div>
+    </header>
+
+    <section class="panel" id="rsLogin" hidden>
+      <div class="panel-header"><div><h3>Masuk dulu</h3><p>Halaman ini untuk relawan yang sudah punya akun.</p></div></div>
+      <div class="form-actions">
+        <a class="btn primary" href="auth.html?next=relawan-saya.html">Login</a>
+        <a class="btn" href="auth.html?next=relawan-saya.html#daftar-relawan">Daftar sebagai relawan</a>
+        <a class="btn" href="management-relawan.html">Lihat relawan yang menawarkan diri</a>
+      </div>
+    </section>
+
+    <div id="rsPanel" hidden>
+      <section class="panel">
+        <div class="panel-header"><div><h3>1. Bencana yang saya bantu</h3><p id="rsIntro">Centang bencana yang ingin Anda bantu. Anda bisa membantu lebih dari satu.</p></div></div>
+        <form class="rn-form" id="rsOfferForm">
+          <div id="rsEvents" class="rs-events"></div>
+          <div class="form-grid" id="rsFirst" hidden>
+            <label>No. HP / WhatsApp<input name="contact" inputmode="tel" placeholder="08…"></label>
+            <label>Keahlian utama<input name="main_skill" placeholder="mis. logistik, medis, memasak"></label>
+            <label>Lokasi Anda<input name="current_location" placeholder="mis. Meulaboh"></label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="submit">Simpan bencana yang saya bantu</button><span class="form-message" id="rsMsg"></span></div>
+        </form>
+      </section>
+
+      <section class="panel" id="rsProfilePanel" hidden>
+        <div class="panel-header"><div><h3>2. Profil relawan saya</h3><p>Terlihat oleh posko dan di daftar relawan. Nama &amp; nomor HP hanya untuk pengguna yang login.</p></div></div>
+        <form class="rn-form" id="rsProfileForm">
+          <div class="form-grid">
+            <label>No. HP / WhatsApp<input name="contact" inputmode="tel" required></label>
+            <label>Keahlian utama<input name="main_skill" placeholder="mis. medis, SAR, memasak"></label>
+            <label>Keahlian lain<input name="skill_tags" placeholder="pisahkan dengan koma"></label>
+            <label>Peralatan yang dibawa<input name="equipment_owned" placeholder="mis. senter, P3K, chainsaw, HT"></label>
+            <label>Waktu yang disediakan<input name="availability_schedule" placeholder="mis. Sabtu–Minggu, 08.00–17.00"></label>
+            <label>Lama bisa membantu<input name="duration_available" placeholder="mis. 3 hari, 2 minggu"></label>
+            <label>Lokasi saya sekarang<input name="current_location"></label>
+            <label>Area yang bisa dijangkau<input name="service_areas" placeholder="mis. Aceh Barat, Nagan Raya"></label>
+            <label>Kendaraan sendiri<select name="transport_vehicle"><option value="">Tidak ada</option><option value="motor">Motor</option><option value="mobil">Mobil</option><option value="truck">Truk</option><option value="lainnya">Lainnya</option></select></label>
+            <label class="rs-check"><input type="checkbox" name="needs_pickup" value="1"> Saya perlu dijemput</label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="submit">Simpan profil</button><span class="form-message" id="rsProfileMsg"></span></div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div><h3>3. Tawarkan diri, jemputan &amp; tempat menginap</h3><p>Per bencana yang Anda centang: pilih posko tempat Anda ingin membantu, pesan kursi di armada, atau tempat tidur di shelter relawan. Posko yang memutuskan.</p></div></div>
+        <div id="rsOptions"><p class="rn-muted">Centang bencana di langkah 1 dulu.</p></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div><h3>Tawaran &amp; booking saya</h3></div></div>
+        <div id="rsBookings" class="rn-muted">Belum ada booking.</div>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
+
+<script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+<script src="../assets/js/rn-relawan-saya.js?v=rs-20261101"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
+<script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
+<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=rs-20261101"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=privasi-20261026"></script>
+<script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+</body>
+</html>

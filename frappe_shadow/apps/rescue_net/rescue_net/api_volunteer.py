@@ -998,6 +998,7 @@ def dashboard(posko=None):
         redact_posko_contacts(poskos)
         for p in profiles:
             p["contact"] = None
+            p["volunteer_name"] = GUEST_VOLUNTEER_NAME  # owner 2026-11-01: name only after login
 
     return {
         "mode": "manager",
@@ -1373,7 +1374,7 @@ def volunteer_board(disaster_event=None):
         ],
     }
 
-    return {
+    out = {
         "disaster_event": event,
         "generated_at": now,
         # 2026-10-25: these two were built but never returned in the repo (the
@@ -1418,3 +1419,33 @@ def volunteer_board(disaster_event=None):
         "papan_penugasan": papan_penugasan,
         "akomodasi_keselamatan": akomodasi_keselamatan,
     }
+    return _board_privacy(out, {p.name: p.get("contact") for p in profiles})
+
+
+GUEST_VOLUNTEER_NAME = "Relawan (login untuk melihat nama)"
+
+
+def _board_privacy(out, contacts):
+    """Owner rule 2026-11-01: the public sees what volunteers offer (skills, equipment,
+    time, placement) but a volunteer's NAME and PHONE only after login."""
+    guest = frappe.session.user == "Guest"
+    out["logged_in"] = not guest
+    for key in ("daftar_relawan", "relawan_tersedia", "relawan_ditempatkan"):
+        for r in out.get(key) or []:
+            if guest:
+                r["volunteer_name"] = GUEST_VOLUNTEER_NAME
+                r["kontak"] = None
+            else:
+                r["kontak"] = contacts.get(r.get("name")) or None
+    if guest:
+        for r in out.get("papan_penugasan") or []:
+            r["volunteer_name"] = GUEST_VOLUNTEER_NAME
+        for key, items in (out.get("kpi_items") or {}).items():
+            if key in ("terdaftar_items", "available_items", "bertugas_items", "fatigue_items"):
+                for it in items or []:
+                    if isinstance(it, dict):
+                        for f in ("title", "label", "name"):
+                            if f in it:
+                                it[f] = "Relawan"
+                                break
+    return out

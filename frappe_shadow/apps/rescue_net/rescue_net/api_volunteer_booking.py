@@ -60,14 +60,56 @@ def my_volunteer():
     for b in bookings:
         b["posko_title"] = _title("RN Posko", b.posko)
         b["target_title"] = (_title("RN Transport Space", b.transport_space, "provider_name") if b.transport_space
-                             else _title("RN Volunteer Accommodation", b.accommodation, "location_name"))
+                             else _title("RN Volunteer Accommodation", b.accommodation, "location_name") if b.accommodation
+                             else b["posko_title"])
     return {
         "account": {"name": frappe.db.get_value("User", frappe.session.user, "full_name") or frappe.session.user},
         "events": _events(),
         "offered": [p.disaster_event for p in profiles if p.availability_status != "unavailable"],
         "profiles": profiles,
         "bookings": bookings,
+        "profile": _my_profile_fields(profiles),
     }
+
+
+EDITABLE = ("contact", "main_skill", "skill_tags", "equipment_owned", "availability_schedule", "duration_available",
+            "current_location", "service_areas", "transport_vehicle", "needs_pickup", "preferences")
+
+
+def _my_profile_fields(profiles):
+    if not profiles:
+        return {}
+    meta = frappe.get_meta("RN Volunteer Profile")
+    fields = [f for f in EDITABLE if meta.has_field(f)]
+    row = frappe.db.get_value("RN Volunteer Profile", profiles[0].name, fields, as_dict=True) or {}
+    return {k: (v if v is not None else "") for k, v in row.items()}
+
+
+@frappe.whitelist(methods=["POST"])
+def update_my_profile(**kw):
+    """Relawan Saya: skills, equipment, time offered etc. — written to every profile of
+    this account (one profile per disaster), so the posko sees the same data everywhere."""
+    actor = _me()
+    meta = frappe.get_meta("RN Volunteer Profile")
+    values = {}
+    for f in EDITABLE:
+        if f in kw and meta.has_field(f):
+            v = kw.get(f)
+            if f == "needs_pickup":
+                values[f] = 1 if str(v).lower() in ("1", "true", "on", "yes") else 0
+            else:
+                values[f] = (str(v).strip()[:500] or None) if v is not None else None
+    if "contact" in values and not values["contact"]:
+        frappe.throw("Nomor HP / WhatsApp wajib diisi agar posko bisa menghubungi Anda.")
+    profiles = _profiles(actor)
+    if not profiles:
+        frappe.throw("Pilih dulu bencana yang ingin Anda bantu.")
+    for p in profiles:
+        doc = frappe.get_doc("RN Volunteer Profile", p.name)
+        doc.update(values)
+        doc.source_updated_at = now_datetime()
+        doc.save(ignore_permissions=True)
+    return my_volunteer()
 
 
 @frappe.whitelist()
@@ -173,7 +215,34 @@ def booking_options(disaster_event):
         akomodasi.append({"id": a.name, "title": a.location_name, "type": a.accommodation_type, "posko": a.posko,
                           "posko_title": _title("RN Posko", a.posko), "safety": a.safety_status,
                           "beds_left": max(0, cap - _used("akomodasi", a.name)), "beds": cint(a.capacity_beds)})
-    return {"disaster_event": event, "armada": armada, "akomodasi": akomodasi}
+    return {"disaster_event": event, "armada": armada, "akomodasi": akomodasi, "posko": _offer_poskos(event)}
+
+
+_CLOSED_POSKO = ("closed", "inactive", "nonaktif", "non_aktif", "offline")
+_TYPE_LABEL = {"logistics": "Logistik", "collection_hub": "Gudang Pengumpul", "transport": "Transport",
+               "medical": "Medis", "shelter": "Shelter", "kitchen": "Dapur Umum", "field_assessment": "Assessment"}
+
+
+def _offer_poskos(event):
+    """Poskos of this disaster a volunteer can offer to work at (owner 2026-11-01)."""
+    from rescue_net.control_centre.common import serving_posko_names
+    names = list(serving_posko_names(event) or [])
+    if not names:
+        return []
+    placed = {}
+    for a in frappe.get_all("RN Volunteer Assignment", filters={"posko": ["in", names],
+                            "assignment_status": ["in", ["planned", "accepted", "checked_in", "in_progress"]]},
+                            pluck="posko", limit_page_length=0):
+        placed[a] = placed.get(a, 0) + 1
+    out = []
+    for p in frappe.get_all("RN Posko", filters={"name": ["in", names]},
+                            fields=["name", "title", "posko_type", "city_name", "operational_status"],
+                            order_by="title asc", limit_page_length=300):
+        if str(p.operational_status or "").lower() in _CLOSED_POSKO:
+            continue
+        out.append({"id": p.name, "title": p.title, "type": _TYPE_LABEL.get(p.posko_type, p.posko_type or "Posko"),
+                    "city": p.city_name, "volunteers": placed.get(p.name, 0)})
+    return out
 
 
 @frappe.whitelist()
@@ -181,12 +250,14 @@ def book(kind, target, disaster_event, date_from=None, date_to=None, pickup_loca
     actor = _me()
     from rescue_net.control_centre.common import canonical_event
     event = canonical_event(disaster_event) or disaster_event
-    if kind not in ("transport", "akomodasi"):
+    if kind not in ("transport", "akomodasi", "posko"):
         frappe.throw("Jenis booking tidak valid.")
     prof = frappe.db.get_value("RN Volunteer Profile", {"user_account": actor.name, "disaster_event": event,
                                                        "availability_status": ["!=", "unavailable"]}, "name")
     if not prof:
         frappe.throw("Tawarkan diri Anda untuk bencana ini dulu (centang di Relawan Saya).")
+    if kind == "posko":
+        return _offer_to_posko(actor, prof, target, event, date_from, date_to, note)
     if kind == "transport":
         if target not in _served_spaces(event):
             frappe.throw("Armada ini tidak melayani bencana tersebut.")
@@ -208,6 +279,29 @@ def book(kind, target, disaster_event, date_from=None, date_to=None, pickup_loca
                           field: target, "date_from": date_from or None, "date_to": date_to or None,
                           "pickup_location": (pickup_location or "")[:140] or None, "note": (note or "")[:500] or None})
     doc.insert(ignore_permissions=True)
+    return {"booking": doc.name, "status": doc.status, "posko": posko}
+
+
+def _offer_to_posko(actor, prof, posko, event, date_from=None, date_to=None, note=None):
+    """A volunteer offers to work at one posko; the posko accepts (-> assignment) or declines."""
+    from rescue_net.reference_resolver import resolve_posko
+    posko = resolve_posko(posko) or posko
+    if posko not in {p["id"] for p in _offer_poskos(event)}:
+        frappe.throw("Posko ini tidak melayani bencana tersebut atau sedang tutup.")
+    if frappe.db.exists("RN Volunteer Booking", {"volunteer": prof, "booking_kind": "posko", "posko": posko,
+                                                 "status": ["in", ACTIVE]}):
+        frappe.throw("Anda sudah menawarkan diri ke posko ini.")
+    doc = frappe.get_doc({"doctype": "RN Volunteer Booking", "booking_kind": "posko", "status": "requested",
+                          "volunteer": prof, "user_account": actor.name, "disaster_event": event, "posko": posko,
+                          "date_from": date_from or None, "date_to": date_to or None,
+                          "note": (note or "")[:500] or None})
+    doc.insert(ignore_permissions=True)
+    try:
+        from rescue_net.api_notify import notify_posko
+        notify_posko(posko, "[Rescue-Net] Relawan %s menawarkan diri ke posko Anda. Buka Manajemen Relawan untuk menyetujui."
+                     % (frappe.db.get_value("RN Volunteer Profile", prof, "volunteer_name") or "baru"), "volunteer_offer")
+    except Exception:
+        frappe.log_error(title="rn volunteer offer notify failed")
     return {"booking": doc.name, "status": doc.status, "posko": posko}
 
 
@@ -246,7 +340,8 @@ def posko_bookings(posko=None, status=None):
         r["volunteer_name"], r["main_skill"], r["contact"] = v.get("volunteer_name"), v.get("main_skill"), v.get("contact")
         r["posko_title"] = _title("RN Posko", r.posko)
         r["target_title"] = (_title("RN Transport Space", r.transport_space, "provider_name") if r.transport_space
-                             else _title("RN Volunteer Accommodation", r.accommodation, "location_name"))
+                             else _title("RN Volunteer Accommodation", r.accommodation, "location_name") if r.accommodation
+                             else r["posko_title"])
     return {"bookings": rows}
 
 
@@ -260,7 +355,16 @@ def decide_booking(booking, action, note=None):
         frappe.throw("Booking ini sudah diputuskan.")
     if action not in ("confirm", "reject"):
         frappe.throw("Aksi tidak valid.")
-    if action == "confirm":
+    if action == "confirm" and doc.booking_kind == "posko":
+        from rescue_net import api_volunteer
+        res = api_volunteer.create_assignment(volunteer=doc.volunteer, posko=doc.posko,
+                                              task_title="Relawan di " + (_title("RN Posko", doc.posko) or doc.posko),
+                                              assignment_notes="Dari tawaran relawan" + (": " + doc.note if doc.note else ""))
+        # the volunteer offered themself: no separate acceptance step
+        frappe.db.set_value("RN Volunteer Assignment", res["assignment"], "assignment_status", "accepted")
+        api_volunteer._refresh_profile_assignment_state(doc.volunteer)
+        doc.assignment = res["assignment"]
+    elif action == "confirm":
         target = doc.transport_space or doc.accommodation
         if _capacity(doc.booking_kind, target) - _used(doc.booking_kind, target) <= 0:
             frappe.throw("Penuh: kapasitas sudah terpakai.")

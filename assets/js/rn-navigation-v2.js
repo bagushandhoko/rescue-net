@@ -302,7 +302,8 @@
   }
 
   function groupHtml(label, items, groupId, forceOpen) {
-    const active = forceOpen || items.some(item => isActive(item.href));
+    // owner 2026-11-02: submenus never open by themselves — only when clicked (the active page link is still highlighted)
+    const active = false;
 
     return `
       <details class="rn-nav-v2-group" data-rn-group="${groupId}" ${active ? "open" : ""}>
@@ -441,10 +442,7 @@
     wireAccordion(nav);
     if (window.RNIconFill) window.RNIconFill(nav);
 
-    // The active function's page is current — keep only this group open.
-    Array.from(nav.querySelectorAll(".rn-nav-v2-group")).forEach(g => {
-      g.open = g.getAttribute("data-rn-group") === "posko-fn";
-    });
+    // owner 2026-11-02: submenus stay closed until clicked
   }
 
   function preserveEventContext(nav) {

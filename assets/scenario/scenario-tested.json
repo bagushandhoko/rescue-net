@@ -1,6 +1,6 @@
 {
  "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
- "diperbarui": "2026-10-26",
+ "diperbarui": "2026-11-01",
  "uji": [
   {
    "id": "POSKO-ALL-2",
@@ -633,6 +633,34 @@
     {
      "masalah": "Belum diputuskan: apakah BNPB perlu melihat detail organisasi tertutup.",
      "perbaikan": "Usulan: ringkasan otomatis + permintaan akses berbatas waktu."
+    }
+   ]
+  },
+  {
+   "id": "KB-1",
+   "tanggal": "2026-11-01",
+   "kategori": "Bencana",
+   "judul": "Kelola Bencana: buat, verifikasi, gabung & batal gabung",
+   "tujuan": "Memastikan bencana tidak dobel: org terverifikasi langsung aktif, lainnya jadi usulan yang diverifikasi super admin; bencana kembar bisa digabung dan dibatalkan.",
+   "akun": [
+    "ld1.demo (Komunitas Landrover, terverifikasi)",
+    "akun uji otomatis (org belum terverifikasi, perorangan, super admin)"
+   ],
+   "langkah": [
+    "Form Kelola Bencana: ketik 'Gempa Aceh Barat' → muncul 'Gempa Aceh Barat 2025' (kemiripan 46%) + tombol Gabung (HP & desktop, tanpa geser samping)",
+    "Org terverifikasi → aktif; org belum terverifikasi/perorangan → usulan, tidak tampil di daftar publik",
+    "Kirim nama/lokasi kembar → ditahan 'sepertinya sudah ada'; kirim tetap → usulan gabung otomatis dibuat",
+    "Super admin: setujui/tolak/turunkan; gabung → posko & data pindah, nama lama jadi nama lain, tautan lama dialihkan",
+    "Batal gabung → data kembali; data yang dibuat setelah gabung tetap di bencana utama",
+    "Celah lama: create_disaster_event bisa set status 'active' oleh semua user login → kini ikut aturan (jadi usulan)"
+   ],
+   "hasil": "Lulus (16 tes otomatis + uji tampilan Playwright; suite penuh 628 tes)",
+   "skor": "16/16",
+   "status": "lulus",
+   "temuan": [
+    {
+     "masalah": "Semua user login bisa membuat bencana aktif lewat API lama.",
+     "perbaikan": "Ditutup (commit 794beef)."
     }
    ]
   }

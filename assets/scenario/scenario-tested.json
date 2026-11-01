@@ -861,6 +861,36 @@
      "perbaikan": "Kesalahan skrip uji; laporan dibiarkan (data simulasi tidak dihapus)."
     }
    ]
+  },
+  {
+   "id": "S13",
+   "tanggal": "2026-11-02",
+   "kategori": "Peringatan dini",
+   "judul": "Gempa BMKG besar → draf bencana → posko terdekat → admin mengaktifkan",
+   "tujuan": "Gempa besar dari BMKG langsung menjadi draf bencana yang bisa diaktifkan super admin dengan satu klik.",
+   "akun": [
+    "akun uji otomatis (super admin, pengguna biasa)"
+   ],
+   "langkah": [
+    "Data BMKG M6.1 di laut Banten → peringatan + draf '[DRAF BMKG] Gempa M6.1 …' dengan koordinat & jenis 'gempa'",
+    "Super admin menerima notifikasi 'Draf bencana dari BMKG'",
+    "Kelola Bencana → 'Draf dari BMKG': magnitudo, kedalaman, wilayah, posko dalam jangkauan",
+    "Pengguna biasa tidak bisa membuka antrean admin",
+    "Aktifkan → status aktif, awalan [DRAF BMKG] hilang, peringatan 'acknowledged'; Tolak → 'rejected' + peringatan 'dismissed'"
+   ],
+   "hasil": "Lulus setelah perbaikan (3 tes baru, suite 657 hijau). Belum diuji dengan gempa BMKG sungguhan.",
+   "skor": "5/5",
+   "status": "lulus-perbaikan",
+   "temuan": [
+    {
+     "masalah": "Draf BMKG tidak tampil di Kelola Bencana — aktivasi hanya lewat panel teknis (Desk).",
+     "perbaikan": "Bagian 'Draf dari BMKG' + tombol Aktifkan/Tolak (78cd7de)."
+    },
+    {
+     "masalah": "Draf dibuat tanpa koordinat & jenis bencana, super admin tidak diberi tahu, posko terdekat tidak terlihat.",
+     "perbaikan": "Koordinat + jenis 'gempa', notifikasi admin, daftar posko dalam jangkauan (78cd7de)."
+    }
+   ]
   }
  ],
  "rencana": [

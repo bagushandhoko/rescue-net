@@ -94,18 +94,22 @@
 
   async function loadAdmin() {
     var q = await call("admin_queue");
-    // S13 (2026-11-02): BMKG drafts — quake details + poskos within its radius
-    var bm = q.bmkg_drafts || [];
-    $("kbBmkgCount").textContent = bm.length;
-    $("kbBmkg").innerHTML = bm.length ? bm.map(function (e) {
-      var w = e.quake || {};
+    // S13 / owner 2026-11-02: BMKG notices are announcements; the super admin turns one into a disaster
+    function quakeLine(w) {
       var near = (w.nearby || []).map(function (p) { return esc(p.title) + " (" + esc(p.km) + " km)"; }).join(", ");
-      return '<div class="rn-callout"><b>' + esc(e.title) + "</b>" +
-        (w.magnitude ? "<div>M" + esc(w.magnitude) + " · kedalaman " + esc(w.depth_km) + " km · " + esc(w.area || e.location_summary || "") +
-          (w.potential ? " · " + esc(w.potential) : "") + " · " + esc(String(w.issued_at || e.started_at || "").slice(0, 16)) + "</div>" : "") +
-        "<div>Posko dalam jangkauan: <b>" + (w.nearby_count || 0) + "</b>" + (near ? " — " + near + (w.nearby_count > 8 ? ", …" : "") : "") + "</div>" +
-        '<div class="form-actions">' + btn("review", { ev: e.name, d: "approve" }, "Aktifkan bencana", true) + btn("review", { ev: e.name, d: "reject" }, "Tolak") + "</div></div>";
-    }).join("") : '<p class="rn-muted">Tidak ada draf dari BMKG.</p>';
+      return (w.magnitude ? "<div>M" + esc(w.magnitude) + " · kedalaman " + esc(w.depth_km) + " km · " + esc(w.area || "") +
+        (w.potential ? " · " + esc(w.potential) : "") + " · " + esc(String(w.issued_at || "").slice(0, 16)) + "</div>" : "") +
+        "<div>Posko dalam jangkauan: <b>" + (w.nearby_count || 0) + "</b>" + (near ? " — " + near + (w.nearby_count > 8 ? ", …" : "") : "") + "</div>";
+    }
+    var notices = q.bmkg_notices || [], drafts = q.bmkg_drafts || [];
+    $("kbBmkgCount").textContent = notices.length + drafts.length;
+    $("kbBmkg").innerHTML = (notices.length || drafts.length) ? notices.map(function (w) {
+      return '<div class="rn-callout"><b>📢 ' + esc(w.title) + '</b> <span class="chip">pengumuman</span>' + quakeLine(w) +
+        '<div class="form-actions">' + btn("promote", { w: w.warning }, "Jadikan bencana", true) + btn("dismissw", { w: w.warning }, "Abaikan") + "</div></div>";
+    }).join("") + drafts.map(function (e) {
+      return '<div class="rn-callout"><b>' + esc(e.title) + '</b> <span class="chip">draf lama</span>' + quakeLine(e.quake || {}) +
+        '<div class="form-actions">' + btn("review", { ev: e.name, d: "approve" }, "Jadikan bencana", true) + btn("review", { ev: e.name, d: "reject" }, "Abaikan") + "</div></div>";
+    }).join("") : '<p class="rn-muted">Tidak ada pengumuman BMKG yang perlu diputuskan.</p>';
     $("kbPropCount").textContent = q.proposed.length;
     $("kbProposed").innerHTML = q.proposed.length ? q.proposed.map(function (e) {
       return evRow(e, btn("review", { ev: e.name, d: "approve" }, "Setujui", true) + btn("review", { ev: e.name, d: "reject" }, "Tolak"));
@@ -137,7 +141,14 @@
     var b = ev.target.closest("button[data-act]"); if (!b) return;
     var act = b.dataset.act;
     try {
-      if (act === "review") {
+      if (act === "promote") {
+        var t = prompt("Pengumuman ini sudah dinyatakan sebagai bencana? Nama bencana di Rescue-Net:", "");
+        if (t === null) return;
+        await call("promote_warning", { warning: b.dataset.w, title: t || null }, true);
+      } else if (act === "dismissw") {
+        if (!confirm("Abaikan pengumuman ini (bukan bencana)?")) return;
+        await call("dismiss_warning", { warning: b.dataset.w }, true);
+      } else if (act === "review") {
         var note = "";
         if (b.dataset.d === "reject" || b.dataset.d === "demote") { note = prompt("Alasan (dikirim ke pembuat):", "") ; if (note === null) return; }
         await call("review_event", { event: b.dataset.ev, decision: b.dataset.d, note: note }, true);

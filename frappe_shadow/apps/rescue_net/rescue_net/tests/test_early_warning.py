@@ -38,14 +38,15 @@ class TestEarlyWarning(RNTestCase):
         self.assertFalse(ew.meets_threshold(ew.parse_quakes(payload(depth="300 km"))[0]))
         self.assertFalse(ew.meets_threshold(ew.parse_quakes(payload(coords="40.0,10.0"))[0]))
 
-    def test_intake_is_idempotent_and_creates_one_draft(self):
+    def test_intake_is_idempotent_and_creates_no_disaster(self):
+        # owner 2026-11-02: a BMKG notice is an announcement, never an automatic (draft) disaster
+        n_events = frappe.db.count("RN Disaster Event")
         self.assertEqual(ew.process([payload()]), 1)
         self.assertEqual(ew.process([payload(), payload()]), 0)
-        w = frappe.get_all("RN Early Warning", fields=["name", "draft_event", "meets_threshold"])[0]
+        w = frappe.get_all("RN Early Warning", fields=["name", "draft_event", "meets_threshold", "nearby_poskos"])[0]
         self.assertTrue(w.meets_threshold)
-        ev = frappe.get_doc("RN Disaster Event", w.draft_event)
-        self.assertEqual(ev.event_status, "draft")
-        self.assertIn("DRAF", ev.title)
+        self.assertFalse(w.draft_event)
+        self.assertEqual(frappe.db.count("RN Disaster Event"), n_events)
 
     def test_below_threshold_stored_without_draft(self):
         ew.process([payload(mag="4.1")])

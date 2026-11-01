@@ -7602,3 +7602,9 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
   border-top: 1px solid rgba(104,64,45,.1); overflow-wrap: anywhere; }
 .rn-dup-row > span:first-child { flex: 1 1 220px; min-width: 0; }
 .kp-addlot { margin-top: 10px; } .kp-addlot > summary { cursor: pointer; font-weight: 700; color: #c4442f; }
+/* owner 2026-11-02: prominent "Tambah Bencana" box under personal registration */
+.rn-auth-addevent { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px;
+  padding: 14px 16px; border: 2px solid #ef523d; border-radius: 14px; background: #fff4ef; }
+.rn-auth-addevent b { font-size: 15px; color: #c4442f; }
+.rn-auth-addevent p { margin: 4px 0 0; font-size: 13px; }
+.rn-auth-addevent > div { flex: 1 1 220px; min-width: 0; }

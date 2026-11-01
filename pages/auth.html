@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Auth, Registration & Verification</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=expiry-20261102">
+  <link rel="stylesheet" href="../assets/css/style.css?v=addevent-20261102">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -282,6 +282,12 @@
           <p class="rn-auth-switch">Sudah punya akun? <button type="button" class="rn-auth-mini-link" data-auth-tab="login">Masuk di sini</button></p>
           <span class="form-message" id="registerMessage" role="alert"></span>
         </form>
+        <!-- owner 2026-11-02: tambah bencana menonjol, di bawah registrasi pribadi -->
+        <div class="rn-auth-addevent">
+          <div><b>⚠️ Tambah Bencana Baru</b>
+            <p>Untuk menambahkan bencana, Anda harus <b>login terlebih dahulu</b>. Organisasi terverifikasi langsung tayang; lainnya diverifikasi super admin.</p></div>
+          <a class="btn primary" href="auth.html?next=kelola-bencana.html%23kbCreatePanel" id="addEventBtn">Login &amp; tambah bencana</a>
+        </div>
       </div>
 
       <aside class="rn-auth-rail">

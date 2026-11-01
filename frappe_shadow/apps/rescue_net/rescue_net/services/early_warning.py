@@ -133,26 +133,15 @@ def store_quake(q):
     })
     if hit:
         doc.nearby_poskos = json.dumps(nearby_poskos(q), ensure_ascii=False)
-        legacy = q["identifier"]
-        if not frappe.db.exists("RN Disaster Event", legacy):
-            values = {
-                "doctype": "RN Disaster Event", "legacy_id": legacy,
-                "title": "[DRAF BMKG] " + doc.title, "event_status": "draft",
-                "severity": doc.severity, "location_summary": q["area"], "started_at": q["when"],
-            }
-            # S13 (2026-11-02): coordinates + type so merge suggestions and maps work, and the super admin is told
-            meta = frappe.get_meta("RN Disaster Event")
-            for f, v in (("latitude", q["lat"]), ("longitude", q["lng"]), ("event_type", "gempa")):
-                if meta.has_field(f):
-                    values[f] = v
-            ev = frappe.get_doc(values).insert(ignore_permissions=True)
-            doc.draft_event = ev.name
-            try:
-                from rescue_net.services.event_merge import notify_admins
+        # owner 2026-11-02: a BMKG notice is an ANNOUNCEMENT, not a disaster — no draft event is created.
+        # A super admin turns it into a Rescue-Net disaster only when it is declared one (Kelola Bencana →
+        # Pengumuman BMKG → "Jadikan bencana", api_disaster_admin.promote_warning).
+        try:
+            from rescue_net.services.event_merge import notify_admins
 
-                notify_admins("Draf bencana dari BMKG: %s — cek di Kelola Bencana" % doc.title)
-            except Exception:
-                frappe.log_error(frappe.get_traceback(), "bmkg draft notify")
+            notify_admins("Pengumuman BMKG: %s — bukan bencana; jadikan bencana di Kelola Bencana bila sudah dinyatakan" % doc.title)
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), "bmkg notice notify")
     doc.insert(ignore_permissions=True)
     return doc.name
 

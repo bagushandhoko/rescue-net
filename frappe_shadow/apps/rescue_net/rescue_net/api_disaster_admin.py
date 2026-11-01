@@ -204,28 +204,76 @@ def _event_row(name):
     return r
 
 
-def _bmkg_drafts():
-    """S13 (2026-11-02): draft events the BMKG feed created (status draft) with the quake and the poskos
-    within its radius — before this they could only be activated from Desk."""
+def _warning_row(w):
     import json
 
+    try:
+        near = json.loads(w.nearby_poskos or "[]")
+    except ValueError:
+        near = []
+    return {"warning": w.name, "title": w.title, "magnitude": w.magnitude, "depth_km": w.depth_km, "area": w.area_desc,
+            "potential": w.potential, "issued_at": str(w.issued_at or ""), "status": w.status,
+            "nearby_count": len(near), "nearby": near[:8]}
+
+
+_W_FIELDS = ["name", "title", "magnitude", "depth_km", "area_desc", "potential", "issued_at", "status",
+             "nearby_poskos", "latitude", "longitude", "draft_event"]
+
+
+def _bmkg_drafts():
+    """Older BMKG-created draft events (before 2026-11-02 drafts were automatic) — still decidable here."""
     out = []
     for n in frappe.get_all(EVENT, filters={"event_status": "draft"}, order_by="creation desc", pluck="name",
                             limit_page_length=50):
         row = _event_row(n)
-        w = frappe.db.get_value("RN Early Warning", {"draft_event": n},
-                                ["name", "magnitude", "depth_km", "area_desc", "potential", "issued_at", "status",
-                                 "nearby_poskos"], as_dict=True)
+        w = frappe.db.get_value("RN Early Warning", {"draft_event": n}, _W_FIELDS, as_dict=True)
         if w:
-            try:
-                near = json.loads(w.nearby_poskos or "[]")
-            except ValueError:
-                near = []
-            row["quake"] = {"warning": w.name, "magnitude": w.magnitude, "depth_km": w.depth_km, "area": w.area_desc,
-                            "potential": w.potential, "issued_at": str(w.issued_at or ""), "status": w.status,
-                            "nearby_count": len(near), "nearby": near[:8]}
+            row["quake"] = _warning_row(w)
         out.append(row)
     return out
+
+
+def _bmkg_notices():
+    """S13 / owner 2026-11-02: big BMKG quakes are ANNOUNCEMENTS. Listed for the super admin, who may turn
+    one into a disaster once it is declared one."""
+    rows = frappe.get_all("RN Early Warning", filters={"meets_threshold": 1, "status": ["in", ["new", "acknowledged"]],
+                                                       "draft_event": ["in", ["", None]]},
+                          fields=_W_FIELDS, order_by="issued_at desc", limit_page_length=20)
+    return [_warning_row(w) for w in rows]
+
+
+@frappe.whitelist(methods=["POST"])
+def promote_warning(warning, title=None):
+    """Super admin: this BMKG announcement has been declared a disaster → create an active RN Disaster Event."""
+    _require_super_admin()
+    w = frappe.db.get_value("RN Early Warning", warning, _W_FIELDS + ["identifier", "severity"], as_dict=True)
+    if not w:
+        frappe.throw("Pengumuman tidak ditemukan.")
+    if w.draft_event:
+        frappe.throw("Pengumuman ini sudah dijadikan bencana.")
+    values = {"doctype": EVENT, "legacy_id": w.identifier, "title": (title or w.title or "").strip()[:140],
+              "event_status": "active", "severity": w.severity, "location_summary": w.area_desc,
+              "started_at": w.issued_at, "reviewed_by": frappe.session.user, "reviewed_at": now_datetime(),
+              "review_note": "Dari pengumuman BMKG " + w.name}
+    meta = frappe.get_meta(EVENT)
+    for f, v in (("latitude", w.latitude), ("longitude", w.longitude), ("event_type", "gempa")):
+        if meta.has_field(f):
+            values[f] = v
+    if frappe.db.exists(EVENT, w.identifier):
+        values.pop("legacy_id")
+    ev = frappe.get_doc(values).insert(ignore_permissions=True)
+    frappe.db.set_value("RN Early Warning", w.name, {"draft_event": ev.name, "status": "acknowledged"})
+    em.suggest_for(ev.name)
+    return {"event": ev.name, "title": ev.title}
+
+
+@frappe.whitelist(methods=["POST"])
+def dismiss_warning(warning):
+    _require_super_admin()
+    if not frappe.db.exists("RN Early Warning", warning):
+        frappe.throw("Pengumuman tidak ditemukan.")
+    frappe.db.set_value("RN Early Warning", warning, "status", "dismissed")
+    return {"warning": warning, "status": "dismissed"}
 
 
 @frappe.whitelist()
@@ -234,6 +282,7 @@ def admin_queue():
     proposed = [_event_row(n) for n in frappe.get_all(EVENT, filters={"event_status": "proposed"},
                                                          order_by="creation desc", pluck="name")]
     bmkg_drafts = _bmkg_drafts()
+    bmkg_notices = _bmkg_notices()
     recent_live = [_event_row(n) for n in frappe.get_all(
         EVENT, filters={"event_status": "active", "legacy_source": "kelola-bencana",
                         "reviewed_by": ["in", ["", None]]}, order_by="creation desc", pluck="name")]
@@ -256,7 +305,7 @@ def admin_queue():
     events = frappe.get_all(EVENT, filters={"event_status": ["in", ["active", "proposed", "draft"]]},
                             fields=["name", "title", "event_status", "is_drill"], order_by="modified desc",
                             limit_page_length=500)
-    return {"proposed": proposed, "bmkg_drafts": bmkg_drafts, "recent_live": recent_live, "suggestions": sugs, "logs": logs,
+    return {"proposed": proposed, "bmkg_drafts": bmkg_drafts, "bmkg_notices": bmkg_notices, "recent_live": recent_live, "suggestions": sugs, "logs": logs,
             "events": events}
 
 

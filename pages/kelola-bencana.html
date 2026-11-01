@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Kelola Bencana</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=cb3-20261026">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
+  <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=warmcontrast-20260914" />
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=label-20261025" />
+  <style>
+    .rn-callout{border:1px solid rgba(239,82,61,.35);background:rgba(239,82,61,.05);border-radius:10px;padding:12px 14px;margin:10px 0;overflow-wrap:anywhere}
+    .rn-callout ul{margin:8px 0 8px 1.1rem;padding:0}.rn-callout li{margin-bottom:8px}
+    .rn-callout .btn{margin-top:4px}
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="../assets/img/rn-logo-web.png" alt="Rescue-Net logo">
+      <div>
+        <h1>Rescue-Net</h1>
+        <p>Disaster Management System</p>
+      </div>
+    </div>
+
+    <nav>
+      <a href="map.html?event=event-sim-001">Map</a>
+      <a href="organisasi-posko.html">Organisasi &amp; Posko</a>
+      <a href="posko-logistik.html">Logistik</a>
+      <a href="management-distribusi.html">Distribusi</a>
+      <a href="dapur-umum.html?id=posko-sim-dapur">Dapur Umum</a>
+      <a href="posko-medis-detail.html?id=posko-sim-medis">Posko Medis</a>
+      <a href="shelter-detail.html?id=posko-sim-shelter">Shelter</a>
+      <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
+      <a href="ai-settings.html">AI Settings</a>
+      <a href="notifikasi-settings.html">Notifikasi WhatsApp</a>
+      <a href="contact-directory.html">Contact Directory</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="rn-page-mobile-title">Kelola Bencana</div>
+      <div>
+        <p class="eyebrow">Bencana · Organisasi &amp; Super Admin</p>
+        <h2>Kelola Bencana</h2>
+        <p class="subtitle">Buat bencana baru untuk organisasi Anda. Sistem mengecek dulu apakah bencana yang sama sudah ada, supaya tidak dobel. Bencana dari organisasi terverifikasi langsung aktif; selain itu menjadi <b>usulan</b> yang diverifikasi super admin. Warga melapor kejadian lewat <a href="laporan-masyarakat.html">Laporan Masyarakat</a>.</p>
+        <p class="subtitle" id="kbStatus" role="status" aria-live="polite">Memuat…</p>
+      </div>
+    </header>
+
+    <section class="panel" id="kbCreatePanel" hidden>
+      <div class="panel-header"><div><h3>Buat bencana baru</h3><p id="kbLiveNote"></p></div></div>
+      <form class="rn-form" id="kbForm" autocomplete="off">
+        <div class="form-grid">
+          <label>Nama bencana<input name="title" required minlength="4" maxlength="140" placeholder="mis. Banjir Bandang Garut 2026"></label>
+          <label>Jenis<select name="event_type" required></select></label>
+          <label>Lokasi (kabupaten/kota, provinsi)<input name="location_summary" required maxlength="300" placeholder="mis. Garut, Jawa Barat"></label>
+          <label>Mulai<input name="started_at" type="datetime-local"></label>
+          <label>Keparahan<select name="severity">
+            <option value="normal">Normal</option><option value="medium" selected>Sedang</option><option value="high">Tinggi</option><option value="urgent">Mendesak</option><option value="critical">Kritis</option>
+          </select></label>
+          <label>Organisasi<select name="organization"></select></label>
+          <label>Latitude (opsional)<input name="latitude" inputmode="decimal" placeholder="-7.21"></label>
+          <label>Longitude (opsional)<input name="longitude" inputmode="decimal" placeholder="107.90"></label>
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="button" id="kbGeo">📍 Pakai lokasi saya</button>
+          <button class="btn primary" type="submit" id="kbSubmit">Kirim</button>
+        </div>
+      </form>
+      <div id="kbDup" class="rn-callout" hidden></div>
+      <p id="kbResult" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="panel" id="kbMinePanel" hidden>
+      <div class="panel-header"><div><h3>Bencana yang saya buat</h3></div></div>
+      <div class="rn-table-wrap"><table class="rn-table">
+        <thead><tr><th>Bencana</th><th>Status</th><th>Lokasi</th><th>Catatan</th></tr></thead>
+        <tbody id="kbMine"></tbody>
+      </table></div>
+    </section>
+
+    <div id="kbAdmin" hidden>
+      <section class="panel">
+        <div class="panel-header"><div><h3>Usulan menunggu verifikasi <span class="chip" id="kbPropCount">0</span></h3><p>Belum tampil di publik sampai disetujui.</p></div></div>
+        <div class="rn-table-wrap"><table class="rn-table">
+          <thead><tr><th>Bencana</th><th>Dari</th><th>Lokasi / mulai</th><th>Aksi</th></tr></thead>
+          <tbody id="kbProposed"></tbody>
+        </table></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div><h3>Bencana baru dari organisasi terverifikasi <span class="chip" id="kbLiveCount">0</span></h3><p>Sudah aktif. Tandai sudah diperiksa, atau turunkan ke usulan bila keliru.</p></div></div>
+        <div class="rn-table-wrap"><table class="rn-table">
+          <thead><tr><th>Bencana</th><th>Dari</th><th>Lokasi / mulai</th><th>Aksi</th></tr></thead>
+          <tbody id="kbLive"></tbody>
+        </table></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div><h3>Usulan gabung otomatis <span class="chip" id="kbSugCount">0</span></h3>
+          <p>Dihitung sistem dari jenis, jarak, waktu dan kemiripan nama. Tidak ada yang digabung sebelum Anda setujui.</p></div>
+          <button class="btn" type="button" id="kbScan">🔎 Cari kembar sekarang</button></div>
+        <div id="kbSugs"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div><h3>Gabung manual</h3><p>Semua data (posko, laporan, kebutuhan, kiriman, relawan, dll.) dari bencana yang digabung dipindah ke bencana utama. Nama lamanya menjadi nama lain. Bisa dibatalkan.</p></div></div>
+        <form class="rn-form" id="kbMerge">
+          <div class="form-grid">
+            <label>Bencana yang digabung (akan hilang dari daftar)<select name="source" required></select></label>
+            <label>Bencana utama (tetap)<select name="target" required></select></label>
+            <label>Catatan<input name="note" maxlength="300"></label>
+          </div>
+          <p id="kbMergePreview" class="rn-muted"></p>
+          <div class="form-actions"><button class="btn primary" type="submit">Gabungkan</button></div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div><h3>Riwayat gabung</h3></div></div>
+        <div class="rn-table-wrap"><table class="rn-table">
+          <thead><tr><th>Waktu</th><th>Digabung → Utama</th><th>Data</th><th>Aksi</th></tr></thead>
+          <tbody id="kbLogs"></tbody>
+        </table></div>
+      </section>
+    </div>
+  </main>
+</div>
+<script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
+
+<script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
+<script src="../assets/js/kelola-bencana.js?v=kb-20261101"></script>
+<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
+<script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
+<script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=kb-20261101"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=privasi-20261026"></script>
+<script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+</body>
+</html>

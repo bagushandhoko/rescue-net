@@ -18,8 +18,9 @@ def disasters(limit=100, include_drill=None):
     adapter returned, so the page renderers did not change."""
     meta = frappe.get_meta("RN Disaster Event")
     fields = [f for f in _EVENT_FIELDS if f == "name" or meta.has_field(f)]
-    # draft events (BMKG early-warning drafts) are unverified: never in the public list
-    rows = frappe.get_all("RN Disaster Event", filters={"event_status": ["!=", "draft"]}, fields=fields, order_by="modified desc",
+    # draft (BMKG), proposed (not yet verified), rejected and merged events: never in the public list
+    from rescue_net.services.event_merge import HIDDEN_STATUSES
+    rows = frappe.get_all("RN Disaster Event", filters={"event_status": ["not in", list(HIDDEN_STATUSES)]}, fields=fields, order_by="modified desc",
                           limit_page_length=max(1, min(int(limit or 100), 500)))
     rows = real_rows(rows, key="name", include_drill=include_drill)  # latihan (10g) tidak pernah di daftar publik
     out = []

@@ -1,0 +1,120 @@
+{
+ "doctype": "DocType",
+ "name": "RN Event Merge Log",
+ "module": "RN Core",
+ "custom": 0,
+ "autoname": "hash",
+ "track_changes": 1,
+ "engine": "InnoDB",
+ "modified": "2026-11-01 10:00:00.000000",
+ "owner": "Administrator",
+ "creation": "2026-11-01 10:00:00.000000",
+ "field_order": [
+  "source_event",
+  "target_event",
+  "status",
+  "merged_by",
+  "merged_at",
+  "suggestion",
+  "note",
+  "source_prev_status",
+  "moved_count",
+  "moved_json",
+  "removed_rows_json",
+  "undone_by",
+  "undone_at",
+  "undo_note"
+ ],
+ "fields": [
+  {
+   "fieldname": "source_event",
+   "fieldtype": "Link",
+   "label": "Bencana Digabung",
+   "options": "RN Disaster Event",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "target_event",
+   "fieldtype": "Link",
+   "label": "Bencana Utama",
+   "options": "RN Disaster Event",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "done\nundone",
+   "default": "done",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "merged_by",
+   "fieldtype": "Data",
+   "label": "Digabung Oleh"
+  },
+  {
+   "fieldname": "merged_at",
+   "fieldtype": "Datetime",
+   "label": "Digabung Pada"
+  },
+  {
+   "fieldname": "suggestion",
+   "fieldtype": "Data",
+   "label": "AI Suggestion"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Catatan"
+  },
+  {
+   "fieldname": "source_prev_status",
+   "fieldtype": "Data",
+   "label": "Status Awal Bencana Digabung"
+  },
+  {
+   "fieldname": "moved_count",
+   "fieldtype": "Int",
+   "label": "Jumlah Data Dipindah"
+  },
+  {
+   "fieldname": "moved_json",
+   "fieldtype": "Long Text",
+   "label": "Data Dipindah (JSON)"
+  },
+  {
+   "fieldname": "removed_rows_json",
+   "fieldtype": "Long Text",
+   "label": "Baris Ganda Dihapus (JSON)"
+  },
+  {
+   "fieldname": "undone_by",
+   "fieldtype": "Data",
+   "label": "Dibatalkan Oleh"
+  },
+  {
+   "fieldname": "undone_at",
+   "fieldtype": "Datetime",
+   "label": "Dibatalkan Pada"
+  },
+  {
+   "fieldname": "undo_note",
+   "fieldtype": "Small Text",
+   "label": "Hasil Pembatalan"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

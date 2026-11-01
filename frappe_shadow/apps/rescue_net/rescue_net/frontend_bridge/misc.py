@@ -86,140 +86,37 @@ def reject_legacy_token_verification():
     )
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def create_disaster_event(
     payload_json=None,
 ):
-    _actor()
+    """Legacy bridge (POST /disasters). Goes through the Kelola Bencana rules
+    (SOP 2026-11-01): the caller can no longer choose the status — verified
+    organisations / admins get an active event, everyone else a proposal."""
+    actor = _actor()
 
     import json
 
+    from rescue_net.api_disaster_admin import create_event_for
+
     try:
-        payload = (
-            json.loads(payload_json)
-            if payload_json
-            else {}
-        )
+        payload = json.loads(payload_json) if payload_json else {}
     except Exception:
-        frappe.throw(
-            "Payload Disaster Event tidak valid"
-        )
+        frappe.throw("Payload Disaster Event tidak valid")
+    if not isinstance(payload, dict):
+        frappe.throw("Payload Disaster Event harus object")
 
-    if not isinstance(
-        payload,
-        dict,
-    ):
-        frappe.throw(
-            "Payload Disaster Event harus object"
-        )
-
-    meta = frappe.get_meta(
-        "RN Disaster Event"
+    title = next((payload.get(k) for k in ("title", "name", "event_name", "disaster_name") if payload.get(k)), None)
+    if not title:
+        frappe.throw("Nama Disaster Event wajib diisi")
+    res = create_event_for(
+        actor, title,
+        event_type=payload.get("event_type") or payload.get("disaster_type") or payload.get("type"),
+        location_summary=payload.get("location_summary") or payload.get("location") or payload.get("location_text") or "-",
+        latitude=payload.get("latitude"), longitude=payload.get("longitude"),
+        started_at=payload.get("started_at"), severity=payload.get("severity"),
+        organization=payload.get("organization"), force=payload.get("force") or 0,
     )
-
-    valid = {
-        df.fieldname
-        for df in meta.fields
-        if df.fieldname
-    }
-
-    aliases = {
-        "name":
-            "title",
-
-        "disaster_name":
-            "title",
-
-        "event_name":
-            "title",
-
-        "disaster_type":
-            "event_type",
-
-        "type":
-            "event_type",
-
-        "location":
-            "location_text",
-
-        "status":
-            "event_status",
-    }
-
-    values = {}
-
-    for key, value in payload.items():
-        target = aliases.get(
-            key,
-            key,
-        )
-
-        if (
-            target in valid
-            and value not in (
-                None,
-                "",
-            )
-        ):
-            values[target] = value
-
-    # Cari title dari beberapa nama legacy.
-    if (
-        "title" in valid
-        and not values.get("title")
-    ):
-        for key in (
-            "title",
-            "name",
-            "event_name",
-            "disaster_name",
-        ):
-            if payload.get(key):
-                values["title"] = (
-                    payload[key]
-                )
-                break
-
-    if (
-        "title" in valid
-        and not values.get("title")
-    ):
-        frappe.throw(
-            "Nama Disaster Event wajib diisi"
-        )
-
-    doc = frappe.new_doc(
-        "RN Disaster Event"
-    )
-
-    for key, value in values.items():
-        doc.set(
-            key,
-            value,
-        )
-
-    doc.insert(
-        ignore_permissions=True
-    )
-
-    return {
-        "id":
-            doc.name,
-
-        "name":
-            doc.name,
-
-        "title":
-            getattr(
-                doc,
-                "title",
-                None,
-            ),
-
-        "event_status":
-            getattr(
-                doc,
-                "event_status",
-                None,
-            ),
-    }
+    if res.get("created"):
+        res["id"] = res["name"]
+    return res

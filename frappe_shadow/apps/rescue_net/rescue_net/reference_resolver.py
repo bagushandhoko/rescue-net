@@ -83,11 +83,17 @@ def resolve_reference(
 
 
 def resolve_disaster_event(value):
-    return resolve_reference(
+    name = resolve_reference(
         "RN Disaster Event",
         value,
         "disaster_events:",
     )
+    # a merged event (SOP 2026-11-01) resolves to the event it was merged into
+    if name and frappe.db.exists("RN Disaster Event", name) and frappe.db.get_value(
+            "RN Disaster Event", name, "merged_into"):
+        from rescue_net.services.event_merge import final_event
+        return final_event(name)
+    return name
 
 
 def resolve_posko(value):

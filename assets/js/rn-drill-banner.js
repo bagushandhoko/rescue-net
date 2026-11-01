@@ -9,6 +9,12 @@
     var q = new URLSearchParams(location.search);
     var ev = q.get("event") || q.get("disaster_event") || q.get("disaster_event_id");
     if (!ev) return;
+    // Kelola Bencana (2026-11-01): a merged disaster's old link opens the disaster now in use
+    window.RN_FRAPPE.call("rescue_net.api_disaster_admin.resolve_event", { event: ev }).then(function (r) {
+      if (!r || !r.found || !r.merged || !r.name) return;
+      ["event", "disaster_event", "disaster_event_id"].forEach(function (k) { if (q.has(k)) q.set(k, r.name); });
+      location.replace(location.pathname + "?" + q.toString() + location.hash);
+    }).catch(function () { /* opsional */ });
     window.RN_FRAPPE.call("rescue_net.api_events.drill_status", { event: ev }).then(function (r) {
       if (!r || !r.is_drill) return;
       var el = document.createElement("div");

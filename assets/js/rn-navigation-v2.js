@@ -177,6 +177,12 @@
         icon: "relawan"
       },
       {
+        // buat bencana baru (cek kembar) + super admin: verifikasi & gabung (SOP 2026-11-01)
+        label: "Kelola Bencana",
+        href: "kelola-bencana.html",
+        icon: "alert-triangle"
+      },
+      {
         // System Manager & Control Centre: who changed sensitive data (2026-10-26)
         label: "Jejak Audit",
         href: "jejak-audit.html",

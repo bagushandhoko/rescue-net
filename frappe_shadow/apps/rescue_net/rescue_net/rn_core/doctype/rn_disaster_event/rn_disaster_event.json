@@ -70,6 +70,69 @@
    "fieldname": "drill_label",
    "label": "Label Latihan",
    "fieldtype": "Data"
+  },
+  {
+   "fieldname": "sb_sop",
+   "fieldtype": "Section Break",
+   "label": "Pembuatan & Gabung (SOP 2026-11)"
+  },
+  {
+   "fieldname": "event_type",
+   "label": "Jenis Bencana",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "latitude",
+   "label": "Latitude",
+   "fieldtype": "Float",
+   "precision": "6"
+  },
+  {
+   "fieldname": "longitude",
+   "label": "Longitude",
+   "fieldtype": "Float",
+   "precision": "6"
+  },
+  {
+   "fieldname": "reporting_organization",
+   "label": "Organisasi Pelapor",
+   "fieldtype": "Link",
+   "options": "RN Organization"
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Dibuat Oleh",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "cb_sop",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "merged_into",
+   "label": "Digabung Ke",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "aliases",
+   "label": "Nama Lain",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "reviewed_by",
+   "label": "Ditinjau Oleh",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "reviewed_at",
+   "label": "Ditinjau Pada",
+   "fieldtype": "Datetime"
+  },
+  {
+   "fieldname": "review_note",
+   "label": "Catatan Tinjauan",
+   "fieldtype": "Small Text"
   }
  ],
  "permissions": [
@@ -83,5 +146,6 @@
    "cancel": 0,
    "amend": 0
   }
- ]
+ ],
+ "modified": "2026-11-01 10:00:00.000000"
 }

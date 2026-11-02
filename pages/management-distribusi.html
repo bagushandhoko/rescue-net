@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Manajemen Distribusi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=kbmap-20261102b">
+  <link rel="stylesheet" href="../assets/css/style.css?v=af-20261102">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -104,6 +104,21 @@
 
     <p class="rn-muted rn-md-xref">Pendaftaran armada, ruang muat, jadwal &amp; booking dikelola di
       <a href="posko-distribusi.html?event=event-sim-001">Posko Distribusi</a> (posko penyedia transport: Garuda, kapal TNI AL, motor pick-up, Land Rover club, dll).</p>
+
+    <!-- owner 2026-11-02: halaman publik — pilih armada menurut waktu & lokasi terdekat; pesan wajib login -->
+    <section class="panel rn-af" id="armadaFinder">
+      <div class="panel-header"><div><h3>🚚 Cari Armada</h3>
+        <p>Semua armada yang melayani bencana ini: <b>tersedia</b>, <b>penuh</b>, atau <b>sedang dipakai</b>. Untuk memesan ruang muat / kursi, login dulu.</p></div></div>
+      <div class="rn-af-filters">
+        <label>Jenis <select id="afType"><option value="">Semua</option><option value="darat">Darat</option><option value="laut">Laut</option><option value="udara">Udara</option><option value="lainnya">Lainnya</option></select></label>
+        <label>Berangkat dari <input type="date" id="afFrom"></label>
+        <label>Berangkat sampai <input type="date" id="afTo"></label>
+        <label>Status <select id="afStatus"><option value="">Semua</option><option value="tersedia">Tersedia</option><option value="penuh">Penuh</option><option value="dipakai">Sedang dipakai</option></select></label>
+        <label>Lokasi terdekat <button type="button" class="btn" id="afNear">📍 Urutkan dari lokasi saya</button></label>
+      </div>
+      <div class="rn-af-counts" id="afCounts"></div>
+      <div class="rn-af-list" id="afList"><p class="rn-muted">Memuat…</p></div>
+    </section>
 
     <section class="content-grid rn-md-row2">
       <div class="panel">
@@ -311,6 +326,7 @@
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/distribusi.js?v=mdmock-20260928g"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/rn-armada-finder.js?v=af-20261102"></script>
 <script src="../assets/js/rn-resource-booking.js?v=booking-sync-1"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

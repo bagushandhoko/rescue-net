@@ -7616,3 +7616,19 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .kb-maphint { font-size: 12px; margin: 6px 0 0; }
 @media (max-width: 640px) { .kb-map { height: 260px; } }
 .kb-pin { font-size: 30px; line-height: 32px; text-align: center; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); background: none; border: 0; }
+/* Cari Armada (owner 2026-11-02) */
+.rn-af { margin-bottom: 16px; }
+.rn-af-filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 18px; margin-bottom: 12px; }
+.rn-af-filters label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 700; min-width: 0; }
+.rn-af-filters input, .rn-af-filters select, .rn-af-filters .btn { min-height: 42px; width: 100%; box-sizing: border-box; }
+.rn-af-counts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+.rn-af-list { display: flex; flex-direction: column; gap: 6px; max-height: 620px; overflow-y: auto; }
+.rn-af-item { border: 1px solid rgba(104,64,45,.14); border-radius: 10px; background: #fff; }
+.rn-af-item[open] { border-color: #ef523d; }
+.rn-af-item > summary { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; list-style: none; min-width: 0; flex-wrap: wrap; }
+.rn-af-item > summary::-webkit-details-marker { display: none; }
+.rn-af-item > summary small { color: #7a6a60; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 140px; }
+.rn-af-km { margin-left: auto; font-weight: 700; color: #c4442f; }
+.rn-af-body { padding: 4px 12px 12px; border-top: 1px dashed rgba(104,64,45,.14); font-size: 13px; display: grid; gap: 4px; }
+@media (max-width: 1100px) { .rn-af-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .rn-af-filters { grid-template-columns: 1fr; } }

@@ -163,6 +163,9 @@
       tr.addEventListener("click", function () { openArmadaDetail(tr.getAttribute("data-armada")); });
     });
     if (shown) shown.textContent = "Menampilkan " + list.length + " armada";
+    // owner 2026-11-02: "Pesan" from Cari Armada (Manajemen Distribusi) opens that armada's detail + booking
+    var want = qs.get("armada");
+    if (want && !window.__pdArmadaOpened) { window.__pdArmadaOpened = true; setTimeout(function () { openArmadaDetail(want); }, 50); }
   }
 
   function openArmadaDetail(id) {

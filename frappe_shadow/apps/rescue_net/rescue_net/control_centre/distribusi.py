@@ -37,6 +37,24 @@ from rescue_net.control_centre.critical import (  # noqa: F401
 
 
 
+
+def _manages(posko):
+    """Can the viewer operate this posko (cached per user per request)."""
+    if not posko or frappe.session.user in (None, "", "Guest"):
+        return False
+    cache = getattr(frappe.local, "rn_manages_posko", None)
+    if cache is None:
+        cache = {}
+        frappe.local.rn_manages_posko = cache
+    key = (frappe.session.user, posko)
+    if key not in cache:
+        from rescue_net.access_policy import can_manage_posko, is_system_manager, rn_actor
+
+        actor = rn_actor(required=False)
+        cache[key] = bool(is_system_manager() or (actor and (actor.get("role") == "command_center"
+                                                             or can_manage_posko(actor, posko))))
+    return cache[key]
+
 def _handover_phone(t):
     """Armada handover phone (privacy check 2026-11-02): it used to reach every guest on the public distribution
     boards. Now: logged-in viewers only, and only when the coordinating posko shares its contacts with them (same
@@ -612,8 +630,10 @@ def distribusi_board(disaster_event=None):
                     "delivery_label": _DELIVERY_LABEL.get(b.get("delivery_method"), "Pakai transporter posko"),
                     "requested_window": b.get("requested_window") or "",
                     # supplier-side follow-up contact (for the coordinating posko)
-                    "supplier_contact_person": b.contact_person or "",
-                    "supplier_contact_phone": b.contact_phone or "",
+                    # booker contacts: the armada's own posko operators only (privacy check 2026-11-02 —
+                    # this event-wide public board used to send them to every guest)
+                    "supplier_contact_person": (b.contact_person or "") if _manages(t.get("coordination_posko")) else "",
+                    "supplier_contact_phone": (b.contact_phone or "") if _manages(t.get("coordination_posko")) else "",
                 }
                 for b in bks if b.status in ("requested", "confirmed")
             ],

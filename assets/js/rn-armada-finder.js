@@ -5,7 +5,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return window.RNUI ? window.RNUI.esc(s) : String(s == null ? "" : s); };
   var ME = null, LOGGED = false;
-  var CHIP = { tersedia: "ok", penuh: "warning", dipakai: "danger" };
+  var CHIP = { tersedia: "ok", penuh: "warning", dipakai: "danger", lewat: "" };
   function num(n, unit) { return n == null ? "" : (Math.round(n * 10) / 10).toLocaleString("id-ID") + " " + unit; }
   function eventId() { return (window.RNUI && window.RNUI.eventId()) || new URLSearchParams(location.search).get("event") || ""; }
 
@@ -13,7 +13,8 @@
     var cap = [a.left_kg != null ? "sisa " + num(a.left_kg, "kg") + (a.capacity_kg ? " dari " + num(a.capacity_kg, "kg") : "") : "",
                a.left_m3 != null ? "sisa " + num(a.left_m3, "m³") : "", a.seats ? a.seats + " kursi relawan" : ""].filter(Boolean).join(" · ");
     var when = a.departure ? (a.flexible ? "Jadwal: " + a.departure : "Berangkat " + a.departure.replace("T", " ")) : "Jadwal fleksibel";
-    var action = a.status === "dipakai" ? '<span class="rn-muted">Sedang dipakai</span>'
+    var action = a.status === "lewat" ? '<span class="rn-muted">Jadwal sudah lewat — hubungi posko untuk jadwal baru</span>'
+      : a.status === "dipakai" ? '<span class="rn-muted">Sedang dipakai</span>'
       : LOGGED ? '<a class="btn primary mini" href="' + esc(a.href + "&armada=" + encodeURIComponent(a.name)) + '">Pesan</a>'
       : '<a class="btn mini" href="auth.html?next=' + encodeURIComponent(a.href + "&armada=" + encodeURIComponent(a.name)) + '">Login untuk pesan</a>';
     return '<details class="rn-af-item"><summary><span class="chip ' + (CHIP[a.status] || "") + '">' + esc(a.status_label) + "</span>" +
@@ -34,7 +35,7 @@
       LOGGED = !!r.logged_in;
       var c = r.counts || {};
       $("afCounts").innerHTML = '<span class="chip ok">Tersedia ' + (c.tersedia || 0) + '</span> <span class="chip warning">Penuh ' + (c.penuh || 0) +
-        '</span> <span class="chip danger">Sedang dipakai ' + (c.dipakai || 0) + "</span>" + (ME ? ' <small class="rn-muted">urut dari lokasi Anda</small>' : "");
+        '</span> <span class="chip danger">Sedang dipakai ' + (c.dipakai || 0) + '</span> <span class="chip">Jadwal lewat ' + (c.lewat || 0) + "</span>" + (ME ? ' <small class="rn-muted">urut dari lokasi Anda</small>' : "");
       $("afList").innerHTML = r.rows.length ? r.rows.map(row).join("") : '<p class="rn-muted">Tidak ada armada yang cocok dengan filter.</p>';
     } catch (e) { $("afList").innerHTML = '<p class="rn-muted">' + esc((e && e.message) || e) + "</p>"; }
   }

@@ -10,13 +10,13 @@ import math
 
 import frappe
 from frappe.rate_limiter import rate_limit
-from frappe.utils import flt, get_datetime, getdate
+from frappe.utils import flt, get_datetime, getdate, now_datetime
 
 from rescue_net.reference_resolver import resolve_disaster_event
 
 IN_USE = {"reserved", "assigned", "in_transit"}
 DONE = {"arrived", "completed", "cancelled"}
-STATUS_LABEL = {"tersedia": "Tersedia", "penuh": "Penuh", "dipakai": "Sedang dipakai"}
+STATUS_LABEL = {"tersedia": "Tersedia", "penuh": "Penuh", "dipakai": "Sedang dipakai", "lewat": "Jadwal lewat"}
 TYPE_LABEL = {"darat": "Darat", "laut": "Laut", "udara": "Udara", "lainnya": "Lainnya"}
 
 
@@ -55,7 +55,8 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
     me_lat, me_lng = _num(lat), _num(lng)
     d_from = getdate(date_from) if date_from else None
     d_to = getdate(date_to) if date_to else None
-    out, counts = [], {"tersedia": 0, "penuh": 0, "dipakai": 0}
+    out, counts = [], {"tersedia": 0, "penuh": 0, "dipakai": 0, "lewat": 0}
+    now = now_datetime()
     for r in rows:
         st = r.transport_status or "available"
         if st in DONE:
@@ -70,6 +71,9 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
         else:
             avail = "tersedia"
         dep = get_datetime(r.departure_at) if r.departure_at else None
+        # still "available" but its departure has passed: the posko has not updated it — don't offer it as free
+        if avail == "tersedia" and dep and dep < now:
+            avail = "lewat"
         if (d_from or d_to) and dep:
             if (d_from and dep.date() < d_from) or (d_to and dep.date() > d_to):
                 continue
@@ -86,7 +90,7 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
             "name": r.name, "title": r.title or r.provider_name, "provider": r.provider_name,
             "type": r.transport_type, "type_label": TYPE_LABEL.get(r.transport_type, r.transport_type or "-"),
             "route": (r.route_origin or "-") + " → " + (r.route_destination or "-"),
-            "departure": str(dep)[:16] if dep else (r.departure_time or ""), "flexible": not dep,
+            "departure": str(dep)[:16] if dep else (r.departure_time or "")[:16], "flexible": not dep,
             "eta": str(r.eta_at)[:16] if r.eta_at else "",
             "capacity_kg": cap_kg or None, "capacity_m3": cap_m3 or None, "left_kg": left_kg, "left_m3": left_m3,
             "seats": r.volunteer_capacity_seats or 0, "status": avail, "status_label": STATUS_LABEL[avail],
@@ -95,6 +99,6 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
             "km": km, "location": r.current_location or "",
             "href": "posko-distribusi.html?id=" + (r.coordination_posko or "") + ("&event=" + event if event else ""),
         })
-    out.sort(key=lambda x: ({"tersedia": 0, "penuh": 1, "dipakai": 2}[x["status"]],
+    out.sort(key=lambda x: ({"tersedia": 0, "penuh": 1, "dipakai": 2, "lewat": 3}[x["status"]],
                             x["km"] if x["km"] is not None else 1e9, x["departure"] or "9999"))
     return {"rows": out, "counts": counts, "logged_in": frappe.session.user != "Guest"}

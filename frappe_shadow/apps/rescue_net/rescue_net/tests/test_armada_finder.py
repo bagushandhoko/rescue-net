@@ -19,10 +19,11 @@ class TestArmadaFinder(RNTestCase):
                            coordination_posko=posko.name, transport_type=kw.pop("transport_type", "darat"),
                            capacity_weight_kg=kw.pop("capacity_weight_kg", 1000), handover_contact_phone="0812-9999-0000",
                            **kw)
-        self.free = armada("Truk Meulaboh", self.w.posko_a, transport_status="available", departure_at="2026-11-10 08:00:00")
+        self.free = armada("Truk Meulaboh", self.w.posko_a, transport_status="available", departure_at="2099-11-10 08:00:00")
+        self.past = armada("Truk Lama", self.w.posko_a, transport_status="available", departure_at="2020-01-01 08:00:00")
         self.full = armada("Pickup Penuh", self.w.posko_a, transport_status="available", capacity_committed_kg=1000)
         self.busy = armada("Kapal Jakarta", self.w.posko_b, transport_type="laut", transport_status="in_transit",
-                           departure_at="2026-11-20 08:00:00")
+                           departure_at="2099-11-20 08:00:00")
         self.done = armada("Selesai", self.w.posko_b, transport_status="completed")
 
     def _find(self, **kw):
@@ -32,14 +33,16 @@ class TestArmadaFinder(RNTestCase):
     def test_status_and_privacy(self):
         r = self._find()
         st = {x["title"]: x["status"] for x in r["rows"]}
-        self.assertEqual(st, {"Truk Meulaboh": "tersedia", "Pickup Penuh": "penuh", "Kapal Jakarta": "dipakai"})
-        self.assertEqual(r["counts"], {"tersedia": 1, "penuh": 1, "dipakai": 1})
+        self.assertEqual(st, {"Truk Meulaboh": "tersedia", "Pickup Penuh": "penuh", "Kapal Jakarta": "dipakai",
+                              "Truk Lama": "lewat"})
+        self.assertEqual(r["counts"], {"tersedia": 1, "penuh": 1, "dipakai": 1, "lewat": 1})
+        self.assertEqual(r["rows"][-1]["title"], "Truk Lama")
         self.assertFalse(r["logged_in"])
         self.assertNotIn("0812-9999-0000", frappe.as_json(r))
 
     def test_filters_and_nearest(self):
         self.assertEqual([x["title"] for x in self._find(transport_type="laut")["rows"]], ["Kapal Jakarta"])
-        names = [x["title"] for x in self._find(date_from="2026-11-15")["rows"]]
+        names = [x["title"] for x in self._find(date_from="2099-11-15")["rows"]]
         self.assertNotIn("Truk Meulaboh", names)           # leaves before the range
         self.assertIn("Pickup Penuh", names)               # no fixed schedule: stays visible
         self.assertEqual([x["title"] for x in self._find(status="tersedia")["rows"]], ["Truk Meulaboh"])

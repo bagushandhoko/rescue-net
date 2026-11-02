@@ -74,3 +74,17 @@ class TestPoskoManage(RNTestCase):
         self.assertTrue(a["requested"][0]["needs_pin"])
         self.assertNotIn("ABC123", frappe.as_json(r))            # the PIN stays with the booker
         self.assertEqual(h["pending"]["pesanan_armada"], 1)
+
+    def test_workbench_owner_tools(self):
+        from rescue_net.logistics.needs_offers import create_need, create_stock_observation
+        with as_user(self.other.user), self.assertRaises(frappe.PermissionError):
+            pm.workbench(self.w.posko_a.name)
+        with as_user(self.mgr.user):
+            create_need(self.w.posko_a.name, "Air minum", quantity=200, unit="liter", quantity_mode="exact")
+            create_stock_observation(self.w.posko_a.name, "Beras", quantity=50, unit="kg", quantity_mode="exact")
+            create_stock_observation(self.w.posko_a.name, "Beras", quantity=40, unit="kg", quantity_mode="exact")
+            w = pm.workbench(self.w.posko_a.name)
+        self.assertIn("Air minum", [n["item_name"] for n in w["needs"]])
+        beras = [s for s in w["stock"] if s["item"] == "Beras"]
+        self.assertEqual(len(beras), 1)                       # latest per item only
+        self.assertIn("operational_status", w["contact"])

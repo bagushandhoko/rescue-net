@@ -95,6 +95,55 @@
         <div class="kp-tools" id="kpTools"></div>
       </section>
 
+      <!-- Kelola Posko tahap 2 (owner 2026-11-02): input tools on the owner page -->
+      <section class="panel" id="kpContact">
+        <div class="panel-header"><div><h3>📞 Kontak &amp; status posko</h3><p>Tampil di bagian atas semua halaman posko. Nomor HP hanya terlihat sesuai pengaturan privasi posko.</p></div></div>
+        <form class="rn-form" id="kpContactForm"><div class="form-grid">
+          <label>Nama PIC <input name="officer_in_charge_name" maxlength="140"></label>
+          <label>Jabatan PIC <input name="officer_in_charge_role" maxlength="140"></label>
+          <label>No. HP PIC <input name="officer_in_charge_phone" inputmode="tel" maxlength="40"></label>
+          <label>WhatsApp <input name="officer_in_charge_whatsapp" inputmode="tel" maxlength="40"></label>
+          <label>Kontak darurat <input name="emergency_contact" maxlength="140"></label>
+          <label>Status operasional <select name="operational_status">
+            <option value="active">Aktif</option><option value="standby">Siaga</option><option value="reducing">Pengurangan</option>
+            <option value="closing">Persiapan tutup</option><option value="offline">Nonaktif / tutup</option></select></label>
+        </div><div class="form-actions"><button class="btn primary" type="submit">Simpan</button><span class="form-message" id="kpContactMsg"></span></div></form>
+      </section>
+
+      <section class="panel" id="kpVolunteers">
+        <div class="panel-header"><div><h3>🙋 Permintaan relawan</h3><p>Relawan yang menawarkan diri bertugas, minta jemputan, atau tempat menginap di posko ini. Setujui = relawan langsung ditempatkan.</p></div></div>
+        <div id="kpVolList" class="kp-list"><p class="rn-muted">Memuat…</p></div>
+      </section>
+
+      <section class="panel" id="kpNeeds">
+        <div class="panel-header"><div><h3>📦 Kebutuhan posko</h3><p>Kebutuhan yang masih terbuka. Tambahkan kebutuhan baru di sini.</p></div></div>
+        <div class="rn-table-wrap"><table class="rn-table"><thead><tr><th>Barang</th><th>Jumlah</th><th>Prioritas</th><th>Status</th><th>Dicatat</th></tr></thead>
+          <tbody id="kpNeedBody"><tr><td colspan="5" class="rn-muted">Memuat…</td></tr></tbody></table></div>
+        <details class="kp-addlot"><summary>+ Tambah kebutuhan</summary>
+          <form class="rn-form" id="kpNeedForm"><div class="form-grid">
+            <label>Barang <input name="item_text" required placeholder="Air minum / Beras / Obat"></label>
+            <label>Jumlah <input name="quantity" type="number" min="0" step="any" required></label>
+            <label>Satuan <input name="unit" required placeholder="liter / kg / dus"></label>
+            <label>Prioritas <select name="urgency"><option value="normal">normal</option><option value="urgent">urgent</option><option value="critical">critical</option></select></label>
+            <label>Jiwa yang membutuhkan <input name="jiwa_terdampak" type="number" min="0" step="1" placeholder="wajib untuk urgent/critical"></label>
+            <label>Harus tiba sebelum <input name="needed_before" placeholder="Hari ini 18:00"></label>
+          </div><div class="form-actions"><button class="btn primary" type="submit">Simpan kebutuhan</button><span class="form-message" id="kpNeedMsg"></span></div></form>
+        </details>
+      </section>
+
+      <section class="panel" id="kpStock">
+        <div class="panel-header"><div><h3>📊 Stok posko</h3><p>Catatan stok terakhir per barang. Catat stok baru setelah menghitung gudang.</p></div></div>
+        <div class="rn-table-wrap"><table class="rn-table"><thead><tr><th>Barang</th><th>Jumlah</th><th>Dicatat</th></tr></thead>
+          <tbody id="kpStockBody"><tr><td colspan="3" class="rn-muted">Memuat…</td></tr></tbody></table></div>
+        <details class="kp-addlot"><summary>+ Catat stok</summary>
+          <form class="rn-form" id="kpStockForm"><div class="form-grid">
+            <label>Barang <input name="item_text" list="kpStockItems" required placeholder="mis. Beras"><datalist id="kpStockItems"></datalist></label>
+            <label>Jumlah sekarang <input name="quantity" type="number" min="0" step="any" required></label>
+            <label>Satuan <input name="unit" required placeholder="kg / dus / pcs"></label>
+          </div><div class="form-actions"><button class="btn primary" type="submit">Simpan stok</button><span class="form-message" id="kpStockMsg"></span></div></form>
+        </details>
+      </section>
+
       <section class="panel" id="kpArmada">
         <div class="panel-header"><div><h3>🚚 Alat transport posko</h3><p>Atur armada posko Anda: status, posisi GPS, dan pesanan ruang muat yang menunggu keputusan. Publik melihat posisi &amp; sisa kapasitas di Manajemen Distribusi → Cari Armada.</p></div>
           <a class="btn primary mini" id="kpArmadaAdd" href="#">+ Daftarkan armada</a></div>
@@ -137,7 +186,7 @@
 </div>
 <script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/kelola-posko.js?v=armada-20261102"></script>
+<script src="../assets/js/kelola-posko.js?v=wb-20261102"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

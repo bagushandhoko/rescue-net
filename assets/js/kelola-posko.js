@@ -56,6 +56,7 @@
       '<a class="kp-item" href="#kpArmada"><span>Pesanan ruang muat armada menunggu</span>' + badge(h.pending.pesanan_armada) + "</a>";
     loadExpiry();
     loadArmada();
+    loadWorkbench();
 
     var ev = (h.events || []).map(function (e) { return esc(e.title); }).join(", ") || "—";
     $("kpInfo").innerHTML =
@@ -74,6 +75,76 @@
     f.offered.value = (h.comms || {}).offered || "";
     f.needed.value = (h.comms || {}).needed || "";
     status("");
+  }
+
+  /* Kelola Posko tahap 2 (owner 2026-11-02): kontak & status, permintaan relawan, kebutuhan, stok */
+  var URG = { normal: "", urgent: "warning", critical: "danger" };
+  var KIND = { posko: "Menawarkan diri bertugas", transport: "Minta kursi armada / jemputan", akomodasi: "Minta tempat menginap" };
+  function call(m, a, post) { return window.RN_FRAPPE.call(m, a || {}, post ? { method: "POST" } : undefined); }
+  function say(id, t) { var m = $(id); if (m) m.textContent = t || ""; }
+
+  async function loadWorkbench() {
+    var w;
+    try { w = await call("rescue_net.api_posko_manage.workbench", { posko: POSKO }); }
+    catch (e) { return; }
+    var f = $("kpContactForm");
+    if (f) Object.keys(w.contact).forEach(function (k) { if (f[k]) f[k].value = w.contact[k] || (k === "operational_status" ? "active" : ""); });
+    $("kpVolList").innerHTML = w.volunteer_requests.length ? w.volunteer_requests.map(function (v) {
+      return '<div class="kp-bk"><span><b>' + esc(v.volunteer_name || "Relawan") + "</b> · " + esc(KIND[v.booking_kind] || v.booking_kind) +
+        "<br><small>" + esc(v.main_skill || "") + (v.contact ? " · " + esc(v.contact) : "") + (v.note ? " · " + esc(v.note) : "") + " · " + esc(v.creation) + "</small></span>" +
+        '<span><button class="btn primary mini" type="button" data-vol="' + esc(v.name) + '" data-d="confirm">Setujui</button> ' +
+        '<button class="btn mini" type="button" data-vol="' + esc(v.name) + '" data-d="reject">Tolak</button></span></div>';
+    }).join("") : '<p class="rn-muted">Tidak ada permintaan relawan yang menunggu.</p>';
+    $("kpNeedBody").innerHTML = w.needs.length ? w.needs.map(function (n) {
+      return "<tr><td>" + esc(n.item_name) + "</td><td>" + esc(n.quantity == null ? "?" : n.quantity) + " " + esc(n.unit || "") + '</td><td><span class="chip ' +
+        (URG[n.urgency] || "") + '">' + esc(n.urgency || "normal") + "</span></td><td>" + esc(n.need_status) + "</td><td>" + esc(n.creation) + "</td></tr>";
+    }).join("") : '<tr><td colspan="5" class="rn-muted">Tidak ada kebutuhan terbuka.</td></tr>';
+    $("kpStockBody").innerHTML = w.stock.length ? w.stock.map(function (s) {
+      return "<tr><td>" + esc(s.item) + "</td><td>" + esc(s.quantity) + " " + esc(s.unit || "") + "</td><td>" + esc(s.observed_at) + "</td></tr>";
+    }).join("") : '<tr><td colspan="3" class="rn-muted">Belum ada catatan stok.</td></tr>';
+    var dl = $("kpStockItems");
+    if (dl) dl.innerHTML = w.stock.map(function (s) { return '<option value="' + esc(s.item) + '">'; }).join("");
+  }
+
+  function wireWorkbench() {
+    var cf = $("kpContactForm");
+    if (cf) cf.addEventListener("submit", async function (e) {
+      e.preventDefault(); say("kpContactMsg", "Menyimpan…");
+      var a = { posko: POSKO };
+      Array.prototype.forEach.call(cf.elements, function (el) { if (el.name) a[el.name] = el.value.trim(); });
+      try { var r = await call("rescue_net.api_community_cluster.update_posko", a, true);
+        say("kpContactMsg", r && r.pending ? "Tersimpan — sebagian menunggu persetujuan pusat." : "Tersimpan."); }
+      catch (err) { say("kpContactMsg", "Gagal: " + ((err && err.message) || err)); }
+    });
+    var vl = $("kpVolList");
+    if (vl) vl.addEventListener("click", async function (e) {
+      var b = e.target.closest("[data-vol]"); if (!b) return;
+      if (b.dataset.d === "reject" && !window.confirm("Tolak permintaan ini?")) return;
+      try { await call("rescue_net.api_volunteer_booking.decide_booking", { booking: b.dataset.vol, action: b.dataset.d }, true); loadWorkbench(); }
+      catch (err) { window.alert((err && err.message) || err); }
+    });
+    var nf = $("kpNeedForm");
+    if (nf) nf.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      if (["urgent", "critical"].indexOf(nf.urgency.value) !== -1 && !(Number(nf.jiwa_terdampak.value) > 0)) {
+        say("kpNeedMsg", "Isi jumlah jiwa untuk kebutuhan urgent/critical."); return; }
+      say("kpNeedMsg", "Menyimpan…");
+      try {
+        await call("rescue_net.api_logistics.create_need", { posko: POSKO, item_text: nf.item_text.value.trim(), quantity: nf.quantity.value,
+          unit: nf.unit.value.trim(), quantity_mode: "exact", urgency: nf.urgency.value, needed_before: nf.needed_before.value.trim(),
+          jiwa_terdampak: nf.jiwa_terdampak.value || null }, true);
+        say("kpNeedMsg", "Kebutuhan tersimpan."); nf.reset(); loadWorkbench();
+      } catch (err) { say("kpNeedMsg", "Gagal: " + ((err && err.message) || err)); }
+    });
+    var sf = $("kpStockForm");
+    if (sf) sf.addEventListener("submit", async function (e) {
+      e.preventDefault(); say("kpStockMsg", "Menyimpan…");
+      try {
+        await call("rescue_net.api_logistics.create_stock_observation", { posko: POSKO, item_text: sf.item_text.value.trim(),
+          quantity: sf.quantity.value, unit: sf.unit.value.trim(), quantity_mode: "exact" }, true);
+        say("kpStockMsg", "Stok tersimpan."); sf.reset(); loadWorkbench();
+      } catch (err) { say("kpStockMsg", "Gagal: " + ((err && err.message) || err)); }
+    });
   }
 
   /* Alat transport posko (owner 2026-11-02) — api_posko_manage.armada_list + existing armada / booking endpoints */
@@ -205,6 +276,7 @@
     });
 
     wireArmada();
+    wireWorkbench();
     var lf = $("kpLotForm");
     if (lf) lf.addEventListener("submit", async function (e) {
       e.preventDefault();

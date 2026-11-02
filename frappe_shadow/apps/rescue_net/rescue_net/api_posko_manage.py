@@ -177,3 +177,40 @@ def armada_list(posko):
     return {"posko": name, "armada": out,
             "pending_total": sum(len(a["requested"]) for a in out),
             "statuses": ARMADA_STATUS_LABEL}
+
+
+# --- Kelola Posko tahap 2 (owner 2026-11-02 "kerjakan semua"): input tools on the owner page ------------------
+
+@frappe.whitelist()
+def workbench(posko):
+    """Data for the owner's input tools: contact & status, open needs, stock, volunteer requests.
+    Writes go through the existing endpoints (update_posko, create_need, create_stock_observation, decide_booking)."""
+    actor = rn_actor()
+    name = resolve_posko(posko)
+    if not name or not can_manage_posko(actor, name):
+        frappe.throw("Halaman ini hanya untuk pengelola posko ini.", frappe.PermissionError)
+    p = frappe.db.get_value("RN Posko", name, ["officer_in_charge_name", "officer_in_charge_role", "officer_in_charge_phone",
+                                              "officer_in_charge_whatsapp", "emergency_contact", "operational_status"],
+                            as_dict=True)
+    needs = frappe.get_all("RN Logistic Need", filters={"posko": name, "need_status": ["in", ["open", "needs_review", "in_progress"]]},
+                           fields=["name", "item_name", "quantity", "unit", "urgency", "need_status", "creation"],
+                           order_by="creation desc", limit_page_length=50)
+    stock = {}
+    for r in frappe.get_all("RN Stock Observation", filters={"posko": name},
+                            fields=["item_name", "quantity", "unit", "observed_at"], order_by="observed_at desc",
+                            limit_page_length=500):
+        stock.setdefault((r.item_name, r.unit), r)          # latest per item+unit
+    vol = frappe.get_all("RN Volunteer Booking", filters={"posko": name, "status": "requested"},
+                         fields=["name", "booking_kind", "volunteer", "note", "creation"], order_by="creation asc",
+                         limit_page_length=50)
+    for v in vol:
+        pr = frappe.db.get_value("RN Volunteer Profile", v.volunteer, ["volunteer_name", "main_skill", "contact"], as_dict=True) or {}
+        v.update({"volunteer_name": pr.get("volunteer_name"), "main_skill": pr.get("main_skill"), "contact": pr.get("contact")})
+    return {
+        "posko": name,
+        "contact": {k: (v or "") for k, v in (p or {}).items()},
+        "needs": [dict(n, creation=str(n.creation)[:16]) for n in needs],
+        "stock": [{"item": r.item_name, "quantity": r.quantity, "unit": r.unit, "observed_at": str(r.observed_at or "")[:16]}
+                  for r in list(stock.values())[:60]],
+        "volunteer_requests": [dict(v, creation=str(v.creation)[:16]) for v in vol],
+    }

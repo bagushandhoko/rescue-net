@@ -124,9 +124,13 @@
       if (q.length < 3) return;
       t = setTimeout(async function () {
         try {
-          var r = await window.RN_FRAPPE.call("rescue_net.api_admin_areas.search_areas", { q: q, limit: 15 });
+          // villages sort first alphabetically and would crowd out kab/kota & kecamatan: ask per level
+          var res = await Promise.all(["city", "district"].map(function (lv) {
+            return window.RN_FRAPPE.call("rescue_net.api_admin_areas.search_areas", { q: q, level: lv, limit: 8 }).catch(function () { return { rows: [] }; });
+          }));
+          var rows = res[0].rows.concat(res[1].rows);
           found = {};
-          list.innerHTML = (r.rows || []).filter(function (a) { return a.level !== "village"; }).map(function (a) {
+          list.innerHTML = rows.map(function (a) {
             var label = a.area_name + " (" + ({ province: "provinsi", city: "kab/kota", district: "kecamatan" }[a.level] || a.level) + ")";
             found[label] = a.code;
             return '<option value="' + esc(label) + '">';

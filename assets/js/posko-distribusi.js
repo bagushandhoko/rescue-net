@@ -134,6 +134,28 @@
     );
   }
 
+  /* owner 2026-11-02: filter Jenis / Berangkat dari-sampai / Status / Cari */
+  var ARMADA_ALL = [];
+  function applyArmadaFilter() {
+    var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ""; };
+    var type = v("pdfType"), from = v("pdfFrom"), to = v("pdfTo"), st = v("pdfStatus"), q = v("pdfQ").toLowerCase();
+    var list = ARMADA_ALL.filter(function (a) {
+      if (type && a.jenis !== type) return false;
+      if (st ? a.avail !== st : a.avail === "selesai") return false;
+      var d = (a.departure_at_raw || "").slice(0, 10);
+      if (from && d && d < from) return false;
+      if (to && d && d > to) return false;
+      if (q && (a.provider + " " + (a.rute || "") + " " + (a.coordination_notes || "")).toLowerCase().indexOf(q) === -1) return false;
+      return true;
+    });
+    renderArmada(list);
+    var shown = $("#armadaShown");
+    if (shown && list.length !== ARMADA_ALL.length) shown.textContent = "Menampilkan " + list.length + " dari " + ARMADA_ALL.length + " armada";
+  }
+  ["pdfType", "pdfFrom", "pdfTo", "pdfStatus", "pdfQ"].forEach(function (id) {
+    document.addEventListener(id === "pdfQ" ? "input" : "change", function (e) { if (e.target && e.target.id === id) applyArmadaFilter(); });
+  });
+
   function renderArmada(list) {
     var body = $("#armadaBody"), shown = $("#armadaShown");
     if (!list || !list.length) {
@@ -154,7 +176,8 @@
         "<td>" + capMeter(a) + "</td>" +
         "<td>" + esc(a.berangkat) + '<small class="rn-muted">→ ' + esc(a.eta) + "</small></td>" +
         "<td>" + relawan + "</td>" +
-        '<td><span class="chip ' + statusChip(a.status) + '">' + esc(a.status_label) + "</span></td>" +
+        '<td><span class="chip ' + statusChip(a.status) + '">' + esc(a.status_label) + "</span>" +
+          (a.avail === "lewat" ? '<small class="rn-muted">jadwal lewat</small>' : a.avail === "penuh" ? '<small class="rn-muted">penuh</small>' : "") + "</td>" +
         "<td>" + (a.bookings_count ? '<span class="chip">' + fmt(a.bookings_count) + "</span>" : '<span class="rn-muted">0</span>') + "</td>" +
         "</tr>"
       );
@@ -164,6 +187,11 @@
     });
     if (shown) shown.textContent = "Menampilkan " + list.length + " armada";
     // owner 2026-11-02: "Pesan" from Cari Armada (Manajemen Distribusi) opens that armada's detail + booking
+    if (location.hash === "#armadaForm" && !window.__pdFormOpened) {
+      window.__pdFormOpened = true;
+      var fd = document.getElementById("armadaForm");
+      if (fd) setTimeout(function () { fd.open = true; fd.scrollIntoView({ block: "start" }); }, 100);
+    }
     var want = qs.get("armada");
     if (want && !window.__pdArmadaOpened) { window.__pdArmadaOpened = true; setTimeout(function () { openArmadaDetail(want); }, 50); }
   }
@@ -826,7 +854,8 @@
     renderSelector(data.transporter_poskos || [], data.posko || "", data.viewer);
     applyAccess(data);
     renderKpi(data.totals || {}, data.posko_info);
-    renderArmada(data.armada || []);
+    ARMADA_ALL = data.armada || [];
+    applyArmadaFilter();
     renderBookings(data.booking_inbox || []);
     var scanBtn = $("#pdScanBtn");     // kurir memindai label saat jemput / serah (owner 2026-10-25)
     if (scanBtn) {

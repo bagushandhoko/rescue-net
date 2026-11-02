@@ -33,6 +33,9 @@ def _pending(posko):
         "relawan": frappe.db.count("RN Volunteer Booking", {"posko": posko, "status": "requested"}),
         "operator": frappe.db.count("RN Posko Assignment", {"posko": posko, "status": "pending"}),
         "kedaluwarsa": 0,
+        # bookings waiting for this posko's armada (owner 2026-11-02)
+        "pesanan_armada": frappe.db.count("RN Transport Booking", {"status": "requested", "transport_space": ["in",
+            frappe.get_all("RN Transport Space", filters={"coordination_posko": posko}, pluck="name") or ["-"]]}),
     }
     # S14 (2026-11-02): stock already expired or expiring soon
     if frappe.db.exists("RN Stock Batch", {"posko": posko}):
@@ -132,3 +135,45 @@ def can_manage(posko):
     actor = rn_actor(required=False)
     name = resolve_posko(posko)
     return {"can_manage": bool(actor and name and can_manage_posko(actor, name))}
+
+
+# --- Alat transport posko (owner 2026-11-02: "halaman untuk mengatur alat transport dia") ----------------------
+
+ARMADA_STATUS_LABEL = {"available": "Tersedia", "reserved": "Dipesan", "assigned": "Ditugaskan", "in_transit": "Dalam perjalanan",
+                       "arrived": "Tiba", "completed": "Selesai", "cancelled": "Batal"}
+
+
+@frappe.whitelist()
+def armada_list(posko):
+    """The posko's own armada with what needs a decision (requested bookings). Managers only."""
+    from rescue_net.control_centre.distribusi import _armada_avail
+
+    actor = rn_actor()
+    name = resolve_posko(posko)
+    if not name or not can_manage_posko(actor, name):
+        frappe.throw("Halaman ini hanya untuk pengelola posko ini.", frappe.PermissionError)
+    rows = frappe.get_all("RN Transport Space", filters={"coordination_posko": name}, fields=[
+        "name", "title", "provider_name", "transport_type", "transport_status", "departure_at", "eta_at",
+        "capacity_weight_kg", "own_load_kg", "capacity_committed_kg", "booking_policy", "position_at",
+        "route_origin", "route_destination"], order_by="departure_at desc", limit_page_length=100)
+    out = []
+    for r in rows:
+        bookings = frappe.get_all("RN Transport Booking", filters={"transport_space": r.name, "status": "requested"},
+                                  fields=["name", "cargo_desc", "qty_weight_kg", "qty_volume_m3", "booker_name",
+                                          "booked_by_type", "contact_person", "contact_phone", "requested_window",
+                                          "verification_pin", "creation"], order_by="creation asc", limit_page_length=20)
+        cap = float(r.capacity_weight_kg or 0)
+        left = max(0.0, cap - float(r.own_load_kg or 0) - float(r.capacity_committed_kg or 0)) if cap else None
+        out.append({
+            "name": r.name, "title": r.title or r.provider_name, "type": r.transport_type or "",
+            "status": r.transport_status or "available",
+            "status_label": ARMADA_STATUS_LABEL.get(r.transport_status, r.transport_status or "-"),
+            "avail": _armada_avail(r.transport_status, left, r.departure_at),
+            "departure": str(r.departure_at or "")[:16], "route": (r.route_origin or "-") + " → " + (r.route_destination or "-"),
+            "capacity_kg": cap or None, "left_kg": left, "position_at": str(r.position_at or "")[:16],
+            "pin_needed": (r.booking_policy or "pin_verify") == "pin_verify",
+            "requested": [dict(b, needs_pin=bool(b.pop("verification_pin"))) for b in bookings],
+        })
+    return {"posko": name, "armada": out,
+            "pending_total": sum(len(a["requested"]) for a in out),
+            "statuses": ARMADA_STATUS_LABEL}

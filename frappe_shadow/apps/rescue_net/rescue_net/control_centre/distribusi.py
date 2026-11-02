@@ -35,6 +35,22 @@ from rescue_net.control_centre.critical import (  # noqa: F401
 )
 
 
+
+def _armada_avail(status, left_kg, departure_at):
+    """tersedia / penuh / dipakai / lewat — same rule as api_armada.armada_finder."""
+    from frappe.utils import get_datetime, now_datetime
+
+    st = status or "available"
+    if st in ("reserved", "assigned", "in_transit"):
+        return "dipakai"
+    if st in ("arrived", "completed", "cancelled"):
+        return "selesai"
+    if left_kg is not None and left_kg <= 0:
+        return "penuh"
+    if departure_at and get_datetime(departure_at) < now_datetime():
+        return "lewat"
+    return "tersedia"
+
 def _distribusi_posko_titles(names):
     names = {n for n in names if n}
     if not names:
@@ -750,6 +766,10 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "kursi_relawan": int(t.get("volunteer_capacity_seats") or 0),
             "status": t.transport_status or "-",
             "status_label": _ARMADA_STATUS_LABEL.get(t.transport_status, t.transport_status or "-"),
+            # owner 2026-11-02: filters on this page — same availability classes as Cari Armada
+            "departure_at_raw": str(t.departure_at or "")[:16],
+            "avail": _armada_avail(t.transport_status, max(0.0, offered_kg - c_kg - h_kg) if cap_kg else None,
+                                   t.departure_at),
             "kapasitas_total_kg": cap_kg, "kapasitas_total_m3": cap_m3,
             "muatan_sendiri_kg": round(own_kg, 1), "muatan_sendiri_m3": round(own_m3, 1),
             "muatan_sendiri_desc": t.own_cargo_desc or "",

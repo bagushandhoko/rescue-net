@@ -52,8 +52,10 @@
     $("kpPending").innerHTML =
       '<a class="kp-item" href="' + esc(relawan ? relawan.href : "management-relawan.html") + '"><span>Relawan menawarkan diri / minta jemputan &amp; shelter</span>' + badge(h.pending.relawan) + "</a>" +
       '<div class="kp-item"><span>Permintaan jadi operator posko <small class="rn-muted">(disetujui super admin)</small></span>' + badge(h.pending.operator) + "</div>" +
-      '<a class="kp-item" href="#kpExpiry"><span>Stok sudah / segera kedaluwarsa</span>' + badge(h.pending.kedaluwarsa) + "</a>";
+      '<a class="kp-item" href="#kpExpiry"><span>Stok sudah / segera kedaluwarsa</span>' + badge(h.pending.kedaluwarsa) + "</a>" +
+      '<a class="kp-item" href="#kpArmada"><span>Pesanan ruang muat armada menunggu</span>' + badge(h.pending.pesanan_armada) + "</a>";
     loadExpiry();
+    loadArmada();
 
     var ev = (h.events || []).map(function (e) { return esc(e.title); }).join(", ") || "—";
     $("kpInfo").innerHTML =
@@ -72,6 +74,103 @@
     f.offered.value = (h.comms || {}).offered || "";
     f.needed.value = (h.comms || {}).needed || "";
     status("");
+  }
+
+  /* Alat transport posko (owner 2026-11-02) — api_posko_manage.armada_list + existing armada / booking endpoints */
+  var GPS_WATCH = null;
+  function armadaRow(a, statuses) {
+    var opts = Object.keys(statuses).map(function (k) {
+      return '<option value="' + k + '"' + (k === a.status ? " selected" : "") + ">" + esc(statuses[k]) + "</option>"; }).join("");
+    var chip = { tersedia: "ok", penuh: "warning", dipakai: "danger", lewat: "", selesai: "" }[a.avail] || "";
+    var avail = { tersedia: "tersedia", penuh: "penuh", dipakai: "sedang dipakai", lewat: "jadwal lewat — perbarui jadwal", selesai: "selesai" }[a.avail] || a.avail;
+    var bks = (a.requested || []).map(function (b) {
+      return '<div class="kp-bk"><span><b>' + esc(b.cargo_desc || "Muatan") + "</b> · " + esc(b.qty_weight_kg || 0) + " kg" +
+        (b.qty_volume_m3 ? " · " + esc(b.qty_volume_m3) + " m³" : "") + "<br><small>" + esc(b.booker_name || b.contact_person || b.booked_by_type || "") +
+        (b.contact_phone ? " · " + esc(b.contact_phone) : "") + (b.requested_window ? " · " + esc(b.requested_window) : "") + "</small></span>" +
+        '<span><button class="btn primary mini" type="button" data-bk-ok="' + esc(b.name) + '" data-pin="' + (b.needs_pin ? 1 : 0) + '">Konfirmasi</button> ' +
+        '<button class="btn mini" type="button" data-bk-no="' + esc(b.name) + '">Tolak</button></span></div>';
+    }).join("");
+    return '<details class="kp-arm"' + (a.requested.length ? " open" : "") + "><summary>" +
+      '<span class="chip ' + chip + '">' + esc(avail) + "</span><b>" + esc(a.title) + "</b><small>" + esc(a.type) + " · " + esc(a.route) + "</small>" +
+      (a.requested.length ? '<span class="kp-badge">' + a.requested.length + "</span>" : "") + "</summary>" +
+      '<div class="kp-arm-body">' +
+      "<div>Berangkat: " + esc(a.departure || "fleksibel") + (a.left_kg != null ? " · sisa " + esc(a.left_kg) + " dari " + esc(a.capacity_kg) + " kg" : "") + "</div>" +
+      '<div class="kp-arm-row"><label>Status <select data-arm-status="' + esc(a.name) + '">' + opts + "</select></label>" +
+      '<button class="btn mini" type="button" data-arm-gps="' + esc(a.name) + '">📍 Kirim posisi sekarang</button>' +
+      '<label class="kp-auto"><input type="checkbox" data-arm-auto="' + esc(a.name) + '"' + (GPS_WATCH && GPS_WATCH.armada === a.name ? " checked" : "") + "> Lacak otomatis</label></div>" +
+      '<small class="rn-muted">Posisi terakhir: ' + esc(a.position_at || "belum ada") + "</small>" +
+      (bks ? "<h5>Pesanan menunggu</h5>" + bks : "") +
+      '<div><a class="btn ghost mini" href="posko-distribusi.html?id=' + encodeURIComponent(POSKO) + "&armada=" + encodeURIComponent(a.name) + '">Detail &amp; ubah armada</a></div>' +
+      "</div></details>";
+  }
+
+  async function loadArmada() {
+    var box = $("kpArmadaList");
+    if (!box) return;
+    $("kpArmadaAdd").href = "posko-distribusi.html?id=" + encodeURIComponent(POSKO) + "#armadaForm";
+    try {
+      var r = await window.RN_FRAPPE.call("rescue_net.api_posko_manage.armada_list", { posko: POSKO });
+      box.innerHTML = r.armada.length ? r.armada.map(function (a) { return armadaRow(a, r.statuses); }).join("")
+        : '<p class="rn-muted">Posko ini belum punya armada. Klik "+ Daftarkan armada" bila posko Anda menyediakan kendaraan / ruang muat.</p>';
+    } catch (e) { box.innerHTML = '<p class="rn-muted">' + esc((e && e.message) || e) + "</p>"; }
+  }
+
+  function armadaMsg(t) { var m = $("kpArmadaMsg"); if (m) m.textContent = t || ""; }
+  function sendPos(id, p) {
+    return window.RN_FRAPPE.call("rescue_net.api_armada.update_armada_position", { transport_space: id,
+      latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy_m: p.coords.accuracy }, { method: "POST" })
+      .then(function (r) { armadaMsg(r.skipped ? "Posisi belum berubah." : "Posisi terkirim " + String(r.position_at).slice(11, 16) + "."); })
+      .catch(function (e) { armadaMsg("Gagal: " + ((e && e.message) || e)); });
+  }
+  function wireArmada() {
+    var box = $("kpArmadaList");
+    if (!box) return;
+    box.addEventListener("change", async function (e) {
+      var st = e.target.closest("[data-arm-status]"), au = e.target.closest("[data-arm-auto]");
+      if (st) {
+        armadaMsg("Menyimpan status…");
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_logistics.update_transport_space",
+            { transport_space: st.dataset.armStatus, transport_status: st.value }, { method: "POST" });
+          armadaMsg("Status armada disimpan."); loadArmada();
+        } catch (err) { armadaMsg("Gagal: " + ((err && err.message) || err)); loadArmada(); }
+      }
+      if (au) {
+        if (GPS_WATCH) { navigator.geolocation.clearWatch(GPS_WATCH.id); GPS_WATCH = null; }
+        box.querySelectorAll("[data-arm-auto]").forEach(function (x) { if (x !== au) x.checked = false; });
+        if (!au.checked) { armadaMsg("Lacak otomatis dimatikan."); return; }
+        if (!navigator.geolocation) { armadaMsg("HP/peramban tidak mendukung GPS."); au.checked = false; return; }
+        var last = 0, id = au.dataset.armAuto;
+        GPS_WATCH = { armada: id, id: navigator.geolocation.watchPosition(function (p) {
+          if (Date.now() - last < 60000) return; last = Date.now(); sendPos(id, p);
+        }, function () { armadaMsg("Izin lokasi ditolak."); }, { enableHighAccuracy: true }) };
+        armadaMsg("Lacak otomatis aktif (±1 menit) selama halaman ini terbuka.");
+      }
+    });
+    box.addEventListener("click", async function (e) {
+      var g = e.target.closest("[data-arm-gps]"), ok = e.target.closest("[data-bk-ok]"), no = e.target.closest("[data-bk-no]");
+      if (g) {
+        if (!navigator.geolocation) return armadaMsg("HP/peramban tidak mendukung GPS.");
+        armadaMsg("Mencari posisi…");
+        navigator.geolocation.getCurrentPosition(function (p) { sendPos(g.dataset.armGps, p).then(loadArmada); },
+          function () { armadaMsg("Izin lokasi ditolak."); }, { enableHighAccuracy: true, timeout: 20000 });
+      }
+      if (ok || no) {
+        try {
+          if (ok) {
+            var pin = null;
+            if (ok.dataset.pin === "1") { pin = window.prompt("Masukkan PIN dari pemesan:", ""); if (pin === null) return; }
+            await window.RN_FRAPPE.call("rescue_net.api_logistics.confirm_transport_booking", { booking: ok.dataset.bkOk, pin: pin }, { method: "POST" });
+            armadaMsg("Pesanan dikonfirmasi.");
+          } else {
+            var why = window.prompt("Alasan menolak (opsional):", ""); if (why === null) return;
+            await window.RN_FRAPPE.call("rescue_net.api_logistics.reject_transport_booking", { booking: no.dataset.bkNo, reason: why }, { method: "POST" });
+            armadaMsg("Pesanan ditolak.");
+          }
+          loadArmada();
+        } catch (err) { armadaMsg("Gagal: " + ((err && err.message) || err)); }
+      }
+    });
   }
 
   /* S14 (2026-11-02): expiring stock + give stock an expiry date */
@@ -105,6 +204,7 @@
       } catch (err) { m.textContent = (err && err.message) || err; }
     });
 
+    wireArmada();
     var lf = $("kpLotForm");
     if (lf) lf.addEventListener("submit", async function (e) {
       e.preventDefault();

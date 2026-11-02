@@ -7639,3 +7639,18 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-pd-gps-auto { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
 .rn-pd-gps-auto input { width: auto; }
 @media (max-width: 640px) { .rn-af-map { height: 280px; } }
+/* Kelola Posko → Alat transport (owner 2026-11-02) */
+.kp-armada { display: flex; flex-direction: column; gap: 8px; }
+.kp-arm { border: 1px solid rgba(104,64,45,.14); border-radius: 12px; background: #fff; }
+.kp-arm[open] { border-color: #ef523d; }
+.kp-arm > summary { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; cursor: pointer; list-style: none; }
+.kp-arm > summary::-webkit-details-marker { display: none; }
+.kp-arm > summary small { color: #7a6a60; flex: 1 1 160px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kp-arm-body { padding: 4px 12px 12px; border-top: 1px dashed rgba(104,64,45,.14); display: grid; gap: 8px; font-size: 13px; }
+.kp-arm-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.kp-arm-row label { display: flex; flex-direction: column; gap: 4px; font-weight: 700; }
+.kp-auto { flex-direction: row !important; align-items: center; gap: 6px !important; font-weight: 400 !important; }
+.kp-auto input { width: auto; }
+.kp-arm h5 { margin: 4px 0 0; }
+.kp-bk { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; padding: 8px 10px; border-radius: 10px; background: #fff4ef; overflow-wrap: anywhere; }
+.kp-bk > span:first-child { flex: 1 1 200px; min-width: 0; }

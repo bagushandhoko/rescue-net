@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Kelola Posko</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=gps-20261102">
+  <link rel="stylesheet" href="../assets/css/style.css?v=armada-20261102">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -95,6 +95,13 @@
         <div class="kp-tools" id="kpTools"></div>
       </section>
 
+      <section class="panel" id="kpArmada">
+        <div class="panel-header"><div><h3>🚚 Alat transport posko</h3><p>Atur armada posko Anda: status, posisi GPS, dan pesanan ruang muat yang menunggu keputusan. Publik melihat posisi &amp; sisa kapasitas di Manajemen Distribusi → Cari Armada.</p></div>
+          <a class="btn primary mini" id="kpArmadaAdd" href="#">+ Daftarkan armada</a></div>
+        <div id="kpArmadaList" class="kp-armada"><p class="rn-muted">Memuat…</p></div>
+        <span class="form-message" id="kpArmadaMsg"></span>
+      </section>
+
       <section class="panel" id="kpExpiry">
         <div class="panel-header"><div><h3>Stok kedaluwarsa</h3><p>Obat / makanan yang sudah atau segera kedaluwarsa (obat: 60 hari, lainnya: 30 hari). Keluarkan yang paling dulu kedaluwarsa.</p></div></div>
         <div class="rn-table-wrap"><table class="rn-table">
@@ -130,7 +137,7 @@
 </div>
 <script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/kelola-posko.js?v=expiry-20261102"></script>
+<script src="../assets/js/kelola-posko.js?v=armada-20261102"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

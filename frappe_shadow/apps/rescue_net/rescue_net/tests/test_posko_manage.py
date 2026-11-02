@@ -57,3 +57,20 @@ class TestPoskoManage(RNTestCase):
         with as_user(self.mgr.user):
             h = pm.manage_hub(self.w.posko_a.name)
         self.assertGreaterEqual(h["pending"]["kedaluwarsa"], 1)
+
+    def test_armada_list_for_owner_only(self):
+        sp = _insert("RN Transport Space", title="Truk Posko A", provider_name="Truk Posko A", disaster_event=self.w.event.name,
+                     coordination_posko=self.w.posko_a.name, transport_type="darat", capacity_weight_kg=1000,
+                     transport_status="available", booking_policy="pin_verify", departure_at="2099-01-01 08:00:00")
+        _insert("RN Transport Booking", transport_space=sp.name, disaster_event=self.w.event.name, status="requested",
+                cargo_desc="Beras", qty_weight_kg=100, verification_pin="ABC123", booked_by_type="posko")
+        with as_user(self.other.user), self.assertRaises(frappe.PermissionError):
+            pm.armada_list(self.w.posko_a.name)
+        with as_user(self.mgr.user):
+            r = pm.armada_list(self.w.posko_a.name)
+            h = pm.manage_hub(self.w.posko_a.name)
+        a = r["armada"][0]
+        self.assertEqual((a["name"], a["avail"], len(a["requested"])), (sp.name, "tersedia", 1))
+        self.assertTrue(a["requested"][0]["needs_pin"])
+        self.assertNotIn("ABC123", frappe.as_json(r))            # the PIN stays with the booker
+        self.assertEqual(h["pending"]["pesanan_armada"], 1)

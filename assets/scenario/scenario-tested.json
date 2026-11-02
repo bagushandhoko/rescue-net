@@ -983,6 +983,41 @@
      "perbaikan": "Belum — perlu isi center_lat/lng RN Admin Area."
     }
    ]
+  },
+  {
+   "id": "CA-1",
+   "tanggal": "2026-11-02",
+   "kategori": "Distribusi",
+   "judul": "Cari Armada di Manajemen Distribusi (publik): waktu, lokasi terdekat, tersedia vs sedang dipakai",
+   "tujuan": "Owner: halaman publik Manajemen Distribusi dengan filter waktu & lokasi terdekat, ketersediaan dan yang sedang dipakai; eksekusi (pesan) wajib login; pemilik posko atur alat transport dari halaman posko-nya.",
+   "akun": [
+    "ld3.demo (LD3 Posko Transport)",
+    "ld2.demo (pemesan)",
+    "tamu",
+    "HP 390px"
+   ],
+   "langkah": [
+    "LD3 daftar 3 armada [SIMULASI]: berangkat besok (pesanan langsung), 3 hari lagi (PIN), pikap hari ini → 'dalam perjalanan'",
+    "Tamu: hitungan Tersedia / Penuh / Sedang dipakai / Jadwal lewat; status ketiga armada tepat",
+    "Filter berangkat 2–4 hari lagi → hanya truk 3 hari lagi",
+    "Urut dari lokasi saya (Meulaboh) → jarak naik",
+    "Tamu tidak bisa memesan lewat jalur login; tombol 'Login untuk pesan'",
+    "LD2 login → Pesan → membuka detail armada di Posko Distribusi; pesan 300 kg → sisa 1.700 dari 2.000 kg",
+    "Kelola Posko: alat 'Alat transport / armada'"
+   ],
+   "hasil": "Lulus (13 langkah di produksi, 3 tes baru, suite 666 hijau, Playwright HP)",
+   "skor": "13/13",
+   "status": "lulus-perbaikan",
+   "temuan": [
+    {
+     "masalah": "15 armada demo masih 'tersedia' padahal jadwal berangkatnya sudah lewat.",
+     "perbaikan": "Status 'Jadwal lewat' (tidak ditawarkan sebagai tersedia) (11518b8)."
+    },
+    {
+     "masalah": "Halaman Posko Distribusi masih membolehkan tamu memesan ruang muat tanpa login (Kode Edit).",
+     "perbaikan": "Menunggu keputusan owner (aturan baru: eksekusi wajib login)."
+    }
+   ]
   }
  ],
  "rencana": [

@@ -1074,6 +1074,29 @@
    "skor": "5/5",
    "status": "lulus",
    "temuan": []
+  },
+  {
+   "id": "PD-1",
+   "tanggal": "2026-11-02",
+   "kategori": "Distribusi",
+   "judul": "Posko Distribusi: filter armada + halaman pemilik 'Alat transport'",
+   "tujuan": "Owner: filter di posko distribusi; halaman untuk pemilik posko mengatur alat transportnya.",
+   "akun": [
+    "tamu",
+    "ld3.demo (pemilik LD3 Posko Transport)",
+    "HP 390px"
+   ],
+   "langkah": [
+    "Posko Distribusi LD3: filter Jenis / Berangkat dari-sampai / Status / Cari; bawaan menyembunyikan yang selesai (10 dari 13)",
+    "Status 'Tersedia' → 3; 'Jadwal lewat' → 6; cari 'pikap' → 3",
+    "Kelola Posko LD3: panel '🚚 Alat transport posko' — daftar armada dengan status ketersediaan, 'jadwal lewat — perbarui jadwal'",
+    "Per armada: ubah status, Kirim posisi sekarang, Lacak otomatis, pesanan menunggu (Konfirmasi dengan PIN pemesan / Tolak), Detail & ubah",
+    "'Perlu tindakan' menghitung pesanan ruang muat menunggu (2); PIN pemesan tidak dikirim ke halaman pemilik"
+   ],
+   "hasil": "Lulus (1 tes baru, suite 672 hijau, Playwright HP)",
+   "skor": "5/5",
+   "status": "lulus",
+   "temuan": []
   }
  ],
  "rencana": [

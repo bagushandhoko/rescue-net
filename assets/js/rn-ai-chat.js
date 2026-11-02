@@ -48,6 +48,9 @@
     ".rn-aic-note a{color:#c4442f;font-weight:700}.rn-aic-sugs{display:flex;flex-wrap:wrap;gap:6px}.rn-aic-sugs button{border:1px solid rgba(104,64,45,.2);background:#fff;border-radius:999px;padding:6px 10px;font:12px system-ui,sans-serif;cursor:pointer}" +
     ".rn-aic-form{display:flex;gap:8px;padding:10px;border-top:1px solid rgba(0,0,0,.08)}.rn-aic-form textarea{flex:1;resize:none;height:44px;border:1px solid rgba(0,0,0,.18);border-radius:10px;padding:8px 10px;font:14px system-ui,sans-serif}" +
     ".rn-aic-form button{border:0;border-radius:10px;padding:0 14px;background:#ef523d;color:#fff;font-weight:700;cursor:pointer}.rn-aic-form button:disabled{opacity:.5}" +
+    ".rn-aic-key{display:inline-block;margin-top:4px;font-size:12px;color:#c4442f;font-weight:700;text-decoration:none}" +
+    ".rn-aic-act{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid rgba(239,82,61,.45);border-radius:12px;padding:8px 10px;font-size:13px}" +
+    ".rn-aic-act button{border:0;border-radius:8px;padding:6px 12px;background:#2f9a5c;color:#fff;font-weight:700;cursor:pointer;flex:0 0 auto}.rn-aic-act button:disabled{opacity:.6}" +
     ".rn-aic-org{font-size:12px;margin-top:4px}.rn-aic-org select{font-size:12px;padding:2px 4px}" +
     "@media print{.rn-aic-btn,.rn-aic-panel{display:none!important}}";
 
@@ -62,10 +65,12 @@
     var btn = el('<button type="button" class="rn-aic-btn" aria-haspopup="dialog">🤖 Tanya AI</button>');
     var panel = el('<section class="rn-aic-panel" role="dialog" aria-label="Asisten AI Rescue-Net" hidden>' +
       '<div class="rn-aic-head"><div><b>🤖 Asisten AI Rescue-Net</b><small id="rnAicSrc">Bantu atur posko &amp; cari data</small>' +
-      '<div class="rn-aic-org" id="rnAicOrg" hidden></div></div><button type="button" class="rn-aic-x" aria-label="Tutup">×</button></div>' +
+      '<div class="rn-aic-org" id="rnAicOrg" hidden></div><a class="rn-aic-key" id="rnAicKey" href="#">⚙ Atur kunci AI</a></div>' +
+      '<button type="button" class="rn-aic-x" aria-label="Tutup">×</button></div>' +
       '<div class="rn-aic-log" id="rnAicLog"></div>' +
       '<form class="rn-aic-form" id="rnAicForm"><textarea name="q" placeholder="Tulis pertanyaan…" maxlength="1500"></textarea><button type="submit">Kirim</button></form></section>');
     document.body.appendChild(btn); document.body.appendChild(panel);
+    panel.querySelector("#rnAicKey").href = href("pages/ai-settings.html");
     btn.addEventListener("click", toggle);
     panel.querySelector(".rn-aic-x").addEventListener("click", toggle);
     panel.querySelector("#rnAicForm").addEventListener("submit", function (e) { e.preventDefault(); send(); });
@@ -75,6 +80,8 @@
     panel.addEventListener("click", function (e) {
       var s = e.target.closest("[data-sug]");
       if (s) { panel.querySelector("textarea").value = s.dataset.sug; send(); }
+      var act = e.target.closest("[data-aic-act]");
+      if (act) runAction(act);
     });
   }
 
@@ -152,11 +159,38 @@
       wait.remove();
       if (r.status !== "ok") { STATE.status = r; note(r.status, r.message, r.settings); return; }
       add(fmt(r.answer), "rn-aic-a");
+      // owner 2026-11-02: actions the AI proposes — the user decides by pressing "Jalankan"
+      (r.actions || []).forEach(function (a) {
+        add('<div class="rn-aic-act"><span>⚡ ' + esc(a.label) + '</span><button type="button" data-aic-act="' +
+          esc(JSON.stringify({ action: a.action, params: a.params })) + '">Jalankan</button></div>', "");
+      });
       h.push({ q: q, a: r.answer }); saveHistory(h);
     } catch (e) {
       wait.remove();
       note("error", (e && e.message) || "Permintaan gagal.", "pages/ai-settings.html");
     } finally { b.disabled = false; }
+  }
+
+  async function runAction(btn) {
+    var spec = JSON.parse(btn.getAttribute("data-aic-act"));
+    var label = btn.parentNode.querySelector("span").textContent.replace(/^⚡\s*/, "");
+    if (!window.confirm("Jalankan: " + label + "?")) return;
+    btn.disabled = true; btn.textContent = "Menjalankan…";
+    var args = { action: spec.action, params: JSON.stringify(spec.params || {}) };
+    try {
+      if (spec.action === "armada_position") {
+        if (!navigator.geolocation) throw new Error("HP/peramban tidak mendukung GPS.");
+        var p = await new Promise(function (ok, bad) {
+          navigator.geolocation.getCurrentPosition(ok, function () { bad(new Error("Izin lokasi ditolak.")); }, { enableHighAccuracy: true, timeout: 20000 });
+        });
+        args.latitude = p.coords.latitude; args.longitude = p.coords.longitude; args.accuracy_m = p.coords.accuracy;
+      }
+      var r = await window.RN_FRAPPE.call(API + "run_action", args, { method: "POST" });
+      btn.textContent = "✓ Selesai"; add("✅ " + esc(r.message || "Selesai."), "rn-aic-a");
+    } catch (e) {
+      btn.disabled = false; btn.textContent = "Jalankan";
+      add("⚠️ " + esc((e && e.message) || e), "rn-aic-note");
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount); else mount();

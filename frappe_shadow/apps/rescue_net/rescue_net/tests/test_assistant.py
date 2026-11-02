@@ -74,3 +74,46 @@ class TestAssistant(RNTestCase):
             aa.chat("stok posko saya", disaster_event=self.w.event.name, posko=self.w.posko_a.name)
         ctx = json.loads(seen["ctx"].split("\n", 1)[1])
         self.assertEqual(ctx["posko_aktif"]["title"], title_a)
+
+
+class TestAssistantActions(RNTestCase):
+    """Owner 2026-11-02: the AI may PROPOSE changes for the user's own posko; the user presses 'Jalankan'."""
+
+    def setUp(self):
+        super().setUp()
+        from rescue_net.tests.factories import _insert
+        self.w = make_world()
+        self.mgr = make_actor(posko=self.w.posko_a)
+        self.space = _insert("RN Transport Space", title="Truk AI", provider_name="Truk AI", disaster_event=self.w.event.name,
+                             coordination_posko=self.w.posko_a.name, transport_type="darat", capacity_weight_kg=500,
+                             transport_status="available")
+
+    def _ask(self, user, reply):
+        with as_user(user), patch("rescue_net.ai.keys.resolve_ai", return_value=dict(KEY, owner_id=user)), \
+                patch.object(llm, "chat", return_value=(reply, {"total_tokens": 5})):
+            return aa.chat("tolong", disaster_event=self.w.event.name, posko=self.w.posko_a.name)
+
+    def test_proposals_filtered_by_rights(self):
+        reply = ("Silakan.\n"
+                 '[[AKSI {"action": "armada_status", "params": {"transport_space": "%s", "transport_status": "in_transit"}, "label": "Truk AI berangkat"}]]\n'
+                 '[[AKSI {"action": "posko_status", "params": {"posko": "%s", "operational_status": "standby"}, "label": "Posko B siaga"}]]\n'
+                 '[[AKSI {"action": "hapus_semua", "params": {}, "label": "x"}]]') % (self.space.name, self.w.posko_b.name)
+        r = self._ask(self.mgr.user, reply)
+        self.assertNotIn("[[AKSI", r["answer"])
+        self.assertEqual([a["action"] for a in r["actions"]], ["armada_status"])   # posko B not managed, unknown dropped
+        r2 = self._ask(make_actor().user, reply)
+        self.assertEqual(r2["actions"], [])
+
+    def test_run_action_as_the_user(self):
+        with as_user(make_actor().user), self.assertRaises(frappe.PermissionError):
+            aa.run_action("armada_status", json.dumps({"transport_space": self.space.name, "transport_status": "in_transit"}))
+        with as_user(self.mgr.user):
+            aa.run_action("armada_status", json.dumps({"transport_space": self.space.name, "transport_status": "in_transit"}))
+            r = aa.run_action("armada_position", json.dumps({"transport_space": self.space.name}), latitude=4.14, longitude=96.13)
+            aa.run_action("comms_support", json.dumps({"posko": self.w.posko_a.name, "needed": "HT 2 unit"}))
+            with self.assertRaisesRegex(frappe.ValidationError, "tidak valid"):
+                aa.run_action("armada_status", json.dumps({"transport_space": self.space.name, "transport_status": "meledak"}))
+        self.assertTrue(r["ok"])
+        self.assertEqual(frappe.db.get_value("RN Transport Space", self.space.name, ["transport_status", "position_lat"]),
+                         ("in_transit", 4.14))
+        self.assertEqual(frappe.db.get_value("RN Posko", self.w.posko_a.name, "comms_support_needed"), "HT 2 unit")

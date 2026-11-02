@@ -49,7 +49,28 @@ Aturan:
 - Anda TIDAK bisa mengubah data. Untuk mengubah, arahkan ke halaman/tombol yang tepat.
 - Jangan menampilkan data pribadi yang tidak ada di konteks; jangan menebak identitas pasien/orang hilang.
 - Sebut nama posko/bencana persis seperti di konteks, dan sertakan tautan relatif bila ada (field href).
-- Bila pertanyaan di luar Rescue-Net/kebencanaan, jawab singkat dan arahkan kembali."""
+- Bila pertanyaan di luar Rescue-Net/kebencanaan, jawab singkat dan arahkan kembali.
+AKSI (owner 2026-11-02): Anda BOLEH mengusulkan aksi perubahan untuk posko yang dikelola pengguna — pengguna sendiri
+yang menekan tombol "Jalankan". Usulkan hanya aksi dari AKSI_TERSEDIA, hanya untuk ID yang ada di konteks
+(posko_yang_anda_kelola / posko_aktif / armada), dan hanya bila pengguna memintanya atau jelas membantu.
+Tulis tiap usulan di baris tersendiri PALING AKHIR jawaban, persis:
+[[AKSI {"action": "<nama>", "params": {...}, "label": "<kalimat singkat untuk tombol>"}]]
+Jangan pernah mengklaim aksi sudah dijalankan."""
+
+# actions the AI may PROPOSE; the user presses "Jalankan" and it runs with the user's own permissions
+ACTIONS = {
+    "armada_position": {"params": ["transport_space"], "desc": "kirim posisi GPS HP sekarang untuk armada (transport_space)"},
+    "armada_status": {"params": ["transport_space", "transport_status"],
+                      "desc": "ubah status armada: available / reserved / assigned / in_transit / arrived / completed"},
+    "posko_status": {"params": ["posko", "operational_status"],
+                     "desc": "ubah status operasional posko: active / standby / reducing / closing / offline"},
+    "comms_support": {"params": ["posko", "offered", "needed"], "desc": "isi dukungan komunikasi yang ditawarkan / dibutuhkan posko"},
+    "stock_expiry": {"params": ["posko", "item_name", "unit", "quantity", "expiry_date"],
+                     "desc": "beri tanggal kedaluwarsa (YYYY-MM-DD) pada stok posko"},
+}
+ARMADA_STATUS = {"available", "reserved", "assigned", "in_transit", "arrived", "completed"}
+POSKO_STATUS = {"active", "standby", "reducing", "closing", "offline"}
+_AKSI_RE = re.compile(r"\[\[AKSI\s*(\{.*?\})\s*\]\]", re.S)
 
 
 def _user():
@@ -157,8 +178,12 @@ def _posko_context(posko):
 
     actor = rn_actor(required=False)
     s = _summary(posko, actor)
-    out = {k: s.get(k) for k in ("title", "type_label", "status", "verification", "events", "pending", "warnings",
-                                 "tools", "comms")}
+    out = {k: s.get(k) for k in ("posko", "title", "type_label", "status", "verification", "events", "pending",
+                                 "warnings", "tools", "comms")}
+    out["armada"] = frappe.get_all("RN Transport Space", filters={"coordination_posko": posko,
+                                                                  "transport_status": ["not in", ["completed", "cancelled"]]},
+                                   fields=["name", "title", "transport_status", "departure_at", "position_at",
+                                           "capacity_weight_kg", "capacity_committed_kg"], limit_page_length=30)
     try:
         from rescue_net.services.expiry import expiring_report
 
@@ -202,7 +227,8 @@ def chat(question, page=None, disaster_event=None, posko=None, organization_id=N
     actor = rn_actor(required=False)
     event = resolve_disaster_event(disaster_event) if disaster_event else None
     managed = _managed_poskos(actor) if actor else []
-    ctx = {"halaman_saat_ini": (page or "")[:200], "PAGE_MAP": PAGE_MAP}
+    ctx = {"halaman_saat_ini": (page or "")[:200], "PAGE_MAP": PAGE_MAP,
+           "AKSI_TERSEDIA": {k: v["desc"] + " — params: " + ", ".join(v["params"]) for k, v in ACTIONS.items()}}
     if event:
         try:
             ctx["bencana"], full = _event_context(event)
@@ -246,4 +272,85 @@ def chat(question, page=None, disaster_event=None, posko=None, organization_id=N
         m = str(e)
         st = "quota" if ("habis" in m or "Anggaran" in m) else ("rate" if "Terlalu banyak" in m else "error")
         return {"status": st, "message": m or "Permintaan AI gagal.", "settings": "pages/ai-settings.html"}
-    return {"status": "ok", "answer": answer, "source": SOURCE_LABEL.get(r["owner_type"])}
+    answer, actions = _extract_actions(answer, actor)
+    return {"status": "ok", "answer": answer, "actions": actions, "source": SOURCE_LABEL.get(r["owner_type"])}
+
+
+def _extract_actions(answer, actor):
+    """Pull [[AKSI {...}]] lines out of the answer; keep only known actions the user is allowed to run."""
+    actions = []
+    for raw in _AKSI_RE.findall(answer or ""):
+        try:
+            a = json.loads(raw)
+        except ValueError:
+            continue
+        name, params = a.get("action"), a.get("params") or {}
+        spec = ACTIONS.get(name)
+        if not spec or not isinstance(params, dict):
+            continue
+        params = {k: params[k] for k in spec["params"] if k in params}
+        if _allowed(name, params, actor):
+            actions.append({"action": name, "params": params, "label": str(a.get("label") or spec["desc"])[:120]})
+    cleaned = _AKSI_RE.sub("", answer or "").strip()
+    return cleaned, actions[:4]
+
+
+def _allowed(name, params, actor):
+    try:
+        if name in ("armada_position", "armada_status"):
+            from rescue_net.api_armada import _can_update
+
+            space = frappe.db.get_value("RN Transport Space", params.get("transport_space"),
+                                        ["name", "coordination_posko", "created_by_user"], as_dict=True)
+            return bool(space and _can_update(space))
+        if params.get("posko"):
+            return bool(actor and can_manage_posko(actor, resolve_posko(params["posko"])))
+    except Exception:
+        return False
+    return False
+
+
+@frappe.whitelist(methods=["POST"])
+@rate_limit(limit=60, seconds=600)
+def run_action(action, params=None, latitude=None, longitude=None, accuracy_m=None):
+    """The user pressed "Jalankan" on an action the AI proposed. Runs through the normal, permission-checked
+    endpoints AS THE USER — the AI itself never writes (ADR-0002: a human decides)."""
+    user = _user()
+    if not user:
+        frappe.throw("Login dulu.", frappe.PermissionError)
+    p = json.loads(params) if isinstance(params, str) else (params or {})
+    if action not in ACTIONS:
+        frappe.throw("Aksi tidak dikenal.")
+    actor = rn_actor(required=False)
+    if not _allowed(action, p, actor):
+        frappe.throw("Anda tidak berhak menjalankan aksi ini.", frappe.PermissionError)
+    if action == "armada_position":
+        from rescue_net.api_armada import update_armada_position
+
+        r = update_armada_position(p["transport_space"], latitude, longitude, accuracy_m)
+        return {"ok": True, "message": "Posisi armada diperbarui." if not r.get("skipped") else "Posisi belum berubah."}
+    if action == "armada_status":
+        if p.get("transport_status") not in ARMADA_STATUS:
+            frappe.throw("Status armada tidak valid.")
+        from rescue_net.logistics.transport import update_transport_space
+
+        update_transport_space(p["transport_space"], transport_status=p["transport_status"])
+        return {"ok": True, "message": "Status armada diubah ke " + p["transport_status"] + "."}
+    if action == "posko_status":
+        if p.get("operational_status") not in POSKO_STATUS:
+            frappe.throw("Status posko tidak valid.")
+        from rescue_net.api_community_cluster import update_posko
+
+        r = update_posko(resolve_posko(p["posko"]), operational_status=p["operational_status"])
+        return {"ok": True, "message": "Status posko diubah." + (" Menunggu persetujuan pusat." if isinstance(r, dict) and r.get("pending") else "")}
+    if action == "comms_support":
+        from rescue_net.api_comms import set_posko_comms_support
+
+        set_posko_comms_support(p["posko"], offered=p.get("offered"), needed=p.get("needed"))
+        return {"ok": True, "message": "Dukungan komunikasi posko disimpan."}
+    if action == "stock_expiry":
+        from rescue_net.api_stock_expiry import add_lot
+
+        add_lot(resolve_posko(p["posko"]), p.get("item_name"), p.get("unit"), p.get("quantity"), p.get("expiry_date"))
+        return {"ok": True, "message": "Tanggal kedaluwarsa dicatat."}
+    frappe.throw("Aksi tidak dikenal.")

@@ -1018,6 +1018,39 @@
      "perbaikan": "Menunggu keputusan owner (aturan baru: eksekusi wajib login)."
     }
    ]
+  },
+  {
+   "id": "GPS-1",
+   "tanggal": "2026-11-02",
+   "kategori": "Distribusi",
+   "judul": "Posisi GPS armada: pemilik posko update posisi, publik pantau pergerakan; pesan wajib login",
+   "tujuan": "Owner: memesan wajib login; publik bisa memantau pergerakan & kapasitas tersedia; pemilik posko update posisi alat transport dari GPS.",
+   "akun": [
+    "ld3.demo (LD3 Posko Transport)",
+    "ld2.demo (posko lain, organisasi sama)",
+    "tamu",
+    "HP 390px"
+   ],
+   "langkah": [
+    "Tamu memesan ruang muat → ditolak 'login dulu' (pemesanan tamu dimatikan; booking tamu lama tetap bisa dilacak)",
+    "LD3 kirim 3 posisi GPS pikap dalam perjalanan Kaway XVI → Meulaboh; posisi berulang <15 m dalam 20 detik diabaikan",
+    "Tamu & LD2 tidak bisa mengirim posisi armada LD3 (setelah perbaikan)",
+    "Publik: peta Cari Armada — posisi GPS terkini (titik penuh), jejak rute, sisa kapasitas, warna status; segar tiap 1 menit",
+    "Posko Distribusi (pengelola): tombol 'Kirim posisi sekarang' + 'Lacak otomatis selama halaman terbuka' (±1 menit)"
+   ],
+   "hasil": "Lulus setelah perbaikan (11 langkah di produksi, 2 tes baru, suite 668 hijau, Playwright HP)",
+   "skor": "11/11",
+   "status": "lulus-perbaikan",
+   "temuan": [
+    {
+     "masalah": "Posko lain dalam organisasi yang sama (LD2) bisa mengubah posisi armada LD3.",
+     "perbaikan": "Hanya pengelola posko pemilik armada / koordinator organisasi / pembuat armada (09cf3ac)."
+    },
+    {
+     "masalah": "Satu titik jejak palsu (4.1, 96.1) dari LD2 sebelum perbaikan masih ada di jejak pikap [SIMULASI].",
+     "perbaikan": "Menunggu izin owner untuk dihapus."
+    }
+   ]
   }
  ],
  "rencana": [

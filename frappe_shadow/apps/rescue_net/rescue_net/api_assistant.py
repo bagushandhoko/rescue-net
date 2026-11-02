@@ -20,7 +20,6 @@ import json
 import re
 
 import frappe
-from frappe.rate_limiter import rate_limit
 
 from rescue_net.access_policy import can_manage_posko, is_system_manager, rn_actor
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
@@ -310,12 +309,26 @@ def _managed_poskos(actor):
         return []
 
 
+CHAT_LIMIT, ACTION_LIMIT, WINDOW_S = 30, 60, 600
+
+
+def _over_limit(user, what, limit):
+    """Per-USER limit (owner 2026-11-02: frappe's @rate_limit counts per IP — an office / posko / the owner's
+    network shares one public IP, so one person's questions used up everybody's quota)."""
+    key = frappe.cache.make_key("rn:assistant:%s:%s" % (what, user))
+    n = frappe.cache.incrby(key, 1)
+    if n == 1:
+        frappe.cache.expire(key, WINDOW_S)
+    return n > limit
+
+
 @frappe.whitelist(methods=["POST"])
-@rate_limit(limit=30, seconds=600)
 def chat(question, page=None, disaster_event=None, posko=None, organization_id=None, history=None):
     user = _user()
     if not user:
         return {"status": "login", "message": "Login dulu untuk memakai Asisten AI."}
+    if _over_limit(user, "chat", CHAT_LIMIT):
+        return {"status": "rate", "message": "Terlalu banyak pertanyaan dalam 10 menit (maks. %d). Tunggu sebentar lalu coba lagi." % CHAT_LIMIT}
     question = (question or "").strip()[:MAX_Q]
     if not question:
         frappe.throw("Tulis pertanyaan dulu.")
@@ -428,13 +441,14 @@ def _allowed(name, params, actor):
 
 
 @frappe.whitelist(methods=["POST"])
-@rate_limit(limit=60, seconds=600)
 def run_action(action, params=None, latitude=None, longitude=None, accuracy_m=None):
     """The user pressed "Jalankan" on an action the AI proposed. Runs through the normal, permission-checked
     endpoints AS THE USER — the AI itself never writes (ADR-0002: a human decides)."""
     user = _user()
     if not user:
         frappe.throw("Login dulu.", frappe.PermissionError)
+    if _over_limit(user, "action", ACTION_LIMIT):
+        frappe.throw("Terlalu banyak aksi dalam 10 menit. Tunggu sebentar lalu coba lagi.")
     p = json.loads(params) if isinstance(params, str) else (params or {})
     if action not in ACTIONS:
         frappe.throw("Aksi tidak dikenal.")

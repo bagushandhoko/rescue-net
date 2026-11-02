@@ -131,3 +131,20 @@ class TestAssistantSettingsActions(RNTestCase):
                 patch.object(llm, "chat", return_value=(reply, {"total_tokens": 1})):
             r = aa.chat("tolong", posko=self.w.posko_a.name)
         self.assertEqual([a["action"] for a in r["actions"]], ["volunteer_decide"])   # manager has no volunteer profile
+
+
+class TestAssistantLimitPerUser(RNTestCase):
+    """Owner 2026-11-02: 'RateLimitExceededError' — the limit was per IP, so users behind one office/posko IP
+    used up each other's quota. Now per user, and a friendly status instead of an exception."""
+
+    def test_limit_counts_per_user_not_per_ip(self):
+        a, b = make_actor(), make_actor()
+        with patch("rescue_net.ai.keys.resolve_ai", return_value=dict(KEY)), \
+                patch.object(llm, "chat", return_value=("ok", {"total_tokens": 1})), \
+                patch.object(aa, "CHAT_LIMIT", 3):
+            with as_user(a.user):
+                got = [aa.chat("halo")["status"] for _ in range(4)]
+            with as_user(b.user):
+                other = aa.chat("halo")["status"]
+        self.assertEqual(got, ["ok", "ok", "ok", "rate"])
+        self.assertEqual(other, "ok")

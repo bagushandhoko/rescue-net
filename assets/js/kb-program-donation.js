@@ -71,7 +71,7 @@
   }
 
   form.donor_program.addEventListener("change", function () { showProgram(form.donor_program.value); });
-  if (picker) picker.addEventListener("change", loadPrograms);
+  if (picker) picker.addEventListener("change", function () { if (!form.hidden) loadPrograms(); });
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
     var id = form.donor_program.value;

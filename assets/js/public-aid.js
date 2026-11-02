@@ -258,8 +258,13 @@ async function populateDisasterPicker(form) {
         const id = d.id || d.legacy_id || d.name;
         return `<option value="${safe(id)}">${safe(d.title || id)}${d.severity ? " — " + safe(d.severity) : ""}</option>`;
       }).join("");
-      if (preset) sel.value = preset;
+      if (preset) {
+        // ?event=event-sim-001 must also pick "disaster_events:event-sim-001" (legacy id)
+        const opt = [...sel.options].find(o => o.value === preset || o.value.endsWith(":" + preset) || preset.endsWith(":" + o.value));
+        if (opt) sel.value = opt.value;
+      }
       if (!sel.value) sel.selectedIndex = 0;
+      sel.dispatchEvent(new Event("change"));
     }
   } catch (e) { /* keep the fallback option */ }
 }

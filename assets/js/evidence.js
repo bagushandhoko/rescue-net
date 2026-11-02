@@ -339,6 +339,7 @@
           linked_object_id: form.linked_object_id.value.trim() || null,
           evidence_type: form.evidence_type.value.trim() || "photo",
           uploaded_by: form.uploaded_by.value.trim() || null,
+          caption: (form.caption && form.caption.value.trim()) || null,
         }, { method: "POST" });
         form.reset();
         statusMsg("Evidence uploaded.");

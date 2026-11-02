@@ -167,3 +167,26 @@ class TestProgramKpi(RNTestCase):
         self.assertEqual(wall["total_received"], 1_500_000)
         for part in ("donor", "tender", "tracking"):
             self.assertIn(part, k)
+
+
+class TestProgramPhotoEvidence(RNTestCase):
+    """Owner 2026-11-02 (simulasi bukti foto Krakatau): a photo uploaded on Bukti Lapangan and linked to a
+    program shows up among that program's bukti."""
+
+    def test_linked_photo_is_program_evidence(self):
+        from rescue_net.frontend_bridge.map_evidence import upload_evidence
+        event = make_event(event_status="active")
+        org = make_org(verification_status="verified")
+        posko = make_posko(event, org)
+        owner = make_actor(org=org, org_role="owner", posko=posko)
+        with as_user(owner.user):
+            p = api.create_special_program(event.name, "Sekolah darurat", owner_type="organization", owner_id=org.name,
+                                           budget_target=10_000_000)["program"]
+            upload_evidence("foto.png", PNG, event.name, node_id=posko.name, linked_object_type="donor_program",
+                            linked_object_id=p, evidence_type="photo", caption="Lokasi sekolah darurat (simulasi)")
+            other = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"\x01" * 40).decode()   # different file
+            upload_evidence("lain.png", other, event.name, node_id=posko.name, caption="Foto lain")
+        frappe.db.set_value("RN Donor Program", p, "public_visibility", "summary_public")
+        with as_user(owner.user):
+            bukti = api.program_detail(p)["bukti"]
+        self.assertEqual([b.get("caption") for b in bukti], ["Lokasi sekolah darurat (simulasi)"])

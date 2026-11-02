@@ -391,9 +391,12 @@ def program_detail(program):
         loc_l = (row.target_location or row.location or "").lower()
 
         for ev in event_evidence(row.disaster_event, limit=150):
-            loc = str(ev.get("location_text") or "").lower()
+            loc = (str(ev.get("location_text") or "") + " " + str(ev.get("caption") or "")).lower()
             hit = (
-                (title_l and len(title_l) > 4 and title_l in loc)
+                # a photo uploaded FOR this program (Bukti Lapangan form: linked object = donor_program)
+                (ev.get("linked_object_type") in ("donor_program", "RN Donor Program")
+                 and ev.get("linked_object_id") == row.name)
+                or (title_l and len(title_l) > 4 and title_l in loc)
                 or (loc_l and len(loc_l) > 3 and loc_l in loc)
             )
             if hit:

@@ -410,6 +410,27 @@ def upload_evidence(
         "RN Evidence File"
     )
 
+    # RN Evidence File is named by legacy_id (autoname field:legacy_id) — without it every upload from the
+    # Bukti Lapangan form failed with "Legacy ID is required" (found 2026-11-02, simulasi bukti foto Krakatau).
+    _set_if(
+        evidence,
+        "legacy_id",
+        "evidence-" + frappe.generate_hash(length=16),
+    )
+
+    _set_if(
+        evidence,
+        "title",
+        (caption or filename or "")[:140] or None,
+    )
+
+    # the doctype stores the file as file_path / filename (no file_url column) — without these the upload
+    # was saved without its file and never appeared in any evidence feed.
+    _set_if(evidence, "file_path", file_doc.file_url)
+    _set_if(evidence, "filename", filename)
+    _set_if(evidence, "size_bytes", len(content))
+    _set_if(evidence, "mime_type", getattr(file_doc, "file_type", None))
+
     _set_if(
         evidence,
         "disaster_event",

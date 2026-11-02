@@ -648,9 +648,10 @@ def event_evidence(event, limit=60):
             filters=event_filters(ef_cols, event),
             fields=[
                 f for f in (
-                    "name", "posko", "file_url", "caption", "evidence_type",
+                    "name", "posko", "file_url", "file_path", "caption", "title", "evidence_type",
                     "linked_doctype", "linked_name", "reference_doctype",
                     "reference_name", "object_type", "object_id",
+                    "linked_object_type", "linked_object_id",
                     "uploaded_by", "created_by_user",
                     "verification_status", "observed_at", "creation",
                 ) if f == "name" or f in ef_cols
@@ -661,13 +662,15 @@ def event_evidence(event, limit=60):
             up = _user_label(e.get("uploaded_by") or e.get("created_by_user"))
             push(_ev_norm(
                 id=e["name"], source="evidence_file",
-                file_url=e.get("file_url"), caption=e.get("caption"),
+                file_url=e.get("file_url") or e.get("file_path"), caption=e.get("caption") or e.get("title"),
                 evidence_type=e.get("evidence_type"), status=e.get("verification_status"),
-                title=e.get("caption"), posko=e.get("posko"),
+                title=e.get("caption") or e.get("title"), posko=e.get("posko"),
                 uploader=up.get("label"), uploader_role=up.get("role"),
                 reporter_name=up.get("label"),
-                linked_object_type=e.get("linked_doctype") or e.get("reference_doctype") or e.get("object_type"),
-                linked_object_id=e.get("linked_name") or e.get("reference_name") or e.get("object_id"),
+                linked_object_type=(e.get("linked_object_type") or e.get("linked_doctype") or e.get("reference_doctype")
+                                    or e.get("object_type")),
+                linked_object_id=(e.get("linked_object_id") or e.get("linked_name") or e.get("reference_name")
+                                  or e.get("object_id")),
                 disaster_event_id=event,
                 observed_at=e.get("observed_at"), creation=e.get("creation"),
             ))

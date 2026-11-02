@@ -964,7 +964,8 @@
     "Klik peta → pin 📍 + latitude/longitude terisi otomatis; pin bisa digeser",
     "Ketik 'Garut' di Cari wilayah → 'Kabupaten Garut (kab/kota)', 'Garut Kota (kecamatan)' → pilih → Lokasi terisi 'Kabupaten Garut, Jawa Barat'",
     "Tombol 'Pakai lokasi saya' ikut memindahkan pin",
-    "Tanpa geser samping, tanpa error"
+    "Tanpa geser samping, tanpa error",
+    "Pilih \"Kabupaten Garut\" → peta langsung pindah ke Garut (zoom 10)"
    ],
    "hasil": "Lulus (Playwright HP, suite 663 hijau)",
    "skor": "5/5",
@@ -980,7 +981,7 @@
     },
     {
      "masalah": "Data wilayah belum punya koordinat pusat → peta belum otomatis pindah ke wilayah yang dipilih.",
-     "perbaikan": "Belum — perlu isi center_lat/lng RN Admin Area."
+     "perbaikan": "Koordinat pusat 7.817 wilayah (38 provinsi, 514 kab/kota, 7.265 kecamatan) diisi dari data terbuka cahyadsn/wilayah (MIT); peta kini langsung ke wilayah yang dipilih (a0aff25)."
     }
    ]
   },

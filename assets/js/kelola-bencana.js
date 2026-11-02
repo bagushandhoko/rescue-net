@@ -92,6 +92,60 @@
       Object.keys(data).map(function (k) { return "data-" + k + '="' + esc(data[k]) + '"'; }).join(" ") + ">" + label + "</button> ";
   }
 
+  /* owner 2026-11-02: pick the disaster location on a map (click / drag pin) + search an admin area */
+  var MAP = null, PIN = null, FORM = null;
+  function mapSync(center) {
+    if (!MAP || !FORM) return;
+    var la = parseFloat(String(FORM.latitude.value).replace(",", ".")), lo = parseFloat(String(FORM.longitude.value).replace(",", "."));
+    if (!isFinite(la) || !isFinite(lo) || Math.abs(la) > 90 || Math.abs(lo) > 180) return;
+    if (!PIN) PIN = L.marker([la, lo], { draggable: true }).addTo(MAP).on("dragend", function () { setPoint(PIN.getLatLng(), false); });
+    else PIN.setLatLng([la, lo]);
+    if (center) MAP.setView([la, lo], Math.max(MAP.getZoom(), 10));
+  }
+  function setPoint(ll, center) {
+    FORM.latitude.value = ll.lat.toFixed(5); FORM.longitude.value = ll.lng.toFixed(5);
+    mapSync(center);
+    FORM.dispatchEvent(new Event("input"));   // re-run the duplicate check
+  }
+  function setupMap(f) {
+    FORM = f;
+    var host = $("kbMap");
+    if (!host || typeof L === "undefined") { if (host) host.hidden = true; return; }
+    MAP = L.map(host, { scrollWheelZoom: false }).setView([-2.5, 118], 4);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap" }).addTo(MAP);
+    MAP.on("click", function (e) { setPoint(e.latlng, false); });
+    ["latitude", "longitude"].forEach(function (k) { f[k].addEventListener("change", function () { mapSync(true); }); });
+    setTimeout(function () { MAP.invalidateSize(); mapSync(true); }, 200);
+    var inp = $("kbArea"), list = $("kbAreaList"), found = {}, t = null;
+    inp.addEventListener("input", function () {
+      clearTimeout(t);
+      var q = inp.value.trim();
+      if (found[q]) return pickArea(found[q]);
+      if (q.length < 3) return;
+      t = setTimeout(async function () {
+        try {
+          var r = await window.RN_FRAPPE.call("rescue_net.api_admin_areas.search_areas", { q: q, limit: 15 });
+          found = {};
+          list.innerHTML = (r.rows || []).filter(function (a) { return a.level !== "village"; }).map(function (a) {
+            var label = a.area_name + " (" + ({ province: "provinsi", city: "kab/kota", district: "kecamatan" }[a.level] || a.level) + ")";
+            found[label] = a.code;
+            return '<option value="' + esc(label) + '">';
+          }).join("");
+        } catch (e) { /* search is a convenience */ }
+      }, 300);
+    });
+    async function pickArea(code) {
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_admin_areas.get_area", { code: code });
+        var path = (r.path || []).map(function (p) { return p.area_name; }).reverse().join(", ");
+        if (path) { FORM.location_summary.value = path; }
+        var a = r.area || {};
+        if (a.center_lat && a.center_lng) MAP.setView([a.center_lat, a.center_lng], a.level === "district" ? 12 : 10);
+        FORM.dispatchEvent(new Event("input"));
+      } catch (e) { /* ignore */ }
+    }
+  }
+
   async function loadAdmin() {
     var q = await call("admin_queue");
     // S13 / owner 2026-11-02: BMKG notices are announcements; the super admin turns one into a disaster
@@ -192,8 +246,10 @@
       if (!navigator.geolocation) return alert("Peramban tidak mendukung lokasi.");
       navigator.geolocation.getCurrentPosition(function (p) {
         f.latitude.value = p.coords.latitude.toFixed(5); f.longitude.value = p.coords.longitude.toFixed(5); probe();
+        mapSync(true);
       }, function () { alert("Lokasi tidak diizinkan."); });
     });
+    setupMap(f);
     loadMine().catch(function () {});
     if (opt.is_super_admin) {
       window.__kbAdmin = true; $("kbAdmin").hidden = false;

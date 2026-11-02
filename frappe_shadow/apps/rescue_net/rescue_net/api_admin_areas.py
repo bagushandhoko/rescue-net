@@ -66,7 +66,8 @@ def get_area(code):
     from rescue_net.services import admin_areas
 
     row = frappe.db.get_value("RN Admin Area", code, ["name as code", "area_name", "level", "parent_code", "pcode_ocha",
-                                                       "bps_code", "valid_from", "valid_to", "replaced_by", "enabled"], as_dict=True)
+                                                       "bps_code", "valid_from", "valid_to", "replaced_by", "enabled", "center_lat", "center_lng"],
+                              as_dict=True)
     if not row:
         frappe.throw("Wilayah tidak ditemukan", frappe.DoesNotExistError)
     return {"area": row, "path": admin_areas.ancestors(code), "external_codes": admin_areas.external_codes(code)}

@@ -6,7 +6,8 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Kelola Bencana</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=addevent-20261102">
+  <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="../assets/css/style.css?v=kbmap-20261102">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -70,6 +71,13 @@
           <label>Organisasi<select name="organization"></select></label>
           <label>Latitude (opsional)<input name="latitude" inputmode="decimal" placeholder="-7.21"></label>
           <label>Longitude (opsional)<input name="longitude" inputmode="decimal" placeholder="107.90"></label>
+        </div>
+        <!-- owner 2026-11-02: pilih lokasi dari peta -->
+        <div class="kb-mapbox">
+          <label class="kb-area">Cari wilayah (kabupaten/kota/kecamatan)
+            <input id="kbArea" list="kbAreaList" placeholder="mis. Garut" autocomplete="off"><datalist id="kbAreaList"></datalist></label>
+          <div id="kbMap" class="kb-map" aria-label="Peta untuk memilih lokasi bencana"></div>
+          <p class="rn-muted kb-maphint">Klik peta untuk menaruh pin lokasi bencana; geser pin untuk memperbaiki. Latitude &amp; longitude terisi otomatis.</p>
         </div>
         <div class="form-actions">
           <button class="btn" type="button" id="kbGeo">📍 Pakai lokasi saya</button>
@@ -143,7 +151,8 @@
 <script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
 
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/kelola-bencana.js?v=notice-20261102"></script>
+<script src="../assets/vendor/leaflet/leaflet.js"></script>
+<script src="../assets/js/kelola-bencana.js?v=map-20261102"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

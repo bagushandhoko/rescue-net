@@ -7608,3 +7608,10 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-auth-addevent b { font-size: 15px; color: #c4442f; }
 .rn-auth-addevent p { margin: 4px 0 0; font-size: 13px; }
 .rn-auth-addevent > div { flex: 1 1 220px; min-width: 0; }
+/* owner 2026-11-02: map picker on the disaster registration form */
+.kb-mapbox { margin: 12px 0 4px; }
+.kb-area { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; max-width: 420px; margin-bottom: 8px; }
+.kb-map { height: 320px; border-radius: 12px; border: 1px solid rgba(104,64,45,.18); overflow: hidden; }
+.kb-map[hidden] { display: none; }
+.kb-maphint { font-size: 12px; margin: 6px 0 0; }
+@media (max-width: 640px) { .kb-map { height: 260px; } }

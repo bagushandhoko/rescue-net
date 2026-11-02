@@ -949,6 +949,40 @@
    "skor": "5/5",
    "status": "lulus",
    "temuan": []
+  },
+  {
+   "id": "KB-2",
+   "tanggal": "2026-11-02",
+   "kategori": "Bencana",
+   "judul": "Registrasi bencana: pilih lokasi dari peta",
+   "tujuan": "Owner: lokasi bencana bisa dipilih dari peta.",
+   "akun": [
+    "ld1.demo (HP 390px, produksi, tanpa mengirim formulir)"
+   ],
+   "langkah": [
+    "Peta Indonesia tampil di formulir Buat bencana baru",
+    "Klik peta → pin 📍 + latitude/longitude terisi otomatis; pin bisa digeser",
+    "Ketik 'Garut' di Cari wilayah → 'Kabupaten Garut (kab/kota)', 'Garut Kota (kecamatan)' → pilih → Lokasi terisi 'Kabupaten Garut, Jawa Barat'",
+    "Tombol 'Pakai lokasi saya' ikut memindahkan pin",
+    "Tanpa geser samping, tanpa error"
+   ],
+   "hasil": "Lulus (Playwright HP, suite 663 hijau)",
+   "skor": "5/5",
+   "status": "lulus-perbaikan",
+   "temuan": [
+    {
+     "masalah": "Ikon pin bawaan Leaflet tidak ada di server (tampil teks 'Marker').",
+     "perbaikan": "Ikon pin sendiri (382b834)."
+    },
+    {
+     "masalah": "Pencarian wilayah tertutup oleh nama desa (urut abjad).",
+     "perbaikan": "Cari per tingkat kab/kota & kecamatan (94eb7ca)."
+    },
+    {
+     "masalah": "Data wilayah belum punya koordinat pusat → peta belum otomatis pindah ke wilayah yang dipilih.",
+     "perbaikan": "Belum — perlu isi center_lat/lng RN Admin Area."
+    }
+   ]
   }
  ],
  "rencana": [

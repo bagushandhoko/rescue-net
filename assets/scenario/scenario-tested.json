@@ -1097,6 +1097,36 @@
    "skor": "5/5",
    "status": "lulus",
    "temuan": []
+  },
+  {
+   "id": "PRIV-2",
+   "tanggal": "2026-11-02",
+   "kategori": "Keamanan",
+   "judul": "Cek privasi papan distribusi publik: nomor HP narahubung armada & pemesan",
+   "tujuan": "Owner: cek apakah nomor HP narahubung serah terima armada sengaja tampil ke tamu.",
+   "akun": [
+    "tamu (produksi)",
+    "akun uji otomatis (pengelola posko armada)"
+   ],
+   "langkah": [
+    "Papan Manajemen Distribusi (tamu) sebelum: 7 nomor HP (nama & HP pemesan ruang muat) + HP narahubung armada",
+    "Sesudah: 0 nomor HP untuk tamu",
+    "Pengelola posko armada tetap melihat HP narahubung & pemesan",
+    "Nomor darurat posko di bilah Kontak Posko tetap publik (keputusan owner sebelumnya)"
+   ],
+   "hasil": "Lulus setelah perbaikan (1 tes baru, suite 673 hijau)",
+   "skor": "4/4",
+   "status": "lulus-perbaikan",
+   "temuan": [
+    {
+     "masalah": "Nama & nomor HP pemesan ruang muat terkirim ke setiap tamu di papan Manajemen Distribusi.",
+     "perbaikan": "Hanya pengelola posko armada (commit 'Privacy: booker name/phone…')."
+    },
+    {
+     "masalah": "HP narahubung serah terima armada tampil ke tamu di papan distribusi & posko distribusi.",
+     "perbaikan": "Hanya pengguna login yang boleh melihat kontak posko itu (651fef4)."
+    }
+   ]
   }
  ],
  "rencana": [

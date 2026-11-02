@@ -146,6 +146,12 @@
     if (STATE.open) setTimeout(function () { panel.querySelector("textarea").focus(); }, 50);
   }
 
+  // network drop / gateway / Cloudflare 52x — worth one retry, not the user's key
+  function transient(e) {
+    var st = e && e.status;
+    return !st || st === 408 || st === 502 || st === 503 || st === 504 || (st >= 520 && st <= 527);
+  }
+
   async function send() {
     var panel = document.querySelector(".rn-aic-panel");
     var ta = panel.querySelector("textarea"), b = panel.querySelector("button[type=submit]");
@@ -157,11 +163,21 @@
     var wait = add("Sedang berpikir…", "rn-aic-a");
     var h = history();
     try {
-      var r = await window.RN_FRAPPE.call(API + "chat", {
+      var args = {
         question: q, page: document.title + " — " + location.pathname, disaster_event: eventId() || null,
         posko: POSKO_PAGE ? (qs.get("id") || qs.get("posko") || null) : null,
         organization_id: STATE.org || null, history: JSON.stringify(h.slice(-6)),
-      }, { method: "POST" });
+      };
+      var r;
+      try { r = await window.RN_FRAPPE.call(API + "chat", args, { method: "POST" }); }
+      catch (e1) {
+        // owner 2026-11-02: "Frappe HTTP 520 / 525" — the connection dropped on the way (Cloudflare / signal).
+        // Try once more after a short pause before showing an error.
+        if (!transient(e1)) throw e1;
+        wait.innerHTML = "Koneksi terputus sebentar, mencoba lagi…";
+        await new Promise(function (ok) { setTimeout(ok, 2500); });
+        r = await window.RN_FRAPPE.call(API + "chat", args, { method: "POST" });
+      }
       wait.remove();
       if (r.status !== "ok") { STATE.status = r; note(r.status, r.message, r.settings); return; }
       add(fmt(r.answer), "rn-aic-a");
@@ -173,7 +189,11 @@
       h.push({ q: q, a: r.answer }); saveHistory(h);
     } catch (e) {
       wait.remove();
-      note("error", (e && e.message) || "Permintaan gagal.", "pages/ai-settings.html");
+      if (transient(e)) {
+        add("📶 Koneksi ke server terputus (" + esc(String((e && e.status) || "jaringan")) + "). Periksa sinyal/internet lalu kirim lagi — pertanyaan Anda: <i>" + esc(q) + "</i>", "rn-aic-note");
+      } else {
+        note("error", (e && e.message) || "Permintaan gagal.", null);
+      }
     } finally { b.disabled = false; }
   }
 

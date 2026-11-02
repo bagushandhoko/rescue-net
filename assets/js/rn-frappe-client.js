@@ -281,10 +281,41 @@
     }
   );
 
+  // Uploaded files (2026-11-02): the site's nginx only proxies the API, so "/files/…" and "/private/files/…"
+  // answered 404 (RAB, plan drawings, evidence photos). Serve them through rescue_net.api_files.file
+  // (public files for everyone, private ones only for those allowed) and rewrite such links on every page.
+  const FILE_RE = /^(?:https?:\/\/[^/]+)?(\/(?:private\/)?files\/[^?#]+)/;
+  function fileUrl(u) {
+    const m = FILE_RE.exec(String(u || ""));
+    if (!m) return u;
+    return METHOD_BASE + "/rescue_net.api_files.file?u=" + encodeURIComponent(decodeURIComponent(m[1]));
+  }
+  function fixLinks(root) {
+    if (!root || !root.querySelectorAll) return;
+    const els = root.matches && root.matches("img,a,source,iframe,embed,object") ? [root] : [];
+    root.querySelectorAll("img[src*='files/'],a[href*='files/'],source[src*='files/'],iframe[src*='files/'],embed[src*='files/'],object[data*='files/']")
+      .forEach(e => els.push(e));
+    els.forEach(el => {
+      ["src", "href", "data"].forEach(attr => {
+        const v = el.getAttribute(attr);
+        if (v && FILE_RE.test(v) && v.indexOf("api_files.file") === -1) el.setAttribute(attr, fileUrl(v));
+      });
+    });
+  }
+  function watchLinks() {
+    fixLinks(document.body);
+    new MutationObserver(list => list.forEach(m => {
+      if (m.type === "attributes") fixLinks(m.target);
+      else m.addedNodes.forEach(n => n.nodeType === 1 && fixLinks(n));
+    })).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src", "href", "data"] });
+  }
+  if (document.body) watchLinks(); else document.addEventListener("DOMContentLoaded", watchLinks);
+
   window.RN_FRAPPE = {
     call,
     session,
     loginUrl,
+    fileUrl,
     methodBase:
       METHOD_BASE
   };

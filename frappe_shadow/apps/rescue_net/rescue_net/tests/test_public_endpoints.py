@@ -61,6 +61,7 @@ GUEST_ENDPOINTS = {
     "api_control_centre.posko_registry_board", "api_control_centre.posko_verification_checklist",
     "api_control_centre.public_dashboard",
     "api_early_warning.banner",  # reviewed: public quake facts only; no draft event / posko list / raw payload
+    "api_files.file",  # reviewed 2026-11-02: /files public; /private/files only uploader/control/posko manager (test_api_files)
     "api_sitrep.sitrep",  # reviewed 2026-10-26: public_dashboard snapshot + period COUNTS only; no names/contacts
     "api_export.cap_alert", "api_export.cap_alerts",  # reviewed: CAP of public BMKG quake facts (same as banner)
     "api_export.hxl_needs",  # reviewed: public needs board as HXL CSV (posko title, item, gap); no contacts
@@ -104,6 +105,7 @@ NOT_SWEPT = {
     "api_logistics.get_guest_aid_offer", "api_logistics.book_transport_space_public",
     "api_logistics.get_public_transport_booking", "api_logistics.update_public_transport_booking",
     "api_volunteer.register_volunteer",
+    "api_files.file",  # needs a file url; covered by test_api_files
 }
 
 SECRETS = {

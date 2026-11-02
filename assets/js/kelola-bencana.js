@@ -98,7 +98,9 @@
     if (!MAP || !FORM) return;
     var la = parseFloat(String(FORM.latitude.value).replace(",", ".")), lo = parseFloat(String(FORM.longitude.value).replace(",", "."));
     if (!isFinite(la) || !isFinite(lo) || Math.abs(la) > 90 || Math.abs(lo) > 180) return;
-    if (!PIN) PIN = L.marker([la, lo], { draggable: true }).addTo(MAP).on("dragend", function () { setPoint(PIN.getLatLng(), false); });
+    // Leaflet's default marker images are not shipped in assets/vendor/leaflet → own pin icon
+    var icon = L.divIcon({ className: "kb-pin", html: "📍", iconSize: [32, 32], iconAnchor: [16, 30] });
+    if (!PIN) PIN = L.marker([la, lo], { draggable: true, icon: icon }).addTo(MAP).on("dragend", function () { setPoint(PIN.getLatLng(), false); });
     else PIN.setLatLng([la, lo]);
     if (center) MAP.setView([la, lo], Math.max(MAP.getZoom(), 10));
   }

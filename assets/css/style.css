@@ -7615,3 +7615,4 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .kb-map[hidden] { display: none; }
 .kb-maphint { font-size: 12px; margin: 6px 0 0; }
 @media (max-width: 640px) { .kb-map { height: 260px; } }
+.kb-pin { font-size: 30px; line-height: 32px; text-align: center; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); background: none; border: 0; }

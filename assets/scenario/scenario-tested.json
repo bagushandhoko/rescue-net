@@ -1198,6 +1198,97 @@
    "temuan": [
     "Konteks AI dulu tanpa panduan pemakaian dan tanpa daftar permintaan relawan, sehingga AI tidak bisa menjelaskan atau memutuskan"
    ]
+  },
+  {
+   "id": "PK-RAB-2",
+   "tanggal": "2026-11-02",
+   "kategori": "Program Khusus",
+   "judul": "RAB beberapa halaman + gambar rencana + contoh data riil",
+   "tujuan": "Owner: program tracking belum ada gambar rencana (PDF/gambar), RAB bisa beberapa halaman; contoh data riil.",
+   "akun": [
+    "sim-ui-peduli@example.org (pemrakarsa UI Peduli — Sekolah Darurat Krakatau)",
+    "tamu"
+   ],
+   "langkah": [
+    "Pemrakarsa unggah RAB hal. 1–2 (PDF) + hal. 3 rekap (PNG) — total contoh Rp 297.510.000",
+    "Unggah 2 gambar rencana (denah, tampak & potongan)",
+    "Tamu membuka halaman Program Khusus: RAB 2 berkas + 2 gambar tampil, PDF bisa dibuka"
+   ],
+   "hasil": "Lulus (tes otomatis RAB beberapa halaman, suite 691 OK, Playwright produksi)",
+   "skor": "3/3",
+   "status": "lulus",
+   "temuan": [
+    "SEMUA berkas unggahan (RAB, gambar, foto bukti) 404 di situs karena nginx hanya meneruskan API → diperbaiki lewat rescue_net.api_files.file + penulisan ulang tautan di semua halaman"
+   ]
+  },
+  {
+   "id": "PK-KPI-1",
+   "tanggal": "2026-11-02",
+   "kategori": "Control Centre",
+   "judul": "KPI ringkasan 3 Program Khusus di Control Centre",
+   "tujuan": "Owner: tambahkan summary Donor Program, Pengadaan & Tender, Program Tracking di KPI Control Centre.",
+   "akun": [
+    "tamu (desktop & HP)"
+   ],
+   "langkah": [
+    "Control Centre Krakatau: kartu Donor Program (terkumpul dari target, jumlah program & donatur), Pengadaan & Tender (dibuka, pemenang, RAB, penawaran), Program Tracking (aktif, kritis, milestone terlambat, lokasi belum terlayani)",
+    "Klik kartu membuka halaman masing-masing",
+    "Angka = papan masing-masing (tes otomatis)"
+   ],
+   "hasil": "Lulus (Playwright desktop 1440 + HP 390, tanpa error)",
+   "skor": "3/3",
+   "status": "lulus",
+   "temuan": []
+  },
+  {
+   "id": "KB-DON-1",
+   "tanggal": "2026-11-02",
+   "kategori": "Donasi",
+   "judul": "Donasi ke Program Khusus lewat Kirim Bantuan — bernama & anonim (simulasi gempa)",
+   "tujuan": "Owner: program khusus di simulasi gempa diisi contoh data oleh user/donatur, dengan nama atau anonim, lewat Kirim Bantuan.",
+   "akun": [
+    "ld2.demo",
+    "ld3.demo",
+    "sim-retno",
+    "sim-slamet",
+    "pemrakarsa sim-kompastv & sim-ui-peduli"
+   ],
+   "langkah": [
+    "5 pengguna login dan mengisi panel 'Donasi ke Program Khusus' di Kirim Bantuan (HP), 2 memilih anonim, 1 memakai nama komunitas",
+    "Pemrakarsa mengonfirmasi dana diterima",
+    "Daftar donatur: Kompas TV Peduli Rescue-Net 3 donatur Rp 5.500.000; UI Peduli — Rekonstruksi Fasilitas Belajar 2 donatur Rp 8.500.000; anonim tampil 'Donatur Anonim'",
+    "Krakatau: Kompas TV Peduli Krakatau 4 donatur Rp 9.250.000, Sekolah Darurat 3 donatur Rp 14.500.000"
+   ],
+   "hasil": "Lulus",
+   "skor": "4/4",
+   "status": "lulus",
+   "temuan": [
+    "?event=event-sim-001 tidak memilih bencana (id legacy) → diperbaiki",
+    "Daftar donatur tersembunyi di tab 'Anggaran' → tab jadi 'Anggaran & Donatur' + judul berisi jumlah & total"
+   ]
+  },
+  {
+   "id": "SIM-BUKTI-1",
+   "tanggal": "2026-11-02",
+   "kategori": "Bukti Lapangan",
+   "judul": "Simulasi bukti foto Krakatau meletus lewat form Bukti Lapangan",
+   "tujuan": "Owner: test simulasi isi bukti foto untuk simulasi meletus, input beneran melalui salah satu user.",
+   "akun": [
+    "sim-retno@example.org (posko BNPB Krakatau)"
+   ],
+   "langkah": [
+    "Unggah 4 foto SIMULASI (abu vulkanik, evakuasi, tenda pengungsian, lahan sekolah darurat) lewat form Upload Evidence di browser, dengan keterangan",
+    "Foto ke-4 ditautkan ke program Sekolah Darurat Krakatau",
+    "Evidence Center Krakatau menampilkan 4 bukti + thumbnail (pengunggah); foto ke-4 muncul di Evidence Program; tamu ditolak membuka foto privat (403)"
+   ],
+   "hasil": "Lulus setelah 3 perbaikan",
+   "skor": "3/3",
+   "status": "lulus",
+   "temuan": [
+    "Form Upload Evidence SELALU gagal ('Legacy ID is required') → diperbaiki",
+    "Unggahan tersimpan tanpa berkas/keterangan (kolom file_path/title) → diperbaiki + kolom Keterangan di form",
+    "Foto privat tampil sebagai gambar rusak untuk tamu di Evidence Program (sesuai izin; tampilan bisa dirapikan)"
+   ]
   }
  ],
  "rencana": [

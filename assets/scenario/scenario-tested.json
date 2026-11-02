@@ -927,6 +927,28 @@
      "perbaikan": "Uji dijalankan Claude; hasil Hermes selalu diverifikasi."
     }
    ]
+  },
+  {
+   "id": "AI-2",
+   "tanggal": "2026-11-02",
+   "kategori": "AI",
+   "judul": "Asisten AI di setiap halaman (Tanya AI)",
+   "tujuan": "Owner: pengguna bisa berkomunikasi dengan AI di setiap halaman untuk mengatur posko dan mencari data; ingat kalau belum ada kunci AI / kuota habis.",
+   "akun": [
+    "akun uji otomatis (pengelola posko, pengguna biasa, tamu)",
+    "tamu & gudang.demo di produksi (HP 390px)"
+   ],
+   "langkah": [
+    "Tamu: tombol 🤖 Tanya AI tampil di Home & Bencana Aktif → 'Login dulu'",
+    "Belum ada kunci AI → petunjuk pasang kunci + tautan AI Settings (diuji juga di produksi)",
+    "Kuota bersama habis → pesan 'Anggaran AI … habis, pasang kunci sendiri'; kunci ditolak → 'perbarui di AI Settings'",
+    "Pengelola: konteks berisi posko yang ia kelola + data publik bencana + hasil pencarian; posko yang TIDAK ia kelola tidak diberi data rinci",
+    "AI tidak mengubah data — menunjuk halaman/alat (PAGE_MAP)"
+   ],
+   "hasil": "Lulus (5 tes baru, suite 663 hijau, Playwright HP). Jawaban AI sungguhan belum diuji di produksi karena belum ada kunci AI platform/pengguna demo.",
+   "skor": "5/5",
+   "status": "lulus",
+   "temuan": []
   }
  ],
  "rencana": [

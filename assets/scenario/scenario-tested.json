@@ -1127,6 +1127,28 @@
      "perbaikan": "Hanya pengguna login yang boleh melihat kontak posko itu (651fef4)."
     }
    ]
+  },
+  {
+   "id": "KP-2",
+   "tanggal": "2026-11-02",
+   "kategori": "Posko",
+   "judul": "Kelola Posko tahap 2: alat input pindah ke halaman pemilik",
+   "tujuan": "Owner (rencana Bertahap): halaman pemilik posko berisi alat untuk mengelola posko; halaman publik untuk informasi.",
+   "akun": [
+    "akun uji otomatis (pengelola posko A, posko lain)",
+    "gudang.demo (produksi, HP)"
+   ],
+   "langkah": [
+    "Kelola Posko: Kontak & status posko (PIC, HP, WA, darurat, status operasional) terisi dari data posko → simpan lewat jalur pengaturan posko",
+    "Permintaan relawan menunggu → Setujui / Tolak",
+    "Kebutuhan terbuka + Tambah kebutuhan (urgent/critical wajib isi jiwa)",
+    "Stok terakhir per barang + Catat stok",
+    "Posko lain ditolak membuka data alat kerja pemilik"
+   ],
+   "hasil": "Lulus (1 tes baru, suite 674 hijau, Playwright HP)",
+   "skor": "5/5",
+   "status": "lulus",
+   "temuan": []
   }
  ],
  "rencana": [

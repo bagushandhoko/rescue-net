@@ -1,6 +1,6 @@
 {
  "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
- "diperbarui": "2026-11-01",
+ "diperbarui": "2026-11-02",
  "uji": [
   {
    "id": "POSKO-ALL-2",
@@ -1149,6 +1149,29 @@
    "skor": "5/5",
    "status": "lulus",
    "temuan": []
+  },
+  {
+   "id": "AI-4",
+   "tanggal": "2026-11-02",
+   "kategori": "AI",
+   "judul": "Asisten AI tahu daftar bencana aktif",
+   "tujuan": "Owner menguji dengan kuncinya sendiri: AI menjawab 'tidak ada bencana aktif' padahal ada beberapa bencana aktif.",
+   "akun": [
+    "owner (kunci AI pribadi, produksi)",
+    "akun uji otomatis"
+   ],
+   "langkah": [
+    "Owner bertanya bencana aktif ke Tanya AI → AI menjawab tidak ada",
+    "Diperiksa: konteks AI hanya memuat bencana yang judulnya cocok kata pertanyaan → kosong",
+    "Perbaikan: daftar bencana aktif publik (tanpa latihan) selalu ikut konteks",
+    "Tes otomatis: konteks memuat bencana aktif untuk pertanyaan apa pun"
+   ],
+   "hasil": "Diperbaiki (984efe6), tes asisten 7/7 hijau; menunggu owner bertanya ulang",
+   "skor": "-",
+   "status": "menunggu uji ulang owner",
+   "temuan": [
+    "Pencarian kata kunci membuang kata 'bencana' sehingga pertanyaan umum tidak menemukan data"
+   ]
   }
  ],
  "rencana": [

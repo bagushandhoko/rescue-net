@@ -69,6 +69,11 @@ class TestArmadaPosition(RNTestCase):
     def test_only_operator_updates_and_public_sees_trail(self):
         with as_user(make_actor(posko=self.w.posko_b).user), self.assertRaises(frappe.PermissionError):
             af.update_armada_position(self.space.name, 4.14, 96.13)
+        # a plain member of the same organisation (sibling posko) may not move this posko's armada
+        from rescue_net.tests.factories import make_posko
+        sibling = make_posko(self.w.event, self.w.org_a)
+        with as_user(make_actor(org=self.w.org_a, posko=sibling).user), self.assertRaises(frappe.PermissionError):
+            af.update_armada_position(self.space.name, 4.14, 96.13)
         with as_guest(), self.assertRaises(frappe.PermissionError):
             af.update_armada_position(self.space.name, 4.14, 96.13)
         with as_user(self.mgr.user):

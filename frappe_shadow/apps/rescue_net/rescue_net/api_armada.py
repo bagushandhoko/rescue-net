@@ -119,13 +119,16 @@ MIN_METERS = 15
 
 
 def _can_update(space):
-    from rescue_net.access_policy import is_system_manager, rn_actor
-    from rescue_net.logistics.common import _can_contribute
+    """The posko that RUNS the armada (its managers / org coordinator / command), or whoever registered it.
+    Stricter than editing the armada (any member of the organisation): found in simulation 2026-11-02 — a sibling
+    posko of the same organisation could move another posko's armada on the public map."""
+    from rescue_net.access_policy import can_manage_posko, is_system_manager, rn_actor
 
     if is_system_manager():
         return True
     actor = rn_actor(required=False)
-    return bool(actor and (_can_contribute(actor, space.coordination_posko) or space.created_by_user == actor.name))
+    return bool(actor and ((space.coordination_posko and can_manage_posko(actor, space.coordination_posko))
+                           or space.created_by_user == actor.name))
 
 
 @frappe.whitelist(methods=["POST"])

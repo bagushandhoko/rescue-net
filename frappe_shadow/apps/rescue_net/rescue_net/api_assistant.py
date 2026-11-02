@@ -309,17 +309,8 @@ def _managed_poskos(actor):
         return []
 
 
-CHAT_LIMIT, ACTION_LIMIT, WINDOW_S = 30, 60, 600
-
-
-def _over_limit(user, what, limit):
-    """Per-USER limit (owner 2026-11-02: frappe's @rate_limit counts per IP — an office / posko / the owner's
-    network shares one public IP, so one person's questions used up everybody's quota)."""
-    key = frappe.cache.make_key("rn:assistant:%s:%s" % (what, user))
-    n = frappe.cache.incrby(key, 1)
-    if n == 1:
-        frappe.cache.expire(key, WINDOW_S)
-    return n > limit
+# No request limit (owner 2026-11-02: "kenapa harus dibatasi? bebaskan saja"). Spending is still capped by the
+# AI budget of the key in use (rescue_net.ai.budget, set in AI Settings).
 
 
 @frappe.whitelist(methods=["POST"])
@@ -327,8 +318,6 @@ def chat(question, page=None, disaster_event=None, posko=None, organization_id=N
     user = _user()
     if not user:
         return {"status": "login", "message": "Login dulu untuk memakai Asisten AI."}
-    if _over_limit(user, "chat", CHAT_LIMIT):
-        return {"status": "rate", "message": "Terlalu banyak pertanyaan dalam 10 menit (maks. %d). Tunggu sebentar lalu coba lagi." % CHAT_LIMIT}
     question = (question or "").strip()[:MAX_Q]
     if not question:
         frappe.throw("Tulis pertanyaan dulu.")
@@ -447,8 +436,7 @@ def run_action(action, params=None, latitude=None, longitude=None, accuracy_m=No
     user = _user()
     if not user:
         frappe.throw("Login dulu.", frappe.PermissionError)
-    if _over_limit(user, "action", ACTION_LIMIT):
-        frappe.throw("Terlalu banyak aksi dalam 10 menit. Tunggu sebentar lalu coba lagi.")
+
     p = json.loads(params) if isinstance(params, str) else (params or {})
     if action not in ACTIONS:
         frappe.throw("Aksi tidak dikenal.")

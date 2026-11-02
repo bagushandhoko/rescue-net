@@ -4,7 +4,6 @@ import hashlib
 import json
 
 import frappe
-from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import now_datetime
 
@@ -212,7 +211,6 @@ operational facts.
 
 
 @frappe.whitelist()
-@rate_limit(limit=20, seconds=60 * 60)
 def analyze_duplicate_candidate(user_id, object_id_a, object_id_b, provider="auto", organization_id=None):
     """Manual, on-demand AI judgment for one duplicate-candidate pair from
     api_frontend_bridge.duplicate_candidates() (pure geo-distance + same-

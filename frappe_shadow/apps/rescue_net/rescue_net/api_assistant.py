@@ -160,6 +160,18 @@ def _search(q, event):
     return {k: v for k, v in out.items() if v}
 
 
+def _active_disasters():
+    """Always in the context (owner 2026-11-02: "AI jawab tidak ada bencana aktif") — the keyword search alone
+    finds nothing for "bencana aktif apa saja?" because no title contains those words. Same public list as the
+    home page (drills excluded)."""
+    from rescue_net.services.drill import real_rows
+
+    rows = frappe.get_all("RN Disaster Event", filters={"event_status": "active"},
+                          fields=["name", "title", "event_type", "severity", "location_summary", "started_at"],
+                          order_by="started_at desc", limit_page_length=30)
+    return [dict(r, href="pages/bencana-aktif.html?event=" + r.name) for r in real_rows(rows, key="name")]
+
+
 def _event_context(event):
     from rescue_net.ai.context import _build_context
     from rescue_net.ai.context import _public_scrub
@@ -235,6 +247,10 @@ def chat(question, page=None, disaster_event=None, posko=None, organization_id=N
             ctx["akses"] = "lengkap (super admin / Control Centre)" if full else "data publik"
         except Exception:
             frappe.log_error(frappe.get_traceback(), "assistant event context")
+    try:
+        ctx["bencana_aktif"] = _active_disasters()
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "assistant active disasters")
     ctx["posko_yang_anda_kelola"] = [{"id": p, "title": frappe.db.get_value("RN Posko", p, "title"),
                                       "kelola": "pages/kelola-posko.html?id=" + p} for p in managed]
     target = resolve_posko(posko) if posko else (managed[0] if len(managed) == 1 else None)

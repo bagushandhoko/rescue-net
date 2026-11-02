@@ -68,6 +68,7 @@ class TestAssistant(RNTestCase):
         self.assertIn(title_a, [p["title"] for p in ctx["posko_yang_anda_kelola"]])
         self.assertNotIn("posko_aktif", ctx)          # asked about posko B, which this user does not manage
         self.assertIn("PAGE_MAP", ctx)
+        self.assertIn(self.w.event.name, [e["name"] for e in ctx["bencana_aktif"]])   # always listed, any question
         self.assertIn(self.w.posko_b.name, [p["name"] for p in ctx.get("hasil_pencarian", {}).get("posko", [])])
         with as_user(self.mgr.user), patch("rescue_net.ai.keys.resolve_ai", return_value=dict(KEY, owner_id=self.mgr.user)), \
                 patch.object(llm, "chat", side_effect=fake_chat):

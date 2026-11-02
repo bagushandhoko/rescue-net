@@ -7,7 +7,7 @@ from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event
 from rescue_net.access_policy import is_system_manager
 
-from frappe.utils import flt, now_datetime, nowdate
+from frappe.utils import cint, flt, now_datetime, nowdate
 
 from rescue_net.api_kitchen import (
     rn_actor,
@@ -564,4 +564,30 @@ def donation_summary(disaster_event=None):
         "donor_count": sum(p["donor_count"] for p in programs),
         "organisers": sorted(by_org.values(), key=lambda g: -g["received"]),
         "programs": programs,
+    }
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=120, seconds=60)
+def program_kpi(disaster_event=None):
+    """KPI Control Centre (owner 2026-11-02: "di halaman Control Centre tambahkan summary dari ketiga program
+    khusus itu ... tambah di KPI"): Donor Program, Pengadaan & Tender, Program Khusus (Tracking) — the same
+    public numbers as the three pages, so a card never disagrees with the page it opens."""
+    from rescue_net.api_tender import tender_board
+
+    plain = lambda f: getattr(f, "__wrapped__", f)          # skip the inner per-IP counters
+    don = plain(donation_summary)(disaster_event)
+    ten = plain(tender_board)(disaster_event).get("totals") or {}
+    trk = plain(program_board)(disaster_event)
+    tt = trk.get("totals") or {}
+    return {
+        "disaster_event": don.get("disaster_event"),
+        "donor": {"programs": don["program_count"], "received": don["received_total"], "target": don["target_total"],
+                  "donors": don["donor_count"]},
+        "tender": {"total": cint(ten.get("total")), "open": cint(ten.get("open")), "awarded": cint(ten.get("awarded")),
+                   "rab_total": flt(ten.get("rab_value_total")), "bids": cint(ten.get("bids_total"))},
+        "tracking": {"active": cint(tt.get("program_aktif")), "critical": cint(tt.get("program_critical")),
+                     "done": cint(tt.get("program_selesai")), "late_milestones": cint(tt.get("milestone_terlambat")),
+                     "unserved_locations": cint(tt.get("lokasi_belum_terlayani")),
+                     "programs": len(trk.get("programs") or [])},
     }

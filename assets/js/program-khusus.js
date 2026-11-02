@@ -420,17 +420,21 @@
       badge.className = "chip " + (data.initiator_verified ? "ok" : "warning");
       badge.textContent = data.initiator_verified ? "✔ Pemrakarsa terverifikasi" : "Pemrakarsa belum terverifikasi";
     }
-    $("#docRab").innerHTML = docs.rab
-      ? '📄 <a href="' + esc(docs.rab) + '" target="_blank" rel="noopener">Rencana Anggaran Biaya (RAB) — PDF ↓</a>' +
-        (manage ? ' <button type="button" class="btn mini" data-doc-del="rab">Hapus</button>' : "")
-      : '<span class="rn-muted">Dokumen RAB (PDF) belum diunggah.</span>';
-    var dr = docs.drawings || [];
-    $("#docDrawings").innerHTML = dr.length ? dr.map(function (d) {
-      var thumb = d.pdf ? '<span class="rn-pk-pdf">📄</span>' : '<img src="' + esc(d.url) + '" alt="' + esc(d.label || d.name) + '" loading="lazy">';
-      return '<a class="rn-pk-drawing" href="' + esc(d.url) + '" target="_blank" rel="noopener">' + thumb +
-        "<span>" + esc(d.label || d.name) + "</span>" +
-        (manage ? '<button type="button" data-doc-del="gambar" data-url="' + esc(d.url) + '" title="Hapus">✕</button>' : "") + "</a>";
-    }).join("") : '<span class="rn-muted">Belum ada gambar kerja.</span>';
+    // owner 2026-11-02: gambar rencana (PDF / gambar) + RAB bisa beberapa halaman
+    function tiles(list, kind, empty) {
+      return list.length ? list.map(function (d, i) {
+        var thumb = d.pdf ? '<span class="rn-pk-pdf">📄</span>' : '<img src="' + esc(d.url) + '" alt="' + esc(d.label || d.name) + '" loading="lazy">';
+        var cap = kind === "rab" ? "Hal. " + (i + 1) + (d.label ? " — " + d.label : "") : (d.label || d.name);
+        return '<a class="rn-pk-drawing" href="' + esc(d.url) + '" target="_blank" rel="noopener">' + thumb +
+          "<span>" + esc(cap) + "</span>" +
+          (manage ? '<button type="button" data-doc-del="' + kind + '" data-url="' + esc(d.url) + '" title="Hapus">✕</button>' : "") + "</a>";
+      }).join("") : '<span class="rn-muted">' + empty + "</span>";
+    }
+    var pages = docs.rab_pages || (docs.rab ? [{ url: docs.rab, name: "RAB.pdf", pdf: true }] : []);
+    $("#docRab").innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">📑 Rencana Anggaran Biaya (RAB)' + (pages.length ? " — " + pages.length + " halaman/berkas" : "") + "</b>" +
+      '<div class="rn-pk-drawings">' + tiles(pages, "rab", "RAB belum diunggah.") + "</div>";
+    $("#docDrawings").innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">📐 Gambar Rencana</b><div class="rn-pk-drawings">' +
+      tiles(docs.drawings || [], "gambar", "Gambar rencana belum diunggah.") + "</div>";
     $("#docManage").hidden = !manage;
   }
 

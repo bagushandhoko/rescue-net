@@ -2,7 +2,10 @@
 and the initiator's verification status shown to the public.
 
 - Only the program's manager (owner org/posko/person) or Control Centre uploads / edits.
-- RAB: one PDF (replaces the previous one). Gambar kerja: up to MAX_DRAWINGS images or PDFs.
+- RAB: several files (owner 2026-11-02: "anggaran bisa beberapa halaman") — PDF or a photo/scan per page, up to
+  MAX_RAB_PAGES, kept in order. Stored in the same JSON field as the drawings (entries with kind "rab"), so no
+  schema change; rab_file_url keeps pointing at the first RAB file for older readers (tender board, exports).
+- Gambar kerja / gambar rencana: up to MAX_DRAWINGS images or PDFs.
 - Files are public (transparency) but only listed while the program itself is visible.
 - The bank account is shown to the public only while the initiator is VERIFIED — an unverified
   initiator's account number is never published (fraud guard); donors see the badge either way.
@@ -20,6 +23,7 @@ from rescue_net.donor_program.common import _actor_verified_person, _allowed_own
 
 MAX_BYTES = 10 * 1024 * 1024
 MAX_DRAWINGS = 12
+MAX_RAB_PAGES = 20
 _IMAGE_EXT = {"png": b"\x89PNG", "jpg": b"\xff\xd8\xff", "jpeg": b"\xff\xd8\xff", "webp": b"RIFF"}
 _PDF_MAGIC = b"%PDF"
 
@@ -37,7 +41,7 @@ def initiator_verified(row):
     return bool(acct and _actor_verified_person(frappe._dict(name=acct)))
 
 
-def _drawings(raw):
+def _entries(raw):
     try:
         val = json.loads(raw or "[]")
         return [d for d in val if isinstance(d, dict) and d.get("url")]
@@ -45,24 +49,33 @@ def _drawings(raw):
         return []
 
 
+def _drawings(raw):
+    return [d for d in _entries(raw) if d.get("kind") != "rab"]
+
+
+def _rab_pages(raw, legacy_url=None):
+    pages = [d for d in _entries(raw) if d.get("kind") == "rab"]
+    if legacy_url and legacy_url not in [d["url"] for d in pages]:
+        pages.insert(0, {"url": legacy_url, "name": legacy_url.rsplit("/", 1)[-1], "label": "", "pdf": True, "kind": "rab"})
+    return pages
+
+
 def _check_file(kind, filename, content):
     ext = (filename.rsplit(".", 1)[-1] if "." in filename else "").lower()
     if len(content) > MAX_BYTES:
         frappe.throw("File terlalu besar (maks. 10 MB).")
-    if kind == "rab":
-        if ext != "pdf" or not content.startswith(_PDF_MAGIC):
-            frappe.throw("Dokumen RAB harus berupa file PDF.")
-        return
     if ext == "pdf" and content.startswith(_PDF_MAGIC):
         return
     magic = _IMAGE_EXT.get(ext)
     if not magic or not content.startswith(magic) or (ext == "webp" and content[8:12] != b"WEBP"):
-        frappe.throw("Gambar kerja harus berupa gambar (PNG / JPG / WEBP) atau PDF.")
+        frappe.throw(("Dokumen RAB" if kind == "rab" else "Gambar rencana") +
+                     " harus berupa PDF atau gambar (PNG / JPG / WEBP).")
 
 
 def documents_for(row_name):
     v = frappe.db.get_value("RN Donor Program", row_name, ["rab_file_url", "work_drawings"], as_dict=True) or {}
-    return {"rab": v.get("rab_file_url") or "", "drawings": _drawings(v.get("work_drawings"))}
+    pages = _rab_pages(v.get("work_drawings"), v.get("rab_file_url"))
+    return {"rab": pages[0]["url"] if pages else "", "rab_pages": pages, "drawings": _drawings(v.get("work_drawings"))}
 
 
 def bank_for(row, can_manage):
@@ -101,9 +114,14 @@ def upload_program_file(donor_program, kind, filename, content_base64, label=Non
     _check_file(kind, filename, content)
 
     doc = frappe.get_doc("RN Donor Program", donor_program)
-    drawings = _drawings(doc.work_drawings)
-    if kind == "gambar" and len(drawings) >= MAX_DRAWINGS:
-        frappe.throw(f"Maksimal {MAX_DRAWINGS} gambar kerja. Hapus yang lama dulu.")
+    entries = _entries(doc.work_drawings)
+    if doc.rab_file_url and doc.rab_file_url not in [d["url"] for d in entries]:      # older single-PDF RAB
+        entries.insert(0, {"url": doc.rab_file_url, "name": doc.rab_file_url.rsplit("/", 1)[-1], "label": "",
+                           "pdf": True, "kind": "rab"})
+    if kind == "gambar" and len(_drawings(json.dumps(entries))) >= MAX_DRAWINGS:
+        frappe.throw(f"Maksimal {MAX_DRAWINGS} gambar rencana. Hapus yang lama dulu.")
+    if kind == "rab" and len([d for d in entries if d.get("kind") == "rab"]) >= MAX_RAB_PAGES:
+        frappe.throw(f"Maksimal {MAX_RAB_PAGES} halaman/berkas RAB. Hapus yang lama dulu.")
     try:
         f = save_file(filename, content, "RN Donor Program", donor_program, is_private=0)
     except frappe.ValidationError:
@@ -111,12 +129,14 @@ def upload_program_file(donor_program, kind, filename, content_base64, label=Non
     except Exception:
         frappe.log_error(frappe.get_traceback(), "Program Khusus upload")
         frappe.throw("File tidak bisa dibaca (rusak?). Coba simpan ulang sebagai PDF / gambar lalu unggah lagi.")
+    item = {"url": f.file_url, "name": filename, "label": (label or "").strip()[:120],
+            "pdf": filename.lower().endswith(".pdf")}
     if kind == "rab":
-        doc.rab_file_url = f.file_url
-    else:
-        drawings.append({"url": f.file_url, "name": filename, "label": (label or "").strip()[:120],
-                         "pdf": filename.lower().endswith(".pdf")})
-        doc.work_drawings = json.dumps(drawings, ensure_ascii=False)
+        item["kind"] = "rab"
+    entries.append(item)
+    doc.work_drawings = json.dumps(entries, ensure_ascii=False)
+    rab = [d for d in entries if d.get("kind") == "rab"]
+    doc.rab_file_url = rab[0]["url"] if rab else None
     doc.save(ignore_permissions=True)
     return documents_for(donor_program)
 
@@ -127,13 +147,20 @@ def remove_program_file(donor_program, kind, file_url=None):
     row = _program(donor_program)
     _assert_manage(actor, row)
     doc = frappe.get_doc("RN Donor Program", donor_program)
-    if kind == "rab":
-        doc.rab_file_url = None
-    elif kind == "gambar":
-        doc.work_drawings = json.dumps([d for d in _drawings(doc.work_drawings) if d["url"] != file_url],
-                                       ensure_ascii=False)
-    else:
+    if kind not in ("rab", "gambar"):
         frappe.throw("Jenis dokumen tidak dikenal (rab / gambar).")
+    entries = _entries(doc.work_drawings)
+    if kind == "rab":
+        # no file_url = remove every RAB page (old single-PDF behaviour)
+        keep = [d for d in entries if d.get("kind") != "rab" or (file_url and d["url"] != file_url)]
+        legacy = doc.rab_file_url if (file_url and doc.rab_file_url != file_url) else None
+        if legacy and legacy not in [d["url"] for d in keep]:
+            keep.insert(0, {"url": legacy, "name": legacy.rsplit("/", 1)[-1], "label": "", "pdf": True, "kind": "rab"})
+    else:
+        keep = [d for d in entries if d.get("kind") == "rab" or d["url"] != file_url]
+    doc.work_drawings = json.dumps(keep, ensure_ascii=False)
+    rab = [d for d in keep if d.get("kind") == "rab"]
+    doc.rab_file_url = rab[0]["url"] if rab else None
     doc.save(ignore_permissions=True)
     return documents_for(donor_program)
 

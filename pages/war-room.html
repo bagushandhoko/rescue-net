@@ -203,6 +203,38 @@
 
     </section>
 
+    <!-- KPI Program Khusus (owner 2026-11-02): Donor Program · Pengadaan & Tender · Program Khusus (Tracking) -->
+    <section class="cc-kpis cc-kpis-program" id="ccProgramKpis" aria-label="Ringkasan Program Khusus">
+      <article class="cc-kpi green" data-pk-href="donor-program.html">
+        <span class="cc-kpi-icon green" data-icon="gift"></span>
+        <small>Donor Program</small>
+        <strong id="kpiPkDonor">-</strong>
+        <em id="kpiPkDonorSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiPkDonorBar"></i></div>
+      </article>
+      <article class="cc-kpi orange" data-pk-href="pengadaan-tender.html">
+        <span class="cc-kpi-icon orange" data-icon="scale"></span>
+        <small>Pengadaan &amp; Tender</small>
+        <strong id="kpiPkTender">-</strong>
+        <em id="kpiPkTenderSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiPkTenderBar"></i></div>
+      </article>
+      <article class="cc-kpi red" data-pk-href="program-khusus.html">
+        <span class="cc-kpi-icon red" data-icon="program"></span>
+        <small>Program Khusus (Tracking)</small>
+        <strong id="kpiPkTrack">-</strong>
+        <em id="kpiPkTrackSub">&nbsp;</em>
+        <div class="cc-kpi-bar" aria-hidden="true"><i id="kpiPkTrackBar"></i></div>
+      </article>
+    </section>
+    <style>
+      .cc-kpis.cc-kpis-program { grid-template-columns: repeat(3, 1fr); }
+      .cc-kpis.cc-kpis-program article { cursor: pointer; }
+      @media (max-width: 900px) {
+        .cc-kpis.cc-kpis-program { height: auto; grid-template-rows: auto; }
+      }
+    </style>
+
 
     <!-- MAIN GRID -->
     <section class="cc-grid-main">
@@ -517,7 +549,7 @@
 ></script>
 
 <script
-  src="../assets/js/rn-control-centre-final.js?v=donasi-20261025b"
+  src="../assets/js/rn-control-centre-final.js?v=pkkpi-20261102"
 ></script>
 
 <script

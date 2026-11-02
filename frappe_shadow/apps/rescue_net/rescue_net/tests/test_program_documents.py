@@ -53,8 +53,6 @@ class TestProgramDocuments(RNTestCase):
         with as_user(self.owner.user):
             with self.assertRaisesRegex(frappe.ValidationError, "PDF"):
                 api.upload_program_file(self.program, "rab", "rab.pdf", EXE)
-            with self.assertRaisesRegex(frappe.ValidationError, "PDF"):
-                api.upload_program_file(self.program, "rab", "rab.png", PNG)
             r = api.upload_program_file(self.program, "rab", "RAB sekolah.pdf", PDF)
             self.assertTrue(r["rab"].endswith(".pdf"))
             api.upload_program_file(self.program, "gambar", "denah.png", PNG, label="Denah")
@@ -68,6 +66,29 @@ class TestProgramDocuments(RNTestCase):
         with as_user(self.owner.user):
             r = api.remove_program_file(self.program, "gambar", d["documents"]["drawings"][0]["url"])
         self.assertEqual(len(r["drawings"]), 1)
+
+    def test_rab_several_pages_pdf_or_image(self):
+        """Owner 2026-11-02: "anggaran bisa beberapa halaman"."""
+        with as_user(self.owner.user):
+            first = api.upload_program_file(self.program, "rab", "RAB hal 1.pdf", PDF)["rab"]
+            api.upload_program_file(self.program, "rab", "RAB hal 2.png", PNG, label="Halaman 2")
+            r = api.upload_program_file(self.program, "gambar", "denah.png", PNG)
+        self.assertEqual([p["name"] for p in r["rab_pages"]], ["RAB hal 1.pdf", "RAB hal 2.png"])
+        self.assertEqual(r["rab"], first)                              # first page stays the "main" RAB file
+        self.assertEqual([d["name"] for d in r["drawings"]], ["denah.png"])  # RAB pages never mix with drawings
+        self.assertEqual(frappe.db.get_value("RN Donor Program", self.program, "rab_file_url"), first)
+        with as_user(self.owner.user):
+            r = api.remove_program_file(self.program, "rab", first)
+        self.assertEqual([p["name"] for p in r["rab_pages"]], ["RAB hal 2.png"])
+        self.assertEqual(frappe.db.get_value("RN Donor Program", self.program, "rab_file_url"), r["rab"])
+        self.assertEqual(len(self._detail()["documents"]["rab_pages"]), 1)
+
+    def test_old_single_rab_pdf_is_page_one(self):
+        frappe.db.set_value("RN Donor Program", self.program, "rab_file_url", "/files/rab-lama.pdf")
+        with as_user(self.owner.user):
+            r = api.upload_program_file(self.program, "rab", "lampiran.pdf", PDF)
+        self.assertEqual([p["url"] for p in r["rab_pages"]][0], "/files/rab-lama.pdf")
+        self.assertEqual(len(r["rab_pages"]), 2)
 
     def test_only_manager_uploads_and_sets_bank(self):
         with as_user(self.stranger.user):
@@ -115,3 +136,34 @@ class TestProgramDocuments(RNTestCase):
         wall = self._detail()["donations"]
         self.assertEqual(sorted(r["donor_name"] for r in wall["public"]), ["Budi Uji", "Donatur Anonim"])
         self.assertNotIn("Rahasia Uji", frappe.as_json(wall))
+
+
+class TestProgramKpi(RNTestCase):
+    """Owner 2026-11-02: the three Program Khusus menus summarised in the Control Centre KPI."""
+
+    def test_kpi_matches_the_three_boards(self):
+        event = make_event(event_status="active")
+        org = make_org(verification_status="verified")
+        owner = make_actor(org=org, org_role="owner", posko=make_posko(event, org))
+        with as_user(owner.user):
+            p = api.create_special_program(event.name, "Dapur umum", owner_type="organization", owner_id=org.name,
+                                           budget_target=10_000_000)["program"]
+        frappe.db.set_value("RN Donor Program", p, "public_visibility", "summary_public")
+        donor = make_actor()
+        with as_user(donor.user):
+            d1 = api.create_cash_donation(p, 1_000_000)["donation"]
+            d2 = api.create_cash_donation(p, 500_000, is_anonymous=1)["donation"]
+        with as_user(owner.user):
+            api.decide_cash_donation(d1, "confirm")
+            api.decide_cash_donation(d2, "confirm")
+        with as_guest():
+            k = api.program_kpi(event.name)
+            don = api.donation_summary(event.name)
+            wall = api.program_donations(p)
+        self.assertEqual(k["donor"]["received"], 1_500_000)
+        self.assertEqual(k["donor"]["received"], don["received_total"])
+        self.assertEqual(k["donor"]["donors"], 2)
+        self.assertIn("Donatur Anonim", [r["donor_name"] for r in wall["public"]])
+        self.assertEqual(wall["total_received"], 1_500_000)
+        for part in ("donor", "tender", "tracking"):
+            self.assertIn(part, k)

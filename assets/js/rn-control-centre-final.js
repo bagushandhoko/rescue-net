@@ -1176,6 +1176,8 @@ function renderKpi(
   // Setiap KPI membuka rincian lintas kelompok: daftar item/objek/
   // situasi di baliknya, dikelompokkan per organisasi; klik "Lanjut"
   // membuka poskonya. Organisasi tertutup hanya membagi ringkasan.
+  renderProgramKpi();
+
   drillCard(
     document.getElementById("kpiRisk"),
     "jiwa",
@@ -1218,6 +1220,52 @@ function renderKpi(
     "Donasi Menumpuk = tawaran bantuan yang belum tersalur. Klik untuk "
     + "rincian per kelompok."
   );
+}
+
+
+// KPI Program Khusus (owner 2026-11-02: "di halaman Control Centre tambahkan summary dari ketiga program
+// khusus itu ... tambah di KPI") — one call, same public numbers as the three pages; a card opens its page.
+function renderProgramKpi() {
+  const box = document.getElementById("ccProgramKpis");
+  if (!box || !window.RN_FRAPPE) return;
+  const ev = eventId();
+  box.querySelectorAll("[data-pk-href]").forEach(card => {
+    if (card.dataset.wired) return;
+    card.dataset.wired = "1";
+    card.setAttribute("role", "link");
+    card.setAttribute("tabindex", "0");
+    const go = () => { location.href = card.dataset.pkHref + (ev ? "?event=" + encodeURIComponent(ev) : ""); };
+    card.addEventListener("click", go);
+    card.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  });
+  const rp = v => "Rp " + new Intl.NumberFormat("id-ID", { notation: "compact", maximumFractionDigits: 1 }).format(v || 0);
+  const bar = (id, pct, tip) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.width = Math.max(0, Math.min(100, pct || 0)).toFixed(0) + "%";
+    el.parentElement.title = tip || "";
+  };
+  window.RN_FRAPPE.call("rescue_net.api_donor_program.program_kpi", { disaster_event: ev })
+    .then(k => {
+      if (!k) return;
+      const d = k.donor || {}, t = k.tender || {}, p = k.tracking || {};
+      setText("kpiPkDonor", rp(d.received));
+      setText("kpiPkDonorSub", d.programs
+        ? `dari ${rp(d.target)} · ${format(d.programs)} program · ${format(d.donors)} donatur`
+        : "belum ada program donasi");
+      bar("kpiPkDonorBar", d.target ? 100 * d.received / d.target : 0, d.target ? `${(100 * d.received / d.target).toFixed(0)}% terkumpul` : "");
+      setText("kpiPkTender", format(t.total || 0));
+      setText("kpiPkTenderSub", t.total
+        ? `${format(t.open)} dibuka · ${format(t.awarded)} pemenang · RAB ${rp(t.rab_total)} · ${format(t.bids)} penawaran`
+        : "belum ada tender");
+      bar("kpiPkTenderBar", t.total ? 100 * t.awarded / t.total : 0, t.total ? "porsi tender yang sudah ada pemenang" : "");
+      setText("kpiPkTrack", format(p.active || 0));
+      setText("kpiPkTrackSub", (p.programs || p.active)
+        ? `aktif · ${format(p.critical)} kritis · ${format(p.late_milestones)} milestone terlambat · ${format(p.unserved_locations)} lokasi belum terlayani`
+        : "belum ada program");
+      bar("kpiPkTrackBar", p.active ? 100 * p.critical / p.active : 0, p.active ? "porsi program aktif yang kritis" : "");
+    })
+    .catch(() => {});
 }
 
 

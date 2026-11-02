@@ -158,18 +158,19 @@
 
             <div class="rn-pk-docs" id="docBox">
               <h4 style="margin-top:16px;">Dokumen Program</h4>
-              <div id="docRab" class="rn-muted">Dokumen RAB belum diunggah.</div>
-              <div id="docDrawings" class="rn-pk-drawings"></div>
+              <div id="docRab">Dokumen RAB belum diunggah.</div>
+              <div id="docDrawings"></div>
             </div>
             <div class="rn-pk-docmanage" id="docManage" hidden>
               <h4 style="margin-top:16px;">Kelola Dokumen &amp; Rekening <small class="rn-muted">(hanya pemrakarsa / Control Centre)</small></h4>
-              <form class="rn-form" id="rabForm"><label>Rencana Anggaran Biaya (RAB) — PDF, maks. 10 MB
-                <input type="file" name="file" accept="application/pdf,.pdf" required></label>
-                <div class="form-actions"><button class="btn primary" type="submit">Unggah RAB</button><span class="form-message" id="rabMsg"></span></div></form>
-              <form class="rn-form" id="drawForm"><label>Gambar kerja — PNG / JPG / WEBP / PDF, maks. 10 MB
+              <form class="rn-form" id="rabForm"><label>Rencana Anggaran Biaya (RAB) — PDF atau foto/scan per halaman (PNG / JPG / WEBP), maks. 10 MB per berkas, bisa beberapa kali unggah (maks. 20)
+                <input type="file" name="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" required></label>
+                <label>Keterangan (opsional)<input name="label" maxlength="120" placeholder="Rekap / Pekerjaan persiapan / Struktur"></label>
+                <div class="form-actions"><button class="btn primary" type="submit">Unggah Halaman RAB</button><span class="form-message" id="rabMsg"></span></div></form>
+              <form class="rn-form" id="drawForm"><label>Gambar rencana / gambar kerja — PNG / JPG / WEBP / PDF, maks. 10 MB
                 <input type="file" name="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" required></label>
                 <label>Keterangan (opsional)<input name="label" maxlength="120" placeholder="Denah lantai 1"></label>
-                <div class="form-actions"><button class="btn primary" type="submit">Unggah Gambar Kerja</button><span class="form-message" id="drawMsg"></span></div></form>
+                <div class="form-actions"><button class="btn primary" type="submit">Unggah Gambar Rencana</button><span class="form-message" id="drawMsg"></span></div></form>
               <form class="rn-form" id="bankForm"><div class="form-grid">
                 <label>Bank <input name="bank_name" maxlength="60" placeholder="BRI / BCA / Mandiri / BSI"></label>
                 <label>No. Rekening <input name="account_number" inputmode="numeric" maxlength="30" placeholder="1234567890"></label>
@@ -348,7 +349,7 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=rab-20261101"></script>
+<script src="../assets/js/program-khusus.js?v=rabpages-20261102"></script>
 <script src="../assets/js/rn-frappe-client.js?v=csrf-20261025"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>

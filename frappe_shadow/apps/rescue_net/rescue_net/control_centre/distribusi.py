@@ -36,6 +36,29 @@ from rescue_net.control_centre.critical import (  # noqa: F401
 
 
 
+
+def _handover_phone(t):
+    """Armada handover phone (privacy check 2026-11-02): it used to reach every guest on the public distribution
+    boards. Now: logged-in viewers only, and only when the coordinating posko shares its contacts with them (same
+    rule as the posko PIC phone, visibility.posko_contacts_visible)."""
+    phone = t.get("handover_contact_phone") if hasattr(t, "get") else None
+    if not phone or frappe.session.user in (None, "", "Guest"):
+        return ""
+    from rescue_net.access_policy import rn_actor
+    from rescue_net.visibility import posko_contacts_visible
+
+    posko = t.get("coordination_posko")
+    if not posko:
+        return phone
+    cache = getattr(frappe.local, "rn_handover_ok", None)
+    if cache is None:
+        cache = {}
+        frappe.local.rn_handover_ok = cache
+    key = (frappe.session.user, posko)
+    if key not in cache:
+        cache[key] = posko_contacts_visible(posko, rn_actor(required=False))
+    return phone if cache[key] else ""
+
 def _armada_avail(status, left_kg, departure_at):
     """tersedia / penuh / dipakai / lewat — same rule as api_armada.armada_finder."""
     from frappe.utils import get_datetime, now_datetime
@@ -327,7 +350,7 @@ def distribusi_board(disaster_event=None):
                     "eta": t.get("eta") or "-",
                     "lokasi_serah_terima": t.get("handover_location") or "-",
                     "narahubung": t.get("handover_contact_person") or "-",
-                    "kontak": t.get("handover_contact_phone") or "-",
+                    "kontak": _handover_phone(t) or "-",
                     "pct": round(100.0 * _num(t.capacity_weight_kg) /
                                   (_num(t.capacity_weight_kg) or 1), 0) if t.transport_status in UTILISED_STATES else 0,
                 }
@@ -427,7 +450,7 @@ def distribusi_board(disaster_event=None):
                 {"title": t.get("provider_name"),
                  "sub": (t.get("transport_type") or "-") + " · "
                         + (t.get("current_location") or t.get("route_origin") or "-")
-                        + (" · ☎ " + t.get("handover_contact_phone") if t.get("handover_contact_phone") else ""),
+                        + (" · ☎ " + _handover_phone(t) if _handover_phone(t) else ""),
                  "href": ("posko-detail.html?id=" + t.get("coordination_posko") + "&event=" + (event or ""))
                          if t.get("coordination_posko") else None}
                 for t in transports if t.get("transport_status") == "available"
@@ -563,7 +586,7 @@ def distribusi_board(disaster_event=None):
             "eta": eta_v,
             "lokasi_serah_terima": t.get("handover_location") or "-",
             "narahubung": t.get("handover_contact_person") or "-",
-            "kontak": t.get("handover_contact_phone") or "-",
+            "kontak": _handover_phone(t) or "-",
             "catatan": t.get("coordination_notes") or "",
             "status": t.get("transport_status") or "-",
             "status_label": _ARMADA_STATUS_LABEL.get(t.get("transport_status"), t.get("transport_status") or "-"),
@@ -571,7 +594,7 @@ def distribusi_board(disaster_event=None):
             "pickup_volunteer_name": t.get("pickup_volunteer_name") or "",
             # transporter-side follow-up contact (for the coordinating posko)
             "transporter_contact_person": t.get("handover_contact_person") or "",
-            "transporter_contact_phone": t.get("handover_contact_phone") or "",
+            "transporter_contact_phone": _handover_phone(t),
             "bookings_count": sum(1 for b in bks if b.status in ("requested", "confirmed")),
             "bookings": [
                 {
@@ -787,7 +810,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "rute": (t.route_origin or "-") + " → " + (t.route_destination or "-"),
             "handover_location": t.handover_location or "-",
             "handover_contact_person": t.handover_contact_person or "-",
-            "handover_contact_phone": t.handover_contact_phone or "-",
+            "handover_contact_phone": _handover_phone(t) or "-",
             "coordination_notes": t.coordination_notes or "",
             "syarat": cargo_terms(t),
             "pickup_volunteer": t.pickup_volunteer or "",

@@ -531,6 +531,8 @@
   function renderDonations(d) {
     var wall = $("#donationWall");
     var pub = d.public || [];
+    var tt = $("#donationWallTitle");
+    if (tt) tt.textContent = "Daftar Donatur (terkonfirmasi) — " + pub.length + " donatur · total " + rp(d.total_received || 0);
     wall.innerHTML = pub.length
       ? pub.map(function (r) {
           return '<article class="event-card"><div class="event-main"><div>' +

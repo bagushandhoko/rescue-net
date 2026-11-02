@@ -1172,6 +1172,32 @@
    "temuan": [
     "Pencarian kata kunci membuang kata 'bencana' sehingga pertanyaan umum tidak menemukan data"
    ]
+  },
+  {
+   "id": "AI-5",
+   "tanggal": "2026-11-02",
+   "kategori": "AI",
+   "judul": "Asisten AI untuk semua pengguna & organisasi: jawab, jelaskan cara pakai, jalankan pengaturan",
+   "tujuan": "Owner: AI benar-benar berfungsi untuk semua user/organisasi; menjawab sesuai hak; bisa menjalankan pengaturan posko & setting lain; bisa menjelaskan penggunaan Rescue-Net; bila belum ada kunci, otomatis dibawa ke halaman AI Settings.",
+   "akun": [
+    "akun uji otomatis: tanpa kunci, anggota organisasi (kunci org dibagikan), non-anggota, pengelola posko, relawan, pengguna lain"
+   ],
+   "langkah": [
+    "Tanpa kunci → status no_key + tautan AI Settings; widget otomatis pindah ke AI Settings (?from=ai-chat, ada penjelasan + lompat ke form kunci)",
+    "Anggota organisasi memakai kunci organisasi yang dibagikan; non-anggota tidak; kunci platform melayani semua yang tanpa kunci; konteks organisasi hanya untuk anggota",
+    "Chat dengan kunci platform sampai ke model",
+    "Pertanyaan 'bagaimana cara…' → Manual Pengguna ikut konteks; pertanyaan data biasa tidak",
+    "Pengelola posko: konteks berisi kontak, kebutuhan terbuka, permintaan relawan; pengguna lain tidak",
+    "Aksi baru lewat tombol Jalankan: kontak posko, tambah kebutuhan (urgent/critical wajib jiwa), catat stok, terima/tolak relawan — pengguna lain ditolak",
+    "Relawan: lihat & ubah profil relawan sendiri; pengguna tanpa profil ditolak",
+    "Usulan AI disaring sesuai hak (pengelola tanpa profil relawan tidak dapat tombol ubah profil)"
+   ],
+   "hasil": "Lulus (tes otomatis 9 baru + 7 lama). Uji nyata dengan kunci owner: menunggu owner",
+   "skor": "8/8",
+   "status": "lulus",
+   "temuan": [
+    "Konteks AI dulu tanpa panduan pemakaian dan tanpa daftar permintaan relawan, sehingga AI tidak bisa menjelaskan atau memutuskan"
+   ]
   }
  ],
  "rencana": [

@@ -202,7 +202,8 @@
       </section>
     </div>
 
-    <div class="rn-settings-group">
+    <div class="rn-settings-group" id="aiKeySection">
+      <p class="rn-ai-from-chat" id="aiFromChat" hidden style="margin:0 0 12px;padding:12px 14px;border-radius:10px;border:1px solid #f59e0b;background:#fff7e6;color:#7a4b00;line-height:1.5">🤖 Asisten AI belum bisa dipakai karena kunci AI belum ada (atau ditolak provider). Simpan kunci AI pribadi Anda di bawah ini, lalu buka lagi tombol <b>Tanya AI</b>. Kalau organisasi Anda punya kunci bersama, minta admin organisasi mengaktifkan "bagikan ke anggota".</p>
       <div class="rn-settings-group-title">
         <h2>AI Setting</h2>
         <p>BYOK · Bring Your Own Key. Pilih provider AI: <b>OpenAI</b>, <b>Claude (Anthropic)</b>, atau <b>Google Gemini</b>. Setiap user/organisasi memakai kuncinya sendiri; kunci yang terakhir disimpan menjadi provider aktif. Secret key disimpan terenkripsi dan tidak ditampilkan ulang.</p>
@@ -397,8 +398,17 @@
   <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 
 <script src="../assets/js/rn-navigation-v2.js?v=regbencana-20261102"></script>
-<script src="../assets/js/rn-mobile-drawer.js?v=aiact-20261102"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=aiset-20261102"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-twofa-settings.js?v=twofa-20261026"></script>
+<script>
+/* owner 2026-11-02: the AI chat sends users without a key here (?from=ai-chat) — say why and jump to the key form */
+(function () {
+  if (!/[?&]from=ai-chat\b/.test(location.search)) return;
+  var box = document.getElementById("aiFromChat"), sec = document.getElementById("aiKeySection");
+  if (box) box.hidden = false;
+  if (sec) setTimeout(function () { sec.scrollIntoView({ behavior: "smooth", block: "start" }); }, 300);
+})();
+</script>
 </body>
 </html>

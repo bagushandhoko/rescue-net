@@ -7,7 +7,12 @@ AI key dan/atau tokennya habis; dia bisa gunakan AI untuk atur posko dan cari da
 - chat(): one question (+ short history). Context = public data of the disaster, a keyword search over
   Rescue-Net (poskos, organisations, disasters, open needs), and — only for poskos the user MANAGES — that
   posko's pending work, stock, expiry and warnings. Full operational context only for System Manager /
-  Control Centre. The AI never changes data (ADR-0002): it answers and points to the page/tool to use.
+  Control Centre. The AI never writes by itself (ADR-0002): it answers, points to the page/tool, and may PROPOSE
+  an action that the user runs with the "Jalankan" button under the user's own permissions.
+- Owner 2026-11-02 sore: "pastikan AI benar-benar berfungsi untuk semua user atau organisasi ... bisa jalankan
+  pengaturan posko dan setting lainnya, atau menjelaskan bagaimana penggunaan rescue-net" → more actions
+  (posko contact, needs, stock, volunteer requests, own volunteer profile) and the user manual
+  (ai/manual_pengguna.txt, from pages/manual.html via scripts/rn-manual-to-ai.py) for how-to questions.
 - Missing key, spent quota, rejected key, rate limit → a friendly `status` instead of an error.
 """
 
@@ -38,21 +43,41 @@ PAGE_MAP = {
     "Donasi & program khusus": "pages/program-khusus.html",
     "Kunci AI pribadi / organisasi": "pages/ai-settings.html",
     "Notifikasi WhatsApp": "pages/notifikasi-settings.html",
+    "Registrasi akun / login / peran": "pages/auth.html",
+    "Bencana aktif & peta": "pages/bencana-aktif.html",
+    "Cari & pesan armada (transport)": "pages/management-distribusi.html (panel Cari Armada)",
+    "Daftarkan armada posko distribusi": "pages/posko-distribusi.html?id=<posko>#armadaForm",
+    "Organisasi & anggota": "pages/koordinasi-organisasi.html",
+    "Kebutuhan publik (yang bisa dibantu)": "pages/kebutuhan-publik.html",
+    "Kirim bantuan": "pages/kirim-bantuan.html",
+    "Lacak kiriman logistik": "pages/lacak-logistik.html",
+    "Pencarian orang hilang": "pages/search-found.html",
+    "Shelter / pengungsian": "pages/shelter-detail.html?id=<shelter>",
+    "Dapur umum": "pages/dapur-umum.html",
+    "Manual pengguna lengkap": "pages/manual.html",
+    "Pasang aplikasi / mode offline": "pages/install.html",
+    "Kebijakan privasi": "pages/kebijakan-privasi.html",
 }
 
 SYSTEM_PROMPT = """Anda adalah Asisten AI Rescue-Net (platform koordinasi bencana di Indonesia).
 Jawab dalam bahasa Indonesia sederhana, singkat dan praktis.
 Tugas: (1) membantu pengelola mengatur posko — beri langkah konkret dan sebut halaman/alat yang dipakai dari PAGE_MAP;
-(2) mencari dan merangkum data Rescue-Net dari konteks yang diberikan (posko, organisasi, bencana, kebutuhan, stok).
+(2) mencari dan merangkum data Rescue-Net dari konteks yang diberikan (posko, organisasi, bencana, kebutuhan, stok);
+(3) menjelaskan cara memakai Rescue-Net (registrasi, peran, posko, relawan, laporan, bantuan, armada, kunci AI, offline)
+berdasarkan MANUAL_PENGGUNA dan PAGE_MAP bila ada di konteks — jangan mengarang menu yang tidak disebut di sana;
+(4) mengusulkan aksi pengaturan yang bisa langsung dijalankan pengguna (lihat AKSI di bawah).
 Aturan:
 - Gunakan HANYA data di konteks. Kalau tidak ada, katakan tidak ditemukan — jangan mengarang angka, nama, atau nomor.
-- Anda TIDAK bisa mengubah data. Untuk mengubah, arahkan ke halaman/tombol yang tepat.
+- Anda sendiri TIDAK mengubah data. Perubahan hanya lewat usulan AKSI yang dijalankan pengguna, atau arahkan ke
+  halaman/tombol yang tepat bila tidak ada aksi yang cocok.
 - Jangan menampilkan data pribadi yang tidak ada di konteks; jangan menebak identitas pasien/orang hilang.
 - Sebut nama posko/bencana persis seperti di konteks, dan sertakan tautan relatif bila ada (field href).
 - Bila pertanyaan di luar Rescue-Net/kebencanaan, jawab singkat dan arahkan kembali.
-AKSI (owner 2026-11-02): Anda BOLEH mengusulkan aksi perubahan untuk posko yang dikelola pengguna — pengguna sendiri
-yang menekan tombol "Jalankan". Usulkan hanya aksi dari AKSI_TERSEDIA, hanya untuk ID yang ada di konteks
-(posko_yang_anda_kelola / posko_aktif / armada), dan hanya bila pengguna memintanya atau jelas membantu.
+AKSI (owner 2026-11-02): Anda BOLEH mengusulkan aksi perubahan untuk posko yang dikelola pengguna, atau untuk profil
+relawan pengguna sendiri — pengguna sendiri yang menekan tombol "Jalankan". Usulkan hanya aksi dari AKSI_TERSEDIA,
+hanya untuk ID yang ada di konteks (posko_yang_anda_kelola / posko_aktif / armada / permintaan_relawan /
+profil_relawan_anda), dan hanya bila pengguna memintanya atau jelas membantu. Isi params hanya dengan nilai yang
+disebut pengguna atau ada di konteks; bila data wajib belum ada (mis. jumlah, satuan), tanyakan dulu.
 Tulis tiap usulan di baris tersendiri PALING AKHIR jawaban, persis:
 [[AKSI {"action": "<nama>", "params": {...}, "label": "<kalimat singkat untuk tombol>"}]]
 Jangan pernah mengklaim aksi sudah dijalankan."""
@@ -67,7 +92,24 @@ ACTIONS = {
     "comms_support": {"params": ["posko", "offered", "needed"], "desc": "isi dukungan komunikasi yang ditawarkan / dibutuhkan posko"},
     "stock_expiry": {"params": ["posko", "item_name", "unit", "quantity", "expiry_date"],
                      "desc": "beri tanggal kedaluwarsa (YYYY-MM-DD) pada stok posko"},
+    "posko_contact": {"params": ["posko", "officer_in_charge_name", "officer_in_charge_role", "officer_in_charge_phone",
+                                 "officer_in_charge_whatsapp", "emergency_contact"],
+                      "desc": "ubah kontak posko (PIC, jabatan, HP, WhatsApp, kontak darurat) — isi hanya yang diubah"},
+    "need_create": {"params": ["posko", "item_text", "quantity", "unit", "urgency", "jiwa_terdampak", "needed_before"],
+                    "desc": "tambah kebutuhan posko; urgency normal / urgent / critical (urgent/critical wajib jiwa_terdampak)"},
+    "stock_record": {"params": ["posko", "item_text", "quantity", "unit"], "desc": "catat stok terkini satu barang di posko"},
+    "volunteer_decide": {"params": ["booking", "decision"],
+                         "desc": "putuskan permintaan relawan ke posko: decision confirm (terima) / reject (tolak)"},
+    "volunteer_profile": {"params": ["main_skill", "equipment_owned", "available_from", "available_until",
+                                     "duration_available", "current_location"],
+                          "desc": "ubah profil relawan pengguna sendiri (keahlian, peralatan, tersedia dari/sampai YYYY-MM-DD, "
+                                  "lama bisa membantu, lokasi) — isi hanya yang diubah"},
 }
+POSKO_ACTIONS = {"posko_status", "comms_support", "stock_expiry", "posko_contact", "need_create", "stock_record"}
+NEED_URGENCY = {"normal", "urgent", "critical"}
+HOWTO_RE = re.compile(r"cara|bagaimana|gimana|gmn|apa itu|fungsi|menu|fitur|daftar|registrasi|regis|pakai|gunakan|guna|"
+                      r"jelaskan|langkah|panduan|tutorial|bantuan|help|mulai|install|pasang|offline|login|akun|peran|"
+                      r"organisasi|kunci|token|bisa apa|kenapa|mengapa", re.I)
 ARMADA_STATUS = {"available", "reserved", "assigned", "in_transit", "arrived", "completed"}
 POSKO_STATUS = {"active", "standby", "reducing", "closing", "offline"}
 _AKSI_RE = re.compile(r"\[\[AKSI\s*(\{.*?\})\s*\]\]", re.S)
@@ -160,6 +202,41 @@ def _search(q, event):
     return {k: v for k, v in out.items() if v}
 
 
+_MANUAL = None
+
+
+def _manual():
+    """User manual as plain text (ai/manual_pengguna.txt, generated from pages/manual.html)."""
+    global _MANUAL
+    if _MANUAL is None:
+        import os
+
+        try:
+            with open(os.path.join(os.path.dirname(__file__), "ai", "manual_pengguna.txt"), encoding="utf-8") as f:
+                _MANUAL = f.read()[:24000]
+        except OSError:
+            _MANUAL = ""
+    return _MANUAL
+
+
+def _my_volunteer_profiles(actor):
+    from rescue_net.api_volunteer_booking import _profiles
+
+    return _profiles(actor)
+
+
+def _my_volunteer_summary(actor):
+    """The asker's OWN volunteer profile (only their own data) so the AI can explain or propose changes."""
+    from rescue_net.api_volunteer_booking import _my_profile_fields
+
+    profiles = _my_volunteer_profiles(actor)
+    if not profiles:
+        return None
+    f = _my_profile_fields(profiles)
+    return {"bencana": [p.disaster_event for p in profiles], "profil": {k: str(v) for k, v in f.items() if v not in ("", None)},
+            "ubah_di": "pages/relawan-saya.html"}
+
+
 def _active_disasters():
     """Always in the context (owner 2026-11-02: "AI jawab tidak ada bencana aktif") — the keyword search alone
     finds nothing for "bencana aktif apa saja?" because no title contains those words. Same public list as the
@@ -196,6 +273,16 @@ def _posko_context(posko):
                                                                   "transport_status": ["not in", ["completed", "cancelled"]]},
                                    fields=["name", "title", "transport_status", "departure_at", "position_at",
                                            "capacity_weight_kg", "capacity_committed_kg"], limit_page_length=30)
+    try:
+        from rescue_net.api_posko_manage import workbench
+
+        wb = workbench(posko)
+        out["kontak"] = wb.get("contact")
+        out["kebutuhan_terbuka"] = wb.get("needs")
+        out["permintaan_relawan"] = [{k: v.get(k) for k in ("name", "booking_kind", "volunteer_name", "main_skill", "note", "creation")}
+                                     for v in wb.get("volunteer_requests") or []]
+    except Exception:
+        pass
     try:
         from rescue_net.services.expiry import expiring_report
 
@@ -247,6 +334,15 @@ def chat(question, page=None, disaster_event=None, posko=None, organization_id=N
             ctx["akses"] = "lengkap (super admin / Control Centre)" if full else "data publik"
         except Exception:
             frappe.log_error(frappe.get_traceback(), "assistant event context")
+    if HOWTO_RE.search(question):
+        ctx["MANUAL_PENGGUNA"] = _manual()
+    if actor:
+        try:
+            prof = _my_volunteer_summary(actor)
+            if prof:
+                ctx["profil_relawan_anda"] = prof
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), "assistant volunteer profile")
     try:
         ctx["bencana_aktif"] = _active_disasters()
     except Exception:
@@ -319,7 +415,12 @@ def _allowed(name, params, actor):
             space = frappe.db.get_value("RN Transport Space", params.get("transport_space"),
                                         ["name", "coordination_posko", "created_by_user"], as_dict=True)
             return bool(space and _can_update(space))
-        if params.get("posko"):
+        if name == "volunteer_decide":
+            posko = frappe.db.get_value("RN Volunteer Booking", params.get("booking"), "posko")
+            return bool(posko and (is_system_manager() or (actor and can_manage_posko(actor, posko))))
+        if name == "volunteer_profile":
+            return bool(actor and _my_volunteer_profiles(actor))
+        if name in POSKO_ACTIONS and params.get("posko"):
             return bool(actor and can_manage_posko(actor, resolve_posko(params["posko"])))
     except Exception:
         return False
@@ -369,4 +470,46 @@ def run_action(action, params=None, latitude=None, longitude=None, accuracy_m=No
 
         add_lot(resolve_posko(p["posko"]), p.get("item_name"), p.get("unit"), p.get("quantity"), p.get("expiry_date"))
         return {"ok": True, "message": "Tanggal kedaluwarsa dicatat."}
+    if action == "posko_contact":
+        from rescue_net.api_community_cluster import update_posko
+
+        fields = {k: str(p[k]).strip()[:140] for k in ACTIONS["posko_contact"]["params"][1:] if p.get(k) not in (None, "")}
+        if not fields:
+            frappe.throw("Tidak ada kontak yang diubah.")
+        r = update_posko(resolve_posko(p["posko"]), **fields)
+        return {"ok": True, "message": "Kontak posko disimpan." + (" Sebagian menunggu persetujuan pusat." if isinstance(r, dict) and r.get("pending") else "")}
+    if action == "need_create":
+        urgency = p.get("urgency") or "normal"
+        if urgency not in NEED_URGENCY:
+            frappe.throw("Urgensi tidak valid.")
+        if urgency in ("urgent", "critical") and not (frappe.utils.cint(p.get("jiwa_terdampak")) > 0):
+            frappe.throw("Isi jumlah jiwa untuk kebutuhan urgent/critical.")
+        from rescue_net.api_logistics import create_need
+
+        create_need(posko=resolve_posko(p["posko"]), item_text=p.get("item_text"), quantity=p.get("quantity"),
+                    unit=p.get("unit"), quantity_mode="exact" if p.get("quantity") not in (None, "") else "unknown",
+                    urgency=urgency, needed_before=p.get("needed_before") or None,
+                    jiwa_terdampak=p.get("jiwa_terdampak") or None)
+        return {"ok": True, "message": "Kebutuhan posko ditambahkan."}
+    if action == "stock_record":
+        from rescue_net.api_logistics import create_stock_observation
+
+        create_stock_observation(posko=resolve_posko(p["posko"]), item_text=p.get("item_text"), quantity=p.get("quantity"),
+                                 unit=p.get("unit"), quantity_mode="exact" if p.get("quantity") not in (None, "") else "unknown")
+        return {"ok": True, "message": "Stok dicatat."}
+    if action == "volunteer_decide":
+        if p.get("decision") not in ("confirm", "reject"):
+            frappe.throw("Keputusan harus confirm atau reject.")
+        from rescue_net.api_volunteer_booking import decide_booking
+
+        decide_booking(p["booking"], p["decision"])
+        return {"ok": True, "message": "Permintaan relawan " + ("diterima." if p["decision"] == "confirm" else "ditolak.")}
+    if action == "volunteer_profile":
+        from rescue_net.api_volunteer_booking import update_my_profile
+
+        fields = {k: p[k] for k in ACTIONS["volunteer_profile"]["params"] if p.get(k) not in (None, "")}
+        if not fields:
+            frappe.throw("Tidak ada data profil yang diubah.")
+        update_my_profile(**fields)
+        return {"ok": True, "message": "Profil relawan Anda diperbarui."}
     frappe.throw("Aksi tidak dikenal.")

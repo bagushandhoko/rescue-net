@@ -56,7 +56,7 @@
 
   var SUGGEST = POSKO_PAGE
     ? ["Apa yang perlu saya tindak di posko ini?", "Stok apa yang hampir habis atau kedaluwarsa?", "Bagaimana cara menerima relawan yang menawarkan diri?"]
-    : ["Ringkas situasi bencana ini", "Posko mana yang butuh bantuan logistik?", "Bagaimana cara mendaftarkan posko?"];
+    : ["Bencana aktif apa saja sekarang?", "Ringkas situasi bencana ini", "Posko mana yang butuh bantuan logistik?", "Bagaimana cara mendaftarkan posko?"];
 
   function el(html) { var d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; }
 
@@ -100,6 +100,12 @@
       forbidden: esc(message),
     }[status] || ("⚠️ " + esc(message || "Asisten AI belum bisa dipakai.") + link);
     add(html, "rn-aic-note");
+    // owner 2026-11-02: "jika belum isi key-nya, otomatis pindahkan ke halaman setting-nya"
+    // (own/shared key only — a chosen organisation without a key is the org admin's job, not this user's)
+    if ((status === "no_key" || status === "key_rejected") && settings && !STATE.org && !/ai-settings\.html/.test(location.pathname)) {
+      add("Membuka halaman AI Settings…", "rn-aic-note");
+      setTimeout(function () { location.href = href(settings) + (settings.indexOf("?") === -1 ? "?" : "&") + "from=ai-chat"; }, 1500);
+    }
   }
 
   async function loadStatus() {
@@ -125,7 +131,7 @@
     var h = history();
     if (s.status !== "ok") { note(s.status, s.message, s.settings); return; }
     if (!h.length) {
-      add("Halo! Saya bisa membantu <b>mengatur posko</b> (langkah &amp; halaman yang dipakai) dan <b>mencari data</b> Rescue-Net (posko, organisasi, bencana, kebutuhan, stok). Saya tidak mengubah data — saya tunjukkan caranya.", "rn-aic-a");
+      add("Halo! Saya bisa membantu <b>mengatur posko</b> (langkah &amp; halaman yang dipakai) dan <b>mencari data</b> Rescue-Net (posko, organisasi, bencana, kebutuhan, stok). Saya juga bisa <b>menjelaskan cara memakai Rescue-Net</b>, dan mengusulkan <b>pengaturan</b> (status &amp; kontak posko, kebutuhan, stok, relawan, profil relawan Anda) — perubahan baru terjadi setelah Anda menekan <b>Jalankan</b>.", "rn-aic-a");
       add('<div class="rn-aic-sugs">' + SUGGEST.map(function (x) { return '<button type="button" data-sug="' + esc(x) + '">' + esc(x) + "</button>"; }).join("") + "</div>", "");
     } else {
       h.forEach(function (x) { add(esc(x.q), "rn-aic-q"); add(fmt(x.a), "rn-aic-a"); });

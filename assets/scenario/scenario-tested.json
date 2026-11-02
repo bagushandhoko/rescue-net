@@ -1051,6 +1051,28 @@
      "perbaikan": "Menunggu izin owner untuk dihapus."
     }
    ]
+  },
+  {
+   "id": "AI-3",
+   "tanggal": "2026-11-02",
+   "kategori": "AI",
+   "judul": "Asisten AI menjalankan aksi untuk posko pengguna (dengan tombol Jalankan)",
+   "tujuan": "Owner: AI untuk pemilik posko / pengguna berhak ubah — selain cari data, bisa mengatur posko (mis. update posisi alat transport); ada link atur kunci AI selain peringatan token habis.",
+   "akun": [
+    "akun uji otomatis (pengelola posko A, pengguna lain)",
+    "ld3.demo di produksi (HP)"
+   ],
+   "langkah": [
+    "AI mengusulkan aksi ([[AKSI …]]) → hanya aksi dikenal & untuk posko/armada yang dikelola pengguna yang muncul sebagai tombol",
+    "Pengguna lain tidak mendapat tombol; menjalankan aksi tanpa hak → ditolak",
+    "Jalankan: status armada → in_transit, posisi GPS armada, dukungan komunikasi posko — tersimpan",
+    "Status tidak valid ditolak",
+    "Jendela chat selalu punya '⚙ Atur kunci AI' (produksi: tampil, menuju AI Settings)"
+   ],
+   "hasil": "Lulus (2 tes baru, suite 670 hijau). Jawaban AI sungguhan belum diuji di produksi (belum ada kunci AI).",
+   "skor": "5/5",
+   "status": "lulus",
+   "temuan": []
   }
  ],
  "rencana": [

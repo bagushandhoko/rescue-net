@@ -39,6 +39,7 @@ GUEST_ENDPOINTS = {
     "api_device.unit_catalog", "api_device.unit_normalize", "api_disaster_admin.resolve_event", "api_posko_manage.can_manage",  # reviewed: returns only a bool for the Kelola Posko button
     "api_assistant.status",  # reviewed: guest gets only {"status": "login"}; no data
     "api_armada.armada_finder",  # reviewed: armada schedule/capacity/status + posko title; no phone numbers
+    "api_armada.armada_trail",  # reviewed: GPS points (lat, lng, time) of an armada — no person data
     "api_events.disasters", "api_events.health",
     "api_ai.ai_providers", "api_ai.public_active_disasters", "api_ai.public_context", "api_ai.public_map_context",
     "api_auth.register", "api_auth.session_info", "api_auth.social_login_url",

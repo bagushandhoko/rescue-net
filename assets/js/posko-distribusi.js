@@ -211,21 +211,18 @@
       row("Narahubung", esc(a.handover_contact_person) + (a.handover_contact_phone && a.handover_contact_phone !== "-" ? " · " + tel(a.handover_contact_phone) : "")) +
       row("Relawan jemput", esc(a.pickup_volunteer_name || "-")) +
       "</div>" +
-      ((CACHE && CACHE.can_manage) ? armadaEditForm(a) : "") +
-      ((CACHE && CACHE.can_coordinate) ? bookingForm(a) : "") +
-      ((CACHE && !CACHE.can_coordinate && !CACHE.can_manage)
-        ? (CACHE.public_ok
-            ? publicBookingForm(a)
-            : '<p class="rn-muted rn-md-detail-note">' +
-              (CACHE.logged_in
-                ? "Posko ini belum membuka pemesanan ruang muat untuk pihak luar."
-                : "Login sebagai posko pengantar untuk memesan — atau, bila posko ini membuka partisipasi publik, warga bisa memesan tanpa akun.") +
-              "</p>")
+      ((CACHE && CACHE.can_manage) ? gpsBlock(a) + armadaEditForm(a) : "") +
+      // owner 2026-11-02: memesan wajib login — logged-in users get the normal form, guests a login link
+      ((CACHE && (CACHE.can_coordinate || (CACHE.logged_in && !CACHE.can_manage))) ? bookingForm(a) : "") +
+      ((CACHE && !CACHE.logged_in)
+        ? '<p class="rn-md-detail-note"><a class="btn primary mini" href="auth.html?next=' +
+          encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search.replace(/&?armada=[^&]*/, "") + "&armada=" + a.id) +
+          '">Login untuk memesan</a> <small class="rn-muted">Memesan ruang muat wajib login.</small></p>'
         : "") +
       '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>";
     if (CACHE && CACHE.can_manage) wireArmadaEdit(a.id);
-    if (CACHE && CACHE.can_coordinate) wireBookingForm(a);
-    if (CACHE && !CACHE.can_coordinate && !CACHE.can_manage && CACHE.public_ok) wirePublicBookingForm(a);
+    if (CACHE && (CACHE.can_coordinate || (CACHE.logged_in && !CACHE.can_manage))) wireBookingForm(a);
+    if (CACHE && CACHE.can_manage) wireGps(a);
     $("#pdDrill").hidden = false;
     document.body.style.overflow = "hidden";
   }
@@ -307,7 +304,51 @@
     });
   }
 
-  /* Public (no-account) booking — shown only when CACHE.public_ok.
+  /* Posisi armada dari GPS HP (owner 2026-11-02) — pengelola armada. api_armada.update_armada_position. */
+  var GPS_WATCH = null;
+  function gpsBlock(a) {
+    var last = a.position_at ? "Posisi terakhir: " + esc(String(a.position_at).slice(0, 16)) +
+      (a.position_lat ? ' · <a href="https://www.openstreetmap.org/?mlat=' + a.position_lat + "&mlon=" + a.position_lng +
+        "#map=14/" + a.position_lat + "/" + a.position_lng + '" target="_blank" rel="noopener">lihat di peta</a>' : "") : "Belum ada posisi GPS.";
+    return '<div class="rn-pd-gps"><b>📍 Posisi armada (GPS)</b><div class="rn-muted" data-gps-last>' + last + "</div>" +
+      '<div class="form-actions"><button class="btn primary mini" type="button" data-gps-now>Kirim posisi sekarang</button>' +
+      '<label class="rn-pd-gps-auto"><input type="checkbox" data-gps-auto' + (GPS_WATCH ? " checked" : "") + "> Lacak otomatis selama halaman ini terbuka</label></div>" +
+      '<small class="rn-muted">Publik melihat posisi & jejak armada di Manajemen Distribusi → Cari Armada. Bawa HP di armada saat lacak otomatis.</small>' +
+      '<span class="rn-pd-bk-msg" data-gps-msg></span></div>';
+  }
+  function sendPos(id, p, msgEl, lastEl) {
+    return window.RN_FRAPPE.call("rescue_net.api_armada.update_armada_position", { transport_space: id,
+      latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy_m: p.coords.accuracy }, { method: "POST" })
+      .then(function (r) {
+        if (msgEl) msgEl.textContent = r.skipped ? " posisi belum berubah" : " terkirim " + String(r.position_at).slice(11, 16);
+        if (lastEl && !r.skipped) lastEl.textContent = "Posisi terakhir: " + String(r.position_at).slice(0, 16) +
+          " (" + p.coords.latitude.toFixed(5) + ", " + p.coords.longitude.toFixed(5) + ")";
+      }).catch(function (e) { if (msgEl) msgEl.textContent = " gagal: " + ((e && e.message) || e); });
+  }
+  function wireGps(a) {
+    var box = document.querySelector(".rn-pd-gps");
+    if (!box) return;
+    var msg = box.querySelector("[data-gps-msg]"), last = box.querySelector("[data-gps-last]");
+    box.querySelector("[data-gps-now]").addEventListener("click", function () {
+      if (!navigator.geolocation) { msg.textContent = " HP/peramban tidak mendukung GPS"; return; }
+      msg.textContent = " mencari posisi…";
+      navigator.geolocation.getCurrentPosition(function (p) { sendPos(a.id, p, msg, last); },
+        function () { msg.textContent = " izin lokasi ditolak"; }, { enableHighAccuracy: true, timeout: 20000 });
+    });
+    box.querySelector("[data-gps-auto]").addEventListener("change", function (e) {
+      if (GPS_WATCH) { navigator.geolocation.clearWatch(GPS_WATCH.id); GPS_WATCH = null; }
+      if (!e.target.checked) { msg.textContent = " lacak otomatis dimatikan"; return; }
+      if (!navigator.geolocation) { msg.textContent = " HP/peramban tidak mendukung GPS"; e.target.checked = false; return; }
+      var lastSent = 0;
+      GPS_WATCH = { armada: a.id, id: navigator.geolocation.watchPosition(function (p) {
+        if (Date.now() - lastSent < 60000) return;   // at most once a minute
+        lastSent = Date.now(); sendPos(a.id, p, msg, last);
+      }, function () { msg.textContent = " izin lokasi ditolak"; }, { enableHighAccuracy: true }) };
+      msg.textContent = " lacak otomatis aktif (tiap ±1 menit)";
+    });
+  }
+
+  /* Public (no-account) booking — DISABLED 2026-11-02 (owner: memesan wajib login); kept for reference.
      api_logistics.book_transport_space_public -> returns a Kode Edit. */
   function publicBookingForm(a) {
     var courierOk = (a.service_mode || "both") !== "space_only";

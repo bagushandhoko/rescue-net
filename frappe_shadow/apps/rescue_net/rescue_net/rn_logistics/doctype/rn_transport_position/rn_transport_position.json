@@ -1,0 +1,79 @@
+{
+ "doctype": "DocType",
+ "name": "RN Transport Position",
+ "module": "RN Logistics",
+ "custom": 0,
+ "autoname": "hash",
+ "engine": "InnoDB",
+ "modified": "2026-11-02 12:00:00.000000",
+ "owner": "Administrator",
+ "creation": "2026-11-02 12:00:00.000000",
+ "field_order": [
+  "transport_space",
+  "latitude",
+  "longitude",
+  "accuracy_m",
+  "recorded_at",
+  "source",
+  "recorded_by"
+ ],
+ "fields": [
+  {
+   "fieldname": "transport_space",
+   "label": "Armada",
+   "fieldtype": "Link",
+   "options": "RN Transport Space",
+   "reqd": 1,
+   "in_list_view": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "latitude",
+   "label": "Latitude",
+   "fieldtype": "Float",
+   "precision": "6",
+   "reqd": 1
+  },
+  {
+   "fieldname": "longitude",
+   "label": "Longitude",
+   "fieldtype": "Float",
+   "precision": "6",
+   "reqd": 1
+  },
+  {
+   "fieldname": "accuracy_m",
+   "label": "Akurasi (m)",
+   "fieldtype": "Float"
+  },
+  {
+   "fieldname": "recorded_at",
+   "label": "Waktu",
+   "fieldtype": "Datetime",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "source",
+   "label": "Sumber",
+   "fieldtype": "Select",
+   "options": "gps\nmanual"
+  },
+  {
+   "fieldname": "recorded_by",
+   "label": "Oleh",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

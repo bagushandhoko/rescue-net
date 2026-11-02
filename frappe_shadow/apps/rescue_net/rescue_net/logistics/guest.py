@@ -309,86 +309,11 @@ def book_transport_space_public(
     delivery_method="self_deliver",
     terms_ack=None,
 ):
-    """Warga tanpa akun memesan ruang muat / titip barang ke posko transport
-    yang membuka partisipasi publik. Mengembalikan Kode Edit (sekali tampil)
-    untuk lacak / ubah / batalkan booking — pola sama dengan guest aid."""
-    name = str(contact_person or "").strip()
-    phone = str(contact_phone or "").strip()
-    if not name:
-        frappe.throw("Nama pemesan wajib diisi.")
-    if len(_norm_contact(phone)) < 7:
-        frappe.throw("Nomor HP/WhatsApp wajib diisi (untuk lacak / ubah booking nanti).")
-
-    space = frappe.get_doc("RN Transport Space", transport_space)
-    posko = space.coordination_posko
-    allowed = bool(
-        posko
-        and cint(frappe.db.get_value("RN Posko", posko, "public_participation") or 0)
-        and public_posko_allowed(posko)
-    )
-    if not allowed:
-        frappe.throw(
-            "Posko transport ini tidak membuka pemesanan ruang muat untuk publik.",
-            frappe.PermissionError,
-        )
-
-    from rescue_net.logistics.transport import require_terms_ack
-    acked = require_terms_ack(space, terms_ack)
-
-    if delivery_method not in ("use_transporter", "self_deliver"):
-        delivery_method = "self_deliver"
-    if delivery_method == "use_transporter" and (space.service_mode or "both") == "space_only":
-        frappe.throw(
-            "Armada ini hanya menyediakan ruang muat (bukan kurir). Pilih 'antar sendiri'."
-        )
-
-    # fit + armada status: booking controller (services/transport.py)
-    w = flt(qty_weight_kg) if qty_weight_kg not in (None, "") else 0.0
-    v = flt(qty_volume_m3) if qty_volume_m3 not in (None, "") else 0.0
-
-    policy = space.booking_policy or "pin_verify"
-    pin = None
-    if policy != "open":
-        import random
-        pin = "%04d" % random.randint(1000, 9999)
-
-    code = _new_guest_code()
-
-    doc = frappe.new_doc("RN Transport Booking")
-    doc.transport_space = space.name
-    doc.disaster_event = space.disaster_event
-    doc.booked_by_type = "individu"
-    doc.booker_name = name + " (tamu)"
-    doc.cargo_desc = cargo_desc
-    doc.qty_weight_kg = w
-    doc.qty_volume_m3 = v
-    doc.pickup_location = pickup_location
-    doc.dropoff_location = dropoff_location
-    doc.contact_person = name
-    doc.contact_phone = phone
-    doc.delivery_method = delivery_method
-    doc.requested_window = requested_window
-    doc.terms_ack = acked
-    doc.verification_pin = pin
-    doc.submitted_channel = "guest"
-    doc.edit_code_hash = _guest_booking_code_hash(code)
-    doc.status = "confirmed" if policy == "open" else "requested"
-    if doc.status == "confirmed":
-        doc.confirmed_at = now_datetime()
-    doc.insert(ignore_permissions=True)
-
-    if doc.status == "confirmed":
-        _recompute_transport_committed(space.name)
-
-    return {
-        "booking": doc.name,
-        "status": doc.status,
-        "status_label": _GUEST_BOOKING_STATUS_LABEL.get(doc.status, doc.status),
-        "verification_pin": pin,
-        "edit_code": code,          # shown once, never stored in the clear
-        "policy": policy,
-        "notice": "Simpan Booking ID + Kode Edit ini. Kode hanya ditampilkan sekali.",
-    }
+    """Owner 2026-11-02: memesan ruang muat WAJIB login (dulu warga tanpa akun bisa memesan dengan Kode Edit).
+    Dipertahankan sebagai endpoint agar klien lama mendapat pesan yang jelas. Booking tamu yang sudah ada tetap bisa
+    dilacak / diubah / dibatalkan lewat get/update/cancel_public_transport_booking."""
+    frappe.throw("Untuk memesan ruang muat, login dulu. Buat akun gratis di menu Login/registrasi.",
+                 frappe.PermissionError)
 
 
 @frappe.whitelist(allow_guest=True)

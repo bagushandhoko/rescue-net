@@ -53,3 +53,35 @@ class TestArmadaFinder(RNTestCase):
     def test_logged_in_flag(self):
         with as_user(make_actor().user):
             self.assertTrue(af.armada_finder(self.w.event.name)["logged_in"])
+
+
+class TestArmadaPosition(RNTestCase):
+    """Owner 2026-11-02: the posko that runs an armada shares its GPS position; the public sees position + trail."""
+
+    def setUp(self):
+        super().setUp()
+        self.w = make_world()
+        self.mgr = make_actor(posko=self.w.posko_a)
+        self.space = _insert("RN Transport Space", title="Truk GPS", provider_name="Truk GPS", disaster_event=self.w.event.name,
+                             coordination_posko=self.w.posko_a.name, transport_type="darat", capacity_weight_kg=1000,
+                             transport_status="in_transit")
+
+    def test_only_operator_updates_and_public_sees_trail(self):
+        with as_user(make_actor(posko=self.w.posko_b).user), self.assertRaises(frappe.PermissionError):
+            af.update_armada_position(self.space.name, 4.14, 96.13)
+        with as_guest(), self.assertRaises(frappe.PermissionError):
+            af.update_armada_position(self.space.name, 4.14, 96.13)
+        with as_user(self.mgr.user):
+            with self.assertRaisesRegex(frappe.ValidationError, "Koordinat"):
+                af.update_armada_position(self.space.name, 120, 96.13)
+            self.assertFalse(af.update_armada_position(self.space.name, 4.1400, 96.1300)["skipped"])
+            self.assertTrue(af.update_armada_position(self.space.name, 4.14001, 96.13001)["skipped"])   # < 15 m, < 20 s
+            self.assertFalse(af.update_armada_position(self.space.name, 4.1600, 96.1500)["skipped"])     # moved ~3 km
+        with as_guest():
+            trail = af.armada_trail(self.space.name)["points"]
+            rows = af.armada_finder(self.w.event.name)["rows"]
+        self.assertEqual([p[:2] for p in trail], [[4.14, 96.13], [4.16, 96.15]])
+        row = [r for r in rows if r["name"] == self.space.name][0]
+        self.assertTrue(row["pos_live"])
+        self.assertEqual(row["pos"], [4.16, 96.15])
+        self.assertEqual(row["status"], "dipakai")

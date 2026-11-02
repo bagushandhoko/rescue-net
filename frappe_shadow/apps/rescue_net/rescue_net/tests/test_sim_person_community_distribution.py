@@ -121,23 +121,30 @@ class TestPublicAndOthersBooking(_Sim):
         frappe.db.set_value("RN Posko", self.d_near.name,
                             {"public_participation": 1, "public_detail": "public", "accept_goods": 1})
 
-    def test_guest_books_the_komunitas_truck_and_brings_the_cargo_themselves(self):
+    def test_guest_cannot_book_space_login_required(self):
+        # owner 2026-11-02: memesan ruang muat wajib login
         from rescue_net.logistics.guest import book_transport_space_public
-        with as_guest():
-            out = book_transport_space_public(self.truck.name, "Warga Ani", "081234567890", cargo_desc="Beras 5 karung",
-                                              qty_weight_kg=200, delivery_method="self_deliver")
-        self.assertTrue(out.get("edit_code"))
+        with as_guest(), self.assertRaisesRegex(frappe.PermissionError, "login"):
+            book_transport_space_public(self.truck.name, "Warga Ani", "081234567890", cargo_desc="Beras 5 karung",
+                                        qty_weight_kg=200, delivery_method="self_deliver")
+
+    def test_logged_in_person_books_the_komunitas_truck_and_brings_the_cargo_themselves(self):
+        from rescue_net.logistics.transport import book_transport_space
+        with as_user(self.person.user):
+            out = book_transport_space(self.truck.name, cargo_desc="Beras 5 karung", qty_weight_kg=200,
+                                       booked_by_type="individu", delivery_method="self_deliver")
         b = frappe.get_doc("RN Transport Booking", out["booking"])
-        self.assertEqual((b.delivery_method, b.status), ("self_deliver", "requested"))     # komunitas confirms with the PIN
-        with as_user(self.com_op.user):
-            confirm_transport_booking(b.name, pin=b.verification_pin)
+        self.assertEqual(b.delivery_method, "self_deliver")
+        if b.status == "requested":                                  # komunitas confirms with the PIN
+            with as_user(self.com_op.user):
+                confirm_transport_booking(b.name, pin=b.verification_pin)
         self.assertEqual(frappe.db.get_value("RN Transport Booking", b.name, "status"), "confirmed")
 
     def test_space_only_truck_cannot_be_asked_to_fetch(self):
-        from rescue_net.logistics.guest import book_transport_space_public
-        with as_guest(), self.assertRaisesRegex(frappe.ValidationError, "ruang muat|space"):
-            book_transport_space_public(self.truck.name, "Warga Ani", "081234567890", cargo_desc="Beras",
-                                        qty_weight_kg=50, delivery_method="use_transporter")
+        from rescue_net.logistics.transport import book_transport_space
+        with as_user(self.person.user), self.assertRaisesRegex(frappe.ValidationError, "ruang muat|space"):
+            book_transport_space(self.truck.name, cargo_desc="Beras", qty_weight_kg=50, booked_by_type="individu",
+                                 delivery_method="use_transporter")
 
     def test_guest_donor_asks_for_pickup_and_a_person_carries_it_to_the_nearest_posko(self):
         import json

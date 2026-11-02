@@ -7632,3 +7632,10 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-af-body { padding: 4px 12px 12px; border-top: 1px dashed rgba(104,64,45,.14); font-size: 13px; display: grid; gap: 4px; }
 @media (max-width: 1100px) { .rn-af-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 640px) { .rn-af-filters { grid-template-columns: 1fr; } }
+.rn-af-map { height: 340px; border-radius: 12px; border: 1px solid rgba(104,64,45,.18); margin-bottom: 6px; overflow: hidden; }
+.rn-af-map[hidden] { display: none; }
+.rn-af-legend { font-size: 12px; margin: 0 0 10px; }
+.rn-pd-gps { margin: 10px 0; padding: 10px 12px; border: 1px solid rgba(47,154,92,.35); border-radius: 10px; background: #f1faf4; display: grid; gap: 6px; }
+.rn-pd-gps-auto { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
+.rn-pd-gps-auto input { width: auto; }
+@media (max-width: 640px) { .rn-af-map { height: 280px; } }

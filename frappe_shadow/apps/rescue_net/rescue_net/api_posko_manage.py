@@ -19,7 +19,7 @@ TYPE_LABEL = {
 WORKSPACE = {
     "logistics": "posko-logistik.html", "collection_hub": "posko-logistik.html", "transport": "posko-distribusi.html",
     "medical": "posko-medis-detail.html", "shelter": "shelter-detail.html", "kitchen": "dapur-umum.html",
-    "equipment": "posko-alat.html",
+    "equipment": "posko-alat.html", "communication": "alat-komunikasi.html",
 }
 CONTACT_FIELDS = ("officer_in_charge_phone", "officer_in_charge_whatsapp", "emergency_contact")
 

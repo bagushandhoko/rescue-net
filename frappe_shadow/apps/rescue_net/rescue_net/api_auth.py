@@ -733,6 +733,7 @@ _POSKO_PAGE = {
     "logistics": "posko-logistik.html", "medical": "posko-medis-detail.html",
     "shelter": "shelter-detail.html", "kitchen": "dapur-umum.html",
     "transport": "posko-distribusi.html", "equipment": "posko-alat.html",
+    "collection_hub": "posko-logistik.html", "communication": "alat-komunikasi.html",
 }
 
 

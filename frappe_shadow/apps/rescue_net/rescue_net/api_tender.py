@@ -5,13 +5,29 @@ dan pihak lain bisa mengajukan penawaran dengan batas waktu.
 
 import frappe
 from frappe.rate_limiter import rate_limit
-from frappe.utils import now_datetime, flt, cint, get_datetime
+from frappe.utils import now_datetime, flt, cint, get_datetime, getdate
 
 from rescue_net.access_policy import rn_actor, is_system_manager, can_manage_organization
 from rescue_net.reference_resolver import resolve_disaster_event
 
 _TENDER_STATUS = {"draft": "Draft", "open": "Terbuka", "evaluation": "Evaluasi",
                   "awarded": "Ditetapkan", "cancelled": "Dibatalkan"}
+_CATEGORY = {"construction": "Pekerjaan Konstruksi", "goods": "Pengadaan Barang",
+             "services": "Jasa Lainnya", "consultancy": "Jasa Konsultansi"}
+_EVALUATION = {"lowest_price": "Harga terendah (memenuhi syarat)",
+               "quality_price": "Kualitas dan harga", "quality": "Kualitas teknis"}
+# Owner 2026-11-03: information a tender normally publishes (besides RAB / scope / deadline).
+INFO_FIELDS = ("tender_category", "funding_source", "explanation_schedule", "work_start_date",
+               "target_completion_date", "work_duration_days", "maintenance_days", "bidder_requirements",
+               "required_documents", "bid_submission_email", "evaluation_method", "bid_validity_days",
+               "payment_terms")
+# Fields the organiser may change after creating the tender (not the status / winner).
+EDITABLE_FIELDS = ("title", "location", "scope_description", "rab_total", "rab_document_url",
+                   "design_image_url", "bidding_opens_at", "bidding_closes_at", "contact_person",
+                   "contact_phone", "notes") + INFO_FIELDS
+_TEXT_MAX = 4000
+MAX_DRAWINGS = 20
+MAX_RAB_PAGES = 20
 _BID_STATUS = {"submitted": "Masuk", "shortlisted": "Shortlist",
                "rejected": "Ditolak", "awarded": "Pemenang"}
 
@@ -30,6 +46,57 @@ def _event_or_filters(disaster_event, ev):
     if not vals:
         return None
     return [["disaster_event", "in", vals], ["disaster_event_legacy_id", "in", vals]]
+
+
+def _clean(field, value):
+    """Normalise one organiser-entered value; '' / None clears it."""
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if field in ("work_duration_days", "maintenance_days", "bid_validity_days"):
+        n = cint(value)
+        if n < 0 or n > 3650:
+            frappe.throw("Jumlah hari harus 0–3650.")
+        return n or None
+    if field == "rab_total":
+        n = flt(value)
+        if n < 0:
+            frappe.throw("Nilai RAB tidak boleh negatif.")
+        return n
+    if field in ("work_start_date", "target_completion_date"):
+        return str(getdate(value))
+    if field in ("bidding_opens_at", "bidding_closes_at"):
+        return str(get_datetime(str(value).replace("T", " ")))
+    if field == "tender_category" and value not in _CATEGORY:
+        frappe.throw("Jenis pengadaan tidak dikenal.")
+    if field == "evaluation_method" and value not in _EVALUATION:
+        frappe.throw("Metode evaluasi tidak dikenal.")
+    value = str(value).strip()
+    if field == "bid_submission_email":
+        from frappe.utils import validate_email_address
+        value = value.lower()
+        if not validate_email_address(value):
+            frappe.throw("Alamat email penawaran tidak valid.")
+    return value[:_TEXT_MAX]
+
+
+def _entries(raw):
+    import json
+    try:
+        val = json.loads(raw or "[]")
+        return [d for d in val if isinstance(d, dict) and d.get("url")]
+    except (ValueError, TypeError):
+        return []
+
+
+def _documents(raw):
+    e = _entries(raw)
+    return {"drawings": [d for d in e if d.get("kind") != "rab"], "rab_pages": [d for d in e if d.get("kind") == "rab"]}
+
+
+def _labels(t):
+    t["category_label"] = _CATEGORY.get(t.get("tender_category"), "")
+    t["evaluation_label"] = _EVALUATION.get(t.get("evaluation_method"), "")
+    return t
 
 
 def _is_open(t):
@@ -64,7 +131,8 @@ def tender_board(disaster_event=None, limit=200):
         fields=["name", "title", "location", "donor_program", "organization",
                 "rab_total", "rab_document_url", "design_image_url", "bidding_opens_at",
                 "bidding_closes_at", "status", "awarded_bid", "scope_description",
-                "modified"],
+                "tender_category", "work_start_date", "target_completion_date", "work_duration_days",
+                "bid_submission_email", "work_drawings", "modified"],
         order_by="bidding_closes_at asc, modified desc",
         limit_page_length=cint(limit) or 200,
     )
@@ -103,7 +171,10 @@ def tender_board(disaster_event=None, limit=200):
 
     out = []
     for r in rows:
-        d = dict(r)
+        d = _labels(dict(r))
+        docs = _documents(d.pop("work_drawings", None))
+        d["drawing_count"] = len(docs["drawings"])
+        d["rab_page_count"] = len(docs["rab_pages"])
         d["status_label"] = _TENDER_STATUS.get(r.status, r.status)
         d["bid_count"] = bid_count.get(r.name, 0)
         d["lowest_bid"] = low_bid.get(r.name)
@@ -132,11 +203,13 @@ def tender_detail(tender):
         ["name", "title", "location", "scope_description", "donor_program",
          "organization", "rab_total", "rab_document_url", "design_image_url",
          "bidding_opens_at", "bidding_closes_at", "status", "awarded_bid",
-         "contact_person", "contact_phone", "notes"],
+         "contact_person", "contact_phone", "notes", "work_drawings", *INFO_FIELDS],
         as_dict=True,
     )
     if not t:
         return {"found": False}
+    t.update(_documents(t.pop("work_drawings", None)))
+    _labels(t)
 
     actor = rn_actor(required=False)
     owner = _owns_tender(actor, t)
@@ -171,8 +244,9 @@ def create_tender(disaster_event, title, rab_total=0, scope_description=None,
                   location=None, donor_program=None, organization=None,
                   rab_document_url=None, design_image_url=None, bidding_opens_at=None,
                   bidding_closes_at=None, contact_person=None, contact_phone=None,
-                  notes=None):
+                  notes=None, **info):
     actor = rn_actor(required=True)
+    info = {k: _clean(k, v) for k, v in info.items() if k in INFO_FIELDS}
     if organization and not (is_system_manager() or can_manage_organization(actor, organization)):
         frappe.throw("Anda bukan pengelola organisasi ini.", frappe.PermissionError)
 
@@ -206,6 +280,7 @@ def create_tender(disaster_event, title, rab_total=0, scope_description=None,
     doc.contact_person = contact_person
     doc.contact_phone = contact_phone
     doc.notes = notes
+    doc.update(info)
     doc.status = "open" if (bidding_closes_at and owner_verified) else "draft"
     doc.insert(ignore_permissions=True)
     return {"tender": doc.name, "status": doc.status, "owner_verified": owner_verified}
@@ -286,3 +361,97 @@ def update_tender_status(tender, status):
     doc.status = status
     doc.save(ignore_permissions=True)
     return {"tender": tender, "status": status}
+
+
+def _manage_tender(tender):
+    actor = rn_actor(required=True)
+    t = frappe.db.get_value("RN Procurement Tender", tender, ["name", "organization", "status"], as_dict=True)
+    if not t:
+        frappe.throw("Tender tidak ditemukan.")
+    if not _owns_tender(actor, t):
+        frappe.throw("Hanya penyelenggara tender yang dapat mengubah tender ini.", frappe.PermissionError)
+    return t
+
+
+@frappe.whitelist(methods=["POST"])
+def update_tender_info(tender, **fields):
+    """Organiser fills in / corrects the tender information (owner 2026-11-03). Status and winner are
+    not changed here (update_tender_status / set_bid_status)."""
+    t = _manage_tender(tender)
+    if t.status in ("awarded", "cancelled"):
+        frappe.throw("Tender yang sudah ditetapkan / dibatalkan tidak bisa diubah.")
+    values = {k: _clean(k, v) for k, v in fields.items() if k in EDITABLE_FIELDS}
+    if "title" in values and not values["title"]:
+        frappe.throw("Judul pekerjaan wajib diisi.")
+    doc = frappe.get_doc("RN Procurement Tender", tender)
+    doc.update(values)
+    doc.save(ignore_permissions=True)
+    return tender_detail(tender)
+
+
+@frappe.whitelist(methods=["POST"])
+def upload_tender_file(tender, filename, content_base64, kind="gambar", label=None):
+    """Gambar kerja (kind=gambar) or a RAB page (kind=rab): PDF / PNG / JPG / WEBP, max 10 MB, public."""
+    import base64
+    import json
+    import re
+    from frappe.utils.file_manager import save_file
+    from rescue_net.donor_program.documents import _check_file
+
+    t = _manage_tender(tender)
+    if t.status in ("awarded", "cancelled"):
+        frappe.throw("Tender yang sudah ditetapkan / dibatalkan tidak bisa diubah.")
+    if kind not in ("rab", "gambar"):
+        frappe.throw("Jenis dokumen tidak dikenal (rab / gambar).")
+    filename = re.sub(r"[^\w.\- ]", "_", str(filename or "").strip())[:120]
+    if not filename:
+        frappe.throw("Nama file wajib diisi.")
+    try:
+        content = base64.b64decode(content_base64 or "", validate=False)
+    except Exception:
+        frappe.throw("Isi file tidak valid.")
+    if not content:
+        frappe.throw("File kosong.")
+    _check_file(kind, filename, content)
+
+    doc = frappe.get_doc("RN Procurement Tender", tender)
+    entries = _entries(doc.work_drawings)
+    same = [d for d in entries if (d.get("kind") == "rab") == (kind == "rab")]
+    limit = MAX_RAB_PAGES if kind == "rab" else MAX_DRAWINGS
+    if len(same) >= limit:
+        frappe.throw(f"Maksimal {limit} berkas. Hapus yang lama dulu.")
+    try:
+        f = save_file(filename, content, "RN Procurement Tender", tender, is_private=0)
+    except frappe.ValidationError:
+        raise
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "Tender upload")
+        frappe.throw("File tidak bisa dibaca (rusak?). Coba simpan ulang sebagai PDF / gambar lalu unggah lagi.")
+    item = {"url": f.file_url, "name": filename, "label": (label or "").strip()[:120],
+            "pdf": filename.lower().endswith(".pdf")}
+    if kind == "rab":
+        item["kind"] = "rab"
+        if not doc.rab_document_url:
+            doc.rab_document_url = f.file_url
+    entries.append(item)
+    doc.work_drawings = json.dumps(entries, ensure_ascii=False)
+    doc.save(ignore_permissions=True)
+    return _documents(doc.work_drawings)
+
+
+@frappe.whitelist(methods=["POST"])
+def remove_tender_file(tender, file_url):
+    import json
+
+    _manage_tender(tender)
+    doc = frappe.get_doc("RN Procurement Tender", tender)
+    entries = _entries(doc.work_drawings)
+    keep = [d for d in entries if d["url"] != file_url]
+    if len(keep) == len(entries):
+        frappe.throw("Berkas tidak ditemukan di tender ini.")
+    if doc.rab_document_url == file_url:
+        rab = [d for d in keep if d.get("kind") == "rab"]
+        doc.rab_document_url = rab[0]["url"] if rab else None
+    doc.work_drawings = json.dumps(keep, ensure_ascii=False)
+    doc.save(ignore_permissions=True)
+    return _documents(doc.work_drawings)

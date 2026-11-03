@@ -21,6 +21,18 @@
     .td-bid { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; border-top: 1px dashed var(--line); padding: 6px 0; font-size: 13px; }
     .td-bid b { min-width: 120px; }
     .td-actions { margin-top: 10px; display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+    .td-sec { margin: 16px 0 6px; font-size: 14px; }
+    .td-info { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 10px; display: grid; gap: 10px; }
+    .td-info dl { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 6px 12px; margin: 0; font-size: 13px; }
+    .td-info dt { color: var(--muted, #667); }
+    .td-info dd { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+    .td-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    .td-gallery figure { margin: 0; border: 1px solid var(--line); border-radius: 6px; padding: 6px; font-size: 12px; }
+    .td-gallery img { width: 100%; height: 110px; object-fit: cover; border-radius: 4px; display: block; }
+    .td-gallery .td-pdf { height: 110px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.04); border-radius: 4px; font-weight: 600; }
+    .td-manage { border: 1px dashed var(--line); border-radius: 8px; padding: 10px; }
+    .td-email { background: rgba(239, 82, 61, .06); border-left: 3px solid #ef523d; padding: 8px 10px; border-radius: 6px; font-size: 13px; }
+    @media (max-width: 640px) { .td-info dl { grid-template-columns: 1fr; } .td-info dt { margin-top: 4px; } }
   </style>
 </head>
 <body>
@@ -46,7 +58,7 @@
       <div>
         <p class="eyebrow">Management Donation · Tender / RAB</p>
         <h2>Pengadaan &amp; Tender</h2>
-        <p class="subtitle">Pekerjaan pembangunan yang didanai donasi ditenderkan secara terbuka: RAB / B&amp;Q bisa diunduh, siapa pun bisa mengajukan penawaran sampai batas waktu, penyelenggara menetapkan pemenang.</p>
+        <p class="subtitle">Pekerjaan pembangunan yang didanai donasi ditenderkan secara terbuka: RAB / B&amp;Q dan gambar kerja bisa diunduh, syarat peserta dan jadwal kerja tercantum, siapa pun bisa mengajukan penawaran sampai batas waktu, penyelenggara menetapkan pemenang.</p>
         <p class="subtitle" id="tdStatus">Memuat…</p>
       </div>
       <div class="status-pill" id="tdCount">—</div>
@@ -72,14 +84,19 @@
           <label>Judul Pekerjaan<input name="title" required placeholder="Rehabilitasi 2 ruang kelas SD 3 Samatiga"></label>
           <label>Lokasi<input name="location" placeholder="Samatiga, Aceh Barat"></label>
           <label>Nilai RAB / HPS (Rp)<input name="rab_total" type="number" min="0" value="0"></label>
-          <label>URL Dokumen RAB / B&amp;Q<input name="rab_document_url" placeholder="https://…/rab-sd3.pdf"></label>
-          <label>URL Gambar Desain (opsional)<input name="design_image_url" placeholder="https://…/desain-sd3.jpg"></label>
+          <label>URL Dokumen RAB / B&amp;Q (opsional)<input name="rab_document_url" placeholder="https://…/rab-sd3.pdf"></label>
           <label>Program Donasi (opsional)<input name="donor_program" placeholder="RN Donor Program id"></label>
           <label>Batas Akhir Penawaran<input name="bidding_closes_at" type="datetime-local" required></label>
           <label>Narahubung<input name="contact_person"></label>
-          <label>Kontak<input name="contact_phone"></label>
+          <label>Kontak (HP)<input name="contact_phone"></label>
         </div>
-        <label style="display:grid;gap:6px;margin-top:10px">Lingkup Pekerjaan<textarea name="scope_description" rows="2"></textarea></label>
+        <label style="display:grid;gap:6px;margin-top:10px">Lingkup Pekerjaan<textarea name="scope_description" rows="3"></textarea></label>
+        <div data-info-fields></div>
+        <h4 class="td-sec">Gambar Kerja &amp; RAB (opsional, bisa ditambah nanti)</h4>
+        <div class="form-grid">
+          <label>Gambar kerja (PDF / JPG / PNG, boleh beberapa)<input name="drawings" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"></label>
+          <label>Halaman RAB / B&amp;Q (PDF / foto, boleh beberapa)<input name="rab_files" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*"></label>
+        </div>
         <div class="form-actions"><button class="btn primary" type="submit">Buat Tender</button><span class="rn-muted" data-td-msg></span></div>
       </form>
     </details>
@@ -91,7 +108,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/pengadaan-tender.js?v=designimg-20260912"></script>
+<script src="../assets/js/pengadaan-tender.js?v=tenderinfo-20261103"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -1341,6 +1341,31 @@
         "Data alat lama belum punya kontak person / masa pakai — diisi pemilik lewat 'Ubah data alat ini'",
         "Belum ada kebutuhan relawan recovery di bencana simulasi"
       ]
+    },
+    {
+      "id": "POSKO-ALAT-1",
+      "tanggal": "2026-11-03",
+      "kategori": "Posko Alat Kerja / Support",
+      "judul": "Posko Alat Kerja: inventaris alat dengan spesifikasi rinci + beberapa foto",
+      "tujuan": "Owner: posko alat kerja/support semacam logistik tapi data lebih detail secara spesifikasi (alat berat, tenda, perahu karet, genset, dll.); pemilik alat bisa upload foto-foto alatnya.",
+      "akun": [
+        "akun uji test stack (pengelola posko alat, pengguna lain, tamu)",
+        "produksi: tamu"
+      ],
+      "langkah": [
+        "Pengelola posko jenis 'equipment' menambah genset 50 kVA (merek, model, tahun, no. seri, kondisi, spesifikasi): kunci spesifikasi asing dibuang, angka disimpan sebagai angka",
+        "Tamu membuka posko: spesifikasi tampil ('Kapasitas: 50 kVA'), no. seri tersembunyi; pengelola melihat no. seri; ringkasan per kelompok (Listrik & Penerangan)",
+        "Spesifikasi salah ditolak (bukan angka, pilihan tak dikenal, negatif, tahun 1800, kategori tak dikenal)",
+        "Pengguna lain/tamu tidak bisa menambah/mengubah alat atau foto; alat posko A tidak bisa diubah lewat posko B",
+        "10 foto per alat; foto ke-11 ditolak; hapus foto pertama → foto berikutnya jadi foto utama",
+        "Produksi HP 390px: halaman pilih posko, posko tanpa alat, menu 'Posko Alat Kerja' muncul, tanpa error JS"
+      ],
+      "hasil": "Lulus (4 tes + sapuan tamu + cek produksi); belum dicoba login nyata, belum ada posko alat kerja di data simulasi",
+      "skor": "6/6",
+      "status": "lulus",
+      "temuan": [
+        "Beranda (index.html) masih memuat skrip menu versi lama karena index.html sedang punya perubahan lain yang belum di-commit — menu baru muncul di beranda setelah perubahan itu dibereskan"
+      ]
     }
   ],
   "rencana": [

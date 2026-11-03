@@ -1,0 +1,84 @@
+{
+ "doctype": "DocType",
+ "name": "RN Recovery Volunteer Signup",
+ "module": "RN Volunteer",
+ "custom": 0,
+ "is_submittable": 0,
+ "track_changes": 1,
+ "autoname": "hash",
+ "description": "Pendaftaran relawan ke kebutuhan relawan recovery (owner 2026-11-03).",
+ "fields": [
+  {
+   "fieldname": "need",
+   "label": "Kebutuhan Relawan",
+   "fieldtype": "Link",
+   "options": "RN Recovery Volunteer Need",
+   "reqd": 1
+  },
+  {
+   "fieldname": "user_account",
+   "label": "Akun",
+   "fieldtype": "Link",
+   "options": "RN User Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "volunteer_name",
+   "label": "Nama",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "phone",
+   "label": "HP / WhatsApp",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "skill",
+   "label": "Keahlian",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "date_from",
+   "label": "Bisa Mulai",
+   "fieldtype": "Date"
+  },
+  {
+   "fieldname": "date_to",
+   "label": "Bisa Sampai",
+   "fieldtype": "Date"
+  },
+  {
+   "fieldname": "note",
+   "label": "Catatan",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "requested\nconfirmed\nrejected\ncancelled",
+   "default": "requested",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "decided_by",
+   "label": "Diputuskan oleh",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "decided_at",
+   "label": "Diputuskan pada",
+   "fieldtype": "Datetime"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

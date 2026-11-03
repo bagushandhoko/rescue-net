@@ -120,6 +120,60 @@
    "label": "Dukungan lain yang dibutuhkan"
   },
   {
+   "fieldname": "offer_type",
+   "label": "Skema Penyediaan",
+   "fieldtype": "Select",
+   "options": "\nhibah\npinjam\nsewa",
+   "description": "hibah = disumbangkan; pinjam = dipinjamkan gratis selama masa pakai; sewa = dengan biaya."
+  },
+  {
+   "fieldname": "operator_included",
+   "label": "Termasuk Operator",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "operator_count",
+   "label": "Jumlah Operator Disediakan",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "support_accommodation",
+   "label": "Butuh Akomodasi / Konsumsi Operator",
+   "fieldtype": "Check",
+   "default": "0"
+  },
+  {
+   "fieldname": "mobilization_needs",
+   "label": "Kebutuhan Pendukung Mobilisasi",
+   "fieldtype": "Small Text",
+   "description": "mis. trailer/lowbed, izin jalan, pengawalan, jarak & rute"
+  },
+  {
+   "fieldname": "mobilization_cost",
+   "label": "Perkiraan Biaya Mobilisasi (Rp)",
+   "fieldtype": "Currency"
+  },
+  {
+   "fieldname": "pic_email",
+   "label": "PIC Email",
+   "fieldtype": "Data",
+   "options": "Email"
+  },
+  {
+   "fieldname": "contact_public",
+   "label": "Kontak Boleh Dilihat Publik",
+   "fieldtype": "Check",
+   "default": "0",
+   "description": "Tanpa centang: nama & nomor PIC hanya terlihat oleh pengguna yang login."
+  },
+  {
+   "fieldname": "offered_by_user",
+   "label": "Ditawarkan oleh (akun)",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  },
+  {
    "fieldname": "pic_name",
    "label": "PIC Name",
    "fieldtype": "Data"

@@ -89,6 +89,23 @@
     return "";
   }
 
+  /* owner 2026-11-03: every tool on this page links to its provider detail (penyedia-alat.html) */
+  function toolHref(code) {
+    return code ? "penyedia-alat.html?id=" + encodeURIComponent(code) + "&event=" + encodeURIComponent(getEventId() || "") : "";
+  }
+  function toolLink(code, label) {
+    return code ? '<a class="rn-ak-tool-link" href="' + esc(toolHref(code)) + '">' + esc(label) + "</a>" : esc(label);
+  }
+  function registryItems(filter) {
+    return ((BOARD_CACHE && BOARD_CACHE.asset_registry) || []).filter(filter).map(function (r) {
+      return { title: r.resource_name, sub: [r.provider, r.location !== "-" ? r.location : "", r.status].filter(Boolean).join(" · "),
+        href: toolHref(r.code) };
+    });
+  }
+  function openToolList(title, items) {
+    showDrill(title, items.length + " alat · klik untuk detail penyedia & kontak", drillItemsHtml(items));
+  }
+
   function drillItemsHtml(items) {
     if (!items || !items.length) return '<p class="rn-muted">Tidak ada data untuk ditampilkan.</p>';
     return items.map(function (it) {
@@ -125,7 +142,8 @@
     var rows = (BOARD_CACHE && BOARD_CACHE.asset_registry) || [];
     showDrill("QR / Asset Tracking", rows.length + " aset · Kode Aset dari Resource Profile",
       drillItemsHtml(rows.map(function (r) {
-        return { title: r.resource_name, sub: r.code + " · " + r.category + " · " + r.status + (r.location ? " · " + r.location : "") };
+        return { title: r.resource_name, sub: r.code + " · " + r.category + " · " + (r.provider || "-") + " · " + r.status + (r.location ? " · " + r.location : ""),
+          href: toolHref(r.code) };
       })));
   }
 
@@ -149,7 +167,7 @@
       var split = "Ready " + c.ready + " · Assigned " + c.assigned + " · Maintenance " + c.maintenance + " · Critical " + c.critical;
       var seg = function (cls, n) { return n ? '<i class="' + cls + '" style="flex:' + n + '"></i>' : ""; };
       return (
-        '<div class="rn-ak-cat-tile" title="' + esc(split) + '">' +
+        '<div class="rn-ak-cat-tile" role="button" tabindex="0" data-cat="' + esc(c.category || "") + '" data-cat-label="' + esc(c.label) + '" title="' + esc(split) + ' — klik untuk daftar alat & penyedia">' +
         "<b>" + esc(c.label) + "</b>" +
         '<span class="rn-ak-cat-art">' + icon(toolIcon(c.category + " " + c.label)) + "</span>" +
         '<span class="rn-ak-cat-bar">' + seg("rn-ak-dot-ready", c.ready) + seg("rn-ak-dot-assigned", c.assigned) +
@@ -158,6 +176,15 @@
         "</div>"
       );
     }).join("");
+    el.querySelectorAll("[data-cat]").forEach(function (t) {
+      var open = function () {
+        var key = t.getAttribute("data-cat");
+        openToolList(t.getAttribute("data-cat-label"), registryItems(function (r) { return (r.category_key || "") === key; }));
+      };
+      t.style.cursor = "pointer";
+      t.addEventListener("click", open);
+      t.addEventListener("keydown", function (e) { if (e.key === "Enter") open(); });
+    });
     limitRows(el, 6);
   }
 
@@ -172,7 +199,8 @@
     el.innerHTML = ops.map(function (o) {
       return (
         '<div class="rn-ak-op-row"><span class="rn-kom-op-av">' + initials(o.name) + "</span>" +
-        '<span class="rn-ak-op-id"><b>' + esc(o.name) + "</b><small>" + esc(o.skill) + "</small></span>" +
+        '<span class="rn-ak-op-id"><b>' + esc(o.name) + "</b><small>" + esc(o.skill) +
+          (o.resource ? " · " + toolLink(o.resource, "alat & penyedia") : "") + "</small></span>" +
         '<span class="chip ' + (OP_CLS[o.status] || "") + '">' + esc(o.status_label) + "</span>" +
         '<span class="rn-ak-op-job"><small>Penugasan</small>' + esc(o.location || "-") + "</span></div>"
       );
@@ -221,8 +249,12 @@
       '<span class="rn-ak-need-body"><span class="rn-ak-need-head"><b>' + esc(m.location || "-") + "</b>" +
       '<span class="chip ' + (PRIO_CHIP[m.priority] || "") + '">' + esc(m.priority_label) + "</span></span>" +
       "<small>Butuh: " + esc(m.tool_name) + " (" + fmt(m.quantity) + ")" + (m.needed_for ? " · " + esc(m.needed_for) : "") + "</small></span>" +
-      needButton(ok, ok ? "Cocok" : "Belum ada",
-        ok ? fmt(m.candidate_count) + " kandidat: " + m.candidate_resource + " · " + m.candidate_location : "belum ada alat available yang cocok") +
+      (ok && m.candidate_resource_id
+        ? '<a class="rn-ak-need-st ok" href="' + esc(toolHref(m.candidate_resource_id)) + '" title="' +
+            esc(fmt(m.candidate_count) + " kandidat: " + m.candidate_resource + " · " + (m.candidate_provider || "") + " · " + (m.candidate_location || "")) +
+            '">✓ ' + esc(m.candidate_resource) + "</a>"
+        : needButton(ok, ok ? "Cocok" : "Belum ada",
+            ok ? fmt(m.candidate_count) + " kandidat: " + m.candidate_resource + " · " + m.candidate_location : "belum ada alat available yang cocok")) +
       "</div>"
     );
   }
@@ -281,7 +313,7 @@
       return (
         '<div class="rn-ak-disp-row"><span class="rn-ak-disp-time">' + shortTime(r.deployed_at) + "<small>" + dayMonth(r.deployed_at) + "</small></span>" +
         '<span class="rn-ak-disp-ic">' + icon(toolIcon(r.tool_name)) + "</span>" +
-        '<span class="rn-ak-disp-id"><b>' + esc(r.tool_name) + "</b><small>Operator: " + esc(r.operator || "-") + "</small></span>" +
+        '<span class="rn-ak-disp-id"><b>' + toolLink(r.resource, r.tool_name) + "</b><small>Operator: " + esc(r.operator || "-") + "</small></span>" +
         '<span class="rn-ak-disp-dest">' + esc(r.destination || "-") + "</span>" +
         '<span class="chip ' + cls + '">' + esc(r.status_label) + "</span></div>"
       );
@@ -298,13 +330,23 @@
     el.innerHTML = sites.map(function (s) {
       var pct = Math.round(s.progress_pct || 0);
       return (
-        '<div class="rn-ak-site-row"><span class="rn-ak-site-pin">' + icon("map-pin") + "</span>" +
+        '<div class="rn-ak-site-row" role="button" tabindex="0" style="cursor:pointer" data-site="' + esc(s.location) + '" title="Klik untuk alat di lokasi ini & penyedianya"><span class="rn-ak-site-pin">' + icon("map-pin") + "</span>" +
         '<span class="rn-ak-site-id"><b>' + esc(s.location) + "</b><small>" + fmt(s.completed) + "/" + fmt(s.total) + " dispatch selesai</small></span>" +
         '<span class="rn-ak-site-prog"><small>Progress</small><span class="rn-kom-batt-bar"><i style="width:' + Math.max(3, pct) + '%"></i></span></span>' +
         '<span class="rn-ak-site-pct">' + pct + "%</span>" +
         '<span class="rn-ak-site-n"><small>Alat</small>' + fmt(s.total) + "</span></div>"
       );
     }).join("");
+    el.querySelectorAll("[data-site]").forEach(function (row) {
+      var open = function () {
+        var loc = row.getAttribute("data-site");
+        var items = ((BOARD_CACHE && BOARD_CACHE.dispatch) || []).filter(function (d) { return d.destination === loc; })
+          .map(function (d) { return { title: d.tool_name, sub: "Operator " + (d.operator || "-") + " · " + (d.status_label || ""), href: toolHref(d.resource) }; });
+        openToolList("Alat di " + loc, items);
+      };
+      row.addEventListener("click", open);
+      row.addEventListener("keydown", function (e) { if (e.key === "Enter") open(); });
+    });
     limitRows(el, 4);
   }
 
@@ -353,7 +395,8 @@
       var where = oldBbm ? "-" : parts[0];
       var note = oldBbm ? detail : parts.slice(1).join(" · ");
       return (
-        '<tr><td title="' + esc(r.label) + '"><span class="rn-ak-cell-ic">' + icon(toolIcon(r.label)) + "</span>" + esc(r.label) + "</td>" +
+        '<tr><td title="' + esc(r.label) + '"><span class="rn-ak-cell-ic">' + icon(toolIcon(r.label)) + "</span>" +
+          (r.tool_href ? '<a class="rn-ak-tool-link" href="' + esc(r.tool_href) + '">' + esc(r.label) + "</a>" : esc(r.label)) + "</td>" +
         '<td title="' + esc(where) + '">' + (r.href ? '<a href="' + esc(r.href) + '">' + esc(where) + "</a>" : esc(where || "-")) + "</td>" +
         '<td title="' + esc(note) + '">' + esc(BLOCK_TYPE[r.type] || r.type) + (note ? ' <small class="rn-muted">· ' + esc(note) + "</small>" : "") + "</td>" +
         '<td><span class="chip ' + (r.severity === "critical" ? "danger" : "warning") + '">' + (r.severity === "critical" ? "Kritis" : "Mendesak") + "</span></td></tr>"
@@ -399,13 +442,23 @@
         totalCol += ' <span class="chip warning">' + fmt(g.unmeasurable_count) + " belum terukur</span>";
       var sourceLabel = g.source === "manual" ? "Manual" : g.source === "ai" ? "AI" : g.source === "rule" ? "Aturan" : "-";
       return (
-        '<div class="rn-ak-group-row"><b>' + esc(g.group) + "</b>" +
+        '<div class="rn-ak-group-row" role="button" tabindex="0" style="cursor:pointer" data-group="' + esc(g.group) + '" title="Klik untuk daftar alat & penyedia"><b>' + esc(g.group) + "</b>" +
         "<span>" + fmt(g.item_count) + " item</span>" +
         "<span>" + totalCol + "</span>" +
         "<span>" + fmt(g.posko_spread) + " lokasi</span>" +
         '<span><span class="chip">' + esc(sourceLabel) + (g.avg_confidence ? " " + g.avg_confidence + "%" : "") + "</span></span></div>"
       );
     }).join("");
+    var byGroup = {};
+    groups.forEach(function (g) { byGroup[g.group] = g.resources || []; });
+    el.querySelectorAll("[data-group]").forEach(function (row) {
+      var open = function () {
+        var codes = byGroup[row.getAttribute("data-group")] || [];
+        openToolList(row.getAttribute("data-group"), registryItems(function (r) { return codes.indexOf(r.code) >= 0; }));
+      };
+      row.addEventListener("click", open);
+      row.addEventListener("keydown", function (e) { if (e.key === "Enter") open(); });
+    });
   }
 
   var CONDITIONS = [];

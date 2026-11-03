@@ -1,0 +1,92 @@
+{
+ "doctype": "DocType",
+ "name": "RN Recovery Volunteer Need",
+ "module": "RN Volunteer",
+ "custom": 0,
+ "is_submittable": 0,
+ "track_changes": 1,
+ "autoname": "hash",
+ "description": "Kebutuhan relawan untuk proyek recovery (owner 2026-11-03).",
+ "fields": [
+  {
+   "fieldname": "disaster_event",
+   "label": "Disaster Event",
+   "fieldtype": "Link",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "recovery_project",
+   "label": "Proyek Recovery",
+   "fieldtype": "Link",
+   "options": "RN Recovery Project",
+   "reqd": 1
+  },
+  {
+   "fieldname": "role_needed",
+   "label": "Peran / Keahlian",
+   "fieldtype": "Data",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "people_needed",
+   "label": "Jumlah Dibutuhkan",
+   "fieldtype": "Int",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "date_from",
+   "label": "Mulai",
+   "fieldtype": "Date"
+  },
+  {
+   "fieldname": "date_to",
+   "label": "Sampai",
+   "fieldtype": "Date"
+  },
+  {
+   "fieldname": "location",
+   "label": "Lokasi",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "task_description",
+   "label": "Tugas",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "requirements",
+   "label": "Syarat Relawan",
+   "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "provisions",
+   "label": "Yang Disediakan",
+   "fieldtype": "Small Text",
+   "description": "mis. konsumsi, tempat menginap, transport, APD"
+  },
+  {
+   "fieldname": "need_status",
+   "label": "Status",
+   "fieldtype": "Select",
+   "options": "open\nfilled\nclosed",
+   "default": "open",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "created_by_user",
+   "label": "Dibuat oleh",
+   "fieldtype": "Link",
+   "options": "RN User Account"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

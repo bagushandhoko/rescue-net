@@ -109,9 +109,11 @@
       ? '<tr><td colspan="8"><button type="button" class="btn ghost" id="raProvMore">Lihat semua ' + fmt(total) + " alat</button></td></tr>" : "";
     $("#raProvBody").innerHTML = (rows.length ? rows.map(function (r) {
       return "<tr>" +
-        "<td><b>" + esc(r.resource_name) + '</b><span class="rn-ra-sub">' + esc(r.category || "") + "</span></td>" +
+        '<td><b><a href="penyedia-alat.html?id=' + encodeURIComponent(r.code) + "&event=" + encodeURIComponent(eventId() || "") + '">' +
+          esc(r.resource_name) + '</a></b><span class="rn-ra-sub">' + esc(r.category || "") + "</span></td>" +
         '<td class="num">' + fmt(r.quantity || 1) + " " + esc(r.unit || "") + "</td>" +
-        "<td>" + esc(r.provider || "-") + "</td>" +
+        "<td>" + (r.provider_href ? '<a href="' + esc(r.provider_href) + '">' + esc(r.provider || "-") + "</a>" : esc(r.provider || "-")) +
+          '<span class="rn-ra-sub"><a href="penyedia-alat.html?id=' + encodeURIComponent(r.code) + "&event=" + encodeURIComponent(eventId() || "") + '">kontak person →</a></span></td>' +
         "<td>" + esc(r.location && r.location !== "-" ? r.location : "-") +
           (r.coverage ? '<span class="rn-ra-sub">layanan: ' + esc(r.coverage) + "</span>" : "") + "</td>" +
         "<td>" + usageCell(r) + "</td>" +
@@ -233,6 +235,8 @@
   });
 
   document.addEventListener("DOMContentLoaded", function () {
+    var offer = $("#raOfferLink");
+    if (offer) offer.href = "tawarkan-alat.html?event=" + encodeURIComponent(eventId() || "");
     if (!window.RN_FRAPPE) return;
     wireForms();
     loadRecovery();

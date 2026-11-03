@@ -53,6 +53,8 @@ GUEST_ENDPOINTS = {
     "api_control_centre.logistik_open_needs", "api_control_centre.logistik_stock_cards",
     "api_control_centre.logistik_stock_sources", "api_control_centre.my_org_coordination",
     "api_control_centre.org_detail", "api_control_centre.org_posko_board",
+    "api_recovery_support.tool_detail",  # reviewed: tool + provider label/link; PIC only with contact_public
+    "api_recovery_support.volunteer_needs",  # reviewed: needs + counts; no volunteer names/phones
     "api_recovery.recovery_board",  # reviewed: plan + progress + owner label; no PIC/notes/creator, drill hidden
     "api_control_centre.ecosystem_board",  # reviewed: org names + counts/totals only; no person names, contacts or donor identities
     "api_control_centre.posko_contact",  # reviewed: guest gets posko title only; numbers only when logged in
@@ -132,6 +134,10 @@ SECRETS = {
     "reporter_title": "NAMA-PELAPOR-SENTINEL",
     "access_note": "CATATAN-AKSES-SENTINEL",
     "access_reporter": "PELAPOR-AKSES-SENTINEL",
+    # Recovery alat + relawan (owner 2026-11-03)
+    "tool_pic_phone": "081111110011",
+    "tool_pic_email": "pic.alat.sentinel@test.rescue-net.local",
+    "signup_phone": "081111110012",
 }
 
 # Confirmed leaks reported to the owner but not fixed yet:
@@ -236,6 +242,17 @@ class TestGuestSweep(RNTestCase):
                         verifier_status="active", trust_level=1, phone=s["verifier_phone"], email=s["verifier_email"])
         _insert("RN Verification Endorsement", title="Verifikasi sentinel", target_type="reporter", target_id=rep.account,
                 verifier=vprof.name, method="site_visit", statement=s["endorse_statement"], status="active")
+        self.tool = _insert("RN Resource Profile", disaster_event=w.event.name, owner_type="organization",
+                            owner_id=w.org_a.name, resource_name="Ekskavator sentinel", category="ekskavator", resource_type="ekskavator",
+                            quantity=1, unit="unit", availability_status="available", pic_name="PIC Alat",
+                            pic_phone=s["tool_pic_phone"], pic_email=s["tool_pic_email"], contact_public=0)
+        proj = _insert("RN Recovery Project", disaster_event=w.event.name, project_name="Rehab sentinel",
+                       owner_type="organization", owner_id=w.org_a.name, status="planned")
+        need = _insert("RN Recovery Volunteer Need", disaster_event=w.event.name, recovery_project=proj.name,
+                       role_needed="Tukang", people_needed=3, need_status="open")
+        signer = make_actor(role="citizen")
+        _insert("RN Recovery Volunteer Signup", need=need.name, user_account=signer.account,
+                volunteer_name="Relawan Sentinel 2", phone=s["signup_phone"], status="requested")
         self.actor = make_actor(posko=w.posko_a, phone=s["account_phone"])
         with as_user(self.actor.user):
             api_ai.save_user_key(self.actor.user, s["ai_key"])
@@ -247,7 +264,7 @@ class TestGuestSweep(RNTestCase):
             "disaster_event": self.w.event.name, "disaster_event_id": self.w.event.name,
             "organization": self.w.org_a.name, "flow": self.flow.name,
             "user_account": self.actor.account, "source_posko": self.w.posko_a.name,
-            "item": "Beras",
+            "item": "Beras", "resource_profile": self.tool.name,
         }
         base, needs_posko = {}, False
         for name, p in sig.parameters.items():
@@ -299,5 +316,6 @@ class TestGuestSweep(RNTestCase):
         # the sweep must actually reach the big boards, or it proves nothing
         for must in ("api_control_centre.posko_detail", "api_control_centre.distribusi_board",
                      "api_ai.public_context", "api_search_found.dashboard", "api_shelter.shelter_board",
-                     "api_volunteer.volunteer_board", "api_control_centre.kpi_drilldown"):
+                     "api_volunteer.volunteer_board", "api_control_centre.kpi_drilldown",
+                     "api_recovery_support.tool_detail", "api_recovery_support.volunteer_needs"):
             self.assertIn(must, exercised, errors.get(must))

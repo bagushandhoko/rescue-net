@@ -35,6 +35,14 @@
   .rn-ra-checks label{display:flex;align-items:center;gap:6px;font-weight:600}
   .rn-ra-tags{display:flex;flex-wrap:wrap;gap:4px}
   .rn-ra-tags .chip{height:22px;font-size:11px;padding:0 8px}
+  .rn-ak-tool-link{color:inherit;text-decoration:underline;text-decoration-color:rgba(239,82,61,.5);text-underline-offset:2px}
+  .rn-rv-card{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  .rn-rv-card h4{margin:2px 0 4px;font-size:15px}
+  .rn-rv-meta{font-size:12.5px;color:var(--muted);display:grid;gap:3px}
+  .rn-rv-meta b{color:var(--ink,#222)}
+  .rn-rv-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+  .rn-rv-box{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px}
+  .rn-rv-sign{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px dashed var(--line);padding:6px 0}
   </style>
 </head>
 <body>
@@ -145,6 +153,31 @@
       </details>
     </section>
 
+    <section class="panel rn-ra-recovery" id="relawan-recovery">
+      <div class="panel-header">
+        <div><h3><span class="rn-step">1b</span>Kebutuhan Relawan Recovery</h3><p>Selain alat, proyek recovery juga butuh tenaga: tukang, tenaga angkut, relawan pembersihan, dll. Relawan bisa mendaftar; pengelola proyek mengonfirmasi.</p></div>
+        <span class="chip" id="rvCount">-</span>
+      </div>
+      <div id="rvList"><p class="rn-muted">Memuat…</p></div>
+      <details class="rn-input-drawer rn-ra-drawer" id="rvDrawer" hidden>
+        <summary><b>+ Tambah kebutuhan relawan</b> <span class="rn-muted">(pengelola proyek recovery)</span></summary>
+        <form class="rn-form" id="rvForm" style="margin-top:10px">
+          <div class="form-grid">
+            <label>Proyek recovery<select name="recovery_project" id="rvProject" required></select></label>
+            <label>Peran / keahlian<input name="role_needed" required placeholder="mis. Tukang kayu, tenaga angkut"></label>
+            <label>Jumlah dibutuhkan<input name="people_needed" type="number" min="1" value="1" required></label>
+            <label>Lokasi<input name="location" placeholder="kosong = lokasi proyek"></label>
+            <label>Mulai<input name="date_from" type="date"></label>
+            <label>Sampai<input name="date_to" type="date"></label>
+            <label style="grid-column:1/-1">Tugas<textarea name="task_description" rows="2" placeholder="mis. memasang rangka atap 2 ruang kelas"></textarea></label>
+            <label style="grid-column:1/-1">Syarat relawan<textarea name="requirements" rows="2" placeholder="mis. usia 18+, berpengalaman, membawa perkakas sendiri"></textarea></label>
+            <label style="grid-column:1/-1">Yang disediakan<textarea name="provisions" rows="2" placeholder="mis. konsumsi 3x, tempat menginap, transport dari posko, APD"></textarea></label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="submit">Simpan kebutuhan</button><span class="rn-muted" id="rvMsg" role="status"></span></div>
+        </form>
+      </details>
+    </section>
+
     <section class="content-grid rn-ak-r1">
       <div class="panel">
         <div class="panel-header">
@@ -179,7 +212,7 @@
     <section class="panel rn-ra-providers" id="penyedia">
       <div class="panel-header">
         <div><h3><span class="rn-step">3</span>Penyedia Alat — siapa, di mana</h3><p>Setiap alat terdaftar: siapa penyedianya, posisi sekarang, area yang bisa dilayani, dan statusnya.</p></div>
-        <div class="rn-ra-filter"><input type="search" id="raProvSearch" placeholder="Cari alat / penyedia / lokasi" aria-label="Cari alat"></div>
+        <div class="rn-ra-filter"><a class="btn primary" id="raOfferLink" href="tawarkan-alat.html?event=event-sim-001">+ Tawarkan / Sumbangkan Alat</a> <input type="search" id="raProvSearch" placeholder="Cari alat / penyedia / lokasi" aria-label="Cari alat"></div>
       </div>
       <div class="rn-table-wrap">
         <table class="rn-table rn-ra-table">
@@ -187,7 +220,7 @@
           <tbody id="raProvBody"><tr><td colspan="8">Memuat…</td></tr></tbody>
         </table>
       </div>
-      <p class="rn-muted rn-ra-note">"Bisa dipakai" dan "Butuh dukungan" diisi oleh pemilik/pengelola alat lewat tombol Ubah (perlu login). Nomor PIC tidak ditampilkan di sini.</p>
+      <p class="rn-muted rn-ra-note">Klik nama alat untuk detail penyedia &amp; kontak person (kontak terlihat setelah login, kecuali pemilik membukanya untuk publik). Punya alat untuk dipinjamkan / disumbangkan? Klik "Tawarkan / Sumbangkan Alat".</p>
       <form class="rn-form rn-ra-edit" id="raEditForm" hidden>
         <h4 id="raEditTitle">Ubah masa pakai &amp; dukungan</h4>
         <input type="hidden" name="resource_profile">
@@ -405,8 +438,9 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/recovery-alat.js?v=ra-20261019c"></script>
-<script src="../assets/js/alat-kerja.js?v=recovery-20261019b"></script>
+<script src="../assets/js/recovery-alat.js?v=ra-20261103"></script>
+<script src="../assets/js/recovery-relawan.js?v=rv-20261103"></script>
+<script src="../assets/js/alat-kerja.js?v=penyedia-20261103"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

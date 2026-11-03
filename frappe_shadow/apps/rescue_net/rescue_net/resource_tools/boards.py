@@ -571,23 +571,37 @@ def tools_board(disaster_event=None):
         "alat_rusak": len(alat_rusak),
     }
 
+    def _tool_href(code):
+        return f"penyedia-alat.html?id={code}" if code else ""
+
+    def _candidate(req):
+        for x in resources:
+            if x.category == req.tool_type and x.availability_status == "available":
+                return x
+        return None
+
     kpi_items = {
         "alat_tersedia_items": [
-            _tb_drill(r.resource_name, f"{_CATEGORY_LABELS.get(r.category, r.category)} · {r.current_location or '-'}")
+            _tb_drill(r.resource_name, f"{_CATEGORY_LABELS.get(r.category, r.category)} · {provider_of(r)} · "
+                      f"{r.current_location or '-'}", f"penyedia-alat.html?id={r.name}")
             for r in alat_tersedia
         ],
         "kebutuhan_alat_items": [
-            _tb_drill(r.tool_name, f"{r.location or '-'} · {_PRIORITY_LABEL.get(r.priority, r.priority)} · {r.request_status}")
+            _tb_drill(r.tool_name, f"{r.location or '-'} · {_PRIORITY_LABEL.get(r.priority, r.priority)} · {r.request_status}"
+                      + (f" · kandidat: {_candidate(r).resource_name} ({provider_of(_candidate(r))})" if _candidate(r) else ""),
+                      _tool_href(_candidate(r).name if _candidate(r) else None))
             for r in kebutuhan_alat
         ],
         "operator_aktif_items": [
-            _tb_drill(name, f"{d.operator_skill or '-'} · {d.destination_location or '-'} · {_DEPLOY_STATUS_LABEL.get(d.deployment_status, d.deployment_status)}")
+            _tb_drill(name, f"{d.operator_skill or '-'} · {d.destination_location or '-'} · {_DEPLOY_STATUS_LABEL.get(d.deployment_status, d.deployment_status)}",
+                      _tool_href(d.resource_profile if d.resource_profile in resource_by_name else None))
             for name, d in active_operators.items()
         ],
         "dispatch_berjalan_items": [
             _tb_drill(
                 (resource_by_name.get(d.resource_profile) or {}).get("resource_name") or "Alat",
                 f"{d.destination_location or '-'} · operator {d.operator_name or '-'}",
+                _tool_href(d.resource_profile if d.resource_profile in resource_by_name else None),
             )
             for d in dispatch_berjalan
         ],
@@ -600,7 +614,8 @@ def tools_board(disaster_event=None):
             for f in bbm_kritis
         ],
         "alat_rusak_items": [
-            _tb_drill(r.resource_name, f"{r.current_location or '-'} · {r.availability_status}")
+            _tb_drill(r.resource_name, f"{provider_of(r)} · {r.current_location or '-'} · {r.availability_status}",
+                      _tool_href(r.name))
             for r in alat_rusak
         ],
     }
@@ -618,6 +633,7 @@ def tools_board(disaster_event=None):
             "status": d.deployment_status,
             "status_label": _DEPLOY_STATUS_LABEL.get(d.deployment_status, d.deployment_status),
             "location": d.destination_location or "-",
+            "resource": d.resource_profile if d.resource_profile in resource_by_name else None,
         })
 
     # --- Matching Kebutuhan Alat ---
@@ -642,6 +658,8 @@ def tools_board(disaster_event=None):
             "candidate_count": len(candidates),
             "candidate_resource": candidates[0].resource_name if candidates else None,
             "candidate_location": candidates[0].current_location if candidates else None,
+            "candidate_resource_id": candidates[0].name if candidates else None,
+            "candidate_provider": provider_of(candidates[0]) if candidates else None,
         })
 
     # --- Jadwal Dispatch Alat ---
@@ -651,6 +669,7 @@ def tools_board(disaster_event=None):
         req = request_by_name.get(d.work_tool_request)
         dispatch.append({
             "deployment": d.name,
+            "resource": d.resource_profile if res else None,
             "tool_name": (res.resource_name if res else None) or (req.tool_name if req else "Alat"),
             "operator": d.operator_name or "-",
             "destination": d.destination_location or "-",
@@ -701,6 +720,7 @@ def tools_board(disaster_event=None):
                 "type": "alat_rusak",
                 "label": r.resource_name,
                 "detail": f"{r.current_location or '-'} · perlu perbaikan",
+                "tool_href": _tool_href(r.name),
                 "severity": "urgent",
             })
     blockers.sort(key=lambda b: _PRIORITY_RANK.get(b["severity"], 3))
@@ -754,6 +774,7 @@ def tools_board(disaster_event=None):
         "item_count": 0, "category": None,
         "base_breakdown": defaultdict(lambda: {"measurable": 0.0, "estimated": 0.0}),
         "unmeasurable_count": 0,
+        "codes": [],
     })
     for r in resources:
         if r.canonical_group:
@@ -790,6 +811,7 @@ def tools_board(disaster_event=None):
             g["confidence_scores"].append(confidence)
         g["sources"].add(source)
         g["item_count"] += 1
+        g["codes"].append(r.name)
 
     groups = []
     for group_key, g in equip_groups.items():
@@ -811,6 +833,7 @@ def tools_board(disaster_event=None):
             ],
             "base_breakdown": base_breakdown,
             "unmeasurable_count": g["unmeasurable_count"],
+            "resources": g["codes"],
             "same_unit": same_unit,
             "posko_spread": len(g["locations"]),
             "avg_confidence": (
@@ -851,11 +874,16 @@ def tools_board(disaster_event=None):
                 "code": r.name,
                 "resource_name": r.resource_name,
                 "category": _CATEGORY_LABELS.get(r.category, r.category),
+                "category_key": r.category or "",
+                "href": f"penyedia-alat.html?id={r.name}",
                 "status": r.availability_status,
                 "location": r.current_location or "-",
                 # Recovery dan Alat Kerja: who provides it, where it can work
                 "provider": provider_of(r),
                 "provider_type": r.owner_type or "",
+                "provider_href": (f"organisasi-posko.html?org={r.owner_id}" if r.owner_type == "organization" and r.owner_id
+                                  else f"posko-detail.html?id={r.owner_id}" if r.owner_type == "posko" and r.owner_id
+                                  else ""),
                 "coverage": r.coverage_area or "",
                 "quantity": r.quantity,
                 "unit": r.unit,

@@ -195,16 +195,15 @@ Periksa kembali bencana, posko, jumlah, satuan, dan tujuan sebelum mengirim.
 Laporkan kesalahan data ke pengelola posko. Jangan membuat data pengganti yang menimpa catatan asli.
 24. Sembilan jenis posko
 Jenis dipilih saat Registrasi Posko . Satu posko boleh punya beberapa fungsi (mis. logistik + shelter + dapur), dan beberapa jenis boleh melayani lebih dari satu bencana.
-Jenis Fungsi Halaman kerja & yang dikerjakan
-Posko Logistik Menerima, menyimpan, dan menyalurkan barang bantuan. Bisa pengumpul (daerah aman) atau penerima (daerah bencana). Bisa melayani beberapa bencana. Posko Logistik : kartu stok, barang masuk/keluar, kirim stok, label & barcode, kebutuhan, tanggal kedaluwarsa.
-Collection Hub Gudang pengumpul besar di luar daerah bencana. Sama dengan Posko Logistik.
-Transport / Distribusi Menjalankan armada (truk, kapal, pesawat, motor) untuk mengantar barang dan relawan. Posko Distribusi : tambah armada, jadwal, booking masuk (konfirmasi/tolak), antrean jemput, posisi GPS armada.
-Posko Medis Pelayanan kesehatan korban. Posko Medis : kasus pasien, triase, rujukan, obat & alat, kebutuhan medis.
-Shelter Tempat pengungsian. Shelter : okupansi, keluarga check-in/out, kelompok rentan, kebutuhan dasar, fasilitas air & toilet.
-Dapur Umum Produksi makanan untuk pengungsi dan relawan. Dapur Umum : produksi porsi, bahan, gas & BBM.
-Assessment Lapangan Tim kaji cepat di lapangan. Posko Detail : laporan kondisi, kebutuhan, bukti foto.
-Posko Komunikasi Simpul radio (ORARI / RAPI), satelit, internet darurat. Bisa melayani beberapa bencana. Alat Komunikasi : perangkat, frekuensi/kanal, call sign, jangkauan & daya, uji kontak.
-Posko Alat Kerja / Support baru Menyimpan dan meminjamkan alat: alat berat, tenda, perahu karet, genset, pompa, tangki air, kendaraan, perkakas. Bisa melayani beberapa bencana. Posko Alat Kerja : inventaris dengan spesifikasi rinci per kategori, foto, kondisi, alat yang sedang dipakai, permintaan alat yang bisa dilayani.
+Posko Logistik Menerima, menyimpan, dan menyalurkan barang bantuan. Bisa pengumpul (daerah aman) atau penerima (daerah bencana). Bisa melayani beberapa bencana. Halaman kerja: Posko Logistik : kartu stok, barang masuk/keluar, kirim stok, label & barcode, kebutuhan, tanggal kedaluwarsa.
+Collection Hub Gudang pengumpul besar di luar daerah bencana. Halaman kerja: Sama dengan Posko Logistik.
+Transport / Distribusi Menjalankan armada (truk, kapal, pesawat, motor) untuk mengantar barang dan relawan. Halaman kerja: Posko Distribusi : tambah armada, jadwal, booking masuk (konfirmasi/tolak), antrean jemput, posisi GPS armada.
+Posko Medis Pelayanan kesehatan korban. Halaman kerja: Posko Medis : kasus pasien, triase, rujukan, obat & alat, kebutuhan medis.
+Shelter Tempat pengungsian. Halaman kerja: Shelter : okupansi, keluarga check-in/out, kelompok rentan, kebutuhan dasar, fasilitas air & toilet.
+Dapur Umum Produksi makanan untuk pengungsi dan relawan. Halaman kerja: Dapur Umum : produksi porsi, bahan, gas & BBM.
+Assessment Lapangan Tim kaji cepat di lapangan. Halaman kerja: Posko Detail : laporan kondisi, kebutuhan, bukti foto.
+Posko Komunikasi Simpul radio (ORARI / RAPI), satelit, internet darurat. Bisa melayani beberapa bencana. Halaman kerja: Alat Komunikasi : perangkat, frekuensi/kanal, call sign, jangkauan & daya, uji kontak.
+Posko Alat Kerja / Support baru Menyimpan dan meminjamkan alat: alat berat, tenda, perahu karet, genset, pompa, tangki air, kendaraan, perkakas. Bisa melayani beberapa bencana. Halaman kerja: Posko Alat Kerja : inventaris dengan spesifikasi rinci per kategori, foto, kondisi, alat yang sedang dipakai, permintaan alat yang bisa dilayani.
 Halaman Posko Detail berlaku untuk semua jenis: ringkasan, kontak, KPI, dan tautan ke halaman kerja posko itu. Setelah login, pengelola langsung dibawa ke halaman kerja posko miliknya.
 25. Kelola Posko Saya
 Menu Kelola Posko Saya (tombol 🔧 di halaman posko) hanya untuk pemilik / pengelola posko:

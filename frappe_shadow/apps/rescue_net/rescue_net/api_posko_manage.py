@@ -14,11 +14,12 @@ from rescue_net.reference_resolver import resolve_posko
 TYPE_LABEL = {
     "logistics": "Posko Logistik", "collection_hub": "Gudang Pengumpul", "transport": "Posko Distribusi / Transport",
     "medical": "Posko Medis", "shelter": "Shelter", "kitchen": "Dapur Umum", "field_assessment": "Assessment Lapangan",
-    "communication": "Posko Komunikasi", "command": "Komando",
+    "communication": "Posko Komunikasi", "equipment": "Posko Alat Kerja / Support", "command": "Komando",
 }
 WORKSPACE = {
     "logistics": "posko-logistik.html", "collection_hub": "posko-logistik.html", "transport": "posko-distribusi.html",
     "medical": "posko-medis-detail.html", "shelter": "shelter-detail.html", "kitchen": "dapur-umum.html",
+    "equipment": "posko-alat.html",
 }
 CONTACT_FIELDS = ("officer_in_charge_phone", "officer_in_charge_whatsapp", "emergency_contact")
 

@@ -65,6 +65,49 @@
    "fieldtype": "Small Text"
   },
   {
+   "fieldname": "brand",
+   "label": "Merek",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "model",
+   "label": "Model / Tipe",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "manufacture_year",
+   "label": "Tahun Pembuatan",
+   "fieldtype": "Int"
+  },
+  {
+   "fieldname": "serial_number",
+   "label": "No. Seri / Plat / Kode Aset",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "tool_condition",
+   "label": "Kondisi",
+   "fieldtype": "Select",
+   "options": "\nbaik\nperlu_servis\nrusak_ringan\nrusak_berat"
+  },
+  {
+   "fieldname": "specs",
+   "label": "Spesifikasi (JSON)",
+   "fieldtype": "Long Text",
+   "description": "Diisi lewat form; kunci mengikuti katalog services/equipment_specs.py per kategori."
+  },
+  {
+   "fieldname": "photo_url",
+   "label": "Foto Alat",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "photos",
+   "label": "Foto-foto Alat (JSON)",
+   "fieldtype": "Long Text",
+   "description": "Daftar foto [{url, name}], maks 10; photo_url = foto pertama."
+  },
+  {
    "fieldname": "availability_status",
    "label": "Availability",
    "fieldtype": "Select",

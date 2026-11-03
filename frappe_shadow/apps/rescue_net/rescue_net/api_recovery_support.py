@@ -30,8 +30,9 @@ from rescue_net.resource_tools.common import _CATEGORY_LABELS, _can_manage_refer
 OFFER_TYPES = {"hibah": "Dihibahkan (disumbangkan)", "pinjam": "Dipinjamkan gratis", "sewa": "Disewakan"}
 TOOL_STATUS = {"available": "Siap dipakai", "limited": "Terbatas", "unavailable": "Tidak tersedia",
                "maintenance": "Perawatan"}
-TOOL_CATEGORIES = dict(_CATEGORY_LABELS, alat_berat_lain="Alat berat lain", kendaraan_angkut="Kendaraan angkut",
-                       alat_pertukangan="Alat pertukangan", lainnya="Lainnya")
+from rescue_net.services import equipment_specs  # noqa: E402
+
+TOOL_CATEGORIES = equipment_specs.labels()        # spec catalog (owner 2026-11-03), a superset of tool_needs
 _TEXT_MAX = 2000
 
 # fields an owner may set through offer_tool / update_tool_offer
@@ -39,7 +40,8 @@ TOOL_FIELDS = ("resource_name", "category", "quantity", "unit", "capacity_descri
                "current_location", "coverage_area", "available_from", "available_until", "offer_type",
                "operator_included", "operator_count", "support_operator", "support_transport", "support_fuel",
                "support_accommodation", "mobilization_needs", "mobilization_cost", "daily_operating_cost",
-               "support_notes", "pic_name", "pic_phone", "pic_email", "contact_public", "notes")
+               "support_notes", "pic_name", "pic_phone", "pic_email", "contact_public", "notes",
+               "brand", "model", "manufacture_year", "serial_number", "tool_condition", "specs")
 _CHECKS = {"operator_included", "support_operator", "support_transport", "support_fuel", "support_accommodation",
            "contact_public"}
 
@@ -49,7 +51,8 @@ _PUBLIC_TOOL = ["name", "disaster_event", "resource_name", "category", "quantity
                 "offer_type", "operator_included", "operator_count", "support_operator", "support_transport",
                 "support_fuel", "support_accommodation", "mobilization_needs", "mobilization_cost",
                 "daily_operating_cost", "support_notes", "verification_status", "owner_type", "owner_id",
-                "contact_public", "modified"]
+                "contact_public", "brand", "model", "manufacture_year", "tool_condition", "specs", "photo_url", "photos",
+                "modified"]
 
 
 # ----------------------------------------------------------------------------------------------- helpers
@@ -101,6 +104,17 @@ def _tool_values(fields, partial):
             if v not in TOOL_CATEGORIES:
                 frappe.throw("Kategori alat tidak dikenal.")
             out[k] = v
+        elif k == "manufacture_year":
+            n = cint(v)
+            if v not in (None, "") and not (1950 <= n <= 2100):
+                frappe.throw("Tahun pembuatan tidak masuk akal.")
+            out[k] = n or None
+        elif k == "tool_condition":
+            if v and v not in equipment_specs.CONDITIONS:
+                frappe.throw("Kondisi alat tidak dikenal.")
+            out[k] = v or None
+        elif k == "specs":
+            out[k] = v              # cleaned below, needs the category
         elif k == "pic_email":
             v = (v or "").strip().lower()
             if v:
@@ -110,6 +124,8 @@ def _tool_values(fields, partial):
             out[k] = v or None
         else:
             out[k] = _clean_text(v)
+    if "specs" in out:
+        out["specs"] = equipment_specs.clean_specs(out.get("category") or fields.get("_category") or "lainnya", out["specs"])
     if not partial or "resource_name" in out:
         if not out.get("resource_name"):
             frappe.throw("Nama alat wajib diisi.")
@@ -155,7 +171,25 @@ def _tool_public(row):
     d["status_label"] = TOOL_STATUS.get(row.availability_status, row.availability_status or "")
     d["offer_label"] = OFFER_TYPES.get(row.offer_type or "", "")
     d["provider"] = _provider(row)
+    d["photos"] = _photos(row.get("photos"), row.get("photo_url"))
+    d["condition_label"] = equipment_specs.CONDITIONS.get(row.get("tool_condition") or "", "")
+    d["spec_rows"] = equipment_specs.spec_rows(row.category, row.get("specs"))
     return d
+
+
+MAX_PHOTOS = 10
+
+
+def _photos(raw, legacy=None):
+    import json
+    try:
+        val = json.loads(raw or "[]")
+        out = [p for p in val if isinstance(p, dict) and p.get("url")]
+    except (ValueError, TypeError):
+        out = []
+    if legacy and legacy not in [p["url"] for p in out]:
+        out.insert(0, {"url": legacy, "name": legacy.rsplit("/", 1)[-1]})
+    return out
 
 
 def _wa(number):
@@ -215,6 +249,8 @@ def tool_form_options():
         "categories": [{"value": k, "label": v} for k, v in TOOL_CATEGORIES.items()],
         "offer_types": [{"value": k, "label": v} for k, v in OFFER_TYPES.items()],
         "statuses": [{"value": k, "label": v} for k, v in TOOL_STATUS.items()],
+        "catalog": equipment_specs.catalog(),
+        "conditions": [{"value": k, "label": v} for k, v in equipment_specs.CONDITIONS.items()],
         "organizations": _managed_orgs(actor),
         "account": _account(actor),
     }
@@ -227,16 +263,17 @@ def my_tools():
     rows = []
     if acc:
         rows += frappe.get_all("RN Resource Profile", filters={"owner_type": "individual", "owner_id": acc},
-                               fields=_PUBLIC_TOOL + ["pic_name", "pic_phone", "pic_email", "notes"],
+                               fields=_PUBLIC_TOOL + ["pic_name", "pic_phone", "pic_email", "notes", "serial_number"],
                                limit_page_length=500)
     for org in _managed_orgs(actor):
         rows += frappe.get_all("RN Resource Profile", filters={"owner_type": "organization", "owner_id": org["name"]},
-                               fields=_PUBLIC_TOOL + ["pic_name", "pic_phone", "pic_email", "notes"],
+                               fields=_PUBLIC_TOOL + ["pic_name", "pic_phone", "pic_email", "notes", "serial_number"],
                                limit_page_length=500)
     out = []
     for r in sorted(rows, key=lambda r: str(r.modified), reverse=True):
         d = _tool_public(r)
-        d.update(pic_name=r.pic_name, pic_phone=r.pic_phone, pic_email=r.pic_email, notes=r.notes)
+        d.update(pic_name=r.pic_name, pic_phone=r.pic_phone, pic_email=r.pic_email, notes=r.notes,
+                 serial_number=r.serial_number)
         out.append(d)
     return {"tools": out}
 
@@ -281,8 +318,8 @@ def update_tool_offer(resource_profile, **fields):
     actor = rn_actor()
     if not _resource_access(actor, resource_profile):
         frappe.throw("Hanya pemilik / pengelola alat yang boleh mengubah.", frappe.PermissionError)
-    values = _tool_values(fields, partial=True)
     doc = frappe.get_doc("RN Resource Profile", resource_profile)
+    values = _tool_values(dict(fields, _category=doc.category), partial=True)
     doc.update(values)
     if doc.available_from and doc.available_until and getdate(doc.available_until) < getdate(doc.available_from):
         frappe.throw("Tanggal 'bisa dipakai sampai' tidak boleh sebelum 'mulai'.")
@@ -290,6 +327,58 @@ def update_tool_offer(resource_profile, **fields):
         doc.support_operator = 0
     doc.save(ignore_permissions=True)
     return tool_detail(resource_profile)
+
+
+@frappe.whitelist(methods=["POST"])
+def upload_tool_photo(resource_profile, filename, content_base64):
+    """Add one photo to a tool (up to MAX_PHOTOS; PNG / JPG / WEBP, 10 MB, public), owner / manager only.
+    Owner 2026-11-03: "pemilik alat untuk upload foto2 alatnya"."""
+    import base64
+    import re
+    from frappe.utils.file_manager import save_file
+    from rescue_net.donor_program.documents import _check_file
+
+    actor = rn_actor()
+    if not _resource_access(actor, resource_profile):
+        frappe.throw("Hanya pemilik / pengelola alat yang boleh mengunggah foto.", frappe.PermissionError)
+    filename = re.sub(r"[^\w.\- ]", "_", str(filename or "").strip())[:120]
+    if not filename or filename.lower().endswith(".pdf"):
+        frappe.throw("Foto alat harus berupa gambar (PNG / JPG / WEBP).")
+    try:
+        content = base64.b64decode(content_base64 or "", validate=False)
+    except Exception:
+        frappe.throw("Isi file tidak valid.")
+    if not content:
+        frappe.throw("File kosong.")
+    _check_file("gambar", filename, content)
+    row = frappe.db.get_value("RN Resource Profile", resource_profile, ["photos", "photo_url"], as_dict=True)
+    photos = _photos(row.photos, row.photo_url)
+    if len(photos) >= MAX_PHOTOS:
+        frappe.throw(f"Maksimal {MAX_PHOTOS} foto per alat. Hapus foto lama dulu.")
+    f = save_file(filename, content, "RN Resource Profile", resource_profile, is_private=0)
+    photos.append({"url": f.file_url, "name": filename})
+    return _save_photos(resource_profile, photos)
+
+
+def _save_photos(resource_profile, photos):
+    import json
+    frappe.db.set_value("RN Resource Profile", resource_profile, {
+        "photos": json.dumps(photos, ensure_ascii=False) if photos else None,
+        "photo_url": photos[0]["url"] if photos else None})
+    return {"resource_profile": resource_profile, "photos": photos, "photo_url": photos[0]["url"] if photos else None}
+
+
+@frappe.whitelist(methods=["POST"])
+def remove_tool_photo(resource_profile, file_url):
+    actor = rn_actor()
+    if not _resource_access(actor, resource_profile):
+        frappe.throw("Hanya pemilik / pengelola alat yang boleh menghapus foto.", frappe.PermissionError)
+    row = frappe.db.get_value("RN Resource Profile", resource_profile, ["photos", "photo_url"], as_dict=True)
+    photos = _photos(row.photos, row.photo_url)
+    keep = [p for p in photos if p["url"] != file_url]
+    if len(keep) == len(photos):
+        frappe.throw("Foto tidak ditemukan pada alat ini.")
+    return _save_photos(resource_profile, keep)
 
 
 @frappe.whitelist(methods=["POST"])

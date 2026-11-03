@@ -227,7 +227,7 @@ def booking_options(disaster_event):
 _CLOSED_POSKO = ("closed", "inactive", "nonaktif", "non_aktif", "offline")
 _TYPE_LABEL = {"logistics": "Logistik", "collection_hub": "Gudang Pengumpul", "transport": "Transport",
                "medical": "Medis", "shelter": "Shelter", "kitchen": "Dapur Umum", "field_assessment": "Assessment",
-               "communication": "Komunikasi"}
+               "communication": "Komunikasi", "equipment": "Alat Kerja / Support"}
 
 
 def _offer_poskos(event):

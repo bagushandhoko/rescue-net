@@ -15,7 +15,9 @@
   var CHECKS = ["operator_included", "support_operator", "support_transport", "support_fuel", "support_accommodation", "contact_public"];
   var FIELDS = ["resource_name", "category", "quantity", "unit", "availability_status", "current_location", "capacity_description",
     "coverage_area", "available_from", "available_until", "daily_operating_cost", "operator_count", "mobilization_needs",
-    "mobilization_cost", "support_notes", "pic_name", "pic_phone", "pic_email", "notes", "offer_type"];
+    "mobilization_cost", "support_notes", "pic_name", "pic_phone", "pic_email", "notes", "offer_type",
+    "brand", "model", "manufacture_year", "serial_number", "tool_condition"];
+  var CATALOG = null, CONDITIONS = [], renderSpecs = null;
   var MINE = [];
 
   function options(sel, list) {
@@ -26,11 +28,17 @@
     var a = {};
     FIELDS.forEach(function (k) { if (f.elements[k]) a[k] = f.elements[k].value.trim(); });
     CHECKS.forEach(function (k) { a[k] = f.elements[k].checked ? 1 : 0; });
+    a.specs = window.RNEquip.readSpecs($("#taSpecs"));
     return a;
   }
 
   function fill(f, t) {
+    f.elements.category.value = t.category || "lainnya";
+    f.elements.category.disabled = true;
+    $("#taIdentity").innerHTML = window.RNEquip.identityHtml(t, CONDITIONS);
+    renderSpecs(t.specs);
     FIELDS.forEach(function (k) {
+      if (k === "category") return;
       if (!f.elements[k]) return;
       var v = t[k];
       if (k === "available_from" || k === "available_until") v = v ? String(v).slice(0, 10) : "";
@@ -38,6 +46,12 @@
     });
     CHECKS.forEach(function (k) { f.elements[k].checked = !!t[k]; });
     f.elements.resource_profile.value = t.name;
+    var showPhotos = function (photos) {
+      $("#taPhotos").hidden = false;
+      $("#taPhotos").innerHTML = "<small class=\"rn-muted\">Foto tersimpan:</small>" + window.RNEquip.photosHtml(photos, true);
+      window.RNEquip.wirePhotoDelete($("#taPhotos"), t.name, function (p) { t.photos = p; showPhotos(p); });
+    };
+    showPhotos(t.photos || []);
     f.elements.disaster_event.value = t.disaster_event || ev;
     f.elements.disaster_event.disabled = true;
     f.elements.owner_choice.disabled = true;
@@ -54,9 +68,18 @@
     f.elements.disaster_event.value = ev;
     f.elements.disaster_event.disabled = false;
     f.elements.owner_choice.disabled = false;
+    f.elements.category.disabled = false;
+    $("#taPhotos").hidden = true; $("#taPhotos").innerHTML = "";
+    $("#taIdentity").innerHTML = window.RNEquip.identityHtml({}, CONDITIONS);
+    renderSpecs();
     $("#taFormTitle").textContent = "Data Alat yang Ditawarkan";
     $("#taSubmit").textContent = "Tawarkan Alat";
     $("#taReset").hidden = true;
+  }
+
+  async function uploadPhoto(id, files) {
+    var fail = await window.RNEquip.uploadPhotos(id, files, $("#taMsg"));
+    if (fail.length) window.alert("Data tersimpan, sebagian foto gagal: " + fail.join("; "));
   }
 
   function renderMine() {
@@ -98,10 +121,12 @@
     $("#taWho").textContent = "Pemilik alat";
     $("#taFormPanel").hidden = false;
     var f = $("#taForm");
-    options($("#taCategory"), o.categories);
+    CATALOG = o.catalog; CONDITIONS = o.conditions || [];
+    $("#taCategory").innerHTML = window.RNEquip.categoryOptions(CATALOG, "lainnya");
+    $("#taIdentity").innerHTML = window.RNEquip.identityHtml({}, CONDITIONS);
+    renderSpecs = window.RNEquip.wire(f, CATALOG, $("#taSpecs"), $("#taUnit"));
     options($("#taOfferType"), o.offer_types);
     options($("#taStatus"), o.statuses);
-    $("#taCategory").value = "lainnya";
     $("#taOfferType").value = "pinjam";
     (o.organizations || []).forEach(function (g) {
       var opt = document.createElement("option");
@@ -121,9 +146,12 @@
       var id = f.elements.resource_profile.value;
       m.textContent = "Menyimpan…";
       try {
+        var photo = f.elements.photo.files;
         if (id) {
           args.resource_profile = id;
+          delete args.category;
           await window.RN_FRAPPE.call(A + "update_tool_offer", args, { method: "POST" });
+          if (photo.length) await uploadPhoto(id, photo);
           m.innerHTML = 'Tersimpan. <a href="penyedia-alat.html?id=' + encodeURIComponent(id) + "&event=" + encodeURIComponent(ev) + '">Lihat halaman alat</a>';
         } else {
           var owner = f.elements.owner_choice.value;
@@ -131,6 +159,7 @@
           if (owner.indexOf("org:") === 0) { args.owner_type = "organization"; args.organization = owner.slice(4); }
           else args.owner_type = "individual";
           var r = await window.RN_FRAPPE.call(A + "offer_tool", args, { method: "POST" });
+          if (photo.length) await uploadPhoto(r.resource_profile, photo);
           m.innerHTML = 'Terima kasih, alat sudah tercatat. <a href="penyedia-alat.html?id=' + encodeURIComponent(r.resource_profile) +
             "&event=" + encodeURIComponent(args.disaster_event) + '">Lihat halaman alat</a> · <a href="' + back + '">ke daftar penyedia</a>';
         }

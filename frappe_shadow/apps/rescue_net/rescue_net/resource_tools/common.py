@@ -286,7 +286,11 @@ def _refresh_request_status(request_name):
     return status
 
 
-_CATEGORY_LABELS = tool_needs.CATEGORY_LABELS
+# tool_needs categories first (field-condition estimates), then the equipment spec catalog (owner 2026-11-03)
+from rescue_net.services import equipment_specs as _equipment_specs  # noqa: E402
+_CATEGORY_LABELS = dict(tool_needs.CATEGORY_LABELS)
+for _k, _v in _equipment_specs.labels().items():
+    _CATEGORY_LABELS.setdefault(_k, _v)
 
 
 _CATEGORY_ORDER = list(_CATEGORY_LABELS.keys())

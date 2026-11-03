@@ -5,7 +5,7 @@ let POSKO_CONTEXT_CACHE = null;
 const RN_POSKO_TYPE_LABEL = {
   logistics: "Logistik", collection_hub: "Gudang Pengumpul", collector: "Pengumpul", receiver: "Penerima",
   transport: "Transport", medical: "Medis", shelter: "Shelter", kitchen: "Dapur Umum",
-  field_assessment: "Assessment Lapangan", command: "Komando", communication: "Komunikasi"
+  field_assessment: "Assessment Lapangan", command: "Komando", communication: "Komunikasi", equipment: "Alat Kerja / Support"
 };
 function poskoTypeLabel(t) { return RN_POSKO_TYPE_LABEL[String(t || "").toLowerCase()] || t || "-"; }
 

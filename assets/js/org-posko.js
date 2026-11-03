@@ -33,7 +33,7 @@
 
   var ORG_ICON = { government: "building", ngo: "hand-heart", community: "users", military: "shield-check", company: "building", campus: "evidence", school: "evidence" };
   var POSKO_ICON = { logistics: "package", logistik: "package", medical: "medis", medis: "medis", kitchen: "dapur", dapur: "dapur", shelter: "shelter",
-    communication: "radio", radio: "radio", distribution: "truck", distribusi: "truck" };
+    communication: "radio", radio: "radio", equipment: "alat-kerja", distribution: "truck", distribusi: "truck" };
   function orgIcon(t) { return ORG_ICON[String(t || "").toLowerCase()] || "building"; }
   function poskoIcon(t) { return POSKO_ICON[String(t || "").toLowerCase()] || "posko"; }
   function isVerified(s) { return /^(official_verified|verified|community_verified|trusted)/.test(String(s || "")); }

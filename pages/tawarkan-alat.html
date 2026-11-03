@@ -90,12 +90,19 @@
           <label>Nama alat<input name="resource_name" required placeholder="mis. Ekskavator Komatsu PC200"></label>
           <label>Kategori<select name="category" id="taCategory"></select></label>
           <label>Jumlah<input name="quantity" type="number" min="1" step="any" value="1" required></label>
-          <label>Satuan<input name="unit" value="unit"></label>
+          <label>Satuan<input name="unit" id="taUnit" value="unit"></label>
           <label>Status<select name="availability_status" id="taStatus"></select></label>
           <label>Lokasi alat sekarang<input name="current_location" placeholder="mis. Meulaboh, Aceh Barat"></label>
-          <label style="grid-column:1/-1">Spesifikasi / kapasitas / kondisi<textarea name="capacity_description" rows="2" placeholder="mis. bucket 0,8 m³, tahun 2018, kondisi baik"></textarea></label>
           <label style="grid-column:1/-1">Area layanan<input name="coverage_area" placeholder="mis. Aceh Barat & Nagan Raya"></label>
         </div>
+        <h4 class="rn-pa-sec">Identitas, kondisi &amp; spesifikasi</h4>
+        <div id="taIdentity"></div>
+        <div id="taSpecs"></div>
+        <div class="form-grid">
+          <label style="grid-column:1/-1">Catatan spesifikasi lain<textarea name="capacity_description" rows="2" placeholder="mis. kelengkapan, riwayat servis"></textarea></label>
+          <label>Foto alat (boleh beberapa, maks 10)<input name="photo" type="file" multiple accept="image/png,image/jpeg,image/webp"></label>
+        </div>
+        <div id="taPhotos" hidden></div>
         <h4 class="rn-pa-sec">3. Bisa Dipakai</h4>
         <div class="form-grid">
           <label>Mulai<input name="available_from" type="date"></label>
@@ -142,12 +149,13 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/tawarkan-alat.js?v=ta-20261103"></script>
+<script src="../assets/js/rn-equipment-specs.js?v=eq-20261103b"></script>
+<script src="../assets/js/tawarkan-alat.js?v=ta-20261103c"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=regbencana-20261102"></script>
-<script src="../assets/js/rn-mobile-drawer.js?v=aiset2-20261102"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=poskoalat-20261103"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=poskoalat-20261103"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>
 </html>

@@ -732,7 +732,7 @@ def admin_reset_password(user=None, new_password=None):
 _POSKO_PAGE = {
     "logistics": "posko-logistik.html", "medical": "posko-medis-detail.html",
     "shelter": "shelter-detail.html", "kitchen": "dapur-umum.html",
-    "transport": "posko-distribusi.html",
+    "transport": "posko-distribusi.html", "equipment": "posko-alat.html",
 }
 
 

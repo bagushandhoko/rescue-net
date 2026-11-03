@@ -47,19 +47,28 @@
     var operator = d.operator_included
       ? "Termasuk operator" + (d.operator_count ? " (" + fmt(d.operator_count) + " orang)" : "")
       : (d.support_operator ? "Tidak termasuk — butuh operator" : "Tidak termasuk operator");
+    var ident = [d.brand, d.model, d.manufacture_year].filter(Boolean).join(" · ");
+    var specs = d.spec_rows || [];
     $("#paTool").innerHTML =
+      (d.photo_url ? '<a href="' + esc(d.photo_url) + '" target="_blank" rel="noopener"><img src="' + esc(d.photo_url) +
+        '" alt="Foto alat" style="width:100%;max-height:280px;object-fit:cover;border-radius:10px;margin-bottom:8px"></a>' : "") +
+      ((d.photos || []).length > 1 ? '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-bottom:10px">' +
+        d.photos.slice(1).map(function (p) { return '<a href="' + esc(p.url) + '" target="_blank" rel="noopener"><img src="' + esc(p.url) +
+          '" alt="" loading="lazy" style="width:100%;height:80px;object-fit:cover;border-radius:8px"></a>'; }).join("") + "</div>" : "") +
       '<div class="rn-pa-tags">' +
         (d.offer_label ? '<span class="chip success">' + esc(d.offer_label) + "</span>" : "") +
         '<span class="chip">' + esc(operator) + "</span>" +
         (d.verification_status === "self_reported" ? '<span class="chip neutral">Data dari pemilik (belum diverifikasi)</span>' : "") +
       "</div>" +
       dl([
-        ["Kategori", d.category_label], ["Jumlah", fmt(d.quantity || 1) + " " + (d.unit || "")],
+        ["Kategori", d.category_label], ["Merek / model / tahun", ident], ["Kondisi", d.condition_label || ""],
+        ["Jumlah", fmt(d.quantity || 1) + " " + (d.unit || "")],
         ["Spesifikasi / kondisi", d.capacity_description || ""],
         ["Status", d.status_label], ["Lokasi sekarang", d.current_location || ""], ["Area layanan", d.coverage_area || ""],
         ["Bisa dipakai", usage(d)], ["Operator", operator],
         ["Biaya operasional", d.daily_operating_cost ? rp(d.daily_operating_cost) + " / hari" : ""],
       ]) +
+      (specs.length ? '<h4 class="rn-pa-sec">Spesifikasi</h4>' + dl(specs.map(function (x) { return [x.label, x.value]; })) : "") +
       '<h4 class="rn-pa-sec">Kebutuhan pendukung mobilisasi</h4>' +
       (needs.length || d.mobilization_needs || d.mobilization_cost || d.support_notes
         ? (needs.length ? '<div class="rn-pa-tags">' + needs.map(function (n) { return '<span class="chip warning">' + esc(n) + "</span>"; }).join("") + "</div>" : "") +

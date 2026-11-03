@@ -75,6 +75,12 @@
         icon: "alat-kerja"
       },
       {
+        // posko alat kerja / support: inventaris alat dengan spesifikasi rinci (owner 2026-11-03)
+        label: "Posko Alat Kerja",
+        href: "posko-alat.html",
+        icon: "alat-kerja"
+      },
+      {
         label: "Posko Alat Komunikasi",
         href: "alat-komunikasi.html?event=event-sim-001",
         icon: "komunikasi"
@@ -225,6 +231,7 @@
     "posko-medis-detail.html",
     "shelter-detail.html",
     "alat-kerja.html",
+    "posko-alat.html",
     "resource-profile.html",
     "evidence.html"
   ];

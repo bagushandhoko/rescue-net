@@ -380,6 +380,7 @@ _BA_POSKO_TYPE_LABEL = {
     "collection_hub": "Posko Logistik",
     "transport": "Posko Distribusi",
     "communication": "Posko Komunikasi",
+    "equipment": "Posko Alat Kerja",
 }
 
 
@@ -518,6 +519,7 @@ def _operate_href(posko_row, event):
         "medical": "posko-medis-detail.html",
         "shelter": "shelter-detail.html",
         "kitchen": "dapur-umum.html",
+        "equipment": "posko-alat.html",
     }.get(ptype, "posko-detail.html")
     return page + "?id=" + pid + "&event=" + ev
 

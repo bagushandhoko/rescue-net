@@ -53,6 +53,8 @@ GUEST_ENDPOINTS = {
     "api_control_centre.logistik_open_needs", "api_control_centre.logistik_stock_cards",
     "api_control_centre.logistik_stock_sources", "api_control_centre.my_org_coordination",
     "api_control_centre.org_detail", "api_control_centre.org_posko_board",
+    "api_equipment.posko_equipment",  # reviewed: inventory + specs; serial only for managers, PIC under posko share rule
+    "api_equipment.equipment_poskos",  # reviewed: posko names + counts
     "api_recovery_support.tool_detail",  # reviewed: tool + provider label/link; PIC only with contact_public
     "api_recovery_support.volunteer_needs",  # reviewed: needs + counts; no volunteer names/phones
     "api_recovery.recovery_board",  # reviewed: plan + progress + owner label; no PIC/notes/creator, drill hidden
@@ -138,6 +140,8 @@ SECRETS = {
     "tool_pic_phone": "081111110011",
     "tool_pic_email": "pic.alat.sentinel@test.rescue-net.local",
     "signup_phone": "081111110012",
+    "tool_serial": "SERIAL-SENTINEL-55",
+    "posko_tool_pic": "081111110013",
 }
 
 # Confirmed leaks reported to the owner but not fixed yet:
@@ -246,6 +250,10 @@ class TestGuestSweep(RNTestCase):
                             owner_id=w.org_a.name, resource_name="Ekskavator sentinel", category="ekskavator", resource_type="ekskavator",
                             quantity=1, unit="unit", availability_status="available", pic_name="PIC Alat",
                             pic_phone=s["tool_pic_phone"], pic_email=s["tool_pic_email"], contact_public=0)
+        _insert("RN Resource Profile", disaster_event=w.event.name, owner_type="posko", owner_id=w.posko_a.name,
+                resource_name="Genset sentinel", category="genset", resource_type="genset", quantity=1, unit="unit",
+                availability_status="available", serial_number=s["tool_serial"], pic_phone=s["posko_tool_pic"],
+                pic_name="PIC Genset", contact_public=0)
         proj = _insert("RN Recovery Project", disaster_event=w.event.name, project_name="Rehab sentinel",
                        owner_type="organization", owner_id=w.org_a.name, status="planned")
         need = _insert("RN Recovery Volunteer Need", disaster_event=w.event.name, recovery_project=proj.name,

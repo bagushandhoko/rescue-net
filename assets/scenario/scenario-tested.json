@@ -1314,6 +1314,33 @@
       "temuan": [
         "Tender simulasi lama belum berisi info baru — diisi penyelenggara lewat 'Ubah informasi tender'"
       ]
+    },
+    {
+      "id": "REC-ALAT-1",
+      "tanggal": "2026-11-03",
+      "kategori": "Recovery dan Alat Kerja",
+      "judul": "Alat → detail penyedia + kontak, Tawarkan Alat, Kebutuhan Relawan Recovery",
+      "tujuan": "Owner: alat tersedia bisa diklik ke halaman penyedia + kontak person; halaman pemilik alat untuk menyumbangkan alat (data, masa pakai, mobilisasi, operator); kebutuhan relawan recovery; semua menu di halaman itu link ke detail penyedia.",
+      "akun": [
+        "akun uji test stack (pemilik organisasi, perorangan, pengguna lain, tamu)",
+        "produksi: tamu"
+      ],
+      "langkah": [
+        "Perorangan menawarkan ekskavator (pinjam, termasuk 2 operator, butuh lowbed + izin jalan + BBM + akomodasi)",
+        "Tamu membuka detail: penyedia 'Perorangan' (nama pribadi tidak tampil), kontak tersembunyi; pengguna login melihat kontak + WhatsApp; setelah pemilik centang 'kontak publik', tamu juga melihat",
+        "Organisasi menawarkan 2 alat: detail menautkan ke halaman organisasi + 'alat lain dari penyedia ini'",
+        "Nilai salah ditolak (tanggal terbalik, skema tak dikenal, jumlah 0, email salah, biaya negatif); orang lain/tamu tidak bisa ubah/tarik alat",
+        "Pengelola proyek membuat kebutuhan relawan; relawan daftar (dobel ditolak, wajib HP), daftar pendaftar hanya untuk pengelola; terima → terpenuhi, batal → terbuka lagi, tutup",
+        "Sapuan tamu: HP/email PIC alat dan HP pendaftar relawan tidak bocor",
+        "Produksi HP 390px: 20 tautan alat→penyedia di tabel, 8 tautan ke halaman organisasi/posko, klik kategori → daftar alat bertautan, tanpa error JS"
+      ],
+      "hasil": "Lulus (5 tes + sapuan tamu + cek produksi); belum dicoba dengan login nyata di produksi",
+      "skor": "7/7",
+      "status": "lulus",
+      "temuan": [
+        "Data alat lama belum punya kontak person / masa pakai — diisi pemilik lewat 'Ubah data alat ini'",
+        "Belum ada kebutuhan relawan recovery di bencana simulasi"
+      ]
     }
   ],
   "rencana": [

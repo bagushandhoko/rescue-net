@@ -68,6 +68,17 @@
           <li><a href="#hp">Memasang aplikasi &amp; mode offline</a></li>
           <li><a href="#privasi">Privasi &amp; praktik aman</a></li>
         </ol>
+        <p class="toc-group">D. Jenis posko &amp; fungsinya</p>
+        <ol start="24">
+          <li><a href="#jenis-posko">Sembilan jenis posko</a></li>
+          <li><a href="#kelola-posko">Kelola Posko Saya</a></li>
+          <li><a href="#alat-kerja">Posko Alat Kerja, Recovery &amp; Tawarkan Alat</a></li>
+          <li><a href="#posko-komunikasi">Posko Komunikasi</a></li>
+        </ol>
+        <p class="toc-group">E. Pembaruan</p>
+        <ol start="28">
+          <li><a href="#pembaruan">Perbaikan sejak manual dibuat</a></li>
+        </ol>
         <p class="toc-tech"><a href="manual-teknis.html">Manual Teknis →</a></p>
       </nav>
 
@@ -370,6 +381,7 @@
             <li>Buka <a href="registrasi-posko.html">Registrasi Posko</a>. Isi nama, jenis, lokasi GPS, kontak penanggung jawab, dan fungsi posko.</li>
             <li>Centang <b>bencana yang ditangani</b>. Cari dengan nama atau lokasi, atau saring rentang waktu. Secara awal semua bencana tampil.</li>
             <li>Posko baru menunggu persetujuan sebelum Anda bisa mengelolanya.</li>
+            <li>Setelah disetujui, kelola posko dari <a href="kelola-posko.html">Kelola Posko Saya</a> (lihat bagian 25).</li>
             <li>Ubah bencana yang ditangani kapan saja di <a href="ai-settings.html">Setting</a> → Bencana yang Ditangani Posko.</li>
           </ol>
           <p>Di halaman posko, operator mencatat stok, kebutuhan, jiwa dilayani, dan bukti foto. Kontak posko (telepon/WA) tampil di bagian atas untuk pengguna yang sudah login.</p>
@@ -403,6 +415,7 @@
             <li><a href="shelter-detail.html">Shelter</a>: okupansi, kebutuhan dasar, kelompok rentan, check-in dan check-out penghuni.</li>
             <li><a href="dapur-umum.html">Dapur Umum</a>: produksi makanan, bahan, gas dan BBM.</li>
             <li><a href="management-relawan.html">Manajemen Relawan</a>: daftar relawan, relawan tersedia, relawan ditempatkan, papan penugasan.</li>
+            <li><a href="posko-alat.html">Posko Alat Kerja</a> dan <a href="alat-komunikasi.html">Posko Komunikasi</a>: lihat bagian D.</li>
           </ul>
         </section>
 
@@ -426,6 +439,116 @@
             <li>Periksa kembali bencana, posko, jumlah, satuan, dan tujuan sebelum mengirim.</li>
             <li>Laporkan kesalahan data ke pengelola posko. Jangan membuat data pengganti yang menimpa catatan asli.</li>
           </ul>
+        </section>
+
+        <!-- ================= D ================= -->
+        <header class="group-head" id="posko-jenis">
+          <p class="group-label">Bagian D</p>
+          <h2>Jenis posko &amp; fungsinya</h2>
+        </header>
+
+        <section id="jenis-posko">
+          <h3>24. Sembilan jenis posko</h3>
+          <p>Jenis dipilih saat <a href="registrasi-posko.html">Registrasi Posko</a>. Satu posko boleh punya beberapa fungsi (mis. logistik + shelter + dapur), dan beberapa jenis boleh melayani lebih dari satu bencana.</p>
+          <div class="rn-table-wrap">
+          <table class="rn-table">
+            <thead><tr><th>Jenis</th><th>Fungsi</th><th>Halaman kerja &amp; yang dikerjakan</th></tr></thead>
+            <tbody>
+              <tr><td><b>Posko Logistik</b></td><td>Menerima, menyimpan, dan menyalurkan barang bantuan. Bisa <i>pengumpul</i> (daerah aman) atau <i>penerima</i> (daerah bencana). Bisa melayani beberapa bencana.</td><td><a href="posko-logistik.html">Posko Logistik</a>: kartu stok, barang masuk/keluar, kirim stok, label &amp; barcode, kebutuhan, tanggal kedaluwarsa.</td></tr>
+              <tr><td><b>Collection Hub</b></td><td>Gudang pengumpul besar di luar daerah bencana.</td><td>Sama dengan Posko Logistik.</td></tr>
+              <tr><td><b>Transport / Distribusi</b></td><td>Menjalankan armada (truk, kapal, pesawat, motor) untuk mengantar barang dan relawan.</td><td><a href="posko-distribusi.html">Posko Distribusi</a>: tambah armada, jadwal, booking masuk (konfirmasi/tolak), antrean jemput, posisi GPS armada.</td></tr>
+              <tr><td><b>Posko Medis</b></td><td>Pelayanan kesehatan korban.</td><td><a href="posko-medis-detail.html">Posko Medis</a>: kasus pasien, triase, rujukan, obat &amp; alat, kebutuhan medis.</td></tr>
+              <tr><td><b>Shelter</b></td><td>Tempat pengungsian.</td><td><a href="shelter-detail.html">Shelter</a>: okupansi, keluarga check-in/out, kelompok rentan, kebutuhan dasar, fasilitas air &amp; toilet.</td></tr>
+              <tr><td><b>Dapur Umum</b></td><td>Produksi makanan untuk pengungsi dan relawan.</td><td><a href="dapur-umum.html">Dapur Umum</a>: produksi porsi, bahan, gas &amp; BBM.</td></tr>
+              <tr><td><b>Assessment Lapangan</b></td><td>Tim kaji cepat di lapangan.</td><td><a href="posko-detail.html">Posko Detail</a>: laporan kondisi, kebutuhan, bukti foto.</td></tr>
+              <tr><td><b>Posko Komunikasi</b></td><td>Simpul radio (ORARI / RAPI), satelit, internet darurat. Bisa melayani beberapa bencana.</td><td><a href="alat-komunikasi.html">Alat Komunikasi</a>: perangkat, frekuensi/kanal, call sign, jangkauan &amp; daya, uji kontak.</td></tr>
+              <tr><td><b>Posko Alat Kerja / Support</b> <span class="chip">baru</span></td><td>Menyimpan dan meminjamkan alat: alat berat, tenda, perahu karet, genset, pompa, tangki air, kendaraan, perkakas. Bisa melayani beberapa bencana.</td><td><a href="posko-alat.html">Posko Alat Kerja</a>: inventaris dengan spesifikasi rinci per kategori, foto, kondisi, alat yang sedang dipakai, permintaan alat yang bisa dilayani.</td></tr>
+            </tbody>
+          </table>
+          </div>
+          <p class="note">Halaman <a href="posko-detail.html">Posko Detail</a> berlaku untuk semua jenis: ringkasan, kontak, KPI, dan tautan ke halaman kerja posko itu. Setelah login, pengelola langsung dibawa ke halaman kerja posko miliknya.</p>
+        </section>
+
+        <section id="kelola-posko">
+          <h3>25. Kelola Posko Saya</h3>
+          <p>Menu <a href="kelola-posko.html">Kelola Posko Saya</a> (tombol 🔧 di halaman posko) hanya untuk pemilik / pengelola posko:</p>
+          <ul>
+            <li><b>Perlu tindakan</b>: permintaan relawan, booking armada, stok kedaluwarsa, kebutuhan terbuka.</li>
+            <li>Kontak &amp; status posko, kebutuhan baru, catatan stok dan tanggal kedaluwarsa.</li>
+            <li><b>Alat transport</b>: status armada, posisi GPS (sekali atau otomatis selama halaman terbuka), konfirmasi booking.</li>
+            <li>Dukungan komunikasi yang ditawarkan / dibutuhkan posko.</li>
+          </ul>
+          <p class="note">Pengaturan posko hanya untuk pemiliknya. Pengunjung dan pengguna lain hanya melihat data publik posko.</p>
+        </section>
+
+        <section id="alat-kerja">
+          <h3>26. Posko Alat Kerja, Recovery &amp; Tawarkan Alat</h3>
+          <ol class="steps">
+            <li><b>Pengelola posko alat</b>: buka <a href="posko-alat.html">Posko Alat Kerja</a> → pilih posko → <b>Tambah Alat</b>. Pilih kategori; kolom spesifikasi menyesuaikan (mis. genset: kVA, fase, BBM, konsumsi; tenda: tipe, ukuran, kapasitas orang; perahu karet: panjang, kapasitas, mesin). Isi merek, model, tahun, no. seri, kondisi, dan unggah beberapa foto (maks. 10).</li>
+            <li><b>Pemilik alat perorangan / perusahaan</b> yang ingin menyumbangkan, meminjamkan, atau menyewakan alat: buka <a href="tawarkan-alat.html">Tawarkan / Sumbangkan Alat</a> (tombol di Recovery dan Alat Kerja). Isi skema (hibah / pinjam / sewa), data &amp; spesifikasi alat, masa bisa dipakai, termasuk operator atau tidak, kebutuhan mobilisasi (transport, BBM, akomodasi operator, biaya), kontak person, dan foto.</li>
+            <li><b>Semua orang</b>: di <a href="alat-kerja.html">Recovery dan Alat Kerja</a>, setiap alat (tabel penyedia, KPI, kategori, kelompok alat, operator, dispatch, lokasi kerja, hambatan) bisa diklik ke <b>detail alat &amp; penyedia</b>: spesifikasi, foto, penyedia (tautan ke halaman organisasi / posko), dan kontak person.</li>
+            <li><b>Kebutuhan relawan recovery</b>: pengelola proyek recovery memasang kebutuhan tenaga (tukang, tenaga angkut, dll.), relawan menekan <b>Daftar jadi relawan</b>, pengelola menerima / menolak; status otomatis "Terpenuhi" saat kuota tercapai.</li>
+          </ol>
+          <p class="note">Kontak person alat hanya tampil untuk pengguna yang login, kecuali pemilik mencentang "kontak boleh dilihat publik". Nama pemilik perorangan tidak ditampilkan ke publik.</p>
+        </section>
+
+        <section id="posko-komunikasi">
+          <h3>27. Posko Komunikasi</h3>
+          <ul>
+            <li>Catat perangkat radio / satelit / internet: frekuensi (MHz), kanal, call sign, jangkauan, sumber daya.</li>
+            <li>Bar kontak posko menampilkan radio posko (frekuensi, kanal, call sign) untuk publik; nomor telepon tetap hanya untuk pengguna login.</li>
+            <li>Posko lain bisa menyatakan <b>dukungan komunikasi yang dibutuhkan</b>; relawan ORARI / RAPI bisa menawarkan diri sebagai simpul komunikasi.</li>
+          </ul>
+        </section>
+
+        <!-- ================= E ================= -->
+        <header class="group-head" id="pembaruan-head">
+          <p class="group-label">Bagian E</p>
+          <h2>Pembaruan</h2>
+        </header>
+
+        <section id="pembaruan">
+          <h3>28. Perbaikan sejak manual dibuat (26 Oktober – 3 November 2026)</h3>
+          <p><b>Posko &amp; kelola posko</b></p>
+          <ul>
+            <li>Jenis posko baru: <b>Posko Komunikasi</b> dan <b>Posko Alat Kerja / Support</b>; daftar jenis posko lengkap di registrasi, daftar akun, dan halaman kerja.</li>
+            <li><b>Kelola Posko Saya</b>: pusat kerja pemilik posko (perlu tindakan, kontak &amp; status, kebutuhan, stok &amp; kedaluwarsa, alat transport, permintaan relawan).</li>
+            <li>Bar kontak posko tampil juga di halaman yang dibuka tanpa memilih posko, dan menampilkan radio posko.</li>
+          </ul>
+          <p><b>Logistik, distribusi &amp; armada</b></p>
+          <ul>
+            <li><b>Cari Armada</b> publik di Manajemen Distribusi: jenis, waktu berangkat, tersedia / penuh / sedang dipakai, terdekat dari lokasi saya; jadwal yang sudah lewat ditandai.</li>
+            <li>Posisi GPS armada dari HP posko (sekali atau otomatis) + peta posisi dan jejak; hanya posko pengelola armada yang boleh memindahkannya.</li>
+            <li>Filter armada di Posko Distribusi; avtur, pertalite, pertamax, dexlite, dan minyak tanah dihitung sebagai BBM.</li>
+            <li>Nomor pemesan dan nomor serah terima armada tidak lagi tampil ke tamu.</li>
+          </ul>
+          <p><b>Bencana &amp; laporan</b></p>
+          <ul>
+            <li><b>Kelola Bencana</b>: buat dengan cek duplikat, verifikasi usulan, gabung + batalkan gabung; pilih lokasi bencana di peta dan cari wilayah sampai kecamatan.</li>
+            <li>Peringatan BMKG menjadi pengumuman; super admin menetapkan atau mengabaikannya.</li>
+            <li>Laporan ganda: laporan masyarakat yang sama ditautkan ke satu laporan utama, korban dihitung sekali di Control Centre.</li>
+            <li>Bukti Lapangan: unggah foto diperbaiki (sebelumnya selalu gagal) dan ada kolom keterangan; berkas unggahan (RAB, gambar, foto) kini bisa dibuka.</li>
+          </ul>
+          <p><b>Donasi, program &amp; tender</b></p>
+          <ul>
+            <li>Program Khusus: RAB beberapa halaman (PDF / foto), gambar rencana, rekening pemrakarsa (publik hanya bila terverifikasi), tab Anggaran &amp; Donatur.</li>
+            <li>Kirim Bantuan: panel <b>Donasi ke Program Khusus</b> dengan daftar donatur terkonfirmasi.</li>
+            <li>Control Centre: baris KPI Donor Program, Pengadaan &amp; Tender, dan Program Tracking.</li>
+            <li><b>Pengadaan &amp; Tender</b>: unggah gambar kerja dan halaman RAB, jadwal (mulai, target selesai, masa pelaksanaan &amp; pemeliharaan), syarat peserta, dokumen wajib, email penawaran, metode evaluasi, cara bayar.</li>
+          </ul>
+          <p><b>Recovery, alat &amp; relawan</b></p>
+          <ul>
+            <li>Semua alat di Recovery dan Alat Kerja bisa diklik ke detail penyedia &amp; kontak person; halaman <b>Tawarkan / Sumbangkan Alat</b>; <b>Kebutuhan Relawan Recovery</b>.</li>
+            <li>Spesifikasi rinci per kategori alat (28 kategori) dan beberapa foto per alat.</li>
+            <li>Relawan: halaman <b>Relawan Saya</b> (tawarkan diri ke posko, booking transport &amp; tempat menginap), filter relawan per bencana, tanggal, dan keahlian.</li>
+          </ul>
+          <p><b>AI &amp; tampilan</b></p>
+          <ul>
+            <li><b>Tanya AI</b> di setiap halaman: menjawab cara pakai dari manual ini dan data bencana publik, serta mengusulkan perubahan untuk posko Anda sendiri (dijalankan setelah Anda menekan Jalankan).</li>
+            <li>Menu HP: submenu terbuka saat diklik dan bergulir ke tampilan; menu baru otomatis termuat (tidak tertahan versi lama).</li>
+            <li>Aplikasi APK Android dihentikan; pasang sebagai aplikasi web lewat <a href="install.html">Install App</a>.</li>
+          </ul>
+          <p class="note">Daftar uji yang sudah dijalankan untuk tiap perbaikan ada di halaman About Us → Scenario Tested.</p>
         </section>
 
         <a class="back-top" href="#top">Kembali ke atas</a>

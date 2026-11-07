@@ -196,7 +196,7 @@
   // Bencana yang ditangani (owner 2026-10-19): posko logistik / distribusi /
   // collection hub boleh melayani beberapa bencana sekaligus (kotak centang);
   // jenis lain memilih satu. Default bencana dari tautan (?event=).
-  var MULTI_TYPES = ["logistics", "transport", "collection_hub", "communication", "equipment"];
+  var MULTI_TYPES = ["logistics", "transport", "collection_hub", "communication", "equipment", "volunteer"];
   var EVENT_PICKER = null;
 
   function syncEventMode() {
@@ -211,7 +211,7 @@
 
   // Beberapa jenis posko dipilih saat daftar (?type=a&more=b,c): form dijalankan
   // berurutan — setelah satu posko tersimpan, jenis berikutnya langsung diisi.
-  var TYPE_LABEL = { logistics: "Posko Logistik", medical: "Posko Medis", kitchen: "Dapur Umum", shelter: "Shelter", transport: "Transport", collection_hub: "Collection Hub", field_assessment: "Field Assessment", communication: "Posko Komunikasi", equipment: "Posko Alat Kerja / Support" };
+  var TYPE_LABEL = { logistics: "Posko Logistik", medical: "Posko Medis", kitchen: "Dapur Umum", shelter: "Shelter", transport: "Transport", collection_hub: "Collection Hub", field_assessment: "Field Assessment", communication: "Posko Komunikasi", equipment: "Posko Alat Kerja / Support", volunteer: "Posko Relawan", sar: "Posko SAR" };
   var QUEUE = (new URLSearchParams(location.search).get("more") || "").split(",").filter(function (t) { return TYPE_LABEL[t]; });
 
   function renderQueueHint() {

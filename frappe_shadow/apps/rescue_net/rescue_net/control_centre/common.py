@@ -382,6 +382,8 @@ _BA_POSKO_TYPE_LABEL = {
     "communication": "Posko Komunikasi",
     "equipment": "Posko Alat Kerja",
     "field_assessment": "Posko Assessment Lapangan",
+    "volunteer": "Posko Relawan",
+    "sar": "Posko SAR",
 }
 
 
@@ -522,6 +524,8 @@ def _operate_href(posko_row, event):
         "kitchen": "dapur-umum.html",
         "equipment": "posko-alat.html",
         "communication": "alat-komunikasi.html",
+        "volunteer": "management-relawan.html",
+        "sar": "search-found.html",
     }.get(ptype, "posko-detail.html")
     return page + "?id=" + pid + "&event=" + ev
 

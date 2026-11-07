@@ -734,6 +734,7 @@ _POSKO_PAGE = {
     "shelter": "shelter-detail.html", "kitchen": "dapur-umum.html",
     "transport": "posko-distribusi.html", "equipment": "posko-alat.html",
     "collection_hub": "posko-logistik.html", "communication": "alat-komunikasi.html",
+    "volunteer": "management-relawan.html", "sar": "search-found.html",
 }
 
 

@@ -142,23 +142,22 @@
               <label class="rn-check"><input type="checkbox" name="fn_shelter"> Shelter</label>
               <label class="rn-check"><input type="checkbox" name="fn_kitchen"> Dapur Umum</label>
             </fieldset>
+            <fieldset class="rn-evc-field">
+              <legend>Persetujuan Penggunaan Data Pribadi *</legend>
+              <div class="rn-checkbox-group">
+                <label class="rn-checkbox">
+                  <input type="checkbox" name="privacy_consent" required>
+                  <span>Saya menyetujui penggunaan data pribadi sesuai <a href="kebijakan-privasi.html" target="_blank">Kebijakan Privasi Rescue-Net</a></span>
+                </label>
+              </div>
+              <p class="rn-muted" style="margin:4px 0 8px;font-size:13px">* Wajib disetujui untuk dapat menyimpan posko</p>
+            </fieldset>
             <label>Nama Lengkap PIC *<input name="officer_in_charge_name" required></label>
             <label>Jabatan *<input name="officer_in_charge_role" placeholder="Koordinator Posko"></label>
             <label>Kontak PIC *<input name="officer_in_charge_phone" inputmode="tel" placeholder="08xxxxxxxxxx" required></label>
             <label>Email PIC *<input name="officer_in_charge_email" type="email" placeholder="nama@organisasi.or.id" required></label>
             <label>Kontak Darurat (Opsional)<input name="emergency_contact"></label>
             <label>Kapasitas (Orang) *<input name="rn_beneficiary_count" type="number" min="0"></label>
-          <fieldset class="rn-evc-field">
-            <legend>Persetujuan Penggunaan Data Pribadi *</legend>
-            <div class="rn-checkbox-group">
-              <label class="rn-checkbox">
-                <input type="checkbox" name="privacy_consent" required>
-                <span>Saya menyetujui penggunaan data pribadi sesuai <a href="kebijakan-privasi.html" target="_blank">Kebijakan Privasi Rescue-Net</a></span>
-              </label>
-            </div>
-            <p class="rn-muted" style="margin:4px 0 8px;font-size:13px">* Wajib disetujui untuk dapat menyimpan posko</p>
-          </fieldset>
-
             <label class="rn-rp-full">Fasilitas Tersedia * <small class="rn-muted">(pisahkan dengan koma)</small>
               <input name="facilities" placeholder="Logistik, Makanan, Air Bersih, Medis">
             </label>
@@ -175,6 +174,16 @@
             <p class="rn-muted" style="margin:4px 0 8px;font-size:13px">Bencananya belum ada di daftar? <a href="kelola-bencana.html#kbCreatePanel">+ Daftarkan bencana baru</a> (organisasi terverifikasi langsung aktif, lainnya diverifikasi super admin).</p>
             <div id="regEventPicker"></div>
           </fieldset>
+            <fieldset class="rn-evc-field">
+              <legend>Persetujuan Penggunaan Data Pribadi *</legend>
+              <div class="rn-checkbox-group">
+                <label class="rn-checkbox">
+                  <input type="checkbox" name="privacy_consent" required>
+                  <span>Saya menyetujui penggunaan data pribadi sesuai <a href="kebijakan-privasi.html" target="_blank">Kebijakan Privasi Rescue-Net</a></span>
+                </label>
+              </div>
+              <p class="rn-muted" style="margin:4px 0 8px;font-size:13px">* Wajib disetujui untuk dapat menyimpan posko</p>
+            </fieldset>
           <div class="form-actions">
             <button class="btn primary" type="submit">Simpan Posko</button>
             <button class="btn" type="button" id="regResetBtn">Reset</button>

@@ -230,7 +230,7 @@ def ecosystem_board(disaster_event):
             "target": target, "received": received, "spent": _num(p.budget_spent),
             "gap": max(0.0, target - received),
             "percent": round(received / target * 100, 1) if target else None,
-            "href": "donor-program.html?id=" + p.name,
+            "href": "program-khusus.html?program=" + p.name,
         })
     prog_rows.sort(key=lambda r: -r["gap"])
     for k in groups:
@@ -283,7 +283,7 @@ def ecosystem_board(disaster_event):
                                                     -(o["posko"] + o["relawan"] + o["peralatan"])))
     for o in org_list:
         o["group"] = _group_of_type(o["organization_type"])
-        o["href"] = "organisasi-posko.html?org=" + o["name"]
+        o["href"] = "profil-organisasi.html?id=" + o["name"]
 
     return {
         "disaster_event": event,

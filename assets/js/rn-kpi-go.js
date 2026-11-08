@@ -12,7 +12,10 @@
     if (!el) return;
     var d = el.closest("details");
     if (d && !d.open) d.open = true;
-    (el.closest(".panel") || el).scrollIntoView({ behavior: "smooth", block: "start" });
+    var target = el.closest(".panel") || el;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    // owner 2026-11-09: di HP perubahan harus terlihat — sorot bagian tujuan sebentar
+    target.classList.remove("rn-flash"); void target.offsetWidth; target.classList.add("rn-flash");
   }
   function wire() {
     document.querySelectorAll(".kpi-card[data-go]:not([data-go-wired])").forEach(function (card) {

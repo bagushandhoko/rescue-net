@@ -32,7 +32,45 @@
   function eventId() {
     var q = new URLSearchParams(location.search).get("event");
     if (!q) { try { q = localStorage.getItem("rn_active_event"); } catch (e) {} }
-    return String(q || "event-sim-001").replace(/^disaster_events:/, "");
+    return String(q || "").replace(/^disaster_events:/, "");
+  }
+
+  // owner 2026-11-09: klik → pindah ke halaman (dengan tombol kembali), bukan isi berubah di bawah
+  function orgHref(o) {
+    var m = /[?&](?:org|id)=([^&]+)/.exec(o.href || ""); var id = (m && decodeURIComponent(m[1])) || o.id || o.name || "";
+    return "profil-organisasi.html?id=" + encodeURIComponent(id) + (eventId() ? "&event=" + encodeURIComponent(eventId()) : "");
+  }
+  function progHref(p) {
+    var m = /[?&](?:id|program)=([^&]+)/.exec(p.href || ""); var id = (m && decodeURIComponent(m[1])) || p.id || p.name || "";
+    return "program-khusus.html?program=" + encodeURIComponent(id) + (eventId() ? "&event=" + encodeURIComponent(eventId()) : "");
+  }
+  function flash(el) {
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    el.classList.remove("rn-flash"); void el.offsetWidth; el.classList.add("rn-flash");
+  }
+  async function setupTopNav() {
+    var back = $("#boBack");
+    if (back) back.onclick = function () {
+      if (document.referrer && document.referrer.indexOf(location.host) > -1 && history.length > 1) history.back();
+      else location.href = "war-room.html" + (eventId() ? "?event=" + encodeURIComponent(eventId()) : "");
+    };
+    var sel = $("#boEventSel"); if (!sel) return;
+    var evs = [];
+    try { evs = await window.RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters", {}); } catch (e) {}
+    evs = Array.isArray(evs) ? evs : [];
+    var cur = eventId();
+    var known = function (id) { return evs.some(function (e) { return (e.id || e.name) === id; }); };
+    if (evs.length && (!cur || !known(cur))) {
+      cur = evs[0].id || evs[0].name;
+      var u = new URL(location.href); u.searchParams.set("event", cur); history.replaceState(null, "", u.toString());
+    }
+    sel.innerHTML = evs.map(function (e) { var id = e.id || e.name; return '<option value="' + esc(id) + '"' + (id === cur ? " selected" : "") + ">" + esc(e.title || id) + "</option>"; }).join("") ||
+      '<option value="">Tidak ada bencana aktif</option>';
+    sel.onchange = function () {
+      try { localStorage.setItem("rn_active_event", sel.value); } catch (e) {}
+      var u = new URL(location.href); u.searchParams.set("event", sel.value); location.href = u.toString();
+    };
   }
 
   function bar(pct) {
@@ -72,9 +110,9 @@
     el.querySelectorAll("[data-group]").forEach(function (b) {
       b.addEventListener("click", function () {
         var g = b.getAttribute("data-group");
-        if (g === "program") { $("#boProgPanel").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+        if (g === "program") { flash($("#boProgPanel")); return; }
         setFilter(g);
-        $("#boOrgPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+        flash($("#boOrgPanel"));
       });
     });
   }
@@ -115,7 +153,7 @@
     body.innerHTML = rows.map(function (o) {
       var type = TYPE_LABEL[o.organization_type] || "Lainnya";
       return "<tr>" +
-        '<td><a href="' + esc(o.href) + "&event=" + ev + '">' + esc(o.title) + "</a>" +
+        '<td><a href="' + esc(orgHref(o)) + '">' + esc(o.title) + "</a>" +
           (o.posko ? '<span class="rn-bo-pct">' + fmt(o.posko_aktif) + " posko aktif</span>" : "") + "</td>" +
         "<td>" + esc(GROUP_LABEL[o.group] || o.group) + '<span class="rn-bo-pct">' + esc(type) + "</span></td>" +
         '<td class="num">' + fmt(o.posko) + '</td><td class="num">' + fmt(o.relawan) + '</td>' +
@@ -156,7 +194,7 @@
   function renderPrograms(rows) {
     var ev = encodeURIComponent(eventId());
     $("#boProgBody").innerHTML = rows.length ? rows.map(function (p) {
-      return '<tr><td><a href="' + esc(p.href) + "&event=" + ev + '">' + esc(p.title) + "</a></td>" +
+      return '<tr><td><a href="' + esc(progHref(p)) + '">' + esc(p.title) + "</a></td>" +
         "<td>" + esc(p.owner) + "</td><td>" + esc(STATUS_LABEL[p.status] || p.status || "-") + "</td>" +
         '<td class="num">' + fmt(p.target) + '</td><td class="num">' + fmt(p.received) + "</td>" +
         '<td class="num' + (p.gap > 0 ? " gap-pos" : "") + '">' + fmt(p.gap) + "</td><td>" + bar(p.percent) + "</td></tr>";
@@ -191,6 +229,6 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     if (!window.RN_FRAPPE) return;
-    load();
+    setupTopNav().then(load);
   });
 })();

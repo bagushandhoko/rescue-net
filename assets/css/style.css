@@ -7791,3 +7791,4 @@ body.home-page .rn-hero-cta { display: flex !important; flex-wrap: wrap; gap: 8p
   .rn-pk-page > .rn-pk-kpi { order: 5; }
   .rn-pk-page > *:not(.pk-topnav):not(.rn-pk-row):not(.rn-pk-kpi) { order: 6; }
 }
+.pk-topnav > .btn { flex: 0 0 auto; width: auto !important; padding: 6px 12px; }

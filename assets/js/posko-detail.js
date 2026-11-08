@@ -278,7 +278,7 @@ function renderStockSummaryLive(board) {
   if (!el || !cards.length) return;
   el.innerHTML = cards.map(c => card(
     c.item,
-    `Stok sekarang: <b>${safe(c.stok_ada)}</b> ${safe(c.unit || "")}` +
+    `Stok sekarang: <b>${safe(c.stok_ada)}</b> ${c.unit ? safe(c.unit) : ""}` +
     (c.masuk_7h || c.keluar_7h ? `<br>Masuk 7 hari: ${safe(c.masuk_7h || 0)} · Keluar 7 hari: ${safe(c.keluar_7h || 0)}` : ""),
     Number(c.stok_ada) > 0 ? "available" : "empty",
     logistikHref(c.item)

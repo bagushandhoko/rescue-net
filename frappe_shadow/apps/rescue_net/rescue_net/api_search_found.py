@@ -42,10 +42,18 @@ def _role(actor):
 
 
 def _is_manager(actor):
-    return bool(
-        is_system_manager()
-        or _role(actor) in MANAGER_ROLES
-    )
+    """Operator rights in Search & Found. Owner 2026-11-08 (finding from the Muhammadiyah simulation): a person
+    placed on a posko by their organisation (approved RN Posko Assignment) or an organisation manager is an
+    operator too, not only accounts whose global role is an operator role. Per-record access is still checked."""
+    if is_system_manager() or _role(actor) in MANAGER_ROLES:
+        return True
+    me = getattr(actor, "name", None)
+    if not me:
+        return False
+    if frappe.db.exists("RN Posko Assignment", {"user_account": me, "status": "approved"}):
+        return True
+    return bool(frappe.db.exists("RN Organization Membership", {
+        "user_account": me, "status": "approved", "membership_role": ["in", ["owner", "deputy", "staff"]]}))
 
 
 def _can_operate_posko(actor, posko):
@@ -294,17 +302,12 @@ def propose_match(
     actor = rn_actor()
     _assert_manager(actor)
 
-    _assert_record_access(
-        actor,
-        "RN Missing Person Report",
-        missing_report,
-    )
-
-    _assert_record_access(
-        actor,
-        "RN Found Person Report",
-        found_report,
-    )
+    # SAR matches across poskos: the operator must work at the posko of at least ONE of the two reports
+    # (or a report not tied to any posko) — not both (owner 2026-11-08).
+    mp = frappe.db.get_value("RN Missing Person Report", missing_report, "posko")
+    fp = frappe.db.get_value("RN Found Person Report", found_report, "posko")
+    if not (_can_operate_posko(actor, mp) if mp else True) and not (_can_operate_posko(actor, fp) if fp else True):
+        frappe.throw("Akses laporan ditolak", frappe.PermissionError)
 
     if frappe.db.exists(
         "RN Search Found Match",

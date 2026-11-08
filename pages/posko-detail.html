@@ -246,20 +246,20 @@
 
       <form class="rn-form" id="transferForm">
         <div class="form-grid">
-          <label>ID Posko Tujuan
-            <input name="destination_posko_id" value="posko-dapur-melati" required>
+          <label>Posko Tujuan
+            <input name="destination_posko_id" list="rnEventPoskoList" placeholder="Ketik nama posko tujuan lalu pilih" required>
           </label>
           <label>Nama Item
-            <input name="item_name" value="Air Mineral" required>
+            <input placeholder="mis. Air Mineral" name="item_name" required>
           </label>
           <label>Jumlah
-            <input name="quantity" type="number" value="5" required>
+            <input placeholder="mis. 5" name="quantity" type="number" required>
           </label>
           <label>Satuan
-            <input name="unit" value="dus" required>
+            <input placeholder="mis. dus" name="unit" required>
           </label>
           <label>Catatan
-            <input name="notes" value="Transfer stok dari posko logistik.">
+            <input placeholder="mis. Transfer stok dari posko logistik." name="notes">
           </label>
         </div>
 
@@ -308,11 +308,11 @@
 <script src="../assets/js/rn-posko-contact.js?v=radio-20261101"></script>
 <script src="../assets/js/rn-posko-settings.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-logistik-info.js?v=kpiword-20261101"></script>
-<script src="../assets/js/posko-detail.js?v=oprequest-20261108"></script>
+<script src="../assets/js/posko-detail.js?v=tujuan-20261108"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=i18n9-20261108"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=pilihposko-20261108"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=tujuan-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=panduan-20261108"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>

@@ -615,3 +615,23 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { setTimeout(run, 50); });
   else setTimeout(run, 50);
 })();
+
+// Owner 2026-11-08: kolom posko tujuan (input[list=rnEventPoskoList]) memakai daftar posko di bencana yang sedang dibuka.
+(function () {
+  function run() {
+    var inputs = document.querySelectorAll("input[list=rnEventPoskoList]");
+    if (!inputs.length || document.getElementById("rnEventPoskoList")) return;
+    var p = new URLSearchParams(location.search), ev = (p.get("event") || "").replace(/^disaster_events:/, "");
+    if (!ev) { try { ev = (localStorage.getItem("rn_active_event") || "").replace(/^disaster_events:/, ""); } catch (e) {} }
+    if (!ev) return;
+    fetch("/rescue-net-frappe/api/method/rescue_net.api_control_centre.event_poskos?disaster_event=" + encodeURIComponent(ev), { credentials: "include" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var pts = (j && j.message && j.message.points) || [];
+        var dl = document.createElement("datalist"); dl.id = "rnEventPoskoList";
+        pts.forEach(function (pt) { var o = document.createElement("option"); o.value = pt.posko_id || pt.id; o.label = pt.name || ""; o.textContent = pt.name || ""; dl.appendChild(o); });
+        document.body.appendChild(dl);
+      }).catch(function () {});
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run); else setTimeout(run, 0);
+})();

@@ -246,6 +246,7 @@
           "</article>";
       }).join("") + "</div>" : '<p class="ko-empty">Belum ada anggota disetujui.</p>';
 
+      wireAddMember(adminData.organizations || []);
       wireMemberActions();
     } else {
       admin.hidden = true;
@@ -270,6 +271,33 @@
           await loadMembers();
         } catch (err) { if (msg) msg.textContent = " gagal: " + ((err && err.message) || err); }
       });
+    });
+  }
+
+  // SOP bergabung jalur 2 (owner 2026-11-08): pengelola menambahkan anggota langsung
+  function wireAddMember(orgs) {
+    var f = $("#koAddMemberForm"), sel = $("#koAddOrg");
+    if (!f || !sel) return;
+    sel.innerHTML = orgs.map(function (o) { return '<option value="' + esc(o.name) + '">' + esc(o.title) + "</option>"; }).join("");
+    if (f.dataset.wired) return;
+    f.dataset.wired = "1";
+    f.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var msg = $("#koAddMsg"), out = $("#koAddResult");
+      out.hidden = true; msg.textContent = "Memproses…";
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.add_member_direct", {
+          organization: sel.value, email: f.email.value.trim(), full_name: f.full_name.value.trim() || null,
+          phone: f.phone.value.trim() || null, member_verified: f.member_verified.checked ? 1 : 0 }, { method: "POST" });
+        msg.textContent = r.already_member ? "Sudah menjadi anggota." : "Ditambahkan sebagai anggota.";
+        if (r.temporary_password) {
+          out.hidden = false;
+          out.innerHTML = "<b>Akun baru dibuat.</b><br>Email: " + esc(f.email.value.trim()) + "<br>Kata sandi sementara: <b data-no-i18n>" +
+            esc(r.temporary_password) + "</b><br><small>" + esc(r.message || "") + "</small>";
+        }
+        f.reset();
+        loadMembers();
+      } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }
     });
   }
 

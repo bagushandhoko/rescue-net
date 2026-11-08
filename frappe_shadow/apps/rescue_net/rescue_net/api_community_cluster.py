@@ -1430,3 +1430,90 @@ def list_needs():
         order_by="creation desc",
         limit_page_length=200,
     )
+
+
+@frappe.whitelist(methods=["POST"])
+def add_member_direct(organization, email, full_name=None, phone=None, member_verified=0, note=None):
+    """SOP bergabung jalur ke-2 (owner 2026-11-08: "sop approval atau langsung dibuat admin untuk bergabung"):
+    the organisation's manager adds a member directly instead of waiting for a join request.
+    - email already registered  -> membership approved at once (staff may do this too);
+    - email not registered yet   -> only the org owner/deputy (or system manager) may create the account; a
+      temporary password is returned ONCE for the manager to hand over (the member changes it after login).
+    Jalur ke-1 (anggota mendaftar sendiri -> minta bergabung -> disetujui) tetap berlaku."""
+    import re
+    from rescue_net.access_policy import is_system_manager
+
+    actor = _actor()
+    if not organization or not frappe.db.exists("RN Organization", organization):
+        frappe.throw("Organisasi tidak ditemukan.")
+    sysmgr = is_system_manager()
+    if not (sysmgr or _can_decide_members(actor, organization)):
+        frappe.throw("Anda bukan pengelola atau staf organisasi ini", frappe.PermissionError)
+    email = (email or "").strip().lower()
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        frappe.throw("Format email tidak valid.")
+    verified = 1 if str(member_verified).lower() in ("1", "true", "yes", "on") else 0
+    owner_level = sysmgr or _owns_org(actor, organization)
+    if verified and not owner_level:
+        verified = 0                                   # only the HQ (owner) attests identity
+    temporary = None
+    created = False
+
+    account = frappe.db.get_value("RN User Account", {"frappe_user": email}, "name") or \
+        frappe.db.get_value("RN User Account", {"email": email}, "name")
+    if not account:
+        if frappe.db.exists("User", email):
+            frappe.throw("Email ini terdaftar tetapi belum punya akun Rescue-Net. Minta yang bersangkutan masuk sekali dulu.")
+        if not owner_level:
+            frappe.throw("Hanya pengelola utama organisasi yang bisa membuatkan akun baru. Staf hanya bisa menambahkan "
+                         "pengguna yang sudah terdaftar.", frappe.PermissionError)
+        full_name = (full_name or "").strip()
+        if not full_name:
+            frappe.throw("Nama lengkap wajib diisi untuk membuat akun baru.")
+        from rescue_net.command import generate_password
+        temporary = generate_password()
+        parts = full_name.split(" ", 1)
+        user = frappe.get_doc({"doctype": "User", "email": email, "first_name": parts[0],
+                               "last_name": parts[1] if len(parts) > 1 else "",
+                               "mobile_no": (phone or "").strip() or None, "send_welcome_email": 0,
+                               "user_type": "Website User", "new_password": temporary})
+        user.insert(ignore_permissions=True)
+        acc = frappe.get_doc({"doctype": "RN User Account", "frappe_user": user.name, "title": full_name,
+                              "username": email.split("@")[0], "email": email, "phone": (phone or "").strip() or None,
+                              "role": "", "requested_role": "", "role_request_status": "approved",
+                              "status": "active", "consent_verification": 0})
+        acc.insert(ignore_permissions=True)
+        account, created = acc.name, True
+
+    existing = frappe.db.get_value("RN Organization Membership",
+                                   {"user_account": account, "organization": organization},
+                                   ["name", "status"], as_dict=True)
+    doc = frappe.get_doc("RN Organization Membership", existing.name) if existing else frappe.new_doc("RN Organization Membership")
+    if existing and existing.status == "approved":
+        if verified and not doc.member_verified:
+            doc.member_verified, doc.verified_at = 1, now_datetime()
+            doc.save(ignore_permissions=True)
+        return {"membership": doc.name, "status": "approved", "already_member": True, "created_account": False}
+    doc.user_account = account
+    doc.organization = organization
+    doc.membership_role = doc.membership_role if existing and doc.membership_role else "member"
+    doc.status = "approved"
+    doc.requested_at = doc.requested_at or now_datetime()
+    doc.approved_at = now_datetime()
+    try:
+        doc.approved_by = actor.name
+    except Exception:
+        pass
+    doc.member_verified = verified
+    doc.verified_at = now_datetime() if verified else None
+    doc.decision_note = ("Ditambahkan langsung oleh pengelola. " + str(note or "").strip())[:500]
+    if existing:
+        doc.save(ignore_permissions=True)
+    else:
+        doc.insert(ignore_permissions=True)
+    out = {"membership": doc.name, "status": "approved", "user_account": account, "created_account": created}
+    if temporary:
+        out["temporary_password"] = temporary
+        out["message"] = ("Akun dibuat. Serahkan kata sandi sementara ini secara pribadi kepada anggota; "
+                          "minta ia menggantinya setelah masuk. Kata sandi ini tidak ditampilkan lagi.")
+    return out

@@ -3,6 +3,28 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "SARAN-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Saran & Masukan Platform",
+      "judul": "Menu 'Saran' di header: kirim saran tanpa login, daftar publik, status oleh super admin",
+      "tujuan": "Owner: tambahkan di header menu 'Saran', tidak perlu login, isinya masukan perbaikan/tambahan fitur Rescue-Net dari pengguna.",
+      "akun": [
+        "tamu (tanpa login)",
+        "akun uji test stack (pengguna login lain, System Manager)"
+      ],
+      "langkah": [
+        "Menu 'Saran' tampil di header semua halaman, menu HP, dan Home",
+        "Tamu mengisi form (jenis: fitur/bug/tampilan/lainnya, halaman terkait, judul, isi, nama & kontak opsional) lalu kirim",
+        "Saran tampil di daftar publik dengan status 'Baru'; kontak pengirim tidak ikut terkirim ke publik",
+        "Kolom tersembunyi (honeypot) terisi -> dianggap bot, tidak disimpan; isi < 10 huruf ditolak; maks 5 saran / 10 menit per pengirim",
+        "Pengguna login biasa & tamu ditolak mengubah status; System Manager mengubah status (baru/ditinjau/dikerjakan/selesai/disembunyikan) + tanggapan",
+        "Saran tidak tercampur ke forum Masukan Masyarakat per bencana",
+        "Browser HP 390px & desktop (Playwright, produksi): tanpa error JS, tanpa scroll horizontal, kirim form berhasil"
+      ],
+      "hasil": "Lulus. Tes test_saran 4/4, suite 712 OK. Produksi: 2 saran uji [SIMULASI] tersimpan, tampil di daftar, kontak tidak bocor, tidak muncul di forum bencana.",
+      "status": "lulus"
+    },
+    {
       "id": "MU-KARHUTLA-1",
       "tanggal": "2026-11-08",
       "kategori": "Organisasi & Ortom · Organisasi tertutup (TNI)",

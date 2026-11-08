@@ -36,7 +36,8 @@
     try { evs = await window.RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters", {}); } catch (e) {}
     evs = Array.isArray(evs) ? evs : ((evs && (evs.events || evs.disasters)) || []);
     var cur = getEventId2();
-    if (!cur && evs.length) {                      // tanpa ?event: pilih bencana aktif pertama
+    var known = function (id) { return evs.some(function (e) { return (e.id || e.name) === id; }); };
+    if (evs.length && (!cur || (!known(cur) && !new URLSearchParams(location.search).get("program")))) {   // tanpa ?event / bencana contoh: pilih bencana aktif pertama
       cur = evs[0].id || evs[0].name;
       var u = new URL(location.href); u.searchParams.set("event", cur); history.replaceState(null, "", u.toString());
     }

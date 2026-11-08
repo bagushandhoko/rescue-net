@@ -13,3 +13,23 @@ h1, h2, h3, h4,
 code, pre, kbd, samp, .mono, [class*="monospace"] {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
 }
+
+/* Owner 2026-11-08: "semua yang bisa diklik, ubah tampilan mouse-nya" — kursor tangan untuk semua yang bisa diklik,
+   kursor dilarang untuk yang nonaktif. Berlaku di semua halaman (file ini dimuat di setiap halaman). */
+a[href], button, summary, select, label[for],
+input[type=checkbox], input[type=radio], input[type=file], input[type=submit], input[type=button], input[type=reset],
+input[type=color], input[type=range], [role=button], [role=tab], [role=link], [role=menuitem], [role=option],
+[onclick], [tabindex]:not([tabindex="-1"]):not(input):not(textarea), .btn, .rn-tab, .chip[data-filter],
+[data-program], [data-copy], [data-open-donate], [data-close-donate], [data-manage-go], [data-kpi], [data-tab],
+[data-filter], [data-act], [data-amt], [data-method], [data-place], [data-unplace], [data-doc-del], [data-set-status],
+[data-donate-act], [data-join-org], .rn-kpi-btn, .kpi-card[data-kpi], .leaflet-interactive, .leaflet-marker-icon,
+.rn-bell, .rn-aic-btn, .rn-drawer-hamburger, .rn-lang button {
+  cursor: pointer;
+}
+button:disabled, button[disabled], [aria-disabled="true"], input:disabled, select:disabled, .btn.disabled,
+fieldset:disabled button, fieldset:disabled input {
+  cursor: not-allowed;
+}
+input[type=text], input[type=email], input[type=password], input[type=number], input[type=tel], input[type=url],
+input[type=search], input:not([type]), textarea { cursor: text; }
+label:has(> input[type=checkbox]), label:has(> input[type=radio]) { cursor: pointer; }

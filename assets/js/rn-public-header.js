@@ -3,7 +3,7 @@
   const prefix = isHome() ? "" : "../";
 
   // Dua bahasa ID/EN (rn-i18n.js): dimuat sekali untuk semua halaman yang memakai header publik.
-  if (!document.querySelector('script[src*="rn-i18n.js"]')) { const s18 = document.createElement("script"); s18.src = `${prefix}assets/js/rn-i18n.js?v=i18n7-20261108`; document.head.appendChild(s18); }
+  if (!document.querySelector('script[src*="rn-i18n.js"]')) { const s18 = document.createElement("script"); s18.src = `${prefix}assets/js/rn-i18n.js?v=i18n8-20261108`; document.head.appendChild(s18); }
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
   const RN_EVENT_DEFAULT = "event-sim-001";
@@ -33,7 +33,7 @@
   window.rnActiveEvent = currentEventId();
 
   const links = [
-    { label: "About Us", children: [ { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` }, { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` }, { label: "Manual Teknis", href: `${prefix}pages/manual-teknis.html` }, { label: "Scenario Tested", href: `${prefix}pages/scenario-tested.html` }, { label: "Profil Organisasi", href: `${prefix}pages/profil-organisasi.html` }, { label: "Kebijakan Privasi", href: `${prefix}pages/kebijakan-privasi.html` } ] },
+    { label: "About Us", children: [ { label: "Fitur/Mock up", href: `${prefix}pages/mockup.html?screen=welcome` }, { label: "Manual Rescue Net", href: `${prefix}pages/manual.html` }, { label: "Panduan Langkah demi Langkah", href: `${prefix}pages/panduan.html` }, { label: "Manual Teknis", href: `${prefix}pages/manual-teknis.html` }, { label: "Scenario Tested", href: `${prefix}pages/scenario-tested.html` }, { label: "Profil Organisasi", href: `${prefix}pages/profil-organisasi.html` }, { label: "Kebijakan Privasi", href: `${prefix}pages/kebijakan-privasi.html` } ] },
     { label: "Home", href: `${prefix}index.html` }, { label: "Bencana Aktif", href: `${prefix}pages/bencana-aktif.html` },
     { label: "Control Centre", href: `${prefix}pages/war-room.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
     { label: "Install App", href: `${prefix}pages/install.html` },

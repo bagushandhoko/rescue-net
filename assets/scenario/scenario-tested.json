@@ -3,6 +3,22 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "DOK-PANDUAN-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Panduan Langkah demi Langkah (About Us)",
+      "tujuan": "Owner: mekanisme donasi & semua alur posko (pengaturan pemilik + publik/pengguna layanan) sejak registrasi dituangkan di manual.",
+      "akun": "-",
+      "langkah": [
+        "Halaman pages/panduan.html: 26 bab — memulai (daftar, 2 jalur bergabung, halaman tujuan), pengelola organisasi, 9 jenis posko (sisi pemilik & publik), mekanisme donasi (pemrakarsa & donatur), donasi barang, tender/alat/recovery, warga & relawan",
+        "Label tombol dicocokkan ke kode (Ajukan Keanggotaan, Tempatkan di posko, Jadikan/Cabut staf, Setting → Ganti Password)",
+        "Ditautkan dari menu About Us (header & menu HP) dan dari Manual"
+      ],
+      "hasil": "Terbit. Langkah donasi & SOP bergabung mengacu ke simulasi MU-LAZISMU-2 dan SOP-GABUNG-1 yang lulus.",
+      "status": "lulus",
+      "temuan": "Belum diterjemahkan ke Inggris (masuk terjemahan tahap 2)."
+    },
+    {
       "id": "MU-LAZISMU-2",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

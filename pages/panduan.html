@@ -1,0 +1,522 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Panduan Langkah demi Langkah</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=kelola-20261108">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font-20261019">
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=scrollgrp-20261102">
+  <link rel="stylesheet" href="../assets/css/rn-manual.css?v=minw-20261026">
+  <style>
+    .pg-roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 10px 0 4px; }
+    .pg-roles a { display: block; border: 1px solid rgba(104,64,45,.18); border-radius: 10px; padding: 10px 12px; text-decoration: none; color: inherit; background: #fffaf7; min-width: 0; overflow-wrap: anywhere; }
+    .pg-roles a b { display: block; margin-bottom: 2px; }
+    .pg-roles a span { font-size: 13px; color: #6d5a50; }
+    .pg-two { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin: 8px 0; }
+    .pg-side { border: 1px solid rgba(104,64,45,.15); border-radius: 10px; padding: 10px 12px; min-width: 0; overflow-wrap: anywhere; }
+    .pg-side h5 { margin: 0 0 6px; font-size: 15px; }
+    .pg-side.owner { background: #fff6f1; }
+    .pg-side.public { background: #f1faf4; }
+    .pg-side ol, .pg-side ul { margin: 0; padding-left: 18px; }
+    .pg-flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; margin: 6px 0 10px; }
+    .pg-flow span { border: 1px solid rgba(104,64,45,.2); border-radius: 999px; padding: 3px 10px; background: #fff; }
+    .pg-flow i { font-style: normal; color: #b0533a; }
+    .pg-demo { font-size: 13px; color: #5e4b40; background: #f3eee9; border-radius: 8px; padding: 6px 10px; margin: 6px 0; }
+  </style>
+</head>
+<body class="public-report-page">
+  <main class="manual" id="top">
+    <div class="manual-back">
+      <details class="rn-public-dropdown">
+        <summary class="btn back" aria-label="Tutup panel kembali">← Kembali</summary>
+        <div class="rn-public-dropdown-menu">
+          <a href="javascript:history.back()">Kembali ke halaman sebelumnya</a>
+          <a href="manual.html">Manual Rescue-Net</a>
+          <a href="../index.html">Beranda</a>
+        </div>
+      </details>
+    </div>
+
+    <section class="manual-hero">
+      <p class="eyebrow">Panduan langkah demi langkah</p>
+      <h1>Panduan per Peran</h1>
+      <p>Urutan kerja nyata dari <b>mendaftar akun</b>, <b>bergabung ke organisasi</b>, <b>membuat posko atau program donasi</b>, sampai <b>warga memakai layanan posko</b>. Setiap bagian dibagi dua: <b>sisi pengelola (pengaturan pemilik)</b> dan <b>sisi publik / pengguna layanan</b>.</p>
+      <p class="note">Penjelasan konsep dan fitur ada di <a href="manual.html">Manual Rescue-Net</a>. Contoh alur di sini sudah diuji dengan akun simulasi — lihat <a href="scenario-tested.html">Scenario Tested</a>. Akun demo bisa dicoba dari halaman <a href="auth.html">Masuk</a> (kata sandi demo tertulis di sana).</p>
+    </section>
+
+    <div class="manual-grid">
+      <nav class="manual-card manual-toc" aria-label="Daftar isi panduan">
+        <h2>Daftar isi</h2>
+        <p class="toc-group">A. Memulai</p>
+        <ol>
+          <li><a href="#peran">Pilih peran Anda</a></li>
+          <li><a href="#daftar">Mendaftar akun</a></li>
+          <li><a href="#gabung">Bergabung ke organisasi (2 jalur)</a></li>
+          <li><a href="#login">Masuk &amp; halaman tujuan otomatis</a></li>
+        </ol>
+        <p class="toc-group">B. Pengelola organisasi</p>
+        <ol start="5">
+          <li><a href="#buat-org">Membuat organisasi</a></li>
+          <li><a href="#kelola-anggota">Mengelola anggota</a></li>
+          <li><a href="#tempatkan">Menempatkan anggota di posko</a></li>
+        </ol>
+        <p class="toc-group">C. Posko</p>
+        <ol start="8">
+          <li><a href="#buat-posko">Membuat posko</a></li>
+          <li><a href="#atur-posko">Pengaturan pemilik posko</a></li>
+          <li><a href="#p-logistik">Posko Logistik &amp; Collection Hub</a></li>
+          <li><a href="#p-distribusi">Posko Distribusi / Armada</a></li>
+          <li><a href="#p-medis">Posko Medis</a></li>
+          <li><a href="#p-shelter">Shelter</a></li>
+          <li><a href="#p-dapur">Dapur Umum</a></li>
+          <li><a href="#p-relawan">Relawan di posko</a></li>
+          <li><a href="#p-alat">Posko Alat Kerja</a></li>
+          <li><a href="#p-komunikasi">Posko Komunikasi</a></li>
+          <li><a href="#p-assessment">Assessment &amp; Search &amp; Found</a></li>
+        </ol>
+        <p class="toc-group">D. Donasi &amp; program</p>
+        <ol start="18">
+          <li><a href="#donasi-alur">Mekanisme donasi dana</a></li>
+          <li><a href="#donasi-pemrakarsa">Pemrakarsa: membuat &amp; mengelola program</a></li>
+          <li><a href="#donasi-donatur">Donatur: menyumbang dana</a></li>
+          <li><a href="#donasi-barang">Donasi barang (Kirim Bantuan)</a></li>
+          <li><a href="#program-lain">Program lain: tender, alat, recovery</a></li>
+        </ol>
+        <p class="toc-group">E. Publik &amp; pengguna layanan</p>
+        <ol start="23">
+          <li><a href="#warga">Warga terdampak</a></li>
+          <li><a href="#relawan">Relawan perorangan</a></li>
+          <li><a href="#aman">Aman &amp; jujur memakai Rescue-Net</a></li>
+        </ol>
+      </nav>
+
+      <article class="manual-card">
+        <!-- ================= A ================= -->
+        <header class="group-head" id="memulai">
+          <p class="group-label">Bagian A</p>
+          <h2>Memulai</h2>
+        </header>
+
+        <section id="peran">
+          <h3>1. Pilih peran Anda</h3>
+          <p>Klik peran yang paling sesuai untuk langsung ke langkah-langkahnya.</p>
+          <div class="pg-roles">
+            <a href="#warga"><b>Warga terdampak</b><span>Lapor kondisi, cari posko, terima bantuan, cari keluarga hilang.</span></a>
+            <a href="#donasi-donatur"><b>Donatur</b><span>Menyumbang dana ke program atau mengirim barang ke posko.</span></a>
+            <a href="#relawan"><b>Relawan</b><span>Menawarkan diri, minta jemputan &amp; tempat menginap, check-in di posko.</span></a>
+            <a href="#buat-org"><b>Pengurus organisasi</b><span>Membuat organisasi, menyetujui/menambah anggota, membuka posko.</span></a>
+            <a href="#buat-posko"><b>Petugas / pemilik posko</b><span>Mendaftarkan posko, mengatur, menjalankan layanannya.</span></a>
+            <a href="#donasi-pemrakarsa"><b>Pemrakarsa program donasi</b><span>Mis. LAZISMU: membuat program, rekening, QRIS, konfirmasi dana.</span></a>
+          </div>
+        </section>
+
+        <section id="daftar">
+          <h3>2. Mendaftar akun</h3>
+          <ol class="steps">
+            <li>Buka <a href="auth.html#daftar">Masuk &amp; Registrasi → tab Daftar</a>.</li>
+            <li>Isi nama lengkap, email, nomor HP, dan kata sandi (minimal 8 karakter, ada huruf besar dan angka). Atau pakai tombol <b>Google</b>.</li>
+            <li>Pilih peran: <b>Relawan</b>, <b>Donatur</b>, <b>Organisasi</b>, <b>Petugas Posko</b>, atau <b>Pelapor Terverifikasi</b>. Peran hanya menentukan halaman awal; satu akun tetap bisa berdonasi, melapor, dan menjadi relawan.</li>
+            <li>Centang <b>persetujuan Kebijakan Privasi</b> (wajib). Centang juga "bersedia diverifikasi" bila Anda ingin dipercaya lebih cepat, lalu tulis satu referensi (mis. ketua RT, kepala sekolah).</li>
+            <li>Tekan <b>Daftar</b>. Anda langsung masuk.</li>
+          </ol>
+          <p class="note">Akun yang <b>dibuatkan oleh pengelola organisasi</b> (jalur 2 di bawah) tidak perlu mendaftar; Anda menerima email dan kata sandi sementara dari pengelola, lalu wajib menggantinya.</p>
+        </section>
+
+        <section id="gabung">
+          <h3>3. Bergabung ke organisasi — dua jalur resmi</h3>
+          <p>Anggota organisasi bisa mengelola posko organisasinya, membuat program donasi atas nama organisasi, dan ikut dalam koordinasi internal. Ada dua cara menjadi anggota:</p>
+          <div class="pg-two">
+            <div class="pg-side public">
+              <h5>Jalur 1 — Mendaftar sendiri lalu disetujui</h5>
+              <div class="pg-flow"><span>Daftar akun</span><i>→</i><span>Ajukan Keanggotaan</span><i>→</i><span>Pengelola menyetujui</span><i>→</i><span>Anggota</span></div>
+              <ol>
+                <li>Setelah punya akun, buka <a href="organisasi-posko.html">Organisasi &amp; Posko</a>, pilih organisasi, tekan <b>Ajukan Keanggotaan</b>.</li>
+                <li>Permohonan Anda muncul di antrean <b>Permohonan menunggu</b> milik pengelola organisasi.</li>
+                <li>Pengelola menekan <b>Setujui</b> (bisa sekaligus menandai "identitas terverifikasi pusat") atau <b>Tolak</b> dengan alasan.</li>
+                <li>Status keanggotaan terlihat di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → Keanggotaan Anda.</li>
+              </ol>
+            </div>
+            <div class="pg-side owner">
+              <h5>Jalur 2 — Ditambahkan langsung oleh pengelola</h5>
+              <div class="pg-flow"><span>Pengelola isi email</span><i>→</i><span>Akun &amp; keanggotaan jadi</span><i>→</i><span>Anggota login &amp; ganti sandi</span></div>
+              <ol>
+                <li>Pengelola membuka <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → <b>➕ Tambah Anggota Langsung</b>.</li>
+                <li>Isi email, nama lengkap, dan nomor HP. Bila email sudah terdaftar, orang itu langsung menjadi anggota.</li>
+                <li>Bila email belum terdaftar, akun dibuatkan dan <b>kata sandi sementara tampil satu kali</b>. Serahkan secara pribadi (bukan di grup).</li>
+                <li>Anggota masuk dengan kata sandi sementara, lalu menggantinya di <a href="ai-settings.html">Setting → Ganti Password</a>.</li>
+              </ol>
+              <p class="pg-demo">Hanya pengelola utama (pemilik/wakil) yang bisa membuatkan akun baru. Staf hanya bisa menambahkan orang yang sudah punya akun.</p>
+            </div>
+          </div>
+          <p class="note">Organisasi dengan <b>komando terpusat</b> (mis. TNI) tidak menerima pendaftaran mandiri; semua akun anggotanya dibuat oleh pusat (jalur 2).</p>
+        </section>
+
+        <section id="login">
+          <h3>4. Masuk &amp; halaman tujuan otomatis</h3>
+          <p>Setelah masuk, Rescue-Net membuka halaman kerja Anda sendiri:</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Anda adalah</th><th>Langsung dibuka</th></tr></thead>
+            <tbody>
+              <tr><td>Petugas posko yang sudah ditempatkan</td><td>Halaman posko Anda sesuai jenisnya (logistik, medis, shelter, dapur, …) pada bencana terbaru yang ditangani.</td></tr>
+              <tr><td>Pemrakarsa program donasi tanpa posko (mis. LAZISMU)</td><td>Program Anda dengan panel <b>⚙️ Kelola Program Anda</b>.</td></tr>
+              <tr><td>Pengurus/anggota organisasi tanpa posko</td><td>Halaman organisasi &amp; posko.</td></tr>
+              <tr><td>Lainnya</td><td>Beranda.</td></tr>
+            </tbody>
+          </table></div>
+        </section>
+
+        <!-- ================= B ================= -->
+        <header class="group-head" id="org">
+          <p class="group-label">Bagian B</p>
+          <h2>Pengelola organisasi</h2>
+        </header>
+
+        <section id="buat-org">
+          <h3>5. Membuat organisasi</h3>
+          <ol class="steps">
+            <li>Daftar dengan peran <b>Organisasi</b> (akun + organisasi dibuat sekaligus, Anda menjadi pemilik), atau buka <a href="organisasi-posko.html">Organisasi &amp; Posko</a> → <b>Tambah Kelompok</b>.</li>
+            <li>Isi nama, jenis (komunitas, NGO, pemerintah, perusahaan, kampus), dan pilih <b>terbuka</b> atau <b>tertutup</b>. Tertutup: publik hanya melihat ringkasan.</li>
+            <li>Bila organisasi Anda cabang/ortom dari organisasi lain, pilih <b>induk</b>-nya; induk menyetujui tautan itu.</li>
+            <li>Organisasi baru berstatus menunggu verifikasi. Setelah diverifikasi super admin, program dan poskonya bisa tampil publik dan rekening programnya boleh dipublikasikan.</li>
+          </ol>
+        </section>
+
+        <section id="kelola-anggota">
+          <h3>6. Mengelola anggota</h3>
+          <p>Semua di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → <b>Keanggotaan Organisasi</b>:</p>
+          <ul>
+            <li><b>Permohonan menunggu</b> — Setujui / Tolak (alasan wajib bila menolak).</li>
+            <li><b>Identitas terverifikasi pusat</b> — centang hanya bila Anda benar-benar mengenal orangnya. Tanda ini menentukan apakah rekening/QRIS program buatan anggota boleh tampil ke publik.</li>
+            <li><b>Tambah Anggota Langsung</b> — jalur 2 (lihat bagian 3).</li>
+            <li><b>Jadikan staf</b> / <b>Cabut staf</b> — staf boleh memutuskan permohonan anggota, tetapi tidak bisa mengubah pengaturan atau membuat akun.</li>
+            <li><b>Keluarkan</b> — anggota yang keluar langsung kehilangan akses ke posko dan program organisasi.</li>
+          </ul>
+        </section>
+
+        <section id="tempatkan">
+          <h3>7. Menempatkan anggota di posko</h3>
+          <ol class="steps">
+            <li>Pastikan orangnya sudah anggota (jalur 1 atau 2).</li>
+            <li>Di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → daftar <b>Anggota</b>, tekan <b>Tempatkan di posko</b> pada anggota itu, lalu pilih poskonya.</li>
+            <li>Login berikutnya, anggota itu langsung dibawa ke halaman poskonya.</li>
+          </ol>
+          <p class="pg-demo">Contoh teruji: Bu Ratna mendaftar sendiri → minta bergabung ke Komunitas Landrover → disetujui → ditempatkan di Dapur Umum → login langsung ke halaman dapur.</p>
+        </section>
+
+        <!-- ================= C ================= -->
+        <header class="group-head" id="posko">
+          <p class="group-label">Bagian C</p>
+          <h2>Posko: pengaturan pemilik &amp; layanan untuk publik</h2>
+        </header>
+
+        <section id="buat-posko">
+          <h3>8. Membuat posko</h3>
+          <div class="pg-flow"><span>Registrasi Posko</span><i>→</i><span>Persetujuan</span><i>→</i><span>Kelola Posko Saya</span><i>→</i><span>Layanan berjalan</span></div>
+          <ol class="steps">
+            <li>Buka <a href="registrasi-posko.html">Registrasi Posko</a>. Isi nama, <b>jenis posko</b> (boleh lebih dari satu fungsi), lokasi GPS (📍 lokasi saat ini atau 🗺️ pilih di peta), kontak penanggung jawab.</li>
+            <li>Centang <b>bencana yang ditangani</b>. Bila bencananya belum ada, tekan <b>+ Daftarkan bencana baru</b>.</li>
+            <li>Pilih organisasi pemilik posko. Posko organisasi mengikuti aturan organisasinya (mis. boleh tidaknya posko dibuka untuk publik).</li>
+            <li>Tekan <b>Simpan Posko</b>, lalu <b>Ajukan Verifikasi</b>. Posko independen bisa <b>Minta Verifikasi Wilayah</b> ke lurah / polsek / tokoh setempat.</li>
+            <li>Setelah disetujui, posko muncul di peta dan Anda mengelolanya dari <a href="kelola-posko.html">Kelola Posko Saya</a>.</li>
+          </ol>
+        </section>
+
+        <section id="atur-posko">
+          <h3>9. Pengaturan pemilik posko (Kelola Posko Saya)</h3>
+          <p>Buka lewat tombol 🔧 di halaman posko atau menu <a href="kelola-posko.html">Kelola Posko</a>. Hanya pemilik/pengelola posko yang melihat halaman ini.</p>
+          <ul>
+            <li><b>Perlu tindakan</b> — angka merah: permintaan relawan, booking armada, stok kedaluwarsa, kebutuhan terbuka.</li>
+            <li><b>📞 Kontak &amp; status posko</b> — buka/tutup, kontak yang tampil, siapa yang boleh melihat nomor HP.</li>
+            <li><b>📦 Kebutuhan posko</b> — tambah kebutuhan baru; otomatis tampil di <a href="kebutuhan-publik.html">Kebutuhan Aktual</a> untuk donatur.</li>
+            <li><b>📊 Stok posko</b> &amp; <b>stok kedaluwarsa</b>.</li>
+            <li><b>🚚 Alat transport</b> — status armada &amp; posisi GPS.</li>
+            <li><b>Setting → Bencana yang ditangani</b> — tambah/kurangi kapan saja.</li>
+            <li><b>Notifikasi WhatsApp</b> — nomor posko penerima notifikasi (bukan HP pribadi).</li>
+          </ul>
+        </section>
+
+        <section id="p-logistik">
+          <h3>10. Posko Logistik &amp; Collection Hub</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Pengelola posko</h5><ol>
+              <li>Di <a href="posko-logistik.html">Posko Logistik</a>: kartu stok per barang, catat <b>barang masuk</b> (bantuan diterima) dan <b>keluar</b>.</li>
+              <li>Tulis kebutuhan dan catatan "tidak dibutuhkan" agar donatur tidak salah kirim.</li>
+              <li>Tekan <b>Kirim</b> pada kartu stok untuk mengirim ke posko lain: pilih tujuan, jumlah, armada atau langsung, lalu cetak label/barcode.</li>
+              <li>Saat barang tiba di tujuan, penerima memindai label di <a href="scan.html">Pindai Barcode</a> → stok tujuan bertambah otomatis.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Publik &amp; donatur</h5><ul>
+              <li>Lihat <a href="kebutuhan-publik.html">Kebutuhan Aktual</a>: dibutuhkan sekarang, sudah cukup, dan tidak dibutuhkan.</li>
+              <li>Kirim barang lewat <a href="kirim-bantuan.html">Kirim Bantuan</a> (bagian 21) dan pantau di <a href="lacak-logistik.html">Lacak Logistik</a> dengan kode RN-XXXXXXXX.</li>
+              <li>Halaman posko menampilkan kondisi logistik dan kebutuhan mendesak.</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <section id="p-distribusi">
+          <h3>11. Posko Distribusi / Armada</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Pengelola armada</h5><ol>
+              <li>Di <a href="posko-distribusi.html">Posko Distribusi</a> tekan <b>Tambah armada</b>: kapasitas, jadwal, titik serah, syarat barang, bencana dan posko yang dilayani.</li>
+              <li>Periksa <b>Booking Masuk</b> → Konfirmasi / Tolak. Kiriman yang dikonfirmasi otomatis naik ke armada.</li>
+              <li>Ambil kiriman dari <b>antrean jemput</b>; bagikan posisi GPS armada selama perjalanan.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Posko pengirim &amp; publik</h5><ul>
+              <li>Posko logistik memilih armada saat menekan Kirim; status booking terlihat di kartu stok.</li>
+              <li>Relawan bisa memesan kursi armada sebagai jemputan dari <a href="relawan-saya.html">Relawan Saya</a>.</li>
+              <li>Publik melihat status kiriman lewat kode lacak.</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <section id="p-medis">
+          <h3>12. Posko Medis</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Tenaga medis / pengelola</h5><ol>
+              <li>Di <a href="posko-medis-detail.html">Posko Medis</a>: <b>+ Tambah Kasus</b> dengan <b>kode anonim</b> (bukan nama asli), triase, kondisi, rujukan.</li>
+              <li><b>+ Catat Penerimaan</b> obat/alat bantuan → stok medis bertambah.</li>
+              <li><b>+ Catat Pemakaian</b> obat/alat; <b>+ Tambah Kebutuhan</b> medis.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Warga &amp; publik</h5><ul>
+              <li>Temukan posko medis terdekat di <a href="map.html">Peta</a> atau halaman bencana; kontak tampil untuk pengguna yang login.</li>
+              <li>Data pasien tidak pernah tampil ke publik — hanya jumlah dan kebutuhan obat/alat.</li>
+              <li>Donatur obat/alat melihat kebutuhan medis di Kebutuhan Aktual.</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <section id="p-shelter">
+          <h3>13. Shelter (pengungsian)</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Pengelola shelter</h5><ol>
+              <li>Di <a href="shelter-detail.html">Shelter</a>: catat okupansi, kapasitas, air &amp; sanitasi, kelompok rentan.</li>
+              <li><b>Check-in / check-out</b> keluarga penghuni.</li>
+              <li>Pembagian bantuan per keluarga di <a href="kartu-keluarga.html">Kartu Keluarga</a>: buat <b>putaran distribusi</b>, terbitkan &amp; cetak kartu (QR tanpa nama), lalu <b>pindai kartu</b> saat keluarga menerima — satu keluarga hanya sekali per putaran.</li>
+              <li>Rencana jangka panjang (kembali/relokasi) di <a href="perencanaan-pengungsi.html">Perencanaan Pengungsi</a>.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Pengungsi &amp; publik</h5><ul>
+              <li>Datang ke shelter, petugas mencatat check-in keluarga Anda.</li>
+              <li>Simpan <b>kartu keluarga</b> (QR); tunjukkan setiap pembagian bantuan.</li>
+              <li>Publik melihat okupansi dan kebutuhan dasar shelter (tanpa data penghuni).</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <section id="p-dapur">
+          <h3>14. Dapur Umum</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Pengelola dapur</h5><ol>
+              <li>Di <a href="dapur-umum.html">Dapur Umum</a>: target jiwa dilayani, <b>Catat Produksi Makanan</b> (porsi) — bahan otomatis berkurang dari stok.</li>
+              <li>Pantau bahan kritis dan status gas/BBM; tambahkan kebutuhan bahan.</li>
+              <li>Catat distribusi makanan ke shelter/posko lain.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Publik &amp; donatur</h5><ul>
+              <li>Lihat kebutuhan bahan dapur di Kebutuhan Aktual, kirim lewat Kirim Bantuan.</li>
+              <li>Relawan dapur menawarkan diri lewat Relawan Saya.</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <section id="p-relawan">
+          <h3>15. Relawan di posko</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Pengelola posko</h5><ol>
+              <li>Tawaran relawan masuk ke <b>🙋 Permintaan relawan</b> (Kelola Posko) dan <a href="management-relawan.html">Manajemen Relawan</a>.</li>
+              <li><b>Setujui</b> = relawan langsung ditempatkan; tolak bila penuh.</li>
+              <li>Cetak <b>QR hari ini</b> di <a href="kehadiran-relawan.html">Kehadiran Relawan</a> dan lihat siapa yang sedang di lokasi.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Relawan</h5><ul>
+              <li>Lihat bagian 24.</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <section id="p-alat">
+          <h3>16. Posko Alat Kerja</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Pengelola alat</h5><ol>
+              <li>Di <a href="posko-alat.html">Posko Alat Kerja</a> → <b>Tambah Alat</b>: kategori, spesifikasi, kondisi, foto.</li>
+              <li>Atur peminjaman/penugasan alat ke lokasi kerja.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Pemilik alat &amp; publik</h5><ul>
+              <li>Punya alat (genset, perahu, alat berat)? <a href="tawarkan-alat.html">Tawarkan / Sumbangkan Alat</a>: hibah, pinjam, atau sewa.</li>
+              <li>Lihat alat yang tersedia di <a href="alat-kerja.html">Recovery &amp; Alat Kerja</a>; kontak penyedia untuk pengguna yang login.</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <section id="p-komunikasi">
+          <h3>17. Posko Komunikasi</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Pengelola</h5><ol>
+              <li>Di <a href="alat-komunikasi.html">Alat Komunikasi</a>: catat perangkat, frekuensi, kanal, call sign, jangkauan, daya.</li>
+              <li>Posko lain bisa menyatakan dukungan komunikasi yang dibutuhkan.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Publik &amp; relawan radio</h5><ul>
+              <li>Frekuensi dan call sign posko tampil di bar kontak posko untuk publik.</li>
+              <li>Relawan ORARI/RAPI mendaftar sebagai node di <a href="relawan-saya.html">Relawan Saya</a>.</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <section id="p-assessment">
+          <h3>18. Assessment lapangan &amp; Search &amp; Found</h3>
+          <div class="pg-two">
+            <div class="pg-side owner"><h5>Tim lapangan / operator</h5><ol>
+              <li>Tim assessment mencatat kondisi, kebutuhan, dan foto bukti di halaman posko.</li>
+              <li>Di <a href="search-found.html">Search &amp; Found</a> operator memeriksa <b>Papan Pencocokan</b> antara laporan hilang dan ditemukan, lalu memverifikasi dan mencatat serah terima.</li>
+            </ol></div>
+            <div class="pg-side public"><h5>Keluarga &amp; warga</h5><ul>
+              <li>Masuk, lalu <b>+ Lapor Hilang</b> (orang, barang/aset, hewan) atau <b>+ Lapor Ditemukan</b>.</li>
+              <li>Nama lengkap hanya terlihat oleh operator berwenang.</li>
+              <li>Barang ditemukan yang milik Anda: <b>Ajukan Klaim</b>.</li>
+            </ul></div>
+          </div>
+        </section>
+
+        <!-- ================= D ================= -->
+        <header class="group-head" id="donasi">
+          <p class="group-label">Bagian D</p>
+          <h2>Donasi &amp; program</h2>
+        </header>
+
+        <section id="donasi-alur">
+          <h3>19. Mekanisme donasi dana</h3>
+          <p>Donasi dana di Rescue-Net <b>tidak melewati rekening Rescue-Net</b>. Donatur mentransfer langsung ke rekening atau QRIS milik <b>pemrakarsa program</b> (lembaga/organisasi), lalu mengisi formulir agar tercatat. Pemrakarsa mencocokkan dengan rekening koran dan mengonfirmasi.</p>
+          <div class="pg-flow"><span>Pemrakarsa membuat program</span><i>→</i><span>Isi rekening &amp; QRIS</span><i>→</i><span>Program aktif</span><i>→</i><span>Donatur transfer / scan QRIS</span><i>→</i><span>Donatur isi formulir</span><i>→</i><span>Menunggu konfirmasi</span><i>→</i><span>Pemrakarsa cek rekening koran &amp; konfirmasi</span><i>→</i><span>Tampil di Daftar Donatur</span></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Pengaman</th><th>Cara kerjanya</th></tr></thead>
+            <tbody>
+              <tr><td>Rekening/QRIS hanya dari pemrakarsa terverifikasi</td><td>Rekening dan QRIS baru tampil ke publik bila organisasi pemilik program sudah diverifikasi — dan, untuk program buatan anggota, bila anggota itu sudah ditandai "terverifikasi pusat" oleh organisasinya. Sebelum itu hanya pengelola yang melihatnya.</td></tr>
+              <tr><td>Donasi tidak langsung tampil</td><td>Donasi berstatus <b>menunggu</b> sampai pemrakarsa memastikan dana benar masuk.</td></tr>
+              <tr><td>Rekening koran disamarkan</td><td>Rekening koran yang diunggah untuk transparansi wajib sudah menyamarkan nama/nomor rekening pribadi pengirim.</td></tr>
+              <tr><td>Program ditutup</td><td>Program yang <b>selesai</b> atau <b>dibatalkan</b> tidak menerima donasi lagi.</td></tr>
+              <tr><td>Hanya pemrakarsa yang mengubah</td><td>Rekening, QRIS, dan data program hanya bisa diubah pembuat program dan pengurus organisasinya. Anggota lain ditolak.</td></tr>
+            </tbody>
+          </table></div>
+          <p class="note">Jangan pernah transfer ke rekening atau QRIS yang dikirim lewat pesan pribadi. Pakai hanya yang tampil di halaman program.</p>
+        </section>
+
+        <section id="donasi-pemrakarsa">
+          <h3>20. Pemrakarsa: membuat &amp; mengelola program donasi</h3>
+          <p>Contoh: LAZISMU, lembaga amil di bawah Muhammadiyah. Syaratnya: Anda anggota organisasi yang sudah disetujui (bagian 3).</p>
+          <h4>A. Membuat program</h4>
+          <ol class="steps">
+            <li>Buka <a href="program-khusus.html">Program Khusus</a> → panel <b>Buat Program Donasi</b>.</li>
+            <li><b>Atas nama organisasi</b>: pilih organisasi Anda (terisi otomatis dari keanggotaan Anda).</li>
+            <li>Isi nama program, deskripsi singkat, sasaran/penerima manfaat, lokasi sasaran, dan target dana. Tekan <b>Buat Program</b>.</li>
+            <li>Halaman langsung membuka program Anda dengan panel <b>⚙️ Kelola Program Anda</b>. Mulai sekarang, setiap Anda login, panel ini yang terbuka.</li>
+          </ol>
+          <h4>B. Panel Kelola Program Anda — lengkapi lima langkah</h4>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Langkah</th><th>Yang dilakukan</th></tr></thead>
+            <tbody>
+              <tr><td>1. Data program</td><td><b>✏️ Ubah Data Program</b>: deskripsi, sasaran, target dana, lokasi, tanggal mulai/selesai, penanggung jawab dan narahubung. Rencana kerja (milestone, lokasi, kebutuhan) di tab <b>Rencana Kerja</b>.</td></tr>
+              <tr><td>2. Rekening</td><td>Isi bank, nomor rekening, dan atas nama — <b>Simpan Rekening</b>.</td></tr>
+              <tr><td>3. QRIS</td><td><b>Unggah QRIS</b>: satu gambar (PNG/JPG/WEBP); unggahan baru mengganti yang lama.</td></tr>
+              <tr><td>4. Konfirmasi donasi</td><td>Saat ada donasi masuk, langkah ini berwarna 🔔. Tekan <b>Konfirmasi sekarang</b> → cocokkan dengan mutasi rekening → <b>Konfirmasi Diterima</b> atau <b>Tolak</b> (dengan alasan).</td></tr>
+              <tr><td>5. Rekening koran</td><td>Unggah per periode, <b>centang "data pribadi sudah disamarkan"</b>. Tampil di Dokumen Program sebagai bukti transparansi.</td></tr>
+            </tbody>
+          </table></div>
+          <h4>C. Status program</h4>
+          <ul>
+            <li><b>▶ Aktifkan</b> — program siap menerima donasi.</li>
+            <li><b>✔ Tandai Selesai</b> — program tuntas; donasi ditutup (bisa diaktifkan lagi).</li>
+            <li><b>✕ Batalkan Program</b> — final, <b>alasan wajib</b>; tidak bisa bila masih ada donasi menunggu konfirmasi.</li>
+          </ul>
+          <h4>D. Laporan untuk donatur</h4>
+          <ul>
+            <li>Catat progres lapangan dan unggah RAB / gambar rencana di <b>Dokumen Program</b>.</li>
+            <li>Profil kerja organisasi Anda (posko, program, alur bantuan) tampil di <a href="profil-organisasi.html">Profil Organisasi</a>.</li>
+          </ul>
+          <p class="pg-demo">Akun demo: <b>LAZISMU — Pemrakarsa Program Donasi</b> di halaman Masuk.</p>
+        </section>
+
+        <section id="donasi-donatur">
+          <h3>21. Donatur: menyumbang dana</h3>
+          <ol class="steps">
+            <li>Buka <a href="program-khusus.html">Program Khusus</a> (atau Kirim Bantuan → Donasi ke Program Khusus) dan pilih program. Perhatikan tanda <b>✔ Pemrakarsa terverifikasi</b>.</li>
+            <li>Di kotak <b>💚 Donasi ke Program Ini</b> paling atas: transfer ke rekening yang tertera (tombol <b>Salin</b>) atau scan <b>QRIS</b>.</li>
+            <li>Tekan <b>Sudah transfer? Isi formulir donasi</b> → isi nominal dan pesan, centang <b>anonim</b> bila tidak ingin nama Anda tampil → <b>Kirim Donasi</b> (perlu login).</li>
+            <li>Donasi Anda berstatus <b>menunggu</b> sampai pemrakarsa mengonfirmasi; setelah itu nama (atau "Donatur Anonim") dan nominal tampil di <b>Daftar Donatur</b>.</li>
+            <li>Pantau penggunaan dana: progres, Dokumen Program (RAB, rekening koran), dan Riwayat.</li>
+          </ol>
+        </section>
+
+        <section id="donasi-barang">
+          <h3>22. Donasi barang (Kirim Bantuan)</h3>
+          <ol class="steps">
+            <li>Cek <a href="kebutuhan-publik.html">Kebutuhan Aktual</a> dulu — kirim yang benar-benar dibutuhkan.</li>
+            <li>Buka <a href="kirim-bantuan.html">Kirim Bantuan</a>, pilih bencana dan posko tujuan (hanya posko yang dibuka untuk publik).</li>
+            <li>Isi jenis dan jumlah barang, pilih <b>antar sendiri</b> atau <b>minta dijemput</b>.</li>
+            <li>Simpan <b>kode lacak</b>, <b>Aid ID</b>, dan <b>Kode Edit</b>. Pantau di <a href="lacak-logistik.html">Lacak Logistik</a>; ubah/batalkan tanpa akun di <a href="edit-bantuan.html">Edit Bantuan Saya</a>.</li>
+            <li>Posko memindai label saat barang tiba; status kiriman Anda berubah menjadi diterima.</li>
+          </ol>
+        </section>
+
+        <section id="program-lain">
+          <h3>23. Program lain: tender, alat, recovery</h3>
+          <ul>
+            <li><b>Pengadaan &amp; Tender</b> — pekerjaan pembangunan yang didanai donasi ditenderkan terbuka di <a href="pengadaan-tender.html">Pengadaan &amp; Tender</a>: penyelenggara memasang RAB &amp; gambar kerja, siapa pun yang memenuhi syarat <b>Ajukan Penawaran</b>, penyelenggara menetapkan pemenang.</li>
+            <li><b>Tawarkan alat</b> — hibah / pinjam / sewa alat di <a href="tawarkan-alat.html">Tawarkan Alat</a> (bagian 16).</li>
+            <li><b>Recovery</b> — proyek pemulihan memasang kebutuhan tenaga; relawan menekan <b>Daftar jadi relawan</b>, pengelola menerima/menolak.</li>
+          </ul>
+        </section>
+
+        <!-- ================= E ================= -->
+        <header class="group-head" id="publik">
+          <p class="group-label">Bagian E</p>
+          <h2>Publik &amp; pengguna layanan</h2>
+        </header>
+
+        <section id="warga">
+          <h3>24. Warga terdampak</h3>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Saya ingin…</th><th>Caranya</th></tr></thead>
+            <tbody>
+              <tr><td>Melaporkan kondisi / kebutuhan</td><td><a href="laporan-masyarakat.html">Laporkan Kondisi Lapangan</a>: tentukan lokasi (Gunakan lokasi saya), jumlah terdampak, kebutuhan → <b>Kirim Laporan</b>. Laporan diverifikasi dulu lalu diteruskan ke posko yang tepat.</td></tr>
+              <tr><td>Mencari posko terdekat</td><td><a href="map.html">Peta</a> atau <a href="bencana-aktif.html">Bencana Aktif</a> → pilih posko → lihat layanan, kebutuhan, dan kontak (kontak untuk pengguna login).</td></tr>
+              <tr><td>Mengungsi</td><td>Datang ke shelter; petugas mencatat check-in keluarga dan memberi kartu keluarga (bagian 13).</td></tr>
+              <tr><td>Berobat</td><td>Datang ke posko medis; data Anda dicatat dengan kode anonim (bagian 12).</td></tr>
+              <tr><td>Mencari keluarga / barang hilang</td><td><a href="search-found.html">Search &amp; Found</a> (bagian 18).</td></tr>
+              <tr><td>Usul, keluhan, pertanyaan</td><td><a href="masukan-masyarakat.html">Masukan Masyarakat</a> (bisa tanpa akun) atau <a href="saran.html">Saran</a> untuk aplikasi.</td></tr>
+            </tbody>
+          </table></div>
+        </section>
+
+        <section id="relawan">
+          <h3>25. Relawan perorangan</h3>
+          <ol class="steps">
+            <li>Daftar (peran Relawan) lalu buka <a href="relawan-saya.html">Relawan Saya</a>.</li>
+            <li>Centang <b>bencana yang ingin dibantu</b>; isi profil: keahlian, peralatan, tanggal tersedia.</li>
+            <li>Per bencana: <b>tawarkan diri</b> ke posko, pesan <b>kursi armada</b> (jemputan), atau <b>tempat menginap</b>. Posko yang memutuskan.</li>
+            <li>Setelah disetujui, tiba di posko → <b>Check-in</b> (scan QR posko) di <a href="kehadiran-relawan.html">Kehadiran Relawan</a>; <b>Check-out</b> saat pulang. Berfungsi tanpa sinyal.</li>
+            <li>Punya radio? Daftar sebagai <b>node komunikasi</b> di Relawan Saya.</li>
+          </ol>
+        </section>
+
+        <section id="aman">
+          <h3>26. Aman &amp; jujur memakai Rescue-Net</h3>
+          <ul>
+            <li>Jangan menulis nomor HP, alamat lengkap, atau nama korban di kolom yang tampil publik.</li>
+            <li>Transfer donasi hanya ke rekening/QRIS di halaman program — bukan dari pesan pribadi.</li>
+            <li>Kata sandi sementara dari pengelola segera diganti; jangan dibagikan di grup.</li>
+            <li>Akun demo hanya untuk latihan; jangan masukkan data pribadi sungguhan.</li>
+            <li>Kebijakan lengkap: <a href="kebijakan-privasi.html">Kebijakan Privasi</a>.</li>
+          </ul>
+        </section>
+
+        <a class="back-top" href="#top">Kembali ke atas</a>
+      </article>
+    </div>
+  </main>
+  <script src="../assets/js/rn-public-header.js?v=i18n8-20261108"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+  <script src="../assets/js/rn-mobile-drawer.js?v=panduan-20261108"></script>
+</body>
+</html>

@@ -7814,3 +7814,6 @@ body.home-page .rn-hero-cta { display: flex !important; flex-wrap: wrap; gap: 8p
 .rn-rev-reply{margin-top:8px;padding:8px 10px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;font-size:13px}
 .rn-rev-replyform{display:flex;gap:6px;margin-top:8px;align-items:flex-start}
 .rn-rev-replyform textarea{flex:1;min-width:0;font:inherit;font-size:13px;padding:6px}
+/* tab detail program: 6 tab — di HP geser ke samping, tidak terpotong (2026-11-09) */
+.rn-pk-detail-tabs{max-width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.rn-pk-detail-tabs .rn-tab{flex:0 0 auto;white-space:nowrap}

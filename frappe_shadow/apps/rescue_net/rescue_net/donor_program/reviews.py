@@ -34,7 +34,8 @@ def _visible_program(name):
 
 
 def _short_name(title):
-    parts = (title or "").split()
+    """'Budi Santoso' -> 'Budi S.' (tanda seperti '[SIMULASI]' dilewati)."""
+    parts = [w for w in (title or "").split() if not (w.startswith("[") and w.endswith("]"))]
     if not parts:
         return "Pengguna"
     return parts[0] + (" " + parts[1][0] + "." if len(parts) > 1 else "")

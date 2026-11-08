@@ -3,6 +3,23 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "PERBAIKAN-ALUR-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Perbaikan alur posko & fungsi pendukung (4 temuan + temuan baru)",
+      "tujuan": "Owner: perbaiki satu per satu temuan simulasi.",
+      "akun": "sim-lr-dapur, sim-mu-lazismu, tes otomatis",
+      "langkah": [
+        "SAR: petugas yang ditempatkan organisasi (tanpa peran global) mencocokkan laporan hilang (posko lain) dengan ditemukan (poskonya)",
+        "🔔 Pemberitahuan: permohonan anggota → pengelola; keputusan → pemohon; penempatan; donasi masuk → pemrakarsa; konfirmasi → donatur; Saran baru → super admin",
+        "Form radio: posko dipilih dari posko yang dikelola; bencana otomatis",
+        "Form dapur/shelter/relawan: isian contoh dihapus, posko terpilih otomatis (dicek di browser sebagai Bu Ratna)"
+      ],
+      "hasil": "Tes otomatis 739 lulus (+ test_search_found_placed_operator, test_inbox). Dicek di browser: 🔔 tampil; posko dapur terpilih otomatis; isian contoh kosong.",
+      "status": "lulus",
+      "temuan": "Ditemukan saat memeriksa: (a) pemberitahuan sudah ditulis sistem tetapi tidak pernah tampil di layar; (b) form Dapur Umum & Shelter terisi contoh posko-dapur-melati/posko-shelter-melati — risiko data masuk ke posko salah; (c) beberapa form memakai bencana contoh event-sim-001. Semua diperbaiki (7bc9b48, 1a58a71)."
+    },
+    {
       "id": "POSKO-TANPA-PENGELOLA-1",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

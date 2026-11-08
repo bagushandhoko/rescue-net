@@ -179,35 +179,61 @@
 
         <section id="buat-org">
           <h3>5. Membuat organisasi</h3>
+          <div class="pg-flow"><span>Daftar akun</span><i>→</i><span>Buat organisasi</span><i>→</i><span>Verifikasi super admin</span><i>→</i><span>Undang/terima anggota</span><i>→</i><span>Buka posko &amp; program</span></div>
+          <h4>A. Cara 1 — sekaligus saat mendaftar</h4>
           <ol class="steps">
-            <li>Daftar dengan peran <b>Organisasi</b> (akun + organisasi dibuat sekaligus, Anda menjadi pemilik), atau buka <a href="organisasi-posko.html">Organisasi &amp; Posko</a> → <b>Tambah Kelompok</b>.</li>
-            <li>Isi nama, jenis (komunitas, NGO, pemerintah, perusahaan, kampus), dan pilih <b>terbuka</b> atau <b>tertutup</b>. Tertutup: publik hanya melihat ringkasan.</li>
-            <li>Bila organisasi Anda cabang/ortom dari organisasi lain, pilih <b>induk</b>-nya; induk menyetujui tautan itu.</li>
-            <li>Organisasi baru berstatus menunggu verifikasi. Setelah diverifikasi super admin, program dan poskonya bisa tampil publik dan rekening programnya boleh dipublikasikan.</li>
+            <li>Buka <a href="auth.html#daftar-organisasi">Daftar → peran Organisasi</a>. Isi data Anda sebagai pengurus (nama, email, HP, kata sandi).</li>
+            <li>Isi <b>Nama organisasi</b> dan <b>Jenis organisasi</b> (Komunitas, NGO/LSM, Pemerintah, Perusahaan/CSR, Sekolah/Kampus).</li>
+            <li>Pilih <b>Keterbukaan</b> (lihat tabel di bawah), centang persetujuan Kebijakan Privasi, tekan <b>Daftar</b>. Akun dan organisasi jadi bersamaan; Anda <b>pemilik</b> organisasi.</li>
           </ol>
+          <h4>B. Cara 2 — dari akun yang sudah ada</h4>
+          <ol class="steps">
+            <li>Buka <a href="organisasi-posko.html">Organisasi &amp; Posko</a> → panel <b>Tambah Kelompok &amp; Posko</b>.</li>
+            <li>Isi <b>Nama Kelompok</b>, <b>Jenis Kelompok</b>, <b>Keterbukaan</b>. Bila ini cabang / ortom / satuan dari organisasi lain, pilih <b>Bagian dari organisasi (opsional)</b> — induk akan menerima permintaan dan harus menyetujuinya.</li>
+            <li>Tekan <b>Simpan Kelompok</b>. Kelompok baru berstatus <i>pending</i> dan <i>belum terverifikasi</i>.</li>
+          </ol>
+          <h4>C. Pilihan keterbukaan</h4>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Pilihan</th><th>Yang dilihat publik</th><th>Cocok untuk</th></tr></thead>
+            <tbody>
+              <tr><td><b>Tertutup</b> (bawaan)</td><td>Hanya ringkasan: jumlah posko, jenis layanan, wilayah. Detail kegiatan hanya untuk anggota.</td><td>TNI/Polri, instansi, rumah sakit, organisasi dengan data sensitif.</td></tr>
+              <tr><td><b>Terbuka</b></td><td>Posko, kebutuhan, dan kegiatan terlihat publik; posko boleh menerima partisipasi publik.</td><td>Komunitas, NGO, gerakan relawan.</td></tr>
+            </tbody>
+          </table></div>
+          <h4>D. Setelah dibuat</h4>
+          <ul>
+            <li><b>Verifikasi</b>: super admin memeriksa di layar Verifikasi. Hasilnya masuk ke <b>🔔 pemberitahuan</b> Anda. Hanya organisasi terverifikasi yang programnya tampil publik dan rekening programnya boleh dipublikasikan.</li>
+            <li><b>Menarik organisasi lain jadi anak</b> (mis. induk Muhammadiyah menarik Aisyiyah): <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → <b>Induk (organisasi saya)</b>, <b>Organisasi yang ditarik jadi anak</b>, catatan → <b>Ajukan Jadikan Anak</b>. Pengelola organisasi anak menyetujui.</li>
+            <li><b>Kunci AI organisasi</b> (opsional): Koordinasi Organisasi → Provider, API key → <b>Simpan Kunci</b>.</li>
+            <li>Profil kerja organisasi untuk publik otomatis tersedia di <a href="profil-organisasi.html">Profil Organisasi</a>.</li>
+          </ul>
         </section>
 
         <section id="kelola-anggota">
           <h3>6. Mengelola anggota</h3>
-          <p>Semua di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → <b>Keanggotaan Organisasi</b>:</p>
-          <ul>
-            <li><b>Permohonan menunggu</b> — Setujui / Tolak (alasan wajib bila menolak).</li>
-            <li><b>Identitas terverifikasi pusat</b> — centang hanya bila Anda benar-benar mengenal orangnya. Tanda ini menentukan apakah rekening/QRIS program buatan anggota boleh tampil ke publik.</li>
-            <li><b>Tambah Anggota Langsung</b> — jalur 2 (lihat bagian 3).</li>
-            <li><b>Jadikan staf</b> / <b>Cabut staf</b> — staf boleh memutuskan permohonan anggota, tetapi tidak bisa mengubah pengaturan atau membuat akun.</li>
-            <li><b>Keluarkan</b> — anggota yang keluar langsung kehilangan akses ke posko dan program organisasi.</li>
-          </ul>
+          <p>Semua di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → <b>Keanggotaan Organisasi</b>. Setiap permohonan baru juga muncul sebagai <b>🔔 pemberitahuan</b> untuk pengelola.</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Tindakan</th><th>Langkah</th><th>Siapa yang boleh</th></tr></thead>
+            <tbody>
+              <tr><td>Menyetujui permohonan (jalur 1)</td><td><b>Permohonan menunggu</b> → periksa nama &amp; kontak → centang <b>Identitas terverifikasi pusat</b> bila Anda mengenal orangnya → <b>Setujui</b>. Atau <b>Tolak</b> + alasan.</td><td>Pemilik, wakil, staf (staf tidak bisa memverifikasi identitas)</td></tr>
+              <tr><td>Menambah anggota langsung (jalur 2)</td><td><b>➕ Tambah Anggota Langsung</b> → Organisasi, Email, Nama lengkap, No. HP → <b>Tambahkan</b>. Email baru: catat kata sandi sementara yang tampil sekali, serahkan secara pribadi.</td><td>Pemilik/wakil (akun baru); staf hanya untuk orang yang sudah punya akun</td></tr>
+              <tr><td>Menjadikan staf</td><td>Daftar <b>Anggota</b> → <b>Jadikan staf</b> (isi wilayah/bagian yang ditangani). <b>Cabut staf</b> untuk menghentikan.</td><td>Pemilik</td></tr>
+              <tr><td>Mengeluarkan anggota</td><td>Daftar <b>Anggota</b> → <b>Keluarkan</b> + alasan. Akses ke posko &amp; program organisasi langsung hilang.</td><td>Pemilik, wakil</td></tr>
+            </tbody>
+          </table></div>
+          <p class="note">Tanda <b>terverifikasi pusat</b> penting untuk donasi: rekening/QRIS program yang dibuat anggota hanya tampil publik bila anggota itu terverifikasi pusat.</p>
         </section>
 
         <section id="tempatkan">
           <h3>7. Menempatkan anggota di posko</h3>
           <ol class="steps">
-            <li>Pastikan orangnya sudah anggota (jalur 1 atau 2).</li>
-            <li>Di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → daftar <b>Anggota</b>, tekan <b>Tempatkan di posko</b> pada anggota itu, lalu pilih poskonya.</li>
-            <li>Login berikutnya, anggota itu langsung dibawa ke halaman poskonya.</li>
+            <li>Pastikan orangnya sudah anggota yang disetujui (jalur 1 atau 2).</li>
+            <li>Di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a> → daftar <b>Anggota</b>, pilih posko di kotak pilihan pada kartu anggota itu, lalu tekan <b>Tempatkan di posko</b>.</li>
+            <li>Anggota menerima 🔔 "Anda ditempatkan di posko …". Login berikutnya ia langsung dibawa ke halaman posko sesuai jenisnya.</li>
+            <li>Untuk memindahkan, pilih posko lain di kotak pilihan lalu <b>Tempatkan di posko</b>; untuk mencabut, tekan <b>lepas</b> di samping nama posko pada kartu anggota.</li>
           </ol>
-          <p><b>Posko yang belum punya pengelola</b> (organisasinya tidak punya pengurus, atau posko perorangan tanpa petugas): buka halaman posko itu saat sudah login, tekan <b>🙋 Ajukan jadi petugas posko ini</b>. Permohonan masuk ke antrean <a href="verification-approval.html">Verifikasi</a> super admin (terlihat posko yang diminta); setelah disetujui Anda langsung menjadi petugasnya. Posko yang punya pengurus organisasi tetap lewat jalur bergabung organisasi.</p>
-          <p class="pg-demo">Contoh teruji: Bu Ratna mendaftar sendiri → minta bergabung ke Komunitas Landrover → disetujui → ditempatkan di Dapur Umum → login langsung ke halaman dapur.</p>
+          <p><b>Posko yang belum punya pengelola</b> (organisasinya tidak punya pengurus, atau posko perorangan tanpa petugas): buka halaman posko itu saat sudah login, tekan <b>🙋 Ajukan jadi petugas posko ini</b>. Permohonan masuk ke antrean <a href="verification-approval.html">Verifikasi</a> super admin (tertulis posko yang diminta); keputusan dikirim ke 🔔 Anda.</p>
+          <p class="pg-demo">Contoh teruji: Bu Ratna mendaftar sendiri → Ajukan Keanggotaan ke Komunitas Landrover → disetujui → ditempatkan di Dapur Umum → login langsung ke halaman dapur.</p>
         </section>
 
         <!-- ================= C ================= -->
@@ -218,59 +244,86 @@
 
         <section id="buat-posko">
           <h3>8. Membuat posko</h3>
-          <div class="pg-flow"><span>Registrasi Posko</span><i>→</i><span>Persetujuan</span><i>→</i><span>Kelola Posko Saya</span><i>→</i><span>Layanan berjalan</span></div>
+          <div class="pg-flow"><span>Registrasi Posko</span><i>→</i><span>Simpan / Ajukan Verifikasi</span><i>→</i><span>Disetujui (🔔)</span><i>→</i><span>Kelola Posko Saya</span><i>→</i><span>Layanan berjalan</span></div>
           <ol class="steps">
-            <li>Buka <a href="registrasi-posko.html">Registrasi Posko</a>. Isi nama, <b>jenis posko</b> (boleh lebih dari satu fungsi), lokasi GPS (📍 lokasi saat ini atau 🗺️ pilih di peta), kontak penanggung jawab.</li>
-            <li>Centang <b>bencana yang ditangani</b>. Bila bencananya belum ada, tekan <b>+ Daftarkan bencana baru</b>.</li>
-            <li>Pilih organisasi pemilik posko. Posko organisasi mengikuti aturan organisasinya (mis. boleh tidaknya posko dibuka untuk publik).</li>
-            <li>Tekan <b>Simpan Posko</b>, lalu <b>Ajukan Verifikasi</b>. Posko independen bisa <b>Minta Verifikasi Wilayah</b> ke lurah / polsek / tokoh setempat.</li>
-            <li>Setelah disetujui, posko muncul di peta dan Anda mengelolanya dari <a href="kelola-posko.html">Kelola Posko Saya</a>.</li>
+            <li>Login, buka <a href="registrasi-posko.html">Registrasi Posko</a> → <b>Form Registrasi</b>.</li>
+            <li>Isi:
+              <div class="table-wrap"><table>
+                <thead><tr><th>Kolom</th><th>Isi dengan</th></tr></thead>
+                <tbody>
+                  <tr><td>Nama Posko *</td><td>Nama yang dikenal warga, mis. "Posko MDMC Siak – Masjid Raya".</td></tr>
+                  <tr><td>Jenis Posko (utama) *</td><td>Logistik, Collection Hub, Transport/Distribusi, Medis, Shelter, Dapur Umum, Assessment, Komunikasi, Alat Kerja. Fungsi tambahan bisa dicentang (satu posko boleh logistik + dapur + shelter).</td></tr>
+                  <tr><td>Peran Logistik</td><td>Pengumpul (daerah aman) atau penerima (daerah bencana).</td></tr>
+                  <tr><td>Lokasi GPS * &amp; Alamat Lengkap *</td><td>Tekan <b>📍 Lokasi saat ini</b> di tempat, atau <b>🗺️ Pilih di peta</b>.</td></tr>
+                  <tr><td>Nama Lengkap PIC *, Jabatan *, Kontak PIC *, Email PIC *</td><td>Penanggung jawab. Nomor HP tidak tampil ke publik kecuali diizinkan di pengaturan posko.</td></tr>
+                  <tr><td>Kapasitas (Orang) *, Fasilitas Tersedia *</td><td>Mis. 200 orang; "MCK, air bersih, genset" (pisahkan koma).</td></tr>
+                  <tr><td>Visibility *</td><td>Publik (tampil di peta &amp; menerima Kirim Bantuan) atau terbatas.</td></tr>
+                  <tr><td>Bencana yang ditangani</td><td>Centang satu atau lebih; bila belum ada, <b>+ Daftarkan bencana baru</b>.</td></tr>
+                </tbody>
+              </table></div>
+            </li>
+            <li>Pilih organisasi pemilik (posko organisasi mengikuti aturan organisasinya), centang persetujuan Kebijakan Privasi.</li>
+            <li><b>Simpan Draft</b> bila belum lengkap, atau <b>Simpan Posko</b> lalu <b>Ajukan Verifikasi</b>. Posko independen bisa <b>Minta Verifikasi Wilayah</b> ke lurah/polsek/tokoh setempat.</li>
+            <li>Keputusan verifikasi (disetujui / ditolak / perlu perbaikan + catatan) masuk ke <b>🔔</b> Anda. Setelah disetujui posko tampil di peta, dan Anda mengelolanya dari <a href="kelola-posko.html">Kelola Posko Saya</a>.</li>
           </ol>
+          <p class="note">Posko organisasi juga bisa dibuat cepat dari <a href="organisasi-posko.html">Organisasi &amp; Posko</a> → Tambah Posko (Event Bencana, Kelompok, Nama Posko, Jenis, Peran Logistik, Lokasi) → <b>Simpan Posko</b>, lalu dilengkapi di Registrasi Posko.</p>
         </section>
 
         <section id="atur-posko">
           <h3>9. Pengaturan pemilik posko (Kelola Posko Saya)</h3>
-          <p>Buka lewat tombol 🔧 di halaman posko atau menu <a href="kelola-posko.html">Kelola Posko</a>. Hanya pemilik/pengelola posko yang melihat halaman ini.</p>
-          <ul>
-            <li><b>Perlu tindakan</b> — angka merah: permintaan relawan, booking armada, stok kedaluwarsa, kebutuhan terbuka.</li>
-            <li><b>📞 Kontak &amp; status posko</b> — buka/tutup, kontak yang tampil, siapa yang boleh melihat nomor HP.</li>
-            <li><b>📦 Kebutuhan posko</b> — tambah kebutuhan baru; otomatis tampil di <a href="kebutuhan-publik.html">Kebutuhan Aktual</a> untuk donatur.</li>
-            <li><b>📊 Stok posko</b> &amp; <b>stok kedaluwarsa</b>.</li>
-            <li><b>🚚 Alat transport</b> — status armada &amp; posisi GPS.</li>
-            <li><b>Setting → Bencana yang ditangani</b> — tambah/kurangi kapan saja.</li>
-            <li><b>Notifikasi WhatsApp</b> — nomor posko penerima notifikasi (bukan HP pribadi).</li>
-          </ul>
+          <p>Buka lewat tombol 🔧 di halaman posko atau menu <a href="kelola-posko.html">Kelola Posko</a>. Hanya pemilik/petugas posko yang melihat halaman ini. Bila mengelola beberapa posko, pilih dulu di <b>Posko yang Anda kelola</b>.</p>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Bagian</th><th>Gunanya</th></tr></thead>
+            <tbody>
+              <tr><td>Perlu tindakan</td><td>Angka merah: permintaan relawan, booking armada, stok kedaluwarsa, kebutuhan terbuka. Kerjakan dari atas.</td></tr>
+              <tr><td>📞 Kontak &amp; status posko</td><td>Status buka/tutup/penuh, kontak yang tampil di bar kontak posko, siapa boleh melihat nomor HP.</td></tr>
+              <tr><td>🙋 Permintaan relawan</td><td>Tawaran relawan, permintaan jemputan &amp; tempat menginap. <b>Setujui</b> = relawan langsung ditempatkan.</td></tr>
+              <tr><td>📦 Kebutuhan posko</td><td>Tambah kebutuhan baru (barang, jumlah, batas waktu). Tampil di <a href="kebutuhan-publik.html">Kebutuhan Aktual</a> untuk donatur.</td></tr>
+              <tr><td>📊 Stok posko, Stok kedaluwarsa</td><td>Catatan stok cepat dan barang yang mendekati kedaluwarsa.</td></tr>
+              <tr><td>🚚 Alat transport posko</td><td>Status armada, posisi GPS (sekali atau otomatis selama halaman terbuka), konfirmasi booking.</td></tr>
+              <tr><td>Dukungan komunikasi</td><td>Apa yang posko tawarkan / butuhkan (radio, internet, genset).</td></tr>
+              <tr><td>Setting → Bencana yang ditangani</td><td>Tambah/kurangi bencana kapan saja.</td></tr>
+              <tr><td>Notifikasi WhatsApp</td><td>Nomor posko penerima notifikasi (bukan HP pribadi).</td></tr>
+            </tbody>
+          </table></div>
+          <p class="note">Di setiap halaman kerja ada tombol <b>🔔</b> di bagian atas: keputusan verifikasi, penempatan, permohonan anggota, donasi masuk, dan Saran baru muncul di sana. Angka merah = belum dibaca.</p>
+          <p class="note">Semua form posko memakai <b>pilihan "posko yang Anda kelola"</b> — posko yang sedang dibuka terpilih otomatis. Bencana mengikuti bencana yang sedang dibuka di header.</p>
         </section>
 
         <section id="p-logistik">
           <h3>10. Posko Logistik &amp; Collection Hub</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Pengelola posko</h5><ol>
-              <li>Di <a href="posko-logistik.html">Posko Logistik</a>: kartu stok per barang, catat <b>barang masuk</b> (bantuan diterima) dan <b>keluar</b>.</li>
-              <li>Tulis kebutuhan dan catatan "tidak dibutuhkan" agar donatur tidak salah kirim.</li>
-              <li>Tekan <b>Kirim</b> pada kartu stok untuk mengirim ke posko lain: pilih tujuan, jumlah, armada atau langsung, lalu cetak label/barcode.</li>
-              <li>Saat barang tiba di tujuan, penerima memindai label di <a href="scan.html">Pindai Barcode</a> → stok tujuan bertambah otomatis.</li>
+              <li><b>Mencatat kebutuhan</b>: panel <b>Kebutuhan Mendesak</b> → <b>+ Tambah</b> → Item Dibutuhkan, Jumlah, Satuan, Prioritas, Harus Tiba Sebelum, Jiwa yang Membutuhkan → <b>Simpan Kebutuhan</b>.</li>
+              <li><b>Mencatat bantuan yang tersedia/masuk</b>: <b>Tambah Bantuan Tersedia</b> → Posko, Kategori, Nama Donatur/Sumber, Item Bantuan, Jumlah, Satuan, Lokasi Pickup, Siap Diambil, No. Batch, Tanggal Kedaluwarsa, Status → <b>Simpan Bantuan</b>.</li>
+              <li><b>Kartu stok</b>: klik barang untuk melihat stok, barang masuk &amp; keluar, label dan lacak kiriman.</li>
+              <li><b>Mengirim stok</b> ke posko lain: <b>Kirim</b> pada kartu stok → bencana, rentang tanggal kirim, jumlah (maks. stok), perkiraan berat, posko tujuan → pilih armada atau "langsung ke tujuan" → titik serah (antar sendiri / antrean jemput / transporter) → centang syarat armada → simpan. Cetak <a href="cetak-label.html">label</a>.</li>
+              <li><b>Menerima kiriman</b>: pindai label di <a href="scan.html">Pindai Barcode</a> (jenis scan: terima) → stok bertambah dan pengirim melihat status "diterima". Bisa tanpa sinyal.</li>
+              <li><b>Catatan "tidak dibutuhkan"</b> di <a href="kebutuhan-publik.html">Kebutuhan Aktual</a> → Catatan posko saya → <b>Simpan catatan</b>, agar donatur tidak salah kirim.</li>
             </ol></div>
             <div class="pg-side public"><h5>Publik &amp; donatur</h5><ul>
-              <li>Lihat <a href="kebutuhan-publik.html">Kebutuhan Aktual</a>: dibutuhkan sekarang, sudah cukup, dan tidak dibutuhkan.</li>
-              <li>Kirim barang lewat <a href="kirim-bantuan.html">Kirim Bantuan</a> (bagian 21) dan pantau di <a href="lacak-logistik.html">Lacak Logistik</a> dengan kode RN-XXXXXXXX.</li>
-              <li>Halaman posko menampilkan kondisi logistik dan kebutuhan mendesak.</li>
+              <li><a href="kebutuhan-publik.html">Kebutuhan Aktual</a>: <b>Dibutuhkan sekarang</b> (kurang = kebutuhan − stok − kiriman di jalan), <b>Sudah cukup</b>, <b>Tidak dibutuhkan</b>.</li>
+              <li>Kirim barang lewat <a href="kirim-bantuan.html">Kirim Bantuan</a> (bagian 22); simpan kode RN-XXXXXXXX dan pantau di <a href="lacak-logistik.html">Lacak Logistik</a>.</li>
+              <li>Halaman posko: Kondisi Logistik, Kebutuhan Mendesak, Kiriman Masyarakat, Daftar Barang.</li>
             </ul></div>
           </div>
+          <p class="note"><b>Collection Hub</b> = gudang pengumpul besar di luar daerah bencana; cara kerjanya sama dengan Posko Logistik (peran logistik: pengumpul).</p>
         </section>
 
         <section id="p-distribusi">
           <h3>11. Posko Distribusi / Armada</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Pengelola armada</h5><ol>
-              <li>Di <a href="posko-distribusi.html">Posko Distribusi</a> tekan <b>Tambah armada</b>: kapasitas, jadwal, titik serah, syarat barang, bencana dan posko yang dilayani.</li>
-              <li>Periksa <b>Booking Masuk</b> → Konfirmasi / Tolak. Kiriman yang dikonfirmasi otomatis naik ke armada.</li>
-              <li>Ambil kiriman dari <b>antrean jemput</b>; bagikan posisi GPS armada selama perjalanan.</li>
+              <li><a href="posko-distribusi.html">Posko Distribusi</a> → <b>+ Daftarkan Armada</b>: Posko, Jenis (truk/kapal/pesawat/motor), Asal &amp; Tujuan, Kapasitas Berat (kg) &amp; Volume (m³), Muatan Sendiri, Waktu Berangkat, Estimasi Tiba, Lokasi Serah Terima, Narahubung &amp; No. Kontak.</li>
+              <li><b>Mode Layanan &amp; Kebijakan Booking</b>: langsung disetujui (satu organisasi) atau perlu konfirmasi; <b>Kursi relawan</b> &amp; <b>Titik jemput relawan</b> bila armada juga membawa relawan.</li>
+              <li><b>Syarat barang</b>: Packing, Berat maks per koli, Batas serah barang, Spesifikasi packing, Barang terlarang/dibatasi, Dokumen yang diperlukan → <b>Simpan Armada</b>.</li>
+              <li>Pantau <b>Booking Menunggu</b> → Konfirmasi / Tolak. Yang dikonfirmasi otomatis naik ke armada.</li>
+              <li>Ambil kiriman dari <b>antrean jemput</b>; perbarui <b>Lokasi Saat Ini</b> / GPS selama perjalanan; <b>Tugaskan / Lepas Relawan</b> sebagai kru.</li>
             </ol></div>
-            <div class="pg-side public"><h5>Posko pengirim &amp; publik</h5><ul>
-              <li>Posko logistik memilih armada saat menekan Kirim; status booking terlihat di kartu stok.</li>
-              <li>Relawan bisa memesan kursi armada sebagai jemputan dari <a href="relawan-saya.html">Relawan Saya</a>.</li>
-              <li>Publik melihat status kiriman lewat kode lacak.</li>
+            <div class="pg-side public"><h5>Posko pengirim, relawan &amp; publik</h5><ul>
+              <li>Posko logistik memilih armada saat menekan <b>Kirim</b>; status booking terlihat di kartu stok.</li>
+              <li>Pemesan tanpa akun memakai <b>Lacak / Ubah Booking Tamu</b>: Booking ID + Kode Edit (+ No. HP) → <b>Cek Booking</b>, ubah muatan atau batalkan.</li>
+              <li>Relawan memesan kursi armada dari <a href="relawan-saya.html">Relawan Saya</a>.</li>
             </ul></div>
           </div>
         </section>
@@ -279,13 +332,15 @@
           <h3>12. Posko Medis</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Tenaga medis / pengelola</h5><ol>
-              <li>Di <a href="posko-medis-detail.html">Posko Medis</a>: <b>+ Tambah Kasus</b> dengan <b>kode anonim</b> (bukan nama asli), triase, kondisi, rujukan.</li>
-              <li><b>+ Catat Penerimaan</b> obat/alat bantuan → stok medis bertambah.</li>
-              <li><b>+ Catat Pemakaian</b> obat/alat; <b>+ Tambah Kebutuhan</b> medis.</li>
+              <li><b>+ Tambah Kasus</b>: Kode Pasien (anonim), Jenis Pasien, Kelompok Umur, Gender, Severity, Triage, Keluhan/Kondisi, Catatan Penanganan → <b>Simpan Kasus</b>. Nama asli hanya bila benar-benar perlu — tidak pernah tampil publik.</li>
+              <li><b>Pasien Aktif &amp; Kondisi Terakhir</b> otomatis urut dari triase paling gawat; perbarui kondisi, rujukan, atau tutup kasus.</li>
+              <li><b>+ Catat Penerimaan</b> obat/alat bantuan: Nama item, Jumlah, Satuan, Pemberi/Donatur, Catatan → stok medis bertambah.</li>
+              <li><b>+ Catat Pemakaian</b>: item, jumlah, satuan, kasus (opsional) → stok berkurang.</li>
+              <li><b>+ Tambah Kebutuhan</b>: Kategori (obat, alat, logistik umum, makanan/air, sanitasi), Nama item, Jumlah, Satuan, Urgensi.</li>
             </ol></div>
             <div class="pg-side public"><h5>Warga &amp; publik</h5><ul>
-              <li>Temukan posko medis terdekat di <a href="map.html">Peta</a> atau halaman bencana; kontak tampil untuk pengguna yang login.</li>
-              <li>Data pasien tidak pernah tampil ke publik — hanya jumlah dan kebutuhan obat/alat.</li>
+              <li>Cari posko medis terdekat di <a href="map.html">Peta</a> / <a href="bencana-aktif.html">Bencana Aktif</a>; kontak tampil untuk pengguna login.</li>
+              <li>Datang dan berobat; data Anda dicatat dengan kode, bukan nama, di layar publik.</li>
               <li>Donatur obat/alat melihat kebutuhan medis di Kebutuhan Aktual.</li>
             </ul></div>
           </div>
@@ -295,15 +350,16 @@
           <h3>13. Shelter (pengungsian)</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Pengelola shelter</h5><ol>
-              <li>Di <a href="shelter-detail.html">Shelter</a>: catat okupansi, kapasitas, air &amp; sanitasi, kelompok rentan.</li>
-              <li><b>Check-in / check-out</b> keluarga penghuni.</li>
-              <li>Pembagian bantuan per keluarga di <a href="kartu-keluarga.html">Kartu Keluarga</a>: buat <b>putaran distribusi</b>, terbitkan &amp; cetak kartu (QR tanpa nama), lalu <b>pindai kartu</b> saat keluarga menerima — satu keluarga hanya sekali per putaran.</li>
-              <li>Rencana jangka panjang (kembali/relokasi) di <a href="perencanaan-pengungsi.html">Perencanaan Pengungsi</a>.</li>
+              <li><a href="shelter-detail.html">Shelter</a> → <b>Catat Okupansi</b>: Posko Shelter (terpilih otomatis), Nama Shelter, Kapasitas Total, Okupansi Saat Ini, Jumlah KK, Anak, Lansia, Disabilitas, Penghuni Perempuan/Laki-laki, Toilet/MCK tersedia &amp; berfungsi, Titik Air Bersih tersedia &amp; berfungsi, status sanitasi/air/listrik/keamanan → <b>Simpan Okupansi</b>.</li>
+              <li><b>Tambah Kebutuhan Shelter</b>: Nama Item, Jumlah Dibutuhkan, Satuan, Prioritas, Dibutuhkan Sebelum → <b>Simpan Kebutuhan Shelter</b>.</li>
+              <li><b>Check-in / Check-out</b> keluarga; pantau <b>Kelompok Rentan</b> dan <b>Peringatan Keselamatan</b>.</li>
+              <li><b>Pembagian bantuan per keluarga</b> di <a href="kartu-keluarga.html">Kartu Keluarga</a>: (1) <b>Buat putaran</b> distribusi, (2) <b>Terbitkan &amp; cetak semua</b> kartu (QR berisi kode acak, tanpa nama), (3) saat membagi, <b>Buka kamera</b> → pindai kartu → <b>Periksa</b> → <b>Catat penerimaan</b>. Satu keluarga hanya sekali per putaran.</li>
+              <li>Rencana jangka panjang (kembali / relokasi, estimasi dana) di <a href="perencanaan-pengungsi.html">Perencanaan Pengungsi</a> → <b>Simpan Rencana</b>.</li>
             </ol></div>
             <div class="pg-side public"><h5>Pengungsi &amp; publik</h5><ul>
-              <li>Datang ke shelter, petugas mencatat check-in keluarga Anda.</li>
-              <li>Simpan <b>kartu keluarga</b> (QR); tunjukkan setiap pembagian bantuan.</li>
-              <li>Publik melihat okupansi dan kebutuhan dasar shelter (tanpa data penghuni).</li>
+              <li>Datang ke shelter; petugas mencatat check-in keluarga.</li>
+              <li>Simpan <b>kartu keluarga</b> (QR) dan tunjukkan di setiap pembagian bantuan.</li>
+              <li>Publik melihat okupansi dan kebutuhan dasar shelter, tanpa data penghuni.</li>
             </ul></div>
           </div>
         </section>
@@ -312,13 +368,14 @@
           <h3>14. Dapur Umum</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Pengelola dapur</h5><ol>
-              <li>Di <a href="dapur-umum.html">Dapur Umum</a>: target jiwa dilayani, <b>Catat Produksi Makanan</b> (porsi) — bahan otomatis berkurang dari stok.</li>
-              <li>Pantau bahan kritis dan status gas/BBM; tambahkan kebutuhan bahan.</li>
-              <li>Catat distribusi makanan ke shelter/posko lain.</li>
+              <li><a href="dapur-umum.html">Dapur Umum</a> → <b>Catat Produksi Makanan</b>: Posko Dapur Umum (terpilih otomatis), Nama Menu, Jumlah Porsi, Waktu Produksi, Tujuan Distribusi Makanan, Bahan yang Dipakai, Jumlah &amp; Satuan Bahan, Catatan → <b>Simpan Produksi</b>. Stok bahan otomatis berkurang.</li>
+              <li>Pantau KPI: <b>Jiwa Dilayani</b>, <b>Produksi Hari Ini</b>, <b>Gap Porsi</b>, <b>Bahan Kritis</b>, <b>Distribusi Hari Ini</b>, status <b>Gas/BBM</b>.</li>
+              <li>Bahan kurang → tambah kebutuhan di Kelola Posko (tampil di Kebutuhan Aktual).</li>
+              <li>Relawan dapur: setujui tawaran di 🙋 Permintaan relawan.</li>
             </ol></div>
             <div class="pg-side public"><h5>Publik &amp; donatur</h5><ul>
-              <li>Lihat kebutuhan bahan dapur di Kebutuhan Aktual, kirim lewat Kirim Bantuan.</li>
-              <li>Relawan dapur menawarkan diri lewat Relawan Saya.</li>
+              <li>Lihat kebutuhan bahan dapur di Kebutuhan Aktual dan kirim lewat Kirim Bantuan.</li>
+              <li>Warga/pengungsi menerima makanan di titik distribusi yang dicatat dapur.</li>
             </ul></div>
           </div>
         </section>
@@ -327,12 +384,14 @@
           <h3>15. Relawan di posko</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Pengelola posko</h5><ol>
-              <li>Tawaran relawan masuk ke <b>🙋 Permintaan relawan</b> (Kelola Posko) dan <a href="management-relawan.html">Manajemen Relawan</a>.</li>
-              <li><b>Setujui</b> = relawan langsung ditempatkan; tolak bila penuh.</li>
-              <li>Cetak <b>QR hari ini</b> di <a href="kehadiran-relawan.html">Kehadiran Relawan</a> dan lihat siapa yang sedang di lokasi.</li>
+              <li>Tawaran relawan masuk ke <b>🙋 Permintaan relawan</b> (Kelola Posko) dan <a href="management-relawan.html">Manajemen Relawan</a> → <b>Permintaan Relawan ke Posko Anda</b>. <b>Setujui</b> = langsung ditempatkan.</li>
+              <li>Saring <b>Relawan Tersedia</b> menurut Bencana, Tersedia dari/sampai, Keahlian.</li>
+              <li><b>Tambah Relawan</b> manual (relawan tanpa akun): Nama, No HP, Skill, Status, Lokasi, Ditempatkan di Posko → <b>Save Relawan</b>.</li>
+              <li><b>Tugaskan Relawan</b>: pilih relawan, Jenis Tujuan (posko/kiriman/kasus), Tujuan Penugasan, Nama &amp; Deskripsi Tugas, Prioritas → <b>Save Assignment</b>. Pantau <b>Fatigue Risk</b> (&gt;12 jam nonstop).</li>
+              <li><a href="kehadiran-relawan.html">Kehadiran Relawan</a> → <b>QR hari ini</b> (cetak/tempel di posko) dan <b>Yang sedang di lokasi</b>.</li>
             </ol></div>
             <div class="pg-side public"><h5>Relawan</h5><ul>
-              <li>Lihat bagian 24.</li>
+              <li>Lihat bagian 25. Tanpa akun pun bisa <b>+ Daftar Jadi Relawan</b> di Manajemen Relawan; petugas posko menghubungi Anda.</li>
             </ul></div>
           </div>
         </section>
@@ -341,12 +400,13 @@
           <h3>16. Posko Alat Kerja</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Pengelola alat</h5><ol>
-              <li>Di <a href="posko-alat.html">Posko Alat Kerja</a> → <b>Tambah Alat</b>: kategori, spesifikasi, kondisi, foto.</li>
-              <li>Atur peminjaman/penugasan alat ke lokasi kerja.</li>
+              <li><a href="posko-alat.html">Posko Alat Kerja</a> → pilih posko → isi Kategori (kolom spesifikasi menyesuaikan: genset kVA/fase/BBM, tenda ukuran/kapasitas, perahu panjang/mesin, alat berat), Nama alat, Jumlah, Satuan, Status, Lokasi alat.</li>
+              <li>Ketersediaan: Bisa dipakai mulai/sampai, Area layanan, Jumlah operator, Biaya operasional/hari, Perkiraan biaya &amp; rincian kebutuhan mobilisasi.</li>
+              <li>Kontak: Nama PIC, HP/WhatsApp, Email; unggah foto (maks. 10) → <b>Simpan ke inventaris</b>.</li>
             </ol></div>
             <div class="pg-side public"><h5>Pemilik alat &amp; publik</h5><ul>
-              <li>Punya alat (genset, perahu, alat berat)? <a href="tawarkan-alat.html">Tawarkan / Sumbangkan Alat</a>: hibah, pinjam, atau sewa.</li>
-              <li>Lihat alat yang tersedia di <a href="alat-kerja.html">Recovery &amp; Alat Kerja</a>; kontak penyedia untuk pengguna yang login.</li>
+              <li>Punya alat? <a href="tawarkan-alat.html">Tawarkan / Sumbangkan Alat</a>: (1) pemilik &amp; skema hibah/pinjam/sewa, (2) data alat, (3) masa bisa dipakai, (4) operator, (5) kebutuhan mobilisasi, (6) kontak → <b>Tawarkan Alat</b>.</li>
+              <li>Lihat alat tersedia di <a href="alat-kerja.html">Recovery &amp; Alat Kerja</a>; klik alat → detail &amp; penyedia. Kontak untuk pengguna login.</li>
             </ul></div>
           </div>
         </section>
@@ -355,12 +415,15 @@
           <h3>17. Posko Komunikasi</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Pengelola</h5><ol>
-              <li>Di <a href="alat-komunikasi.html">Alat Komunikasi</a>: catat perangkat, frekuensi, kanal, call sign, jangkauan, daya.</li>
-              <li>Posko lain bisa menyatakan dukungan komunikasi yang dibutuhkan.</li>
+              <li><a href="alat-komunikasi.html">Alat Komunikasi</a> → <b>Tambah / Perbarui Alat Komunikasi</b>: Posko (pilih dari posko Anda, atau "tanpa posko" untuk alat pribadi/organisasi), Nama Alat, Kategori (HT, repeater, satelit, internet…), Status, Baterai, Frekuensi (MHz), Channel, Call sign, Lokasi, Jangkauan, Sumber &amp; Ketahanan Energi → <b>Simpan Alat</b>.</li>
+              <li><b>Dukungan Komunikasi Posko</b>: pilih posko Anda → yang ditawarkan &amp; dibutuhkan → <b>Simpan Dukungan</b>.</li>
+              <li><b>+ Tambah Operator</b>: Nama, Peran, Status, Posko, No. Kontak, Keahlian → <b>Simpan Operator</b>.</li>
+              <li><b>Tambah Kanal Frekuensi / Jaringan</b>: Label, Jenis Jaringan, Frekuensi, Operator/Penyedia, Beban → <b>Simpan Kanal</b>.</li>
+              <li>Pantau KPI: alat aktif, posko tidak terhubung, repeater, kebutuhan internet darurat, baterai kritis.</li>
             </ol></div>
             <div class="pg-side public"><h5>Publik &amp; relawan radio</h5><ul>
-              <li>Frekuensi dan call sign posko tampil di bar kontak posko untuk publik.</li>
-              <li>Relawan ORARI/RAPI mendaftar sebagai node di <a href="relawan-saya.html">Relawan Saya</a>.</li>
+              <li>Frekuensi, kanal, dan call sign posko tampil di bar kontak posko untuk publik.</li>
+              <li>Relawan ORARI/RAPI mendaftar sebagai node di <a href="relawan-saya.html">Relawan Saya</a> → <b>Daftarkan node</b>.</li>
             </ul></div>
           </div>
         </section>
@@ -369,13 +432,15 @@
           <h3>18. Assessment lapangan &amp; Search &amp; Found</h3>
           <div class="pg-two">
             <div class="pg-side owner"><h5>Tim lapangan / operator</h5><ol>
-              <li>Tim assessment mencatat kondisi, kebutuhan, dan foto bukti di halaman posko.</li>
-              <li>Di <a href="search-found.html">Search &amp; Found</a> operator memeriksa <b>Papan Pencocokan</b> antara laporan hilang dan ditemukan, lalu memverifikasi dan mencatat serah terima.</li>
+              <li><b>Assessment</b>: di halaman posko, <b>Catat Observasi Stok</b>, kebutuhan, dan foto bukti; laporan kondisi juga lewat <a href="laporan-masyarakat.html">Laporan</a>.</li>
+              <li><b>Search &amp; Found</b> (<a href="search-found.html">halaman</a>): petugas yang ditempatkan di posko — termasuk koordinator SAR yang ditempatkan organisasinya — bisa mencatat <b>+ Lapor Hilang</b> / <b>+ Lapor Ditemukan</b> untuk poskonya.</li>
+              <li><b>Papan Pencocokan</b>: cocokkan laporan hilang dengan laporan ditemukan, <b>termasuk lintas posko</b> (cukup salah satu laporan dari posko Anda). Lalu verifikasi, reunifikasi keluarga, dan catat <b>Serah Terima</b>.</li>
+              <li>Barang/aset ditemukan: kelola <b>Klaim &amp; Serah Terima</b>.</li>
             </ol></div>
             <div class="pg-side public"><h5>Keluarga &amp; warga</h5><ul>
-              <li>Masuk, lalu <b>+ Lapor Hilang</b> (orang, barang/aset, hewan) atau <b>+ Lapor Ditemukan</b>.</li>
-              <li>Nama lengkap hanya terlihat oleh operator berwenang.</li>
-              <li>Barang ditemukan yang milik Anda: <b>Ajukan Klaim</b>.</li>
+              <li>Login, lalu <b>+ Lapor Hilang</b> (orang, aset/barang, hewan) atau <b>+ Lapor Ditemukan</b>; isi kontak yang bisa dihubungi.</li>
+              <li>Nama lengkap hanya terlihat operator berwenang; publik melihat ringkasan.</li>
+              <li>Barang ditemukan milik Anda: <b>+ Ajukan klaim baru</b>.</li>
             </ul></div>
           </div>
         </section>

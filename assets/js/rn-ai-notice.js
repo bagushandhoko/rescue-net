@@ -86,7 +86,11 @@
     if (pop && !pop.contains(e.target) && !e.target.closest(".rn-bell")) { pop.remove(); pop = null; }
   });
   function mount() {
-    var spots = [document.querySelector(".rn-drawer-topbar"), document.querySelector("header.topbar")].filter(Boolean);
+    // hanya satu lonceng: topbar HP bila terlihat, kalau tidak header halaman (owner 2026-11-08: lonceng dobel di HP)
+    var top = document.querySelector(".rn-drawer-topbar"), head = document.querySelector("header.topbar");
+    var vis = function (el) { return el && el.offsetParent !== null && getComputedStyle(el).display !== "none"; };
+    var spots = [vis(top) ? top : (head || top)].filter(Boolean);
+    document.querySelectorAll(".rn-bell").forEach(function (x) { if (spots.indexOf(x.parentNode) === -1) x.remove(); });
     var btns = [];
     spots.forEach(function (sp) {
       if (sp.querySelector(".rn-bell")) return;

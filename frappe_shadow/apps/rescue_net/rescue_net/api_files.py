@@ -46,6 +46,15 @@ def _can_read_private(row):
         for posko in frappe.get_all(dt, filters={field: row.file_url}, pluck="posko", limit_page_length=20):
             if posko and can_manage_posko(actor, posko):
                 return True
+            # owner 2026-11-08: pengurus organisasi pemilik posko boleh melihat bukti foto poskonya
+            org = frappe.db.get_value("RN Posko", posko, "organization") if posko else None
+            if org:
+                try:
+                    from rescue_net.access_policy import can_manage_organization
+                    if can_manage_organization(actor, org):
+                        return True
+                except Exception:
+                    pass
     return False
 
 

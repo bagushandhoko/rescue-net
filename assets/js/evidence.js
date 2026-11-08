@@ -151,7 +151,7 @@
       body.innerHTML = slice.map(function (r, i) {
         var url = r.evidence_url || "";
         var thumb = r.mime === "image"
-          ? '<img src="' + esc(url) + '" alt="" loading="lazy">'
+          ? '<img src="' + esc(url) + '" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'ev-locked\',textContent:\'🔒 Terbatas\'}))">'
           : '<span class="rn-ev-thumb-icon">' + mimeIcon(r.mime) + "</span>";
         var geo = hasGeo(r)
           ? '<small class="rn-ev-geo"><span data-icon="map-pin"></span>' + r.latitude.toFixed(4) + ", " + r.longitude.toFixed(4) + "</small>"

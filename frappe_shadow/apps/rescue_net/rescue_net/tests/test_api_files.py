@@ -47,3 +47,19 @@ class TestApiFiles(RNTestCase):
         for bad in ("/files/../site_config.json", "/etc/passwd", "/private/files/a/b.png", "files/x.png"):
             with as_guest(), self.assertRaises(frappe.PermissionError):
                 self._get(bad)
+
+    def test_org_manager_sees_member_evidence(self):
+        """Owner 2026-11-08: the organisation's manager (no posko assignment) sees photos its members upload."""
+        from rescue_net.frontend_bridge.map_evidence import upload_evidence
+        import base64
+        org = frappe.db.get_value("RN Posko", self.posko.name, "organization")
+        member = make_actor(org=frappe._dict(name=org), org_role="member", posko=self.posko)
+        head = make_actor(org=frappe._dict(name=org), org_role="owner")
+        other_org_head = make_actor(org=make_org(), org_role="owner")
+        with as_user(member.user):
+            url = upload_evidence("b2.png", base64.b64encode(PNG + b"m").decode(), self.event.name,
+                                  node_id=self.posko.name, caption="uji")["file_url"]
+        with as_user(head.user):
+            self.assertEqual(self._get(url).filecontent, PNG + b"m")
+        with as_user(other_org_head.user), self.assertRaises(frappe.PermissionError):
+            self._get(url)

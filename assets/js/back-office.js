@@ -233,8 +233,26 @@
     renderPrograms(DATA.programs || []);
   }
 
+  // owner 2026-11-09: "tidak harus seluruhnya yang tampil" — pilih bagian yang ditampilkan (diingat di alamat & browser)
+  function setupShow() {
+    var box = $("#boShow"); if (!box) return;
+    var q = new URLSearchParams(location.search).get("tampil");
+    var cur = q || (function () { try { return localStorage.getItem("rn-bo-tampil") || "semua"; } catch (e) { return "semua"; } })();
+    function apply(k) {
+      box.querySelectorAll("button[data-s]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-s") === k); });
+      document.querySelectorAll("[data-bo-sec]").forEach(function (el) { el.hidden = k !== "semua" && el.getAttribute("data-bo-sec") !== k; });
+      var grid = document.querySelector("#boToolPanel") && document.querySelector("#boToolPanel").parentElement;
+      if (grid) grid.hidden = k !== "semua" && k !== "peralatan" && k !== "relawan";
+      try { localStorage.setItem("rn-bo-tampil", k); } catch (e) {}
+      var u = new URL(location.href); if (k === "semua") u.searchParams.delete("tampil"); else u.searchParams.set("tampil", k); history.replaceState(null, "", u.toString());
+    }
+    box.querySelectorAll("button[data-s]").forEach(function (b) { b.addEventListener("click", function () { apply(b.getAttribute("data-s")); }); });
+    apply(cur);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     if (!window.RN_FRAPPE) return;
+    setupShow();
     setupTopNav().then(load);
   });
 })();

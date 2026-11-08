@@ -14,6 +14,9 @@
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=arrow-20261102" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=topback2-20261109" />
   <style>
+  .bo-show{margin:0 0 12px;align-items:center}.bo-show-lbl{font-size:13px;font-weight:700;margin-right:2px}
+  .rk-chips{display:flex;flex-wrap:wrap;gap:6px}.rk-chips button{border:1px solid rgba(104,64,45,.25);background:#fff;border-radius:999px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer}.rk-chips button.on{background:#e8755a;border-color:#e8755a;color:#fff}
+  [data-bo-sec][hidden]{display:none!important}
   .rn-bo-back{text-decoration:none;white-space:nowrap}
   .rn-bo-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:0 0 18px}
   .rn-bo-group{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:14px 16px;display:grid;gap:8px;cursor:pointer;text-align:left;font:inherit;color:inherit}
@@ -69,8 +72,18 @@
       <label class="pk-evsel">Bencana <select id="boEventSel"><option value="">Memuat…</option></select></label>
       <a class="btn mini" id="boRiwayat" href="riwayat-kegiatan.html">📜 Riwayat semua kegiatan</a>
     </nav>
+    <div class="rk-chips bo-show" id="boShow" role="group" aria-label="Pilih bagian yang ditampilkan">
+      <span class="bo-show-lbl">Tampilkan:</span>
+      <button type="button" data-s="semua" class="on">Semua</button>
+      <button type="button" data-s="ringkasan">Ringkasan</button>
+      <button type="button" data-s="pihak">Pihak terlibat</button>
+      <button type="button" data-s="kebutuhan">Kebutuhan</button>
+      <button type="button" data-s="peralatan">Peralatan</button>
+      <button type="button" data-s="relawan">Relawan</button>
+      <button type="button" data-s="program">Program donasi</button>
+    </div>
 
-    <section class="kpi-grid rn-bo-kpi">
+    <section class="kpi-grid rn-bo-kpi" data-bo-sec="ringkasan">
       <div class="kpi-card rn-kpi-clickable" data-go="#boOrgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="building"></span><span>Pihak Terlibat</span><strong id="kPihak">-</strong><small>organisasi &amp; lembaga</small></div>
       <div class="kpi-card rn-kpi-clickable" data-go="#boOrgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="map-pin"></span><span>Posko</span><strong id="kPosko">-</strong><small id="kPoskoSub">jiwa dilayani</small></div>
       <div class="kpi-card rn-kpi-clickable" data-go="#boSkills" role="button" tabindex="0"><span class="kpi-icon" data-icon="users"></span><span>Relawan</span><strong id="kRelawan">-</strong><small id="kRelawanSub">siaga</small></div>
@@ -79,9 +92,9 @@
       <div class="kpi-card rn-kpi-clickable" data-go="#boProgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="heart"></span><span>Dana Terkumpul</span><strong id="kDana">-</strong><small id="kDanaSub">program donasi</small></div>
     </section>
 
-    <section class="rn-bo-groups" id="boGroups" aria-label="Ringkasan per kelompok"></section>
+    <section class="rn-bo-groups" data-bo-sec="ringkasan" id="boGroups" aria-label="Ringkasan per kelompok"></section>
 
-    <section class="panel" id="boOrgPanel">
+    <section class="panel" id="boOrgPanel" data-bo-sec="pihak">
       <div class="panel-header">
         <div><h3>Pihak yang Terlibat</h3><p>Siapa membawa apa. Klik nama untuk detail organisasi.</p></div>
         <div class="rn-bo-tabs" role="tablist" id="boOrgTabs"></div>
@@ -95,7 +108,7 @@
       <p class="rn-muted rn-bo-note">Masyarakat umum (perorangan) hanya dihitung jumlahnya — nama dan kontak pribadi tidak ditampilkan.</p>
     </section>
 
-    <section class="panel" id="boNeedPanel">
+    <section class="panel" id="boNeedPanel" data-bo-sec="kebutuhan">
       <div class="panel-header">
         <div><h3>Gap Kebutuhan Barang</h3><p>Kebutuhan terbuka di semua posko bencana ini dibanding yang sudah terpenuhi dan bantuan yang sedang menuju posko.</p></div>
         <span class="chip" id="boNeedCount">-</span>
@@ -109,7 +122,7 @@
     </section>
 
     <section class="content-grid">
-      <div class="panel" id="boToolPanel">
+      <div class="panel" id="boToolPanel" data-bo-sec="peralatan">
         <div class="panel-header"><div><h3>Peralatan: Tersedia vs Diminta</h3><p>Aset ekosistem dibanding permintaan alat kerja di lapangan.</p></div></div>
         <div class="rn-table-wrap">
           <table class="rn-table rn-bo-table">
@@ -118,13 +131,13 @@
           </table>
         </div>
       </div>
-      <div class="panel" id="boSkillPanel">
+      <div class="panel" id="boSkillPanel" data-bo-sec="relawan">
         <div class="panel-header"><div><h3>Relawan per Keahlian</h3><p>Relawan terdaftar untuk bencana ini.</p></div></div>
         <div class="rn-bo-skills" id="boSkills"><p class="rn-muted">Memuat…</p></div>
       </div>
     </section>
 
-    <section class="panel" id="boProgPanel">
+    <section class="panel" id="boProgPanel" data-bo-sec="program">
       <div class="panel-header"><div><h3>Program Donasi</h3><p>Target dana dibanding yang sudah terkumpul. Klik program untuk detail.</p></div></div>
       <div class="rn-table-wrap">
         <table class="rn-table rn-bo-table">
@@ -141,7 +154,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/back-office.js?v=satuorg-20261109"></script>
+<script src="../assets/js/back-office.js?v=tampil-20261109"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hpdonasi-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

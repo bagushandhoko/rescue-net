@@ -3,6 +3,23 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "EKO-RIWAYAT-1",
+      "tanggal": "2026-11-09",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Ekosistem: organisasi satu kesatuan + Riwayat Kegiatan yang bisa ditelusuri",
+      "tujuan": "Owner: ekosistem menggambarkan apa yang dilakukan organisasi/posko/orang, bisa di-trace dari siapa & posko mana sampai detail, seperti performance/history; Muhammadiyah tampil satu kesatuan.",
+      "akun": "tamu (HP 390 px)",
+      "langkah": [
+        "Ekosistem Karhutla: Muhammadiyah tampil 1 baris (11 posko aktif, termasuk Aisyiyah, HW, IMM, Nasyiah, …)",
+        "Klik 'Riwayat kegiatan →' → Riwayat Muhammadiyah: kinerja (45 kegiatan, 11 posko, 7 hari) + saring jenis (kiriman, bukti, stok, donasi, realisasi, dapur, SAR)",
+        "Klik posko → riwayat satu posko; Masyarakat Umum → Kegiatan Masyarakat → riwayat masyarakat",
+        "Organisasi tertutup: tamu hanya melihat angka; anggota melihat rincian"
+      ],
+      "hasil": "Lulus. Tes 750 OK (TestActivityHistory, TestCommunityActivity).",
+      "status": "lulus",
+      "temuan": "Sebelumnya ortom/cabang tampil sebagai baris sejajar dengan induknya; kini digabung ke induk tertinggi. Donatur & pelapor tidak pernah disebut namanya."
+    },
+    {
       "id": "I18N-2",
       "tanggal": "2026-11-09",
       "kategori": "Program Khusus · Donasi",

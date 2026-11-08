@@ -1,7 +1,26 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-03",
+  "diperbarui": "2026-11-08",
   "uji": [
+    {
+      "id": "PRIVASI-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Registrasi & Privasi",
+      "judul": "Persetujuan penggunaan data pribadi wajib saat registrasi akun dan posko",
+      "tujuan": "Owner: di registrasi berikan pilihan yang harus diklik, persetujuan penggunaan data pribadi, dengan link ke Kebijakan Privasi.",
+      "akun": [
+        "akun uji test stack (tamu)",
+        "produksi: tamu"
+      ],
+      "langkah": [
+        "Form Daftar (auth.html) dan Registrasi Posko menampilkan kotak centang + tautan Kebijakan Privasi",
+        "Kirim tanpa centang: form menolak dengan pesan jelas",
+        "Panggil API register langsung tanpa privacy_consent: server menolak",
+        "Dengan centang: pendaftaran berjalan seperti biasa (tes pelapor terverifikasi)"
+      ],
+      "hasil": "Lulus. Produksi: API register tanpa persetujuan ditolak 'Persetujuan penggunaan data pribadi (Kebijakan Privasi) wajib dicentang.'; tes test_signup_requires_privacy_consent hijau.",
+      "status": "lulus"
+    },
     {
       "id": "POSKO-ALL-2",
       "tanggal": "2026-10-27",

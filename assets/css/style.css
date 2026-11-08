@@ -7772,3 +7772,9 @@ body.home-page .rn-hero-cta { display: flex !important; flex-wrap: wrap; gap: 8p
   .kpi-card strong { font-size: 1.15rem !important; line-height: 1.1 !important; }
   .kpi-card span, .kpi-card small { font-size: 11px !important; line-height: 1.25 !important; }
 }
+/* HP: sembunyikan pil "User/Role" (info teknis) dan rapatkan pil status kecil (owner 2026-11-08: tanpa ruang kosong) */
+@media (max-width: 720px) {
+  [data-rn-session-pill="true"] { display: none !important; }
+  .topbar { gap: 8px !important; margin-bottom: 10px !important; }
+  .topbar .status-pill { padding: 4px 10px !important; font-size: 11px !important; margin: 0 !important; }
+}

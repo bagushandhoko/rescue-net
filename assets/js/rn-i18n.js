@@ -186,12 +186,14 @@
     var spots = [];
     var act = document.querySelector(".rn-public-header .rn-public-actions");
     if (act && !act.querySelector(".rn-lang")) { act.insertBefore(makeToggle(), act.firstChild); spots.push(act); }
+    var home = document.querySelector("header.welcome-nav");
+    if (home && !home.querySelector(".rn-lang")) { var hm = makeToggle(); hm.classList.add("rn-lang-home"); home.appendChild(hm); spots.push(home); }
     var top = document.querySelector(".rn-drawer-topbar");
     if (top && !top.querySelector(".rn-lang")) { var t = makeToggle(); t.classList.add("rn-lang-top"); top.appendChild(t); spots.push(top); }
     var visible = Array.prototype.some.call(document.querySelectorAll(".rn-lang:not(.rn-lang-float)"), function (x) { return x.offsetParent !== null; });
     if (visible) {
       document.querySelectorAll(".rn-lang-float").forEach(function (x) { x.remove(); });
-    } else if (final && !document.querySelector(".rn-lang")) {          // halaman tanpa header publik
+    } else if (final && !document.querySelector(".rn-lang-float")) {          // halaman tanpa header publik
       var f = makeToggle(); f.classList.add("rn-lang-float"); document.body.appendChild(f);
     }
     paintButtons();
@@ -204,7 +206,7 @@
       ".rn-lang button{border:0;background:#fff;color:#5e4b40;padding:6px 9px;cursor:pointer;font:inherit}" +
       ".rn-lang button[aria-pressed=true]{background:#e8755a;color:#fff}" +
       ".rn-lang button:focus-visible{outline:2px solid #e8755a;outline-offset:-2px}" +
-      ".rn-lang-top{margin:0 6px 0 auto}" +
+      ".rn-lang-top{margin:0 6px 0 auto}.rn-lang-home{align-self:center;margin-left:12px}" +
       ".rn-lang-float{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:900;box-shadow:0 2px 8px rgba(0,0,0,.15)}";
     document.head.appendChild(st);
   }

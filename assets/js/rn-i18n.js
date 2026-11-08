@@ -31,6 +31,11 @@
     if (DICT[s] != null) return DICT[s];
     var m = EDGE.exec(s);
     if (m && m[2] && DICT[m[2]] != null) return m[1] + DICT[m[2]] + m[3];
+    // pola ber-angka/nama: "__patterns": [["^(\\d+) posko aktif$", "$1 active relief posts"], ...]
+    var pats = PATS();
+    for (var i = 0; i < pats.length; i++) {
+      if (pats[i][0].test(s)) return s.replace(pats[i][0], pats[i][1]);
+    }
     return null;
   }
 
@@ -139,6 +144,13 @@
       .catch(function () { return {}; })
       .then(function (d) { DICT = d || {}; try { sessionStorage.setItem("rn-i18n-en@" + VERSION, JSON.stringify(DICT)); } catch (e) {} return DICT; });
   }
+  var _pats = null;
+  function PATS() {
+    if (_pats) return _pats;
+    _pats = [];
+    ((DICT && DICT.__patterns) || []).forEach(function (p) { try { _pats.push([new RegExp(p[0]), p[1]]); } catch (e) {} });
+    return _pats;
+  }
   var VERSION = (/[?&]v=([^&]+)/.exec(me) || [])[1] || "1";
 
   function paintButtons() {
@@ -176,7 +188,8 @@
     if (act && !act.querySelector(".rn-lang")) { act.insertBefore(makeToggle(), act.firstChild); spots.push(act); }
     var top = document.querySelector(".rn-drawer-topbar");
     if (top && !top.querySelector(".rn-lang")) { var t = makeToggle(); t.classList.add("rn-lang-top"); top.appendChild(t); spots.push(top); }
-    if (spots.length || document.querySelector(".rn-public-header .rn-lang, .rn-drawer-topbar .rn-lang")) {
+    var visible = Array.prototype.some.call(document.querySelectorAll(".rn-lang:not(.rn-lang-float)"), function (x) { return x.offsetParent !== null; });
+    if (visible) {
       document.querySelectorAll(".rn-lang-float").forEach(function (x) { x.remove(); });
     } else if (final && !document.querySelector(".rn-lang")) {          // halaman tanpa header publik
       var f = makeToggle(); f.classList.add("rn-lang-float"); document.body.appendChild(f);

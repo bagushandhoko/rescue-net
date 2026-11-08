@@ -33,6 +33,7 @@
 "90 hari setelah bencana ditutup": "90 days after the disaster is closed",
 "? Daftar dulu sebagai Relawan, lalu buka": "? Register as a Volunteer first, then open",
 "AI membantu mengisi formulir dari cerita Anda dan memberi saran kebutuhan. Hasilnya selalu bisa Anda periksa dan ubah sebelum dikirim, dan keputusan tetap diambil petugas. Bila sebuah organisasi memakai layanan AI pihak ketiga, teks laporan dapat diproses oleh penyedia tersebut.": "AI helps fill in forms from your account and suggests needs. You can always review and change the result before submitting, and decisions remain with officers. If an organisation uses a third-party AI service, report text may be processed by that provider.",
+"Ada narahubung resmi (kontak hanya untuk petugas)": "Official contact person on file (contact visible to staff only)",
 "Admin Muhammadiyah (organisasi induk)": "Muhammadiyah Admin (parent organisation)",
 "Admin Pusat — Kodam Iskandar Muda": "Central Admin — Kodam Iskandar Muda",
 "Air mineral / beras / selimut": "Bottled water / rice / blankets",
@@ -44,7 +45,7 @@
 "Akun Anda dan organisasi didaftarkan sekaligus. Anda otomatis menjadi pemilik (admin) organisasi ini; organisasi menunggu verifikasi.": "Your account and organisation are registered together. You automatically become the owner (admin) of this organisation; the organisation awaits verification.",
 "Akun dibuat, tetapi organisasi belum tersimpan": "Account created, but the organisation has not been saved",
 "Akun dibuat. Masuk…": "Account created. Logging in…",
-"Alat Kerja": "Work Tools",
+"Alat Kerja": "Equipment",
 "Alur Distribusi": "Distribution Flow",
 "Alur bantuan": "Aid flow",
 "Alur distribusi bantuan. Klik untuk rincian per kelompok.": "Aid distribution flows. Click for a per-group breakdown.",
@@ -57,11 +58,13 @@
 "Anggota daerah — Posko Kodim 0105": "Regional member — Kodim 0105 Post",
 "Anggota, ortom sebagai organisasi anak, Gudang PWM Jatim Surabaya, Program LAZISMU & konfirmasi donasi.": "Members, autonomous organisations (ortom) as child organisations, PWM East Java Warehouse Surabaya, LAZISMU Program & donation confirmation.",
 "Anggota, posko organisasi, Terbuka/Tertutup, kunci AI organisasi.": "Members, organisation posts, Open/Closed, organisation AI key.",
-"Angka dari catatan posko dan program organisasi ini beserta organisasi anaknya.": "Figures from the relief post records and programs of this organisation and its child organisations.",
+"Angka dari catatan posko dan program organisasi ini beserta organisasi anaknya.": "Figures from the relief post records and programmes of this organisation and its child organisations.",
 "Angka gabungan dari seluruh aktivitas posko ini.": "Combined figures from all activity at this post.",
+"Angkutan:": "Carrier:",
 "Antar sendiri": "Self-delivery",
 "Apa yang dikerjakan tiap jenis posko.": "What each type of relief post does.",
 "Armada, syarat barang, Booking Masuk, antrean jemput.": "Fleet, item requirements, Incoming Booking, pickup queue.",
+"Asesmen Lapangan": "Field Assessment",
 "BNPB Pusat (Pusdalops)": "BNPB Headquarters (Pusdalops)",
 "Bagaimana Rescue-Net mengumpulkan, memakai, melindungi, dan menghapus data pribadi Anda, sesuai Undang-Undang Pelindungan Data Pribadi (UU 27/2022) dan PP 33/2026.": "How Rescue-Net collects, uses, protects, and deletes your personal data, in accordance with the Personal Data Protection Law (Law 27/2022) and Government Regulation 33/2026.",
 "Bagikan Situasi": "Share Situation",
@@ -90,6 +93,7 @@
 "Belum ada snapshot stok.": "No stock snapshots yet.",
 "Belum ada stock observation": "No stock observations yet",
 "Belum punya akun?": "Don't have an account?",
+"Belum terverifikasi": "Not yet verified",
 "Bencana": "Disaster",
 "Bencana & Lokasi": "Disaster & Location",
 "Bencana Aktif": "Active Disasters",
@@ -119,6 +123,7 @@
 "Buka detail untuk ditindaklanjuti": "Open details to follow up",
 "Buka di Google Maps": "Open in Google Maps",
 "Buka halaman modul →": "Open module page →",
+"Buka halaman posko →": "Open relief post page →",
 "Buka menu": "Open menu",
 "Buka menu navigasi": "Open navigation menu",
 "Buka ringkasan posko →": "Open post summary →",
@@ -166,6 +171,7 @@
 "Data pribadi operasional": "Operational personal data",
 "Dengan mendaftar, Anda menyetujui": "By registering, you agree to the",
 "Depok / alamat donor": "Depok / donor address",
+"Didukung verifikator wilayah": "Backed by regional verifiers",
 "Diperbarui": "Updated",
 "Distribusi": "Distribution",
 "Distribusi Terhambat": "Distribution Delayed",
@@ -198,6 +204,7 @@
 "Ganti kata sandi": "Change password",
 "Gap (Kekurangan)": "Gap (Shortfall)",
 "Gelombang": "Wave",
+"Gudang / Collection Hub": "Warehouse / Collection Hub",
 "Gudang Pengumpul — Klub Mercy": "Collection Warehouse — Klub Mercy",
 "HP / WhatsApp": "Phone / WhatsApp",
 "Halaman terkait (opsional)": "Related page (optional)",
@@ -210,6 +217,7 @@
 "Hubungan / jabatan referensi": "Reference relationship / position",
 "ID Posko Tujuan": "Destination Post ID",
 "IMM — Posko Relawan": "IMM — Volunteer Post",
+"Identitas organisasi diverifikasi": "Organisation identity verified",
 "Identitas posko, organisasi, dan status operasional.": "Post identity, organisation, and operational status.",
 "Informasi diverifikasi di lapangan.": "Information is verified in the field.",
 "Informasi real-time untuk respons yang lebih efektif.": "Real-time information for a more effective response.",
@@ -260,7 +268,7 @@
 "Kebutuhan terbuka": "Open needs",
 "Kebutuhan yang masih terbuka di posko organisasi ini.": "Needs still open at this organisation's relief posts.",
 "Kegiatan terbaru": "Latest activity",
-"Kelengkapan data organisasi di Rescue-Net.": "Completeness of organisation data in Rescue-Net.",
+"Kelengkapan data organisasi di Rescue-Net.": "Completeness of the organisation's data on Rescue-Net.",
 "Kelola Bencana": "Manage Disasters",
 "Kelola Logistik Posko Ini →": "Manage This Post's Logistics →",
 "Kelola Posko Saya": "Manage My Relief Post",
@@ -283,7 +291,7 @@
 "Kirim ke posko ini": "Send to this post",
 "Kirim saran": "Submit suggestion",
 "Kiriman Masyarakat": "Community Shipments",
-"Kiriman terbaru dari dan ke posko organisasi ini.": "Latest shipments from and to this organisation's relief posts.",
+"Kiriman terbaru dari dan ke posko organisasi ini.": "Latest shipments to and from this organisation's relief posts.",
 "Klik barang untuk membuka kartu stoknya di Posko Logistik: stok, barang masuk & keluar, label dan lacak kiriman.": "Click an item to open its stock card in the Logistics Post: stock, items in & out, labels, and shipment tracking.",
 "Klik satu bencana untuk melihat rincian per wilayah dan ringkasannya.": "Click a disaster to see its breakdown by area and summary.",
 "Klik titik bencana untuk melihat ringkasannya. Titik kecil = posko bencana yang dipilih.": "Click a disaster point to see its summary. Small dots = relief posts of the selected disaster.",
@@ -295,8 +303,10 @@
 "Kode OTP memastikan nomor Anda benar dan aman.": "The OTP code confirms your number is correct and secure.",
 "Kode pasien, keluhan, kelompok usia, jenis kelamin, disabilitas, triase, nama (opsional).": "Patient code, complaint, age group, gender, disability, triage, name (optional).",
 "Kolaboratif": "Collaborative",
+"Komando": "Command",
 "Komando Pusat: buat akun anggota daerah, reset & nonaktifkan, setujui pengajuan.": "Central Command: create regional member accounts, reset & deactivate, approve requests.",
 "Komando terpusat": "Central command",
+"Komunikasi": "Communications",
 "Komunitas": "Community",
 "Kondisi Logistik": "Logistics Condition",
 "Kondisi Logistik Posko": "Relief Post Logistics Condition",
@@ -327,6 +337,7 @@
 "Lengkapi nama, HP, dan minimal satu item barang.": "Fill in name, phone, and at least one item.",
 "Lihat Bencana Aktif": "View Active Disasters",
 "Lihat Papan Logistik Posko Ini →": "See This Post's Logistics Board →",
+"Lihat program khusus bencana ini →": "See this disaster's special programmes →",
 "Lihat semua bukti →": "See all evidence →",
 "Lihat semua kebutuhan →": "See all needs →",
 "Lihat semua prioritas →": "See all priorities →",
@@ -418,13 +429,14 @@
 "Organisasi": "Organisations",
 "Organisasi & Posko": "Organisations & Relief Posts",
 "Organisasi dalam jaringan": "Organisations in the network",
-"Organisasi induk dan organisasi anak (ortom / cabang) yang tercatat.": "Recorded parent and child organisations (ortom / branches).",
-"Organisasi induk yang punya posko di Rescue-Net.": "Parent organisations with relief posts in Rescue-Net.",
-"Organisasi lain yang bekerja bersama: pengirim, angkutan, atau penerima bantuan.": "Other organisations working together: senders, transporters, or aid recipients.",
+"Organisasi induk dan organisasi anak (ortom / cabang) yang tercatat.": "Registered parent and child organisations (autonomous bodies / branches).",
+"Organisasi induk yang punya posko di Rescue-Net.": "Parent organisations with relief posts on Rescue-Net.",
+"Organisasi lain yang bekerja bersama: pengirim, angkutan, atau penerima bantuan.": "Other organisations working alongside: senders, carriers, or aid recipients.",
 "Organisasi seperti TNI dapat memilih mode tertutup: publik dan pihak lain hanya melihat ringkasan, sedangkan detailnya hanya untuk anggota organisasi itu.": "Organisations such as TNI can choose closed mode: the public and other parties see only a summary, while details are for that organisation's members only.",
-"Organisasi terbuka": "Open organisations",
-"Organisasi tertutup — angka gabungan": "Closed organisations — combined figures",
+"Organisasi terbuka": "Open organisation",
+"Organisasi tertutup — angka gabungan": "Closed organisation — combined figures only",
 "Organisasi tertutup — komando terpusat (TNI)": "Closed organisation — central command (TNI)",
+"Organisasi tertutup: hanya angka gabungan": "Closed organisation: combined figures only",
 "Organisasi tidak ditemukan": "Organisation not found",
 "Pakai akun ini": "Use this account",
 "Pantau dan kelola bencana yang sedang berlangsung secara real-time.": "Monitor and manage ongoing disasters in real time.",
@@ -526,7 +538,7 @@
 "Program Khusus (Tracking)": "Special Programs (Tracking)",
 "Program khusus & donasi terarah. Klik untuk rincian per kelompok.": "Special programs & targeted donations. Click for a per-group breakdown.",
 "Program khusus dan koordinasi donasi.": "Special programs and donation coordination.",
-"Program khusus organisasi. Donasi dihitung setelah dikonfirmasi penyelenggara.": "The organisation's special programs. Donations are counted after the organiser confirms them.",
+"Program khusus organisasi. Donasi dihitung setelah dikonfirmasi penyelenggara.": "The organisation's special programmes. Donations count once the organiser confirms them.",
 "Publik hanya melihat keahlian & wilayah, tanpa kontak. Kontak untuk posko yang menugaskan.": "The public sees only skills & area, without contact. Contact is for the relief post that assigns them.",
 "Quantity tidak boleh negatif.": "Quantity cannot be negative.",
 "Quantity transfer harus lebih dari 0.": "Transfer quantity must be greater than 0.",
@@ -561,6 +573,7 @@
 "Ringkasan kerja": "Work summary",
 "Ringkasan kerja organisasi di Rescue-Net: posko di peta, peran tiap bidang, alur bantuan, program, dan cara membantu.": "Summary of organisation work in Rescue-Net: relief posts on the map, roles per field, aid flow, programs, and ways to help.",
 "Ruang ramah anak.": "Child-friendly space.",
+"SAR": "SAR",
 "SIMULASI": "SIMULATION",
 "Salurkan bantuan dan pantau dampaknya.": "Send aid and track its impact.",
 "Salurkan bantuan untuk yang membutuhkan": "Send aid to those in need",
@@ -590,6 +603,7 @@
 "Setelah Submit": "After Submitting",
 "Setiap bantuan tercatat dan dapat dilacak.": "Every aid is recorded and can be tracked.",
 "Setting akun": "Account settings",
+"Shelter": "Shelter",
 "Siap": "Ready",
 "Siap bila ada relawan yang ditugaskan.": "Ready when volunteers are assigned.",
 "Siap.": "Ready.",
@@ -636,6 +650,7 @@
 "Titik diperbarui dari peta.": "Point updated from the map.",
 "Titik dipilih dari peta.": "Point chosen from the map.",
 "Transparan & Akuntabel": "Transparent & Accountable",
+"Transportasi": "Transport",
 "Tulis saran minimal 10 huruf.": "Write a suggestion of at least 10 characters.",
 "Tutup": "Close",
 "Tutup Semua": "Close All",
@@ -651,7 +666,75 @@
 "Wilayah yang Anda pantau": "Area you monitor",
 "Yang tampil hanya angka gabungan. Login sebagai anggota/operator": "Only combined figures are shown. Log in as a member/operator",
 "[diusulkan — penyamaran otomatis sedang disiapkan]": "[proposed — automatic anonymisation is being prepared]",
+"__patterns": [
+[
+"^Peran (.+) dalam penanganan bencana di Rescue-Net: ([\\d.]+) posko dari ([\\d.]+) organisasi \\(induk & organisasi anak\\), ([\\d.]+) bencana\\.$",
+"$1's role in disaster response on Rescue-Net: $2 relief posts across $3 organisations (parent & child organisations), $4 disasters."
+],
+[
+"^([\\d.]+) posko: (.*)$",
+"$1 posts: $2"
+],
+[
+"^([\\d.]+) posko$",
+"$1 relief posts"
+],
+[
+"^([\\d.]+) organisasi anak$",
+"$1 child organisations"
+],
+[
+"^([\\d.]+) donatur$",
+"$1 donors"
+],
+[
+"^progres ([\\d]+)%$",
+"progress $1%"
+],
+[
+"^(Rp [\\d.]+) dari (Rp [\\d.]+)$",
+"$1 of $2"
+],
+[
+"^urgensi (.+)$",
+"urgency $1"
+],
+[
+"^([\\d.]+) pasien dilayani$",
+"$1 patients treated"
+],
+[
+"^([\\d.]+) porsi dimasak$",
+"$1 portions cooked"
+],
+[
+"^([\\d.]+) pengungsi tertampung$",
+"$1 evacuees sheltered"
+],
+[
+"^([\\d.]+) laporan orang hilang$",
+"$1 missing person reports"
+],
+[
+"^([\\d.]+) orang ditemukan$",
+"$1 people found"
+],
+[
+"^([\\d.]+) penugasan relawan$",
+"$1 volunteer assignments"
+],
+[
+"^([\\d.]+) kiriman diterima$",
+"$1 shipments received"
+],
+[
+"^([\\d.]+) kiriman disalurkan$",
+"$1 shipments dispatched"
+]
+],
 "anggota organisasi yang sudah ada": "a member of an existing organisation",
+"anggota terdaftar": "registered members",
+"angkutan": "carrier",
 "anonim": "anonymous",
 "aspek logistik · shelter · medis · rincian wilayah": "logistics · shelter · medical aspects · regional breakdown",
 "atau lanjut dengan": "or continue with",
@@ -672,6 +755,7 @@
 "blank spot": "dead zones",
 "dalam penanganan bencana di Rescue-Net": "in disaster response in Rescue-Net",
 "dan hanya terhubung ke data latihan": "and are connected to practice data only",
+"dana program terkonfirmasi": "confirmed programme funds",
 "dari": "of",
 "detail kegiatan dan posko terlihat publik. Anggota baru tetap perlu disetujui pengelola.": "activity and relief post details are visible to the public. New members still need manager approval.",
 "dikonfirmasi posko": "confirmed by post",
@@ -694,6 +778,8 @@
 "kebutuhan prioritas belum terpenuhi · lihat item": "priority needs unmet · view items",
 "kebutuhan terbuka": "open needs",
 "kiriman bantuan diterima": "aid shipments received",
+"kiriman disalurkan": "shipments dispatched",
+"kiriman diterima": "shipments received",
 "laporan hilang & ditemukan": "missing & found reports",
 "laporan langsung tampil di posko itu dengan nama/instansi Anda dan ditandai “belum dikonfirmasi” sampai petugas posko memastikannya. Pelapor tidak bisa mengubah stok atau data posko.": "reports appear directly at that post with your name/agency and are marked “unconfirmed” until the post officer confirms them. Reporters cannot change stock or relief post data.",
 "laporan orang hilang": "missing person reports",
@@ -715,13 +801,20 @@
 "muncul di layar": "shown on screen",
 "nama & kontak pelapor. Kontak hanya untuk petugas posko yang menangani.": "the reporter's name & contact. Contact is only for the relief post officers handling it.",
 "nama@contoh.com": "name@example.com",
+"orang ditemukan": "people found",
 "organisasi (induk & organisasi anak),": "organisations (parent & child organisations),",
 "organisasi anak": "child organisations",
 "organisasi ini": "this organisation",
 "papan kebutuhan": "needs board",
+"pasien dilayani": "patients treated",
+"penerima": "recipient",
+"pengirim bantuan": "aid sender",
 "pengiriman masuk (OTW)": "incoming shipments (OTW)",
 "pengiriman tertahan / menunggu · lihat item": "shipments held / waiting · view items",
+"pengungsi tertampung": "evacuees sheltered",
 "penugasan relawan": "volunteer assignments",
+"porsi dimasak": "portions cooked",
+"porsi makanan": "meal portions",
 "porsi program aktif yang kritis": "share of active programs that are critical",
 "porsi tender yang sudah ada pemenang": "share of tenders with a winner",
 "posko aktif": "active relief posts",
@@ -750,6 +843,7 @@
 "← Kembali": "← Back",
 "→ pilih organisasi →": "→ choose an organisation →",
 "⚠️ Tambah Bencana Baru": "⚠️ Add New Disaster",
+"✓ Terverifikasi": "✓ Verified",
 "＋ Tambah item": "＋ Add item",
 "💰 Donasi ke Program Khusus": "💰 Donate to a Special Program",
 "📍 Lokasi saat ini": "📍 Current location",

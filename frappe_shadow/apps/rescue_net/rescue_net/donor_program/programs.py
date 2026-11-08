@@ -18,6 +18,9 @@ from rescue_net.api_kitchen import (
 )
 
 from rescue_net.donor_program.common import (  # noqa: F401
+    _assert_can_start_program,
+    _assert_program_manager,
+    _program_manager,
     PROGRAM_FIELDS,
     _allowed_owner,
     _assert_owner,
@@ -54,11 +57,7 @@ def create_program(
         owner_type
     )
 
-    _assert_owner(
-        actor,
-        owner_type,
-        owner_id,
-    )
+    _assert_can_start_program(actor, owner_type, owner_id)
 
     if not _campaign_owner_verified(actor, owner_type, owner_id):
         public_visibility = "restricted"
@@ -148,11 +147,7 @@ def create_update(
 
     p = _program(program)
 
-    _assert_owner(
-        actor,
-        p.owner_type,
-        p.owner_id,
-    )
+    _assert_program_manager(actor, p)
 
     update_type = (
         update_type
@@ -331,11 +326,7 @@ def attach_evidence(
         row.program
     )
 
-    _assert_owner(
-        actor,
-        p.owner_type,
-        p.owner_id,
-    )
+    _assert_program_manager(actor, p)
 
     file_url = (
         file_url or ""
@@ -396,11 +387,7 @@ def context(
         rows = [
             row
             for row in rows
-            if _allowed_owner(
-                actor,
-                row.owner_type,
-                row.owner_id,
-            )
+            if _program_manager(actor, row)
         ]
 
     result = _build_context(
@@ -461,11 +448,7 @@ def get_program(
         program
     )
 
-    _assert_owner(
-        actor,
-        p.owner_type,
-        p.owner_id,
-    )
+    _assert_program_manager(actor, p)
 
     return {
         "program":

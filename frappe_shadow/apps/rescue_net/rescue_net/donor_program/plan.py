@@ -4,7 +4,7 @@ import frappe
 from frappe.utils import cint, flt
 
 from rescue_net.api_kitchen import rn_actor, _is_control
-from rescue_net.donor_program.common import _allowed_owner, _program
+from rescue_net.donor_program.common import _allowed_owner, _program, _program_manager
 
 _KINDS = {
     "milestone": ("RN Program Milestone", {"title", "sort_order", "due_date", "milestone_status", "progress_percent"}),
@@ -14,7 +14,7 @@ _KINDS = {
 
 
 def _assert_manage(actor, row):
-    if not (_is_control(actor) or _allowed_owner(actor, row.owner_type, row.owner_id)):
+    if not (_is_control(actor) or _program_manager(actor, row)):
         frappe.throw("Hanya pemilik program atau Control Centre yang boleh mengubah rencana program.",
                      frappe.PermissionError)
 
@@ -84,3 +84,46 @@ def set_output_verification(donor_program, status=None, output_target=None, outp
     for k, v in updates.items():
         frappe.db.set_value("RN Donor Program", donor_program, k, v)
     return {"program": donor_program, **updates}
+
+
+_INFO_FIELDS = {
+    "description": ("text", 4000), "target_description": ("text", 1000), "location": ("text", 140),
+    "contact_person": ("text", 140), "contact_phone": ("text", 40),
+    "officer_in_charge_name": ("text", 140), "officer_in_charge_phone": ("text", 40),
+    "target_beneficiaries": ("text", 140), "budget_target": ("money", None), "target_amount": ("money", None),
+    "start_date": ("date", None), "end_date": ("date", None),
+}
+
+
+@frappe.whitelist()
+def update_program_info(donor_program, values=None):
+    """Program initiator edits the basic data of their program (owner 2026-11-08: the LAZISMU login
+    lands on a settings page to fill in program data, bank account and QRIS). Name, owner, status and
+    money received are NOT editable here."""
+    from frappe.utils import getdate
+    actor = rn_actor()
+    row = _program(donor_program)
+    _assert_manage(actor, row)
+    values = frappe.parse_json(values) if isinstance(values, str) else (values or {})
+    clean = {}
+    for key, raw in values.items():
+        if key not in _INFO_FIELDS:
+            continue
+        kind, limit = _INFO_FIELDS[key]
+        if raw in (None, ""):
+            clean[key] = None
+        elif kind == "text":
+            clean[key] = str(raw).strip()[:limit]
+        elif kind == "int":
+            clean[key] = max(0, cint(raw))
+        elif kind == "money":
+            if flt(raw) < 0:
+                frappe.throw("Nominal tidak boleh negatif.")
+            clean[key] = flt(raw)
+        elif kind == "date":
+            clean[key] = getdate(raw)
+    if clean.get("start_date") and clean.get("end_date") and clean["end_date"] < clean["start_date"]:
+        frappe.throw("Tanggal selesai tidak boleh sebelum tanggal mulai.")
+    if clean:
+        frappe.db.set_value("RN Donor Program", donor_program, clean)
+    return {"name": donor_program, "updated": sorted(clean)}

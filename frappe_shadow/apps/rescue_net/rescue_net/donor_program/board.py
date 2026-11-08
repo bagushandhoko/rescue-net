@@ -20,6 +20,8 @@ from rescue_net.api_kitchen import (
 from rescue_net.services.program_plan import board_stats, plan_for
 
 from rescue_net.donor_program.common import (  # noqa: F401
+    _assert_program_manager,
+    _program_manager,
     SPECIAL_PROGRAM_FIELDS,
     UPDATE_FIELDS,
     _PRIORITY_CRITICAL,
@@ -82,7 +84,7 @@ def program_board(disaster_event=None):
             "RN Donor Program", filters=hidden_filters,
             fields=SPECIAL_PROGRAM_FIELDS, limit_page_length=1000,
         ):
-            if _allowed_owner(actor, hr.owner_type, hr.owner_id):
+            if _program_manager(actor, hr):
                 rows.append(hr)
                 own_hidden_names.add(hr.name)
 
@@ -291,7 +293,7 @@ def program_donations(donor_program):
         actor = None
     if actor:
         try:
-            can_manage = bool(_is_control(actor) or _allowed_owner(actor, row.owner_type, row.owner_id))
+            can_manage = bool(_is_control(actor) or _program_manager(actor, row))
         except Exception:
             can_manage = False
     if can_manage:
@@ -327,7 +329,7 @@ def decide_cash_donation(donation, action, note=None):
         frappe.throw("Donasi ini sudah diputuskan.")
 
     row = _program(doc.donor_program)
-    if not (_is_control(actor) or _allowed_owner(actor, row.owner_type, row.owner_id)):
+    if not (_is_control(actor) or _program_manager(actor, row)):
         frappe.throw("Anda bukan pengelola program/lembaga penerima ini.", frappe.PermissionError)
 
     action = str(action or "").strip().lower()
@@ -365,7 +367,7 @@ def program_detail(program):
             actor = rn_actor(required=False)
         except Exception:
             actor = None
-        if not (actor and (_is_control(actor) or _allowed_owner(actor, row.owner_type, row.owner_id))):
+        if not (actor and (_is_control(actor) or _program_manager(actor, row))):
             frappe.throw("Program tidak ditemukan atau tidak publik", frappe.DoesNotExistError)
 
     updates = frappe.get_all(
@@ -444,7 +446,7 @@ def program_detail(program):
         detail_actor = rn_actor(required=False)
     except Exception:
         detail_actor = None
-    can_manage = bool(detail_actor and (_is_control(detail_actor) or _allowed_owner(detail_actor, row.owner_type, row.owner_id)))
+    can_manage = bool(detail_actor and (_is_control(detail_actor) or _program_manager(detail_actor, row)))
     owner_verified = _campaign_owner_verified(detail_actor, row.owner_type, row.owner_id) if can_manage else None
     from rescue_net.donor_program.documents import bank_for, documents_for, initiator_verified
 
@@ -483,7 +485,7 @@ def recheck_and_publish(donor_program):
     for the same reason, if it already has real bidding dates."""
     actor = rn_actor()
     row = _program(donor_program)
-    _assert_owner(actor, row.owner_type, row.owner_id)
+    _assert_program_manager(actor, row)
 
     if not _campaign_owner_verified(actor, row.owner_type, row.owner_id):
         frappe.throw(

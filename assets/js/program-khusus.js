@@ -651,12 +651,72 @@
     }
   }
 
+
+  // ---- Kelola Program (owner 2026-11-08): pemrakarsa langsung melihat langkah pengelolaan ----
+  function goManage(tab, sel) {
+    var t = $("#detailTabs .rn-tab[data-tab=" + tab + "]"); if (t) t.click();
+    setTimeout(function () {
+      var el = $(sel); if (!el) return;
+      if (el.tagName === "DETAILS") el.open = true;
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      var f = el.querySelector && el.querySelector("input,textarea,select"); if (f) try { f.focus({ preventScroll: true }); } catch (e) {}
+    }, 60);
+  }
+  function renderManagePanel(data) {
+    var panel = $("#managePanel"); if (!panel) return;
+    if (!data || !data.can_manage) { panel.hidden = true; return; }
+    panel.hidden = false;
+    var p = data.program || {}, b = data.bank || {}, docs = data.documents || {}, don = data.donations || {};
+    var pending = (don.pending || []).length;
+    var hasInfo = !!(p.description && (p.officer_in_charge_name || p.contact_person));
+    var steps = [
+      [hasInfo ? "done" : "todo", "Data program (deskripsi, sasaran, penanggung jawab)", "Ubah data", "ringkasan", "#infoBox"],
+      [b.account_number ? "done" : "todo", b.account_number ? "Rekening: " + (b.bank_name || "") + " " + b.account_number : "Rekening penerimaan donasi belum diisi", b.account_number ? "Ubah rekening" : "Isi rekening", "ringkasan", "#bankForm"],
+      [b.qris_url ? "done" : "todo", b.qris_url ? "QRIS sudah dipasang" : "QRIS belum diunggah", b.qris_url ? "Ganti QRIS" : "Unggah QRIS", "ringkasan", "#qrisForm"],
+      [pending ? "alert" : "done", pending ? pending + " donasi masuk menunggu konfirmasi Anda" : "Tidak ada donasi menunggu konfirmasi", pending ? "Konfirmasi sekarang" : "Lihat donasi", "anggaran", "#donationPendingSection"],
+      [(docs.statements || []).length ? "done" : "todo", "Rekening koran untuk transparansi (" + (docs.statements || []).length + " berkas)", "Unggah rekening koran", "ringkasan", "#koranForm"]
+    ];
+    var verified = data.initiator_verified;
+    $("#manageSteps").innerHTML = steps.map(function (s, i) {
+      return '<li class="' + s[0] + '"><span>' + esc(s[1]) + '</span><button type="button" class="btn mini" data-manage-go="' + i + '">' + esc(s[2]) + "</button></li>";
+    }).join("") + (verified ? "" : '<li class="alert"><span>Pemrakarsa belum terverifikasi — rekening &amp; QRIS baru tampil ke publik setelah verifikasi.</span></li>');
+    $("#manageSteps").querySelectorAll("[data-manage-go]").forEach(function (btn) {
+      btn.addEventListener("click", function () { var s = steps[+btn.getAttribute("data-manage-go")]; goManage(s[3], s[4]); });
+    });
+    var f = $("#infoForm");
+    if (f) {
+      ["description", "target_beneficiaries", "target_description", "budget_target", "location", "start_date", "end_date",
+       "officer_in_charge_name", "officer_in_charge_phone", "contact_person", "contact_phone"].forEach(function (k) {
+        if (f[k]) f[k].value = p[k] == null ? "" : (k === "budget_target" && !p[k] ? "" : String(p[k]).slice(0, k.indexOf("date") > -1 ? 10 : 4000));
+      });
+      if (!f.dataset.wired) {
+        f.dataset.wired = "1";
+        f.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          var m = $("#infoMsg"), vals = {};
+          Array.prototype.forEach.call(f.elements, function (el) { if (el.name) vals[el.name] = el.value; });
+          m.textContent = "Menyimpan…";
+          try {
+            await window.RN_FRAPPE.call("rescue_net.api_donor_program.update_program_info", { donor_program: SELECTED, values: JSON.stringify(vals) }, { method: "POST" });
+            m.textContent = "Tersimpan.";
+            await selectProgram(SELECTED);
+          } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
+        });
+      }
+    }
+    if (!panel.dataset.autoscrolled && /[?&]kelola=1\b/.test(location.search)) {
+      panel.dataset.autoscrolled = "1";
+      setTimeout(function () { panel.scrollIntoView({ behavior: "smooth", block: "start" }); }, 200);
+    }
+  }
+
   async function selectProgram(name) {
     SELECTED = name;
     renderList();
     try {
       var data = await window.RN_FRAPPE.call(DETAIL_METHOD, { program: name });
       renderDetail(data);
+      renderManagePanel(data);
     } catch (err) {
       console.error("[program detail]", err);
     }
@@ -671,7 +731,10 @@
     renderKpi(data.totals || {});
     renderList();
 
-    if (data.programs && data.programs.length && !SELECTED) {
+    var wanted = new URLSearchParams(location.search).get("program");
+    if (wanted && !SELECTED) {
+      selectProgram(wanted);            // tautan langsung ke satu program (juga tujuan login pemrakarsa)
+    } else if (data.programs && data.programs.length && !SELECTED) {
       selectProgram(data.programs[0].name);
     }
   }
@@ -819,68 +882,44 @@ async function loadPrograms() {
 
 
 function setupProgramForm() {
-  const form =
-    document.getElementById(
-      "programForm"
-    );
-
+  // owner 2026-11-08: a real member (e.g. LAZISMU) picks its organisation instead of typing an ID
+  const form = document.getElementById("programForm");
   if (!form) return;
-
-  form.addEventListener(
-    "submit",
-    async e => {
-      e.preventDefault();
-
-      await RN_FRAPPE.call(
-        "rescue_net.api_donor_program." +
-        "create_program",
-        {
-          disaster_event:
-            getEventId(),
-
-          owner_type:
-            form.owner_type?.value ||
-            "organization",
-
-          owner_id:
-            form.owner_id.value.trim(),
-
-          program_name:
-            form.program_name.value.trim(),
-
-          program_type:
-            form.program_type.value.trim(),
-
-          target_description:
-            form.target_description.value
-              .trim(),
-
-          target_amount:
-            Number(
-              form.target_amount.value || 0
-            ),
-
-          target_unit:
-            form.target_unit?.value ||
-            "IDR",
-
-          location:
-            form.location?.value?.trim() ||
-            null,
-
-          notes:
-            form.notes.value.trim()
-        },
-        {
-          method: "POST"
-        }
-      );
-
-      form.reset();
-
-      await loadPrograms();
+  const sel = document.getElementById("ownerSelect");
+  const msg = document.getElementById("programFormMsg");
+  RN_FRAPPE.call("rescue_net.api_community_cluster.my_memberships", {})
+    .then(r => {
+      const orgs = ((r && r.memberships) || []).filter(m => m.status === "approved");
+      sel.innerHTML = orgs.length
+        ? orgs.map(m => `<option value="${safe(m.organization)}">${safe(m.organization_title || m.organization)}</option>`).join("")
+        : '<option value="">Anda belum menjadi anggota organisasi yang disetujui</option>';
+    })
+    .catch(() => { sel.innerHTML = '<option value="">Login dulu untuk membuat program</option>'; });
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!sel.value) { msg.textContent = "Pilih organisasi dulu."; return; }
+    msg.textContent = "Menyimpan…";
+    try {
+      const r = await RN_FRAPPE.call("rescue_net.api_donor_program.create_special_program", {
+        disaster_event: getEventId(),
+        owner_type: "organization",
+        owner_id: sel.value,
+        program_name: form.program_name.value.trim(),
+        description: form.description.value.trim() || null,
+        target_beneficiaries: form.target_beneficiaries.value.trim() || null,
+        target_location: form.target_location.value.trim() || null,
+        budget_target: Number(form.budget_target.value || 0),
+        status: "active"
+      }, { method: "POST" });
+      msg.textContent = "Program dibuat. Membuka panel kelola…";
+      const id = r && (r.program || r.id);
+      const url = new URL(location.href);
+      if (id) { url.searchParams.set("program", id); url.searchParams.set("kelola", "1"); }
+      location.href = url.toString();
+    } catch (err) {
+      msg.textContent = "Gagal: " + ((err && err.message) || err);
     }
-  );
+  });
 }
 
 

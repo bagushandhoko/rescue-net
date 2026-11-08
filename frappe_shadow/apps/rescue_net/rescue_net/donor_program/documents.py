@@ -23,7 +23,7 @@ import frappe
 from frappe.utils.file_manager import save_file
 
 from rescue_net.api_kitchen import rn_actor, _is_control
-from rescue_net.donor_program.common import _actor_verified_person, _allowed_owner, _owner_verified, _program
+from rescue_net.donor_program.common import _actor_verified_person, _allowed_owner, _owner_verified, _program, _program_manager
 
 MAX_BYTES = 10 * 1024 * 1024
 MAX_DRAWINGS = 12
@@ -35,13 +35,34 @@ _PDF_MAGIC = b"%PDF"
 
 
 def _assert_manage(actor, row):
-    if not (_is_control(actor) or _allowed_owner(actor, row.owner_type, row.owner_id)):
+    if not (_is_control(actor) or _program_manager(actor, row)):
         frappe.throw("Hanya pemrakarsa program atau Control Centre yang boleh mengubah ini.", frappe.PermissionError)
+
+
+def _org_creator_trusted(row):
+    """Owner 2026-11-08: an approved MEMBER may start a program for the organisation (e.g. LAZISMU), but its
+    bank account / QRIS goes public only when the organisation vouches for that member (HQ attestation
+    member_verified, or the member is owner/deputy/staff, or runs a posko of the org). Programs created via the
+    old route (posko/control, no membership row) are unchanged."""
+    acct = row.get("created_by_user")
+    if not acct or not row.get("owner_id"):
+        return True
+    m = frappe.db.get_value("RN Organization Membership",
+                            {"user_account": acct, "organization": row.owner_id, "status": "approved"},
+                            ["membership_role", "member_verified"], as_dict=True)
+    if not m:
+        return True
+    if (m.membership_role or "") in ("owner", "deputy", "staff") or m.member_verified:
+        return True
+    poskos = frappe.get_all("RN Posko Assignment", filters={"user_account": acct, "status": "approved"}, pluck="posko")
+    return bool(poskos and frappe.db.exists("RN Posko", {"name": ["in", poskos], "organization": row.owner_id}))
 
 
 def initiator_verified(row):
     """Is the program's initiator verified right now (org / posko status, or the creating person)?"""
-    if row.owner_type in ("organization", "posko"):
+    if row.owner_type == "organization":
+        return bool(_owner_verified(row.owner_type, row.owner_id)) and _org_creator_trusted(row)
+    if row.owner_type == "posko":
         return bool(_owner_verified(row.owner_type, row.owner_id))
     acct = row.get("created_by_user") or row.get("owner_id")
     return bool(acct and _actor_verified_person(frappe._dict(name=acct)))

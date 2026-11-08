@@ -18,6 +18,9 @@ from rescue_net.api_kitchen import (
 )
 
 from rescue_net.donor_program.common import (  # noqa: F401
+    _assert_can_start_program,
+    _assert_program_manager,
+    _program_manager,
     SPECIAL_PROGRAM_FIELDS,
     UPDATE_FIELDS,
     _allowed_owner,
@@ -58,11 +61,7 @@ def create_special_program(
         owner_type
     )
 
-    _assert_owner(
-        actor,
-        owner_type,
-        owner_id,
-    )
+    _assert_can_start_program(actor, owner_type, owner_id)
 
     # Only a verified org/posko/person may run a PUBLIC campaign. Creation
     # itself is never blocked — an unverified owner's program is just kept
@@ -213,11 +212,7 @@ def create_special_program_update(
             "Program not found"
         )
 
-    _assert_owner(
-        actor,
-        p.owner_type,
-        p.owner_id,
-    )
+    _assert_program_manager(actor, p)
 
     update_title = (
         update_title or ""
@@ -373,11 +368,7 @@ def get_special_program(
             "Program not found"
         )
 
-    _assert_owner(
-        actor,
-        p.owner_type,
-        p.owner_id,
-    )
+    _assert_program_manager(actor, p)
 
     updates = frappe.get_all(
         "RN Donor Program Update",

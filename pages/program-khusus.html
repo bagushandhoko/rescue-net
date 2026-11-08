@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=armada-20261102">
+  <link rel="stylesheet" href="../assets/css/style.css?v=kelola-20261108">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -128,6 +128,30 @@
             <span class="form-message" id="recheckPublishMsg"></span>
           </div>
 
+          <section class="rn-pk-box rn-pk-manage" id="managePanel" hidden>
+            <div class="rn-pk-box-h"><h4>⚙️ Kelola Program Anda</h4></div>
+            <p class="rn-muted" style="margin:0 0 8px">Langkah pengelola program: lengkapi data, pasang rekening &amp; QRIS, lalu konfirmasi setiap donasi yang masuk.</p>
+            <ol class="rn-pk-steps" id="manageSteps"></ol>
+            <details id="infoBox">
+              <summary class="btn">✏️ Ubah Data Program</summary>
+              <form class="rn-form" id="infoForm" autocomplete="off" style="margin-top:8px">
+                <label>Deskripsi program<textarea name="description" rows="3"></textarea></label>
+                <label>Sasaran / penerima manfaat<input name="target_beneficiaries" placeholder="mis. 15.000 warga Siak"></label>
+                <label>Uraian target<textarea name="target_description" rows="2"></textarea></label>
+                <div class="form-grid">
+                  <label>Target dana (Rp)<input name="budget_target" type="number" min="0" step="1000"></label>
+                  <label>Lokasi<input name="location"></label>
+                  <label>Tanggal mulai<input name="start_date" type="date"></label>
+                  <label>Tanggal selesai<input name="end_date" type="date"></label>
+                  <label>Penanggung jawab<input name="officer_in_charge_name"></label>
+                  <label>No. HP penanggung jawab<input name="officer_in_charge_phone" inputmode="tel"></label>
+                  <label>Narahubung<input name="contact_person"></label>
+                  <label>No. HP narahubung<input name="contact_phone" inputmode="tel"></label>
+                </div>
+                <div class="form-actions"><button class="btn primary" type="submit">Simpan Data Program</button><span class="form-message" id="infoMsg"></span></div>
+              </form>
+            </details>
+          </section>
           <div class="rn-tabs rn-pk-detail-tabs" id="detailTabs">
             <button class="rn-tab is-active" data-tab="ringkasan" type="button">Ringkasan</button>
             <button class="rn-tab" data-tab="rencana" type="button" id="tabBtnRencana" hidden>Rencana Kerja</button>
@@ -288,28 +312,29 @@
         </div>
 
         <aside class="panel" data-login-only>
-          <h3>Buat Program</h3>
-          <form class="rn-form" id="programForm">
+          <h3>Buat Program Donasi</h3>
+          <p class="rn-muted" style="font-size:13px">Untuk lembaga/ortom anggota organisasi (mis. LAZISMU). Setelah dibuat, Anda menjadi pemrakarsa: isi rekening, QRIS, dan konfirmasi donasi di panel "Kelola Program Anda".</p>
+          <form class="rn-form" id="programForm" autocomplete="off">
+            <label>Atas nama organisasi
+              <select name="owner_id" id="ownerSelect" required><option value="">Memuat organisasi Anda…</option></select>
+            </label>
             <label>Nama Program
-              <input name="program_name" value="Program PLTS Darurat untuk Posko Gelap" required>
+              <input name="program_name" required maxlength="140" placeholder="mis. Masker N95 &amp; Oksigen untuk Warga Terdampak Asap">
             </label>
-            <label>Jenis Program
-              <input name="program_type" value="energy_support">
+            <label>Deskripsi singkat
+              <textarea name="description" rows="3" placeholder="Apa yang dibantu, untuk siapa, bagaimana dana dipakai"></textarea>
             </label>
-            <label>ID Pemilik
-              <input name="owner_id" value="org-sim-bpbd">
+            <label>Sasaran / penerima manfaat
+              <input name="target_beneficiaries" placeholder="mis. 15.000 warga Kab. Siak">
             </label>
-            <label>Target Lokasi
-              <input name="target_description" value="Shelter Simulasi dan Dapur Umum">
+            <label>Lokasi sasaran
+              <input name="target_location" placeholder="mis. Kab. Siak &amp; Pelalawan">
             </label>
-            <label>Target Dana
-              <input name="target_amount" type="number" value="50000000">
+            <label>Target dana (Rp)
+              <input name="budget_target" type="number" min="0" step="1000" placeholder="mis. 50000000">
             </label>
-            <label>Catatan
-              <textarea name="notes" rows="4">Pengadaan panel surya portable, lampu, power station, dan instalasi darurat.</textarea>
-            </label>
-            <p class="rn-muted" style="font-size:12px">Hanya organisasi/posko yang sudah terverifikasi (lewat Verification &amp; Approval) yang programnya tampil publik di Papan Donasi — kalau ID Pemilik belum terverifikasi, program tetap tersimpan tapi disembunyikan dari publik sampai verifikasinya selesai.</p>
-            <button class="btn primary" type="submit">Simpan Program</button>
+            <p class="rn-muted" style="font-size:12px">Program tampil publik setelah organisasi terverifikasi. Rekening &amp; QRIS hanya tampil ke publik bila pemrakarsa terverifikasi — jangan minta transfer lewat pesan pribadi.</p>
+            <div class="form-actions"><button class="btn primary" type="submit">Buat Program</button><span class="form-message" id="programFormMsg"></span></div>
           </form>
         </aside>
       </section>
@@ -365,13 +390,13 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=qristop-20261108"></script>
+<script src="../assets/js/program-khusus.js?v=kelola2-20261108"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-owner-only.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
-<script src="../assets/js/rn-public-header.js?v=i18n5-20261108"></script>
+<script src="../assets/js/rn-public-header.js?v=i18n6-20261108"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=poskoalat-20261103"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=saran-20261108"></script>

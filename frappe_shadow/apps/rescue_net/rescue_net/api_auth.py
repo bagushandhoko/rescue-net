@@ -747,6 +747,22 @@ def _short_event(name):
     return str(name or "").replace("disaster_events:", "")
 
 
+def _program_landing(actor, latest=None):
+    """Initiator of a donation/special program without an own posko (e.g. LAZISMU) lands straight on
+    that program's management view (owner 2026-11-08). Newest active program first, preferring the
+    disaster the user is busy with."""
+    rows = frappe.get_all("RN Donor Program",
+                          filters={"created_by_user": actor.name, "status": ["not in", ["cancelled", "completed"]]},
+                          fields=["name", "disaster_event", "status"], order_by="modified desc", limit_page_length=20)
+    if not rows:
+        return None
+    pick = next((r for r in rows if latest and _short_event(r.disaster_event) == latest), rows[0])
+    from urllib.parse import quote
+    ev = _short_event(pick.disaster_event) if pick.disaster_event else None
+    return ("program-khusus.html?program=" + quote(pick.name, safe="") +
+            ("&event=" + quote(ev, safe="") if ev else "") + "&kelola=1")
+
+
 @frappe.whitelist()
 def my_landing():
     """{href, posko, events[]} for the logged-in user. `events` = disasters of
@@ -802,7 +818,9 @@ def my_landing():
         from urllib.parse import quote
         href = page + "?id=" + quote(primary, safe="") + ("&event=" + quote(ev, safe="") if ev else "")
         posko_info = {"name": row.name, "title": row.title, "posko_type": row.posko_type}
-    elif actor.get("organization"):
+    else:
+        href = _program_landing(actor, latest)
+    if not href and not own and actor.get("organization"):
         from urllib.parse import quote
         href = ("organisasi-posko.html?org=" + quote(actor.organization, safe="") +
                 ("&event=" + quote(latest, safe="") if latest else ""))

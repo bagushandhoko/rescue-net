@@ -7654,3 +7654,13 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .kp-arm h5 { margin: 4px 0 0; }
 .kp-bk { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; padding: 8px 10px; border-radius: 10px; background: #fff4ef; overflow-wrap: anywhere; }
 .kp-bk > span:first-child { flex: 1 1 200px; min-width: 0; }
+
+/* Kelola Program (owner 2026-11-08) */
+.rn-pk-manage { border: 2px solid rgba(232,117,90,.45); background: #fffaf7; margin-bottom: 12px; }
+.rn-pk-steps { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 8px; }
+.rn-pk-steps li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; border: 1px solid rgba(104,64,45,.15); border-radius: 10px; padding: 8px 10px; background: #fff; min-width: 0; }
+.rn-pk-steps li > span { flex: 1 1 200px; min-width: 0; overflow-wrap: anywhere; }
+.rn-pk-steps li.done > span::before { content: "✅ "; }
+.rn-pk-steps li.todo > span::before { content: "⬜ "; }
+.rn-pk-steps li.alert > span::before { content: "🔔 "; }
+.rn-pk-steps li.alert { border-color: rgba(224,138,30,.6); background: #fff6e8; }

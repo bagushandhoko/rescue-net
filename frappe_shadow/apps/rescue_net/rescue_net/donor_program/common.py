@@ -143,6 +143,48 @@ def _assert_owner(actor, owner_type, owner_id):
         )
 
 
+def _program_manager(actor, row):
+    """Who may manage ONE program (owner 2026-11-08: "login lazismu harus langsung tampil halaman
+    setting pemilik donasi program"): the old owner rule (posko of the owning org / control), plus,
+    for an organisation-owned program, the organisation's own managers (can_manage_organization)
+    and the program's initiator (created_by_user) while still an APPROVED member of that org.
+    A member who leaves/is removed loses access; other members of a big org don't get it."""
+    if not actor or not row:
+        return False
+    if _allowed_owner(actor, row.get("owner_type"), row.get("owner_id")):
+        return True
+    if (row.get("owner_type") or "organization").strip().lower() != "organization" or not row.get("owner_id"):
+        return False
+    try:
+        from rescue_net.access_policy import can_manage_organization
+        if can_manage_organization(actor, row.owner_id):
+            return True
+    except Exception:
+        pass
+    me = actor.get("name")
+    if not me or not row.get("created_by_user") or row.get("created_by_user") != me:
+        return False
+    return bool(frappe.db.exists("RN Organization Membership", {
+        "user_account": me, "organization": row.owner_id, "status": "approved"}))
+
+
+def _assert_can_start_program(actor, owner_type, owner_id):
+    """Creating a program for an organisation: the old owner rule, or any APPROVED member of that organisation
+    (owner 2026-11-08: e.g. LAZISMU, an ortom account inside Muhammadiyah, starts its own donation program and
+    becomes its initiator). Public visibility and the bank/QRIS stay gated by verification as before."""
+    if _allowed_owner(actor, owner_type, owner_id):
+        return
+    if (owner_type == "organization" and owner_id and actor and actor.get("name") and frappe.db.exists(
+            "RN Organization Membership", {"user_account": actor.name, "organization": owner_id, "status": "approved"})):
+        return
+    frappe.throw("Akses Donor Program ditolak", frappe.PermissionError)
+
+
+def _assert_program_manager(actor, row):
+    if not _program_manager(actor, row):
+        frappe.throw("Akses Donor Program ditolak", frappe.PermissionError)
+
+
 _VERIFIED_STATUSES = {"verified", "official_verified", "community_verified"}
 
 

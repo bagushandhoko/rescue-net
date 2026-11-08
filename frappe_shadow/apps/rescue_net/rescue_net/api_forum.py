@@ -47,9 +47,13 @@ def feedback_threads(disaster_event=None, category=None, limit=200):
         "RN Community Feedback", filters=filters, or_filters=orf,
         fields=["name", "topic", "category", "author_name", "body", "wilayah",
                 "upvotes", "status", "official_response", "responded_by",
-                "responded_at", "creation"],
+                "responded_at", "creation", "legacy_id"],
         order_by="upvotes desc, creation desc", limit_page_length=cint(limit) or 200,
     )
+    # Saran untuk platform (api_saran) bukan masukan bencana: jangan tampil di forum ini.
+    roots = [r for r in roots if not str(r.get("legacy_id") or "").startswith("saran:")]
+    for r in roots:
+        r.pop("legacy_id", None)
     names = [r.name for r in roots]
     replies_by_parent = {}
     if names:
@@ -68,11 +72,11 @@ def feedback_threads(disaster_event=None, category=None, limit=200):
 
     counts = {}
     for c in _CATS:
-        counts[c] = len(frappe.get_all(
+        counts[c] = sum(1 for x in frappe.get_all(
             "RN Community Feedback",
             filters={"parent_feedback": ["in", ["", None]], "status": ["!=", "hidden"], "category": c},
-            or_filters=orf, limit_page_length=0, pluck="name",
-        ))
+            or_filters=orf, limit_page_length=0, pluck="legacy_id",
+        ) if not str(x or "").startswith("saran:"))
 
     return {"disaster_event": ev, "threads": roots, "category_counts": counts,
             "open_count": sum(1 for r in roots if r.status == "open")}

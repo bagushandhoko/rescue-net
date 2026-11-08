@@ -98,6 +98,8 @@ GUEST_ENDPOINTS = {
     "api_verifier.posko_verification_public", "api_verifier.verifier_directory",
     "api_verifier.endorsements_overview",  # reviewed: reporter targets masked, their statements only for SM/verifier (test_reporter_contact)
     "api_volunteer.dashboard", "api_volunteer.register_volunteer", "api_volunteer.volunteer_board",
+    "api_saran.list_suggestions",  # reviewed: saran publik tanpa kontak pengirim (test_saran)
+    "api_saran.submit_suggestion", "api_saran.support_suggestion",
 }
 
 # Guest endpoints that write, or need a secret the caller must already hold
@@ -109,6 +111,7 @@ NOT_SWEPT = {
     "api_logistics.get_guest_aid_offer", "api_logistics.book_transport_space_public",
     "api_logistics.get_public_transport_booking", "api_logistics.update_public_transport_booking",
     "api_volunteer.register_volunteer",
+    "api_saran.submit_suggestion", "api_saran.support_suggestion",
     "api_files.file",  # needs a file url; covered by test_api_files
 }
 

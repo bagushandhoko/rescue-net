@@ -44,6 +44,7 @@
       ["Control Centre", "pages/war-room.html?event=" + encodeURIComponent(ev)],
       ["Laporan Masyarakat", "pages/laporan-masyarakat.html"],
       ["Kirim Bantuan", "pages/kirim-bantuan.html"],
+      ["Saran", "pages/saran.html"],
       ["Install App", "pages/install.html"],
       ["Login/registrasi", "pages/auth.html"],
       ["Daftarkan Bencana", "pages/kelola-bencana.html#kbCreatePanel"]

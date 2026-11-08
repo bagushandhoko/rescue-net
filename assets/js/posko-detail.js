@@ -222,7 +222,7 @@ function renderOverview(ctx) {
 
       <div>
         <span>Organization</span>
-        <b>${safe(posko.organization)}</b>
+        <b>${posko.organization_id ? `<a href="profil-organisasi.html?id=${encodeURIComponent(posko.organization_id)}" title="Profil kerja organisasi">${safe(posko.organization)}</a>` : safe(posko.organization)}</b>
       </div>
 
       <div>
@@ -626,6 +626,7 @@ async function loadPosko() {
         (res.organization && res.organization.id) ||
         "-",
       operational_status: res.posko && res.posko.operational_status,
+      organization_id: res.organization && res.organization.id,
       verification_status: res.posko && res.posko.verification_status
     },
 

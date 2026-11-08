@@ -100,6 +100,7 @@ GUEST_ENDPOINTS = {
     "api_volunteer.dashboard", "api_volunteer.register_volunteer", "api_volunteer.volunteer_board",
     "api_saran.list_suggestions",  # reviewed: saran publik tanpa kontak pengirim (test_saran)
     "api_saran.submit_suggestion", "api_saran.support_suggestion",
+    "api_org_profile.org_list", "api_org_profile.org_profile",  # reviewed: profil kerja organisasi tanpa kontak/pasien/anggota (test_org_profile)
 }
 
 # Guest endpoints that write, or need a secret the caller must already hold

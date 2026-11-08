@@ -150,6 +150,17 @@ def org_posko_board(disaster_event=None):
     }
 
 
+def _can_see_members(organization):
+    if frappe.session.user in (None, "", "Guest"):
+        return False
+    from rescue_net.access_policy import is_system_manager
+    if is_system_manager():
+        return True
+    acc = frappe.db.get_value("RN User Account", {"frappe_user": frappe.session.user}, "name")
+    return bool(acc and frappe.db.exists("RN Organization Membership",
+                                         {"user_account": acc, "organization": organization, "status": "approved"}))
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def org_detail(organization):
@@ -176,10 +187,14 @@ def org_detail(organization):
 
     poskos = real_rows(poskos)  # posko latihan tidak terdaftar di detail organisasi (10g)
 
-    members = frappe.get_all(
-        "RN User Account", filters={"organization": organization},
-        fields=["name", "title", "role", "status"], limit_page_length=200,
-    )
+    # Daftar nama anggota hanya untuk anggota organisasi itu sendiri / super admin (owner 2026-11-08:
+    # profil publik tidak boleh membuka daftar anggota). Jumlahnya tetap ada di counts.members.
+    members = []
+    if _can_see_members(organization):
+        members = frappe.get_all(
+            "RN User Account", filters={"organization": organization},
+            fields=["name", "title", "role", "status"], limit_page_length=200,
+        )
 
     programs = frappe.get_all(
         "RN Donor Program", filters={"owner_type": "organization", "owner_id": organization},

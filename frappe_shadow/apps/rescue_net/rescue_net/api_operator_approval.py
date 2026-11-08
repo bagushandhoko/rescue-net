@@ -25,6 +25,54 @@ def _actor():
     return actor
 
 
+def _org_managers(org):
+    if not org:
+        return []
+    return frappe.get_all("RN Organization Membership",
+                          filters={"organization": org, "status": "approved",
+                                   "membership_role": ["in", ["owner", "deputy", "staff"]]},
+                          pluck="user_account")
+
+
+def _operator_status(posko, actor=None):
+    """Can the caller ask to become this posko's operator directly (super-admin approval)?
+    Only when nobody can place them: the posko has no approved operator AND its organisation (if any) has
+    no manager. Otherwise the route is: join the organisation, its manager places you."""
+    row = frappe.db.get_value("RN Posko", posko, ["name", "title", "organization"], as_dict=True)
+    if not row:
+        frappe.throw("Posko tidak ditemukan.")
+    operators = frappe.get_all("RN Posko Assignment", filters={"posko": posko, "status": "approved"}, pluck="user_account")
+    managers = _org_managers(row.organization)
+    pending = bool(actor and frappe.db.exists("RN Posko Assignment",
+                                              {"posko": posko, "user_account": actor.name, "status": "pending"}))
+    mine = bool(actor and actor.name in operators)
+    if mine:
+        return {"can_request": False, "pending": False, "is_operator": True, "reason": "Anda sudah petugas posko ini."}
+    if pending:
+        return {"can_request": False, "pending": True, "is_operator": False,
+                "reason": "Permohonan Anda sedang menunggu persetujuan super admin."}
+    if managers:
+        org_title = frappe.db.get_value("RN Organization", row.organization, "title") or row.organization
+        return {"can_request": False, "pending": False, "is_operator": False, "organization": row.organization,
+                "reason": f"Posko ini dikelola organisasi {org_title}. Ajukan keanggotaan ke organisasi itu; "
+                          "pengelolanya yang menempatkan petugas."}
+    if operators:
+        return {"can_request": False, "pending": False, "is_operator": False,
+                "reason": "Posko ini sudah punya petugas. Hubungi petugasnya lewat kontak posko."}
+    return {"can_request": True, "pending": False, "is_operator": False,
+            "reason": "Posko ini belum punya pengelola. Anda bisa mengajukan diri; super admin akan memeriksa."}
+
+
+@frappe.whitelist()
+def posko_operator_status(posko):
+    """For the posko page: may the logged-in user ask to run this posko?"""
+    user = frappe.session.user
+    if user in ("Guest",):
+        return {"can_request": False, "login_required": True}
+    actor = frappe.db.get_value("RN User Account", {"frappe_user": user, "status": "active"}, ["name"], as_dict=True)
+    return _operator_status(posko, actor)
+
+
 @frappe.whitelist()
 def request_posko_operator(posko):
     actor = _actor()
@@ -45,9 +93,21 @@ def request_posko_operator(posko):
     )
 
     if not assignment_name:
-        frappe.throw(
-            "Anda belum memiliki assignment pada Posko tersebut"
-        )
+        # owner 2026-11-08: a posko nobody manages (no org managers, no operator) used to be a dead end.
+        # Anyone logged in may now ask to run it; the request lands in the Verification queue (super admin).
+        st = _operator_status(posko, actor)
+        if not st["can_request"]:
+            frappe.throw(st["reason"])
+        assignment = frappe.new_doc("RN Posko Assignment")
+        assignment.user_account = actor.name
+        assignment.posko = posko
+        assignment.assignment_role = "posko_operator"
+        assignment.status = "pending"
+        assignment.insert(ignore_permissions=True)
+        frappe.db.set_value("RN User Account", actor.name,
+                            {"requested_role": "posko_operator", "role_request_status": "pending"})
+        return {"result": "operator_request_pending", "user_account": actor.name, "posko": posko,
+                "requested_role": "posko_operator"}
 
     assignment = frappe.get_doc(
         "RN Posko Assignment",

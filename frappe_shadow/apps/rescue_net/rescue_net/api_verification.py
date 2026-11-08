@@ -666,6 +666,10 @@ def approval_item_detail(kind, name):
             "Role Diminta": doc.requested_role, "Email": doc.email, "Phone": doc.phone,
             "Bersedia Diverifikasi": "Ya" if getattr(doc, "consent_verification", 0) else "Tidak",
         }
+        if doc.requested_role == "posko_operator":
+            ps = frappe.get_all("RN Posko Assignment", filters={"user_account": doc.name, "status": "pending"}, pluck="posko")
+            fields["Role Diminta"] = "Petugas posko (posko tanpa pengelola)"
+            fields["Posko Diminta"] = ", ".join(frappe.db.get_value("RN Posko", p, "title") or p for p in ps) or "-"
         if doc.requested_role == "pelapor":
             fields["Role Diminta"] = "Pelapor Terverifikasi (lapor kebutuhan di semua posko)"
             fields["Instansi / Kelompok"] = doc.get("reporter_agency")
@@ -818,6 +822,10 @@ def approval_action(kind, name, action, note=None):
         doc.role = doc.requested_role
         if hasattr(doc, "status"):
             doc.status = "active"
+    if kind == "user" and doc.get("requested_role") == "posko_operator" and action in ("approve", "reject"):
+        # owner 2026-11-08: a "jadi petugas posko ini" request carries a pending posko assignment
+        for asg in frappe.get_all("RN Posko Assignment", filters={"user_account": doc.name, "status": "pending"}, pluck="name"):
+            frappe.db.set_value("RN Posko Assignment", asg, "status", "approved" if action == "approve" else "rejected")
 
     if action == "escalate" and hasattr(doc, "urgency"):
         doc.urgency = "critical"

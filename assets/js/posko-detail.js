@@ -932,6 +932,7 @@ document.addEventListener(
     setupTransferForm();
     wireKpiLinks();
 
+    loadOperatorRequest();
     loadPosko()
       .catch(
         err =>
@@ -945,3 +946,27 @@ document.addEventListener(
 
 window.receiveFlow =
   receiveFlow;
+
+
+// owner 2026-11-08: posko tanpa pengelola — pengguna login bisa mengajukan diri jadi petugas (disetujui super admin)
+async function loadOperatorRequest() {
+  const panel = document.getElementById("opRequestPanel");
+  if (!panel || !window.RN_FRAPPE) return;
+  let st;
+  try { st = await RN_FRAPPE.call("rescue_net.api_operator_approval.posko_operator_status", { posko: getPoskoId() }); }
+  catch (e) { return; }
+  if (!st || st.login_required || st.is_operator) return;
+  if (!(st.can_request || st.pending)) return;      // managed poskos: the organisation route is shown elsewhere
+  panel.hidden = false;
+  document.getElementById("opRequestReason").textContent = st.reason || "";
+  const btn = document.getElementById("opRequestBtn"), msg = document.getElementById("opRequestMsg");
+  btn.hidden = !st.can_request;
+  btn.onclick = async () => {
+    msg.textContent = "Mengirim…";
+    try {
+      await RN_FRAPPE.call("rescue_net.api_operator_approval.request_posko_operator", { posko: getPoskoId() }, { method: "POST" });
+      msg.textContent = "Terkirim — menunggu persetujuan super admin di Verifikasi.";
+      btn.hidden = true;
+    } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }
+  };
+}

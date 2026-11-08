@@ -58,6 +58,23 @@ class TestOrgProfile(RNTestCase):
         make_posko(other, self.root, posko_type="logistics")
         self.assertEqual(len(self.profile(disaster_event=self.event.name)["poskos"]), 3)
 
+    def test_partner_carrier_and_confirmed_donors(self):
+        other = make_org(title="Mitra Angkut", privacy_mode="closed")
+        hub = make_posko(self.event, other, posko_type="transport")
+        space = _insert("RN Transport Space", title="Pesawat Uji", coordination_posko=hub.name, provider_name="Pesawat Uji", disaster_event=self.event.name)
+        fl = _insert("RN Distribution Flow", title="Kiriman uji", source_posko=self.dapur.name, destination_posko=self.rs.name, item_name="Masker",
+                     quantity=10, unit="pcs", flow_status="planned", transport_space=space.name, disaster_event=self.event.name)
+        frappe.db.set_value("RN Distribution Flow", fl.name, "flow_status", "received")  # status akhir tanpa jalur penuh
+        prog = _insert("RN Donor Program", program_name="Program Uji", owner_type="organization", owner_id=self.root.name,
+                       disaster_event=self.event.name, budget_target=1000, budget_received=300, status="active")
+        don = _insert("RN Cash Donation", donor_program=prog.name, amount=300, status="pending", donor_name="Rahasia Donatur", is_anonymous=1)
+        frappe.db.set_value("RN Cash Donation", don.name, "status", "received")  # = dikonfirmasi penyelenggara
+        p = self.profile()
+        self.assertIn("Mitra Angkut", [x["title"] for x in p["partners"]])
+        self.assertIn("angkutan", next(x for x in p["partners"] if x["title"] == "Mitra Angkut")["peran"])
+        self.assertEqual(next(x for x in p["programs"] if x["id"] == prog.name)["donatur"], 1)
+        self.assertNotIn("Rahasia Donatur", json.dumps(p, default=str))
+
     def test_org_detail_member_list_only_for_members(self):
         with as_guest():
             self.assertEqual(cc_org.org_detail(self.root.name)["members"], [])

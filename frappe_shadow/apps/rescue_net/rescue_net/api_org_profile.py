@@ -118,7 +118,7 @@ def org_profile(organization, disaster_event=None):
         filters=[["flow_status", "!=", "cancelled"]],
         or_filters=[["source_posko", "in", names or [""]], ["destination_posko", "in", names or [""]]],
         fields=["name", "source_posko", "destination_posko", "item_name", "quantity", "unit", "flow_status",
-                "transport_reference", "transport_provider", "transport_type", "modified"],
+                "transport_space", "transport_provider", "transport_type", "modified"],
         order_by="modified desc", limit_page_length=500)
     received_in = [f for f in flows if f.destination_posko in by_name and f.flow_status in RECEIVED]
     sent_out = [f for f in flows if f.source_posko in by_name]
@@ -197,12 +197,12 @@ def org_profile(organization, disaster_event=None):
         src_org, src_title = porg(f.source_posko)
         dst_org, dst_title = porg(f.destination_posko)
         carrier_title = None
-        if f.transport_reference and frappe.db.exists("RN Transport Space", f.transport_reference):
-            cp = frappe.db.get_value("RN Transport Space", f.transport_reference, "coordination_posko")
+        if f.transport_space and frappe.db.exists("RN Transport Space", f.transport_space):
+            cp = frappe.db.get_value("RN Transport Space", f.transport_space, "coordination_posko")
             c_org, c_title = porg(cp)
             if c_org and c_org not in orgs:
                 partners.setdefault(c_org, {"organization": c_org, "title": c_title, "peran": set()})["peran"].add("angkutan")
-            carrier_title = frappe.db.get_value("RN Transport Space", f.transport_reference, "provider_name")
+            carrier_title = frappe.db.get_value("RN Transport Space", f.transport_space, "provider_name")
         if src_org and src_org not in orgs:
             partners.setdefault(src_org, {"organization": src_org, "title": src_title, "peran": set()})["peran"].add("pengirim bantuan")
         if dst_org and dst_org not in orgs:
@@ -222,7 +222,7 @@ def org_profile(organization, disaster_event=None):
             continue
         if disaster_event and pr.disaster_event != disaster_event:
             continue
-        dons = frappe.get_all("RN Cash Donation", filters={"donor_program": pr.name, "status": "confirmed"},
+        dons = frappe.get_all("RN Cash Donation", filters={"donor_program": pr.name, "status": ["in", ["received", "confirmed"]]},
                               fields=["amount"], limit_page_length=0)
         upd = frappe.get_all("RN Donor Program Update", filters={"program": pr.name},
                              fields=["update_title", "progress_percent", "observed_at", "creation", "public_visibility"],

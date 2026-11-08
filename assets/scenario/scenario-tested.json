@@ -3,6 +3,32 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "ORG-PROFIL-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Organisasi & Ortom · Privasi",
+      "judul": "Profil Kerja Organisasi: halaman publik ringkasan kerja organisasi + ortom dengan peta posko",
+      "tujuan": "Owner: halaman untuk menampilkan ringkasan kerja sebuah organisasi lengkap dengan peta posko, agar publik bisa melihat peranannya.",
+      "akun": [
+        "tamu (tanpa login)",
+        "akun uji test stack (anggota, pengguna lain)"
+      ],
+      "langkah": [
+        "Tamu membuka About Us › Profil Organisasi: daftar organisasi induk yang punya posko",
+        "Membuka Muhammadiyah (SIMULASI): identitas, 6 organisasi (induk + 5 ortom), ringkasan kerja, peta 11 posko berwarna per jenis",
+        "Peran per bidang: medis 3 pasien, dapur 450 porsi, shelter 74 pengungsi, SAR 1 dicari/1 ditemukan, logistik 4 kiriman diterima",
+        "Alur bantuan Gudang PWM Jatim → Hercules TNI → MDMC → RS/rumah singgah; Mitra: TNI (angkutan)",
+        "Program LAZISMU: 3 donatur Rp 3.750.000 dari target Rp 750 juta, progres 20%; kebutuhan terbuka + tombol Kirim Bantuan / Jadi Relawan",
+        "Privasi: tidak ada nomor HP, nama pasien, nama donatur anonim, atau daftar anggota; organisasi tertutup (TNI) hanya angka gabungan",
+        "Nama organisasi di halaman posko kini menuju profil ini"
+      ],
+      "hasil": "Lulus. Produksi desktop & HP 390 px tanpa error dan tanpa scroll samping; tidak ada data pribadi di halaman. Tes test_org_profile 6/6, suite penuh hijau.",
+      "status": "lulus",
+      "temuan": [
+        "org_detail (Organisasi & Posko) mengirim daftar nama anggota ke tamu — kini hanya untuk anggota organisasi itu / super admin",
+        "Hitungan donatur awal salah (status donasi terkonfirmasi = 'received') dan mitra angkutan tak terbaca (kolom transport_space) — diperbaiki sebelum selesai"
+      ]
+    },
+    {
       "id": "SARAN-1",
       "tanggal": "2026-11-08",
       "kategori": "Saran & Masukan Platform",

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Kegiatan Masyarakat Umum</title>
+  <link rel="stylesheet" href="../assets/css/style.css?v=pola-hp-20261109">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=kursor-20261108">
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=scrollgrp-20261102">
+  <link rel="stylesheet" href="../assets/css/rn-manual.css?v=minw-20261026">
+    <style>
+    .po-wrap { display: grid; gap: 16px; min-width: 0; }
+    .po-card { background: #fff; border: 1px solid rgba(104,64,45,.15); border-radius: 12px; padding: 16px; min-width: 0; overflow-wrap: anywhere; }
+    .po-card h2 { margin: 0 0 4px; font-size: 19px; }
+    .po-card > p.sub { margin: 0 0 12px; color: #7c6458; font-size: 14px; }
+    .po-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .po-badge { font-size: 12px; padding: 3px 10px; border-radius: 999px; border: 1px solid rgba(104,64,45,.2); background: #fff8f4; }
+    .po-badge.ok { background: #e6f4ee; border-color: #9fd3b8; color: #1d6b45; }
+    .po-badge.lock { background: #f3eee9; color: #5e4b40; }
+    .po-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+    .po-kpi { border: 1px solid rgba(104,64,45,.15); border-radius: 10px; padding: 10px 12px; background: #fffaf7; }
+    .po-kpi b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+    .po-kpi span { font-size: 13px; color: #6d5a50; }
+    #poMap { height: 380px; border-radius: 10px; border: 1px solid rgba(104,64,45,.15); }
+    .po-legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; margin-top: 8px; }
+    .po-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+    .po-roles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+    .po-role { border: 1px solid rgba(104,64,45,.15); border-radius: 10px; padding: 12px; }
+    .po-role h3 { margin: 0 0 4px; font-size: 16px; }
+    .po-role ul { margin: 6px 0 0; padding-left: 18px; font-size: 14px; }
+    .po-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .po-list li { border-bottom: 1px solid rgba(104,64,45,.12); padding-bottom: 8px; font-size: 14px; }
+    .po-list li:last-child { border-bottom: 0; }
+    .po-muted { color: #7c6458; font-size: 13px; }
+    .po-bar { height: 8px; background: #f1e6df; border-radius: 4px; overflow: hidden; margin: 6px 0 2px; }
+    .po-bar i { display: block; height: 100%; background: #e8755a; }
+    .po-orgs { display: flex; flex-wrap: wrap; gap: 8px; }
+    .po-orgs a { text-decoration: none; }
+    .po-cta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .po-pick { display: grid; gap: 8px; }
+    .po-pick a { display: block; padding: 10px 12px; border: 1px solid rgba(104,64,45,.15); border-radius: 10px; text-decoration: none; color: inherit; }
+    .po-filter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 0; font-size: 14px; }
+    .po-filter select { font: inherit; padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(104,64,45,.25); max-width: 100%; }
+    .po-two { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  </style>
+</head>
+<body class="public-report-page">
+  <main class="manual" id="top">
+    <nav class="pk-topnav" aria-label="Navigasi">
+      <button type="button" class="btn mini" id="kmBack">← Kembali</button>
+      <label class="pk-evsel">Bencana <select id="kmEvent"><option value="">Memuat…</option></select></label>
+    </nav>
+    <section class="manual-hero">
+      <p class="eyebrow">Kegiatan dalam penanganan bencana</p>
+      <h1>Masyarakat Umum</h1>
+      <p id="kmLead">Apa yang dilakukan warga, relawan, dan donatur perorangan (tanpa organisasi) pada bencana ini. Hanya kegiatan — tanpa nama atau kontak pribadi.</p>
+    </section>
+    <div class="manual-grid" style="grid-template-columns: minmax(0, 1fr)">
+      <div class="po-wrap" id="kmBody"><div class="po-card"><p>Memuat data…</p></div></div>
+    </div>
+  </main>
+  <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
+  <script src="../assets/js/kegiatan-masyarakat.js?v=km-20261109"></script>
+  <script src="../assets/js/rn-public-header.js?v=hpdonasi-20261109"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+  <script src="../assets/js/rn-mobile-drawer.js?v=hpdonasi-20261109"></script>
+</body>
+</html>

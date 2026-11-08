@@ -81,3 +81,29 @@ class TestOrgProfile(RNTestCase):
         stranger = make_actor()
         with as_user(stranger.user):
             self.assertEqual(cc_org.org_detail(self.root.name)["members"], [])
+
+
+class TestCommunityActivity(RNTestCase):
+    """Owner 2026-11-09: kegiatan masyarakat umum per bencana — aktivitas saja, tanpa data pribadi."""
+
+    def test_activity_without_personal_data(self):
+        from rescue_net import api_donor_program as dp
+        event = make_event(event_status="active")
+        org = make_org(verification_status="official_verified")
+        posko = make_posko(event, org)
+        owner = make_actor(org=org, org_role="owner", posko=posko)
+        with as_user(owner.user):
+            prog = dp.create_special_program(event.name, "Air bersih", owner_type="organization", owner_id=org.name,
+                                             status="active")["program"]
+        donor = make_actor(phone="+62811-7777-1234")
+        with as_user(donor.user):
+            don = dp.create_cash_donation(prog, 25_000, donor_name="Nama Rahasia Uji")["donation"]
+        with as_user(owner.user):
+            dp.decide_cash_donation(don, "confirm")
+        with as_guest():
+            r = api_org_profile.community_activity(event.name)
+        self.assertEqual(r["donasi"]["jumlah"], 1)
+        self.assertEqual(r["donasi"]["total"], 25_000)
+        blob = json.dumps(r, default=str)
+        self.assertNotIn("Nama Rahasia Uji", blob)
+        self.assertNotIn("7777", blob)

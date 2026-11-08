@@ -111,6 +111,7 @@
       b.addEventListener("click", function () {
         var g = b.getAttribute("data-group");
         if (g === "program") { flash($("#boProgPanel")); return; }
+        if (g === "masyarakat") { location.href = "kegiatan-masyarakat.html?event=" + encodeURIComponent(eventId()); return; }
         setFilter(g);
         flash($("#boOrgPanel"));
       });
@@ -143,7 +144,7 @@
     var ev = encodeURIComponent(eventId());
     if (FILTER === "masyarakat") {
       var m = (DATA.groups || []).filter(function (g) { return g.key === "masyarakat"; })[0] || {};
-      body.innerHTML = '<tr><td><b>Masyarakat umum (perorangan)</b><span class="rn-bo-pct">tanpa organisasi</span></td><td>Masyarakat Umum</td>' +
+      body.innerHTML = '<tr><td><a href="kegiatan-masyarakat.html?event=' + ev + '"><b>Masyarakat umum (perorangan)</b></a><span class="rn-bo-pct">tanpa organisasi — klik untuk melihat kegiatannya</span></td><td>Masyarakat Umum</td>' +
         '<td class="num">' + fmt(m.posko) + '</td><td class="num">' + fmt(m.relawan) + '</td><td class="num">' + fmt(m.sumbangan) +
         '</td><td class="num">' + fmt(m.peralatan) + '</td><td class="num">—</td><td class="num">—</td></tr>';
       return;

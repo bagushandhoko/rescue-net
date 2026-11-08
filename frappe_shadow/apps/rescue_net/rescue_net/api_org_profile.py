@@ -309,3 +309,79 @@ def org_list():
         out.append({"id": r.name, "title": r.title, "type": r.organization_type, "verification_status": r.verification_status,
                     "open": _is_open(r), "posko": counts[r.name], "organisasi_anak": parents[r.name]})
     return sorted(out, key=lambda x: (-x["posko"], x["title"] or ""))
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=60, seconds=60)
+def community_activity(disaster_event):
+    """Owner 2026-11-09: "profil = apa yang dilakukan dalam penanganan bencana" — for the public at large
+    (perorangan / tanpa organisasi). Activities only: counts, item kinds, programs, poskos. NO names,
+    contacts or report texts."""
+    from rescue_net.control_centre.ecosystem import canonical_event
+    event = canonical_event(disaster_event)
+    if not event or not frappe.db.exists("RN Disaster Event", event):
+        frappe.throw("Bencana tidak ditemukan.", frappe.DoesNotExistError)
+    title = frappe.db.get_value("RN Disaster Event", event, "title")
+
+    def rows(dt, fields, extra=None):
+        if not frappe.db.exists("DocType", dt):
+            return []
+        f = {"disaster_event": event}
+        f.update(extra or {})
+        cols = [c for c in fields if frappe.get_meta(dt).has_field(c) or c == "name"]
+        return frappe.get_all(dt, filters=f, fields=cols, limit_page_length=5000)
+
+    reports = rows("RN Community Report", ["name", "report_type", "posko"])
+    rtype = Counter((r.report_type or "lainnya") for r in reports)
+
+    offers = rows("RN Aid Offer", ["name", "item_name", "quantity", "unit"])
+    items = defaultdict(float)
+    units = {}
+    for o in offers:
+        k = (o.item_name or "barang").strip()
+        items[k] += flt(o.quantity)
+        units.setdefault(k, o.unit or "")
+
+    poskos = {p.name: p for p in frappe.get_all("RN Posko", filters={"disaster_event": event},
+                                                 fields=["name", "title", "posko_type", "organization"], limit_page_length=2000)}
+    programs = {p.name: p for p in frappe.get_all("RN Donor Program",
+                                                   filters={"disaster_event": event, "status": ["!=", "cancelled"],
+                                                            "public_visibility": "summary_public"},
+                                                   fields=["name", "program_name"], limit_page_length=500)}
+    dons = rows("RN Cash Donation", ["name", "donor_program", "amount"], {"status": "received"})
+    per_prog = defaultdict(lambda: [0, 0.0])
+    for d in dons:
+        if d.donor_program in programs:
+            per_prog[d.donor_program][0] += 1
+            per_prog[d.donor_program][1] += flt(d.amount)
+
+    assigns = rows("RN Volunteer Assignment", ["name", "posko"])
+    per_posko = Counter(a.posko for a in assigns if a.posko)
+
+    tools = rows("RN Resource Profile", ["name", "category", "owner_type"])
+    tools = [t for t in tools if (t.owner_type or "").lower() not in ("organization", "posko")]
+
+    missing = len(rows("RN Missing Person Report", ["name"]))
+    found = len(rows("RN Found Person Report", ["name"]))
+    lone = [p for p in poskos.values() if not p.organization]
+
+    return {
+        "disaster_event": event, "event_title": title,
+        "laporan": {"total": len(reports), "per_jenis": [{"jenis": k, "n": n} for k, n in rtype.most_common(8)],
+                    "ke_posko": sum(1 for r in reports if r.posko)},
+        "bantuan_barang": {"total": len(offers),
+                           "barang": [{"item": k, "jumlah": round(v, 2), "satuan": units.get(k)}
+                                      for k, v in sorted(items.items(), key=lambda x: -x[1])[:10]]},
+        "donasi": {"jumlah": sum(v[0] for v in per_prog.values()), "total": sum(v[1] for v in per_prog.values()),
+                   "program": [{"program": programs[k].program_name, "n": v[0], "total": v[1],
+                                "href": "program-khusus.html?program=" + k} for k, v in
+                               sorted(per_prog.items(), key=lambda x: -x[1][1])]},
+        "relawan": {"penugasan": len(assigns),
+                    "posko": [{"posko": poskos[k].title if k in poskos else k, "n": n,
+                               "href": "posko-detail.html?id=" + k} for k, n in per_posko.most_common(10)]},
+        "alat": {"jumlah": len(tools), "kategori": [{"kategori": k or "lainnya", "n": n}
+                                                    for k, n in Counter(t.category for t in tools).most_common(8)]},
+        "sar": {"hilang": missing, "ditemukan": found},
+        "posko_perorangan": [{"title": p.title, "jenis": p.posko_type, "href": "posko-detail.html?id=" + p.name}
+                             for p in lone[:20]],
+    }

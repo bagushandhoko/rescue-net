@@ -3,6 +3,40 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "MU-KARHUTLA-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Organisasi & Ortom · Organisasi tertutup (TNI)",
+      "judul": "Simulasi Muhammadiyah: RS PKU & ortom jadi posko di bencana Karhutla Siak–Pelalawan, logistik dari Gudang PWM Jatim Surabaya naik Hercules TNI",
+      "tujuan": "Owner: simulasi organisasi Muhammadiyah memakai Rescue-Net; rumah sakit dan organisasi otonom menjadi posko relevan; akun dicantumkan di akun demo; termasuk waktu pengiriman logistik dengan pesawat TNI dari Surabaya, dan sisi organisasi tertutup. Semua data berlabel SIMULASI, bukan data resmi Muhammadiyah.",
+      "akun": [
+        "14 akun sim-mu-*@example.org (sandi demo Demo12345): admin, mdmc, lazismu, rs-a, rs-b, aisyiyah, pemuda, nasyiah, imm, hw, relawan1/2, donatur1/2",
+        "tni.pusat.demo@rescue-net.local (Komando Pusat TNI, organisasi tertutup terpusat)",
+        "tamu"
+      ],
+      "langkah": [
+        "14 akun mendaftar lewat API registrasi (centang persetujuan data pribadi)",
+        "Admin membuat organisasi induk 'Muhammadiyah (SIMULASI)'; MDMC, LAZISMU, 2 RS PKU, 2 relawan minta jadi anggota dan disetujui admin",
+        "5 ortom ('Aisyiyah, Pemuda Muhammadiyah/KOKAM, Nasyiatul 'Aisyiyah, IMM, Hizbul Wathan) membuat organisasi sendiri dengan induk Muhammadiyah; admin menerima tautan induk",
+        "Super admin memverifikasi 6 organisasi; pemilik organisasi mengizinkan posko tampil publik",
+        "MDMC mendaftarkan bencana baru '[SIMULASI] Karhutla & Kabut Asap Siak–Pelalawan 2026' (organisasi terverifikasi -> langsung aktif)",
+        "11 posko Muhammadiyah: Posko Induk MDMC (logistik), Tim Asesmen MDMC, RS PKU A (medis ISPA), RS PKU B (klinik lapangan), Dapur Umum & Rumah Singgah 'Aisyiyah, Posko SAR KOKAM, Posko Relawan Nasyiah/IMM/HW, Gudang PWM Jatim Surabaya; pemilik organisasi menempatkan koordinator",
+        "Komando Pusat TNI (organisasi tertutup) membuka Pos Angkutan Udara Lanud Juanda + armada C-130H Hercules A-1338: berangkat 09/11/2026 06:00 WIB Juanda Surabaya, tiba 09:30 WIB Lanud Roesmin Nurjadin Pekanbaru, batas kargo 08/11 22:00, kapasitas 15 t (3 t muatan sendiri), wajib palet",
+        "Gudang PWM Jatim memesan ruang (masker N95 20.000, oksigen 60 tabung, air 300 dus, susu bayi 200 kaleng; 6,2 t) -> TNI konfirmasi -> dijemput -> terbang -> tiba -> MDMC terima (19.800 masker, 296 dus: sisanya rusak)",
+        "MDMC kirim 5.000 masker + 20 tabung oksigen ke RS PKU A dan 80 susu bayi ke Rumah Singgah; RS A pakai 2 tabung oksigen",
+        "RS PKU A/B catat 3 pasien ISPA/asma; RS B minta nebulizer; dapur 'Aisyiyah 450 porsi (stok bahan otomatis berkurang); Rumah Singgah okupansi 74/120, check-in KK, kebutuhan masker anak",
+        "SAR KOKAM: laporan orang hilang + orang ditemukan",
+        "Program Khusus LAZISMU (dibuat admin organisasi) + rekening; 3 donasi (1 anonim) dikonfirmasi -> 3 donatur Rp 3.750.000; laporan progres 20%",
+        "Privasi: tamu tidak bisa membuka detail posko TNI; relawan biasa ditolak mengubah armada TNI; PIC RS A ditolak mencatat pasien di RS B"
+      ],
+      "hasil": "Lulus sebagian besar (fase 1 40/40, fase 2 12/12, fase 3 16/16, fase 4b 49/53 + 3/3). Kegagalan awal fase 4 karena kesalahan skrip uji (parameter salah), sudah diulang dengan benar; paket pertama yang terlanjur tanpa armada dibatalkan.",
+      "status": "lulus dengan temuan",
+      "temuan": [
+        "Koordinator Posko SAR (ditempatkan pemilik organisasi) tidak bisa mengusulkan pencocokan orang hilang/ditemukan: butuh peran operator global ('Hak operator diperlukan') — perlu keputusan owner",
+        "Anggota biasa organisasi (LAZISMU) tidak bisa membuat Program Khusus atas nama organisasi; hanya pemilik organisasi (sesuai aturan sekarang)",
+        "Posko baru buatan anggota masih 'menunggu' sampai pemilik organisasi menempatkannya — alur benar, tetapi tidak ada pemberitahuan ke pembuat"
+      ]
+    },
+    {
       "id": "OWNER-ONLY-1",
       "tanggal": "2026-11-08",
       "kategori": "Keamanan & Izin",

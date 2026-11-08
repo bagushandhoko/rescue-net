@@ -573,3 +573,4 @@
   body.rn-has-topback .pk-topnav > .btn[id$="Back"] { display: none !important; }
   body.rn-has-topback .pk-topnav > .pk-evsel { flex-basis: 100%; }
 }
+@media (max-width: 1023px) { body.rn-has-topback .manual-back { display: none !important; } }

@@ -3,6 +3,28 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "PK-QRIS-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "QRIS & rekening koran untuk program donasi",
+      "tujuan": "Owner: tambahkan untuk program donasi rekening koran, bisa berbentuk QRIS.",
+      "akun": [
+        "akun uji test stack (pemrakarsa, pengguna lain, tamu)"
+      ],
+      "langkah": [
+        "Pemrakarsa mengunggah QRIS (gambar; PDF ditolak) di Kelola Dokumen & Rekening; unggahan baru mengganti yang lama",
+        "QRIS tampil di kotak 'Sumbang ke Program Ini' dan panel donasi Kirim Bantuan hanya bila pemrakarsa terverifikasi; bila verifikasi dicabut, publik tidak melihatnya tetapi pemrakarsa tetap melihat",
+        "Pemrakarsa mengunggah rekening koran per periode (PDF/foto); wajib mencentang bahwa data pribadi sudah disamarkan, tanpa centang ditolak",
+        "Rekening koran tampil ke publik di Dokumen Program sebagai bukti transparansi; bisa dihapus pemrakarsa",
+        "Pengguna lain ditolak mengunggah"
+      ],
+      "hasil": "Lulus (test_program_documents 11/11, suite penuh 720 tes OK). Tanpa perubahan struktur database.",
+      "status": "lulus",
+      "temuan": [
+        "Belum dicoba unggah sungguhan lewat browser oleh pemrakarsa yang login"
+      ]
+    },
+    {
       "id": "I18N-1",
       "tanggal": "2026-11-08",
       "kategori": "Tampilan · Dua bahasa",

@@ -43,10 +43,12 @@
     try {
       var d = await call("program_detail", { program: id });
       var b = d.bank || {};
-      if (b.account_number) {
+      if (b.account_number || b.qris_url) {
         bank.hidden = false;
-        bank.innerHTML = "Transfer ke rekening pemrakarsa: <b>" + esc(b.bank_name) + " " + esc(b.account_number) + "</b> a.n. " + esc(b.account_holder) +
-          "<br><small>Setelah transfer, kirim formulir ini. Jangan transfer ke rekening yang dikirim lewat pesan pribadi.</small>";
+        bank.innerHTML = (b.account_number ? "Transfer ke rekening pemrakarsa: <b>" + esc(b.bank_name) + " " + esc(b.account_number) + "</b> a.n. " + esc(b.account_holder) : "") +
+          (b.qris_url ? '<div style="margin-top:6px">' + (b.account_number ? "Atau bayar dengan QRIS:" : "Bayar dengan QRIS:") + '<br><img src="' + esc(b.qris_url) +
+            '" alt="QRIS penerimaan donasi program" style="width:200px;max-width:100%;border-radius:8px;border:1px solid #ddd;background:#fff;margin-top:4px"></div>' : "") +
+          "<br><small>Setelah membayar, kirim formulir ini. Jangan transfer ke rekening atau QRIS yang dikirim lewat pesan pribadi.</small>";
       }
       var w = d.donations || {};
       var rows = w.public || [];

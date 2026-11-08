@@ -160,6 +160,7 @@
               <h4 style="margin-top:16px;">Dokumen Program</h4>
               <div id="docRab">Dokumen RAB belum diunggah.</div>
               <div id="docDrawings"></div>
+              <div id="docStatements"></div>
             </div>
             <div class="rn-pk-docmanage" id="docManage" hidden>
               <h4 style="margin-top:16px;">Kelola Dokumen &amp; Rekening <small class="rn-muted">(hanya pemrakarsa / Control Centre)</small></h4>
@@ -171,6 +172,16 @@
                 <input type="file" name="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" required></label>
                 <label>Keterangan (opsional)<input name="label" maxlength="120" placeholder="Denah lantai 1"></label>
                 <div class="form-actions"><button class="btn primary" type="submit">Unggah Gambar Rencana</button><span class="form-message" id="drawMsg"></span></div></form>
+              <form class="rn-form" id="qrisForm"><label>QRIS penerimaan donasi — gambar PNG / JPG / WEBP, maks. 10 MB (satu QRIS; unggahan baru mengganti yang lama)
+                <input type="file" name="file" accept="image/png,image/jpeg,image/webp" required></label>
+                <p class="rn-muted" style="font-size:12px;margin:4px 0">Sama seperti nomor rekening: QRIS tampil ke publik hanya bila pemrakarsa sudah terverifikasi.</p>
+                <div class="form-actions"><button class="btn primary" type="submit">Unggah QRIS</button><span class="form-message" id="qrisMsg"></span></div></form>
+              <form class="rn-form" id="koranForm"><label>Rekening koran (bukti dana masuk/keluar) — PDF atau foto, maks. 10 MB per berkas (maks. 24)
+                <input type="file" name="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" required></label>
+                <label>Periode<input name="label" maxlength="120" placeholder="November 2026" required></label>
+                <label class="rn-check"><input type="checkbox" name="redacted" required> Nama dan nomor rekening pengirim/penerima pribadi sudah saya samarkan (dihitamkan)</label>
+                <p class="rn-muted" style="font-size:12px;margin:4px 0">Rekening koran tampil ke publik sebagai bukti transparansi. Jangan unggah data pribadi donatur.</p>
+                <div class="form-actions"><button class="btn primary" type="submit">Unggah Rekening Koran</button><span class="form-message" id="koranMsg"></span></div></form>
               <form class="rn-form" id="bankForm"><div class="form-grid">
                 <label>Bank <input name="bank_name" maxlength="60" placeholder="BRI / BCA / Mandiri / BSI"></label>
                 <label>No. Rekening <input name="account_number" inputmode="numeric" maxlength="30" placeholder="1234567890"></label>
@@ -349,13 +360,13 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=owneronly-20261108"></script>
+<script src="../assets/js/program-khusus.js?v=qris-20261108"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-owner-only.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
-<script src="../assets/js/rn-public-header.js?v=i18n3-20261108"></script>
+<script src="../assets/js/rn-public-header.js?v=i18n4-20261108"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=poskoalat-20261103"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=saran-20261108"></script>

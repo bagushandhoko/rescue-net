@@ -7,6 +7,10 @@ and the initiator's verification status shown to the public.
   schema change; rab_file_url keeps pointing at the first RAB file for older readers (tender board, exports).
 - Gambar kerja / gambar rencana: up to MAX_DRAWINGS images or PDFs.
 - Files are public (transparency) but only listed while the program itself is visible.
+- QRIS (owner 2026-11-08): one payment QR image per program (kind "qris"), shown with the bank account and under
+  the same rule — public only while the initiator is verified.
+- Rekening koran (kind "koran", owner 2026-11-08): bank statements per period, PDF or photo, public for
+  transparency; the uploader must confirm that donors' personal data (names / account numbers) is masked.
 - The bank account is shown to the public only while the initiator is VERIFIED — an unverified
   initiator's account number is never published (fraud guard); donors see the badge either way.
 """
@@ -24,6 +28,8 @@ from rescue_net.donor_program.common import _actor_verified_person, _allowed_own
 MAX_BYTES = 10 * 1024 * 1024
 MAX_DRAWINGS = 12
 MAX_RAB_PAGES = 20
+MAX_STATEMENTS = 24
+_OTHER_KINDS = ("rab", "qris", "koran")     # not drawings
 _IMAGE_EXT = {"png": b"\x89PNG", "jpg": b"\xff\xd8\xff", "jpeg": b"\xff\xd8\xff", "webp": b"RIFF"}
 _PDF_MAGIC = b"%PDF"
 
@@ -50,7 +56,11 @@ def _entries(raw):
 
 
 def _drawings(raw):
-    return [d for d in _entries(raw) if d.get("kind") != "rab"]
+    return [d for d in _entries(raw) if d.get("kind") not in _OTHER_KINDS]
+
+
+def _of_kind(raw, kind):
+    return [d for d in _entries(raw) if d.get("kind") == kind]
 
 
 def _rab_pages(raw, legacy_url=None):
@@ -65,30 +75,36 @@ def _check_file(kind, filename, content):
     if len(content) > MAX_BYTES:
         frappe.throw("File terlalu besar (maks. 10 MB).")
     if ext == "pdf" and content.startswith(_PDF_MAGIC):
+        if kind == "qris":
+            frappe.throw("QRIS harus berupa gambar (PNG / JPG / WEBP).")
         return
     magic = _IMAGE_EXT.get(ext)
     if not magic or not content.startswith(magic) or (ext == "webp" and content[8:12] != b"WEBP"):
-        frappe.throw(("Dokumen RAB" if kind == "rab" else "Gambar rencana") +
+        frappe.throw({"rab": "Dokumen RAB", "qris": "QRIS", "koran": "Rekening koran"}.get(kind, "Gambar rencana") +
                      " harus berupa PDF atau gambar (PNG / JPG / WEBP).")
 
 
 def documents_for(row_name):
     v = frappe.db.get_value("RN Donor Program", row_name, ["rab_file_url", "work_drawings"], as_dict=True) or {}
     pages = _rab_pages(v.get("work_drawings"), v.get("rab_file_url"))
-    return {"rab": pages[0]["url"] if pages else "", "rab_pages": pages, "drawings": _drawings(v.get("work_drawings"))}
+    return {"rab": pages[0]["url"] if pages else "", "rab_pages": pages, "drawings": _drawings(v.get("work_drawings")),
+            "statements": _of_kind(v.get("work_drawings"), "koran")}
 
 
 def bank_for(row, can_manage):
     """Bank account block for program_detail: managers always see what they entered; the public only
     while the initiator is verified."""
-    v = frappe.db.get_value("RN Donor Program", row.name, ["bank_name", "bank_account_number", "bank_account_holder"],
-                            as_dict=True) or {}
-    has = bool(v.get("bank_account_number"))
+    v = frappe.db.get_value("RN Donor Program", row.name, ["bank_name", "bank_account_number", "bank_account_holder",
+                                                           "work_drawings"], as_dict=True) or {}
+    qris = (_of_kind(v.get("work_drawings"), "qris") or [None])[-1]
+    has = bool(v.get("bank_account_number")) or bool(qris)
     verified = initiator_verified(row)
     show = has and (can_manage or verified)
     return {
         "available": has,
         "shown_publicly": has and verified,
+        "qris_url": (qris or {}).get("url", "") if show else "",
+        "qris_available": bool(qris),
         "bank_name": (v.get("bank_name") or "") if show else "",
         "account_number": (v.get("bank_account_number") or "") if show else "",
         "account_holder": (v.get("bank_account_holder") or "") if show else "",
@@ -96,12 +112,14 @@ def bank_for(row, can_manage):
 
 
 @frappe.whitelist(methods=["POST"])
-def upload_program_file(donor_program, kind, filename, content_base64, label=None):
+def upload_program_file(donor_program, kind, filename, content_base64, label=None, redacted=0):
     actor = rn_actor()
     row = _program(donor_program)
     _assert_manage(actor, row)
-    if kind not in ("rab", "gambar"):
-        frappe.throw("Jenis dokumen tidak dikenal (rab / gambar).")
+    if kind not in ("rab", "gambar", "qris", "koran"):
+        frappe.throw("Jenis dokumen tidak dikenal (rab / gambar / qris / koran).")
+    if kind == "koran" and str(redacted).strip().lower() not in ("1", "true", "yes", "on"):
+        frappe.throw("Samarkan dulu data pribadi pengirim (nama / nomor rekening) di rekening koran, lalu centang konfirmasinya.")
     filename = re.sub(r"[^\w.\- ]", "_", str(filename or "").strip())[:120]
     if not filename:
         frappe.throw("Nama file wajib diisi.")
@@ -122,6 +140,10 @@ def upload_program_file(donor_program, kind, filename, content_base64, label=Non
         frappe.throw(f"Maksimal {MAX_DRAWINGS} gambar rencana. Hapus yang lama dulu.")
     if kind == "rab" and len([d for d in entries if d.get("kind") == "rab"]) >= MAX_RAB_PAGES:
         frappe.throw(f"Maksimal {MAX_RAB_PAGES} halaman/berkas RAB. Hapus yang lama dulu.")
+    if kind == "koran" and len([d for d in entries if d.get("kind") == "koran"]) >= MAX_STATEMENTS:
+        frappe.throw(f"Maksimal {MAX_STATEMENTS} berkas rekening koran. Hapus yang lama dulu.")
+    if kind == "qris":
+        entries = [d for d in entries if d.get("kind") != "qris"]       # satu QRIS per program: yang baru mengganti
     try:
         f = save_file(filename, content, "RN Donor Program", donor_program, is_private=0)
     except frappe.ValidationError:
@@ -131,8 +153,8 @@ def upload_program_file(donor_program, kind, filename, content_base64, label=Non
         frappe.throw("File tidak bisa dibaca (rusak?). Coba simpan ulang sebagai PDF / gambar lalu unggah lagi.")
     item = {"url": f.file_url, "name": filename, "label": (label or "").strip()[:120],
             "pdf": filename.lower().endswith(".pdf")}
-    if kind == "rab":
-        item["kind"] = "rab"
+    if kind in _OTHER_KINDS:
+        item["kind"] = kind
     entries.append(item)
     doc.work_drawings = json.dumps(entries, ensure_ascii=False)
     rab = [d for d in entries if d.get("kind") == "rab"]
@@ -147,17 +169,19 @@ def remove_program_file(donor_program, kind, file_url=None):
     row = _program(donor_program)
     _assert_manage(actor, row)
     doc = frappe.get_doc("RN Donor Program", donor_program)
-    if kind not in ("rab", "gambar"):
-        frappe.throw("Jenis dokumen tidak dikenal (rab / gambar).")
+    if kind not in ("rab", "gambar", "qris", "koran"):
+        frappe.throw("Jenis dokumen tidak dikenal (rab / gambar / qris / koran).")
     entries = _entries(doc.work_drawings)
-    if kind == "rab":
+    if kind in ("qris", "koran"):
+        keep = [d for d in entries if d.get("kind") != kind or (file_url and d["url"] != file_url)]
+    elif kind == "rab":
         # no file_url = remove every RAB page (old single-PDF behaviour)
         keep = [d for d in entries if d.get("kind") != "rab" or (file_url and d["url"] != file_url)]
         legacy = doc.rab_file_url if (file_url and doc.rab_file_url != file_url) else None
         if legacy and legacy not in [d["url"] for d in keep]:
             keep.insert(0, {"url": legacy, "name": legacy.rsplit("/", 1)[-1], "label": "", "pdf": True, "kind": "rab"})
     else:
-        keep = [d for d in entries if d.get("kind") == "rab" or d["url"] != file_url]
+        keep = [d for d in entries if d.get("kind") in _OTHER_KINDS or d["url"] != file_url]
     doc.work_drawings = json.dumps(keep, ensure_ascii=False)
     rab = [d for d in keep if d.get("kind") == "rab"]
     doc.rab_file_url = rab[0]["url"] if rab else None

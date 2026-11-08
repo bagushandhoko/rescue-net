@@ -439,23 +439,31 @@
       '<div class="rn-pk-drawings">' + tiles(pages, "rab", "RAB belum diunggah.") + "</div>";
     $("#docDrawings").innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">📐 Gambar Rencana</b><div class="rn-pk-drawings">' +
       tiles(docs.drawings || [], "gambar", "Gambar rencana belum diunggah.") + "</div>";
+    var st = docs.statements || [];
+    var ds = $("#docStatements");
+    if (ds) ds.innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">🧾 Rekening Koran (transparansi dana)' + (st.length ? " — " + st.length + " berkas" : "") + "</b>" +
+      '<div class="rn-pk-drawings">' + tiles(st, "koran", "Rekening koran belum diunggah.") + "</div>";
     $("#docManage").hidden = !manage;
   }
 
   function renderBank(data) {
     var b = data.bank || {}, box = $("#bankBox");
     if (!box) return;
-    if (b.account_number) {
+    var qris = b.qris_url ? '<div class="rn-pk-qris" style="margin-top:8px"><b>Atau bayar dengan QRIS:</b><br>' +
+      '<a href="' + esc(b.qris_url) + '" target="_blank" rel="noopener"><img src="' + esc(b.qris_url) + '" alt="QRIS penerimaan donasi program" ' +
+      'style="width:220px;max-width:100%;border-radius:8px;border:1px solid var(--line);background:#fff;margin-top:4px"></a>' +
+      (data.can_manage ? '<br><button type="button" class="btn mini" data-doc-del="qris" data-url="' + esc(b.qris_url) + '">Hapus QRIS</button>' : "") + "</div>" : "";
+    if (b.account_number || b.qris_url) {
       box.hidden = false;
       box.className = "rn-pk-bank" + (b.shown_publicly ? "" : " warn");
-      box.innerHTML = "Transfer ke rekening pemrakarsa:<br><b>" + esc(b.bank_name) + " " + esc(b.account_number) + "</b>" +
-        ' <button type="button" class="btn mini" data-copy="' + esc(b.account_number) + '">Salin</button><br>a.n. ' + esc(b.account_holder) +
+      box.innerHTML = (b.account_number ? "Transfer ke rekening pemrakarsa:<br><b>" + esc(b.bank_name) + " " + esc(b.account_number) + "</b>" +
+        ' <button type="button" class="btn mini" data-copy="' + esc(b.account_number) + '">Salin</button><br>a.n. ' + esc(b.account_holder) : "") + qris +
         "<br><small>" + (b.shown_publicly
           ? "Setelah transfer, isi formulir di bawah. Donasi tampil di daftar setelah dicek & dikonfirmasi pemrakarsa."
           : "Hanya Anda (pengelola) yang melihat rekening ini — tampil ke publik setelah pemrakarsa terverifikasi.") + "</small>";
     } else if (b.available) {
       box.hidden = false; box.className = "rn-pk-bank warn";
-      box.textContent = "Rekening pemrakarsa disembunyikan sampai pemrakarsa terverifikasi. Jangan transfer ke rekening yang dikirim lewat pesan pribadi.";
+      box.textContent = "Rekening / QRIS pemrakarsa disembunyikan sampai pemrakarsa terverifikasi. Jangan transfer ke rekening atau QRIS yang dikirim lewat pesan pribadi.";
     } else {
       box.hidden = true;
     }
@@ -488,7 +496,8 @@
         m.textContent = "Mengunggah…";
         try {
           await window.RN_FRAPPE.call(API + "upload_program_file", { donor_program: SELECTED, kind: kind, filename: file.name,
-            content_base64: await readBase64(file), label: f.label ? f.label.value : "" }, { method: "POST" });
+            content_base64: await readBase64(file), label: f.label ? f.label.value : "",
+            redacted: f.redacted && f.redacted.checked ? 1 : 0 }, { method: "POST" });
           m.textContent = "Terunggah."; f.reset();
           await selectProgram(SELECTED);
         } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
@@ -496,6 +505,8 @@
     }
     upload("#rabForm", "#rabMsg", "rab");
     upload("#drawForm", "#drawMsg", "gambar");
+    upload("#qrisForm", "#qrisMsg", "qris");
+    upload("#koranForm", "#koranMsg", "koran");
     var bf = $("#bankForm");
     if (bf && !bf.dataset.wired) {
       bf.dataset.wired = "1";

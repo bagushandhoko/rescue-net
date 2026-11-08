@@ -118,6 +118,38 @@ class TestProgramDocuments(RNTestCase):
         self.assertEqual(o["bank"]["account_number"], "01234567890")
         self.assertFalse(o["bank"]["shown_publicly"])
 
+    def test_qris_one_image_public_only_when_verified(self):
+        with as_user(self.owner.user):
+            with self.assertRaisesRegex(frappe.ValidationError, "QRIS"):
+                api.upload_program_file(self.program, "qris", "qris.pdf", PDF)
+            api.upload_program_file(self.program, "qris", "qris-lama.png", PNG)
+            other = base64.b64encode(b"\x89PNG\r\n\x1a\n" + b"\x02" * 40).decode()
+            api.upload_program_file(self.program, "qris", "qris-baru.png", other)
+        g = self._detail()
+        self.assertIn("qris-baru", g["bank"]["qris_url"])          # the new one replaces the old one
+        self.assertEqual(g["documents"]["drawings"], [])            # QRIS is not a drawing
+        frappe.db.set_value("RN Organization", self.org.name, "verification_status", "pending")
+        g = self._detail()
+        self.assertEqual(g["bank"]["qris_url"], "")
+        self.assertTrue(g["bank"]["qris_available"])
+        self.assertIn("qris-baru", self._detail(self.owner.user)["bank"]["qris_url"])
+        with as_user(self.stranger.user), self.assertRaises(frappe.PermissionError):
+            api.upload_program_file(self.program, "qris", "q.png", PNG)
+
+    def test_bank_statements_need_masking_confirmation(self):
+        with as_user(self.owner.user):
+            with self.assertRaisesRegex(frappe.ValidationError, "Samarkan"):
+                api.upload_program_file(self.program, "koran", "koran-nov.pdf", PDF, label="November 2026")
+            api.upload_program_file(self.program, "koran", "koran-nov.pdf", PDF, label="November 2026", redacted=1)
+            r = api.upload_program_file(self.program, "koran", "koran-des.png", PNG, label="Desember 2026", redacted=1)
+        self.assertEqual([x["label"] for x in r["statements"]], ["November 2026", "Desember 2026"])
+        self.assertEqual(r["drawings"], [])
+        g = self._detail()
+        self.assertEqual(len(g["documents"]["statements"]), 2)       # public transparency
+        with as_user(self.owner.user):
+            r = api.remove_program_file(self.program, "koran", r["statements"][0]["url"])
+        self.assertEqual([x["label"] for x in r["statements"]], ["Desember 2026"])
+
     def test_board_badge(self):
         with as_guest():
             rows = api.program_board(self.event.name)["programs"]

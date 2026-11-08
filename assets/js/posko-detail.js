@@ -271,6 +271,7 @@ function renderOverview(ctx) {
 
 // Ringkasan Stok memakai stok hidup yang sama dengan Daftar Barang (observasi − kiriman keluar
 // − pemakaian), bukan angka observasi mentah — dulu dua angka berbeda tampil di satu halaman.
+let LIVE_STOCK_BOARD = null;
 function renderStockSummaryLive(board) {
   const el = document.getElementById("stockSummary");
   const cards = (board && board.stock_cards) || [];
@@ -550,6 +551,7 @@ function renderSummaryRollup(summary) {
 
 
 async function loadPosko() {
+  LIVE_STOCK_BOARD = null;
   setStatus(
     "Loading Frappe Posko context..."
   );
@@ -597,7 +599,7 @@ async function loadPosko() {
     if (window.RNLogistikInfo) {
       RNLogistikInfo.renderKpi(logBoard);
       RNLogistikInfo.renderUrgentNeeds(logBoard);
-      renderStockSummaryLive(logBoard);
+      LIVE_STOCK_BOARD = logBoard;
       RNLogistikInfo.renderPublicShipmentsInfo(logBoard);
       RNLogistikInfo.renderItemList(logBoard, {
         onOpen: r => {
@@ -661,7 +663,8 @@ async function loadPosko() {
   POSKO_CONTEXT_CACHE = ctx;
 
   renderOverview(ctx);
-  renderStockSummary(ctx.stocks);
+  if (LIVE_STOCK_BOARD && (LIVE_STOCK_BOARD.stock_cards || []).length) renderStockSummaryLive(LIVE_STOCK_BOARD);
+  else renderStockSummary(ctx.stocks);
   renderStockObservations(ctx.stocks);
   renderNeeds(ctx.needs);
   renderIncomingAid(ctx.offers);

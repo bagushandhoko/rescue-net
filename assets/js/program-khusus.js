@@ -18,7 +18,36 @@
   function esc(s) { return window.RNUI.esc(s); }
   function fmt(n) { return window.RNUI.fmt(n); }
   function rp(n) { return "Rp " + fmt(n); }
-  function getEventId2() { return new URLSearchParams(window.location.search).get("event") || "event-sim-001"; }
+  function getEventId2() {
+    var q = new URLSearchParams(window.location.search).get("event");
+    if (q) return q;
+    try { var v = localStorage.getItem("rn_active_event"); if (v) return v.replace(/^disaster_events:/, ""); } catch (e) {}
+    return "";
+  }
+  // owner 2026-11-09: filter bencana di atas + tombol kembali (HP)
+  async function setupTopNav() {
+    var back = $("#pkBack");
+    if (back) back.onclick = function () {
+      if (document.referrer && document.referrer.indexOf(location.host) > -1 && history.length > 1) history.back();
+      else location.href = "../index.html";
+    };
+    var sel = $("#pkEventSel"); if (!sel) return;
+    var evs = [];
+    try { evs = await window.RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters", {}); } catch (e) {}
+    evs = Array.isArray(evs) ? evs : ((evs && (evs.events || evs.disasters)) || []);
+    var cur = getEventId2();
+    if (!cur && evs.length) {                      // tanpa ?event: pilih bencana aktif pertama
+      cur = evs[0].id || evs[0].name;
+      var u = new URL(location.href); u.searchParams.set("event", cur); history.replaceState(null, "", u.toString());
+    }
+    sel.innerHTML = evs.map(function (e) { var id = e.id || e.name; return '<option value="' + esc(id) + '"' + (id === cur ? " selected" : "") + ">" + esc(e.title || id) + "</option>"; }).join("") ||
+      '<option value="">Tidak ada bencana aktif</option>';
+    if (cur && !evs.some(function (e) { return (e.id || e.name) === cur; })) sel.insertAdjacentHTML("afterbegin", '<option value="' + esc(cur) + '" selected>' + esc(cur) + "</option>");
+    sel.onchange = function () {
+      try { localStorage.setItem("rn_active_event", sel.value); } catch (e) {}
+      var u = new URL(location.href); u.searchParams.set("event", sel.value); u.searchParams.delete("program"); u.searchParams.delete("kelola"); location.href = u.toString();
+    };
+  }
   function shortDate(s) { return window.RNUI.shortDate(s); }
 
   var STATUS_LABEL = { planned: "Rencana", active: "Aktif", completed: "Selesai", cancelled: "Dibatalkan" };
@@ -1016,7 +1045,7 @@
     wireDonateSheet();
     wireDocForms();
     wirePlanEditing();
-    loadBoard().catch(function (err) { console.error("[program board]", err); });
+    setupTopNav().then(function () { return loadBoard(); }).catch(function (err) { console.error("[program board]", err); });
   });
 })();
 

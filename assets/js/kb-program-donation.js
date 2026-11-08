@@ -34,6 +34,7 @@
       : '<option value="">Belum ada program khusus di bencana ini</option>';
     var want = new URLSearchParams(location.search).get("program");
     if (want && PROGRAMS.some(function (p) { return p.name === want; })) { sel.value = want; showProgram(want); }
+    else if (PROGRAMS.length) { sel.value = PROGRAMS[0].name; showProgram(PROGRAMS[0].name); }   // owner 2026-11-09: langsung tampil rekening/QRIS
     else { wall.innerHTML = ""; bank.hidden = true; }
   }
 

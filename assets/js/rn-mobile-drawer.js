@@ -44,6 +44,7 @@
       ["Control Centre", "pages/war-room.html?event=" + encodeURIComponent(ev)],
       ["Laporan Masyarakat", "pages/laporan-masyarakat.html"],
       ["Kirim Bantuan", "pages/kirim-bantuan.html"],
+      ["Donasi", "pages/program-khusus.html" + (ev && ev !== "event-sim-001" ? "?event=" + encodeURIComponent(ev) : "")],
       ["Saran", "pages/saran.html"],
       ["Install App", "pages/install.html"],
       ["Login/registrasi", "pages/auth.html"],

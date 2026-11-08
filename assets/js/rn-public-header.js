@@ -38,7 +38,7 @@
     { label: "Control Centre", href: `${prefix}pages/war-room.html?event=${encodeURIComponent(window.rnActiveEvent)}` },
     { label: "Install App", href: `${prefix}pages/install.html` },
     { label: "Laporan Masyarakat", href: `${prefix}pages/laporan-masyarakat.html` },
-    { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` }, { label: "Saran", href: `${prefix}pages/saran.html` }
+    { label: "Kirim Bantuan", href: `${prefix}pages/kirim-bantuan.html` }, { label: "Donasi", href: `${prefix}pages/program-khusus.html` }, { label: "Saran", href: `${prefix}pages/saran.html` }
   ];
 
   function renderPublicLink(link) {

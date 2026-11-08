@@ -7778,3 +7778,16 @@ body.home-page .rn-hero-cta { display: flex !important; flex-wrap: wrap; gap: 8p
   .topbar { gap: 8px !important; margin-bottom: 10px !important; }
   .topbar .status-pill { padding: 4px 10px !important; font-size: 11px !important; margin: 0 !important; }
 }
+/* Program Donasi di HP (owner 2026-11-09): filter bencana + kembali di atas, program & rekening/QRIS tampil lebih dulu */
+.pk-topnav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 10px; }
+.pk-evsel { display: flex; gap: 6px; align-items: center; flex: 1 1 220px; min-width: 0; font-size: 13px; font-weight: 700; }
+.pk-evsel select { flex: 1; min-width: 0; padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(104,64,45,.25); font: inherit; font-weight: 400; }
+@media (max-width: 720px) {
+  .rn-pk-page .topbar { display: none !important; }
+  .rn-pk-page { display: flex; flex-direction: column; }
+  .rn-pk-page > .pk-topnav { order: 0; position: sticky; top: 56px; z-index: 50; background: #fff8f4; padding: 6px 0; }
+  .rn-pk-page > .rn-pk-row { order: 1; display: flex !important; flex-direction: column; }
+  .rn-pk-page > .rn-pk-row > #programDetailPanel { order: -1; }
+  .rn-pk-page > .rn-pk-kpi { order: 5; }
+  .rn-pk-page > *:not(.pk-topnav):not(.rn-pk-row):not(.rn-pk-kpi) { order: 6; }
+}

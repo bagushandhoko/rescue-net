@@ -52,9 +52,9 @@
         "Jalur 2: admin Muhammadiyah 'Tambah Anggota Langsung' (Koordinasi Organisasi) → akun dibuat + kata sandi sementara → amil login → ganti kata sandi → login dengan kata sandi baru",
         "Anggota biasa (Aisyiyah) mencoba menambah anggota ke induk → ditolak"
       ],
-      "hasil": "Lulus 12/12 (SOP1 + SOP1B). Fitur baru add_member_direct (056d811).",
+      "hasil": "Lulus. Jalur 1 (Bu Ratna → Dapur Umum) dan jalur 2 (amil LAZISMU Siak/Pelalawan; operator Posko Komando BPBD Kalbar ditambahkan langsung oleh pengelolanya lalu ditempatkan → login langsung ke Posko Komando). Fitur baru add_member_direct (056d811).",
       "status": "lulus",
-      "temuan": "Akun pengelola data-awal BPBD Kalbar (KH-USER-KOMANDO) & BNPB (SIM-NS-USER-NASKOMANDO) tidak punya login → posko 'Posko Komando Satgas Karhutla Kalbar' belum bisa diberi petugas oleh pengelolanya. Perbaikan lewat konsol ditolak pengaman; perlu tindakan owner (super admin). Skrip lama sempat memakai jalur ganti sandi Frappe yang tidak dibuka situs — yang benar api_auth.change_password."
+      "temuan": "Diperbaiki atas izin owner: 22 akun data-awal simulasi tanpa login (mis. pengelola BPBD Kalbar & BNPB) kini punya login Demo12345; semua 52+ akun demo memakai Demo12345. Kini 54 dari 57 posko punya petugas; 3 sisanya data uji non-simulasi (Dapur Ibu-Ibu Gang Melati, Posko UAT Rescue-Net 2, Komando Kota UAT) menunggu keputusan owner. Aturan kekuatan kata sandi menolak 'Demo12345' saat ganti sandi lewat aplikasi (benar) — sandi demo dipasang lewat konsol."
     },
     {
       "id": "PK-QRIS-2",

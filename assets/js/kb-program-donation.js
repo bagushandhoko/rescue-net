@@ -63,7 +63,7 @@
           rows.map(function (r) { return "<tr><td>" + esc(r.donor_name) + '</td><td style="text-align:right">' + rp(r.amount) + "</td><td>" + esc(r.message || "") + "</td></tr>"; }).join("") +
           '</tbody><tfoot><tr><th>Total</th><th style="text-align:right">' + rp(w.total_received) + "</th><th></th></tr></tfoot></table>"
           : '<p class="rn-muted">Belum ada donasi yang dikonfirmasi.</p>') +
-        '<p style="margin-top:8px"><a href="donor-program.html?id=' + encodeURIComponent(id) + '">Lihat program lengkap ›</a></p>';
+        '<p style="margin-top:8px"><a href="program-khusus.html?program=' + encodeURIComponent(id) + '">Lihat program lengkap ›</a></p>';
     } catch (e) { wall.innerHTML = ""; }
   }
 

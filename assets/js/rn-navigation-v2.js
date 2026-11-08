@@ -170,19 +170,14 @@
     // request instead of 3 separate top-level items.
     donasi: [
       {
-        label: "Donor Program",
-        href: "donor-program.html?event=event-sim-001",
+        label: "Program Donasi",
+        href: "program-khusus.html?event=event-sim-001",
         icon: "donor"
       },
       {
         label: "Pengadaan & Tender",
         href: "pengadaan-tender.html?event=event-sim-001",
         icon: "scale"
-      },
-      {
-        label: "Program Khusus (Tracking)",
-        href: "program-khusus.html?event=event-sim-001",
-        icon: "program"
       }
     ],
 

@@ -1,6 +1,17 @@
 <!doctype html>
 <html lang="id">
 <head>
+<script>
+/* owner 2026-11-08 ("nggak muncul rekening dan qris"): halaman lama → Program Khusus (satu halaman donasi) */
+(function () {
+  var q = new URLSearchParams(location.search), out = new URLSearchParams();
+  if (q.get("id")) out.set("program", q.get("id"));
+  if (q.get("program")) out.set("program", q.get("program"));
+  if (q.get("event")) out.set("event", q.get("event"));
+  location.replace("program-khusus.html" + (out.toString() ? "?" + out.toString() : "") + location.hash);
+})();
+</script>
+
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="manifest" href="../manifest.webmanifest">
@@ -201,7 +212,7 @@
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 
-<script src="../assets/js/rn-navigation-v2.js?v=tujuan-20261108"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=donasi-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=panduan-20261108"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>

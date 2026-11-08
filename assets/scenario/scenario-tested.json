@@ -3,6 +3,22 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "MU-BUKTI-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Anggota Muhammadiyah mengunggah foto bukti lapangan → Control Centre",
+      "tujuan": "Owner: tambahkan oleh anggota Muhammadiyah foto-foto simulasi bukti di Control Centre.",
+      "akun": "sim-mu-mdmc, sim-mu-rs-a, sim-mu-aisyiyah, sim-mu-lazismu, sim-mu-hw, sim-mu-admin, sim-mu-nasyiah, sim-mu-imm",
+      "langkah": [
+        "9 gambar ILUSTRASI SIMULASI (bukan foto orang asli) dibuat untuk kegiatan: masker MDMC, asesmen ISPU, ISPA RS PKU, dapur Aisyiyah, paket gizi LAZISMU, rumah singgah HW, packing Gudang PWM Jatim, edukasi Nasyiah, air bersih IMM",
+        "Tiap anggota login dan mengunggah lewat Bukti Lapangan (upload_evidence) dengan posko masing-masing",
+        "Control Centre (bencana Karhutla) menampilkan bukti tsb"
+      ],
+      "hasil": "Lulus 10/10. Foto tampil untuk super admin, petugas Control Centre, pengunggah & pengelola posko terkait.",
+      "status": "lulus",
+      "temuan": "Untuk tamu, foto bukti (file privat — bisa memuat korban) ditolak 403 dan tampil sebagai gambar rusak. Diperbaiki: kini tampil keterangan '🔒 Foto terbatas untuk petugas berwenang'. Bila owner ingin foto tertentu boleh publik, perlu fitur 'boleh tampil publik' per foto (belum ada)."
+    },
+    {
       "id": "PK-KITABISA-1",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

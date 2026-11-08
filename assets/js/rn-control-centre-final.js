@@ -1729,6 +1729,7 @@ function renderEvidence(
                   row.evidence_url
                     ? `
                       <img
+                        onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'cc-ev-locked',textContent:'🔒 Foto terbatas untuk petugas berwenang'}))"
                         src="${safe(
                           row.evidence_url
                         )}"

@@ -736,6 +736,7 @@
   function ago(ts) {
     if (!ts) return "";
     var t = new Date(String(ts).replace(" ", "T")), s = (Date.now() - t.getTime()) / 1000;
+    if (s < 0 && s > -86400) return "baru saja";          // jam server vs jam perangkat berbeda zona
     if (!(s >= 0)) return shortDate(ts);
     if (s < 3600) return Math.max(1, Math.round(s / 60)) + " menit lalu";
     if (s < 86400) return Math.round(s / 3600) + " jam lalu";

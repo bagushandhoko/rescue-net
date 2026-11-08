@@ -7676,3 +7676,7 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-pk-bars .bar i { display: block; height: 100%; background: #2f9a5c; }
 .rn-pk-bars .bar.spent i { background: #e8755a; }
 .rn-pk-bars label { font-size: 13px; display: flex; justify-content: space-between; gap: 8px; }
+
+.rn-pk-donors .row.one, .rn-pk-real .row.one { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 10px; align-items: center; padding: 5px 0; }
+.rn-pk-donors .row.one .nm, .rn-pk-real .row.one .nm { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rn-pk-donors .row.one .dt, .rn-pk-real .row.one .dt { font-size: 12px; color: #7c6458; white-space: nowrap; }

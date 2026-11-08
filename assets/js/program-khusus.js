@@ -571,15 +571,12 @@
     var pub = d.public || [];
     var tt = $("#donationWallTitle");
     if (tt) tt.textContent = "Daftar Donatur (terkonfirmasi) — " + pub.length + " donatur · total " + rp(d.total_received || 0);
+    wall.className = "rn-pk-donors";
     wall.innerHTML = pub.length
       ? pub.map(function (r) {
-          return '<article class="event-card"><div class="event-main"><div>' +
-            "<h4>" + esc(r.donor_name) + "</h4>" +
-            (r.message ? "<p>" + esc(r.message) + "</p>" : "") +
-            '<p class="rn-muted">' + shortDate(r.confirmed_at) + "</p></div>" +
-            '<div class="chips"><span class="chip ok">' + rp(r.amount) + "</span></div>" +
-            "</div></article>";
-        }).join("")
+          return '<div class="row one" title="' + esc(r.message || "") + '"><span class="nm">' + esc(r.donor_name) +
+            '</span><span class="dt">' + shortDate(r.confirmed_at) + "</span><b>" + rp(r.amount) + "</b></div>";
+        }).join("") + '<div class="row one"><span class="nm"><b>Total</b></span><span class="dt">' + pub.length + " donatur</span><b>" + rp(d.total_received || 0) + "</b></div>"
       : '<p class="rn-muted">Belum ada donasi terkonfirmasi untuk program ini.</p>';
 
     var pendingSection = $("#donationPendingSection");
@@ -686,7 +683,7 @@
     var rows = (data.updates || []).filter(function (u) { return Number(u.amount_spent || 0) > 0; });
     var list = $("#realisasiList");
     if (list) list.innerHTML = rows.length ? rows.map(function (u) {
-      return '<div class="row"><span>' + esc(u.update_title) + "<small>" + shortDate(u.observed_at) + (u.update_notes ? " · " + esc(u.update_notes) : "") + "</small></span><b>" + rp(u.amount_spent) + "</b></div>";
+      return '<div class="row one" title="' + esc(u.update_notes || "") + '"><span class="nm">' + esc(u.update_title) + '</span><span class="dt">' + shortDate(u.observed_at) + "</span><b>" + rp(u.amount_spent) + "</b></div>";
     }).join("") + '<div class="row"><span><b>Total realisasi</b></span><b>' + rp(spent) + "</b></div>"
       : '<p class="rn-muted">Belum ada realisasi anggaran tercatat.</p>';
     var f = $("#realisasiForm");
@@ -714,7 +711,7 @@
     box.hidden = false;
     $("#donorsTopSum").textContent = (d.donor_count || pub.length) + " penyumbang · " + rp(d.total_received || 0);
     $("#donorsTopList").innerHTML = pub.length ? pub.slice(0, 10).map(function (r) {
-      return '<div class="row"><span>' + esc(r.donor_name) + "<small>" + shortDate(r.confirmed_at) + (r.message ? " · " + esc(r.message) : "") + "</small></span><b>" + rp(r.amount) + "</b></div>";
+      return '<div class="row one" title="' + esc(r.message || "") + '"><span class="nm">' + esc(r.donor_name) + '</span><span class="dt">' + shortDate(r.confirmed_at) + "</span><b>" + rp(r.amount) + "</b></div>";
     }).join("") : '<p class="rn-muted">Belum ada donasi terkonfirmasi. Jadilah penyumbang pertama.</p>';
     var all = $("#donorsTopAll");
     all.hidden = pub.length <= 10;

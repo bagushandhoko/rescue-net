@@ -67,7 +67,10 @@
     try { me = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info", {}); } catch (e) {}
     var logged = !!(me && (me.logged_in || (me.user && me.user !== "Guest")));
     document.getElementById("kbDonLogin").hidden = logged;
-    form.hidden = !logged;
+    // owner 2026-11-08: tamu tetap bisa memilih program dan melihat rekening/QRIS/daftar donatur; hanya isian donasi perlu login
+    form.hidden = false;
+    form.querySelectorAll("[data-login-field]").forEach(function (el) { el.hidden = !logged; });
+    ["amount"].forEach(function (n) { if (form[n]) form[n].required = logged; });
     if (logged && me && (me.full_name || me.name) && !form.donor_name.value) form.donor_name.value = me.full_name || me.name || "";
     await loadPrograms();
   }

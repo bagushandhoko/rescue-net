@@ -201,20 +201,20 @@
         <p>Pilih program di bencana yang sama dengan form di atas. Donasi tampil di daftar donatur setelah pemrakarsa
           mengonfirmasi dana diterima. Centang <b>anonim</b> bila tidak ingin nama Anda disebutkan.</p>
       </div></div>
-      <p class="rn-muted" id="kbDonLogin" hidden>Donasi uang perlu login agar pemrakarsa bisa memeriksa.
+      <p class="rn-muted" id="kbDonLogin" hidden>Rekening, QRIS, dan daftar donatur bisa dilihat tanpa login. Untuk <b>mengisi formulir donasi</b> setelah transfer, perlu login agar pemrakarsa bisa memeriksa.
         <a class="btn primary" id="kbDonLoginBtn" href="auth.html?next=kirim-bantuan.html%23kbDonasi">Login / Daftar</a></p>
-      <form class="rn-form" id="kbDonForm" hidden>
+      <form class="rn-form" id="kbDonForm">
         <div class="form-grid">
           <label>Program <select name="donor_program" required><option value="">Memuat program…</option></select></label>
-          <label>Nominal (Rp) <input name="amount" type="number" min="1000" step="1000" inputmode="numeric" required placeholder="100000"></label>
-          <label>Nama yang ditampilkan <input name="donor_name" maxlength="120" placeholder="Nama pribadi / komunitas"></label>
-          <label>Kontak (tidak ditampilkan) <input name="donor_contact" maxlength="60" placeholder="0812xxxx / email"></label>
+          <div class="rn-pk-bank" id="kbDonBank" hidden style="grid-column:1/-1"></div>
+          <label data-login-field>Nominal (Rp) <input name="amount" type="number" min="1000" step="1000" inputmode="numeric" required placeholder="100000"></label>
+          <label data-login-field>Nama yang ditampilkan <input name="donor_name" maxlength="120" placeholder="Nama pribadi / komunitas"></label>
+          <label data-login-field>Kontak (tidak ditampilkan) <input name="donor_contact" maxlength="60" placeholder="0812xxxx / email"></label>
         </div>
-        <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" name="is_anonymous" value="1" style="width:auto">
+        <label data-login-field style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="checkbox" name="is_anonymous" value="1" style="width:auto">
           Jangan sebutkan nama saya (tampil sebagai "Donatur Anonim")</label>
-        <label>Pesan (opsional) <input name="message" maxlength="300" placeholder="Semoga lekas pulih"></label>
-        <div class="rn-pk-bank" id="kbDonBank" hidden></div>
-        <div class="form-actions"><button class="btn primary" type="submit">Kirim Donasi</button>
+        <label data-login-field>Pesan (opsional) <input name="message" maxlength="300" placeholder="Semoga lekas pulih"></label>
+        <div class="form-actions" data-login-field><button class="btn primary" type="submit">Kirim Donasi</button>
           <span class="form-message" id="kbDonMsg"></span></div>
       </form>
       <div id="kbDonWall"></div>
@@ -228,7 +228,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/public-aid.js?v=evpreset-20261102"></script>
-<script src="../assets/js/kb-program-donation.js?v=qris-20261108"></script>
+<script src="../assets/js/kb-program-donation.js?v=tamu-20261108"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=i18n9-20261108"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

@@ -28,7 +28,12 @@ class TestReporterSignupAndApproval(RNTestCase):
     def test_signup_requires_agency_and_position(self):
         with as_user("Guest"), self.assertRaises(frappe.ValidationError):
             api_auth.register(full_name="Budi", email=f"{uid('p')}@test.rescue-net.local",
-                              password="Rn-Test-Pass-2026!x", role="pelapor")
+                              password="Rn-Test-Pass-2026!x", role="pelapor", privacy_consent=1)
+
+    def test_signup_requires_privacy_consent(self):
+        with as_user("Guest"), self.assertRaises(frappe.ValidationError):
+            api_auth.register(full_name="Budi", email=f"{uid('p')}@test.rescue-net.local",
+                              password="Rn-Test-Pass-2026!x", role="relawan")
 
     def test_admin_approval_grants_reporter_role(self):
         acc = self.pending()

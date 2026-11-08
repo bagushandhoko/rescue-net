@@ -447,6 +447,7 @@ def register(
     reporter_agency=None,
     reporter_position=None,
     reporter_area=None,
+    privacy_consent=0,
 ):
     """Public self-service signup used by pages/auth.html (Daftar tab).
 
@@ -473,6 +474,10 @@ def register(
 
     if not full_name or not email or not password:
         frappe.throw("Nama lengkap, email, dan password wajib diisi.")
+
+    # Persetujuan penggunaan data pribadi (Kebijakan Privasi) wajib dicentang.
+    if str(privacy_consent).strip().lower() not in ("1", "true", "yes", "on"):
+        frappe.throw("Persetujuan penggunaan data pribadi (Kebijakan Privasi) wajib dicentang.")
 
     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
         frappe.throw("Format email tidak valid.")

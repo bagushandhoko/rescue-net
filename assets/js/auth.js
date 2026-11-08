@@ -476,6 +476,12 @@
           setMessage("registerMessage", "Nama organisasi wajib diisi.", true);
           return;
         }
+        var privacyEl = registerForm.querySelector('input[name="privacy_consent"]');
+        if (privacyEl && !privacyEl.checked) {
+          setMessage("registerMessage", "Centang persetujuan penggunaan data pribadi (Kebijakan Privasi) untuk mendaftar.", true);
+          privacyEl.focus();
+          return;
+        }
         var c = pwChecks(pass);
         if (!c.len || !c.upper || !c.digit) {
           setMessage("registerMessage", "Password belum memenuhi semua syarat.", true);
@@ -495,6 +501,7 @@
             password: pass,
             role: role,
             consent_verification: consentVerification,
+            privacy_consent: 1,
             reference_name: referenceName,
             reference_relation: referenceRelation,
             reference_contact: referenceContact,

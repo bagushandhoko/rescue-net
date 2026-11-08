@@ -340,6 +340,7 @@
 
       var events = EVENT_PICKER ? EVENT_PICKER.getSelected() : [];
       if (!events.length) { msg.textContent = "Pilih minimal satu bencana yang ditangani posko."; return; }
+      if (form.privacy_consent && !form.privacy_consent.checked) { msg.textContent = "Centang persetujuan penggunaan data pribadi (Kebijakan Privasi) untuk menyimpan posko."; return; }
       msg.textContent = "Menyimpan…";
       // fungsi posko (boleh > 1): checkbox + fallback ke jenis utama
       var functions = [];

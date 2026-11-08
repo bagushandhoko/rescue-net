@@ -763,7 +763,9 @@
     if (wanted && !SELECTED) {
       selectProgram(wanted);            // tautan langsung ke satu program (juga tujuan login pemrakarsa)
     } else if (data.programs && data.programs.length && !SELECTED) {
-      selectProgram(data.programs[0].name);
+      // buka program yang masih menerima donasi lebih dulu (bukan yang batal/selesai)
+      var open = data.programs.filter(function (p) { return !/^(cancelled|completed)$/i.test(String(p.status || "")); });
+      selectProgram((open[0] || data.programs[0]).name);
     }
   }
 

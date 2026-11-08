@@ -107,6 +107,23 @@ class TestProgramInitiator(RNTestCase):
             with self.assertRaises(frappe.PermissionError):
                 api.set_program_status(self.program, "completed")
 
+    def test_cancelled_program_hidden_from_public(self):
+        with as_user(self.lazis.user):
+            api.set_program_status(self.program, "active")
+            api.set_program_bank(self.program, bank_name="BSI", account_number="7000123456", account_holder="LAZISMU")
+        with as_guest():
+            self.assertIn(self.program, [p["name"] for p in api.program_board(self.event.name)["programs"]])
+            self.assertEqual(api.program_detail(self.program)["bank"]["account_number"], "7000123456")   # public
+        with as_user(self.lazis.user):
+            api.set_program_status(self.program, "cancelled", note="dobel")
+        with as_guest():
+            self.assertNotIn(self.program, [p["name"] for p in api.program_board(self.event.name)["programs"]])
+            with self.assertRaises(frappe.DoesNotExistError):
+                api.program_detail(self.program)
+        with as_user(self.lazis.user):                                    # the manager still finds it
+            self.assertIn(self.program, [p["name"] for p in api.program_board(self.event.name)["programs"]])
+            self.assertTrue(api.program_detail(self.program)["can_manage"])
+
     def test_dates_are_checked(self):
         with as_user(self.lazis.user):
             with self.assertRaisesRegex(frappe.ValidationError, "Tanggal selesai"):

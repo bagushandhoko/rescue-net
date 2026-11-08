@@ -213,7 +213,8 @@ def org_profile(organization, disaster_event=None):
     partners = [dict(v, peran=sorted(v["peran"])) for v in partners.values()]
 
     # ---- program & donasi ---------------------------------------------------------------------------------------
-    progs = frappe.get_all("RN Donor Program", filters={"owner_type": "organization", "owner_id": ["in", list(orgs)]},
+    progs = frappe.get_all("RN Donor Program", filters={"owner_type": "organization", "owner_id": ["in", list(orgs)],
+                                                        "status": ["!=", "cancelled"]},
                            fields=["name", "program_name", "status", "budget_target", "budget_received", "disaster_event",
                                    "owner_id", "public_visibility", "target_location"], limit_page_length=100)
     programs = []

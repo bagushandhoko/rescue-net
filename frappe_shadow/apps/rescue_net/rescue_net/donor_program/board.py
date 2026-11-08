@@ -55,7 +55,8 @@ def program_board(disaster_event=None):
     """
     event = resolve_disaster_event(disaster_event)
 
-    filters = {"public_visibility": "summary_public"}
+    # owner 2026-11-08: a cancelled program is not shown publicly at all (managers still see their own below)
+    filters = {"public_visibility": "summary_public", "status": ["!=", "cancelled"]}
     if event:
         filters["disaster_event"] = event
 
@@ -80,10 +81,20 @@ def program_board(disaster_event=None):
         hidden_filters = {"public_visibility": ["!=", "summary_public"]}
         if event:
             hidden_filters["disaster_event"] = event
+        seen = {r.name for r in rows}
+        cancelled_filters = {"status": "cancelled"}
+        if event:
+            cancelled_filters["disaster_event"] = event
         for hr in frappe.get_all(
             "RN Donor Program", filters=hidden_filters,
             fields=SPECIAL_PROGRAM_FIELDS, limit_page_length=1000,
+        ) + frappe.get_all(
+            "RN Donor Program", filters=cancelled_filters,
+            fields=SPECIAL_PROGRAM_FIELDS, limit_page_length=1000,
         ):
+            if hr.name in seen:
+                continue
+            seen.add(hr.name)
             if _program_manager(actor, hr):
                 rows.append(hr)
                 own_hidden_names.add(hr.name)
@@ -377,8 +388,8 @@ def program_detail(program):
     if not row:
         frappe.throw("Program tidak ditemukan", frappe.DoesNotExistError)
 
-    if row.public_visibility != "summary_public":
-        # Not public yet — still let the owner see their own program (e.g.
+    if row.public_visibility != "summary_public" or row.status == "cancelled":
+        # Not public yet (or cancelled — owner 2026-11-08: not shown publicly) — still let the owner see their own program (e.g.
         # to check why it's hidden / recheck verification), everyone else
         # gets the same not-found response as before.
         try:

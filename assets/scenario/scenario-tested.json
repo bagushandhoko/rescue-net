@@ -3,6 +3,24 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "MU-DONATUR-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Penyumbang & realisasi anggaran program LAZISMU Peduli Asap",
+      "tujuan": "Owner: tampilkan daftar penyumbang; tab Anggaran berisi anggaran & realisasi (tanpa rekening/QRIS); rekening/QRIS terlihat tanpa login; daftar 1 baris.",
+      "akun": "sim-mu-don-a … sim-mu-don-e (daftar sendiri), sim-mu-lazismu, tamu",
+      "langkah": [
+        "5 donatur mendaftar, melihat rekening & QRIS, mengisi formulir donasi (2 anonim)",
+        "LAZISMU mengonfirmasi tiap donasi",
+        "LAZISMU mencatat 3 realisasi belanja (masker, oksigen, paket gizi)",
+        "Tamu: Ringkasan menampilkan Daftar Penyumbang; tab Anggaran: target, diterima, terpakai, sisa, %, daftar realisasi",
+        "Tamu di Kirim Bantuan: pilih program → rekening & QRIS tampil; isian donasi minta login"
+      ],
+      "hasil": "Lulus 26/26. Diterima Rp 31.100.000 dari 6 donatur, realisasi Rp 29.400.000, sisa Rp 1.700.000. Nama donatur anonim tidak bocor.",
+      "status": "lulus",
+      "temuan": "Diperbaiki: (1) pemrakarsa ditolak saat mencatat realisasi (data program dimuat tanpa pembuat program) — 654f588; (2) Kirim Bantuan menyembunyikan seluruh form donasi untuk tamu sehingga rekening/QRIS tak terlihat tanpa login — 2794b52; (3) rekening/QRIS dihapus dari tab Anggaran, daftar donatur & realisasi dibuat 1 baris."
+    },
+    {
       "id": "PERBAIKAN-ALUR-1",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

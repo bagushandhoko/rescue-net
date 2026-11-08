@@ -2,6 +2,7 @@ import re
 
 import frappe
 from frappe.rate_limiter import rate_limit
+from frappe.utils import now_datetime
 
 from rescue_net.access_policy import (
     rn_actor,
@@ -316,6 +317,10 @@ def me():
     }
 
 
+# Versi Kebijakan Privasi yang disetujui pendaftar (pages/kebijakan-privasi.html, 2026-10-26).
+PRIVACY_POLICY_VERSION = "2026-10-26"
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def session_info():
@@ -534,6 +539,8 @@ def register(
                 # Pelapor terverifikasi baru aktif setelah disetujui (reporter.activate).
                 "status": "pending_verification" if role_key == "pelapor" else "active",
                 "consent_verification": consent_verification,
+                "privacy_consent_at": now_datetime(),
+                "privacy_policy_version": PRIVACY_POLICY_VERSION,
                 "reporter_agency": reporter_agency,
                 "reporter_position": reporter_position,
                 "reporter_area": reporter_area,

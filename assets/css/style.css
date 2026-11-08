@@ -7795,3 +7795,22 @@ body.home-page .rn-hero-cta { display: flex !important; flex-wrap: wrap; gap: 8p
 /* Pola HP: bagian tujuan disorot sebentar setelah digulir (owner 2026-11-09) */
 @keyframes rnFlash { 0% { box-shadow: 0 0 0 0 rgba(232,117,90,.0); } 20% { box-shadow: 0 0 0 4px rgba(232,117,90,.75); } 100% { box-shadow: 0 0 0 0 rgba(232,117,90,0); } }
 .rn-flash { animation: rnFlash 1.6s ease-out 1; scroll-margin-top: 70px; }
+
+/* Ulasan publik program donasi (2026-11-09) */
+.rn-stars{display:inline-flex;gap:2px;margin-left:8px;vertical-align:middle}
+.rn-stars button{background:none;border:0;font-size:26px;line-height:1;color:#cbd5e1;cursor:pointer;padding:2px}
+.rn-stars button.on{color:#f59e0b}
+.rn-rev-dist{display:grid;gap:3px;max-width:340px;margin:0 0 12px}
+.rn-rev-bar{display:grid;grid-template-columns:28px 1fr 26px;align-items:center;gap:6px;font-size:12px}
+.rn-rev-bar i{display:block;height:7px;background:#e5e7eb;border-radius:4px;overflow:hidden}
+.rn-rev-bar b{display:block;height:100%;background:#f59e0b}
+.rn-rev-list{display:grid;gap:10px;margin-top:12px}
+.rn-rev-item{border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;background:#fff}
+.rn-rev-item.is-hidden{opacity:.6}
+.rn-rev-item p{margin:6px 0 0;font-size:14px}
+.rn-rev-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rn-rev-stars{color:#f59e0b;letter-spacing:1px}
+.rn-rev-head small{color:#64748b;margin-left:auto}
+.rn-rev-reply{margin-top:8px;padding:8px 10px;background:#f0fdf4;border-left:3px solid #16a34a;border-radius:6px;font-size:13px}
+.rn-rev-replyform{display:flex;gap:6px;margin-top:8px;align-items:flex-start}
+.rn-rev-replyform textarea{flex:1;min-width:0;font:inherit;font-size:13px;padding:6px}

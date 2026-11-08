@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=pola-hp-20261109">
+  <link rel="stylesheet" href="../assets/css/style.css?v=ulasan-20261109">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -194,6 +194,7 @@
             <button class="rn-tab" data-tab="donatur" type="button">Donatur <span id="tabDonCount"></span></button>
             <button class="rn-tab" data-tab="anggaran" type="button">Penggunaan Dana</button>
             <button class="rn-tab" data-tab="riwayat" type="button">Kabar Terbaru</button>
+            <button class="rn-tab" data-tab="ulasan" type="button">Ulasan <span id="tabRevCount"></span></button>
             <button class="rn-tab" data-tab="rencana" type="button" id="tabBtnRencana" hidden>Rencana Kerja</button>
           </div>
 
@@ -326,6 +327,25 @@
 
           <div id="tabRiwayat" hidden>
             <div class="event-list" id="detailUpdates"></div>
+          </div>
+          <div id="tabUlasan" hidden>
+            <div class="rn-pk-box" id="ulasan">
+              <div class="rn-pk-box-h"><h4>⭐ Ulasan Publik untuk Penyelenggara</h4><span class="chip" id="revAvg"></span></div>
+              <p class="rn-muted" style="font-size:13px;margin:4px 0 10px">Masyarakat menilai kerja dan respons penyelenggara program ini. Penyelenggara dapat menjawab setiap ulasan.</p>
+              <div id="revDist" class="rn-rev-dist"></div>
+              <form class="rn-form" id="revForm" hidden>
+                <label>Nilai Anda
+                  <span class="rn-stars" id="revStars" role="radiogroup" aria-label="Nilai 1 sampai 5">
+                    <button type="button" data-v="1" aria-label="1 bintang">★</button><button type="button" data-v="2" aria-label="2 bintang">★</button><button type="button" data-v="3" aria-label="3 bintang">★</button><button type="button" data-v="4" aria-label="4 bintang">★</button><button type="button" data-v="5" aria-label="5 bintang">★</button>
+                  </span></label>
+                <label>Ulasan (opsional)<textarea name="comment" maxlength="1000" rows="3" placeholder="Contoh: laporan penggunaan dana lengkap, respons cepat saat ditanya"></textarea></label>
+                <label class="rn-check"><input type="checkbox" name="anonymous"> Sembunyikan nama saya (tampil sebagai Anonim)</label>
+                <div class="form-actions"><button class="btn primary" type="submit" id="revSubmit">Kirim Ulasan</button><span class="form-message" id="revMsg"></span></div>
+              </form>
+              <p class="rn-muted" id="revLogin" hidden><a href="auth.html">Login</a> untuk memberi ulasan.</p>
+              <p class="rn-muted" id="revOwnerNote" hidden>Anda pengelola program ini — Anda dapat menjawab ulasan di bawah.</p>
+              <div id="revList" class="rn-rev-list"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -477,13 +497,13 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=hpdonasi2-20261109"></script>
+<script src="../assets/js/program-khusus.js?v=ulasan-20261109"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-owner-only.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
-<script src="../assets/js/rn-public-header.js?v=i18n13-20261109"></script>
+<script src="../assets/js/rn-public-header.js?v=i18n14-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=kompakhp-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=topback-20261109"></script>

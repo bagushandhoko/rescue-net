@@ -1,0 +1,100 @@
+{
+ "doctype": "DocType",
+ "name": "RN Program Review",
+ "module": "RN Donor",
+ "custom": 0,
+ "engine": "InnoDB",
+ "track_changes": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "field_order": [
+  "program",
+  "user_account",
+  "reviewer_name",
+  "anonymous",
+  "rating",
+  "comment",
+  "status",
+  "hidden_reason",
+  "reply",
+  "reply_by_user",
+  "reply_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "program",
+   "fieldtype": "Link",
+   "label": "Program",
+   "options": "RN Donor Program",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "user_account",
+   "fieldtype": "Link",
+   "label": "Pengulas",
+   "options": "RN User Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "reviewer_name",
+   "fieldtype": "Data",
+   "label": "Nama Tampil"
+  },
+  {
+   "fieldname": "anonymous",
+   "fieldtype": "Check",
+   "label": "Sembunyikan Nama",
+   "default": "0"
+  },
+  {
+   "fieldname": "rating",
+   "fieldtype": "Int",
+   "label": "Nilai (1-5)",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "comment",
+   "fieldtype": "Small Text",
+   "label": "Ulasan"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "published\nhidden",
+   "default": "published",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "hidden_reason",
+   "fieldtype": "Data",
+   "label": "Alasan Disembunyikan"
+  },
+  {
+   "fieldname": "reply",
+   "fieldtype": "Small Text",
+   "label": "Jawaban Penyelenggara"
+  },
+  {
+   "fieldname": "reply_by_user",
+   "fieldtype": "Data",
+   "label": "Dijawab oleh"
+  },
+  {
+   "fieldname": "reply_at",
+   "fieldtype": "Datetime",
+   "label": "Dijawab pada"
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ]
+}

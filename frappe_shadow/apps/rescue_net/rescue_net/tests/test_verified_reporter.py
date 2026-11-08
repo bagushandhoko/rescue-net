@@ -35,6 +35,15 @@ class TestReporterSignupAndApproval(RNTestCase):
             api_auth.register(full_name="Budi", email=f"{uid('p')}@test.rescue-net.local",
                               password="Rn-Test-Pass-2026!x", role="relawan")
 
+    def test_signup_stores_privacy_consent(self):
+        email = f"{uid('p')}@test.rescue-net.local"
+        with as_user("Guest"):
+            api_auth.register(full_name="Budi", email=email, password="Rn-Test-Pass-2026!x", role="relawan",
+                              privacy_consent=1)
+        at, ver = frappe.db.get_value("RN User Account", {"email": email}, ["privacy_consent_at", "privacy_policy_version"])
+        self.assertTrue(at)
+        self.assertEqual(ver, api_auth.PRIVACY_POLICY_VERSION)
+
     def test_admin_approval_grants_reporter_role(self):
         acc = self.pending()
         api_verification.approval_action("user", acc.name, "approve")

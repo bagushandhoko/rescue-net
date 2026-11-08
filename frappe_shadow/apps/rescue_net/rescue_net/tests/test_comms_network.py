@@ -141,3 +141,23 @@ class TestCommsNetwork(RNTestCase):
     def test_posko_device_still_needs_disaster(self):
         with self.assertRaisesRegex(frappe.ValidationError, "Disaster event"):
             _insert("RN Comms Device", posko=self.w.posko_a.name, device_name="HT", category="ht", owner_type="posko")
+
+
+class TestCommsFrequencyPermission(RNTestCase):
+    """owner 2026-11-09: frekuensi hanya dicatat petugas posko / pengelola organisasi / Control Centre."""
+
+    def setUp(self):
+        super().setUp()
+        self.w = make_world()
+        self.mgr = make_actor(posko=self.w.posko_a)
+        self.plain = make_actor()
+
+    def test_plain_user_refused_manager_allowed(self):
+        with as_user(self.plain.user), self.assertRaises(frappe.PermissionError):
+            ac.create_comms_frequency("Rig 2m", "vhf", disaster_event=self.w.event.name)
+        with as_user(self.mgr.user):
+            out = ac.create_comms_frequency("Rig 2m", "vhf", disaster_event=self.w.event.name,
+                                            frequency_value="146.020")
+        self.assertTrue(frappe.db.exists("RN Comms Frequency", {"band_label": "Rig 2m"}))
+        with as_guest(), self.assertRaisesRegex(frappe.ValidationError, "Login"):
+            ac.create_comms_frequency("X", "vhf", disaster_event=self.w.event.name)

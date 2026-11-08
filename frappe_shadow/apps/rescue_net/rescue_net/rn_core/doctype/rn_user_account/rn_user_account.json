@@ -104,6 +104,19 @@
       "description": "Opt-in saat registrasi: pengguna bersedia diverifikasi untuk meningkatkan trust level akun/posko-nya."
     },
     {
+      "fieldname": "privacy_consent_at",
+      "label": "Setuju Kebijakan Privasi pada",
+      "fieldtype": "Datetime",
+      "read_only": 1,
+      "description": "Waktu pengguna mencentang persetujuan penggunaan data pribadi saat mendaftar."
+    },
+    {
+      "fieldname": "privacy_policy_version",
+      "label": "Versi Kebijakan Privasi",
+      "fieldtype": "Data",
+      "read_only": 1
+    },
+    {
       "fieldname": "legacy_payload",
       "label": "Legacy Payload",
       "fieldtype": "Code",

@@ -157,7 +157,7 @@
         $("#detailTabs").querySelectorAll(".rn-tab").forEach(function (t) { t.classList.remove("is-active"); });
         tab.classList.add("is-active");
         var name = tab.getAttribute("data-tab");
-        ["ringkasan", "rencana", "anggaran", "riwayat", "donatur"].forEach(function (k) {
+        ["ringkasan", "rencana", "anggaran", "riwayat", "donatur", "ulasan"].forEach(function (k) {
           $("#tab" + k.charAt(0).toUpperCase() + k.slice(1)).hidden = k !== name;
         });
       });
@@ -1002,6 +1002,79 @@
     }
   }
 
+  // ---- Ulasan publik (owner 2026-11-02 22:40, dikerjakan 2026-11-09) ----
+  var REV_RATING = 0;
+  function stars(n) { var o = ""; for (var i = 1; i <= 5; i++) o += i <= n ? "★" : "☆"; return o; }
+  async function loadReviews(name) {
+    var box = $("#ulasan"); if (!box) return;
+    var r;
+    try { r = await window.RN_FRAPPE.call("rescue_net.api_donor_program.program_reviews", { donor_program: name }); }
+    catch (e) { $("#revList").innerHTML = '<p class="rn-muted">Ulasan belum bisa dimuat.</p>'; return; }
+    if (SELECTED !== name) return;
+    $("#tabRevCount").textContent = r.count ? "(" + r.count + ")" : "";
+    $("#revAvg").textContent = r.count ? stars(Math.round(r.average)) + " " + String(r.average).replace(".", ",") + " · " + r.count + " ulasan" : "Belum ada ulasan";
+    $("#revDist").innerHTML = r.count ? [5, 4, 3, 2, 1].map(function (k) {
+      var c = r.distribution[String(k)] || 0, pct = Math.round(c * 100 / r.count);
+      return '<div class="rn-rev-bar"><span>' + k + '★</span><i><b style="width:' + pct + '%"></b></i><span>' + c + "</span></div>";
+    }).join("") : "";
+    $("#revForm").hidden = !r.can_review;
+    $("#revLogin").hidden = !r.login_required;
+    $("#revOwnerNote").hidden = !r.can_reply;
+    REV_RATING = r.mine ? r.mine.rating : 0;
+    paintStars();
+    var f = $("#revForm");
+    if (r.mine) { f.comment.value = r.mine.comment || ""; f.anonymous.checked = !!r.mine.anonymous; $("#revSubmit").textContent = "Perbarui Ulasan"; }
+    else { f.comment.value = ""; f.anonymous.checked = false; $("#revSubmit").textContent = "Kirim Ulasan"; }
+    $("#revList").innerHTML = r.reviews.length ? r.reviews.map(function (v) {
+      return '<div class="rn-rev-item' + (v.hidden ? " is-hidden" : "") + '">' +
+        '<div class="rn-rev-head"><b>' + esc(v.reviewer) + (v.mine ? " (Anda)" : "") + '</b><span class="rn-rev-stars">' + stars(v.rating) + "</span><small>" + esc(v.date) + "</small>" +
+        (v.hidden ? ' <span class="chip">disembunyikan</span>' : "") + "</div>" +
+        (v.comment ? "<p>" + esc(v.comment) + "</p>" : "") +
+        (v.reply ? '<div class="rn-rev-reply"><b>Jawaban penyelenggara</b>' + (v.reply_date ? " <small>" + esc(v.reply_date) + "</small>" : "") + "<p>" + esc(v.reply) + "</p></div>" : "") +
+        (r.can_reply ? '<form class="rn-rev-replyform" data-rev="' + esc(v.name) + '"><textarea maxlength="1000" rows="2" placeholder="Tulis jawaban…">' + esc(v.reply || "") + '</textarea><button class="btn ghost mini" type="submit">' + (v.reply ? "Ubah Jawaban" : "Jawab") + "</button></form>" : "") +
+        (r.can_moderate ? '<button class="btn ghost mini" type="button" data-rev-mod="' + esc(v.name) + '" data-st="' + (v.hidden ? "published" : "hidden") + '">' + (v.hidden ? "Tampilkan lagi" : "Sembunyikan") + "</button>" : "") +
+        "</div>";
+    }).join("") : '<p class="rn-muted">Belum ada ulasan untuk program ini.</p>';
+  }
+  function paintStars() {
+    var b = document.querySelectorAll("#revStars button");
+    Array.prototype.forEach.call(b, function (x) { x.classList.toggle("on", Number(x.dataset.v) <= REV_RATING); x.setAttribute("aria-pressed", Number(x.dataset.v) <= REV_RATING ? "true" : "false"); });
+  }
+  function setupReviews() {
+    var st = $("#revStars"); if (!st) return;
+    st.addEventListener("click", function (e) { var b = e.target.closest("button[data-v]"); if (!b) return; REV_RATING = Number(b.dataset.v); paintStars(); });
+    $("#revForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var msg = $("#revMsg");
+      if (!REV_RATING) { msg.textContent = "Pilih nilai bintang dulu."; return; }
+      msg.textContent = "Mengirim…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_donor_program.submit_review", { donor_program: SELECTED, rating: REV_RATING,
+          comment: this.comment.value, anonymous: this.anonymous.checked ? 1 : 0 }, { method: "POST" });
+        msg.textContent = "Terima kasih, ulasan tersimpan.";
+        loadReviews(SELECTED);
+      } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }
+    });
+    $("#revList").addEventListener("submit", async function (e) {
+      var f = e.target.closest(".rn-rev-replyform"); if (!f) return;
+      e.preventDefault();
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_donor_program.reply_review", { review: f.dataset.rev, reply: f.querySelector("textarea").value }, { method: "POST" });
+        loadReviews(SELECTED);
+      } catch (err) { alert("Gagal: " + ((err && err.message) || err)); }
+    });
+    $("#revList").addEventListener("click", async function (e) {
+      var b = e.target.closest("[data-rev-mod]"); if (!b) return;
+      var reason = b.dataset.st === "hidden" ? prompt("Alasan menyembunyikan ulasan ini?") : "";
+      if (b.dataset.st === "hidden" && !reason) return;
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_donor_program.moderate_review", { review: b.dataset.revMod, status: b.dataset.st, reason: reason }, { method: "POST" });
+        loadReviews(SELECTED);
+      } catch (err) { alert("Gagal: " + ((err && err.message) || err)); }
+    });
+    if (location.hash === "#ulasan") setTimeout(function () { var t = $("#detailTabs .rn-tab[data-tab=ulasan]"); if (t) t.click(); }, 800);
+  }
+
   async function selectProgram(name) {
     SELECTED = name;
     renderList();
@@ -1009,6 +1082,7 @@
       var data = await window.RN_FRAPPE.call(DETAIL_METHOD, { program: name });
       renderDetail(data);
       renderManagePanel(data);
+      loadReviews(name);
     } catch (err) {
       console.error("[program detail]", err);
     }
@@ -1042,6 +1116,7 @@
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
     setupFilterTabs();
     setupDetailTabs();
+    setupReviews();
     wireDonationActions();
     wireDonateSheet();
     wireDocForms();

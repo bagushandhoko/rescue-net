@@ -1,7 +1,26 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-08",
+  "diperbarui": "2026-11-09",
   "uji": [
+    {
+      "id": "PK-ULASAN-1",
+      "tanggal": "2026-11-09",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Ulasan publik penyelenggara program + izin frekuensi radio + bukti persetujuan privasi",
+      "tujuan": "Owner: ada review dari publik untuk memantau kerja/respons penyelenggara; rapikan pekerjaan yang belum selesai.",
+      "akun": "tes otomatis (pengelola, 2 publik, tamu, admin)",
+      "langkah": [
+        "Publik login memberi 4 lalu 5 bintang (ulasan diperbarui, bukan dobel); publik lain 3 bintang anonim",
+        "Tamu melihat rata-rata 4,0 dari 2 ulasan, nama 'Anonim', tanpa ID akun",
+        "Bukan pengelola mencoba menjawab → ditolak; pengelola menjawab → jawaban tampil ke tamu",
+        "Pengelola mengulas program sendiri → ditolak; nilai 9 → ditolak; tamu kirim → diminta login",
+        "Pengguna biasa menyembunyikan ulasan → ditolak; Control Centre menyembunyikan → hilang dari hitungan",
+        "Frekuensi radio: pengguna tanpa posko/organisasi ditolak, petugas posko berhasil",
+        "Daftar dengan persetujuan privasi → waktu & versi kebijakan tersimpan di akun"
+      ],
+      "hasil": "Lulus (755 tes)",
+      "status": "lulus"
+    },
     {
       "id": "EKO-RIWAYAT-1",
       "tanggal": "2026-11-09",

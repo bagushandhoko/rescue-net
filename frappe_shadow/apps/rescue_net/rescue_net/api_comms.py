@@ -714,10 +714,14 @@ def create_comms_frequency(
     load_pct=None,
     notes=None,
 ):
-    rn_actor()
+    actor = rn_actor()
     event = resolve_disaster_event(disaster_event)
     if not event:
         frappe.throw("Disaster event wajib diisi")
+    # owner 2026-11-09: hanya petugas posko / pengelola organisasi / Control Centre yang mencatat frekuensi
+    if not _can_report_frequency(actor):
+        frappe.throw("Hanya petugas posko, pengelola organisasi, atau Control Centre yang boleh mencatat frekuensi.",
+                     frappe.PermissionError)
     if network_type not in {"vhf", "uhf", "hf", "seluler", "starlink", "vsat", "lainnya"}:
         frappe.throw("Jenis jaringan tidak valid")
     if status not in {"baik", "sibuk", "lemah", "down"}:
@@ -785,6 +789,23 @@ def _set_power(doc, coverage_km=None, power_source=None, power_endurance_hours=N
         doc.power_source = power_source or None
     if power_endurance_hours is not None:
         doc.power_endurance_hours = _float_or_none(power_endurance_hours, "Ketahanan energi", 10000)
+
+
+def _can_report_frequency(actor):
+    from rescue_net.api_kitchen import _is_control
+    if _is_control(actor):
+        return True
+    if not actor or not actor.name:
+        return False
+    try:
+        from rescue_net.api_posko_manage import _managed
+        if _managed(actor):
+            return True
+    except Exception:
+        pass
+    return bool(frappe.db.exists("RN Organization Membership", {
+        "user_account": actor.name, "status": "approved",
+        "membership_role": ["in", ["owner", "deputy", "staff", "coordinator"]]}))
 
 
 def _require_posko_manager(actor, posko):

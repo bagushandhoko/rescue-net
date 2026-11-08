@@ -19,6 +19,7 @@ from rescue_net.api_kitchen import (
 
 from rescue_net.services.program_plan import board_stats, plan_for
 
+from rescue_net.donor_program.kitabisa import public_block as _kb_public
 from rescue_net.donor_program.common import (  # noqa: F401
     _assert_program_manager,
     _program_manager,
@@ -127,6 +128,7 @@ def program_board(disaster_event=None):
 
     today = nowdate()
     stats = board_stats(names)
+    _kb_block = _kb_public
     # owner 2026-11-08 (tampilan ala Kitabisa/LAZISMU): jumlah donatur & nama penggalang di kartu
     donor_counts = {}
     if names:
@@ -192,6 +194,8 @@ def program_board(disaster_event=None):
                                                              initiator_verified(r)),
             "donor_count": donor_counts.get(r.name, 0),
             "owner_title": _owner_title(r),
+            "donation_channel": r.get("donation_channel") or "sendiri",
+            "kitabisa": _kb_block(r),
         })
 
     active = [p for p in programs if p["status"] == "active"]
@@ -264,6 +268,8 @@ def create_cash_donation(donor_program, amount, is_anonymous=0, message=None,
     if (row.status or "").lower() in ("cancelled", "completed"):
         frappe.throw("Program ini sudah " + ("dibatalkan" if row.status == "cancelled" else "selesai") +
                      " dan tidak menerima donasi lagi.")
+    if frappe.db.get_value("RN Donor Program", donor_program, "donation_channel") == "kitabisa":
+        frappe.throw("Donasi program ini dikelola melalui Kitabisa — silakan berdonasi di halaman Kitabisa-nya.")
 
     amount = flt(amount)
     if amount <= 0:
@@ -511,6 +517,8 @@ def program_detail(program):
         "owner_verified": owner_verified,
         # owner 2026-11-01: public badge, RAB PDF + gambar kerja, initiator's bank account (verified only)
         "initiator_verified": initiator_verified(row),
+        "donation_channel": row.get("donation_channel") or "sendiri",
+        "kitabisa": _kb_public(row),
         "owner_title": (frappe.db.get_value({"organization": "RN Organization", "posko": "RN Posko"}.get((row.owner_type or "").lower(), "RN Organization"), row.owner_id, "title") if row.owner_id else None) or "",
         "documents": documents_for(program),
         "bank": bank_for(row, can_manage),

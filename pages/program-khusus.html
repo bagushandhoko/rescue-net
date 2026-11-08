@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=kitabisa2-20261108">
+  <link rel="stylesheet" href="../assets/css/style.css?v=kbchannel-20261108">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -147,6 +147,24 @@
               <button type="button" class="btn mini" data-set-status="cancelled">✕ Batalkan Program</button>
               <span class="form-message" id="statusMsg"></span>
             </div>
+            <details id="channelBox" class="pk-channel">
+              <summary class="btn">💳 Cara Pengelolaan Donasi: <b id="channelNow">Dikelola sendiri</b></summary>
+              <form class="rn-form" id="channelForm" autocomplete="off" style="margin-top:8px">
+                <label class="rn-row"><input type="radio" name="channel" value="sendiri" checked> <span><b>Dikelola sendiri</b> — donatur transfer ke rekening/QRIS lembaga Anda, Anda mengonfirmasi di sini.</span></label>
+                <label class="rn-row"><input type="radio" name="channel" value="kitabisa"> <span><b>Melalui Kitabisa</b> — donasi diproses di campaign Kitabisa Anda; Rescue-Net menampilkan data campaign + data pendukung (realisasi, posko, bukti lapangan).</span></label>
+                <label id="kbUrlWrap">Link campaign Kitabisa<input name="kitabisa_url" type="url" placeholder="https://kitabisa.com/campaign/namacampaign"></label>
+                <div class="form-actions"><button class="btn primary" type="submit">Simpan Pilihan</button><span class="form-message" id="channelMsg"></span></div>
+              </form>
+              <form class="rn-form" id="kbFigForm" autocomplete="off" hidden style="margin-top:8px">
+                <p class="rn-muted" style="font-size:12px;margin:0">Angka terkumpul &amp; jumlah donatur tidak bisa dibaca otomatis dari Kitabisa. Salin dari dashboard Kitabisa Anda — tampil dengan keterangan tanggal &amp; sumber.</p>
+                <div class="form-grid">
+                  <label>Terkumpul di Kitabisa (Rp)<input name="collected" type="number" min="0" step="1000"></label>
+                  <label>Jumlah donatur<input name="donor_count" type="number" min="0"></label>
+                  <label>Per tanggal<input name="as_of" type="date"></label>
+                </div>
+                <div class="form-actions"><button class="btn primary" type="submit">Simpan Angka</button><button class="btn" type="button" id="kbRefresh">🔄 Perbarui dari Kitabisa</button><span class="form-message" id="kbFigMsg"></span></div>
+              </form>
+            </details>
             <details id="infoBox">
               <summary class="btn">✏️ Ubah Data Program</summary>
               <form class="rn-form" id="infoForm" autocomplete="off" style="margin-top:8px">
@@ -357,6 +375,12 @@
             <label>Target dana (Rp)
               <input name="budget_target" type="number" min="0" step="1000" placeholder="mis. 50000000">
             </label>
+            <label>Cara pengelolaan donasi
+              <select name="donation_channel" id="createChannel"><option value="sendiri">Dikelola sendiri (rekening/QRIS lembaga)</option><option value="kitabisa">Melalui Kitabisa (link campaign)</option></select>
+            </label>
+            <label id="createKbWrap" hidden>Link campaign Kitabisa
+              <input name="kitabisa_url" type="url" placeholder="https://kitabisa.com/campaign/namacampaign">
+            </label>
             <p class="rn-muted" style="font-size:12px">Program tampil publik setelah organisasi terverifikasi. Rekening &amp; QRIS hanya tampil ke publik bila pemrakarsa terverifikasi — jangan minta transfer lewat pesan pribadi.</p>
             <div class="form-actions"><button class="btn primary" type="submit">Buat Program</button><span class="form-message" id="programFormMsg"></span></div>
           </form>
@@ -449,7 +473,7 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=kitabisa2-20261108"></script>
+<script src="../assets/js/program-khusus.js?v=kbchannel-20261108"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-owner-only.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>

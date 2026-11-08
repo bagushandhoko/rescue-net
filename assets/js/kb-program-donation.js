@@ -43,7 +43,12 @@
     try {
       var d = await call("program_detail", { program: id });
       var b = d.bank || {};
-      if (b.account_number || b.qris_url) {
+      if (d.donation_channel === "kitabisa" && d.kitabisa && d.kitabisa.url) {
+        bank.hidden = false;
+        bank.innerHTML = 'Donasi program ini <b>melalui Kitabisa</b>. <a class="btn primary mini" href="' + esc(d.kitabisa.url) +
+          '" target="_blank" rel="noopener">Donasi di Kitabisa →</a><br><small>Penggunaan dana &amp; bukti lapangan tetap bisa dipantau di halaman program Rescue-Net.</small>';
+        form.querySelectorAll("[data-login-field]").forEach(function (el) { el.hidden = true; });
+      } else if (b.account_number || b.qris_url) {
         bank.hidden = false;
         bank.innerHTML = (b.account_number ? "Transfer ke rekening pemrakarsa: <b>" + esc(b.bank_name) + " " + esc(b.account_number) + "</b> a.n. " + esc(b.account_holder) : "") +
           (b.qris_url ? '<div style="margin-top:6px">' + (b.account_number ? "Atau bayar dengan QRIS:" : "Bayar dengan QRIS:") + '<br><img src="' + esc(b.qris_url) +

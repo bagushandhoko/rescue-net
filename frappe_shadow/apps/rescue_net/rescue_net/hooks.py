@@ -40,6 +40,7 @@ scheduler_events = {
         "rescue_net.ai.queue.process_pending",
         "rescue_net.api_presence.close_stale_presence",
         "rescue_net.services.sms.sweep_failed_whatsapp",
+        "rescue_net.donor_program.kitabisa.refresh_stale",
     ],
     "daily": [
         "rescue_net.ai.budget.purge_usage_logs",

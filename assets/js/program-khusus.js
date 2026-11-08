@@ -92,7 +92,10 @@
           '<span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></span>" +
         '<span class="rn-pk-card-meta"><i class="pk-cat">' + esc(p.category) + "</i> · " + esc(p.location) +
           (p.owner_title ? '<br>oleh <b>' + esc(p.owner_title) + "</b>" : "") + "</span>" +
-        (Number(p.budget_target) > 0 || Number(p.budget_received) > 0
+        (p.donation_channel === "kitabisa" ? '<span class="pk-card-amt"><span class="pk-kb-tag">via Kitabisa</span> ' +
+            (p.kitabisa && p.kitabisa.collected != null ? "<b>" + rp(p.kitabisa.collected) + "</b> terkumpul" : "lihat angka di Kitabisa") +
+            (p.kitabisa && (p.kitabisa.target || p.budget_target) ? " dari " + rp(p.kitabisa.target || p.budget_target) : "") + "</span>" : "") +
+        (p.donation_channel !== "kitabisa" && (Number(p.budget_target) > 0 || Number(p.budget_received) > 0)
           ? '<span class="pk-card-amt"><b>' + rp(p.budget_received) + "</b> terkumpul" + (Number(p.budget_target) > 0 ? " dari " + rp(p.budget_target) : "") + "</span>" +
             '<span class="rn-pk-bar"><span style="width:' + (Number(p.budget_target) > 0 ? Math.min(100, Math.round(p.budget_received / p.budget_target * 100)) : 0) + '%"></span></span>' +
             '<span class="rn-pk-bar-label"><span>' + fmt(p.donor_count || 0) + " donatur</span><span>" + (p.end_date && p.status === "active" ? daysLeft(p.end_date) : "") + "</span></span></span></button>"
@@ -766,9 +769,34 @@
     $("#pkDonors").textContent = fmt(d.donor_count || (d.public || []).length || 0);
     $("#pkDays").textContent = open ? daysLeft(p.end_date) : (/cancel/i.test(p.status) ? "Dibatalkan" : "Selesai");
     var hasPay = !!((data.bank || {}).account_number || (data.bank || {}).qris_url) && (data.bank || {}).shown_publicly;
-    document.querySelectorAll("[data-open-donate]").forEach(function (b) { b.disabled = !open; });
+    var kb = data.donation_channel === "kitabisa" ? (data.kitabisa || {}) : null;
+    if (kb) {
+      if (kb.open === false) open = false;
+      var kbTgt = Number(kb.target || tgt || 0), kbRec = kb.collected == null ? null : Number(kb.collected);
+      $("#pkRaised").textContent = kbRec == null ? "Lihat di Kitabisa" : rp(kbRec);
+      $("#pkOfTarget").textContent = (kbRec == null ? "" : "terkumpul") + (kbTgt ? " dari " + rp(kbTgt) : "") +
+        (kb.figures_at ? " · per " + shortDate(kb.figures_at) + ", sumber Kitabisa" : "");
+      $("#pkBar").style.width = (kbTgt > 0 && kbRec != null ? Math.min(100, kbRec / kbTgt * 100) : 0) + "%";
+      $("#pkDonors").textContent = kb.donor_count == null ? "—" : fmt(kb.donor_count);
+      $("#pkOwner").textContent = data.owner_title || kb.organizer || "-";
+      if (!open && kb.open === false) $("#pkDays").textContent = "Campaign Kitabisa ditutup";
+    }
+    document.querySelectorAll("[data-open-donate]").forEach(function (b) {
+      b.disabled = !open;
+      b.textContent = kb ? "Donasi di Kitabisa →" : "Donasi Sekarang";
+    });
     var st = $("#pkSticky"); if (st) st.hidden = !open;
-    DONATE_CTX = { data: data, open: open, hasPay: hasPay };
+    var badge = $("#pkKbBadge");
+    if (!badge && $("#pkFund")) { badge = document.createElement("div"); badge.id = "pkKbBadge"; badge.className = "pk-kb"; $("#pkFund").insertBefore(badge, $("#pkFund").firstChild); }
+    if (badge) {
+      badge.hidden = !kb;
+      if (kb) badge.innerHTML = '<span class="pk-kb-tag">Melalui Kitabisa</span> Donasi diproses di <a href="' + esc(kb.url) + '" target="_blank" rel="noopener">halaman Kitabisa</a>' +
+        (kb.title ? ' — "' + esc(kb.title) + '"' : "") + '. Di sini: penggunaan dana, posko penerima, dan bukti lapangan.';
+    }
+    var dt = $("#donateTop"); if (dt && kb) dt.hidden = true;
+    var dtl = $("#donorsTopList"); if (dtl && kb && !(data.donations && (data.donations.public || []).length)) dtl.innerHTML = '<p class="rn-muted">Daftar donatur ada di <a href="' + esc(kb.url) + '" target="_blank" rel="noopener">halaman Kitabisa</a>.</p>';
+    var wall = $("#donationWall"); if (wall && kb && !(data.donations && (data.donations.public || []).length)) wall.innerHTML = '<p class="rn-muted">Donasi program ini diproses Kitabisa; daftar donatur lengkap ada di <a href="' + esc(kb.url) + '" target="_blank" rel="noopener">halaman Kitabisa</a>.</p>';
+    DONATE_CTX = { data: data, open: open, hasPay: hasPay, kb: kb };
   }
   var DONATE_CTX = null, PK_METHOD = "qris";
   function payBox() {
@@ -789,6 +817,7 @@
   }
   function openDonate() {
     if (!DONATE_CTX || !DONATE_CTX.open) return;
+    if (DONATE_CTX.kb && DONATE_CTX.kb.url) { window.open(DONATE_CTX.kb.url, "_blank", "noopener"); return; }
     var sh = $("#pkSheet"); if (!sh) return;
     $("#pkSheetProg").textContent = (DONATE_CTX.data.program || {}).program_name || "";
     payBox();
@@ -822,6 +851,51 @@
       var af = $("#pkAmountField"); if (af) af.value = c.value;
     });
     document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDonate(); });
+  }
+
+
+  function wireChannel(data) {
+    var cf = $("#channelForm"), ff = $("#kbFigForm"); if (!cf) return;
+    var kbMode = data.donation_channel === "kitabisa", kb = data.kitabisa || {};
+    $("#channelNow").textContent = kbMode ? "Melalui Kitabisa" : "Dikelola sendiri";
+    cf.querySelectorAll("input[name=channel]").forEach(function (r) { r.checked = r.value === (kbMode ? "kitabisa" : "sendiri"); });
+    cf.kitabisa_url.value = kb.url || "";
+    var syncUrl = function () { $("#kbUrlWrap").hidden = !cf.querySelector("input[name=channel][value=kitabisa]").checked; };
+    syncUrl();
+    ff.hidden = !kbMode;
+    if (kbMode) {
+      ff.collected.value = kb.collected == null ? "" : kb.collected;
+      ff.donor_count.value = kb.donor_count == null ? "" : kb.donor_count;
+      ff.as_of.value = kb.figures_at || new Date().toISOString().slice(0, 10);
+    }
+    if (cf.dataset.wired) return; cf.dataset.wired = "1";
+    cf.addEventListener("change", syncUrl);
+    cf.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var m = $("#channelMsg"), ch = cf.querySelector("input[name=channel]:checked").value;
+      m.textContent = "Menyimpan…";
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_donor_program.set_donation_channel",
+          { donor_program: SELECTED, channel: ch, kitabisa_url: cf.kitabisa_url.value.trim() || null }, { method: "POST" });
+        m.textContent = r && r.warning ? r.warning : "Tersimpan.";
+        await selectProgram(SELECTED);
+      } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
+    });
+    ff.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var m = $("#kbFigMsg"); m.textContent = "Menyimpan…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_donor_program.set_kitabisa_figures", { donor_program: SELECTED,
+          collected: ff.collected.value || 0, donor_count: ff.donor_count.value || 0, as_of: ff.as_of.value || null }, { method: "POST" });
+        m.textContent = "Tersimpan."; await selectProgram(SELECTED);
+      } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
+    });
+    $("#kbRefresh").addEventListener("click", async function () {
+      var m = $("#kbFigMsg"); m.textContent = "Membaca Kitabisa…";
+      try { await window.RN_FRAPPE.call("rescue_net.api_donor_program.refresh_kitabisa", { donor_program: SELECTED }, { method: "POST" });
+        m.textContent = "Diperbarui."; await selectProgram(SELECTED);
+      } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
+    });
   }
 
   function renderManagePanel(data) {
@@ -867,6 +941,7 @@
         } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
       };
     });
+    wireChannel(data);
     var f = $("#infoForm");
     if (f) {
       ["description", "target_beneficiaries", "target_description", "budget_target", "location", "start_date", "end_date",
@@ -1082,6 +1157,8 @@ function setupProgramForm() {
         : '<option value="">Anda belum menjadi anggota organisasi yang disetujui</option>';
     })
     .catch(() => { sel.innerHTML = '<option value="">Login dulu untuk membuat program</option>'; });
+  const ch = document.getElementById("createChannel"), kbw = document.getElementById("createKbWrap");
+  if (ch && kbw) ch.addEventListener("change", () => { kbw.hidden = ch.value !== "kitabisa"; form.kitabisa_url.required = ch.value === "kitabisa"; });
   form.addEventListener("submit", async e => {
     e.preventDefault();
     if (!sel.value) { msg.textContent = "Pilih organisasi dulu."; return; }
@@ -1098,8 +1175,15 @@ function setupProgramForm() {
         budget_target: Number(form.budget_target.value || 0),
         status: "active"
       }, { method: "POST" });
-      msg.textContent = "Program dibuat. Membuka panel kelola…";
       const id = r && (r.program || r.id);
+      if (id && form.donation_channel && form.donation_channel.value === "kitabisa") {
+        try {
+          const c = await RN_FRAPPE.call("rescue_net.api_donor_program.set_donation_channel",
+            { donor_program: id, channel: "kitabisa", kitabisa_url: form.kitabisa_url.value.trim() }, { method: "POST" });
+          if (c && c.warning) alert(c.warning);
+        } catch (e2) { alert("Program dibuat, tetapi link Kitabisa belum tersimpan: " + ((e2 && e2.message) || e2)); }
+      }
+      msg.textContent = "Program dibuat. Membuka panel kelola…";
       const url = new URL(location.href);
       if (id) { url.searchParams.set("program", id); url.searchParams.set("kelola", "1"); }
       location.href = url.toString();

@@ -371,6 +371,13 @@ def _build_context(
 
 
 SPECIAL_PROGRAM_FIELDS = PROGRAM_FIELDS + [
+    "donation_channel",
+    "kitabisa_url",
+    "kitabisa_data",
+    "kitabisa_synced_at",
+    "kitabisa_collected",
+    "kitabisa_donor_count",
+    "kitabisa_figures_at",
     "target_location",
     "target_node_id",
     "target_beneficiaries",

@@ -10,11 +10,12 @@ from rescue_net.donor_program import (  # noqa: F401
     board,
     common,
     documents,
+    kitabisa,
     plan,
     programs,
     special,
 )
 
-for _module in (common, board, documents, plan, programs, special,):
+for _module in (common, board, documents, kitabisa, plan, programs, special,):
     globals().update({k: v for k, v in vars(_module).items() if not k.startswith("__")})
 del _module

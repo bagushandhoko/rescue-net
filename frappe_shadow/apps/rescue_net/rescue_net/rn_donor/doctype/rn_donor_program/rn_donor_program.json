@@ -49,7 +49,14 @@
   "bank_account_number",
   "bank_account_holder",
   "rab_file_url",
-  "work_drawings"
+  "work_drawings",
+  "donation_channel",
+  "kitabisa_url",
+  "kitabisa_data",
+  "kitabisa_synced_at",
+  "kitabisa_collected",
+  "kitabisa_donor_count",
+  "kitabisa_figures_at"
  ],
  "fields": [
   {
@@ -289,6 +296,43 @@
    "fieldname": "work_drawings",
    "label": "Gambar Kerja (JSON)",
    "fieldtype": "Small Text"
+  },
+  {
+   "fieldname": "donation_channel",
+   "fieldtype": "Select",
+   "label": "Cara Pengelolaan Donasi",
+   "options": "sendiri\nkitabisa",
+   "default": "sendiri"
+  },
+  {
+   "fieldname": "kitabisa_url",
+   "fieldtype": "Data",
+   "label": "Link Campaign Kitabisa"
+  },
+  {
+   "fieldname": "kitabisa_data",
+   "fieldtype": "Long Text",
+   "label": "Data Kitabisa (tersimpan)"
+  },
+  {
+   "fieldname": "kitabisa_synced_at",
+   "fieldtype": "Datetime",
+   "label": "Kitabisa Diperbarui"
+  },
+  {
+   "fieldname": "kitabisa_collected",
+   "fieldtype": "Float",
+   "label": "Terkumpul di Kitabisa (diisi pemrakarsa)"
+  },
+  {
+   "fieldname": "kitabisa_donor_count",
+   "fieldtype": "Int",
+   "label": "Jumlah Donatur di Kitabisa (diisi pemrakarsa)"
+  },
+  {
+   "fieldname": "kitabisa_figures_at",
+   "fieldtype": "Date",
+   "label": "Angka Kitabisa per Tanggal"
   }
  ],
  "permissions": [
@@ -300,5 +344,5 @@
    "delete": 1
   }
  ],
- "modified": "2026-11-01 23:30:00.000000"
+ "modified": "2026-11-08 19:00:00.000000"
 }

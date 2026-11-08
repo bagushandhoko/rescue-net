@@ -21,6 +21,8 @@
     .st-sum div { border: 1px solid rgba(104,64,45,.15); border-radius: 10px; padding: 10px 12px; background: #fff; }
     .st-sum b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
     .st-card { border: 1px solid rgba(104,64,45,.15); border-radius: 12px; padding: 14px 16px; background: #fff; margin: 12px 0; }
+    .st-card, .st-card * { overflow-wrap: anywhere; min-width: 0; } /* teks panjang (id, alamat, URL) tidak melebarkan halaman HP */
+    .manual, .manual-grid, .manual-card { min-width: 0; max-width: 100%; }
     .st-card h3 { margin: 4px 0 6px; font-size: 17px; text-wrap: balance; }
     .st-meta { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: #7c6458; }
     .st-chip { border-radius: 999px; padding: 2px 9px; border: 1px solid currentColor; font-weight: 600; }

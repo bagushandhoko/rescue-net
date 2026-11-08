@@ -269,6 +269,23 @@ function renderOverview(ctx) {
 }
 
 
+// Ringkasan Stok memakai stok hidup yang sama dengan Daftar Barang (observasi − kiriman keluar
+// − pemakaian), bukan angka observasi mentah — dulu dua angka berbeda tampil di satu halaman.
+function renderStockSummaryLive(board) {
+  const el = document.getElementById("stockSummary");
+  const cards = (board && board.stock_cards) || [];
+  if (!el || !cards.length) return;
+  el.innerHTML = cards.map(c => card(
+    c.item,
+    `Stok sekarang: <b>${safe(c.stok_ada)}</b> ${safe(c.unit || "")}` +
+    (c.masuk_7h || c.keluar_7h ? `<br>Masuk 7 hari: ${safe(c.masuk_7h || 0)} · Keluar 7 hari: ${safe(c.keluar_7h || 0)}` : ""),
+    Number(c.stok_ada) > 0 ? "available" : "empty",
+    logistikHref(c.item)
+  )).join("");
+  const cap = el.closest(".panel") && el.closest(".panel").querySelector(".panel-header p");
+  if (cap) cap.textContent = "Stok sekarang setelah barang masuk, keluar, dan dipakai.";
+}
+
 function renderStockSummary(items) {
   const el =
     document.getElementById(
@@ -567,6 +584,8 @@ async function loadPosko() {
     const a = document.getElementById("logistikManageLinkHref");
     if (a) {
       a.href = `posko-logistik.html?id=${encodeURIComponent(getPoskoId())}&event=${encodeURIComponent(currentEventParam())}`;
+      // tamu / bukan pengelola hanya melihat papan logistik — jangan beri label "Kelola"
+      a.textContent = canEdit ? "Kelola Logistik Posko Ini →" : "Lihat Papan Logistik Posko Ini →";
     }
   }
 
@@ -578,6 +597,7 @@ async function loadPosko() {
     if (window.RNLogistikInfo) {
       RNLogistikInfo.renderKpi(logBoard);
       RNLogistikInfo.renderUrgentNeeds(logBoard);
+      renderStockSummaryLive(logBoard);
       RNLogistikInfo.renderPublicShipmentsInfo(logBoard);
       RNLogistikInfo.renderItemList(logBoard, {
         onOpen: r => {

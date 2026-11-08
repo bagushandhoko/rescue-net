@@ -3,6 +3,24 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "POSKO-TANPA-PENGELOLA-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Posko tanpa pengelola mendapat petugas lewat permohonan + Verifikasi super admin",
+      "tujuan": "Owner: 'beri petugas' untuk 3 posko data lama yang tidak punya pengelola organisasi.",
+      "akun": "sim-op-melati, sim-op-uat2, sim-op-kotauat (daftar sendiri); persetujuan super admin",
+      "langkah": [
+        "Daftar akun (Petugas Posko)",
+        "Buka halaman posko → panel '🙋 Jadi petugas posko ini' → Ajukan",
+        "Permohonan tampil di antrean Verifikasi (Role Diminta: Petugas posko; Posko Diminta: …)",
+        "Super admin menyetujui → penempatan aktif",
+        "Login berikutnya langsung ke halaman posko"
+      ],
+      "hasil": "Lulus 9/9 + 3 persetujuan. Kini 57/57 posko punya petugas.",
+      "status": "lulus",
+      "temuan": "Sebelumnya posko tanpa pengelola tidak bisa didapatkan siapa pun (request_posko_operator butuh penempatan yang sudah ada; persetujuannya tak ada di layar). Diperbaiki 3715a6f. Persetujuan simulasi dijalankan lewat konsol sebagai Administrator memakai fungsi yang sama dengan tombol Setujui."
+    },
+    {
       "id": "DOK-PANDUAN-1",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

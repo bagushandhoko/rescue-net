@@ -280,6 +280,21 @@
       "";
 
     topbar.appendChild(hamburger);
+    // owner 2026-11-09 (pola HP): tombol kembali selalu terlihat di bilah atas, kecuali di Home
+    if (!isHome) {
+      const back = document.createElement("button");
+      back.type = "button";
+      back.className = "rn-drawer-back";
+      back.setAttribute("aria-label", "Kembali ke halaman sebelumnya");
+      back.textContent = "←";
+      back.addEventListener("click", () => {
+        const same = document.referrer && document.referrer.indexOf(location.host) > -1;
+        if (same && history.length > 1) history.back();
+        else location.href = prefix + "index.html";
+      });
+      topbar.appendChild(back);
+      document.body.classList.add("rn-has-topback");
+    }
     topbar.appendChild(title);
 
     if (logoSrc) {

@@ -565,3 +565,11 @@
     content: ""; display: block; height: 96px;
   }
 }
+/* Tombol kembali di bilah atas HP (owner 2026-11-09) */
+.rn-drawer-back { display: none; }
+@media (max-width: 1023px) {
+  .rn-drawer-back { display: inline-grid; place-items: center; flex: 0 0 auto; width: 38px; height: 38px; border: 1px solid rgba(104,64,45,.2); border-radius: 10px; background: #fff; font-size: 20px; line-height: 1; cursor: pointer; margin-right: 4px; color: #5e4b40; }
+  /* tombol kembali di dalam halaman tidak perlu dobel di HP — filter bencana tetap */
+  body.rn-has-topback .pk-topnav > .btn[id$="Back"] { display: none !important; }
+  body.rn-has-topback .pk-topnav > .pk-evsel { flex-basis: 100%; }
+}

@@ -132,6 +132,19 @@ class TestProgramInitiator(RNTestCase):
             with self.assertRaises(frappe.PermissionError):
                 api.create_special_program_update(self.program, "Palsu", update_type="spending", amount_spent=5)
 
+    def test_board_shows_donor_count_and_owner(self):
+        with as_user(self.lazis.user):
+            api.set_program_status(self.program, "active")
+        with as_user(self.donor.user):
+            don = api.create_cash_donation(self.program, 20_000)["donation"]
+        with as_user(self.lazis.user):
+            api.decide_cash_donation(don, "confirm")
+        with as_guest():
+            row = [p for p in api.program_board(self.event.name)["programs"] if p["name"] == self.program][0]
+            self.assertEqual(row["donor_count"], 1)
+            self.assertEqual(row["owner_title"], frappe.db.get_value("RN Organization", self.org.name, "title"))
+            self.assertEqual(api.program_detail(self.program)["owner_title"], row["owner_title"])
+
     def test_dates_are_checked(self):
         with as_user(self.lazis.user):
             with self.assertRaisesRegex(frappe.ValidationError, "Tanggal selesai"):

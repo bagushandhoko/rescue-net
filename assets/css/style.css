@@ -7684,3 +7684,51 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
   .rn-pk-donors .row.one, .rn-pk-real .row.one { grid-template-columns: minmax(0,1fr) auto; }
   .rn-pk-donors .row.one .dt, .rn-pk-real .row.one .dt { display: none; }
 }
+
+/* Program donasi ala Kitabisa/LAZISMU (owner 2026-11-08) */
+.pk-fund { border: 1px solid rgba(104,64,45,.15); border-radius: 12px; padding: 12px 14px; margin: 10px 0 12px; background: #fff; display: grid; gap: 6px; min-width: 0; }
+.pk-fund-by { font-size: 13px; color: #6d5a50; overflow-wrap: anywhere; }
+.pk-v { color: #1d6b45; font-weight: 700; font-size: 12px; }
+.pk-fund-amt b { font-size: 22px; color: #c2410c; font-variant-numeric: tabular-nums; }
+.pk-fund-amt span { font-size: 13px; color: #6d5a50; }
+.pk-fund-bar { height: 8px; background: #f1e6df; border-radius: 6px; overflow: hidden; }
+.pk-fund-bar i { display: block; height: 100%; background: #e8755a; }
+.pk-fund-meta { display: flex; justify-content: space-between; font-size: 13px; color: #5e4b40; }
+.pk-donate-btn { width: 100%; font-size: 16px; padding: 12px; margin-top: 4px; }
+.pk-sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 800; padding: 10px 16px calc(10px + env(safe-area-inset-bottom,0px)); background: #fff; box-shadow: 0 -2px 12px rgba(0,0,0,.12); display: none; }
+.pk-sticky .btn { width: 100%; font-size: 16px; padding: 12px; }
+@media (max-width: 720px) { .pk-sticky:not([hidden]) { display: block; } body:has(.pk-sticky:not([hidden])) { padding-bottom: 72px; } }
+.pk-sheet { position: fixed; inset: 0; z-index: 9600; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; }
+.pk-sheet[hidden] { display: none; }
+.pk-sheet-card { background: #fff; width: min(560px, 100%); max-height: 92vh; overflow: auto; border-radius: 16px 16px 0 0; padding: 14px 16px calc(16px + env(safe-area-inset-bottom,0px)); }
+@media (min-width: 721px) { .pk-sheet { align-items: center; } .pk-sheet-card { border-radius: 16px; } }
+.pk-sheet-head { display: flex; justify-content: space-between; align-items: center; font-size: 17px; }
+.pk-x { border: 0; background: none; font-size: 20px; cursor: pointer; }
+.pk-sheet-prog { margin: 2px 0 8px; color: #6d5a50; font-size: 13px; overflow-wrap: anywhere; }
+.pk-step { border-top: 1px solid rgba(104,64,45,.12); padding: 10px 0; }
+.pk-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin: 8px 0; }
+.pk-presets button, .pk-methods button { border: 1px solid rgba(104,64,45,.25); background: #fff; border-radius: 10px; padding: 10px; font-weight: 700; cursor: pointer; }
+.pk-presets button.is-on, .pk-methods button.is-on { border-color: #e8755a; background: #fff1ec; color: #b0533a; }
+.pk-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+.pk-methods button:disabled { opacity: .45; cursor: not-allowed; }
+.pk-paybox { display: grid; gap: 6px; justify-items: center; text-align: center; }
+.pk-qris { width: 230px; max-width: 100%; border: 1px solid rgba(104,64,45,.2); border-radius: 10px; background: #fff; }
+.pk-bankline { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; font-size: 15px; }
+.pk-bankline b { font-size: 18px; letter-spacing: .04em; }
+.pk-custom { display: grid; gap: 4px; font-size: 13px; }
+.pk-donors { display: grid; gap: 2px; }
+.pk-don { display: grid; grid-template-columns: 36px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 7px 0; border-bottom: 1px solid rgba(104,64,45,.08); }
+.pk-av { width: 36px; height: 36px; border-radius: 50%; background: #fde3d9; color: #b0533a; display: grid; place-items: center; font-weight: 800; }
+.pk-av.anon { background: #e8f3ec; color: #1d6b45; }
+.pk-don-main { min-width: 0; display: grid; }
+.pk-don-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pk-don-main small { color: #7c6458; font-size: 12px; }
+.pk-don-amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pk-don-total { display: flex; justify-content: space-between; padding: 8px 0 0; font-weight: 700; }
+.pk-prayers { display: grid; gap: 10px; }
+.pk-prayer { display: grid; grid-template-columns: 36px minmax(0,1fr); gap: 10px; }
+.pk-prayer p { margin: 2px 0 0; overflow-wrap: anywhere; }
+.pk-prayer small { color: #7c6458; }
+.pk-cat { font-style: normal; background: #fff1ec; color: #b0533a; border-radius: 6px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
+.pk-card-amt { display: block; font-size: 13px; margin-top: 4px; }
+.pk-card-amt b { color: #c2410c; }

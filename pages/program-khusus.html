@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=satubaris2-20261108">
+  <link rel="stylesheet" href="../assets/css/style.css?v=kitabisa-20261108">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -122,6 +122,14 @@
             </div>
           </div>
 
+          <div class="pk-fund" id="pkFund" hidden>
+            <div class="pk-fund-by">oleh <b id="pkOwner">-</b> <span class="pk-v" id="pkOwnerV" hidden title="Pemrakarsa terverifikasi">✔ terverifikasi</span></div>
+            <div class="pk-fund-amt"><b id="pkRaised">Rp 0</b> <span id="pkOfTarget"></span></div>
+            <div class="pk-fund-bar"><i id="pkBar" style="width:0%"></i></div>
+            <div class="pk-fund-meta"><span><b id="pkDonors">0</b> donatur</span><span id="pkDays"></span></div>
+            <button type="button" class="btn primary pk-donate-btn" data-open-donate>Donasi Sekarang</button>
+          </div>
+
           <div id="detailNotPublicBanner" class="rn-va-fields" style="border:1px solid var(--yellow, #b88918);border-radius:8px;padding:10px 12px;margin:8px 0;" hidden>
             <p class="rn-muted" style="margin:0 0 8px">Program ini <b>belum tampil publik</b> karena organisasi/posko/akun pemilik belum terverifikasi. Selesaikan dulu di Verification &amp; Approval, lalu klik tombol ini untuk publikasikan.</p>
             <button type="button" class="btn primary mini" id="recheckPublishBtn">Cek Verifikasi &amp; Publikasikan</button>
@@ -160,17 +168,18 @@
             </details>
           </section>
           <div class="rn-tabs rn-pk-detail-tabs" id="detailTabs">
-            <button class="rn-tab is-active" data-tab="ringkasan" type="button">Ringkasan</button>
+            <button class="rn-tab is-active" data-tab="ringkasan" type="button">Keterangan</button>
+            <button class="rn-tab" data-tab="donatur" type="button">Donatur <span id="tabDonCount"></span></button>
+            <button class="rn-tab" data-tab="anggaran" type="button">Penggunaan Dana</button>
+            <button class="rn-tab" data-tab="riwayat" type="button">Kabar Terbaru</button>
             <button class="rn-tab" data-tab="rencana" type="button" id="tabBtnRencana" hidden>Rencana Kerja</button>
-            <button class="rn-tab" data-tab="anggaran" type="button">Anggaran &amp; Donatur</button>
-            <button class="rn-tab" data-tab="riwayat" type="button">Riwayat</button>
           </div>
 
           <div id="tabRingkasan">
             <div class="rn-pk-box" id="donateTop" hidden style="margin-bottom:12px">
               <div class="rn-pk-box-h"><h4>💚 Donasi ke Program Ini</h4></div>
               <div id="bankBoxTop" class="rn-pk-bank"></div>
-              <button type="button" class="btn primary" id="donateTopGo">Sudah transfer? Isi formulir donasi →</button>
+              <button type="button" class="btn primary" id="donateTopGo" data-open-donate>Donasi Sekarang</button>
             </div>
             <div class="rn-pk-box" id="donorsTop" hidden style="margin-bottom:12px">
               <div class="rn-pk-box-h"><h4>🙏 Daftar Penyumbang</h4><span class="chip" id="donorsTopSum"></span></div>
@@ -279,24 +288,14 @@
               </div>
               <div class="form-actions"><button class="btn primary" type="submit">Catat Realisasi</button><span class="form-message" id="realisasiMsg"></span></div>
             </form>
-
-            <h4 class="rn-md-detail-h" id="donateFormTitle">Formulir Donasi (setelah transfer)</h4>
-            <p class="rn-muted" style="font-size:12px;margin:0 0 6px">Rekening &amp; QRIS ada di tab <b>Ringkasan</b> → Donasi ke Program Ini.</p>
             <div id="bankBox" class="rn-pk-bank" hidden></div>
-            <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Donasi tercatat "menunggu" sampai lembaga penerima (pengelola program) mengonfirmasi dana benar diterima — baru setelah itu masuk ke Papan Donasi &amp; Anggaran Diterima.</p>
-            <form class="rn-form" id="donateForm" autocomplete="off">
-              <label>Nominal (Rp)<input name="amount" type="number" min="1" step="1000" required placeholder="mis. 100000"></label>
-              <label>Pesan (opsional)<input name="message" placeholder="mis. Semoga bermanfaat"></label>
-              <label class="rn-auth-check"><input type="checkbox" name="is_anonymous"> Tampilkan sebagai donatur anonim di publik</label>
-              <div class="form-actions">
-                <button class="btn primary" type="submit">Kirim Donasi</button>
-                <span class="form-message" id="donateMsg"></span>
-              </div>
-            </form>
+          </div>
 
-            <h4 class="rn-md-detail-h" id="donationWallTitle">Daftar Donatur (terkonfirmasi)</h4>
-            <div id="donationWall" class="event-list"><p class="rn-muted">Memuat…</p></div>
-
+          <div id="tabDonatur" hidden>
+            <h4 class="rn-md-detail-h" id="donationWallTitle">Donatur</h4>
+            <div id="donationWall" class="pk-donors"><p class="rn-muted">Memuat…</p></div>
+            <h4 class="rn-md-detail-h">🤲 Doa &amp; dukungan</h4>
+            <div id="pkPrayers" class="pk-prayers"></div>
             <div id="donationPendingSection" hidden>
               <h4 class="rn-md-detail-h">Menunggu Konfirmasi Penerimaan</h4>
               <div id="donationPending" class="event-list"></div>
@@ -397,6 +396,41 @@
         </form>
       </section>
     </details>
+  <div class="pk-sticky" id="pkSticky" hidden><button type="button" class="btn primary" data-open-donate>Donasi Sekarang</button></div>
+  <div class="pk-sheet" id="pkSheet" hidden role="dialog" aria-modal="true" aria-labelledby="pkSheetTitle">
+    <div class="pk-sheet-card">
+      <div class="pk-sheet-head"><b id="pkSheetTitle">Donasi</b><button type="button" class="pk-x" data-close-donate aria-label="Tutup">✕</button></div>
+      <p class="pk-sheet-prog" id="pkSheetProg"></p>
+      <div class="pk-step"><b>1. Pilih nominal</b>
+        <div class="pk-presets" id="pkPresets">
+          <button type="button" data-amt="50000">Rp 50.000</button><button type="button" data-amt="100000">Rp 100.000</button>
+          <button type="button" data-amt="250000">Rp 250.000</button><button type="button" data-amt="500000">Rp 500.000</button>
+          <button type="button" data-amt="1000000">Rp 1.000.000</button>
+        </div>
+        <label class="pk-custom">Nominal lain (Rp)<input type="number" id="pkCustom" min="1000" step="1000" inputmode="numeric" placeholder="mis. 75000"></label>
+      </div>
+      <div class="pk-step"><b>2. Cara bayar</b>
+        <div class="pk-methods" role="tablist">
+          <button type="button" data-method="qris" class="is-on">QRIS</button><button type="button" data-method="bank">Transfer Bank</button>
+        </div>
+        <div id="pkPayBox" class="pk-paybox"></div>
+        <p class="rn-muted" style="font-size:12px;margin:6px 0 0">Dana langsung masuk ke rekening/QRIS pemrakarsa — bukan ke Rescue-Net. Jangan transfer ke rekening yang dikirim lewat pesan pribadi.</p>
+      </div>
+      <div class="pk-step"><b>3. Sudah bayar? Kabari pemrakarsa</b>
+        <p class="rn-muted" id="pkLoginNote" hidden style="margin:4px 0">Masuk dulu agar pemrakarsa bisa mencocokkan dana. <a class="btn primary mini" id="pkLoginBtn" href="auth.html">Masuk / Daftar</a></p>
+        <form class="rn-form" id="donateForm" autocomplete="off">
+              <label>Nominal (Rp)<input name="amount" id="pkAmountField" type="number" min="1" step="1000" required placeholder="mis. 100000"></label>
+              <label>Doa / pesan dukungan (opsional)<input name="message" maxlength="300" placeholder="mis. Semoga lekas pulih dan asap segera reda"></label>
+              <label class="rn-auth-check"><input type="checkbox" name="is_anonymous"> Tampilkan sebagai donatur anonim di publik</label>
+              <div class="form-actions">
+                <button class="btn primary" type="submit">Kirim Donasi</button>
+                <span class="form-message" id="donateMsg"></span>
+              </div>
+            </form>
+        <p class="rn-muted" style="font-size:12px;margin:6px 0 0">Donasi tampil di daftar setelah pemrakarsa memastikan dana masuk.</p>
+      </div>
+    </div>
+  </div>
   </main>
 </div>
 
@@ -415,7 +449,7 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=satubaris-20261108"></script>
+<script src="../assets/js/program-khusus.js?v=kitabisa-20261108"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-owner-only.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>

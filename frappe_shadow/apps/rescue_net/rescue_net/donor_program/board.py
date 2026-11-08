@@ -127,6 +127,20 @@ def program_board(disaster_event=None):
 
     today = nowdate()
     stats = board_stats(names)
+    # owner 2026-11-08 (tampilan ala Kitabisa/LAZISMU): jumlah donatur & nama penggalang di kartu
+    donor_counts = {}
+    if names:
+        for dc in frappe.get_all("RN Cash Donation", filters={"donor_program": ["in", names], "status": "received"},
+                                 fields=["donor_program", "count(name) as n"], group_by="donor_program"):
+            donor_counts[dc.donor_program] = dc.n
+    _owner_titles = {}
+
+    def _owner_title(r):
+        key = (r.owner_type, r.owner_id)
+        if key not in _owner_titles:
+            dt = {"organization": "RN Organization", "posko": "RN Posko"}.get((r.owner_type or "").lower())
+            _owner_titles[key] = (frappe.db.get_value(dt, r.owner_id, "title") if dt and r.owner_id else None) or ""
+        return _owner_titles[key]
     from rescue_net.donor_program.documents import initiator_verified
     _verified_cache = {}
     programs = []
@@ -176,6 +190,8 @@ def program_board(disaster_event=None):
             "locations_total": plan["locations"] if plan else 0,
             "initiator_verified": _verified_cache.setdefault((r.owner_type, r.owner_id, r.created_by_user),
                                                              initiator_verified(r)),
+            "donor_count": donor_counts.get(r.name, 0),
+            "owner_title": _owner_title(r),
         })
 
     active = [p for p in programs if p["status"] == "active"]
@@ -495,6 +511,7 @@ def program_detail(program):
         "owner_verified": owner_verified,
         # owner 2026-11-01: public badge, RAB PDF + gambar kerja, initiator's bank account (verified only)
         "initiator_verified": initiator_verified(row),
+        "owner_title": (frappe.db.get_value({"organization": "RN Organization", "posko": "RN Posko"}.get((row.owner_type or "").lower(), "RN Organization"), row.owner_id, "title") if row.owner_id else None) or "",
         "documents": documents_for(program),
         "bank": bank_for(row, can_manage),
         "note": (

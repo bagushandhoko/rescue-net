@@ -90,10 +90,14 @@
           (p.initiator_verified ? '<span class="chip ok" title="Pemrakarsa terverifikasi">✔ Terverifikasi</span>'
             : '<span class="chip warning" title="Pemrakarsa belum terverifikasi">Belum terverifikasi</span>') +
           '<span class="chip ' + (STATUS_CHIP[p.status] || "") + '">' + (STATUS_LABEL[p.status] || p.status) + "</span></span>" +
-        '<span class="rn-pk-card-meta">' + esc(p.category) + "<br>" + esc(p.location) +
-          ' · <i class="rn-pk-kind">' + (p.program_kind === "project" ? "Project Base" : "Cash Base") + "</i></span>" +
-        '<span class="rn-pk-bar"><span style="width:' + p.progress_percent + '%"></span></span>' +
-        '<span class="rn-pk-bar-label"><span>' + p.progress_percent + "%</span></span></span></button>"
+        '<span class="rn-pk-card-meta"><i class="pk-cat">' + esc(p.category) + "</i> · " + esc(p.location) +
+          (p.owner_title ? '<br>oleh <b>' + esc(p.owner_title) + "</b>" : "") + "</span>" +
+        (Number(p.budget_target) > 0 || Number(p.budget_received) > 0
+          ? '<span class="pk-card-amt"><b>' + rp(p.budget_received) + "</b> terkumpul" + (Number(p.budget_target) > 0 ? " dari " + rp(p.budget_target) : "") + "</span>" +
+            '<span class="rn-pk-bar"><span style="width:' + (Number(p.budget_target) > 0 ? Math.min(100, Math.round(p.budget_received / p.budget_target * 100)) : 0) + '%"></span></span>' +
+            '<span class="rn-pk-bar-label"><span>' + fmt(p.donor_count || 0) + " donatur</span><span>" + (p.end_date && p.status === "active" ? daysLeft(p.end_date) : "") + "</span></span></span></button>"
+          : '<span class="rn-pk-bar"><span style="width:' + p.progress_percent + '%"></span></span>' +
+            '<span class="rn-pk-bar-label"><span>' + p.progress_percent + "% progres</span></span></span></button>")
       );
     }).join("");
 
@@ -120,7 +124,7 @@
         $("#detailTabs").querySelectorAll(".rn-tab").forEach(function (t) { t.classList.remove("is-active"); });
         tab.classList.add("is-active");
         var name = tab.getAttribute("data-tab");
-        ["ringkasan", "rencana", "anggaran", "riwayat"].forEach(function (k) {
+        ["ringkasan", "rencana", "anggaran", "riwayat", "donatur"].forEach(function (k) {
           $("#tab" + k.charAt(0).toUpperCase() + k.slice(1)).hidden = k !== name;
         });
       });
@@ -412,6 +416,7 @@
     renderDonations(data.donations || {});
     renderBudget(data);
     renderDonorsTop(data);
+    renderFund(data);
     renderDocs(data);
     renderBank(data);
     if (window.RNIconFill) window.RNIconFill(document);
@@ -483,10 +488,7 @@
       var go = $("#donateTopGo");
       if (go) {
         go.hidden = closed || !(b.account_number || b.qris_url) || !b.shown_publicly;
-        go.onclick = function () {
-          var t = $("#detailTabs .rn-tab[data-tab=anggaran]"); if (t) t.click();
-          var df = $("#donateForm"); if (df) df.scrollIntoView({ behavior: "smooth", block: "start" });
-        };
+        go.onclick = null;   // tombol membuka lembar donasi (data-open-donate)
       }
     }
     box.hidden = true;                 // owner 2026-11-08: rekening/QRIS hanya di Ringkasan, tidak di tab Anggaran
@@ -571,13 +573,19 @@
     var pub = d.public || [];
     var tt = $("#donationWallTitle");
     if (tt) tt.textContent = "Daftar Donatur (terkonfirmasi) — " + pub.length + " donatur · total " + rp(d.total_received || 0);
-    wall.className = "rn-pk-donors";
-    wall.innerHTML = pub.length
-      ? pub.map(function (r) {
-          return '<div class="row one" title="' + esc(r.message || "") + '"><span class="nm">' + esc(r.donor_name) +
-            '</span><span class="dt">' + shortDate(r.confirmed_at) + "</span><b>" + rp(r.amount) + "</b></div>";
-        }).join("") + '<div class="row one"><span class="nm"><b>Total</b></span><span class="dt">' + pub.length + " donatur</span><b>" + rp(d.total_received || 0) + "</b></div>"
+    wall.className = "pk-donors";
+    wall.innerHTML = pub.length ? pub.map(donorRow).join("") +
+        '<div class="pk-don-total"><span>Total ' + pub.length + " donatur</span><b>" + rp(d.total_received || 0) + "</b></div>"
       : '<p class="rn-muted">Belum ada donasi terkonfirmasi untuk program ini.</p>';
+    var tc = $("#tabDonCount"); if (tc) tc.textContent = pub.length ? "(" + pub.length + ")" : "";
+    var pr = $("#pkPrayers");
+    if (pr) {
+      var msgs = pub.filter(function (r) { return r.message; });
+      pr.innerHTML = msgs.length ? msgs.map(function (r) {
+        return '<div class="pk-prayer"><span class="pk-av">' + initial(r.donor_name) + '</span><div><b>' + esc(r.donor_name) +
+          '</b> <small>' + ago(r.confirmed_at) + "</small><p>" + esc(r.message) + "</p></div></div>";
+      }).join("") : '<p class="rn-muted">Belum ada doa atau pesan dukungan.</p>';
+    }
 
     var pendingSection = $("#donationPendingSection");
     var pendingList = $("#donationPending");
@@ -622,6 +630,7 @@
             message: (form.message.value || "").trim() || null,
           }, { method: "POST" });
           msg.textContent = "Terkirim — menunggu konfirmasi lembaga penerima.";
+          setTimeout(function () { if (typeof closeDonate === "function") closeDonate(); }, 2500);
           form.reset();
           await selectProgram(SELECTED);
         } catch (err) {
@@ -710,12 +719,108 @@
     var d = data.donations || {}, pub = d.public || [];
     box.hidden = false;
     $("#donorsTopSum").textContent = (d.donor_count || pub.length) + " penyumbang · " + rp(d.total_received || 0);
-    $("#donorsTopList").innerHTML = pub.length ? pub.slice(0, 10).map(function (r) {
-      return '<div class="row one" title="' + esc(r.message || "") + '"><span class="nm">' + esc(r.donor_name) + '</span><span class="dt">' + shortDate(r.confirmed_at) + "</span><b>" + rp(r.amount) + "</b></div>";
-    }).join("") : '<p class="rn-muted">Belum ada donasi terkonfirmasi. Jadilah penyumbang pertama.</p>';
+    $("#donorsTopList").className = "pk-donors";
+    $("#donorsTopList").innerHTML = pub.length ? pub.slice(0, 5).map(donorRow).join("")
+      : '<p class="rn-muted">Belum ada donasi terkonfirmasi. Jadilah penyumbang pertama.</p>';
     var all = $("#donorsTopAll");
-    all.hidden = pub.length <= 10;
-    all.onclick = function () { var t = $("#detailTabs .rn-tab[data-tab=anggaran]"); if (t) t.click(); var w = $("#donationWallTitle"); if (w) w.scrollIntoView({ behavior: "smooth" }); };
+    all.hidden = pub.length <= 5;
+    all.onclick = function () { var t = $("#detailTabs .rn-tab[data-tab=donatur]"); if (t) t.click(); var w = $("#donationWallTitle"); if (w) w.scrollIntoView({ behavior: "smooth" }); };
+  }
+
+
+  // ---- gaya Kitabisa/LAZISMU (owner 2026-11-08: "kombinasikan") ----
+  function initial(name) {
+    var n = String(name || "").replace(/^\[SIMULASI\]\s*/i, "").trim();
+    return /^donatur anonim/i.test(n) || !n ? "♥" : esc(n.charAt(0).toUpperCase());
+  }
+  function ago(ts) {
+    if (!ts) return "";
+    var t = new Date(String(ts).replace(" ", "T")), s = (Date.now() - t.getTime()) / 1000;
+    if (!(s >= 0)) return shortDate(ts);
+    if (s < 3600) return Math.max(1, Math.round(s / 60)) + " menit lalu";
+    if (s < 86400) return Math.round(s / 3600) + " jam lalu";
+    if (s < 86400 * 30) return Math.round(s / 86400) + " hari lalu";
+    return shortDate(ts);
+  }
+  function donorRow(r) {
+    return '<div class="pk-don"><span class="pk-av' + (/anonim/i.test(r.donor_name) ? " anon" : "") + '">' + initial(r.donor_name) + '</span>' +
+      '<span class="pk-don-main"><b class="pk-don-name">' + esc(r.donor_name) + '</b><small>' + ago(r.confirmed_at) + '</small></span>' +
+      '<b class="pk-don-amt">' + rp(r.amount) + "</b></div>";
+  }
+  function daysLeft(end) {
+    if (!end) return "";
+    var d = Math.ceil((new Date(String(end) + "T23:59:59") - Date.now()) / 86400000);
+    return d > 0 ? d + " hari lagi" : "Berakhir";
+  }
+  function renderFund(data) {
+    var p = data.program || {}, box = $("#pkFund"); if (!box) return;
+    var d = data.donations || {}, rec = Number(p.budget_received || 0), tgt = Number(p.budget_target || 0);
+    var open = !/^(cancelled|completed)$/i.test(String(p.status || ""));
+    box.hidden = false;
+    $("#pkOwner").textContent = data.owner_title || "-";
+    $("#pkOwnerV").hidden = !data.initiator_verified;
+    $("#pkRaised").textContent = rp(rec);
+    $("#pkOfTarget").textContent = tgt > 0 ? "terkumpul dari " + rp(tgt) : "terkumpul";
+    $("#pkBar").style.width = (tgt > 0 ? Math.min(100, rec / tgt * 100) : 0) + "%";
+    $("#pkDonors").textContent = fmt(d.donor_count || (d.public || []).length || 0);
+    $("#pkDays").textContent = open ? daysLeft(p.end_date) : (/cancel/i.test(p.status) ? "Dibatalkan" : "Selesai");
+    var hasPay = !!((data.bank || {}).account_number || (data.bank || {}).qris_url) && (data.bank || {}).shown_publicly;
+    document.querySelectorAll("[data-open-donate]").forEach(function (b) { b.disabled = !open; });
+    var st = $("#pkSticky"); if (st) st.hidden = !open;
+    DONATE_CTX = { data: data, open: open, hasPay: hasPay };
+  }
+  var DONATE_CTX = null, PK_METHOD = "qris";
+  function payBox() {
+    var b = (DONATE_CTX && DONATE_CTX.data.bank) || {}, el = $("#pkPayBox");
+    if (!el) return;
+    if (!(b.account_number || b.qris_url) || !b.shown_publicly) {
+      el.innerHTML = '<p class="rn-muted">Rekening/QRIS pemrakarsa belum tersedia untuk publik (pemrakarsa belum terverifikasi).</p>'; return;
+    }
+    if (PK_METHOD === "qris" && !b.qris_url) PK_METHOD = "bank";
+    document.querySelectorAll(".pk-methods [data-method]").forEach(function (x) {
+      x.classList.toggle("is-on", x.getAttribute("data-method") === PK_METHOD);
+      x.disabled = x.getAttribute("data-method") === "qris" ? !b.qris_url : !b.account_number;
+    });
+    el.innerHTML = PK_METHOD === "qris"
+      ? '<img src="' + esc(b.qris_url) + '" alt="QRIS pemrakarsa" class="pk-qris"><small>Pindai dengan aplikasi bank / e-wallet. Pastikan nama penerima sesuai pemrakarsa.</small>'
+      : '<div class="pk-bankline"><span>' + esc(b.bank_name) + '</span><b>' + esc(b.account_number) + '</b><button type="button" class="btn mini" data-copy="' +
+        esc(b.account_number) + '">Salin</button></div><small>a.n. ' + esc(b.account_holder) + "</small>";
+  }
+  function openDonate() {
+    if (!DONATE_CTX || !DONATE_CTX.open) return;
+    var sh = $("#pkSheet"); if (!sh) return;
+    $("#pkSheetProg").textContent = (DONATE_CTX.data.program || {}).program_name || "";
+    payBox();
+    sh.hidden = false; document.body.style.overflow = "hidden";
+    checkLogin();
+  }
+  function closeDonate() { var sh = $("#pkSheet"); if (sh) sh.hidden = true; document.body.style.overflow = ""; }
+  async function checkLogin() {
+    var logged = false;
+    try { var me = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info", {}); logged = !!(me && (me.logged_in || (me.user && me.user !== "Guest"))); } catch (e) {}
+    $("#pkLoginNote").hidden = logged;
+    $("#donateForm").hidden = !logged;
+    var lb = $("#pkLoginBtn"); if (lb) lb.href = "auth.html?next=" + encodeURIComponent(location.pathname.split("/").pop() + location.search);
+  }
+  function wireDonateSheet() {
+    if (document.body.dataset.pkSheet) return; document.body.dataset.pkSheet = "1";
+    document.addEventListener("click", function (e) {
+      if (e.target.closest("[data-open-donate]")) { e.preventDefault(); openDonate(); return; }
+      if (e.target.closest("[data-close-donate]") || e.target.id === "pkSheet") { closeDonate(); return; }
+      var pre = e.target.closest("#pkPresets [data-amt]");
+      if (pre) {
+        document.querySelectorAll("#pkPresets [data-amt]").forEach(function (x) { x.classList.toggle("is-on", x === pre); });
+        $("#pkCustom").value = ""; var af = $("#pkAmountField"); if (af) af.value = pre.getAttribute("data-amt"); return;
+      }
+      var m = e.target.closest(".pk-methods [data-method]");
+      if (m && !m.disabled) { PK_METHOD = m.getAttribute("data-method"); payBox(); }
+    });
+    var c = $("#pkCustom");
+    if (c) c.addEventListener("input", function () {
+      document.querySelectorAll("#pkPresets [data-amt]").forEach(function (x) { x.classList.remove("is-on"); });
+      var af = $("#pkAmountField"); if (af) af.value = c.value;
+    });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDonate(); });
   }
 
   function renderManagePanel(data) {
@@ -729,7 +834,7 @@
       [hasInfo ? "done" : "todo", "Data program (deskripsi, sasaran, penanggung jawab)", "Ubah data", "ringkasan", "#infoBox"],
       [b.account_number ? "done" : "todo", b.account_number ? "Rekening: " + (b.bank_name || "") + " " + b.account_number : "Rekening penerimaan donasi belum diisi", b.account_number ? "Ubah rekening" : "Isi rekening", "ringkasan", "#bankForm"],
       [b.qris_url ? "done" : "todo", b.qris_url ? "QRIS sudah dipasang" : "QRIS belum diunggah", b.qris_url ? "Ganti QRIS" : "Unggah QRIS", "ringkasan", "#qrisForm"],
-      [pending ? "alert" : "done", pending ? pending + " donasi masuk menunggu konfirmasi Anda" : "Tidak ada donasi menunggu konfirmasi", pending ? "Konfirmasi sekarang" : "Lihat donasi", "anggaran", "#donationPendingSection"],
+      [pending ? "alert" : "done", pending ? pending + " donasi masuk menunggu konfirmasi Anda" : "Tidak ada donasi menunggu konfirmasi", pending ? "Konfirmasi sekarang" : "Lihat donasi", "donatur", "#donationPendingSection"],
       [(docs.statements || []).length ? "done" : "todo", "Rekening koran untuk transparansi (" + (docs.statements || []).length + " berkas)", "Unggah rekening koran", "ringkasan", "#koranForm"]
     ];
     var verified = data.initiator_verified;
@@ -829,6 +934,7 @@
     setupFilterTabs();
     setupDetailTabs();
     wireDonationActions();
+    wireDonateSheet();
     wireDocForms();
     wirePlanEditing();
     loadBoard().catch(function (err) { console.error("[program board]", err); });

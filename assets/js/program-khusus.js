@@ -410,6 +410,8 @@
     renderUpdates(data.updates || []);
     renderNotPublicBanner(data);
     renderDonations(data.donations || {});
+    renderBudget(data);
+    renderDonorsTop(data);
     renderDocs(data);
     renderBank(data);
     if (window.RNIconFill) window.RNIconFill(document);
@@ -487,6 +489,7 @@
         };
       }
     }
+    box.hidden = true;                 // owner 2026-11-08: rekening/QRIS hanya di Ringkasan, tidak di tab Anggaran
     var f = $("#bankForm");
     if (f && data.can_manage && b.account_number) {
       f.bank_name.value = b.bank_name; f.account_number.value = b.account_number; f.account_holder.value = b.account_holder;
@@ -668,6 +671,56 @@
       var f = el.querySelector && el.querySelector("input,textarea,select"); if (f) try { f.focus({ preventScroll: true }); } catch (e) {}
     }, 60);
   }
+
+  // ---- Anggaran & realisasi + daftar penyumbang (owner 2026-11-08) ----
+  function renderBudget(data) {
+    var p = data.program || {};
+    var tgt = Number(p.budget_target || 0), rec = Number(p.budget_received || 0), spent = Number(p.budget_spent || 0);
+    var left = rec - spent;
+    var el = $("#budgetLeft"); if (el) el.textContent = rp(left);
+    var pct = function (a, b) { return b > 0 ? Math.min(100, Math.round(a / b * 100)) : 0; };
+    var bars = $("#budgetBars");
+    if (bars) bars.innerHTML =
+      (tgt > 0 ? '<div><label><span>Dana terkumpul dari target</span><b>' + pct(rec, tgt) + '%</b></label><div class="bar"><i style="width:' + pct(rec, tgt) + '%"></i></div></div>' : "") +
+      '<div><label><span>Dana terpakai dari yang diterima</span><b>' + pct(spent, rec) + '%</b></label><div class="bar spent"><i style="width:' + pct(spent, rec) + '%"></i></div></div>';
+    var rows = (data.updates || []).filter(function (u) { return Number(u.amount_spent || 0) > 0; });
+    var list = $("#realisasiList");
+    if (list) list.innerHTML = rows.length ? rows.map(function (u) {
+      return '<div class="row"><span>' + esc(u.update_title) + "<small>" + shortDate(u.observed_at) + (u.update_notes ? " · " + esc(u.update_notes) : "") + "</small></span><b>" + rp(u.amount_spent) + "</b></div>";
+    }).join("") + '<div class="row"><span><b>Total realisasi</b></span><b>' + rp(spent) + "</b></div>"
+      : '<p class="rn-muted">Belum ada realisasi anggaran tercatat.</p>';
+    var f = $("#realisasiForm");
+    if (f) {
+      f.hidden = !data.can_manage;
+      if (!f.dataset.wired) {
+        f.dataset.wired = "1";
+        f.addEventListener("submit", async function (e) {
+          e.preventDefault();
+          var m = $("#realisasiMsg"); m.textContent = "Menyimpan…";
+          try {
+            await window.RN_FRAPPE.call("rescue_net.api_donor_program.create_special_program_update", {
+              program: SELECTED, update_title: f.update_title.value.trim(), update_type: "spending",
+              amount_spent: Number(f.amount_spent.value || 0), update_notes: f.update_notes.value.trim() || null }, { method: "POST" });
+            m.textContent = "Tercatat."; f.reset();
+            await selectProgram(SELECTED);
+          } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
+        });
+      }
+    }
+  }
+  function renderDonorsTop(data) {
+    var box = $("#donorsTop"); if (!box) return;
+    var d = data.donations || {}, pub = d.public || [];
+    box.hidden = false;
+    $("#donorsTopSum").textContent = (d.donor_count || pub.length) + " penyumbang · " + rp(d.total_received || 0);
+    $("#donorsTopList").innerHTML = pub.length ? pub.slice(0, 10).map(function (r) {
+      return '<div class="row"><span>' + esc(r.donor_name) + "<small>" + shortDate(r.confirmed_at) + (r.message ? " · " + esc(r.message) : "") + "</small></span><b>" + rp(r.amount) + "</b></div>";
+    }).join("") : '<p class="rn-muted">Belum ada donasi terkonfirmasi. Jadilah penyumbang pertama.</p>';
+    var all = $("#donorsTopAll");
+    all.hidden = pub.length <= 10;
+    all.onclick = function () { var t = $("#detailTabs .rn-tab[data-tab=anggaran]"); if (t) t.click(); var w = $("#donationWallTitle"); if (w) w.scrollIntoView({ behavior: "smooth" }); };
+  }
+
   function renderManagePanel(data) {
     var panel = $("#managePanel"); if (!panel) return;
     if (!data || !data.can_manage) { panel.hidden = true; return; }

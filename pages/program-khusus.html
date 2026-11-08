@@ -6,7 +6,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=kelola-20261108">
+  <link rel="stylesheet" href="../assets/css/style.css?v=realisasi-20261108">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
@@ -172,6 +172,11 @@
               <div id="bankBoxTop" class="rn-pk-bank"></div>
               <button type="button" class="btn primary" id="donateTopGo">Sudah transfer? Isi formulir donasi →</button>
             </div>
+            <div class="rn-pk-box" id="donorsTop" hidden style="margin-bottom:12px">
+              <div class="rn-pk-box-h"><h4>🙏 Daftar Penyumbang</h4><span class="chip" id="donorsTopSum"></span></div>
+              <div id="donorsTopList" class="rn-pk-donors"></div>
+              <button type="button" class="btn ghost mini" id="donorsTopAll" hidden>Lihat semua penyumbang →</button>
+            </div>
             <div class="rn-pk-row3">
               <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Target &amp; Milestone</h4></div><ol class="rn-pk-ms" id="planMilestones"></ol></div>
               <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Lokasi Implementasi</h4></div>
@@ -259,11 +264,25 @@
             <div class="rn-pk-budget-grid">
               <div class="rn-pk-budget-tile"><span>Target Anggaran</span><b id="budgetTarget">-</b></div>
               <div class="rn-pk-budget-tile"><span>Diterima</span><b id="budgetReceived">-</b></div>
-              <div class="rn-pk-budget-tile"><span>Terpakai</span><b id="budgetSpent">-</b></div>
+              <div class="rn-pk-budget-tile"><span>Terpakai (realisasi)</span><b id="budgetSpent">-</b></div>
+              <div class="rn-pk-budget-tile"><span>Sisa Dana</span><b id="budgetLeft">-</b></div>
             </div>
+            <div class="rn-pk-bars" id="budgetBars"></div>
+            <h4 class="rn-md-detail-h">Realisasi Anggaran</h4>
+            <div id="realisasiList" class="rn-pk-real"></div>
+            <form class="rn-form" id="realisasiForm" hidden autocomplete="off" style="margin-top:8px">
+              <p class="rn-muted" style="font-size:12px;margin:0">Pengelola: catat setiap pengeluaran dana program. Total realisasi otomatis menambah "Terpakai".</p>
+              <div class="form-grid">
+                <label>Uraian belanja<input name="update_title" required maxlength="140" placeholder="mis. Pembelian 2.000 masker N95"></label>
+                <label>Jumlah (Rp)<input name="amount_spent" type="number" min="1" step="1000" required placeholder="mis. 30000000"></label>
+                <label>Keterangan / bukti<input name="update_notes" maxlength="500" placeholder="mis. Nota CV Medika No. 123, diserahkan ke posko MDMC"></label>
+              </div>
+              <div class="form-actions"><button class="btn primary" type="submit">Catat Realisasi</button><span class="form-message" id="realisasiMsg"></span></div>
+            </form>
             <p class="rn-muted">Anggaran dicatat per program dari donasi/alokasi yang diterima; belum ada rincian per-baris belanja terpisah.</p>
 
-            <h4 class="rn-md-detail-h">Sumbang ke Program Ini</h4>
+            <h4 class="rn-md-detail-h" id="donateFormTitle">Formulir Donasi (setelah transfer)</h4>
+            <p class="rn-muted" style="font-size:12px;margin:0 0 6px">Rekening &amp; QRIS ada di tab <b>Ringkasan</b> → Donasi ke Program Ini.</p>
             <div id="bankBox" class="rn-pk-bank" hidden></div>
             <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Donasi tercatat "menunggu" sampai lembaga penerima (pengelola program) mengonfirmasi dana benar diterima — baru setelah itu masuk ke Papan Donasi &amp; Anggaran Diterima.</p>
             <form class="rn-form" id="donateForm" autocomplete="off">
@@ -397,7 +416,7 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=batal-20261108"></script>
+<script src="../assets/js/program-khusus.js?v=realisasi-20261108"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-owner-only.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>

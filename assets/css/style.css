@@ -7664,3 +7664,15 @@ a.rn-kom-net-card:hover { border-color: #ef523d; }
 .rn-pk-steps li.todo > span::before { content: "⬜ "; }
 .rn-pk-steps li.alert > span::before { content: "🔔 "; }
 .rn-pk-steps li.alert { border-color: rgba(224,138,30,.6); background: #fff6e8; }
+
+/* Daftar penyumbang & realisasi (owner 2026-11-08) */
+.rn-pk-donors { display: grid; gap: 6px; }
+.rn-pk-donors .row, .rn-pk-real .row { display: flex; gap: 8px; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgba(104,64,45,.1); padding: 6px 0; min-width: 0; }
+.rn-pk-donors .row span, .rn-pk-real .row span { min-width: 0; overflow-wrap: anywhere; }
+.rn-pk-donors .row b, .rn-pk-real .row b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rn-pk-donors small, .rn-pk-real small { display: block; color: #7c6458; font-size: 12px; }
+.rn-pk-bars { display: grid; gap: 8px; margin: 10px 0; }
+.rn-pk-bars .bar { height: 10px; background: #f1e6df; border-radius: 6px; overflow: hidden; }
+.rn-pk-bars .bar i { display: block; height: 100%; background: #2f9a5c; }
+.rn-pk-bars .bar.spent i { background: #e8755a; }
+.rn-pk-bars label { font-size: 13px; display: flex; justify-content: space-between; gap: 8px; }

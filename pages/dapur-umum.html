@@ -176,37 +176,37 @@
 
       <form class="rn-form" id="mealForm">
         <div class="form-grid">
-          <label>Kitchen Posko ID
-            <input name="posko_id" value="posko-dapur-melati" required>
+          <label>Posko Dapur Umum
+            <select name="posko_id" data-my-posko="required" required><option value="">Memuat posko yang Anda kelola…</option></select>
           </label>
-          <label>Meal Name
-            <input name="meal_name" value="Nasi Bungkus Darurat" required>
+          <label>Nama Menu
+            <input name="meal_name" placeholder="mis. Nasi bungkus lauk telur" required>
           </label>
-          <label>Portions
-            <input name="portions" type="number" value="100" required>
+          <label>Jumlah Porsi
+            <input name="portions" type="number" min="1" placeholder="mis. 100" required>
           </label>
-          <label>Production Time
-            <input name="production_time" value="Hari ini">
+          <label>Waktu Produksi
+            <input name="production_time" placeholder="mis. Siang, 12.00">
           </label>
-          <label>Target Distribution Location
-            <input name="target_distribution_location" value="Shelter warga Gang Melati">
+          <label>Tujuan Distribusi Makanan
+            <input name="target_distribution_location" placeholder="mis. Shelter Masjid Al-Ikhlas">
           </label>
-          <label>Ingredient Item
-            <input name="ingredient_item_name" value="Air Mineral" required>
+          <label>Bahan yang Dipakai
+            <input name="ingredient_item_name" placeholder="mis. Beras" required>
           </label>
-          <label>Ingredient Quantity
-            <input name="ingredient_quantity" type="number" value="1" required>
+          <label>Jumlah Bahan
+            <input name="ingredient_quantity" type="number" min="0" step="any" placeholder="mis. 10" required>
           </label>
-          <label>Ingredient Unit
-            <input name="ingredient_unit" value="dus" required>
+          <label>Satuan Bahan
+            <input name="ingredient_unit" placeholder="mis. kg" required>
           </label>
-          <label>Notes
-            <input name="notes" value="Produksi makanan dari dapur umum.">
+          <label>Catatan
+            <input name="notes" placeholder="opsional">
           </label>
         </div>
 
         <div class="form-actions">
-          <button class="btn primary" type="submit">Save Meal Production</button>
+          <button class="btn primary" type="submit">Simpan Produksi</button>
           <button class="btn" type="button" id="refreshKitchen">Refresh</button>
         </div>
       </form>
@@ -244,11 +244,11 @@
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-contact.js?v=radio-20261101"></script>
 <script src="../assets/js/rn-posko-settings.js?v=owneronly-20261108"></script>
-<script src="../assets/js/dapur-umum.js?v=dpmock-20260928e"></script>
+<script src="../assets/js/dapur-umum.js?v=pilihposko2-20261108"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=i18n9-20261108"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=inbox-20261108"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=pilihposko-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=panduan-20261108"></script>
 <script src="../assets/js/rn-lightbox.js?v=lb-2"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>

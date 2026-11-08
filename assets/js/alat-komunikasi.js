@@ -495,26 +495,6 @@
   function fill() {
     var ev = activeEvent();
     document.querySelectorAll("input[data-active-event]").forEach(function (i) { i.value = ev; });
-    var sels = document.querySelectorAll("select[data-my-posko]");
-    if (!sels.length || !window.RN_FRAPPE) return;
-    window.RN_FRAPPE.call("rescue_net.api_posko_manage.my_managed_poskos", {}).then(function (r) {
-      var ps = (r && r.poskos) || [];
-      sels.forEach(function (sel) {
-        var keep = sel.value || new URLSearchParams(location.search).get("posko") || "", req = sel.getAttribute("data-my-posko") === "required";
-        var opts = ps.map(function (p) {
-          return '<option value="' + String(p.posko).replace(/"/g, "&quot;") + '">' +
-            String(p.title).replace(/</g, "&lt;") + " (" + String(p.type_label || "").replace(/</g, "&lt;") + ")</option>";
-        }).join("");
-        sel.innerHTML = (req ? (ps.length ? "" : '<option value="">Anda belum mengelola posko</option>')
-                             : '<option value="">— tanpa posko (alat pribadi/organisasi) —</option>') + opts;
-        if (keep && !ps.some(function (p) { return p.posko === keep; })) {
-          var o = document.createElement("option"); o.value = keep; o.textContent = keep; sel.appendChild(o);
-        }
-        if (keep) sel.value = keep;
-      });
-    }).catch(function () {
-      sels.forEach(function (sel) { if (sel.getAttribute("data-my-posko") === "required") sel.innerHTML = '<option value="">Login sebagai pengelola posko dulu</option>'; });
-    });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fill); else fill();
 })();

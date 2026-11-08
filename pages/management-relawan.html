@@ -157,13 +157,13 @@
       <form class="rn-form" id="relawanForm" data-create-relawan>
         <div class="form-grid">
           <label>Nama Relawan
-            <input name="volunteer_name" value="Relawan Motor Trail" required>
+            <input placeholder="mis. Relawan Motor Trail" name="volunteer_name" required>
           </label>
           <label>No HP / Kontak
-            <input name="contact" value="081200000001">
+            <input placeholder="mis. 081200000001" name="contact">
           </label>
           <label>Skill Tags
-            <input name="skill_tags" value="motor trail,last mile delivery,evakuasi ringan">
+            <input placeholder="mis. motor trail,last mile delivery,evakuasi ringan" name="skill_tags">
           </label>
           <label>Status
             <select name="availability_status">
@@ -173,13 +173,13 @@
             </select>
           </label>
           <label>Lokasi Saat Ini
-            <input name="current_location" value="Aceh Barat">
+            <input placeholder="mis. Aceh Barat" name="current_location">
           </label>
-          <label>Assigned Posko ID
-            <input name="assigned_posko_id" value="">
+          <label>Ditempatkan di Posko
+            <select name="assigned_posko_id" data-my-posko="optional"><option value="">— belum ditempatkan —</option></select>
           </label>
           <label>Notes
-            <input name="notes" value="Siap bantu distribusi ke titik sulit.">
+            <input placeholder="mis. Siap bantu distribusi ke titik sulit." name="notes">
           </label>
         </div>
         <div class="form-actions">
@@ -204,7 +204,7 @@
             <label>Volunteer
               <select name="volunteer_id" required></select>
             </label>
-            <label>Assigned To Type
+            <label>Jenis Tujuan
               <select name="assigned_to_type">
                 <option value="posko">posko</option>
                 <option value="distribution_flow">distribution_flow</option>
@@ -213,14 +213,14 @@
                 <option value="shelter">shelter</option>
               </select>
             </label>
-            <label>Assigned To ID
-              <input name="assigned_to_id" value="posko-logistik-aceh" required>
+            <label>Tujuan Penugasan (posko / ID kiriman / kasus)
+              <input name="assigned_to_id" list="rnMyPoskoList" placeholder="Pilih posko Anda atau ketik ID tujuan" required>
             </label>
             <label>Task Name
-              <input name="task_name" value="Distribusi last-mile ke posko terpencil" required>
+              <input placeholder="mis. Distribusi last-mile ke posko terpencil" name="task_name" required>
             </label>
             <label>Task Description
-              <input name="task_description" value="Bantu antar air mineral dan bahan dapur umum.">
+              <input placeholder="mis. Bantu antar air mineral dan bahan dapur umum." name="task_description">
             </label>
             <label>Priority
               <select name="priority">
@@ -310,7 +310,7 @@
 
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/relawan.js?v=rwfilter-20261102b"></script>
+<script src="../assets/js/relawan.js?v=pilihposko2-20261108"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
@@ -318,7 +318,7 @@
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
 <script src="../assets/js/rn-public-header.js?v=i18n9-20261108"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=inbox-20261108"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=pilihposko-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=panduan-20261108"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-relawan-saya.js?v=rs-20261101"></script>

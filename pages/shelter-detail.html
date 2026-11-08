@@ -182,29 +182,29 @@
 
       <form class="rn-form" id="occupancyForm">
         <div class="form-grid">
-          <label>ID Posko Shelter
-            <input name="posko_id" value="posko-shelter-melati" required>
+          <label>Posko Shelter
+            <select name="posko_id" data-my-posko="required" required><option value="">Memuat posko yang Anda kelola…</option></select>
           </label>
           <label>Nama Shelter
-            <input name="shelter_name" value="Shelter Warga Gang Melati" required>
+            <input placeholder="mis. Shelter Warga Gang Melati" name="shelter_name" required>
           </label>
           <label>Kapasitas Total
-            <input name="capacity_total" type="number" value="200" required>
+            <input placeholder="mis. 200" name="capacity_total" type="number" required>
           </label>
           <label>Okupansi Saat Ini
-            <input name="current_occupancy" type="number" value="135" required>
+            <input placeholder="mis. 135" name="current_occupancy" type="number" required>
           </label>
           <label>Jumlah KK
-            <input name="families_count" type="number" value="42">
+            <input placeholder="mis. 42" name="families_count" type="number">
           </label>
           <label>Jumlah Anak
-            <input name="children_count" type="number" value="38">
+            <input placeholder="mis. 38" name="children_count" type="number">
           </label>
           <label>Jumlah Lansia
-            <input name="elderly_count" type="number" value="12">
+            <input placeholder="mis. 12" name="elderly_count" type="number">
           </label>
           <label>Jumlah Disabilitas
-            <input name="disabled_count" type="number" value="3">
+            <input placeholder="mis. 3" name="disabled_count" type="number">
           </label>
           <label>Penghuni Perempuan
             <input name="female_count" type="number" min="0" placeholder="opsional">
@@ -225,19 +225,19 @@
             <input name="water_point_functional" type="number" min="0">
           </label>
           <label>Status Sanitasi
-            <input name="sanitation_status" value="limited">
+            <input placeholder="mis. limited" name="sanitation_status">
           </label>
           <label>Status Air
-            <input name="water_status" value="needs_supply">
+            <input placeholder="mis. needs_supply" name="water_status">
           </label>
           <label>Status Listrik
-            <input name="electricity_status" value="partial">
+            <input placeholder="mis. partial" name="electricity_status">
           </label>
           <label>Status Keamanan
-            <input name="safety_status" value="safe">
+            <input placeholder="mis. safe" name="safety_status">
           </label>
           <label>Catatan
-            <input name="notes" value="Shelter aktif, butuh air dan selimut.">
+            <input placeholder="mis. Shelter aktif, butuh air dan selimut." name="notes">
           </label>
         </div>
         <div class="form-actions">
@@ -260,13 +260,13 @@
           <h4>Tambah Kebutuhan Shelter</h4>
           <form class="rn-form" id="needForm">
             <label>Nama Item
-              <input name="item_name" value="Selimut" required>
+              <input placeholder="mis. Selimut" name="item_name" required>
             </label>
             <label>Jumlah Dibutuhkan
-              <input name="quantity_needed" type="number" value="150" required>
+              <input placeholder="mis. 150" name="quantity_needed" type="number" required>
             </label>
             <label>Satuan
-              <input name="unit" value="pcs" required>
+              <input placeholder="mis. pcs" name="unit" required>
             </label>
             <label>Prioritas
               <select name="priority">
@@ -276,10 +276,10 @@
               </select>
             </label>
             <label>Dibutuhkan Sebelum
-              <input name="needed_before" value="Besok pagi">
+              <input placeholder="mis. Besok pagi" name="needed_before">
             </label>
             <label>Catatan
-              <input name="notes" value="Untuk anak-anak dan lansia.">
+              <input placeholder="mis. Untuk anak-anak dan lansia." name="notes">
             </label>
             <div class="form-actions">
               <button class="btn primary" type="submit">Simpan Kebutuhan Shelter</button>
@@ -320,11 +320,11 @@
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-contact.js?v=radio-20261101"></script>
 <script src="../assets/js/rn-posko-settings.js?v=owneronly-20261108"></script>
-<script src="../assets/js/shelter-detail.js?v=sadd-20261026"></script>
+<script src="../assets/js/shelter-detail.js?v=pilihposko2-20261108"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=i18n9-20261108"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=inbox-20261108"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=pilihposko-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=panduan-20261108"></script>
 <script src="../assets/js/rn-lightbox.js?v=lb-2"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>

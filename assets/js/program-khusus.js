@@ -467,6 +467,20 @@
     } else {
       box.hidden = true;
     }
+    // Ringkasan juga menampilkan rekening/QRIS (owner 2026-11-08: "nggak ada no rekening apalagi qris" — dulu hanya di tab Anggaran)
+    var top = $("#donateTop"), topBox = $("#bankBoxTop");
+    if (top && topBox) {
+      top.hidden = box.hidden;
+      topBox.className = box.className; topBox.innerHTML = box.innerHTML;
+      var go = $("#donateTopGo");
+      if (go) {
+        go.hidden = !(b.account_number || b.qris_url) || !b.shown_publicly;
+        go.onclick = function () {
+          var t = $("#detailTabs .rn-tab[data-tab=anggaran]"); if (t) t.click();
+          var df = $("#donateForm"); if (df) df.scrollIntoView({ behavior: "smooth", block: "start" });
+        };
+      }
+    }
     var f = $("#bankForm");
     if (f && data.can_manage && b.account_number) {
       f.bank_name.value = b.bank_name; f.account_number.value = b.account_number; f.account_holder.value = b.account_holder;

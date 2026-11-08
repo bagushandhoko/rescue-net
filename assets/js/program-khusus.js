@@ -905,13 +905,16 @@
     var p = data.program || {}, b = data.bank || {}, docs = data.documents || {}, don = data.donations || {};
     var pending = (don.pending || []).length;
     var hasInfo = !!(p.description && (p.officer_in_charge_name || p.contact_person));
+    var kbMode = data.donation_channel === "kitabisa";
     var steps = [
+      ["done", "Cara pengelolaan donasi: " + (kbMode ? "Melalui Kitabisa" : "Dikelola sendiri (rekening/QRIS)"), kbMode ? "Ubah / isi angka Kitabisa" : "Ganti ke Kitabisa", "ringkasan", "#channelBox"],
       [hasInfo ? "done" : "todo", "Data program (deskripsi, sasaran, penanggung jawab)", "Ubah data", "ringkasan", "#infoBox"],
       [b.account_number ? "done" : "todo", b.account_number ? "Rekening: " + (b.bank_name || "") + " " + b.account_number : "Rekening penerimaan donasi belum diisi", b.account_number ? "Ubah rekening" : "Isi rekening", "ringkasan", "#bankForm"],
       [b.qris_url ? "done" : "todo", b.qris_url ? "QRIS sudah dipasang" : "QRIS belum diunggah", b.qris_url ? "Ganti QRIS" : "Unggah QRIS", "ringkasan", "#qrisForm"],
       [pending ? "alert" : "done", pending ? pending + " donasi masuk menunggu konfirmasi Anda" : "Tidak ada donasi menunggu konfirmasi", pending ? "Konfirmasi sekarang" : "Lihat donasi", "donatur", "#donationPendingSection"],
       [(docs.statements || []).length ? "done" : "todo", "Rekening koran untuk transparansi (" + (docs.statements || []).length + " berkas)", "Unggah rekening koran", "ringkasan", "#koranForm"]
     ];
+    if (kbMode) steps = steps.filter(function (x) { return x[4] !== "#bankForm" && x[4] !== "#qrisForm"; });
     var verified = data.initiator_verified;
     $("#manageSteps").innerHTML = steps.map(function (s, i) {
       return '<li class="' + s[0] + '"><span>' + esc(s[1]) + '</span><button type="button" class="btn mini" data-manage-go="' + i + '">' + esc(s[2]) + "</button></li>";

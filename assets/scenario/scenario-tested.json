@@ -3,6 +3,23 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "I18N-2",
+      "tanggal": "2026-11-09",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Terjemahan Inggris tahap 2 — kolaborasi Hermes (CT103) diperiksa Claude",
+      "tujuan": "Owner: selesaikan terjemahan dengan kolaborasi Hermes.",
+      "akun": "Hermes (GLM glm-4.5-flash gratis + GitHub Copilot Free gpt-4o/4.1), Claude memeriksa",
+      "langkah": [
+        "3.912 potongan teks halaman yang belum ada di kamus dibagi 58 kelompok",
+        "Hermes menerjemahkan sesuai daftar istilah (posko→relief post, pemrakarsa→initiator, …)",
+        "Claude memeriksa tiap hasil: kunci persis, angka, istilah, kosong",
+        "Yang lolos digabung; 22 yang kosong diterjemahkan Claude; label dinamis (terkumpul, hari lagi, donatur, waktu) dibuat pola"
+      ],
+      "hasil": "3.886/3.912 lolos pemeriksaan otomatis; kamus 4.742 entri + 28 pola. Mode EN (HP): Panduan, Kirim Bantuan, Home 0 teks Indonesia; Manual & Program Donasi tersisa hanya data/kode.",
+      "status": "lulus",
+      "temuan": "Hermes `-z` tidak memakai rantai cadangan → skrip memutar GLM/Copilot sendiri. Dua jalur paralel membuat CT103 (1 core) macet; satu jalur stabil (38 kelompok GLM, 2 Copilot). Deskripsi program buatan pengguna tidak diterjemahkan (data)."
+    },
+    {
       "id": "MU-BUKTI-1",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

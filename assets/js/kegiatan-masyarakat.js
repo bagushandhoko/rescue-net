@@ -59,7 +59,7 @@
       "</div>";
     html += card("Ikut membantu", "", '<div class="po-cta"><a class="btn primary" href="kirim-bantuan.html?event=' + encodeURIComponent(cur) + '">Kirim Bantuan</a>' +
       '<a class="btn" href="program-khusus.html?event=' + encodeURIComponent(cur) + '">Donasi</a><a class="btn" href="laporan-masyarakat.html">Lapor Kondisi</a>' +
-      '<a class="btn" href="relawan-saya.html">Jadi Relawan</a></div>');
+      '<a class="btn" href="relawan-saya.html">Jadi Relawan</a><a class="btn" href="riwayat-kegiatan.html?scope=masyarakat&event=' + encodeURIComponent(cur) + '">Riwayat kegiatan →</a></div>');
     $("kmBody").innerHTML = html;
   }
   document.addEventListener("DOMContentLoaded", function () { if (window.RN_FRAPPE) load(); });

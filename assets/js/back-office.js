@@ -40,6 +40,7 @@
     var m = /[?&](?:org|id)=([^&]+)/.exec(o.href || ""); var id = (m && decodeURIComponent(m[1])) || o.id || o.name || "";
     return "profil-organisasi.html?id=" + encodeURIComponent(id) + (eventId() ? "&event=" + encodeURIComponent(eventId()) : "");
   }
+  function orgId(o) { var m = /[?&](?:org|id)=([^&]+)/.exec(o.href || ""); return (m && decodeURIComponent(m[1])) || o.id || o.name || ""; }
   function progHref(p) {
     var m = /[?&](?:id|program)=([^&]+)/.exec(p.href || ""); var id = (m && decodeURIComponent(m[1])) || p.id || p.name || "";
     return "program-khusus.html?program=" + encodeURIComponent(id) + (eventId() ? "&event=" + encodeURIComponent(eventId()) : "");
@@ -155,7 +156,10 @@
       var type = TYPE_LABEL[o.organization_type] || "Lainnya";
       return "<tr>" +
         '<td><a href="' + esc(orgHref(o)) + '">' + esc(o.title) + "</a>" +
-          (o.posko ? '<span class="rn-bo-pct">' + fmt(o.posko_aktif) + " posko aktif</span>" : "") + "</td>" +
+          (o.posko ? '<span class="rn-bo-pct">' + fmt(o.posko_aktif) + " posko aktif</span>" : "") +
+          ((o.anak || []).length ? '<span class="rn-bo-pct">termasuk ' + o.anak.map(function (a) { return esc(a.title); }).join(", ") + "</span>" : "") +
+          '<span class="rn-bo-pct"><a href="riwayat-kegiatan.html?scope=organisasi&id=' + encodeURIComponent(orgId(o)) + (eventId() ? "&event=" + encodeURIComponent(eventId()) : "") + '">Riwayat kegiatan →</a></span>' +
+          "</td>" +
         "<td>" + esc(GROUP_LABEL[o.group] || o.group) + '<span class="rn-bo-pct">' + esc(type) + "</span></td>" +
         '<td class="num">' + fmt(o.posko) + '</td><td class="num">' + fmt(o.relawan) + '</td>' +
         '<td class="num">' + fmt(o.sumbangan) + '</td><td class="num">' + fmt(o.peralatan) + '</td>' +
@@ -210,6 +214,7 @@
       a.setAttribute("href", u.pathname.split("/").pop() + u.search);
     });
     $("#boBackLink").setAttribute("href", "war-room.html?event=" + encodeURIComponent(ev));
+    var rw = $("#boRiwayat"); if (rw) rw.setAttribute("href", "riwayat-kegiatan.html?scope=all&event=" + encodeURIComponent(ev));
     try {
       DATA = await window.RN_FRAPPE.call("rescue_net.api_control_centre.ecosystem_board", { disaster_event: ev });
     } catch (err) {

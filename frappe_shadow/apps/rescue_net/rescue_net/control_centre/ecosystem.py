@@ -279,6 +279,47 @@ def ecosystem_board(disaster_event):
         tools.append(t)
     tools.sort(key=lambda t: (-t["gap"], -t["tersedia"]))
 
+    # owner 2026-11-09: satu organisasi = satu kesatuan. Organisasi anak (ortom, cabang) digabung ke organisasi
+    # induk tertingginya; baris induk memuat angka gabungan + daftar anaknya, bukan baris terpisah sejajar.
+    parent_of = {}
+    if orgs:
+        names = list(orgs)
+        while names:
+            rows = frappe.get_all("RN Organization", filters={"name": ["in", names]},
+                                  fields=["name", "title", "organization_type", "verification_status", "parent_organization"],
+                                  limit_page_length=len(names))
+            names = []
+            for r in rows:
+                if r.name in parent_of:
+                    continue
+                parent_of[r.name] = r.parent_organization
+                if r.parent_organization and r.parent_organization not in parent_of:
+                    names.append(r.parent_organization)
+                    if r.parent_organization not in orgs:
+                        prow = frappe.db.get_value("RN Organization", r.parent_organization,
+                                                   ["name", "title", "organization_type", "verification_status"], as_dict=True)
+                        if prow:
+                            orgs[prow.name] = _new_org_row(prow)
+
+    def _root(n, seen=None):
+        seen = seen or set()
+        while parent_of.get(n) and parent_of[n] not in seen and parent_of[n] in orgs:
+            seen.add(n)
+            n = parent_of[n]
+        return n
+
+    for name in list(orgs):
+        root = _root(name)
+        if root == name:
+            continue
+        child, top = orgs.pop(name), orgs[root]
+        for k in ("posko", "posko_aktif", "relawan", "sumbangan", "sumbangan_diterima", "peralatan", "peralatan_unit",
+                  "program", "dana_terkumpul"):
+            top[k] += child[k]
+        top["poskos"].extend(child["poskos"])
+        top.setdefault("anak", []).append({"name": child["name"], "title": child["title"],
+                                           "posko": child["posko"], "href": "profil-organisasi.html?id=" + child["name"]})
+
     org_list = sorted(orgs.values(), key=lambda o: (_group_of_type(o["organization_type"]) != "pemerintah",
                                                     -(o["posko"] + o["relawan"] + o["peralatan"])))
     for o in org_list:

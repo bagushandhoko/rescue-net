@@ -107,3 +107,28 @@ class TestCommunityActivity(RNTestCase):
         blob = json.dumps(r, default=str)
         self.assertNotIn("Nama Rahasia Uji", blob)
         self.assertNotIn("7777", blob)
+
+
+class TestActivityHistory(RNTestCase):
+    """Owner 2026-11-09: riwayat kegiatan bisa ditelusuri per organisasi / posko; organisasi tertutup hanya angka."""
+
+    def test_trace_open_vs_closed(self):
+        event = make_event(event_status="active")
+        open_org = make_org(title="Org Terbuka Uji", privacy_mode="open")
+        closed_org = make_org(title="Org Tertutup Uji", privacy_mode="closed")
+        p_open = make_posko(event, open_org, posko_type="kitchen")
+        p_closed = make_posko(event, closed_org, posko_type="kitchen")
+        for p in (p_open, p_closed):
+            _insert("RN Kitchen Production", disaster_event=event.name, posko=p.name, meal_name="Nasi", portions=120)
+        with as_guest():
+            r_open = api_org_profile.activity_history(event.name, "organisasi", open_org.name)
+            r_closed = api_org_profile.activity_history(event.name, "organisasi", closed_org.name)
+            r_posko = api_org_profile.activity_history(event.name, "posko", p_open.name)
+        self.assertEqual(r_open["total"], 1)
+        self.assertIn("120 porsi", r_open["items"][0]["teks"])
+        self.assertEqual(r_closed["total"], 1)          # counted …
+        self.assertEqual(r_closed["items"], [])         # … but not itemised for outsiders
+        self.assertEqual(r_posko["items"][0]["posko"], p_open.name)
+        member = make_actor(org=closed_org, org_role="member")
+        with as_user(member.user):
+            self.assertEqual(len(api_org_profile.activity_history(event.name, "organisasi", closed_org.name)["items"]), 1)

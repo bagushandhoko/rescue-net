@@ -385,3 +385,38 @@ def community_activity(disaster_event):
         "posko_perorangan": [{"title": p.title, "jenis": p.posko_type, "href": "posko-detail.html?id=" + p.name}
                              for p in lone[:20]],
     }
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=60, seconds=60)
+def activity_history(disaster_event, scope="all", scope_id=None, kind=None, limit=200):
+    """Riwayat kegiatan per bencana — semua / satu organisasi (+anak) / satu posko / masyarakat umum.
+    Organisasi tertutup: hanya angka untuk orang luar (lihat services.activity_trace)."""
+    from rescue_net.control_centre.ecosystem import canonical_event
+    from rescue_net.services import activity_trace
+    event = canonical_event(disaster_event)
+    if not event or not frappe.db.exists("RN Disaster Event", event):
+        frappe.throw("Bencana tidak ditemukan.", frappe.DoesNotExistError)
+    scope = (scope or "all").strip().lower()
+    if scope not in ("all", "organisasi", "posko", "masyarakat"):
+        frappe.throw("Lingkup tidak dikenal.")
+    title, sub, href = "Semua pihak", None, None
+    if scope == "organisasi":
+        o = frappe.db.get_value("RN Organization", scope_id, ["name", "title", "privacy_mode"], as_dict=True) if scope_id else None
+        if not o:
+            frappe.throw("Organisasi tidak ditemukan.", frappe.DoesNotExistError)
+        title, sub, href = o.title, "Organisasi " + ("terbuka" if (o.privacy_mode or "") == "open" else "tertutup — rincian hanya untuk anggota"), \
+            "profil-organisasi.html?id=" + o.name
+    elif scope == "posko":
+        p = frappe.db.get_value("RN Posko", scope_id, ["name", "title", "organization", "posko_type"], as_dict=True) if scope_id else None
+        if not p:
+            frappe.throw("Posko tidak ditemukan.", frappe.DoesNotExistError)
+        title = p.title
+        sub = (frappe.db.get_value("RN Organization", p.organization, "title") if p.organization else "Posko perorangan")
+        href = "posko-detail.html?id=" + p.name
+    elif scope == "masyarakat":
+        title, sub, href = "Masyarakat Umum", "Warga, relawan dan donatur perorangan (tanpa organisasi)", "kegiatan-masyarakat.html"
+    out = activity_trace.collect(event, scope, scope_id, kind=(kind or None), limit=limit)
+    out.update({"disaster_event": event, "event_title": frappe.db.get_value("RN Disaster Event", event, "title"),
+                "scope": scope, "scope_id": scope_id, "title": title, "subtitle": sub, "href": href})
+    return out

@@ -122,7 +122,8 @@
     if (d.timeline.length) {
       two += card("Kegiatan terbaru", "", '<ul class="po-list">' + d.timeline.slice(0, 12).map(function (x) {
         return "<li>" + esc(String(x.teks).replace(/\[SIMULASI\]\s*/g, "")) + (x.waktu ? '<br><span class="po-muted">' + esc(x.waktu.slice(0, 16)) + "</span>" : "") + "</li>";
-      }).join("") + "</ul>");
+      }).join("") + "</ul>" + '<p class="po-cta"><a class="btn" href="riwayat-kegiatan.html?scope=organisasi&id=' + encodeURIComponent(params.get("id") || "") +
+        ($("poEvent").value ? "&event=" + encodeURIComponent($("poEvent").value) : "") + '">Riwayat kegiatan lengkap & kinerja →</a></p>');
     }
     if (two) html += '<div class="po-two">' + two + "</div>";
 

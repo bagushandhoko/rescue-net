@@ -14,6 +14,14 @@
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=arrow-20261102" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=topback2-20261109" />
   <style>
+  .bo-perf{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .bo-pc{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px 14px;display:grid;gap:8px;min-width:0}
+  .bo-pc h4{margin:0;font-size:16px;overflow-wrap:anywhere}.bo-pc h4 a{color:inherit}
+  .bo-pc .sub{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+  .bo-pm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .bo-pm div{background:#fff8f4;border-radius:8px;padding:6px 8px}.bo-pm b{display:block;font-size:16px;font-variant-numeric:tabular-nums}.bo-pm span{font-size:11px;color:var(--muted)}
+  .bo-pj{display:flex;flex-wrap:wrap;gap:4px}.bo-pj span{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+  .bo-pa{display:flex;flex-wrap:wrap;gap:6px}
   .bo-show{margin:0 0 12px;align-items:center}.bo-show-lbl{font-size:13px;font-weight:700;margin-right:2px}
   .rk-chips{display:flex;flex-wrap:wrap;gap:6px}.rk-chips button{border:1px solid rgba(104,64,45,.25);background:#fff;border-radius:999px;padding:5px 10px;font:inherit;font-size:13px;cursor:pointer}.rk-chips button.on{background:#e8755a;border-color:#e8755a;color:#fff}
   [data-bo-sec][hidden]{display:none!important}
@@ -75,20 +83,25 @@
     <div class="rk-chips bo-show" id="boShow" role="group" aria-label="Pilih bagian yang ditampilkan">
       <span class="bo-show-lbl">Tampilkan:</span>
       <button type="button" data-s="semua" class="on">Semua</button>
-      <button type="button" data-s="ringkasan">Ringkasan</button>
-      <button type="button" data-s="pihak">Pihak terlibat</button>
-      <button type="button" data-s="kebutuhan">Kebutuhan</button>
-      <button type="button" data-s="peralatan">Peralatan</button>
+      <button type="button" data-s="kinerja">Kinerja pihak</button>
+      <button type="button" data-s="ringkasan">Ringkasan angka</button>
+      <button type="button" data-s="pihak">Tabel pihak</button>
       <button type="button" data-s="relawan">Relawan</button>
       <button type="button" data-s="program">Program donasi</button>
     </div>
+    <section class="panel" id="boPerfPanel" data-bo-sec="kinerja">
+      <div class="panel-header"><div><h3>Siapa yang Terlibat &amp; Kinerjanya</h3><p>Organisasi tampil sebagai satu kesatuan (termasuk organisasi anak). Angka = apa yang sudah dilakukan pada bencana ini. Klik untuk riwayat & profil.</p></div></div>
+      <div id="boPerf" class="bo-perf"><p class="rn-muted">Memuat…</p></div>
+      <p class="rn-muted" style="margin:10px 0 0;font-size:13px">Kebutuhan, gap barang dan alat yang diminta (operasional) ada di <a id="boOpsLink" href="war-room.html">Control Centre →</a></p>
+    </section>
 
     <section class="kpi-grid rn-bo-kpi" data-bo-sec="ringkasan">
       <div class="kpi-card rn-kpi-clickable" data-go="#boOrgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="building"></span><span>Pihak Terlibat</span><strong id="kPihak">-</strong><small>organisasi &amp; lembaga</small></div>
       <div class="kpi-card rn-kpi-clickable" data-go="#boOrgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="map-pin"></span><span>Posko</span><strong id="kPosko">-</strong><small id="kPoskoSub">jiwa dilayani</small></div>
       <div class="kpi-card rn-kpi-clickable" data-go="#boSkills" role="button" tabindex="0"><span class="kpi-icon" data-icon="users"></span><span>Relawan</span><strong id="kRelawan">-</strong><small id="kRelawanSub">siaga</small></div>
-      <div class="kpi-card warning rn-kpi-clickable" data-go="#boNeedBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="package"></span><span>Kebutuhan Belum Tertutup</span><strong id="kGap">-</strong><small id="kGapSub">jenis barang</small></div>
-      <div class="kpi-card rn-kpi-clickable" data-go="#boToolBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="wrench"></span><span>Peralatan</span><strong id="kAlat">-</strong><small>aset terdaftar</small></div>
+      <div class="kpi-card rn-kpi-clickable" data-go="#boPerf" role="button" tabindex="0"><span class="kpi-icon" data-icon="activity"></span><span>Kegiatan Tercatat</span><strong id="kKeg">-</strong><small>oleh semua pihak</small></div>
+      <span id="kGap" hidden></span><span id="kGapSub" hidden></span>
+      <div class="kpi-card rn-kpi-clickable" data-go="#boPerf" role="button" tabindex="0"><span class="kpi-icon" data-icon="wrench"></span><span>Peralatan</span><strong id="kAlat">-</strong><small>aset terdaftar</small></div>
       <div class="kpi-card rn-kpi-clickable" data-go="#boProgBody" role="button" tabindex="0"><span class="kpi-icon" data-icon="heart"></span><span>Dana Terkumpul</span><strong id="kDana">-</strong><small id="kDanaSub">program donasi</small></div>
     </section>
 
@@ -108,7 +121,7 @@
       <p class="rn-muted rn-bo-note">Masyarakat umum (perorangan) hanya dihitung jumlahnya — nama dan kontak pribadi tidak ditampilkan.</p>
     </section>
 
-    <section class="panel" id="boNeedPanel" data-bo-sec="kebutuhan">
+    <section class="panel" id="boNeedPanel" data-bo-sec="operasional" hidden>
       <div class="panel-header">
         <div><h3>Gap Kebutuhan Barang</h3><p>Kebutuhan terbuka di semua posko bencana ini dibanding yang sudah terpenuhi dan bantuan yang sedang menuju posko.</p></div>
         <span class="chip" id="boNeedCount">-</span>
@@ -122,7 +135,7 @@
     </section>
 
     <section class="content-grid">
-      <div class="panel" id="boToolPanel" data-bo-sec="peralatan">
+      <div class="panel" id="boToolPanel" data-bo-sec="operasional" hidden>
         <div class="panel-header"><div><h3>Peralatan: Tersedia vs Diminta</h3><p>Aset ekosistem dibanding permintaan alat kerja di lapangan.</p></div></div>
         <div class="rn-table-wrap">
           <table class="rn-table rn-bo-table">
@@ -154,7 +167,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/back-office.js?v=tampil-20261109"></script>
+<script src="../assets/js/back-office.js?v=kinerja-20261109"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=hpdonasi-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

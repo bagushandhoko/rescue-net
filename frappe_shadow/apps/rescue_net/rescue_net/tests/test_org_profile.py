@@ -132,3 +132,19 @@ class TestActivityHistory(RNTestCase):
         member = make_actor(org=closed_org, org_role="member")
         with as_user(member.user):
             self.assertEqual(len(api_org_profile.activity_history(event.name, "organisasi", closed_org.name)["items"]), 1)
+
+
+class TestEcosystemPerformance(RNTestCase):
+    def test_child_rolls_into_root_and_counts(self):
+        event = make_event(event_status="active")
+        root = make_org(title="Induk Kinerja", privacy_mode="open")
+        child = make_org(title="Anak Kinerja", privacy_mode="closed", parent_organization=root.name)
+        p = make_posko(event, child, posko_type="kitchen")
+        _insert("RN Kitchen Production", disaster_event=event.name, posko=p.name, meal_name="Nasi", portions=80)
+        with as_guest():
+            r = api_org_profile.ecosystem_performance(event.name)
+        rows = {x["id"]: x for x in r["pihak"]}
+        self.assertIn(root.name, rows)
+        self.assertNotIn(child.name, rows)
+        self.assertEqual(rows[root.name]["porsi"], 80)
+        self.assertEqual(rows[root.name]["anak"], ["Anak Kinerja"])

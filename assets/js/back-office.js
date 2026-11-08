@@ -74,6 +74,33 @@
     };
   }
 
+  var IC = { kirim: "🚚", terima: "📦", dapur: "🍲", medis: "🩺", shelter: "🏠", stok: "📋", bukti: "📷", relawan: "🙋", laporan: "📣", sar: "🔎", donasi: "💚", realisasi: "🧾" };
+  async function renderPerf() {
+    var box = $("#boPerf"); if (!box) return;
+    var ev = eventId(), q = ev ? "&event=" + encodeURIComponent(ev) : "";
+    var ops = $("#boOpsLink"); if (ops) ops.href = "war-room.html" + (ev ? "?event=" + encodeURIComponent(ev) : "");
+    var d;
+    try { d = await window.RN_FRAPPE.call("rescue_net.api_org_profile.ecosystem_performance", { disaster_event: ev }); }
+    catch (e) { box.innerHTML = '<p class="rn-muted">Gagal memuat kinerja.</p>'; return; }
+    var rows = d.pihak || [];
+    var kk = $("#kKeg"); if (kk) kk.textContent = fmt(rows.reduce(function (s, r) { return s + (r.kegiatan || 0); }, 0));
+    box.innerHTML = rows.length ? rows.map(function (r) {
+      var prof = r.masyarakat ? "kegiatan-masyarakat.html?" + q.slice(1) : "profil-organisasi.html?id=" + encodeURIComponent(r.id) + q;
+      var hist = "riwayat-kegiatan.html?scope=" + (r.masyarakat ? "masyarakat" : "organisasi&id=" + encodeURIComponent(r.id)) + q;
+      var kir = (r.per_jenis || []).filter(function (x) { return x.jenis === "kirim" || x.jenis === "terima"; }).reduce(function (s, x) { return s + x.n; }, 0);
+      var m = [[r.kegiatan, "kegiatan"], [r.posko, "posko"], [kir, "kiriman"]];
+      if (r.porsi) m.push([fmt(r.porsi), "porsi"]); if (r.pasien) m.push([r.pasien, "pasien"]);
+      if (r.dana) m.push([rpShort(r.dana), "donasi"]); if (r.realisasi) m.push([rpShort(r.realisasi), "realisasi"]);
+      return '<article class="bo-pc"><h4><a href="' + esc(prof) + '">' + esc(r.title) + "</a></h4>" +
+        '<div class="sub">' + (r.masyarakat ? "Warga, relawan & donatur perorangan" : (r.open ? "Organisasi terbuka" : "Organisasi tertutup — angka saja") + (r.verified ? " · ✔ terverifikasi" : "")) +
+        ((r.anak || []).length ? "<br>termasuk " + r.anak.map(esc).join(", ") : "") + "</div>" +
+        '<div class="bo-pm">' + m.map(function (x) { return "<div><b>" + (typeof x[0] === "number" ? fmt(x[0]) : esc(x[0])) + "</b><span>" + x[1] + "</span></div>"; }).join("") + "</div>" +
+        '<div class="bo-pj">' + (r.per_jenis || []).slice(0, 6).map(function (x) { return "<span>" + (IC[x.jenis] || "") + " " + esc(x.label) + " " + fmt(x.n) + "</span>"; }).join("") + "</div>" +
+        '<div class="sub">' + (r.terakhir ? "Terakhir aktif " + esc(r.terakhir.replace("T", " ")) : "Belum ada kegiatan tercatat") + "</div>" +
+        '<div class="bo-pa"><a class="btn mini primary" href="' + esc(hist) + '">Riwayat & kinerja →</a><a class="btn mini" href="' + esc(prof) + '">' + (r.masyarakat ? "Ringkasan" : "Profil") + "</a></div></article>";
+    }).join("") : '<p class="rn-muted">Belum ada pihak yang tercatat pada bencana ini.</p>';
+  }
+
   function bar(pct) {
     if (pct === null || pct === undefined) return '<span class="rn-muted">—</span>';
     var p = Math.max(0, Math.min(100, Number(pct)));
@@ -231,6 +258,7 @@
     renderTools(DATA.tools || []);
     renderSkills(DATA.relawan_keahlian || []);
     renderPrograms(DATA.programs || []);
+    renderPerf();
   }
 
   // owner 2026-11-09: "tidak harus seluruhnya yang tampil" — pilih bagian yang ditampilkan (diingat di alamat & browser)
@@ -240,9 +268,9 @@
     var cur = q || (function () { try { return localStorage.getItem("rn-bo-tampil") || "semua"; } catch (e) { return "semua"; } })();
     function apply(k) {
       box.querySelectorAll("button[data-s]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-s") === k); });
-      document.querySelectorAll("[data-bo-sec]").forEach(function (el) { el.hidden = k !== "semua" && el.getAttribute("data-bo-sec") !== k; });
+      document.querySelectorAll("[data-bo-sec]").forEach(function (el) { var s = el.getAttribute("data-bo-sec"); el.hidden = s === "operasional" || (k !== "semua" && s !== k); });
       var grid = document.querySelector("#boToolPanel") && document.querySelector("#boToolPanel").parentElement;
-      if (grid) grid.hidden = k !== "semua" && k !== "peralatan" && k !== "relawan";
+      if (grid) grid.hidden = k !== "semua" && k !== "relawan";
       try { localStorage.setItem("rn-bo-tampil", k); } catch (e) {}
       var u = new URL(location.href); if (k === "semua") u.searchParams.delete("tampil"); else u.searchParams.set("tampil", k); history.replaceState(null, "", u.toString());
     }

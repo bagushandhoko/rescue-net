@@ -420,3 +420,16 @@ def activity_history(disaster_event, scope="all", scope_id=None, kind=None, limi
     out.update({"disaster_event": event, "event_title": frappe.db.get_value("RN Disaster Event", event, "title"),
                 "scope": scope, "scope_id": scope_id, "title": title, "subtitle": sub, "href": href})
     return out
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=60, seconds=60)
+def ecosystem_performance(disaster_event):
+    """Ekosistem: siapa yang terlibat (organisasi sebagai satu kesatuan + masyarakat umum) dan kinerjanya — angka saja."""
+    from rescue_net.control_centre.ecosystem import canonical_event
+    from rescue_net.services import activity_trace
+    event = canonical_event(disaster_event)
+    if not event or not frappe.db.exists("RN Disaster Event", event):
+        frappe.throw("Bencana tidak ditemukan.", frappe.DoesNotExistError)
+    return {"disaster_event": event, "event_title": frappe.db.get_value("RN Disaster Event", event, "title"),
+            "pihak": activity_trace.performance_by_party(event)}

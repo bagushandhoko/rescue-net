@@ -175,3 +175,104 @@ def collect(event, scope="all", scope_id=None, kind=None, limit=200):
         "detail_hidden": detail_hidden,
         "poskos": sorted([{"id": n, "title": poskos[n].title} for n in in_scope if n in poskos and visible(n)], key=lambda x: x["title"] or ""),
     }
+
+
+def performance_by_party(event):
+    """Owner 2026-11-09: Ekosistem = siapa yang terlibat + kinerjanya. Counts only (safe for public, incl. closed orgs):
+    per ROOT organisation (children rolled in) and 'masyarakat' (poskos without organisation + public at large)."""
+    poskos = {p.name: p for p in frappe.get_all("RN Posko", filters={"disaster_event": event},
+                                                fields=["name", "title", "organization", "operational_status"], limit_page_length=3000)}
+    parent = {o.name: o for o in frappe.get_all("RN Organization", fields=["name", "title", "parent_organization",
+                                                                            "organization_type", "privacy_mode", "verification_status"],
+                                                limit_page_length=5000)}
+
+    def root(org):
+        seen = set()
+        while org and parent.get(org) and parent[org].parent_organization and parent[org].parent_organization in parent and org not in seen:
+            seen.add(org)
+            org = parent[org].parent_organization
+        return org
+
+    party = {}
+
+    def P(key):
+        if key not in party:
+            o = parent.get(key)
+            party[key] = {"id": key, "title": (o.title if o else "Masyarakat Umum"), "organization_type": o.organization_type if o else None,
+                          "open": bool(o and (o.privacy_mode or "") == "open"), "verified": bool(o and str(o.verification_status or "") in ("verified", "official_verified", "community_verified")),
+                          "anak": set(), "posko": set(), "counts": Counter(), "porsi": 0, "pasien": 0, "dana": 0.0, "realisasi": 0.0, "terakhir": ""}
+        return party[key]
+
+    def key_of_posko(n):
+        p = poskos.get(n)
+        if not p:
+            return None
+        if not p.organization:
+            return "masyarakat"
+        r = root(p.organization)
+        if r != p.organization:
+            P(r)["anak"].add(parent[p.organization].title if p.organization in parent else p.organization)
+        return r
+
+    for n, p in poskos.items():
+        P(key_of_posko(n))["posko"].add(n)
+
+    def hit(n, kind, when, add=None):
+        k = key_of_posko(n) if n else "masyarakat"
+        if not k:
+            return
+        row = P(k)
+        row["counts"][kind] += 1
+        if add:
+            for f, v in add.items():
+                row[f] += v
+        w = str(when or "")[:16]
+        if w > row["terakhir"]:
+            row["terakhir"] = w
+
+    ev = {"disaster_event": event}
+    for f in _rows("RN Distribution Flow", ev, ["source_posko", "destination_posko", "flow_status", "observed_at", "creation", "modified"]):
+        if f.source_posko in poskos:
+            hit(f.source_posko, "kirim", f.observed_at or f.creation)
+        if f.destination_posko in poskos and str(f.flow_status or "").lower() in _RECEIVED:
+            hit(f.destination_posko, "terima", f.modified)
+    for r in _rows("RN Kitchen Production", ev, ["posko", "portions", "observed_at", "creation"]):
+        hit(r.posko, "dapur", r.observed_at or r.creation, {"porsi": cint(r.portions)})
+    for r in _rows("RN Medical Case", ev, ["posko", "observed_at", "creation"]):
+        hit(r.posko, "medis", r.observed_at or r.creation, {"pasien": 1})
+    for dt, kind in (("RN Shelter Occupancy", "shelter"), ("RN Stock Observation", "stok"), ("RN Evidence File", "bukti"),
+                     ("RN Volunteer Assignment", "relawan"), ("RN Missing Person Report", "sar"), ("RN Community Report", "laporan")):
+        for r in _rows(dt, ev, ["posko", "observed_at", "creation"]):
+            if r.posko in poskos or kind in ("laporan", "sar"):
+                hit(r.posko if r.posko in poskos else None, kind, r.get("observed_at") or r.creation)
+
+    progs = frappe.get_all("RN Donor Program", filters={"disaster_event": event, "status": ["!=", "cancelled"]},
+                           fields=["name", "owner_type", "owner_id"], limit_page_length=500)
+    owner_key = {}
+    for pr in progs:
+        if pr.owner_type == "organization" and pr.owner_id in parent:
+            owner_key[pr.name] = root(pr.owner_id)
+        elif pr.owner_type == "posko":
+            owner_key[pr.name] = key_of_posko(pr.owner_id) or "masyarakat"
+        else:
+            owner_key[pr.name] = "masyarakat"
+    if owner_key:
+        for d in _rows("RN Cash Donation", {"donor_program": ["in", list(owner_key)], "status": "received"}, ["donor_program", "amount", "confirmed_at", "creation"]):
+            row = P(owner_key[d.donor_program]); row["counts"]["donasi"] += 1; row["dana"] += flt(d.amount)
+            row["terakhir"] = max(row["terakhir"], str(d.confirmed_at or d.creation or "")[:16])
+        for u in _rows("RN Donor Program Update", {"program": ["in", list(owner_key)]}, ["program", "amount_spent", "observed_at", "creation"]):
+            if flt(u.amount_spent) > 0:
+                row = P(owner_key[u.program]); row["counts"]["realisasi"] += 1; row["realisasi"] += flt(u.amount_spent)
+
+    out = []
+    for k, r in party.items():
+        total = sum(r["counts"].values())
+        if not total and not r["posko"]:
+            continue
+        out.append({"id": k, "title": r["title"], "organization_type": r["organization_type"], "open": r["open"], "verified": r["verified"],
+                    "masyarakat": k == "masyarakat", "anak": sorted(r["anak"]), "posko": len(r["posko"]),
+                    "kegiatan": total, "per_jenis": [{"jenis": j, "label": KIND_LABEL.get(j, j), "n": n} for j, n in r["counts"].most_common()],
+                    "porsi": r["porsi"], "pasien": r["pasien"], "dana": round(r["dana"], 2), "realisasi": round(r["realisasi"], 2),
+                    "terakhir": r["terakhir"]})
+    out.sort(key=lambda x: (x["masyarakat"], -x["kegiatan"], -x["posko"]))
+    return out

@@ -263,6 +263,14 @@ def create_cash_donation(donor_program, amount, is_anonymous=0, message=None,
     doc.status = "pending"
     doc.insert(ignore_permissions=True)
 
+    from rescue_net.services import inbox as _ib
+    _msg = "Donasi baru Rp %s untuk '%s' menunggu konfirmasi Anda." % ("{:,.0f}".format(amount).replace(",", "."), row.program_name)
+    _link = "program-khusus.html?program=%s&kelola=1" % donor_program
+    if row.get("created_by_user"):
+        _ib.notify_account(row.created_by_user, _msg, _link)
+    elif row.owner_type == "organization":
+        _ib.notify_org_managers(row.owner_id, _msg, _link, roles=("owner", "deputy"))
+
     return {"donation": doc.name, "status": doc.status, "amount": doc.amount}
 
 
@@ -348,6 +356,13 @@ def decide_cash_donation(donation, action, note=None):
 
     if action == "confirm":
         add_to_program(doc.donor_program, "budget_received", doc.amount)
+
+    if doc.get("donor_user"):
+        from rescue_net.services import inbox as _ib
+        _ib.notify_account(doc.donor_user, "Donasi Anda Rp %s untuk '%s' %s." % (
+            "{:,.0f}".format(doc.amount or 0).replace(",", "."), row.program_name,
+            "sudah diterima & dikonfirmasi" if action == "confirm" else "tidak dikonfirmasi" + (" (%s)" % note if note else "")),
+            "program-khusus.html?program=%s" % doc.donor_program)
 
     return {"donation": doc.name, "status": doc.status}
 

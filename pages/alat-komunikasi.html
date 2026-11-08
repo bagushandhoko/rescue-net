@@ -171,8 +171,8 @@
       </summary>
       <form class="rn-form" data-create-device>
         <div class="form-grid">
-          <label>Disaster Event ID <input name="disaster_event" value="event-sim-001" required></label>
-          <label>Posko <input name="posko" placeholder="posko-sim-logistik"></label>
+          <input type="hidden" name="disaster_event" data-active-event required>
+          <label>Posko <select name="posko" data-my-posko="optional"><option value="">— tanpa posko (alat pribadi/organisasi) —</option></select></label>
           <label>Nama Alat <input name="device_name" placeholder="HT Unit-045" required></label>
           <label>Kategori
             <select name="category" required>
@@ -226,7 +226,7 @@
       </summary>
       <form class="rn-form" data-comms-support>
         <div class="form-grid">
-          <label>Posko <input name="posko" placeholder="ID posko Anda" required></label>
+          <label>Posko <select name="posko" data-my-posko="required" required><option value="">Memuat posko yang Anda kelola…</option></select></label>
           <label>Dukungan yang ditawarkan <textarea name="offered" rows="2" maxlength="1000" placeholder="Relay VHF 24 jam, 5 HT pinjaman, 2 operator, genset 3 kVA"></textarea></label>
           <label>Dukungan yang dibutuhkan <textarea name="needed" rows="2" maxlength="1000" placeholder="Repeater, aki cadangan, operator malam"></textarea></label>
         </div>
@@ -243,7 +243,7 @@
       </summary>
       <form class="rn-form" data-create-operator>
         <div class="form-grid">
-          <label>Disaster Event ID <input name="disaster_event" value="event-sim-001" required></label>
+          <input type="hidden" name="disaster_event" data-active-event required>
           <label>Nama Operator <input name="operator_name" placeholder="Andi Pratama" required></label>
           <label>Peran
             <select name="role">
@@ -261,7 +261,7 @@
               <option value="offline">Offline</option>
             </select>
           </label>
-          <label>Posko <input name="posko" placeholder="posko-sim-logistik"></label>
+          <label>Posko <select name="posko" data-my-posko="optional"><option value="">— tanpa posko (alat pribadi/organisasi) —</option></select></label>
           <label>No. Kontak <input name="contact_phone" placeholder="0812-xxxx-xxxx"></label>
           <label>Keahlian <input name="skills" placeholder="Radio VHF, antena lapangan"></label>
         </div>
@@ -278,7 +278,7 @@
       </summary>
       <form class="rn-form" data-create-freq>
         <div class="form-grid">
-          <label>Disaster Event ID <input name="disaster_event" value="event-sim-001" required></label>
+          <input type="hidden" name="disaster_event" data-active-event required>
           <label>Label Kanal <input name="band_label" placeholder="VHF Primary" required></label>
           <label>Jenis Jaringan
             <select name="network_type" required>
@@ -331,11 +331,11 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=cluster-20260930"></script>
-<script src="../assets/js/alat-komunikasi.js?v=jaringan-20261101"></script>
+<script src="../assets/js/alat-komunikasi.js?v=pilihposko-20261108"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=i18n9-20261108"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
-<script src="../assets/js/rn-navigation-v2.js?v=poskoalat-20261103"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=inbox-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=panduan-20261108"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>

@@ -845,7 +845,26 @@ def approval_action(kind, name, action, note=None):
         "note": note, "decided_at": now_datetime(),
     }).insert(ignore_permissions=True)
 
+    _notify_decision(kind, doc, action, note)
     return {
         "kind": kind, "name": name, "action": action,
         "status": new_status,
     }
+
+
+def _notify_decision(kind, doc, action, note):
+    """Owner 2026-11-08: the person waiting for a decision hears about it in the 🔔 inbox."""
+    from rescue_net.services import inbox as _ib
+    word = {"approve": "disetujui", "reject": "ditolak", "request_revision": "perlu perbaikan", "escalate": "dieskalasi"}.get(action, action)
+    tail = (" Catatan: %s" % note) if note else ""
+    if kind == "posko":
+        msg = "Posko '%s' %s.%s" % (doc.get("title") or doc.name, word, tail)
+        _ib.notify_user(doc.get("owner"), msg, "kelola-posko.html")
+        for acc in frappe.get_all("RN Posko Assignment", filters={"posko": doc.name, "status": "approved"}, pluck="user_account"):
+            _ib.notify_account(acc, msg, "kelola-posko.html")
+    elif kind == "organisasi":
+        _ib.notify_org_managers(doc.name, "Organisasi '%s' %s.%s" % (doc.get("title") or doc.name, word, tail), roles=("owner", "deputy"))
+    elif kind == "user":
+        role = doc.get("requested_role") or "peran"
+        _ib.notify_account(doc.name, "Permohonan %s Anda %s.%s" % (
+            "jadi petugas posko" if role == "posko_operator" else ("peran " + role), word, tail))

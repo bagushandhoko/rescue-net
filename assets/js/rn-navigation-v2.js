@@ -540,7 +540,31 @@
   var s = document.createElement("script");
   s.src = (document.currentScript && document.currentScript.src
     ? document.currentScript.src.replace(/rn-navigation-v2\.js.*$/, "")
-    : "../assets/js/") + "rn-ai-notice.js?v=notice-20261023";
+    : "../assets/js/") + "rn-ai-notice.js?v=inbox-20261108";
   s.defer = true; s.setAttribute("data-rn-ai-notice", "1");
   document.head.appendChild(s);
+})();
+
+// Owner 2026-11-08 (temuan simulasi): form tidak boleh diam-diam memakai bencana contoh "event-sim-001".
+// Kolom bencana yang masih bernilai contoh diisi bencana yang sedang dibuka (?event= / pilihan terakhir) dan dikunci.
+(function () {
+  function active() {
+    var q = new URLSearchParams(location.search).get("event");
+    if (q) return q.replace(/^disaster_events:/, "");
+    try { var v = localStorage.getItem("rn-active-event") || localStorage.getItem("rn_active_event"); if (v) return v.replace(/^disaster_events:/, ""); } catch (e) {}
+    return "";
+  }
+  function fix() {
+    var ev = active();
+    if (!ev) return;
+    document.querySelectorAll('input[name="disaster_event"], input[name="disaster_event_id"]').forEach(function (i) {
+      if (i.type === "hidden" || i.value === "event-sim-001" || !i.value) {
+        if (i.value === ev) return;
+        if (i.value && i.value !== "event-sim-001") return;      // a deliberate value stays
+        i.value = ev;
+        if (i.type !== "hidden") { i.readOnly = true; i.title = "Mengikuti bencana yang sedang dibuka. Ganti bencana dari pilihan di header."; }
+      }
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fix); else fix();
 })();

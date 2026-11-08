@@ -106,6 +106,9 @@ def request_posko_operator(posko):
         assignment.insert(ignore_permissions=True)
         frappe.db.set_value("RN User Account", actor.name,
                             {"requested_role": "posko_operator", "role_request_status": "pending"})
+        from rescue_net.services import inbox as _ib
+        _ib.notify_admins("Permohonan jadi petugas posko '%s' menunggu di Verifikasi." %
+                          (frappe.db.get_value("RN Posko", posko, "title") or posko), "verification-approval.html")
         return {"result": "operator_request_pending", "user_account": actor.name, "posko": posko,
                 "requested_role": "posko_operator"}
 

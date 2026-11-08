@@ -65,6 +65,8 @@ def submit_suggestion(body=None, category=None, title=None, page=None, author_na
     doc.author_user = actor.get("name") if actor else None
     doc.status = "open"
     doc.insert(ignore_permissions=True)
+    from rescue_net.services import inbox as _ib
+    _ib.notify_admins("Saran baru: %s" % (doc.topic or "")[:110], "saran.html")
     return {"saved": True, "suggestion": doc.name, "status": "baru"}
 
 
@@ -125,4 +127,7 @@ def set_suggestion_status(suggestion, status, response=None):
         doc.responded_by = frappe.session.user
         doc.responded_at = now_datetime()
     doc.save(ignore_permissions=True)
+    if doc.get("author_user") and status != "disembunyikan":
+        from rescue_net.services import inbox as _ib
+        _ib.notify_account(doc.author_user, "Saran Anda '%s' kini berstatus %s." % ((doc.topic or "")[:80], status), "saran.html")
     return {"suggestion": doc.name, "status": status}

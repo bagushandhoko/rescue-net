@@ -166,6 +166,10 @@ def request_membership(organization):
     membership.requested_at = now_datetime()
     membership.insert(ignore_permissions=True)
 
+    from rescue_net.services import inbox as _ib
+    _ib.notify_org_managers(organization, "Permohonan anggota baru dari %s menunggu persetujuan Anda (Koordinasi Organisasi)." %
+                            (frappe.db.get_value("RN User Account", actor.name, "title") or actor.name), "koordinasi-organisasi.html")
+
     return {"name": membership.name, "status": membership.status}
 
 
@@ -737,6 +741,9 @@ def assign_member_to_posko(posko, user_account, assignment_role="operator", remo
         a.user_account, a.posko, a.assignment_role, a.status = user_account, posko, role, "approved"
         a.insert(ignore_permissions=True)
         name = a.name
+    from rescue_net.services import inbox as _ib
+    _ib.notify_account(user_account, "Anda ditempatkan di posko '%s'. Buka halaman posko untuk mulai bekerja." %
+                       (frappe.db.get_value("RN Posko", posko, "title") or posko))
     return {"assignment": name, "posko": posko, "user_account": user_account, "status": "approved"}
 
 
@@ -788,6 +795,14 @@ def decide_membership(membership, action, member_verified=None, note=None):
         doc.decision_note = str(note)[:500]
 
     doc.save(ignore_permissions=True)
+
+    from rescue_net.services import inbox as _ib
+    _otitle = frappe.db.get_value("RN Organization", doc.organization, "title") or doc.organization
+    _ib.notify_account(doc.user_account, {
+        "approved": "Keanggotaan Anda di %s disetujui." % _otitle,
+        "rejected": "Permohonan keanggotaan Anda di %s ditolak." % _otitle,
+        "revoked": "Keanggotaan Anda di %s dicabut." % _otitle}.get(doc.status, "Status keanggotaan %s: %s" % (_otitle, doc.status))
+        + (" Catatan: %s" % note if note else ""))
 
     return {
         "membership": doc.name,
@@ -1511,6 +1526,10 @@ def add_member_direct(organization, email, full_name=None, phone=None, member_ve
         doc.save(ignore_permissions=True)
     else:
         doc.insert(ignore_permissions=True)
+    if not created:
+        from rescue_net.services import inbox as _ib
+        _ib.notify_account(account, "Anda ditambahkan sebagai anggota %s oleh pengelolanya." %
+                           (frappe.db.get_value("RN Organization", organization, "title") or organization))
     out = {"membership": doc.name, "status": "approved", "user_account": account, "created_account": created}
     if temporary:
         out["temporary_password"] = temporary

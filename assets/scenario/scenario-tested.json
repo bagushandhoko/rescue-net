@@ -3,6 +3,23 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "PK-KITABISA-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Program donasi: dikelola sendiri atau melalui Kitabisa",
+      "tujuan": "Owner: saat setting program khusus bisa pilih dikelola sendiri atau melalui Kitabisa; tampilkan data campaign + data pendukung yang tak ada di Kitabisa.",
+      "akun": "tes otomatis; sim-mu-lazismu (cek tampilan); server produksi membaca campaign publik Kitabisa",
+      "langkah": [
+        "Panel Kelola → 💳 Cara Pengelolaan Donasi → pilih Melalui Kitabisa + link campaign → Simpan",
+        "Server membaca JSON-LD halaman Kitabisa (judul, foto, penggalang, target, buka/tutup)",
+        "Pemrakarsa mengisi angka terkumpul & jumlah donatur dari dashboard Kitabisa (dengan tanggal)",
+        "Publik: kartu menampilkan 'Melalui Kitabisa', tombol 'Donasi di Kitabisa →', realisasi/posko/bukti tetap dari Rescue-Net; formulir donasi internal ditolak"
+      ],
+      "hasil": "Tes 747 lulus (test_program_kitabisa 5/5). Produksi: migrate OK (backup DB sebelum), baca campaign publik Fatayat NU berhasil (judul, penggalang, target Rp 100 jt, status ditutup). UI pilihan dicek di browser.",
+      "status": "lulus",
+      "temuan": "Angka terkumpul & donatur Kitabisa dimuat lewat API yang dilindungi Cloudflare — tidak dibaca otomatis (tidak disiasati); diisi pemrakarsa dengan label tanggal & sumber. Belum ada program simulasi via Kitabisa: perlu link campaign milik owner/organisasi sendiri agar tidak mengatasnamakan pihak lain."
+    },
+    {
       "id": "MU-DONATUR-1",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

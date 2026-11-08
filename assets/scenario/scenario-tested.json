@@ -3,6 +3,22 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "PK-QRIS-2",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Rekening & QRIS program terlihat langsung di Ringkasan",
+      "tujuan": "Owner melapor: di halaman program tidak terlihat nomor rekening maupun QRIS.",
+      "akun": "Tamu (tanpa login), layar HP 420 px",
+      "langkah": [
+        "Buka program-khusus.html?event=event-839db8a5e43f (program LAZISMU simulasi)",
+        "Lihat tab Ringkasan (tab bawaan)",
+        "Tekan tombol 'Sudah transfer? Isi formulir donasi →'"
+      ],
+      "hasil": "Sebelum perbaikan: rekening & QRIS hanya ada di tab 'Anggaran & Donatur' sehingga tidak terlihat. Sesudah (86d8bf3): kotak 'Donasi ke Program Ini' di atas Ringkasan menampilkan rekening, tombol Salin, dan gambar QRIS; tombol membuka tab Anggaran ke formulir donasi.",
+      "status": "lulus",
+      "temuan": "Penempatan rekening/QRIS di tab kedua membuat donatur tidak menemukannya — kini dipindah ke tampilan awal."
+    },
+    {
       "id": "PK-QRIS-1",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

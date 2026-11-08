@@ -203,6 +203,7 @@ def create_special_program_update(
             "owner_type",
             "owner_id",
             "budget_spent",
+            "created_by_user",
         ],
         as_dict=True,
     )

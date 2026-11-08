@@ -124,6 +124,14 @@ class TestProgramInitiator(RNTestCase):
             self.assertIn(self.program, [p["name"] for p in api.program_board(self.event.name)["programs"]])
             self.assertTrue(api.program_detail(self.program)["can_manage"])
 
+    def test_initiator_records_spending(self):
+        with as_user(self.lazis.user):
+            api.create_special_program_update(self.program, "Beli masker", update_type="spending", amount_spent=1_000_000)
+        self.assertEqual(frappe.db.get_value("RN Donor Program", self.program, "budget_spent"), 1_000_000)
+        with as_user(self.other.user):
+            with self.assertRaises(frappe.PermissionError):
+                api.create_special_program_update(self.program, "Palsu", update_type="spending", amount_spent=5)
+
     def test_dates_are_checked(self):
         with as_user(self.lazis.user):
             with self.assertRaisesRegex(frappe.ValidationError, "Tanggal selesai"):

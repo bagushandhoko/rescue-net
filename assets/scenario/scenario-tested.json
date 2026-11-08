@@ -3,6 +3,44 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "MU-LAZISMU-2",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "LAZISMU membuat & mengelola program donasinya sendiri (dari pendaftaran)",
+      "tujuan": "Owner: login LAZISMU langsung ke halaman setting pemilik program; isi data, rekening, QRIS, konfirmasi dana masuk, tampil di daftar.",
+      "akun": "sim-mu-lazismu, sim-mu-donatur3 (daftar sendiri), sim-mu-aisyiyah, sim-mu-admin",
+      "langkah": [
+        "Donatur baru mendaftar sendiri",
+        "LAZISMU memilih organisasi di form 'Buat Program Donasi' dan membuat program",
+        "Login berikutnya → program-khusus.html?program=…&kelola=1 (panel Kelola Program Anda)",
+        "Ubah Data Program, isi rekening, unggah QRIS, rekening koran (tanpa centang samarkan ditolak)",
+        "Donatur melihat rekening+QRIS dan mengisi formulir donasi Rp 500.000",
+        "Donasi belum tampil publik sebelum dikonfirmasi",
+        "LAZISMU mengonfirmasi → tampil di Daftar Donatur",
+        "Aisyiyah gagal mengubah rekening LAZISMU; admin Muhammadiyah bisa ikut mengelola",
+        "Program lama buatan admin dibatalkan lewat tombol 'Batalkan Program' (alasan wajib); donasi ke program batal ditolak"
+      ],
+      "hasil": "Lulus 20/20. Program baru rn-donor-8861d9b89083 aktif & siap menerima donasi.",
+      "status": "lulus",
+      "temuan": "Ditemukan & diperbaiki: (1) anggota tak bisa jadi pengelola program — kini pemrakarsa+pengurus; (2) form Buat Program meminta ID manual — kini pilih organisasi; (3) tak ada cara menutup/membatalkan program; (4) donasi masih diterima untuk program batal/selesai; (5) rekening/QRIS program anggota yang belum diverifikasi pusat kini tidak dipublikasikan."
+    },
+    {
+      "id": "SOP-GABUNG-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Program Khusus · Donasi",
+      "judul": "Dua jalur bergabung organisasi & semua posko punya petugas",
+      "tujuan": "Owner: SOP bergabung lewat persetujuan ATAU langsung ditambahkan admin; semua posko simulasi punya pengguna yang berjalan.",
+      "akun": "sim-lr-dapur (daftar sendiri), ld1.demo (pengelola Landrover), sim-mu-admin, sim-mu-amil-siak/pelalawan (ditambahkan langsung), sim-mu-aisyiyah (uji tolak)",
+      "langkah": [
+        "Jalur 1: Bu Ratna mendaftar (Petugas Posko) → minta bergabung Komunitas Landrover → pengelola menyetujui → ditempatkan di Dapur Umum Simulasi → login langsung ke halaman dapur",
+        "Jalur 2: admin Muhammadiyah 'Tambah Anggota Langsung' (Koordinasi Organisasi) → akun dibuat + kata sandi sementara → amil login → ganti kata sandi → login dengan kata sandi baru",
+        "Anggota biasa (Aisyiyah) mencoba menambah anggota ke induk → ditolak"
+      ],
+      "hasil": "Lulus 12/12 (SOP1 + SOP1B). Fitur baru add_member_direct (056d811).",
+      "status": "lulus",
+      "temuan": "Akun pengelola data-awal BPBD Kalbar (KH-USER-KOMANDO) & BNPB (SIM-NS-USER-NASKOMANDO) tidak punya login → posko 'Posko Komando Satgas Karhutla Kalbar' belum bisa diberi petugas oleh pengelolanya. Perbaikan lewat konsol ditolak pengaman; perlu tindakan owner (super admin). Skrip lama sempat memakai jalur ganti sandi Frappe yang tidak dibuka situs — yang benar api_auth.change_password."
+    },
+    {
       "id": "PK-QRIS-2",
       "tanggal": "2026-11-08",
       "kategori": "Program Khusus · Donasi",

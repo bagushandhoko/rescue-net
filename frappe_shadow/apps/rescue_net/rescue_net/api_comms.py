@@ -584,7 +584,7 @@ def create_comms_device(
     power_source=None,
     power_endurance_hours=None,
 ):
-    rn_actor()  # 403 for Guest
+    actor = rn_actor()  # 403 for Guest
     if owner_type not in ("organization", "posko", "external"):
         frappe.throw("Jenis pemilik alat tidak valid (node relawan didaftarkan lewat Relawan Saya)")
     event = resolve_disaster_event(disaster_event)
@@ -595,13 +595,22 @@ def create_comms_device(
     if status not in _DEVICE_STATUS:
         frappe.throw("Status alat tidak valid")
 
+    # owner 2026-11-02 23:20: hanya pengelola posko / pengelola organisasi pemilik alat
+    posko = resolve_posko(posko) if posko else None
+    if posko:
+        _require_posko_manager(actor, posko)
+    if owner_type == "organization" and owner_id:
+        _require_org_manager(actor, owner_id)
+    if owner_type == "posko" and owner_id and owner_id != posko:
+        _require_posko_manager(actor, resolve_posko(owner_id) or owner_id)
+
     doc = frappe.new_doc("RN Comms Device")
     doc.disaster_event = event
     doc.device_name = device_name
     doc.category = category
     doc.status = status
     if posko:
-        doc.posko = resolve_posko(posko)
+        doc.posko = posko
     if battery_pct not in (None, ""):
         doc.battery_pct = int(battery_pct)
     doc.frequency_channel = frequency_channel
@@ -667,7 +676,10 @@ def create_comms_operator(
     skills=None,
     shift_note=None,
 ):
-    rn_actor()
+    actor = rn_actor()
+    posko = resolve_posko(posko) if posko else None
+    if posko:
+        _require_posko_manager(actor, posko)
     event = resolve_disaster_event(disaster_event)
     if not event:
         frappe.throw("Disaster event wajib diisi")
@@ -686,7 +698,7 @@ def create_comms_operator(
     doc.skills = skills
     doc.shift_note = shift_note
     if posko:
-        doc.posko = resolve_posko(posko)
+        doc.posko = posko
     doc.insert(ignore_permissions=True)
     return {"comms_operator": doc.name, "status": doc.status}
 
@@ -779,6 +791,14 @@ def _require_posko_manager(actor, posko):
     from rescue_net.access_policy import can_manage_posko
     if not can_manage_posko(actor, posko):
         frappe.throw("Hanya pengelola posko ini yang boleh mengubahnya", frappe.PermissionError)
+
+
+def _require_org_manager(actor, organization):
+    from rescue_net.access_policy import can_manage_organization, is_system_manager
+    if is_system_manager():
+        return
+    if not can_manage_organization(actor, organization):
+        frappe.throw("Hanya pengelola organisasi ini yang boleh menambah alatnya", frappe.PermissionError)
 
 
 def _can_edit_device(doc, actor):

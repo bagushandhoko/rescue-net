@@ -3,6 +3,24 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "OWNER-ONLY-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Keamanan & Izin",
+      "judul": "Pengaturan & pencatatan posko/program hanya untuk pengelolanya",
+      "tujuan": "Owner 2026-11-02: pengaturan posko/program tidak boleh dilihat publik, dan pengguna login yang bukan pemilik/pengelola tidak boleh mengakses pengaturan posko/program orang lain.",
+      "akun": [
+        "akun uji test stack: pemilik organisasi + pengelola posko, pengguna login lain, tamu"
+      ],
+      "langkah": [
+        "Tamu dan pengguna lain mencoba 12 aksi tulis (okupansi & kebutuhan shelter, kasus/kebutuhan/penerimaan/pemakaian posko medis, alat & operator komunikasi untuk posko maupun organisasi, dukungan komunikasi posko, tender atas nama organisasi, progres program): semua ditolak",
+        "Pengelola sah menjalankan 12 aksi yang sama: semua berhasil",
+        "Pengguna login lain membuka Pengaturan Posko: data pengaturan (PIC, kontak, notifikasi) tidak lagi dikirim",
+        "Halaman shelter-detail & posko-medis-detail: form/tombol pencatatan disembunyikan kecuali bagi pengelola posko; program-khusus: form progres hanya untuk pengelola program yang dibuka; form 'buat baru' (program, program donasi, tender, alat komunikasi) disembunyikan dari tamu"
+      ],
+      "hasil": "Lulus di test stack (test_owner_only_settings 2/2, suite penuh hijau). Celah ditutup: create_comms_device & create_comms_operator dulu cukup login.",
+      "status": "lulus"
+    },
+    {
       "id": "PRIVASI-1",
       "tanggal": "2026-11-08",
       "kategori": "Registrasi & Privasi",

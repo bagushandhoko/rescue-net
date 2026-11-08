@@ -15,6 +15,22 @@
 
   var qs = new URLSearchParams(location.search);
   var POSKO = qs.get("id") || qs.get("posko") || "";
+
+  /* owner 2026-11-02 23:20: form & tombol pengaturan/pencatatan (data-owner-only) hanya tampil
+     untuk pengelola posko ini. Tanpa ?id= (dasbor semua posko saya): tampil bila login — server
+     tetap menolak posko yang bukan milik pengguna. */
+  (function ownerOnly() {
+    var st = document.createElement("style");
+    st.textContent = "html:not(.rn-can-operate) [data-owner-only]{display:none!important}";
+    (document.head || document.documentElement).appendChild(st);
+    var grant = function () { document.documentElement.classList.add("rn-can-operate"); };
+    var p = POSKO
+      ? window.RN_FRAPPE.call("rescue_net.api_community_cluster.get_posko_settings", { posko: POSKO })
+          .then(function (d) { if (d && (d.can_operate || d.can_edit)) grant(); })
+      : window.RN_FRAPPE.call("rescue_net.api_auth.session_info", {})
+          .then(function (d) { if (d && d.user && d.user !== "Guest") grant(); });
+    p.catch(function () {});
+  })();
   if (!POSKO) return;
 
   function esc(s) { return window.RNUI.esc(s); }

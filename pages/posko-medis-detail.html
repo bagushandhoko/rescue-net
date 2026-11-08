@@ -121,12 +121,12 @@
           <p>Stok obat/alat posko. Bantuan yang diterima langsung menambah stok di sini.</p>
         </div>
         <div class="panel-actions">
-          <button class="btn primary mini" type="button" data-toggle="#aidForm">+ Catat Penerimaan</button>
+          <button class="btn primary mini" type="button" data-owner-only data-toggle="#aidForm">+ Catat Penerimaan</button>
           <button class="btn ghost mini" type="button" id="refreshMedical">Refresh</button>
         </div>
       </div>
 
-      <form class="rn-form rn-inline-form" id="aidForm" hidden>
+      <form class="rn-form rn-inline-form" id="aidForm" hidden data-owner-only>
         <div class="rn-form-grid">
           <label>Nama item bantuan
             <input name="item_name" placeholder="mis. Paracetamol / Masker N95" required>
@@ -161,11 +161,11 @@
           <p>Catat pasien dengan kode anonim, bukan nama asli.</p>
         </div>
         <div class="panel-actions">
-          <button class="btn primary mini" type="button" data-toggle="#caseForm">+ Tambah Kasus</button>
+          <button class="btn primary mini" type="button" data-owner-only data-toggle="#caseForm">+ Tambah Kasus</button>
         </div>
       </div>
 
-      <form class="rn-form rn-inline-form" id="caseForm" hidden>
+      <form class="rn-form rn-inline-form" id="caseForm" hidden data-owner-only>
         <input type="hidden" name="posko_id" value="">
         <div class="rn-form-grid">
           <label>Kode Pasien
@@ -229,11 +229,11 @@
           <p>Kebutuhan logistik bencana per kategori — obat, alat, logistik umum, makanan/air, sanitasi.</p>
         </div>
         <div class="panel-actions">
-          <button class="btn primary mini" type="button" data-toggle="#needForm">+ Tambah Kebutuhan</button>
+          <button class="btn primary mini" type="button" data-owner-only data-toggle="#needForm">+ Tambah Kebutuhan</button>
         </div>
       </div>
 
-      <form class="rn-form rn-inline-form" id="needForm" hidden>
+      <form class="rn-form rn-inline-form" id="needForm" hidden data-owner-only>
         <div class="rn-form-grid">
           <label>Kategori
             <select name="need_kind">
@@ -279,11 +279,11 @@
           <p>Riwayat pemakaian obat dan alat medis.</p>
         </div>
         <div class="panel-actions">
-          <button class="btn primary mini" type="button" data-toggle="#supplyUseForm">+ Catat Pemakaian</button>
+          <button class="btn primary mini" type="button" data-owner-only data-toggle="#supplyUseForm">+ Catat Pemakaian</button>
         </div>
       </div>
 
-      <form class="rn-form rn-inline-form" id="supplyUseForm" hidden>
+      <form class="rn-form rn-inline-form" id="supplyUseForm" hidden data-owner-only>
         <div class="rn-form-grid">
           <label>Kasus (opsional)
             <input name="medical_case_id" placeholder="boleh kosong / isi dari case id">
@@ -319,7 +319,7 @@
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
 <script src="../assets/js/rn-posko-contact.js?v=radio-20261101"></script>
-<script src="../assets/js/rn-posko-settings.js?v=kelola-20261101b"></script>
+<script src="../assets/js/rn-posko-settings.js?v=owneronly-20261108"></script>
 <script src="../assets/js/posko-medis-detail.js?v=sadd-20261026"></script>
 <script src="../assets/js/session-role.js?v=frappe-session-2"></script>
 <script src="../assets/js/rn-public-header.js?v=privasi-20261026"></script>

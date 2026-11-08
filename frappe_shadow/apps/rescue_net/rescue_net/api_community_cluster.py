@@ -1336,9 +1336,14 @@ def get_posko_settings(posko):
         "province_name", "city_name", "district_name", "village_name",
         "organization", "disaster_event", "verification_status",
     ]
+    can_edit = bool(_can_edit_posko(actor, doc))
+    from rescue_net.access_policy import can_manage_organization
+    can_operate = can_edit or bool(doc.organization and can_manage_organization(actor, doc.organization))
+    # owner 2026-11-02 23:20: pengaturan posko hanya untuk pengelolanya — bukan pengguna login lain
     return {
-        "can_edit": bool(_can_edit_posko(actor, doc)),
-        "posko": {f: doc.get(f) for f in fields},
+        "can_edit": can_edit,
+        "can_operate": can_operate,
+        "posko": {f: doc.get(f) for f in fields} if can_edit else None,
     }
 
 

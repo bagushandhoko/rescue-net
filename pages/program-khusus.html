@@ -271,7 +271,7 @@
           <div class="event-list" id="programListLegacy"></div>
         </div>
 
-        <aside class="panel">
+        <aside class="panel" data-login-only>
           <h3>Buat Program</h3>
           <form class="rn-form" id="programForm">
             <label>Nama Program
@@ -298,7 +298,7 @@
         </aside>
       </section>
 
-      <section class="panel">
+      <section class="panel" data-owner-only>
         <div class="panel-header">
           <div>
             <h3>Pembaruan Progres Program</h3>
@@ -309,7 +309,7 @@
         <form class="rn-form" id="programUpdateForm">
           <div class="form-grid">
             <label>ID Program
-              <input name="program_id" value="donorprog-4b09d6e78dbb" required>
+              <input name="program_id" required>
             </label>
             <label>Progres %
               <input name="progress_percent" type="number" value="25">
@@ -349,8 +349,9 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/program-khusus.js?v=donlist-20261102"></script>
+<script src="../assets/js/program-khusus.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
+<script src="../assets/js/rn-owner-only.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>

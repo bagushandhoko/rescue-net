@@ -384,6 +384,10 @@
       $("#detailCurrent").textContent = fmt(p.current_amount) + " " + (p.target_unit || "");
     }
     $("#tabBtnRencana").hidden = !data.can_manage;
+    // owner 2026-11-02 23:20: form progres hanya untuk pengelola program yang sedang dibuka
+    if (window.RN_OWNER_ONLY) window.RN_OWNER_ONLY.grant(!!data.can_manage);
+    var updForm = document.getElementById("programUpdateForm");
+    if (updForm && data.can_manage && updForm.program_id && p.name) updForm.program_id.value = p.name;
     if (!data.can_manage && !$("#tabRencana").hidden) { $("#detailTabs .rn-tab[data-tab=ringkasan]").click(); }
 
     $("#detailDescription").textContent = p.description || p.target_description || "Belum ada deskripsi program.";

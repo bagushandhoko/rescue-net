@@ -234,6 +234,9 @@ def create_cash_donation(donor_program, amount, is_anonymous=0, message=None,
                           donor_name=None, donor_contact=None):
     actor = rn_actor()
     row = _program(donor_program)
+    if (row.status or "").lower() in ("cancelled", "completed"):
+        frappe.throw("Program ini sudah " + ("dibatalkan" if row.status == "cancelled" else "selesai") +
+                     " dan tidak menerima donasi lagi.")
 
     amount = flt(amount)
     if amount <= 0:

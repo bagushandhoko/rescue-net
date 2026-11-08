@@ -127,3 +127,34 @@ def update_program_info(donor_program, values=None):
     if clean:
         frappe.db.set_value("RN Donor Program", donor_program, clean)
     return {"name": donor_program, "updated": sorted(clean)}
+
+
+_STATUS_FLOW = {"planned": {"active", "cancelled"}, "active": {"completed", "cancelled"},
+                "completed": {"active"}, "cancelled": set()}
+
+
+@frappe.whitelist()
+def set_program_status(donor_program, status, note=None):
+    """Program manager opens (aktif), finishes (selesai) or cancels (batal) the program (owner 2026-11-08:
+    "dibatalkan"; "program itu sudah aktif dan siap terima donasi"). Cancelling is final and needs a reason;
+    a cancelled program stops taking donations (create_cash_donation refuses non-active programs)."""
+    actor = rn_actor()
+    row = _program(donor_program)
+    _assert_manage(actor, row)
+    status = (status or "").strip().lower()
+    current = (row.status or "planned").lower()
+    if status == current:
+        return {"name": donor_program, "status": status}
+    if status not in _STATUS_FLOW.get(current, set()):
+        frappe.throw(f"Status program tidak bisa diubah dari '{current}' ke '{status}'.")
+    if status == "cancelled" and not (note or "").strip():
+        frappe.throw("Tuliskan alasan pembatalan program.")
+    if status == "cancelled" and frappe.db.exists("RN Cash Donation", {"donor_program": donor_program, "status": "pending"}):
+        frappe.throw("Masih ada donasi menunggu konfirmasi — putuskan dulu (terima/tolak) sebelum membatalkan program.")
+    frappe.db.set_value("RN Donor Program", donor_program, "status", status)
+    if note:
+        old = frappe.db.get_value("RN Donor Program", donor_program, "notes") or ""
+        stamp = frappe.utils.now_datetime().strftime("%Y-%m-%d %H:%M")
+        frappe.db.set_value("RN Donor Program", donor_program, "notes",
+                            (old + "\n" if old else "") + f"[{stamp}] Status → {status}: {str(note).strip()[:500]}")
+    return {"name": donor_program, "status": status}

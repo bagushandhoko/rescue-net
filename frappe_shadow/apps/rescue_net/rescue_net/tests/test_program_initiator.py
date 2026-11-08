@@ -87,6 +87,26 @@ class TestProgramInitiator(RNTestCase):
         self.assertFalse(bank.get("account_number"))
         self.assertFalse(bank.get("shown_publicly"))
 
+    def test_cancel_program_stops_donations(self):
+        with as_user(self.donor.user):
+            don = api.create_cash_donation(self.program, 10_000)["donation"]
+        with as_user(self.lazis.user):
+            api.set_program_status(self.program, "active")
+            with self.assertRaisesRegex(frappe.ValidationError, "alasan"):
+                api.set_program_status(self.program, "cancelled")
+            with self.assertRaisesRegex(frappe.ValidationError, "menunggu konfirmasi"):
+                api.set_program_status(self.program, "cancelled", note="Dobel")
+            api.decide_cash_donation(don, "reject", note="uji")
+            api.set_program_status(self.program, "cancelled", note="Program dobel, diganti program baru")
+            with self.assertRaisesRegex(frappe.ValidationError, "tidak bisa diubah"):
+                api.set_program_status(self.program, "active")
+        with as_user(self.donor.user):
+            with self.assertRaisesRegex(frappe.ValidationError, "dibatalkan"):
+                api.create_cash_donation(self.program, 10_000)
+        with as_user(self.other.user):
+            with self.assertRaises(frappe.PermissionError):
+                api.set_program_status(self.program, "completed")
+
     def test_dates_are_checked(self):
         with as_user(self.lazis.user):
             with self.assertRaisesRegex(frappe.ValidationError, "Tanggal selesai"):

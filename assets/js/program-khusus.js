@@ -468,13 +468,19 @@
       box.hidden = true;
     }
     // Ringkasan juga menampilkan rekening/QRIS (owner 2026-11-08: "nggak ada no rekening apalagi qris" — dulu hanya di tab Anggaran)
+    var closed = /^(cancelled|completed)$/i.test(String((data.program || {}).status || ""));
     var top = $("#donateTop"), topBox = $("#bankBoxTop");
+    if (closed) {
+      box.hidden = false; box.className = "rn-pk-bank warn";
+      box.textContent = "Program ini sudah " + (/cancel/i.test(data.program.status) ? "dibatalkan" : "selesai") + " dan tidak menerima donasi lagi.";
+      var dfm = $("#donateForm"); if (dfm) dfm.hidden = true;
+    } else { var dfo = $("#donateForm"); if (dfo) dfo.hidden = false; }
     if (top && topBox) {
       top.hidden = box.hidden;
       topBox.className = box.className; topBox.innerHTML = box.innerHTML;
       var go = $("#donateTopGo");
       if (go) {
-        go.hidden = !(b.account_number || b.qris_url) || !b.shown_publicly;
+        go.hidden = closed || !(b.account_number || b.qris_url) || !b.shown_publicly;
         go.onclick = function () {
           var t = $("#detailTabs .rn-tab[data-tab=anggaran]"); if (t) t.click();
           var df = $("#donateForm"); if (df) df.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -682,6 +688,28 @@
     }).join("") + (verified ? "" : '<li class="alert"><span>Pemrakarsa belum terverifikasi — rekening &amp; QRIS baru tampil ke publik setelah verifikasi.</span></li>');
     $("#manageSteps").querySelectorAll("[data-manage-go]").forEach(function (btn) {
       btn.addEventListener("click", function () { var s = steps[+btn.getAttribute("data-manage-go")]; goManage(s[3], s[4]); });
+    });
+    var ST = { planned: "Direncanakan — belum menerima donasi", active: "Aktif — siap menerima donasi",
+               completed: "Selesai", cancelled: "Dibatalkan" };
+    var NEXT = { planned: ["active", "cancelled"], active: ["completed", "cancelled"], completed: ["active"], cancelled: [] };
+    var cur = String(p.status || "planned").toLowerCase();
+    $("#statusNow").textContent = "Status: " + (ST[cur] || cur);
+    $("#statusBox").querySelectorAll("[data-set-status]").forEach(function (btn) {
+      var to = btn.getAttribute("data-set-status");
+      btn.hidden = (NEXT[cur] || []).indexOf(to) === -1;
+      btn.onclick = async function () {
+        var note = null;
+        if (to === "cancelled") {
+          note = window.prompt("Alasan pembatalan program (wajib, tampil di catatan program):", "");
+          if (!note) return;
+        } else if (window.confirm && !window.confirm("Ubah status program menjadi '" + ST[to] + "'?")) return;
+        var m = $("#statusMsg"); m.textContent = "Menyimpan…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_donor_program.set_program_status", { donor_program: SELECTED, status: to, note: note }, { method: "POST" });
+          m.textContent = "";
+          await selectProgram(SELECTED);
+        } catch (err) { m.textContent = "Gagal: " + ((err && err.message) || err); }
+      };
     });
     var f = $("#infoForm");
     if (f) {

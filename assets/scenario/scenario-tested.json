@@ -3,6 +3,28 @@
   "diperbarui": "2026-11-08",
   "uji": [
     {
+      "id": "I18N-1",
+      "tanggal": "2026-11-08",
+      "kategori": "Tampilan · Dua bahasa",
+      "judul": "Dua bahasa Indonesia / English tahap 1 (tombol ID | EN seperti sac-energi.online)",
+      "tujuan": "Owner: buat 2 bahasa Indonesia–English, seperti tampilan menu di sac-energi.online.",
+      "akun": [
+        "tamu (tanpa login)"
+      ],
+      "langkah": [
+        "Tombol ID | EN tampil di header semua halaman publik, di header Home (desktop), dan di bilah atas HP",
+        "Klik EN (atau buka dengan ?lang=en): menu, Home, Login/Registrasi, Bencana Aktif, Kirim Bantuan, Saran, Profil Organisasi, Control Centre, detail posko, Kebijakan Privasi, Scenario Tested tampil dalam bahasa Inggris; pilihan diingat browser",
+        "Teks yang muncul belakangan (kartu, angka, popup peta) ikut diterjemahkan; kalimat ber-angka memakai pola",
+        "Klik ID: semua kembali ke bahasa Indonesia tanpa memuat ulang"
+      ],
+      "hasil": "Lulus untuk halaman tahap 1 (±780 kalimat & label). Desktop & HP 390 px tanpa error dan tanpa scroll samping.",
+      "status": "lulus sebagian",
+      "temuan": [
+        "Halaman lain (Manual, halaman kerja posko, admin) dan data yang diketik pengguna (nama posko, barang, catatan) tetap bahasa Indonesia — tahap berikutnya",
+        "Gambar hero Home (label 'Data Terverifikasi' dll.) adalah bagian gambar, belum diterjemahkan"
+      ]
+    },
+    {
       "id": "ORG-PROFIL-1",
       "tanggal": "2026-11-08",
       "kategori": "Organisasi & Ortom · Privasi",

@@ -80,7 +80,7 @@
     if (!sel) return;
     // owner 2026-11-09: tanpa ?id= pemilih menampilkan posko pertama tetapi isi halaman masih gabungan
     // ("Belum ada posko dipilih", tabel armada kosong) — langsung buka posko pertama agar isi = pilihan.
-    if (!current && (list || []).length) { navToPosko(list[0].id); return; }
+    if (!current && (list || []).length && !window.RN_POSKO_SUMMARY_MODE) { navToPosko(list[0].id); return; }
 
     // shared grouped picker: org member → "Posko organisasi saya" +
     // "Posko lain — terbuka untuk koordinasi"; guest → one flat list.

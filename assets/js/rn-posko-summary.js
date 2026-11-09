@@ -197,6 +197,10 @@
       '<p class="rn-muted rn-ps-hint">Pilih satu posko untuk melihat rinciannya.</p>' +
       '<div class="rn-ps-body"></div>';
     main.insertBefore(panel, main.firstChild);
+    // sembunyikan isi satu-posko (juga di HP, di mana aturan topbar memakai !important)
+    Array.prototype.forEach.call(main.children, function (el) {
+      if (el !== panel) el.style.setProperty("display", "none", "important");
+    });
     load(panel);
   }
 

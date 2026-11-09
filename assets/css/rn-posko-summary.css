@@ -1,5 +1,5 @@
 /* rn-posko-summary.css — daftar semua posko satu jenis (owner 2026-11-09 malam). Lihat rn-posko-summary.js. */
-.rn-ps-mode > :not(.rn-ps-panel) { display: none !important; }
+body:not(#rn-x) .rn-ps-mode > :not(.rn-ps-panel):not(.rn-ps-keep) { display: none !important; }
 .rn-ps-panel { background: #fff; border: 1px solid #f0dcd2; border-radius: 16px; padding: 18px 20px; margin: 0 0 16px; box-shadow: 0 4px 16px rgba(120, 60, 30, .06); line-height: 1.5; }
 .rn-ps-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 .rn-ps-eyebrow { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #d9573f; }

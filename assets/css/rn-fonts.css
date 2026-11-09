@@ -39,3 +39,11 @@ label:has(> input[type=checkbox]), label:has(> input[type=radio]) { cursor: poin
 small, .small, .rn-muted small { font-size: max(13px, .85em); }
 @media print { small, .small { font-size: smaller; } }
 
+
+/* Owner 2026-11-09 malam: "ya ok terapkan di semua halaman seperti di Control Centre" — jarak baris ala sac-energi.
+   Teks isi halaman 1.5; judul/angka/tombol/isian tetap rapat 1.25. :where() = spesifisitas 0, jadi aturan
+   line-height yang sudah ada di tiap halaman tetap menang (hanya nilai bawaan yang berubah).
+   Sidebar/menu tidak ikut (di luar area isi). Cadangan: tag sebelum-lineheight-20261109. */
+:where(.main, main, .kh-wrap, .ll-wrap, .sc-wrap, .ak-wrap, .kp-wrap) { line-height: 1.5; }
+:where(.main, main, .kh-wrap, .ll-wrap, .sc-wrap, .ak-wrap, .kp-wrap)
+  :where(h1, h2, h3, h4, strong, b, button, .btn, select, input, .chip) { line-height: 1.25; }

@@ -3,6 +3,22 @@
   "diperbarui": "2026-11-09",
   "uji": [
     {
+      "id": "AUDIT-PEMILIK-1",
+      "tanggal": "2026-11-09",
+      "kategori": "Keamanan · Pengaturan Pemilik",
+      "judul": "Audit login nyata: tombol/form pengaturan posko hanya untuk pemilik/petugasnya",
+      "tujuan": "Owner: posko & program yang dipublikasikan bisa diubah pemiliknya, pengaturan tidak terlihat publik.",
+      "akun": "tamu, donatur tanpa posko (sim-mu-don-a), petugas posko lain (sim-dewi/sim-yusuf), pemilik 11 jenis posko (HP 390 px)",
+      "langkah": [
+        "68 halaman kerja (posko-detail, logistik, distribusi, relawan, SAR, shelter, dapur, medis, alat komunikasi) dibuka sebagai tamu, petugas posko lain, dan pemilik",
+        "Temuan 1: tamu melihat tombol '+ Tambah Operator' & pengguna biasa melihat form Simpan Alat/Operator/Kanal/Dukungan di Alat Komunikasi → kini hanya petugas posko / pengelola organisasi / Control Centre",
+        "Temuan 2: pemilik posko berperan umum 'viewer' (mis. MDMC, PWM) TIDAK melihat '+ Buat Distribusi' → kini tampil (hak dari penugasan posko; server tetap memeriksa)",
+        "Uji ulang: donatur tanpa posko 0 form di Distribusi & Alat Komunikasi; pemilik MDMC melihat form-nya; tamu tidak melihat form tulis"
+      ],
+      "hasil": "Lulus setelah perbaikan 016f218",
+      "status": "lulus"
+    },
+    {
       "id": "PK-ULASAN-1",
       "tanggal": "2026-11-09",
       "kategori": "Program Khusus · Donasi",

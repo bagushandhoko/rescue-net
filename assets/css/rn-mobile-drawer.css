@@ -574,3 +574,17 @@
   body.rn-has-topback .pk-topnav > .pk-evsel { flex-basis: 100%; }
 }
 @media (max-width: 1023px) { body.rn-has-topback .manual-back { display: none !important; } }
+
+/* 2026-11-09 (audit HP): style.css `body:not(...) .sidebar { position: sticky }` lebih spesifik dan menimpa
+   drawer -> panel menu ikut alur halaman dan menyisakan ±780px kosong di bawah banyak halaman.
+   :not(#rn-x) menaikkan spesifisitas supaya drawer tetap melayang (fixed). */
+@media (max-width: 1023px) {
+  body:not(#rn-x) .sidebar.rn-drawer-panel {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+}

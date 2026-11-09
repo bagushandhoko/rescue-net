@@ -3,6 +3,21 @@
   "diperbarui": "2026-11-09",
   "uji": [
     {
+      "id": "HP-LAYOUT-2",
+      "tanggal": "2026-11-09",
+      "kategori": "Tampilan HP & Control Centre",
+      "judul": "Audit layout HP semua halaman + font Control Centre dinormalkan + foto bukti Muhammadiyah publik",
+      "tujuan": "Owner: cek semua halaman di HP agar tidak ada ruang kosong; font Control Centre normal seperti sac-energi.online; foto bukti simulasi Muhammadiyah tampil ke publik.",
+      "akun": "tamu (HP 390 px & laptop 1366 px)",
+      "langkah": [
+        "69 halaman dipindai di HP 390 px: ±30 halaman punya satu layar kosong di bawah (menu drawer tertimpa .sidebar sticky) → diperbaiki, pindai ulang: hilang",
+        "Font Control Centre: teks dominan 9–13 px → 12–15 px (sac-energi 12/14 px); tidak ada elemen melebar di 1366 px & 390 px",
+        "9 foto bukti simulasi Muhammadiyah diubah publik (backup DB dulu); tamu bisa membuka foto (HTTP 200)"
+      ],
+      "hasil": "Lulus",
+      "status": "lulus"
+    },
+    {
       "id": "AUDIT-PEMILIK-1",
       "tanggal": "2026-11-09",
       "kategori": "Keamanan · Pengaturan Pemilik",

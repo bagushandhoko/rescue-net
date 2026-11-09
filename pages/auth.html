@@ -6,11 +6,11 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Auth, Registration & Verification</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=font-20261109">
+  <link rel="stylesheet" href="../assets/css/style.css?v=font13-20261109">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
-  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=kursor-20261108">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font13-20261109">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=font-20261109" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=font-20261109" />
   <link rel="stylesheet" href="../assets/css/rn-demo-accounts.css?v=font-20261109" />
@@ -163,7 +163,7 @@
             <label><input type="radio" name="role" value="donatur"> Donatur</label>
             <label><input type="radio" name="role" value="organisasi"> Organisasi</label>
           <div id="orgFields" class="rn-auth-reference" hidden>
-            <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Akun Anda dan organisasi didaftarkan sekaligus. Anda otomatis menjadi pemilik (admin) organisasi ini; organisasi menunggu verifikasi.</p>
+            <p class="rn-muted" style="font-size:13px;margin:0 0 8px">Akun Anda dan organisasi didaftarkan sekaligus. Anda otomatis menjadi pemilik (admin) organisasi ini; organisasi menunggu verifikasi.</p>
             <label>Nama organisasi
               <input name="org_title" type="text" placeholder="mis. Komunitas Rescue Lokal">
             </label>
@@ -183,7 +183,7 @@
               <input name="org_notes" type="text" placeholder="Bidang kerja, wilayah, dll.">
             </label>
             <fieldset class="rn-scheme" style="border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0">
-              <legend style="font-size:12px;color:var(--muted);padding:0 6px">Keterbukaan organisasi (bisa diubah kapan saja)</legend>
+              <legend style="font-size:13px;color:var(--muted);padding:0 6px">Keterbukaan organisasi (bisa diubah kapan saja)</legend>
               <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
                 <input type="radio" name="org_open" value="0" checked style="margin-top:3px">
                 <span><b>Tertutup</b> (bawaan) — kegiatan hanya terlihat ringkas oleh publik; anggota melihat detail. Anggota baru perlu disetujui pengelola.</span>
@@ -194,7 +194,7 @@
               </label>
             </fieldset>
             <fieldset class="rn-scheme" style="border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0">
-              <legend style="font-size:12px;color:var(--muted);padding:0 6px">Skema koordinasi (dipilih sekali)</legend>
+              <legend style="font-size:13px;color:var(--muted);padding:0 6px">Skema koordinasi (dipilih sekali)</legend>
               <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
                 <input type="radio" name="org_scheme" value="mandiri" checked style="margin-top:3px">
                 <span><b>Mandiri</b> — tiap posko dan anggota mengelola dirinya sendiri.</span>
@@ -204,7 +204,7 @@
                 <span><b>Komando terpusat</b> — pusat membuat akun posko dan menyetujui perubahan level bawah.</span>
               </label>
             </fieldset>
-            <p class="rn-muted" style="font-size:12px;margin:0">Cabang/sub dari organisasi lain? Ajukan induknya nanti di halaman Organisasi &amp; Posko.</p>
+            <p class="rn-muted" style="font-size:13px;margin:0">Cabang/sub dari organisasi lain? Ajukan induknya nanti di halaman Organisasi &amp; Posko.</p>
           </div>
             <label><input type="radio" name="role" value="petugas_posko"> Petugas Posko</label>
           <div id="poskoTypeFields" class="rn-auth-reference" hidden>
@@ -225,10 +225,10 @@
           </div>
             <label><input type="radio" name="role" value="pelapor"> Pelapor Terverifikasi</label>
           </fieldset>
-          <p class="rn-muted" style="font-size:12px;margin:-2px 0 0">Ingin jadi <b>anggota organisasi yang sudah ada</b>? Daftar dulu sebagai Relawan, lalu buka <b>Organisasi &amp; Posko</b> &rarr; pilih organisasi &rarr; <b>Ajukan Keanggotaan</b>. Pengelola organisasi menyetujuinya di <b>Pengaturan &rarr; Persetujuan Anggota</b>.</p>
+          <p class="rn-muted" style="font-size:13px;margin:-2px 0 0">Ingin jadi <b>anggota organisasi yang sudah ada</b>? Daftar dulu sebagai Relawan, lalu buka <b>Organisasi &amp; Posko</b> &rarr; pilih organisasi &rarr; <b>Ajukan Keanggotaan</b>. Pengelola organisasi menyetujuinya di <b>Pengaturan &rarr; Persetujuan Anggota</b>.</p>
 
           <div id="reporterFields" class="rn-auth-reference" hidden>
-            <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Untuk petugas resmi (BNPB/BPBD, Polri, TNI, perangkat desa) atau warga yang mendedikasikan diri memantau kondisi sekitar. Setelah diverifikasi admin atau verifikator senior, Anda bisa <b>melaporkan kebutuhan di semua posko</b> — laporan langsung tampil di posko itu dengan nama/instansi Anda dan ditandai “belum dikonfirmasi” sampai petugas posko memastikannya. Pelapor tidak bisa mengubah stok atau data posko.</p>
+            <p class="rn-muted" style="font-size:13px;margin:0 0 8px">Untuk petugas resmi (BNPB/BPBD, Polri, TNI, perangkat desa) atau warga yang mendedikasikan diri memantau kondisi sekitar. Setelah diverifikasi admin atau verifikator senior, Anda bisa <b>melaporkan kebutuhan di semua posko</b> — laporan langsung tampil di posko itu dengan nama/instansi Anda dan ditandai “belum dikonfirmasi” sampai petugas posko memastikannya. Pelapor tidak bisa mengubah stok atau data posko.</p>
             <label>Instansi / kelompok
               <input name="reporter_agency" type="text" list="reporterAgencyOptions" placeholder="mis. BPBD Aceh Barat, Polsek Samatiga, warga Desa Suak">
               <datalist id="reporterAgencyOptions">
@@ -256,7 +256,7 @@
           </label>
 
           <div id="referenceFields" class="rn-auth-reference" hidden>
-            <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Pilih bebas siapa saja yang bisa dihubungi untuk memverifikasi Anda — mis. Ketua RT, Kepala Sekolah, atau tokoh masyarakat yang Anda kenal. Ini bukan dari daftar verifikator resmi.</p>
+            <p class="rn-muted" style="font-size:13px;margin:0 0 8px">Pilih bebas siapa saja yang bisa dihubungi untuk memverifikasi Anda — mis. Ketua RT, Kepala Sekolah, atau tokoh masyarakat yang Anda kenal. Ini bukan dari daftar verifikator resmi.</p>
             <label>Nama referensi
               <input name="reference_name" type="text" placeholder="Nama lengkap referensi">
             </label>
@@ -284,7 +284,7 @@
             </span> Lanjut dengan Google
           </a>
 
-          <p class="rn-muted" style="font-size:12px;margin:6px 0">Dengan mendaftar, Anda menyetujui <a href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi</a> Rescue-Net.</p>
+          <p class="rn-muted" style="font-size:13px;margin:6px 0">Dengan mendaftar, Anda menyetujui <a href="kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi</a> Rescue-Net.</p>
           <p class="rn-auth-switch">Sudah punya akun? <button type="button" class="rn-auth-mini-link" data-auth-tab="login">Masuk di sini</button></p>
           <span class="form-message" id="registerMessage" role="alert"></span>
         </form>
@@ -446,7 +446,7 @@
 <script src="../assets/js/auth.js?v=privasi-20261108"></script>
 <script src="../assets/js/rn-demo-accounts.js?v=demo-20261025"></script>
 <script src="../assets/js/session-role.js?v=petugas-20261109"></script>
-<script src="../assets/js/rn-public-header.js?v=font-20261109"></script>
+<script src="../assets/js/rn-public-header.js?v=font13-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
 <script src="../assets/js/rn-icons.js?v=tools-20261001"></script>
 

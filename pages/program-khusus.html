@@ -6,11 +6,11 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Program Khusus</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=font-20261109">
+  <link rel="stylesheet" href="../assets/css/style.css?v=font13-20261109">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
-  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=kursor-20261108">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font13-20261109">
   <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=font-20261109" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=font-20261109" />
@@ -160,7 +160,7 @@
                 <div class="form-actions"><button class="btn primary" type="submit">Simpan Pilihan</button><span class="form-message" id="channelMsg"></span></div>
               </form>
               <form class="rn-form" id="kbFigForm" autocomplete="off" hidden style="margin-top:8px">
-                <p class="rn-muted" style="font-size:12px;margin:0">Angka terkumpul &amp; jumlah donatur tidak bisa dibaca otomatis dari Kitabisa. Salin dari dashboard Kitabisa Anda — tampil dengan keterangan tanggal &amp; sumber.</p>
+                <p class="rn-muted" style="font-size:13px;margin:0">Angka terkumpul &amp; jumlah donatur tidak bisa dibaca otomatis dari Kitabisa. Salin dari dashboard Kitabisa Anda — tampil dengan keterangan tanggal &amp; sumber.</p>
                 <div class="form-grid">
                   <label>Terkumpul di Kitabisa (Rp)<input name="collected" type="number" min="0" step="1000"></label>
                   <label>Jumlah donatur<input name="donor_count" type="number" min="0"></label>
@@ -247,19 +247,19 @@
                 <div class="form-actions"><button class="btn primary" type="submit">Unggah Gambar Rencana</button><span class="form-message" id="drawMsg"></span></div></form>
               <form class="rn-form" id="qrisForm"><label>QRIS penerimaan donasi — gambar PNG / JPG / WEBP, maks. 10 MB (satu QRIS; unggahan baru mengganti yang lama)
                 <input type="file" name="file" accept="image/png,image/jpeg,image/webp" required></label>
-                <p class="rn-muted" style="font-size:12px;margin:4px 0">Sama seperti nomor rekening: QRIS tampil ke publik hanya bila pemrakarsa sudah terverifikasi.</p>
+                <p class="rn-muted" style="font-size:13px;margin:4px 0">Sama seperti nomor rekening: QRIS tampil ke publik hanya bila pemrakarsa sudah terverifikasi.</p>
                 <div class="form-actions"><button class="btn primary" type="submit">Unggah QRIS</button><span class="form-message" id="qrisMsg"></span></div></form>
               <form class="rn-form" id="koranForm"><label>Rekening koran (bukti dana masuk/keluar) — PDF atau foto, maks. 10 MB per berkas (maks. 24)
                 <input type="file" name="file" accept="image/png,image/jpeg,image/webp,application/pdf,.pdf" required></label>
                 <label>Periode<input name="label" maxlength="120" placeholder="November 2026" required></label>
                 <label class="rn-check"><input type="checkbox" name="redacted" required> Nama dan nomor rekening pengirim/penerima pribadi sudah saya samarkan (dihitamkan)</label>
-                <p class="rn-muted" style="font-size:12px;margin:4px 0">Rekening koran tampil ke publik sebagai bukti transparansi. Jangan unggah data pribadi donatur.</p>
+                <p class="rn-muted" style="font-size:13px;margin:4px 0">Rekening koran tampil ke publik sebagai bukti transparansi. Jangan unggah data pribadi donatur.</p>
                 <div class="form-actions"><button class="btn primary" type="submit">Unggah Rekening Koran</button><span class="form-message" id="koranMsg"></span></div></form>
               <form class="rn-form" id="bankForm"><div class="form-grid">
                 <label>Bank <input name="bank_name" maxlength="60" placeholder="BRI / BCA / Mandiri / BSI"></label>
                 <label>No. Rekening <input name="account_number" inputmode="numeric" maxlength="30" placeholder="1234567890"></label>
                 <label>Atas Nama <input name="account_holder" maxlength="120" placeholder="Yayasan / nama pemrakarsa"></label></div>
-                <p class="rn-muted" style="font-size:12px;margin:4px 0">Nomor rekening tampil ke publik hanya bila pemrakarsa sudah terverifikasi. Kosongkan nomor untuk menghapus.</p>
+                <p class="rn-muted" style="font-size:13px;margin:4px 0">Nomor rekening tampil ke publik hanya bila pemrakarsa sudah terverifikasi. Kosongkan nomor untuk menghapus.</p>
                 <div class="form-actions"><button class="btn primary" type="submit">Simpan Rekening</button><span class="form-message" id="bankMsg"></span></div></form>
             </div>
 
@@ -280,7 +280,7 @@
           </div>
 
           <div id="tabRencana" hidden>
-            <p class="rn-muted" style="font-size:12px">Hanya pemilik program atau Control Centre yang dapat mengubah rencana. Perubahan langsung tampil di Ringkasan dan menggerakkan KPI Milestone Terlambat, Lokasi Belum Terlayani, dan Butuh Dukungan.</p>
+            <p class="rn-muted" style="font-size:13px">Hanya pemilik program atau Control Centre yang dapat mengubah rencana. Perubahan langsung tampil di Ringkasan dan menggerakkan KPI Milestone Terlambat, Lokasi Belum Terlayani, dan Butuh Dukungan.</p>
             <h4 class="rn-md-detail-h">Milestone</h4><div id="editMilestones" class="rn-pk-edit"></div>
             <form class="rn-form rn-pk-addform" data-add="milestone"><input name="title" placeholder="Nama milestone" required><input name="due_date" type="date" title="Target selesai"><select name="milestone_status"><option value="belum_mulai">Belum mulai</option><option value="berjalan">Berjalan</option><option value="selesai">Selesai</option></select><input name="progress_percent" type="number" min="0" max="100" placeholder="%"><button class="btn mini primary" type="submit">Tambah</button></form>
             <h4 class="rn-md-detail-h">Lokasi</h4><div id="editLocations" class="rn-pk-edit"></div>
@@ -303,7 +303,7 @@
             <h4 class="rn-md-detail-h">Realisasi Anggaran</h4>
             <div id="realisasiList" class="rn-pk-real"></div>
             <form class="rn-form" id="realisasiForm" hidden autocomplete="off" style="margin-top:8px">
-              <p class="rn-muted" style="font-size:12px;margin:0">Pengelola: catat setiap pengeluaran dana program. Total realisasi otomatis menambah "Terpakai".</p>
+              <p class="rn-muted" style="font-size:13px;margin:0">Pengelola: catat setiap pengeluaran dana program. Total realisasi otomatis menambah "Terpakai".</p>
               <div class="form-grid">
                 <label>Uraian belanja<input name="update_title" required maxlength="140" placeholder="mis. Pembelian 2.000 masker N95"></label>
                 <label>Jumlah (Rp)<input name="amount_spent" type="number" min="1" step="1000" required placeholder="mis. 30000000"></label>
@@ -405,7 +405,7 @@
             <label id="createKbWrap" hidden>Link campaign Kitabisa
               <input name="kitabisa_url" type="url" placeholder="https://kitabisa.com/campaign/namacampaign">
             </label>
-            <p class="rn-muted" style="font-size:12px">Program tampil publik setelah organisasi terverifikasi. Rekening &amp; QRIS hanya tampil ke publik bila pemrakarsa terverifikasi — jangan minta transfer lewat pesan pribadi.</p>
+            <p class="rn-muted" style="font-size:13px">Program tampil publik setelah organisasi terverifikasi. Rekening &amp; QRIS hanya tampil ke publik bila pemrakarsa terverifikasi — jangan minta transfer lewat pesan pribadi.</p>
             <div class="form-actions"><button class="btn primary" type="submit">Buat Program</button><span class="form-message" id="programFormMsg"></span></div>
           </form>
         </aside>
@@ -462,7 +462,7 @@
           <button type="button" data-method="qris" class="is-on">QRIS</button><button type="button" data-method="bank">Transfer Bank</button>
         </div>
         <div id="pkPayBox" class="pk-paybox"></div>
-        <p class="rn-muted" style="font-size:12px;margin:6px 0 0">Dana langsung masuk ke rekening/QRIS pemrakarsa — bukan ke Rescue-Net. Jangan transfer ke rekening yang dikirim lewat pesan pribadi.</p>
+        <p class="rn-muted" style="font-size:13px;margin:6px 0 0">Dana langsung masuk ke rekening/QRIS pemrakarsa — bukan ke Rescue-Net. Jangan transfer ke rekening yang dikirim lewat pesan pribadi.</p>
       </div>
       <div class="pk-step"><b>3. Sudah bayar? Kabari pemrakarsa</b>
         <p class="rn-muted" id="pkLoginNote" hidden style="margin:4px 0">Masuk dulu agar pemrakarsa bisa mencocokkan dana. <a class="btn primary mini" id="pkLoginBtn" href="auth.html">Masuk / Daftar</a></p>
@@ -475,7 +475,7 @@
                 <span class="form-message" id="donateMsg"></span>
               </div>
             </form>
-        <p class="rn-muted" style="font-size:12px;margin:6px 0 0">Donasi tampil di daftar setelah pemrakarsa memastikan dana masuk.</p>
+        <p class="rn-muted" style="font-size:13px;margin:6px 0 0">Donasi tampil di daftar setelah pemrakarsa memastikan dana masuk.</p>
       </div>
     </div>
   </div>
@@ -503,7 +503,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-sync-engine.js?v=eventfix-20260904"></script>
-<script src="../assets/js/rn-public-header.js?v=font-20261109"></script>
+<script src="../assets/js/rn-public-header.js?v=font13-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=kompakhp-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=topback-20261109"></script>

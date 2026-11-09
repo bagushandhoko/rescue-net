@@ -13,6 +13,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     _CLOSED_NEED,
     _CRIT_URGENCY,
     _DRILL_BLOCKED_FLOW,
+    _TERHAMBAT_FLOW,
     _JIWA_NON_POSKO,
     _MEDICAL_CLOSED_CASE,
     _MEDICAL_CRIT_SEVERITY,
@@ -444,7 +445,7 @@ def active_disasters_board(limit=60):
         ]
         blocked_flows = [
             f for f in flows
-            if str(f.get("flow_status") or "").lower() in _DRILL_BLOCKED_FLOW
+            if str(f.get("flow_status") or "").lower() in _TERHAMBAT_FLOW
         ]
 
         short_ev = str(ev["name"]).replace("disaster_events:", "")

@@ -15,6 +15,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     _DELIVERY_LABEL,
     _DISTRIBUSI_STATUS_LABEL,
     _DRILL_BLOCKED_FLOW,
+    _TERHAMBAT_FLOW,
     _DRILL_DELIVERED_OFFER,
     _FLOW_STATUS_TO_STEP,
     _FLOW_TRACE_STEPS,
@@ -376,9 +377,12 @@ def distribusi_board(disaster_event=None):
             ],
         }
 
-    overall_cap = _cap_bucket(transports)
+    # owner 2026-11-09: armada yang perjalanannya sudah selesai/batal bukan ruang muat saat ini (dulu dihitung
+    # "terpakai 100%" padahal pesawatnya sudah mendarat).
+    live_transports = [t for t in transports if t.transport_status not in ("arrived", "completed", "cancelled")]
+    overall_cap = _cap_bucket(live_transports)
     by_type = {
-        ttype: _cap_bucket([t for t in transports if t.transport_type == ttype])
+        ttype: _cap_bucket([t for t in live_transports if t.transport_type == ttype])
         for ttype in ("darat", "laut", "udara")
     }
 
@@ -387,7 +391,7 @@ def distribusi_board(disaster_event=None):
     open_needs = [n for n in needs if str(n.need_status or "open").lower() == "open"]
     unmatched_needs = [n for n in open_needs if n.name not in matched_need_ids]
 
-    blocked_flows = [f for f in flows if str(f.flow_status or "").lower() in _DRILL_BLOCKED_FLOW]
+    blocked_flows = [f for f in flows if str(f.flow_status or "").lower() in _TERHAMBAT_FLOW]
 
     totals = {
         "transport_space_pct": overall_cap["pct"],

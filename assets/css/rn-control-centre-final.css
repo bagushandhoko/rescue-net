@@ -92,7 +92,7 @@ body {
       #ef4930
     );
 
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 900;
 }
 
@@ -115,7 +115,7 @@ body {
 
   color: #665e59;
 
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-sidebar nav a.active {
@@ -178,7 +178,7 @@ body {
 
   background: white;
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-system strong {
@@ -261,7 +261,7 @@ body {
 
   color: var(--muted);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-header-actions {
@@ -283,7 +283,7 @@ body {
 
   background: white;
 
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-severity {
@@ -300,7 +300,7 @@ body {
   color: var(--orange);
   background: #fff4e8;
 
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -440,13 +440,13 @@ body {
 }
 
 .cc-section-title strong {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-section-title span {
   color: var(--muted);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-needs-grid {
@@ -484,7 +484,7 @@ body {
   border-bottom:
     1px solid #f5f0ed;
 
-  font-size: 11px;
+  font-size: 13px;
 
   text-align: right;
 }
@@ -509,7 +509,7 @@ body {
 .cc-progress-label {
   margin-bottom: 2px;
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-progress-track {
@@ -675,7 +675,7 @@ body {
 .cc-kpis small {
   display: block;
 
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.3;
   color: var(--text);
@@ -695,7 +695,7 @@ body {
 
   margin-top: 3px;
 
-  font-size: 12px;
+  font-size: 13px;
   font-style: normal;
   color: var(--muted);
 }
@@ -761,7 +761,7 @@ body {
 .cc-needs-table th {
   color: var(--muted);
 
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -816,7 +816,7 @@ body {
 
   border-radius: 5px;
 
-  font-size: 12px;
+  font-size: 13px;
   font-style: normal;
   font-weight: 600;
 }
@@ -868,13 +868,13 @@ body {
   border-bottom:
     1px solid var(--line);
 
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-card > header span {
   color: var(--muted);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 
@@ -904,7 +904,7 @@ body {
   border-top:
     1px solid var(--line);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-map-legend span {
@@ -999,13 +999,13 @@ body {
   color: white;
   background: var(--red);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-priority-item strong {
   display: block;
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-priority-item p {
@@ -1013,7 +1013,7 @@ body {
 
   color: var(--muted);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 
@@ -1065,7 +1065,7 @@ body {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-evidence-item span {
@@ -1075,7 +1075,7 @@ body {
 
   color: var(--muted);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 
@@ -1117,7 +1117,7 @@ body {
   align-items: center;
   gap: 7px;
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-mod-icon {
@@ -1171,7 +1171,7 @@ body {
 
   color: var(--muted);
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-mini-chart {
@@ -1200,7 +1200,7 @@ body {
 
   color: var(--muted);
 
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-mini-chart svg {
@@ -1221,7 +1221,7 @@ body {
 
   color: #aaa;
 
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .cc-modules em {
@@ -1238,7 +1238,7 @@ body {
   color: #9c641f;
   background: #fff2df;
 
-  font-size: 11px;
+  font-size: 13px;
   font-style: normal;
 }
 
@@ -1362,7 +1362,7 @@ body {
 
     color: #625b57;
 
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .cc-header p {
@@ -1379,7 +1379,7 @@ body {
     width: 220px;
     height: 27px;
 
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .cc-severity {
@@ -1421,7 +1421,7 @@ body {
     padding:
       2px 4px;
 
-    font-size: 11px;
+    font-size: 13px;
   }
 
 
@@ -1467,7 +1467,7 @@ body {
 
     text-align: center;
 
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .cc-kpis strong {
@@ -1573,7 +1573,7 @@ body {
 
     margin-top: -7px;
 
-    font-size: 11px;
+    font-size: 13px;
   }
 
   .cc-mobile-nav a.active {
@@ -1609,7 +1609,7 @@ body {
 .cc-system small,
 .cc-system b,
 .cc-system span {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 
@@ -1639,16 +1639,16 @@ body {
 }
 
 .cc-section-title span {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-needs-grid th,
 .cc-needs-grid td {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-progress-label {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 
@@ -1663,7 +1663,7 @@ body {
 }
 
 .cc-kpis em {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 
@@ -1674,33 +1674,33 @@ body {
 }
 
 .cc-card > header span {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-map-legend {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 
 /* Priority */
 
 .cc-priority-item strong {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-priority-item p {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 
 /* Evidence */
 
 .cc-evidence-item strong {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-evidence-item span {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 
@@ -1715,11 +1715,11 @@ body {
 }
 
 .cc-modules span {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-modules em {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 
@@ -1758,16 +1758,16 @@ body {
   }
 
   .cc-section-title span {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .cc-needs-grid th,
   .cc-needs-grid td {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .cc-kpis small {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .cc-kpis strong {
@@ -1779,15 +1779,15 @@ body {
   }
 
   .cc-priority-item strong {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .cc-priority-item p {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .cc-mobile-nav small {
-    font-size: 11px;
+    font-size: 13px;
   }
 }
 
@@ -1909,7 +1909,7 @@ body {
   color: #a65b13;
   background: #fff1dd;
 
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
 }
 
@@ -1961,7 +1961,7 @@ body {
 .cc-evidence-modal-meta span {
   color: #8c827c;
 
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-evidence-modal-meta strong {
@@ -2094,7 +2094,7 @@ body {
   border-radius: 999px;
   background: #eef2ff;
   color: #3730a3;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: .04em;
   text-transform: uppercase;
@@ -2165,7 +2165,7 @@ body {
   flex: none;
   padding: 4px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
 }
@@ -2257,7 +2257,7 @@ body {
 .cc-drill-stat {
   padding: 2px 7px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: .03em;
@@ -2324,7 +2324,7 @@ body {
   align-items: center;
   gap: 6px 14px;
   color: #8c827c;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cc-drill-legend i {
@@ -2377,7 +2377,7 @@ body {
   }
 
   .cc-drill-item-foot {
-    font-size: 12px;
+    font-size: 13px;
   }
 }
 

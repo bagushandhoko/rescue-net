@@ -202,7 +202,7 @@
   function css() {
     if (document.getElementById("rn-i18n-css")) return;
     var st = document.createElement("style"); st.id = "rn-i18n-css";
-    st.textContent = ".rn-lang{display:inline-flex;border:1px solid rgba(104,64,45,.3);border-radius:8px;overflow:hidden;font:700 12px/1 system-ui,sans-serif;flex-shrink:0;margin-right:8px;vertical-align:middle}" +
+    st.textContent = ".rn-lang{display:inline-flex;border:1px solid rgba(104,64,45,.3);border-radius:8px;overflow:hidden;font:700 13px/1 system-ui,sans-serif;flex-shrink:0;margin-right:8px;vertical-align:middle}" +
       ".rn-lang button{border:0;background:#fff;color:#5e4b40;padding:6px 9px;cursor:pointer;font:inherit}" +
       ".rn-lang button[aria-pressed=true]{background:#e8755a;color:#fff}" +
       ".rn-lang button:focus-visible{outline:2px solid #e8755a;outline-offset:-2px}" +

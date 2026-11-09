@@ -35,7 +35,7 @@ class TestArmadaFinder(RNTestCase):
         st = {x["title"]: x["status"] for x in r["rows"]}
         self.assertEqual(st, {"Truk Meulaboh": "tersedia", "Pickup Penuh": "penuh", "Kapal Jakarta": "dipakai",
                               "Truk Lama": "lewat"})
-        self.assertEqual(r["counts"], {"tersedia": 1, "penuh": 1, "dipakai": 1, "lewat": 1})
+        self.assertEqual(r["counts"], {"tersedia": 1, "penuh": 1, "dipakai": 1, "lewat": 1, "selesai": 1})
         self.assertEqual(r["rows"][-1]["title"], "Truk Lama")
         self.assertFalse(r["logged_in"])
         self.assertNotIn("0812-9999-0000", frappe.as_json(r))
@@ -46,6 +46,7 @@ class TestArmadaFinder(RNTestCase):
         self.assertNotIn("Truk Meulaboh", names)           # leaves before the range
         self.assertIn("Pickup Penuh", names)               # no fixed schedule: stays visible
         self.assertEqual([x["title"] for x in self._find(status="tersedia")["rows"]], ["Truk Meulaboh"])
+        self.assertEqual([x["title"] for x in self._find(status="selesai")["rows"]], ["Selesai"])
         rows = self._find(lat=-6.21, lng=106.81)["rows"]
         kapal = [x for x in rows if x["title"] == "Kapal Jakarta"][0]
         self.assertLess(kapal["km"], 5)

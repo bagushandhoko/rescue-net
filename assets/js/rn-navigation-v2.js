@@ -306,7 +306,8 @@
       }
     }
 
-    return bestScore >= 3 ? best : null;
+    // owner 2026-11-09: halaman dengan sidebar pendek (Peta Nasional, Ekosistem, dll.) ikut memakai menu yang sama
+    return bestScore >= 3 ? best : (document.querySelector(".sidebar nav") || null);
   }
 
   function groupHtml(label, items, groupId, forceOpen) {
@@ -535,7 +536,7 @@
   var s = document.createElement("script");
   s.src = (document.currentScript && document.currentScript.src
     ? document.currentScript.src.replace(/rn-navigation-v2\.js.*$/, "")
-    : "../assets/js/") + "rn-ai-notice.js?v=inbox2-20261108";
+    : "../assets/js/") + "rn-ai-notice.js?v=font13-20261109";
   s.defer = true; s.setAttribute("data-rn-ai-notice", "1");
   document.head.appendChild(s);
 })();

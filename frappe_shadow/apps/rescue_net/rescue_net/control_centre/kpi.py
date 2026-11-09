@@ -12,6 +12,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     KPI_DIMENSIONS,
     TREND_SOURCES,
     _DRILL_BLOCKED_FLOW,
+    _TERHAMBAT_FLOW,
     _DRILL_CLOSED_NEED,
     _DRILL_DELIVERED_OFFER,
     _DRILL_TITLES,
@@ -241,7 +242,7 @@ def _drill_flows(event, res, limit, only_blocked):
         limit_page_length=limit,
     ):
         st = str(f.get("flow_status") or "").lower()
-        if only_blocked and st not in _DRILL_BLOCKED_FLOW:
+        if only_blocked and st not in _TERHAMBAT_FLOW:
             continue
         transport = f.get("transport_type") or f.get("transport_provider")
         rows.append({

@@ -6,11 +6,11 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Koordinasi Internal Organisasi</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=font-20261109">
+  <link rel="stylesheet" href="../assets/css/style.css?v=font13-20261109">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
-  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=kursor-20261108">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font13-20261109">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=font-20261109" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=font-20261109" />
   <style>
@@ -30,10 +30,10 @@
     }
     .ko-posko-card.is-mine { border-color: var(--ko-accent); box-shadow: 0 0 0 1px var(--ko-accent) inset; }
     .ko-posko-card h4 { margin: 0; font-size: 14px; line-height: 1.3; }
-    .ko-posko-meta { color: var(--muted); font-size: 12px; }
+    .ko-posko-meta { color: var(--muted); font-size: 13px; }
     .ko-posko-card .rn-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .ko-tag {
-      font-size:12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase;
+      font-size:13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase;
       padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted);
     }
     .ko-tag.edit { background: var(--ko-accent); border-color: var(--ko-accent); color: #fff; }
@@ -152,18 +152,18 @@
         </div>
 
         <h4 class="rn-md-detail-h">Keterbukaan &amp; Control Centre</h4>
-        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Satu klik untuk membuka/menutup organisasi. <b>Tertutup</b>: Control Centre hanya menampilkan ringkasan organisasi Anda ke luar — organisasi Anda tetap memantau detail poskonya sendiri. <b>Terbuka</b>: detail posko tampil penuh ke semua. Posko yang Anda set &quot;publik&quot; (mis. kapal bersama) tetap terlihat publik meski organisasi tertutup, selama opsi di bawah aktif.</p>
+        <p class="rn-muted" style="font-size:13px;margin:0 0 8px">Satu klik untuk membuka/menutup organisasi. <b>Tertutup</b>: Control Centre hanya menampilkan ringkasan organisasi Anda ke luar — organisasi Anda tetap memantau detail poskonya sendiri. <b>Terbuka</b>: detail posko tampil penuh ke semua. Posko yang Anda set &quot;publik&quot; (mis. kapal bersama) tetap terlihat publik meski organisasi tertutup, selama opsi di bawah aktif.</p>
         <div id="koOrgVisibility"></div>
 
         <h4 class="rn-md-detail-h">Hierarki &amp; kelola induk</h4>
         <div id="koOrgHierarchy"></div>
 
         <h4 class="rn-md-detail-h">Permintaan Menunggu Persetujuan</h4>
-        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Gabung/tarik/lepas hierarki butuh persetujuan pihak yang tidak mengajukan. Kontak person ditampilkan untuk saling verifikasi sebelum diputuskan; menolak wajib disertai alasan.</p>
+        <p class="rn-muted" style="font-size:13px;margin:0 0 8px">Gabung/tarik/lepas hierarki butuh persetujuan pihak yang tidak mengajukan. Kontak person ditampilkan untuk saling verifikasi sebelum diputuskan; menolak wajib disertai alasan.</p>
         <div id="koPendingRequests"></div>
 
         <h4 class="rn-md-detail-h">Tarik organisasi jadi anak</h4>
-        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Mis. PMI Pusat menarik PMI daerah yang tadinya berdiri sendiri. Ini mengajukan permintaan — organisasi tujuan yang harus menyetujui (kecuali Anda juga pengelola organisasi tujuan).</p>
+        <p class="rn-muted" style="font-size:13px;margin:0 0 8px">Mis. PMI Pusat menarik PMI daerah yang tadinya berdiri sendiri. Ini mengajukan permintaan — organisasi tujuan yang harus menyetujui (kecuali Anda juga pengelola organisasi tujuan).</p>
         <form class="rn-form" id="koAttachForm" autocomplete="off">
           <label>Induk (organisasi saya)
             <select name="parent_organization" id="koAttachParent"></select>
@@ -182,7 +182,7 @@
         <div id="koHierLog"></div>
 
         <h4 class="rn-md-detail-h">Kunci AI Organisasi (BYOK)</h4>
-        <p class="rn-muted" style="font-size:12px;margin:0 0 8px">Kunci disimpan terenkripsi di server — halaman ini hanya menampilkan status &amp; 4 digit terakhir. AI organisasi ini memakai kunci tersebut.</p>
+        <p class="rn-muted" style="font-size:13px;margin:0 0 8px">Kunci disimpan terenkripsi di server — halaman ini hanya menampilkan status &amp; 4 digit terakhir. AI organisasi ini memakai kunci tersebut.</p>
         <form class="rn-form" id="koAiKeyForm" autocomplete="off">
           <label>Organisasi
             <select name="organization_id" id="koAiKeyOrg"></select>
@@ -197,7 +197,7 @@
             </label>
             <label>Label (opsional)<input name="api_key_label" placeholder="mis. Kunci utama"></label>
           </div>
-          <p class="rn-muted" id="koAiKeyStatus" style="font-size:12px;margin:2px 0">—</p>
+          <p class="rn-muted" id="koAiKeyStatus" style="font-size:13px;margin:2px 0">—</p>
           <label>API key<input name="api_key" type="password" placeholder="Tempel kunci baru untuk menyimpan / mengganti"></label>
           <div class="form-actions">
             <button class="btn primary" type="submit">Simpan Kunci</button>
@@ -251,9 +251,9 @@
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20261008"></script>
-<script src="../assets/js/koordinasi-organisasi.js?v=addmember-20261108"></script>
+<script src="../assets/js/koordinasi-organisasi.js?v=font13-20261109"></script>
 <script src="../assets/js/session-role.js?v=petugas-20261109"></script>
-<script src="../assets/js/rn-public-header.js?v=font-20261109"></script>
+<script src="../assets/js/rn-public-header.js?v=font13-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
 <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 

@@ -15,7 +15,7 @@
 .kp-table th, .kp-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .kp-table th { font-size: 13px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); white-space: nowrap; }
 .kp-table td small { display: block; color: var(--muted); font-size: 13px; }
-.kp-tag { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }
+.kp-tag { display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line2); color: var(--muted); }
 .kp-tag.ok { color: var(--green); border-color: rgba(47,155,104,.4); }
 .kp-tag.bad { color: var(--red, #c0392b); border-color: rgba(192,57,43,.4); }
 .kp-tag.wait { color: var(--yellow); border-color: rgba(184,137,24,.4); }

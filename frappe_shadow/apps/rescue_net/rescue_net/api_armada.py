@@ -16,7 +16,8 @@ from rescue_net.reference_resolver import resolve_disaster_event
 
 IN_USE = {"reserved", "assigned", "in_transit"}
 DONE = {"arrived", "completed", "cancelled"}
-STATUS_LABEL = {"tersedia": "Tersedia", "penuh": "Penuh", "dipakai": "Sedang dipakai", "lewat": "Jadwal lewat"}
+STATUS_LABEL = {"tersedia": "Tersedia", "penuh": "Penuh", "dipakai": "Sedang dipakai", "lewat": "Jadwal lewat",
+                "selesai": "Perjalanan selesai"}
 TYPE_LABEL = {"darat": "Darat", "laut": "Laut", "udara": "Udara", "lainnya": "Lainnya"}
 
 
@@ -56,16 +57,21 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
     me_lat, me_lng = _num(lat), _num(lng)
     d_from = getdate(date_from) if date_from else None
     d_to = getdate(date_to) if date_to else None
-    out, counts = [], {"tersedia": 0, "penuh": 0, "dipakai": 0, "lewat": 0}
+    out, counts = [], {"tersedia": 0, "penuh": 0, "dipakai": 0, "lewat": 0, "selesai": 0}
     now = now_datetime()
     for r in rows:
         st = r.transport_status or "available"
-        if st in DONE:
+        # owner 2026-11-09: armada yang perjalanannya selesai tetap terhitung ("Selesai N") dan bisa dilihat lewat
+        # filter Status = Perjalanan selesai, tapi tidak tampil di daftar biasa (tidak bisa dipesan lagi).
+        if st in DONE and status != "selesai":
+            counts["selesai"] += 1
             continue
         cap_kg, cap_m3 = flt(r.capacity_weight_kg), flt(r.capacity_volume_m3)
         left_kg = max(0.0, cap_kg - flt(r.own_load_kg) - flt(r.capacity_committed_kg)) if cap_kg else None
         left_m3 = max(0.0, cap_m3 - flt(r.own_load_m3) - flt(r.capacity_committed_m3)) if cap_m3 else None
-        if st in IN_USE:
+        if st in DONE:
+            avail = "selesai"
+        elif st in IN_USE:
             avail = "dipakai"
         elif (left_kg is not None and left_kg <= 0) and (left_m3 is None or left_m3 <= 0):
             avail = "penuh"
@@ -107,7 +113,7 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
             "pos_live": bool(r.position_lat and r.position_lng), "pos_at": str(r.position_at or "")[:16],
             "href": "posko-distribusi.html?id=" + (r.coordination_posko or "") + ("&event=" + event if event else ""),
         })
-    out.sort(key=lambda x: ({"tersedia": 0, "penuh": 1, "dipakai": 2, "lewat": 3}[x["status"]],
+    out.sort(key=lambda x: ({"tersedia": 0, "penuh": 1, "dipakai": 2, "lewat": 3, "selesai": 4}[x["status"]],
                             x["km"] if x["km"] is not None else 1e9, x["departure"] or "9999"))
     return {"rows": out, "counts": counts, "logged_in": frappe.session.user != "Guest"}
 

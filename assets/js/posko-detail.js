@@ -615,6 +615,7 @@ async function loadPosko() {
   }
 
   const d = res.detail || {};
+  if (res.posko && res.posko.posko_type === "transport") renderArmadaPanel(getPoskoId(), currentEventParam());
 
   const ctx = {
     posko: {
@@ -969,4 +970,43 @@ async function loadOperatorRequest() {
       btn.hidden = true;
     } catch (err) { msg.textContent = "Gagal: " + ((err && err.message) || err); }
   };
+}
+
+
+/* owner 2026-11-09: "TNI posko terbuka, diklik nggak muncul kapasitas dll seperti posko distribusi lainnya" —
+   posko transport menampilkan armada & kapasitasnya (data sama dengan Posko Distribusi, terbuka untuk tamu karena
+   dipakai untuk memesan ruang muat; stok/kontak tetap mengikuti aturan privasi organisasi). */
+async function renderArmadaPanel(poskoId, eventId) {
+  const panel = document.getElementById("armadaPanel");
+  if (!panel) return;
+  let b;
+  try {
+    b = await RN_FRAPPE.call("rescue_net.api_control_centre.posko_distribusi_board", { posko: poskoId, disaster_event: eventId || "" });
+  } catch (e) { return; }
+  const list = (b && b.armada) || [];
+  if (!b || (!b.is_transport_posko && !list.length)) return;
+  const t = b.totals || {};
+  const n = v => Number(v || 0).toLocaleString("id-ID");
+  panel.hidden = false;
+  document.getElementById("armadaPanelCount").textContent = list.length + " armada";
+  document.getElementById("armadaPanelKpi").innerHTML = [
+    ["Armada", n(t.armada_count), "unit transport"],
+    ["Kapasitas Total", n(t.kapasitas_total_kg) + " kg", n(t.kapasitas_total_m3) + " m³"],
+    ["Masih Tersedia", n(list.filter(a => a.avail !== "selesai").reduce((x, a) => x + Number(a.kapasitas_tersedia_kg || 0), 0)) + " kg",
+      list.some(a => a.avail !== "selesai") ? "ruang yang bisa dipesan" : "semua perjalanan sudah selesai"],
+    ["Booking", n(t.booking_terkonfirmasi), n(t.booking_menunggu) + " menunggu konfirmasi"],
+  ].map(k => `<div class="kpi-card"><span>${safe(k[0])}</span><strong>${safe(k[1])}</strong><small>${safe(k[2])}</small></div>`).join("");
+  const JENIS = { darat: "Darat", laut: "Laut", udara: "Udara", lainnya: "Lainnya" };
+  document.getElementById("armadaPanelBody").innerHTML = list.length ? list.map(a => `<tr>
+      <td><b>${safe(a.provider)}</b>${a.service_mode_label ? `<br><small class="rn-muted">${safe(a.service_mode_label)}</small>` : ""}</td>
+      <td>${safe(JENIS[a.jenis] || a.jenis || "-")}</td>
+      <td>${n(a.kapasitas_total_kg)} kg${a.kapasitas_total_m3 ? " · " + n(a.kapasitas_total_m3) + " m³" : ""}</td>
+      <td>${a.avail === "selesai" ? "-" : n(a.kapasitas_tersedia_kg) + " kg"}</td>
+      <td>${safe(a.berangkat || "-")} → ${safe(a.eta || "-")}</td>
+      <td>${safe(a.rute || "-")}</td>
+      <td><span class="chip">${safe(a.status_label || a.status || "-")}</span></td></tr>`).join("")
+    : '<tr><td colspan="7"><em class="rn-muted">Posko ini belum mendaftarkan armada.</em></td></tr>';
+  const q = new URLSearchParams({ id: poskoId });
+  if (eventId) q.set("event", eventId);
+  document.getElementById("armadaPanelLink").href = "posko-distribusi.html?" + q.toString();
 }

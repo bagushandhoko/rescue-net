@@ -61,7 +61,7 @@
       "padding:20px 22px;color:#2a2018}",
       ".rn-ps-card h3{margin:0 0 2px}",
       ".rn-ps-sub{color:#6b5c4f;font-size:13px;margin:0 0 14px}",
-      ".rn-ps-sec{font-weight:700;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#8a5a2a;",
+      ".rn-ps-sec{font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#8a5a2a;",
       "margin:16px 0 6px}",
       ".rn-ps-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}",
       ".rn-ps-grid label{display:flex;flex-direction:column;gap:3px;font-size:13px}",
@@ -148,7 +148,7 @@
         '<button type="button" class="rn-ps-cancel" id="rnPsLogBtn">Lihat log kiriman</button>' +
         '<span class="rn-ps-msg" id="rnPsWaMsg"></span>' +
       "</div>" +
-      '<div class="wide" id="rnPsLog" style="grid-column:1/-1;font-size:12px;color:#5b4a3d"></div>' +
+      '<div class="wide" id="rnPsLog" style="grid-column:1/-1;font-size:13px;color:#5b4a3d"></div>' +
       "</div>" +
 
       '<div class="rn-ps-sec">Data Lain</div>' +

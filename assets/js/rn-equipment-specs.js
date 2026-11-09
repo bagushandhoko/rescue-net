@@ -106,7 +106,7 @@
     return fail;
   }
   function photosHtml(photos, canDelete) {
-    if (!photos || !photos.length) return '<p class="rn-muted" style="font-size:12px">Belum ada foto.</p>';
+    if (!photos || !photos.length) return '<p class="rn-muted" style="font-size:13px">Belum ada foto.</p>';
     return '<div class="rn-eq-photos">' + photos.map(function (p) {
       return '<figure><a href="' + esc(p.url) + '" target="_blank" rel="noopener"><img src="' + esc(p.url) + '" alt="" loading="lazy"></a>' +
         (canDelete ? '<button type="button" class="btn ghost mini" data-photo-del="' + esc(p.url) + '">hapus</button>' : "") + "</figure>";

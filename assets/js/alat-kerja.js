@@ -299,7 +299,7 @@
     showDrill(o.title,
       o.object_type_label + " · " + fmt(o.size_value) + " " + (o.size_unit || "") +
       (o.work_days_target ? " · target " + fmt(o.work_days_target) + " hari kerja" : "") + " · " + (o.location || "-"),
-      '<div class="rn-ak-object-preds">' + preds + "</div>" + (o.notes ? '<p class="rn-muted" style="margin-top:10px;font-size:12px;">' + esc(o.notes) + "</p>" : ""));
+      '<div class="rn-ak-object-preds">' + preds + "</div>" + (o.notes ? '<p class="rn-muted" style="margin-top:10px;font-size:13px;">' + esc(o.notes) + "</p>" : ""));
   }
 
   function renderDispatch(rows) {

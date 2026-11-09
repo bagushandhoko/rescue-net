@@ -5,7 +5,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return window.RNUI ? window.RNUI.esc(s) : String(s == null ? "" : s); };
   var ME = null, LOGGED = false, MAP = null, LAYER = null, TRAIL = null, ROWS = [];
-  var COLOR = { tersedia: "#2f9a5c", penuh: "#e08a1e", dipakai: "#d23c3c", lewat: "#a89a91" };
+  var COLOR = { tersedia: "#2f9a5c", penuh: "#e08a1e", dipakai: "#d23c3c", lewat: "#a89a91", selesai: "#7d8a99" };
 
   function drawMap(rows) {
     var host = $("afMap");
@@ -46,7 +46,7 @@
       $("afMap").scrollIntoView({ behavior: "smooth", block: "center" });
     } catch (e) { alert((e && e.message) || e); }
   }
-  var CHIP = { tersedia: "ok", penuh: "warning", dipakai: "danger", lewat: "" };
+  var CHIP = { tersedia: "ok", penuh: "warning", dipakai: "danger", lewat: "", selesai: "" };
   function num(n, unit) { return n == null ? "" : (Math.round(n * 10) / 10).toLocaleString("id-ID") + " " + unit; }
   function eventId() { return (window.RNUI && window.RNUI.eventId()) || new URLSearchParams(location.search).get("event") || ""; }
 
@@ -54,7 +54,8 @@
     var cap = [a.left_kg != null ? "sisa " + num(a.left_kg, "kg") + (a.capacity_kg ? " dari " + num(a.capacity_kg, "kg") : "") : "",
                a.left_m3 != null ? "sisa " + num(a.left_m3, "m³") : "", a.seats ? a.seats + " kursi relawan" : ""].filter(Boolean).join(" · ");
     var when = a.departure ? (a.flexible ? "Jadwal: " + a.departure : "Berangkat " + a.departure.replace("T", " ")) : "Jadwal fleksibel";
-    var action = a.status === "lewat" ? '<span class="rn-muted">Jadwal sudah lewat — hubungi posko untuk jadwal baru</span>'
+    var action = a.status === "selesai" ? '<span class="rn-muted">Perjalanan sudah selesai</span>'
+      : a.status === "lewat" ? '<span class="rn-muted">Jadwal sudah lewat — hubungi posko untuk jadwal baru</span>'
       : a.status === "dipakai" ? '<span class="rn-muted">Sedang dipakai</span>'
       : LOGGED ? '<a class="btn primary mini" href="' + esc(a.href + "&armada=" + encodeURIComponent(a.name)) + '">Pesan</a>'
       : '<a class="btn mini" href="auth.html?next=' + encodeURIComponent(a.href + "&armada=" + encodeURIComponent(a.name)) + '">Login untuk pesan</a>';
@@ -78,9 +79,10 @@
       LOGGED = !!r.logged_in;
       var c = r.counts || {};
       $("afCounts").innerHTML = '<span class="chip ok">Tersedia ' + (c.tersedia || 0) + '</span> <span class="chip warning">Penuh ' + (c.penuh || 0) +
-        '</span> <span class="chip danger">Sedang dipakai ' + (c.dipakai || 0) + '</span> <span class="chip">Jadwal lewat ' + (c.lewat || 0) + "</span>" + (ME ? ' <small class="rn-muted">urut dari lokasi Anda</small>' : "");
+        '</span> <span class="chip danger">Sedang dipakai ' + (c.dipakai || 0) + '</span> <span class="chip">Jadwal lewat ' + (c.lewat || 0) + '</span> <span class="chip" data-af-done>Selesai ' + (c.selesai || 0) + "</span>" + (ME ? ' <small class="rn-muted">urut dari lokasi Anda</small>' : "");
       ROWS = r.rows;
-      $("afList").innerHTML = r.rows.length ? r.rows.map(row).join("") : '<p class="rn-muted">Tidak ada armada yang cocok dengan filter.</p>';
+      $("afList").innerHTML = r.rows.length ? r.rows.map(row).join("") : '<p class="rn-muted">Tidak ada armada yang cocok dengan filter.' +
+        (c.selesai && $("afStatus").value !== "selesai" ? ' ' + c.selesai + ' armada sudah selesai perjalanan — <a href="#" data-af-showdone>tampilkan</a>.' : "") + "</p>";
       drawMap(r.rows);
     } catch (e) { $("afList").innerHTML = '<p class="rn-muted">' + esc((e && e.message) || e) + "</p>"; }
   }
@@ -96,6 +98,7 @@
       }, function () { $("afNear").textContent = "📍 Urutkan dari lokasi saya"; alert("Izin lokasi ditolak."); });
     });
     document.addEventListener("click", function (e) {
+      if (e.target.closest("[data-af-showdone]")) { e.preventDefault(); $("afStatus").value = "selesai"; load(); return; }
       var t = e.target.closest("[data-trail]");
       if (!t) return;
       e.preventDefault(); showTrail(t.getAttribute("data-trail"));

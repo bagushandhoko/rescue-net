@@ -302,7 +302,7 @@
     if (typeof QRCode === "function") {
       new QRCode(box, { text: url, width: 176, height: 176, correctLevel: QRCode.CorrectLevel.M });
     } else {
-      box.innerHTML = '<span class="rn-muted" style="font-size:12px">Pustaka QR gagal dimuat — pakai tautan di bawah.</span>';
+      box.innerHTML = '<span class="rn-muted" style="font-size:13px">Pustaka QR gagal dimuat — pakai tautan di bawah.</span>';
     }
     modal.hidden = false;
     document.body.style.overflow = "hidden";
@@ -331,7 +331,7 @@
       '<!doctype html><title>Label QR — ' + trace + '</title>' +
       '<style>body{font-family:system-ui,Segoe UI,Roboto,sans-serif;margin:0;padding:24px;text-align:center}' +
       'img{width:220px;height:220px}.t{font-family:monospace;font-weight:700;font-size:18px;letter-spacing:1px;margin-top:8px}' +
-      '.r{font-size:12px;color:#444;margin-top:4px}.u{font-size:12px;color:#666;margin-top:8px;word-break:break-all}' +
+      '.r{font-size:13px;color:#444;margin-top:4px}.u{font-size:13px;color:#666;margin-top:8px;word-break:break-all}' +
       '@media print{@page{margin:8mm}}</style>' +
       '<div style="font-weight:700;font-size:13px">RESCUE-NET · LACAK LOGISTIK</div>' +
       (src ? '<div><img src="' + src + '" alt="QR"></div>' : '<p>(QR gagal dirender)</p>') +
@@ -351,6 +351,20 @@
 
     renderKpi(data.totals || {});
     renderMatchingBoard(data.matching_board || {});
+    // owner 2026-11-09: buka tab moda yang punya unit (dulu selalu Darat walau kosong)
+    if (!window.__mdTabPicked) {
+      window.__mdTabPicked = true;
+      var bt = data.ruang_transportasi.by_type;
+      if (!(bt[activeTransportTab].units || []).length) {
+        var first = ["darat", "laut", "udara"].filter(function (k) { return (bt[k].units || []).length; })[0];
+        if (first) {
+          activeTransportTab = first;
+          document.querySelectorAll("#transportTabs .rn-tab").forEach(function (t) {
+            t.classList.toggle("is-active", t.getAttribute("data-type") === first);
+          });
+        }
+      }
+    }
     renderTransportTab(data.ruang_transportasi.by_type);
     ALUR_ALL = data.alur_distribusi || [];
     applyAlurFilter();

@@ -134,3 +134,13 @@
     min-height: 44px;
   }
 }
+
+/* Owner 2026-11-09: "format side menu, font dan lebar kolom samakan dengan halaman Bencana Aktif, tetap satu baris
+   tiap item, besarkan sedikit selama masih bisa, samakan ke semua halaman" — laptop/desktop saja (HP pakai drawer). */
+@media (min-width: 901px) {
+  .sidebar .rn-nav-v2-summary { font-size: 16px; line-height: 1.3; }
+  .sidebar .rn-nav-v2-link.rn-nav-v2-child { font-size: 15px; line-height: 1.3; min-height: 36px; padding-top: 7px; padding-bottom: 7px; }
+  .sidebar .rn-nav-v2-link, .sidebar .rn-nav-v2-label { white-space: nowrap; }
+  .sidebar .rn-nav-v2-label { overflow: hidden; text-overflow: ellipsis; }
+  .sidebar .rn-nav-v2-children { gap: 2px; }
+}

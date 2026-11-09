@@ -3,7 +3,7 @@
   const prefix = isHome() ? "" : "../";
 
   // Dua bahasa ID/EN (rn-i18n.js): dimuat sekali untuk semua halaman yang memakai header publik.
-  if (!document.querySelector('script[src*="rn-i18n.js"]')) { const s18 = document.createElement("script"); s18.src = `${prefix}assets/js/rn-i18n.js?v=i18n16-20261109`; document.head.appendChild(s18); }
+  if (!document.querySelector('script[src*="rn-i18n.js"]')) { const s18 = document.createElement("script"); s18.src = `${prefix}assets/js/rn-i18n.js?v=font13-20261109`; document.head.appendChild(s18); }
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
   const RN_EVENT_DEFAULT = "event-sim-001";
@@ -62,7 +62,7 @@
     const ownPicker = document.querySelector("#pkEventSel, #boEventSel, [data-own-event-picker]");
     const mainEl = document.querySelector("main, .main, .rn-main");
     if (!document.getElementById("rnEvPickCss")) { const st = document.createElement("style"); st.id = "rnEvPickCss";
-      st.textContent = ".rn-event-picker--side{display:block!important;margin:6px 14px 14px}.rn-event-picker--side label{display:flex!important;flex-direction:column;align-items:stretch;gap:4px;width:100%}.rn-event-picker--side label>span{font-size:12px;letter-spacing:.04em;text-transform:uppercase;opacity:.75}.rn-event-picker--side select{width:100%;max-width:none;min-height:38px;border-radius:10px;padding:6px 8px;font-size:14px}.rn-event-picker--inline{display:flex!important;margin:0 0 12px}.rn-event-picker--inline label{display:inline-flex!important;align-items:center;gap:8px;font-size:13px}.rn-event-picker--inline select{min-width:280px;max-width:520px;min-height:36px;border-radius:10px;padding:4px 8px;font-size:14px}";
+      st.textContent = ".rn-event-picker--side{display:block!important;margin:6px 14px 14px}.rn-event-picker--side label{display:flex!important;flex-direction:column;align-items:stretch;gap:4px;width:100%}.rn-event-picker--side label>span{font-size:13px;letter-spacing:.04em;text-transform:uppercase;opacity:.75}.rn-event-picker--side select{width:100%;max-width:none;min-height:38px;border-radius:10px;padding:6px 8px;font-size:14px}.rn-event-picker--inline{display:flex!important;margin:0 0 12px}.rn-event-picker--inline label{display:inline-flex!important;align-items:center;gap:8px;font-size:13px}.rn-event-picker--inline select{min-width:280px;max-width:520px;min-height:36px;border-radius:10px;padding:4px 8px;font-size:14px}";
       document.head.appendChild(st); }
     if (sideBrand) { wrap.classList.add("rn-event-picker--side"); sideBrand.insertAdjacentElement("afterend", wrap); }
     else if (desk && ownPicker) { return; }
@@ -105,6 +105,10 @@
   // 2026-11-09: akun login Google / akun lama belum menyetujui Kebijakan Privasi -> minta sekali
   function askPrivacyOnce(sess) {
     if (!sess.privacy_consent_needed || document.getElementById("rnPrivacyAsk")) return;
+    // owner 2026-11-09: "permintaan privacy cukup sekali kalau login google, jangan di setiap halaman" —
+    // "Nanti" / gagal simpan diingat per akun di browser ini selama 7 hari, tidak muncul lagi di halaman berikutnya.
+    const KEY = "rnPrivacyAsked:" + (sess.user || "");
+    try { const t = Number(localStorage.getItem(KEY) || 0); if (t && Date.now() - t < 7 * 864e5) return; localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
     const pfx = location.pathname.indexOf("/pages/") !== -1 ? "" : "pages/";
     const box = document.createElement("div"); box.id = "rnPrivacyAsk";
     box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true");
@@ -123,9 +127,16 @@
     ok.onclick = async () => {
       ok.disabled = true;
       try {
-        const r = await fetch(RN_API + "rescue_net.api_auth.accept_privacy", { method: "POST", credentials: "include",
-          headers: Object.assign({ "Content-Type": "application/json" }, sess.csrf_token ? { "X-Frappe-CSRF-Token": sess.csrf_token } : {}), body: "{}" });
-        if (!r.ok) throw new Error("HTTP " + r.status);
+        let res;
+        if (window.RN_FRAPPE && window.RN_FRAPPE.call) {
+          res = await window.RN_FRAPPE.call("rescue_net.api_auth.accept_privacy", {}, { method: "POST" });   // CSRF + retry
+        } else {
+          const r = await fetch(RN_API + "rescue_net.api_auth.accept_privacy", { method: "POST", credentials: "include",
+            headers: Object.assign({ "Content-Type": "application/json" }, sess.csrf_token ? { "X-Frappe-CSRF-Token": sess.csrf_token } : {}), body: "{}" });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          res = ((await r.json()) || {}).message;
+        }
+        if (!res || !res.ok) throw new Error("tidak tersimpan");
         box.remove();
       } catch (e) { ok.disabled = false; box.querySelector("#rnPrivacyMsg").textContent = "Gagal menyimpan, coba lagi."; }
     };
@@ -143,7 +154,7 @@
     // owner 2026-10-26: clicking the name opens the account's own settings
     if (!document.getElementById("rnUserMenuCss")) {
       const st = document.createElement("style"); st.id = "rnUserMenuCss";
-      st.textContent = "/* account menu on the user name (2026-10-26) */ .rn-user-wrap { position: relative; display: inline-flex; } .rn-user-btn { font: inherit; color: inherit; background: none; border: 0; padding: 4px 6px; cursor: pointer; border-radius: 8px; } .rn-user-btn:hover, .rn-user-btn:focus-visible { background: rgba(232, 117, 90, .12); outline: none; } .rn-user-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 1000; min-width: 240px; max-width: min(320px, 92vw);   background: #fff; color: #2d211b; border: 1px solid rgba(104, 64, 45, .18); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .14);   padding: 6px; display: grid; } .rn-user-menu[hidden] { display: none; } .rn-user-menu-head { display: grid; gap: 2px; padding: 8px 10px 10px; border-bottom: 1px solid rgba(104, 64, 45, .12); margin-bottom: 4px; } .rn-user-menu-head small { color: #7c6458; font-size: 12px; overflow-wrap: anywhere; } .rn-user-menu a { display: block; padding: 9px 10px; border-radius: 8px; color: inherit; text-decoration: none; font-size: 14px; } .rn-user-menu a:hover, .rn-user-menu a:focus-visible { background: #fff4ef; outline: none; } .rn-user-menu .rn-user-logout { color: #c0392b; border-top: 1px solid rgba(104, 64, 45, .12); margin-top: 4px; } .rn-drawer-public .rn-user-wrap { display: grid; } .rn-drawer-public .rn-user-menu { position: static; box-shadow: none; margin-top: 6px; min-width: 0; max-width: none; }";
+      st.textContent = "/* account menu on the user name (2026-10-26) */ .rn-user-wrap { position: relative; display: inline-flex; } .rn-user-btn { font: inherit; color: inherit; background: none; border: 0; padding: 4px 6px; cursor: pointer; border-radius: 8px; } .rn-user-btn:hover, .rn-user-btn:focus-visible { background: rgba(232, 117, 90, .12); outline: none; } .rn-user-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 1000; min-width: 240px; max-width: min(320px, 92vw);   background: #fff; color: #2d211b; border: 1px solid rgba(104, 64, 45, .18); border-radius: 12px; box-shadow: 0 10px 30px rgba(0, 0, 0, .14);   padding: 6px; display: grid; } .rn-user-menu[hidden] { display: none; } .rn-user-menu-head { display: grid; gap: 2px; padding: 8px 10px 10px; border-bottom: 1px solid rgba(104, 64, 45, .12); margin-bottom: 4px; } .rn-user-menu-head small { color: #7c6458; font-size: 13px; overflow-wrap: anywhere; } .rn-user-menu a { display: block; padding: 9px 10px; border-radius: 8px; color: inherit; text-decoration: none; font-size: 14px; } .rn-user-menu a:hover, .rn-user-menu a:focus-visible { background: #fff4ef; outline: none; } .rn-user-menu .rn-user-logout { color: #c0392b; border-top: 1px solid rgba(104, 64, 45, .12); margin-top: 4px; } .rn-drawer-public .rn-user-wrap { display: grid; } .rn-drawer-public .rn-user-menu { position: static; box-shadow: none; margin-top: 6px; min-width: 0; max-width: none; }";
       document.head.appendChild(st);
     }
     const userEl = document.createElement("span"); userEl.className = "rn-public-user rn-user-wrap";

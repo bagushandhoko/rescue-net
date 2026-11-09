@@ -208,7 +208,7 @@
           "<h4>" + esc(m.user_name) + "</h4>" +
           '<div class="ko-posko-meta">Kontak: ' + esc(m.user_email || "-") + (m.user_phone ? " · " + esc(m.user_phone) : "") +
           " · minta " + fmtDate(m.requested_at) + " · " + esc(m.organization_title) + "</div>" +
-          (isOwnerOf(m.organization) ? '<label class="rn-row" style="font-size:12px"><input type="checkbox" class="koVerifyChk"> Identitas terverifikasi pusat</label>' : "") +
+          (isOwnerOf(m.organization) ? '<label class="rn-row" style="font-size:13px"><input type="checkbox" class="koVerifyChk"> Identitas terverifikasi pusat</label>' : "") +
           '<div class="ko-card-actions">' +
           '<button type="button" class="btn primary mini" data-act="approve">Setujui</button>' +
           '<button type="button" class="btn ghost mini" data-act="reject">Tolak</button>' +
@@ -377,13 +377,13 @@
       "</div>" +
       '<div class="ko-posko-meta" style="margin-top:6px">Sub-organisasi:</div>' + kids +
       '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' +
-        '<label class="rn-muted" style="font-size:12px">Ubah induk: ' +
+        '<label class="rn-muted" style="font-size:13px">Ubah induk: ' +
           '<select class="koSetParent">' + opts.join("") + "</select></label>" +
         '<button type="button" class="btn ghost mini koApplyParent">Ajukan</button>' +
         (o.parent_organization
           ? '<button type="button" class="btn ghost mini koDetach">Ajukan lepas (berdiri sendiri)</button>'
           : "") +
-        '<span class="koOrgMsg rn-muted" style="font-size:12px"></span>' +
+        '<span class="koOrgMsg rn-muted" style="font-size:13px"></span>' +
       "</div>" +
       "</article>";
   }
@@ -516,7 +516,7 @@
       '<div class="rn-row" style="justify-content:space-between;align-items:center">' +
         "<b>" + esc(title || name) + "</b>" + stateChip +
       "</div>" +
-      '<p class="rn-muted" style="font-size:12px;margin:6px 0">' + esc(desc) + "</p>" +
+      '<p class="rn-muted" style="font-size:13px;margin:6px 0">' + esc(desc) + "</p>" +
       '<button type="button" class="btn ' + (isOpen ? "ghost" : "primary") +
         ' koVisToggle" data-open="' + (isOpen ? "1" : "0") + '">' +
         (isOpen ? "Tutup — hanya organisasi" : "Buka ke publik") +

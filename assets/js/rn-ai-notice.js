@@ -61,10 +61,10 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   var css = document.createElement("style");
   css.textContent = ".rn-bell{position:relative;border:1px solid rgba(104,64,45,.25);background:#fff;border-radius:999px;width:36px;height:36px;font-size:17px;cursor:pointer;flex-shrink:0;margin-left:6px}" +
-    ".rn-bell b{position:absolute;top:-4px;right:-4px;background:#d64545;color:#fff;border-radius:999px;font:700 11px/1 system-ui;padding:3px 5px;min-width:18px}" +
+    ".rn-bell b{position:absolute;top:-4px;right:-4px;background:#d64545;color:#fff;border-radius:999px;font:700 13px/1 system-ui;padding:3px 5px;min-width:18px}" +
     ".rn-bell-pop{position:fixed;z-index:9500;top:60px;right:max(12px,env(safe-area-inset-right,0px));width:min(380px,calc(100vw - 24px));max-height:70vh;overflow:auto;background:#fff;border:1px solid rgba(104,64,45,.2);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:8px}" +
     ".rn-bell-pop h4{margin:4px 6px 8px;font-size:15px}.rn-bell-pop a,.rn-bell-pop div.it{display:block;padding:8px 10px;border-radius:8px;color:inherit;text-decoration:none;font-size:14px;overflow-wrap:anywhere}" +
-    ".rn-bell-pop .new{background:#fff6f1}.rn-bell-pop small{display:block;color:#7c6458;font-size:12px;margin-top:2px}";
+    ".rn-bell-pop .new{background:#fff6f1}.rn-bell-pop small{display:block;color:#7c6458;font-size:13px;margin-top:2px}";
   document.head.appendChild(css);
   var pop = null, data = null;
   function render(btns) {

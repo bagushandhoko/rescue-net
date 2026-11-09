@@ -524,7 +524,7 @@
   (function loadAiChat() {
     if (window.RNAIChat || document.querySelector('script[src*="rn-ai-chat.js"]')) return;
     const s = document.createElement("script");
-    s.src = prefix + "assets/js/rn-ai-chat.js?v=aiset2-20261102";
+    s.src = prefix + "assets/js/rn-ai-chat.js?v=font13-20261109";
     s.defer = true;
     document.head.appendChild(s);
   })();

@@ -78,6 +78,9 @@
   function renderSelector(list, current, viewer) {
     var sel = $("#poskoSelect");
     if (!sel) return;
+    // owner 2026-11-09: tanpa ?id= pemilih menampilkan posko pertama tetapi isi halaman masih gabungan
+    // ("Belum ada posko dipilih", tabel armada kosong) — langsung buka posko pertama agar isi = pilihan.
+    if (!current && (list || []).length) { navToPosko(list[0].id); return; }
 
     // shared grouped picker: org member → "Posko organisasi saya" +
     // "Posko lain — terbuka untuk koordinasi"; guest → one flat list.
@@ -151,7 +154,17 @@
     renderArmada(list);
     var shown = $("#armadaShown");
     if (shown && list.length !== ARMADA_ALL.length) shown.textContent = "Menampilkan " + list.length + " dari " + ARMADA_ALL.length + " armada";
+    // owner 2026-11-09: armada yang sudah selesai disembunyikan oleh filter bawaan — jelaskan, jangan "Belum ada armada"
+    var done = ARMADA_ALL.filter(function (a) { return a.avail === "selesai"; }).length;
+    if (!list.length && ARMADA_ALL.length && !st && done) {
+      $("#armadaBody").innerHTML = '<tr><td colspan="8"><em class="rn-muted">Tidak ada armada yang sedang aktif. ' + done +
+        ' armada sudah selesai perjalanan — <a href="#" data-pd-showdone>tampilkan</a>.</em></td></tr>';
+    }
   }
+  document.addEventListener("click", function (e) {
+    if (!e.target.closest("[data-pd-showdone]")) return;
+    e.preventDefault(); var f = document.getElementById("pdfStatus"); if (f) { f.value = "selesai"; applyArmadaFilter(); }
+  });
   ["pdfType", "pdfFrom", "pdfTo", "pdfStatus", "pdfQ"].forEach(function (id) {
     document.addEventListener(id === "pdfQ" ? "input" : "change", function (e) { if (e.target && e.target.id === id) applyArmadaFilter(); });
   });

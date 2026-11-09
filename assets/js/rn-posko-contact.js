@@ -40,7 +40,7 @@
     ".rn-posko-contact{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;" +
     "padding:10px 14px;border:1px solid var(--line,rgba(104,64,45,.14));border-radius:14px;" +
     "background:var(--panel,#fff);color:var(--text,#2d211b);font-size:14px;line-height:1.35}" +
-    ".rn-posko-contact .rn-pc-label{font-weight:700;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--coral,#ef6f5e)}" +
+    ".rn-posko-contact .rn-pc-label{font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--coral,#ef6f5e)}" +
     ".rn-posko-contact .rn-pc-who{color:var(--muted,#7c6458)}" +
     ".rn-posko-contact .rn-pc-num{font-weight:700;font-variant-numeric:tabular-nums;color:inherit}" +
     ".rn-posko-contact .rn-pc-hidden{color:var(--muted,#7c6458)}" +

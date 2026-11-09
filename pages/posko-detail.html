@@ -6,11 +6,11 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Posko Detail</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=font-20261109">
+  <link rel="stylesheet" href="../assets/css/style.css?v=font13-20261109">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
-  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=kursor-20261108">
+  <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=font13-20261109">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=font-20261109" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=font-20261109" />
 </head>
@@ -99,6 +99,22 @@
         <strong id="kpiMenuju">-</strong>
         <small id="kpiMenujuHint">pengiriman masuk (OTW)</small>
       </div>
+    </section>
+
+    <!-- owner 2026-11-09: posko transport (mis. Pos Angkutan Udara TNI) menampilkan armada & kapasitas di detail -->
+    <section class="panel" id="armadaPanel" hidden>
+      <div class="panel-heading">
+        <div>
+          <h3>Armada &amp; Kapasitas <span class="chip" id="armadaPanelCount">0 armada</span></h3>
+          <p>Alat angkut posko ini: kapasitas, ruang yang masih tersedia, jadwal, dan rute. Pesan ruang muat di Posko Distribusi.</p>
+        </div>
+      </div>
+      <div class="kpi-grid" id="armadaPanelKpi"></div>
+      <div class="table-wrap"><table class="data-table">
+        <thead style="text-align:left"><tr><th>Armada</th><th>Jenis</th><th>Kapasitas</th><th>Tersedia</th><th>Berangkat → Tiba</th><th>Rute</th><th>Status</th></tr></thead>
+        <tbody id="armadaPanelBody"><tr><td colspan="7">Memuat…</td></tr></tbody>
+      </table></div>
+      <p class="form-actions"><a class="btn primary" id="armadaPanelLink" href="posko-distribusi.html">Buka Posko Distribusi &amp; pesan ruang muat →</a></p>
     </section>
 
     <section class="panel">
@@ -306,12 +322,12 @@
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
 <script src="../assets/js/rn-verif-badge.js?v=vbadge-20261008"></script>
 <script src="../assets/js/rn-posko-scope.js?v=poskoscope-20260904"></script>
-<script src="../assets/js/rn-posko-contact.js?v=radio-20261101"></script>
-<script src="../assets/js/rn-posko-settings.js?v=owneronly-20261108"></script>
+<script src="../assets/js/rn-posko-contact.js?v=font13-20261109"></script>
+<script src="../assets/js/rn-posko-settings.js?v=font13-20261109"></script>
 <script src="../assets/js/rn-logistik-info.js?v=kpiword-20261101"></script>
-<script src="../assets/js/posko-detail.js?v=tujuan-20261108"></script>
+<script src="../assets/js/posko-detail.js?v=armada-20261109"></script>
 <script src="../assets/js/session-role.js?v=petugas-20261109"></script>
-<script src="../assets/js/rn-public-header.js?v=font-20261109"></script>
+<script src="../assets/js/rn-public-header.js?v=font13-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=kompakhp-20261108"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=topback-20261109"></script>

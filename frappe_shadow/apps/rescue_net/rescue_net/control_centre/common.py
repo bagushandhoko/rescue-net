@@ -284,6 +284,10 @@ _DRILL_BLOCKED_FLOW = {
     "need_pickup", "awaiting_pickup", "stuck", "assigned_pickup", "cancelled",
 }
 
+# owner 2026-11-09: kiriman yang DIBATALKAN bukan "terhambat" (tidak perlu tindakan). _DRILL_BLOCKED_FLOW tetap
+# memuat "cancelled" untuk critical.py (kiriman batal = tidak ada pasokan menuju posko).
+_TERHAMBAT_FLOW = _DRILL_BLOCKED_FLOW - {"cancelled"}
+
 
 _DRILL_DELIVERED_OFFER = {
     "delivered", "distributed", "completed", "closed", "received", "fulfilled",

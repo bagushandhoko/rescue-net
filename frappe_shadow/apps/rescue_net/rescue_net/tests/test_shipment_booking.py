@@ -296,3 +296,29 @@ class TestMovementsReadable(_ShipmentWorld):
         self.assertEqual(row["tujuan_posko"], self.dst.name)
         self.assertTrue(row["status_label"])
         self.assertNotIn("_", row["status_label"])
+
+
+class TestPoskoDistribusiPublicView(_ShipmentWorld):
+    """owner 2026-11-09: isi booking hanya untuk pengelola posko distribusi; publik melihat antrean & sisa ruang;
+    pengirim melihat booking miliknya sendiri."""
+
+    def test_guest_sees_queue_not_bookings(self):
+        from rescue_net.api_control_centre import posko_distribusi_board
+        r = self.send(self.arm_b, weight_kg=700)
+        self.assertEqual(r["booking_status"], "requested")
+        with as_guest():
+            b = posko_distribusi_board(posko=self.tp_b.name)
+        self.assertEqual(b["booking_inbox"], [])
+        arm = [a for a in b["armada"] if a["id"] == self.arm_b.name][0]
+        self.assertEqual(arm["antri_booking"], 1)
+        self.assertEqual(arm["antri_kg"], 700)
+        # the sender sees its own booking, the armada's posko sees all of them
+        with as_user(self.op.user):
+            mine = posko_distribusi_board(posko=self.tp_b.name)["booking_inbox"]
+        self.assertEqual([x["id"] for x in mine], [r["booking"]])
+        other = make_actor(posko=make_posko(self.w.event, self.w.org_a, posko_type="logistics"))
+        with as_user(other.user):
+            self.assertEqual(posko_distribusi_board(posko=self.tp_b.name)["booking_inbox"], [])
+        coord = make_actor(posko=self.tp_b)
+        with as_user(coord.user):
+            self.assertEqual(len(posko_distribusi_board(posko=self.tp_b.name)["booking_inbox"]), 1)

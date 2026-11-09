@@ -771,7 +771,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "confirmed_at", "delivery_method", "requested_window",
                 "logistic_need", "aid_offer", "submitted_channel",
                 "window_from", "window_to", "distribution_flow", "disaster_event", "notes",
-                "booking_leg", "terms_ack",
+                "booking_leg", "terms_ack", "created_by_user", "booked_by_id",
             ]),
             order_by="creation desc", limit_page_length=1000,
         )
@@ -798,10 +798,12 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         c_m3 = sum(_num(b.qty_volume_m3) for b in mine if b.status == "confirmed")
         h_kg = sum(_num(b.qty_weight_kg) for b in mine if b.status == "requested")
         h_m3 = sum(_num(b.qty_volume_m3) for b in mine if b.status == "requested")
-        tot_kg += cap_kg
-        tot_m3 += cap_m3
-        used_kg += own_kg + c_kg + h_kg
-        used_m3 += own_m3 + c_m3 + h_m3
+        # owner 2026-11-09: armada yang perjalanannya selesai/batal tidak dihitung sebagai kapasitas saat ini
+        if (t.transport_status or "") not in ("arrived", "completed", "cancelled"):
+            tot_kg += cap_kg
+            tot_m3 += cap_m3
+            used_kg += own_kg + c_kg + h_kg
+            used_m3 += own_m3 + c_m3 + h_m3
         smode = t.service_mode or "both"
         armada.append({
             "id": t.name,
@@ -826,6 +828,10 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "kapasitas_tersedia_kg": round(max(0.0, offered_kg - c_kg - h_kg), 1),
             "kapasitas_tersedia_m3": round(max(0.0, offered_m3 - c_m3 - h_m3), 1),
             "kapasitas_pct": round(100.0 * (own_kg + c_kg + h_kg) / cap_kg) if cap_kg else 0,
+            # owner 2026-11-09: publik melihat angka antrean, bukan isi booking
+            "antri_booking": sum(1 for b in mine if b.status == "requested"),
+            "antri_kg": round(h_kg, 1),
+            "booking_konfirmasi": sum(1 for b in mine if b.status == "confirmed"),
             "berangkat": _dt(t.departure_at) or (t.departure_time or "-"),
             "eta": _dt(t.eta_at) or (t.eta or "-"),
             "current_location": t.current_location or "-",
@@ -845,8 +851,34 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "served_poskos": _served_rows("RN Transport Space Posko", t.name, "posko"),
         })
 
+    # owner 2026-11-09: "booking itu dilihat oleh pemilik posko, publik lihat berapa yang tersedia & berapa antri".
+    # Pengelola posko: semua booking. Pengguna lain: hanya booking yang ia buat sendiri (atau dibuat posko yang ia
+    # kelola). Tamu: tidak ada — angka antrean ada di tiap armada (antri_booking / antri_kg).
+    if _di_flags[1]:
+        visible_bookings = bookings
+    elif frappe.session.user == "Guest":
+        visible_bookings = []
+    else:
+        from rescue_net.access_policy import can_manage_posko, rn_actor
+        _me = rn_actor(required=False)
+        _mp = {}
+
+        def _mine(b):
+            if b.get("created_by_user") and b.get("created_by_user") == frappe.session.user:
+                return True
+            pid = b.get("booked_by_id")
+            if b.get("booked_by_type") == "posko" and pid and _me:
+                if pid not in _mp:
+                    try:
+                        _mp[pid] = bool(frappe.db.exists("RN Posko", pid) and can_manage_posko(_me, pid))
+                    except Exception:
+                        _mp[pid] = False
+                return _mp[pid]
+            return False
+        visible_bookings = [b for b in bookings if _mine(b)]
+
     inbox = []
-    for b in bookings:
+    for b in visible_bookings:
         t = next((x for x in transports if x.name == b.transport_space), None)
         inbox.append({
             "id": b.name,

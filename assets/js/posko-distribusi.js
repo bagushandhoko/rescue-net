@@ -120,6 +120,19 @@
     $("#kpiKapasitas").textContent = fmt(t.kapasitas_total_kg) + " kg";
     $("#kpiTerpakai").textContent = fmt(t.kapasitas_terpakai_kg) + " kg";
     $("#kpiMenunggu").textContent = fmt(t.booking_menunggu);
+    // owner 2026-11-09: publik/pengguna lain melihat ruang yang masih tersedia + antrean, pemilik melihat beban kerja
+    var manage = !!(CACHE && CACHE.can_manage);
+    function lab(id, label, sub) {
+      var card = $(id) && $(id).closest(".kpi-card"); if (!card) return;
+      var sp = card.querySelectorAll("span")[1], sm = card.querySelector("small");
+      if (sp) sp.textContent = label; if (sm) sm.textContent = sub;
+    }
+    if (!manage) {
+      $("#kpiTerpakai").textContent = fmt(t.kapasitas_tersedia_kg) + " kg";
+      lab("#kpiTerpakai", "Masih Tersedia", "ruang muat yang bisa dipesan");
+      lab("#kpiMenunggu", "Antre Booking", "pesanan menunggu konfirmasi posko");
+      lab("#kpiKapasitas", "Kapasitas Total", "armada yang belum berangkat/selesai");
+    }
   }
 
   /* ---------- armada table ---------- */
@@ -191,7 +204,11 @@
         "<td>" + relawan + "</td>" +
         '<td><span class="chip ' + statusChip(a.status) + '">' + esc(a.status_label) + "</span>" +
           (a.avail === "lewat" ? '<small class="rn-muted">jadwal lewat</small>' : a.avail === "penuh" ? '<small class="rn-muted">penuh</small>' : "") + "</td>" +
-        "<td>" + (a.bookings_count ? '<span class="chip">' + fmt(a.bookings_count) + "</span>" : '<span class="rn-muted">0</span>') + "</td>" +
+        // owner 2026-11-09: pemilik lihat jumlah booking; publik lihat antrean (isi booking hanya untuk pemilik)
+        "<td>" + ((CACHE && CACHE.can_manage)
+          ? (a.bookings_count ? '<span class="chip">' + fmt(a.bookings_count) + "</span>" : '<span class="rn-muted">0</span>')
+          : (a.antri_booking ? '<span class="chip warning">' + fmt(a.antri_booking) + " antre</span><small class=\"rn-muted\">" + fmt(a.antri_kg) + " kg menunggu</small>" : '<span class="rn-muted">0 antre</span>') +
+            (a.booking_konfirmasi ? '<small class="rn-muted">' + fmt(a.booking_konfirmasi) + " terkonfirmasi</small>" : "")) + "</td>" +
         "</tr>"
       );
     }).join("");
@@ -244,7 +261,9 @@
             (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_ditawarkan_m3) + " m³" : ""))
         : "") +
       row("Sisa kapasitas", fmt(a.kapasitas_tersedia_kg) + " kg" + (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_tersedia_m3) + " m³" : "")) +
-      row("Jadwal", esc(a.berangkat) + " → " + esc(a.eta)) +
+      row("Antrean booking", fmt(a.antri_booking || 0) + " menunggu konfirmasi" + (a.antri_kg ? " (" + fmt(a.antri_kg) + " kg)" : "") +
+        " · " + fmt(a.booking_konfirmasi || 0) + " terkonfirmasi") +
+      row("Rencana berangkat → tiba", esc(a.berangkat) + " → " + esc(a.eta)) +
       termsRows(a.syarat) +
       row("Lokasi saat ini", mapsLink(a.current_location)) +
       row("Rute", esc(a.rute)) +
@@ -260,7 +279,8 @@
           encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search.replace(/&?armada=[^&]*/, "") + "&armada=" + a.id) +
           '">Login untuk memesan</a> <small class="rn-muted">Memesan ruang muat wajib login.</small></p>'
         : "") +
-      '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>";
+      ((CACHE && CACHE.can_manage) ? '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>"
+        : bk.length ? '<h4 class="rn-md-detail-h">Booking Anda</h4><div class="rn-md-bk-list">' + bkHtml + "</div>" : "");
     if (CACHE && CACHE.can_manage) wireArmadaEdit(a.id);
     if (CACHE && (CACHE.can_coordinate || (CACHE.logged_in && !CACHE.can_manage))) wireBookingForm(a);
     if (CACHE && CACHE.can_manage) wireGps(a);
@@ -664,6 +684,12 @@
   /* ---------- booking inbox ---------- */
   function renderBookings(list) {
     var body = $("#bookingBody");
+    var sec = $("#bookingSection"), manage = !!(CACHE && CACHE.can_manage);
+    if (sec) sec.hidden = !manage && !(list && list.length);
+    if ($("#bookingTitle")) $("#bookingTitle").textContent = manage ? "Booking Masuk" : "Booking Anda";
+    if ($("#bookingSub")) $("#bookingSub").textContent = manage
+      ? "Permintaan ruang dari posko / donatur / organisasi. Konfirmasi (dengan PIN bila pemesan publik), atau tolak."
+      : "Pesanan ruang muat yang Anda buat di armada posko ini. Isi booking pihak lain hanya terlihat oleh pengelola posko.";
     if (!list || !list.length) {
       body.innerHTML = '<tr><td colspan="7"><em class="rn-muted">Belum ada booking masuk.</em></td></tr>';
       return;

@@ -7817,3 +7817,15 @@ body.home-page .rn-hero-cta { display: flex !important; flex-wrap: wrap; gap: 8p
 /* tab detail program: 6 tab — di HP geser ke samping, tidak terpotong (2026-11-09) */
 .rn-pk-detail-tabs{max-width:100%;overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 .rn-pk-detail-tabs .rn-tab{flex:0 0 auto;white-space:nowrap}
+
+/* owner 2026-11-09: Bencana Aktif — tombol tambah bencana di samping kolom cari */
+.rn-ba-searchrow { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: flex-end; }
+.rn-ba-searchrow .rn-ba-search { flex: 1 1 auto; min-width: 0; }
+.rn-ba-add { white-space: nowrap; flex: none; }
+@media (min-width: 901px) { .rn-ba-searchrow { width: min(560px, 100%); } .rn-ba-searchrow .rn-ba-search { min-width: 340px; } }
+@media (max-width: 900px) {
+  .rn-ba-controls { flex-wrap: wrap !important; }
+  .rn-ba-searchrow { flex: 1 1 100%; }
+  .rn-ba-add-long { display: none; }
+  .rn-ba-add { min-width: 44px; justify-content: center; }
+}

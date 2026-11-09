@@ -44,8 +44,9 @@
     var then = new Date(iso).getTime();
     if (isNaN(then)) return "—";
     var diff = Math.max(0, Date.now() - then);
+    var sec = Math.round(diff / 1000);
+    if (sec < 60) return sec < 10 ? "baru saja" : sec + " detik lalu";
     var m = Math.round(diff / 60000);
-    if (m < 1) return "baru saja";
     if (m < 60) return m + " menit lalu";
     var h = Math.round(m / 60);
     if (h < 24) return h + " jam lalu";
@@ -72,6 +73,34 @@
 
   /* ---------- data ---------- */
 
+  // owner 2026-11-09: "update terakhir pastikan bener2 real time" — muat ulang diam-diam tiap 60 detik,
+  // label waktu relatif diperbarui tiap 15 detik, jam data ditampilkan apa adanya.
+  var GENERATED_AT = null;
+  function clock(iso) {
+    var d = new Date(String(iso || "").replace(" ", "T"));
+    return isNaN(d.getTime()) ? "" : d.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+  function paintUpdated() {
+    var el = $("#baUpdated");
+    if (!el || !GENERATED_AT) return;
+    el.textContent = "Data pukul " + clock(GENERATED_AT) + " · " + relTime(GENERATED_AT) + " · otomatis tiap 60 dtk";
+  }
+  function quietReload() {
+    if (document.hidden) return;
+    window.RN_FRAPPE.call(METHOD).then(function (res) {
+      var data = res || {};
+      state.events = data.events || [];
+      state.totals = data.totals || {};
+      GENERATED_AT = data.generated_at;
+      renderKpi(state.totals);
+      applyFilter();
+      paintUpdated();
+    }).catch(function () { /* coba lagi di putaran berikut */ });
+  }
+  setInterval(quietReload, 60000);
+  setInterval(function () { paintUpdated(); if (!document.hidden) applyFilter(); }, 15000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) quietReload(); });
+
   function load() {
     setStatus("Memuat data bencana…");
     return window.RN_FRAPPE.call(METHOD)
@@ -80,8 +109,8 @@
         state.events = data.events || [];
         state.totals = data.totals || {};
         renderKpi(state.totals);
-        $("#baUpdated").textContent =
-          "Diperbarui " + relTime(data.generated_at);
+        GENERATED_AT = data.generated_at;
+        paintUpdated();
         applyFilter();
         renderMap();
         if (!state.selectedId && state.events.length) {

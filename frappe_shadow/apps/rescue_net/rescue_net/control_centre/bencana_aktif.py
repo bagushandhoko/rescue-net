@@ -70,6 +70,37 @@ def _ba_max_dt(a, b):
         return a
 
 
+def _ba_latest_activity(event_id, posko_names, flow_names):
+    """Waktu aktivitas terbaru di bencana ini dari tabel kerja lapangan (modified terbesar)."""
+    latest = None
+
+    def _max(doctype, filters):
+        nonlocal latest
+        if not frappe.db.exists("DocType", doctype):
+            return
+        try:
+            r = frappe.get_all(doctype, filters=filters, fields=["max(modified) as m"], limit_page_length=1)
+        except Exception:
+            return
+        if r and r[0].get("m"):
+            latest = _ba_max_dt(latest, r[0]["m"])
+
+    by_posko = {"posko": ["in", posko_names]} if posko_names else None
+    for dt in ("RN Stock Observation", "RN Medical Case", "RN Shelter Occupancy", "RN Kitchen Production"):
+        if by_posko and frappe.db.exists("DocType", dt) and "posko" in cols(dt):
+            _max(dt, by_posko)
+    if posko_names:
+        _max("RN Transport Space", {"coordination_posko": ["in", posko_names]})
+    if flow_names:
+        _max("RN Custody Scan", {"flow": ["in", flow_names]})
+    for dt in ("RN Community Report", "RN Evidence File", "RN Transport Booking"):
+        if frappe.db.exists("DocType", dt):
+            f = event_filters(cols(dt), event_id)
+            if f:
+                _max(dt, f)
+    return latest
+
+
 def _ba_iso(v):
     if not v:
         return None
@@ -628,6 +659,10 @@ def active_disasters_board(limit=60):
         for coll in (poskos, needs, flows):
             for row in coll:
                 last_updated = _ba_max_dt(last_updated, row.get("modified"))
+        # owner 2026-11-09: "update terakhir pastikan bener2 real time" — juga stok, laporan warga, bukti,
+        # pindaian serah-terima, booking & armada, kasus medis, okupansi shelter
+        last_updated = _ba_max_dt(last_updated, _ba_latest_activity(
+            event_id, [p["name"] for p in poskos], [f["name"] for f in flows]))
 
         # map (owner 2026-10-19): event marker = centre of its poskos, plus posko dots
         posko_points = []

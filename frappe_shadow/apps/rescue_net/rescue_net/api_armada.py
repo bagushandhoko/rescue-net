@@ -43,6 +43,13 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
     event = resolve_disaster_event(disaster_event) if disaster_event else None
     names = serving_transport_names(event) if event else frappe.get_all("RN Transport Space", pluck="name",
                                                                        limit_page_length=1000)
+    from rescue_net.services.drill import hidden_posko_names, real_rows
+    hidden = hidden_posko_names() if names else set()
+    if hidden:
+        # latihan + (Mode Operasional Riil) armada posko simulasi tidak tampil, juga tanpa filter bencana
+        names = [r.name for r in frappe.get_all("RN Transport Space", filters={"name": ["in", names]},
+                                                fields=["name", "coordination_posko"], limit_page_length=0)
+                 if r.coordination_posko not in hidden]
     if not names:
         return {"rows": [], "counts": {}, "logged_in": frappe.session.user != "Guest"}
     rows = frappe.get_all("RN Transport Space", filters={"name": ["in", names]}, fields=[
@@ -51,6 +58,7 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
         "capacity_committed_kg", "capacity_committed_m3", "transport_status", "coordination_posko", "booking_policy",
         "volunteer_capacity_seats", "current_location", "service_mode", "position_lat", "position_lng",
         "position_at"], limit_page_length=1000)
+    rows = real_rows(rows, key="__none__")  # Mode Operasional Riil: armada berjudul [SIMULASI] tidak tampil
     pk = {p.name: p for p in frappe.get_all(
         "RN Posko", filters={"name": ["in", list({r.coordination_posko for r in rows if r.coordination_posko}) or ["-"]]},
         fields=["name", "title", "latitude", "longitude", "city_name"])}

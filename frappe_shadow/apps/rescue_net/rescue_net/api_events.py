@@ -41,6 +41,9 @@ def drill_status(event):
         "RN Disaster Event", {"legacy_id": str(event).replace("disaster_events:", "")}, "name")
     if not name or not is_drill_event(name):
         return {"is_drill": 0}
+    from rescue_net.services.drill import is_flagged_drill_event
+    if not is_flagged_drill_event(name):  # bencana simulasi yang disembunyikan Mode Operasional Riil
+        return {"is_drill": 1, "label": "Simulasi — tersembunyi dari publik (Mode Operasional Riil aktif)"}
     return {"is_drill": 1, "label": frappe.db.get_value("RN Disaster Event", name, "drill_label") or "Latihan"}
 
 

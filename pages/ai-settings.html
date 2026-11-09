@@ -160,6 +160,49 @@
       </section>
     </div>
 
+    <!-- Mode Operasional Riil (owner 2026-11-09): satu tombol super admin menyembunyikan semua data simulasi -->
+    <div class="rn-settings-group" id="operationalModeSection" hidden>
+      <div class="rn-settings-group-title">
+        <h2>Mode Operasional Riil</h2>
+        <p>System Manager saja. Saat Rescue-Net dipakai untuk bencana sungguhan, satu tombol menyembunyikan semua data simulasi dari halaman Rescue-Net. Data <b>tidak dihapus</b> dan bisa ditampilkan lagi.</p>
+      </div>
+      <section class="content-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Status</h3>
+              <p><span id="opModePill">Memuat…</span></p>
+              <p class="subtitle" id="opModeWho"></p>
+            </div>
+            <button class="btn primary" type="button" id="opModeToggle">Memuat…</button>
+          </div>
+          <p class="subtitle" id="opModeMsg"></p>
+          <h4 style="margin:12px 0 6px">Yang disembunyikan saat aktif</h4>
+          <ul style="margin:0 0 10px;padding-left:20px;line-height:1.5">
+            <li>Bencana simulasi (judul berisi <b>SIMULASI</b> / <b>UJI-E2E</b>, id <code>event-sim-…</code>, atau ditandai manual di tabel) beserta semua datanya: posko, armada, kiriman, kebutuhan, bukti, laporan, program donasi, relawan.</li>
+            <li>Posko, organisasi, program, dan armada berjudul <b>[SIMULASI]</b> / <b>(SIMULASI)</b> / <b>[UJI-E2E]</b> walau berada di bencana nyata.</li>
+            <li>Akun demo di halaman Masuk.</li>
+            <li>Tautan langsung ke bencana/posko simulasi ditolak ("tidak ditemukan") untuk tamu &amp; pengguna biasa. Super admin tetap bisa membuka lewat id.</li>
+          </ul>
+          <p class="subtitle">Bencana latihan resmi (is_drill) tetap tersembunyi seperti biasa di kedua mode. Pembersihan latihan tidak pernah menghapus data simulasi.</p>
+        </div>
+        <aside class="panel summary">
+          <h3>Riwayat perubahan</h3>
+          <ul id="opModeLog" style="margin:0;padding-left:18px;line-height:1.5"><li>—</li></ul>
+        </aside>
+      </section>
+      <section class="panel">
+        <div class="panel-header"><div><h3>Bencana &amp; tandanya</h3><p id="opModeCount"></p></div></div>
+        <p class="subtitle">Periksa sebelum mengaktifkan: bencana nyata yang salah terdeteksi bisa ditandai <b>Nyata (manual)</b>, dan bencana simulasi tanpa label bisa ditandai <b>Simulasi (manual)</b>.</p>
+        <div style="overflow-x:auto">
+          <table class="rn-table" style="width:100%;border-collapse:collapse">
+            <thead><tr><th style="text-align:left">Bencana</th><th style="text-align:left">Sekarang</th><th style="text-align:left">Tanda</th></tr></thead>
+            <tbody id="opModeEvents"><tr><td colspan="3">Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
     <div class="rn-settings-group" id="systemAdminSection" hidden>
       <div class="rn-settings-group-title">
         <h2>Backup / Restore</h2>
@@ -393,7 +436,8 @@
 <script src="../assets/js/rn-posko-events-settings.js?v=evc-20261019"></script>
 <script src="../assets/js/session-role.js?v=petugas-20261109"></script>
 <script src="../assets/js/system-admin.js?v=backuprestore-20260913"></script>
-<script src="../assets/js/rn-public-header.js?v=font13-20261109"></script>
+<script src="../assets/js/rn-operational-mode.js?v=opmode-20261109"></script>
+<script src="../assets/js/rn-public-header.js?v=opmode-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
   <script src="../assets/js/rn-icons.js?v=kpiicon-20260904"></script>
 

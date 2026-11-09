@@ -29,6 +29,22 @@
     });
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  // Mode Operasional Riil (owner 2026-11-09): akun demo disembunyikan saat super admin mengaktifkan mode itu.
+  // Gagal memeriksa -> tampilan lama (akun demo tampil), tidak ada yang rusak.
+  function hideWhenOperational() {
+    fetch(location.origin + "/rescue-net-frappe/api/method/rescue_net.api_operational_mode.status",
+      { credentials: "omit", headers: { Accept: "application/json" } })
+      .then(function (r) { return r.ok ? r.json() : {}; })
+      .then(function (j) {
+        if (!(j && j.message && j.message.operational)) return;
+        var box = document.getElementById("demoAccounts");
+        if (box) { box.hidden = true; box.style.display = "none"; }
+      })
+      .catch(function () { /* opsional */ });
+  }
+
+  function start() { boot(); hideWhenOperational(); }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  else start();
 })();

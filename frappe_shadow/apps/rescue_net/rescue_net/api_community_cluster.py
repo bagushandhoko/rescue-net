@@ -39,7 +39,8 @@ def get_context():
 @frappe.whitelist()
 def list_organizations():
     _actor()
-    return frappe.get_all(
+    from rescue_net.services.drill import real_rows
+    return real_rows(frappe.get_all(  # Mode Operasional Riil: organisasi [SIMULASI] tidak ditawarkan
         "RN Organization",
         fields=[
             "name","title","organization_type","status",
@@ -47,7 +48,7 @@ def list_organizations():
         ],
         order_by="title asc",
         limit_page_length=500,
-    )
+    ))
 
 
 @frappe.whitelist()

@@ -437,6 +437,7 @@ def active_disasters_board(limit=60):
             ]),
             limit_page_length=500,
         )
+        poskos = real_rows(poskos, key="__none__")  # Mode Operasional Riil: posko [SIMULASI] di bencana nyata disembunyikan
         needs = frappe.get_all(
             "RN Logistic Need",
             filters=event_filters(need_cols, event_id),

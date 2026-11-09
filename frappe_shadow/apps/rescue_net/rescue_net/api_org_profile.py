@@ -300,6 +300,7 @@ def org_list():
     rows = frappe.get_all(ORG, filters={"name": ["in", list(counts) or [""]]},
                           fields=["name", "title", "organization_type", "verification_status", "privacy_mode",
                                   "parent_organization", "status"], limit_page_length=0)
+    rows = real_rows(rows)  # Mode Operasional Riil: organisasi berjudul [SIMULASI] tidak tampil
     parents = Counter(r.parent_organization for r in frappe.get_all(ORG, filters={"parent_organization": ["is", "set"]},
                                                                    fields=["parent_organization"], limit_page_length=0))
     out = []

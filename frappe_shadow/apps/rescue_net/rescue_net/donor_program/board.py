@@ -69,6 +69,8 @@ def program_board(disaster_event=None):
         limit_page_length=1000,
         ignore_permissions=True,
     )
+    from rescue_net.services.drill import real_rows
+    rows = real_rows(rows)  # latihan + (Mode Operasional Riil) program bencana/berlabel simulasi tidak tampil
 
     # Also surface the caller's OWN not-yet-public programs (kept off the
     # public list until their org/posko/account is verified — see
@@ -588,9 +590,11 @@ def donation_summary(disaster_event=None):
     rows = frappe.get_all(
         "RN Donor Program", filters=filters,
         fields=["name", "program_name", "program_type", "owner_type", "owner_id", "status",
-                "budget_target", "budget_received", "budget_spent", "officer_in_charge_name"],
+                "budget_target", "budget_received", "budget_spent", "officer_in_charge_name", "disaster_event"],
         order_by="budget_received desc", limit_page_length=500, ignore_permissions=True,
     )
+    from rescue_net.services.drill import real_rows
+    rows = real_rows(rows)  # latihan + (Mode Operasional Riil) simulasi tidak masuk angka donasi
     donors = {}
     if rows:
         for d in frappe.get_all("RN Cash Donation",

@@ -9,7 +9,11 @@ app_license = "MIT"
 before_request = ["rescue_net.services.drill.before_request"]
 
 # Rescue-Net authenticated identity bridge
-on_login = "rescue_net.identity_bridge.handle_identity_on_login"
+on_login = [
+    "rescue_net.identity_bridge.handle_identity_on_login",
+    # Mode Operasional Riil: akun demo tidak bisa masuk (owner 2026-11-09)
+    "rescue_net.services.drill.block_demo_login",
+]
 
 after_install = [
     "rescue_net.setup.normalization_defaults.install_defaults",

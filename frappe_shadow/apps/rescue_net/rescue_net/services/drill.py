@@ -51,6 +51,31 @@ def operational_mode():
     return str(_get_default(MODE_KEY) or "0").strip() in ("1", "true", "True")
 
 
+# Akun demo/simulasi (owner 2026-11-09 malam: "hilangkan akun demo dan bencana simulasi, taruh di satu button di
+# super admin"): semua akun berdomain di bawah ini dibuat untuk demo & simulasi (data 2026-11-09: 46 + 39 akun;
+# akun nyata memakai domain asli). Saat Mode Operasional aktif akun ini tidak bisa masuk dan sesinya diputus.
+DEMO_DOMAINS = ("@rescue-net.local", "@example.org")
+DEMO_LOGIN_MSG = "Akun demo dinonaktifkan: Rescue-Net sedang dalam Mode Operasional Riil."
+
+
+def is_demo_user(user):
+    u = str(user or "").strip().lower()
+    return bool(u) and u.endswith(DEMO_DOMAINS)
+
+
+def demo_users():
+    return [u for (u,) in frappe.db.sql(
+        "select name from tabUser where " + " or ".join(["name like %s"] * len(DEMO_DOMAINS)),
+        tuple("%" + d for d in DEMO_DOMAINS))]
+
+
+def block_demo_login(login_manager=None):
+    """Hook on_login: tolak akun demo saat Mode Operasional aktif (sebelum sesi dibuat)."""
+    user = getattr(login_manager, "user", None) or frappe.session.user
+    if is_demo_user(user) and operational_mode():
+        frappe.throw(DEMO_LOGIN_MSG, frappe.AuthenticationError)
+
+
 def simulation_hidden():
     """Alias yang dibaca di titik penyaringan: data simulasi sedang disembunyikan?"""
     return operational_mode()
@@ -255,4 +280,7 @@ def before_request(*args, **kwargs):
         params = frappe.local.form_dict
     except Exception:
         return
+    # sesi akun demo yang masih terbuka saat Mode Operasional aktif: ditolak
+    if is_demo_user(frappe.session.user) and operational_mode():
+        frappe.throw(DEMO_LOGIN_MSG, frappe.AuthenticationError)
     guard_guest_refs(params)

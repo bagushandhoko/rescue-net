@@ -99,6 +99,8 @@ def admin_status():
         "events": events,
         "simulation_count": sum(1 for e in events if e["simulation"]),
         "markers": list(drill.SIM_MARKERS),
+        "demo_account_count": len(drill.demo_users()),
+        "demo_domains": list(drill.DEMO_DOMAINS),
     }
 
 
@@ -111,12 +113,24 @@ def set_operational_mode(active, confirm=None):
         frappe.throw(f'Ketik "{CONFIRM_WORD}" untuk mengonfirmasi Mode Operasional Riil.')
     was = drill.operational_mode()
     frappe.db.set_default(drill.MODE_KEY, "1" if on else "0")
+    if on:
+        _end_demo_sessions()
     if was != on:
         n = len(drill.simulation_event_names())
         _append_log("aktif" if on else "nonaktif",
                     (f"{n} bencana simulasi disembunyikan" if on else f"{n} bencana simulasi ditampilkan lagi"))
     _clear_public_caches()
     return admin_status()
+
+
+def _end_demo_sessions():
+    """Putus sesi semua akun demo (mereka juga tidak bisa login lagi selama mode aktif)."""
+    from frappe.sessions import clear_sessions
+    for user in drill.demo_users():
+        try:
+            clear_sessions(user=user, force=True)
+        except Exception:
+            frappe.log_error(title="operational mode: clear demo session", message=frappe.get_traceback())
 
 
 @frappe.whitelist(methods=["POST"])

@@ -29,7 +29,9 @@
     $("opModeWho").textContent = s.changed_at
       ? "Terakhir diubah oleh " + (s.changed_by || "-") + " pada " + s.changed_at
       : "Belum pernah diubah.";
-    $("opModeCount").textContent = s.simulation_count + " bencana ditandai simulasi";
+    window.__rnOpDemo = s.demo_account_count;
+    $("opModeCount").textContent = s.simulation_count + " bencana ditandai simulasi · " +
+      (s.demo_account_count || 0) + " akun demo " + (on ? "diblokir" : "masih bisa login");
     var btn = $("opModeToggle");
     btn.textContent = on ? "Kembali ke Mode Simulasi (tampilkan data simulasi)" : "Aktifkan Mode Operasional Riil";
     btn.style.cssText = on ? "" : "background:#c23a3a;border-color:#c23a3a;color:#fff";
@@ -62,8 +64,9 @@
     if (!on) {
       var typed = window.prompt(
         "Aktifkan MODE OPERASIONAL RIIL?\n\n" +
-        "Semua bencana simulasi beserta posko, armada, kiriman, bukti, program donasi, laporan, dan akun demo " +
-        "di halaman login akan DISEMBUNYIKAN dari semua pengguna (super admin masih bisa membuka lewat tautan langsung).\n" +
+        "Semua bencana simulasi beserta posko, armada, kiriman, bukti, program donasi, dan laporan akan DISEMBUNYIKAN " +
+        "dari semua pengguna (super admin masih bisa membuka lewat tautan langsung).\n" +
+        "Akun demo (" + (window.__rnOpDemo || "semua") + " akun @rescue-net.local / @example.org) tidak bisa login dan sesinya diputus.\n" +
         "Data TIDAK dihapus dan bisa ditampilkan lagi dengan tombol yang sama.\n\n" +
         "Ketik " + CONFIRM + " untuk melanjutkan:");
       if (typed == null) return;

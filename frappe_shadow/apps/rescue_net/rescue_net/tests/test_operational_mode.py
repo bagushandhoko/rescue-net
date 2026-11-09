@@ -27,7 +27,9 @@ from rescue_net.tests.factories import (
     make_event,
     make_org,
     make_posko,
+    make_user,
     make_world,
+    uid,
 )
 
 SENT = "SIMOPS-SENTINEL-5521"
@@ -172,3 +174,34 @@ class TestOperationalModeSwitch(OperationalBase):
         opm.set_event_simulation(self.real.event.name, "auto")
         self.assertIn(self.sim.name, drill.drill_event_names())
         self.assertNotIn(self.real.event.name, drill.drill_event_names())
+
+
+class TestDemoAccountsBlocked(RNTestCase):
+    """Owner 2026-11-09 malam: satu tombol super admin juga mematikan akun demo (@rescue-net.local / @example.org)."""
+
+    def tearDown(self):
+        frappe.db.set_default(drill.MODE_KEY, "0")
+        super().tearDown()
+
+    def _login_manager(self, user):
+        return frappe._dict(user=user)
+
+    def test_demo_detection(self):
+        self.assertTrue(drill.is_demo_user("ld1.demo@rescue-net.local"))
+        self.assertTrue(drill.is_demo_user("sim-mu-mdmc@example.org"))
+        self.assertFalse(drill.is_demo_user("pemilik@gmail.com"))
+        self.assertFalse(drill.is_demo_user("Administrator"))
+
+    def test_demo_login_blocked_only_in_operational_mode(self):
+        demo = make_user(email=uid("demo") + "@example.org")
+        real = make_user(email=uid("nyata") + "@gmail.com")
+        frappe.db.set_default(drill.MODE_KEY, "0")
+        drill.block_demo_login(self._login_manager(demo))  # mode mati: boleh
+        frappe.db.set_default(drill.MODE_KEY, "1")
+        with self.assertRaises(frappe.AuthenticationError):
+            drill.block_demo_login(self._login_manager(demo))
+        drill.block_demo_login(self._login_manager(real))  # akun nyata tetap boleh
+
+    def test_hook_registered(self):
+        hooks = frappe.get_hooks("on_login")
+        self.assertIn("rescue_net.services.drill.block_demo_login", hooks)

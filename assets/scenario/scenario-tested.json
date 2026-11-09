@@ -3,6 +3,41 @@
  "diperbarui": "2026-11-09",
  "uji": [
   {
+   "id": "DIST-MU-3",
+   "tanggal": "2026-11-09",
+   "kategori": "Distribusi & armada",
+   "judul": "Variasi armada & estafet antar-posko distribusi + bukti lapangan terbuka/internal (Gempa Simulasi 001 Meulaboh)",
+   "tujuan": "Owner: data posko distribusi kurang variasi; simulasikan kapal TNI, Garuda, Land Rover Club, truk Rotary Club, motor pelajar SMA dan mutasi pergerakan langsung ke posko logistik maupun estafet; bukti di Control Centre hanya dari organisasi terbuka / masyarakat / yang dipilih publik.",
+   "akun": "Akun BARU Koordinator Rotary Club Banda Aceh (organisasi terbuka baru), Land Rover Club (LD2/LD3/LD5), Gudang Jogja, Garuda Cargo, KRI TNI AL, OSIS pelajar, LD4/LD6, warga",
+   "langkah": [
+    "Rotary daftar, membuat organisasi terbuka + Posko Distribusi Rotary di Bandara Cut Nyak Dhien + truk Hino 8 t",
+    "5 armada berjadwal 12/11: Garuda ATR 72 (YIA → Cut Nyak Dhien), KRI Teluk Bintuni (Meulaboh → Arongan), Land Rover 6 unit, truk Rotary, motor pelajar 3 unit",
+    "A langsung: LD2 → LD5 Samatiga 1.000 kg beras dengan Land Rover — dikirim, jalan, tiba, diterima",
+    "B estafet 3 kaki: Gudang Jogja → Garuda → truk Rotary → motor pelajar (2 rit @150 kg) → LD4 Medis Woyla; tiap kaki dikonfirmasi pemilik armada dengan PIN; serah-terima dipindai pembawa",
+    "C estafet 2 kaki: LD2 → KRI → truk Rotary → LD6 Arongan (motor pelajar ditolak sistem: 2.400 kg melebihi kapasitas 150 kg)",
+    "Pembawa (motor pelajar) mencoba mencatat terima → ditolak; posko tujuan yang mencatat terima",
+    "Tamu melacak resi B: 3 kaki + serah-terima, tanpa PIN/kontak",
+    "Bukti: Rotary & Land Rover (terbuka), pelajar (tertutup, dipilih publik), warga tanpa posko → tampil di Control Centre; KRI (tertutup, internal) → tidak tampil"
+   ],
+   "hasil": "Ketiga kiriman diterima. Simulasi menemukan kiriman 'Direncanakan' tidak bisa dipindai Dikirim (macet) — diperbaiki dan dicek ulang di live.",
+   "skor": "semua langkah lulus setelah perbaikan",
+   "status": "lulus-perbaikan",
+   "temuan": [
+    {
+     "masalah": "Pindai 'Dikirim'/'Dalam perjalanan' ditolak untuk kiriman berstatus 'Direncanakan' sehingga kiriman macet",
+     "perbaikan": "Pindaian otomatis melewati langkah penugasan jemput"
+    },
+    {
+     "masalah": "Estafet lebih dari 2 kaki dan serah-terima oleh posko distribusi pembawa belum didukung",
+     "perbaikan": "Kaki 'estafet' berurutan + posko pembawa boleh memindai serah-terima/perjalanan (bukan penerimaan)"
+    },
+    {
+     "masalah": "Bukti dari organisasi tertutup ikut tampil di Control Centre",
+     "perbaikan": "Disembunyikan kecuali pengirim memilih 'terbuka untuk publik'"
+    }
+   ]
+  },
+  {
    "id": "DIST-MU-2",
    "tanggal": "2026-11-09",
    "kategori": "Distribusi & armada",

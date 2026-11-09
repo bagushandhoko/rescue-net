@@ -132,7 +132,17 @@
   function wireChange(sel, onChange) {
     if (!onChange || sel.dataset.rnPickerWired) return;
     sel.dataset.rnPickerWired = "1";
-    sel.addEventListener("change", function () { onChange(sel.value); });
+    sel.addEventListener("change", function () {
+      // owner 2026-11-09: "pilih posko lain kok nggak ada perubahan" — halaman membaca ?id=/?posko= dari URL
+      // lebih dulu daripada pilihan; perbarui URL dulu supaya data posko baru yang dimuat.
+      try {
+        var u = new URL(location.href);
+        ["id", "posko"].forEach(function (k) { if (u.searchParams.has(k)) u.searchParams.set(k, sel.value); });
+        if (!u.searchParams.has("id") && !u.searchParams.has("posko")) u.searchParams.set("id", sel.value);
+        history.replaceState(null, "", u.toString());
+      } catch (e) {}
+      onChange(sel.value);
+    });
   }
 
   window.RNPoskoPicker = { mount: mount, poskoValue: poskoValue, matchId: matchId };

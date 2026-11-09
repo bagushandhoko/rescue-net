@@ -127,7 +127,10 @@ async function loadPoskoOptions() {
       })
       .join("");
     if (!want && sel.options.length) sel.selectedIndex = 0;
-    sel.addEventListener("change", () => loadBoard());
+    sel.addEventListener("change", () => {
+      try { const u = new URL(location.href); u.searchParams.set("id", sel.value); u.searchParams.delete("posko"); history.replaceState(null, "", u.toString()); } catch (e) {}
+      loadBoard();
+    });
     return;
   }
 

@@ -13,13 +13,13 @@
 
 /* Welcome page nav */
 .welcome-links .rn-menu-item { align-self: center; }
-.welcome-links .rn-menu-link { font-size: 13px; }
-.welcome-links .rn-submenu-link { font-size: 13px; }
+.welcome-links .rn-menu-link { font-size: 14px; }
+.welcome-links .rn-submenu-link { font-size: 14px; }
 
 /* Public header nav */
 .rn-public-links .rn-menu-item { }
-.rn-public-links .rn-menu-link { font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-.rn-public-links .rn-submenu-link { font-size: 12.5px; }
+.rn-public-links .rn-menu-link { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.rn-public-links .rn-submenu-link { font-size: 14px; }
 
 /* Mobile drawer */
 .rn-drawer-public .rn-menu-item { width: 100%; }

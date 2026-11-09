@@ -331,7 +331,7 @@
       '<!doctype html><title>Label QR — ' + trace + '</title>' +
       '<style>body{font-family:system-ui,Segoe UI,Roboto,sans-serif;margin:0;padding:24px;text-align:center}' +
       'img{width:220px;height:220px}.t{font-family:monospace;font-weight:700;font-size:18px;letter-spacing:1px;margin-top:8px}' +
-      '.r{font-size:12px;color:#444;margin-top:4px}.u{font-size:10px;color:#666;margin-top:8px;word-break:break-all}' +
+      '.r{font-size:12px;color:#444;margin-top:4px}.u{font-size:12px;color:#666;margin-top:8px;word-break:break-all}' +
       '@media print{@page{margin:8mm}}</style>' +
       '<div style="font-weight:700;font-size:13px">RESCUE-NET · LACAK LOGISTIK</div>' +
       (src ? '<div><img src="' + src + '" alt="QR"></div>' : '<p>(QR gagal dirender)</p>') +

@@ -35,7 +35,7 @@
     el.setAttribute("role", "status");
     el.style.cssText = "margin:0 0 12px;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.5;" +
       (alert ? "border:1px solid #c0392b;background:rgba(192,57,43,.08)" : "border:1px solid rgba(104,64,45,.18);background:rgba(104,64,45,.04)");
-    el.innerHTML = html + '<div style="color:#7c6458;font-size:11px;margin-top:4px">' + esc(b.attribution) + "</div>";
+    el.innerHTML = html + '<div style="color:#7c6458;font-size:13px;margin-top:4px">' + esc(b.attribution) + "</div>";
     host.insertBefore(el, host.firstChild);
   }
 

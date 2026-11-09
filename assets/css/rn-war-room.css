@@ -173,7 +173,7 @@ html.rn-map-embedded body {
   .rn-war-room-tab {
     min-height: 46px;
     padding: 10px 14px;
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .rn-war-room-map-toolbar {
@@ -199,7 +199,7 @@ html.rn-map-embedded body {
 @media (max-width: 420px) {
   .rn-war-room-tab {
     padding: 9px 12px;
-    font-size: 12.5px;
+    font-size: 14px;
   }
 
   .rn-war-room-map-frame {
@@ -330,14 +330,14 @@ main > section.hero-command.rn-war-section-active {
 }
 
 .rn-active-disaster-switcher__label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
 
 .rn-active-disaster-switcher__count {
-  font-size: 11px;
+  font-size: 13px;
   opacity: .65;
 }
 
@@ -368,7 +368,7 @@ main > section.hero-command.rn-war-section-active {
 
 .rn-active-disaster-status {
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   opacity: .72;
 }

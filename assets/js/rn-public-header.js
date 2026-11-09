@@ -55,7 +55,19 @@
     const wrap = document.createElement("div");
     wrap.className = "rn-event-picker";
     wrap.innerHTML = `<label><span>Bencana</span><select aria-label="Pilih bencana aktif"><option value="${active}">${prettifyEventId(active)}</option></select></label>`;
-    const actions = header.querySelector(".rn-public-actions") || header; actions.appendChild(wrap);
+    // owner 2026-11-09: "header menu terlihat dipaksakan — pilihan bencana pindah ke side menu paling atas atau
+    // di halaman". Laptop: di atas menu samping (bila ada) atau di atas isi halaman; HP tetap lewat menu drawer.
+    const desk = window.matchMedia && window.matchMedia("(min-width: 1024px)").matches;
+    const sideBrand = desk && document.querySelector("aside.sidebar:not(.rn-drawer-panel) .brand");
+    const ownPicker = document.querySelector("#pkEventSel, #boEventSel, [data-own-event-picker]");
+    const mainEl = document.querySelector("main, .main, .rn-main");
+    if (!document.getElementById("rnEvPickCss")) { const st = document.createElement("style"); st.id = "rnEvPickCss";
+      st.textContent = ".rn-event-picker--side{display:block!important;margin:6px 14px 14px}.rn-event-picker--side label{display:flex!important;flex-direction:column;align-items:stretch;gap:4px;width:100%}.rn-event-picker--side label>span{font-size:12px;letter-spacing:.04em;text-transform:uppercase;opacity:.75}.rn-event-picker--side select{width:100%;max-width:none;min-height:38px;border-radius:10px;padding:6px 8px;font-size:14px}.rn-event-picker--inline{display:flex!important;margin:0 0 12px}.rn-event-picker--inline label{display:inline-flex!important;align-items:center;gap:8px;font-size:13px}.rn-event-picker--inline select{min-width:280px;max-width:520px;min-height:36px;border-radius:10px;padding:4px 8px;font-size:14px}";
+      document.head.appendChild(st); }
+    if (sideBrand) { wrap.classList.add("rn-event-picker--side"); sideBrand.insertAdjacentElement("afterend", wrap); }
+    else if (desk && ownPicker) { return; }
+    else if (desk && mainEl) { wrap.classList.add("rn-event-picker--inline"); mainEl.insertBefore(wrap, mainEl.firstChild); }
+    else { const actions = header.querySelector(".rn-public-actions") || header; actions.appendChild(wrap); }
     const select = wrap.querySelector("select");
     select.addEventListener("change", () => { if (select.value && select.value !== active) goToEvent(select.value); });
     try {

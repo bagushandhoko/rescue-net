@@ -73,7 +73,7 @@
   function printCards(cards) {
     var box = $("#kkPrint");
     box.innerHTML = '<div class="kk-sheet">' + cards.map(function (c, i) {
-      return '<div class="kk-tag"><div class="qr" id="kkqr' + i + '"></div><b>' + esc(c.household_code) + "</b><div>" + esc(c.members_count) + " orang · " + esc(c.token) + "</div><div style='font-size:11px'>Kartu bantuan — tunjukkan ke petugas</div></div>";
+      return '<div class="kk-tag"><div class="qr" id="kkqr' + i + '"></div><b>' + esc(c.household_code) + "</b><div>" + esc(c.members_count) + " orang · " + esc(c.token) + "</div><div style='font-size:13px'>Kartu bantuan — tunjukkan ke petugas</div></div>";
     }).join("") + "</div>";
     cards.forEach(function (c, i) {
       if (typeof QRCode === "function") new QRCode($("#kkqr" + i), { text: c.token, width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M });

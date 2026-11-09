@@ -3,7 +3,7 @@
   const prefix = isHome() ? "" : "../";
 
   // Dua bahasa ID/EN (rn-i18n.js): dimuat sekali untuk semua halaman yang memakai header publik.
-  if (!document.querySelector('script[src*="rn-i18n.js"]')) { const s18 = document.createElement("script"); s18.src = `${prefix}assets/js/rn-i18n.js?v=i18n14-20261109`; document.head.appendChild(s18); }
+  if (!document.querySelector('script[src*="rn-i18n.js"]')) { const s18 = document.createElement("script"); s18.src = `${prefix}assets/js/rn-i18n.js?v=i18n15-20261109`; document.head.appendChild(s18); }
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
   const RN_EVENT_DEFAULT = "event-sim-001";
@@ -90,12 +90,42 @@
   function closeMenu(header, button) { header.classList.remove("is-open"); button.setAttribute("aria-expanded", "false"); }
   function readCookie(name) { const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)")); try { return m ? decodeURIComponent(m[1]) : ""; } catch (e) { return m ? m[1] : ""; } }
 
+  // 2026-11-09: akun login Google / akun lama belum menyetujui Kebijakan Privasi -> minta sekali
+  function askPrivacyOnce(sess) {
+    if (!sess.privacy_consent_needed || document.getElementById("rnPrivacyAsk")) return;
+    const pfx = location.pathname.indexOf("/pages/") !== -1 ? "" : "pages/";
+    const box = document.createElement("div"); box.id = "rnPrivacyAsk";
+    box.setAttribute("role", "dialog"); box.setAttribute("aria-modal", "true");
+    box.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;padding:16px";
+    box.innerHTML = '<div style="background:#fff;color:#0f172a;max-width:440px;width:100%;border-radius:14px;padding:18px 18px 14px;box-shadow:0 10px 40px rgba(0,0,0,.3);font-size:15px;line-height:1.5">' +
+      '<h3 style="margin:0 0 8px;font-size:18px">Persetujuan Data Pribadi</h3>' +
+      '<p style="margin:0 0 10px">Untuk melanjutkan memakai Rescue-Net, mohon setujui penggunaan data pribadi Anda sesuai <a href="' + pfx + 'kebijakan-privasi.html" target="_blank" rel="noopener">Kebijakan Privasi</a>.</p>' +
+      '<label style="display:flex;gap:8px;align-items:flex-start;margin:0 0 12px;cursor:pointer"><input type="checkbox" id="rnPrivacyChk" style="margin-top:4px"> <span>Saya telah membaca dan menyetujui Kebijakan Privasi Rescue-Net.</span></label>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" id="rnPrivacyLater" style="padding:8px 12px;border:1px solid #cbd5e1;background:#fff;border-radius:8px;cursor:pointer">Nanti</button>' +
+      '<button type="button" id="rnPrivacyOk" disabled style="padding:8px 14px;border:0;background:#16a34a;color:#fff;border-radius:8px;cursor:pointer;opacity:.5">Setuju</button></div>' +
+      '<p id="rnPrivacyMsg" style="margin:8px 0 0;font-size:13px;color:#b91c1c"></p></div>';
+    document.body.appendChild(box);
+    const chk = box.querySelector("#rnPrivacyChk"), ok = box.querySelector("#rnPrivacyOk");
+    chk.onchange = () => { ok.disabled = !chk.checked; ok.style.opacity = chk.checked ? "1" : ".5"; };
+    box.querySelector("#rnPrivacyLater").onclick = () => box.remove();
+    ok.onclick = async () => {
+      ok.disabled = true;
+      try {
+        const r = await fetch(RN_API + "rescue_net.api_auth.accept_privacy", { method: "POST", credentials: "include",
+          headers: Object.assign({ "Content-Type": "application/json" }, sess.csrf_token ? { "X-Frappe-CSRF-Token": sess.csrf_token } : {}), body: "{}" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        box.remove();
+      } catch (e) { ok.disabled = false; box.querySelector("#rnPrivacyMsg").textContent = "Gagal menyimpan, coba lagi."; }
+    };
+  }
+
   async function buildAuthArea(container, existingLoginEl) {
     const actions = existingLoginEl ? container : (container.querySelector(".rn-public-actions") || container);
     const loginEl = existingLoginEl || document.createElement("a");
     if (!existingLoginEl) { loginEl.className = LOGIN_LINK.className; loginEl.href = LOGIN_LINK.href; loginEl.textContent = LOGIN_LINK.label; actions.appendChild(loginEl); }
     let sess = null; try { const res = await fetch(RN_API + "rescue_net.api_auth.session_info", { credentials: "include" }); if (res.ok) sess = ((await res.json()) || {}).message || null; } catch (e) { }
     if (!sess || !sess.user || sess.user === "Guest") return;
+    askPrivacyOnce(sess);
     const name = sess.full_name || readCookie("full_name") || sess.user;
     const doLogout = async (el) => { el.textContent = "Keluar…"; try { await fetch(RN_API + "logout", { method: "POST", credentials: "include", headers: sess.csrf_token ? { "X-Frappe-CSRF-Token": sess.csrf_token } : {} }); } catch (err) {} try { localStorage.removeItem("RN_USER"); } catch (err) {} location.reload(); };
     // owner 2026-10-26: clicking the name opens the account's own settings

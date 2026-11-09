@@ -44,6 +44,15 @@ class TestReporterSignupAndApproval(RNTestCase):
         self.assertTrue(at)
         self.assertEqual(ver, api_auth.PRIVACY_POLICY_VERSION)
 
+    def test_google_or_old_account_asked_once(self):
+        acc = make_actor()
+        with as_user(acc.user):
+            self.assertTrue(api_auth.session_info()["privacy_consent_needed"])
+            api_auth.accept_privacy()
+            self.assertFalse(api_auth.session_info()["privacy_consent_needed"])
+        self.assertEqual(frappe.db.get_value("RN User Account", acc.account, "privacy_policy_version"),
+                         api_auth.PRIVACY_POLICY_VERSION)
+
     def test_admin_approval_grants_reporter_role(self):
         acc = self.pending()
         api_verification.approval_action("user", acc.name, "approve")

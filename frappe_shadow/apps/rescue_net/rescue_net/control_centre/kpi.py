@@ -804,8 +804,9 @@ def _build_public_dashboard(
         event
     )
 
-    from rescue_net.control_centre.map_evidence import public_safe_rows
+    from rescue_net.control_centre.map_evidence import _drop_closed_org_evidence, public_safe_rows
 
+    _drop_closed_org_evidence(evidence_rows)              # owner 2026-11-09: bukti organisasi tertutup tidak di CC
     public_safe_rows(report_rows, community_only=True)   # public dashboard: never who reported
     public_safe_rows(evidence_rows)
 

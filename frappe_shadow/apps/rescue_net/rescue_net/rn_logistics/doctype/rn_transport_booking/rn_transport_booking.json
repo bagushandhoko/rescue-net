@@ -94,8 +94,14 @@
       "fieldname": "booking_leg",
       "label": "Leg",
       "fieldtype": "Select",
-      "options": "\nmain\nfirst_mile",
-      "description": "main = the shipment's main armada; first_mile = courier to the main armada's handover point."
+      "options": "\nmain\nfirst_mile\nrelay",
+      "description": "main = the shipment's main armada; first_mile = courier to the main armada's handover point. relay = kaki estafet tambahan antar-posko distribusi (urutan di leg_seq)."
+    },
+    {
+      "fieldname": "leg_seq",
+      "fieldtype": "Int",
+      "label": "Urutan Kaki Estafet",
+      "description": "Owner 2026-11-09: urutan kaki relay dalam satu kiriman (1, 2, 3…)."
     },
     {
       "fieldname": "qty_weight_kg",

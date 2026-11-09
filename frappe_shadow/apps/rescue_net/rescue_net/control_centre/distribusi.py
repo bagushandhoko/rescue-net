@@ -214,7 +214,31 @@ def flow_trace(flow=None, trace=None):
         "steps": steps,
         "updated_at": str(f.get("modified")) if f.get("modified") else None,
         "package": _trace_package(f.get("name")),
+        # owner 2026-11-09: urutan kaki (jemput → armada utama → estafet), tanpa kontak
+        "legs": _trace_legs(f.get("name")),
+        # mutasi: serah-terima tercatat (posko + waktu), tanpa nama orang
+        "handovers": _trace_handovers(f.get("name")),
     }
+
+
+def _trace_legs(flow):
+    try:
+        from rescue_net.logistics.relay import flow_legs
+        return flow_legs(flow)
+    except Exception:
+        return []
+
+
+def _trace_handovers(flow):
+    if not frappe.db.exists("DocType", "RN Custody Scan"):
+        return []
+    rows = frappe.get_all("RN Custody Scan", filters={"flow": flow, "outcome": ["!=", "rejected"]},
+                          fields=["scan_type", "posko", "scanned_at"], order_by="scanned_at asc", limit_page_length=100)
+    titles = _distribusi_posko_titles([r.posko for r in rows if r.posko])
+    label = {"dispatch": "Dikirim", "transit": "Dalam perjalanan", "arrive": "Tiba", "receive": "Diterima",
+             "handover": "Serah-terima"}
+    return [{"jenis": label.get(r.scan_type, r.scan_type), "posko": titles.get(r.posko) or "-",
+             "waktu": str(r.scanned_at or "")[:16]} for r in rows]
 
 
 def _trace_package(flow):

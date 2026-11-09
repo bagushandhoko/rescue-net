@@ -714,6 +714,23 @@ def event_evidence(event, limit=60):
     return out[:limit]
 
 
+def _drop_closed_org_evidence(rows):
+    """owner 2026-11-09: "bukti yang dikirim organisasi tertutup nggak tampil di Control Centre". Bukti dari posko milik
+    organisasi berstatus tertutup dibuang, kecuali posko itu sengaja dibuka publik (public_posko_allowed). Bukti tanpa
+    posko (laporan masyarakat umum) dan dari organisasi terbuka tetap tampil. Mengubah list di tempat."""
+    from rescue_net.access_policy import public_posko_allowed
+    poskos = {r.get("posko") for r in rows if r.get("posko")}
+    if not poskos:
+        return rows
+    org_of = {p.name: p.organization for p in frappe.get_all(
+        "RN Posko", filters={"name": ["in", list(poskos)]}, fields=["name", "organization"], limit_page_length=0)}
+    closed_orgs = set(frappe.get_all("RN Organization", filters={
+        "name": ["in", [o for o in org_of.values() if o] or ["-"]], "privacy_mode": "closed"}, pluck="name"))
+    hidden = {p for p, o in org_of.items() if o in closed_orgs and not public_posko_allowed(p)}
+    rows[:] = [r for r in rows if r.get("posko") not in hidden]
+    return rows
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def evidence_board(disaster_event=None, limit=300):
@@ -729,6 +746,8 @@ def evidence_board(disaster_event=None, limit=300):
     """
     event = canonical_event(disaster_event) if disaster_event else None
     rows = event_evidence(event, limit=int(limit)) if event else []
+    if frappe.session.user == "Guest":
+        _drop_closed_org_evidence(rows)
     if not names_allowed():
         public_safe_rows(rows)
 

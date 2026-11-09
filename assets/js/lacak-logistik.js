@@ -58,10 +58,26 @@
         (p.updated_at ? row("Diperbarui", fmtDateTime(p.updated_at)) : "") +
       "</div>" +
       packageCard(p) +
+      legsCard(p) +
       '<div class="ll-card"><ul class="ll-timeline">' + steps + "</ul></div>";
 
     $("#llBody").innerHTML = html;
     $("#llFindCard").hidden = false;
+  }
+
+  // owner 2026-11-09: estafet — urutan armada yang membawa kiriman + serah-terima tercatat (mutasi pergerakan)
+  function legsCard(p) {
+    var legs = p.legs || [], hs = p.handovers || [];
+    if (legs.length < 2 && !hs.length) return "";
+    var st = { requested: "menunggu konfirmasi", confirmed: "terkonfirmasi", completed: "selesai" };
+    return '<div class="ll-card"><b>Perjalanan kiriman' + (legs.length > 1 ? " (" + legs.length + " kaki" + (legs.some(function (l) { return l.leg === "relay"; }) ? ", estafet" : "") + ")" : "") + "</b>" +
+      legs.map(function (l) {
+        return row(l.no + ". " + l.leg_label, l.armada + " — " + l.posko + " · " + l.from + " → " + l.to +
+          (l.berangkat ? " · berangkat " + fmtDateTime(l.berangkat) : "") + " · " + (st[l.booking_status] || l.booking_status));
+      }).join("") +
+      (hs.length ? '<p class="ll-muted" style="margin:10px 0 4px">Serah-terima tercatat</p>' +
+        hs.map(function (h) { return row(fmtDateTime(h.waktu), h.jenis + " · " + h.posko); }).join("") : "") +
+      "</div>";
   }
 
   // paket (owner 2026-10-26): every item travelling under this resi

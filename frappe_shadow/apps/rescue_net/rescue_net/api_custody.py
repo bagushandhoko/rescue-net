@@ -75,6 +75,10 @@ def record_scan(flow=None, trace=None, scan_type=None, offline_id=None,
         if p and _can_operate(actor, p):
             posko = p
             break
+    if not posko and scan_type != "receive":
+        # owner 2026-11-09 estafet: posko distribusi yang membawa kiriman (kaki mana pun) mencatat serah-terima
+        from rescue_net.logistics.relay import carrier_poskos
+        posko = next((p for p in sorted(carrier_poskos(name)) if _can_operate(actor, p)), None)
     if not posko:
         frappe.throw("Anda tidak dapat memindai kiriman ini", frappe.PermissionError)
     if scan_type == "receive" and not (f.destination_posko and _can_operate(actor, f.destination_posko)):
@@ -126,11 +130,17 @@ def custody_chain(flow=None, trace=None):
         frappe.throw("Kiriman tidak ditemukan.", frappe.DoesNotExistError)
     f = frappe.db.get_value("RN Distribution Flow", name,
                             ["source_posko", "destination_posko"], as_dict=True)
-    if not any(p and _can_operate(actor, p) for p in (f.source_posko, f.destination_posko)):
+    from rescue_net.logistics.relay import carrier_poskos, flow_legs
+    if not any(p and _can_operate(actor, p) for p in (f.source_posko, f.destination_posko)) and \
+            not any(_can_operate(actor, p) for p in carrier_poskos(name)):
         frappe.throw("Tidak diizinkan", frappe.PermissionError)
     rows = frappe.get_all(
         "RN Custody Scan", filters={"flow": name},
-        fields=["name", "scan_type", "outcome", "actor", "scanned_at",
+        fields=["name", "scan_type", "outcome", "actor", "posko", "scanned_at",
                 "status_before", "status_after", "note"],
         order_by="scanned_at asc, creation asc", limit_page_length=200)
-    return {"flow": name, "scans": rows}
+    titles = {p.name: p.title for p in frappe.get_all("RN Posko", filters={"name": ["in", [r.posko for r in rows if r.posko] or ["-"]]},
+                                                      fields=["name", "title"], limit_page_length=0)}
+    for r in rows:
+        r["posko_title"] = titles.get(r.posko) or ""
+    return {"flow": name, "scans": rows, "legs": flow_legs(name)}

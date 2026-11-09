@@ -679,6 +679,8 @@ def _assign_flow_to_space(flow_name, space, leg="main"):
     from rescue_net.logistics.package import sync_package
     if leg == "first_mile":
         frappe.db.set_value("RN Distribution Flow", flow_name, "first_mile_space", space.name)
+    elif leg == "relay":
+        pass                    # owner 2026-11-09: kaki estafet tidak mengganti armada utama kiriman
     else:
         frappe.db.set_value("RN Distribution Flow", flow_name, {
             "transport_space": space.name,

@@ -682,6 +682,52 @@
   function closeDrill() { $("#pdDrill").hidden = true; document.body.style.overflow = ""; }
 
   /* ---------- booking inbox ---------- */
+  // estafet: pilih armada lain yang melayani bencana ini (Cari Armada), lalu api_logistics.book_relay_leg
+  function wireRelay(box) {
+    var flow = box.getAttribute("data-flow"), msg = box.querySelector(".rn-pd-bk-msg");
+    box.querySelector('[data-relay="scan"]').addEventListener("click", async function () {
+      msg.textContent = " mencatat…";
+      try {
+        await window.RN_FRAPPE.call("rescue_net.api_custody.record_scan", { flow: flow, scan_type: "handover",
+          note: "Serah-terima di " + ((CACHE && CACHE.posko_info && CACHE.posko_info.title) || "posko distribusi") }, { method: "POST" });
+        msg.textContent = " serah-terima tercatat ✓";
+      } catch (e) { msg.textContent = " " + ((e && e.message) || e); }
+    });
+    box.querySelector('[data-relay="open"]').addEventListener("click", async function () {
+      if (box.querySelector("form")) return;
+      msg.textContent = " memuat armada…";
+      var r;
+      try { r = await window.RN_FRAPPE.call("rescue_net.api_armada.armada_finder", { disaster_event: getEvent() || null, status: "tersedia" }); }
+      catch (e) { msg.textContent = " " + ((e && e.message) || e); return; }
+      var mine = ((CACHE && CACHE.armada) || []).map(function (a) { return a.id; });
+      var rows = (r.rows || []).filter(function (a) { return mine.indexOf(a.name) === -1; });
+      if (!rows.length) { msg.textContent = " belum ada armada lain yang tersedia."; return; }
+      msg.textContent = "";
+      var f = document.createElement("form");
+      f.className = "rn-form rn-pd-relay-form";
+      f.innerHTML = '<label>Armada berikutnya<select name="space">' + rows.map(function (a) {
+          return '<option value="' + esc(a.name) + '">' + esc(a.title) + " — " + esc(a.posko_title || "") + " (" + esc(a.type_label) +
+            (a.left_kg != null ? ", sisa " + fmt(a.left_kg) + " kg" : "") + ")</option>";
+        }).join("") + "</select></label>" +
+        '<label>Titik serah<input name="from" placeholder="mis. pelabuhan / simpang kota"></label>' +
+        '<label>Tujuan kaki ini<input name="to" placeholder="mis. posko distribusi berikutnya / posko tujuan"></label>' +
+        '<label class="rn-dispatch-ack"><input type="checkbox" name="ack"> Barang memenuhi syarat armada berikutnya</label>' +
+        '<div class="form-actions"><button class="btn primary mini" type="submit">Pesan kaki estafet</button><span class="rn-pd-bk-msg"></span></div>';
+      box.appendChild(f);
+      f.addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        var m = f.querySelector(".rn-pd-bk-msg");
+        m.textContent = " memesan…";
+        try {
+          var x = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_relay_leg", { flow: flow, transport_space: f.space.value,
+            pickup_location: f.from.value.trim(), dropoff_location: f.to.value.trim(), terms_ack: f.ack.checked ? 1 : 0 }, { method: "POST" });
+          m.textContent = " estafet ke-" + x.leg_seq + " " + (x.status === "confirmed" ? "terkonfirmasi" :
+            "menunggu konfirmasi posko armada" + (x.verification_pin ? " (PIN " + x.verification_pin + ")" : ""));
+        } catch (e) { m.textContent = " " + ((e && e.message) || e); }
+      });
+    });
+  }
+
   function renderBookings(list) {
     var body = $("#bookingBody");
     var sec = $("#bookingSection"), manage = !!(CACHE && CACHE.can_manage);
@@ -704,10 +750,17 @@
           '<button type="button" class="btn primary mini" data-do="confirm">Konfirmasi</button>' +
           '<button type="button" class="btn mini" data-do="reject">Tolak</button>' +
           '<span class="rn-pd-bk-msg"></span></div>';
+      } else if (b.status === "confirmed" && canManage && b.flow) {
+        // owner 2026-11-09 estafet: pembawa mencatat serah-terima & meneruskan ke posko distribusi berikutnya
+        act =
+          '<div class="rn-pd-relay" data-flow="' + esc(b.flow) + '">' +
+          '<button type="button" class="btn mini" data-relay="scan">Catat serah-terima</button>' +
+          '<button type="button" class="btn mini" data-relay="open">Teruskan estafet</button>' +
+          '<span class="rn-pd-bk-msg"></span></div>';
       }
       return (
         "<tr><td><b>" + esc(b.cargo) + "</b><small class=\"rn-muted\">" + esc(b.armada) + "</small>" +
-          (b.is_shipment ? '<small class="rn-muted">' + (b.leg === "first_mile" ? "Jemput ke titik serah: " : "Kiriman posko: ") +
+          (b.is_shipment ? '<small class="rn-muted">' + (b.leg === "first_mile" ? "Jemput ke titik serah: " : b.leg === "relay" ? "Kaki estafet: " : "Kiriman posko: ") +
             esc(b.pickup || "-") + " → " + esc(b.dropoff || "-") +
             (b.event_title ? " · " + esc(b.event_title) : "") + "</small>" : "") +
           (b.note ? '<small class="rn-muted">' + esc(b.note) + "</small>" : "") +
@@ -724,6 +777,7 @@
       );
     }).join("");
 
+    body.querySelectorAll(".rn-pd-relay").forEach(wireRelay);
     body.querySelectorAll(".rn-pd-bk-act").forEach(function (box) {
       var id = box.getAttribute("data-booking");
       var pin = box.querySelector(".rn-pd-pin");

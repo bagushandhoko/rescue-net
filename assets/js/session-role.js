@@ -360,14 +360,22 @@
     );
   }
 
+  /* owner 2026-11-09 (audit login nyata): petugas posko / pengelola organisasi sering berperan umum
+     "viewer" — hak sebenarnya dari penugasan posko. Tampilkan form kerja posko untuk mereka;
+     server tetap memeriksa izin per posko. */
+  function effectiveRole(u) {
+    if (!u) return "viewer";
+    var r = u.role || "viewer";
+    if ((r === "viewer" || r === "donor" || r === "volunteer") && (u.posko_id || u.manages_org)) return "posko_operator";
+    return r;
+  }
+
   function applyRoleVisibility() {
     const user =
       getUser();
 
     const role =
-      user
-        ? user.role
-        : "viewer";
+      effectiveRole(user);
 
     document
       .querySelectorAll(

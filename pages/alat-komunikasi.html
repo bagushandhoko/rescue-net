@@ -127,7 +127,7 @@
           <div><h3>Operator Radio</h3></div>
         </div>
         <div class="rn-kom-op-list" id="operatorList"></div>
-        <button class="btn rn-kom-op-add" type="button" id="opAddBtn">+ Tambah Operator</button>
+        <button class="btn rn-kom-op-add" type="button" id="opAddBtn" data-owner-only>+ Tambah Operator</button>
       </aside>
     </section>
 
@@ -164,7 +164,7 @@
     </section>
     <p class="rn-muted rn-kom-footnote" id="komFootnote"></p>
 
-    <details class="panel create-panel rn-input-drawer" id="deviceForm" data-login-only>
+    <details class="panel create-panel rn-input-drawer" id="deviceForm" data-owner-only>
       <summary>
         <h3>Tambah / Perbarui Alat Komunikasi</h3>
         <p>Alat milik posko, organisasi, TNI/Polri, atau relawan. Perlu login.</p>
@@ -219,7 +219,7 @@
       </form>
     </details>
 
-    <details class="panel create-panel rn-input-drawer" id="supportForm" data-login-only>
+    <details class="panel create-panel rn-input-drawer" id="supportForm" data-owner-only>
       <summary>
         <h3>Dukungan Komunikasi Posko</h3>
         <p>Pengelola posko: tulis dukungan yang posko Anda tawarkan (mis. relay radio, pinjam HT, operator, genset) dan yang dibutuhkan.</p>
@@ -236,7 +236,7 @@
         </div>
       </form>
     </details>
-    <details class="panel create-panel rn-input-drawer" id="operatorForm" data-login-only>
+    <details class="panel create-panel rn-input-drawer" id="operatorForm" data-owner-only>
       <summary>
         <h3>Tambah Operator Radio</h3>
         <p>Operator / koordinator radio yang bertugas untuk event ini. Perlu login.</p>
@@ -272,7 +272,7 @@
       </form>
     </details>
 
-    <details class="panel create-panel rn-input-drawer" id="freqForm" data-login-only>
+    <details class="panel create-panel rn-input-drawer" id="freqForm" data-owner-only>
       <summary>
         <h3>Tambah Kanal Frekuensi / Jaringan</h3>
       </summary>
@@ -331,8 +331,8 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=cluster-20260930"></script>
-<script src="../assets/js/alat-komunikasi.js?v=pilihposko2-20261108"></script>
-<script src="../assets/js/session-role.js?v=frappe-session-2"></script>
+<script src="../assets/js/alat-komunikasi.js?v=petugas-20261109"></script>
+<script src="../assets/js/session-role.js?v=petugas-20261109"></script>
 <script src="../assets/js/rn-public-header.js?v=i18n14-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>
 <script src="../assets/js/rn-navigation-v2.js?v=kompakhp-20261108"></script>

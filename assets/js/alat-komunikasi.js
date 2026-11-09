@@ -498,3 +498,19 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fill); else fill();
 })();
+
+// owner 2026-11-09 (audit login nyata): form tambah alat/operator/kanal/dukungan hanya untuk petugas posko,
+// pengelola organisasi, atau Control Centre — bukan tamu / pengguna biasa tanpa posko.
+(function () {
+  async function check() {
+    if (!window.RN_FRAPPE || !window.RN_OWNER_ONLY) return;
+    try {
+      var s = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info", {});
+      if (!s || !s.user || s.user === "Guest") return;
+      if (s.is_system_manager || s.manages_org || s.posko_id || /control|komando|koordinator/i.test(s.role || "")) { window.RN_OWNER_ONLY.grant(true); return; }
+      var m = await window.RN_FRAPPE.call("rescue_net.api_posko_manage.my_managed_poskos", {});
+      if (m && m.poskos && m.poskos.length) window.RN_OWNER_ONLY.grant(true);
+    } catch (e) {}
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", check); else check();
+})();

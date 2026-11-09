@@ -44,7 +44,7 @@
       },
       {
         label: "Posko Logistik",
-        href: "posko-logistik.html",
+        href: "posko-logistik.html?event=event-sim-001",
         icon: "logistik"
       },
       {
@@ -87,17 +87,17 @@
       },
       {
         label: "Posko Medis",
-        href: "posko-medis-detail.html?id=posko-sim-medis",
+        href: "posko-medis-detail.html?event=event-sim-001",
         icon: "medis"
       },
       {
         label: "Posko Shelter",
-        href: "shelter-detail.html?id=posko-sim-shelter",
+        href: "shelter-detail.html?event=event-sim-001",
         icon: "shelter"
       },
       {
         label: "Posko Dapur Umum",
-        href: "dapur-umum.html?id=posko-sim-dapur",
+        href: "dapur-umum.html?event=event-sim-001",
         icon: "dapur"
       },
       {
@@ -374,7 +374,7 @@
   /* ---- Top group: function switcher for a merged posko ---- */
 
   const FN_PAGES = {
-    logistics: { label: "Logistik", href: "posko-logistik.html", icon: "logistik" },
+    logistics: { label: "Logistik", href: "posko-logistik.html?event=event-sim-001", icon: "logistik" },
     shelter: { label: "Shelter", href: "shelter-detail.html", icon: "shelter" },
     kitchen: { label: "Dapur Umum", href: "dapur-umum.html", icon: "dapur" }
   };

@@ -60,6 +60,7 @@ GUEST_ENDPOINTS = {
     "api_recovery.recovery_board",  # reviewed: plan + progress + owner label; no PIC/notes/creator, drill hidden
     "api_control_centre.ecosystem_board",  # reviewed: org names + counts/totals only; no person names, contacts or donor identities
     "api_control_centre.posko_contact",  # reviewed: guest gets posko title only; numbers only when logged in
+    "api_control_centre.posko_summary",  # reviewed 2026-11-09: angka ringkasan per posko dari papan posko; tanpa kontak/pasien (test_posko_summary)
     "api_control_centre.posko_detail", "api_control_centre.posko_distribusi_board",
     "api_control_centre.posko_edit_scope", "api_control_centre.posko_functions",
     "api_control_centre.posko_registry_board", "api_control_centre.posko_verification_checklist",

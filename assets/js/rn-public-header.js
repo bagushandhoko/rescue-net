@@ -28,7 +28,7 @@
     const url = new URL(location.href);
     if (!url.searchParams.get("event")) { url.searchParams.set("event", eventId); try { history.replaceState(null, "", url.toString()); } catch (e) {} }
   }
-  function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); location.href = url.toString(); }
+  function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); if (document.body && document.body.getAttribute("data-rn-posko-kind")) { url.searchParams.delete("id"); url.searchParams.delete("posko"); } location.href = url.toString(); }
 
   window.rnActiveEvent = currentEventId();
 
@@ -96,7 +96,7 @@
   function writeStoredEvent(v) { try { localStorage.setItem(RN_EVENT_STORE_KEY, v); } catch (e) {} }
   function currentEventId() { const url = new URL(location.href); const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || ""); if (fromUrl) return fromUrl; return stripEventPrefix(readStoredEvent()) || "event-sim-001"; }
   function ensureEventInUrl(eventId) { const url = new URL(location.href); if (!url.searchParams.get("event")) { url.searchParams.set("event", eventId); try { history.replaceState(null, "", url.toString()); } catch (e) {} } }
-  function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); location.href = url.toString(); }
+  function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); if (document.body && document.body.getAttribute("data-rn-posko-kind")) { url.searchParams.delete("id"); url.searchParams.delete("posko"); } location.href = url.toString(); }
   window.rnActiveEvent = currentEventId();
 
   // Mode Operasional Riil (owner 2026-11-09): bila super admin menyembunyikan data simulasi, halaman yang masih

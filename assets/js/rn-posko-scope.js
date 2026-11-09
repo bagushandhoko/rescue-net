@@ -141,7 +141,9 @@
     //    (medis / shelter / dapur) keep whatever ?id= the nav gave them so a
     //    logistics operator is not bounced onto a medical posko with no data.
     var REDIRECT_PAGES = /\/(posko-logistik|posko-distribusi|posko-detail)\.html$/;
-    if (!pid && scope.primary_posko && REDIRECT_PAGES.test(location.pathname)) {
+    //    Owner 2026-11-09: halaman dengan ringkasan semua posko (rn-posko-summary.js) tidak dialihkan —
+    //    posko milik anggota tampil paling atas dengan tanda "Posko saya".
+    if (!pid && scope.primary_posko && REDIRECT_PAGES.test(location.pathname) && !window.RN_POSKO_SUMMARY_MODE) {
       var u = new URLSearchParams(location.search);
       u.set("id", scope.primary_posko);
       if (!u.get("event")) u.set("event", ev);

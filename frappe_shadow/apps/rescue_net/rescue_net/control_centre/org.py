@@ -55,9 +55,12 @@ def org_posko_board(disaster_event=None):
     posko_filter = {"disaster_event": event} if event else {}
     poskos = frappe.get_all(
         "RN Posko", filters=posko_filter,
-        fields=["name", "title", "organization", "posko_type", "operational_status", "verification_status"],
+        fields=["name", "title", "organization", "posko_type", "operational_status", "verification_status",
+                "disaster_event"],
         limit_page_length=1000,
     )
+    from rescue_net.services.drill import real_rows
+    poskos = real_rows(poskos)  # latihan + (Mode Operasional Riil) posko simulasi tidak tampil
 
     org_names = sorted({p.organization for p in poskos if p.organization})
     # Organisasi yang punya posko di bencana ini = "ikut bencana" (dipakai KPI);
@@ -86,6 +89,7 @@ def org_posko_board(disaster_event=None):
                 "trust_level", "trusted_verifier_count", "status", "modified"],
         limit_page_length=500,
     )
+    orgs_raw = real_rows(orgs_raw)  # Mode Operasional Riil: organisasi [SIMULASI] tidak tampil
 
     orgs = []
     posko_aktif_total = 0
@@ -319,9 +323,11 @@ def posko_registry_board(disaster_event=None, limit=200):
         fields=_sf("RN Posko", ["name", "title", "posko_type", "address", "city_name",
                 "organization", "officer_in_charge_name", "rn_beneficiary_count",
                 "verification_status", "trusted_verifier_count",
-                "operational_status", "modified"]),
+                "operational_status", "modified", "disaster_event"]),
         order_by="modified desc", limit_page_length=int(limit),
     )
+    from rescue_net.services.drill import real_rows
+    rows = real_rows(rows)  # latihan + (Mode Operasional Riil) posko simulasi tidak tampil
 
     org_titles = {}
     _org_ids = sorted({r.get("organization") for r in rows if r.get("organization")})

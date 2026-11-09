@@ -7,7 +7,7 @@ pratinjau (``confirm_total``); dan berhenti bila ada catatan keuangan/audit di e
 
 import frappe
 
-from rescue_net.services.drill import is_drill_event
+from rescue_net.services.drill import is_flagged_drill_event as is_drill_event  # hanya is_drill=1; simulasi demo tak pernah dihapus
 
 # dihapus HANYA bila event latihan; urutan: anak dulu, posko, lalu event
 _PROTECTED = ("RN Cash Donation", "RN Donor Program", "RN Donor Program Update", "RN Verification Action",

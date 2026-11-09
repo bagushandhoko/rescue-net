@@ -105,6 +105,7 @@ GUEST_ENDPOINTS = {
     "api_org_profile.community_activity",  # reviewed: kegiatan masyarakat umum per bencana — hanya angka/barang/program/posko, tanpa nama/kontak (test_org_profile)
     "api_org_profile.org_list", "api_org_profile.org_profile",  # reviewed: profil kerja organisasi tanpa kontak/pasien/anggota (test_org_profile)
     "api_inbox.my_notifications",  # reviewed: Guest gets {logged_in: False}; only the caller's own notices (test_inbox)
+    "api_operational_mode.status",  # reviewed: only {"operational": bool} — Mode Operasional Riil (test_operational_mode)
     "api_donor_program.program_reviews",  # reviewed: public ratings; reviewer shown by short name or Anonim, no account ids (test_program_reviews)
 }
 

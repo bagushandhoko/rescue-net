@@ -99,6 +99,39 @@
   function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); location.href = url.toString(); }
   window.rnActiveEvent = currentEventId();
 
+  // Mode Operasional Riil (owner 2026-11-09): bila super admin menyembunyikan data simulasi, halaman yang masih
+  // membuka bencana simulasi (default lama event-sim-001, tautan/localStorage lama) dipindah ke bencana aktif
+  // pertama. Status disimpan 60 dtk di sessionStorage agar tidak memanggil server tiap halaman.
+  async function operationalMode() {
+    const KEY = "rn_opmode";
+    try { const c = JSON.parse(sessionStorage.getItem(KEY) || "null"); if (c && Date.now() - c.t < 60000) return !!c.on; } catch (e) {}
+    let on = false;
+    try { const r = await fetch(RN_API + "rescue_net.api_operational_mode.status", { credentials: "omit" }); if (r.ok) on = !!(((await r.json()) || {}).message || {}).operational; } catch (e) { return false; }
+    try { sessionStorage.setItem(KEY, JSON.stringify({ t: Date.now(), on: on })); } catch (e) {}
+    return on;
+  }
+  async function leaveHiddenEvent() {
+    const url = new URL(location.href);
+    const explicit = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event") || url.searchParams.get("disaster_event_id") || "");
+    if (!explicit && isHome()) return;  // beranda tidak memakai bencana dari URL
+    const ev = explicit || window.rnActiveEvent;
+    if (!ev || !(await operationalMode())) return;
+    try {
+      const all = ((await (await fetch(RN_API + "rescue_net.api_events.disasters?limit=500", { credentials: "omit" })).json()) || {}).message || {};
+      const visible = (all.disasters || []).some(d => [d.name, d.legacy_id, d.frappe_name].map(stripEventPrefix).indexOf(ev) !== -1);
+      if (visible) return;
+      const act = ((await (await fetch(RN_API + "rescue_net.api_ai.public_active_disasters", { credentials: "omit" })).json()) || {}).message || [];
+      const first = act.length ? stripEventPrefix(act[0].legacy_id || act[0].id || act[0].name || "") : "";
+      if (first && first !== ev) {
+        writeStoredEvent(first);
+        const u = new URL(location.href); u.searchParams.set("event", first);
+        u.searchParams.delete("disaster_event"); u.searchParams.delete("disaster_event_id");
+        location.replace(u.toString()); return;
+      }
+      if (!act.length) { writeStoredEvent(""); }
+    } catch (e) { }
+  }
+
   function closeMenu(header, button) { header.classList.remove("is-open"); button.setAttribute("aria-expanded", "false"); }
   function readCookie(name) { const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)")); try { return m ? decodeURIComponent(m[1]) : ""; } catch (e) { return m ? m[1] : ""; } }
 
@@ -195,7 +228,7 @@
     const header = document.createElement("header"); header.className = "rn-public-header";
     header.innerHTML = `<a class="rn-public-brand" href="${prefix}index.html" aria-label="Rescue-Net Home"><img src="${prefix}assets/img/rn-logo-web.png" alt=""><span class="rn-public-brand-name">Rescue-Net</span></a><nav class="rn-public-links" aria-label="Rescue-Net public navigation">${links.map(l => l.children ? `<div class="rn-menu-item rn-has-submenu" role="none"><a href="#" class="rn-menu-link" aria-haspopup="true" aria-expanded="false">${l.label}</a><ul class="rn-submenu" role="menu">${l.children.map(c => `<li role="none"><a href="${c.href}" class="rn-submenu-link" role="menuitem">${c.label}</a></li>`).join("")}</ul></div>` : `<a class="${l.className || ""}" href="${l.href}">${l.label}</a>`).join("")}</nav><div class="rn-public-actions"></div><button class="rn-public-toggle" type="button" aria-label="Buka menu" aria-expanded="false"><span></span><span></span><span></span></button>`;
     document.body.insertBefore(header, document.body.firstChild);
-    buildEventPicker(header); buildAuthArea(header);
+    leaveHiddenEvent(); buildEventPicker(header); buildAuthArea(header);
     const button = header.querySelector(".rn-public-toggle");
     button.addEventListener("click", () => { const open = header.classList.toggle("is-open"); button.setAttribute("aria-expanded", open ? "true" : "false"); });
     header.querySelectorAll("a").forEach(link => { link.addEventListener("click", () => closeMenu(header, button)); });

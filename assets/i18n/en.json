@@ -5787,18 +5787,54 @@
 "Yang tampil hanya angka gabungan. Login sebagai anggota/operator": "Only combined figures are shown. Log in as a member/operator",
 "[diusulkan — penyamaran otomatis sedang disiapkan]": "[proposed — automatic anonymisation is being prepared]",
 "__patterns": [
-["^terkumpul dari Rp (.+)$", "raised of Rp $1"],
-["^terkumpul dari (Rp .+)$", "raised of $1"],
-["^(\\d+) hari lagi$", "$1 days left"],
-["^(\\d+) penyumbang · (Rp .+)$", "$1 donors · $2"],
-["^Total (\\d+) donatur$", "Total $1 donors"],
-["^(\\d+) jam lalu$", "$1 hours ago"],
-["^(\\d+) menit lalu$", "$1 minutes ago"],
-["^(\\d+) hari lalu$", "$1 days ago"],
-["^baru saja$", "just now"],
-["^(\\d+) donatur$", "$1 donors"],
-["^(\\d+) donasi masuk menunggu konfirmasi Anda$", "$1 incoming donations awaiting your confirmation"],
-["^Rekening koran untuk transparansi \\((\\d+) berkas\\)$", "Bank statements for transparency ($1 files)"],
+[
+"^terkumpul dari Rp (.+)$",
+"raised of Rp $1"
+],
+[
+"^terkumpul dari (Rp .+)$",
+"raised of $1"
+],
+[
+"^(\\d+) hari lagi$",
+"$1 days left"
+],
+[
+"^(\\d+) penyumbang · (Rp .+)$",
+"$1 donors · $2"
+],
+[
+"^Total (\\d+) donatur$",
+"Total $1 donors"
+],
+[
+"^(\\d+) jam lalu$",
+"$1 hours ago"
+],
+[
+"^(\\d+) menit lalu$",
+"$1 minutes ago"
+],
+[
+"^(\\d+) hari lalu$",
+"$1 days ago"
+],
+[
+"^baru saja$",
+"just now"
+],
+[
+"^(\\d+) donatur$",
+"$1 donors"
+],
+[
+"^(\\d+) donasi masuk menunggu konfirmasi Anda$",
+"$1 incoming donations awaiting your confirmation"
+],
+[
+"^Rekening koran untuk transparansi \\((\\d+) berkas\\)$",
+"Bank statements for transparency ($1 files)"
+],
 [
 "^Peran (.+) dalam penanganan bencana di Rescue-Net: ([\\d.]+) posko dari ([\\d.]+) organisasi \\(induk & organisasi anak\\), ([\\d.]+) bencana\\.$",
 "$1's role in disaster response on Rescue-Net: $2 relief posts across $3 organisations (parent & child organisations), $4 disasters."
@@ -5862,6 +5898,30 @@
 [
 "^([\\d.]+) kiriman disalurkan$",
 "$1 shipments dispatched"
+],
+[
+"^(\\d+) mnt lalu$",
+"$1 min ago"
+],
+[
+"^(\\d+) jam lalu$",
+"$1 h ago"
+],
+[
+"^(\\d+) hari lalu$",
+"$1 days ago"
+],
+[
+"^(\\d+) posko$",
+"$1 posts"
+],
+[
+"^([\\d.,]+) antre · ([\\d.,]+) ok$",
+"$1 queued · $2 ok"
+],
+[
+"^\\(([\\d.,]+) kritis\\)$",
+"($1 critical)"
 ]
 ],
 "anggota organisasi yang sudah ada": "a member of an existing organisation",
@@ -5979,5 +6039,32 @@
 "＋ Tambah item": "＋ Add item",
 "💰 Donasi ke Program Khusus": "💰 Donate to a Special Program",
 "📍 Lokasi saat ini": "📍 Current location",
-"🗺️ Pilih di peta": "🗺️ Choose on map"
+"🗺️ Pilih di peta": "🗺️ Choose on map",
+"Semua posko di bencana ini": "All posts in this disaster",
+"Pilih satu posko untuk melihat rinciannya.": "Choose a post to see its details.",
+"Cari posko / lokasi / organisasi": "Search post / location / organization",
+"Update": "Updated",
+"Posko saya": "My post",
+"Jenis stok": "Stock types",
+"Stok menipis": "Low stock",
+"Bantuan menuju": "Aid on the way",
+"Jiwa dilayani": "People served",
+"Armada aktif": "Active fleet",
+"Sisa ruang": "Space left",
+"Pasien ditangani": "Patients in care",
+"Triase merah": "Red triage",
+"khusus petugas": "staff only",
+"Kelompok rentan": "Vulnerable groups",
+"Porsi hari ini": "Portions today",
+"Dibagikan hari ini": "Distributed today",
+"Kurang porsi": "Portion shortfall",
+"Bahan kritis": "Critical ingredients",
+"Memuat daftar posko…": "Loading posts…",
+"Gagal memuat daftar posko.": "Failed to load posts.",
+"Coba lagi": "Try again",
+"← Semua Posko Logistik": "← All Logistics Posts",
+"← Semua Posko Distribusi": "← All Distribution Posts",
+"← Semua Posko Medis": "← All Medical Posts",
+"← Semua Posko Shelter": "← All Shelter Posts",
+"← Semua Posko Dapur Umum": "← All Public Kitchen Posts"
 }

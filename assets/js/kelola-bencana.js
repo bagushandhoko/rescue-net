@@ -57,6 +57,47 @@
     call("check_duplicates", d).then(function (r) { showDup(r.matches, false); }).catch(function () {});
   }
 
+  // owner 2026-11-09: setelah membuat bencana, tawarkan laporan kondisi, posko baru, atau aktifkan posko saya / organisasi saya
+  async function nextSteps(ev, title) {
+    var box = $("kbNext");
+    if (!box) {
+      box = document.createElement("div"); box.id = "kbNext"; box.className = "panel rn-kb-next";
+      $("kbResult").insertAdjacentElement("afterend", box);
+    }
+    var q = "?event=" + encodeURIComponent(ev);
+    box.innerHTML = "<h4>Langkah berikutnya untuk " + esc(title || ev) + "</h4>" +
+      '<div class="form-actions" style="flex-wrap:wrap">' +
+      '<a class="btn primary" href="laporan-masyarakat.html' + q + '">📝 Buat laporan kondisi bencana</a>' +
+      '<a class="btn" href="registrasi-posko.html' + q + '">＋ Buat posko baru</a>' +
+      '<a class="btn ghost" href="war-room.html' + q + '">Buka Control Centre</a></div>' +
+      '<div id="kbNextPosko"><p class="rn-muted">Memuat posko Anda…</p></div>';
+    var rows = [];
+    try { rows = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.my_poskos_served_events"); } catch (e) { rows = []; }
+    var wrap = $("kbNextPosko");
+    rows = (rows || []).filter(function (p) { return (p.events || []).indexOf(ev) === -1; });
+    if (!rows.length) { wrap.innerHTML = '<p class="rn-muted">Belum ada posko Anda / organisasi Anda yang bisa diaktifkan di bencana ini.</p>'; return; }
+    wrap.innerHTML = "<p><b>Aktifkan posko Anda / organisasi Anda di bencana ini</b> (posko tetap melayani bencana sebelumnya):</p>" +
+      rows.map(function (p) {
+        return '<label class="rn-dispatch-ack" style="display:flex;gap:8px"><input type="checkbox" value="' + esc(p.posko) + '"> ' +
+          esc(p.title) + ' <small class="rn-muted">(' + esc(p.posko_type || "") + ")</small></label>";
+      }).join("") +
+      '<div class="form-actions"><button class="btn primary" type="button" id="kbNextGo">Aktifkan posko terpilih</button><span id="kbNextMsg" class="rn-muted"></span></div>';
+    $("kbNextGo").addEventListener("click", async function () {
+      var picked = Array.prototype.slice.call(wrap.querySelectorAll("input:checked")).map(function (i) { return i.value; });
+      if (!picked.length) { $("kbNextMsg").textContent = " pilih minimal satu posko"; return; }
+      var ok = 0, fail = [];
+      for (var i = 0; i < picked.length; i++) {
+        var p = rows.filter(function (x) { return x.posko === picked[i]; })[0];
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_posko_served_events",
+            { posko: p.posko, disaster_events: JSON.stringify((p.events || []).concat([ev])) }, { method: "POST" });
+          ok++;
+        } catch (e) { fail.push(p.title + ": " + errText(e)); }
+      }
+      $("kbNextMsg").textContent = " " + ok + " posko aktif di bencana ini" + (fail.length ? " · gagal: " + fail.join("; ") : "");
+    });
+  }
+
   async function submit(force) {
     var d = formData(); if (force) d.force = 1;
     $("kbSubmit").disabled = true; $("kbResult").textContent = "Mengirim…";
@@ -65,6 +106,7 @@
       if (!r.created) { showDup(r.duplicates, true); $("kbResult").textContent = r.message; return; }
       showDup([], false);
       $("kbResult").innerHTML = esc(r.message) + " " + link(r.name, r.title);
+      nextSteps(r.name, r.title);
       $("kbForm").reset(); lastProbe = "";
       loadMine(); if (window.__kbAdmin) loadAdmin();
     } catch (e) { $("kbResult").textContent = errText(e); }

@@ -456,7 +456,12 @@
 
   function preserveEventContext(nav) {
     const params = new URLSearchParams(window.location.search);
-    const eventId = params.get("event");
+    // owner 2026-11-09: tanpa ?event= di alamat, pakai bencana terakhir yang dipilih (bukan contoh Aceh)
+    let eventId = params.get("event") || params.get("disaster_event_id");
+    if (!eventId) {
+      try { eventId = localStorage.getItem("rn_active_event") || localStorage.getItem("rn-active-event"); } catch (e) {}
+    }
+    eventId = String(eventId || "").replace(/^disaster_events:/, "");
 
     if (!eventId) return;
 

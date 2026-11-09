@@ -322,3 +322,18 @@ class TestPoskoDistribusiPublicView(_ShipmentWorld):
         coord = make_actor(posko=self.tp_b)
         with as_user(coord.user):
             self.assertEqual(len(posko_distribusi_board(posko=self.tp_b.name)["booking_inbox"]), 1)
+
+    def test_capacity_counts_own_load_and_confirmed_space(self):
+        """Simulasi DIST-MU-2: pesawat terisi muatan sendiri + booking terkonfirmasi dulu tampil 0% terpakai."""
+        from rescue_net.api_control_centre import distribusi_board
+        plane = make_transport_space(self.tp_b, disaster_event=self.w.event.name, transport_type="udara",
+                                     capacity_weight_kg=15000, capacity_volume_m3=60, own_load_kg=2500, own_load_m3=10,
+                                     capacity_committed_kg=4300, capacity_committed_m3=20)
+        done = make_transport_space(self.tp_b, disaster_event=self.w.event.name, transport_type="udara",
+                                    capacity_volume_m3=60, transport_status="completed")
+        with as_guest():
+            u = distribusi_board(self.w.event.name)["ruang_transportasi"]["by_type"]["udara"]
+        self.assertEqual(u["total_m3"], 60)          # the finished flight is not current capacity
+        self.assertEqual(u["terpakai_m3"], 30)       # 10 own + 20 confirmed
+        self.assertEqual(u["pct"], 50)
+        self.assertTrue(plane and done)

@@ -280,7 +280,7 @@ def distribusi_board(disaster_event=None):
             "handover_contact_person", "handover_contact_phone",
             "coordination_notes", "departure_at", "eta_at", "service_mode",
             "booking_policy", "capacity_committed_kg", "capacity_committed_m3",
-            "pickup_volunteer", "pickup_volunteer_name",
+            "pickup_volunteer", "pickup_volunteer_name", "own_load_kg", "own_load_m3",
         ]),
         limit_page_length=200,
     )
@@ -336,13 +336,19 @@ def distribusi_board(disaster_event=None):
         """Booked (confirmed + requested) volume on this armada that is not yet
         reflected in transport_status — the mock-up's donut "Blocked" segment."""
         bks = _bookings_by_space.get(t.get("name"), [])
-        return sum(_num(b.qty_volume_m3) for b in bks
-                   if b.status in ("confirmed", "requested"))
+        # confirmed bookings are already in capacity_committed_m3 (= terpakai); blocked = still waiting
+        return sum(_num(b.qty_volume_m3) for b in bks if b.status == "requested")
 
     def _cap_bucket(rows):
         blocked_m3 = round(sum(_blocked_m3_for(t) for t in rows), 1)
-        terpakai_m3 = round(sum(_num(t.capacity_volume_m3) for t in rows
-                                if t.transport_status in UTILISED_STATES), 1)
+        # owner 2026-11-09 (simulasi DIST-MU-2): dulu hanya armada berstatus jalan yang dihitung "terpakai" — Hercules
+        # yang sudah terisi muatan TNI + booking terkonfirmasi tampil 0%. Kini: armada jalan = penuh; lainnya = muatan
+        # sendiri + ruang terkonfirmasi (capacity_committed_m3).
+        def _used_m3(t):
+            if t.transport_status in UTILISED_STATES:
+                return _num(t.capacity_volume_m3)
+            return min(_num(t.capacity_volume_m3), _num(t.get("own_load_m3")) + _num(t.get("capacity_committed_m3")))
+        terpakai_m3 = round(sum(_used_m3(t) for t in rows), 1)
         total_m3 = round(sum(_num(t.capacity_volume_m3) for t in rows), 1)
         # "Ruang" transport = volume: the % must be terpakai_m3 / total_m3, the same
         # numbers shown next to it (KPI note, donut). Weight only when no armada has m³.
@@ -350,10 +356,12 @@ def distribusi_board(disaster_event=None):
             pct = round(100.0 * terpakai_m3 / total_m3, 1)
         else:
             total_kg = sum(_num(t.capacity_weight_kg) for t in rows)
-            used_kg = sum(_num(t.capacity_weight_kg) for t in rows if t.transport_status in UTILISED_STATES)
+            used_kg = sum(_num(t.capacity_weight_kg) if t.transport_status in UTILISED_STATES else
+                          min(_num(t.capacity_weight_kg), _num(t.get("own_load_kg")) + _num(t.get("capacity_committed_kg")))
+                          for t in rows)
             pct = round(100.0 * used_kg / total_kg, 1) if total_kg else 0
         return {
-            "tersedia_m3": round(max(0.0, sum(_num(t.capacity_volume_m3) for t in rows
+            "tersedia_m3": round(max(0.0, sum(_num(t.capacity_volume_m3) - _used_m3(t) for t in rows
                                       if t.transport_status == "available") - blocked_m3), 1),
             "terpakai_m3": terpakai_m3,
             "blocked_m3": blocked_m3,
@@ -771,7 +779,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
                 "confirmed_at", "delivery_method", "requested_window",
                 "logistic_need", "aid_offer", "submitted_channel",
                 "window_from", "window_to", "distribution_flow", "disaster_event", "notes",
-                "booking_leg", "terms_ack", "created_by_user", "booked_by_id",
+                "booking_leg", "terms_ack", "created_by_user", "booked_by_id", "owner",
             ]),
             order_by="creation desc", limit_page_length=1000,
         )
@@ -864,7 +872,8 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         _mp = {}
 
         def _mine(b):
-            if b.get("created_by_user") and b.get("created_by_user") == frappe.session.user:
+            # owner = akun Frappe yang membuat booking; created_by_user = RN User Account (bila diisi)
+            if b.get("owner") == frappe.session.user or (_me and b.get("created_by_user") and b.get("created_by_user") == _me.name):
                 return True
             pid = b.get("booked_by_id")
             if b.get("booked_by_type") == "posko" and pid and _me:

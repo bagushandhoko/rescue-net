@@ -75,6 +75,8 @@ def record_scan(flow=None, trace=None, scan_type=None, offline_id=None,
         if p and _can_operate(actor, p):
             posko = p
             break
+    if not posko and scan_type == "receive":
+        frappe.throw("Hanya posko tujuan yang dapat mencatat penerimaan", frappe.PermissionError)
     if not posko and scan_type != "receive":
         # owner 2026-11-09 estafet: posko distribusi yang membawa kiriman (kaki mana pun) mencatat serah-terima
         from rescue_net.logistics.relay import carrier_poskos
@@ -87,6 +89,13 @@ def record_scan(flow=None, trace=None, scan_type=None, offline_id=None,
     before = f.flow_status or "planned"
     target = SCAN_STATUS[scan_type]
     outcome, after, reason = "recorded", before, None
+
+    # owner 2026-11-09 (simulasi DIST-MU-3): pindai "Dikirim"/"Dalam perjalanan" pada kiriman yang masih
+    # "Direncanakan" ditolak (planned hanya boleh → assigned_pickup) sehingga kiriman macet. Pindaian itu berarti
+    # barang sudah diambil: lewati langkah penugasan jemput secara otomatis.
+    if target in ("dispatched", "in_transit") and before == "planned":
+        update_flow_status(name, "assigned_pickup")
+        before = "assigned_pickup"
 
     if target:
         if before in _PAST[target]:

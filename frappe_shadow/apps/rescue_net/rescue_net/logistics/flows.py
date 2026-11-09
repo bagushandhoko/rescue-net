@@ -298,6 +298,10 @@ def update_flow_status(
     if not allowed_actor and doc.transport_space and new_status in TRANSIT_STATUSES:
         space_posko = frappe.db.get_value("RN Transport Space", doc.transport_space, "coordination_posko")
         allowed_actor = bool(space_posko and _can_operate(actor, space_posko))
+    # owner 2026-11-09 estafet: posko pembawa kaki mana pun (jemput / utama / estafet) ikut menggerakkan perjalanan
+    if not allowed_actor and new_status in TRANSIT_STATUSES | {"dispatched"}:
+        from rescue_net.logistics.relay import carrier_poskos
+        allowed_actor = any(_can_operate(actor, p) for p in carrier_poskos(doc.name))
 
     if not allowed_actor:
         frappe.throw(

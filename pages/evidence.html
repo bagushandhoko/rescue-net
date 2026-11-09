@@ -127,25 +127,46 @@
       </div>
     </section>
 
-    <details class="panel create-panel rn-input-drawer">
+    <details class="panel create-panel rn-input-drawer" id="evidenceDrawer">
       <summary>
-        <h3>Upload Evidence</h3>
-        <p>Upload manual — perlu login sebagai operator.</p>
+        <h3>Kirim Bukti Lapangan</h3>
+        <p>Untuk masyarakat umum dan anggota posko. Wajib login.</p>
       </summary>
-
+      <!-- owner 2026-11-09: masyarakat & anggota posko (termasuk organisasi tertutup) bisa kirim; org tertutup pilih internal / publik -->
       <form class="rn-form" id="evidenceForm">
         <div class="form-grid">
-          <label>File
-            <input name="file" type="file" required>
+          <label>Foto / dokumen
+            <input name="file" type="file" accept="image/*,application/pdf" required>
           </label>
-          <label>Disaster Event ID
-            <input name="disaster_event_id" value="event-sim-001" required>
+          <label>Posko
+            <select name="node_id" id="evPosko"><option value="">— Tanpa posko (saya warga / masyarakat umum) —</option></select>
           </label>
-          <label>Posko terkait
-            <input name="node_id" list="rnEventPoskoList" placeholder="Ketik nama posko lalu pilih (opsional)">
+          <label style="grid-column:1/-1">Keterangan / lokasi foto
+            <input name="caption" maxlength="300" placeholder="Abu vulkanik menutup jalan desa — Kalianda, pagi setelah letusan">
           </label>
-          <label>Linked Object Type
-            <select name="linked_object_type">
+          <div id="evPublicWrap" style="grid-column:1/-1" hidden>
+            <p class="rn-muted" style="margin:0 0 6px">Posko ini milik organisasi <b>tertutup</b>: bukti bersifat <b>internal organisasi</b> (tidak terlihat publik) kecuali Anda centang di bawah.</p>
+            <label class="rn-dispatch-ack"><input type="checkbox" name="public" id="evPublic"> Terbuka untuk publik (tampil di Control Centre &amp; halaman Evidence)</label>
+          </div>
+          <p class="rn-muted" id="evShareNote" style="grid-column:1/-1;margin:0">Bukti tanpa posko atau dari organisasi terbuka tampil untuk publik.</p>
+        </div>
+        <details class="rn-ev-adv"><summary>Lanjutan (opsional)</summary>
+          <div class="form-grid">
+            <label>Disaster Event ID
+              <input name="disaster_event_id" value="event-sim-001" required>
+            </label>
+            <label>Jenis bukti
+              <select name="evidence_type">
+              <option value="photo">photo</option>
+              <option value="document">document</option>
+              <option value="receipt">receipt</option>
+              <option value="handover">handover</option>
+              <option value="medical">medical</option>
+              <option value="verification">verification</option>
+            </select>
+            </label>
+            <label>Terkait data (jenis)
+              <select name="linked_object_type"><option value="">— tidak ada —</option>
               <option value="aid_offer">aid_offer</option>
               <option value="logistic_need">logistic_need</option>
               <option value="stock_movement">stock_movement</option>
@@ -164,29 +185,16 @@
               <option value="recovery_project">recovery_project</option>
               <option value="verification_action">verification_action</option>
             </select>
-          </label>
-          <label>Linked Object ID
-            <input name="linked_object_id" value="aid-74fc9a410ab5">
-          </label>
-          <label>Evidence Type
-            <select name="evidence_type">
-              <option value="photo">photo</option>
-              <option value="document">document</option>
-              <option value="receipt">receipt</option>
-              <option value="handover">handover</option>
-              <option value="medical">medical</option>
-              <option value="verification">verification</option>
-            </select>
-          </label>
-          <label>Uploaded By
-            <input name="uploaded_by" value="operator-demo">
-          </label>
-          <label style="grid-column:1/-1">Keterangan / lokasi foto
-            <input name="caption" maxlength="300" placeholder="Abu vulkanik menutup jalan desa — Kalianda, pagi setelah letusan">
-          </label>
-        </div>
+            </label>
+            <label>Terkait data (ID)
+              <input name="linked_object_id" value="">
+            </label>
+            <input type="hidden" name="uploaded_by" value="">
+          </div>
+        </details>
         <div class="form-actions">
-          <button class="btn primary" data-requires-role-action="upload_evidence" type="submit">Upload Evidence</button>
+          <button class="btn primary" type="submit">Kirim Bukti</button>
+          <span class="rn-muted" id="evFormMsg"></span>
         </div>
       </form>
     </details>
@@ -209,7 +217,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/evidence.js?v=kompakhp-20261108"></script>
+<script src="../assets/js/evidence.js?v=kirim-20261109"></script>
 <script src="../assets/js/session-role.js?v=petugas-20261109"></script>
 <script src="../assets/js/rn-public-header.js?v=font13-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=noscrollbar-20260905"></script>

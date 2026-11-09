@@ -653,13 +653,14 @@ def event_evidence(event, limit=60):
                     "reference_name", "object_type", "object_id",
                     "linked_object_type", "linked_object_id",
                     "uploaded_by", "created_by_user",
-                    "verification_status", "observed_at", "creation",
+                    "verification_status", "observed_at", "creation", "visibility",
                 ) if f == "name" or f in ef_cols
             ],
             order_by="creation desc",
             limit_page_length=limit,
         ):
             up = _user_label(e.get("uploaded_by") or e.get("created_by_user"))
+            _n0 = len(out)
             push(_ev_norm(
                 id=e["name"], source="evidence_file",
                 file_url=e.get("file_url") or e.get("file_path"), caption=e.get("caption") or e.get("title"),
@@ -674,6 +675,8 @@ def event_evidence(event, limit=60):
                 disaster_event_id=event,
                 observed_at=e.get("observed_at"), creation=e.get("creation"),
             ))
+            if len(out) > _n0:
+                out[-1]["share"] = e.get("visibility") or ""     # owner 2026-11-09: internal / public / (lama)
 
     # --- 4. RN Operational Evidence (attached to operational records) ---
     if frappe.db.exists("DocType", "RN Operational Evidence"):
@@ -721,13 +724,15 @@ def _drop_closed_org_evidence(rows):
     from rescue_net.access_policy import public_posko_allowed
     poskos = {r.get("posko") for r in rows if r.get("posko")}
     if not poskos:
+        rows[:] = [r for r in rows if r.get("share") != "internal"]
         return rows
     org_of = {p.name: p.organization for p in frappe.get_all(
         "RN Posko", filters={"name": ["in", list(poskos)]}, fields=["name", "organization"], limit_page_length=0)}
     closed_orgs = set(frappe.get_all("RN Organization", filters={
         "name": ["in", [o for o in org_of.values() if o] or ["-"]], "privacy_mode": "closed"}, pluck="name"))
     hidden = {p for p, o in org_of.items() if o in closed_orgs and not public_posko_allowed(p)}
-    rows[:] = [r for r in rows if r.get("posko") not in hidden]
+    # pilihan pengirim (RN Evidence File.visibility): "internal" selalu disembunyikan, "public" selalu tampil
+    rows[:] = [r for r in rows if r.get("share") != "internal" and (r.get("share") == "public" or r.get("posko") not in hidden)]
     return rows
 
 

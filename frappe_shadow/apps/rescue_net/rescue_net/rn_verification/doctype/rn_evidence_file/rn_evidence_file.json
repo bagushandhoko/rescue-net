@@ -101,6 +101,13 @@
       "fieldtype": "Data"
     },
     {
+      "fieldname": "visibility",
+      "label": "Visibilitas",
+      "fieldtype": "Select",
+      "options": "\ninternal\npublic",
+      "description": "Owner 2026-11-09: internal = hanya organisasi (tidak tampil publik/Control Centre); public = terbuka. Kosong (data lama) = ikut aturan organisasi (tertutup -> tidak publik)."
+    },
+    {
       "fieldname": "legacy_payload",
       "label": "Legacy Payload",
       "fieldtype": "Code",

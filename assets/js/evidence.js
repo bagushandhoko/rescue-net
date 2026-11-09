@@ -311,6 +311,31 @@
     return btoa(binary);
   }
 
+  // owner 2026-11-09: kirim bukti — masyarakat umum (tanpa posko) & anggota posko; organisasi tertutup pilih internal/publik
+  var EV_POSKO = {};
+  async function loadPoskoOptions(form) {
+    var sel = $("#evPosko");
+    if (!sel) return;
+    try {
+      var r = await window.RN_FRAPPE.call("rescue_net.api_frontend_bridge.evidence_upload_options", { disaster_event: getEventId() });
+      (r.poskos || []).forEach(function (p) {
+        EV_POSKO[p.id] = p;
+        var o = document.createElement("option");
+        o.value = p.id;
+        o.textContent = p.title + (p.organization ? " — " + p.organization : "") + (p.closed ? " (tertutup)" : "") + (p.mine ? " ★" : "");
+        sel.appendChild(o);
+      });
+      var want = new URLSearchParams(location.search).get("node") || new URLSearchParams(location.search).get("node_id");
+      if (want && EV_POSKO[want]) sel.value = want;
+    } catch (e) { /* tamu: belum login */ }
+    function sync() {
+      var p = EV_POSKO[sel.value];
+      $("#evPublicWrap").hidden = !(p && p.closed);
+      $("#evShareNote").hidden = !!(p && p.closed);
+    }
+    sel.addEventListener("change", sync); sync();
+  }
+
   function setupUploadForm() {
     var form = $("#evidenceForm");
     if (!form) return;
@@ -318,34 +343,40 @@
     form.disaster_event_id.value = getEventId();
     var objectType = params.get("object_type") || params.get("linked_object_type");
     var objectId = params.get("object_id") || params.get("linked_object_id");
-    var nodeId = params.get("node") || params.get("node_id");
-    if (nodeId) form.node_id.value = nodeId;
     if (objectType) form.linked_object_type.value = objectType;
     if (objectId) form.linked_object_id.value = objectId;
+    loadPoskoOptions(form);
+    var msg = $("#evFormMsg");
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       var file = form.file.files[0];
       if (!file) return;
-      statusMsg("Uploading evidence...");
+      var logged = window.RNSession && window.RNSession.getSession && window.RNSession.getSession();
+      msg.textContent = " mengirim…";
       try {
         var contentBase64 = await rnFileToBase64(file);
-        await window.RN_FRAPPE.call("rescue_net.api_frontend_bridge.upload_evidence", {
+        var p = EV_POSKO[form.node_id.value];
+        var r = await window.RN_FRAPPE.call("rescue_net.api_frontend_bridge.upload_evidence", {
           filename: file.name,
           content_base64: contentBase64,
           disaster_event: form.disaster_event_id.value.trim(),
-          node_id: form.node_id.value.trim() || null,
-          linked_object_type: form.linked_object_type.value.trim() || null,
-          linked_object_id: form.linked_object_id.value.trim() || null,
-          evidence_type: form.evidence_type.value.trim() || "photo",
-          uploaded_by: form.uploaded_by.value.trim() || null,
+          node_id: form.node_id.value || null,
+          linked_object_type: form.linked_object_type.value || (form.node_id.value ? "posko" : null),
+          linked_object_id: form.linked_object_id.value.trim() || form.node_id.value || null,
+          evidence_type: form.evidence_type.value || "photo",
           caption: (form.caption && form.caption.value.trim()) || null,
+          public: (p && p.closed) ? (form.public.checked ? 1 : 0) : 1,
         }, { method: "POST" });
         form.reset();
-        statusMsg("Evidence uploaded.");
+        form.disaster_event_id.value = getEventId();
+        msg.textContent = (p && p.closed && !r.public) ? " terkirim — internal organisasi (tidak tampil publik)." : " terkirim — tampil untuk publik.";
         await loadBoard();
       } catch (err) {
-        statusMsg("Gagal upload: " + (err && err.message || err));
+        var t = (err && err.message) || String(err);
+        msg.innerHTML = /login|Login|403|Guest/.test(t) && !logged
+          ? ' <a href="auth.html?next=' + encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search) + '">Login dulu</a> untuk mengirim bukti.'
+          : " Gagal: " + t;
       }
     });
   }

@@ -356,6 +356,55 @@ def evidence_context(
     )
 
 
+def _evidence_visibility(actor, node_id, public):
+    """'public' / 'internal' for a new evidence upload (see upload_evidence)."""
+    from frappe.utils import cint
+    want_public = str(public).strip().lower() in ("1", "true", "yes", "on") or public is True
+    if not node_id:
+        return "public"                                   # masyarakat umum, tanpa posko
+    posko = _canonical_posko(node_id)
+    org = frappe.db.get_value("RN Posko", posko, "organization") if posko else None
+    closed = bool(org and frappe.db.get_value("RN Organization", org, "privacy_mode") == "closed")
+    if not closed:
+        return "public"
+    from rescue_net.logistics.common import _can_operate
+    if not (getattr(actor, "name", None) and _can_operate(actor, posko)) and not _is_org_member(actor, org):
+        frappe.throw("Posko ini milik organisasi tertutup — hanya anggotanya yang dapat mengirim bukti atas nama posko ini. "
+                     "Kirim tanpa memilih posko bila Anda warga.", frappe.PermissionError)
+    return "public" if want_public else "internal"
+
+
+def _is_org_member(actor, org):
+    if not getattr(actor, "name", None):
+        return False
+    return bool(frappe.db.exists("RN Organization Membership", {"user_account": actor.name, "organization": org,
+                                                                "status": "approved"}))
+
+
+@frappe.whitelist()
+def evidence_upload_options(disaster_event=None):
+    """Posko yang boleh dipakai pengirim untuk bukti + apakah organisasinya tertutup (form Bukti Lapangan)."""
+    actor = _actor()
+    from rescue_net.logistics.common import _can_operate
+    event = _canonical_event(disaster_event) if disaster_event else None
+    from rescue_net.control_centre.common import serving_posko_names
+    names = serving_posko_names(event) if event else []
+    rows = frappe.get_all("RN Posko", filters={"name": ["in", names or ["-"]]},
+                          fields=["name", "title", "organization"], limit_page_length=500)
+    orgs = {o.name: o for o in frappe.get_all("RN Organization", filters={"name": ["in", [r.organization for r in rows
+            if r.organization] or ["-"]]}, fields=["name", "title", "privacy_mode"], limit_page_length=0)}
+    out = []
+    for r in rows:
+        o = orgs.get(r.organization)
+        closed = bool(o and o.privacy_mode == "closed")
+        mine = bool(getattr(actor, "name", None)) and (_can_operate(actor, r.name) or (o and _is_org_member(actor, o.name)))
+        if closed and not mine:
+            continue
+        out.append({"id": r.name, "title": r.title, "organization": o.title if o else "", "closed": closed, "mine": bool(mine)})
+    out.sort(key=lambda x: (not x["mine"], x["title"] or ""))
+    return {"poskos": out}
+
+
 @frappe.whitelist()
 def upload_evidence(
     filename,
@@ -367,8 +416,12 @@ def upload_evidence(
     evidence_type="photo",
     uploaded_by=None,
     caption=None,
+    public=None,
 ):
     actor = _actor()
+    # owner 2026-11-09: bukti boleh dikirim masyarakat umum & anggota posko (termasuk organisasi tertutup).
+    # Organisasi tertutup: internal kecuali pengirim mencentang "terbuka untuk publik"; lainnya publik.
+    visibility = _evidence_visibility(actor, node_id, public)
 
     event = _canonical_event(
         disaster_event
@@ -403,7 +456,7 @@ def upload_evidence(
         content,
         None,
         None,
-        is_private=1,
+        is_private=0 if visibility == "public" else 1,
     )
 
     evidence = frappe.new_doc(
@@ -484,6 +537,8 @@ def upload_evidence(
         "verification_status",
         "pending",
     )
+
+    _set_if(evidence, "visibility", visibility)
 
     _set_if(
         evidence,
@@ -571,7 +626,11 @@ def upload_evidence(
         "file_url":
             file_doc.file_url,
         "private":
-            True,
+            visibility != "public",
+        "public":
+            visibility == "public",
+        "visibility":
+            visibility,
         "verification_status":
             getattr(
                 evidence,

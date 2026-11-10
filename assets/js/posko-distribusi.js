@@ -245,7 +245,18 @@
     }).join("") : '<p class="rn-muted">Belum ada booking pada armada ini.</p>';
     $("#pdDrillTitle").textContent = a.provider;
     $("#pdDrillSub").textContent = a.service_mode_label + " · " + a.status_label;
+    // Booking harus langsung tampak di detail kendaraan, sebelum rincian panjang.
+    var bookingPanel = CACHE && CACHE.can_manage
+      ? ""
+      : CACHE && CACHE.logged_in && CACHE.can_coordinate
+        ? '<h4 class="rn-md-detail-h">Booking Ruang Muat</h4>' + bookingForm(a)
+        : CACHE && CACHE.logged_in
+          ? '<section class="rn-md-booking-note"><h4>Booking Ruang Muat</h4><p>Posko ini belum membuka booking ruang muat untuk pihak luar. Pilih kendaraan dari posko yang membuka koordinasi.</p></section>'
+          : '<section class="rn-md-booking-note"><h4>Booking Ruang Muat</h4><p>Login untuk mengisi jumlah ruang, kontak, dan waktu pengiriman.</p><a class="btn primary mini" href="auth.html?next=' +
+            encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search.replace(/&?armada=[^&]*/, "") + "&armada=" + a.id) +
+            '">Login untuk memesan</a></section>';
     $("#pdDrillBody").innerHTML =
+      bookingPanel +
       '<div class="rn-md-detail">' +
       row("Jenis", esc(a.jenis)) +
       row("Kebijakan booking", a.booking_policy === "open" ? "Langsung terkonfirmasi" : "Konfirmasi PIN posko") +
@@ -273,12 +284,6 @@
       "</div>" +
       ((CACHE && CACHE.can_manage) ? gpsBlock(a) + armadaEditForm(a) : "") +
       // owner 2026-11-02: memesan wajib login — logged-in users get the normal form, guests a login link
-      ((CACHE && (CACHE.can_coordinate || (CACHE.logged_in && !CACHE.can_manage))) ? bookingForm(a) : "") +
-      ((CACHE && !CACHE.logged_in)
-        ? '<p class="rn-md-detail-note"><a class="btn primary mini" href="auth.html?next=' +
-          encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search.replace(/&?armada=[^&]*/, "") + "&armada=" + a.id) +
-          '">Login untuk memesan</a> <small class="rn-muted">Memesan ruang muat wajib login.</small></p>'
-        : "") +
       ((CACHE && CACHE.can_manage) ? '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>"
         : bk.length ? '<h4 class="rn-md-detail-h">Booking Anda</h4><div class="rn-md-bk-list">' + bkHtml + "</div>" : "");
     if (CACHE && CACHE.can_manage) wireArmadaEdit(a.id);

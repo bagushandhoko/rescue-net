@@ -246,15 +246,12 @@
     $("#pdDrillTitle").textContent = a.provider;
     $("#pdDrillSub").textContent = a.service_mode_label + " · " + a.status_label;
     // Booking harus langsung tampak di detail kendaraan, sebelum rincian panjang.
-    var bookingPanel = CACHE && CACHE.can_manage
-      ? ""
-      : CACHE && CACHE.logged_in && CACHE.can_coordinate
-        ? '<h4 class="rn-md-detail-h">Booking Ruang Muat</h4>' + bookingForm(a)
-        : CACHE && CACHE.logged_in
-          ? '<section class="rn-md-booking-note"><h4>Booking Ruang Muat</h4><p>Posko ini belum membuka booking ruang muat untuk pihak luar. Pilih kendaraan dari posko yang membuka koordinasi.</p></section>'
-          : '<section class="rn-md-booking-note"><h4>Booking Ruang Muat</h4><p>Login untuk mengisi jumlah ruang, kontak, dan waktu pengiriman.</p><a class="btn primary mini" href="auth.html?next=' +
-            encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search.replace(/&?armada=[^&]*/, "") + "&armada=" + a.id) +
-            '">Login untuk memesan</a></section>';
+    var bookingPanel = CACHE && CACHE.logged_in
+      ? '<h4 class="rn-md-detail-h">Booking Ruang Muat</h4>' + bookingForm(a) +
+        (CACHE.can_manage ? '<h4 class="rn-md-detail-h">Booking Masuk untuk kendaraan ini</h4><div class="rn-md-bk-list">' + bkHtml + "</div>" : "")
+      : '<section class="rn-md-booking-note"><h4>Booking Ruang Muat</h4><p>Login untuk mengisi muatan, berat/volume, kontak, dan waktu pengiriman.</p><a class="btn primary mini" href="auth.html?next=' +
+        encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search.replace(/&?armada=[^&]*/, "") + "&armada=" + a.id) +
+        '">Login untuk memesan</a></section>';
     $("#pdDrillBody").innerHTML =
       bookingPanel +
       '<div class="rn-md-detail">' +
@@ -287,7 +284,7 @@
       ((CACHE && CACHE.can_manage) ? '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>"
         : bk.length ? '<h4 class="rn-md-detail-h">Booking Anda</h4><div class="rn-md-bk-list">' + bkHtml + "</div>" : "");
     if (CACHE && CACHE.can_manage) wireArmadaEdit(a.id);
-    if (CACHE && (CACHE.can_coordinate || (CACHE.logged_in && !CACHE.can_manage))) wireBookingForm(a);
+    if (CACHE && CACHE.logged_in) wireBookingForm(a);
     if (CACHE && CACHE.can_manage) wireGps(a);
     $("#pdDrill").hidden = false;
     document.body.style.overflow = "hidden";

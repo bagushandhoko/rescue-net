@@ -281,7 +281,8 @@
       "</div>" +
       ((CACHE && CACHE.can_manage) ? gpsBlock(a) + armadaEditForm(a) : "") +
       // owner 2026-11-02: memesan wajib login — logged-in users get the normal form, guests a login link
-      ((CACHE && CACHE.can_manage) ? '<h4 class="rn-md-detail-h">Booking masuk</h4><div class="rn-md-bk-list">' + bkHtml + "</div>"
+      // pemilik sudah melihat "Booking Masuk" di atas (bookingPanel) - jangan dobel
+      ((CACHE && CACHE.can_manage) ? ""
         : bk.length ? '<h4 class="rn-md-detail-h">Booking Anda</h4><div class="rn-md-bk-list">' + bkHtml + "</div>" : "");
     if (CACHE && CACHE.can_manage) wireArmadaEdit(a.id);
     if (CACHE && CACHE.logged_in) wireBookingForm(a);

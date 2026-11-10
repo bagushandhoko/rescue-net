@@ -70,6 +70,11 @@
           // form (or its <aside> wrapper), never the whole drawer, so the
           // read-only history stays visible.
           host = el.closest("aside") || el.closest(".panel.create-panel") || el;
+        } else if (el.tagName === "BUTTON" || el.tagName === "A") {
+          // a lone action button (e.g. "+ Daftarkan Armada" in the Armada
+          // Terdaftar header): hide only the button, never its panel, or the
+          // read-only list (armada -> detail -> booking) vanishes after login.
+          host = el;
         } else {
           host = el.closest(".panel") && !el.classList.contains("panel")
             ? el.closest(".panel") : el;

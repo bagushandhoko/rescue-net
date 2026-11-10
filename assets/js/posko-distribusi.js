@@ -208,26 +208,12 @@
         "<td>" + ((CACHE && CACHE.can_manage)
           ? (a.bookings_count ? '<span class="chip">' + fmt(a.bookings_count) + "</span>" : '<span class="rn-muted">0</span>')
           : (a.antri_booking ? '<span class="chip warning">' + fmt(a.antri_booking) + " antre</span><small class=\"rn-muted\">" + fmt(a.antri_kg) + " kg menunggu</small>" : '<span class="rn-muted">0 antre</span>') +
-            (a.booking_konfirmasi ? '<small class="rn-muted">' + fmt(a.booking_konfirmasi) + " terkonfirmasi</small>" : "")) +
-          '<button type="button" class="btn primary mini" data-pd-book-space aria-label="' +
-          esc(((CACHE && CACHE.can_manage) ? "Kelola booking " : "Booking ruang muat ") + a.provider) + '">' +
-          ((CACHE && CACHE.can_manage) ? "Kelola Booking" : "Booking Ruang Muat") + "</button></td>" +
+            (a.booking_konfirmasi ? '<small class="rn-muted">' + fmt(a.booking_konfirmasi) + " terkonfirmasi</small>" : "")) + "</td>" +
         "</tr>"
       );
     }).join("");
     body.querySelectorAll("tr.rn-ba-row").forEach(function (tr) {
-      tr.addEventListener("click", function (e) {
-        openArmadaDetail(tr.getAttribute("data-armada"));
-        if (e.target.closest("[data-pd-book-space]")) {
-          var target = $("#pdBookForm") || $("#pdDrillBody .rn-md-detail-note a") || $("#pdDrillTitle");
-          if (target) {
-            target.scrollIntoView({ block: "center" });
-            var field = target.querySelector("input, select, button");
-            if (field) field.focus({ preventScroll: true });
-            else { target.setAttribute("tabindex", "-1"); target.focus({ preventScroll: true }); }
-          }
-        }
-      });
+      tr.addEventListener("click", function () { openArmadaDetail(tr.getAttribute("data-armada")); });
     });
     if (shown) shown.textContent = "Menampilkan " + list.length + " armada";
     // owner 2026-11-02: "Pesan" from Cari Armada (Manajemen Distribusi) opens that armada's detail + booking

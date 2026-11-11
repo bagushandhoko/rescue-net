@@ -3,6 +3,39 @@
   "diperbarui": "2026-11-11",
   "uji": [
     {
+      "id": "DIST-BOOK-2",
+      "tanggal": "2026-11-11",
+      "kategori": "Distribusi & armada",
+      "judul": "Booking tempat setelah login: super admin, akun belum terdaftar, kontak & tujuan otomatis",
+      "tujuan": "Owner: booking terlihat sebelum login tapi hilang setelah login; istilah diganti \"booking tempat\"; kontak pembooking otomatis dari akun; tujuan dari armada, perantara boleh isi sendiri.",
+      "akun": "Tamu, pengguna Land Rover LD1, petugas Pos Komando TNI AL (pemilik armada), akun login yang belum terdaftar (disimulasikan)",
+      "langkah": [
+        "Tamu: detail armada menampilkan Booking Tempat + tombol Login untuk booking tempat",
+        "Pengguna login: form Booking Tempat terbuka, nama terisi dari akun, tujuan terisi & terkunci dari tujuan armada",
+        "Centang \"armada ini hanya perantara\": kolom tujuan terbuka untuk diisi sendiri",
+        "Pemilik/pengelola (juga berlaku untuk super admin): Booking Masuk di atas lalu form Booking Tempat terbuka (tidak terlipat)",
+        "Akun login tanpa pendaftaran Rescue-Net: pesan Lengkapi pendaftaran, bukan tombol login",
+        "Diulang di HP 390 px & desktop 1366 px di situs live; tidak membuat booking sungguhan"
+      ],
+      "hasil": "Semua sesuai di situs live setelah deploy (backend direstart), tanpa error halaman.",
+      "skor": "6/6 langkah lulus setelah perbaikan",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Super admin dianggap pengelola semua posko sehingga form booking terlipat dan terlihat hilang",
+          "perbaikan": "Form Booking Tempat selalu terbuka di Menu Pemilik"
+        },
+        {
+          "masalah": "Akun login yang belum terdaftar diperlakukan seperti tamu (tombol login muncul lagi)",
+          "perbaikan": "Pesan dan tautan Lengkapi pendaftaran"
+        },
+        {
+          "masalah": "Pembooking harus mengetik ulang kontak dan tujuan",
+          "perbaikan": "Kontak dari akun, tujuan dari armada; perantara boleh isi tujuan sendiri"
+        }
+      ]
+    },
+    {
       "id": "DIST-BOOK-1",
       "tanggal": "2026-11-11",
       "kategori": "Distribusi & armada",

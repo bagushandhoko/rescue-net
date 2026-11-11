@@ -236,7 +236,7 @@ async function loadAdminAreaChildren(parentCode = "", level = "") {
 function fillAdminSelect(select, rows, placeholder) {
   if (!select) return;
   select.innerHTML = `<option value="">${placeholder}</option>` + rows.map((row) => (
-    `<option value="${row.name}" data-code="${row.code}" data-level="${row.level}">${row.name}</option>`
+    `<option value="${escHtml(row.area_name || row.name || "")}" data-code="${escHtml(row.code || "")}" data-level="${escHtml(row.level || "")}">${escHtml(row.area_name || row.name || row.code || "")}</option>` /* audit 2026-11-11: API mengirim area_name; dulu tampil "undefined" */
   )).join("");
   select.disabled = false;
 }

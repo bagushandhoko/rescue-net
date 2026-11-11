@@ -126,7 +126,6 @@ def org_posko_board(disaster_event=None):
             "posko_count": len(org_poskos), "posko_active_count": active_poskos,
             "member_count": members, "program_count": programs,
             "poskos": posko_list,
-        "viewer": _poskos_viewer_context(),
             "in_event": o.name in in_event,
         })
 
@@ -381,6 +380,8 @@ def posko_registry_board(disaster_event=None, limit=200):
             "community_verified": verif_counts["community_verified"],
         },
         "poskos": posko_list,
+        # audit S2: form Registrasi Posko menampilkan organisasi akun pendaftar
+        "viewer": _poskos_viewer_context(),
     }
 
 

@@ -438,7 +438,8 @@
       var values = type === "posko" ? ids.poskos : (type === "organization" && ids.viewer.org ? [ids.viewer.org] : []);
       select.innerHTML = values.map(function (p) {
         var id = typeof p === "string" ? p : (p.name || p.id);
-        var label = typeof p === "string" ? p : (p.title || id);
+        var known = ((CACHE && CACHE.transporter_poskos) || []).filter(function (t) { return (t.name || t.id) === id; })[0];
+        var label = typeof p === "string" ? ((known && known.title) || p) : (p.title || id);
         if (type === "organization") label = ids.viewer.org_title || id;
         return '<option value="' + esc(id) + '">' + esc(label) + '</option>';
       }).join("");
@@ -449,6 +450,11 @@
       form.querySelector("[data-book-identity]").hidden = !needed;
     }
     form.elements.booked_by_type.addEventListener("change", syncIdentity);
+    // audit S1 (review Suri): pengguna tanpa posko yang dikelola tidak boleh tertahan di pilihan "Posko"
+    (function () {
+      var ids = bookingIdentities(), t = form.elements.booked_by_type;
+      if (t.value === "posko" && !ids.poskos.length) t.value = ids.viewer.org ? "organization" : "individu";
+    })();
     syncIdentity();
     var msg = form.querySelector("[data-book-msg]");
     form.addEventListener("submit", async function (e) {

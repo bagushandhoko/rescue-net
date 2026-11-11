@@ -390,6 +390,11 @@
     });
   }
 
+  function bookingIdentities() {
+    var viewer = (CACHE && CACHE.viewer) || {};
+    return { viewer: viewer, poskos: viewer.manages || (CACHE && CACHE.my_managed_poskos) || [] };
+  }
+
   function bookingForm(a) {
     var me = (CACHE && CACHE.me) || {};
     var courierOk = (a.service_mode || "both") !== "space_only";
@@ -402,6 +407,7 @@
         '<option value="individu">Pribadi / warga</option>' +
         '<option value="organization">Organisasi</option>' +
         '<option value="relawan">Relawan</option></select></label>' +
+      '<label data-book-identity>Posko / organisasi pembooking<select name="booked_by_id"></select></label>' +
       '<label>Muatan<input name="cargo_desc" placeholder="Beras 40 karung / Air mineral" required></label>' +
       '<label>Berat (kg) *<input name="qty_weight_kg" type="number" step="0.01" min="0.01" placeholder="500" required></label>' +
       '<label>Volume (m³)<input name="qty_volume_m3" type="number" step="0.01" placeholder="2"></label>' +
@@ -426,6 +432,30 @@
     var form = $("#pdBookForm");
     if (!form) return;
     wireDropoff(form);
+    function syncIdentity() {
+      var ids = bookingIdentities(), type = form.elements.booked_by_type.value;
+      var select = form.elements.booked_by_id;
+      var values = type === "posko" ? ids.poskos : (type === "organization" && ids.viewer.org ? [ids.viewer.org] : []);
+      select.innerHTML = values.map(function (p) {
+        var id = typeof p === "string" ? p : (p.name || p.id);
+        var known = ((CACHE && CACHE.transporter_poskos) || []).filter(function (t) { return (t.name || t.id) === id; })[0];
+        var label = typeof p === "string" ? ((known && known.title) || p) : (p.title || id);
+        if (type === "organization") label = ids.viewer.org_title || id;
+        return '<option value="' + esc(id) + '">' + esc(label) + '</option>';
+      }).join("");
+      var needed = type === "posko" || type === "organization";
+      if (needed && !values.length) select.innerHTML = '<option value="">Tidak ada posko/organisasi yang dapat dipakai</option>';
+      select.required = needed;
+      select.disabled = !needed;
+      form.querySelector("[data-book-identity]").hidden = !needed;
+    }
+    form.elements.booked_by_type.addEventListener("change", syncIdentity);
+    // audit S1 (review Suri): pengguna tanpa posko yang dikelola tidak boleh tertahan di pilihan "Posko"
+    (function () {
+      var ids = bookingIdentities(), t = form.elements.booked_by_type;
+      if (t.value === "posko" && !ids.poskos.length) t.value = ids.viewer.org ? "organization" : "individu";
+    })();
+    syncIdentity();
     var msg = form.querySelector("[data-book-msg]");
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -436,6 +466,7 @@
         var r = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_transport_space", {
           transport_space: a.id,
           booked_by_type: v("booked_by_type") || "posko",
+          booked_by_id: form.elements.booked_by_id.disabled ? null : v("booked_by_id"),
           cargo_desc: v("cargo_desc"),
           qty_weight_kg: Number(form.qty_weight_kg.value || 0),
           qty_volume_m3: Number(form.qty_volume_m3.value || 0),

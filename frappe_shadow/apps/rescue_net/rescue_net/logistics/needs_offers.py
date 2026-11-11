@@ -344,6 +344,10 @@ def create_aid_offer(
     estimate_text=None,
     pickup_location=None,
     donor_contact=None,
+    ready_at=None,
+    batch_no=None,
+    expiry_date=None,
+    status="available",
 ):
     # RN_CANONICAL_REF target_posko = resolve_posko(target_posko)
     target_posko = resolve_posko(target_posko)
@@ -390,7 +394,13 @@ def create_aid_offer(
     doc.estimate_text = estimate_text
     doc.pickup_location = pickup_location
     doc.donor_contact = donor_contact
-    doc.offer_status = "available"
+    status = status or "available"
+    if status not in ("available", "need_pickup", "reserved", "in_transit"):
+        frappe.throw("Status bantuan tidak sah")
+    doc.ready_at = ready_at or None
+    doc.batch_no = batch_no or None
+    doc.expiry_date = expiry_date or None
+    doc.offer_status = status
     doc.insert(ignore_permissions=True)
 
     return {

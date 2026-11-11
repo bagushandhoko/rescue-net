@@ -16,6 +16,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     _my_posko_names,
     _operate_href,
     _posko_actor_flags,
+    _poskos_viewer_context,
     _resolve_posko,
     _sf,
     canonical_event,
@@ -379,6 +380,8 @@ def posko_registry_board(disaster_event=None, limit=200):
             "community_verified": verif_counts["community_verified"],
         },
         "poskos": posko_list,
+        # audit S2: form Registrasi Posko menampilkan organisasi akun pendaftar
+        "viewer": _poskos_viewer_context(),
     }
 
 

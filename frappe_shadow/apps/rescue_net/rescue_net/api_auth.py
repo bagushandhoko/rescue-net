@@ -847,3 +847,26 @@ def my_landing():
                 ("&event=" + quote(latest, safe="") if latest else ""))
 
     return {"logged_in": True, "href": href, "posko": posko_info, "events": out_events, "latest_event": latest}
+
+
+@frappe.whitelist(allow_guest=True)
+def account_status():
+    """Audit 2026-11-11 (T3/T4): bedakan 'belum login', 'login tapi akun Rescue-Net
+    belum ada / belum aktif', dan super admin — session_info melempar error untuk
+    akun tanpa RN User Account aktif sehingga halaman salah mengira belum login.
+    Hanya data milik penanya sendiri."""
+    user = frappe.session.user
+    if not user or user == "Guest":
+        return {"logged_in": False}
+    sm = bool(is_system_manager())
+    acc = frappe.db.get_value(
+        "RN User Account", {"frappe_user": user}, ["name", "status"], as_dict=True, order_by="modified desc"
+    )
+    rn_status = (acc or {}).get("status") or "none"
+    return {
+        "logged_in": True,
+        "user": user,
+        "is_system_manager": sm,
+        "rn_status": rn_status,
+        "registered": sm or rn_status == "active",
+    }

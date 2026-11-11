@@ -108,13 +108,30 @@
     } catch (e) { $("rsPoskoPanel").hidden = true; }
   }
 
+  // audit 2026-11-11 (T3): status akun — login saja belum cukup, akun Rescue-Net harus aktif
+  async function rnAccountStatus() {
+    try { return await window.RN_FRAPPE.call("rescue_net.api_auth.account_status", {}); } catch (e) { return { logged_in: false }; }
+  }
+  function rnRegMsg(st) {
+    return st.rn_status === "pending"
+      ? "Akun Rescue-Net Anda masih menunggu verifikasi admin. Fitur ini bisa dipakai setelah akun aktif."
+      : 'Akun Anda sudah login tetapi belum terdaftar di Rescue-Net. <a href="auth.html#daftar">Lengkapi pendaftaran</a>.';
+  }
   document.addEventListener("DOMContentLoaded", async function () {
     if (!$("rsPanel") && !$("rsPoskoPanel") && !$("openRegisterBtn")) return;
     var sess = null;
-    try { sess = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info"); } catch (e) {}
-    var guest = !sess || !sess.user || sess.user === "Guest";
+    var st = await rnAccountStatus();
+    if (st.logged_in && st.registered) { try { sess = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info"); } catch (e) {} }
+    var guest = !st.logged_in;
     if ($("rsStatus")) $("rsStatus").textContent = "";
     if (guest) { guestButton(); if ($("rsLogin")) $("rsLogin").hidden = false; return; }
+    if (!st.registered) { guestButton(); if ($("rsStatus")) $("rsStatus").innerHTML = rnRegMsg(st); return; }
+    if (st.is_system_manager && st.rn_status === "none") {
+      // audit 2026-11-11 (T4): super admin tidak punya profil relawan
+      guestButton();
+      if ($("rsStatus")) $("rsStatus").innerHTML = 'Anda login sebagai super admin, yang tidak punya profil relawan. Untuk mengelola relawan buka <a href="management-relawan.html">Manajemen Relawan</a>; untuk mencoba sebagai relawan gunakan akun relawan.';
+      return;
+    }
     memberButton();
     var mine = !!$("rsPanel");
     if (mine) $("rsPanel").hidden = false;

@@ -273,10 +273,25 @@
     try { var r = await call("event_counts", { event: s }); $("kbMergePreview").innerHTML = "Akan dipindah: " + counts(r.counts); } catch (e) { /* ignore */ }
   }
 
+  // audit 2026-11-11 (T3): status akun — login saja belum cukup, akun Rescue-Net harus aktif
+  async function rnAccountStatus() {
+    try { return await window.RN_FRAPPE.call("rescue_net.api_auth.account_status", {}); } catch (e) { return { logged_in: false }; }
+  }
+  function rnRegMsg(st) {
+    return st.rn_status === "pending"
+      ? "Akun Rescue-Net Anda masih menunggu verifikasi admin. Fitur ini bisa dipakai setelah akun aktif."
+      : 'Akun Anda sudah login tetapi belum terdaftar di Rescue-Net. <a href="auth.html#daftar">Lengkapi pendaftaran</a>.';
+  }
   async function init() {
     var opt;
     try { opt = await call("create_options"); }
-    catch (e) { $("kbStatus").innerHTML = 'Silakan <a href="auth.html?next=' + encodeURIComponent("kelola-bencana.html#kbCreatePanel") + '">login</a> untuk membuat atau mengusulkan bencana.'; return; }
+    catch (e) {
+      var st = await rnAccountStatus();
+      $("kbStatus").innerHTML = !st.logged_in
+        ? 'Silakan <a href="auth.html?next=' + encodeURIComponent("kelola-bencana.html#kbCreatePanel") + '">login</a> untuk membuat atau mengusulkan bencana.'
+        : (!st.registered ? rnRegMsg(st) : "Gagal memuat formulir: " + esc((e && e.message) || String(e)));
+      return;
+    }
     $("kbStatus").textContent = "";
     var f = $("kbForm");
     f.event_type.innerHTML = opt.event_types.map(function (t) { return '<option value="' + esc(t) + '">' + esc(TYPE[t] || t) + "</option>"; }).join("");

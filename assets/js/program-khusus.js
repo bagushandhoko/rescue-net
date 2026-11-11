@@ -855,10 +855,20 @@
     checkLogin();
   }
   function closeDonate() { var sh = $("#pkSheet"); if (sh) sh.hidden = true; document.body.style.overflow = ""; }
+  // audit 2026-11-11 (T3): status akun — login saja belum cukup, akun Rescue-Net harus aktif
+  async function rnAccountStatus() {
+    try { return await window.RN_FRAPPE.call("rescue_net.api_auth.account_status", {}); } catch (e) { return { logged_in: false }; }
+  }
+  function rnRegMsg(st) {
+    return st.rn_status === "pending"
+      ? "Akun Rescue-Net Anda masih menunggu verifikasi admin. Fitur ini bisa dipakai setelah akun aktif."
+      : 'Akun Anda sudah login tetapi belum terdaftar di Rescue-Net. <a href="auth.html#daftar">Lengkapi pendaftaran</a>.';
+  }
   async function checkLogin() {
-    var logged = false;
-    try { var me = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info", {}); logged = !!(me && (me.logged_in || (me.user && me.user !== "Guest"))); } catch (e) {}
+    var st = await rnAccountStatus();
+    var logged = !!(st.logged_in && st.registered);
     $("#pkLoginNote").hidden = logged;
+    if (st.logged_in && !st.registered) $("#pkLoginNote").innerHTML = rnRegMsg(st);
     $("#donateForm").hidden = !logged;
     var lb = $("#pkLoginBtn"); if (lb) lb.href = "auth.html?next=" + encodeURIComponent(location.pathname.split("/").pop() + location.search);
   }

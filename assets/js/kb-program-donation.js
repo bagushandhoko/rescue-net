@@ -38,8 +38,21 @@
     else { wall.innerHTML = ""; bank.hidden = true; }
   }
 
+  // audit 2026-11-11 (T3): status akun — login saja belum cukup, akun Rescue-Net harus aktif
+  async function rnAccountStatus() {
+    try { return await window.RN_FRAPPE.call("rescue_net.api_auth.account_status", {}); } catch (e) { return { logged_in: false }; }
+  }
+  function rnRegMsg(st) {
+    return st.rn_status === "pending"
+      ? "Akun Rescue-Net Anda masih menunggu verifikasi admin. Fitur ini bisa dipakai setelah akun aktif."
+      : 'Akun Anda sudah login tetapi belum terdaftar di Rescue-Net. <a href="auth.html#daftar">Lengkapi pendaftaran</a>.';
+  }
+  var LOGGED = false;
   async function showProgram(id) {
     wall.innerHTML = ""; bank.hidden = true;
+    // audit 2026-11-11 (T1): pulihkan isian donasi sesuai status login setiap ganti program
+    form.querySelectorAll("[data-login-field]").forEach(function (el) { el.hidden = !LOGGED; });
+    if (form.amount) form.amount.required = LOGGED;
     if (!id) return;
     try {
       var d = await call("program_detail", { program: id });
@@ -49,6 +62,7 @@
         bank.innerHTML = 'Donasi program ini <b>melalui Kitabisa</b>. <a class="btn primary mini" href="' + esc(d.kitabisa.url) +
           '" target="_blank" rel="noopener">Donasi di Kitabisa →</a><br><small>Penggunaan dana &amp; bukti lapangan tetap bisa dipantau di halaman program Rescue-Net.</small>';
         form.querySelectorAll("[data-login-field]").forEach(function (el) { el.hidden = true; });
+        if (form.amount) form.amount.required = false;
       } else if (b.account_number || b.qris_url) {
         bank.hidden = false;
         bank.innerHTML = (b.account_number ? "Transfer ke rekening pemrakarsa: <b>" + esc(b.bank_name) + " " + esc(b.account_number) + "</b> a.n. " + esc(b.account_holder) : "") +
@@ -70,9 +84,13 @@
 
   async function init() {
     var me = null;
-    try { me = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info", {}); } catch (e) {}
-    var logged = !!(me && (me.logged_in || (me.user && me.user !== "Guest")));
-    document.getElementById("kbDonLogin").hidden = logged;
+    var st = await rnAccountStatus();
+    var logged = !!(st.logged_in && st.registered);
+    LOGGED = logged;
+    if (logged) { try { me = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info", {}); } catch (e) {} }
+    var loginBox = document.getElementById("kbDonLogin");
+    loginBox.hidden = logged;
+    if (st.logged_in && !st.registered) loginBox.innerHTML = rnRegMsg(st);
     // owner 2026-11-08: tamu tetap bisa memilih program dan melihat rekening/QRIS/daftar donatur; hanya isian donasi perlu login
     form.hidden = false;
     form.querySelectorAll("[data-login-field]").forEach(function (el) { el.hidden = !logged; });

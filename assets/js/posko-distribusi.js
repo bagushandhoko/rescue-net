@@ -373,7 +373,25 @@
       '<label class="rn-dispatch-ack"><input type="checkbox" name="terms_ack"> Barang saya memenuhi syarat di atas (packing, berat per koli, dokumen).</label></div>';
   }
 
+  /* owner 2026-11-11: tujuan = tujuan armada; bila armada hanya perantara (estafet),
+     pembooking boleh mengisi tujuan akhirnya sendiri. */
+  function dropoffField(a) {
+    var dest = a.route_destination || "";
+    if (!dest) return '<label>Tujuan / dropoff *<input name="dropoff_location" placeholder="Posko / alamat tujuan" required></label>';
+    return '<label>Tujuan / dropoff *<input name="dropoff_location" required readonly value="' + esc(dest) + '" data-armada-dest="' + esc(dest) + '"></label>' +
+      '<label class="rn-pd-relay-own"><input type="checkbox" data-dest-own> Armada ini hanya perantara — saya isi tujuan akhir sendiri</label>';
+  }
+  function wireDropoff(form) {
+    var cb = form.querySelector("[data-dest-own]"), inp = form.querySelector("[name=dropoff_location]");
+    if (!cb || !inp) return;
+    cb.addEventListener("change", function () {
+      if (cb.checked) { inp.readOnly = false; inp.value = ""; inp.placeholder = "Tujuan akhir barang"; inp.focus(); }
+      else { inp.readOnly = true; inp.value = inp.getAttribute("data-armada-dest") || ""; }
+    });
+  }
+
   function bookingForm(a) {
+    var me = (CACHE && CACHE.me) || {};
     var courierOk = (a.service_mode || "both") !== "space_only";
     return (
       '<details class="rn-pd-edit" open><summary>Booking Tempat</summary>' +
@@ -391,9 +409,10 @@
         (courierOk ? '<option value="use_transporter">Dijemput kurir armada</option>' : "") +
         '<option value="self_deliver">Antar sendiri ke titik jemput</option></select></label>' +
       '<label>Lokasi barang<input name="pickup_location" placeholder="Gudang / alamat"></label>' +
-      '<label>Tujuan / dropoff<input name="dropoff_location" placeholder="Posko tujuan"></label>' +
-      '<label>Kontak Anda *<input name="contact_person" placeholder="Nama" required></label>' +
-      '<label>No. HP / WhatsApp *<input name="contact_phone" type="tel" inputmode="tel" pattern="[0-9+ ()-]{8,}" title="Nomor HP yang bisa dihubungi pemilik armada" placeholder="0812-…" required></label>' +
+      dropoffField(a) +
+      '<label>Kontak Anda *<input name="contact_person" placeholder="Nama" required value="' + esc(me.name || "") + '"></label>' +
+      '<label>No. HP / WhatsApp *<input name="contact_phone" type="tel" inputmode="tel" pattern="[0-9+ ()-]{8,}" title="Nomor HP yang bisa dihubungi pemilik armada" placeholder="0812-…" required value="' + esc(me.phone || "") + '"></label>' +
+      (me.name || me.phone ? '<small class="rn-muted rn-pd-autofill">Kontak diisi otomatis dari akun Anda — boleh diubah.</small>' : "") +
       '<label>Kapan barang dikirim *<input name="requested_window" placeholder="Besok pagi / 12 Nov 08:00" required></label>' +
       "</div>" +
       termsAckBlock(a) +
@@ -406,6 +425,7 @@
   function wireBookingForm(a) {
     var form = $("#pdBookForm");
     if (!form) return;
+    wireDropoff(form);
     var msg = form.querySelector("[data-book-msg]");
     form.addEventListener("submit", async function (e) {
       e.preventDefault();

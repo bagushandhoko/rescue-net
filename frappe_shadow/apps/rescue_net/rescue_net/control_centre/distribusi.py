@@ -718,6 +718,23 @@ def _served_rows(child, parent, field):
                           pluck=field, order_by="idx asc")
 
 
+def _my_booking_contact():
+    """Nama + No. HP akun yang sedang login, untuk mengisi otomatis form booking tempat
+    (owner 2026-11-11: "kontak langsung muncul kontak dari user yang pesan").
+    Hanya data milik penanya sendiri; tamu -> None."""
+    user = frappe.session.user
+    if not user or user == "Guest":
+        return None
+    acc = frappe.db.get_value(
+        "RN User Account", {"frappe_user": user, "status": "active"}, ["title", "phone"], as_dict=True
+    ) or {}
+    u = frappe.db.get_value("User", user, ["full_name", "mobile_no", "phone"], as_dict=True) or {}
+    return {
+        "name": acc.get("title") or u.get("full_name") or "",
+        "phone": acc.get("phone") or u.get("mobile_no") or u.get("phone") or "",
+    }
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def posko_distribusi_board(posko=None, disaster_event=None):
@@ -870,6 +887,9 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "position_lat": t.get("position_lat"), "position_lng": t.get("position_lng"),
             "position_at": str(t.get("position_at") or ""),
             "rute": (t.route_origin or "-") + " → " + (t.route_destination or "-"),
+            # owner 2026-11-11: form booking tempat mengisi tujuan dari tujuan armada
+            "route_origin": t.route_origin or "",
+            "route_destination": t.route_destination or "",
             "handover_location": t.handover_location or "-",
             "handover_contact_person": t.handover_contact_person or "-",
             "handover_contact_phone": _handover_phone(t) or "-",
@@ -1192,6 +1212,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
         ],
         "viewer": _poskos_viewer_context(),
         "session_user_logged_in": frappe.session.user != "Guest",
+        "me": _my_booking_contact(),
         "logged_in": _di_flags[0],
         "can_manage": _di_flags[1],
         "can_coordinate": _di_flags[2],

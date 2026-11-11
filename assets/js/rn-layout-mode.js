@@ -37,6 +37,11 @@
       appShell.style.height = "";
       appShell.style.minHeight = "";
       appShell.style.transform = "";
+      appShell.style.removeProperty("grid-template-columns");
+      const sb = document.querySelector(".sidebar");
+      if (sb) { sb.style.zoom = ""; ["width", "min-width", "max-width"].forEach(function (k) { sb.style.removeProperty(k); }); sb.style.removeProperty("height"); sb.style.removeProperty("min-height"); sb.style.removeProperty("max-height"); }
+      const mn = document.querySelector(".main");
+      if (mn) mn.style.removeProperty("min-height");
     }
 
     if (mockShell) {
@@ -67,11 +72,25 @@
       // once a page is tall enough to show a scrollbar — after the 0.75
       // zoom that residual sliver still overflows, producing a persistent
       // horizontal scrollbar. Pixel math against clientWidth is exact.
-      const zoomedW = document.documentElement.clientWidth / 0.75;
-      const zoomedH = document.documentElement.clientHeight / 0.75;
+      // Owner 2026-11-09 malam: "nggak bisa disamakan seperti Control Centre?" -> isi halaman 100%
+      // (huruf sama besar dengan Control Centre); menu samping tetap .75 agar identik dengan menu sekarang
+      // dan dengan sidebar Control Centre. Kembali ke skala lama: CONTENT_ZOOM = 0.75
+      // (atau git checkout tag sebelum-zoom100-20261109 -- assets/js/rn-layout-mode.js).
+      // Suri 2026-11-11 (owner: "font terlalu kecil jadi kelihatan nggak profesional"): 100% dipakai bila
+      // layar cukup lebar. Layar desktop sempit (901-1279px) dikecilkan secukupnya supaya tata letak
+      // selebar MIN_LAYOUT_W tetap muat (tanpa ini isi terpotong di kanan: uji Playwright 1024/1100px).
+      const MIN_LAYOUT_W = 1280;
+      const SIDEBAR_ZOOM = 0.75;
+      const viewW = document.documentElement.clientWidth;
+      const viewH = document.documentElement.clientHeight;
+      const CONTENT_ZOOM = Math.min(1, viewW / MIN_LAYOUT_W);
+      const zoomedW = viewW / CONTENT_ZOOM;
+      const zoomedH = viewH / CONTENT_ZOOM;
 
       document.body.style.overflowX = "hidden";
-      appShell.style.zoom = "0.75";
+      // style.css memberi body min-width 1180px; di layar <1180px itu membuat halaman bisa digeser ke samping.
+      document.body.style.minWidth = "0";
+      appShell.style.zoom = String(CONTENT_ZOOM);
       appShell.style.width = zoomedW + "px";
       appShell.style.minWidth = zoomedW + "px";
       appShell.style.minHeight = zoomedH + "px";
@@ -80,14 +99,21 @@
       const main = document.querySelector(".main");
 
       if (sidebar) {
-        sidebar.style.height = zoomedH + "px";
-        sidebar.style.minHeight = zoomedH + "px";
-        sidebar.style.maxHeight = zoomedH + "px";
+        const sbH = viewH / (CONTENT_ZOOM * SIDEBAR_ZOOM);
+        const sbW = 300; // lebar CSS menu = Control Centre (.cc-sidebar 300px x .75 = 225px di layar)
+        sidebar.style.zoom = String(SIDEBAR_ZOOM);
+        sidebar.style.setProperty("width", sbW + "px", "important");
+        sidebar.style.setProperty("min-width", sbW + "px", "important");
+        sidebar.style.setProperty("max-width", sbW + "px", "important");
+        appShell.style.setProperty("grid-template-columns", (sbW * SIDEBAR_ZOOM) + "px minmax(0, 1fr)", "important");
+        sidebar.style.setProperty("height", sbH + "px", "important");
+        sidebar.style.setProperty("min-height", sbH + "px", "important");
+        sidebar.style.setProperty("max-height", sbH + "px", "important");
         sidebar.style.overflowY = "auto";
       }
 
       if (main) {
-        main.style.minHeight = zoomedH + "px";
+        main.style.setProperty("min-height", zoomedH + "px", "important");
       }
     }
 

@@ -7169,11 +7169,11 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .rn-vx-hub, .rn-vx-hub input, .rn-vx-hub select, .rn-vx-hub textarea, .rn-vx-hub button { font-size: 14px; }
 
 /* page header */
-.vx-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin: 4px 0 18px; }
+.vx-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px 24px; flex-wrap: wrap; margin: 4px 0 18px; }
 .vx-title h2 { margin: 2px 0 6px; font-size: 30px; line-height: 1.15; letter-spacing: -.02em; color: var(--vx-ink); }
 .vx-eyebrow { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--vx-brand-dark); }
 .vx-lead { margin: 0; max-width: 62ch; color: var(--muted); font-size: 14.5px; line-height: 1.55; }
-.vx-status { display: grid; gap: 8px; justify-items: end; text-align: right; flex: 0 0 auto; }
+.vx-status { display: grid; gap: 8px; justify-items: end; text-align: right; flex: 0 1 auto; min-width: 0; max-width: 100%; }
 .vx-pills { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .vx-statusline { margin: 0; font-size: 14px; color: var(--muted); }
 .rn-vx-hub .status-pill { display: inline-flex !important; }

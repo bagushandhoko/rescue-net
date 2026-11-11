@@ -78,6 +78,7 @@
         <p class="toc-group">E. Pembaruan</p>
         <ol start="28">
           <li><a href="#pembaruan">Perbaikan sejak manual dibuat (s.d. 8 Nov)</a></li>
+          <li><a href="#audit-1111">Pembaruan hasil audit proses (11 Nov)</a></li>
         </ol>
         <p class="toc-tech"><a href="manual-teknis.html">Manual Teknis →</a></p>
       </nav>
@@ -360,11 +361,12 @@
           <h3>16. Mengirim laporan masyarakat</h3>
           <ol class="steps">
             <li>Buka <a href="laporan-masyarakat.html">Laporan Masyarakat</a> dan login.</li>
-            <li>Pilih <b>Cukup ceritakan</b> (tulis kejadian, AI mengisi formulir) atau <b>Isi form</b>. Pilih titik lokasi di peta bila perlu.</li>
+            <li>Pilih <b>Cukup ceritakan</b> (tulis kejadian, AI mengisi formulir) atau <b>Isi form</b>.</li>
+            <li><b>Lokasi:</b> pilih wilayah pemerintah berjenjang — provinsi › kabupaten/kota › kecamatan › desa/kelurahan — atau pakai <b>Lokasi saat ini</b> (GPS) / titik di peta. Wilayah cukup bila tidak ada sinyal GPS.</li>
             <li>Periksa jenis kejadian, lokasi, jumlah terdampak, dan kebutuhan, lalu kirim.</li>
             <li>Ikuti status dan tindak lanjutnya di <b>Laporan Saya</b>.</li>
           </ol>
-          <p class="note">Tulis fakta yang diperlukan saja. Jangan memasukkan kata sandi, data keuangan, atau data pribadi orang lain yang tidak perlu.</p>
+          <p class="note">Mengirim laporan wajib login, agar Anda bisa menambah kondisi dan melihat tanggapan posko. Tulis fakta yang diperlukan saja. Jangan memasukkan kata sandi, data keuangan, atau data pribadi orang lain yang tidak perlu.</p>
         </section>
 
         <section id="bantuan">
@@ -375,6 +377,13 @@
             <li>Isi jenis dan jumlah barang. Pilih antar sendiri atau minta dijemput.</li>
             <li>Simpan kode lacak, lalu pantau di <a href="lacak-logistik.html">Lacak Logistik</a>.</li>
           </ol>
+          <p><b>Donasi uang ke program</b> (kotak <b>Donasi ke Program Khusus</b> di Kirim Bantuan, atau halaman <a href="program-khusus.html">Program Khusus</a>):</p>
+          <ol class="steps">
+            <li>Pilih program. Rekening, QRIS, dan daftar donatur bisa dilihat tanpa login.</li>
+            <li>Bila program memakai <b>Kitabisa</b>, tekan <b>Donasi di Kitabisa →</b>; donasi dilakukan di Kitabisa.</li>
+            <li>Bila program memakai rekening/QRIS: bayar dulu, lalu login dan isi nominal, nama yang ditampilkan (atau centang anonim), kontak, dan pesan, kemudian kirim. Donasi tampil di daftar donatur setelah pemrakarsa mengonfirmasi dana diterima.</li>
+          </ol>
+          <p class="note">Bila muncul pesan <b>"Akun Rescue-Net Anda masih menunggu verifikasi admin"</b>, akun sudah terdaftar tetapi belum aktif — fitur bisa dipakai setelah disetujui. Pesan <b>"belum terdaftar di Rescue-Net — Lengkapi pendaftaran"</b> berarti Anda login (mis. dengan Google) tetapi belum menyelesaikan pendaftaran Rescue-Net.</p>
         </section>
 
         <section id="posko">
@@ -382,7 +391,8 @@
           <ol class="steps">
             <li>Buka <a href="registrasi-posko.html">Registrasi Posko</a>. Isi nama, jenis, lokasi GPS, kontak penanggung jawab, dan fungsi posko.</li>
             <li>Centang <b>bencana yang ditangani</b>. Cari dengan nama atau lokasi, atau saring rentang waktu. Secara awal semua bencana tampil.</li>
-            <li>Posko baru menunggu persetujuan sebelum Anda bisa mengelolanya.</li>
+            <li><b>Organisasi:</b> bila akun Anda anggota sebuah organisasi, posko otomatis terhubung ke organisasi itu; bila tidak, posko tercatat sebagai <b>posko mandiri</b>.</li>
+            <li>Posko baru menunggu persetujuan sebelum Anda bisa mengelolanya. Tombol <b>Ajukan verifikasi</b>, <b>Minta verifier</b>, dan <b>Simpan</b> hanya aktif untuk pengelola posko; <b>Hapus</b> hanya untuk pembuat posko (penugasan disetujui) atau super admin.</li>
             <li>Setelah disetujui, kelola posko dari <a href="kelola-posko.html">Kelola Posko Saya</a> (lihat bagian 25).</li>
             <li>Ubah bencana yang ditangani kapan saja di <a href="ai-settings.html">Setting</a> → Bencana yang Ditangani Posko.</li>
           </ol>
@@ -398,6 +408,7 @@
             <li><b>Ke titik serah:</b> antar sendiri, masuk antrean jemput, atau pilih transporter. Centang pernyataan bahwa barang memenuhi syarat armada.</li>
           </ol>
           <p>Jangan membuat kiriman kedua selama permintaan pertama masih menunggu konfirmasi.</p>
+          <p><b>Mencatat bantuan yang akan masuk</b> (panel <b>Tambah Bantuan Tersedia</b> di Posko Logistik): isi donatur, barang, jumlah, satuan, lokasi ambil, lalu bila ada <b>waktu siap</b>, <b>nomor batch</b>, <b>tanggal kedaluwarsa</b>, dan <b>status</b>. Saat bantuan diterima, batch dan tanggal kedaluwarsa ikut masuk ke pemantau stok &amp; kedaluwarsa di <a href="kelola-posko.html">Kelola Posko Saya</a> — penting untuk obat dan makanan.</p>
         </section>
 
         <section id="distribusi">
@@ -407,6 +418,20 @@
             <li>Centang <b>bencana yang dilayani</b> armada dan, bila perlu, <b>posko logistik yang dilayani</b>. Kosong berarti semua posko logistik di bencana itu.</li>
             <li>Periksa <b>Booking Masuk</b>, lalu tekan Konfirmasi atau Tolak. Setelah dikonfirmasi, kiriman otomatis naik ke armada itu.</li>
             <li>Ambil kiriman dari <b>antrean jemput</b> dengan menekan Booking pada barisnya.</li>
+          </ol>
+          <p><b>Booking Tempat (ruang muat) — untuk pengguna:</b></p>
+          <ol class="steps">
+            <li>Buka Posko Distribusi, klik armada di <b>Armada Terdaftar</b>. Detail armada dibuka dengan <b>Booking Tempat</b> di bagian atas. Tamu melihat tombol <b>Login untuk booking tempat</b>.</li>
+            <li>Pilih <b>Pembooking atas nama</b>: Pribadi/warga, Organisasi, Relawan, atau Posko. Untuk Organisasi/Posko, nama organisasi/posko Anda dipilih otomatis — server memeriksa bahwa Anda memang anggota/pengelolanya.</li>
+            <li>Isi muatan, berat (kg), dan <b>kapan barang dikirim</b>. Nama dan No. HP/WhatsApp terisi otomatis dari akun (boleh diubah) — nomor ini dipakai pemilik armada untuk menghubungi Anda.</li>
+            <li><b>Tujuan</b> terisi dan terkunci dari tujuan armada. Bila armada hanya <b>perantara</b> (estafet), centang <b>"Armada ini hanya perantara — saya isi tujuan akhir sendiri"</b> lalu isi tujuan akhir.</li>
+            <li>Tekan <b>Booking Tempat</b>. Bila armada memakai konfirmasi PIN, simpan <b>PIN</b> yang muncul dan berikan ke posko armada.</li>
+          </ol>
+          <p><b>Booking Tempat — untuk pemilik/pengelola posko armada:</b></p>
+          <ol class="steps">
+            <li>Pengelola posko melihat dua tab: <b>🔧 Menu Pemilik — Booking Masuk &amp; Armada</b> dan <b>👁 Tampilan Publik / Pembooking</b> (pratinjau yang dilihat orang lain, tanpa kontak pembooking).</li>
+            <li>Di <b>Booking Masuk</b> tampil muatan, berat, waktu, nama pembooking, serta tombol <b>telepon</b> dan <b>WhatsApp</b> pembooking.</li>
+            <li>Masukkan PIN dari pembooking (bila diminta), lalu tekan <b>Konfirmasi</b> atau <b>Tolak</b>.</li>
           </ol>
         </section>
 
@@ -566,6 +591,21 @@
             <li>Aplikasi APK Android dihentikan; pasang sebagai aplikasi web lewat <a href="install.html">Install App</a>.</li>
           </ul>
           <p class="note">Daftar uji yang sudah dijalankan untuk tiap perbaikan ada di halaman About Us → Scenario Tested.</p>
+        </section>
+
+        <section id="audit-1111">
+          <h3>29. Pembaruan hasil audit proses (10–11 November 2026)</h3>
+          <p>Audit menyeluruh dari registrasi sampai relief program, disimulasikan seperti kejadian sesungguhnya. Rincian dan temuan: <a href="scenario-tested.html">Scenario Tested</a> → AUDIT-PROSES-1.</p>
+          <ul>
+            <li><b>Booking Tempat</b> di Posko Distribusi: tampil setelah login (juga untuk super admin), kontak & tujuan terisi otomatis, pilihan perantara, Menu Pemilik vs Tampilan Publik — lihat bagian 20.</li>
+            <li><b>Status akun</b>: pesan "menunggu verifikasi admin" atau "Lengkapi pendaftaran" menggantikan ajakan login yang membingungkan — lihat bagian 17.</li>
+            <li><b>Privasi verifikasi</b>: daftar dan detail antrean verifikasi (termasuk email/HP pendaftar) hanya untuk verifikator/admin; publik melihat angka ringkas.</li>
+            <li><b>Laporan Masyarakat</b>: daftar provinsi/kabupaten/kecamatan/desa tampil benar — lihat bagian 16.</li>
+            <li><b>Posko Logistik</b>: nomor batch dan tanggal kedaluwarsa bantuan tersimpan dan diteruskan ke pemantau kedaluwarsa — lihat bagian 19.</li>
+            <li><b>Registrasi Posko</b>: posko terhubung ke organisasi pendaftar; tombol mengikuti hak — lihat bagian 18.</li>
+            <li><b>Donasi program</b>: isian donasi tidak lagi hilang setelah sempat memilih program Kitabisa.</li>
+            <li><b>Relawan Saya</b>: super admin diarahkan ke Manajemen Relawan.</li>
+          </ul>
         </section>
 
         <a class="back-top" href="#top">Kembali ke atas</a>

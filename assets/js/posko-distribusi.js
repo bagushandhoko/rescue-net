@@ -947,7 +947,7 @@
           (b.terms_ack ? '<small class="rn-muted">✓ Pembooking menyatakan memenuhi syarat barang</small>' : "") + "</td>" +
         "<td>" + fmt(b.qty_kg) + " kg" + (b.qty_m3 ? " · " + fmt(b.qty_m3) + " m³" : "") + "</td>" +
         "<td>" + esc(b.delivery_label) + "</td>" +
-        "<td>" + esc(b.booker) + (b.is_guest ? ' <span class="chip">tamu</span>' : "") +
+        "<td class=\"rn-pd-booker-contact\">" + esc(b.booker) + (b.is_guest ? ' <span class="chip">tamu</span>' : "") +
           (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
           "<small class=\"rn-muted\">" + contact(b.supplier_contact_phone) + "</small></td>" +
         "<td>" + esc((b.window_from || b.window_to) ? (b.window_from || "…") + " s/d " + (b.window_to || "…")

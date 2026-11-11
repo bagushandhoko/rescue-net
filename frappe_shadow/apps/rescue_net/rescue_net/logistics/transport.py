@@ -375,6 +375,16 @@ def book_transport_space(
     doc.disaster_event = space.disaster_event
     doc.booked_by_type = booked_by_type if booked_by_type in (
         "posko", "organization", "individu", "relawan") else "posko"
+    if doc.booked_by_type in ("posko", "organization"):
+        doctype = "RN Posko" if doc.booked_by_type == "posko" else "RN Organization"
+        if not booked_by_id or not frappe.db.exists(doctype, booked_by_id):
+            frappe.throw("Pilih posko atau organisasi pembooking yang sah")
+        if not is_system_manager():
+            allowed = (can_manage_posko(actor, booked_by_id)
+                       if doc.booked_by_type == "posko"
+                       else approved_member(actor.name, booked_by_id))
+            if not allowed:
+                frappe.throw("Anda tidak berhak booking atas nama posko/organisasi ini", frappe.PermissionError)
     doc.booked_by_id = booked_by_id
     doc.booker_name = _actor_display_name(actor)
     doc.aid_offer = aid_offer or None

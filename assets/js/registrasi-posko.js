@@ -335,6 +335,7 @@
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
       var msg = $("#regFormMsg");
+      if (form.elements.organization.disabled) { msg.textContent = "Tunggu organisasi akun selesai dimuat."; return; }
       var fd = new FormData(form);
       var latlng = String(fd.get("latlng") || "").split(",").map(function (s) { return s.trim(); });
 
@@ -353,6 +354,7 @@
       }
       try {
         var res = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.create_posko", {
+          organization: fd.get("organization") || "",
           title: fd.get("title"),
           posko_type: fd.get("posko_type"),
           address: fd.get("address"),
@@ -397,6 +399,12 @@
   async function loadRegistry() {
     var data = await window.RN_FRAPPE.call("rescue_net.api_control_centre.posko_registry_board", { disaster_event: getEventId() });
     state.rows = data.poskos || [];
+    var viewer = data.viewer || {};
+    var org = $("#regForm").elements.organization;
+    org.innerHTML = viewer.org
+      ? '<option value="' + esc(viewer.org) + '">' + esc(viewer.org_title || viewer.org) + '</option>'
+      : '<option value="">Posko mandiri (tanpa organisasi)</option>';
+    org.disabled = false;
     $("#regUpdated").textContent = "Posko · Diperbarui " + fmtTime(data.generated_at).slice(11, 16);
     renderKpi(data.totals || {});
     applyFilter();

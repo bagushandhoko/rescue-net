@@ -926,6 +926,9 @@ def create_posko(
     travel with a komando-terpusat request and are set on approval.
     """
     actor = _actor()
+    from rescue_net.access_policy import approved_member
+    if not organization and actor.organization and approved_member(actor.name, actor.organization):
+        organization = actor.organization
 
     if organization:
         approved = (

@@ -16,6 +16,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     _my_posko_names,
     _operate_href,
     _posko_actor_flags,
+    _poskos_viewer_context,
     _resolve_posko,
     _sf,
     canonical_event,
@@ -125,6 +126,7 @@ def org_posko_board(disaster_event=None):
             "posko_count": len(org_poskos), "posko_active_count": active_poskos,
             "member_count": members, "program_count": programs,
             "poskos": posko_list,
+        "viewer": _poskos_viewer_context(),
             "in_event": o.name in in_event,
         })
 

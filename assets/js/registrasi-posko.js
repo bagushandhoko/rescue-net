@@ -124,10 +124,13 @@
       ? "Siap diajukan untuk verifikasi."
       : "Lengkapi Email, No HP, Identitas PIC, dan Lokasi sebelum mengajukan verifikasi.";
 
-    $("#submitVerifBtn").disabled = !(data.ready_to_submit && (data.verification_status === "self_reported" || data.verification_status === "needs_correction"));
-    $("#saveDraftBtn").disabled = false;
-    $("#deletePoskoBtn").disabled = false;
-    if ($("#requestVerifierBtn")) $("#requestVerifierBtn").disabled = false;
+    // audit S4 2026-11-11: tombol mengikuti hak server (dulu aktif untuk semua pembaca lalu ditolak)
+    var canEdit = !!data.can_edit, canDel = !!data.can_delete;
+    $("#submitVerifBtn").disabled = !(canEdit && data.ready_to_submit && (data.verification_status === "self_reported" || data.verification_status === "needs_correction"));
+    $("#saveDraftBtn").disabled = !canEdit;
+    $("#deletePoskoBtn").disabled = !canDel;
+    if ($("#requestVerifierBtn")) $("#requestVerifierBtn").disabled = !canEdit;
+    if (!canEdit) $("#checklistNote").textContent += " Pengajuan, permintaan verifier, dan perubahan hanya oleh pengelola posko ini.";
   }
 
   async function selectPosko(name) {

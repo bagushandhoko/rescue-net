@@ -304,11 +304,26 @@ def posko_verification_checklist(posko):
             if item["key"] in ("email", "phone", "pic"):
                 item["value"] = None
 
+    # Audit S4 (2026-11-11): tombol Ajukan / Minta Verifier / Hapus mengikuti aturan server
+    # (update/submit = _can_edit_posko; hapus = System Manager atau pembuat dgn penugasan disetujui).
+    actor = rn_actor(required=False)
+    can_edit = can_delete = False
+    if actor:
+        from rescue_net.access_policy import approved_posko_assignment, is_system_manager
+        from rescue_net.api_community_cluster import _can_edit_posko
+        can_edit = _can_edit_posko(actor, frappe._dict(name=doc.name))
+        owner = frappe.db.get_value("RN Posko", doc.name, "owner")
+        can_delete = bool(is_system_manager() or (
+            owner == frappe.session.user and actor.get("name")
+            and approved_posko_assignment(actor.name, doc.name)))
+
     return {
         "posko": doc.name,
         "verification_status": doc.verification_status or "self_reported",
         "items": items,
         "ready_to_submit": all(i["done"] for i in items[:4]),  # trusted_verifier comes after submission
+        "can_edit": bool(can_edit),
+        "can_delete": bool(can_delete),
     }
 
 
@@ -515,6 +530,13 @@ def posko_edit_scope(posko=None, disaster_event=None):
                 except Exception:
                     coord = False
             out["can_coordinate_current"] = coord
+            # Audit S3 (2026-11-11): Pelapor Terverifikasi boleh melapor kebutuhan di posko mana pun
+            # (sama dengan create_need) -> form laporan kebutuhan jangan ikut disembunyikan.
+            try:
+                from rescue_net.services import reporter
+                out["can_report_current"] = bool(reporter.is_verified_reporter(actor))
+            except Exception:
+                out["can_report_current"] = False
 
     return out
 

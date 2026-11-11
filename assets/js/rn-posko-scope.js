@@ -39,6 +39,13 @@
 
   // When the posko opened cross-org participation, a non-manager member may
   // still SEND AID to it — keep just that one form (+ its wrapper) visible.
+  // audit S3 2026-11-11: pelapor terverifikasi tetap boleh "Laporkan Kebutuhan" di posko organisasi lain
+  var KEEP_REPORT = false;
+  function isReportForm(el) {
+    return KEEP_REPORT && ((el.matches && el.matches("[data-rn-create-logistic-need]")) ||
+      (el.closest && el.closest("[data-rn-create-logistic-need]")));
+  }
+
   function isCoordinationForm(el) {
     return el.id === "aidOfferPanel" ||
       (el.closest && el.closest("#aidOfferPanel")) ||
@@ -64,6 +71,7 @@
         // keep read-only drawers that only display data
         if (el.classList.contains("rn-stockcards-panel")) return;
         if (keepCoordination && isCoordinationForm(el)) return;
+        if (isReportForm(el)) return;
         var host;
         if (el.tagName === "FORM") {
           // a record form living inside a mixed "Riwayat" drawer: hide just the
@@ -119,6 +127,7 @@
 
   function applyReadOnly(scope) {
     var keepCoord = !!scope.can_coordinate_current;
+    KEEP_REPORT = !!scope.can_report_current;
     banner(scope);
     hideEditForms(keepCoord);
     // page JS may render forms after us — sweep again a couple of times

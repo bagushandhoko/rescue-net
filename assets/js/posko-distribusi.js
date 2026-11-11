@@ -17,7 +17,7 @@
   function getEvent() { return qs.get("event") || "event-sim-001"; }
   function getPosko() { return qs.get("id") || qs.get("posko") || ""; }
   function tel(v) { return v && v !== "-" ? '<a href="tel:' + esc(String(v).replace(/[^0-9+]/g, "")) + '">' + esc(v) + "</a>" : "-"; }
-  // owner 2026-11-10: kontak pemesan "tinggal diklik bisa dihubungi" -> telepon + WhatsApp
+  // owner 2026-11-10: kontak pembooking "tinggal diklik bisa dihubungi" -> telepon + WhatsApp
   function waNum(v) {
     var n = String(v || "").replace(/[^0-9]/g, "");
     if (/^0/.test(n)) n = "62" + n.slice(1);
@@ -31,8 +31,8 @@
 
   /* owner 2026-11-10: "bedakan halaman untuk publik atau user dan halaman/menu sebagai pemilik".
      Pengelola posko (can_manage) mendapat dua tab: Menu Pemilik (booking masuk + kontak di atas,
-     kelola armada) dan Tampilan Publik / Pemesan (persis yang dilihat publik & user, tanpa
-     kontak pemesan lain). Publik & user biasa tidak melihat tab. Pilihan disimpan di ?view=. */
+     kelola armada) dan Tampilan Publik / Pembooking (persis yang dilihat publik & user, tanpa
+     kontak pembooking lain). Publik & user biasa tidak melihat tab. Pilihan disimpan di ?view=. */
   function currentView() { return qs.get("view") === "publik" ? "publik" : "pemilik"; }
   function setView(v) {
     if (v === "publik") qs.set("view", "publik"); else qs.delete("view");
@@ -50,7 +50,7 @@
       ".rn-pd-viewtabs button[aria-pressed=true]{background:#8a3b12;border-color:#8a3b12;color:#fff}" +
       ".rn-pd-viewtabs small{flex-basis:100%;color:#6b5a4c;font-size:13px}" +
       ".rn-pd-wa{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:#25d366;color:#fff!important;font-size:12px;font-weight:700;text-decoration:none}" +
-      ".rn-md-bk-own{margin-top:10px}.rn-md-bk-own>summary{cursor:pointer;font-weight:700}";
+      ".rn-md-bk-own{margin-top:10px}";
     document.head.appendChild(st);
   }
   function renderViewTabs(data) {
@@ -70,10 +70,10 @@
     box.innerHTML =
       '<button type="button" role="tab" data-view="pemilik" aria-pressed="' + (v === "pemilik") + '">🔧 Menu Pemilik — Booking Masuk & Armada' +
         (waiting ? " (" + fmt(waiting) + " menunggu)" : "") + "</button>" +
-      '<button type="button" role="tab" data-view="publik" aria-pressed="' + (v === "publik") + '">👁 Tampilan Publik / Pemesan</button>' +
+      '<button type="button" role="tab" data-view="publik" aria-pressed="' + (v === "publik") + '">👁 Tampilan Publik / Pembooking</button>' +
       "<small>" + (v === "pemilik"
         ? "Anda pengelola posko ini: lihat siapa yang booking, hubungi lewat telepon / WhatsApp, konfirmasi atau tolak."
-        : "Ini yang dilihat publik dan pengguna: pilih armada lalu isi booking. Kontak pemesan lain tidak tampil di sini.") + "</small>";
+        : "Ini yang dilihat publik dan pengguna: pilih armada lalu isi booking. Kontak pembooking lain tidak tampil di sini.") + "</small>";
     box.querySelectorAll("button[data-view]").forEach(function (b) {
       b.addEventListener("click", function () { if (b.getAttribute("data-view") !== currentView()) setView(b.getAttribute("data-view")); });
     });
@@ -110,7 +110,7 @@
   var MODE_CHIP = { space_only: "", courier_pickup: "warning", both: "ok" };
 
   var ARMADA_STATUS = [
-    ["available", "Tersedia"], ["reserved", "Dipesan"], ["assigned", "Ditugaskan"],
+    ["available", "Tersedia"], ["reserved", "Sudah dibooking"], ["assigned", "Ditugaskan"],
     ["in_transit", "Dalam Perjalanan"], ["arrived", "Tiba"],
     ["completed", "Selesai"], ["cancelled", "Dibatalkan"],
   ];
@@ -197,8 +197,8 @@
     }
     if (!manage) {
       $("#kpiTerpakai").textContent = fmt(t.kapasitas_tersedia_kg) + " kg";
-      lab("#kpiTerpakai", "Masih Tersedia", "ruang muat yang bisa dipesan");
-      lab("#kpiMenunggu", "Antre Booking", "pesanan menunggu konfirmasi posko");
+      lab("#kpiTerpakai", "Masih Tersedia", "ruang muat yang bisa dibooking");
+      lab("#kpiMenunggu", "Antre Booking", "booking tempat menunggu konfirmasi posko");
       lab("#kpiKapasitas", "Kapasitas Total", "armada yang belum berangkat/selesai");
     }
   }
@@ -284,7 +284,7 @@
       tr.addEventListener("click", function () { openArmadaDetail(tr.getAttribute("data-armada")); });
     });
     if (shown) shown.textContent = "Menampilkan " + list.length + " armada";
-    // owner 2026-11-02: "Pesan" from Cari Armada (Manajemen Distribusi) opens that armada's detail + booking
+    // owner 2026-11-02: booking from Cari Armada (Manajemen Distribusi) opens that armada's detail + booking
     if (location.hash === "#armadaForm" && !window.__pdFormOpened) {
       window.__pdFormOpened = true;
       var fd = document.getElementById("armadaForm");
@@ -304,7 +304,7 @@
         '<div class="rn-md-bk"><div class="rn-md-bk-main"><b>' + esc(b.cargo) + "</b> " +
         fmt(b.qty_kg) + " kg" + (b.qty_m3 ? " · " + fmt(b.qty_m3) + " m³" : "") +
         '<small class="rn-muted"> · ' + esc(b.delivery_label) + (b.requested_window ? " · " + esc(b.requested_window) : "") + "</small></div>" +
-        '<div class="rn-md-bk-contacts"><span>Pemesan: <b>' + esc(b.booker) + "</b>" +
+        '<div class="rn-md-bk-contacts"><span>Pembooking: <b>' + esc(b.booker) + "</b>" +
         (b.supplier_contact_person ? " (" + esc(b.supplier_contact_person) + ")" : "") +
         (b.supplier_contact_phone ? " · " + contact(b.supplier_contact_phone) : "") + "</span></div>" +
         '<div class="rn-md-bk-meta"><span class="chip ' + statusChip(b.status) + '">' + esc(b.status_label) + "</span>" +
@@ -314,14 +314,16 @@
     $("#pdDrillTitle").textContent = a.provider;
     $("#pdDrillSub").textContent = a.service_mode_label + " · " + a.status_label;
     // Booking harus langsung tampak di detail kendaraan, sebelum rincian panjang.
-    var bookingPanel = CACHE && CACHE.can_manage
+    var bookingPanel = CACHE && CACHE.session_user_logged_in && !CACHE.logged_in
+      ? '<section class="rn-md-booking-note"><h4>Booking Tempat</h4><p>Lengkapi pendaftaran Rescue-Net untuk booking tempat.</p><a class="btn primary mini" href="auth.html#daftar">Lengkapi pendaftaran</a></section>'
+      : CACHE && CACHE.can_manage
       ? '<h4 class="rn-md-detail-h">Booking Masuk untuk kendaraan ini</h4><div class="rn-md-bk-list">' + bkHtml + "</div>" +
-        '<details class="rn-md-bk-own"><summary>Pesan ruang di armada ini atas nama posko Anda</summary>' + bookingForm(a) + "</details>"
+        '<section class="rn-md-bk-own"><h4 class="rn-md-detail-h">Booking Tempat</h4>' + bookingForm(a) + "</section>"
       : CACHE && CACHE.logged_in
-      ? '<h4 class="rn-md-detail-h">Booking Ruang Muat</h4>' + bookingForm(a)
-      : '<section class="rn-md-booking-note"><h4>Booking Ruang Muat</h4><p>Login untuk mengisi muatan, berat/volume, kontak, dan waktu pengiriman.</p><a class="btn primary mini" href="auth.html?next=' +
+      ? '<h4 class="rn-md-detail-h">Booking Tempat</h4>' + bookingForm(a)
+      : '<section class="rn-md-booking-note"><h4>Booking Tempat</h4><p>Login untuk mengisi muatan, berat/volume, kontak, dan waktu pengiriman.</p><a class="btn primary mini" href="auth.html?next=' +
         encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search.replace(/&?armada=[^&]*/, "") + "&armada=" + a.id) +
-        '">Login untuk memesan</a></section>';
+        '">Login untuk booking tempat</a></section>';
     $("#pdDrillBody").innerHTML =
       bookingPanel +
       '<div class="rn-md-detail">' +
@@ -350,7 +352,7 @@
       row("Relawan jemput", esc(a.pickup_volunteer_name || "-")) +
       "</div>" +
       ((CACHE && CACHE.can_manage) ? gpsBlock(a) + armadaEditForm(a) : "") +
-      // owner 2026-11-02: memesan wajib login — logged-in users get the normal form, guests a login link
+      // owner 2026-11-02: booking tempat wajib login — logged-in users get the normal form, guests a login link
       // pemilik sudah melihat "Booking Masuk" di atas (bookingPanel) - jangan dobel
       ((CACHE && CACHE.can_manage) ? ""
         : bk.length ? '<h4 class="rn-md-detail-h">Booking Anda</h4><div class="rn-md-bk-list">' + bkHtml + "</div>" : "");
@@ -361,9 +363,9 @@
     document.body.style.overflow = "hidden";
   }
 
-  /* "Pesan Slot" — any logged-in user, on an open transport posko.
+  /* "Booking Tempat" — any logged-in user, on an open transport posko.
      api_logistics.book_transport_space (PIN back unless policy = open). */
-  // Syarat barang + pernyataan pemesan (wajib dicentang bila armada punya syarat).
+  // Syarat barang + pernyataan pembooking (wajib dicentang bila armada punya syarat).
   function termsAckBlock(a) {
     var t = a.syarat;
     if (!t || !t.ada) return "";
@@ -374,10 +376,10 @@
   function bookingForm(a) {
     var courierOk = (a.service_mode || "both") !== "space_only";
     return (
-      '<details class="rn-pd-edit" open><summary>Pesan slot pada armada ini</summary>' +
+      '<details class="rn-pd-edit" open><summary>Booking Tempat</summary>' +
       '<form class="rn-form" id="pdBookForm">' +
       '<div class="form-grid">' +
-      '<label>Pemesan atas nama<select name="booked_by_type">' +
+      '<label>Pembooking atas nama<select name="booked_by_type">' +
         '<option value="posko">Posko pengantar / pengumpul</option>' +
         '<option value="individu">Pribadi / warga</option>' +
         '<option value="organization">Organisasi</option>' +
@@ -395,7 +397,7 @@
       '<label>Kapan barang dikirim *<input name="requested_window" placeholder="Besok pagi / 12 Nov 08:00" required></label>' +
       "</div>" +
       termsAckBlock(a) +
-      '<div class="form-actions"><button class="btn primary" type="submit">Pesan Slot</button>' +
+      '<div class="form-actions"><button class="btn primary" type="submit">Booking Tempat</button>' +
       '<span class="rn-pd-bk-msg" data-book-msg></span></div>' +
       "</form></details>"
     );
@@ -409,7 +411,7 @@
       e.preventDefault();
       var v = function (n) { return form[n] ? String(form[n].value).trim() : ""; };
       if (form.terms_ack && !form.terms_ack.checked) { if (msg) msg.textContent = " centang pernyataan memenuhi syarat barang"; return; }
-      if (msg) msg.textContent = " memesan…";
+      if (msg) msg.textContent = " booking tempat…";
       try {
         var r = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_transport_space", {
           transport_space: a.id,
@@ -482,12 +484,12 @@
     });
   }
 
-  /* Public (no-account) booking — DISABLED 2026-11-02 (owner: memesan wajib login); kept for reference.
+  /* Public (no-account) booking — DISABLED 2026-11-02 (owner: booking tempat wajib login); kept for reference.
      api_logistics.book_transport_space_public -> returns a Kode Edit. */
   function publicBookingForm(a) {
     var courierOk = (a.service_mode || "both") !== "space_only";
     return (
-      '<details class="rn-pd-edit" open><summary>Pesan ruang muat tanpa akun (warga)</summary>' +
+      '<details class="rn-pd-edit" open><summary>Booking tempat tanpa akun (warga)</summary>' +
       '<form class="rn-form" id="pdPublicBookForm">' +
       '<div class="form-grid">' +
       '<label>Nama Anda<input name="contact_person" placeholder="Nama lengkap" required></label>' +
@@ -503,7 +505,7 @@
       '<label>Kapan barang dikirim *<input name="requested_window" placeholder="Besok pagi / 12 Nov 08:00" required></label>' +
       "</div>" +
       termsAckBlock(a) +
-      '<div class="form-actions"><button class="btn primary" type="submit">Pesan (tanpa akun)</button>' +
+      '<div class="form-actions"><button class="btn primary" type="submit">Booking tempat (tanpa akun)</button>' +
       '<span class="rn-pd-bk-msg" data-pub-msg></span></div>' +
       '<p class="rn-muted rn-pd-code" data-pub-code hidden></p>' +
       "</form></details>"
@@ -519,7 +521,7 @@
       e.preventDefault();
       var v = function (n) { return form[n] ? String(form[n].value).trim() : ""; };
       if (form.terms_ack && !form.terms_ack.checked) { if (msg) msg.textContent = " centang pernyataan memenuhi syarat barang"; return; }
-      if (msg) msg.textContent = " memesan…";
+      if (msg) msg.textContent = " booking tempat…";
       try {
         var r = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_transport_space_public", {
           transport_space: a.id,
@@ -785,12 +787,12 @@
         '<label>Titik serah<input name="from" placeholder="mis. pelabuhan / simpang kota"></label>' +
         '<label>Tujuan kaki ini<input name="to" placeholder="mis. posko distribusi berikutnya / posko tujuan"></label>' +
         '<label class="rn-dispatch-ack"><input type="checkbox" name="ack"> Barang memenuhi syarat armada berikutnya</label>' +
-        '<div class="form-actions"><button class="btn primary mini" type="submit">Pesan kaki estafet</button><span class="rn-pd-bk-msg"></span></div>';
+        '<div class="form-actions"><button class="btn primary mini" type="submit">Booking tempat kaki estafet</button><span class="rn-pd-bk-msg"></span></div>';
       box.appendChild(f);
       f.addEventListener("submit", async function (ev) {
         ev.preventDefault();
         var m = f.querySelector(".rn-pd-bk-msg");
-        m.textContent = " memesan…";
+        m.textContent = " booking tempat…";
         try {
           var x = await window.RN_FRAPPE.call("rescue_net.api_logistics.book_relay_leg", { flow: flow, transport_space: f.space.value,
             pickup_location: f.from.value.trim(), dropoff_location: f.to.value.trim(), terms_ack: f.ack.checked ? 1 : 0 }, { method: "POST" });
@@ -807,8 +809,8 @@
     if (sec) sec.hidden = !manage && !(list && list.length);
     if ($("#bookingTitle")) $("#bookingTitle").textContent = manage ? "Booking Masuk" : "Booking Anda";
     if ($("#bookingSub")) $("#bookingSub").textContent = manage
-      ? "Permintaan ruang dari posko / donatur / organisasi. Konfirmasi (dengan PIN bila pemesan publik), atau tolak."
-      : "Pesanan ruang muat yang Anda buat di armada posko ini. Isi booking pihak lain hanya terlihat oleh pengelola posko.";
+      ? "Permintaan ruang dari posko / donatur / organisasi. Konfirmasi (dengan PIN bila pembooking publik), atau tolak."
+      : "Booking tempat ruang muat yang Anda buat di armada posko ini. Isi booking pihak lain hanya terlihat oleh pengelola posko.";
     if (!list || !list.length) {
       body.innerHTML = '<tr><td colspan="7"><em class="rn-muted">Belum ada booking masuk.</em></td></tr>';
       return;
@@ -837,7 +839,7 @@
             esc(b.pickup || "-") + " → " + esc(b.dropoff || "-") +
             (b.event_title ? " · " + esc(b.event_title) : "") + "</small>" : "") +
           (b.note ? '<small class="rn-muted">' + esc(b.note) + "</small>" : "") +
-          (b.terms_ack ? '<small class="rn-muted">✓ Pemesan menyatakan memenuhi syarat barang</small>' : "") + "</td>" +
+          (b.terms_ack ? '<small class="rn-muted">✓ Pembooking menyatakan memenuhi syarat barang</small>' : "") + "</td>" +
         "<td>" + fmt(b.qty_kg) + " kg" + (b.qty_m3 ? " · " + fmt(b.qty_m3) + " m³" : "") + "</td>" +
         "<td>" + esc(b.delivery_label) + "</td>" +
         "<td>" + esc(b.booker) + (b.is_guest ? ' <span class="chip">tamu</span>' : "") +
@@ -988,7 +990,7 @@
     data.can_manage_real = !!data.can_manage;
     data.booking_inbox_all = data.booking_inbox || [];
     if (data.can_manage_real && currentView() === "publik") {
-      // pratinjau publik: perlakukan seperti pengguna biasa, jangan tampilkan kontak pemesan lain
+      // pratinjau publik: perlakukan seperti pengguna biasa, jangan tampilkan kontak pembooking lain
       data.can_manage = false;
       data.booking_inbox = [];
     }
@@ -1044,7 +1046,7 @@
   /* Three levels: guest = read-only; operator of THIS posko (can_manage) =
      daftarkan/perbarui armada, konfirmasi booking, tugaskan relawan, klaim
      pickup; any logged-in user on an open transport posko (can_coordinate) =
-     "Pesan Slot" on an armada. renderArmada/renderBookings/renderPickupQueue
+     "Booking Tempat" on an armada. renderArmada/renderBookings/renderPickupQueue
      read CACHE.can_manage / CACHE.can_coordinate directly. */
   function applyAccess(data) {
     var manage = !!data.can_manage;
@@ -1069,14 +1071,16 @@
     var hint = $("#pdNoManage");
     if (hint && data.can_manage_real && !manage) {
       hint.hidden = false;
-      hint.textContent = "Pratinjau tampilan publik / pemesan. Kembali ke \u201cMenu Pemilik\u201d untuk melihat booking masuk dan mengelola armada.";
+      hint.textContent = "Pratinjau tampilan publik / pembooking. Kembali ke \u201cMenu Pemilik\u201d untuk melihat booking masuk dan mengelola armada.";
     } else if (hint) {
       hint.hidden = manage || !data.posko;
       hint.textContent = data.can_coordinate
-        ? "Anda bukan pengelola posko ini — Anda bisa memesan ruang muat pada armada (buka detail armada), tapi tidak mengelola armada / booking."
+        ? "Anda bukan pengelola posko ini — Anda bisa booking tempat ruang muat pada armada (buka detail armada), tapi tidak mengelola armada / booking."
         : (data.logged_in
-          ? "Anda bisa memesan ruang muat: klik armada lalu isi booking di detailnya. Mengelola armada & booking masuk hanya untuk pengelola posko ini."
-          : "Mode lihat. Login untuk memesan ruang muat (sebagai posko pengantar atau warga) atau untuk mengelola armada & booking.");
+          ? "Anda bisa booking tempat ruang muat: klik armada lalu isi booking di detailnya. Mengelola armada & booking masuk hanya untuk pengelola posko ini."
+          : data.session_user_logged_in
+          ? "Lengkapi pendaftaran Rescue-Net untuk booking tempat."
+          : "Mode lihat. Login untuk booking tempat ruang muat (sebagai posko pengantar atau warga) atau untuk mengelola armada & booking.");
     }
   }
 

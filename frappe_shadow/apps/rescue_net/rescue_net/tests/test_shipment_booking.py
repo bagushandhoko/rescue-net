@@ -8,7 +8,7 @@ from rescue_net.api_control_centre import logistik_dispatch_options
 from rescue_net.logistics.flows import create_flow
 from rescue_net.logistics.transport import confirm_transport_booking, update_transport_space
 from rescue_net.tests.factories import (RNTestCase, _insert, as_guest, as_user, make_actor, make_event,
-                                        make_posko, make_transport_space, make_world)
+                                        make_posko, make_transport_space, make_user, make_world)
 
 
 class _ShipmentWorld(RNTestCase):
@@ -301,6 +301,24 @@ class TestMovementsReadable(_ShipmentWorld):
 class TestPoskoDistribusiPublicView(_ShipmentWorld):
     """owner 2026-11-09: isi booking hanya untuk pengelola posko distribusi; publik melihat antrean & sisa ruang;
     pengirim melihat booking miliknya sendiri."""
+
+    def test_session_login_without_rescue_net_account(self):
+        from rescue_net.api_control_centre import posko_distribusi_board
+        with as_guest():
+            guest = posko_distribusi_board(posko=self.tp_b.name)
+        self.assertFalse(guest["session_user_logged_in"])
+        self.assertFalse(guest["logged_in"])
+        with as_user(make_user()):
+            incomplete = posko_distribusi_board(posko=self.tp_b.name)
+        self.assertTrue(incomplete["session_user_logged_in"])
+        self.assertFalse(incomplete["logged_in"])
+        self.assertFalse(incomplete["can_manage"])
+        self.assertFalse(incomplete["can_coordinate"])
+        self.assertEqual(incomplete["booking_inbox"], [])
+        with as_user(self.op.user):
+            registered = posko_distribusi_board(posko=self.tp_b.name)
+        self.assertTrue(registered["session_user_logged_in"])
+        self.assertTrue(registered["logged_in"])
 
     def test_guest_sees_queue_not_bookings(self):
         from rescue_net.api_control_centre import posko_distribusi_board

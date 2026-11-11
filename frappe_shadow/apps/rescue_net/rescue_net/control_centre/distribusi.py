@@ -1191,6 +1191,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             for r in tp_rows
         ],
         "viewer": _poskos_viewer_context(),
+        "session_user_logged_in": frappe.session.user != "Guest",
         "logged_in": _di_flags[0],
         "can_manage": _di_flags[1],
         "can_coordinate": _di_flags[2],

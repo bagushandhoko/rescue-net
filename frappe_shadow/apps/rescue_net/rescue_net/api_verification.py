@@ -541,6 +541,10 @@ def approval_queue(disaster_event=None, limit=300):
     from rescue_net.api_control_centre import event_evidence
 
     event = resolve_disaster_event(disaster_event) if disaster_event else None
+    # Audit 2026-11-11 (K1, UU PDP): baris antrean memuat nama & email pembuat;
+    # hanya yang berwenang memutuskan (sama dengan approval_action) yang melihatnya.
+    # Tamu / pengguna lain hanya mendapat angka ringkas.
+    can_view = _can_verify(rn_actor(required=False))
 
     queue = []
     for kind, cfg in _KIND_CONFIG.items():
@@ -607,7 +611,8 @@ def approval_queue(disaster_event=None, limit=300):
             "expense_pending": counts["expense"],
             "evidence_pending": counts["evidence"],
         },
-        "queue": queue,
+        "queue": queue if can_view else [],
+        "restricted": not can_view,
     }
 
 
@@ -621,6 +626,10 @@ def approval_item_detail(kind, name):
     shown as-is; other kinds show a real signal checklist instead.
     """
     from rescue_net.api_control_centre import event_evidence
+
+    # Audit 2026-11-11 (K1): detail memuat email/telepon pendaftar -> hanya verifikator/admin.
+    if not _can_verify(rn_actor(required=False)):
+        frappe.throw("Detail verifikasi hanya untuk verifikator / admin.", frappe.PermissionError)
 
     if kind == "evidence":
         # name is the evidence "id" from event_evidence(); look it up fresh.

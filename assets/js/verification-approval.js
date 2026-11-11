@@ -232,6 +232,7 @@
     var data = await window.RN_FRAPPE.call("rescue_net.api_verification.approval_queue", { disaster_event: getEventId() });
     QUEUE_CACHE = data;
     state.queue = data.queue || [];
+    state.restricted = !!data.restricted;
     $("#verifUpdated").textContent = "Verifikasi · Diperbarui " + fmtTime(data.generated_at).slice(11, 16);
     renderKpi(data.totals || {});
     applyFilter();
@@ -244,8 +245,13 @@
     setupActions();
     loadQueue()
       .then(function () {
-        if (state.filtered.length) selectItem(state.filtered[0].kind, state.filtered[0].name);
         var el = document.getElementById("verifStatus");
+        if (state.restricted) {
+          // audit 2026-11-11: daftar & detail hanya untuk verifikator/admin (privasi pendaftar)
+          if (el) el.textContent = "Angka di atas adalah ringkasan publik. Daftar dan detail antrean verifikasi hanya untuk verifikator / admin — silakan login dengan akun tersebut.";
+          return;
+        }
+        if (state.filtered.length) selectItem(state.filtered[0].kind, state.filtered[0].name);
         if (el) el.textContent = "Dimuat " + state.queue.length + " item pending.";
       })
       .catch(function (err) {

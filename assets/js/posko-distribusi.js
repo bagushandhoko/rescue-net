@@ -33,9 +33,12 @@
      Pengelola posko (can_manage) mendapat dua tab: Menu Pemilik (booking masuk + kontak di atas,
      kelola armada) dan Tampilan Publik / Pembooking (persis yang dilihat publik & user, tanpa
      kontak pembooking lain). Publik & user biasa tidak melihat tab. Pilihan disimpan di ?view=. */
-  function currentView() { return qs.get("view") === "publik" ? "publik" : "pemilik"; }
+  // owner 2026-11-11: menu kelola hanya untuk pemilik posko / admin organisasinya. Super admin yang bukan
+  // pemilik dibuka di Tampilan Publik (tab Menu Pemilik tetap ada bila perlu turun tangan).
+  var DEFAULT_VIEW = "pemilik";
+  function currentView() { var v = qs.get("view"); return v === "publik" ? "publik" : v === "pemilik" ? "pemilik" : DEFAULT_VIEW; }
   function setView(v) {
-    if (v === "publik") qs.set("view", "publik"); else qs.delete("view");
+    qs.set("view", v === "publik" ? "publik" : "pemilik");
     var q = qs.toString();
     history.replaceState(null, "", location.pathname + (q ? "?" + q : "") + location.hash);
     load();
@@ -50,7 +53,14 @@
       ".rn-pd-viewtabs button[aria-pressed=true]{background:#8a3b12;border-color:#8a3b12;color:#fff}" +
       ".rn-pd-viewtabs small{flex-basis:100%;color:#6b5a4c;font-size:13px}" +
       ".rn-pd-wa{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:#25d366;color:#fff!important;font-size:12px;font-weight:700;text-decoration:none}" +
-      ".rn-md-bk-own{margin-top:10px}";
+      ".rn-md-bk-own{margin-top:10px}" +
+      ".rn-btn-book,.btn.rn-btn-book{background:#1f7a4d!important;border-color:#1f7a4d!important;color:#fff!important}" +
+      ".rn-btn-book:hover{background:#17603c!important}" +
+      "button.rn-btn-book.mini{border:0;border-radius:999px;padding:5px 12px;font-weight:700;font-size:13px;cursor:pointer;margin-top:4px;white-space:nowrap;display:inline-block}" +
+      ".rn-pd-bookhint{margin:4px 0 10px;padding:10px 14px;border-radius:10px;background:#e9f6ee;border:1px solid #9fd3b4;color:#174d31;font-size:15px}" +
+      ".rn-pd-bookhint.own{background:#fff4e8;border-color:#e8c49d;color:#5a3412}" +
+      ".rn-pd-addrow td{background:#fffaf4;text-align:left}" +
+      ".btn.rn-btn-add{background:#fff;border:2px dashed #b8361f;color:#b8361f;font-weight:700}";
     document.head.appendChild(st);
   }
   function renderViewTabs(data) {
@@ -77,6 +87,21 @@
     box.querySelectorAll("button[data-view]").forEach(function (b) {
       b.addEventListener("click", function () { if (b.getAttribute("data-view") !== currentView()) setView(b.getAttribute("data-view")); });
     });
+  }
+  // owner 2026-11-11: keterangan di atas daftar alat transport, beda untuk pemilik dan publik/pengguna.
+  function renderBookHint(data) {
+    var filt = document.querySelector(".rn-pd-filters");
+    if (!filt) return;
+    var el = document.getElementById("pdBookHint");
+    if (!el) { el = document.createElement("div"); el.id = "pdBookHint"; filt.parentNode.insertBefore(el, filt); }
+    if (data.can_manage) {
+      el.className = "rn-pd-bookhint own";
+      el.innerHTML = "\ud83d\udd27 <b>Kelola alat transport:</b> klik alat transport untuk melihat booking masuk dan mengubah datanya. Tambah alat transport baru di baris paling bawah daftar.";
+    } else {
+      el.className = "rn-pd-bookhint";
+      el.innerHTML = "\ud83d\udc49 <b>Booking space:</b> klik alat transport di daftar ini (atau tombol hijau <b>Booking space</b>), lalu isi formulir Booking Tempat." +
+        (data.logged_in ? "" : " Perlu login.");
+    }
   }
   // Menu Pemilik: Booking Masuk naik ke atas daftar armada; tampilan publik: posisi semula.
   function placeBookingSection(data) {
@@ -253,7 +278,9 @@
   function renderArmada(list) {
     var body = $("#armadaBody"), shown = $("#armadaShown");
     if (!list || !list.length) {
-      body.innerHTML = '<tr><td colspan="8"><em class="rn-muted">Belum ada armada. Gunakan "Daftarkan Armada".</em></td></tr>';
+      body.innerHTML = '<tr><td colspan="8"><em class="rn-muted">' + ((CACHE && CACHE.can_manage)
+        ? "Belum ada alat transport. Tambahkan di bawah." : "Belum ada alat transport di posko ini.") + "</em></td></tr>" + addRow();
+      wireAddRow(body);
       if (shown) shown.textContent = "0 armada";
       return;
     }
@@ -276,12 +303,20 @@
         "<td>" + ((CACHE && CACHE.can_manage)
           ? (a.bookings_count ? '<span class="chip">' + fmt(a.bookings_count) + "</span>" : '<span class="rn-muted">0</span>')
           : (a.antri_booking ? '<span class="chip warning">' + fmt(a.antri_booking) + " antre</span><small class=\"rn-muted\">" + fmt(a.antri_kg) + " kg menunggu</small>" : '<span class="rn-muted">0 antre</span>') +
-            (a.booking_konfirmasi ? '<small class="rn-muted">' + fmt(a.booking_konfirmasi) + " terkonfirmasi</small>" : "")) + "</td>" +
+            (a.booking_konfirmasi ? '<small class="rn-muted">' + fmt(a.booking_konfirmasi) + " terkonfirmasi</small>" : "") +
+            (bookable(a) ? '<button type="button" class="rn-btn-book mini" data-book-armada="' + esc(a.id) + '">Booking space</button>' : "")) + "</td>" +
         "</tr>"
       );
-    }).join("");
+    }).join("") + addRow();
+    wireAddRow(body);
     body.querySelectorAll("tr.rn-ba-row").forEach(function (tr) {
-      tr.addEventListener("click", function () { openArmadaDetail(tr.getAttribute("data-armada")); });
+      tr.addEventListener("click", function (e) {
+        openArmadaDetail(tr.getAttribute("data-armada"));
+        if (e.target.closest("[data-book-armada]")) setTimeout(function () {
+          var f = document.querySelector("#pdDrill #pdBookForm, #pdDrill .rn-md-booking-note");
+          if (f) f.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 120);
+      });
     });
     if (shown) shown.textContent = "Menampilkan " + list.length + " armada";
     // owner 2026-11-02: booking from Cari Armada (Manajemen Distribusi) opens that armada's detail + booking
@@ -292,6 +327,25 @@
     }
     var want = qs.get("armada");
     if (want && !window.__pdArmadaOpened) { window.__pdArmadaOpened = true; setTimeout(function () { openArmadaDetail(want); }, 50); }
+  }
+
+  function bookable(a) {
+    return !(CACHE && CACHE.can_manage) && ["lewat", "penuh"].indexOf(a.avail) < 0 &&
+      ["completed", "cancelled", "selesai"].indexOf(String(a.status || "")) < 0;
+  }
+  function addRow() {
+    if (!(CACHE && CACHE.can_manage)) return "";
+    return '<tr class="rn-pd-addrow"><td colspan="8"><button type="button" class="btn rn-btn-add mini" data-add-armada>\uff0b Tambah alat transport</button></td></tr>';
+  }
+  function wireAddRow(body) {
+    var b = body.querySelector("[data-add-armada]"), f = $("#armadaForm");
+    if (!b || !f) return;
+    b.addEventListener("click", function () {
+      f.hidden = false; f.open = true;
+      f.scrollIntoView({ behavior: "smooth", block: "center" });
+      var fp = f.querySelector('input[name="provider_name"]');
+      if (fp) setTimeout(function () { fp.focus(); }, 300);
+    });
   }
 
   function openArmadaDetail(id) {
@@ -422,7 +476,7 @@
       '<label>Kapan barang dikirim *<input name="requested_window" placeholder="Besok pagi / 12 Nov 08:00" required></label>' +
       "</div>" +
       termsAckBlock(a) +
-      '<div class="form-actions"><button class="btn primary" type="submit">Booking Tempat</button>' +
+      '<div class="form-actions"><button class="btn rn-btn-book" type="submit">Booking Tempat</button>' +
       '<span class="rn-pd-bk-msg" data-book-msg></span></div>' +
       "</form></details>"
     );
@@ -1040,12 +1094,17 @@
     var data = await window.RN_FRAPPE.call(BOARD, { posko: getPosko(), disaster_event: getEvent() });
     data.can_manage_real = !!data.can_manage;
     data.booking_inbox_all = data.booking_inbox || [];
+    var _mine = ((data.viewer && data.viewer.manages) || []).map(String);
+    data.is_real_owner = data.can_manage_real && (_mine.indexOf(String(data.posko || "")) >= 0 || _mine.indexOf(getPosko()) >= 0);
+    DEFAULT_VIEW = (data.can_manage_real && !data.is_real_owner) ? "publik" : "pemilik";
     if (data.can_manage_real && currentView() === "publik") {
       // pratinjau publik: perlakukan seperti pengguna biasa, jangan tampilkan kontak pembooking lain
       data.can_manage = false;
       data.booking_inbox = [];
     }
     CACHE = data;
+    injectViewCss();
+    renderBookHint(data);
     renderViewTabs(data);
     placeBookingSection(data);
     var t = String(data.generated_at || "").slice(11, 16);
@@ -1103,7 +1162,7 @@
     var manage = !!data.can_manage;
 
     var addBtn = $("#armadaAddBtn");
-    if (addBtn) addBtn.hidden = !manage;
+    if (addBtn) addBtn.hidden = true; // owner 2026-11-11: pindah ke baris terakhir daftar alat transport
     var addForm = $("#armadaForm");
     if (addForm) addForm.hidden = !manage;
 

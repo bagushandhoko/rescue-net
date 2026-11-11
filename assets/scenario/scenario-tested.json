@@ -3,6 +3,81 @@
   "diperbarui": "2026-11-11",
   "uji": [
     {
+      "id": "AUDIT-PROSES-1",
+      "tanggal": "2026-11-11",
+      "kategori": "Audit proses menyeluruh",
+      "judul": "Audit proses ujung-ke-ujung: dari registrasi sampai relief program, disimulasikan seperti kejadian sesungguhnya (Gempa Simulasi Pidie Jaya)",
+      "tujuan": "Owner: \"lakukan audit proses, simulasikan seperti kejadian sesungguhnya, dari registrasi sampai relief program, cari kalau ada yang tidak benar (seperti hilangnya booking setelah login), audit yang mendalam, libatkan tim AI\". Dikerjakan tim AI: Suri (moderator, uji browser & perbaikan), Nala (audit kode & perbaikan), Edith (skenario & manual).",
+      "akun": "Tamu (tanpa login), warga pelapor, relawan baru (didaftarkan saat uji), pengguna organisasi Komunitas Landrover, petugas Posko Logistik, petugas Pos Komando TNI AL (pemilik armada), akun login yang belum aktif & super admin (disimulasikan)",
+      "langkah": [
+        "1. Skenario bencana realistis 51 langkah dalam 10 fase disusun Edith: registrasi & verifikasi akun, laporan masyarakat & pembuatan bencana, pendaftaran 7 jenis posko, kebutuhan logistik, kirim bantuan & jemput, distribusi/armada/booking/estafet, relawan, medis-shelter-dapur, program khusus (relief program), Control Centre & penutupan.",
+        "2. Pemeriksaan sambungan halaman ke server: 249 fungsi server yang dipanggil oleh 68 halaman diperiksa satu per satu — semuanya ada.",
+        "3. Sapuan peran: 30 halaman utama dibuka sebagai tamu, pengguna, dan pemilik posko; tombol/form/isian dibandingkan untuk mencari fitur yang hilang setelah login, serta error halaman — tidak ada error halaman.",
+        "4. Audit kode 8 alur inti oleh Nala: kecocokan tampilan dengan hak akses server, form yang mengirim isian yang tidak disimpan server.",
+        "5. Pembuktian di browser untuk setiap temuan sebelum diperbaiki (tidak menebak).",
+        "6. Simulasi lapangan lewat layar seperti pengguna sungguhan (data berawalan [SIMULASI]): warga melapor dengan memilih wilayah Aceh › Pidie Jaya › Bandar Baru › Abah Lueng; donatur tamu mengirim 20 dus air mineral; petugas logistik mencatat 50 strip obat dengan nomor batch & tanggal kedaluwarsa; relawan baru mendaftar; booking tempat penuh — Komunitas Landrover memesan 500 kg ruang muat di KRI Teluk Bintuni, mendapat PIN, pemilik armada TNI AL melihat pembooking beserta tombol telepon & WhatsApp, lalu mengonfirmasi dengan PIN.",
+        "7. Setiap perbaikan diuji ulang di desktop (1366 px) dan HP (390 px) dengan akun login sungguhan, lalu dipasang dan dicek lagi di situs live.",
+        "8. Manual penggunaan (About Us) diperbarui sesuai alur yang sudah diperbaiki."
+      ],
+      "hasil": "Ditemukan 1 masalah kritis (privasi), 5 tinggi, 4 sedang, 3 rendah. Semua yang kritis, tinggi, dan sedang sudah diperbaiki dan dipasang. Alur booking tempat lengkap (pesan → PIN → kontak pembooking → konfirmasi pemilik) lulus di situs live.",
+      "skor": "13 temuan; 10 diperbaiki & live, 3 rendah dicatat",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "KRITIS — Antrean verifikasi beserta email & nomor HP pendaftar bisa dilihat siapa pun tanpa login (berisiko melanggar UU PDP; saat audit isinya masih akun simulasi).",
+          "perbaikan": "Daftar & detail antrean hanya untuk verifikator/admin; publik hanya melihat angka ringkas."
+        },
+        {
+          "masalah": "Donasi program: setelah memilih program Kitabisa lalu pindah ke program biasa, isian donasi hilang sampai halaman dimuat ulang.",
+          "perbaikan": "Isian dipulihkan setiap kali program diganti."
+        },
+        {
+          "masalah": "Posko Logistik: isian waktu siap, nomor batch, tanggal kedaluwarsa, dan status bantuan tidak tersimpan.",
+          "perbaikan": "Disimpan, dan saat bantuan diterima ikut masuk pelacak kedaluwarsa stok."
+        },
+        {
+          "masalah": "Akun yang sudah login tetapi belum aktif/terdaftar diperlakukan seperti belum login (donasi, Program Khusus, Relawan Saya, Kelola Bencana).",
+          "perbaikan": "Pesan yang benar: \"menunggu verifikasi admin\" atau \"lengkapi pendaftaran\"."
+        },
+        {
+          "masalah": "Super admin di Relawan Saya diminta \"masuk dulu sebagai relawan\".",
+          "perbaikan": "Penjelasan + tautan ke Manajemen Relawan."
+        },
+        {
+          "masalah": "Laporan Masyarakat: daftar provinsi tampil \"undefined\" sehingga warga tanpa GPS tidak bisa memilih wilayah (ditemukan saat simulasi lapangan).",
+          "perbaikan": "Nama wilayah tampil benar; laporan berhasil masuk."
+        },
+        {
+          "masalah": "Booking \"atas nama posko/organisasi\" tidak menyimpan posko/organisasi yang mana; rekan petugas tidak melihat booking itu.",
+          "perbaikan": "Posko/organisasi dipilih otomatis dari akun dan diperiksa haknya oleh server; pengguna tanpa posko otomatis atas nama pribadi/organisasinya."
+        },
+        {
+          "masalah": "Registrasi Posko tidak menghubungkan posko ke organisasi pendaftar.",
+          "perbaikan": "Posko otomatis terhubung ke organisasi akun (atau \"posko mandiri\")."
+        },
+        {
+          "masalah": "Pelapor terverifikasi yang anggota organisasi lain kehilangan form Laporkan Kebutuhan di posko organisasi lain.",
+          "perbaikan": "Form tetap tampil sesuai hak pelapor terverifikasi."
+        },
+        {
+          "masalah": "Registrasi Posko menampilkan tombol Hapus/Ajukan/Minta Verifier ke orang yang tidak berhak (lalu ditolak).",
+          "perbaikan": "Tombol mengikuti hak: pengelola bisa mengajukan, hanya pembuat/super admin bisa menghapus."
+        },
+        {
+          "masalah": "RENDAH — tamu bisa mengisi seluruh form laporan panjang lalu baru tahu wajib login.",
+          "perbaikan": "Dicatat untuk perbaikan berikutnya."
+        },
+        {
+          "masalah": "RENDAH — dua tombol hilang setelah login (Relawan Saya, Koordinasi Organisasi); perlu konfirmasi maksud desain.",
+          "perbaikan": "Dicatat untuk dicek."
+        },
+        {
+          "masalah": "RENDAH — satu jalur cadangan pemanggilan data bencana tidak ada (tidak berdampak).",
+          "perbaikan": "Dicatat untuk dirapikan."
+        }
+      ]
+    },
+    {
       "id": "DIST-BOOK-2",
       "tanggal": "2026-11-11",
       "kategori": "Distribusi & armada",

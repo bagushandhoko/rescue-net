@@ -108,6 +108,16 @@
           <li><a href="#h-back-office">Back Office Penanganan</a></li>
           <li><a href="#h-sumber-daya">Profil Sumber Daya</a></li>
         </ol>
+        <p class="toc-group">G. Arsitektur skala nasional &amp; federasi</p>
+        <ol start="55">
+          <li><a href="#ars-prinsip">Prinsip rancangan</a></li>
+          <li><a href="#ars-tahap">Empat tahap skala</a></li>
+          <li><a href="#ars-gandakan">Cara RN menggandakan diri</a></li>
+          <li><a href="#ars-tangguh">Ketahanan saat bencana</a></li>
+          <li><a href="#ars-federasi">Federasi nasional &amp; internasional</a></li>
+          <li><a href="#ars-aman">Keamanan &amp; kepatuhan</a></li>
+          <li><a href="#ars-jalan">Peta jalan</a></li>
+        </ol>
         <p class="toc-tech"><a href="manual-teknis.html">Manual Teknis →</a></p>
       </nav>
 
@@ -1080,11 +1090,145 @@
           <p class="note">Data identitas hanya terlihat oleh pengelola untuk verifikasi.</p>
         </section>
 
+        <!-- ================= G ================= -->
+        <header class="group-head" id="arsitektur">
+          <p class="group-label">Bagian G</p>
+          <h2>Rancangan arsitektur teknis RN sebagai disaster management skala nasional dan federasi untuk international network</h2>
+          <p>Rancangan bagaimana Rescue-Net (RN) tumbuh dari satu server menjadi sistem nasional yang melayani ribuan pengguna bersamaan, lalu menjadi jaringan antarnegara yang tetap berjalan walau satu wilayah lumpuh. Disusun 13 November 2026; status: <b>rancangan</b>, dikerjakan bertahap.</p>
+        </header>
+
+        <section id="ars-prinsip">
+          <h3>55. Prinsip rancangan</h3>
+          <ul>
+            <li><b>Monolit modular yang bisa digandakan, bukan puluhan microservice.</b> RN tetap satu aplikasi (Frappe + modul rescue_net) agar mudah dirawat tim kecil. Yang digandakan adalah <i>salinannya</i>, bukan dipecah-pecah. Hanya pekerjaan berat (notifikasi, AI, olah foto, laporan) dijadikan layanan antrean terpisah.</li>
+            <li><b>Satu paket instalasi untuk semua skala.</b> Paket <i>Rescue-Net Node</i> (satu perintah: pasang, cadangan, pulihkan, perbarui) dipakai untuk server tunggal, salinan tambahan saat beban naik, server cadangan, dan node federasi.</li>
+            <li><b>Tahan bencana sejak awal.</b> Bencana memutus listrik, internet, dan menara seluler. RN harus tetap berguna saat sebagian jaringan putus: aplikasi bisa dipakai luring, data dikirim ulang saat tersambung, dan node lain mengambil alih.</li>
+            <li><b>Kedaulatan data.</b> Tiap lembaga/provinsi/negara memiliki dan menyimpan datanya sendiri; yang dipertukarkan hanya data yang disepakati.</li>
+            <li><b>Standar terbuka.</b> Pertukaran memakai format kemanusiaan internasional: OCHA SitRep, OASIS EDXL &amp; CAP, HXL, P-code wilayah.</li>
+          </ul>
+        </section>
+
+        <section id="ars-tahap">
+          <h3>56. Empat tahap skala</h3>
+          <figure class="ars-diagram" aria-label="Diagram empat tahap skala Rescue-Net" style="overflow-x:auto;margin:0">
+            <svg viewBox="0 0 880 300" role="img" style="width:100%;min-width:720px;height:auto;max-width:880px">
+              <style>
+                .k{fill:#fff;stroke:#c2410c;stroke-width:1.5;rx:10}
+                .j{font:600 15px sans-serif;fill:#7c2d12}
+                .t{font:12px sans-serif;fill:#44403c}
+                .p{stroke:#a8a29e;stroke-width:2;marker-end:url(#m)}
+              </style>
+              <defs><marker id="m" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#a8a29e"/></marker></defs>
+              <rect class="k" x="10" y="20" width="195" height="250"/>
+              <text class="j" x="24" y="48">1. Node tunggal</text>
+              <text class="t" x="24" y="74">web + database + antrean</text>
+              <text class="t" x="24" y="94">dalam satu server</text>
+              <text class="t" x="24" y="122">+ cache CDN halaman publik</text>
+              <text class="t" x="24" y="150">± ratusan pengguna</text>
+              <text class="t" x="24" y="170">bersamaan</text>
+              <text class="t" x="24" y="244">pilot, simulasi, regional</text>
+              <line class="p" x1="207" y1="145" x2="227" y2="145"/>
+              <rect class="k" x="230" y="20" width="195" height="250"/>
+              <text class="j" x="244" y="48">2. Web digandakan</text>
+              <text class="t" x="244" y="74">penyeimbang beban</text>
+              <text class="t" x="244" y="94">→ 4–8 salinan web</text>
+              <text class="t" x="244" y="114">database &amp; Redis terpisah</text>
+              <text class="t" x="244" y="134">pekerja notifikasi terpisah</text>
+              <text class="t" x="244" y="162">± 1.000–2.000 pengguna</text>
+              <text class="t" x="244" y="244">bencana besar satu provinsi</text>
+              <line class="p" x1="427" y1="145" x2="447" y2="145"/>
+              <rect class="k" x="450" y="20" width="195" height="250"/>
+              <text class="j" x="464" y="48">3. Multi-server</text>
+              <text class="t" x="464" y="74">beberapa server aplikasi</text>
+              <text class="t" x="464" y="94">DB utama + replika baca</text>
+              <text class="t" x="464" y="114">Redis siaga otomatis</text>
+              <text class="t" x="464" y="134">penyimpanan foto bersama</text>
+              <text class="t" x="464" y="154">2 lokasi (aktif–siaga)</text>
+              <text class="t" x="464" y="182">± ribuan–puluhan ribu</text>
+              <text class="t" x="464" y="244">operasi nasional</text>
+              <line class="p" x1="647" y1="145" x2="667" y2="145"/>
+              <rect class="k" x="670" y="20" width="200" height="250"/>
+              <text class="j" x="684" y="48">4. Federasi</text>
+              <text class="t" x="684" y="74">node per provinsi/lembaga</text>
+              <text class="t" x="684" y="94">node per negara</text>
+              <text class="t" x="684" y="114">tukar data yang disepakati</text>
+              <text class="t" x="684" y="134">tiap node mandiri</text>
+              <text class="t" x="684" y="162">tetap jalan bila satu</text>
+              <text class="t" x="684" y="182">wilayah terputus</text>
+              <text class="t" x="684" y="244">nasional &amp; internasional</text>
+            </svg>
+          <figcaption class="rn-muted" style="font-size:13px">Di HP, geser diagram ke samping.</figcaption>
+          </figure>
+          <p>Angka kapasitas adalah <b>perkiraan pengguna aktif bersamaan</b> dengan halaman publik ter-cache; angka pasti ditetapkan lewat uji beban di tiap tahap. Saat bencana, sebagian besar pengunjung hanya <i>membaca</i> (Bencana Aktif, peta, kebutuhan), sehingga cache sangat menentukan.</p>
+        </section>
+
+        <section id="ars-gandakan">
+          <h3>57. Cara RN "menggandakan diri"</h3>
+          <ol class="steps">
+            <li><b>Server web tanpa ingatan lokal.</b> Sesi login di Redis, data di database, foto &amp; dokumen di penyimpanan bersama (S3/MinIO). Dengan begitu salinan web bisa ditambah atau dikurangi kapan saja tanpa pengguna sadar.</li>
+            <li><b>Penyeimbang beban</b> (mis. HAProxy atau load balancer CDN) membagi pengunjung ke salinan yang sehat dan otomatis melewati salinan yang mati.</li>
+            <li><b>Penggandaan otomatis.</b> Pilihan sederhana: pengendali di hypervisor mengkloning kontainer RN dari paket Rescue-Net Node saat CPU tinggi. Pilihan standar industri: Kubernetes ringan (k3s) dengan penskala otomatis (menambah salinan saat beban naik, mengurangi saat sepi).</li>
+            <li><b>Database bertingkat.</b> Satu database utama untuk menulis, replika untuk membaca (papan publik, laporan, ekspor SITREP). Cadangan otomatis tiap malam ke lokasi lain + cadangan berkelanjutan (binlog) agar kehilangan data maksimal hitungan menit.</li>
+            <li><b>Antrean pekerjaan berat.</b> Notifikasi WhatsApp/SMS/email, analisis AI, kompresi foto, pembuatan SITREP/PDF berjalan di pekerja terpisah yang bisa digandakan sendiri; web tetap cepat walau ribuan notifikasi dikirim.</li>
+            <li><b>Cache berlapis.</b> CDN di tepi jaringan → micro-cache di pintu web (sudah berjalan: 20 detik untuk papan publik) → cache Redis di aplikasi.</li>
+          </ol>
+        </section>
+
+        <section id="ars-tangguh">
+          <h3>58. Ketahanan saat bencana</h3>
+          <ul>
+            <li><b>Dua lokasi berjauhan</b> (aktif–siaga) agar satu bencana tidak mematikan keduanya; pengalihan otomatis lewat DNS/CDN.</li>
+            <li><b>Listrik &amp; jaringan:</b> sumber listrik cadangan (PLTS/baterai/genset) untuk server <i>dan</i> perangkat jaringan, dua jalur internet berbeda (fiber + seluler/satelit).</li>
+            <li><b>Luring di lapangan:</b> aplikasi (PWA) menyimpan antrean laporan, pindaian serah-terima, dan kehadiran saat tanpa sinyal, lalu mengirim otomatis saat tersambung (sudah ada).</li>
+            <li><b>Jalur cadangan komunikasi:</b> SMS, radio (node komunikasi relawan), dan posko komunikasi untuk wilayah tanpa internet.</li>
+            <li><b>Pemantauan &amp; pemulihan:</b> pemantau situs mengirim peringatan saat layanan turun; paket instalasi memulihkan RN di server lain dalam hitungan menit dari cadangan.</li>
+          </ul>
+        </section>
+
+        <section id="ars-federasi">
+          <h3>59. Federasi nasional &amp; jaringan internasional</h3>
+          <p>Setiap <b>node</b> adalah RN lengkap milik satu pihak (BNPB/BPBD provinsi, lembaga kemanusiaan, atau negara lain). Node berdiri sendiri dan tetap berjalan walau terputus dari node lain.</p>
+          <ul>
+            <li><b>Kepemilikan data:</b> data dimiliki node yang membuatnya (mis. posko milik node provinsi). Node lain menerima salinan baca, bukan mengubah.</li>
+            <li><b>Yang dipertukarkan</b> (dapat diatur per node): bencana lintas wilayah/batas negara, kebutuhan kritis, tawaran bantuan &amp; armada, ketersediaan relawan, SITREP. <b>Data pribadi tidak dipertukarkan</b> kecuali ada dasar hukum &amp; persetujuan.</li>
+            <li><b>Protokol:</b> kotak keluar (outbox) per node yang dikirim berkala lewat HTTPS, ditandatangani kunci node (HMAC/tanda tangan digital), bisa diulang bila gagal; node di wilayah terputus mengirim ulang saat tersambung. Format: OCHA SitRep, EDXL-SitRep, CAP 1.2 untuk peringatan, HXL untuk tabel, P-code untuk wilayah.</li>
+            <li><b>Node pusat penghubung</b> (opsional) meneruskan pesan antar-node yang tidak saling terhubung langsung, tanpa menyimpan data pribadi.</li>
+            <li><b>Internasional:</b> tiap negara menjalankan node sendiri (bahasa, nama, logo, aturan lembaga sendiri) dan memilih data apa yang dibagikan ke jaringan regional/internasional (mis. ASEAN, jaringan kemanusiaan PBB).</li>
+          </ul>
+        </section>
+
+        <section id="ars-aman">
+          <h3>60. Keamanan &amp; kepatuhan</h3>
+          <ul>
+            <li>Tidak ada port server yang dibuka langsung ke internet: akses publik lewat terowongan terenkripsi &amp; CDN; halaman admin hanya dari jaringan internal.</li>
+            <li>Rahasia (API key, token) disimpan terenkripsi; kunci enkripsi ikut dalam cadangan lengkap dan diperlakukan sangat rahasia.</li>
+            <li>Indonesia: UU Pelindungan Data Pribadi, lokalisasi data (PP 71/2019), pendaftaran PSE, uji keamanan &amp; panduan BSSN, kesesuaian SPBE.</li>
+            <li>Jejak audit untuk perubahan data sensitif (sudah ada) dan kunci API dengan persetujuan super admin (sudah ada).</li>
+          </ul>
+        </section>
+
+        <section id="ars-jalan">
+          <h3>61. Peta jalan</h3>
+          <div style="overflow-x:auto;max-width:100%">
+          <table class="rn-table">
+            <thead><tr><th>Tahap</th><th>Isi</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>Paket instalasi Rescue-Net Node (pasang, cadangan, pulihkan, perbarui) + menu cadangan super admin</td><td>paket selesai &amp; teruji; menu dalam pengerjaan</td></tr>
+              <tr><td>1</td><td>Node tunggal di server khusus, cadangan harian ke lokasi lain, pemantauan</td><td>sedang dipindahkan</td></tr>
+              <tr><td>2</td><td>Web digandakan + database/Redis/pekerja terpisah + uji beban 1.000 pengguna</td><td>rencana</td></tr>
+              <tr><td>3</td><td>Multi-server, replika database, penyimpanan bersama, lokasi kedua</td><td>rencana</td></tr>
+              <tr><td>4</td><td>Federasi: protokol pertukaran, node provinsi/lembaga, lalu node negara</td><td>rintisan desain ada; rencana</td></tr>
+            </tbody>
+          </table>
+          </div>
+          <p class="note">Rincian teknis (susunan server, perintah, kata sandi) tidak dimuat di halaman publik ini; tersedia di <a href="manual-teknis.html">Manual Teknis</a> dan dokumentasi internal tim.</p>
+        </section>
+
         <a class="back-top" href="#top">Kembali ke atas</a>
       </article>
     </div>
   </main>
-  <script src="../assets/js/rn-public-header.js?v=kembali-20261112"></script>
+  <script src="../assets/js/rn-public-header.js?v=arsitektur-20261113"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
   <script src="../assets/js/rn-mobile-drawer.js?v=topback-20261109"></script>
 </body>

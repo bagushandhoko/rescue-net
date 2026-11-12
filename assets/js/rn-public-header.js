@@ -234,4 +234,20 @@
     header.querySelectorAll("a").forEach(link => { link.addEventListener("click", () => closeMenu(header, button)); });
   }
   if (document.readyState === "loading") { document.addEventListener("DOMContentLoaded", buildHeader); } else { buildHeader(); }
+
+  // Audit SOP 2026-11-12 (owner: "agar RN lebih mudah digunakan dan tidak muter2"): setiap tautan ke halaman login/daftar
+  // membawa ?next=<halaman ini> agar setelah login pengguna KEMBALI ke halaman tempat ia tadi (kirim bantuan, laporan,
+  // booking, dll.), bukan dilempar ke beranda/posko lalu mencari jalan kembali. Beranda tetap memakai pendaratan otomatis.
+  document.addEventListener("click", function (e) {
+    const a = e.target && e.target.closest && e.target.closest("a[href]");
+    if (!a) return;
+    const href = a.getAttribute("href") || "";
+    if (!/(^|\/)auth\.html/.test(href) || /[?&]next=/.test(href)) return;
+    const page = (location.pathname.split("/").pop() || "").toLowerCase();
+    if (isHome() || !page || /^(auth|manual|panduan|index)\.html$/.test(page)) return;
+    const next = page + location.search;
+    const i = href.indexOf("#");
+    const base = i >= 0 ? href.slice(0, i) : href, hash = i >= 0 ? href.slice(i) : "";
+    a.setAttribute("href", base + (base.indexOf("?") >= 0 ? "&" : "?") + "next=" + encodeURIComponent(next) + hash);
+  }, true);
 })();

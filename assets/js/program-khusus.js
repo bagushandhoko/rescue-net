@@ -35,15 +35,18 @@
     var evs = [];
     try { evs = await window.RN_FRAPPE.call("rescue_net.api_ai.public_active_disasters", {}); } catch (e) {}
     evs = Array.isArray(evs) ? evs : ((evs && (evs.events || evs.disasters)) || []);
-    var cur = getEventId2();
-    var known = function (id) { return evs.some(function (e) { return (e.id || e.name) === id; }); };
+    // audit SOP 12 Nov (S8): sebagian ID berawalan "disaster_events:" -> dulu event-sim-001 dianggap tak dikenal dan halaman
+    // pindah sendiri ke bencana pertama (Karhutla). Bandingkan dalam bentuk tanpa awalan.
+    var norm = function (id) { return String(id || "").replace(/^disaster_events:/, ""); };
+    var cur = norm(getEventId2());
+    var known = function (id) { return evs.some(function (e) { return norm(e.id || e.name) === norm(id); }); };
     if (evs.length && (!cur || (!known(cur) && !new URLSearchParams(location.search).get("program")))) {   // tanpa ?event / bencana contoh: pilih bencana aktif pertama
-      cur = evs[0].id || evs[0].name;
+      cur = norm(evs[0].id || evs[0].name);
       var u = new URL(location.href); u.searchParams.set("event", cur); history.replaceState(null, "", u.toString());
     }
-    sel.innerHTML = evs.map(function (e) { var id = e.id || e.name; return '<option value="' + esc(id) + '"' + (id === cur ? " selected" : "") + ">" + esc(e.title || id) + "</option>"; }).join("") ||
+    sel.innerHTML = evs.map(function (e) { var id = norm(e.id || e.name); return '<option value="' + esc(id) + '"' + (id === cur ? " selected" : "") + ">" + esc(e.title || id) + "</option>"; }).join("") ||
       '<option value="">Tidak ada bencana aktif</option>';
-    if (cur && !evs.some(function (e) { return (e.id || e.name) === cur; })) sel.insertAdjacentHTML("afterbegin", '<option value="' + esc(cur) + '" selected>' + esc(cur) + "</option>");
+    if (cur && !evs.some(function (e) { return norm(e.id || e.name) === cur; })) sel.insertAdjacentHTML("afterbegin", '<option value="' + esc(cur) + '" selected>' + esc(cur) + "</option>");
     sel.onchange = function () {
       try { localStorage.setItem("rn_active_event", sel.value); } catch (e) {}
       var u = new URL(location.href); u.searchParams.set("event", sel.value); u.searchParams.delete("program"); u.searchParams.delete("kelola"); location.href = u.toString();

@@ -79,6 +79,34 @@
         <ol start="28">
           <li><a href="#pembaruan">Perbaikan sejak manual dibuat (s.d. 8 Nov)</a></li>
           <li><a href="#audit-1111">Pembaruan hasil audit proses (11 Nov)</a></li>
+          <li><a href="#pembaruan-1211">Pembaruan 12 Nov</a></li>
+        </ol>
+        <p class="toc-group">F. Panduan per halaman</p>
+        <ol start="31">
+          <li><a href="#h-sitrep">Laporan Situasi (SITREP) &amp; API pelaporan</a></li>
+          <li><a href="#h-evidence">Evidence Center (bukti lapangan)</a></li>
+          <li><a href="#h-kelola-bencana">Kelola Bencana</a></li>
+          <li><a href="#h-war-room">Control Centre (War Room)</a></li>
+          <li><a href="#h-konsolidasi">Konsolidasi Data</a></li>
+          <li><a href="#h-kebutuhan-publik">Kebutuhan Publik</a></li>
+          <li><a href="#h-lacak">Lacak Kiriman Bantuan</a></li>
+          <li><a href="#h-scan">Pindai Barcode / Serah Terima</a></li>
+          <li><a href="#h-relawan-saya">Relawan Saya</a></li>
+          <li><a href="#h-kehadiran">Kehadiran Relawan</a></li>
+          <li><a href="#h-program-khusus">Program Khusus &amp; Donasi</a></li>
+          <li><a href="#h-edit-bantuan">Ubah / Batalkan Bantuan (Kode Edit)</a></li>
+          <li><a href="#h-jejak-audit">Jejak Audit</a></li>
+          <li><a href="#h-pengadaan">Pengadaan &amp; Tender</a></li>
+          <li><a href="#h-notifikasi">Pengaturan Notifikasi (WhatsApp/SMS)</a></li>
+          <li><a href="#h-ai-settings">Pengaturan AI (kunci sendiri)</a></li>
+          <li><a href="#h-ai-analyst">Analis AI</a></li>
+          <li><a href="#h-kontak">Direktori Kontak</a></li>
+          <li><a href="#h-perencanaan">Perencanaan Pengungsi</a></li>
+          <li><a href="#h-masukan">Masukan Masyarakat</a></li>
+          <li><a href="#h-status-akses">Status Akses Jalan &amp; Infrastruktur</a></li>
+          <li><a href="#h-riwayat">Riwayat Kegiatan</a></li>
+          <li><a href="#h-back-office">Back Office Penanganan</a></li>
+          <li><a href="#h-sumber-daya">Profil Sumber Daya</a></li>
         </ol>
         <p class="toc-tech"><a href="manual-teknis.html">Manual Teknis →</a></p>
       </nav>
@@ -350,7 +378,7 @@
           <h3>15. Mulai &amp; memilih bencana</h3>
           <ol class="steps">
             <li>Buka <a href="../index.html">Beranda</a>, lalu pilih <a href="auth.html">Login/registrasi</a>. Belum punya akun? Ikuti <a href="#registrasi">Registrasi akun &amp; organisasi</a>.</li>
-            <li>Setelah login, Anda langsung dibawa ke halaman posko milik Anda. Bila belum punya posko tetapi tergabung di organisasi, Anda dibawa ke halaman organisasi.</li>
+            <li>Setelah login, Anda kembali ke halaman yang tadi Anda buka. Bila login dari Beranda, Anda dibawa ke halaman kerja Anda sendiri: <b>petugas posko</b> ke halaman poskonya, <b>koordinator organisasi</b> ke <a href="kelola-posko.html">Kelola Posko</a>, <b>relawan</b> ke <a href="relawan-saya.html">Relawan Saya</a>, <b>pemrakarsa program</b> ke program miliknya, <b>super admin</b> ke <a href="bencana-aktif.html">Bencana Aktif</a>. Anggota organisasi biasa ke halaman organisasi.</li>
             <li>Pemilih <b>Bencana</b> di header hanya menampilkan bencana yang Anda tangani, dengan yang terbaru sebagai pilihan awal.</li>
             <li>Pengunjung tanpa login bisa membuka <a href="bencana-aktif.html">Bencana Aktif</a> dan <a href="war-room.html">Control Centre</a> untuk data yang dibuka ke publik.</li>
           </ol>
@@ -606,6 +634,450 @@
             <li><b>Donasi program</b>: isian donasi tidak lagi hilang setelah sempat memilih program Kitabisa.</li>
             <li><b>Relawan Saya</b>: super admin diarahkan ke Manajemen Relawan.</li>
           </ul>
+        </section>
+
+        <section id="pembaruan-1211">
+          <h3>30. Pembaruan 12 November 2026</h3>
+          <ul>
+            <li><b>Bencana Aktif</b>: pilihan lokasi bertingkat <b>Provinsi › Kab/Kota › Kecamatan › Desa/Kelurahan</b> di bawah kolom cari, dan kolom cari mengenali nama desa/kecamatan. Bencana tampil bila poskonya berada di wilayah itu atau di wilayah yang mencakupnya. Supaya ikut tersaring, petugas mengisi kecamatan dan desa di data posko.</li>
+            <li><b>Relawan Saya</b>: pesan kursi <b>berangkat</b>, pilih tempat menginap (shelter relawan atau <b>posko shelter</b>), dan pesan kursi <b>pulang</b> — lihat <a href="#h-relawan-saya">bagian 39</a>.</li>
+            <li><b>Posko Distribusi</b>: saat menambah atau mengubah alat transport, centang <b>Bisa mengangkut relawan / orang</b>, lalu isi jumlah orang, arah perjalanan (berangkat / pulang / pergi &amp; pulang), titik jemput, dan jadwal pulang.</li>
+            <li><b>Login langsung ke halaman kerja sendiri</b> (lihat <a href="#mulai">bagian 15</a>).</li>
+            <li><b>Kirim Bantuan</b>: posko tujuan dipilih dari daftar nama. <b>Laporan Masyarakat</b>: bisa melampirkan foto atau langsung memotret (maks. 4).</li>
+            <li><b>SITREP</b> mengikuti susunan OCHA dan menyediakan API (JSON, EDXL-SitRep, HXL) dengan kunci yang disetujui super admin — lihat <a href="#h-sitrep">bagian 31</a>.</li>
+            <li>Tombol <b>?</b> di setiap halaman membuka bagian manual halaman tersebut.</li>
+          </ul>
+        </section>
+
+        <!-- ================= F ================= -->
+        <header class="group-head" id="per-halaman">
+          <p class="group-label">Bagian F</p>
+          <h2>Panduan per halaman</h2>
+          <p>Untuk tiap halaman: gunanya, siapa melihat apa, dan langkah memakainya. Draf ditulis Hermes, lalu diperiksa terhadap uji per peran dan aturan hak akses di server (12 Nov 2026).</p>
+        </header>
+
+        <section id="h-sitrep">
+          <h3>31. Laporan Situasi (SITREP) &amp; API pelaporan</h3>
+          <p>Ringkasan situasi satu bencana dengan susunan OCHA: gambaran situasi, angka kunci, kebutuhan per sektor, pendanaan, koordinasi dan kontak. Untuk koordinator, mitra, dan pemerintah. <a href="sitrep.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang (tanpa login):</b> membaca laporan, mengganti periode, mencetak / menyimpan PDF.</li>
+            <li><b>Admin organisasi:</b> menekan <b>Minta kunci API</b>; permintaan masuk ke super admin.</li>
+            <li><b>Super admin:</b> menyetujui permintaan atau langsung <b>Buat kunci API</b>. Kunci rahasia hanya tampil <b>sekali</b>.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih bencana di header.</li>
+            <li>Pilih <b>Periode operasi</b> (12 jam, 24 jam, 3 hari, 7 hari) lalu tekan <b>Perbarui</b>.</li>
+            <li>Baca dari atas: Gambaran situasi → Angka kunci → Sektor → Kelompok rentan → Pendanaan → Koordinasi &amp; kontak.</li>
+            <li>Tekan <b>Cetak / simpan PDF</b> untuk dibagikan.</li>
+            <li>Sistem lain (BNPB, OCHA, mitra) mengambil data lewat bagian <b>API</b> dalam format JSON, EDXL-SitRep, atau HXL (CSV) memakai kunci API.</li>
+          </ol>
+          <p class="note">Kontak di SITREP hanya nama dan peran, tanpa nomor HP. Simpan kunci API seperti kata sandi; bila bocor, minta super admin membuat kunci baru.</p>
+        </section>
+
+        <section id="h-evidence">
+          <h3>32. Evidence Center (bukti lapangan)</h3>
+          <p>Kumpulan foto, dokumen, dan video bukti penanganan: penerimaan bantuan, serah terima, kondisi lapangan. <a href="evidence.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat daftar bukti publik, kartu ringkasan, filter modul, dan mengekspor.</li>
+            <li><b>Pengguna login:</b> <b>Kirim Bukti</b> (foto/dokumen, keterangan lokasi, posko terkait).</li>
+            <li><b>Anggota organisasi / verifikator:</b> juga melihat bukti berlabel terbatas milik organisasinya dan memverifikasi.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih bencana, lalu saring dengan kartu (Pending Verifikasi, Geotagged, Serah Terima, …) atau tab modul (Shelter, Dapur, …).</li>
+            <li>Untuk mengirim: tekan <b>Kirim Bukti</b>, pilih foto/dokumen, tulis keterangan dan lokasi.</li>
+            <li>Pilih posko terkait, atau biarkan <i>Tanpa posko</i> bila Anda warga.</li>
+            <li>Tekan <b>Kirim Bukti</b>. Bukti tampil dengan status menunggu verifikasi.</li>
+          </ol>
+          <p class="note">Bukti dari organisasi tertutup tidak tampil ke publik kecuali ditandai terbuka. Hindari wajah anak dan data pribadi pada foto.</p>
+        </section>
+
+        <section id="h-kelola-bencana">
+          <h3>33. Kelola Bencana</h3>
+          <p>Tempat membuat atau mengusulkan bencana baru agar posko dan bantuan bisa dikaitkan. <a href="kelola-bencana.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Tamu:</b> hanya judul; harus login.</li>
+            <li><b>Pengguna login:</b> <b>Buat bencana baru</b>. Dari organisasi terverifikasi langsung aktif; selain itu menjadi usulan.</li>
+            <li><b>Super admin:</b> memverifikasi usulan, <b>menggabungkan</b> bencana ganda, dan membatalkan penggabungan.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Login, buka Kelola Bencana.</li>
+            <li>Isi nama, jenis, lokasi (atau <b>📍 Pakai lokasi saya</b>), waktu mulai, dan tingkat keparahan.</li>
+            <li>Sistem memeriksa bencana serupa. Bila sudah ada, pakai yang sudah ada.</li>
+            <li>Tekan <b>Kirim</b>.</li>
+          </ol>
+          <p class="note">Kejadian kecil atau belum resmi dilaporkan lewat <a href="laporan-masyarakat.html">Laporan Masyarakat</a>, bukan dibuat sebagai bencana.</p>
+        </section>
+
+        <section id="h-war-room">
+          <h3>34. Control Centre (War Room)</h3>
+          <p>Layar pantau satu bencana: indikator kritis, kebutuhan 72 jam, dan bukti terbaru. Cocok untuk layar besar di posko komando. <a href="war-room.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat data yang dibuka ke publik. Tampilan sama untuk semua peran.</li>
+            <li><b>Pengelola:</b> bertindak dari halaman kerjanya (posko, distribusi, verifikasi); Control Centre untuk memantau.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih bencana di header.</li>
+            <li>Lihat warna indikator: merah kritis, kuning terganggu, hijau aman.</li>
+            <li>Periksa tabel kebutuhan 72 jam: butuh, tersedia, dan selisih (gap).</li>
+            <li>Klik angka atau baris untuk membuka rinciannya.</li>
+          </ol>
+          <p class="note">Semua bencana sekaligus terlihat di <a href="bencana-aktif.html">Bencana Aktif</a>.</p>
+        </section>
+
+        <section id="h-konsolidasi">
+          <h3>35. Konsolidasi Data</h3>
+          <p>Menggabungkan laporan dan kebutuhan yang sama agar angka tidak dobel, serta menyinkronkan data dari HP lapangan. <a href="data-consolidation.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat ringkasan kebutuhan terkonsolidasi.</li>
+            <li><b>Pengelola posko / koordinator:</b> memeriksa duplikat, menandai laporan, membangun ulang kebutuhan terkonsolidasi. Tombol yang bukan hak Anda akan ditolak server.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Tekan <b>Check Duplicate</b> untuk mencari kebutuhan yang sama dari beberapa laporan.</li>
+            <li>Tinjau pasangan yang ditemukan, lalu putuskan: gabung atau bukan duplikat.</li>
+            <li>Tekan <b>Rebuild Consolidated Needs</b> setelah ada perubahan.</li>
+            <li>Bagian Sinkronisasi menunjukkan data HP yang belum terkirim.</li>
+          </ol>
+          <p class="note">Aturan aman: angka digabung memakai yang <b>terbesar</b>, bukan dijumlahkan, agar tidak membengkak.</p>
+        </section>
+
+        <section id="h-kebutuhan-publik">
+          <h3>36. Kebutuhan Publik</h3>
+          <p>Daftar barang yang benar-benar dibutuhkan sekarang, untuk donatur sebelum mengirim bantuan. <a href="kebutuhan-publik.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat kebutuhan per posko: dibutuhkan sekarang, sudah cukup, atau tidak dibutuhkan.</li>
+            <li><b>Pengelola posko:</b> menulis <b>Catatan posko saya</b> (mis. barang yang tidak diterima) lalu <b>Simpan catatan</b>.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih bencana.</li>
+            <li>Baca status tiap barang sebelum membeli atau mengirim.</li>
+            <li>Tekan <b>Kirim ke posko ini</b> untuk langsung membuka Kirim Bantuan dengan posko terisi.</li>
+          </ol>
+          <p class="note">Catatan publik tidak boleh berisi nomor HP, email, atau tautan.</p>
+        </section>
+
+        <section id="h-lacak">
+          <h3>37. Lacak Kiriman Bantuan</h3>
+          <p>Melihat perjalanan satu kiriman memakai kode trace. <a href="lacak-logistik.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> memasukkan kode trace dan melihat status serta serah terimanya.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Ambil kode trace (RN-…) dari label kiriman, layar Kirim Bantuan, atau petugas posko.</li>
+            <li>Ketik di kolom lalu tekan <b>Lacak</b>.</li>
+            <li>Baca urutan status: dikirim, di jalan, serah kurir, tiba, diterima.</li>
+          </ol>
+          <p class="note">Bagikan kode trace hanya kepada pihak yang perlu.</p>
+        </section>
+
+        <section id="h-scan">
+          <h3>38. Pindai Barcode / Serah Terima</h3>
+          <p>Mencatat setiap perpindahan tangan kiriman dengan memindai QR atau barcode. <a href="scan.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> membuka halaman dan kamera.</li>
+            <li><b>Petugas posko asal atau tujuan kiriman (dan pembawa estafet):</b> <b>Catat</b> berhasil tersimpan. Akun lain ditolak.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih jenis: <b>Kirim</b>, <b>Di jalan</b>, <b>Serah kurir</b>, <b>Tiba</b>, atau <b>Terima</b>.</li>
+            <li>Tekan <b>Buka kamera</b> dan arahkan ke QR, atau ketik kode trace.</li>
+            <li>Saat <b>Terima</b>, isi jumlah yang benar-benar diterima.</li>
+            <li>Tekan <b>Catat</b>.</li>
+          </ol>
+          <p class="note">Tanpa sinyal, pindaian disimpan di antrean HP dan terkirim otomatis saat online (atau tekan <b>Kirim sekarang</b>).</p>
+        </section>
+
+        <section id="h-relawan-saya">
+          <h3>39. Relawan Saya</h3>
+          <p>Halaman pribadi relawan. Setelah login, relawan langsung dibawa ke sini. <a href="relawan-saya.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Tamu:</b> tombol daftar dan login.</li>
+            <li><b>Relawan (login):</b> semua langkah di bawah, plus daftar <b>Tawaran &amp; booking saya</b>.</li>
+            <li><b>Pengelola posko:</b> menyetujui atau menolak tawaran dan booking relawan di <a href="kelola-posko.html">Kelola Posko</a>.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li><b>1. Bencana yang saya bantu</b>: centang bencananya, lalu simpan.</li>
+            <li><b>2. Profil</b>: keahlian, peralatan yang dibawa, waktu dan tanggal tersedia, kendaraan, area. Tekan <b>Simpan profil</b>.</li>
+            <li><b>3a.</b> Pilih posko tempat membantu → <b>Tawarkan diri</b>.</li>
+            <li><b>3b. Berangkat</b>: pesan kursi armada ke lokasi bencana → isi tanggal dan titik jemput.</li>
+            <li><b>3c. Menginap</b>: pilih shelter relawan (<b>Pesan tempat</b>) atau posko shelter (<b>Minta menginap</b>).</li>
+            <li><b>3d. Pulang</b>: pesan kursi armada yang melayani kepulangan.</li>
+            <li>Pantau status (menunggu, disetujui, ditolak) di <b>Tawaran &amp; booking saya</b>. Booking bisa dibatalkan.</li>
+            <li><b>4.</b> Operator radio dapat mendaftar sebagai node komunikasi.</li>
+          </ol>
+          <p class="note">Nomor HP relawan hanya terlihat oleh pengguna yang login. Posko yang memutuskan setiap booking.</p>
+        </section>
+
+        <section id="h-kehadiran">
+          <h3>40. Kehadiran Relawan</h3>
+          <p>Check-in dan check-out relawan di posko. <a href="kehadiran-relawan.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Relawan (login):</b> check-in dengan memindai QR posko atau menekan tombol, lalu check-out.</li>
+            <li><b>Pengelola posko:</b> melihat relawan yang ada di lokasi, mencetak <b>QR kehadiran hari ini</b>, dan meninjau relawan yang datang tanpa penugasan.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Saat tiba, pindai QR posko atau tekan <b>Check-in</b>.</li>
+            <li>Lokasi boleh diisi sebagai penanda jarak (tidak wajib).</li>
+            <li>Saat pulang, tekan <b>Check-out</b>.</li>
+          </ol>
+          <p class="note">Tetap bisa dipakai tanpa sinyal. Lokasi tidak pernah menolak check-in.</p>
+        </section>
+
+        <section id="h-program-khusus">
+          <h3>41. Program Khusus &amp; Donasi</h3>
+          <p>Program bantuan dan penggalangan dana per bencana: target, donasi, laporan, dan ulasan. <a href="program-khusus.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat program publik, target, donatur, dan berdonasi.</li>
+            <li><b>Pengguna login:</b> <b>Buat Program Donasi</b> atas nama organisasinya.</li>
+            <li><b>Pemrakarsa program:</b> panel <b>Kelola Program</b>: data, rekening, QRIS, konfirmasi donasi, rekening koran, status.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih bencana, lalu pilih program dari daftar.</li>
+            <li>Baca tab Ringkasan, Donasi, Laporan, dan Ulasan.</li>
+            <li>Untuk berdonasi, ikuti kotak <b>💚 Donasi ke Program Ini</b>.</li>
+            <li>Pemrakarsa: lengkapi data, pasang rekening/QRIS, lalu <b>Aktifkan</b>.</li>
+          </ol>
+          <p class="note">QRIS dan rekening hanya tampil ke publik bila pemrakarsa terverifikasi. Program selesai atau batal tidak menerima donasi.</p>
+        </section>
+
+        <section id="h-edit-bantuan">
+          <h3>42. Ubah / Batalkan Bantuan (Kode Edit)</h3>
+          <p>Untuk penyumbang tanpa akun yang ingin mengubah atau membatalkan bantuannya. <a href="edit-bantuan.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> membuka bantuan dengan Kode Bantuan, Kode Edit, dan nomor HP yang sama saat mengirim.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Isi Aid ID (Kode Bantuan), Kode Edit, dan nomor HP/WhatsApp.</li>
+            <li>Tekan <b>Muat data bantuan</b>.</li>
+            <li>Ubah barang, jumlah, lokasi jemput, atau waktu siap. Untuk membatalkan, centang <b>Batalkan bantuan ini</b>.</li>
+            <li>Tekan <b>Simpan Perubahan</b>.</li>
+          </ol>
+          <p class="note">Bantuan yang sudah berjalan di pengiriman tidak bisa diubah atau dibatalkan.</p>
+        </section>
+
+        <section id="h-jejak-audit">
+          <h3>43. Jejak Audit</h3>
+          <p>Catatan siapa mengubah data penting, kapan, dan apa yang berubah. <a href="jejak-audit.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Super admin &amp; Control Centre:</b> melihat riwayat. Akun lain ditolak walaupun formulirnya tampil.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih jenis data dan periode (24 jam sampai 90 hari).</li>
+            <li>Tekan <b>Tampilkan</b>.</li>
+            <li>Baca tabel: waktu, pengubah, data, dan perubahan.</li>
+          </ol>
+          <p class="note">PIN dan kata sandi selalu disamarkan.</p>
+        </section>
+
+        <section id="h-pengadaan">
+          <h3>44. Pengadaan &amp; Tender</h3>
+          <p>Tender pekerjaan rehabilitasi yang didanai program: syarat, jadwal, gambar kerja, dan RAB. <a href="pengadaan-tender.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat daftar dan detail tender beserta gambar kerja.</li>
+            <li><b>Pengguna login:</b> <b>Ajukan Penawaran</b>.</li>
+            <li><b>Organisasi / koordinator:</b> <b>Buat Tender Baru</b> dan mengelola tendernya.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Buka tender dari daftar, baca syarat peserta dan jadwal.</li>
+            <li>Unduh gambar kerja dan RAB.</li>
+            <li>Tekan <b>Ajukan Penawaran</b> dan isi penawaran Anda.</li>
+            <li>Pembuat tender: isi Informasi Umum, Jadwal, Syarat, lalu unggah Gambar Kerja &amp; RAB.</li>
+          </ol>
+          <p class="note">Kontak penawar tidak ditampilkan ke publik.</p>
+        </section>
+
+        <section id="h-notifikasi">
+          <h3>45. Pengaturan Notifikasi (WhatsApp/SMS)</h3>
+          <p>Menghubungkan Rescue-Net ke layanan WhatsApp/SMS untuk mengirim pemberitahuan. <a href="notifikasi-settings.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Super admin:</b> menyimpan pengaturan dan mengirim pesan uji. Akun lain ditolak.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih penyedia (simulasi, fonnte, wablas, twilio, meta_cloud).</li>
+            <li>Isi token dan nomor pengirim, lalu <b>Simpan gateway</b>.</li>
+            <li>Isi nomor tujuan dan tekan <b>Kirim tes</b>.</li>
+          </ol>
+          <p class="note">Token disimpan terenkripsi; hanya 4 digit terakhir yang terlihat.</p>
+        </section>
+
+        <section id="h-ai-settings">
+          <h3>46. Pengaturan AI (kunci sendiri)</h3>
+          <p>Menyimpan kunci AI agar tombol <b>Tanya AI</b> bisa dipakai. <a href="ai-settings.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Pengguna login:</b> menyimpan kunci pribadi dan melihat pemakaian 30 hari.</li>
+            <li><b>Pengelola organisasi:</b> menyimpan <b>Kunci AI Organisasi</b>, membagikannya ke anggota, dan memberi batas token.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih penyedia (OpenAI, Claude, Google) dan model.</li>
+            <li>Tempel API key dan beri label.</li>
+            <li>Tekan <b>Save Encrypted Key</b>, lalu <b>Cek Status</b>.</li>
+            <li>Kembali dan coba tombol <b>Tanya AI</b>.</li>
+          </ol>
+          <p class="note">Kunci disimpan terenkripsi. Bila organisasi punya kunci bersama, anggota tidak perlu kunci sendiri.</p>
+        </section>
+
+        <section id="h-ai-analyst">
+          <h3>47. Analis AI</h3>
+          <p>Ringkasan situasi, peringatan, dan rekomendasi dari AI berdasarkan data Rescue-Net. <a href="ai-analyst.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> membaca ringkasan, peringatan, dan rekomendasi.</li>
+            <li><b>Pengguna login dengan kunci AI:</b> mengajukan pertanyaan di <b>Ask AI / Briefing</b>.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih bencana.</li>
+            <li>Baca Alerts dan Recommendations.</li>
+            <li>Tulis pertanyaan di Ask AI lalu kirim; jawaban muncul di AI Answer.</li>
+          </ol>
+          <p class="note">Jawaban AI adalah saran. Periksa ke data sumber sebelum mengambil keputusan.</p>
+        </section>
+
+        <section id="h-kontak">
+          <h3>48. Direktori Kontak</h3>
+          <p>Daftar narahubung: penanggung jawab posko, donatur, relawan, dan PIC program. <a href="contact-directory.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat nama dan peran.</li>
+            <li><b>Pengguna login:</b> melihat nomor HP/WhatsApp untuk dihubungi.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih bencana.</li>
+            <li>Cari kategori kontak yang dibutuhkan.</li>
+            <li>Tekan <b>Refresh Contacts</b> bila data tampak lama.</li>
+          </ol>
+          <p class="note">Nomor HP hanya untuk koordinasi bencana. Jangan disebarkan (UU Pelindungan Data Pribadi).</p>
+        </section>
+
+        <section id="h-perencanaan">
+          <h3>49. Perencanaan Pengungsi</h3>
+          <p>Rencana ke depan per KK pengungsi: kembali ke rumah, relokasi, atau dukungan lain. <a href="perencanaan-pengungsi.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat ringkasan rencana.</li>
+            <li><b>Pengguna login:</b> <b>Tambah / Perbarui Rencana KK</b>.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Lihat tabel Rencana per KK dan status tiap rencana.</li>
+            <li>Lihat Rollup Rencana untuk jumlah total.</li>
+            <li>Setelah login: isi formulir rencana KK lalu simpan.</li>
+          </ol>
+          <p class="note">Data pengungsi bersifat pribadi. Gunakan kode KK, bukan nama lengkap, di catatan.</p>
+        </section>
+
+        <section id="h-masukan">
+          <h3>50. Masukan Masyarakat</h3>
+          <p>Forum usul, keluhan, informasi, dan pertanyaan warga. <a href="masukan-masyarakat.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> membaca forum dan <b>Kirim Masukan</b> tanpa akun.</li>
+            <li><b>Operator posko, koordinator, Control Centre:</b> memberi tanggapan resmi dan mengubah status.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih kategori: Usul, Keluhan, Informasi, atau Pertanyaan.</li>
+            <li>Isi bencana, topik, dan pesan. Nama, wilayah, dan kontak tidak wajib.</li>
+            <li>Tekan <b>Kirim</b>.</li>
+          </ol>
+          <p class="note">Jangan menulis data pribadi orang lain.</p>
+        </section>
+
+        <section id="h-status-akses">
+          <h3>51. Status Akses Jalan &amp; Infrastruktur</h3>
+          <p>Kondisi jalan, jembatan, listrik, air, sinyal, bandara, dan pelabuhan. <a href="status-akses.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat status terbaru di peta dan daftar.</li>
+            <li><b>Pengguna login:</b> melaporkan kondisi.</li>
+            <li><b>Verifikator:</b> memverifikasi laporan.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih jenis (jalan, jembatan, listrik, …) dan status (putus, terbatas, normal, tidak diketahui).</li>
+            <li>Isi nama tempat/ruas dan masa berlaku (1 jam – 30 hari).</li>
+            <li>Tekan <b>Kirim laporan</b>.</li>
+          </ol>
+          <p class="note">Laporan kedaluwarsa otomatis dan ditandai basi.</p>
+        </section>
+
+        <section id="h-riwayat">
+          <h3>52. Riwayat Kegiatan</h3>
+          <p>Linimasa kegiatan penanganan: distribusi, laporan, bukti, layanan. <a href="riwayat-kegiatan.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat kegiatan yang dibuka ke publik. Tampilan sama untuk semua peran.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih bencana.</li>
+            <li>Saring menurut jenis kegiatan.</li>
+            <li>Klik kategori untuk rincian.</li>
+          </ol>
+        </section>
+
+        <section id="h-back-office">
+          <h3>53. Back Office Penanganan</h3>
+          <p>Siapa terlibat dan apa yang sudah dikerjakan: kinerja organisasi, relawan, program donasi, dan gap kebutuhan. <a href="back-office.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat ringkasan per pihak. Masyarakat umum hanya dihitung jumlahnya.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Pilih tampilan: Semua, Kinerja pihak, Ringkasan angka, Tabel pihak, Relawan, atau Program donasi.</li>
+            <li>Periksa gap kebutuhan barang dan peralatan.</li>
+            <li>Klik nama organisasi atau program untuk rincian.</li>
+          </ol>
+          <p class="note">Nama dan kontak warga tidak ditampilkan.</p>
+        </section>
+
+        <section id="h-sumber-daya">
+          <h3>54. Profil Sumber Daya</h3>
+          <p>Kemampuan yang dimiliki akun atau organisasi Anda: keahlian, kendaraan, fasilitas, barang, wilayah, jadwal. <a href="resource-profile.html">Buka halaman →</a></p>
+          <h4>Siapa melihat apa</h4>
+          <ul>
+            <li><b>Semua orang:</b> melihat direktori sumber daya umum.</li>
+            <li><b>Pengguna login:</b> mengubah profil sendiri (<b>✎ Edit Profil</b>) dan menambah isian dengan tombol <b>+</b>.</li>
+          </ul>
+          <h4>Langkah</h4>
+          <ol class="steps">
+            <li>Tekan <b>✎ Edit Profil</b> untuk data dasar.</li>
+            <li>Tekan <b>+</b> untuk menambah keahlian, kendaraan, fasilitas, dan lainnya.</li>
+            <li>Tekan <b>Simpan</b>.</li>
+          </ol>
+          <p class="note">Data identitas hanya terlihat oleh pengelola untuk verifikasi.</p>
         </section>
 
         <a class="back-top" href="#top">Kembali ke atas</a>

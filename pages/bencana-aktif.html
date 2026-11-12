@@ -79,16 +79,50 @@
 
       <div class="rn-ba-controls">
         <!-- owner 2026-11-09: tombol tambah bencana di samping kolom cari -->
-        <div class="rn-ba-searchrow">
-          <label class="rn-ba-search">
-            <span class="rn-ba-search-ic" aria-hidden="true">⌕</span>
-            <input type="search" id="baSearch" placeholder="Cari bencana atau wilayah: provinsi, kab/kota, kecamatan, desa/kelurahan…">
-          </label>
+        <div class="rn-ba-searchrow" style="justify-content:flex-end">
           <a class="btn primary rn-ba-add" href="kelola-bencana.html" title="Buat / usulkan bencana baru"><span aria-hidden="true">＋</span><span class="rn-ba-add-long"> Tambah bencana</span></a>
         </div>
         <span class="status-pill" id="baUpdated" title="Data dimuat ulang otomatis tiap 60 detik">Memuat…</span>
       </div>
     </header>
+
+    <!-- owner 2026-11-12 "belum keliatan menu search": kolom cari dipindah ke baris lebar sendiri, berlabel jelas -->
+    <style>
+      .rn-ba-findbar{margin:0 0 16px;padding:12px 14px;border:2px solid #e8735a;border-radius:14px;background:#fff}
+      .rn-ba-findbar > b{display:block;font-size:15px;margin-bottom:6px}
+      .rn-ba-findbar .rn-ba-search{display:flex;align-items:center;gap:8px;width:100%;min-width:0;border:0!important;padding:0!important;background:none!important;box-shadow:none!important}
+      .rn-ba-findbar .rn-ba-search input{flex:1;min-width:0;height:46px!important;min-height:46px!important;font-size:16px!important;padding:8px 12px!important;border:1px solid rgba(104,64,45,.3);border-radius:10px}
+      .rn-ba-findbar small{display:block;margin-top:6px;color:#7c6458;font-size:13px}
+    </style>
+    <section class="rn-ba-findbar" aria-label="Cari bencana atau wilayah">
+      <b>🔎 Cari bencana atau wilayah</b>
+      <label class="rn-ba-search">
+        <input type="search" id="baSearch" placeholder="Ketik nama bencana, provinsi, kabupaten/kota, kecamatan, atau desa/kelurahan…">
+      </label>
+      <small>Contoh: <i>Aceh Barat</i>, <i>Johan Pahlawan</i> (kecamatan), <i>Suak Ribee</i> (desa). Bencana yang cocok langsung terbuka di daftar di bawah.</small>
+      <div id="baFindInfo" style="margin-top:6px;font-size:14px" hidden></div>
+    </section>
+    <script>
+      (function () {
+        var t = null;
+        document.addEventListener("input", function (e) {
+          if (!e.target || e.target.id !== "baSearch") return;
+          clearTimeout(t);
+          t = setTimeout(function () {
+            var box = document.getElementById("baFindInfo"), q = e.target.value.trim();
+            if (!q) { box.hidden = true; return; }
+            var n = (document.getElementById("baCount") || {}).textContent || "0";
+            box.innerHTML = "<b>" + n + "</b> bencana cocok. " + (n !== "0" ? '<a href="#" data-ke-hasil>Lihat hasil ↓</a>' : "Coba nama wilayah lain.");
+            box.hidden = false;
+          }, 1200);
+        });
+        document.addEventListener("click", function (e) {
+          if (!e.target.closest || !e.target.closest("[data-ke-hasil]")) return;
+          e.preventDefault();
+          var tb = document.querySelector(".rn-ba-table"); if (tb) tb.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      })();
+    </script>
 
     <section class="kpi-grid">
       <button class="kpi-card danger rn-kpi-btn" type="button" data-kpi="bencana">

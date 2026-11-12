@@ -329,15 +329,21 @@
         }
 
         if (user) {
+          // audit SOP 12 Nov (S5): kode peran teknis (community_coordinator, viewer, ...) diganti nama peran Indonesia.
+          const ROLE_ID = {
+            viewer: "Pengguna", community_coordinator: "Koordinator komunitas", posko_operator: "Petugas posko",
+            posko_admin: "Admin posko", org_admin: "Admin organisasi", organization_admin: "Admin organisasi",
+            system_manager: "Super admin", administrator: "Super admin", volunteer: "Relawan", relawan: "Relawan",
+            donor: "Donatur", reporter: "Pelapor", verifier: "Verifikator", logistics_officer: "Petugas logistik",
+            medical_officer: "Petugas medis", control_centre: "Control Centre", guest: "Tamu",
+            command_center: "Control Centre", medical_operator: "Petugas medis", shelter_operator: "Petugas shelter",
+            verified_reporter: "Pelapor terverifikasi", logistics_operator: "Petugas logistik", kitchen_operator: "Petugas dapur", organization: "Akun organisasi", user: "Pengguna", system: "Sistem"
+          };
+          const rc = String(user.role || "").toLowerCase();
+          const roleLabel = ROLE_ID[rc] || (rc ? rc.replace(/_/g, " ").replace(/^./, c => c.toUpperCase()) : "Pengguna");
           pill.innerHTML =
-            `User: ${
-              safe(
-                user.display_name
-              )
-            }<br>` +
-            `Role: ${
-              safe(user.role)
-            }`;
+            `Masuk sebagai ${safe(user.display_name)}<br>` +
+            `Peran: ${safe(roleLabel)}`;
 
         } else {
           let href =

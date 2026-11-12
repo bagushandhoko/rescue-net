@@ -122,27 +122,51 @@ def sitrep(disaster_event, hours=24):
     except Exception:
         quakes = []
 
+    # owner 2026-11-12: format OCHA (nomor, highlights, sektor, pendanaan, koordinasi) + data uji disaring
+    from rescue_net import sitrep_ocha as oc
+    kebutuhan = oc.clean_recommendations(ctx.get("recommendations"))[:8]
+    situasi = {
+        "jiwa_terdampak": kpi.get("jiwa"),
+        "jiwa_per_layanan": kpi.get("jiwa_aspects") or {},
+        "orang_hilang": kpi.get("jiwa_missing"),
+        "posko_aktif": summary.get("posko_count"),
+        "posko_kritis": kpi.get("posko_kritis"),
+        "kebutuhan_terbuka": summary.get("open_need_count"),
+        "relawan": kpi.get("relawan"),
+        "pengungsi_shelter": shelter["penghuni"],
+    }
+    logistik = {"kiriman_total": kpi.get("distribusi"), "kiriman_terhambat": kpi.get("distribusi_terhambat"),
+                "tawaran_bantuan": summary.get("aid_offer_count")}
+    layanan = {"shelter": shelter, "medis_per_status": med, "porsi_dapur": portions}
+    try:
+        dana = oc.pendanaan(event)
+    except Exception:
+        dana = {}
+    try:
+        koord = oc.koordinasi(event, poskos)
+    except Exception:
+        koord = {}
+    try:
+        sek = oc.sektor(event, layanan, logistik)
+    except Exception:
+        sek = []
     return {
         "judul": "Laporan Situasi (SITREP)",
+        "nomor": oc.nomor(dis, until, hours),
+        "laporan_berikutnya": str(add_to_date(until, hours=hours))[:16],
+        "highlights": oc.highlights(situasi, layanan, changes, kebutuhan, dana),
+        "sektor": sek,
+        "pendanaan": dana,
+        "koordinasi": koord,
         "bencana": {"id": event, "title": dis.get("title") or event, "status": dis.get("event_status"),
                     "severity": dis.get("severity"), "mulai": str(dis.get("started_at") or "")[:16]},
         "periode": {"jam": hours, "dari": str(since)[:16], "sampai": str(until)[:16]},
         "dibuat": str(until)[:19],
-        "situasi": {
-            "jiwa_terdampak": kpi.get("jiwa"),
-            "jiwa_per_layanan": kpi.get("jiwa_aspects") or {},
-            "orang_hilang": kpi.get("jiwa_missing"),
-            "posko_aktif": summary.get("posko_count"),
-            "posko_kritis": kpi.get("posko_kritis"),
-            "kebutuhan_terbuka": summary.get("open_need_count"),
-            "relawan": kpi.get("relawan"),
-        },
+        "situasi": situasi,
         "perubahan_periode": changes,
-        "kebutuhan_mendesak": [{"judul": r.get("title"), "alasan": r.get("reason"), "prioritas": r.get("priority")}
-                               for r in (ctx.get("recommendations") or [])][:8],
-        "logistik": {"kiriman_total": kpi.get("distribusi"), "kiriman_terhambat": kpi.get("distribusi_terhambat"),
-                     "tawaran_bantuan": summary.get("aid_offer_count")},
-        "layanan": {"shelter": shelter, "medis_per_status": med, "porsi_dapur": portions},
+        "kebutuhan_mendesak": kebutuhan,
+        "logistik": logistik,
+        "layanan": layanan,
         "kelompok_rentan": {"laporan_warga": rentan.get("RN Community Report") or {},
                             "shelter": rentan.get("RN Shelter Occupancy") or {}},
         "peringatan": [a.get("message") for a in (ctx.get("alerts") or []) if a.get("message")],

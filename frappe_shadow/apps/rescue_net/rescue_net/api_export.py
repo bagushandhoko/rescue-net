@@ -104,3 +104,148 @@ def hxl_needs(disaster_event):
     resp = Response(out.getvalue(), mimetype="text/csv")
     resp.headers["Content-Disposition"] = 'inline; filename="rescue-net-kebutuhan-hxl.csv"'
     return resp
+
+
+# ---------------------------------------------------------------------------------------------------------
+# SITREP untuk sistem lain (owner 2026-11-12: "lengkapi dengan API protokol untuk pelaporan ini" + "berikan button
+# berikan api key untuk sitrep itu"). Autentikasi = kunci API bawaan Frappe:
+#   Authorization: token <api_key>:<api_secret>
+# Kunci dibuat lewat tombol "Buat API key" di halaman SITREP (super admin / admin organisasi).
+# Format: JSON (lengkap), EDXL-SitRep 1.0 (OASIS, struktur dasar), HXL CSV (angka kunci). Isi = SITREP publik.
+# ---------------------------------------------------------------------------------------------------------
+
+def _need_login():
+    if frappe.session.user in (None, "", "Guest"):
+        frappe.throw("Perlu kunci API (Authorization: token <api_key>:<api_secret>) atau login.", frappe.AuthenticationError)
+
+
+def _sitrep_data(disaster_event, hours):
+    from rescue_net.api_sitrep import sitrep
+    return sitrep(disaster_event, hours)
+
+
+@frappe.whitelist()
+@rate_limit(limit=60, seconds=60)
+def sitrep_json(disaster_event, hours=24):
+    """SITREP lengkap (JSON) untuk sistem lain."""
+    _need_login()
+    d = _sitrep_data(disaster_event, hours)
+    d["format"] = "rescue-net-sitrep/1"
+    d["sumber"] = "https://rescue-net.online/rescue-net/pages/sitrep.html?event=%s" % d["bencana"]["id"]
+    return d
+
+
+def _iso_local(s):
+    s = str(s or "")[:16]
+    return (s.replace(" ", "T") + ":00+07:00") if s else ""
+
+
+@frappe.whitelist()
+@rate_limit(limit=60, seconds=60)
+def sitrep_edxl(disaster_event, hours=24):
+    """SITREP sebagai XML berstruktur OASIS EDXL-SitRep 1.0 (laporan SituationInformation + ringkasan korban).
+    Catatan: struktur dasar mengikuti EDXL-SitRep 1.0; belum divalidasi terhadap skema XSD resmi OASIS."""
+    _need_login()
+    d = _sitrep_data(disaster_event, hours)
+    s = d.get("situasi") or {}
+    b = d.get("bencana") or {}
+    sev = {"critical": "Extreme", "high": "Severe", "medium": "Moderate", "low": "Minor"}.get(str(b.get("severity") or "").lower(), "Unknown")
+    highlights = "".join("<KeyMessage>%s</KeyMessage>" % escape(h) for h in d.get("highlights") or [])
+    sektor = "".join(
+        "<SectorReport><Sector>%s</Sector><NeedsCount>%s</NeedsCount><CriticalCount>%s</CriticalCount>"
+        "<Response>%s</Response><Gaps>%s</Gaps></SectorReport>"
+        % (escape(x.get("nama") or ""), x.get("kebutuhan") or 0, x.get("kritis") or 0, escape(x.get("respons") or ""),
+           escape("; ".join(x.get("kesenjangan") or [])))
+        for x in d.get("sektor") or [])
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<SitRep xmlns="urn:oasis:names:tc:emergency:edxl:sitrep:1.0">'
+        "<MessageID>RN-SITREP-%s-%s</MessageID>"
+        "<PreparedBy><OrganizationName>Rescue-Net (rescue-net.online)</OrganizationName></PreparedBy>"
+        "<ReportPurpose>Laporan situasi otomatis dari data posko Rescue-Net</ReportPurpose>"
+        "<ReportNumber>%s</ReportNumber><ReportVersion>Update</ReportVersion>"
+        "<ForTimePeriod><FromDateTime>%s</FromDateTime><ToDateTime>%s</ToDateTime></ForTimePeriod>"
+        "<IncidentID>%s</IncidentID><IncidentName>%s</IncidentName><IncidentLifecyclePhase>%s</IncidentLifecyclePhase>"
+        "<Severity>%s</Severity><ReportConfidence>Unsure</ReportConfidence>"
+        "<SituationInformation>%s"
+        "<CasualtyAndIllnessSummary><AffectedPersons>%s</AffectedPersons><MissingPersons>%s</MissingPersons>"
+        "<DisplacedPersons>%s</DisplacedPersons></CasualtyAndIllnessSummary>"
+        "<ResourceSummary><ActiveFacilities>%s</ActiveFacilities><CriticalFacilities>%s</CriticalFacilities>"
+        "<OpenNeeds>%s</OpenNeeds><Volunteers>%s</Volunteers></ResourceSummary>%s"
+        "<NextReport>%s</NextReport></SituationInformation></SitRep>"
+    ) % (escape(b.get("id") or ""), escape(str(d.get("nomor") or 1)), d.get("nomor") or 1,
+         _iso_local(d["periode"]["dari"]), _iso_local(d["periode"]["sampai"]), escape(b.get("id") or ""),
+         escape(b.get("title") or ""), escape(b.get("status") or "active"), sev, highlights,
+         s.get("jiwa_terdampak") or 0, s.get("orang_hilang") or 0, s.get("pengungsi_shelter") or 0,
+         s.get("posko_aktif") or 0, s.get("posko_kritis") or 0, s.get("kebutuhan_terbuka") or 0, s.get("relawan") or 0,
+         sektor, _iso_local(d.get("laporan_berikutnya")))
+    return Response(xml, mimetype="application/xml")
+
+
+@frappe.whitelist()
+@rate_limit(limit=60, seconds=60)
+def sitrep_hxl(disaster_event, hours=24):
+    """Angka kunci SITREP sebagai HXL CSV (satu baris per angka)."""
+    _need_login()
+    d = _sitrep_data(disaster_event, hours)
+    s = d.get("situasi") or {}
+    out = io.StringIO()
+    w = csv.writer(out)
+    w.writerow(["Bencana", "Indikator", "Nilai", "Periode sampai"])
+    w.writerow(["#crisis+code", "#indicator+name", "#indicator+value+num", "#date+reported"])
+    for label, val in (("affected", s.get("jiwa_terdampak")), ("missing", s.get("orang_hilang")),
+                       ("displaced_in_shelter", s.get("pengungsi_shelter")), ("facilities_active", s.get("posko_aktif")),
+                       ("facilities_critical", s.get("posko_kritis")), ("needs_open", s.get("kebutuhan_terbuka")),
+                       ("volunteers", s.get("relawan"))):
+        w.writerow([d["bencana"]["id"], label, val if val is not None else "", d["periode"]["sampai"]])
+    resp = Response(out.getvalue(), mimetype="text/csv")
+    resp.headers["Content-Disposition"] = 'inline; filename="rescue-net-sitrep-hxl.csv"'
+    return resp
+
+
+@frappe.whitelist(methods=["POST"])
+def buat_kunci_api_sitrep():
+    """Tombol "Buat API key" (halaman SITREP). Hanya super admin / admin organisasi. Membuat (atau memakai ulang) satu
+    pengguna API khusus per organisasi (Website User, tanpa akses desk & tanpa akun RN), lalu menerbitkan kunci baru —
+    kunci lama otomatis tidak berlaku. Rahasia hanya ditampilkan sekali."""
+    import re as _re
+    if frappe.session.user in (None, "", "Guest"):
+        frappe.throw("Login dulu.", frappe.AuthenticationError)
+    from rescue_net.access_policy import is_system_manager, rn_actor
+    actor = rn_actor(required=False) or {}
+    org = actor.get("organization")
+    allowed = bool(is_system_manager())
+    if not allowed and org:
+        try:
+            from rescue_net.access_policy import can_manage_organization
+            allowed = bool(can_manage_organization(actor, org))
+        except Exception:
+            allowed = False
+    if not allowed:
+        frappe.throw("Kunci API SITREP hanya bisa dibuat super admin atau admin organisasi.", frappe.PermissionError)
+    owner = org or frappe.session.user
+    slug = _re.sub(r"[^a-z0-9]+", "-", str(owner).lower()).strip("-")[:40] or "umum"
+    email = "api-sitrep-%s@rescue-net.local" % slug
+    if not frappe.db.exists("User", email):
+        u = frappe.get_doc({"doctype": "User", "email": email, "first_name": ("API SITREP " + str(owner))[:60],
+                            "user_type": "Website User", "send_welcome_email": 0, "enabled": 1})
+        u.flags.ignore_permissions = True
+        u.flags.no_welcome_mail = True
+        u.insert(ignore_permissions=True)
+    u = frappe.get_doc("User", email)
+    key, secret = frappe.generate_hash(length=15), frappe.generate_hash(length=15)
+    u.api_key = key
+    u.api_secret = secret
+    u.flags.ignore_permissions = True
+    u.save(ignore_permissions=True)
+    try:
+        u.add_comment("Info", "Kunci API SITREP diterbitkan oleh %s" % frappe.session.user)
+    except Exception:
+        pass
+    base = "https://rescue-net.online/rescue-net-frappe/api/method/rescue_net.api_export."
+    return {"api_key": key, "api_secret": secret, "pengguna_api": email,
+            "header": "Authorization: token %s:%s" % (key, secret),
+            "endpoint": {"json": base + "sitrep_json?disaster_event=<id>&hours=24",
+                         "edxl_sitrep": base + "sitrep_edxl?disaster_event=<id>&hours=24",
+                         "hxl": base + "sitrep_hxl?disaster_event=<id>&hours=24"},
+            "catatan": "Simpan rahasia ini sekarang; tidak bisa ditampilkan lagi. Membuat kunci baru membatalkan kunci lama."}

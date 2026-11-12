@@ -18,6 +18,11 @@
     .sr-grid div { border: 1px solid var(--line, #eadfd8); border-radius: 10px; padding: 10px 12px; min-width: 0; }
     .sr-grid b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
     .sr-grid span { font-size: 13px; color: var(--muted, #7c6458); }
+    .sr-table td { vertical-align: top; }
+    .sr-key { margin-top: 10px; padding: 12px; border: 1px solid #e8c49d; border-radius: 10px; background: #fff8ef; }
+    .sr-key pre { white-space: pre-wrap; word-break: break-all; background: #fff; padding: 8px; border-radius: 6px; font-size: 13px; }
+    #srApiList code { word-break: break-all; font-size: 12px; }
+    @media print { .sr-noprint { display: none !important; } }
     .sr-list { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
     @media print { .sidebar, .rn-top-nav, .rn-mobile-header, #srForm, .rn-public-header, nav { display: none !important; } .main { margin: 0 !important; } }
   </style>
@@ -73,17 +78,28 @@
       </form>
     </section>
 
-    <section class="panel"><div class="panel-header"><div><h3>1. Situasi saat ini</h3></div></div><div class="sr-grid" id="srSituasi"></div></section>
-    <section class="panel"><div class="panel-header"><div><h3>2. Perubahan dalam periode</h3><p id="srPeriode"></p></div></div><div class="sr-grid" id="srChanges"></div></section>
-    <section class="panel"><div class="panel-header"><div><h3>3. Kebutuhan mendesak</h3></div></div><ol class="sr-list" id="srNeeds"></ol></section>
-    <section class="panel"><div class="panel-header"><div><h3>4. Logistik &amp; layanan</h3></div></div><div class="sr-grid" id="srLayanan"></div></section>
-    <section class="panel"><div class="panel-header"><div><h3>5. Peringatan &amp; gempa BMKG</h3></div></div><ul class="sr-list" id="srAlerts"></ul><p class="subtitle" id="srNote"></p></section>
+    <section class="panel"><div class="panel-header"><div><h3>Ringkasan utama (Highlights)</h3></div></div><ul class="sr-list" id="srHigh"></ul></section>
+    <section class="panel"><div class="panel-header"><div><h3>1. Angka kunci</h3></div></div><div class="sr-grid" id="srSituasi"></div></section>
+    <section class="panel"><div class="panel-header"><div><h3>2. Kebutuhan, respons &amp; kesenjangan per sektor</h3><p>Mengikuti klaster kemanusiaan (OCHA).</p></div></div>
+      <div class="rn-table-wrap"><table class="rn-table sr-table"><thead><tr><th>Sektor</th><th>Kebutuhan terbuka</th><th>Respons</th><th>Kesenjangan utama</th></tr></thead><tbody id="srSektor"></tbody></table></div></section>
+    <section class="panel"><div class="panel-header"><div><h3>3. Perubahan dalam periode</h3><p id="srPeriode"></p></div></div><div class="sr-grid" id="srChanges"></div></section>
+    <section class="panel"><div class="panel-header"><div><h3>4. Prioritas tindakan</h3></div></div><ol class="sr-list" id="srNeeds"></ol></section>
+    <section class="panel"><div class="panel-header"><div><h3>5. Logistik &amp; layanan</h3></div></div><div class="sr-grid" id="srLayanan"></div></section>
+    <section class="panel"><div class="panel-header"><div><h3>6. Kelompok rentan (data terpilah)</h3></div></div><ul class="sr-list" id="srRentan"></ul></section>
+    <section class="panel"><div class="panel-header"><div><h3>7. Pendanaan</h3></div></div><div class="sr-grid" id="srDana"></div></section>
+    <section class="panel"><div class="panel-header"><div><h3>8. Koordinasi</h3></div></div><div id="srKoord"></div></section>
+    <section class="panel"><div class="panel-header"><div><h3>9. Peringatan &amp; gempa BMKG</h3></div></div><ul class="sr-list" id="srAlerts"></ul><p class="subtitle" id="srNote"></p></section>
+    <section class="panel sr-noprint" id="srApi"><div class="panel-header"><div><h3>Data standar &amp; API untuk sistem lain</h3>
+      <p>Autentikasi: header <code>Authorization: token &lt;api_key&gt;:&lt;api_secret&gt;</code>.</p></div></div>
+      <ul class="sr-list" id="srApiList"></ul>
+      <div class="form-actions"><button class="btn primary" type="button" id="srKeyBtn" hidden>&#128273; Buat API key</button><small id="srKeyHint"></small></div>
+      <div class="sr-key" id="srKeyOut" hidden></div></section>
   </main>
 </div>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/sitrep.js?v=sitrep-20261026"></script>
+<script src="../assets/js/sitrep.js?v=ocha-20261112"></script>
 <script src="../assets/js/session-role.js?v=petugas-20261109"></script>
 <script src="../assets/js/rn-public-header.js?v=ps4-20261109"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>

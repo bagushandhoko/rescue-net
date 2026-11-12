@@ -377,11 +377,14 @@
     // karena wilayahnya dibuka otomatis supaya baris wilayah yang dicari langsung terlihat.
     state.regionHit = {};
     state.filtered = state.events.filter(function (ev) {
-      if (!q) return true;
+      if (!q && !state.wil) return true;
       var regionMatch = (ev.regions || []).some(function (rg) { return String(rg.name || "").toLowerCase().indexOf(q) !== -1; });
       var areaMatch = (ev.area_names || []).some(function (n) { return String(n).toLowerCase().indexOf(q) !== -1; }) ||
         !!(state.areaHit[ev.id] && state.areaQ === q);
       if (regionMatch || areaMatch) state.regionHit[ev.id] = true;
+      if (state.wil && !state.wil.hits[ev.id]) return false;          // pilihan lokasi bertingkat
+      if (state.wil) state.regionHit[ev.id] = true;
+      if (!q) return true;
       return (
         areaMatch ||
         (ev.name || "").toLowerCase().indexOf(q) !== -1 ||
@@ -427,6 +430,57 @@
         .catch(function () {});
     }, 350);
   }
+  /* ---------- owner 2026-11-12: pilihan lokasi bertingkat (seperti data.go.id) ---------- */
+  state.wil = null;
+  var WIL_API = "/rescue-net-frappe/api/method/rescue_net.api_admin_areas.get_children?";
+  var WIL_ORDER = ["province", "city", "district", "village"];
+  function wilFill(sel, parent) {
+    var lv = sel.getAttribute("data-lv"), ph = sel.options[0].textContent;
+    sel.innerHTML = '<option value="">Memuat…</option>';
+    fetch(WIL_API + "level=" + lv + (parent ? "&parent_code=" + encodeURIComponent(parent) : ""), { credentials: "include" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) {
+        var rows = (j && j.message) || [];
+        sel.innerHTML = '<option value="">' + ph + "</option>" + rows.map(function (a) {
+          return '<option value="' + esc(a.code) + '">' + esc(a.area_name) + "</option>"; }).join("");
+        sel.disabled = !rows.length;
+      })
+      .catch(function () { sel.innerHTML = '<option value="">' + ph + "</option>"; });
+  }
+  function wilApply() {
+    var box = $("#baWil"); if (!box) return;
+    var sels = box.querySelectorAll("select"), code = "", names = [];
+    sels.forEach(function (s) { if (s.value) { code = s.value; names.push(s.selectedOptions[0].textContent); } });
+    $("#baWilReset").hidden = !code;
+    if (!code) { state.wil = null; }
+    else {
+      var hits = {};
+      state.events.forEach(function (ev) {
+        if ((ev.area_codes || []).some(function (c) { return areaWithin(code, c); })) hits[ev.id] = true;
+      });
+      state.wil = { code: code, label: names.reverse().join(", "), hits: hits };
+    }
+    state.page = 0; applyFilter();
+  }
+  function wilInit() {
+    var box = $("#baWil"); if (!box) return;
+    var sels = Array.prototype.slice.call(box.querySelectorAll("select"));
+    wilFill(sels[0], "");
+    sels.forEach(function (sel, i) {
+      sel.addEventListener("change", function () {
+        for (var k = i + 1; k < sels.length; k++) {
+          sels[k].innerHTML = '<option value="">' + ["Provinsi", "Kab/Kota", "Kecamatan", "Desa/Kel."][k] + "</option>"; sels[k].disabled = true;
+        }
+        if (sel.value && sels[i + 1]) wilFill(sels[i + 1], sel.value);
+        wilApply();
+      });
+    });
+    $("#baWilReset").addEventListener("click", function () {
+      sels.forEach(function (s, k) { if (k) { s.innerHTML = '<option value="">' + ["Provinsi", "Kab/Kota", "Kecamatan", "Desa/Kel."][k] + "</option>"; s.disabled = true; } else s.value = ""; });
+      wilApply();
+    });
+  }
+
   function renderAreaHint(q) {
     var el = $("#baAreaHint");
     if (!el) {
@@ -434,6 +488,13 @@
       el.style.cssText = "margin:6px 0 10px;padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.5;background:rgba(104,64,45,.05);border:1px solid rgba(104,64,45,.15)";
       var tbl = document.querySelector(".rn-ba-table"); if (!tbl) return;
       tbl.parentNode.insertBefore(el, tbl);
+    }
+    if (state.wil) {
+      var nW = Object.keys(state.wil.hits).length;
+      el.innerHTML = "Lokasi: <b>" + esc(state.wil.label) + "</b> — " + (nW
+        ? nW + " bencana aktif dengan posko di wilayah ini atau di kecamatan/kab/kota yang mencakupnya."
+        : "belum ada bencana aktif dengan posko di wilayah ini.");
+      el.hidden = false; return;
     }
     if (!q || q.length < 3 || state.areaQ !== q) { el.hidden = true; return; }
     var ids = Object.keys(state.areaInfo);
@@ -804,6 +865,7 @@
       if (e.key === "Escape" && !$("#baDrill").hidden) closeDrill();
     });
 
+    wilInit();
     $("#baSearch").addEventListener("input", function () {
       state.page = 0;
       lookupAreas((this.value || "").trim().toLowerCase());

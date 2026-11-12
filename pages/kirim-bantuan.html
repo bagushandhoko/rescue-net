@@ -63,14 +63,14 @@
     <div class="rn-page-mobile-title">Kirim Bantuan</div>
 
       <div>
-        <p class="eyebrow">Public Aid Offer</p>
+        <p class="eyebrow">Kirim Bantuan</p>
         <h2>Saya Ingin Kirim Bantuan</h2>
         <p class="subtitle">
           Untuk donatur personal, tidak perlu registrasi. Isi data bantuan, pilih perlu pickup atau antar sendiri ke posko.
           Belum tahu apa yang dibutuhkan? Lihat <a href="kebutuhan-publik.html"><b>kebutuhan aktual per posko</b></a> (termasuk yang sudah cukup).
         </p>
       </div>
-      <div class="status-pill">Tanpa Registrasi</div>
+      <div class="status-pill">Boleh tanpa akun</div>
     </header>
 
     <section class="content-grid">
@@ -150,15 +150,13 @@
           </div>
 
           <div class="form-grid" data-self-deliver-fields style="display:none; margin-top:12px;">
+            <!-- audit SOP 12 Nov (S3): pilih posko berdasarkan NAMA; ID & nama terisi otomatis (dulu ID mentah + nama bawaan salah) -->
             <label>
               Posko Tujuan
-              <input name="target_node_id" list="rnEventPoskoList" placeholder="Ketik nama posko lalu pilih">
+              <select data-posko-pick><option value="">Memuat daftar posko…</option></select>
             </label>
-
-            <label>
-              Nama Posko Tujuan
-              <input name="target_node_name" value="Posko Logistik Aceh Barat Utama">
-            </label>
+            <input type="hidden" name="target_node_id">
+            <input type="hidden" name="target_node_name">
 
             <label>
               Perkiraan Sampai Posko
@@ -178,16 +176,16 @@
       </div>
 
       <aside class="panel summary">
-        <h3>Setelah Submit</h3>
+        <h3>Setelah Dikirim</h3>
         <div class="summary-list">
-          <div><span>Kode Bantuan</span><b>muncul di layar</b></div>
-          <div><span>Kode Edit</span><b>simpan/screenshot</b></div>
-          <div><span>Pickup</span><b>masuk distribusi</b></div>
-          <div><span>Antar sendiri</span><b>incoming posko</b></div>
+          <div><span>Kode Bantuan</span><b>tampil di layar — catat</b></div>
+          <div><span>Kode Edit</span><b>untuk mengubah / membatalkan</b></div>
+          <div><span>Minta dijemput</span><b>masuk antrean distribusi</b></div>
+          <div><span>Antar sendiri</span><b>posko tujuan menunggu kiriman Anda</b></div>
         </div>
 
         <p class="subtitle">
-          Untuk prototype, kode edit tampil di layar. Versi operasional bisa memakai SMS, email, WhatsApp API, atau operator posko.
+          Simpan Kode Bantuan dan Kode Edit (foto layar). Untuk mengubah atau membatalkan bantuan, buka <a href="edit-bantuan.html"><b>Ubah Bantuan</b></a>; untuk melihat perjalanan barang, buka <a href="lacak-logistik.html"><b>Lacak Logistik</b></a>.
         </p>
       </aside>
     </section>
@@ -227,7 +225,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
-<script src="../assets/js/public-aid.js?v=evpreset-20261102"></script>
+<script src="../assets/js/public-aid.js?v=sop-20261112"></script>
 <script src="../assets/js/kb-program-donation.js?v=audit-20261111"></script>
 <script src="../assets/js/session-role.js?v=petugas-20261109"></script>
 <script src="../assets/js/rn-public-header.js?v=kembali-20261112"></script>

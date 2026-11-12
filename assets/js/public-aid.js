@@ -554,15 +554,41 @@ document.addEventListener(
 );
 
 // Fase 10f: "Kirim ke posko ini" from kebutuhan-publik.html -> ?posko=<name>
+// Audit SOP 12 Nov (S3): posko tujuan dipilih dari daftar NAMA (bencana yang dibuka); ID & nama tersembunyi terisi otomatis.
 document.addEventListener("DOMContentLoaded", () => {
-  const posko = new URLSearchParams(location.search).get("posko");
-  if (!posko) return;
+  const qs = new URLSearchParams(location.search);
+  const posko = qs.get("posko") || "";
+  const presetName = qs.get("target_node_name") || "";
+  let ev = (qs.get("event") || "").replace(/^disaster_events:/, "");
+  if (!ev) { try { ev = (localStorage.getItem("rn_active_event") || "").replace(/^disaster_events:/, ""); } catch (e) {} }
   document.querySelectorAll("form").forEach(form => {
     if (!form.target_node_id) return;
-    form.target_node_id.value = posko;
-    if (form.delivery_mode) {
-      form.delivery_mode.value = "self_deliver_to_posko";
-      form.delivery_mode.dispatchEvent(new Event("change", { bubbles: true }));
+    const pick = form.querySelector("[data-posko-pick]");
+    const setVal = (id, name) => { form.target_node_id.value = id || ""; if (form.target_node_name) form.target_node_name.value = name || ""; };
+    if (posko) {
+      setVal(posko, presetName);
+      if (form.delivery_mode) {
+        form.delivery_mode.value = "self_deliver_to_posko";
+        form.delivery_mode.dispatchEvent(new Event("change", { bubbles: true }));
+      }
     }
+    if (!pick) return;
+    pick.addEventListener("change", () => setVal(pick.value, pick.selectedOptions[0] ? pick.selectedOptions[0].textContent : ""));
+    if (!ev) { pick.innerHTML = '<option value="">Pilih bencana dulu</option>'; return; }
+    fetch("/rescue-net-frappe/api/method/rescue_net.api_control_centre.event_poskos?disaster_event=" + encodeURIComponent(ev), { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        const pts = ((j && j.message && j.message.points) || []).filter(pt => (pt.posko_id || pt.id));
+        pick.innerHTML = '<option value="">— pilih posko tujuan —</option>' + pts.map(pt => {
+          const id = String(pt.posko_id || pt.id), nm = String(pt.name || id);
+          return '<option value="' + id.replace(/"/g, "&quot;") + '">' + nm.replace(/</g, "&lt;") + "</option>";
+        }).join("");
+        if (posko) {
+          const opt = [...pick.options].find(o => o.value === posko);
+          if (opt) { pick.value = posko; setVal(posko, opt.textContent); }
+          else { pick.insertAdjacentHTML("beforeend", '<option value="' + posko.replace(/"/g, "&quot;") + '">' + (presetName || "Posko pilihan Anda").replace(/</g, "&lt;") + "</option>"); pick.value = posko; }
+        }
+      })
+      .catch(() => { pick.innerHTML = '<option value="">Daftar posko gagal dimuat — coba muat ulang</option>'; });
   });
 });

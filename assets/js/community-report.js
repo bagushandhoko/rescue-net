@@ -513,6 +513,127 @@ async function draftReport(form) {
   }
 }
 
+/* ---------- Foto bukti laporan (owner 2026-11-12: "tambahkan feature untuk kirim bukti berupa foto atau
+   langsung buka camera") — diunggah lewat upload_evidence setelah laporan masuk, ditautkan ke laporan. ---------- */
+const RN_PHOTOS = [];
+const RN_PHOTO_MAX = 4;
+
+function photoCss() {
+  if (document.getElementById("rnReportPhotoCss")) return;
+  const st = document.createElement("style");
+  st.id = "rnReportPhotoCss";
+  st.textContent =
+    ".rn-form .rn-report-mode label:has(> input[type=radio]){display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;align-items:start!important;column-gap:10px;row-gap:2px}" +
+    ".rn-form .rn-report-mode label>input{grid-row:span 2;margin-top:3px}" +
+    ".rn-form .rn-report-mode label>b,.rn-form .rn-report-mode label>span{grid-column:2;min-width:0}" +
+    ".rn-report-photo{margin:12px 0;padding:12px;border:1px dashed #d9a08f;border-radius:12px;background:#fffaf7}" +
+    ".rn-report-photo b{display:block;margin-bottom:4px}.rn-report-photo p{margin:0 0 8px;font-size:13px;color:#6b5a4c}" +
+    ".rn-photo-btns{display:flex;flex-wrap:wrap;gap:8px}.rn-photo-btns .btn{flex:1 1 140px;min-height:44px;font-size:15px}" +
+    ".rn-photo-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}" +
+    ".rn-photo-list figure{position:relative;margin:0;width:84px;height:84px;border-radius:8px;overflow:hidden;border:1px solid #e3cfc6}" +
+    ".rn-photo-list img{width:100%;height:100%;object-fit:cover}" +
+    ".rn-photo-list button{position:absolute;top:2px;right:2px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:16px;line-height:1;cursor:pointer}" +
+    ".rn-more-btn{width:100%;margin-top:8px}" +
+    ".rn-form label.checkbox-label{display:flex!important;flex-direction:row!important;justify-content:flex-start!important;align-items:center!important;gap:8px;text-align:left;grid-column:1/-1}" +
+    ".rn-form label.checkbox-label>input[type=checkbox]{width:20px!important;min-width:20px!important;max-width:20px!important;height:20px!important;flex:0 0 20px!important;margin:0!important}";
+  document.head.appendChild(st);
+}
+
+function shrinkPhoto(file) {
+  // perkecil ke sisi terpanjang 1600 px (JPEG 0.82) supaya cepat terkirim dari HP
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      const data = c.toDataURL("image/jpeg", 0.82);
+      resolve({ name: (file.name || "foto").replace(/\.[^.]+$/, "") + ".jpg", data });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      const r = new FileReader();
+      r.onload = () => resolve({ name: file.name || "foto", data: String(r.result) });
+      r.readAsDataURL(file);
+    };
+    img.src = url;
+  });
+}
+
+function renderPhotos(box) {
+  const list = box.querySelector("[data-photo-list]");
+  list.innerHTML = RN_PHOTOS.map((p, i) =>
+    `<figure><img src="${p.data}" alt="Foto bukti ${i + 1}"><button type="button" data-photo-del="${i}" aria-label="Hapus foto">\u00d7</button></figure>`).join("");
+  box.querySelector("[data-photo-count]").textContent = RN_PHOTOS.length
+    ? `${RN_PHOTOS.length} foto siap dikirim bersama laporan.` : "";
+}
+
+function setupReportPhotos() {
+  const form = document.querySelector("form[data-community-report-form]");
+  if (!form || form.querySelector(".rn-report-photo")) return;
+  const submit = [...form.querySelectorAll("button[type=submit]")].pop();
+  const anchor = submit && (submit.closest(".form-actions") || submit);
+  if (!anchor) return;
+  photoCss();
+  const box = document.createElement("div");
+  box.className = "rn-report-photo";
+  box.innerHTML =
+    "<b>\ud83d\udcf7 Foto bukti (opsional)</b>" +
+    `<p>Ambil foto langsung atau pilih dari galeri, maksimal ${RN_PHOTO_MAX} foto. Foto ikut terkirim setelah laporan masuk.</p>` +
+    '<div class="rn-photo-btns">' +
+    '<button type="button" class="btn" data-photo-cam>\ud83d\udcf7 Buka kamera</button>' +
+    '<button type="button" class="btn" data-photo-gal>\ud83d\uddbc Pilih dari galeri</button></div>' +
+    '<input type="file" accept="image/*" capture="environment" hidden data-photo-in-cam>' +
+    '<input type="file" accept="image/*" multiple hidden data-photo-in-gal>' +
+    '<div class="rn-photo-list" data-photo-list></div><small data-photo-count></small>';
+  anchor.parentNode.insertBefore(box, anchor);
+  const add = async (files) => {
+    for (const f of [...(files || [])]) {
+      if (RN_PHOTOS.length >= RN_PHOTO_MAX) break;
+      if (!/^image\//.test(f.type || "image/")) continue;
+      RN_PHOTOS.push(await shrinkPhoto(f));
+    }
+    renderPhotos(box);
+  };
+  box.querySelector("[data-photo-cam]").addEventListener("click", () => box.querySelector("[data-photo-in-cam]").click());
+  box.querySelector("[data-photo-gal]").addEventListener("click", () => box.querySelector("[data-photo-in-gal]").click());
+  box.querySelectorAll("input[type=file]").forEach((inp) => inp.addEventListener("change", async () => { await add(inp.files); inp.value = ""; }));
+  box.addEventListener("click", (e) => {
+    const d = e.target.closest("[data-photo-del]");
+    if (!d) return;
+    RN_PHOTOS.splice(Number(d.getAttribute("data-photo-del")), 1);
+    renderPhotos(box);
+  });
+}
+
+async function uploadReportPhotos(reportName, payload) {
+  let ok = 0;
+  const all = RN_PHOTOS.splice(0, RN_PHOTOS.length);
+  for (const p of all) {
+    try {
+      await RN_FRAPPE.call("rescue_net.api_frontend_bridge.upload_evidence", {
+        filename: p.name,
+        content_base64: p.data.split(",")[1],
+        disaster_event: payload.disaster_event_id || window.rnActiveEvent || null,
+        linked_object_type: "RN Community Report",
+        linked_object_id: reportName,
+        evidence_type: "photo",
+        caption: payload.evidence_caption || payload.title || null,
+        public: 1
+      }, { method: "POST" });
+      ok++;
+    } catch (err) {
+      console.warn("[foto bukti]", err);
+    }
+  }
+  const box = document.querySelector(".rn-report-photo");
+  if (box) renderPhotos(box);
+  return ok === all.length ? `${ok} foto bukti terkirim.` : `${ok} dari ${all.length} foto bukti terkirim (coba kirim ulang lewat halaman Evidence).`;
+}
+
 /* ---------- Laporan Saya + tindak lanjut ---------- */
 const UPDATE_TYPE_LABEL = { info: "Info terbaru", additional_need: "Kebutuhan tambahan", resolved: "Sudah tertangani" };
 
@@ -555,9 +676,17 @@ async function loadMyReports() {
   const target = document.querySelector("[data-my-reports]");
   if (!target) return;
   const rows = await RN_FRAPPE.call("rescue_net.api_reports.my_community_reports");
+  // owner 2026-11-12 "layout HP berantakan": tampilkan 5 terbaru dulu, sisanya lewat tombol.
+  const LIMIT = 5;
   target.innerHTML = rows.length
-    ? rows.map(myReportCard).join("")
+    ? rows.slice(0, LIMIT).map(myReportCard).join("") +
+      (rows.length > LIMIT
+        ? `<div class="rn-more" data-more-wrap hidden>${rows.slice(LIMIT).map(myReportCard).join("")}</div>` +
+          `<button class="btn rn-more-btn" type="button" data-more-btn>Tampilkan semua laporan saya (${rows.length})</button>`
+        : "")
     : "<p class=\"subtitle\">Anda belum mengirim laporan.</p>";
+  const mb = target.querySelector("[data-more-btn]");
+  if (mb) mb.addEventListener("click", () => { target.querySelector("[data-more-wrap]").hidden = false; mb.remove(); });
 }
 
 function setupFollowUps() {
@@ -914,6 +1043,10 @@ function setupCommunityReportForm() {
           .join(", ");
         successText += ` Perkiraan kebutuhan (heuristik): ${list}.`;
       }
+      if (RN_PHOTOS.length) {
+        if (msg) showMsg(msg, successText + " Mengunggah foto bukti…", false);
+        successText += " " + await uploadReportPhotos(data.name, payload);
+      }
       if (msg) showMsg(msg, successText, false);
       await loadCommunityReports();
       loadMyReports().catch(() => {});
@@ -1201,6 +1334,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupCommunityReportForm();
   setupCommunityReportActions();
   setupFollowUps();
+  setupReportPhotos();
   loadCommunityReports();
 
   // Reconciliation: a report queued offline gets pushed automatically by

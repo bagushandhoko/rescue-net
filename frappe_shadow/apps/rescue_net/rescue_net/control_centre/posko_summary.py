@@ -147,6 +147,28 @@ def _last_update(names):
     return out
 
 
+_STATUS_LABEL = {"critical": "Kritis", "overload": "Kelebihan beban", "emergency": "Darurat", "danger": "Bahaya",
+                 "urgent": "Mendesak", "warning": "Waspada", "affected": "Terdampak", "disrupted": "Terganggu"}
+
+
+def _situation_reasons(p):
+    """Owner 2026-11-12 (posko TNI AL "Kritis" padahal armada baru terpakai 0%): tampilkan ALASAN di bawah
+    Kritis/Waspada. Alasan turunan (critical_reasons) sudah disaring menurut hak lihat oleh map_points;
+    status manual dari petugas posko disebut terpisah agar tidak dikira hasil hitungan."""
+    try:
+        if p.get("situation") not in ("critical", "warning"):
+            return []
+        out = list(p.get("critical_reasons") or [])
+        st = str(p.get("status") or "").lower()
+        if st in _STATUS_LABEL:
+            out.insert(0, "Status diisi petugas posko: %s" % _STATUS_LABEL[st])
+        if not out and p.get("critical_reasons_hidden"):
+            out.append("Alasan hanya terlihat oleh anggota organisasi posko")
+        return out[:3]
+    except Exception:
+        return []
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=60, seconds=60)
 def posko_summary(disaster_event, kind):
@@ -188,6 +210,7 @@ def posko_summary(disaster_event, kind):
             "organization": org_titles.get(r.get("organization")) or r.get("organization"),
             "lokasi": ", ".join(x for x in (r.get("district_name"), r.get("city_name")) if x) or r.get("province_name") or p.get("address"),
             "situation": p.get("situation"),
+            "situation_reasons": _situation_reasons(p),
             "status": p.get("status"),
             "verification_status": r.get("verification_status"),
             "public_participation": p.get("public_participation"),

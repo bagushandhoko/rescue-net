@@ -78,6 +78,12 @@
     if (s === "warning") return '<span class="rn-ps-chip is-warn">Waspada</span>';
     return '<span class="rn-ps-chip is-ok">Aman</span>';
   }
+  // owner 2026-11-12: alasan Kritis/Waspada tampil di bawah status (mis. "Status diisi petugas posko: Kritis").
+  function why(list) {
+    if (!list || !list.length) return "";
+    return '<small class="rn-ps-why" style="display:block;margin-top:4px;color:#6b5a4c;font-size:12px;line-height:1.35;max-width:220px">' +
+      list.map(function (x) { return String(x).replace(/[&<>"]/g, function (c) { return {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]; }); }).join("<br>") + "</small>";
+  }
   function bar(pct) {
     if (pct == null) return "–";
     var p = Math.max(0, Math.min(100, Number(pct)));
@@ -135,7 +141,7 @@
       '<td class="rn-ps-name"><a href="' + esc(detailUrl(r.posko)) + '">' + esc(String(r.title || r.posko).replace(/^\[SIMULASI\]\s*/i, "")) + "</a>" +
       '<small>' + esc(r.organization || "") + (r.lokasi ? " · " + esc(r.lokasi) : "") + "</small>" +
       (tags ? '<span class="rn-ps-tags">' + tags + "</span>" : "") + "</td>" +
-      '<td data-l="Kondisi">' + situ(r.situation) + "</td>" +
+      '<td data-l="Kondisi">' + situ(r.situation) + why(r.situation_reasons) + "</td>" +
       cols.map(function (c) { return '<td data-l="' + esc(c[0]) + '">' + c[1](m) + "</td>"; }).join("") +
       '<td data-l="Update" class="rn-ps-time">' + esc(ago(r.last_update)) + "</td></tr>";
   }

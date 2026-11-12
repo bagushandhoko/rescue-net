@@ -200,7 +200,7 @@
       "<h1>" + esc(LABEL[kind] || "Posko") + "</h1>" +
       '<p class="rn-ps-count rn-muted">…</p></div>' +
       '<input class="rn-ps-search" type="search" placeholder="Cari posko / lokasi / organisasi" hidden></div>' +
-      '<p class="rn-muted rn-ps-hint">Pilih satu posko untuk melihat rinciannya.</p>' +
+      '<p class="rn-muted rn-ps-hint">Klik nama posko untuk melihat rinciannya, mengirim bantuan, atau melapor. Pengelola posko mencatat data di halaman poskonya sendiri.</p>' +
       '<div class="rn-ps-body"></div>';
     main.insertBefore(panel, main.firstChild);
     // sembunyikan isi satu-posko (juga di HP, di mana aturan topbar memakai !important)

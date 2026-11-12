@@ -7,7 +7,7 @@ import re
 import frappe
 from frappe.utils import add_to_date, cint, flt, get_datetime
 
-_TEST = re.compile(r"smoke test|\[uji|uji-beban|uji beban|\btest\b", re.I)
+_TEST = re.compile(r"smoke test|\[uji|uji-beban|uji beban|\btest\b|\buat\b", re.I)
 _PRIO = {"critical": "kritis", "urgent": "mendesak", "high": "tinggi", "medium": "sedang", "low": "rendah"}
 _STATUS = {"planned": "direncanakan", "in_progress": "berjalan", "done": "selesai", "completed": "selesai",
            "active": "aktif", "closed": "ditutup", "monitoring": "pemantauan", "stabilized": "stabil", "treated": "ditangani",

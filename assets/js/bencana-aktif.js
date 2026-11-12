@@ -373,12 +373,18 @@
 
   function applyFilter() {
     var q = ($("#baSearch").value || "").trim().toLowerCase();
+    // owner 2026-11-12: cari juga berdasarkan WILAYAH (kabupaten/kota tempat posko bencana itu). Bencana yang cocok
+    // karena wilayahnya dibuka otomatis supaya baris wilayah yang dicari langsung terlihat.
+    state.regionHit = {};
     state.filtered = state.events.filter(function (ev) {
       if (!q) return true;
+      var regionMatch = (ev.regions || []).some(function (rg) { return String(rg.name || "").toLowerCase().indexOf(q) !== -1; });
+      if (regionMatch) state.regionHit[ev.id] = true;
       return (
         (ev.name || "").toLowerCase().indexOf(q) !== -1 ||
         (ev.location || "").toLowerCase().indexOf(q) !== -1 ||
-        shortId(ev.id).toLowerCase().indexOf(q) !== -1
+        shortId(ev.id).toLowerCase().indexOf(q) !== -1 ||
+        regionMatch
       );
     });
     var maxPage = Math.max(0, Math.ceil(state.filtered.length / PAGE_SIZE) - 1);
@@ -402,7 +408,7 @@
     var html = "";
 
     rows.forEach(function (ev) {
-      var open = state.expandAll || !!state.expanded[ev.id];
+      var open = state.expandAll || !!state.expanded[ev.id] || !!(state.regionHit && state.regionHit[ev.id]);
       var isSel = ev.id === state.selectedId;
       html +=
         '<tr class="rn-ba-row' +

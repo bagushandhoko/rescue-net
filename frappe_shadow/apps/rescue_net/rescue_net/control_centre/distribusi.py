@@ -296,7 +296,7 @@ def distribusi_board(disaster_event=None):
     transport_filter = event_filters(cols("RN Transport Space"), event) if event else {}
     transports = frappe.get_all(
         "RN Transport Space", filters=transport_filter,
-        fields=_sf("RN Transport Space", ["volunteer_capacity_seats", "volunteer_pickup_location", 
+        fields=_sf("RN Transport Space", ["volunteer_capacity_seats", "volunteer_pickup_location", "people_trip", "return_departure_at", 
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3", "route_origin",
             "route_destination", "observed_at", "coordination_posko",
@@ -626,6 +626,8 @@ def distribusi_board(disaster_event=None):
             "service_mode_label": _SERVICE_MODE_LABEL.get(smode, smode),
             "booking_policy": t.get("booking_policy") or "pin_verify",
             "kursi_relawan": int(t.get("volunteer_capacity_seats") or 0),
+            "angkut_orang_arah": t.get("people_trip") or ("ke_lokasi" if int(t.get("volunteer_capacity_seats") or 0) else ""),
+            "jadwal_pulang": str(t.get("return_departure_at") or "")[:16],
             "jemput_relawan": t.get("volunteer_pickup_location") or "",
             "kapasitas": " · ".join(cap_bits) or "-",
             "kapasitas_total_kg": cap_kg,
@@ -791,7 +793,7 @@ def posko_distribusi_board(posko=None, disaster_event=None):
 
     transports = frappe.get_all(
         "RN Transport Space", filters=tfilter, or_filters=tor,
-        fields=_sf("RN Transport Space", ["volunteer_capacity_seats", "volunteer_pickup_location", 
+        fields=_sf("RN Transport Space", ["volunteer_capacity_seats", "volunteer_pickup_location", "people_trip", "return_departure_at", 
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3",
             "own_load_kg", "own_load_m3", "own_cargo_desc", "route_origin",
@@ -862,6 +864,8 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "service_mode_label": _SERVICE_MODE_LABEL.get(smode, smode),
             "booking_policy": t.booking_policy or "pin_verify",
             "kursi_relawan": int(t.get("volunteer_capacity_seats") or 0),
+            "angkut_orang_arah": t.get("people_trip") or ("ke_lokasi" if int(t.get("volunteer_capacity_seats") or 0) else ""),
+            "jadwal_pulang": str(t.get("return_departure_at") or "")[:16],
             "status": t.transport_status or "-",
             "status_label": _ARMADA_STATUS_LABEL.get(t.transport_status, t.transport_status or "-"),
             # owner 2026-11-02: filters on this page — same availability classes as Cari Armada

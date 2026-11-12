@@ -43,6 +43,8 @@ GUEST_ENDPOINTS = {
     "api_events.disasters", "api_events.health",
     "api_ai.ai_providers", "api_ai.public_active_disasters", "api_ai.public_context", "api_ai.public_map_context",
     "api_auth.register", "api_auth.session_info", "api_auth.social_login_url",
+    "api_auth.account_status",  # reviewed 2026-11-12: guest gets only {"logged_in": False}
+    "api_control_centre.cari_wilayah_bencana",  # reviewed 2026-11-12: nama & kode wilayah resmi (data publik), tanpa data orang
     "api_comms.comms_board",
     "api_community_cluster.disaster_options", "api_community_cluster.get_posko_settings",
     "api_control_centre.active_disasters_board", "api_control_centre.distribusi_board",

@@ -312,6 +312,18 @@
       "label": "Titik Jemput Relawan",
       "fieldtype": "Data",
       "description": "Titik kumpul relawan jika armada jemput."
+    },
+    {
+      "fieldname": "people_trip",
+      "fieldtype": "Select",
+      "label": "Angkut Relawan/Orang untuk",
+      "options": "\nke_lokasi\npulang\npergi_pulang",
+      "description": "Kosong = berangkat ke lokasi (data lama)."
+    },
+    {
+      "fieldname": "return_departure_at",
+      "fieldtype": "Datetime",
+      "label": "Jadwal Pulang (angkut orang)"
     }
   ],
   "permissions": [
@@ -324,5 +336,5 @@
     }
   ],
   "track_changes": 1,
-  "modified": "2026-11-02 12:00:00.000000"
+  "modified": "2026-11-12 18:00:00.000000"
 }

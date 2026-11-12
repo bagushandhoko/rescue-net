@@ -34,30 +34,44 @@
     old.replaceWith(a);
   }
 
+  // owner 2026-11-12: berangkat, menginap (shelter relawan / posko shelter), pulang — masing-masing bisa dipesan
+  function optRow(icon, title, sub, kind, target, evId, label, ok, leg) {
+    return '<div class="rs-opt"><div><b>' + icon + " " + esc(title) + "</b><br><small>" + sub + "</small></div>" +
+      '<button class="btn mini" type="button" data-book="' + kind + '" data-target="' + esc(target) + '" data-ev="' + esc(evId) + '"' +
+      (leg ? ' data-leg="' + leg + '"' : "") + (ok ? "" : " disabled") + ">" + label + "</button></div>";
+  }
+  function armRow(a, evId, leg) {
+    return optRow(leg === "pulang" ? "↩" : "🚚", a.title, esc(a.posko_title || "") + (a.route ? " · " + esc(a.route) : "") +
+      (a.departure_at ? " · " + (leg === "pulang" ? "pulang " : "berangkat ") + esc(a.departure_at) : "") +
+      (a.pickup && leg !== "pulang" ? " · jemput: " + esc(a.pickup) : "") + " · sisa " + a.seats_left + "/" + a.seats + " kursi",
+      "transport", a.id, evId, leg === "pulang" ? "Pesan kursi pulang" : "Pesan kursi berangkat", a.seats_left > 0, leg);
+  }
   function renderOptions(evId, title, opt) {
-    var arm = (opt.armada || []).map(function (a) {
-      return '<div class="rs-opt"><div><b>🚚 ' + esc(a.title) + "</b><br><small>" + esc(a.posko_title || "") +
-        (a.departure_at ? " · berangkat " + esc(a.departure_at) : "") + (a.pickup ? " · jemput: " + esc(a.pickup) : "") +
-        " · sisa " + a.seats_left + "/" + a.seats + " kursi</small></div>" +
-        '<button class="btn mini" type="button" data-book="transport" data-target="' + esc(a.id) + '" data-ev="' + esc(evId) + '"' +
-        (a.seats_left > 0 ? "" : " disabled") + ">Pesan kursi</button></div>";
-    }).join("");
-    var ako = (opt.akomodasi || []).map(function (a) {
-      return '<div class="rs-opt"><div><b>🏠 ' + esc(a.title) + "</b><br><small>" + esc(a.posko_title || "") +
-        (a.safety ? " · " + esc(a.safety) : "") + " · sisa " + a.beds_left + "/" + a.beds + " tempat tidur</small></div>" +
-        '<button class="btn mini" type="button" data-book="akomodasi" data-target="' + esc(a.id) + '" data-ev="' + esc(evId) + '"' +
-        (a.beds_left > 0 ? "" : " disabled") + ">Pesan tempat</button></div>";
-    }).join("");
+    var none = function (t) { return '<p class="rn-muted">' + t + "</p>"; };
     var pos = (opt.posko || []).map(function (p) {
-      return '<div class="rs-opt"><div><b>📍 ' + esc(p.title) + "</b><br><small>" + esc(p.type || "") + (p.city ? " · " + esc(p.city) : "") +
-        " · " + p.volunteers + " relawan bertugas</small></div>" +
-        '<button class="btn mini" type="button" data-book="posko" data-target="' + esc(p.id) + '" data-ev="' + esc(evId) + '">Tawarkan diri</button></div>';
+      return optRow("📍", p.title, esc(p.type || "") + (p.city ? " · " + esc(p.city) : "") + " · " + p.volunteers + " relawan bertugas",
+        "posko", p.id, evId, "Tawarkan diri", true);
+    }).join("");
+    var go = (opt.armada || []).map(function (a) { return armRow(a, evId, "berangkat"); }).join("");
+    var back = (opt.armada_pulang || []).map(function (a) { return armRow(a, evId, "pulang"); }).join("");
+    var ako = (opt.akomodasi || []).map(function (a) {
+      return optRow("🏠", a.title, esc(a.posko_title || "") + (a.safety ? " · " + esc(a.safety) : "") + " · sisa " + a.beds_left + "/" + a.beds + " tempat tidur",
+        "akomodasi", a.id, evId, "Pesan tempat", a.beds_left > 0);
+    }).join("");
+    var sh = (opt.shelter || []).map(function (p) {
+      return optRow("⛺", p.title, "Posko shelter" + (p.city ? " · " + esc(p.city) : "") + " · pengelola shelter yang memutuskan",
+        "shelter", p.id, evId, "Minta menginap", true);
     }).join("");
     return '<div class="rs-ev-opts"><h4 style="margin:12px 0 6px">' + esc(title) + "</h4>" +
-      '<h5>Posko yang bisa Anda bantu</h5>' + (pos || '<p class="rn-muted">Belum ada posko untuk bencana ini.</p>') +
-      '<h5>Jemputan (kursi armada) &amp; tempat menginap</h5>' +
-      (arm || ako ? arm + ako : '<p class="rn-muted">Belum ada armada dengan kursi relawan atau tempat menginap untuk bencana ini.</p>') + "</div>";
+      "<h5>a. Posko tempat Anda membantu</h5>" + (pos || none("Belum ada posko untuk bencana ini.")) +
+      "<h5>b. Berangkat ke lokasi bencana (kursi armada)</h5>" + (go || none("Belum ada armada yang membawa relawan ke lokasi.")) +
+      "<h5>c. Tempat menginap (shelter relawan / posko shelter)</h5>" + (ako + sh || none("Belum ada tempat menginap untuk bencana ini.")) +
+      "<h5>d. Pulang (kursi armada)</h5>" + (back || none("Belum ada armada yang melayani kepulangan relawan.")) + "</div>";
   }
+  var KIND = function (b) {
+    if (b.booking_kind === "transport") return b.trip_leg === "pulang" ? "↩ Kursi pulang: " : "🚚 Kursi berangkat: ";
+    return b.booking_kind === "posko" ? "📍 Tawaran ke posko: " : b.booking_kind === "shelter" ? "⛺ Menginap di posko shelter: " : "🏠 Tempat menginap: ";
+  };
 
   async function loadMine() {
     var r = await call("my_volunteer");
@@ -83,7 +97,7 @@
     }
     $("rsOptions").innerHTML = blocks.join("");
     $("rsBookings").innerHTML = (r.bookings || []).length ? r.bookings.map(function (b) {
-      var kind = b.booking_kind === "transport" ? "🚚 Kursi armada: " : b.booking_kind === "posko" ? "📍 Tawaran ke posko: " : "🏠 Tempat menginap: ";
+      var kind = KIND(b);
       return '<div class="rs-opt"><div><b>' + kind + esc(b.target_title || "-") + "</b> " + chip(b.status) +
         "<br><small>" + esc(b.posko_title || "") + (b.date_from ? " · " + esc(b.date_from) + (b.date_to ? " s/d " + esc(b.date_to) : "") : "") +
         (b.decision_note ? " · catatan posko: " + esc(b.decision_note) : "") + "</small></div>" +
@@ -98,7 +112,7 @@
       $("rsPoskoPanel").hidden = !rows.length;
       $("rsPoskoList").innerHTML = rows.map(function (b) {
         return '<div class="rs-opt"><div><b>' + esc(b.volunteer_name || b.volunteer) + "</b> · " + esc(b.main_skill || "") + " " + chip(b.status) +
-          "<br><small>" + (b.booking_kind === "transport" ? "Kursi armada " : b.booking_kind === "posko" ? "Menawarkan diri bertugas di " : "Tempat menginap ") + esc(b.target_title || "") +
+          "<br><small>" + KIND(b) + esc(b.target_title || "") +
           (b.date_from ? " · " + esc(b.date_from) + (b.date_to ? " s/d " + esc(b.date_to) : "") : "") +
           (b.pickup_location ? " · jemput: " + esc(b.pickup_location) : "") + (b.contact ? " · " + esc(b.contact) : "") +
           (b.note ? "<br>" + esc(b.note) : "") + "</small></div>" +
@@ -164,9 +178,30 @@
       e.preventDefault();
       try {
         if (bk) {
-          var note = window.prompt ? (window.prompt("Catatan untuk posko (opsional, mis. tanggal tiba / lokasi jemput):") || "") : "";
-          await call("book", { kind: bk.dataset.book, target: bk.dataset.target, disaster_event: bk.dataset.ev, note: note }, true);
-          msg(bk.dataset.book === "posko" ? "Tawaran terkirim ke posko. Bila disetujui, Anda langsung ditempatkan di sana." : "Booking terkirim. Menunggu persetujuan posko.");
+          var row = bk.closest(".rs-opt"), old = document.querySelector(".rs-book-form");
+          if (old) old.remove();
+          var tr = bk.dataset.book === "transport", stay = bk.dataset.book === "akomodasi" || bk.dataset.book === "shelter";
+          var f = document.createElement("form");
+          f.className = "rn-form rs-book-form"; f.style.cssText = "margin:6px 0 12px;padding:10px;border:1px solid rgba(104,64,45,.2);border-radius:10px";
+          f.innerHTML = '<div class="form-grid">' +
+            "<label>" + (tr ? (bk.dataset.leg === "pulang" ? "Tanggal pulang" : "Tanggal berangkat") : stay ? "Menginap dari" : "Mulai membantu") + '<input type="date" name="date_from"></label>' +
+            (tr ? "" : "<label>" + (stay ? "Sampai" : "Sampai (opsional)") + '<input type="date" name="date_to"></label>') +
+            (tr ? '<label>Titik jemput Anda<input name="pickup_location" placeholder="mis. Terminal Meulaboh"></label>' : "") +
+            '<label>Catatan untuk posko<input name="note" maxlength="500" placeholder="opsional"></label></div>' +
+            '<div class="form-actions"><button class="btn primary" type="submit">Kirim</button> <button class="btn ghost" type="button" data-batal>Batal</button></div>';
+          row.after(f);
+          f.querySelector("[data-batal]").onclick = function () { f.remove(); };
+          f.onsubmit = async function (ev) {
+            ev.preventDefault();
+            try {
+              await call("book", { kind: bk.dataset.book, target: bk.dataset.target, disaster_event: bk.dataset.ev, trip_leg: bk.dataset.leg || undefined,
+                date_from: f.date_from.value || undefined, date_to: f.date_to ? f.date_to.value || undefined : undefined,
+                pickup_location: f.pickup_location ? f.pickup_location.value || undefined : undefined, note: f.note.value || undefined }, true);
+              msg(bk.dataset.book === "posko" ? "Tawaran terkirim ke posko. Bila disetujui, Anda langsung ditempatkan di sana." : "Permintaan terkirim. Menunggu persetujuan posko.");
+              f.remove(); await loadMine();
+            } catch (err) { msg((err && err.message) || err, true); }
+          };
+          return;
         } else if (cn) {
           await call("cancel_booking", { booking: cn.dataset.cancel }, true);
         } else {

@@ -134,6 +134,25 @@ class TestLanding(RNTestCase):
         self.assertIn(w.posko_a.name.replace(":", "%3A"), r["href"])
         self.assertEqual([e["id"] for e in r["events"]], [w.event.name.replace("disaster_events:", "")])
 
+    def test_landing_audit_20261112(self):
+        """Owner 2026-11-12: login -> pengaturan posko sendiri; papan lintas posko -> Kelola Posko; relawan -> Relawan Saya."""
+        from rescue_net.api_auth import my_landing
+        from rescue_net.tests.factories import make_world, _insert
+        w = make_world()
+        frappe.db.set_value("RN Disaster Event", w.event.name, "event_status", "active")
+        frappe.db.set_value("RN Posko", w.posko_a.name, "posko_type", "equipment")
+        with as_user(make_actor(posko=w.posko_a).user):
+            self.assertTrue(my_landing()["href"].startswith("kelola-posko.html?id="))
+        rel = make_actor(role="relawan")
+        _insert("RN Volunteer Profile", user_account=rel.account, disaster_event=w.event.name, volunteer_name="Uji",
+                main_skill="logistik", availability_status="available")
+        with as_user(rel.user):
+            self.assertEqual(my_landing()["href"], "relawan-saya.html")
+        with as_user(make_actor(role="community_coordinator", org=w.org_a).user):     # koordinator org, tanpa posko sendiri
+            self.assertEqual(my_landing()["href"], "kelola-posko.html")
+        with as_user(make_actor(org=w.org_a).user):                                   # anggota biasa: tetap halaman organisasi
+            self.assertTrue(my_landing()["href"].startswith("organisasi-posko.html"))
+
     def test_guest_gets_no_landing(self):
         from rescue_net.api_auth import my_landing
         with as_guest():

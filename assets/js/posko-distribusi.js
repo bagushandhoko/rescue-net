@@ -395,6 +395,9 @@
             (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_ditawarkan_m3) + " m³" : ""))
         : "") +
       row("Sisa kapasitas", fmt(a.kapasitas_tersedia_kg) + " kg" + (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_tersedia_m3) + " m³" : "")) +
+      (Number(a.kursi_relawan || 0) > 0 ? row("Angkut orang", fmt(a.kursi_relawan) + " orang · " +
+        ({ ke_lokasi: "berangkat ke lokasi", pulang: "pulang", pergi_pulang: "pergi & pulang" }[a.angkut_orang_arah] || "berangkat ke lokasi") +
+        (a.jadwal_pulang ? " · pulang " + a.jadwal_pulang : "")) : "") +
       row("Antrean booking", fmt(a.antri_booking || 0) + " menunggu konfirmasi" + (a.antri_kg ? " (" + fmt(a.antri_kg) + " kg)" : "") +
         " · " + fmt(a.booking_konfirmasi || 0) + " terkonfirmasi") +
       row("Rencana berangkat → tiba", esc(a.berangkat) + " → " + esc(a.eta)) +
@@ -767,6 +770,45 @@
       parts.map(function (p) { return '<span style="display:block;margin:0 0 4px">' + p + "</span>"; }).join("") + "</b></div>";
   }
 
+  // owner 2026-11-12: centang "bisa mengangkut relawan/orang" + jumlah orang + arah perjalanan (ke lokasi / pulang / PP)
+  var TRIP_OPTS = [["ke_lokasi", "Berangkat ke lokasi bencana"], ["pulang", "Pulang dari lokasi bencana"], ["pergi_pulang", "Pergi & pulang"]];
+  function peopleFields(a) {
+    a = a || {};
+    var on = Number(a.kursi_relawan || 0) > 0, trip = a.angkut_orang_arah || "ke_lokasi";
+    return '<fieldset class="rn-pd-orang" style="grid-column:1/-1;border:1px solid rgba(104,64,45,.2);border-radius:10px;padding:8px 12px">' +
+      '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" data-angkut style="width:20px;height:20px"' + (on ? " checked" : "") +
+      "> Bisa mengangkut relawan / orang</label>" +
+      '<div class="form-grid" data-angkut-isi' + (on ? "" : " hidden") + ">" +
+      '<label>Jumlah orang<input type="number" min="1" name="volunteer_capacity_seats" value="' + esc(on ? a.kursi_relawan : "") + '" placeholder="mis. 10"></label>' +
+      '<label>Untuk perjalanan<select name="people_trip">' + TRIP_OPTS.map(function (o) {
+        return '<option value="' + o[0] + '"' + (o[0] === trip ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>" +
+      '<label>Titik jemput<input name="volunteer_pickup_location" value="' + esc(clean(a.jemput_relawan || "")) + '" placeholder="mis. Halaman posko"></label>' +
+      '<label data-pulang-at' + (trip === "ke_lokasi" ? " hidden" : "") + '>Jadwal pulang<input type="datetime-local" name="return_departure_at" value="' + esc(toLocalDT(a.jadwal_pulang || "")) + '"></label>' +
+      "</div></fieldset>";
+  }
+  function peoplePayload(form) {
+    var on = !!(form.querySelector("[data-angkut]") || {}).checked;
+    var n = on ? Number((form.volunteer_capacity_seats && form.volunteer_capacity_seats.value) || 0) : 0;
+    var trip = on && form.people_trip ? form.people_trip.value : "";
+    return {
+      volunteer_capacity_seats: n,
+      volunteer_pickup_location: on && form.volunteer_pickup_location ? form.volunteer_pickup_location.value.trim() : "",
+      people_trip: n > 0 ? trip : "",
+      return_departure_at: n > 0 && trip !== "ke_lokasi" && form.return_departure_at && form.return_departure_at.value ? form.return_departure_at.value.replace("T", " ") : "",
+    };
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-people-fields]").forEach(function (slot) { slot.outerHTML = peopleFields({}); });
+  });
+  document.addEventListener("change", function (e) {
+    var box = e.target.closest && e.target.closest(".rn-pd-orang"); if (!box) return;
+    var on = box.querySelector("[data-angkut]").checked, isi = box.querySelector("[data-angkut-isi]");
+    isi.hidden = !on;
+    var n = box.querySelector('[name="volunteer_capacity_seats"]'); if (on && n && !n.value) n.value = 1;
+    var t = box.querySelector('[name="people_trip"]'), at = box.querySelector("[data-pulang-at]");
+    if (t && at) at.hidden = t.value === "ke_lokasi";
+  });
+
   function armadaEditForm(a) {
     return (
       '<details class="rn-pd-edit"><summary>Perbarui armada</summary>' +
@@ -775,8 +817,7 @@
       '<label>Status<select name="transport_status">' + optionList(ARMADA_STATUS, a.status) + "</select></label>" +
       '<label>Mode layanan<select name="service_mode">' + optionList(SERVICE_MODE, a.service_mode) + "</select></label>" +
       '<label>Kebijakan booking<select name="booking_policy">' + optionList(BOOKING_POLICY, a.booking_policy) + "</select></label>" +
-      '<label>Kursi relawan<input type="number" min="0" name="volunteer_capacity_seats" value="' + esc(a.kursi_relawan || 0) + '"></label>' +
-      '<label>Titik jemput relawan<input name="volunteer_pickup_location" value="' + esc(clean(a.jemput_relawan || "")) + '"></label>' +
+      peopleFields(a) +
       '<label>Muatan sendiri (kg)<input type="number" step="0.01" name="own_load_kg" value="' + esc(a.muatan_sendiri_kg || "") + '"></label>' +
       '<label>Muatan sendiri (m³)<input type="number" step="0.01" name="own_load_m3" value="' + esc(a.muatan_sendiri_m3 || "") + '"></label>' +
       '<label>Lokasi saat ini<input name="current_location" value="' + esc(clean(a.current_location)) + '"></label>' +
@@ -820,8 +861,6 @@
         transport_status: v("transport_status"),
         service_mode: v("service_mode"),
         booking_policy: v("booking_policy"),
-        volunteer_capacity_seats: v("volunteer_capacity_seats"),
-        volunteer_pickup_location: v("volunteer_pickup_location"),
         current_location: v("current_location"),
         own_load_kg: v("own_load_kg"),
         own_load_m3: v("own_load_m3"),
@@ -838,6 +877,7 @@
         prohibited_items: v("prohibited_items"),
         documents_required: v("documents_required"),
       };
+      Object.assign(payload, peoplePayload(form));
       if (served) {
         var evs = served.ev.getSelected();
         if (!evs.length) { if (msg) msg.textContent = " pilih minimal satu bencana"; return; }
@@ -1033,8 +1073,10 @@
           transport_type: f("transport_type"),
           service_mode: f("service_mode"),
           booking_policy: f("booking_policy"),
-          volunteer_capacity_seats: Number((form.volunteer_capacity_seats && form.volunteer_capacity_seats.value) || 0),
-          volunteer_pickup_location: form.volunteer_pickup_location ? form.volunteer_pickup_location.value.trim() : "",
+          volunteer_capacity_seats: peoplePayload(form).volunteer_capacity_seats,
+          volunteer_pickup_location: peoplePayload(form).volunteer_pickup_location,
+          people_trip: peoplePayload(form).people_trip,
+          return_departure_at: peoplePayload(form).return_departure_at,
           route_origin: f("route_origin"),
           route_destination: f("route_destination"),
           capacity_weight_kg: Number(form.capacity_weight_kg.value || 0),

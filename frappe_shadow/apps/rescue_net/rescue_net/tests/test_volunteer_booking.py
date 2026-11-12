@@ -83,3 +83,47 @@ class TestArmadaVolunteerSeats(RNTestCase):
             self.assertEqual(frappe.db.get_value("RN Transport Space", name, "volunteer_capacity_seats"), 4)
             update_transport_space(name, volunteer_capacity_seats=6)
         self.assertEqual(frappe.db.get_value("RN Transport Space", name, "volunteer_capacity_seats"), 6)
+
+
+class TestVolunteerTripAndShelter(RNTestCase):
+    """Owner 2026-11-12: kursi pulang terpisah dari berangkat; menginap di posko shelter."""
+    def setUp(self):
+        super().setUp()
+        self.w = make_world()
+        frappe.db.set_value("RN Disaster Event", self.w.event.name, "event_status", "active")
+        self.tp = make_posko(self.w.event, self.w.org_a, posko_type="transport")
+        self.sh = make_posko(self.w.event, self.w.org_b, posko_type="shelter")
+        self.pp = make_transport_space(self.tp, disaster_event=self.w.event.name, volunteer_capacity_seats=1,
+                                       people_trip="pergi_pulang", route_origin="Banda Aceh", route_destination="Meulaboh")
+        self.go = make_transport_space(self.tp, disaster_event=self.w.event.name, volunteer_capacity_seats=2)
+        self.rel = make_actor(role="relawan")
+        with as_user(self.rel.user):
+            vb.offer_events([self.w.event.name], contact="0812000011", main_skill="logistik")
+
+    def test_return_leg_has_own_seats(self):
+        with as_user(self.rel.user):
+            opts = vb.booking_options(self.w.event.name)
+            self.assertIn(self.pp.name, [a["id"] for a in opts["armada"]])
+            back = [a for a in opts["armada_pulang"] if a["id"] == self.pp.name]
+            self.assertEqual(back[0]["route"], "Meulaboh → Banda Aceh")
+            self.assertNotIn(self.go.name, [a["id"] for a in opts["armada_pulang"]])   # data lama: berangkat saja
+            b1 = vb.book("transport", self.pp.name, self.w.event.name)["booking"]
+            b2 = vb.book("transport", self.pp.name, self.w.event.name, trip_leg="pulang")["booking"]
+            with self.assertRaisesRegex(frappe.ValidationError, "tidak melayani"):
+                vb.book("transport", self.go.name, self.w.event.name, trip_leg="pulang")
+        with as_user(make_actor(posko=self.tp).user):
+            self.assertEqual(vb.decide_booking(b1, "confirm")["status"], "confirmed")
+            self.assertEqual(vb.decide_booking(b2, "confirm")["status"], "confirmed")   # 1 kursi per arah
+        self.assertEqual(frappe.db.get_value("RN Volunteer Booking", b2, "trip_leg"), "pulang")
+
+    def test_stay_at_shelter_posko(self):
+        with as_user(self.rel.user):
+            opts = vb.booking_options(self.w.event.name)
+            self.assertIn(self.sh.name, [p["id"] for p in opts["shelter"]])
+            b = vb.book("shelter", self.sh.name, self.w.event.name, date_from="2026-11-13")["booking"]
+            with self.assertRaisesRegex(frappe.ValidationError, "sudah"):
+                vb.book("shelter", self.sh.name, self.w.event.name)
+            with self.assertRaisesRegex(frappe.ValidationError, "bukan posko shelter"):
+                vb.book("shelter", self.tp.name, self.w.event.name)
+        with as_user(make_actor(posko=self.sh).user):
+            self.assertEqual(vb.decide_booking(b, "confirm")["status"], "confirmed")

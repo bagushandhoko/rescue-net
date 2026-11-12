@@ -758,9 +758,11 @@ def admin_reset_password(user=None, new_password=None):
 _POSKO_PAGE = {
     "logistics": "posko-logistik.html", "medical": "posko-medis-detail.html",
     "shelter": "shelter-detail.html", "kitchen": "dapur-umum.html",
-    "transport": "posko-distribusi.html", "equipment": "posko-alat.html",
-    "collection_hub": "posko-logistik.html", "communication": "alat-komunikasi.html",
-    "volunteer": "management-relawan.html", "sar": "search-found.html",
+    "transport": "posko-distribusi.html", "collection_hub": "posko-logistik.html",
+    # audit 2026-11-12: papan alat/komunikasi/relawan/SAR adalah papan lintas posko tanpa pengaturan posko sendiri ->
+    # pengelola jenis ini mendarat di Kelola Posko (pengaturan + antrean posko itu).
+    "equipment": "kelola-posko.html", "communication": "kelola-posko.html",
+    "volunteer": "kelola-posko.html", "sar": "kelola-posko.html",
 }
 
 
@@ -799,7 +801,8 @@ def my_landing():
         return {"logged_in": False}
     actor = rn_actor(required=False)
     if not actor or not actor.get("name"):
-        return {"logged_in": True, "events": [], "href": None}
+        # audit 2026-11-12: super admin tanpa akun RN -> Bencana Aktif (Control Centre), bukan beranda
+        return {"logged_in": True, "events": [], "href": "bencana-aktif.html" if is_system_manager() else None}
 
     own = []
     if actor.get("posko"):
@@ -841,6 +844,20 @@ def my_landing():
         posko_info = {"name": row.name, "title": row.title, "posko_type": row.posko_type}
     else:
         href = _program_landing(actor, latest)
+    # audit 2026-11-12 (owner: "ketika login halaman pertama pengaturan posko sendiri, spt relawan"):
+    # pengelola posko lewat organisasi -> Kelola Posko (1 posko langsung terbuka, >1 pilih); relawan -> Relawan Saya.
+    if not href and not own:
+        try:
+            from rescue_net.api_posko_manage import _managed
+            if _managed(actor):
+                href = "kelola-posko.html"
+        except Exception:
+            frappe.log_error(frappe.get_traceback(), "my_landing kelola posko")
+    if not href and not own and frappe.db.exists("RN Volunteer Profile", {
+            "user_account": actor.name, "availability_status": ["!=", "unavailable"]}):
+        href = "relawan-saya.html"
+    if not href and is_system_manager():
+        href = "bencana-aktif.html"
     if not href and not own and actor.get("organization"):
         from urllib.parse import quote
         href = ("organisasi-posko.html?org=" + quote(actor.organization, safe="") +

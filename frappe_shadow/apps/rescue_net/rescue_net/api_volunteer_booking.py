@@ -56,7 +56,8 @@ def my_volunteer():
     profiles = _profiles(actor)
     bookings = frappe.get_all("RN Volunteer Booking", filters={"user_account": actor.name},
                               fields=["name", "booking_kind", "status", "disaster_event", "posko", "transport_space",
-                                      "accommodation", "date_from", "date_to", "decision_note", "creation"],
+                                      "accommodation", "date_from", "date_to", "decision_note", "creation"]
+                              + (["trip_leg"] if _has("RN Volunteer Booking", "trip_leg") else []),
                               order_by="creation desc", limit_page_length=50)
     for b in bookings:
         b["posko_title"] = _title("RN Posko", b.posko)
@@ -180,8 +181,25 @@ def _served_spaces(event):
     return names
 
 
-def _used(kind, target):
+_LEGS = {"ke_lokasi": ("berangkat",), "pulang": ("pulang",), "pergi_pulang": ("berangkat", "pulang")}
+_LEG_LABEL = {"berangkat": "berangkat ke lokasi bencana", "pulang": "pulang"}
+
+
+def _has(dt, field):
+    return frappe.get_meta(dt).has_field(field)
+
+
+def _legs(space_row):
+    """Perjalanan yang dilayani armada untuk orang (owner 2026-11-12). Data lama tanpa arah = berangkat saja."""
+    return _LEGS.get((space_row.get("people_trip") if space_row else None) or "ke_lokasi", ("berangkat",))
+
+
+def _used(kind, target, leg=None):
     field = "transport_space" if kind == "transport" else "accommodation"
+    if kind == "transport" and leg and _has("RN Volunteer Booking", "trip_leg"):
+        legs = ("", "berangkat") if leg == "berangkat" else (leg,)
+        return cint(frappe.db.sql("select count(*) from `tabRN Volunteer Booking` where transport_space=%s "
+                                  "and status='confirmed' and ifnull(trip_leg,'') in %s", (target, legs))[0][0])
     return frappe.db.count("RN Volunteer Booking", {field: target, "status": "confirmed"})
 
 
@@ -203,14 +221,20 @@ def booking_options(disaster_event):
                                                          "transport_status": ["not in", ["completed", "cancelled"]]},
                             fields=["name", "provider_name", "transport_type", "coordination_posko", "departure_at",
                                     "volunteer_capacity_seats", "volunteer_needs_pickup", "volunteer_pickup_location",
-                                    "handover_location"], limit_page_length=200):
+                                    "handover_location", "route_origin", "route_destination"]
+                            + [f for f in ("people_trip", "return_departure_at") if _has("RN Transport Space", f)],
+                            limit_page_length=200):
         seats = cint(s.get("volunteer_capacity_seats"))
         if seats <= 0:
             continue
-        armada.append({"id": s.name, "title": s.provider_name, "type": s.transport_type, "posko": s.coordination_posko,
-                       "posko_title": _title("RN Posko", s.coordination_posko), "departure_at": str(s.departure_at or "")[:16],
-                       "seats_left": max(0, seats - _used("transport", s.name)), "seats": seats,
-                       "pickup": s.get("volunteer_pickup_location") or s.get("handover_location")})
+        for leg in _legs(s):
+            armada.append({"id": s.name, "title": s.provider_name, "type": s.transport_type, "posko": s.coordination_posko,
+                           "posko_title": _title("RN Posko", s.coordination_posko), "leg": leg,
+                           "departure_at": str((s.get("return_departure_at") if leg == "pulang" else s.departure_at) or "")[:16],
+                           "route": " → ".join(x for x in ((s.route_destination, s.route_origin) if leg == "pulang"
+                                                           else (s.route_origin, s.route_destination)) if x),
+                           "seats_left": max(0, seats - _used("transport", s.name, leg)), "seats": seats,
+                           "pickup": s.get("volunteer_pickup_location") or s.get("handover_location")})
     akomodasi = []
     for a in frappe.get_all("RN Volunteer Accommodation", filters={"disaster_event": event},
                             fields=["name", "location_name", "accommodation_type", "posko", "capacity_beds", "safety_status"],
@@ -221,7 +245,11 @@ def booking_options(disaster_event):
         akomodasi.append({"id": a.name, "title": a.location_name, "type": a.accommodation_type, "posko": a.posko,
                           "posko_title": _title("RN Posko", a.posko), "safety": a.safety_status,
                           "beds_left": max(0, cap - _used("akomodasi", a.name)), "beds": cint(a.capacity_beds)})
-    return {"disaster_event": event, "armada": armada, "akomodasi": akomodasi, "posko": _offer_poskos(event)}
+    poskos = _offer_poskos(event)
+    shelter = [p for p in poskos if p.get("type") == _TYPE_LABEL["shelter"]]
+    return {"disaster_event": event, "armada": [a for a in armada if a["leg"] == "berangkat"],
+            "armada_pulang": [a for a in armada if a["leg"] == "pulang"],
+            "akomodasi": akomodasi, "shelter": shelter, "posko": poskos}
 
 
 _CLOSED_POSKO = ("closed", "inactive", "nonaktif", "non_aktif", "offline")
@@ -253,11 +281,11 @@ def _offer_poskos(event):
 
 
 @frappe.whitelist()
-def book(kind, target, disaster_event, date_from=None, date_to=None, pickup_location=None, note=None):
+def book(kind, target, disaster_event, date_from=None, date_to=None, pickup_location=None, note=None, trip_leg=None):
     actor = _me()
     from rescue_net.control_centre.common import canonical_event
     event = canonical_event(disaster_event) or disaster_event
-    if kind not in ("transport", "akomodasi", "posko"):
+    if kind not in ("transport", "akomodasi", "posko", "shelter"):
         frappe.throw("Jenis booking tidak valid.")
     prof = frappe.db.get_value("RN Volunteer Profile", {"user_account": actor.name, "disaster_event": event,
                                                        "availability_status": ["!=", "unavailable"]}, "name")
@@ -265,26 +293,41 @@ def book(kind, target, disaster_event, date_from=None, date_to=None, pickup_loca
         frappe.throw("Tawarkan diri Anda untuk bencana ini dulu (centang di Relawan Saya).")
     if kind == "posko":
         return _offer_to_posko(actor, prof, target, event, date_from, date_to, note)
+    if kind == "shelter":
+        return _stay_at_shelter(actor, prof, target, event, date_from, date_to, note)
+    leg = None
     if kind == "transport":
         if target not in _served_spaces(event):
             frappe.throw("Armada ini tidak melayani bencana tersebut.")
-        if frappe.db.get_value("RN Transport Space", target, "transport_status") in ("completed", "cancelled"):
+        sp = frappe.db.get_value("RN Transport Space", target,
+                                 ["transport_status", "coordination_posko"]
+                                 + (["people_trip"] if _has("RN Transport Space", "people_trip") else []), as_dict=True)
+        if sp.transport_status in ("completed", "cancelled"):
             frappe.throw("Armada ini sudah selesai atau dibatalkan.")
-        posko = frappe.db.get_value("RN Transport Space", target, "coordination_posko")
+        leg = trip_leg or "berangkat"
+        if leg not in _legs(sp):
+            frappe.throw("Armada ini tidak melayani perjalanan %s untuk relawan." % _LEG_LABEL.get(leg, leg))
+        posko = sp.coordination_posko
     else:
         row = frappe.db.get_value("RN Volunteer Accommodation", target, ["disaster_event", "posko"], as_dict=True)
         if not row or row.disaster_event != event:
             frappe.throw("Tempat menginap ini tidak untuk bencana tersebut.")
         posko = row.posko
     field = "transport_space" if kind == "transport" else "accommodation"
-    if frappe.db.exists("RN Volunteer Booking", {"volunteer": prof, field: target, "status": ["in", ACTIVE]}):
+    dup = {"volunteer": prof, field: target, "status": ["in", ACTIVE]}
+    if leg and _has("RN Volunteer Booking", "trip_leg"):
+        dup["trip_leg"] = leg
+    if frappe.db.exists("RN Volunteer Booking", dup):
         frappe.throw("Anda sudah punya booking aktif di sini.")
-    if _capacity(kind, target) - _used(kind, target) <= 0:
+    if _capacity(kind, target) - _used(kind, target, leg) <= 0:
         frappe.throw("Penuh: tidak ada %s tersisa." % ("kursi" if kind == "transport" else "tempat tidur"))
-    doc = frappe.get_doc({"doctype": "RN Volunteer Booking", "booking_kind": kind, "status": "requested",
-                          "volunteer": prof, "user_account": actor.name, "disaster_event": event, "posko": posko,
-                          field: target, "date_from": date_from or None, "date_to": date_to or None,
-                          "pickup_location": (pickup_location or "")[:140] or None, "note": (note or "")[:500] or None})
+    row = {"doctype": "RN Volunteer Booking", "booking_kind": kind, "status": "requested",
+           "volunteer": prof, "user_account": actor.name, "disaster_event": event, "posko": posko,
+           field: target, "date_from": date_from or None, "date_to": date_to or None,
+           "pickup_location": (pickup_location or "")[:140] or None, "note": (note or "")[:500] or None}
+    if leg and _has("RN Volunteer Booking", "trip_leg"):
+        row["trip_leg"] = leg
+    doc = frappe.get_doc(row)
     doc.insert(ignore_permissions=True)
     return {"booking": doc.name, "status": doc.status, "posko": posko}
 
@@ -309,6 +352,30 @@ def _offer_to_posko(actor, prof, posko, event, date_from=None, date_to=None, not
                      % (frappe.db.get_value("RN Volunteer Profile", prof, "volunteer_name") or "baru"), "volunteer_offer")
     except Exception:
         frappe.log_error(title="rn volunteer offer notify failed")
+    return {"booking": doc.name, "status": doc.status, "posko": posko}
+
+
+def _stay_at_shelter(actor, prof, posko, event, date_from=None, date_to=None, note=None):
+    """Owner 2026-11-12: relawan memilih menginap di posko shelter bencana itu; pengelola shelter memutuskan."""
+    from rescue_net.reference_resolver import resolve_posko
+    posko = resolve_posko(posko) or posko
+    shelters = {p["id"] for p in _offer_poskos(event) if p.get("type") == _TYPE_LABEL["shelter"]}
+    if posko not in shelters:
+        frappe.throw("Posko ini bukan posko shelter yang aktif untuk bencana tersebut.")
+    if frappe.db.exists("RN Volunteer Booking", {"volunteer": prof, "booking_kind": "shelter", "posko": posko,
+                                                 "status": ["in", ACTIVE]}):
+        frappe.throw("Anda sudah meminta menginap di posko shelter ini.")
+    doc = frappe.get_doc({"doctype": "RN Volunteer Booking", "booking_kind": "shelter", "status": "requested",
+                          "volunteer": prof, "user_account": actor.name, "disaster_event": event, "posko": posko,
+                          "date_from": date_from or None, "date_to": date_to or None,
+                          "note": (note or "")[:500] or None})
+    doc.insert(ignore_permissions=True)
+    try:
+        from rescue_net.api_notify import notify_posko
+        notify_posko(posko, "[Rescue-Net] Relawan %s minta menginap di shelter Anda. Buka Manajemen Relawan untuk menyetujui."
+                     % (frappe.db.get_value("RN Volunteer Profile", prof, "volunteer_name") or "baru"), "volunteer_offer")
+    except Exception:
+        frappe.log_error(title="rn volunteer shelter notify failed")
     return {"booking": doc.name, "status": doc.status, "posko": posko}
 
 
@@ -338,7 +405,8 @@ def posko_bookings(posko=None, status=None):
         filters["posko"] = posko
     rows = frappe.get_all("RN Volunteer Booking", filters=filters,
                           fields=["name", "booking_kind", "status", "volunteer", "posko", "transport_space", "accommodation",
-                                  "date_from", "date_to", "pickup_location", "note", "creation"],
+                                  "date_from", "date_to", "pickup_location", "note", "creation"]
+                          + (["trip_leg"] if _has("RN Volunteer Booking", "trip_leg") else []),
                           order_by="creation desc", limit_page_length=200)
     if not posko and not is_system_manager():
         rows = [r for r in rows if r.posko and can_manage_posko(actor, r.posko)]
@@ -371,9 +439,10 @@ def decide_booking(booking, action, note=None):
         frappe.db.set_value("RN Volunteer Assignment", res["assignment"], "assignment_status", "accepted")
         api_volunteer._refresh_profile_assignment_state(doc.volunteer)
         doc.assignment = res["assignment"]
-    elif action == "confirm":
+    elif action == "confirm" and doc.booking_kind != "shelter":
         target = doc.transport_space or doc.accommodation
-        if _capacity(doc.booking_kind, target) - _used(doc.booking_kind, target) <= 0:
+        leg = (doc.get("trip_leg") or "berangkat") if doc.booking_kind == "transport" else None
+        if _capacity(doc.booking_kind, target) - _used(doc.booking_kind, target, leg) <= 0:
             frappe.throw("Penuh: kapasitas sudah terpakai.")
     doc.status = "confirmed" if action == "confirm" else "rejected"
     doc.decision_note = (note or "")[:500] or None

@@ -57,7 +57,7 @@
   // give — send them straight there instead of a generic homepage. An
   // explicit ?next= (e.g. they were bounced here mid-flow) still wins.
   var ROLE_LANDING_PAGE = {
-    relawan: "management-relawan.html",
+    relawan: "relawan-saya.html",   // audit 2026-11-12: relawan ke halamannya sendiri
     petugas_posko: "registrasi-posko.html",
     donatur: "program-khusus.html",
     organisasi: "organisasi-posko.html",

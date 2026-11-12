@@ -396,6 +396,82 @@ def _ba_jiwa_categories(event_id, short_ev, posko_by_name, posko_title, posko_re
     return categories
 
 
+# ---- owner 2026-11-12: cari bencana aktif berdasarkan wilayah sampai desa/kelurahan (data wilayah Kemendagri) ----
+def _ba_norm_city(name):
+    n = " ".join(str(name or "").lower().replace(".", ". ").split())
+    for pre in ("kabupaten ", "kab. ", "kab "):
+        if n.startswith(pre):
+            n = n[len(pre):]
+    return n.strip()
+
+
+_BA_CITY_CODES = {}
+
+
+def _ba_city_code(name):
+    """Kode kab/kota dari NAMA (hanya bila tunggal; tidak menebak) untuk posko yang belum punya kode wilayah."""
+    if not _BA_CITY_CODES:
+        m = {}
+        for r in frappe.get_all("RN Admin Area", filters={"level": "city", "enabled": 1},
+                                fields=["name", "area_name"], limit_page_length=0):
+            m.setdefault(_ba_norm_city(r.area_name), []).append(r.name)
+        _BA_CITY_CODES.update({k: v[0] for k, v in m.items() if len(v) == 1})
+    return _BA_CITY_CODES.get(_ba_norm_city(name))
+
+
+def _ba_area_index(poskos):
+    """{area_codes: kode wilayah tempat posko (atau kab/kota dari nama), area_names: kecamatan/desa yang tercatat}."""
+    codes, names = set(), set()
+    try:
+        for p in poskos:
+            c = str(p.get("admin_area_id") or "").strip()
+            if not c and p.get("city_name"):
+                c = _ba_city_code(p.get("city_name")) or ""
+            if c:
+                codes.add(c)
+            for f in ("district_name", "village_name"):
+                if (p.get(f) or "").strip():
+                    names.add(p.get(f).strip())
+    except Exception:
+        frappe.log_error(frappe.get_traceback(), "bencana_aktif area index")
+    return {"area_codes": sorted(codes), "area_names": sorted(names)}
+
+
+@frappe.whitelist(allow_guest=True)
+@rate_limit(limit=60, seconds=60)
+def cari_wilayah_bencana(q=None, limit=60):
+    """Cari provinsi/kab/kota/kecamatan/desa-kelurahan berdasarkan nama; tiap hasil membawa jalur lengkapnya
+    (Desa X, Kec. Y, Kab. Z, Provinsi) untuk dicocokkan dengan kode wilayah posko di halaman Bencana Aktif."""
+    from frappe.utils import cint
+    text = " ".join(str(q or "").replace("%", "").replace("_", "").split())
+    if len(text) < 3:
+        return []
+    limit = min(max(cint(limit) or 30, 1), 60)
+    lvl_order = "field(level,'province','city','district','village')"
+    rows = frappe.db.sql(
+        "select name, area_name, level from `tabRN Admin Area` where enabled=1 and area_name like %s "
+        "order by (area_name = %s) desc, " + lvl_order + ", area_name limit %s",
+        ("%" + text + "%", text, limit), as_dict=True)
+    anc = set()
+    for r in rows:
+        parts = r.name.split(".")
+        anc.update(".".join(parts[:i]) for i in range(1, len(parts)))
+    nm = {}
+    if anc:
+        nm = {a.name: a.area_name for a in frappe.get_all(
+            "RN Admin Area", filters={"name": ["in", list(anc)]}, fields=["name", "area_name"], limit_page_length=0)}
+    label = {"province": "Prov.", "city": "", "district": "Kec.", "village": "Desa/Kel."}
+    out = []
+    for r in rows:
+        parts = r.name.split(".")
+        chain = [nm.get(".".join(parts[:i])) for i in range(len(parts) - 1, 0, -1)]
+        lv = ["Kec.", "", "Prov."][-(len(parts) - 1):] if len(parts) > 1 else []
+        path = ", ".join((l + " " + n).strip() for l, n in zip(lv, chain) if n)
+        out.append({"code": r.name, "name": r.area_name, "level": r.level,
+                    "label": (label.get(r.level, "") + " " + r.area_name).strip(), "path": path})
+    return out
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 @guest_cache(30)
@@ -433,7 +509,7 @@ def active_disasters_board(limit=60):
                 "name", "title", "city_name", "province_name", "address",
                 "posko_type", "operational_status", "organization",
                 "rn_beneficiary_count", "rn_fn_shelter", "modified",
-                "latitude", "longitude",
+                "latitude", "longitude", "district_name", "village_name", "admin_area_id",
             ]),
             limit_page_length=500,
         )
@@ -703,6 +779,7 @@ def active_disasters_board(limit=60):
             "posko_count": len(poskos),
             "posko_kritis": len(posko_kritis_items),
             "regions": region_rows,
+            **_ba_area_index(poskos),
             "isu_kritis": isu,
             "kebutuhan_items": kebutuhan_items,
             "distribusi_items": distribusi_items,

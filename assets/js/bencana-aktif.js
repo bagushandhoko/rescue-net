@@ -379,8 +379,11 @@
     state.filtered = state.events.filter(function (ev) {
       if (!q) return true;
       var regionMatch = (ev.regions || []).some(function (rg) { return String(rg.name || "").toLowerCase().indexOf(q) !== -1; });
-      if (regionMatch) state.regionHit[ev.id] = true;
+      var areaMatch = (ev.area_names || []).some(function (n) { return String(n).toLowerCase().indexOf(q) !== -1; }) ||
+        !!(state.areaHit[ev.id] && state.areaQ === q);
+      if (regionMatch || areaMatch) state.regionHit[ev.id] = true;
       return (
+        areaMatch ||
         (ev.name || "").toLowerCase().indexOf(q) !== -1 ||
         (ev.location || "").toLowerCase().indexOf(q) !== -1 ||
         shortId(ev.id).toLowerCase().indexOf(q) !== -1 ||
@@ -389,7 +392,67 @@
     });
     var maxPage = Math.max(0, Math.ceil(state.filtered.length / PAGE_SIZE) - 1);
     if (state.page > maxPage) state.page = maxPage;
+    renderAreaHint(q);
     renderTable();
+  }
+
+  /* ---------- owner 2026-11-12: cari sampai desa/kelurahan (data wilayah Kemendagri di RN) ----------
+   * Nama yang diketik dicari di daftar wilayah resmi; bencana cocok bila poskonya berada di wilayah itu,
+   * atau wilayah itu berada di dalam kab/kota/kecamatan tempat posko bencana tersebut. */
+  state.areaHit = {}; state.areaInfo = {}; state.areaQ = ""; state.areaFound = [];
+  var areaTimer = null, areaSeq = 0;
+  function areaWithin(a, c) { return a === c || a.indexOf(c + ".") === 0 || c.indexOf(a + ".") === 0; }
+  function lookupAreas(q) {
+    clearTimeout(areaTimer);
+    if (q.length < 3) { state.areaHit = {}; state.areaInfo = {}; state.areaQ = ""; state.areaFound = []; return; }
+    var seq = ++areaSeq;
+    areaTimer = setTimeout(function () {
+      fetch("/rescue-net-frappe/api/method/rescue_net.api_control_centre.cari_wilayah_bencana?q=" + encodeURIComponent(q), { credentials: "include" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (j) {
+          if (seq !== areaSeq) return;
+          var areas = (j && j.message) || [];
+          state.areaHit = {}; state.areaInfo = {}; state.areaQ = q; state.areaFound = areas;
+          state.events.forEach(function (ev) {
+            var codes = ev.area_codes || [];
+            areas.forEach(function (a) {
+              if (codes.some(function (c) { return areaWithin(a.code, c); })) {
+                state.areaHit[ev.id] = true;
+                (state.areaInfo[ev.id] = state.areaInfo[ev.id] || []).push(a);
+              }
+            });
+          });
+          applyFilter();
+        })
+        .catch(function () {});
+    }, 350);
+  }
+  function renderAreaHint(q) {
+    var el = $("#baAreaHint");
+    if (!el) {
+      el = document.createElement("div"); el.id = "baAreaHint";
+      el.style.cssText = "margin:6px 0 10px;padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.5;background:rgba(104,64,45,.05);border:1px solid rgba(104,64,45,.15)";
+      var tbl = document.querySelector(".rn-ba-table"); if (!tbl) return;
+      tbl.parentNode.insertBefore(el, tbl);
+    }
+    if (!q || q.length < 3 || state.areaQ !== q) { el.hidden = true; return; }
+    var ids = Object.keys(state.areaInfo);
+    var raw = (($("#baSearch") || {}).value || q).trim();
+    if (!state.areaFound.length) {
+      if (state.filtered.length) { el.hidden = true; return; }
+      el.innerHTML = "Tidak ada bencana atau wilayah resmi bernama <b>" + esc(raw) + "</b>."; el.hidden = false; return;
+    }
+    var lines = ids.map(function (id) {
+      var ev = state.events.filter(function (e) { return e.id === id; })[0]; if (!ev) return "";
+      var a = state.areaInfo[id].slice(0, 3).map(function (x) { return "<b>" + esc(x.label) + "</b>" + (x.path ? " (" + esc(x.path) + ")" : ""); }).join("; ");
+      return "<li>" + a + " → <b>" + esc(ev.name) + "</b></li>";
+    }).join("");
+    el.innerHTML = ids.length
+      ? "Wilayah ditemukan dan terkait bencana aktif (posko berada di wilayah itu atau di kecamatan/kab/kota yang sama):<ul style='margin:4px 0 0 18px;padding:0'>" + lines + "</ul>"
+      : "Ditemukan " + state.areaFound.length + " wilayah bernama <b>" + esc(raw) + "</b> (mis. " +
+        state.areaFound.slice(0, 2).map(function (x) { return esc(x.label + (x.path ? ", " + x.path : "")); }).join("; ") +
+        "), tetapi belum ada posko bencana aktif di wilayah tersebut.";
+    el.hidden = false;
   }
 
   function renderTable() {
@@ -743,6 +806,7 @@
 
     $("#baSearch").addEventListener("input", function () {
       state.page = 0;
+      lookupAreas((this.value || "").trim().toLowerCase());
       applyFilter();
     });
 

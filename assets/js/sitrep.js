@@ -81,25 +81,78 @@
       "<li><b>HXL</b> angka kunci (CSV, perlu kunci): <code>" + esc(API + "sitrep_hxl" + q) + "</code></li>" +
       '<li><b>HXL</b> kebutuhan per posko (publik): <a href="' + API + "hxl_needs?disaster_event=" + encodeURIComponent(ev) + '">hxl_needs</a></li>' +
       '<li><b>CAP 1.2</b> peringatan gempa (publik): <a href="' + API + 'cap_alerts">cap_alerts</a></li>';
-    var logged = !!(window.RNSession && window.RNSession.getSession && window.RNSession.getSession());
-    $("srKeyBtn").hidden = !logged;
-    $("srKeyHint").textContent = logged ? "Kunci hanya bisa dibuat super admin atau admin organisasi." : "Login sebagai super admin / admin organisasi untuk membuat kunci API.";
+    keyStatus();
+  }
+
+  // owner 2026-11-12: kunci API disetujui super admin; admin organisasi hanya meminta.
+  async function keyStatus() {
+    var btn = $("srKeyBtn"), hint = $("srKeyHint"), box = $("srKeyReq");
+    btn.hidden = true; box.innerHTML = "";
+    var st;
+    try { st = await window.RN_FRAPPE.call("rescue_net.api_export.status_kunci_api_sitrep", {}); } catch (e) { st = { login: false }; }
+    if (!st || !st.login) { hint.textContent = "Login sebagai admin organisasi untuk meminta kunci API (disetujui super admin)."; return; }
+    if (st.pemberi_persetujuan) {
+      btn.hidden = false; btn.textContent = "\ud83d\udd11 Buat API key"; btn.dataset.mode = "buat";
+      hint.textContent = "Anda pemberi persetujuan kunci API.";
+      box.innerHTML = (st.permintaan || []).length
+        ? "<b>Permintaan menunggu persetujuan:</b><ul class=\"sr-list\">" + st.permintaan.map(function (t) {
+            return "<li>" + esc(String(t.description || "").replace("[API-SITREP] ", "")) + " <small>(" + esc(String(t.creation).slice(0, 16)) + ")</small> " +
+              '<button type="button" class="btn primary mini" data-setujui="' + esc(t.name) + '">Setujui &amp; buat kunci</button></li>';
+          }).join("") + "</ul>"
+        : "<small>Tidak ada permintaan kunci yang menunggu.</small>";
+      box.querySelectorAll("[data-setujui]").forEach(function (b) {
+        b.addEventListener("click", function () { approve(b.getAttribute("data-setujui")); });
+      });
+    } else if (st.admin_organisasi) {
+      if (st.menunggu_saya) { hint.textContent = "Permintaan kunci API organisasi Anda menunggu persetujuan super admin."; return; }
+      btn.hidden = false; btn.textContent = "\ud83d\udce8 Minta API key"; btn.dataset.mode = "minta";
+      hint.textContent = "Kunci diberikan setelah disetujui super admin (" + (st.approver || "") + ").";
+    } else {
+      hint.textContent = "Kunci API hanya untuk admin organisasi (diminta) dan super admin (menyetujui).";
+    }
+  }
+
+  function showKey(k) {
+    var out = $("srKeyOut"), ev = LAST ? LAST.bencana.id : eventParam();
+    out.hidden = false;
+    out.innerHTML = "<b>Kunci API dibuat" + (k.untuk ? " untuk " + esc(k.untuk) : "") + " — simpan sekarang, rahasia tidak bisa ditampilkan lagi.</b>" +
+      (k.peminta ? "<p>Teruskan ke peminta: " + esc(k.peminta) + "</p>" : "") +
+      "<pre>api_key    : " + esc(k.api_key) + "\napi_secret : " + esc(k.api_secret) + "\nheader     : " + esc(k.header) + "</pre>" +
+      "<p>Contoh:</p><pre>curl -H \"" + esc(k.header) + "\" \\\n  \"https://rescue-net.online" + esc(API) + "sitrep_edxl?disaster_event=" + esc(ev) + "&amp;hours=24\"</pre>" +
+      '<button type="button" class="btn ghost mini" id="srKeyCopy">Salin header</button>';
+    $("srKeyCopy").addEventListener("click", function () {
+      try { navigator.clipboard.writeText(k.header); $("srKeyCopy").textContent = "Tersalin"; } catch (e) { /* abaikan */ }
+    });
+  }
+
+  async function approve(todo) {
+    var out = $("srKeyOut");
+    if (!confirm("Setujui permintaan ini dan buat kunci API? Kunci lama organisasi itu tidak berlaku lagi.")) return;
+    out.hidden = false; out.textContent = "Membuat kunci…";
+    try {
+      showKey(await window.RN_FRAPPE.call("rescue_net.api_export.setujui_kunci_api_sitrep", { todo: todo }, { method: "POST" }));
+      keyStatus();
+    } catch (e) { out.textContent = "Gagal: " + ((e && e.message) || e); }
   }
 
   async function makeKey() {
     var out = $("srKeyOut");
-    if (!confirm("Buat kunci API SITREP baru? Kunci lama organisasi Anda akan tidak berlaku.")) return;
+    if ($("srKeyBtn").dataset.mode === "minta") {
+      var why = prompt("Untuk apa kunci API SITREP ini? (mis. sistem BPBD, dashboard mitra)");
+      if (why === null) return;
+      out.hidden = false; out.textContent = "Mengirim permintaan…";
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_export.minta_kunci_api_sitrep", { alasan: why }, { method: "POST" });
+        out.textContent = r.pesan || "Permintaan terkirim.";
+        keyStatus();
+      } catch (e) { out.textContent = "Gagal: " + ((e && e.message) || e); }
+      return;
+    }
+    if (!confirm("Buat kunci API SITREP baru (super admin)? Kunci lama super admin tidak berlaku lagi.")) return;
     out.hidden = false; out.textContent = "Membuat kunci…";
     try {
       var k = await window.RN_FRAPPE.call("rescue_net.api_export.buat_kunci_api_sitrep", {}, { method: "POST" });
-      var ev = LAST ? LAST.bencana.id : eventParam();
-      out.innerHTML = "<b>Kunci API dibuat — simpan sekarang, rahasia tidak bisa ditampilkan lagi.</b>" +
-        "<pre>api_key    : " + esc(k.api_key) + "\napi_secret : " + esc(k.api_secret) + "\nheader     : " + esc(k.header) + "</pre>" +
-        "<p>Contoh:</p><pre>curl -H \"" + esc(k.header) + "\" \\\n  \"https://rescue-net.online" + esc(API) + "sitrep_edxl?disaster_event=" + esc(ev) + "&amp;hours=24\"</pre>" +
-        '<button type="button" class="btn ghost mini" id="srKeyCopy">Salin header</button>';
-      $("srKeyCopy").addEventListener("click", function () {
-        try { navigator.clipboard.writeText(k.header); $("srKeyCopy").textContent = "Tersalin"; } catch (e) { /* abaikan */ }
-      });
+      showKey(k);
     } catch (e) {
       out.textContent = "Gagal: " + ((e && e.message) || e);
     }

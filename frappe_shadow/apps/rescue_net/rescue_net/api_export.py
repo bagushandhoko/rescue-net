@@ -203,27 +203,36 @@ def sitrep_hxl(disaster_event, hours=24):
     return resp
 
 
-@frappe.whitelist(methods=["POST"])
-def buat_kunci_api_sitrep():
-    """Tombol "Buat API key" (halaman SITREP). Hanya super admin / admin organisasi. Membuat (atau memakai ulang) satu
-    pengguna API khusus per organisasi (Website User, tanpa akses desk & tanpa akun RN), lalu menerbitkan kunci baru —
-    kunci lama otomatis tidak berlaku. Rahasia hanya ditampilkan sekali."""
-    import re as _re
-    if frappe.session.user in (None, "", "Guest"):
-        frappe.throw("Login dulu.", frappe.AuthenticationError)
-    from rescue_net.access_policy import is_system_manager, rn_actor
+# Owner 2026-11-12: "api key aproval super admin bagushandhoko@gmail.com" -> admin organisasi hanya MEMINTA kunci;
+# super admin pemberi persetujuan menyetujui (atau membuat langsung) dan menerima rahasia untuk diteruskan.
+KUNCI_APPROVER = "bagushandhoko@gmail.com"
+_TODO_TAG = "[API-SITREP]"
+
+
+def _is_approver():
+    u = frappe.session.user
+    if frappe.db.exists("User", KUNCI_APPROVER):
+        return u == KUNCI_APPROVER
+    from rescue_net.access_policy import is_system_manager
+    return bool(is_system_manager())  # cadangan bila akun pemberi persetujuan tidak ada
+
+
+def _org_admin():
+    """(org, allowed) untuk admin organisasi yang login."""
+    from rescue_net.access_policy import rn_actor
     actor = rn_actor(required=False) or {}
     org = actor.get("organization")
-    allowed = bool(is_system_manager())
-    if not allowed and org:
-        try:
-            from rescue_net.access_policy import can_manage_organization
-            allowed = bool(can_manage_organization(actor, org))
-        except Exception:
-            allowed = False
-    if not allowed:
-        frappe.throw("Kunci API SITREP hanya bisa dibuat super admin atau admin organisasi.", frappe.PermissionError)
-    owner = org or frappe.session.user
+    if not org:
+        return None, False
+    try:
+        from rescue_net.access_policy import can_manage_organization
+        return org, bool(can_manage_organization(actor, org))
+    except Exception:
+        return org, False
+
+
+def _issue_key(owner, by):
+    import re as _re
     slug = _re.sub(r"[^a-z0-9]+", "-", str(owner).lower()).strip("-")[:40] or "umum"
     email = "api-sitrep-%s@rescue-net.local" % slug
     if not frappe.db.exists("User", email):
@@ -236,16 +245,83 @@ def buat_kunci_api_sitrep():
     key, secret = frappe.generate_hash(length=15), frappe.generate_hash(length=15)
     u.api_key = key
     u.api_secret = secret
+    u.enabled = 1
     u.flags.ignore_permissions = True
     u.save(ignore_permissions=True)
     try:
-        u.add_comment("Info", "Kunci API SITREP diterbitkan oleh %s" % frappe.session.user)
+        u.add_comment("Info", "Kunci API SITREP diterbitkan/disetujui oleh %s" % by)
     except Exception:
         pass
     base = "https://rescue-net.online/rescue-net-frappe/api/method/rescue_net.api_export."
-    return {"api_key": key, "api_secret": secret, "pengguna_api": email,
+    return {"api_key": key, "api_secret": secret, "pengguna_api": email, "untuk": owner,
             "header": "Authorization: token %s:%s" % (key, secret),
             "endpoint": {"json": base + "sitrep_json?disaster_event=<id>&hours=24",
                          "edxl_sitrep": base + "sitrep_edxl?disaster_event=<id>&hours=24",
                          "hxl": base + "sitrep_hxl?disaster_event=<id>&hours=24"},
-            "catatan": "Simpan rahasia ini sekarang; tidak bisa ditampilkan lagi. Membuat kunci baru membatalkan kunci lama."}
+            "catatan": "Simpan rahasia ini sekarang; tidak bisa ditampilkan lagi. Kunci baru membatalkan kunci lama organisasi itu."}
+
+
+@frappe.whitelist()
+def status_kunci_api_sitrep():
+    """Untuk tombol di halaman SITREP: peran penanya + permintaan yang menunggu (hanya untuk pemberi persetujuan)."""
+    if frappe.session.user in (None, "", "Guest"):
+        return {"login": False}
+    appr = _is_approver()
+    org, admin = _org_admin()
+    out = {"login": True, "pemberi_persetujuan": appr, "admin_organisasi": admin, "organisasi": org,
+           "approver": KUNCI_APPROVER, "permintaan": [], "menunggu_saya": False}
+    if appr:
+        out["permintaan"] = frappe.get_all("ToDo", filters={"status": "Open", "description": ["like", _TODO_TAG + "%"]},
+                                           fields=["name", "description", "owner", "creation", "reference_name"],
+                                           order_by="creation desc", limit_page_length=50, ignore_permissions=True)
+    if org:
+        out["menunggu_saya"] = bool(frappe.db.exists("ToDo", {"status": "Open", "reference_type": "RN Organization",
+                                                             "reference_name": org, "description": ["like", _TODO_TAG + "%"]}))
+    return out
+
+
+@frappe.whitelist(methods=["POST"])
+def minta_kunci_api_sitrep(alasan=None):
+    """Admin organisasi meminta kunci API SITREP -> tugas (ToDo) untuk super admin pemberi persetujuan."""
+    if frappe.session.user in (None, "", "Guest"):
+        frappe.throw("Login dulu.", frappe.AuthenticationError)
+    org, admin = _org_admin()
+    if not admin:
+        frappe.throw("Permintaan kunci API hanya untuk admin organisasi.", frappe.PermissionError)
+    if frappe.db.exists("ToDo", {"status": "Open", "reference_type": "RN Organization", "reference_name": org,
+                                 "description": ["like", _TODO_TAG + "%"]}):
+        return {"ok": True, "pesan": "Permintaan organisasi Anda sudah ada dan menunggu persetujuan super admin."}
+    title = frappe.db.get_value("RN Organization", org, "title") or org
+    t = frappe.get_doc({"doctype": "ToDo", "allocated_to": KUNCI_APPROVER, "status": "Open", "priority": "Medium",
+                        "reference_type": "RN Organization", "reference_name": org,
+                        "description": "%s Permintaan kunci API SITREP untuk organisasi %s oleh %s. Alasan: %s"
+                                       % (_TODO_TAG, title, frappe.session.user, str(alasan or "-")[:300])})
+    t.insert(ignore_permissions=True)
+    return {"ok": True, "pesan": "Permintaan terkirim ke super admin (%s). Kunci akan diberikan setelah disetujui." % KUNCI_APPROVER}
+
+
+@frappe.whitelist(methods=["POST"])
+def setujui_kunci_api_sitrep(todo):
+    """Super admin menyetujui permintaan -> kunci untuk organisasi peminta (rahasia tampil sekali, diteruskan manual)."""
+    if not _is_approver():
+        frappe.throw("Hanya super admin %s yang bisa menyetujui kunci API." % KUNCI_APPROVER, frappe.PermissionError)
+    t = frappe.get_doc("ToDo", todo)
+    if not str(t.description or "").startswith(_TODO_TAG) or t.status != "Open":
+        frappe.throw("Permintaan tidak ditemukan atau sudah diproses.")
+    out = _issue_key(t.reference_name or t.owner, frappe.session.user)
+    out["peminta"] = t.owner
+    t.status = "Closed"
+    t.flags.ignore_permissions = True
+    t.save(ignore_permissions=True)
+    return out
+
+
+@frappe.whitelist(methods=["POST"])
+def buat_kunci_api_sitrep():
+    """Super admin pemberi persetujuan membuat kunci langsung (untuk dirinya / mitra). Admin organisasi: pakai minta_."""
+    if frappe.session.user in (None, "", "Guest"):
+        frappe.throw("Login dulu.", frappe.AuthenticationError)
+    if not _is_approver():
+        frappe.throw("Kunci API SITREP dibuat/disetujui oleh super admin %s. Admin organisasi: tekan \"Minta API key\"."
+                     % KUNCI_APPROVER, frappe.PermissionError)
+    return _issue_key("super-admin", frappe.session.user)

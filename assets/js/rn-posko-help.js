@@ -1,22 +1,57 @@
-/* Tombol "?" di setiap halaman posko -> langsung menampilkan bab panduan jenis posko itu.
-   Owner 2026-11-11: "tambahkan di setiap halaman posko '?' di bagian atas yang kalau di klik langsung
-   tampilkan manual untuk masing2 posko itu". Dibuat Suri (Claude CT105). Panduan: pages/panduan.html#p-*. */
+/* Tombol "?" di setiap halaman -> langsung menampilkan bagian manual/panduan halaman itu.
+   Owner 2026-11-11: "tambahkan di setiap halaman posko '?' ... langsung tampilkan manual untuk masing2 posko itu";
+   2026-11-12: "'?' kok nggak tampil di halaman2, semua link ke manual detail" -> semua halaman + pemeriksa posisi
+   (di halaman ringkasan judul detail disembunyikan setelah dimuat, tombol ikut hilang). Dibuat Suri (Claude CT105).
+   Halaman posko -> panduan.html#p-<jenis>; halaman lain -> manual.html#<bagian>. */
 (function () {
   var PAGE = (location.pathname.split("/").pop() || "").toLowerCase();
+  var P = "panduan.html", M = "manual.html";
   var BY_PAGE = {
-    "posko-logistik.html": ["p-logistik", "Posko Logistik"],
-    "posko-distribusi.html": ["p-distribusi", "Posko Distribusi"],
-    "posko-medis-detail.html": ["p-medis", "Posko Medis"],
-    "shelter-detail.html": ["p-shelter", "Shelter / Pengungsian"],
-    "dapur-umum.html": ["p-dapur", "Dapur Umum"],
-    "management-relawan.html": ["p-relawan", "Posko Relawan"],
-    "kehadiran-relawan.html": ["p-relawan", "Posko Relawan"],
-    "posko-alat.html": ["p-alat", "Posko Alat Kerja"],
-    "alat-kerja.html": ["p-alat", "Posko Alat Kerja"],
-    "alat-komunikasi.html": ["p-komunikasi", "Posko Komunikasi"],
-    "search-found.html": ["p-sar", "Posko SAR"],
-    "komando-pusat.html": ["p-komando", "Posko Komando"],
-    "posko-detail.html": ["jenis", "Jenis Posko"]
+    "posko-logistik.html": [P, "p-logistik", "Posko Logistik"],
+    "posko-distribusi.html": [P, "p-distribusi", "Posko Distribusi"],
+    "posko-medis-detail.html": [P, "p-medis", "Posko Medis"],
+    "shelter-detail.html": [P, "p-shelter", "Shelter / Pengungsian"],
+    "dapur-umum.html": [P, "p-dapur", "Dapur Umum"],
+    "management-relawan.html": [P, "p-relawan", "Posko Relawan"],
+    "kehadiran-relawan.html": [P, "p-relawan", "Posko Relawan"],
+    "posko-alat.html": [P, "p-alat", "Posko Alat Kerja"],
+    "alat-kerja.html": [P, "p-alat", "Posko Alat Kerja"],
+    "alat-komunikasi.html": [P, "p-komunikasi", "Posko Komunikasi"],
+    "search-found.html": [P, "p-sar", "Posko SAR"],
+    "komando-pusat.html": [P, "p-komando", "Posko Komando"],
+    "posko-detail.html": [P, "jenis", "Jenis Posko"],
+    "bencana-aktif.html": [M, "mulai", "Mulai & memilih bencana"],
+    "map.html": [M, "mulai", "Peta & memilih bencana"],
+    "peta-nasional.html": [M, "mulai", "Peta & memilih bencana"],
+    "laporan-masyarakat.html": [M, "laporan", "Mengirim laporan masyarakat"],
+    "masukan-masyarakat.html": [M, "laporan", "Laporan & masukan masyarakat"],
+    "kirim-bantuan.html": [M, "bantuan", "Menyalurkan bantuan"],
+    "edit-bantuan.html": [M, "bantuan", "Menyalurkan bantuan"],
+    "program-khusus.html": [M, "bantuan", "Program khusus & donasi"],
+    "donor-program.html": [M, "bantuan", "Program khusus & donasi"],
+    "management-distribusi.html": [M, "distribusi", "Distribusi & armada"],
+    "relawan-saya.html": [M, "layanan", "Relawan & layanan"],
+    "perencanaan-pengungsi.html": [M, "layanan", "Medis, shelter, dapur, relawan"],
+    "kelola-posko.html": [M, "kelola-posko", "Kelola Posko Saya"],
+    "registrasi-posko.html": [M, "posko", "Mendaftar & mengelola posko"],
+    "auth.html": [M, "registrasi", "Registrasi akun & organisasi"],
+    "organisasi-posko.html": [M, "organisasi", "Organisasi terbuka & tertutup"],
+    "koordinasi-organisasi.html": [M, "organisasi", "Koordinasi organisasi"],
+    "verification-approval.html": [M, "verifikasi", "Verifikasi berjenjang"],
+    "data-consolidation.html": [M, "verifikasi", "Verifikasi & konsolidasi data"],
+    "evidence.html": [M, "verifikasi", "Bukti lapangan & verifikasi"],
+    "kelola-bencana.html": [M, "komando", "Control Centre & kelola bencana"],
+    "sitrep.html": [M, "komando", "Control Centre & SITREP"],
+    "back-office.html": [M, "komando", "Ekosistem penanganan"],
+    "ai-analyst.html": [M, "ai", "AI di Rescue-Net"],
+    "ai-settings.html": [M, "ai", "AI di Rescue-Net"],
+    "tawarkan-alat.html": [M, "alat-kerja", "Posko Alat Kerja & Tawarkan Alat"],
+    "penyedia-alat.html": [M, "alat-kerja", "Posko Alat Kerja & Tawarkan Alat"],
+    "resource-profile.html": [M, "alat-kerja", "Alat & sumber daya"],
+    "contact-directory.html": [M, "posko-komunikasi", "Posko Komunikasi & kontak"],
+    "notifikasi-settings.html": [M, "hp", "Aplikasi, notifikasi & offline"],
+    "jejak-audit.html": [M, "lainnya", "Fitur lainnya"],
+    "pengadaan-tender.html": [M, "lainnya", "Fitur lainnya"]
   };
   // posko-detail / posko-logistik melayani beberapa jenis: tebak dari teks halaman bila bisa.
   var BY_TEXT = [
@@ -46,7 +81,7 @@
       txt = ((h && h.textContent) || "") + " " + ((sub && sub.textContent) || "");
     }
     for (var i = 0; i < BY_TEXT.length; i++) {
-      if (BY_TEXT[i][0].test(txt)) { cur = [BY_TEXT[i][1], BY_TEXT[i][2]]; return; }
+      if (BY_TEXT[i][0].test(txt)) { cur = [P, BY_TEXT[i][1], BY_TEXT[i][2]]; return; }
     }
   }
 
@@ -58,6 +93,7 @@
       ".rn-ph-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;margin-left:10px;border-radius:50%;" +
       "border:2px solid #b8361f;background:#fff;color:#b8361f;font:800 17px/1 Nunito,Roboto,sans-serif;cursor:pointer;vertical-align:middle;flex:0 0 auto}" +
       ".rn-ph-btn:hover,.rn-ph-btn:focus-visible{background:#b8361f;color:#fff;outline:none}" +
+      ".rn-ph-btn.rn-ph-float{position:fixed;top:70px;right:14px;z-index:8000;margin:0;box-shadow:0 4px 12px rgba(0,0,0,.18)}" +
       ".rn-ph-ov{position:fixed;inset:0;z-index:9000;background:rgba(30,20,15,.45);display:flex;align-items:center;justify-content:center;padding:16px}" +
       ".rn-ph-box{background:#fff;border-radius:14px;width:min(860px,100%);height:min(86vh,900px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.3)}" +
       ".rn-ph-head{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #eadfdb;font:700 16px Nunito,Roboto,sans-serif;color:#2a1f1b}" +
@@ -69,14 +105,14 @@
 
   function open() {
     guessType();
-    var url = "panduan.html#" + cur[0];
+    var url = cur[0] + "#" + cur[1];
     var ov = document.createElement("div");
     ov.className = "rn-ph-ov";
-    ov.innerHTML = '<div class="rn-ph-box" role="dialog" aria-modal="true" aria-label="Panduan ' + cur[1] + '">' +
-      '<div class="rn-ph-head">❓ Panduan ' + cur[1] +
-      '<a href="panduan.html#' + cur[0] + '" target="_blank" rel="noopener">Buka di tab baru ↗</a>' +
+    ov.innerHTML = '<div class="rn-ph-box" role="dialog" aria-modal="true" aria-label="Panduan ' + cur[2] + '">' +
+      '<div class="rn-ph-head">❓ ' + (cur[0] === P ? "Panduan " : "Manual: ") + cur[2] +
+      '<a href="' + url + '" target="_blank" rel="noopener">Buka di tab baru ↗</a>' +
       '<button type="button" aria-label="Tutup">×</button></div>' +
-      '<iframe src="' + url + '" title="Panduan ' + cur[1] + '"></iframe></div>';
+      '<iframe src="' + url + '" title="Panduan ' + cur[2] + '"></iframe></div>';
     function close() { ov.remove(); document.removeEventListener("keydown", esc); }
     function esc(e) { if (e.key === "Escape") close(); }
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
@@ -88,51 +124,65 @@
     fr.addEventListener("load", function () {
       try {
         var d = fr.contentDocument, s = d.createElement("style");
-        s.textContent = ".sidebar,.rn-public-header,.topbar,.rn-drawer-hamburger,.rn-ai-fab,#rnAiFab,.rn-mobile-topbar{display:none!important}" +
+        s.textContent = ".sidebar,.rn-public-header,.topbar,.rn-drawer-hamburger,.rn-ai-fab,#rnAiFab,.rn-mobile-topbar,#rnPoskoHelp{display:none!important}" +
           ".app-shell{display:block!important;zoom:1!important;width:auto!important;min-width:0!important}" +
           "body{min-width:0!important;padding:0!important}.main{padding:12px 16px!important;min-height:0!important}";
         d.head.appendChild(s);
-        var t = d.getElementById(cur[0]);
+        var t = d.getElementById(cur[1]);
         if (t) t.scrollIntoView({ block: "start" });
       } catch (e) { /* beda origin: biarkan tampil apa adanya */ }
     });
     ov.querySelector(".rn-ph-head button").focus();
   }
 
+  function visible(el) {
+    if (!el) return false;
+    var r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden";
+  }
   function visibleHeading() {
     var all = document.querySelectorAll(".main h1, .main h2, main h1, main h2, .page-header h1, .page-header h2");
-    for (var i = 0; i < all.length; i++) {
-      var r = all[i].getBoundingClientRect();
-      if (r.width > 0 && r.height > 0 && getComputedStyle(all[i]).visibility !== "hidden") return all[i];
-    }
+    for (var i = 0; i < all.length; i++) if (visible(all[i])) return all[i];
     return null;
   }
-  function place(force) {
-    if (document.getElementById("rnPoskoHelp")) return true;
-    var h = visibleHeading();
-    if (!h && !force) return false;
+  function button() {
+    var b = document.getElementById("rnPoskoHelp");
+    if (b) return b;
     css();
-    guessType();
-    var b = document.createElement("button");
+    b = document.createElement("button");
     b.type = "button";
     b.id = "rnPoskoHelp";
     b.className = "rn-ph-btn";
     b.textContent = "?";
-    b.title = "Panduan " + cur[1];
-    b.setAttribute("aria-label", "Buka panduan " + cur[1]);
     b.setAttribute("data-no-i18n", "");
     b.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); open(); });
-    if (h) h.appendChild(b);
-    else { // tidak ada judul yang terlihat: tombol melayang di kanan atas
-      b.style.cssText = "position:fixed;top:70px;right:14px;z-index:8000;margin:0;box-shadow:0 4px 12px rgba(0,0,0,.18)";
-      document.body.appendChild(b);
-    }
+    return b;
+  }
+  // Tempel di judul yang TERLIHAT; bila tak ada, melayang di kanan atas. Dipanggil ulang bila tombol tersembunyi.
+  function place(force) {
+    var b = document.getElementById("rnPoskoHelp");
+    if (b && visible(b)) return true;
+    var h = visibleHeading();
+    if (!h && !force) return false;
+    guessType();
+    b = button();
+    b.title = (cur[0] === P ? "Panduan " : "Manual: ") + cur[2];
+    b.setAttribute("aria-label", "Buka " + b.title);
+    if (h) { b.classList.remove("rn-ph-float"); h.appendChild(b); }
+    else { b.classList.add("rn-ph-float"); document.body.appendChild(b); }
     return true;
   }
 
   function start() {
-    if (place()) return;
-    var n = 0, t = setInterval(function () { if (place(n >= 10) || ++n > 20) clearInterval(t); }, 300);
+    var n = 0;
+    var t = setInterval(function () {
+      n++;
+      place(n >= 4);
+      if (n > 40) clearInterval(t); // ±20 detik: halaman ringkasan/detail sering mengganti bagian yang terlihat
+    }, 500);
+    window.addEventListener("resize", function () { place(true); });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) place(true); });
+    document.addEventListener("click", function () { setTimeout(function () { place(true); }, 700); }, true);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();

@@ -54,6 +54,13 @@ def _count(doctype, scope, since, until, field="creation", extra=None):
     return frappe.db.count(doctype, f)
 
 
+def _safe(fn, default):
+    try:
+        return fn()
+    except Exception:
+        return default
+
+
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=30, seconds=60)
 def sitrep(disaster_event, hours=24):
@@ -158,6 +165,8 @@ def sitrep(disaster_event, hours=24):
         "sektor": sek,
         "pendanaan": dana,
         "koordinasi": koord,
+        "gambaran": _safe(lambda: oc.gambaran(event, dis, hours), ""),
+        "kontak": _safe(lambda: oc.kontak(poskos), []),
         "bencana": {"id": event, "title": dis.get("title") or event, "status": dis.get("event_status"),
                     "severity": dis.get("severity"), "mulai": str(dis.get("started_at") or "")[:16]},
         "periode": {"jam": hours, "dari": str(since)[:16], "sampai": str(until)[:16]},

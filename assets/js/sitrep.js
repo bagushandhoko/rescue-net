@@ -30,6 +30,10 @@
       $("srTitle").textContent = "SITREP No. " + (r.nomor || 1) + " — " + r.bencana.title;
       $("srMeta").textContent = "Periode " + r.periode.dari + " s/d " + r.periode.sampai + " WIB · dibuat " + r.dibuat +
         " · status bencana: " + (r.bencana.status || "-") + (r.laporan_berikutnya ? " · laporan berikutnya: " + r.laporan_berikutnya + " WIB" : "");
+      $("srGambaran").textContent = r.gambaran || "";
+      $("srKontak").innerHTML = (r.kontak || []).map(function (c) {
+        return '<li><a href="' + esc(c.tautan) + '">' + esc(c.posko) + "</a>" + (c.pic ? " — PIC " + esc(c.pic) : "") + (c.peran ? " (" + esc(c.peran) + ")" : "") + "</li>";
+      }).join("") + ((r.kontak || []).length ? '<li><small>Nomor telepon PIC tampil di halaman posko setelah login (privasi).</small></li>' : "");
       $("srHigh").innerHTML = (r.highlights || []).map(function (h) { return "<li>" + esc(h) + "</li>"; }).join("") || "<li>Belum ada ringkasan.</li>";
       var s = r.situasi, jl = s.jiwa_per_layanan || {};
       $("srSituasi").innerHTML = tile("Jiwa terdampak", num(s.jiwa_terdampak)) + tile("Pengungsi di shelter", num(s.pengungsi_shelter)) +

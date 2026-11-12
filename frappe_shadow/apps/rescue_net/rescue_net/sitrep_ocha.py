@@ -137,3 +137,33 @@ def _fmt(v):
         return "{:,}".format(int(round(flt(v)))).replace(",", ".")
     except Exception:
         return str(v if v is not None else "-")
+
+
+def gambaran(event, dis, hours):
+    """Situasi umum (OCHA "Situation overview"): jenis, lokasi, tingkat, sejak kapan — dari data bencana."""
+    row = frappe.db.get_value("RN Disaster Event", event, ["title", "location_summary", "severity", "started_at", "event_status"],
+                              as_dict=True) or {}
+    sev = {"critical": "kritis", "high": "tinggi", "medium": "sedang", "low": "rendah"}.get(str(row.get("severity") or "").lower(),
+                                                                                         row.get("severity") or "belum ditetapkan")
+    hari = None
+    try:
+        if row.get("started_at"):
+            hari = (frappe.utils.now_datetime() - get_datetime(row.get("started_at"))).days
+    except Exception:
+        hari = None
+    teks = "%s%s. Tingkat keparahan: %s. Status: %s%s." % (
+        row.get("title") or event, (" di " + row.get("location_summary")) if row.get("location_summary") else "",
+        sev, _STATUS.get(str(row.get("event_status") or ""), row.get("event_status") or "-"),
+        ("; berlangsung %s hari sejak %s" % (hari, str(row.get("started_at"))[:10])) if hari is not None else "")
+    return teks
+
+
+def kontak(poskos):
+    """Kontak koordinasi untuk SITREP publik: nama posko & PIC (tanpa nomor — nomor hanya di halaman posko setelah login)."""
+    if not poskos:
+        return []
+    rows = frappe.get_all("RN Posko", filters={"name": ["in", poskos], "posko_type": ["in", ["org_admin", "posko_operator", "field_assessment"]]},
+                          fields=["name", "title", "posko_type", "officer_in_charge_name", "officer_in_charge_role"],
+                          limit_page_length=10, ignore_permissions=True)
+    return [{"posko": r.title, "peran": r.officer_in_charge_role or "", "pic": r.officer_in_charge_name or "",
+             "tautan": "posko-detail.html?id=%s" % r.name} for r in rows if not _TEST.search(r.title or "")]

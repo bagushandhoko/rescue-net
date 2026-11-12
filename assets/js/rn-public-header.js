@@ -250,4 +250,33 @@
     const base = i >= 0 ? href.slice(0, i) : href, hash = i >= 0 ? href.slice(i) : "";
     a.setAttribute("href", base + (base.indexOf("?") >= 0 ? "&" : "?") + "next=" + encodeURIComponent(next) + hash);
   }, true);
+
+  // Audit SOP 2026-11-12 (S6): sisa kata Inggris pendek di tombol/judul kolom/status diganti bahasa Indonesia saat
+  // bahasa = ID (mode EN dibiarkan untuk rn-i18n). Hanya teks pendek (<=30 huruf) pada elemen kontrol, kata utuh.
+  const EN_ID = { "Refresh": "Muat ulang", "Save": "Simpan", "Delete": "Hapus", "Submit": "Kirim", "Edit": "Ubah",
+    "Evidence": "Bukti", "Pending": "Menunggu", "Request": "Permintaan", "Dispatch": "Berangkatkan", "Assign": "Tugaskan",
+    "Draft": "Draf", "Resource": "Sumber daya", "Upload": "Unggah", "Cancel": "Batal", "Approved": "Disetujui",
+    "Rejected": "Ditolak", "Restricted": "Terbatas", "Geotagged": "Bertitik GPS", "Overview": "Ringkasan", "Back": "Kembali" };
+  const EN_RX = new RegExp("\\b(" + Object.keys(EN_ID).join("|") + ")\\b", "g");
+  function isEnglish() {
+    try { if (new URLSearchParams(location.search).get("lang") === "en") return true; return localStorage.getItem("rn-lang") === "en"; }
+    catch (e) { return false; }
+  }
+  function idKata(root) {
+    if (isEnglish()) return;
+    (root || document).querySelectorAll("button, a.btn, .btn, th, .chip, .status-pill, .rn-pill, label > span, summary, h3, h4, option")
+      .forEach(function (el) {
+        el.childNodes.forEach(function (n) {
+          if (n.nodeType !== 3) return;
+          const t = n.nodeValue; if (!t || t.trim().length > 30 || !EN_RX.test(t)) return;
+          EN_RX.lastIndex = 0;
+          n.nodeValue = t.replace(EN_RX, function (w) { return EN_ID[w] || w; });
+        });
+      });
+  }
+  let idTimer = null;
+  function idSoon() { clearTimeout(idTimer); idTimer = setTimeout(function () { idKata(document); }, 250); }
+  document.addEventListener("DOMContentLoaded", idSoon);
+  window.addEventListener("load", idSoon);
+  try { new MutationObserver(idSoon).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
 })();

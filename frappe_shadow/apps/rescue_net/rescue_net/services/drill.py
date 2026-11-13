@@ -74,6 +74,15 @@ def block_demo_login(login_manager=None):
     user = getattr(login_manager, "user", None) or frappe.session.user
     if is_demo_user(user) and operational_mode():
         frappe.throw(DEMO_LOGIN_MSG, frappe.AuthenticationError)
+    if is_demo_user(user):
+        # owner 2026-11-13: masuk dengan akun demo = ekosistem demo -> tampilan Simulasi, dan tetap Simulasi setelah
+        # keluar sampai pengunjung sendiri memilih "Riil Data Bencana" di Home.
+        cm = getattr(frappe.local, "cookie_manager", None)
+        if cm is not None:
+            try:
+                cm.delete_cookie(VIEW_COOKIE)
+            except Exception:
+                pass
 
 
 # Pilihan tampilan per pengunjung (owner 2026-11-13: tombol "Lihat Simulasi" / "Riil Data Bencana" di Home).

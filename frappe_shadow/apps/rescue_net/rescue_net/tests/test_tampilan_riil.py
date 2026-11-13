@@ -136,3 +136,20 @@ class TestGuardShortIds(OperationalBase):
         self._mode(True)
         with _Cookie(None):
             drill.guard_guest_refs(frappe._dict({"disaster_event": self.sim.name}))  # Mode Operasional: admin boleh
+
+
+
+class TestDemoLoginGoesSimulasi(OperationalBase):
+    def test_demo_login_clears_riil_choice_real_user_keeps_it(self):
+        from types import SimpleNamespace
+        from frappe.auth import CookieManager
+        old = getattr(frappe.local, "cookie_manager", None)
+        try:
+            frappe.local.cookie_manager = CookieManager()
+            drill.block_demo_login(SimpleNamespace(user="ld1.demo@rescue-net.local"))
+            self.assertIn(drill.VIEW_COOKIE, frappe.local.cookie_manager.to_delete)
+            frappe.local.cookie_manager = CookieManager()
+            drill.block_demo_login(SimpleNamespace(user="warga.nyata@gmail.com"))
+            self.assertNotIn(drill.VIEW_COOKIE, frappe.local.cookie_manager.to_delete)
+        finally:
+            frappe.local.cookie_manager = old

@@ -39,7 +39,7 @@
     "dapur-umum.html": [P, "p-dapur", "Dapur Umum"],
     "management-relawan.html": [P, "p-relawan", "Posko Relawan"],
     "posko-alat.html": [P, "p-alat", "Posko Alat Kerja"],
-    "alat-kerja.html": [P, "p-alat", "Posko Alat Kerja"],
+    "alat-kerja.html": [M, "alat-kerja", "Recovery Program & Alat Kerja"],
     "alat-komunikasi.html": [P, "p-komunikasi", "Posko Komunikasi"],
     "search-found.html": [P, "p-sar", "Posko SAR"],
     "komando-pusat.html": [P, "p-komando", "Posko Komando"],
@@ -55,9 +55,9 @@
     "registrasi-posko.html": [M, "posko", "Mendaftar & mengelola posko"],
     "auth.html": [M, "registrasi", "Registrasi akun & organisasi"],
     "organisasi-posko.html": [M, "organisasi", "Organisasi terbuka & tertutup"],
-    "koordinasi-organisasi.html": [M, "organisasi", "Koordinasi organisasi"],
+    "koordinasi-organisasi.html": [M, "organisasi", "Koordinasi organisasi (termasuk backup data organisasi)"],
     "verification-approval.html": [M, "verifikasi", "Verifikasi berjenjang"],
-    "tawarkan-alat.html": [M, "alat-kerja", "Posko Alat Kerja & Tawarkan Alat"],
+    "tawarkan-alat.html": [M, "alat-kerja", "Recovery Program & Alat Kerja"],
     "penyedia-alat.html": [M, "alat-kerja", "Posko Alat Kerja & Tawarkan Alat"],
     "pengadaan-tender.html": [M, "lainnya", "Fitur lainnya"]
   };

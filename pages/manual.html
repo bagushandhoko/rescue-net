@@ -72,14 +72,14 @@
         <ol start="24">
           <li><a href="#jenis-posko">Jenis posko (12)</a></li>
           <li><a href="#kelola-posko">Kelola Posko Saya</a></li>
-          <li><a href="#alat-kerja">Posko Alat Kerja, Recovery &amp; Tawarkan Alat</a></li>
+          <li><a href="#alat-kerja">Recovery Program &amp; Alat Kerja</a></li>
           <li><a href="#posko-komunikasi">Posko Komunikasi</a></li>
         </ol>
         <p class="toc-group">E. Pembaruan</p>
         <ol start="28">
           <li><a href="#pembaruan">Perbaikan sejak manual dibuat (s.d. 8 Nov)</a></li>
           <li><a href="#audit-1111">Pembaruan hasil audit proses (11 Nov)</a></li>
-          <li><a href="#pembaruan-1211">Pembaruan 12–13 Nov (termasuk tampilan Simulasi/Riil)</a></li>
+          <li><a href="#pembaruan-1211">Pembaruan 12–13 Nov (Simulasi/Riil, Posko Relawan, Alat Kerja, Backup Organisasi)</a></li>
         </ol>
         <p class="toc-group">F. Panduan per halaman</p>
         <ol start="31">
@@ -290,7 +290,7 @@
           <ul>
             <li><b>Search &amp; Found:</b> laporan orang hilang dan ditemukan, dengan kontak pelapor yang tidak pernah dibuka ke publik.</li>
             <li><b>Kartu pasien:</b> riwayat dan kondisi terakhir pasien posko medis, hanya untuk petugas.</li>
-            <li><b>Recovery dan Alat Kerja:</b> dari obyek kerusakan, rencana rekonstruksi, dan progresnya, sampai alat yang dibutuhkan, siapa penyedianya, kapan bisa dipakai, serta dukungan transport, operator, dan biaya operasionalnya.</li>
+            <li><b>Recovery Program &amp; Alat Kerja:</b> dari obyek kerusakan, rencana rekonstruksi, dan progresnya, sampai alat yang dibutuhkan, siapa penyedianya, kapan bisa dipakai, serta dukungan transport, operator, dan biaya operasionalnya.</li>
             <li><b>Relawan:</b> relawan tersedia (jadwal, kendaraan, butuh dijemput, area layanan) dan relawan yang ditempatkan beserta tugasnya. Ada check-in kehadiran harian lewat QR.</li>
             <li><b>Program khusus &amp; tender:</b> program donasi dengan target dan realisasi, serta penawaran untuk kebutuhan besar.</li>
             <li><b>Mode latihan (simulasi):</b> bencana latihan untuk pelatihan, tidak pernah tampil di daftar publik.</li>
@@ -370,7 +370,7 @@
           <h4>E. Setelah terdaftar</h4>
           <ol class="steps">
             <li>Daftarkan posko di <a href="registrasi-posko.html">Registrasi Posko</a>, lalu centang bencana yang ditangani. Lihat <a href="#posko">Mendaftar &amp; mengelola posko</a>.</li>
-            <li>Atur keterbukaan, anggota, dan posko organisasi di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a>.</li>
+            <li>Atur keterbukaan, anggota, dan posko organisasi di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a>. Admin organisasi juga bisa <a href="#backup-organisasi">backup &amp; memulihkan data organisasinya sendiri</a>.</li>
             <li>Atur kunci AI organisasi, notifikasi, dan kata sandi di <a href="ai-settings.html">Setting</a> dan <a href="notifikasi-settings.html">Notifikasi</a>.</li>
             <li>Ingin mencoba dulu? Di halaman <a href="auth.html">Masuk</a> tersedia daftar <b>akun demo</b> (posko, organisasi, TNI, BNPB, masyarakat) dengan kata sandi <b>Demo12345</b>.</li>
           </ol>
@@ -480,7 +480,7 @@
             <li><a href="shelter-detail.html">Shelter</a>: okupansi, kebutuhan dasar, kelompok rentan, check-in dan check-out penghuni.</li>
             <li><a href="dapur-umum.html">Dapur Umum</a>: produksi makanan, bahan, gas dan BBM.</li>
             <li><a href="management-relawan.html">Manajemen Relawan</a>: daftar relawan, relawan tersedia, relawan ditempatkan, papan penugasan.</li>
-            <li><a href="posko-alat.html">Posko Alat Kerja</a> dan <a href="alat-komunikasi.html">Posko Komunikasi</a>: lihat bagian D.</li>
+            <li><a href="alat-kerja.html#pengaturan">Recovery Program &amp; Alat Kerja › Pengaturan Alat Kerja</a> dan <a href="alat-komunikasi.html">Posko Komunikasi</a>: lihat bagian D.</li>
           </ul>
         </section>
 
@@ -544,14 +544,16 @@
         </section>
 
         <section id="alat-kerja">
-          <h3>26. Posko Alat Kerja, Recovery &amp; Tawarkan Alat</h3>
+          <h3>26. Recovery Program &amp; Alat Kerja</h3>
+          <p>Sejak 13 November menu <b>Recovery dan Alat Kerja</b>, <b>Posko Alat Kerja</b>, dan halaman <b>Tawarkan Alat</b> digabung menjadi satu halaman: <a href="alat-kerja.html">Recovery Program &amp; Alat Kerja</a>.</p>
           <ol class="steps">
-            <li><b>Pengelola posko alat</b>: buka <a href="posko-alat.html">Posko Alat Kerja</a> → pilih posko → <b>Tambah Alat</b>. Pilih kategori; kolom spesifikasi menyesuaikan (mis. genset: kVA, fase, BBM, konsumsi; tenda: tipe, ukuran, kapasitas orang; perahu karet: panjang, kapasitas, mesin). Isi merek, model, tahun, no. seri, kondisi, dan unggah beberapa foto (maks. 10).</li>
-            <li><b>Pemilik alat perorangan / perusahaan</b> yang ingin menyumbangkan, meminjamkan, atau menyewakan alat: buka <a href="tawarkan-alat.html">Tawarkan / Sumbangkan Alat</a> (tombol di Recovery dan Alat Kerja). Isi skema (hibah / pinjam / sewa), data &amp; spesifikasi alat, masa bisa dipakai, termasuk operator atau tidak, kebutuhan mobilisasi (transport, BBM, akomodasi operator, biaya), kontak person, dan foto.</li>
-            <li><b>Semua orang</b>: di <a href="alat-kerja.html">Recovery dan Alat Kerja</a>, setiap alat (tabel penyedia, KPI, kategori, kelompok alat, operator, dispatch, lokasi kerja, hambatan) bisa diklik ke <b>detail alat &amp; penyedia</b>: spesifikasi, foto, penyedia (tautan ke halaman organisasi / posko), dan kontak person.</li>
-            <li><b>Kebutuhan relawan recovery</b>: pengelola proyek recovery memasang kebutuhan tenaga (tukang, tenaga angkut, dll.), relawan menekan <b>Daftar jadi relawan</b>, pengelola menerima / menolak; status otomatis "Terpenuhi" saat kuota tercapai.</li>
+            <li><b>Semua orang</b> melihat obyek recovery &amp; rencana rekonstruksi, kebutuhan alat, ketersediaan alat per kategori, penyedia alat, jadwal dispatch (alat dipakai di mana, sejak kapan, sampai kapan), dan kebutuhan relawan recovery. Setiap alat bisa diklik ke <b>detail alat &amp; penyedia</b> (spesifikasi, foto, penyedia).</li>
+            <li><b>Menambah alat</b>: tekan <b>+ Tambah Alat Kerja</b> di kepala halaman (tamu diminta login dulu). Isi pemilik &amp; skema (hibah / pinjam / sewa), kategori (kolom spesifikasi menyesuaikan, mis. genset: kVA, BBM; tenda: kapasitas; perahu: mesin), merek, model, no. seri, kondisi, masa bisa dipakai, operator ikut atau tidak, kebutuhan mobilisasi (transport, BBM, akomodasi operator, perkiraan biaya), kontak person, dan foto (maks. 10).</li>
+            <li><b>Pengaturan Alat Kerja</b>: tombol ini <b>aktif untuk pemilik alat</b> (perorangan / organisasi) dan <b>pengelola posko alat kerja</b>. Isinya: form alat, daftar <b>Alat Saya</b> (ubah, tarik penawaran), dan <b>Posko Alat Kerja saya</b> → <b>Kelola inventaris</b> (inventaris, alat dipakai/dikirim, permintaan alat).</li>
+            <li><b>Pemilik alat yang login langsung dibawa ke Pengaturan Alat Kerja.</b> Pengelola posko alat kerja juga langsung ke halaman ini.</li>
+            <li><b>Kebutuhan relawan recovery</b>: pengelola proyek recovery memasang kebutuhan tenaga, relawan menekan <b>Daftar jadi relawan</b>, pengelola menerima / menolak; status otomatis "Terpenuhi" saat kuota tercapai.</li>
           </ol>
-          <p class="note">Kontak person alat hanya tampil untuk pengguna yang login, kecuali pemilik mencentang "kontak boleh dilihat publik". Nama pemilik perorangan tidak ditampilkan ke publik.</p>
+          <p class="note">Kontak person alat hanya tampil untuk pengguna yang login, kecuali pemilik mencentang "kontak boleh dilihat publik". Tautan lama Tawarkan Alat otomatis membuka Pengaturan Alat Kerja.</p>
         </section>
 
         <section id="posko-komunikasi">
@@ -657,6 +659,13 @@
             <li><b>SITREP</b> mengikuti susunan OCHA dan menyediakan API (JSON, EDXL-SitRep, HXL) dengan kunci yang disetujui super admin — lihat <a href="#h-sitrep">bagian 31</a>.</li>
             <li>Tombol <b>?</b> di setiap halaman membuka bagian manual halaman tersebut.</li>
           </ul>
+          <h4 id="pembaruan-1311">Pembaruan 13 November</h4>
+          <ul>
+            <li><b>Posko Relawan</b>: halaman Relawan Saya digabung ke Posko Relawan sebagai tombol <b>Pengaturan Relawan</b> (lihat <a href="#h-relawan-saya">bagian 39</a>). Publik melihat <b>nama relawan</b> (tanpa nomor HP), bidang, posisi bertugas/menginap, serta panel <b>Kebutuhan &amp; Ketersediaan Relawan</b>.</li>
+            <li><b>Recovery Program &amp; Alat Kerja</b>: satu halaman untuk recovery, posko alat kerja, dan menambah alat (lihat <a href="#alat-kerja">bagian 26</a>).</li>
+            <li><b>Backup &amp; Pulihkan Data Organisasi</b> untuk admin organisasi (lihat di bawah).</li>
+            <li><b>Tampilan Simulasi / Riil</b> di Home (lihat di bawah).</li>
+          </ul>
           <h4 id="tampilan-data">Tampilan data: Simulasi atau Riil (13 November)</h4>
           <p>Di bagian atas halaman Home, terdapat dua tombol pilihan tampilan:</p>
           <ul>
@@ -666,6 +675,17 @@
           <p>Setelah memilih, pengunjung langsung dibawa ke halaman Bencana Aktif. Pilihan ini bisa diganti kapan saja dari Home.</p>
           <p>Pilihan tersimpan di browser atau HP masing-masing selama 1 tahun dan diperpanjang setiap membuka Home, sehingga tidak mempengaruhi pengunjung lain. Pengguna juga bisa memilih tampilan awal saat registrasi akun.</p>
           <p>Data simulasi tidak dihapus, hanya disembunyikan. Namun, jika Super Admin mengaktifkan saklar Mode Operasional di Setting, simulasi akan disembunyikan untuk semua orang dan tombol di Home terkunci di Riil.</p>
+          <p>Halaman yang membutuhkan bencana (mis. Control Centre) menampilkan keterangan "belum ada bencana riil" bila Anda memilih Riil dan belum ada bencana nyata. <b>Masuk dengan akun demo</b> otomatis memindahkan tampilan ke <b>Simulasi</b>, dan tetap Simulasi setelah keluar sampai Anda sendiri memilih Riil Data Bencana di Home.</p>
+          <h4 id="backup-organisasi">Backup &amp; Pulihkan Data Organisasi (13 November)</h4>
+          <p>Untuk <b>admin organisasi</b> (pemilik organisasi) di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a>, bagian <b>Organisasi Saya</b>:</p>
+          <ol class="steps">
+            <li><b>Buat backup sekarang</b>: satu berkas berisi data organisasi, anggota, semua posko, dan seluruh isinya (kebutuhan, stok, armada, relawan, pasien, shelter, bukti). Berkas tersimpan di server dan bisa <b>diunduh</b>.</li>
+            <li>Bila data rusak atau terhapus, tekan <b>Pulihkan</b> pada salah satu backup, atau pilih berkas yang pernah diunduh lalu <b>Pulihkan dari berkas</b> (maks. 7 MB).</li>
+            <li>Pemulihan <b>hanya mengubah data milik organisasi Anda</b>; data organisasi lain tidak tersentuh. Sebelum memulihkan, sistem <b>otomatis membuat backup keadaan sekarang</b> sehingga bisa dikembalikan.</li>
+            <li>Data yang dibuat setelah backup <b>tetap ada</b>, kecuali Anda mencentang <b>hapus juga data yang dibuat setelah backup</b>.</li>
+            <li>Setiap backup dan pemulihan tercatat di <b>Riwayat backup &amp; pemulihan</b>.</li>
+          </ol>
+          <p class="note">Foto dan dokumen tidak disalin ke dalam berkas backup (hanya alamatnya) dan tidak terhapus saat pemulihan.</p>
         </section>
 
         <!-- ================= F ================= -->

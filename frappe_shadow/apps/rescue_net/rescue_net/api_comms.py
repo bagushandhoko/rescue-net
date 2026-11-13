@@ -20,6 +20,7 @@ from frappe.utils import now_datetime
 
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from rescue_net.access_policy import rn_actor
+from rescue_net.services import drill
 
 
 # --- category / status labels --------------------------------------------------
@@ -218,34 +219,38 @@ def comms_board(disaster_event=None):
             "name", "device_name", "category", "status", "battery_pct",
             "frequency_channel", "frequency_mhz", "contact_id", "current_location", "posko", "owner_type",
             "owner_id", "notes", "observed_at", "coverage_km", "power_source", "power_endurance_hours",
+            "disaster_event",
         ],
         order_by="category asc, device_name asc",
         limit_page_length=3000,
     )
     # volunteer nodes are listed in jaringan.node_relawan, not as posko inventory (owner_type may be NULL)
     devices = [d for d in devices if d.owner_type != "relawan"]
+    devices = drill.drop_hidden_rows(devices)  # tampilan riil: angka & daftar tanpa data simulasi
 
     operators = frappe.get_all(
         "RN Comms Operator",
         filters=dfilt,
         fields=[
             "name", "operator_name", "role", "channel", "status",
-            "contact_phone", "skills", "posko", "shift_note", "observed_at",
+            "contact_phone", "skills", "posko", "shift_note", "observed_at", "disaster_event",
         ],
         order_by="modified desc",
         limit_page_length=1000,
     )
+    operators = drill.drop_hidden_rows(operators)
 
     frequencies = frappe.get_all(
         "RN Comms Frequency",
         filters=dfilt,
         fields=[
             "name", "band_label", "network_type", "frequency_value",
-            "provider", "status", "load_pct", "notes", "observed_at",
+            "provider", "status", "load_pct", "notes", "observed_at", "disaster_event",
         ],
         order_by="network_type asc, band_label asc",
         limit_page_length=500,
     )
+    frequencies = drill.drop_hidden_rows(frequencies)
 
     # ---- poskos for this event (connectivity) ----
     posko_fields = ["name", "title", "latitude", "longitude", "address", "province_name",
@@ -267,6 +272,7 @@ def comms_board(disaster_event=None):
             "RN Posko", fields=posko_fields, limit_page_length=2000,
         )
 
+    poskos = drill.drop_hidden_rows(poskos, posko_keys=("name",))
     posko_title = {p.name: (p.get("title") or p.name) for p in poskos}
 
     # device rollups per posko (fallback connectivity signal)
@@ -928,6 +934,7 @@ def _volunteer_nodes(event, actor):
                           limit_page_length=500)
     if event:  # nodes for this disaster + standby nodes (no disaster) that can be called in
         rows = [r for r in rows if not r.disaster_event or r.disaster_event == event]
+    rows = drill.drop_hidden_rows(rows)
     return [_node_row(r, actor) for r in rows]
 
 

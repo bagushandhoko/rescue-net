@@ -36,7 +36,7 @@ def displacement_board(disaster_event=None):
           "in_camp", "posko", "people_count", "vulnerable_count",
           "health_status", "plan_type", "est_return_cost",
           "est_rebuild_support", "support_needed", "supporting_org",
-          "status", "notes", "modified"]
+          "status", "notes", "modified", "disaster_event"]
     vals = [x for x in {ev, disaster_event} if x]
     orf = ([["disaster_event", "in", vals], ["disaster_event_legacy_id", "in", vals]]
            if vals else None)
@@ -45,6 +45,8 @@ def displacement_board(disaster_event=None):
         "RN Displacement Plan", or_filters=orf, fields=_f,
         order_by="modified desc", limit_page_length=1000,
     )
+    from rescue_net.services import drill
+    rows = drill.drop_hidden_rows(rows)  # tampilan riil: tanpa rencana pengungsi simulasi
 
     def _p(r):
         r = dict(r)

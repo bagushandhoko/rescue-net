@@ -506,7 +506,8 @@ def _overlay_group_overrides(groups):
 def control_centre_summary():
     rn_actor(required=False)
 
-    rows = _fetch_need_rows()
+    from rescue_net.services import drill
+    rows = drill.drop_hidden_rows(_fetch_need_rows())  # tampilan riil: tanpa kebutuhan simulasi
 
     return {
         "raw_need_count": len(rows),

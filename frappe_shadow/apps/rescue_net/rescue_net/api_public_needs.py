@@ -47,6 +47,8 @@ def board(event=None, wilayah=None):
             limit_page_length=500)
         if public_posko_allowed(p.name)
     ]
+    from rescue_net.services import drill
+    poskos = drill.drop_hidden_rows(poskos, posko_keys=("name",))  # tampilan riil: tanpa posko simulasi
     names = [p.name for p in poskos]
     if not names:
         return {"event": event, "needs": [], "enough": [], "poskos": 0, "notes": []}

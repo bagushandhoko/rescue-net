@@ -38,10 +38,17 @@ def _retained_backup_dir():
 
 
 def run_daily_backup():
+    return run_backup("lengkap")
+
+
+def run_backup(jenis="lengkap"):
+    """jenis "lengkap" = database + berkas publik/privat + konfigurasi situs (berisi kunci enkripsi; bisa
+    dipulihkan di server lain). "data" = database saja (owner 2026-11-13)."""
     from frappe.utils.backups import new_backup
 
+    data_only = jenis == "data"
     odb = new_backup(
-        ignore_files=False,
+        ignore_files=data_only,
         force=True,
     )
 
@@ -52,17 +59,21 @@ def run_daily_backup():
     run_dir = os.path.join(dest_root, stamp)
     os.makedirs(run_dir, exist_ok=True)
 
-    for attr in (
+    attrs = ("backup_path_db",) if data_only else (
         "backup_path_db",
         "backup_path_files",
         "backup_path_private_files",
         "backup_path_conf",
-    ):
+    )
+    for attr in attrs:
         src = getattr(odb, attr, None)
         if src and os.path.isfile(src):
             shutil.copy2(src, run_dir)
+    with open(os.path.join(run_dir, "JENIS.txt"), "w") as fh:
+        fh.write("data" if data_only else "lengkap")
 
     _prune_old_backups(dest_root)
+    return stamp
 
 
 def _prune_old_backups(

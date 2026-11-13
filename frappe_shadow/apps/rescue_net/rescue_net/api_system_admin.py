@@ -75,6 +75,7 @@ def list_backups():
             "size_bytes": total,
             "has_database": "database" in files,
             "files": files,
+            "jenis": _jenis(full, files),
         })
 
     return {
@@ -84,20 +85,110 @@ def list_backups():
     }
 
 
+def _jenis(full, files):
+    try:
+        with open(os.path.join(full, "JENIS.txt")) as fh:
+            v = fh.read().strip()
+            if v in ("data", "lengkap"):
+                return v
+    except OSError:
+        pass
+    return "lengkap" if ("files" in files or "site_config" in files) else "data"
+
+
 @frappe.whitelist()
-def trigger_backup():
-    """Run an on-demand backup right now (in addition to the daily one)."""
+def trigger_backup(jenis="lengkap"):
+    """Cadangan sekarang (selain yang harian). jenis: "data" (database saja) | "lengkap" (pindah server)."""
     _require_system_manager()
+    if jenis not in ("data", "lengkap"):
+        frappe.throw("Jenis cadangan tidak dikenal.")
 
-    from rescue_net.setup.db_backup import run_daily_backup
+    from rescue_net.setup.db_backup import run_backup
 
-    run_daily_backup()
+    run_backup(jenis)
 
     frappe.logger().info(
-        f"[system-admin] manual backup triggered by {frappe.session.user}"
+        f"[system-admin] manual backup ({jenis}) triggered by {frappe.session.user}"
     )
 
     return list_backups()
+
+
+_TS_RE = r"^\d{8}-\d{6}$"
+
+_PULIHKAN_TXT = """PAKET PINDAH SERVER RESCUE-NET
+Situs: {site} | Cadangan: {ts} | Dibuat oleh: {by}
+
+ISI: database, berkas publik & privat, site_config.json.
+RAHASIA: site_config.json berisi KUNCI ENKRIPSI dan kata sandi database. Simpan berkas ini seperti kata sandi.
+
+MEMULIHKAN DI SERVER LAIN (paket instalasi Rescue-Net Node, folder node/ di repo rescue-net):
+  1. Pasang Docker di server baru, salin repo rescue-net, masuk ke folder node/.
+  2. Salin berkas .tar ini ke node/backups/
+  3. Jalankan:   ./pasang.sh --pulihkan backups/{tarname}
+     (situs, aplikasi, data, berkas, dan kunci enkripsi dipulihkan; tugas terjadwal belum dinyalakan)
+  4. Setelah diperiksa:  docker compose --profile jobs up -d
+  5. Pindahkan domain/Cloudflare Tunnel ke server baru; matikan tunnel di server lama.
+Rincian: node/README.md
+"""
+
+
+@frappe.whitelist(methods=["GET"])
+def unduh_cadangan(backup_timestamp, bagian="paket"):
+    """Unduh cadangan. bagian: "database" (.sql.gz saja) | "paket" (satu .tar untuk pindah server:
+    database + berkas + site_config.json + petunjuk + SHA256SUMS). System Manager saja."""
+    import hashlib
+    import io
+    import re
+    import tarfile
+
+    _require_system_manager()
+    if not re.match(_TS_RE, str(backup_timestamp or "")):
+        frappe.throw("Nama cadangan tidak valid.")
+    full = os.path.join(_retained_dir(), backup_timestamp)
+    if not os.path.isdir(full):
+        frappe.throw("Cadangan tidak ditemukan.")
+    files = _backup_files(full)
+    if "database" not in files:
+        frappe.throw("Cadangan ini tidak berisi database.")
+    site = frappe.local.site
+
+    if bagian == "database":
+        with open(os.path.join(full, files["database"]), "rb") as fh:
+            content = fh.read()
+        name = files["database"]
+    elif bagian == "paket":
+        if _jenis(full, files) != "lengkap":
+            frappe.throw("Paket pindah server hanya dari cadangan LENGKAP. Buat cadangan lengkap dulu.")
+        folder = f"rescue-net-{site.replace('.', '_')}-{backup_timestamp}"
+        name = folder + ".tar"
+        members = {}
+        for key in ("database", "files", "private_files"):
+            if key in files:
+                with open(os.path.join(full, files[key]), "rb") as fh:
+                    members[files[key]] = fh.read()
+        conf = os.path.join(full, files["site_config"]) if "site_config" in files else frappe.get_site_path("site_config.json")
+        with open(conf, "rb") as fh:
+            members["site_config.json"] = fh.read()
+        members["PULIHKAN.txt"] = _PULIHKAN_TXT.format(site=site, ts=backup_timestamp, by=frappe.session.user,
+                                                       tarname=name).encode()
+        members["SHA256SUMS"] = "".join(f"{hashlib.sha256(v).hexdigest()}  {k}\n" for k, v in sorted(members.items())).encode()
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode="w") as tar:
+            for k, v in members.items():
+                info = tarfile.TarInfo(f"{folder}/{k}")
+                info.size = len(v)
+                info.mode = 0o600
+                info.mtime = int(datetime.now().timestamp())
+                tar.addfile(info, io.BytesIO(v))
+        content = buf.getvalue()
+    else:
+        frappe.throw("Bagian unduhan tidak dikenal.")
+
+    frappe.logger().info(f"[system-admin] backup {backup_timestamp} ({bagian}) downloaded by {frappe.session.user}")
+    frappe.local.response.filename = name
+    frappe.local.response.filecontent = content
+    frappe.local.response.type = "download"
 
 
 def _read_status():

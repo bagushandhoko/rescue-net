@@ -1,0 +1,105 @@
+# Rescue-Net Node — paket instalasi server (Suri, 2026-11-13). Satu folder, satu perintah: ./pasang.sh
+# Isi: MariaDB 10.6 + 2 Redis + Frappe v15 (frappe, erpnext, rescue_net) + nginx pintu depan (+ Cloudflare Tunnel opsional).
+# Kode aplikasi & halaman web diambil langsung dari repo ini (folder induk), jadi pembaruan = git pull + ./perbarui.sh.
+# Semua angka & rahasia ada di .env (lihat .env.example). Data di volume Docker; pindah server = ./cadangan.sh lalu ./pasang.sh --pulihkan.
+name: ${RN_PROJECT:-rescuenet}
+
+x-frappe: &frappe
+  image: frappe/erpnext@sha256:9bb6205fe5a0fdd6e221583623940dc732475ef6b6a6994d4eded1518ed452ed   # frappe/erpnext:v15 (sama dengan produksi)
+  restart: unless-stopped
+  environment:
+    PYTHONPATH: /home/frappe/frappe-bench/apps/rescue_net
+    RN_SITE: ${RN_SITE:-osiun.localhost}   # dibaca rescue_net/wsgi.py (situs tetap)
+  volumes:
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+    - ../frappe_shadow/apps/rescue_net:/home/frappe/frappe-bench/apps/rescue_net
+    - ./backups:/backups
+  networks: [net]
+
+services:
+  mariadb:
+    image: mariadb@sha256:114d40be36852d0a019afd8458f7e1cc63fd300403b115b1f32e31130d5f671b   # mariadb:10.6
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --innodb-buffer-pool-size=${RN_DB_BUFFER:-256M}
+    environment:
+      MYSQL_ROOT_PASSWORD: ${RN_DB_ROOT_PASSWORD:?isi RN_DB_ROOT_PASSWORD di .env}
+    volumes: [db-data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      retries: 60
+    networks: [net]
+
+  redis-cache:
+    image: redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    restart: unless-stopped
+    networks: [net]
+
+  redis-queue:
+    image: redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+    restart: unless-stopped
+    networks: [net]
+
+  backend:
+    <<: *frappe
+    depends_on:
+      mariadb: {condition: service_healthy}
+      redis-cache: {condition: service_started}
+      redis-queue: {condition: service_started}
+    entrypoint: ["/bin/bash"]
+    command:
+      - -lc
+      - "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && cd sites && exec ../env/bin/gunicorn --bind=0.0.0.0:8000 --workers=${RN_WORKERS:-7} --threads=2 --worker-class=gthread --worker-tmp-dir=/dev/shm --timeout=120 --graceful-timeout=30 --max-requests=2000 --max-requests-jitter=200 --preload rescue_net.wsgi:application"
+
+  # tugas latar & terjadwal (notifikasi, BMKG, dsb.). Profil "jobs": JANGAN dinyalakan di server uji/gladi
+  # yang memakai data asli, supaya pesan tidak terkirim dua kali ke orang sungguhan.
+  worker:
+    <<: *frappe
+    profiles: ["jobs"]
+    depends_on: [backend]
+    entrypoint: ["/bin/bash"]
+    command: ["-lc", "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && exec bench --site ${RN_SITE:-osiun.localhost} worker --queue default"]
+
+  scheduler:
+    <<: *frappe
+    profiles: ["jobs"]
+    depends_on: [backend]
+    entrypoint: ["/bin/bash"]
+    command: ["-lc", "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && exec bench --site ${RN_SITE:-osiun.localhost} schedule"]
+
+  web:
+    image: nginx@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2   # nginx:alpine
+    restart: unless-stopped
+    depends_on: [backend]
+    ports: ["${RN_WEB_BIND:-127.0.0.1}:${RN_WEB_PORT:-8182}:80"]
+    environment:
+      RN_SITE: ${RN_SITE:-osiun.localhost}
+      RN_DOMAIN: ${RN_DOMAIN:-rescue-net.online}
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx
+    volumes:
+      - ./nginx:/etc/nginx/templates:ro
+      - ..:/repo:ro
+    networks: [net]
+
+  # Cloudflare Tunnel (opsional): docker compose --profile tunnel up -d. Token dari dashboard Cloudflare.
+  # PERHATIAN: satu token hanya boleh aktif di SATU server pada satu waktu (matikan di server lama dulu).
+  tunnel:
+    image: cloudflare/cloudflared:2025.4.2
+    profiles: ["tunnel"]
+    restart: unless-stopped
+    network_mode: host
+    command: ["tunnel", "--no-autoupdate", "--protocol", "http2", "run", "--token", "${RN_CF_TUNNEL_TOKEN:-}"]
+
+volumes:
+  db-data:
+  sites:
+  logs:
+
+networks:
+  net:
+    name: ${RN_PROJECT:-rescuenet}-net

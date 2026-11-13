@@ -86,10 +86,15 @@ function renderBackups(payload) {
         <div class="event-main">
           <div>
             <h4>${fmtTimestamp(r.timestamp)}</h4>
-            <p>${fmtBytes(r.size_bytes)} — ${Object.keys(r.files).join(", ") || "kosong"}</p>
+            <p>${fmtBytes(r.size_bytes)} — ${r.jenis === "data" ? "database saja" : "database + foto/dokumen + konfigurasi"}</p>
           </div>
-          <div class="chips"><span class="chip ${r.has_database ? "neutral" : "warning"}">${r.has_database ? "database ok" : "no db file"}</span></div>
+          <div class="chips"><span class="chip ${r.jenis === "data" ? "neutral" : "good"}">${r.jenis === "data" ? "data saja" : "lengkap"}</span>
+            ${r.has_database ? "" : '<span class="chip warning">tanpa database</span>'}</div>
         </div>
+        ${r.has_database ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+          <a class="btn ghost mini" href="${RN_SYSADMIN_BASE}/rescue_net.api_system_admin.unduh_cadangan?backup_timestamp=${encodeURIComponent(r.timestamp)}&bagian=database">Unduh database</a>
+          ${r.jenis === "lengkap" ? `<a class="btn mini" href="${RN_SYSADMIN_BASE}/rescue_net.api_system_admin.unduh_cadangan?backup_timestamp=${encodeURIComponent(r.timestamp)}&bagian=paket">Unduh paket pindah server</a>` : ""}
+        </div>` : ""}
       </article>`).join("")
     : "<p class='subtitle'>Belum ada backup.</p>";
 
@@ -124,13 +129,13 @@ async function pollRestoreStatus() {
   }
 }
 
-async function triggerBackup() {
+async function triggerBackup(jenis) {
   const msg = document.getElementById("backupStatusMsg");
-  msg.textContent = "Membuat backup...";
+  msg.textContent = jenis === "data" ? "Membuat cadangan data..." : "Membuat cadangan lengkap...";
   try {
-    const payload = await sysAdminCall("rescue_net.api_system_admin.trigger_backup", {}, true);
+    const payload = await sysAdminCall("rescue_net.api_system_admin.trigger_backup", { jenis }, true);
     renderBackups(payload);
-    msg.textContent = "✓ Backup selesai dibuat.";
+    msg.textContent = jenis === "data" ? "✓ Cadangan data selesai." : "✓ Cadangan lengkap selesai — bisa diunduh sebagai paket pindah server.";
   } catch (err) {
     msg.textContent = "✗ " + err.message;
   }
@@ -188,8 +193,10 @@ async function initSystemAdmin() {
   }
 
   document.getElementById("triggerBackupBtn").addEventListener("click", () => {
-    triggerBackup().catch(() => {});
+    triggerBackup("lengkap").catch(() => {});
   });
+  const dataBtn = document.getElementById("triggerBackupDataBtn");
+  if (dataBtn) dataBtn.addEventListener("click", () => { triggerBackup("data").catch(() => {}); });
   document.getElementById("restoreForm").addEventListener("submit", submitRestore);
 
   loadBackups().catch(err => {

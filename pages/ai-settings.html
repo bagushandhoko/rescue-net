@@ -205,18 +205,22 @@
 
     <div class="rn-settings-group" id="systemAdminSection" hidden>
       <div class="rn-settings-group-title">
-        <h2>Backup / Restore</h2>
-        <p>System Manager saja. Snapshot harian otomatis (retensi 30 hari), backup manual, dan restore dari snapshot.</p>
+        <h2>Cadangan &amp; Pindah Server</h2>
+        <p>Super admin saja. Cadangan lengkap otomatis tiap hari (disimpan 30 hari), cadangan manual (data saja atau lengkap), unduh, pulihkan di server ini, atau pindahkan Rescue-Net ke server lain.</p>
       </div>
 
       <section class="content-grid">
         <div class="panel">
           <div class="panel-header">
             <div>
-              <h3>Database Backup</h3>
-              <p>Snapshot harian otomatis + backup manual.</p>
+              <h3>Cadangan</h3>
+              <p><b>Data saja</b> = database (laporan, posko, bantuan, akun) — kecil, untuk berjaga-jaga.
+                 <b>Lengkap</b> = database + foto/dokumen + konfigurasi (kunci enkripsi) — untuk pindah server.</p>
             </div>
-            <button class="btn primary" type="button" id="triggerBackupBtn">Buat Backup Sekarang</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn" type="button" id="triggerBackupDataBtn">Cadangan data saja</button>
+              <button class="btn primary" type="button" id="triggerBackupBtn">Cadangan lengkap</button>
+            </div>
           </div>
           <p class="subtitle" id="backupStatusMsg"></p>
           <div class="event-list" id="backupList"></div>
@@ -242,6 +246,18 @@
           </form>
           <p class="subtitle" id="restoreMsg"></p>
         </aside>
+      </section>
+
+      <section class="panel" id="pindahServerPanel">
+        <div class="panel-header"><div><h3>Pindahkan / pulihkan Rescue-Net di server lain</h3>
+          <p>Memakai paket instalasi <b>Rescue-Net Node</b> (folder <code>node/</code> di repo rescue-net).</p></div></div>
+        <ol class="steps">
+          <li>Di daftar cadangan di atas, pilih cadangan <b>lengkap</b> lalu klik <b>Unduh paket pindah server</b> (satu berkas <code>.tar</code>).</li>
+          <li>Di server baru: pasang Docker, salin repo rescue-net, masuk ke folder <code>node/</code>, taruh berkas <code>.tar</code> di <code>node/backups/</code>.</li>
+          <li>Jalankan <code>./pasang.sh --pulihkan backups/&lt;nama-berkas&gt;.tar</code> — situs, data, berkas, dan kunci enkripsi dipulihkan.</li>
+          <li>Periksa situs, lalu nyalakan tugas terjadwal (<code>docker compose --profile jobs up -d</code>) dan pindahkan domain/Cloudflare Tunnel ke server baru.</li>
+        </ol>
+        <p class="subtitle" style="color:#b23b3b">⚠ Paket pindah server berisi kunci enkripsi &amp; kata sandi database. Simpan seperti kata sandi; jangan dikirim lewat grup chat atau email terbuka.</p>
       </section>
     </div>
 
@@ -435,7 +451,7 @@
 <script src="../assets/js/rn-event-checklist.js?v=evc-20261019c"></script>
 <script src="../assets/js/rn-posko-events-settings.js?v=evc-20261019"></script>
 <script src="../assets/js/session-role.js?v=peran-20261112"></script>
-<script src="../assets/js/system-admin.js?v=backuprestore-20260913"></script>
+<script src="../assets/js/system-admin.js?v=cadangan-20261113"></script>
 <script src="../assets/js/rn-operational-mode.js?v=demo-20261109"></script>
 <script src="../assets/js/rn-public-header.js?v=arsitektur2-20261113"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>

@@ -4,6 +4,8 @@
 #   scripts/deploy-vm.sh --dry-run  -> hanya tampilkan perubahan
 # Tanpa --delete: berkas yang hanya ada di VM tidak pernah dihapus.
 set -eu
+# 2026-11-13: Rescue-Net PINDAH ke Flex (192.168.100.3, LXC 201). VM Aspire tidak lagi melayani rescue-net.online.
+if [ "${RN_VM_FORCE:-}" != "1" ]; then echo "deploy-vm.sh sudah tidak dipakai: Rescue-Net kini di Flex -> pakai scripts/deploy-flex.sh" >&2; exit 1; fi
 VM="${RN_VM:-debian@192.168.100.51}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 DRY=""; [ "${1:-}" = "--dry-run" ] && DRY="-n"

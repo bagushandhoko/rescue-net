@@ -5,7 +5,8 @@
 # real visitor IP: cloudflared reaches us from the docker gateway; Cloudflare puts the visitor in CF-Connecting-IP
 map $http_cf_connecting_ip $client_ip { default $http_cf_connecting_ip; "" $remote_addr; }
 limit_req_zone $client_ip zone=rn_login:10m rate=10r/m;
-limit_req_zone $client_ip zone=rn_api:10m rate=600r/m;
+# owner 2026-11-13 (ribuan pengguna, CGNAT operator seluler berbagi IP): 600 -> 3000 permintaan/menit per IP
+limit_req_zone $client_ip zone=rn_api:10m rate=3000r/m;
 
 # guest micro-cache (uji beban S10, 2026-10-26): public feeds identical for every guest -> 20 s copy.
 # A request carrying a real session cookie (sid other than Guest) always goes to Frappe and is never stored.
@@ -41,8 +42,8 @@ server {
 
     # ---- Frappe: whitelist only ----
     # guest-cached public feeds (must precede the generic API regex)
-    location ~ ^/rescue-net-frappe/api/method/rescue_net\.api_(events\.disasters|ai\.public_active_disasters|ai\.public_context|control_centre\.active_disasters_board|control_centre\.public_dashboard|early_warning\.banner|public_needs\.board|frontend_bridge\.community_reports)$ {
-        limit_req zone=rn_api burst=60 nodelay;
+    location ~ ^/rescue-net-frappe/api/method/rescue_net\.api_(events\.disasters|ai\.public_active_disasters|ai\.public_context|control_centre\.active_disasters_board|control_centre\.public_dashboard|volunteer\.volunteer_board|comms\.comms_board|search_found\.dashboard|tender\.tender_board|displacement\.displacement_board|intelligence\.control_centre_summary|verifier\.verifier_directory|gis\.national_situation|armada\.armada_finder|early_warning\.banner|public_needs\.board|frontend_bridge\.community_reports)$ {
+        limit_req zone=rn_api burst=300 nodelay;
         rewrite ^/rescue-net-frappe/(.*)$ /$1 break;
         include /etc/nginx/rn-proxy.conf;
         proxy_cache rn_guest;
@@ -63,7 +64,7 @@ server {
     }
     # website API: rescue_net.api_<module>.<function>
     location ~ ^/rescue-net-frappe/api/method/rescue_net\.api_[a-z0-9_]+\.[A-Za-z0-9_]+$ {
-        limit_req zone=rn_api burst=60 nodelay;
+        limit_req zone=rn_api burst=300 nodelay;
         rewrite ^/rescue-net-frappe/(.*)$ /$1 break;
         include /etc/nginx/rn-proxy.conf;
     }

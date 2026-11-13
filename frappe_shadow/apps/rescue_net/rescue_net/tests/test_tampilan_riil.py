@@ -115,3 +115,24 @@ class TestDropHiddenRows(OperationalBase):
     def test_riil_view_keeps_only_real(self):
         with _Cookie("riil"):
             self.assertEqual([r.name for r in drill.drop_hidden_rows(self.rows())], ["a"])
+
+
+class TestGuardShortIds(OperationalBase):
+    def test_short_and_full_simulation_ids_refused_in_riil(self):
+        frappe.db.set_value("RN Disaster Event", self.sim.name, "legacy_id", "disaster_events:event-sim-uji-" + self.sim.name[-6:])
+        short = "event-sim-uji-" + self.sim.name[-6:]
+        with _Cookie("riil"), as_guest():
+            for ev in (short, "disaster_events:" + short, self.sim.name):
+                with self.assertRaises(frappe.DoesNotExistError, msg=ev):
+                    drill.guard_guest_refs(frappe._dict({"disaster_event_id": ev}))
+        with _Cookie(None), as_guest():
+            drill.guard_guest_refs(frappe._dict({"disaster_event_id": short}))  # tampilan simulasi: boleh
+
+    def test_super_admin_choosing_riil_is_guarded_too(self):
+        frappe.set_user("Administrator")
+        with _Cookie("riil"):
+            with self.assertRaises(frappe.DoesNotExistError):
+                drill.guard_guest_refs(frappe._dict({"disaster_event": self.sim.name}))
+        self._mode(True)
+        with _Cookie(None):
+            drill.guard_guest_refs(frappe._dict({"disaster_event": self.sim.name}))  # Mode Operasional: admin boleh

@@ -227,6 +227,8 @@ def _event_refs(names):
         for v in (r.name, r.legacy_id):
             if v:
                 refs.update({v, "disaster_events:" + v})
+                if ":" in v:  # id pendek di URL/halaman: event-sim-001 = disaster_events:event-sim-001
+                    refs.add(v.split(":", 1)[1])
     return refs
 
 
@@ -315,7 +317,8 @@ def guard_guest_refs(params):
         if refers_to_drill(params):
             frappe.throw("Data tidak ditemukan.", frappe.DoesNotExistError)
         return
-    if "System Manager" not in frappe.get_roles(user) and refers_to_simulation(params):
+    # super admin tetap bisa membuka data simulasi saat Mode Operasional, KECUALI ia sendiri memilih tampilan Riil
+    if ("System Manager" not in frappe.get_roles(user) or viewer_wants_real()) and refers_to_simulation(params):
         frappe.throw("Data tidak ditemukan.", frappe.DoesNotExistError)
 
 

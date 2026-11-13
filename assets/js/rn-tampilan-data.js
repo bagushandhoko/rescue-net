@@ -11,8 +11,9 @@
   }
   function save(v) {
     var sec = location.protocol === 'https:' ? '; Secure' : '';
-    if (v === 'riil') document.cookie = COOKIE + '=riil; path=/; max-age=31536000; SameSite=Lax' + sec;
     try { sessionStorage.removeItem('rn_opmode'); } catch (e) {}
+    if (v === 'riil') { try { localStorage.removeItem('rn_active_event'); localStorage.removeItem('rn-active-event'); } catch (e) {} }
+    if (v === 'riil') document.cookie = COOKIE + '=riil; path=/; max-age=31536000; SameSite=Lax' + sec;
     else document.cookie = COOKIE + '=; path=/; max-age=0; SameSite=Lax' + sec;
   }
   window.RNTampilan = { current: current, save: save };

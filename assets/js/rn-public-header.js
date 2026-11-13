@@ -22,9 +22,10 @@
     const url = new URL(location.href);
     const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || "");
     if (fromUrl) return fromUrl;
-    return stripEventPrefix(readStoredEvent()) || "event-sim-001";
+    return stripEventPrefix(readStoredEvent()) || (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie) ? "" : "event-sim-001");
   }
   function ensureEventInUrl(eventId) {
+    if (!eventId) return;
     const url = new URL(location.href);
     if (!url.searchParams.get("event")) { url.searchParams.set("event", eventId); try { history.replaceState(null, "", url.toString()); } catch (e) {} }
   }
@@ -94,8 +95,8 @@
   function prettifyEventId(id) { return String(id || "").replace(/^event[-_]/i, "").replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()).trim() || id; }
   function readStoredEvent() { try { return localStorage.getItem(RN_EVENT_STORE_KEY) || ""; } catch (e) { return ""; } }
   function writeStoredEvent(v) { try { localStorage.setItem(RN_EVENT_STORE_KEY, v); } catch (e) {} }
-  function currentEventId() { const url = new URL(location.href); const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || ""); if (fromUrl) return fromUrl; return stripEventPrefix(readStoredEvent()) || "event-sim-001"; }
-  function ensureEventInUrl(eventId) { const url = new URL(location.href); if (!url.searchParams.get("event")) { url.searchParams.set("event", eventId); try { history.replaceState(null, "", url.toString()); } catch (e) {} } }
+  function currentEventId() { const url = new URL(location.href); const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || ""); if (fromUrl) return fromUrl; return stripEventPrefix(readStoredEvent()) || (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie) ? "" : "event-sim-001"); }
+  function ensureEventInUrl(eventId) { if (!eventId) return; const url = new URL(location.href); if (!url.searchParams.get("event")) { url.searchParams.set("event", eventId); try { history.replaceState(null, "", url.toString()); } catch (e) {} } }
   function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); if (document.body && document.body.getAttribute("data-rn-posko-kind")) { url.searchParams.delete("id"); url.searchParams.delete("posko"); } location.href = url.toString(); }
   window.rnActiveEvent = currentEventId();
 
@@ -134,8 +135,8 @@
       if (!act.length) {
         // belum ada bencana yang boleh tampil: lepaskan bencana simulasi dari alamat halaman (sekali, tanpa putaran)
         writeStoredEvent(""); try { localStorage.removeItem("rn-active-event"); } catch (e) {}
-        if (explicit) {
-          const u = new URL(location.href);
+        const u = new URL(location.href);
+        if (["event", "disaster_event", "disaster_event_id"].some(k => u.searchParams.get(k))) {
           ["event", "disaster_event", "disaster_event_id"].forEach(k => u.searchParams.delete(k));
           location.replace(u.toString()); return;
         }

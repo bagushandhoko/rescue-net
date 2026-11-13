@@ -147,7 +147,7 @@ class TestLanding(RNTestCase):
         _insert("RN Volunteer Profile", user_account=rel.account, disaster_event=w.event.name, volunteer_name="Uji",
                 main_skill="logistik", availability_status="available")
         with as_user(rel.user):
-            self.assertEqual(my_landing()["href"], "relawan-saya.html")
+            self.assertEqual(my_landing()["href"], "management-relawan.html#saya")
         with as_user(make_actor(role="community_coordinator", org=w.org_a).user):     # koordinator org, tanpa posko sendiri
             self.assertEqual(my_landing()["href"], "kelola-posko.html")
         with as_user(make_actor(org=w.org_a).user):                                   # anggota biasa: tetap halaman organisasi

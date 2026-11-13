@@ -58,12 +58,6 @@
         icon: "relawan"
       },
       {
-        // halaman pribadi relawan: tawarkan diri ke posko, jemputan, shelter, pilih bencana (owner 2026-11-01)
-        label: "Relawan Saya",
-        href: "relawan-saya.html",
-        icon: "relawan"
-      },
-      {
         // hub khusus pemilik / pengelola posko (owner 2026-11-01)
         label: "Kelola Posko Saya",
         href: "kelola-posko.html",

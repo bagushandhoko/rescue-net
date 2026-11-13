@@ -36,7 +36,7 @@ PAGE_MAP = {
     "Stok, kebutuhan, kirim barang (posko logistik)": "pages/posko-logistik.html?id=<posko>",
     "Distribusi & armada": "pages/management-distribusi.html",
     "Relawan: tawaran, penugasan, jemputan": "pages/management-relawan.html",
-    "Profil & tawaran relawan pribadi": "pages/relawan-saya.html",
+    "Profil & tawaran relawan pribadi": "pages/management-relawan.html#saya",
     "Alat komunikasi & radio": "pages/alat-komunikasi.html",
     "Laporan warga": "pages/laporan-masyarakat.html",
     "Donasi & program khusus": "pages/program-khusus.html",
@@ -233,7 +233,7 @@ def _my_volunteer_summary(actor):
         return None
     f = _my_profile_fields(profiles)
     return {"bencana": [p.disaster_event for p in profiles], "profil": {k: str(v) for k, v in f.items() if v not in ("", None)},
-            "ubah_di": "pages/relawan-saya.html"}
+            "ubah_di": "pages/management-relawan.html#saya"}
 
 
 def _active_disasters():

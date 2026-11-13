@@ -16,7 +16,7 @@
     "kebutuhan-publik.html": [M, "h-kebutuhan-publik", "Kebutuhan Publik"],
     "lacak-logistik.html": [M, "h-lacak", "Lacak Kiriman Bantuan"],
     "scan.html": [M, "h-scan", "Pindai Barcode / Serah Terima"],
-    "relawan-saya.html": [M, "h-relawan-saya", "Relawan Saya"],
+    "relawan-saya.html": [M, "h-relawan-saya", "Pengaturan Relawan"],
     "kehadiran-relawan.html": [M, "h-kehadiran", "Kehadiran Relawan"],
     "program-khusus.html": [M, "h-program-khusus", "Program Khusus & Donasi"],
     "edit-bantuan.html": [M, "h-edit-bantuan", "Ubah / Batalkan Bantuan (Kode Edit)"],

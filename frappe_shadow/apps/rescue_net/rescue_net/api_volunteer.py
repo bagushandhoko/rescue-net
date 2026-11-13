@@ -997,8 +997,7 @@ def dashboard(posko=None):
         from rescue_net.visibility import redact_posko_contacts
         redact_posko_contacts(poskos)
         for p in profiles:
-            p["contact"] = None
-            p["volunteer_name"] = GUEST_VOLUNTEER_NAME  # owner 2026-11-01: name only after login
+            p["contact"] = None  # owner 2026-11-13: nama boleh publik, nomor HP tidak
 
     return {
         "mode": "manager",
@@ -1430,26 +1429,11 @@ GUEST_VOLUNTEER_NAME = "Relawan (login untuk melihat nama)"
 
 
 def _board_privacy(out, contacts):
-    """Owner rule 2026-11-01: the public sees what volunteers offer (skills, equipment,
-    time, placement) but a volunteer's NAME and PHONE only after login."""
+    """Owner rule 2026-11-13 (menggantikan 2026-11-01): publik melihat NAMA relawan, bidang, posisi bertugas/menginap
+    dan apa yang ditawarkan; NOMOR HP/kontak hanya untuk pengguna yang login."""
     guest = frappe.session.user == "Guest"
     out["logged_in"] = not guest
     for key in ("daftar_relawan", "relawan_tersedia", "relawan_ditempatkan"):
         for r in out.get(key) or []:
-            if guest:
-                r["volunteer_name"] = GUEST_VOLUNTEER_NAME
-                r["kontak"] = None
-            else:
-                r["kontak"] = contacts.get(r.get("name")) or None
-    if guest:
-        for r in out.get("papan_penugasan") or []:
-            r["volunteer_name"] = GUEST_VOLUNTEER_NAME
-        for key, items in (out.get("kpi_items") or {}).items():
-            if key in ("terdaftar_items", "available_items", "bertugas_items", "fatigue_items"):
-                for it in items or []:
-                    if isinstance(it, dict):
-                        for f in ("title", "label", "name"):
-                            if f in it:
-                                it[f] = "Relawan"
-                                break
+            r["kontak"] = None if guest else (contacts.get(r.get("name")) or None)
     return out

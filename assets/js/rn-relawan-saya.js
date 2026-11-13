@@ -19,19 +19,40 @@
     var a = document.createElement("a");
     a.className = old.className; a.id = "openRegisterBtn";
     a.textContent = "+ Daftar sebagai Relawan";
-    a.href = "auth.html?next=" + encodeURIComponent("relawan-saya.html") + "#daftar-relawan";
+    a.href = "auth.html?next=" + encodeURIComponent("management-relawan.html#saya") + "#daftar-relawan";
     old.replaceWith(a);
   }
 
+  // owner 2026-11-13: Relawan Saya digabung ke Posko Relawan -> panel "Pengaturan Relawan" (#saya)
+  function openSelf(scroll) {
+    var box = $("saya");
+    if (!box) return;
+    box.hidden = false;
+    try { if (location.hash !== "#saya") history.replaceState(null, "", location.pathname + location.search + "#saya"); } catch (e) {}
+    if (scroll) box.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
   function memberButton() {
+    // akun terdaftar yang belum relawan: tombol membuka panel di langkah 1 (centang bencana = jadi relawan)
     var old = $("openRegisterBtn");
     if (!old) return;
-    var b = old.cloneNode(true);                  // drop the anonymous-form listener
-    var a = document.createElement("a");
-    a.className = old.className; a.id = "openRegisterBtn";
-    a.textContent = "Relawan Saya: tawarkan diri, jemputan, shelter";
-    a.href = "relawan-saya.html";
-    old.replaceWith(a);
+    var b = document.createElement("button");
+    b.type = "button"; b.className = old.className; b.id = "openRegisterBtn";
+    b.textContent = "+ Daftar Jadi Relawan";
+    b.addEventListener("click", function () { openSelf(true); });
+    old.replaceWith(b);
+  }
+  function selfButton(isVolunteer) {
+    var b = $("rsSelfBtn");
+    if (!b) return;
+    b.disabled = !isVolunteer;
+    b.classList.toggle("primary", !!isVolunteer);
+    b.title = isVolunteer ? "Ubah kesediaan, peralatan, kemampuan, bencana, booking & lihat statusnya" : "Aktif bila akun Anda terdaftar sebagai relawan";
+    if (isVolunteer && !b.dataset.bound) {
+      b.dataset.bound = "1";
+      b.addEventListener("click", function () { var box = $("saya"); if (box && !box.hidden) { box.hidden = true; } else { openSelf(true); } });
+    }
+    var reg = $("openRegisterBtn");
+    if (reg && isVolunteer) reg.hidden = true;   // sudah relawan: tidak perlu tombol daftar
   }
 
   // owner 2026-11-12: berangkat, menginap (shelter relawan / posko shelter), pulang — masing-masing bisa dipesan
@@ -80,6 +101,7 @@
       return '<label class="rs-ev"><input type="checkbox" name="ev" value="' + esc(e.id) + '"' + (offered.has(e.id) ? " checked" : "") + "> " + esc(e.title) + "</label>";
     }).join("") || '<p class="rn-muted">Belum ada bencana aktif.</p>';
     $("rsFirst").hidden = (r.profiles || []).length > 0;
+    selfButton((r.profiles || []).length > 0);
     var pf = $("rsProfileForm");
     if (pf) {
       $("rsProfilePanel").hidden = !(r.profiles || []).length;
@@ -138,17 +160,19 @@
     if (st.logged_in && st.registered) { try { sess = await window.RN_FRAPPE.call("rescue_net.api_auth.session_info"); } catch (e) {} }
     var guest = !st.logged_in;
     if ($("rsStatus")) $("rsStatus").textContent = "";
-    if (guest) { guestButton(); if ($("rsLogin")) $("rsLogin").hidden = false; return; }
+    if (guest) { guestButton(); if ($("rsLogin")) $("rsLogin").hidden = false; if (location.hash === "#saya") openSelf(false); return; }
     if (!st.registered) { guestButton(); if ($("rsStatus")) $("rsStatus").innerHTML = rnRegMsg(st); return; }
     if (st.is_system_manager && st.rn_status === "none") {
       // audit 2026-11-11 (T4): super admin tidak punya profil relawan
       guestButton();
-      if ($("rsStatus")) $("rsStatus").innerHTML = 'Anda login sebagai super admin, yang tidak punya profil relawan. Untuk mengelola relawan buka <a href="management-relawan.html">Manajemen Relawan</a>; untuk mencoba sebagai relawan gunakan akun relawan.';
+      if ($("rsStatus")) $("rsStatus").innerHTML = 'Anda login sebagai super admin, yang tidak punya profil relawan. Pengaturan Relawan hanya untuk akun relawan; untuk mencoba gunakan akun relawan.';
+      if (location.hash === "#saya") openSelf(false);
       return;
     }
     memberButton();
     var mine = !!$("rsPanel");
     if (mine) $("rsPanel").hidden = false;
+    if (location.hash === "#saya") openSelf(true);   // relawan yang baru login langsung ke Pengaturan Relawan
     var pform = $("rsProfileForm");
     if (pform) pform.addEventListener("submit", async function (e) {
       e.preventDefault();

@@ -60,22 +60,20 @@ class TestVolunteerOffer(RNTestCase):
         with as_user(self.rel.user), self.assertRaisesRegex(frappe.ValidationError, "wajib"):
             vb.update_my_profile(contact="")
 
-    def test_board_hides_name_and_phone_from_guest(self):
+    def test_board_shows_name_hides_phone_from_guest(self):
         with as_user(self.rel.user):
             vb.update_my_profile(equipment_owned="Perahu karet", availability_schedule="24 jam")
         with as_guest():
             g = av.volunteer_board(self.w.event.name)
         self.assertFalse(g["logged_in"])
         row = [r for r in g["relawan_tersedia"] if r["name"] == self.prof][0]
-        self.assertEqual(row["volunteer_name"], av.GUEST_VOLUNTEER_NAME)
+        real = frappe.db.get_value("RN Volunteer Profile", self.prof, "volunteer_name")
+        self.assertEqual(row["volunteer_name"], real)              # owner 2026-11-13: nama publik
         self.assertIsNone(row["kontak"])
         self.assertEqual(row["peralatan"], "Perahu karet")       # what they offer stays public
         self.assertEqual(row["jadwal_tersedia"], "24 jam")
         blob = frappe.as_json(g)
         self.assertNotIn("0812-7777-1234", blob)
-        real = frappe.db.get_value("RN Volunteer Profile", self.prof, "volunteer_name")
-        if real:
-            self.assertNotIn(real, blob)
         with as_guest():
             d = av.dashboard()
         self.assertNotIn("0812-7777-1234", frappe.as_json(d))

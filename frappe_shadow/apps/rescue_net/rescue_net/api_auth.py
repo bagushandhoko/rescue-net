@@ -855,7 +855,7 @@ def my_landing():
             frappe.log_error(frappe.get_traceback(), "my_landing kelola posko")
     if not href and not own and frappe.db.exists("RN Volunteer Profile", {
             "user_account": actor.name, "availability_status": ["!=", "unavailable"]}):
-        href = "relawan-saya.html"
+        href = "management-relawan.html#saya"
     if not href and is_system_manager():
         href = "bencana-aktif.html"
     if not href and not own and actor.get("organization"):

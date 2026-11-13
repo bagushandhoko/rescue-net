@@ -1,0 +1,8 @@
+[Unit]
+Description=Jalankan rn-autoscale tiap menit
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=1min
+AccuracySec=10s
+[Install]
+WantedBy=timers.target

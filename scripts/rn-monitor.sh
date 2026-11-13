@@ -47,6 +47,12 @@ else
   [ "${mem:-0}" -gt 92 ] && fail+=("RAM kontainer ${mem}%")
   [ "$ac" = "0" ] && fail+=("Flex pakai BATERAI (listrik padam?) ${bat}%")
 fi
+# kejadian penjaga otomatis Flex (rn-autoscale): kabarkan sekali per kejadian baru
+evl=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$FLEX" "tail -1 /var/lib/rn-autoscale/events.log 2>/dev/null" 2>/dev/null)
+if [ -n "$evl" ] && [ "$evl" != "$(cat $D/last-autoscale 2>/dev/null)" ]; then
+  echo "$evl" > $D/last-autoscale
+  [ -x $D/alert.sh ] && $D/alert.sh "Flex otomatis: $evl"
+fi
 state=OK; [ ${#fail[@]} -gt 0 ] && state="MASALAH: $(IFS='; '; echo "${fail[*]}")"
 echo "{\"waktu\":\"$now\",\"status\":\"${state//\"/}\",$r1,$r2,$r3,\"backup_jam\":${bk:--1},\"disk_persen\":${disk:--1},\"ram_persen\":${mem:--1},\"listrik\":\"${ac}\",\"baterai\":\"${bat}\"}" > $ST
 echo "$now $state" >> $LOG

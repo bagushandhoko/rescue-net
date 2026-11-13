@@ -1,0 +1,5 @@
+[Unit]
+Description=Penjaga otomatis Flex: Rescue-Net ramai -> HA mati + RAM RN naik
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/rn-autoscale.sh

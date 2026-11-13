@@ -230,6 +230,35 @@ def _event_refs(names):
     return refs
 
 
+HIDE_EVENT_KEYS = ("disaster_event", "disaster_event_legacy_id", "disaster_event_id", "event")
+HIDE_POSKO_KEYS = ("posko", "source_posko", "destination_posko", "coordination_posko", "posko_ditempatkan_id",
+                   "assigned_posko", "host_posko", "shelter_posko")
+
+
+def drop_hidden_rows(rows, event_keys=HIDE_EVENT_KEYS, posko_keys=HIDE_POSKO_KEYS, label=True):
+    """Papan publik (angka & daftar): buang baris milik bencana/posko tersembunyi — latihan is_drill, dan data
+    simulasi bila disembunyikan (Mode Operasional atau tampilan "Riil Data Bencana"). Pakai tepat setelah
+    frappe.get_all supaya ringkasan dihitung dari data yang sama dengan daftarnya (owner 2026-11-13)."""
+    rows = list(rows or [])
+    sim = simulation_hidden()
+    events = drill_event_names()
+    if not rows or (not sim and not events):
+        return rows
+    refs = _event_refs(events)
+    poskos = hidden_posko_names()
+    get = lambda r, k: r.get(k) if hasattr(r, "get") else getattr(r, k, None)
+    out = []
+    for r in rows:
+        if any(get(r, k) in refs for k in event_keys if get(r, k)):
+            continue
+        if any(get(r, k) in poskos for k in posko_keys if get(r, k)):
+            continue
+        if sim and label and row_has_sim_label(r):
+            continue
+        out.append(r)
+    return out
+
+
 def _drill_event_refs():
     """Referensi event yang tersembunyi (latihan + simulasi bila mode operasional aktif)."""
     return _event_refs(drill_event_names())

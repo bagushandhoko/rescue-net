@@ -96,3 +96,22 @@ class TestViewerChoice(OperationalBase):
         self.assertTrue(b["riil"])
         self.assertEqual(a, c)  # salinan simulasi dipakai ulang
         self.assertEqual(len(CALLS), 2)
+
+
+class TestDropHiddenRows(OperationalBase):
+    def rows(self):
+        return [
+            frappe._dict(name="a", disaster_event=self.real.event.name, posko=self.real.posko_a.name, title="nyata"),
+            frappe._dict(name="b", disaster_event=self.sim.name, title="di bencana simulasi"),
+            frappe._dict(name="c", posko=self.sim_posko.name, title="di posko simulasi"),
+            frappe._dict(name="d", posko=self.label_posko.name, title="posko berlabel"),
+            frappe._dict(name="e", title="[SIMULASI] berlabel"),
+        ]
+
+    def test_simulasi_view_keeps_all(self):
+        with _Cookie(None):
+            self.assertEqual(len(drill.drop_hidden_rows(self.rows())), 5)
+
+    def test_riil_view_keeps_only_real(self):
+        with _Cookie("riil"):
+            self.assertEqual([r.name for r in drill.drop_hidden_rows(self.rows())], ["a"])

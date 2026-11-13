@@ -1,7 +1,24 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-13",
+  "diperbarui": "2026-11-14",
   "uji": [
+    {
+      "id": "NALA-KIRIM-BANTUAN-20261114",
+      "tanggal": "2026-11-14",
+      "kategori": "Posko dan distribusi",
+      "judul": "Tombol Kirim Bantuan dan armada bencana",
+      "tujuan": "Buka form untuk posko penerima dan temukan armada terkait",
+      "akun": "Uji skrip terisolasi dan HTTP/HTML statis; belum uji browser login sungguhan",
+      "langkah": [
+        "Periksa sintaks dua skrip dan git diff --check serta pemindai rahasia.",
+        "Periksa HTTP/HTML tujuh halaman posko dan Kirim Bantuan serta pemuatan skrip.",
+        "Uji skrip: prefill nama/ID/bencana, tanpa ID, prioritas rute/posko pengelola, tautan booking, ganti bencana, tanpa posko, escape HTML dan kapasitas nol."
+      ],
+      "hasil": "Pemeriksaan tersebut lulus. Belum deploy. Uji browser 390px dan login sungguhan menunggu review Suri.",
+      "skor": "Pemeriksaan statis dan perilaku skrip lulus; browser belum diuji",
+      "status": "lulus",
+      "temuan": []
+    },
     {
       "id": "NALA-ALAT-BERAT-20261113",
       "tanggal": "2026-11-13",

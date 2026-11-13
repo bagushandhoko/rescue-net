@@ -16,7 +16,7 @@ class TestArmadaCapacity(LogisticsTestCase):
     def book(self, space=None, **qty):
         with as_user(self.op_b.user):
             return api.book_transport_space(space or self.space.name, cargo_desc="Beras",
-                                            delivery_method="self_deliver", **qty)
+                                            delivery_method="self_deliver", booked_by_id=self.w.posko_b.name, **qty)
 
     def test_requested_and_confirmed_bookings_share_the_space(self):
         self.book(qty_weight_kg=60)

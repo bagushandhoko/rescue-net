@@ -1,6 +1,7 @@
 """Control Centre — distribution board, flow trace (QR), posko distribusi board, auto-matching."""
 
 import frappe
+from frappe.utils import flt
 from frappe.rate_limiter import rate_limit
 
 from rescue_net.api_ai import (
@@ -296,7 +297,9 @@ def distribusi_board(disaster_event=None):
     transport_filter = event_filters(cols("RN Transport Space"), event) if event else {}
     transports = frappe.get_all(
         "RN Transport Space", filters=transport_filter,
-        fields=_sf("RN Transport Space", ["volunteer_capacity_seats", "volunteer_pickup_location", "people_trip", "return_departure_at", 
+        fields=_sf("RN Transport Space", [
+            "carries_heavy_equipment", "heavy_max_ton", "heavy_deck_type", "heavy_trip", "heavy_demob_at",
+            "volunteer_capacity_seats", "volunteer_pickup_location", "people_trip", "return_departure_at",
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3", "route_origin",
             "route_destination", "observed_at", "coordination_posko",
@@ -628,6 +631,11 @@ def distribusi_board(disaster_event=None):
             "kursi_relawan": int(t.get("volunteer_capacity_seats") or 0),
             "angkut_orang_arah": t.get("people_trip") or ("ke_lokasi" if int(t.get("volunteer_capacity_seats") or 0) else ""),
             "jadwal_pulang": str(t.get("return_departure_at") or "")[:16],
+            "angkut_alat_berat": bool(t.get("carries_heavy_equipment")),
+            "alat_berat_maks_ton": flt(t.get("heavy_max_ton")),
+            "alat_berat_dek": t.get("heavy_deck_type") or "",
+            "alat_berat_arah": t.get("heavy_trip") or "",
+            "jadwal_demob": str(t.get("heavy_demob_at") or "")[:16],
             "jemput_relawan": t.get("volunteer_pickup_location") or "",
             "kapasitas": " · ".join(cap_bits) or "-",
             "kapasitas_total_kg": cap_kg,
@@ -793,7 +801,9 @@ def posko_distribusi_board(posko=None, disaster_event=None):
 
     transports = frappe.get_all(
         "RN Transport Space", filters=tfilter, or_filters=tor,
-        fields=_sf("RN Transport Space", ["volunteer_capacity_seats", "volunteer_pickup_location", "people_trip", "return_departure_at", 
+        fields=_sf("RN Transport Space", [
+            "carries_heavy_equipment", "heavy_max_ton", "heavy_deck_type", "heavy_trip", "heavy_demob_at",
+            "volunteer_capacity_seats", "volunteer_pickup_location", "people_trip", "return_departure_at",
             "name", "provider_name", "transport_type", "transport_status",
             "capacity_weight_kg", "capacity_volume_m3",
             "own_load_kg", "own_load_m3", "own_cargo_desc", "route_origin",
@@ -866,6 +876,11 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "kursi_relawan": int(t.get("volunteer_capacity_seats") or 0),
             "angkut_orang_arah": t.get("people_trip") or ("ke_lokasi" if int(t.get("volunteer_capacity_seats") or 0) else ""),
             "jadwal_pulang": str(t.get("return_departure_at") or "")[:16],
+            "angkut_alat_berat": bool(t.get("carries_heavy_equipment")),
+            "alat_berat_maks_ton": flt(t.get("heavy_max_ton")),
+            "alat_berat_dek": t.get("heavy_deck_type") or "",
+            "alat_berat_arah": t.get("heavy_trip") or "",
+            "jadwal_demob": str(t.get("heavy_demob_at") or "")[:16],
             "status": t.transport_status or "-",
             "status_label": _ARMADA_STATUS_LABEL.get(t.transport_status, t.transport_status or "-"),
             # owner 2026-11-02: filters on this page — same availability classes as Cari Armada

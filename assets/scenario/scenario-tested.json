@@ -1,7 +1,31 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-11",
+  "diperbarui": "2026-11-13",
   "uji": [
+    {
+      "id": "NALA-ALAT-BERAT-20261113",
+      "tanggal": "2026-11-13",
+      "kategori": "Distribusi",
+      "judul": "Armada bisa mengangkut alat berat",
+      "tujuan": "Catat kemampuan armada untuk mob/demob alat berat",
+      "akun": "Tamu dan operator posko pada tes; login Administrator sungguhan di browser stack uji",
+      "langkah": [
+        "Migrasi lima field hanya pada stack uji.",
+        "Simpan dan ubah ton, dek, arah, jadwal; periksa nilai pada dua papan publik.",
+        "Tolak ton kosong/nol/negatif ketika kemampuan dicentang; uji hapus centang dan perubahan sebagian.",
+        "Jalankan regresi transport dan booking relawan.",
+        "Browser dengan login sungguhan: periksa komponen form tambah/ubah, ton wajib, arah demob, serta payload."
+      ],
+      "hasil": "4 tes baru + 10 transport + 8 booking lulus. Browser komponen form dan API dengan login sungguhan lulus. Belum deploy; produksi memerlukan migrate oleh Suri.",
+      "skor": "22 tes lulus",
+      "status": "lulus",
+      "temuan": [
+        {
+          "masalah": "Tiga tes kapasitas transport lama tidak mengirim posko pembooking yang kini diwajibkan main; baseline juga gagal.",
+          "perbaikan": "Helper tes mengirim booked_by_id posko pembooking; aturan izin aplikasi tetap."
+        }
+      ]
+    },
     {
       "id": "AUDIT-PROSES-1",
       "tanggal": "2026-11-11",

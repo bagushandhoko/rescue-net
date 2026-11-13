@@ -324,6 +324,39 @@
       "fieldname": "return_departure_at",
       "fieldtype": "Datetime",
       "label": "Jadwal Pulang (angkut orang)"
+    },
+    {
+      "fieldname": "carries_heavy_equipment",
+      "fieldtype": "Check",
+      "label": "Bisa mengangkut alat berat",
+      "default": "0"
+    },
+    {
+      "fieldname": "heavy_max_ton",
+      "fieldtype": "Float",
+      "label": "Muatan alat berat maks (ton)",
+      "depends_on": "eval:doc.carries_heavy_equipment",
+      "mandatory_depends_on": "eval:doc.carries_heavy_equipment"
+    },
+    {
+      "fieldname": "heavy_deck_type",
+      "fieldtype": "Select",
+      "label": "Jenis bak/dek",
+      "options": "\nlowbed\nselfloader\nflatbed\ntongkang\nlainnya",
+      "depends_on": "eval:doc.carries_heavy_equipment"
+    },
+    {
+      "fieldname": "heavy_trip",
+      "fieldtype": "Select",
+      "label": "Arah: mob = ke lokasi, demob = pulang",
+      "options": "\nmob\ndemob\nmob_demob",
+      "depends_on": "eval:doc.carries_heavy_equipment"
+    },
+    {
+      "fieldname": "heavy_demob_at",
+      "fieldtype": "Datetime",
+      "label": "Jadwal demob",
+      "depends_on": "eval:doc.carries_heavy_equipment"
     }
   ],
   "permissions": [
@@ -336,5 +369,5 @@
     }
   ],
   "track_changes": 1,
-  "modified": "2026-11-12 18:00:00.000000"
+  "modified": "2026-11-13 21:15:00.000000"
 }

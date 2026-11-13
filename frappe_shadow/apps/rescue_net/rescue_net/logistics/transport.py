@@ -62,6 +62,11 @@ def create_transport_space(
     volunteer_pickup_location=None,
     people_trip=None,
     return_departure_at=None,
+    carries_heavy_equipment=None,
+    heavy_max_ton=None,
+    heavy_deck_type=None,
+    heavy_trip=None,
+    heavy_demob_at=None,
 ):
     """Register an armada distribusi (kendaraan darat / kapal / pesawat) a
     posko puts on offer. Besides capacity + jadwal (berangkat / ETA) the
@@ -119,6 +124,7 @@ def create_transport_space(
         doc.booking_policy = booking_policy
     _apply_volunteer_seats(doc, volunteer_capacity_seats, volunteer_needs_pickup, volunteer_pickup_location,
                            people_trip, return_departure_at)
+    _apply_heavy_equipment(doc, carries_heavy_equipment, heavy_max_ton, heavy_deck_type, heavy_trip, heavy_demob_at)
     doc.current_location = current_location
     doc.handover_location = handover_location
     doc.handover_contact_person = handover_contact_person
@@ -175,6 +181,11 @@ def update_transport_space(
     volunteer_pickup_location=None,
     people_trip=None,
     return_departure_at=None,
+    carries_heavy_equipment=None,
+    heavy_max_ton=None,
+    heavy_deck_type=None,
+    heavy_trip=None,
+    heavy_demob_at=None,
 ):
     """Let the coordinating posko keep an armada record current as the trip
     progresses (status, keberadaan, jam berangkat/ETA, titik & narahubung
@@ -203,6 +214,7 @@ def update_transport_space(
         frappe.throw("Kebijakan booking tidak valid")
     _apply_volunteer_seats(doc, volunteer_capacity_seats, volunteer_needs_pickup, volunteer_pickup_location,
                            people_trip, return_departure_at)
+    _apply_heavy_equipment(doc, carries_heavy_equipment, heavy_max_ton, heavy_deck_type, heavy_trip, heavy_demob_at)
 
     for field, value in (
         ("current_location", current_location),
@@ -232,6 +244,17 @@ def update_transport_space(
         "transport": doc.name,
         "transport_status": doc.transport_status,
     }
+
+
+def _apply_heavy_equipment(doc, carries=None, max_ton=None, deck=None, trip=None, demob_at=None):
+    """Partial updates preserve existing heavy-equipment settings."""
+    if carries is not None:
+        doc.carries_heavy_equipment = 1 if str(carries).lower() in ("1", "true", "yes", "on") else 0
+    if max_ton is not None:
+        doc.heavy_max_ton = flt(max_ton)
+    for key, value in (("heavy_deck_type", deck), ("heavy_trip", trip), ("heavy_demob_at", demob_at)):
+        if value is not None:
+            doc.set(key, value or None)
 
 
 def _apply_volunteer_seats(doc, seats=None, needs_pickup=None, pickup_location=None, people_trip=None,

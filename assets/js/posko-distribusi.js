@@ -772,6 +772,38 @@
 
   // owner 2026-11-12: centang "bisa mengangkut relawan/orang" + jumlah orang + arah perjalanan (ke lokasi / pulang / PP)
   var TRIP_OPTS = [["ke_lokasi", "Berangkat ke lokasi bencana"], ["pulang", "Pulang dari lokasi bencana"], ["pergi_pulang", "Pergi & pulang"]];
+  function heavyFields(a) {
+    a = a || {};
+    var on = !!a.angkut_alat_berat, trip = a.alat_berat_arah || "mob";
+    return '<fieldset class="rn-pd-heavy" style="grid-column:1/-1;border:1px solid rgba(104,64,45,.2);border-radius:10px;padding:8px 12px">' +
+      '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" data-heavy style="width:20px;height:20px"' + (on ? " checked" : "") + '> Bisa mengangkut alat berat</label>' +
+      '<div class="form-grid" data-heavy-isi' + (on ? "" : " hidden") + '>' +
+      '<label>Muatan alat berat maks (ton)<input type="number" min="0.001" step="any" name="heavy_max_ton" value="' + esc(on ? a.alat_berat_maks_ton : "") + '"' + (on ? ' required' : ' disabled') + '></label>' +
+      '<label>Jenis bak/dek<select name="heavy_deck_type">' + optionList([["", "Pilih jenis"], ["lowbed", "Lowbed"], ["selfloader", "Selfloader"], ["flatbed", "Flatbed"], ["tongkang", "Tongkang"], ["lainnya", "Lainnya"]], a.alat_berat_dek || "") + '</select></label>' +
+      '<label>Arah perjalanan<select name="heavy_trip">' + optionList([["mob", "Mob — ke lokasi"], ["demob", "Demob — pulang"], ["mob_demob", "Mob & demob"]], trip) + '</select></label>' +
+      '<label data-demob-at' + (trip === "mob" ? " hidden" : "") + '>Jadwal demob<input type="datetime-local" name="heavy_demob_at" value="' + esc(toLocalDT(a.jadwal_demob || "")) + '"></label>' +
+      '</div></fieldset>';
+  }
+  function heavyPayload(form) {
+    var on = !!(form.querySelector("[data-heavy]") || {}).checked;
+    var trip = on && form.heavy_trip ? form.heavy_trip.value : "";
+    return {
+      carries_heavy_equipment: on ? 1 : 0,
+      heavy_max_ton: on ? Number(form.heavy_max_ton.value || 0) : 0,
+      heavy_deck_type: on ? form.heavy_deck_type.value : "",
+      heavy_trip: trip,
+      heavy_demob_at: on && trip !== "mob" && form.heavy_demob_at.value ? form.heavy_demob_at.value.replace("T", " ") : "",
+    };
+  }
+  document.addEventListener("change", function (e) {
+    var box = e.target.closest && e.target.closest(".rn-pd-heavy"); if (!box) return;
+    var on = box.querySelector("[data-heavy]").checked;
+    box.querySelector("[data-heavy-isi]").hidden = !on;
+    var ton = box.querySelector('[name="heavy_max_ton"]');
+    ton.required = on; ton.disabled = !on;
+    box.querySelector("[data-demob-at]").hidden = box.querySelector('[name="heavy_trip"]').value === "mob";
+  });
+
   function peopleFields(a) {
     a = a || {};
     var on = Number(a.kursi_relawan || 0) > 0, trip = a.angkut_orang_arah || "ke_lokasi";
@@ -798,7 +830,7 @@
     };
   }
   document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("[data-people-fields]").forEach(function (slot) { slot.outerHTML = peopleFields({}); });
+    document.querySelectorAll("[data-people-fields]").forEach(function (slot) { slot.outerHTML = peopleFields({}) + heavyFields({}); });
   });
   document.addEventListener("change", function (e) {
     var box = e.target.closest && e.target.closest(".rn-pd-orang"); if (!box) return;
@@ -817,7 +849,7 @@
       '<label>Status<select name="transport_status">' + optionList(ARMADA_STATUS, a.status) + "</select></label>" +
       '<label>Mode layanan<select name="service_mode">' + optionList(SERVICE_MODE, a.service_mode) + "</select></label>" +
       '<label>Kebijakan booking<select name="booking_policy">' + optionList(BOOKING_POLICY, a.booking_policy) + "</select></label>" +
-      peopleFields(a) +
+      peopleFields(a) + heavyFields(a) +
       '<label>Muatan sendiri (kg)<input type="number" step="0.01" name="own_load_kg" value="' + esc(a.muatan_sendiri_kg || "") + '"></label>' +
       '<label>Muatan sendiri (m³)<input type="number" step="0.01" name="own_load_m3" value="' + esc(a.muatan_sendiri_m3 || "") + '"></label>' +
       '<label>Lokasi saat ini<input name="current_location" value="' + esc(clean(a.current_location)) + '"></label>' +
@@ -877,7 +909,7 @@
         prohibited_items: v("prohibited_items"),
         documents_required: v("documents_required"),
       };
-      Object.assign(payload, peoplePayload(form));
+      Object.assign(payload, peoplePayload(form), heavyPayload(form));
       if (served) {
         var evs = served.ev.getSelected();
         if (!evs.length) { if (msg) msg.textContent = " pilih minimal satu bencana"; return; }
@@ -1077,6 +1109,12 @@
           volunteer_pickup_location: peoplePayload(form).volunteer_pickup_location,
           people_trip: peoplePayload(form).people_trip,
           return_departure_at: peoplePayload(form).return_departure_at,
+          carries_heavy_equipment: heavyPayload(form).carries_heavy_equipment,
+          heavy_max_ton: heavyPayload(form).heavy_max_ton,
+          heavy_deck_type: heavyPayload(form).heavy_deck_type,
+          heavy_trip: heavyPayload(form).heavy_trip,
+          heavy_demob_at: heavyPayload(form).heavy_demob_at,
+
           route_origin: f("route_origin"),
           route_destination: f("route_destination"),
           capacity_weight_kg: Number(form.capacity_weight_kg.value || 0),

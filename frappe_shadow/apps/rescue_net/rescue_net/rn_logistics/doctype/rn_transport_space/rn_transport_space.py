@@ -1,8 +1,9 @@
 import hashlib
+import math
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, flt
 
 
 VALID_STATUS = {
@@ -71,6 +72,10 @@ class RNTransportSpace(Document):
 
     def validate(self):
         self._sync_served()
+        if self.get("carries_heavy_equipment"):
+            tons = flt(self.get("heavy_max_ton"))
+            if not math.isfinite(tons) or tons <= 0:
+                frappe.throw("Muatan alat berat maks (ton) wajib lebih dari 0")
         if (
             not self.legacy_id
             and self.transport_status

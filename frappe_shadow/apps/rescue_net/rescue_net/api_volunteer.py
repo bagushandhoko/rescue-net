@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from rescue_net.services import drill
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import now_datetime
 from frappe.rate_limiter import rate_limit
@@ -1192,10 +1193,10 @@ def volunteer_board(disaster_event=None):
     """
     event = resolve_disaster_event(disaster_event) or disaster_event
 
-    profiles = frappe.get_all(
+    profiles = drill.drop_hidden_rows(frappe.get_all(
         "RN Volunteer Profile",
         filters={"disaster_event": event} if event else {},
-        fields=["name", "volunteer_name", "contact", "main_skill", "skill_tags",
+        fields=["disaster_event", "name", "volunteer_name", "contact", "main_skill", "skill_tags",
                 "skill_category", "preferences", "equipment_owned", "needs_transport",
                 "availability_status", "duration_available", "current_location",
                 "assigned_posko", "user_account", "verification_status"] + [
@@ -1205,17 +1206,17 @@ def volunteer_board(disaster_event=None):
                 if frappe.db.has_column("RN Volunteer Profile", f)],
         order_by="availability_status asc, volunteer_name asc",
         limit_page_length=2000,
-    )
+    ))
     profile_names = [p.name for p in profiles]
 
-    assignments = frappe.get_all(
+    assignments = drill.drop_hidden_rows(frappe.get_all(
         "RN Volunteer Assignment",
         filters={"disaster_event": event} if event else {},
-        fields=["name", "volunteer", "posko", "assignment_type", "task_title",
+        fields=["disaster_event", "name", "volunteer", "posko", "assignment_type", "task_title",
                 "priority", "assignment_status", "shift_start", "checked_in_at"],
         order_by="creation desc",
         limit_page_length=2000,
-    )
+    ))
 
     posko_names = list({p.assigned_posko for p in profiles if p.assigned_posko} |
                         {a.posko for a in assignments if a.posko})
@@ -1332,21 +1333,21 @@ def volunteer_board(disaster_event=None):
         for a in planned_assignments
     ]
 
-    accom_rows = frappe.get_all(
+    accom_rows = drill.drop_hidden_rows(frappe.get_all(
         "RN Volunteer Accommodation",
         filters={"disaster_event": event} if event else {},
-        fields=["name", "location_name", "capacity_beds", "occupants_count",
+        fields=["disaster_event", "name", "location_name", "capacity_beds", "occupants_count",
                 "is_safe_point", "safety_status", "posko"],
         limit_page_length=200,
-    )
+    ))
     today = frappe.utils.getdate()
-    briefings = frappe.get_all(
+    briefings = drill.drop_hidden_rows(frappe.get_all(
         "RN Safety Briefing",
         filters={"disaster_event": event} if event else {},
-        fields=["name", "title", "scheduled_at", "location", "briefing_status"],
+        fields=["disaster_event", "name", "title", "scheduled_at", "location", "briefing_status"],
         order_by="scheduled_at asc",
         limit_page_length=200,
-    )
+    ))
     briefings_today = [
         b for b in briefings
         if b.scheduled_at and frappe.utils.getdate(b.scheduled_at) == today

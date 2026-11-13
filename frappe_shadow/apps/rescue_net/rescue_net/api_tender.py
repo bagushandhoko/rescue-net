@@ -4,6 +4,7 @@ dan pihak lain bisa mengajukan penawaran dengan batas waktu.
 """
 
 import frappe
+from rescue_net.services import drill
 from frappe.rate_limiter import rate_limit
 from frappe.utils import now_datetime, flt, cint, get_datetime, getdate
 
@@ -125,17 +126,17 @@ def tender_board(disaster_event=None, limit=200):
     from rescue_net.api_donor_program import _owner_verified, _is_control, _allowed_owner
 
     ev = _event(disaster_event)
-    rows = frappe.get_all(
+    rows = drill.drop_hidden_rows(frappe.get_all(
         "RN Procurement Tender",
         or_filters=_event_or_filters(disaster_event, ev),
-        fields=["name", "title", "location", "donor_program", "organization",
+        fields=["disaster_event", "name", "title", "location", "donor_program", "organization",
                 "rab_total", "rab_document_url", "design_image_url", "bidding_opens_at",
                 "bidding_closes_at", "status", "awarded_bid", "scope_description",
                 "tender_category", "work_start_date", "target_completion_date", "work_duration_days",
                 "bid_submission_email", "work_drawings", "modified"],
         order_by="bidding_closes_at asc, modified desc",
         limit_page_length=cint(limit) or 200,
-    )
+    ))
 
     # Same verification gate as api_donor_program (create_special_program):
     # a tender whose organization isn't verified is kept off the public

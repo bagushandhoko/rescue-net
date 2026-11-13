@@ -1,0 +1,18 @@
+/* Posko chart layout; scoped to preserve existing page layouts. */
+.rn-pie-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin:16px 0; min-width:0; }
+.rn-pie-grid[hidden] { display:none; }
+.rn-pie-card { min-width:0; margin:0; overflow-wrap:anywhere; }
+.rn-pie-card h3 { margin:0 0 14px; }
+.rn-pie-wrap { display:flex; align-items:center; gap:20px; min-width:0; }
+.rn-pie-card .rn-pie-ring { width:140px; height:140px; flex:0 0 140px; border-radius:50%; display:grid; place-items:center; }
+.rn-pie-ring .rn-donut-center { position:static; transform:none; width:98px; height:98px; border-radius:50%; background:var(--card,#fff); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.rn-pie-ring strong { font-size:24px; }
+.rn-pie-ring small { font-size:12px; }
+.rn-pie-card .rn-pie-legend { list-style:none; padding:0; margin:0; min-width:0; flex:1 1 auto; }
+.rn-pie-legend li { display:flex; align-items:flex-start; gap:8px; margin:8px 0; font-size:14px; }
+.rn-pie-card .rn-donut-dot { display:inline-block; width:10px; height:10px; flex:0 0 10px; border-radius:50%; margin-top:5px; }
+.rn-pie-card p { font-size:13px; margin:12px 0 0; }
+@media(max-width:700px) { .rn-pie-grid { grid-template-columns:minmax(0,1fr); } .rn-pie-wrap { flex-direction:column; align-items:center; gap:12px; } .rn-pie-card .rn-pie-legend { width:100%; } }
+@media print { .rn-pie-card .rn-pie-ring { print-color-adjust:exact; } }
+
+.rn-pie-card .rn-pie-ring::after { display:none; }

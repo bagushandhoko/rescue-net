@@ -12,13 +12,7 @@ let KATEGORI = "";
 /* Coarse item categories so the "Kategori" filter in the topbar can narrow
    both the Kebutuhan Mendesak table and the Kartu Stok Rinci table. */
 function itemCategory(name) {
-  const s = String(name || "").toLowerCase();
-  if (/(air|minum|mineral|galon|aqua)/.test(s)) return "Air & Minuman";
-  if (/(beras|mie|instan|sembako|makan|nasi|biskuit|roti|gula|garam|minyak|susu|pangan|lauk)/.test(s)) return "Pangan";
-  if (/(selimut|pakaian|baju|sandang|terpal|tenda|tikar|matras|seprai)/.test(s)) return "Sandang & Hunian";
-  if (/(obat|medis|p3k|masker|perban|antiseptik|vitamin|infus|oralit)/.test(s)) return "Obat & Medis";
-  if (/(popok|pembalut|sabun|pasta|higien|hygiene|sanitasi|tissue|diapers)/.test(s)) return "Higienis";
-  return "Lainnya";
+  return RNPoskoCharts.category(name);
 }
 
 // HTML-escaped (item names / labels come from posko staff, donors and, since
@@ -1211,6 +1205,7 @@ async function loadBoard() {
       RNLogistikInfo.renderKpi(b);
       RNLogistikInfo.renderMovements(b);
     }
+    RNPoskoCharts.logistics(b);
     renderNeedsBoard(b);
     wireEventWideLinks();
     renderManageAccess(b);      // toggles the operator inline actions on top

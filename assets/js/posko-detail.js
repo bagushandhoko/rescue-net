@@ -591,6 +591,7 @@ async function loadPosko() {
     }
   }
 
+  LIVE_STOCK_BOARD = null;
   try {
     const logBoard = await RN_FRAPPE.call(
       "rescue_net.api_control_centre.logistik_board",
@@ -664,6 +665,15 @@ async function loadPosko() {
 
   POSKO_CONTEXT_CACHE = ctx;
 
+  if (res.detail_allowed) {
+    RNPoskoCharts.mount("rnPoskoCharts", [RNPoskoCharts.needs(d.needs || []),
+      RNPoskoCharts.stocks(LIVE_STOCK_BOARD ? LIVE_STOCK_BOARD.stock_cards : ctx.stocks)]);
+  } else if (LIVE_STOCK_BOARD) {
+    RNPoskoCharts.logistics(LIVE_STOCK_BOARD);
+  } else {
+    RNPoskoCharts.mount("rnPoskoCharts", [{title: "Kebutuhan & ketersediaan", unavailable: true, segments: [],
+      note: "Rincian dibatasi oleh pengaturan berbagi posko."}]);
+  }
   renderOverview(ctx);
   if (LIVE_STOCK_BOARD && (LIVE_STOCK_BOARD.stock_cards || []).length) renderStockSummaryLive(LIVE_STOCK_BOARD);
   else renderStockSummary(ctx.stocks);

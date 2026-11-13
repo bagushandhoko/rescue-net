@@ -25,6 +25,8 @@ Detail status, item terbuka, dan gotcha ada di `HANDOVER.md`.
 
 ## Status saat ini
 
+- 2026-11-14 Nala: grafik kebutuhan/ketersediaan posko di nala/pie-posko-20261114 (BELUM deploy/push). Browser login asli tujuh halaman 390px + desktop dan helper lulus; integrasi endpoint Menuju posko masih tertunda karena stack uji mati/IO tinggi. Rincian HANDOVER.md bagian grafik ringkasan posko.
+
 Perbarui bagian ini di akhir setiap sesi kerja. (Terakhir: 2026-10-23.)
 - **AI bersama + staf organisasi SELESAI + TER-DEPLOY (2026-10-23, migrate OK, backup 20261023_080624):** key chat personal = pribadi → organisasi (admin nyalakan `share_with_members` di RN AI Profile) → platform (super admin, semua bencana); kuota bersama habis → notifikasi + banner `rn-ai-notice.js` agar user pasang key sendiri (ADR-0002 §5 diubah). Staf organisasi: `membership_role="staff"` + `staff_area`/`staff_note` (field baru RN Organization Membership), hanya boleh setujui/tolak permohonan anggota; owner menunjuk lewat `set_org_staff` (UI di Koordinasi Organisasi → Keanggotaan). Tes: `test_ai_shared_fallback`, `test_org_staff`.
 - **Audit layout HP (2026-10-23) + peta:** blok CSS "HP: form & kontrol" di akhir `style.css` (font 16px, tinggi 44px); `rn-map-fullscreen.js` memberi tombol layar penuh/tutup ke semua peta Leaflet; Laporan Masyarakat punya pemilih titik peta. Audit Playwright (390px, mode tamu, 49 halaman) bersih; tampilan setelah login belum diaudit. Skrip: scratchpad `audit.js` (tidak disimpan di repo).

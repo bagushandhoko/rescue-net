@@ -49,10 +49,12 @@
       var e = document.createElement(tag); e.textContent = text; parent.appendChild(e); return e;
     }
     el('h3', 'Menuju posko ini', panel);
+    var chart = document.createElement('div'); chart.className = 'rn-pie-grid'; panel.appendChild(chart);
     var body = document.createElement('div'); panel.appendChild(body);
     var refresh = el('button', 'Perbarui pantauan', panel);
     refresh.type = 'button'; refresh.className = 'btn'; refresh.style.minHeight = '44px';
     function render(data) {
+      if (window.RNPoskoCharts) RNPoskoCharts.incoming(chart, data);
       body.replaceChildren();
       [['in_transit', 'Bantuan dalam perjalanan'], ['booked', 'Sudah dibooking'],
         ['arrivals', 'Armada & relawan yang akan datang']].forEach(function (group) {
@@ -76,6 +78,7 @@
     }
     function load() {
       refresh.disabled = true;
+      chart.replaceChildren();
       body.textContent = 'Memuat pantauan…';
       window.RN_FRAPPE.call('rescue_net.api_public_needs.incoming_for_posko',
         {posko: id, event: q.get('event') || undefined}, {method: 'GET'})

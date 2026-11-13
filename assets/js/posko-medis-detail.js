@@ -112,6 +112,7 @@ function card(
 }
 
 function renderStock(items) {
+  RNPoskoCharts.mount("rnStockChart", [RNPoskoCharts.stocks(items, "Stok medis per kategori")]);
   const el =
     document.getElementById(
       "medicalStock"
@@ -256,6 +257,9 @@ function needCard(n) {
 
 // `needs` is the flat list from posko_needs; null = login required.
 function renderNeeds(needs) {
+  RNPoskoCharts.mount("rnNeedChart", [needs === null
+    ? {title: "Kebutuhan medis", unavailable: true, segments: [], note: "Kebutuhan hanya untuk tim posko yang berwenang."}
+    : RNPoskoCharts.needs(needs)]);
   const el = document.getElementById("needList");
   if (!el) return;
 

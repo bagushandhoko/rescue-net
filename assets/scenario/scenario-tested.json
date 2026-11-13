@@ -3,6 +3,32 @@
   "diperbarui": "2026-11-14",
   "uji": [
     {
+      "id": "NALA-PIE-POSKO-20261114",
+      "tanggal": "2026-11-14",
+      "kategori": "Posko dan logistik",
+      "judul": "Grafik ringkasan kebutuhan dan ketersediaan posko",
+      "tujuan": "Membaca status kebutuhan dan jenis stok/alat dengan cepat tanpa mencampur satuan",
+      "akun": "Tamu dan akun demo relawan/logistik login sungguhan pada browser; salinan halaman lokal memakai API asli, tanpa deploy",
+      "langkah": [
+        "Periksa grafik di Logistik, Detail Posko, Medis, Alat, Distribusi, Dapur dan Shelter pada lebar 390px setelah login; periksa susunan desktop.",
+        "Periksa kebutuhan medis pada sesi tamu baru, serta pilihan Riil dengan posko simulasi.",
+        "Uji helper terisolasi: data kosong/dibatasi, angka tidak valid, label HTML, status kebutuhan, stok terbaru, kategori lainnya dan pembaruan status menuju posko."
+      ],
+      "hasil": "Grafik tujuh halaman login 390px dan susunan desktop lulus; tamu medis dibatasi; helper lulus. Grafik Menuju posko baru diuji dengan data terisolasi: uji endpoint gabungan masih tertunda karena stack uji dihentikan saat beban disk tinggi. Belum deploy.",
+      "skor": "Tampilan lulus; integrasi Menuju posko tertunda",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Banner akses gagal disisipkan saat section Menuju posko bersarang di header.",
+          "perbaikan": "Anchor dinaikkan ke anak langsung main; uji ulang tujuh halaman login tanpa error JS."
+        },
+        {
+          "masalah": "KPI logistik tidak mengirim jumlah kebutuhan selesai; kecocokan kategori alat tidak menjamin terpenuhi.",
+          "perbaikan": "Label mengikuti data: kebutuhan terbuka/kritis dan kecocokan kategori; stok menghitung jenis barang/alat."
+        }
+      ]
+    },
+    {
       "id": "NALA-MENUJU-POSKO-20261114",
       "tanggal": "2026-11-14",
       "kategori": "Posko dan logistik",

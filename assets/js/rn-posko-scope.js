@@ -121,7 +121,11 @@
       '<a class="btn ghost mini" href="' + esc(scope.coordination_href) + '">Koordinasi Organisasi</a>' +
       '<a class="btn ghost mini" href="' + esc(scope.control_centre_href) + '">Control Centre</a>';
     var firstSection = main.querySelector("section, .content-grid, .kpi-grid");
-    if (firstSection) main.insertBefore(b, firstSection);
+    // Incoming activity may be a nested section inside the topbar.
+    if (firstSection) {
+      while (firstSection.parentNode !== main) firstSection = firstSection.parentNode;
+      main.insertBefore(b, firstSection);
+    }
     else main.appendChild(b);
   }
 

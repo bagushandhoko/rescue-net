@@ -205,6 +205,24 @@
             <span class="form-message" id="koAiKeyMsg"></span>
           </div>
         </form>
+
+        <!-- owner 2026-11-13: admin organisasi bisa backup & pulihkan sendiri -->
+        <div id="koBackupOrg" hidden>
+          <h4 class="rn-md-detail-h">Backup &amp; Pulihkan Data Organisasi</h4>
+          <p class="rn-muted" style="font-size:13px;margin:0 0 8px">Satu berkas berisi data organisasi, anggota, semua posko, dan seluruh isinya (kebutuhan, stok, armada, relawan, pasien, shelter, bukti). Bila data rusak atau terhapus, pulihkan sendiri dari sini. Pemulihan hanya mengubah data milik organisasi ini; sebelum memulihkan, sistem otomatis membuat backup keadaan sekarang.</p>
+          <div class="form-grid">
+            <label>Organisasi<select id="koBkOrg"></select></label>
+          </div>
+          <div class="form-actions"><button class="btn primary" type="button" id="koBkCreate">Buat backup sekarang</button></div>
+          <div id="koBkList" style="margin:8px 0"></div>
+          <label class="rs-check" style="display:flex;gap:8px;align-items:flex-start;margin:6px 0"><input type="checkbox" id="koBkHapus"> <span>Saat memulihkan, <b>hapus juga</b> data yang dibuat setelah backup itu</span></label>
+          <div class="form-grid">
+            <label>Pulihkan dari berkas yang pernah diunduh<input type="file" id="koBkFile" accept=".gz,.json,application/gzip,application/json"></label>
+          </div>
+          <div class="form-actions"><button class="btn" type="button" id="koBkUpload">Pulihkan dari berkas</button></div>
+          <p class="form-message" id="koBkMsg" role="status"></p>
+          <details><summary>Riwayat backup &amp; pemulihan</summary><ul id="koBkLog" style="margin:6px 0 0;padding-left:18px"></ul></details>
+        </div>
       </div>
     </section>
 
@@ -261,5 +279,6 @@
 <script src="../assets/js/rn-mobile-drawer.js?v=topback-20261109"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-posko-help.js?v=manualF-20261112" defer></script>
+<script src="../assets/js/rn-backup-org.js?v=backuporg-20261113"></script>
 </body>
 </html>

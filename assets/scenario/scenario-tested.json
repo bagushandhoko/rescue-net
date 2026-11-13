@@ -1,7 +1,24 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-11",
+  "diperbarui": "2026-11-13",
   "uji": [
+    {
+      "id": "NALA-RELAWAN-PUBLIK-20261113",
+      "tanggal": "2026-11-13",
+      "kategori": "Relawan dan papan publik",
+      "judul": "Posisi dan kebutuhan relawan publik",
+      "tujuan": "Posisi dan kebutuhan relawan publik",
+      "akun": "Tamu dan Administrator pada stack uji terisolasi",
+      "langkah": [
+        "Periksa booking confirmed, requested, rejected, cancelled serta penempatan relawan.",
+        "Periksa kebutuhan terbuka dan pencocokan bidang per bencana.",
+        "Pastikan kontak tidak tampil bagi tamu dan data simulasi tersembunyi pada Riil."
+      ],
+      "hasil": "5 tes baru dan 34 tes lama lulus. Belum deploy; tampilan halaman digabung oleh Suri.",
+      "skor": "Lulus",
+      "status": "lulus",
+      "temuan": []
+    },
     {
       "id": "AUDIT-PROSES-1",
       "tanggal": "2026-11-11",

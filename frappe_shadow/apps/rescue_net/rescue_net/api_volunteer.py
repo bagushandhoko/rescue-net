@@ -1195,7 +1195,7 @@ def volunteer_board(disaster_event=None):
     profiles = frappe.get_all(
         "RN Volunteer Profile",
         filters={"disaster_event": event} if event else {},
-        fields=["name", "volunteer_name", "contact", "main_skill", "skill_tags",
+        fields=["disaster_event", "name", "volunteer_name", "contact", "main_skill", "skill_tags",
                 "skill_category", "preferences", "equipment_owned", "needs_transport",
                 "availability_status", "duration_available", "current_location",
                 "assigned_posko", "user_account", "verification_status"] + [
@@ -1422,7 +1422,83 @@ def volunteer_board(disaster_event=None):
         "papan_penugasan": papan_penugasan,
         "akomodasi_keselamatan": akomodasi_keselamatan,
     }
+    _public_volunteer_positions(out, profiles, event)
     return _board_privacy(out, {p.name: p.get("contact") for p in profiles})
+
+
+def _public_volunteer_positions(out, profiles, event):
+    """Batch confirmed bookings; expose only public position and capacity fields."""
+    from rescue_net.services import drill
+
+    names = [p.name for p in profiles]
+    filters = {"status": "confirmed", "volunteer": ["in", names]}
+    if event:
+        filters["disaster_event"] = event
+    bookings = drill.drop_hidden_rows(frappe.get_all(
+        "RN Volunteer Booking", filters=filters,
+        fields=["name", "volunteer", "disaster_event", "booking_kind", "posko", "transport_space",
+                "accommodation", "trip_leg", "date_from", "date_to"],
+        order_by="date_from desc, creation desc", limit_page_length=0,
+    )) if names else []
+
+    def targets(doctype, ids, fields):
+        if not ids:
+            return {}
+        rows = drill.drop_hidden_rows(frappe.get_all(
+            doctype, filters={"name": ["in", list(ids)]},
+            fields=["name", "disaster_event"] + fields, limit_page_length=0,
+        ))
+        return {r.name: r for r in rows}
+
+    assigned = {p.name: p.assigned_posko for p in profiles if p.assigned_posko}
+    poskos = targets("RN Posko", {b.posko for b in bookings if b.posko} | set(assigned.values()), ["title"])
+    vehicles = targets("RN Transport Space", {b.transport_space for b in bookings if b.transport_space},
+                       ["title", "provider_name", "coordination_posko"])
+    stays = targets("RN Volunteer Accommodation", {b.accommodation for b in bookings if b.accommodation},
+                   ["location_name", "posko"])
+    by_volunteer = defaultdict(list)
+    for b in bookings:
+        by_volunteer[b.volunteer].append(b)
+    for key in ("daftar_relawan", "relawan_tersedia", "relawan_ditempatkan"):
+        for row in out.get(key, []):
+            row.update(menginap_di=None, kendaraan=[], bertugas_di=None)
+            if row.get("posko_ditempatkan") not in (None, "", "-"):
+                row["bertugas_di"] = row["posko_ditempatkan"]
+            if not row["bertugas_di"] and assigned.get(row["name"]) in poskos:
+                row["bertugas_di"] = poskos[assigned[row["name"]]].title
+            for b in by_volunteer.get(row["name"], []):
+                if b.booking_kind in ("shelter", "akomodasi") and row["menginap_di"] is None:
+                    target = poskos.get(b.posko) if b.booking_kind == "shelter" else stays.get(b.accommodation)
+                    if target:
+                        row["menginap_di"] = {"nama": target.get("title") or target.get("location_name"),
+                                              "date_from": b.date_from, "date_to": b.date_to}
+                elif b.booking_kind == "transport" and b.transport_space in vehicles:
+                    target = vehicles[b.transport_space]
+                    row["kendaraan"].append({"nama": target.title or target.provider_name,
+                                              "arah": b.trip_leg or "berangkat", "tanggal": b.date_from})
+                elif b.booking_kind == "posko" and not row["bertugas_di"] and b.posko in poskos:
+                    row["bertugas_di"] = poskos[b.posko].title
+
+    need_filters = {"need_status": "open"}
+    if event:
+        need_filters["disaster_event"] = event
+    needs = drill.drop_hidden_rows(frappe.get_all(
+        "RN Recovery Volunteer Need", filters=need_filters,
+        fields=["name", "role_needed", "people_needed", "location", "date_from", "date_to", "disaster_event"],
+        order_by="date_from asc, creation desc", limit_page_length=0,
+    ))
+    visible_profiles = drill.drop_hidden_rows(profiles)
+    out["kebutuhan_relawan"] = []
+    for n in needs:
+        role = (n.role_needed or "").strip().casefold()
+        available = sum(1 for p in visible_profiles
+                        if p.availability_status == "available" and p.disaster_event == n.disaster_event
+                        and role and role in " ".join(str(p.get(k) or "") for k in
+                                                     ("skill_category", "main_skill", "skill_tags")).casefold())
+        out["kebutuhan_relawan"].append({"bidang": n.role_needed, "dibutuhkan": _num_i(n.people_needed),
+                                       "tersedia": available, "lokasi": n.location,
+                                       "tanggal": {"date_from": n.date_from, "date_to": n.date_to},
+                                       "bencana": n.disaster_event})
 
 
 GUEST_VOLUNTEER_NAME = "Relawan (login untuk melihat nama)"

@@ -508,6 +508,8 @@ def control_centre_summary():
 
     from rescue_net.services import drill
     rows = drill.drop_hidden_rows(_fetch_need_rows())  # tampilan riil: tanpa kebutuhan simulasi
+    if drill.simulation_hidden():  # kebutuhan riil selalu milik suatu bencana
+        rows = [r for r in rows if r.get("disaster_event")]
 
     return {
         "raw_need_count": len(rows),

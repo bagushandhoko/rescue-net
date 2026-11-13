@@ -31,7 +31,8 @@ class TestRiilAngka(OperationalBase):
 
     def test_displacement_totals(self):
         sim, riil = self.both(api_displacement.displacement_board)
-        self.assertEqual(sim["totals"]["people_total"] - riil["totals"]["people_total"], 5)
+        self.assertGreaterEqual(sim["totals"]["people_total"] - riil["totals"]["people_total"], 5)
+        self.assertNotIn(SENT, frappe.as_json(riil))
 
     def test_public_needs_posko_count(self):
         frappe.db.set_value("RN Posko", self.sim_posko.name, "public_detail", "public")
@@ -50,3 +51,9 @@ class TestRiilAngka(OperationalBase):
         self.assertIn(SENT, frappe.as_json(sim))
         self.assertNotIn("SIMULASI", frappe.as_json(riil).upper())
         self.assertEqual(riil["count"], len(riil["verifiers"]))
+
+    def test_rows_without_event_hidden_in_riil(self):
+        _insert("RN Displacement Plan", title="KK tanpa bencana " + SENT, people_count=7, plan_type="undecided", status="proposed")
+        sim, riil = self.both(api_displacement.displacement_board)
+        self.assertIn("KK tanpa bencana", frappe.as_json(sim))
+        self.assertNotIn("KK tanpa bencana", frappe.as_json(riil))

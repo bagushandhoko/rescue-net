@@ -47,6 +47,8 @@ def displacement_board(disaster_event=None):
     )
     from rescue_net.services import drill
     rows = drill.drop_hidden_rows(rows)  # tampilan riil: tanpa rencana pengungsi simulasi
+    if drill.simulation_hidden():  # data riil selalu milik suatu bencana; data contoh tanpa bencana disembunyikan
+        rows = [r for r in rows if r.get("disaster_event")]
 
     def _p(r):
         r = dict(r)

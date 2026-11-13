@@ -236,7 +236,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     var offer = $("#raOfferLink");
-    if (offer) offer.href = "tawarkan-alat.html?event=" + encodeURIComponent(eventId() || "");
+    if (offer) offer.href = "#pengaturan";  // owner 2026-11-13: form tawarkan alat kini di panel Pengaturan Alat Kerja
     if (!window.RN_FRAPPE) return;
     wireForms();
     loadRecovery();

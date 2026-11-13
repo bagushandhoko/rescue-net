@@ -142,7 +142,13 @@ class TestLanding(RNTestCase):
         frappe.db.set_value("RN Disaster Event", w.event.name, "event_status", "active")
         frappe.db.set_value("RN Posko", w.posko_a.name, "posko_type", "equipment")
         with as_user(make_actor(posko=w.posko_a).user):
-            self.assertTrue(my_landing()["href"].startswith("kelola-posko.html?id="))
+            href = my_landing()["href"]  # owner 2026-11-13: posko alat -> Pengaturan Alat Kerja
+            self.assertTrue(href.startswith("alat-kerja.html?id=") and href.endswith("#pengaturan"), href)
+        pemilik = make_actor()
+        _insert("RN Resource Profile", resource_name="Genset uji", resource_type="equipment", category="genset", owner_type="individual",
+                owner_id=pemilik.account, disaster_event=w.event.name, quantity=1, availability_status="available")
+        with as_user(pemilik.user):
+            self.assertEqual(my_landing()["href"], "alat-kerja.html#pengaturan")
         rel = make_actor(role="relawan")
         _insert("RN Volunteer Profile", user_account=rel.account, disaster_event=w.event.name, volunteer_name="Uji",
                 main_skill="logistik", availability_status="available")

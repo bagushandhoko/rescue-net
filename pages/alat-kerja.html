@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
-  <title>Rescue-Net | Recovery dan Alat Kerja</title>
+  <title>Rescue-Net | Recovery Program &amp; Alat Kerja</title>
   <link rel="stylesheet" href="../assets/css/style.css?v=font13-20261109">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,6 +43,26 @@
   .rn-rv-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
   .rn-rv-box{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px}
   .rn-rv-sign{display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-bottom:1px dashed var(--line);padding:6px 0}
+  </style>
+  <style id="rn-alat-pengaturan-style">
+  .rn-pa-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px;align-items:start}
+  @media (max-width:860px){.rn-pa-grid{grid-template-columns:1fr}}
+  .rn-pa-dl{display:grid;grid-template-columns:minmax(130px,200px) 1fr;gap:6px 12px;margin:0;font-size:14px}
+  .rn-pa-dl dt{color:var(--muted)} .rn-pa-dl dd{margin:0;white-space:pre-line;overflow-wrap:anywhere}
+  @media (max-width:560px){.rn-pa-dl{grid-template-columns:1fr}.rn-pa-dl dt{margin-top:6px}}
+  .rn-pa-tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+  .rn-pa-contact{display:grid;gap:8px;font-size:14px}
+  .rn-pa-contact .btn{justify-content:center}
+  .rn-pa-other a{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);color:inherit;text-decoration:none}
+  .rn-pa-sec{margin:16px 0 6px;font-size:14px}
+  .rn-pa-checks{display:flex;flex-wrap:wrap;gap:8px 18px;margin:6px 0}
+  .rn-pa-checks label{display:flex;align-items:center;gap:6px;font-weight:600}
+  .rn-pa-mine{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+  
+    .rn-self{border:2px solid #1f6f43;border-radius:14px;padding:4px 14px 10px;margin:12px 0;background:#fbfffc}
+    .rn-self > h3{margin:10px 0 2px}
+    #akSelfBtn[disabled]{opacity:.5;cursor:not-allowed}
+    .rn-ak-head-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   </style>
 </head>
 <body>
@@ -82,16 +102,95 @@
 
   <main class="main rn-dense rn-ak-page">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Recovery dan Alat Kerja</div>
+    <div class="rn-page-mobile-title">Recovery Program &amp; Alat Kerja</div>
 
       <div>
         <p class="eyebrow">Obyek Recovery → Kebutuhan Alat → Penyedia &amp; Ketersediaan → Dukungan agar Alat Dipakai</p>
-        <h2>Recovery dan Alat Kerja</h2>
+        <h2>Recovery Program &amp; Alat Kerja</h2>
+        <div class="rn-ak-head-actions"><button type="button" class="btn primary" id="akAddBtn">+ Tambah Alat Kerja</button> <button type="button" class="btn" id="akSelfBtn" disabled title="Aktif bila Anda pemilik alat atau pengelola posko alat kerja">Pengaturan Alat Kerja</button></div>
         <p class="subtitle">Mulai dari obyek yang harus dipulihkan dan rencana rekonstruksinya, lalu alat apa yang dibutuhkan, siapa yang menyediakan dan di mana, serta dukungan (operator, BBM, transport, biaya) agar alat itu benar-benar bisa dipakai.</p>
         <p class="subtitle" id="workToolMeta">Memuat…</p>
       </div>
       <div class="status-pill" id="workToolUpdated">Alat Kerja · Live</div>
     </header>
+
+    <!-- owner 2026-11-13: Posko Alat Kerja + Tawarkan Alat digabung -> "Pengaturan Alat Kerja" -->
+    <section class="rn-self" id="pengaturan" hidden>
+      <h3>Pengaturan Alat Kerja</h3>
+      <p class="subtitle">Tambah dan ubah alat (data, foto, waktu tersedia, operator, kebutuhan mobilisasi), lihat alat Anda, dan kelola posko alat kerja Anda.</p>
+      <span id="taWho" hidden></span><a id="taBack" hidden></a>
+      <section class="panel" id="akMyPoskosPanel" hidden>
+        <div class="panel-header"><div><h3>Posko Alat Kerja saya</h3><p>Inventaris, alat dipakai/dikirim, dan permintaan alat per posko.</p></div></div>
+        <div id="akMyPoskos"></div>
+      </section>
+    <section class="panel" id="taLogin" hidden><p>Perlu login untuk menawarkan alat. <a id="taLoginLink" href="auth.html">Login / Registrasi</a></p></section>
+    <section class="panel" id="taFormPanel" hidden>
+      <div class="panel-header"><div><h3 id="taFormTitle">Data Alat yang Ditawarkan</h3><p id="taFormSub">Alat langsung muncul di daftar penyedia bencana yang dipilih.</p></div></div>
+      <form class="rn-form" id="taForm">
+        <input type="hidden" name="resource_profile">
+        <h4 class="rn-pa-sec">1. Pemilik &amp; Skema</h4>
+        <div class="form-grid">
+          <label>Bencana<input name="disaster_event" id="taEvent" required></label>
+          <label>Ditawarkan sebagai<select name="owner_choice" id="taOwner"><option value="individual">Perorangan (atas nama saya)</option></select></label>
+          <label>Skema<select name="offer_type" id="taOfferType"></select></label>
+        </div>
+        <h4 class="rn-pa-sec">2. Data Alat</h4>
+        <div class="form-grid">
+          <label>Nama alat<input name="resource_name" required placeholder="mis. Ekskavator Komatsu PC200"></label>
+          <label>Kategori<select name="category" id="taCategory"></select></label>
+          <label>Jumlah<input name="quantity" type="number" min="1" step="any" value="1" required></label>
+          <label>Satuan<input name="unit" id="taUnit" value="unit"></label>
+          <label>Status<select name="availability_status" id="taStatus"></select></label>
+          <label>Lokasi alat sekarang<input name="current_location" placeholder="mis. Meulaboh, Aceh Barat"></label>
+          <label style="grid-column:1/-1">Area layanan<input name="coverage_area" placeholder="mis. Aceh Barat & Nagan Raya"></label>
+        </div>
+        <h4 class="rn-pa-sec">Identitas, kondisi &amp; spesifikasi</h4>
+        <div id="taIdentity"></div>
+        <div id="taSpecs"></div>
+        <div class="form-grid">
+          <label style="grid-column:1/-1">Catatan spesifikasi lain<textarea name="capacity_description" rows="2" placeholder="mis. kelengkapan, riwayat servis"></textarea></label>
+          <label>Foto alat (boleh beberapa, maks 10)<input name="photo" type="file" multiple accept="image/png,image/jpeg,image/webp"></label>
+        </div>
+        <div id="taPhotos" hidden></div>
+        <h4 class="rn-pa-sec">3. Bisa Dipakai</h4>
+        <div class="form-grid">
+          <label>Mulai<input name="available_from" type="date"></label>
+          <label>Sampai<input name="available_until" type="date"></label>
+          <label>Biaya operasional per hari (Rp, bila sewa)<input name="daily_operating_cost" type="number" min="0" step="1000"></label>
+        </div>
+        <h4 class="rn-pa-sec">4. Operator</h4>
+        <div class="rn-pa-checks">
+          <label><input type="checkbox" name="operator_included"> Termasuk operator</label>
+          <label><input type="checkbox" name="support_operator"> Butuh operator dari pihak penerima</label>
+        </div>
+        <div class="form-grid"><label>Jumlah operator disediakan<input name="operator_count" type="number" min="0"></label></div>
+        <h4 class="rn-pa-sec">5. Kebutuhan Pendukung Mobilisasi</h4>
+        <div class="rn-pa-checks">
+          <label><input type="checkbox" name="support_transport"> Butuh transport (trailer / lowbed / kapal)</label>
+          <label><input type="checkbox" name="support_fuel"> Butuh BBM</label>
+          <label><input type="checkbox" name="support_accommodation"> Butuh akomodasi / konsumsi operator</label>
+        </div>
+        <div class="form-grid">
+          <label style="grid-column:1/-1">Rincian kebutuhan mobilisasi<textarea name="mobilization_needs" rows="3" placeholder="mis. lowbed 20 ton dari Medan, izin jalan, pengawalan, BBM 100 L/hari"></textarea></label>
+          <label>Perkiraan biaya mobilisasi (Rp)<input name="mobilization_cost" type="number" min="0" step="1000"></label>
+          <label>Dukungan lain<input name="support_notes" placeholder="mis. butuh mekanik saat servis"></label>
+        </div>
+        <h4 class="rn-pa-sec">6. Kontak Person</h4>
+        <div class="form-grid">
+          <label>Nama<input name="pic_name" required></label>
+          <label>HP / WhatsApp<input name="pic_phone" required inputmode="tel"></label>
+          <label>Email (opsional)<input name="pic_email" type="email"></label>
+        </div>
+        <div class="rn-pa-checks"><label><input type="checkbox" name="contact_public"> Kontak boleh dilihat publik (tanpa centang: hanya pengguna yang login)</label></div>
+        <label style="display:grid;gap:6px;margin-top:8px">Catatan<textarea name="notes" rows="2"></textarea></label>
+        <div class="form-actions"><button class="btn primary" type="submit" id="taSubmit">Tawarkan Alat</button> <button class="btn ghost" type="button" id="taReset" hidden>Batal ubah</button> <span class="rn-muted" id="taMsg" role="status"></span></div>
+      </form>
+    </section>
+    <section class="panel" id="taMinePanel" hidden>
+      <div class="panel-header"><div><h3>Alat Saya</h3><p>Alat yang Anda tawarkan (pribadi atau organisasi yang Anda kelola).</p></div></div>
+      <div id="taMine"></div>
+    </section>
+    </section>
 
     <section class="kpi-grid rn-ak-kpi" id="akKpi">
       <button type="button" class="kpi-card good rn-kpi-btn" data-kpi="alat_tersedia">
@@ -438,15 +537,18 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=rnui-20260926"></script>
-<script src="../assets/js/recovery-alat.js?v=ra-20261103"></script>
+<script src="../assets/js/recovery-alat.js?v=gabung-20261113"></script>
 <script src="../assets/js/recovery-relawan.js?v=rv-20261103"></script>
 <script src="../assets/js/alat-kerja.js?v=font13-20261109"></script>
 <script src="../assets/js/session-role.js?v=peran-20261112"></script>
 <script src="../assets/js/rn-public-header.js?v=simriil2-20261113"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=rel2-20261113"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=alat-20261113"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=topback-20261109"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-posko-help.js?v=manualF-20261112" defer></script>
+<script src="../assets/js/rn-equipment-specs.js?v=font13-20261109"></script>
+<script src="../assets/js/tawarkan-alat.js?v=gabung-20261113"></script>
+<script src="../assets/js/rn-pengaturan-alat.js?v=gabung-20261113"></script>
 </body>
 </html>

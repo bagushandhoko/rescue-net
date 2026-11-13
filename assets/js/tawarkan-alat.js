@@ -100,6 +100,7 @@
   async function loadMine() {
     try { MINE = (await window.RN_FRAPPE.call(A + "my_tools")).tools || []; } catch (e) { MINE = []; }
     renderMine();
+    document.dispatchEvent(new CustomEvent("rn-mytools", { detail: MINE }));  // tombol Pengaturan Alat Kerja
     var want = qs.get("edit");
     if (want) {
       var t = MINE.filter(function (x) { return x.name === want; })[0];
@@ -108,8 +109,9 @@
   }
 
   async function init() {
+    if (!$("#taForm")) return;
     var back = "alat-kerja.html?event=" + encodeURIComponent(ev) + "#penyedia";
-    $("#taBack").href = back;
+    if ($("#taBack")) $("#taBack").href = back;
     var o;
     try { o = await window.RN_FRAPPE.call(A + "tool_form_options"); }
     catch (e) {

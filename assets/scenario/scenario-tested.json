@@ -14,7 +14,7 @@
         "Periksa kebutuhan terbuka dan pencocokan bidang per bencana.",
         "Pastikan kontak tidak tampil bagi tamu dan data simulasi tersembunyi pada Riil."
       ],
-      "hasil": "5 tes baru dan 34 tes lama lulus. Belum deploy; tampilan halaman digabung oleh Suri.",
+      "hasil": "5 tes baru dan 34 tes lama lulus; browser API dengan login Administrator sungguhan dan kunci kebutuhan_relawan lulus. Belum deploy; tampilan halaman digabung oleh Suri.",
       "skor": "Lulus",
       "status": "lulus",
       "temuan": []

@@ -61,9 +61,12 @@ services:
   worker:
     <<: *frappe
     profiles: ["jobs"]
+    # owner 2026-11-13: layani semua antrean Frappe (default, short, long); jumlah proses = RN_JOB_WORKERS
+    deploy:
+      replicas: ${RN_JOB_WORKERS:-1}
     depends_on: [backend]
     entrypoint: ["/bin/bash"]
-    command: ["-lc", "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && exec bench --site ${RN_SITE:-osiun.localhost} worker --queue default"]
+    command: ["-lc", "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && exec bench --site ${RN_SITE:-osiun.localhost} worker --queue default,short,long"]
 
   scheduler:
     <<: *frappe

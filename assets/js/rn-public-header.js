@@ -71,7 +71,7 @@
     const select = wrap.querySelector("select");
     select.addEventListener("change", () => { if (select.value && select.value !== active) goToEvent(select.value); });
     try {
-      const res = await fetch(RN_API + "rescue_net.api_ai.public_active_disasters", { credentials: "omit" });
+      const res = await fetch(RN_API + "rescue_net.api_ai.public_active_disasters", { credentials: "same-origin" });
       const payload = await res.json(); const rows = (payload && payload.message) || [];
       if (rows.length) {
         select.innerHTML = rows.map(row => { const id = stripEventPrefix(row.legacy_id || row.id || row.name || ""); const title = row.title || id; const sev = row.severity ? ` (${row.severity})` : ""; const sel = id === active ? " selected" : ""; return `<option value="${id}"${sel}>${title}${sev}</option>`; }).join("");
@@ -102,7 +102,10 @@
   // Mode Operasional Riil (owner 2026-11-09): bila super admin menyembunyikan data simulasi, halaman yang masih
   // membuka bencana simulasi (default lama event-sim-001, tautan/localStorage lama) dipindah ke bencana aktif
   // pertama. Status disimpan 60 dtk di sessionStorage agar tidak memanggil server tiap halaman.
+  // owner 2026-11-13: pengunjung yang memilih "Riil Data Bencana" (cookie rn_tampilan=riil) diperlakukan sama
+  function viewerRiil() { return /(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie); }
   async function operationalMode() {
+    if (viewerRiil()) return true;
     const KEY = "rn_opmode";
     try { const c = JSON.parse(sessionStorage.getItem(KEY) || "null"); if (c && Date.now() - c.t < 60000) return !!c.on; } catch (e) {}
     let on = false;
@@ -117,10 +120,10 @@
     const ev = explicit || window.rnActiveEvent;
     if (!ev || !(await operationalMode())) return;
     try {
-      const all = ((await (await fetch(RN_API + "rescue_net.api_events.disasters?limit=500", { credentials: "omit" })).json()) || {}).message || {};
+      const all = ((await (await fetch(RN_API + "rescue_net.api_events.disasters?limit=500", { credentials: "same-origin" })).json()) || {}).message || {};
       const visible = (all.disasters || []).some(d => [d.name, d.legacy_id, d.frappe_name].map(stripEventPrefix).indexOf(ev) !== -1);
       if (visible) return;
-      const act = ((await (await fetch(RN_API + "rescue_net.api_ai.public_active_disasters", { credentials: "omit" })).json()) || {}).message || [];
+      const act = ((await (await fetch(RN_API + "rescue_net.api_ai.public_active_disasters", { credentials: "same-origin" })).json()) || {}).message || [];
       const first = act.length ? stripEventPrefix(act[0].legacy_id || act[0].id || act[0].name || "") : "";
       if (first && first !== ev) {
         writeStoredEvent(first);
@@ -128,7 +131,15 @@
         u.searchParams.delete("disaster_event"); u.searchParams.delete("disaster_event_id");
         location.replace(u.toString()); return;
       }
-      if (!act.length) { writeStoredEvent(""); }
+      if (!act.length) {
+        // belum ada bencana yang boleh tampil: lepaskan bencana simulasi dari alamat halaman (sekali, tanpa putaran)
+        writeStoredEvent(""); try { localStorage.removeItem("rn-active-event"); } catch (e) {}
+        if (explicit) {
+          const u = new URL(location.href);
+          ["event", "disaster_event", "disaster_event_id"].forEach(k => u.searchParams.delete(k));
+          location.replace(u.toString()); return;
+        }
+      }
     } catch (e) { }
   }
 

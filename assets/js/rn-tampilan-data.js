@@ -1,18 +1,22 @@
-/* Tombol tampilan data di Home (owner 2026-11-13): "Lihat Simulasi" / "Riil Data Bencana".
- * Pilihan per pengunjung, disimpan di cookie rn_tampilan (dibaca server: services/drill.simulation_hidden).
- * Tanpa cookie = simulasi tampil (bawaan). Pilihan riil berlaku 1 tahun, diperpanjang tiap membuka Home. Saklar Mode Operasional super admin tetap saklar utama. */
+/* Tampilan data (owner 2026-11-13): "Lihat Simulasi" / "Riil Data Bencana", pilihan per pengunjung.
+ * Disimpan di cookie rn_tampilan (dibaca server: services/drill.simulation_hidden + services/sim_scrub).
+ * Tanpa cookie = simulasi tampil (bawaan). Pilihan riil berlaku 1 tahun, diperpanjang tiap membuka Home.
+ * Home: bilah #rnTampilanData; klik -> simpan lalu ke halaman Bencana Aktif. Registrasi: radio name="rn_tampilan".
+ * Saklar Mode Operasional super admin tetap saklar utama. */
 (function () {
   var COOKIE = 'rn_tampilan';
   function current() {
     var m = document.cookie.match(/(?:^|;\s*)rn_tampilan=([^;]*)/);
     return m && decodeURIComponent(m[1]) === 'riil' ? 'riil' : 'simulasi';
   }
-  function choose(v) {
+  function save(v) {
     var sec = location.protocol === 'https:' ? '; Secure' : '';
     if (v === 'riil') document.cookie = COOKIE + '=riil; path=/; max-age=31536000; SameSite=Lax' + sec;
+    try { sessionStorage.removeItem('rn_opmode'); } catch (e) {}
     else document.cookie = COOKIE + '=; path=/; max-age=0; SameSite=Lax' + sec;
-    location.reload();
   }
+  window.RNTampilan = { current: current, save: save };
+
   function css() {
     if (document.getElementById('rnTampilanCss')) return;
     var s = document.createElement('style'); s.id = 'rnTampilanCss';
@@ -26,7 +30,8 @@
       '.rn-tampilan-btns button[aria-pressed="true"]{background:#b4532a;color:#fff}' +
       '.rn-tampilan-btns button[aria-pressed="true"].riil{background:#1f6f43}' +
       '.rn-tampilan-btns button:disabled{opacity:.45;cursor:not-allowed}' +
-      '.rn-tampilan-note{color:#6b5a4c;font-size:13px;flex:1 1 260px}' +
+      '.rn-tampilan-note{color:#6b5a4c;font-size:13px;flex:1 1 260px;line-height:1.4}' +
+      '.rn-tampilan-note small{display:block;color:#8a7766}' +
       '@media (max-width:900px){.rn-tampilan{margin:8px 12px 0}.rn-tampilan-btns{width:100%}.rn-tampilan-btns button{flex:1}}';
     document.head.appendChild(s);
   }
@@ -35,30 +40,46 @@
     var note = operational
       ? 'Mode Operasional Riil aktif: data simulasi disembunyikan untuk semua pengunjung.'
       : (v === 'riil'
-        ? 'Hanya data bencana riil. Data simulasi/latihan disembunyikan.'
-        : 'Termasuk data SIMULASI (latihan, bukan kejadian nyata).');
+        ? 'Sekarang: hanya data bencana riil. Data simulasi/latihan disembunyikan di semua halaman.'
+        : 'Sekarang: termasuk data SIMULASI (latihan, bukan kejadian nyata).');
+    var hint = operational ? '' : '<small>Pilihan berlaku di semua halaman. Untuk mengganti pilihan, kembali ke halaman Home ini.</small>';
     box.innerHTML =
       '<span class="rn-tampilan-label">Tampilan data:</span>' +
       '<span class="rn-tampilan-btns" role="group" aria-label="Pilih tampilan data">' +
       '<button type="button" data-v="simulasi" aria-pressed="' + (v === 'simulasi') + '"' + (operational ? ' disabled' : '') + '>Lihat Simulasi</button>' +
       '<button type="button" class="riil" data-v="riil" aria-pressed="' + (v === 'riil') + '"' + (operational ? ' disabled' : '') + '>Riil Data Bencana</button>' +
-      '</span><span class="rn-tampilan-note">' + note + '</span>';
+      '</span><span class="rn-tampilan-note">' + note + hint + '</span>';
     Array.prototype.forEach.call(box.querySelectorAll('button[data-v]'), function (b) {
-      b.addEventListener('click', function () { if (b.getAttribute('data-v') !== current()) choose(b.getAttribute('data-v')); });
+      b.addEventListener('click', function () {
+        save(b.getAttribute('data-v'));
+        location.href = 'pages/bencana-aktif.html';   // owner: setelah memilih langsung ke Bencana Aktif
+      });
     });
   }
-  function init() {
+  function initHome() {
     var box = document.getElementById('rnTampilanData');
     if (!box) return;
-    // pilihan riil diperpanjang 1 tahun setiap membuka Home (owner: jangan tiba-tiba kembali ke simulasi)
-    if (current() === 'riil') {
-      document.cookie = COOKIE + '=riil; path=/; max-age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
-    }
+    if (current() === 'riil') save('riil');   // perpanjang 1 tahun tiap membuka Home
     css(); render(box, false);
     fetch('/rescue-net-frappe/api/method/rescue_net.api_operational_mode.status', { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) { if (j && j.message && j.message.operational) render(box, true); })
       .catch(function () {});
   }
+  function initRegister() {
+    var radios = document.querySelectorAll('input[name="rn_tampilan"]');
+    if (!radios.length) return;
+    var v = current();
+    Array.prototype.forEach.call(radios, function (r) {
+      r.checked = r.value === v;
+      r.addEventListener('change', function () { if (r.checked) save(r.value); });
+    });
+    var form = document.getElementById('registerForm');
+    if (form) form.addEventListener('submit', function () {
+      var c = form.querySelector('input[name="rn_tampilan"]:checked');
+      if (c) save(c.value);
+    });
+  }
+  function init() { initHome(); initRegister(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

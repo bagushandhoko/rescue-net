@@ -7,6 +7,7 @@ app_license = "MIT"
 
 # Mode latihan (10g): tamu tidak bisa membuka event/posko latihan lewat id eksplisit
 before_request = ["rescue_net.services.drill.before_request"]
+after_request = ["rescue_net.services.sim_scrub.after_request"]
 
 # Rescue-Net authenticated identity bridge
 on_login = [

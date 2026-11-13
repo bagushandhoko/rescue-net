@@ -761,7 +761,8 @@ _POSKO_PAGE = {
     "transport": "posko-distribusi.html", "collection_hub": "posko-logistik.html",
     # audit 2026-11-12: papan alat/komunikasi/relawan/SAR adalah papan lintas posko tanpa pengaturan posko sendiri ->
     # pengelola jenis ini mendarat di Kelola Posko (pengaturan + antrean posko itu).
-    "equipment": "kelola-posko.html", "communication": "kelola-posko.html",
+    # owner 2026-11-13: posko alat kerja -> Recovery Program & Alat Kerja, panel Pengaturan Alat Kerja
+    "equipment": "alat-kerja.html#pengaturan", "communication": "kelola-posko.html",
     "volunteer": "kelola-posko.html", "sar": "kelola-posko.html",
 }
 
@@ -840,7 +841,8 @@ def my_landing():
         page = _POSKO_PAGE.get(str(row.posko_type or "").lower(), "posko-detail.html")
         ev = latest if latest in serves[primary] else (serves[primary][0] if serves[primary] else latest)
         from urllib.parse import quote
-        href = page + "?id=" + quote(primary, safe="") + ("&event=" + quote(ev, safe="") if ev else "")
+        page, _, frag = page.partition("#")
+        href = page + "?id=" + quote(primary, safe="") + ("&event=" + quote(ev, safe="") if ev else "") + ("#" + frag if frag else "")
         posko_info = {"name": row.name, "title": row.title, "posko_type": row.posko_type}
     else:
         href = _program_landing(actor, latest)
@@ -856,6 +858,8 @@ def my_landing():
     if not href and not own and frappe.db.exists("RN Volunteer Profile", {
             "user_account": actor.name, "availability_status": ["!=", "unavailable"]}):
         href = "management-relawan.html#saya"
+    if not href and not own and frappe.db.exists("RN Resource Profile", {"owner_type": "individual", "owner_id": actor.name}):
+        href = "alat-kerja.html#pengaturan"  # owner 2026-11-13: pemilik alat langsung ke Pengaturan Alat Kerja
     if not href and is_system_manager():
         href = "bencana-aktif.html"
     if not href and not own and actor.get("organization"):

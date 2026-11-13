@@ -64,14 +64,8 @@
         icon: "posko"
       },
       {
-        label: "Recovery dan Alat Kerja",
+        label: "Recovery Program & Alat Kerja",
         href: "alat-kerja.html?event=event-sim-001",
-        icon: "alat-kerja"
-      },
-      {
-        // posko alat kerja / support: inventaris alat dengan spesifikasi rinci (owner 2026-11-03)
-        label: "Posko Alat Kerja",
-        href: "posko-alat.html",
         icon: "alat-kerja"
       },
       {

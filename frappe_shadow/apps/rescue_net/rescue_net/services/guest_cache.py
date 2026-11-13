@@ -19,7 +19,9 @@ def guest_cache(ttl=30):
             if frappe.session.user != "Guest" or frappe.flags.in_test:
                 return fn(*args, **kwargs)
             raw = json.dumps([args, kwargs], sort_keys=True, default=str)
-            key = "rn_guest:%s.%s:%s" % (fn.__module__, fn.__name__, hashlib.sha1(raw.encode()).hexdigest()[:16])
+            from rescue_net.services.drill import view_suffix  # tampilan riil/simulasi punya salinan sendiri
+            key = "rn_guest:%s.%s:%s%s" % (fn.__module__, fn.__name__, hashlib.sha1(raw.encode()).hexdigest()[:16],
+                                           view_suffix())
             hit = frappe.cache().get_value(key)
             if hit is not None:
                 return hit

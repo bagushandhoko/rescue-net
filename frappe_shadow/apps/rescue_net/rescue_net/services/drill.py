@@ -76,9 +76,29 @@ def block_demo_login(login_manager=None):
         frappe.throw(DEMO_LOGIN_MSG, frappe.AuthenticationError)
 
 
+# Pilihan tampilan per pengunjung (owner 2026-11-13: tombol "Lihat Simulasi" / "Riil Data Bencana" di Home).
+# Cookie rn_tampilan=riil -> data simulasi disembunyikan HANYA untuk pengunjung itu. Tanpa cookie = simulasi tampil.
+# Saklar Mode Operasional (super admin) tetap saklar utama untuk semua orang + blokir akun demo.
+VIEW_COOKIE = "rn_tampilan"
+VIEW_REAL = "riil"
+
+
+def viewer_wants_real():
+    try:
+        req = getattr(frappe.local, "request", None)
+        return bool(req) and str(req.cookies.get(VIEW_COOKIE) or "").strip().lower() == VIEW_REAL
+    except Exception:
+        return False
+
+
+def view_suffix():
+    """Bagian kunci cache publik: salinan untuk tampilan riil terpisah dari tampilan simulasi."""
+    return ":riil" if (viewer_wants_real() and not operational_mode()) else ""
+
+
 def simulation_hidden():
-    """Alias yang dibaca di titik penyaringan: data simulasi sedang disembunyikan?"""
-    return operational_mode()
+    """Dibaca di titik penyaringan: data simulasi disembunyikan? (Mode Operasional global ATAU pengunjung memilih riil)"""
+    return operational_mode() or viewer_wants_real()
 
 
 def has_sim_label(text):

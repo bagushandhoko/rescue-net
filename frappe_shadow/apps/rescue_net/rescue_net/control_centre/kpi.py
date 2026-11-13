@@ -767,7 +767,8 @@ def public_dashboard(
     # always get a fresh build)
     if frappe.session.user != "Guest" or frappe.flags.in_test:
         return _build_public_dashboard(disaster_event_id)
-    key = "rn_public_dashboard:" + str(canonical_event(disaster_event_id) or disaster_event_id)
+    from rescue_net.services.drill import view_suffix  # tampilan riil/simulasi punya salinan sendiri
+    key = "rn_public_dashboard:" + str(canonical_event(disaster_event_id) or disaster_event_id) + view_suffix()
     hit = frappe.cache().get_value(key)
     if hit is not None:
         return hit

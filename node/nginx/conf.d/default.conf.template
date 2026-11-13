@@ -47,7 +47,7 @@ server {
         include /etc/nginx/rn-proxy.conf;
         proxy_cache rn_guest;
         proxy_cache_methods GET HEAD;
-        proxy_cache_key "$uri?$args";
+        proxy_cache_key "$uri?$args|$cookie_rn_tampilan";
         proxy_cache_bypass $rn_is_user;
         proxy_no_cache $rn_is_user;
         proxy_cache_valid 200 20s;

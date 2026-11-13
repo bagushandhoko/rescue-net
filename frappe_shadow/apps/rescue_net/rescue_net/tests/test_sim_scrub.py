@@ -75,3 +75,29 @@ class TestSimScrub(OperationalBase):
         with _Cookie("riil"):
             sim_scrub.after_request(response=r, request=_Req("rescue_net.api_comms.comms_board"))
         self.assertEqual(r.get_data(as_text=True), "bukan json")
+
+
+class TestSimScrubNestedAndTitles(OperationalBase):
+    def test_nested_rows_and_plain_posko_titles(self):
+        frappe.db.set_value("RN Posko", self.sim_posko.name, "title", "Dapur Umum Simulasi " + SENT)
+        payload = {
+            "pairs": [
+                {"missing": {"description": "[SIMULASI] baju merah"}, "found": {"place": "x"}},
+                {"missing": {"description": "anak hilang"}, "found": {"place": "Balai desa"}},
+            ],
+            "ops": [
+                {"name": "A", "posko": "Dapur Umum Simulasi " + SENT},
+                {"name": "B", "posko": self.real.posko_a.title},
+            ],
+            "subs": [{"sub": "Bertugas di Dapur Umum Simulasi " + SENT}, {"sub": "Bertugas di Balai"}],
+            "items_in_row": [{"title": "Papan nyata", "list": [{"title": "[SIMULASI] isi"}, {"title": "isi nyata"}]}],
+        }
+        r = _resp(payload)
+        with _Cookie("riil"):
+            sim_scrub.after_request(response=r, request=_Req("rescue_net.api_search_found.dashboard"))
+        m = json.loads(r.get_data(as_text=True))["message"]
+        self.assertEqual(len(m["pairs"]), 1)
+        self.assertEqual([x["name"] for x in m["ops"]], ["B"])
+        self.assertEqual([x["sub"] for x in m["subs"]], ["Bertugas di Balai"])
+        self.assertEqual(len(m["items_in_row"]), 1)  # baris tetap; isi list-nya yang disaring
+        self.assertEqual([x["title"] for x in m["items_in_row"][0]["list"]], ["isi nyata"])

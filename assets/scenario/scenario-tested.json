@@ -3,6 +3,23 @@
   "diperbarui": "2026-11-13",
   "uji": [
     {
+      "id": "NALA-RELAWAN-PUBLIK-20261113",
+      "tanggal": "2026-11-13",
+      "kategori": "Relawan dan papan publik",
+      "judul": "Posisi dan kebutuhan relawan publik",
+      "tujuan": "Posisi dan kebutuhan relawan publik",
+      "akun": "Tamu dan Administrator pada stack uji terisolasi",
+      "langkah": [
+        "Periksa booking confirmed, requested, rejected, cancelled serta penempatan relawan.",
+        "Periksa kebutuhan terbuka dan pencocokan bidang per bencana.",
+        "Pastikan kontak tidak tampil bagi tamu dan data simulasi tersembunyi pada Riil."
+      ],
+      "hasil": "5 tes baru dan 34 tes lama lulus; browser API dengan login Administrator sungguhan dan kunci kebutuhan_relawan lulus. Belum deploy; tampilan halaman digabung oleh Suri.",
+      "skor": "Lulus",
+      "status": "lulus",
+      "temuan": []
+    },
+    {
       "id": "NALA-RIIL-20261113",
       "tanggal": "2026-11-13",
       "kategori": "Relawan dan papan publik",

@@ -3,6 +3,28 @@
   "diperbarui": "2026-11-14",
   "uji": [
     {
+      "id": "NALA-MENUJU-POSKO-20261114",
+      "tanggal": "2026-11-14",
+      "kategori": "Posko dan logistik",
+      "judul": "Menuju posko ini",
+      "tujuan": "Lihat bantuan, booking, armada dan relawan menuju penerima tanpa kontak pribadi",
+      "akun": "Guest pada tes backend; browser login sungguhan belum diuji",
+      "langkah": [
+        "Tes tujuan flow, booking, privasi HP, status selesai dan tampilan Riil.",
+        "Perbaiki dua fixture profil relawan dengan main_skill wajib.",
+        "Ulangi modul baru, regresi terkait, browser tamu/login asli 390px saat stack uji tersedia."
+      ],
+      "hasil": "BELUM selesai: 5 tes pass, 2 error fixture sudah diperbaiki tetapi belum rerun. Stack uji berhenti exit 137 saat IO server tinggi. Versi akhir dan browser belum terverifikasi.",
+      "skor": "Verifikasi tertunda",
+      "status": "rencana",
+      "temuan": [
+        {
+          "masalah": "Stack uji bersama ditimpa proses lain dan kemudian dimatikan saat IO tinggi.",
+          "perbaikan": "Salinan app terpisah sudah disiapkan; tunggu pemulihan stack dan ulangi verifikasi."
+        }
+      ]
+    },
+    {
       "id": "NALA-KIRIM-BANTUAN-20261114",
       "tanggal": "2026-11-14",
       "kategori": "Posko dan distribusi",

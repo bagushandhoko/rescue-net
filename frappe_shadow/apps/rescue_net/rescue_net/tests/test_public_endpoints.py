@@ -73,6 +73,7 @@ GUEST_ENDPOINTS = {
     "api_export.cap_alert", "api_export.cap_alerts",  # reviewed: CAP of public BMKG quake facts (same as banner)
     "api_export.hxl_needs",  # reviewed: public needs board as HXL CSV (posko title, item, gap); no contacts
     "api_access_status.board",  # reviewed: per-jenis ringkasan + tempat tertutup/terbatas; tanpa pelapor/koordinat/catatan
+    "api_public_needs.incoming_for_posko",  # reviewed: public destination only, allowlisted activity; no contacts/PINs/edit codes
     "api_public_needs.board",  # reviewed: public posko only; item/qty/unit/region/time, no contacts or notes
     "api_displacement.displacement_board",
     "api_donor_program.donation_summary", "api_donor_program.program_kpi", "api_donor_program.program_board", "api_donor_program.program_detail",

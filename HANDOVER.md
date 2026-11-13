@@ -244,3 +244,11 @@ Owner answers to the questions (2026-09-26), implemented:
 
 - 2026-10-26: Halaman `pages/kebijakan-privasi.html` (UU PDP, draft; `[perlu dikonfirmasi]` = badan hukum + kontak privasi menunggu pemilik). Ditautkan di About Us (header, drawer, index) + kalimat persetujuan di form daftar auth.html. Catatan internal: /root/server-notes/rn-pdp.md.
 - 2026-10-26 malam: uji beban maks (S10) → batas ~53 API/detik, CPU penuh, 0 error. Tambah `services/guest_cache.py` (@guest_cache(30)) di active_disasters_board, public_needs.board, ai public_context (tamu saja). VM 101 → 8 vCPU, gunicorn 7 worker (compose di VM /srv/rescue-net, bukan di repo).
+
+
+## 2026-11-14 Nala — Menuju posko ini (BELUM selesai verifikasi)
+- Branch `nala/menuju-posko-20261114`, basis `nala/tombol-kirim-bantuan-20261114`. Endpoint GET publik `api_public_needs.incoming_for_posko` + service `incoming_posko`, panel bersama tujuh detail posko, manual bab 30 dan cache-buster. Tidak ada field baru/migrate; BELUM deploy/push.
+- Publik hanya menerima field yang diizinkan; kontak/HP/PIN/kode edit tidak dibaca untuk respons. Penyaring drill/Riil dan public_posko_allowed aktif. Booking mengikuti tujuan flow; legacy dropoff/rute hanya cocok ID atau judul posko yang unik, bukan kecocokan sebagian.
+- Sintaks Python/JS dan secret scan lolos. Percobaan backend menghasilkan 5 pass + 2 error fixture main_skill; fixture telah diperbaiki, belum teruji ulang. Versi akhir juga menambah satuan m³ untuk booking volume dan memakai FINAL_OFFER_STATES.
+- Stack uji bersamaan dengan Suri mob/demob sempat menimpa modul. Salinan terpisah `/tmp/nala-menuju-app` dengan PYTHONPATH dipakai; lalu ketiga container stack uji berhenti exit 137 saat penanganan IO server (bukan OOM). Jangan klaim 7 tes lulus.
+- Lanjut: saat stack boleh dipakai lagi, sync versi akhir dan jalankan test_menuju_posko_nala, test_public_needs, test_public_needs_notes, test_transport_rules, test_volunteer_booking, test_public_endpoints. Uji browser login operator sungguhan+tamu 390px belum dilakukan. Persiapan proxy/seed/browser ada di CT106 `/root/masuk-work` (browser perlu argumen --single-process --no-zygote --disable-gpu). Kembalikan D="sudo docker" sebelum commit.

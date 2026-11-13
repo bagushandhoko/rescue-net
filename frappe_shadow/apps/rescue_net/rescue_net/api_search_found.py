@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import frappe
+from rescue_net.services import drill
 from frappe.rate_limiter import rate_limit
 from rescue_net.reference_resolver import resolve_disaster_event, resolve_posko
 from frappe.utils import now_datetime
@@ -755,7 +756,7 @@ def dashboard(disaster_event=None):
             "disaster_event"
         ] = resolved_event
 
-    missing = frappe.get_all(
+    missing = drill.drop_hidden_rows(frappe.get_all(
         "RN Missing Person Report",
         filters=missing_filters,
         fields=present_fields("RN Missing Person Report", [
@@ -776,9 +777,9 @@ def dashboard(disaster_event=None):
         ]),
         order_by="creation desc",
         limit_page_length=2000,
-    )
+    ))
 
-    found = frappe.get_all(
+    found = drill.drop_hidden_rows(frappe.get_all(
         "RN Found Person Report",
         filters=found_filters,
         fields=present_fields("RN Found Person Report", [
@@ -800,7 +801,7 @@ def dashboard(disaster_event=None):
         ]),
         order_by="creation desc",
         limit_page_length=2000,
-    )
+    ))
 
     if actor:
         # Unchanged existing behaviour for any logged-in actor.

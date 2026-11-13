@@ -1,7 +1,24 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-11",
+  "diperbarui": "2026-11-13",
   "uji": [
+    {
+      "id": "NALA-RIIL-20261113",
+      "tanggal": "2026-11-13",
+      "kategori": "Relawan dan papan publik",
+      "judul": "Angka ringkasan mengikuti tampilan Riil",
+      "tujuan": "Angka ringkasan mengikuti tampilan Riil",
+      "akun": "Tamu dan Administrator pada stack uji terisolasi",
+      "langkah": [
+        "Bandingkan angka relawan, Search & Found, dan tender saat simulasi tampil/disembunyikan.",
+        "Jalankan regresi relawan, Search & Found, dan tender.",
+        "Login sungguhan di browser pada stack uji dan panggil tiga papan."
+      ],
+      "hasil": "3 tes baru dan 59 tes lama lulus; login browser stack uji lulus. Belum deploy.",
+      "skor": "Lulus",
+      "status": "lulus",
+      "temuan": []
+    },
     {
       "id": "AUDIT-PROSES-1",
       "tanggal": "2026-11-11",

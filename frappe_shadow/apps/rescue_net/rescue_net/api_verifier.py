@@ -211,6 +211,8 @@ def verifier_directory(wilayah=None, status="active", limit=200):
     )
     if wilayah:
         rows = [r for r in rows if _wilayah_match(r.wilayah, wilayah)] or rows
+    from rescue_net.services import drill
+    rows = drill.drop_hidden_rows(rows)  # tampilan riil: tanpa verifikator [SIMULASI]
     return {"verifiers": rows, "count": len(rows)}
 
 
@@ -706,6 +708,10 @@ def endorsements_overview(target_type=None, q=None, status="active", limit=200):
                                               ("target", "verifier", "verifier_type", "position", "wilayah", "method", "statement")).lower():
             continue
         out.append(item)
+    from rescue_net.services import drill
+    if drill.simulation_hidden():  # tampilan riil: tanpa dukungan untuk posko/verifikator simulasi
+        out = [i for i in drill.drop_hidden_rows(out, event_keys=(), posko_keys=("target_id",))
+               if not any(drill.has_sim_label(v) for v in i.values() if isinstance(v, str))]
     return {"rows": out, "total": len(out), "privileged": privileged}
 
 

@@ -114,7 +114,19 @@
     try { sessionStorage.setItem(KEY, JSON.stringify({ t: Date.now(), on: on })); } catch (e) {}
     return on;
   }
+  // owner 2026-11-13: tampilan Riil tanpa bencana riil -> keterangan jelas, bukan data simulasi / halaman kosong
+  function showNoRealNotice() {
+    if (isHome() || document.getElementById("rnNoRealNotice")) return;
+    const box = document.createElement("div");
+    box.id = "rnNoRealNotice"; box.setAttribute("role", "status");
+    box.style.cssText = "margin:10px auto;max-width:1180px;padding:10px 14px;border:1px solid #9cc9ae;border-radius:10px;background:#eef8f1;color:#1f4d33;font-size:14px;line-height:1.45";
+    box.innerHTML = "<b>Tampilan: Riil Data Bencana.</b> Saat ini belum ada bencana riil yang tercatat, jadi halaman ini kosong. "
+      + "Untuk melihat contoh/latihan, pilih <b>Lihat Simulasi</b> di <a href='" + (location.pathname.indexOf("/pages/") !== -1 ? "../index.html" : "index.html") + "'>halaman Home</a>.";
+    const host = document.querySelector("main") || document.body;
+    host.insertBefore(box, host.firstChild);
+  }
   async function leaveHiddenEvent() {
+    try { if (sessionStorage.getItem("rn_noreal_notice") === location.pathname) { sessionStorage.removeItem("rn_noreal_notice"); showNoRealNotice(); } } catch (e) {}
     const url = new URL(location.href);
     const explicit = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event") || url.searchParams.get("disaster_event_id") || "");
     if (!explicit && isHome()) return;  // beranda tidak memakai bencana dari URL
@@ -138,8 +150,10 @@
         const u = new URL(location.href);
         if (["event", "disaster_event", "disaster_event_id"].some(k => u.searchParams.get(k))) {
           ["event", "disaster_event", "disaster_event_id"].forEach(k => u.searchParams.delete(k));
+          try { sessionStorage.setItem("rn_noreal_notice", u.pathname); } catch (e) {}
           location.replace(u.toString()); return;
         }
+        showNoRealNotice();
       }
     } catch (e) { }
   }

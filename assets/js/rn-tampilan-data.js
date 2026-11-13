@@ -1,6 +1,6 @@
 /* Tombol tampilan data di Home (owner 2026-11-13): "Lihat Simulasi" / "Riil Data Bencana".
  * Pilihan per pengunjung, disimpan di cookie rn_tampilan (dibaca server: services/drill.simulation_hidden).
- * Tanpa cookie = simulasi tampil (bawaan). Saklar Mode Operasional super admin tetap saklar utama. */
+ * Tanpa cookie = simulasi tampil (bawaan). Pilihan riil berlaku 1 tahun, diperpanjang tiap membuka Home. Saklar Mode Operasional super admin tetap saklar utama. */
 (function () {
   var COOKIE = 'rn_tampilan';
   function current() {
@@ -50,6 +50,10 @@
   function init() {
     var box = document.getElementById('rnTampilanData');
     if (!box) return;
+    // pilihan riil diperpanjang 1 tahun setiap membuka Home (owner: jangan tiba-tiba kembali ke simulasi)
+    if (current() === 'riil') {
+      document.cookie = COOKIE + '=riil; path=/; max-age=31536000; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
+    }
     css(); render(box, false);
     fetch('/rescue-net-frappe/api/method/rescue_net.api_operational_mode.status', { credentials: 'same-origin' })
       .then(function (r) { return r.ok ? r.json() : null; })

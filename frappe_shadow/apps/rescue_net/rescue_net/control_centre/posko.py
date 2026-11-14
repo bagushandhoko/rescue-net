@@ -13,6 +13,7 @@ from rescue_net.control_centre.common import (  # noqa: F401
     _INTRANSIT_STATES,
     _LOGISTIK_CONVERSIONS,
     _POSKO_OWNER_REASONS,
+    _manage_allowed,
     _RECEIVED_STATES,
     _norm_item,
     _num,
@@ -169,7 +170,7 @@ def posko_detail(posko, disaster_event=None):
     #                              -> coordinate only: book / send aid to it,
     #                                 never edit its internal needs / stock
     logged_in = bool(actor)
-    can_manage = share.get("reason") in _POSKO_OWNER_REASONS
+    can_manage = _manage_allowed(share.get("reason"), actor, name)
     # coordinate = send goods to another org's posko that opened itself up.
     # Mirrors api_logistics.create_aid_offer's public_ok EXACTLY
     # (public_posko_allowed + public_participation + accept_goods) so the

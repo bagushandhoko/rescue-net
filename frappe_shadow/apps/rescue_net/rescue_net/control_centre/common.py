@@ -184,6 +184,24 @@ _POSKO_OWNER_REASONS = {
     "posko_assignment", "org_membership",
 }
 
+# Suri 2026-11-14 (owner: bug privasi): anggota organisasi biasa boleh MELIHAT detail
+# posko organisasinya (effective_posko_share), tetapi Menu Pemilik / kontak pembooking
+# hanya untuk yang lolos access_policy.can_manage_posko (pengelola posko, penempatan
+# disetujui, koordinator organisasi, komando, super admin).
+_ORG_ONLY_REASONS = {"org_member", "org_membership"}
+
+
+def _manage_allowed(reason, actor, posko_name):
+    if reason not in _POSKO_OWNER_REASONS:
+        return False
+    if reason not in _ORG_ONLY_REASONS:
+        return True
+    try:
+        from rescue_net.access_policy import can_manage_posko
+        return bool(actor) and bool(can_manage_posko(actor, posko_name))
+    except Exception:
+        return False
+
 
 def _posko_actor_flags(posko_name, actor="__unset__"):
     """(logged_in, can_manage, can_coordinate) for an operational posko page.
@@ -207,7 +225,7 @@ def _posko_actor_flags(posko_name, actor="__unset__"):
         reason = effective_posko_share(posko_name, actor).get("reason")
     except Exception:
         reason = None
-    can_manage = reason in _POSKO_OWNER_REASONS
+    can_manage = _manage_allowed(reason, actor, posko_name)
     pp = frappe.db.get_value("RN Posko", posko_name, "public_participation")
     can_coordinate = bool(logged_in and not can_manage and pp)
     return logged_in, can_manage, can_coordinate

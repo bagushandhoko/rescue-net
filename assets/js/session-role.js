@@ -125,6 +125,11 @@
       session.user_id ||
       "";
 
+    // 2026-11-14: tamu dijawab server {user:"Guest"} -> bukan sesi login (dulu tampil "Masuk sebagai Guest").
+    if (!userId || userId === "Guest") {
+      return null;
+    }
+
     return {
       ...session,
 
@@ -228,6 +233,10 @@
         localStorage.setItem(
           "RN_USER",
           JSON.stringify(session)
+        );
+      } else {
+        localStorage.removeItem(
+          "RN_USER"
         );
       }
 

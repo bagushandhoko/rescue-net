@@ -146,6 +146,7 @@
       if (!f.elements[k] || k === "category") return;
       var v = t[k];
       if (k === "available_from" || k === "available_until") v = v ? String(v).slice(0, 10) : "";
+      if (k === "manufacture_year" && !Number(v)) v = "";   // 0 = kosong; nilai 0 melanggar min=1950 dan diam-diam menahan Simpan perubahan
       f.elements[k].value = v == null ? "" : v;
     });
     CHECKS.forEach(function (k) { f.elements[k].checked = !!t[k]; });

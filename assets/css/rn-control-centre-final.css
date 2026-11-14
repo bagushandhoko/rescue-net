@@ -2538,3 +2538,9 @@ body {
 .cc-main { line-height: 1.5; }
 .cc-main h1, .cc-main h2, .cc-main h3, .cc-main h4, .cc-main strong, .cc-main b, .cc-main button, .cc-main .btn,
 .cc-main select, .cc-main input, .cc-main .chip { line-height: 1.25; }
+
+/* owner 2026-11-14 "ya rapikan - Control Centre duplikasi bencana di laptop": di laptop pilihan bencana
+   sudah tampil di atas halaman (rn-public-header.js, >=1024px), jadi pilihan di header disembunyikan. HP/tablet tetap. */
+@media (min-width: 1024px) {
+  .cc-header .cc-event-pick { display: none !important; }
+}

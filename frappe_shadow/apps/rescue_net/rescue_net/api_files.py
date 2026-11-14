@@ -40,6 +40,14 @@ def _can_read_private(row):
             return True
     except Exception:
         pass
+    # Aid uploads are always private. A batch's receiving/handling posko has
+    # access, but ordinary members and unrelated posko do not.
+    from rescue_net.logistics.aid_attachments import can_read_attachments
+    for aid in frappe.get_all("File", filters={"file_url": row.file_url, "is_private": 1,
+                                             "attached_to_doctype": "RN Aid Offer"},
+                              pluck="attached_to_name", limit_page_length=30):
+        if aid and can_read_attachments(aid):
+            return True
     for dt, field in (("RN Evidence File", "file_path"), ("RN Operational Evidence", "file_url")):
         if not frappe.db.exists("DocType", dt) or not frappe.get_meta(dt).has_field(field):
             continue

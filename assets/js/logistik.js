@@ -211,11 +211,26 @@ function renderPublicShipments(b) {
       <td>${s.wave ? "Gel. " + s.wave : (safe(s.ready_at) || "—")}</td>
       <td>${statusChip(s.status)}</td>
       ${canManage
-        ? `<td><button type="button" class="btn ghost mini" data-receive-ship="${s.id}">Terima</button></td>`
+        ? `<td><button type="button" class="btn ghost mini" data-receive-ship="${s.id}">Terima</button> <button type="button" class="btn ghost mini" data-aid-files="${s.id}">Lampiran</button><div data-aid-files-result></div></td>`
         : ""}
     </tr>`).join("");
   panel.hidden = false;
 
+  body.querySelectorAll('[data-aid-files]').forEach(btn => btn.addEventListener('click', async () => {
+    const out = btn.parentElement.querySelector('[data-aid-files-result]');
+    btn.disabled = true; out.textContent = 'Memuat lampiran…';
+    try {
+      const rows = await RN_FRAPPE.call('rescue_net.api_logistics.aid_attachments', { aid_offer: btn.dataset.aidFiles });
+      out.replaceChildren();
+      if (!rows.length) out.textContent = 'Tidak ada lampiran.';
+      rows.forEach(row => {
+        const a = document.createElement('a'); a.textContent = row.file_name;
+        a.href = RN_FRAPPE.fileUrl(row.file_url); a.target = '_blank'; a.rel = 'noopener';
+        a.style.cssText = 'display:block;overflow-wrap:anywhere'; out.appendChild(a);
+      });
+    } catch (err) { out.textContent = err.message || 'Lampiran tidak bisa dibuka.'; }
+    finally { btn.disabled = false; }
+  }));
   body.querySelectorAll("[data-receive-ship]").forEach(btn =>
     btn.addEventListener("click", () => receivePublicShipment(btn.dataset.receiveShip))
   );

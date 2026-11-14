@@ -1,3 +1,104 @@
+/* Optional aid files: held in the form until the aid and private files save together. */
+function setupAidAttachments(form) {
+  const box = form.querySelector('[data-aid-attachments]');
+  if (!box) return;
+  const list = box.querySelector('[data-attachment-list]');
+  const msg = box.querySelector('[data-attachment-message]');
+  const files = [];
+  const mb = 1024 * 1024;
+  function render() {
+    list.replaceChildren();
+    files.forEach((file, i) => {
+      const row = document.createElement('li');
+      row.style.cssText = 'display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0';
+      const name = document.createElement('span');
+      name.style.cssText = 'overflow-wrap:anywhere;flex:1;min-width:0';
+      name.textContent = file.name + ' (' + (file.size / mb).toFixed(1) + ' MB)';
+      const remove = document.createElement('button');
+      remove.type = 'button'; remove.className = 'btn mini'; remove.textContent = 'Hapus';
+      remove.setAttribute('aria-label', 'Hapus lampiran ' + file.name);
+      remove.onclick = () => { files.splice(i, 1); render(); msg.textContent = ''; };
+      row.append(name, remove); list.appendChild(row);
+    });
+  }
+  function add(input) {
+    msg.textContent = '';
+    for (const file of Array.from(input.files || [])) {
+      if (files.length >= 3) { msg.textContent = 'Maksimal 3 lampiran. Hapus salah satu untuk mengganti.'; break; }
+      const image = /^image\//.test(file.type);
+      const pdf = /\.pdf$/i.test(file.name) && (!file.type || file.type === 'application/pdf');
+      if (!image && !pdf) { msg.textContent = 'Pilih gambar atau dokumen PDF.'; continue; }
+      if (!file.size || file.size > (image ? 20 : 2) * mb) {
+        msg.textContent = image ? 'Foto sumber maksimal 20 MB; foto akan diperkecil sebelum dikirim.' : 'PDF maksimal 2 MB.';
+        continue;
+      }
+      files.push(file);
+    }
+    input.value = ''; render();
+  }
+  box.querySelectorAll('input[type=file]').forEach(input => input.addEventListener('change', () => add(input)));
+  box.querySelector('[data-pick-attachment]').onclick = () => box.querySelector('[data-attachment-picker]').click();
+  box.querySelector('[data-take-photo]').onclick = () => box.querySelector('[data-attachment-camera]').click();
+  function read(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = () => reject(new Error('Lampiran tidak bisa dibaca. Pilih berkas kembali.'));
+      reader.readAsDataURL(file);
+    });
+  }
+  async function payload(file) {
+    if (!/^image\//.test(file.type)) return { filename: file.name.length > 140 ? file.name.slice(0, 136) + '.pdf' : file.name, content_base64: await read(file) };
+    // Camera files may be very large. Resize and remove EXIF/GPS before upload.
+    const image = new Image(), url = URL.createObjectURL(file);
+    try {
+      await new Promise((resolve, reject) => { image.onload = resolve; image.onerror = () => reject(new Error('Foto tidak bisa dibuka. Gunakan JPG, PNG, atau WebP.')); image.src = url; });
+      const scale = Math.min(1, 1600 / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const encoded = canvas.toDataURL('image/jpeg', .85).split(',')[1];
+      if (encoded.length > Math.ceil(2 * mb / 3) * 4) throw new Error('Foto masih melebihi 2 MB. Pilih foto yang lebih kecil.');
+      return { filename: file.name.replace(/\.[^.]*$/, '').slice(0, 120) + '.jpg', content_base64: encoded };
+    } finally { URL.revokeObjectURL(url); }
+  }
+  form.__readAidAttachments = async () => {
+    const rows = await Promise.all(files.map(payload));
+    // The deployed proxy accepts 10 MiB requests. Reserve room for aid fields
+    // and count percent-encoding overhead, not merely the decoded file bytes.
+    if (new URLSearchParams({ attachments_json: JSON.stringify(rows) }).toString().length > 9 * mb) {
+      throw new Error('Total lampiran terlalu besar untuk dikirim. Hapus satu lampiran atau pilih berkas yang lebih kecil.');
+    }
+    return rows;
+  };
+  form.__resetAidAttachments = () => { files.length = 0; msg.textContent = ''; render(); };
+}
+
+function addGuestAttachmentButtons(container, rows, creds) {
+  if (!rows || !rows.length) return;
+  const box = document.createElement('div');
+  box.className = 'panel'; box.style.marginTop = '10px';
+  const title = document.createElement('p'); title.textContent = 'Lampiran privat pengiriman ini'; box.appendChild(title);
+  rows.forEach(row => {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'btn mini';
+    button.style.cssText = 'margin:4px;max-width:100%;white-space:normal;overflow-wrap:anywhere'; button.textContent = row.file_name;
+    button.onclick = async () => {
+      button.disabled = true;
+      try {
+        const data = await RN_FRAPPE.call('rescue_net.api_logistics.guest_aid_attachment', { ...creds, attachment: row.name }, { method: 'POST' });
+        const bytes = Uint8Array.from(atob(data.content_base64), c => c.charCodeAt(0));
+        const url = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+        const link = document.createElement('a'); link.href = url; link.download = data.file_name; document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      } catch (err) { alert(err.message || 'Lampiran tidak bisa dibuka.'); }
+      finally { button.disabled = false; }
+    };
+    box.appendChild(button);
+  });
+  container.appendChild(box);
+}
+
 function safe(v) {
   return (
     v === null ||
@@ -287,6 +388,7 @@ function setupPublicAidForm() {
   setupDeliveryModeToggle(form);
   initAidItems(form);
   setupAidLocationPicker(form);
+  setupAidAttachments(form);
 
   form.addEventListener(
     "submit",
@@ -353,6 +455,9 @@ function setupPublicAidForm() {
           `Menyimpan ${items.length} item bantuan ke Frappe...` +
           `</div>`;
 
+        const submit = form.querySelector('[type="submit"]');
+        if (submit) submit.disabled = true;
+        const attachments = form.__readAidAttachments ? await form.__readAidAttachments() : [];
         const notesRaw = form.notes.value.trim();
         const arrival = (form.expected_arrival_at && form.expected_arrival_at.value.trim()) || "";
         const notesOut = [notesRaw, arrival ? ("Perkiraan sampai posko: " + arrival) : ""]
@@ -391,6 +496,7 @@ function setupPublicAidForm() {
               ready_at:
                 form.ready_at.value.trim() || null,
 
+              attachments_json: JSON.stringify(attachments),
               notes: notesOut
             },
             {
@@ -403,7 +509,9 @@ function setupPublicAidForm() {
           data
         );
 
+        addGuestAttachmentButtons(result, data.attachments, { aid_offer: data.aid_offers[0].aid_offer, edit_code: data.edit_code, donor_contact: donorContact });
         form.reset();
+        if (form.__resetAidAttachments) form.__resetAidAttachments();
         if (form.__resetAidItems) form.__resetAidItems();
         if (form.__resetAidLocation) form.__resetAidLocation();
 
@@ -430,6 +538,9 @@ function setupPublicAidForm() {
           `<div class="alert danger">` +
           `${safe(err.message)}` +
           `</div>`;
+      } finally {
+        const submit = form.querySelector('[type="submit"]');
+        if (submit) submit.disabled = false;
       }
     }
   );
@@ -487,6 +598,7 @@ function setupEditAidForm() {
         </div>
         ${sib ? `<div class="panel" style="margin-top:8px"><h4>Item lain di pengiriman yang sama</h4><div class="code-grid">${sib}</div><p class="subtitle">Kode Edit yang sama berlaku untuk semua. Ubah satu per satu lewat Aid ID masing-masing.</p></div>` : ""}
       `;
+      addGuestAttachmentButtons(result, d.attachments, c);
     } catch (err) {
       fields.hidden = true;
       result.innerHTML = `<div class="alert danger">${safe(err.message)}</div>`;

@@ -56,7 +56,7 @@ def _load_guest_offer(aid_offer, edit_code, donor_contact=None):
     return doc
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist(allow_guest=True, methods=["POST"])
 @rate_limit(limit=20, seconds=3600)
 def submit_guest_aid_offer_multi(
     disaster_event,
@@ -70,6 +70,7 @@ def submit_guest_aid_offer_multi(
     pickup_longitude=None,
     ready_at=None,
     notes=None,
+    attachments_json=None,
 ):
     """One guest "Kirim Bantuan" carrying several barang, no account needed.
     Returns the Aid IDs plus ONE Edit Code (shown once) covering all rows."""
@@ -93,6 +94,9 @@ def submit_guest_aid_offer_multi(
         frappe.throw("Tambahkan minimal satu barang bantuan.")
     if len(items) > 30:
         frappe.throw("Maksimal 30 baris barang per pengiriman.")
+
+    from rescue_net.logistics.aid_attachments import validate_attachments, save_attachments
+    attachments = validate_attachments(attachments_json)
 
     event = _resolve_user_aid_event(disaster_event)
     if not event:
@@ -163,7 +167,10 @@ def submit_guest_aid_offer_multi(
     if not created:
         frappe.throw("Tidak ada barang valid untuk disimpan.")
 
+    saved_attachments = save_attachments(attachments, created[0]["aid_offer"])
+
     return {
+        "attachments": saved_attachments,
         "aid_offers": created,
         "count": len(created),
         "guest_batch": batch,
@@ -191,7 +198,40 @@ def get_guest_aid_offer(aid_offer, edit_code, donor_contact=None):
         ):
             siblings.append(r)
     out["batch_items"] = siblings
+    from rescue_net.logistics.aid_attachments import attachment_rows
+    out["attachments"] = [{"name": r.name, "file_name": r.file_name} for r in attachment_rows(doc)]
     return out
+
+
+@frappe.whitelist()
+def aid_attachments(aid_offer):
+    """Private attachment list for the donor or responsible posko/organization."""
+    from rescue_net.logistics.aid_attachments import attachment_rows, can_read_attachments
+    if not can_read_attachments(aid_offer):
+        frappe.throw("Lampiran bantuan ini terbatas.", frappe.PermissionError)
+    return [{"name": r.name, "file_name": r.file_name, "file_url": r.file_url}
+            for r in attachment_rows(frappe.get_doc("RN Aid Offer", aid_offer))]
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=15, seconds=3600)
+def guest_aid_attachment(aid_offer, edit_code, donor_contact, attachment):
+    """POST-only download using the aid's existing edit credentials, never URL tokens."""
+    import base64
+    from rescue_net.logistics.aid_attachments import attachment_rows
+    request = getattr(frappe.local, "request", None)
+    if request and request.method != "POST":
+        frappe.throw("Gunakan POST untuk membuka lampiran.", frappe.PermissionError)
+    if not _norm_contact(donor_contact):
+        frappe.throw("Nomor HP wajib diisi.", frappe.PermissionError)
+    doc = _load_guest_offer(aid_offer, edit_code, donor_contact)
+    row = next((r for r in attachment_rows(doc) if r.name == attachment), None)
+    if not row:
+        frappe.throw("Lampiran tidak ditemukan.", frappe.PermissionError)
+    content = frappe.get_doc("File", row.name).get_content()
+    if isinstance(content, str):
+        content = content.encode()
+    return {"file_name": row.file_name, "content_base64": base64.b64encode(content).decode("ascii")}
 
 
 @frappe.whitelist(allow_guest=True)

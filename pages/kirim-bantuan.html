@@ -171,6 +171,19 @@
             <input name="notes" placeholder="Kondisi barang, kemasan, kontak tambahan, dll.">
           </label>
 
+          <fieldset data-aid-attachments style="margin-top:16px;border:1px solid #d5dee6;border-radius:10px;padding:12px;min-width:0;">
+            <legend>Lampiran (opsional)</legend>
+            <p class="subtitle">Foto barang, kemasan, atau dokumen PDF. Maksimal 3 berkas, masing-masing 2 MB setelah foto diperkecil. Lampiran privat, bukan untuk daftar publik.</p>
+            <div class="form-actions" style="flex-wrap:wrap;">
+              <button type="button" class="btn" data-pick-attachment>Pilih file / gambar</button>
+              <button type="button" class="btn" data-take-photo>Ambil foto</button>
+            </div>
+            <input type="file" accept="image/*,application/pdf,.pdf" multiple hidden data-attachment-picker aria-label="Pilih lampiran bantuan">
+            <input type="file" accept="image/*" capture="environment" hidden data-attachment-camera aria-label="Ambil foto bantuan dengan kamera">
+            <ul data-attachment-list style="list-style:none;margin:8px 0;padding:0;"></ul>
+            <p data-attachment-message role="status" aria-live="polite" style="overflow-wrap:anywhere;"></p>
+          </fieldset>
+
           <div class="form-actions">
             <button class="btn primary" type="submit">Kirim Data Bantuan</button>
           </div>
@@ -227,7 +240,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
-<script src="../assets/js/public-aid.js?v=sop-20261112"></script>
+<script src="../assets/js/public-aid.js?v=lampiran-20261115"></script>
 <script src="../assets/js/kb-program-donation.js?v=audit-20261111"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
 <script src="../assets/js/rn-public-header.js?v=simriil2-20261113"></script>

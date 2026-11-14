@@ -1,7 +1,34 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-13",
+  "diperbarui": "2026-11-14",
   "uji": [
+    {
+      "id": "NALA-LAMPIRAN-BANTUAN-20261114",
+      "tanggal": "2026-11-14",
+      "kategori": "Logistik",
+      "judul": "Lampiran privat dan kamera pada Kirim Bantuan",
+      "tujuan": "Pengirim dapat melampirkan gambar/PDF opsional tanpa membuka lampiran ke publik.",
+      "akun": "Tamu serta pengirim dan penerima non-admin dengan login sungguhan di stack uji terisolasi.",
+      "langkah": [
+        "Kirim bantuan tamu dengan gambar, PDF, dan hasil pemilihan input kamera pada layar 390 px; hapus/ganti pilihan dan uji batas tiga berkas.",
+        "Uji file privat, kode edit/HP salah, tujuan saudara batch, pengelola vs anggota biasa/posko lain, metadata gambar, PDF aktif, serta duplikat file publik/privat.",
+        "Login sebagai petugas penerima, buka Lampiran di Kiriman Masyarakat; pastikan browser tamu terpisah ditolak pada API dan alamat private langsung.",
+        "Login sebagai pengirim, kirim lampiran, tolak PDF terlalu besar, buka ulang Edit Bantuan dan unduh melalui POST."
+      ],
+      "hasil": "10 tes lampiran + 4 regresi file lulus. Browser tamu, pengirim login, penerima login, unduh privat, dan layout 390 px lulus tanpa error JS. Atribut kamera dan file chooser diuji; kamera fisik HP belum diuji. Belum deploy.",
+      "skor": "14 tes backend + browser nyata lulus",
+      "status": "lulus-perbaikan",
+      "temuan": [
+        {
+          "masalah": "Utilitas save_file memilih blob privat lama berdasarkan hash dan menolak unggah identik dari tamu lain.",
+          "perbaikan": "Simpan dari byte tervalidasi melalui dokumen File; jangan menerima atau menyalin URL berkas pengguna."
+        },
+        {
+          "masalah": "Batas request nginx 10 MiB lebih kecil dari tiga berkas 4 MB setelah base64.",
+          "perbaikan": "Batas tiap berkas 2 MB, foto diperkecil, dan body URL-encoded dibatasi 9 MiB tanpa mengubah server produksi."
+        }
+      ]
+    },
     {
       "id": "NALA-ALAT-BERAT-20261113",
       "tanggal": "2026-11-13",

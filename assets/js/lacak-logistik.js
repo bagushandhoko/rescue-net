@@ -113,7 +113,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     var q = new URLSearchParams(location.search);
     var flow = (q.get("flow") || "").trim();
-    var trace = (q.get("trace") || q.get("t") || "").trim();
+    var trace = (q.get("trace") || q.get("t") || q.get("code") || q.get("kode") || "").trim();
 
     if (flow) load({ flow: flow });
     else if (trace) load({ trace: trace });
@@ -123,6 +123,7 @@
     }
 
     var btn = $("#llFindBtn"), input = $("#llFindInput");
+    if (input && trace && !input.value) input.value = trace;
     function go() {
       var v = (input.value || "").trim();
       if (v) location.search = "?trace=" + encodeURIComponent(v);

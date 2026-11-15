@@ -403,8 +403,8 @@
       ? items.map(function (n) {
           return card(
             n.item_name,
-            "Need: " + safe(n.quantity_needed) + " " + safe(n.unit) + "<br>Priority: " + safe(n.priority) + "<br>Before: " + safe(n.needed_before),
-            n.need_status
+            "Kebutuhan: " + safe(n.quantity_needed) + " " + safe(n.unit) + "<br>Prioritas: " + safe(n.priority) + "<br>Sebelum: " + safe(window.RNUI && RNUI.niceTime ? RNUI.niceTime(n.needed_before) : n.needed_before),
+            (window.RNUI && RNUI.statusLabel ? RNUI.statusLabel(n.need_status) : n.need_status)
           );
         }).join("")
       : card("Belum ada kebutuhan shelter", "Tambahkan kebutuhan shelter.", "empty");
@@ -414,7 +414,7 @@
     var el = document.getElementById("shelterStock");
     if (!el) return;
     el.innerHTML = items.length
-      ? items.map(function (s) { return card(s.item_name, "Current stock: <b>" + safe(s.quantity) + "</b> " + safe(s.unit), s.stock_state); }).join("")
+      ? items.map(function (s) { return card(s.item_name, "Stok saat ini: <b>" + safe(s.quantity) + "</b> " + safe(s.unit), (window.RNUI && RNUI.statusLabel ? RNUI.statusLabel(s.stock_state) : s.stock_state)); }).join("")
       : card("Belum ada stok shelter", "Belum ada Stock Observation.", "empty");
   }
 

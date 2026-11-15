@@ -750,7 +750,7 @@ async function receiveFlow(flowId) {
     );
 
   setStatus(
-    `Receipt verified. Current stock: ` +
+    `Penerimaan terverifikasi. Stok saat ini: ` +
     `${safe(result.current_quantity)} ` +
     `${safe(result.unit)}`
   );
@@ -992,7 +992,8 @@ async function renderArmadaPanel(poskoId, eventId) {
   document.getElementById("armadaPanelKpi").innerHTML = [
     ["Armada", n(t.armada_count), "unit transport"],
     ["Kapasitas Total", n(t.kapasitas_total_kg) + " kg", n(t.kapasitas_total_m3) + " m³"],
-    ["Masih Tersedia", n(list.filter(a => a.avail !== "selesai").reduce((x, a) => x + Number(a.kapasitas_tersedia_kg || 0), 0)) + " kg",
+    ["Masih Tersedia", n(t.kapasitas_bisa_dibooking_kg != null ? t.kapasitas_bisa_dibooking_kg
+      : list.filter(a => a.avail !== "selesai").reduce((x, a) => x + Number(a.kapasitas_tersedia_kg || 0), 0)) + " kg",
       list.some(a => a.avail !== "selesai") ? "ruang yang bisa dipesan" : "semua perjalanan sudah selesai"],
     ["Booking", n(t.booking_terkonfirmasi), n(t.booking_menunggu) + " menunggu konfirmasi"],
   ].map(k => `<div class="kpi-card"><span>${safe(k[0])}</span><strong>${safe(k[1])}</strong><small>${safe(k[2])}</small></div>`).join("");

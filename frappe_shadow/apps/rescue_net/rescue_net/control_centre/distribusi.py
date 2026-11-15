@@ -1214,6 +1214,11 @@ def posko_distribusi_board(posko=None, disaster_event=None):
             "kapasitas_terpakai_kg": round(used_kg, 1),
             "kapasitas_terpakai_m3": round(used_m3, 1),
             "kapasitas_tersedia_kg": round(max(0.0, tot_kg - used_kg), 1),
+            # audit 14 Nov: satu angka "Masih Tersedia" untuk publik & pemilik = ruang yang
+            # benar-benar bisa dibooking (armada belum berangkat, jadwal belum lewat, belum penuh)
+            "kapasitas_bisa_dibooking_kg": round(sum(
+                a["kapasitas_tersedia_kg"] for a in armada
+                if a.get("avail") == "tersedia" or (a.get("avail") == "dipakai" and a.get("status") != "in_transit")), 1),
             "booking_menunggu": sum(1 for b in bookings if b.status == "requested"),
             "booking_terkonfirmasi": sum(1 for b in bookings if b.status == "confirmed"),
             "pickup_queue": len(pickup_queue),

@@ -36,6 +36,26 @@
       (fallback === undefined ? "event-sim-001" : fallback);
   }
 
+  // Status mentah dari server (Inggris) -> label Indonesia untuk tampilan (audit 14 Nov).
+  var STATUS_ID = { available: "Tersedia", need_pickup: "Perlu Jemput", ready: "Siap", offered: "Ditawarkan",
+    matched: "Cocok", pledged: "Dijanjikan", dispatched: "Dalam Perjalanan", in_transit: "Dalam Perjalanan",
+    transit: "Dalam Perjalanan", arrived: "Tiba", received: "Diterima", received_verified: "Diterima (terverifikasi)",
+    stock_transferred: "Masuk Stok", completed: "Selesai", closed: "Ditutup", cancelled: "Batal", pending: "Menunggu",
+    open: "Terbuka", low: "Menipis", critical: "Kritis", empty: "Habis", out_of_stock: "Habis", fulfilled: "Terpenuhi",
+    partially_fulfilled: "Sebagian Terpenuhi", draft: "Draf", planned: "Direncanakan", active: "Aktif" };
+  function statusLabel(s) {
+    var k = String(s == null ? "" : s).trim();
+    return STATUS_ID[k.toLowerCase()] || k;
+  }
+  // "2026-08-29 22:22:44.067501" -> "29 Agu 2026 22.22"; teks lain dibiarkan.
+  var BLN = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  function niceTime(t) {
+    var m = String(t == null ? "" : t).trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+    if (!m) return t;
+    var d = (+m[3]) + " " + BLN[(+m[2]) - 1] + " " + m[1];
+    return m[4] ? d + " " + m[4] + "." + m[5] : d;
+  }
+
   function chip(label, tone) {
     return '<span class="chip' + (tone ? " " + esc(tone) : "") + '">' + esc(label) + "</span>";
   }
@@ -111,5 +131,5 @@
   }
 
   window.RNUI = { aiContext: aiContext, esc: esc, fmt: fmt, shortDate: shortDate, fmtTime: fmtTime, eventId: eventId,
-                  chip: chip, kpiCard: kpiCard, modal: modal, localClusterBounds: localClusterBounds };
+                  chip: chip, statusLabel: statusLabel, niceTime: niceTime, kpiCard: kpiCard, modal: modal, localClusterBounds: localClusterBounds };
 })();

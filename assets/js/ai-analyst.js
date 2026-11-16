@@ -200,7 +200,18 @@ async function loadAiContext() {
     : card("No alerts", "Belum ada alert.", "ok");
 
   document.getElementById("aiRecommendations").innerHTML = combinedRecommendations.length
-    ? combinedRecommendations.map((r, i) => card(`Recommendation ${i + 1}`, r, i < (ctx.recommendations || []).length ? "AI" : "Ops")).join("")
+    ? combinedRecommendations.map((r, i) => {
+        // Rekomendasi dari server berupa objek {title, reason, priority}; operasional berupa teks.
+        const esc = RNUI.esc;
+        const sumber = i < (ctx.recommendations || []).length ? "AI" : "Ops";
+        if (r && typeof r === "object") {
+          const judul = r.title || r.message || `Rekomendasi ${i + 1}`;
+          const alasan = r.reason || r.detail || r.description || "";
+          const chip = r.priority ? `${sumber} · ${r.priority}` : sumber;
+          return card(`${i + 1}. ${esc(judul)}`, esc(alasan), esc(chip));
+        }
+        return card(`${i + 1}. Saran operasional`, esc(r), sumber);
+      }).join("")
     : card("No recommendation", "Belum ada rekomendasi.", "empty");
 
   const sourceCards = (ctx.sources || []).slice(0, 20).map(src => card(

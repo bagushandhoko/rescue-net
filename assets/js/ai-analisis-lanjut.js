@@ -1,7 +1,7 @@
 /* Analisis AI Lanjutan (Suri 2026-11-16). Memakai frappeCall/ensureSession/getEventId dari ai-analyst.js.
    Semua hasil = SARAN tersimpan di RN AI Report; tidak ada data operasional yang diubah. */
 (function () {
-  const M = "rescue_net.ai.analysis.";
+  const M = "rescue_net.api_ai.";
   const FITUR = [
     { id: "sitrep_ai", label: "SITREP AI", ikon: "📋", ket: "Laporan situasi naratif (gaya OCHA) + risiko 24–72 jam + rekomendasi.", param: "jam" },
     { id: "triase_laporan", label: "Triase Laporan Warga", ikon: "🚨", ket: "Kelompokkan laporan warga & tandai yang darurat.", param: "jam72" },

@@ -291,6 +291,8 @@ def kandidat_kirim(disaster_event_id, maks_kebutuhan=40):
         calon_armada = []
         for a in armada:
             sisa = (a.capacity_weight_kg or 0) - (a.capacity_committed_kg or 0)
+            if a.capacity_weight_kg and sisa <= 0:
+                continue  # armada sudah penuh
             dekat = None
             for s in sumber:
                 asal = posko[s["posko_asal"]]

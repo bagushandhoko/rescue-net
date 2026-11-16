@@ -1,7 +1,33 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-14",
+  "diperbarui": "2026-11-16",
   "uji": [
+    {
+      "id": "NALA-AI-ANALYSIS-20261116",
+      "tanggal": "2026-11-16",
+      "kategori": "AI Analysis",
+      "judul": "Triase, stok, gempa dan kandidat kejanggalan (tanpa site)",
+      "tujuan": "Verifikasi hitungan, privasi prompt dan kontrak empat endpoint saran.",
+      "akun": "Tanpa login/site; endpoint memakai mock Frappe dan AI. Bukan uji browser.",
+      "langkah": [
+        "Jalankan 42 tes Python murni dan endpoint mock dengan patch rescue_net.ai.analysis._tanya.",
+        "Periksa stok, konversi satuan, haversine, lima jenis kandidat, ID palsu, scope dan privasi.",
+        "Jalankan py_compile empat file, diff --check dan secret scan."
+      ],
+      "hasil": "42 tes lulus; sintaks dan pemeriksaan statis lulus. Stack Frappe/DB, model AI asli, browser login sungguhan BELUM diuji; belum deploy.",
+      "skor": "42 tes tanpa site lulus; integrasi belum diuji",
+      "status": "lulus",
+      "temuan": [
+        {
+          "masalah": "Teks warga bisa memuat identitas tanpa label.",
+          "perbaikan": "Kirim hanya proyeksi kosakata operasional dan koordinat kasar; rinciannya diperiksa di sumber."
+        },
+        {
+          "masalah": "Stack Frappe terisolasi tidak berjalan pada mesin yang diperiksa.",
+          "perbaikan": "Jalankan tes tanpa site dan catat batasnya; integrasi/browser diteruskan ke Suri."
+        }
+      ]
+    },
     {
       "id": "NALA-LAMPIRAN-BANTUAN-20261114",
       "tanggal": "2026-11-14",

@@ -180,3 +180,9 @@ def tanya_berujukan(user_id, disaster_event_id, question, provider="auto", organ
                 disaster_event=disaster_event_id, feature="ai_tanya_berujukan")
     name = _simpan(k, "tanya_jawab", question[:120], md, disaster_event_id, question=question)
     return {"name": name, "title": question[:120], "content": md, "provider": k["provider"], "model_name": k["model_name"]}
+
+
+# Endpoint Nala tetap tersedia melalui rescue_net.ai.analysis untuk frontend.
+from rescue_net.ai.analysis_nala import (  # noqa: E402,F401
+    triase_laporan, prakiraan_stok, dampak_gempa, cek_kejanggalan,
+)

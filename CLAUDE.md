@@ -200,3 +200,9 @@ Fase 0 (prioritas, sebelum Fase 1 setelah owner perintahkan): lingkungan kerja a
 deploy hanya lewat alur Git yang disetujui owner. Fase 10: backlog fitur baru (peringatan dini BMKG, QR bantuan &
 kartu pengungsi, SMS, gudang, status akses, papan kebutuhan publik, mode latihan, check-in relawan) — tiap fitur
 mulai dari audit kode + desain singkat yang disetujui owner.
+
+
+## 2026-11-16 Nala — AI Analysis fitur 2,3,5,7 (BELUM DEPLOY)
+- Branch nala/ai-analisis-20261116, fondasi Suri becabd0e. Empat endpoint di ai/analysis_nala.py, hitungan murni ai/analysis_nala_calc.py, import publik melalui analysis.py.
+- 42 tes tanpa site lulus; py_compile, diff --check, secret scan lulus. Frappe/DB, AI asli dan browser login sungguhan belum diuji. Tidak deploy/migrate/push main atau ubah data produksi.
+- Rincian, batas privasi/data dan langkah integrasi Suri: docs/AI_ANALYSIS_NALA.md. UI/manual bab 47 dikelola Suri; sesuaikan batas pada dokumen sebelum deploy.

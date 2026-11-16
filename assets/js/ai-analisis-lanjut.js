@@ -12,6 +12,7 @@
     { id: "analisis_foto", label: "Analisis Foto Bukti", ikon: "📷", ket: "Nilai kerusakan / banjir / bahaya dari foto.", param: "foto" },
     { id: "rencana_kirim", label: "Rencana Pengiriman", ikon: "🚚", ket: "Usulan siapa kirim apa ke mana (perlu persetujuan)." },
   ];
+  const bersih = m => String(m || "").replace(/^(frappe\.exceptions\.)?\w+Error:\s*/, "");
   const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // Markdown sederhana -> HTML aman (judul, daftar, tabel, tebal, kode baris).
@@ -74,7 +75,7 @@
       }
       const res = await frappeCall(M + f.id, args, true);
       tampil(res); muatRiwayat();
-    } catch (e) { box.innerHTML = `<p class="aia-err">Gagal: ${esc(e.message || e)}</p>`; }
+    } catch (e) { box.innerHTML = `<p class="aia-err">Gagal: ${esc(bersih(e.message || e))}</p>`; }
   }
 
   async function muatRiwayat() {
@@ -116,7 +117,7 @@
     host.addEventListener("submit", e => { const form = e.target.closest("form[data-fitur]"); if (!form) return; e.preventDefault(); jalankan(FITUR.find(f => f.id === form.dataset.fitur), form); });
     host.addEventListener("click", async e => {
       const b = e.target.closest("[data-buka]");
-      if (b) { try { const s = await ensureSession(); tampil(await frappeCall(M + "baca_laporan_ai", { user_id: s.user, name: b.dataset.buka })); } catch (err) { document.getElementById("aiaHasil").innerHTML = `<p class="aia-err">${esc(err.message)}</p>`; } }
+      if (b) { try { const s = await ensureSession(); tampil(await frappeCall(M + "baca_laporan_ai", { user_id: s.user, name: b.dataset.buka })); } catch (err) { document.getElementById("aiaHasil").innerHTML = `<p class="aia-err">${esc(bersih(err.message))}</p>`; } }
       const a = e.target.closest("[data-aia]"); if (a) (a.dataset.aia === "unduh" ? unduh : cetak)();
     });
     muatRiwayat();

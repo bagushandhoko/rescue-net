@@ -336,3 +336,9 @@ def rencana_kirim(user_id, disaster_event_id, provider="auto", organization_id=N
     name = _simpan(k, "rencana_kirim", judul, md, disaster_event_id, structured=kandidat)
     return {"name": name, "title": judul, "content": md, "structured": kandidat,
             "provider": k["provider"], "model_name": k["model_name"]}
+
+
+# Endpoint Nala tetap tersedia melalui rescue_net.ai.analysis untuk frontend.
+from rescue_net.ai.analysis_nala import (  # noqa: E402,F401
+    triase_laporan, prakiraan_stok, dampak_gempa, cek_kejanggalan,
+)

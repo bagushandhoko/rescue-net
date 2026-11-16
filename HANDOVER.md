@@ -253,3 +253,9 @@ Owner answers to the questions (2026-09-26), implemented:
 - Bukti CT106 /root/lampiran-work/: lampiran-390-before.png, lampiran-390-success.png, lampiran-receiver.png, lampiran-logged-390.png, lampiran-edit-390.png; skrip browser*.py, receiver-result.json, sender-result.json. Tahap penerima perlu event pada URL dan tombol Nanti untuk modal privasi fixture (tidak bypass DOM).
 - Uji Frappe menemukan save_file() lama menolak hash privat milik tamu lain; diganti File(content=byte tervalidasi).insert(ignore_permissions=True), dengan invariant privat+asosiasi. Duplikat publik dan privat diuji. File URLs dari pengguna tidak diterima.
 - Deploy: perlu izin owner, tag cadangan, deploy-flex.sh dari worktree bersih, restart backend; TANPA migrate (tidak ada field/DocType baru), purge/cache sesuai skrip. Manual dan Scenario Tested ikut commit. Uji ulang live dengan akun pengirim/petugas setelah deploy.
+
+
+## 2026-11-16 Nala — AI Analysis fitur 2,3,5,7 (BELUM DEPLOY)
+- Branch nala/ai-analisis-20261116, fondasi Suri becabd0e. Empat endpoint di ai/analysis_nala.py, hitungan murni ai/analysis_nala_calc.py, import publik melalui analysis.py.
+- 42 tes tanpa site lulus; py_compile, diff --check, secret scan lulus. Frappe/DB, AI asli dan browser login sungguhan belum diuji. Tidak deploy/migrate/push main atau ubah data produksi.
+- Rincian, batas privasi/data dan langkah integrasi Suri: docs/AI_ANALYSIS_NALA.md. UI/manual bab 47 dikelola Suri; sesuaikan batas pada dokumen sebelum deploy.

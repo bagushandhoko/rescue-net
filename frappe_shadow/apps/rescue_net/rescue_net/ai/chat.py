@@ -320,7 +320,7 @@ Never expose API keys or credentials.
 def _llm_chat(api_key, model_name, system_prompt, user_content,
               user_id, key_source, key_owner_type, key_owner_id,
               provider, disaster_event=None, q_chars=0, temperature=0.1,
-              json_mode=False, feature=None):
+              json_mode=False, feature=None, images=None):
     """One chat call for every AI feature, any provider (services/llm.py):
     budget / kill-switch / rate gate, request, error mapping and the RN AI
     Usage Log row live here once."""
@@ -338,7 +338,8 @@ def _llm_chat(api_key, model_name, system_prompt, user_content,
             "RN AI Profile", profile_name(_LEVEL_OF_OWNER[key_owner_type], key_owner_id), "base_url")
     try:
         answer, usage = llm.chat(provider, api_key, model_name, system_prompt, user_content,
-                                 temperature=temperature, json_mode=json_mode, base_url=base_url)
+                                 temperature=temperature, json_mode=json_mode, base_url=base_url,
+                                 images=images)
     except llm.LLMError as e:
         _log_ai_usage(**log, outcome="auth_error" if e.kind == "auth" else "error",
                       error_note=f"{e.kind} {e.note}".strip())

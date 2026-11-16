@@ -131,11 +131,15 @@ def _post(url, headers, payload):
         raise LLMError("invalid", "non-json")
 
 
-def _openai(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None):
+def _openai(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None, images=None):
+    msgs = [{"role": "user", "content": m} for m in messages]
+    if images and msgs:
+        # Suri 2026-11-16: gambar (vision) ditempel ke pesan terakhir
+        msgs[-1]["content"] = [{"type": "text", "text": msgs[-1]["content"]}] + [
+            {"type": "image_url", "image_url": {"url": "data:%s;base64,%s" % (i["mime"], i["b64"])}} for i in images]
     payload = {
         "model": model,
-        "messages": [{"role": "system", "content": system}]
-        + [{"role": "user", "content": m} for m in messages],
+        "messages": [{"role": "system", "content": system}] + msgs,
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
@@ -158,7 +162,7 @@ def _openai(key, model, system, messages, temperature, json_mode, max_tokens, ba
     }
 
 
-def _anthropic(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None):
+def _anthropic(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None, images=None):
     # Claude 5 models take no temperature/top_p (400) and think adaptively
     # by default — the request stays minimal.
     payload = {
@@ -167,6 +171,10 @@ def _anthropic(key, model, system, messages, temperature, json_mode, max_tokens,
         "system": system,
         "messages": [{"role": "user", "content": "\n\n".join(messages)}],
     }
+    if images:
+        payload["messages"][0]["content"] = [
+            {"type": "image", "source": {"type": "base64", "media_type": i["mime"], "data": i["b64"]}} for i in images
+        ] + [{"type": "text", "text": "\n\n".join(messages)}]
     headers = {
         "x-api-key": key,
         "anthropic-version": ANTHROPIC_VERSION,
@@ -186,13 +194,14 @@ def _anthropic(key, model, system, messages, temperature, json_mode, max_tokens,
     return text, {"prompt_tokens": pin, "completion_tokens": pout, "total_tokens": pin + pout}
 
 
-def _gemini(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None):
+def _gemini(key, model, system, messages, temperature, json_mode, max_tokens, base_url=None, images=None):
     config = {"temperature": temperature, "maxOutputTokens": max_tokens}
     if json_mode:
         config["responseMimeType"] = "application/json"
     payload = {
         "systemInstruction": {"parts": [{"text": system}]},
-        "contents": [{"role": "user", "parts": [{"text": m} for m in messages]}],
+        "contents": [{"role": "user", "parts": [{"text": m} for m in messages]
+                      + [{"inline_data": {"mime_type": i["mime"], "data": i["b64"]}} for i in (images or [])]}],
         "generationConfig": config,
     }
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
@@ -215,7 +224,7 @@ _CALLS = {"openai": _openai, "anthropic": _anthropic, "gemini": _gemini, "local"
 
 
 def chat(provider, api_key, model, system, messages, temperature=0.2, json_mode=False,
-         max_tokens=16000, base_url=None):
+         max_tokens=16000, base_url=None, images=None):
     """`messages` = list of user-turn strings (context first, question last).
     `base_url` is required for provider 'local' (OpenAI-compatible endpoint)."""
     provider = normalize_provider(provider)
@@ -227,6 +236,9 @@ def chat(provider, api_key, model, system, messages, temperature=0.2, json_mode=
     if isinstance(messages, str):
         messages = [messages]
     model = (model or "").strip() or default_model(provider)
+    if images:
+        return _CALLS[provider](api_key, model, system, list(messages), temperature, json_mode, max_tokens,
+                                base_url, images=images)
     return _CALLS[provider](api_key, model, system, list(messages), temperature, json_mode, max_tokens,
                             base_url)
 

@@ -1,0 +1,108 @@
+{
+ "doctype": "DocType",
+ "name": "RN AI Report",
+ "module": "RN Intelligence",
+ "custom": 0,
+ "istable": 0,
+ "editable_grid": 0,
+ "autoname": "hash",
+ "track_changes": 0,
+ "engine": "InnoDB",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "fields": [
+  {
+   "fieldname": "report_type",
+   "fieldtype": "Select",
+   "label": "Jenis",
+   "options": "sitrep\ntriase_laporan\nprakiraan_stok\ntanya_jawab\ngempa\nkejanggalan\nfoto\nrencana_kirim",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Judul",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "fieldtype": "Data",
+   "label": "Bencana"
+  },
+  {
+   "fieldname": "question",
+   "fieldtype": "Small Text",
+   "label": "Pertanyaan / parameter"
+  },
+  {
+   "fieldname": "content",
+   "fieldtype": "Long Text",
+   "label": "Hasil (markdown)"
+  },
+  {
+   "fieldname": "structured",
+   "fieldtype": "Long Text",
+   "label": "Hasil terstruktur (JSON)"
+  },
+  {
+   "fieldname": "sources",
+   "fieldtype": "Long Text",
+   "label": "Sumber data (JSON)"
+  },
+  {
+   "fieldname": "user_id",
+   "fieldtype": "Data",
+   "label": "Dibuat oleh (RN User Account)"
+  },
+  {
+   "fieldname": "owner_type",
+   "fieldtype": "Data",
+   "label": "Pemilik kunci"
+  },
+  {
+   "fieldname": "owner_id",
+   "fieldtype": "Data",
+   "label": "ID pemilik kunci"
+  },
+  {
+   "fieldname": "provider",
+   "fieldtype": "Data",
+   "label": "Provider"
+  },
+  {
+   "fieldname": "model_name",
+   "fieldtype": "Data",
+   "label": "Model"
+  }
+ ],
+ "field_order": [
+  "report_type",
+  "title",
+  "disaster_event",
+  "question",
+  "content",
+  "structured",
+  "sources",
+  "user_id",
+  "owner_type",
+  "owner_id",
+  "provider",
+  "model_name"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "modified": "2026-11-16 19:30:00.000000",
+ "owner": "Administrator",
+ "creation": "2026-11-16 19:30:00.000000",
+ "description": "Hasil fitur Analisis AI (SITREP AI, triase laporan, prakiraan stok, tanya jawab berujukan, gempa, kejanggalan, foto, rencana kirim). Suri 2026-11-16."
+}

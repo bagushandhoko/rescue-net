@@ -110,9 +110,10 @@
           <li><a href="#h-riwayat">Riwayat Kegiatan</a></li>
           <li><a href="#h-back-office">Back Office Penanganan</a></li>
           <li><a href="#h-sumber-daya">Profil Sumber Daya</a></li>
+          <li><a href="#help-lainnya">Halaman lainnya (petunjuk tombol ?)</a></li>
         </ol>
         <p class="toc-group">G. Arsitektur skala nasional &amp; federasi</p>
-        <ol start="55">
+        <ol start="56">
           <li><a href="#ars-prinsip">Prinsip rancangan</a></li>
           <li><a href="#ars-tahap">Empat tahap skala</a></li>
           <li><a href="#ars-gandakan">Cara RN menggandakan diri</a></li>
@@ -1188,6 +1189,22 @@
           <p class="note">Data identitas hanya terlihat oleh pengelola untuk verifikasi.</p>
         </section>
 
+        <section id="help-lainnya">
+          <h3>55. Halaman lainnya (petunjuk tombol ?)</h3>
+          <p>Tombol <b>?</b> di setiap halaman membuka petunjuk yang cocok. Bagian ini memuat petunjuk singkat untuk halaman yang belum punya bab sendiri. Hak ubah tetap mengikuti peran akun.</p>
+          <section id="help-cetak-label"><h3>Cetak Label Kiriman</h3><p>Buka dari halaman kiriman setelah data kiriman tersedia. Masukkan <b>Jumlah koli / label</b>, lalu tekan <b>Cetak</b>. Periksa jumlah label sebelum ditempel pada koli. Tombol Kembali membawa Anda ke halaman sebelumnya.</p></section>
+          <section id="help-disaster-detail"><h3>Detail Bencana</h3><p>Halaman ini merangkum satu bencana dan pintasan ke layanan penanganannya. Gunakan tautan ke Control Centre atau posko untuk membuka daftar kerja yang relevan. Data dan tombol pengelolaan mengikuti hak akun Anda.</p></section>
+          <section id="help-kartu-keluarga"><h3>Kartu Keluarga &amp; Penerimaan Bantuan</h3><ol><li>Koordinator membuat <b>Putaran distribusi</b>.</li><li>Tambahkan kartu keluarga pada putaran yang dipilih; periksa identitas dan jumlah anggota sebelum menerbitkan atau mencetak.</li><li>Catat penerimaan bantuan untuk keluarga yang benar. Riwayat penerimaan tampil untuk putaran terpilih.</li></ol><p>Data keluarga bersifat pribadi. Gunakan halaman ini hanya untuk tugas distribusi yang menjadi wewenang Anda.</p></section>
+          <section id="help-privasi"><h3>Kebijakan Privasi</h3><p>Baca jenis data yang dikumpulkan, tujuan pemakaian, penggunaan AI, masa simpan, keamanan, dan hak pengguna. Organisasi tertutup membatasi informasi organisasinya. Persetujuan kebijakan diperlukan saat pendaftaran; ajukan permintaan terkait data melalui kontak Rescue-Net.</p></section>
+          <section id="help-kegiatan-masyarakat"><h3>Kegiatan Masyarakat</h3><p>Pilih bencana untuk melihat informasi kegiatan masyarakat yang terkait. Gunakan <b>Kembali</b> untuk kembali ke halaman sebelumnya. Jika daftar kosong, pilih bencana yang benar atau tunggu data kegiatan dimuat.</p></section>
+          <section id="help-mockup"><h3>Mock-up Rescue-Net</h3><p>Gunakan pilihan layar pada halaman ini untuk melihat contoh rancangan antarmuka. Mock-up membantu memahami tata letak dan alur; lakukan pekerjaan operasional melalui halaman layanan terkait, bukan dari mock-up.</p></section>
+          <section id="help-profil-organisasi"><h3>Profil Organisasi</h3><p>Pilih organisasi untuk membaca ringkasan, bidang kerja, dan keterlibatan pada bencana. Profil yang dibuka ke publik dapat dilihat siapa saja; organisasi tertutup menampilkan informasi terbatas. Pengelola memperbarui profil dari menu organisasi jika tombol edit tersedia.</p></section>
+          <section id="help-saran"><h3>Saran untuk Rescue-Net</h3><ol><li>Pilih jenis saran: fitur baru, perbaikan bug atau error, tampilan, atau lainnya.</li><li>Pilih halaman terkait bila diketahui, tulis judul dan isi saran, lalu kirim.</li><li>Nama dan kontak bersifat opsional; kontak tidak ditampilkan pada daftar publik.</li></ol><p>Daftar saran menampilkan status tindak lanjut sesuai hak akses.</p></section>
+          <section id="help-scenario-tested"><h3>Scenario Tested</h3><p>Gunakan halaman ini untuk melihat skenario uji, akun demo yang disediakan, dan hasil yang tercatat. Skenario membantu pemeriksaan alur aplikasi; data di sini bukan instruksi untuk mengubah catatan operasional.</p></section>
+          <section id="help-sync-console"><h3>Sinkronisasi Data Offline ↔ Online</h3><p>Halaman ini meninjau antrean sinkronisasi antara perangkat offline dan sistem online. Periksa item yang tertunda atau gagal sebelum mengirim ulang. Jangan menghapus antrean bila belum memastikan data sudah tersimpan di server.</p></section>
+          <section id="help-verifikator"><h3>Jaringan Verifikator</h3><p>Halaman ini berisi layanan verifikasi untuk akun yang diberi tugas verifikator. Tinjau bukti dan data sumber, lalu gunakan tindakan verifikasi yang tersedia sesuai kewenangan. Jangan menandai identitas, lokasi, atau kebutuhan benar tanpa bukti pendukung.</p></section>
+        </section>
+
         <!-- ================= G ================= -->
         <header class="group-head" id="arsitektur">
           <p class="group-label">Bagian G</p>
@@ -1196,7 +1213,7 @@
         </header>
 
         <section id="ars-prinsip">
-          <h3>55. Prinsip rancangan</h3>
+          <h3>56. Prinsip rancangan</h3>
           <ul>
             <li><b>Monolit modular yang bisa digandakan, bukan puluhan microservice.</b> RN tetap satu aplikasi (Frappe + modul rescue_net) agar mudah dirawat tim kecil. Yang digandakan adalah <i>salinannya</i>, bukan dipecah-pecah. Hanya pekerjaan berat (notifikasi, AI, olah foto, laporan) dijadikan layanan antrean terpisah.</li>
             <li><b>Satu paket instalasi untuk semua skala.</b> Paket <i>Rescue-Net Node</i> (satu perintah: pasang, cadangan, pulihkan, perbarui) dipakai untuk server tunggal, salinan tambahan saat beban naik, server cadangan, dan node federasi.</li>
@@ -1207,7 +1224,7 @@
         </section>
 
         <section id="ars-tahap">
-          <h3>56. Empat tahap skala</h3>
+          <h3>57. Empat tahap skala</h3>
           <figure class="ars-diagram" aria-label="Diagram empat tahap skala Rescue-Net" style="overflow-x:auto;margin:0">
             <svg viewBox="0 0 880 300" role="img" style="width:100%;min-width:720px;height:auto;max-width:880px">
               <style>
@@ -1261,7 +1278,7 @@
         </section>
 
         <section id="ars-gandakan">
-          <h3>57. Cara RN "menggandakan diri"</h3>
+          <h3>58. Cara RN "menggandakan diri"</h3>
           <ol class="steps">
             <li><b>Server web tanpa ingatan lokal.</b> Sesi login di Redis, data di database, foto &amp; dokumen di penyimpanan bersama (S3/MinIO). Dengan begitu salinan web bisa ditambah atau dikurangi kapan saja tanpa pengguna sadar.</li>
             <li><b>Penyeimbang beban</b> (mis. HAProxy atau load balancer CDN) membagi pengunjung ke salinan yang sehat dan otomatis melewati salinan yang mati.</li>
@@ -1273,7 +1290,7 @@
         </section>
 
         <section id="ars-tangguh">
-          <h3>58. Ketahanan saat bencana</h3>
+          <h3>59. Ketahanan saat bencana</h3>
           <ul>
             <li><b>Dua lokasi berjauhan</b> (aktif–siaga) agar satu bencana tidak mematikan keduanya; pengalihan otomatis lewat DNS/CDN.</li>
             <li><b>Listrik &amp; jaringan:</b> sumber listrik cadangan (PLTS/baterai/genset) untuk server <i>dan</i> perangkat jaringan, dua jalur internet berbeda (fiber + seluler/satelit).</li>
@@ -1284,7 +1301,7 @@
         </section>
 
         <section id="ars-federasi">
-          <h3>59. Federasi nasional &amp; jaringan internasional</h3>
+          <h3>60. Federasi nasional &amp; jaringan internasional</h3>
           <p>Setiap <b>node</b> adalah RN lengkap milik satu pihak (BNPB/BPBD provinsi, lembaga kemanusiaan, atau negara lain). Node berdiri sendiri dan tetap berjalan walau terputus dari node lain.</p>
           <ul>
             <li><b>Kepemilikan data:</b> data dimiliki node yang membuatnya (mis. posko milik node provinsi). Node lain menerima salinan baca, bukan mengubah.</li>
@@ -1296,7 +1313,7 @@
         </section>
 
         <section id="ars-aman">
-          <h3>60. Keamanan &amp; kepatuhan</h3>
+          <h3>61. Keamanan &amp; kepatuhan</h3>
           <ul>
             <li>Tidak ada port server yang dibuka langsung ke internet: akses publik lewat terowongan terenkripsi &amp; CDN; halaman admin hanya dari jaringan internal.</li>
             <li>Rahasia (API key, token) disimpan terenkripsi; kunci enkripsi ikut dalam cadangan lengkap dan diperlakukan sangat rahasia.</li>
@@ -1306,7 +1323,7 @@
         </section>
 
         <section id="ars-jalan">
-          <h3>61. Peta jalan</h3>
+          <h3>62. Peta jalan</h3>
           <div style="overflow-x:auto;max-width:100%">
           <table class="rn-table">
             <thead><tr><th>Tahap</th><th>Isi</th><th>Status</th></tr></thead>
@@ -1329,5 +1346,6 @@
   <script src="../assets/js/rn-public-header.js?v=simriil2-20261113"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
   <script src="../assets/js/rn-mobile-drawer.js?v=topback-20261109"></script>
+<script src="../assets/js/rn-posko-help.js?v=bantuan-20261117" defer></script>
 </body>
 </html>

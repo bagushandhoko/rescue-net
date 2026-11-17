@@ -5,6 +5,7 @@
    Halaman posko -> panduan.html#p-<jenis>; halaman lain -> manual.html#<bagian>. */
 (function () {
   var PAGE = (location.pathname.split("/").pop() || "").toLowerCase();
+  if (!PAGE) PAGE = "index.html"; // beranda /rescue-net/ (Nala 12 Nov)
   var P = "panduan.html", M = "manual.html";
   var BY_PAGE = {
     // 12 Nov 2026: halaman ini punya bagian sendiri di Manual Bagian F
@@ -59,7 +60,23 @@
     "verification-approval.html": [M, "verifikasi", "Verifikasi berjenjang"],
     "tawarkan-alat.html": [M, "alat-kerja", "Recovery Program & Alat Kerja"],
     "penyedia-alat.html": [M, "alat-kerja", "Posko Alat Kerja & Tawarkan Alat"],
-    "pengadaan-tender.html": [M, "lainnya", "Fitur lainnya"]
+    "pengadaan-tender.html": [M, "lainnya", "Fitur lainnya"],
+    "cetak-label.html": [M, "help-cetak-label", "Cetak label kiriman"],
+    "disaster-detail.html": [M, "help-disaster-detail", "Detail bencana"],
+    "install.html": [M, "hp", "Pasang aplikasi & mode offline"],
+    "offline.html": [M, "hp", "Pasang aplikasi & mode offline"],
+    "kartu-keluarga.html": [M, "help-kartu-keluarga", "Kartu keluarga & penerimaan bantuan"],
+    "kebijakan-privasi.html": [M, "help-privasi", "Kebijakan privasi"],
+    "kegiatan-masyarakat.html": [M, "help-kegiatan-masyarakat", "Kegiatan masyarakat"],
+    "mockup.html": [M, "help-mockup", "Mock-up Rescue-Net"],
+    "profil-organisasi.html": [M, "help-profil-organisasi", "Profil organisasi"],
+    "recovery-reconstruction.html": [M, "alat-kerja", "Recovery Program & Alat Kerja"],
+    "saran.html": [M, "help-saran", "Kirim saran"],
+    "scenario-tested.html": [M, "help-scenario-tested", "Skenario uji"],
+    "sync-console.html": [M, "help-sync-console", "Sinkronisasi data"],
+    "verifikator.html": [M, "help-verifikator", "Jaringan verifikator"],
+    "manual-teknis.html": [M, "latar", "Manual Teknis"],
+    "index.html": ["pages/manual.html", "latar", "Manual Rescue-Net"]
   };
   // posko-detail / posko-logistik melayani beberapa jenis: tebak dari teks halaman bila bisa.
   var BY_TEXT = [

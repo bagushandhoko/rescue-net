@@ -40,9 +40,30 @@
   }
 
   function orgId() {
-    const f = document.getElementById("aiAskForm");
-    const v = f && f.ai_ctx ? f.ai_ctx.value : "";
+    // Owner 17 Nov: panel Ask AI dihapus; pemilih Konteks AI kini di panel ini (#aiaKonteks).
+    const sel = document.getElementById("aiaKonteks");
+    let v = sel ? sel.value : "";
+    if (!sel) { try { v = localStorage.getItem("rn_ai_ctx") || ""; } catch (e) { v = ""; } }
     return v && v !== "personal" ? v : "";
+  }
+
+  function pasangKonteks() {
+    const host = document.getElementById("aiaKonteksWadah");
+    if (!host || !window.RNUI || !RNUI.aiContext) return;
+    RNUI.aiContext(frappeCall).then(ctx => {
+      const orgs = (ctx.contexts && ctx.contexts.organizations) || [];
+      const personal = ctx.contexts && ctx.contexts.personal && ctx.contexts.personal.available;
+      if (!orgs.length) return;
+      const sel = document.createElement("select");
+      sel.id = "aiaKonteks";
+      sel.innerHTML = (personal ? '<option value="personal">AI pribadi (kunci saya)</option>' : "")
+        + orgs.map(o => `<option value="${esc(o.id)}">AI organisasi: ${esc(o.title)}</option>`).join("");
+      sel.value = ctx.organization_id || "personal";
+      sel.addEventListener("change", () => { try { localStorage.setItem("rn_ai_ctx", sel.value); } catch (e) {} });
+      const label = document.createElement("label");
+      label.append("Konteks AI (kunci yang dipakai) ", sel);
+      host.appendChild(label);
+    }).catch(() => {});
   }
 
   function fileB64(file) {
@@ -106,7 +127,8 @@
   function bangun() {
     const host = document.getElementById("aiaPanel"); if (!host) return;
     host.innerHTML = `<h3>Analisis AI Lanjutan</h3>
-      <p class="aia-meta">Perlu login dan kunci AI (pribadi/organisasi) di AI Settings. Biaya memakai kuota kunci yang dipilih di "Konteks AI". Hasil = saran, tersimpan di riwayat.</p>
+      <p class="aia-meta">Perlu login dan kunci AI (pribadi/organisasi) di AI Settings. Biaya memakai kuota kunci yang dipilih di "Konteks AI". Hasil = saran, tersimpan di riwayat. Untuk bertanya bebas ke AI, pakai ikon <b>Tanya AI</b> yang melayang.</p>
+      <div id="aiaKonteksWadah" class="aia-meta"></div>
       <div class="aia-grid">${FITUR.map(f => `<form class="aia-card" data-fitur="${f.id}"><div class="aia-title">${f.ikon} ${esc(f.label)}</div><div class="aia-ket">${esc(f.ket)}</div>
         ${f.param === "jam" ? '<label>Periode <select name="jam"><option value="24">24 jam</option><option value="48">48 jam</option><option value="72">72 jam</option><option value="168">7 hari</option></select></label>' : ""}
         ${f.param === "jam72" ? '<label>Periode <select name="jam"><option value="24">24 jam</option><option value="72" selected>72 jam</option><option value="168">7 hari</option></select></label>' : ""}
@@ -115,6 +137,7 @@
         <button class="btn primary" type="submit">Jalankan</button></form>`).join("")}</div>
       <div id="aiaHasil" class="aia-hasil"></div>
       <h4>Riwayat Analisis AI</h4><ul id="aiaRiwayat" class="aia-riwayat"></ul>`;
+    pasangKonteks();
     host.addEventListener("submit", e => { const form = e.target.closest("form[data-fitur]"); if (!form) return; e.preventDefault(); jalankan(FITUR.find(f => f.id === form.dataset.fitur), form); });
     host.addEventListener("click", async e => {
       const b = e.target.closest("[data-buka]");

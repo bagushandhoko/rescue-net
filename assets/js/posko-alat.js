@@ -64,6 +64,7 @@
 
   function render() {
     var d = DATA, p = d.posko;
+    RNPoskoCharts.equipment(d);
     document.title = "Rescue-Net | " + p.title;
     $("#eqTitle").textContent = p.title;
     $("#eqSub").textContent = [p.is_equipment_posko ? "Posko Alat Kerja / Support" : "Posko", p.organization_title, p.area || p.address].filter(Boolean).join(" · ");

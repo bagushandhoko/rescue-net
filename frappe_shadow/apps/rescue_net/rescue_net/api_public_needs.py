@@ -187,3 +187,11 @@ def set_public_notes(posko, not_needed="", not_accepted_packaging=""):
     frappe.db.set_value("RN Posko", posko, vals)
     return {"posko": posko, "public": frappe.db.get_value("RN Posko", posko, "public_detail") == "public", **{
         "not_needed": vals["public_not_needed"], "not_accepted_packaging": vals["public_not_accepted_packaging"]}}
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+@rate_limit(limit=60, seconds=60)
+def incoming_for_posko(posko, event=None):
+    """Barang, booking, armada dan relawan menuju posko; tanpa kontak pribadi."""
+    from rescue_net.services.incoming_posko import incoming
+    return incoming(posko, event)

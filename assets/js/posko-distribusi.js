@@ -1227,6 +1227,11 @@
     renderSelector(data.transporter_poskos || [], data.posko || "", data.viewer);
     applyAccess(data);
     renderKpi(data.totals || {}, data.posko_info);
+    var totals = data.totals || {}, cap = Math.max(0, Number(totals.kapasitas_total_kg) || 0);
+    var used = Math.min(cap, Math.max(0, Number(totals.kapasitas_terpakai_kg) || 0));
+    RNPoskoCharts.mount("rnPoskoCharts", [{title: "Kapasitas armada", unit: "kg", segments: [
+      {label: "Terpakai", value: used, color: "#e8835d"}, {label: "Sisa kapasitas", value: cap - used, color: "#3f8f65"}],
+      note: "Kapasitas total armada yang ditampilkan pada papan ini."}]);
     ARMADA_ALL = data.armada || [];
     applyArmadaFilter();
     renderBookings(data.booking_inbox || []);

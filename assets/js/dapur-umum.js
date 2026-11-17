@@ -148,31 +148,9 @@
     var legend = document.getElementById("produksiLegend");
     document.getElementById("donutTotal").textContent = fmt(donut && donut.total);
 
-    var acc = 0;
-    var stops = segs
-      .map(function (s) {
-        var start = acc;
-        acc += s.pct;
-        var color = DONUT_COLORS[s.key] || "#bbb";
-        return color + " " + start + "% " + acc + "%";
-      })
-      .join(", ");
-    if (el) {
-      el.style.background = stops
-        ? "conic-gradient(" + stops + ")"
-        : "conic-gradient(#e5e0da 0% 100%)";
-    }
-
-    if (legend) {
-      legend.innerHTML = segs
-        .map(function (s) {
-          return (
-            '<li><span class="rn-donut-dot" style="background:' + (DONUT_COLORS[s.key] || "#bbb") + '"></span>' +
-            "<span>" + esc(s.label) + "<br><b>" + fmt(s.value) + "</b> <small>(" + s.pct + "%)</small></span></li>"
-          );
-        })
-        .join("");
-    }
+    RNUI.donut.paint(el, legend, {title: "Produksi makanan hari ini", unit: "porsi", segments: segs.map(function (s) {
+      return {label: s.label, value: s.value, color: DONUT_COLORS[s.key]};
+    })});
   }
 
   /* ---------- render main board ---------- */

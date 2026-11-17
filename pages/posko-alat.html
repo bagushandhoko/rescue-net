@@ -33,6 +33,7 @@
   .rn-eq-checks label{display:flex;align-items:center;gap:6px;font-weight:600}
   @media (max-width:520px){.rn-eq-item{grid-template-columns:64px 1fr}.rn-eq-item img{width:64px;height:64px}}
   </style>
+  <link rel="stylesheet" href="../assets/css/rn-donut.css?v=pie-20261114-1">
   <link rel="icon" type="image/png" sizes="32x32" href="/rescue-net/assets/img/favicon/favicon-32.png?v=20261114">
   <link rel="icon" type="image/png" sizes="48x48" href="/rescue-net/assets/img/favicon/favicon-48.png?v=20261114">
   <link rel="apple-touch-icon" href="/rescue-net/assets/img/favicon/favicon-180.png?v=20261114">
@@ -91,6 +92,8 @@
 
     <div id="eqMain" hidden>
       <section class="rn-eq-sum" id="eqSum"></section>
+<section class="rn-pie-grid" id="rnPoskoCharts" aria-label="Ringkasan kebutuhan dan ketersediaan" hidden></section>
+
       <section class="panel">
         <div class="panel-header"><div><h3>Inventaris Alat</h3><p>Klik nama alat untuk detail lengkap, penyedia &amp; kontak.</p></div>
           <div class="rn-ra-filter"><input type="search" id="eqSearch" placeholder="Cari alat / merek / spesifikasi" aria-label="Cari alat"></div></div>
@@ -168,15 +171,17 @@
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
-<script src="../assets/js/rn-ui.js?v=audit-20261115"></script>
+<script src="../assets/js/rn-ui.js?v=gabung-20261117"></script>
+<script src="../assets/js/rn-donut.js?v=pie-20261114-1"></script>
 <script src="../assets/js/rn-equipment-specs.js?v=font13-20261109"></script>
-<script src="../assets/js/posko-alat.js?v=tahun-20261114"></script>
-<script src="../assets/js/session-role.js?v=tamu-20261114"></script>
+<script src="../assets/js/posko-alat.js?v=gabung-20261117"></script>
+<script src="../assets/js/session-role.js?v=gabung-20261117"></script>
 <script src="../assets/js/rn-public-header.js?v=simriil2-20261113"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>
   <script src="../assets/js/rn-navigation-v2.js?v=alat-20261113"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=topback-20261109"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-posko-help.js?v=manual13-20261113" defer></script>
+<script src="../assets/js/rn-kirim-bantuan-btn.js?v=pie-20261114-1" defer></script>
 </body>
 </html>

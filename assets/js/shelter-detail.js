@@ -118,23 +118,15 @@
   /* ---------- donut ---------- */
 
   function renderOkupansiDonut(ko) {
-    var pct = ko.pct || 0;
-    var el = document.getElementById("okupansiDonut");
-    $("#okupansiPct").textContent = pct + "%";
-    el.style.background =
-      "conic-gradient(#e8835d 0% " + pct + "%, #e5e0da " + pct + "% 100%)";
-
-    var legend = document.getElementById("okupansiLegend");
-    legend.innerHTML = [
-      { color: "#e8835d", label: "Terisi", value: ko.terisi },
-      { color: "#3b82c4", label: "Tersedia", value: ko.tersedia },
-      { color: "#d9d2c8", label: "Kapasitas Max", value: ko.kapasitas_max },
-    ].map(function (s) {
-      return (
-        '<li><span class="rn-donut-dot" style="background:' + s.color + '"></span>' +
-        "<span>" + s.label + "</span><b>" + fmt(s.value) + "</b></li>"
-      );
-    }).join("");
+    $("#okupansiPct").textContent = (ko.pct || 0) + "%";
+    RNUI.donut.paint(document.getElementById("okupansiDonut"), document.getElementById("okupansiLegend"), {
+      title: "Kapasitas dan okupansi", unit: "orang", segments: [
+        {label: "Terisi", value: ko.terisi, color: "#e8835d"},
+        {label: "Tersedia", value: ko.tersedia, color: "#3b82c4"}]
+    });
+    var capacity = document.createElement("li");
+    capacity.textContent = "Kapasitas maksimum: " + fmt(ko.kapasitas_max) + " orang";
+    document.getElementById("okupansiLegend").appendChild(capacity);
   }
 
   /* ---------- render main board ---------- */

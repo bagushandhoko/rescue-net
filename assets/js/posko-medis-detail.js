@@ -123,13 +123,13 @@ function renderStock(items) {
     items.length
       ? items.map(s => card(
           s.item_name,
-          `Current stock: <b>${
+          `Stok saat ini: <b>${
             safe(
               s.quantity ??
               s.current_quantity
             )
           }</b> ${safe(s.unit)}`,
-          s.stock_state || s.unit
+          (window.RNUI && RNUI.statusLabel ? RNUI.statusLabel(s.stock_state) : s.stock_state) || s.unit
         )).join("")
       : card(
           "Belum ada stok medis",
@@ -138,11 +138,17 @@ function renderStock(items) {
         );
 }
 
-const MEDICAL_LOGIN_NOTICE = card(
-  "Login diperlukan",
-  "Data medis (kasus, pemakaian obat/alat) hanya untuk pengguna yang sudah login.",
-  "empty"
-);
+// audit 14 Nov: pengguna yang SUDAH login tapi bukan petugas posko ini tidak
+// boleh disuruh "login" — beri tahu bahwa datanya khusus petugas.
+function rnLoggedIn() {
+  const m = document.cookie.match(/(?:^|; )user_id=([^;]*)/);
+  return !!(m && decodeURIComponent(m[1]) && decodeURIComponent(m[1]) !== "Guest");
+}
+const MEDICAL_LOGIN_NOTICE = rnLoggedIn()
+  ? card("Khusus petugas posko",
+      "Data medis (kasus, pemakaian obat/alat) hanya untuk petugas / pengelola posko medis ini.", "empty")
+  : card("Login diperlukan",
+      "Data medis (kasus, pemakaian obat/alat) hanya untuk petugas posko yang sudah login.", "empty");
 
 // Inline "update status" control for one case. Only the transitions the
 // backend will accept are offered; a terminal status shows no control.
@@ -261,7 +267,7 @@ function renderNeeds(needs) {
 
   if (needs === null) {
     el.innerHTML =
-      card("Login diperlukan", "Kebutuhan hanya untuk tim posko.", "empty");
+      card(rnLoggedIn() ? "Khusus petugas posko" : "Login diperlukan", "Kebutuhan hanya untuk tim posko.", "empty");
     return;
   }
 

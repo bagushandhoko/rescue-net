@@ -486,7 +486,7 @@
               && s.effective_available !== s.snapshot_quantity)
               ? " <small class=\"subtitle\">(snapshot " + safe(s.snapshot_quantity) + ")</small>"
               : "";
-            return card(safe(s.item_name), "Current stock: <b>" + safe(qty) + "</b> " + safe(s.unit) + extra, safe(s.unit));
+            return card(safe(s.item_name), "Stok saat ini: <b>" + safe(qty) + "</b> " + safe(s.unit) + extra, safe(s.unit));
           })
           .join("")
       : card("Belum ada stok", "Transfer bahan dari Posko Logistik dulu.", "empty");

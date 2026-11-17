@@ -221,7 +221,7 @@
       if (sp) sp.textContent = label; if (sm) sm.textContent = sub;
     }
     if (!manage) {
-      $("#kpiTerpakai").textContent = fmt(t.kapasitas_tersedia_kg) + " kg";
+      $("#kpiTerpakai").textContent = fmt(t.kapasitas_bisa_dibooking_kg != null ? t.kapasitas_bisa_dibooking_kg : t.kapasitas_tersedia_kg) + " kg";
       lab("#kpiTerpakai", "Masih Tersedia", "ruang muat yang bisa dibooking");
       lab("#kpiMenunggu", "Antre Booking", "booking tempat menunggu konfirmasi posko");
       lab("#kpiKapasitas", "Kapasitas Total", "armada yang belum berangkat/selesai");
@@ -331,7 +331,8 @@
 
   function bookable(a) {
     return !(CACHE && CACHE.can_manage) && ["lewat", "penuh"].indexOf(a.avail) < 0 &&
-      ["completed", "cancelled", "selesai"].indexOf(String(a.status || "")) < 0;
+      // audit 14 Nov: armada yang sedang jalan/sudah tiba tidak bisa dibooking lagi
+      ["completed", "cancelled", "selesai", "in_transit", "arrived"].indexOf(String(a.status || "")) < 0;
   }
   function addRow() {
     if (!(CACHE && CACHE.can_manage)) return "";
@@ -453,6 +454,11 @@
   }
 
   function bookingForm(a) {
+    // audit 14 Nov: armada yang sudah berangkat/tiba/selesai tidak menerima booking baru
+    var st = String(a.status || "");
+    if (["in_transit", "arrived", "completed", "cancelled", "selesai"].indexOf(st) >= 0)
+      return '<p class="rn-muted">Armada ini ' + esc(a.status_label || st).toLowerCase() +
+        ' — tidak menerima booking baru. Pilih armada lain yang masih Tersedia.</p>';
     var me = (CACHE && CACHE.me) || {};
     var courierOk = (a.service_mode || "both") !== "space_only";
     return (

@@ -36,7 +36,7 @@ window.RNLogistikInfo = (function () {
     let cls = "neutral";
     if (/(received|completed|diterima|closed|arrived)/.test(s)) cls = "good";
     else if (/(transit|dispatch|jalan|pickup)/.test(s)) cls = "warning";
-    return `<span class="chip ${cls}">${safe(text || status)}</span>`;
+    return `<span class="chip ${cls}">${safe(text || (window.RNUI && RNUI.statusLabel ? RNUI.statusLabel(status) : status))}</span>`;
   }
 
   /* "Daftar Barang" (owner 2026-10-25/26): one row per item — its stock card
@@ -109,8 +109,9 @@ window.RNLogistikInfo = (function () {
   }
 
   function etaChip(txt) {
-    const s = String(txt || "").trim();
+    let s = String(txt || "").trim();
     if (!s || s === "-") return `<span class="rn-muted">—</span>`;
+    if (window.RNUI && RNUI.niceTime) s = String(RNUI.niceTime(s));
     const cls = /jam|hari ini|hr ini|<\s*24/i.test(s) ? "warning" : "neutral";
     return `<span class="chip ${cls}">${safe(s)}</span>`;
   }

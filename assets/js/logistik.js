@@ -50,7 +50,7 @@ function statusChip(status) {
   let cls = "neutral";
   if (/(received|completed|diterima|closed|arrived)/.test(s)) cls = "good";
   else if (/(transit|dispatch|jalan|pickup)/.test(s)) cls = "warning";
-  return `<span class="chip ${cls}">${safe(status)}</span>`;
+  return `<span class="chip ${cls}">${safe((window.RNUI && RNUI.statusLabel ? RNUI.statusLabel(status) : status))}</span>`;
 }
 
 function eventParam() {

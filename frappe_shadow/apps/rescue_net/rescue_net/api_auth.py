@@ -373,10 +373,15 @@ def session_info():
 @frappe.whitelist(methods=["POST"])
 def accept_privacy():
     """Catat persetujuan Kebijakan Privasi untuk akun yang login (login Google / akun lama)."""
+    # 2026-11-17 (owner: login Google selalu ditanya privasi lagi): untuk System Manager rn_actor()
+    # tidak membawa nama akun RN -> dulu selalu {"ok": False} dan persetujuan tak pernah tersimpan.
+    # Cari akun RN dari user yang login, sama seperti session_info (privacy_consent_needed).
     actor = rn_actor()
-    if not actor or not actor.name:
+    name = (actor or {}).get("name") or frappe.db.get_value(
+        "RN User Account", {"frappe_user": frappe.session.user}, "name")
+    if not name or frappe.session.user in (None, "", "Guest"):
         return {"ok": False}
-    frappe.db.set_value("RN User Account", actor.name, {
+    frappe.db.set_value("RN User Account", name, {
         "privacy_consent_at": now_datetime(), "privacy_policy_version": PRIVACY_POLICY_VERSION})
     return {"ok": True, "version": PRIVACY_POLICY_VERSION}
 

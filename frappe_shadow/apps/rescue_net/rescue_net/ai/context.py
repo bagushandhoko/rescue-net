@@ -409,6 +409,7 @@ def _build_context(disaster_event_id, public=False):
         resolved_event,
         [
             "posko_name",
+            "title",
             "location",
             "operational_status",
             "verification_status",
@@ -429,6 +430,9 @@ def _build_context(disaster_event_id, public=False):
             "location",
             "needed_before",
             "legacy_payload",
+            # 2026-11-17 owner: rekomendasi Analis AI harus bisa diklik
+            # ke posko kebutuhan itu.
+            "posko",
         ],
     )
 
@@ -547,6 +551,7 @@ def _build_context(disaster_event_id, public=False):
             "unit",
             "priority",
             "status",
+            "posko",
         ],
         50,
     )
@@ -595,7 +600,7 @@ def _build_context(disaster_event_id, public=False):
 
     # 2026-10-26: the AI quoted internal ids ("posko_nodes:posko-sim-dapur");
     # give it the posko title next to the id.
-    _add_posko_titles(stock, medical, volunteers)
+    _add_posko_titles(stock, medical, volunteers, needs, shelter_needs)
 
     recovery = _rows(
         "RN Recovery Project",
@@ -701,6 +706,9 @@ def _build_context(disaster_event_id, public=False):
             "type": "open_needs",
             "message":
                 f"{open_needs} kebutuhan masih aktif.",
+            # 2026-11-17 owner: tiap temuan Analis AI bisa diklik ke
+            # obyek yang dimaksud. Halaman membangun URL dari link.
+            "link": {"type": "open_needs"},
         })
 
     unavailable = [
@@ -716,6 +724,12 @@ def _build_context(disaster_event_id, public=False):
             "message":
                 f"{len(unavailable)} resource "
                 "tidak available.",
+            "link": {
+                "type": "resource_list",
+                "status": "unavailable",
+                # Satu resource -> langsung ke halaman alatnya.
+                "id": unavailable[0].get("name") if len(unavailable) == 1 else None,
+            },
         })
 
     recovery_active = [
@@ -765,8 +779,19 @@ def _build_context(disaster_event_id, public=False):
                     f" - {row.get('location')}"
                     if row.get("location") else ""
                 )
+                + (
+                    f" - {row.get('posko_name') or row.get('posko')}"
+                    if row.get("posko") else ""
+                )
             ),
             "priority": row.get("priority") or "urgent",
+            "link": {
+                "type": "logistic_need",
+                "id": row.get("name"),
+                "posko": row.get("posko"),
+                "posko_name": row.get("posko_name"),
+                "item": row.get("item_name") or "",
+            },
         })
 
     action_plans = _rows(
@@ -781,9 +806,11 @@ def _build_context(disaster_event_id, public=False):
             "target_unit",
             "assigned_to",
             "notes",
+            "posko",
         ],
         20,
     )
+    _add_posko_titles(action_plans)
 
     for plan in action_plans:
         if _status(plan) in {"completed", "cancelled", "done"}:
@@ -805,6 +832,13 @@ def _build_context(disaster_event_id, public=False):
             "title": plan.get("title") or "Rencana Aksi",
             "reason": " - ".join(bits) or (plan.get("notes") or ""),
             "priority": plan.get("priority") or "high",
+            "link": {
+                "type": "action_plan",
+                "id": plan.get("name"),
+                "posko": plan.get("posko"),
+                "posko_name": plan.get("posko_name"),
+                "category": plan.get("category") or "",
+            },
         })
 
     for project in recovery_active:
@@ -818,6 +852,10 @@ def _build_context(disaster_event_id, public=False):
                 f"{project.get('status') or 'aktif'}"
             ),
             "priority": project.get("priority") or "normal",
+            "link": {
+                "type": "recovery_project",
+                "id": project.get("name"),
+            },
         })
 
     if not recommendations and open_needs:
@@ -828,6 +866,7 @@ def _build_context(disaster_event_id, public=False):
                 "urutkan berdasarkan urgensi dan bukti."
             ),
             "priority": "high",
+            "link": {"type": "open_needs"},
         })
 
     summary["alert_count"] = len(alerts)

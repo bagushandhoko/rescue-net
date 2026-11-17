@@ -75,9 +75,12 @@
       fmt(t.selesai) + " selesai",
       "Anggaran " + rpShort(t.anggaran_target) + " · terkumpul " + rpShort(t.anggaran_terkumpul)
     ].map(function (x) { return '<span class="chip">' + esc(x) + "</span>"; }).join("") : "";
+    // ?proyek=<id> (tautan dari Analis AI, 2026-11-17) -> baris itu disorot.
+    var want = new URLSearchParams(location.search).get("proyek") || "";
     $("#raBody").innerHTML = PROJECTS.length ? PROJECTS.map(function (p) {
       var u = p.last_update;
-      return "<tr>" +
+      var hit = want && p.name === want;
+      return '<tr data-proyek="' + esc(p.name) + '"' + (hit ? ' class="rn-ra-sorot" style="background:rgba(232,89,12,.12);outline:2px solid #e8590c"' : "") + ">" +
         "<td><b>" + esc(p.title) + "</b>" +
           '<span class="rn-ra-sub">' + esc([STATUS[p.status] || p.status, p.target].filter(Boolean).join(" · ")) + "</span></td>" +
         "<td>" + esc(p.location || "-") + "</td>" +
@@ -88,6 +91,8 @@
         "<td>" + (u ? esc(u.title) + '<span class="rn-ra-sub">' + esc(day(u.at)) + "</span>" : '<span class="rn-muted">belum ada</span>') + "</td>" +
         "</tr>";
     }).join("") : '<tr><td colspan="7">Belum ada rencana rekonstruksi untuk bencana ini. Tambahkan lewat tombol di bawah.</td></tr>';
+    var sorot = want && document.querySelector("#raBody tr.rn-ra-sorot");
+    if (sorot) setTimeout(function () { sorot.scrollIntoView({ behavior: "smooth", block: "center" }); }, 150);
     var obj = $("#objectRecoverySelect");
     if (obj) obj.innerHTML = '<option value="">— tidak terkait proyek —</option>' + PROJECTS.map(function (p) {
       return '<option value="' + esc(p.name) + '">' + esc(p.title) + "</option>";

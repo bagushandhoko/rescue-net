@@ -92,13 +92,109 @@ async function ensureSession() {
   return RN_FRAPPE_SESSION;
 }
 
-function card(title, body, chip = "") {
+/* 2026-11-17 owner: "ai analisis harus bisa diklik ke object yang disarankan
+   atau dikatakan". Peta link {type,id,posko,...} dari server -> halaman RN,
+   plus registri ID/nama obyek supaya teks jawaban AI ikut jadi tautan. */
+const RNAiLinks = (function () {
+  const escH = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const ev = () => String(getEventId() || "").replace(/^disaster_events:/, "");
+  const abs = rel => { try { return new URL(rel, location.href).href; } catch (e) { return rel; } };
+  const q = obj => Object.entries(obj).filter(([, v]) => v !== null && v !== undefined && v !== "")
+    .map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v)).join("&");
+  const KATEGORI = {
+    logistics: "management-distribusi.html", distribution: "management-distribusi.html",
+    transport: "management-distribusi.html", medical: "posko-medis-detail.html",
+    shelter: "shelter-detail.html", kitchen: "dapur-umum.html",
+  };
+
+  // link -> {href, label} (label = teks tombol). null bila tidak ada tujuan.
+  function target(link) {
+    if (!link || typeof link !== "object") return null;
+    const e = ev();
+    switch (link.type) {
+      case "posko":
+        return link.id ? { href: "posko-detail.html?" + q({ id: link.id }), label: "Buka posko" } : null;
+      case "logistic_need":
+        if (link.posko) return { href: "posko-logistik.html?" + q({ id: link.posko, item: link.item, event: e }), label: "Buka kartu stok di " + (link.posko_name || "posko") };
+        return { href: "kebutuhan-publik.html?" + q({ event: e }), label: "Buka daftar kebutuhan" };
+      case "shelter_need":
+        return link.posko ? { href: "shelter-detail.html?" + q({ id: link.posko }), label: "Buka shelter" } : null;
+      case "open_needs":
+        return { href: "kebutuhan-publik.html?" + q({ event: e }), label: "Lihat semua kebutuhan" };
+      case "resource":
+        return link.id ? { href: "penyedia-alat.html?" + q({ id: link.id, event: e }), label: "Buka alat" } : null;
+      case "resource_list":
+        if (link.id) return { href: "penyedia-alat.html?" + q({ id: link.id, event: e }), label: "Buka alat" };
+        return { href: "alat-kerja.html?" + q({ event: e }) + "#penyedia", label: "Lihat daftar alat & penyedia" };
+      case "recovery_project":
+        return { href: "alat-kerja.html?" + q({ event: e, proyek: link.id }) + "#recovery", label: "Buka proyek" };
+      case "recovery_list":
+        return { href: "alat-kerja.html?" + q({ event: e }) + "#recovery", label: "Lihat proyek recovery" };
+      case "action_plan": {
+        if (link.posko) return { href: "posko-detail.html?" + q({ id: link.posko }), label: "Buka " + (link.posko_name || "posko") };
+        const page = KATEGORI[String(link.category || "").toLowerCase()];
+        return page ? { href: page + "?" + q({ event: e }), label: "Buka halaman " + String(link.category).toLowerCase() } : null;
+      }
+      case "page":
+        return link.href ? { href: link.href, label: link.label || "Buka" } : null;
+    }
+    return null;
+  }
+
+  // Registri obyek dari konteks AI: ID & nama -> tautan.
+  let REG = new Map(), RX = null;
+  function add(key, link, minLen) {
+    key = String(key || "").trim();
+    if (!key || key.length < (minLen || 3) || REG.has(key.toLowerCase())) return;
+    const t = target(link);
+    if (t) REG.set(key.toLowerCase(), { href: abs(t.href), label: t.label });
+  }
+  function register(ctx) {
+    REG = new Map();
+    (ctx.poskos || []).forEach(p => {
+      const l = { type: "posko", id: p.name };
+      add(p.name, l); add(p.legacy_id, l); add(p.title || p.posko_name, l, 6);
+    });
+    (ctx.logistic_needs || []).forEach(n => add(n.name, { type: "logistic_need", id: n.name, posko: n.posko, posko_name: n.posko_name, item: n.item_name }));
+    (ctx.shelter_needs || []).forEach(n => add(n.name, { type: "shelter_need", id: n.name, posko: n.posko }));
+    (ctx.resource_profiles || []).forEach(r => { const l = { type: "resource", id: r.name }; add(r.name, l); add(r.resource_name, l, 8); });
+    (ctx.recovery_projects || []).forEach(p => { const l = { type: "recovery_project", id: p.name }; add(p.name, l); add(p.project_name, l, 8); });
+    (ctx.recommendations || []).forEach(r => { if (r && r.link && r.link.id) add(r.link.id, r.link); });
+    const keys = [...REG.keys()].sort((a, b) => b.length - a.length).map(k => escH(k).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    try {
+      RX = keys.length ? new RegExp("(?<![\\w-])(" + keys.join("|") + ")(?![\\w-])", "gi") : null;
+    } catch (e) { RX = null; } // browser lama tanpa lookbehind: teks tetap tampil, tanpa tautan
+  }
+  // Tambah tautan pada HTML yang SUDAH di-escape (tanpa tag).
+  function linkify(escaped) {
+    let out = String(escaped || "");
+    if (RX) {
+      out = out.replace(RX, m => {
+        const raw = m.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+        const hit = REG.get(raw.toLowerCase());
+        return hit ? `<a class="rn-ai-ref" href="${escH(hit.href)}" title="${escH(hit.label)}">${m}</a>` : m;
+      });
+    }
+    // ID posko/alat yang belum terdaftar tetap bisa diklik.
+    return out.replace(/(^|[^\w>"=\/-])((?:SIM-[A-Z0-9]+-POSKO-[A-Z0-9-]+)|(?:rn-posko-[a-f0-9]{8,})|(?:rn-resource-[a-f0-9]{8,}))(?![\w-])/g, (all, pre, id) => {
+      const t = target(id.startsWith("rn-resource-") ? { type: "resource", id } : { type: "posko", id });
+      return pre + `<a class="rn-ai-ref" href="${escH(abs(t.href))}" title="${escH(t.label)}">${id}</a>`;
+    });
+  }
+  return { target, register, linkify, abs };
+})();
+window.RNAiLinks = RNAiLinks;
+
+function card(title, body, chip = "", link = null) {
+  const t = RNAiLinks.target(link);
+  const href = t ? RNUI.esc(t.href) : "";
   return `
-    <article class="event-card">
+    <article class="event-card${t ? " rn-ai-klik" : ""}">
       <div class="event-main">
         <div>
-          <h4>${title}</h4>
+          <h4>${t ? `<a class="rn-ai-judul" href="${href}">${title}</a>` : title}</h4>
           <p>${body}</p>
+          ${t ? `<a class="rn-ai-buka" href="${href}">${RNUI.esc(t.label)} →</a>` : ""}
         </div>
         <div class="chips">${chip ? `<span class="chip warning">${chip}</span>` : ""}</div>
       </div>
@@ -119,39 +215,42 @@ function buildOperationalRecommendations(ctx, resources, recoveryProjects) {
   const recoveryActive = recoveryProjects.filter(p => !["completed", "cancelled"].includes(String(p.status || "").toLowerCase()));
 
   if (Number(s.open_need_count ?? s.open_needs_count ?? 0) > 0 && transportAssets.length > 0) {
-    recommendations.push(`Gunakan ${transportAssets.length} aset transport terdaftar untuk prioritas open logistic needs. Cocokkan kapasitas dan PIC sebelum assignment.`);
+    recommendations.push({ text: `Gunakan ${transportAssets.length} aset transport terdaftar untuk prioritas open logistic needs. Cocokkan kapasitas dan PIC sebelum assignment.`, link: { type: "resource_list" } });
   }
 
   if (Number(s.medical_case_count || 0) > 0 && medicalAssets.length > 0) {
-    recommendations.push(`Ada ${s.medical_case_count} kasus medis dan ${medicalAssets.length} resource medis terdata. Prioritaskan ketersediaan stok medis dan rujukan pasien berat.`);
+    recommendations.push({ text: `Ada ${s.medical_case_count} kasus medis dan ${medicalAssets.length} resource medis terdata. Prioritaskan ketersediaan stok medis dan rujukan pasien berat.`, link: { type: "page", href: "posko-medis-detail.html?event=" + encodeURIComponent(getEventId()), label: "Buka Posko Medis" } });
   }
 
   if (unavailableResources.length > 0) {
-    recommendations.push(`${unavailableResources.length} resource tidak available. Command center perlu cek status ketersediaan sebelum membuat rencana distribusi.`);
+    recommendations.push({ text: `${unavailableResources.length} resource tidak available. Command center perlu cek status ketersediaan sebelum membuat rencana distribusi.`, link: { type: "resource_list", id: unavailableResources.length === 1 ? unavailableResources[0].name : null } });
   }
 
   if (recoveryActive.length > 0) {
-    recommendations.push(`${recoveryActive.length} recovery/reconstruction project aktif. Sinkronkan kebutuhan alat kerja, relawan teknis, evidence, dan verifikasi progress.`);
+    recommendations.push({ text: `${recoveryActive.length} recovery/reconstruction project aktif. Sinkronkan kebutuhan alat kerja, relawan teknis, evidence, dan verifikasi progress.`, link: recoveryActive.length === 1 ? { type: "recovery_project", id: recoveryActive[0].name } : { type: "recovery_list" } });
   }
 
   if (Number(s.shelter_need_count || 0) > 0 && Number(s.shelter_occupancy_count || 0) > 0) {
-    recommendations.push(`Shelter memiliki kebutuhan terbuka. Bandingkan occupancy, kapasitas, air, sanitasi, dan distribusi bantuan sebelum perpindahan pengungsi.`);
+    recommendations.push({ text: `Shelter memiliki kebutuhan terbuka. Bandingkan occupancy, kapasitas, air, sanitasi, dan distribusi bantuan sebelum perpindahan pengungsi.`, link: { type: "page", href: "shelter-detail.html?event=" + encodeURIComponent(getEventId()), label: "Buka Shelter" } });
   }
 
   return recommendations;
 }
 
 function renderResourceRecoverySources(resources, recoveryProjects) {
+  const e = v => RNUI.esc(safe(v));
   const resourceCards = resources.slice(0, 8).map(r => card(
-    safe(r.resource_name),
-    `Type: ${safe(r.resource_type)}<br>Owner: ${safe(r.owner_type)} / ${safe(r.owner_id)}<br>Status: ${safe(r.availability_status || r.status)}<br>Capacity: ${safe(r.capacity_description)}`,
-    "resource"
+    e(r.resource_name),
+    `Type: ${e(r.resource_type)}<br>Owner: ${e(r.owner_type)} / ${e(r.owner_id)}<br>Status: ${e(r.availability_status || r.status)}<br>Capacity: ${e(r.capacity_description)}`,
+    "resource",
+    { type: "resource", id: r.name }
   ));
 
   const recoveryCards = recoveryProjects.slice(0, 8).map(p => card(
-    safe(p.project_name),
-    `Type: ${safe(p.project_type)}<br>Location: ${safe(p.location)}<br>Progress: ${safe(p.progress_percent)}%<br>Status: ${safe(p.status)}`,
-    "recovery"
+    e(p.project_name),
+    `Type: ${e(p.project_type)}<br>Location: ${e(p.location)}<br>Progress: ${e(p.progress_percent)}%<br>Status: ${e(p.status)}`,
+    "recovery",
+    { type: "recovery_project", id: p.name }
   ));
 
   return [...resourceCards, ...recoveryCards];
@@ -173,6 +272,7 @@ async function loadAiContext() {
   const resources = ctx.resource_profiles || [];
   const recoveryProjects = ctx.recovery_projects || [];
   const s = ctx.summary || {};
+  RNAiLinks.register(ctx);
   const operationalRecommendations = buildOperationalRecommendations(ctx, resources || [], recoveryProjects || []);
   const combinedRecommendations = [
     ...(ctx.recommendations || []),
@@ -193,9 +293,10 @@ async function loadAiContext() {
 
   document.getElementById("aiAlerts").innerHTML = (ctx.alerts || []).length
     ? ctx.alerts.slice(0, 10).map(a => card(
-        safe(a.type),
-        safe(a.message),
-        safe(a.level || "alert")
+        RNUI.esc(safe(a.type)),
+        RNAiLinks.linkify(RNUI.esc(safe(a.message))),
+        RNUI.esc(safe(a.level || "alert")),
+        a.link
       )).join("")
     : card("No alerts", "Belum ada alert.", "ok");
 
@@ -208,15 +309,16 @@ async function loadAiContext() {
           const judul = r.title || r.message || `Rekomendasi ${i + 1}`;
           const alasan = r.reason || r.detail || r.description || "";
           const chip = r.priority ? `${sumber} · ${r.priority}` : sumber;
-          return card(`${i + 1}. ${esc(judul)}`, esc(alasan), esc(chip));
+          if (r.text) return card(`${i + 1}. Saran operasional`, esc(r.text), sumber, r.link);
+          return card(`${i + 1}. ${esc(judul)}`, esc(alasan), esc(chip), r.link);
         }
         return card(`${i + 1}. Saran operasional`, esc(r), sumber);
       }).join("")
     : card("No recommendation", "Belum ada rekomendasi.", "empty");
 
   const sourceCards = (ctx.sources || []).slice(0, 20).map(src => card(
-        safe(src.source_table),
-        `ID: ${safe(src.source_id)}`,
+        RNUI.esc(safe(src.source_table)),
+        `ID: ${RNAiLinks.linkify(RNUI.esc(safe(src.source_id)))}`,
         "source"
       ));
   const resourceRecoveryCards = renderResourceRecoverySources(resources || [], recoveryProjects || []);
@@ -269,7 +371,9 @@ function setupAiAsk() {
         true
       );
 
-      setText("aiAnswer", res.answer || res.message || JSON.stringify(res, null, 2));
+      const jawab = String(res.answer || res.message || JSON.stringify(res, null, 2));
+      const box = document.getElementById("aiAnswer");
+      if (box) { box.style.whiteSpace = "pre-wrap"; box.innerHTML = RNAiLinks.linkify(RNUI.esc(jawab)); }
     } catch (err) {
       setText("aiAnswer", err.message);
     }

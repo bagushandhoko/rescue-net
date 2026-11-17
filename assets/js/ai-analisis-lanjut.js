@@ -18,7 +18,9 @@
   // Markdown sederhana -> HTML aman (judul, daftar, tabel, tebal, kode baris).
   function md(text) {
     const lines = String(text || "").split(/\r?\n/); let out = "", list = null, table = [];
-    const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
+    // 2026-11-17: ID/nama posko, kebutuhan, alat, proyek yang disebut AI -> tautan.
+    const link = h => (window.RNAiLinks ? window.RNAiLinks.linkify(h) : h);
+    const inline = s => link(esc(s)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
     const flushTable = () => {
       if (!table.length) return;
       const rows = table.filter(r => !/^\s*\|?\s*:?-{2,}/.test(r)).map(r => r.replace(/^\s*\||\|\s*$/g, "").split("|"));

@@ -26,3 +26,4 @@ from rescue_net.ai.analysis import (  # noqa: E402,F401
     triase_laporan, prakiraan_stok, dampak_gempa, cek_kejanggalan,
     daftar_laporan_ai, baca_laporan_ai,
 )
+from rescue_net.ai.tautan import tautan_objek  # noqa: E402,F401  (owner 17 Nov: hasil AI bisa diklik ke objek)

@@ -208,7 +208,11 @@ async function loadAiContext() {
           const judul = r.title || r.message || `Rekomendasi ${i + 1}`;
           const alasan = r.reason || r.detail || r.description || "";
           const chip = r.priority ? `${sumber} · ${r.priority}` : sumber;
-          return card(`${i + 1}. ${esc(judul)}`, esc(alasan), esc(chip));
+          // Owner 17 Nov: rekomendasi bisa diklik ke objeknya (url dari server, relatif ke pages/).
+          const judulHtml = r.url && /^[a-z0-9-]+\.html\?/.test(r.url)
+            ? `<a class="rn-ai-obj" href="${esc(r.url)}" target="_blank" rel="noopener" title="Buka halaman">${esc(judul)} ↗</a>`
+            : esc(judul);
+          return card(`${i + 1}. ${judulHtml}`, esc(alasan), esc(chip));
         }
         return card(`${i + 1}. Saran operasional`, esc(r), sumber);
       }).join("")
@@ -270,6 +274,7 @@ function setupAiAsk() {
       );
 
       setText("aiAnswer", res.answer || res.message || JSON.stringify(res, null, 2));
+      if (window.RNAiTautan) window.RNAiTautan.tautkan(document.getElementById("aiAnswer"), getEventId());
     } catch (err) {
       setText("aiAnswer", err.message);
     }

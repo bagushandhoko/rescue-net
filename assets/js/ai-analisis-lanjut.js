@@ -57,6 +57,7 @@
       <span class="aia-act"><button type="button" class="btn" data-aia="unduh">Unduh .md</button> <button type="button" class="btn" data-aia="cetak">Cetak</button></span></div>
       <div class="aia-isi">${md(res.content)}</div><p class="aia-note">Hasil AI adalah saran — periksa kembali sebelum bertindak.</p>`;
     box.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (window.RNAiTautan) window.RNAiTautan.tautkan(box.querySelector(".aia-isi"), getEventId());
   }
 
   async function jalankan(f, form) {

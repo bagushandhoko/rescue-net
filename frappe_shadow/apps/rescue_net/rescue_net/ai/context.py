@@ -105,6 +105,17 @@ def _ai_scope_poskos(refresh=False):
     return scope
 
 
+def _url_rek(doctype, name, event):
+    """Owner 17 Nov: rekomendasi AI bisa diklik ke objeknya."""
+    if not name:
+        return None
+    try:
+        from rescue_net.ai.tautan import url_for
+        return url_for(doctype, name, event)
+    except Exception:
+        return None
+
+
 def _rows(
     doctype,
     disaster_event_id,
@@ -767,6 +778,7 @@ def _build_context(disaster_event_id, public=False):
                 )
             ),
             "priority": row.get("priority") or "urgent",
+            "url": _url_rek("RN Logistic Need", row.get("name"), resolved_event),
         })
 
     action_plans = _rows(
@@ -805,6 +817,7 @@ def _build_context(disaster_event_id, public=False):
             "title": plan.get("title") or "Rencana Aksi",
             "reason": " - ".join(bits) or (plan.get("notes") or ""),
             "priority": plan.get("priority") or "high",
+            "url": _url_rek("RN Action Plan", plan.get("name"), resolved_event),
         })
 
     for project in recovery_active:
@@ -818,6 +831,7 @@ def _build_context(disaster_event_id, public=False):
                 f"{project.get('status') or 'aktif'}"
             ),
             "priority": project.get("priority") or "normal",
+            "url": _url_rek("RN Recovery Project", project.get("name"), resolved_event),
         })
 
     if not recommendations and open_needs:

@@ -7,7 +7,7 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v7"; // v7 2026-11-02: purge stale menu scripts on phones
+const CACHE = "rescue-net-web-v8"; // v8 2026-11-17: 21 alamat aset pernah berisi >1 versi tanpa naik ?v= -> buang semua cache lama di HP // v7 2026-11-02: purge stale menu scripts on phones
 const PRECACHE = [
  "/rescue-net/index.html",
  "/rescue-net/pages/laporan-masyarakat.html",

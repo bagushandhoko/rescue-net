@@ -1,0 +1,128 @@
+{
+ "doctype": "DocType",
+ "name": "RN Equipment Transport Booking",
+ "module": "RN Resources",
+ "custom": 0,
+ "is_submittable": 0,
+ "track_changes": 1,
+ "engine": "InnoDB",
+ "description": "Booking angkutan alat kerja/alat berat (mobilisasi / demobilisasi) ke armada posko distribusi yang bisa mengangkut alat berat (owner 2026-11-14).",
+ "modified": "2026-11-14 02:00:00.000000",
+ "fields": [
+  {
+   "fieldname": "trip",
+   "fieldtype": "Select",
+   "label": "Arah",
+   "options": "mob\ndemob",
+   "reqd": 1,
+   "in_list_view": 1,
+   "description": "mob = alat dikirim ke lokasi kerja; demob = alat ditarik pulang"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "requested\nconfirmed\nrejected\ncancelled\ndone",
+   "default": "requested",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "resource_profile",
+   "fieldtype": "Link",
+   "label": "Alat",
+   "options": "RN Resource Profile",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "transport_space",
+   "fieldtype": "Link",
+   "label": "Armada",
+   "options": "RN Transport Space",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "disaster_event",
+   "fieldtype": "Link",
+   "label": "Bencana",
+   "options": "RN Disaster Event"
+  },
+  {
+   "fieldname": "requested_by",
+   "fieldtype": "Link",
+   "label": "Diminta oleh",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "trip_date",
+   "fieldtype": "Date",
+   "label": "Tanggal angkut"
+  },
+  {
+   "fieldname": "weight_ton",
+   "fieldtype": "Float",
+   "label": "Berat alat (ton)"
+  },
+  {
+   "fieldname": "pickup_location",
+   "fieldtype": "Data",
+   "label": "Titik jemput alat"
+  },
+  {
+   "fieldname": "destination",
+   "fieldtype": "Data",
+   "label": "Tujuan (lokasi kerja / pulang)"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Catatan untuk pemilik armada"
+  },
+  {
+   "fieldname": "decision_note",
+   "fieldtype": "Small Text",
+   "label": "Catatan keputusan"
+  },
+  {
+   "fieldname": "decided_by",
+   "fieldtype": "Link",
+   "label": "Diputuskan oleh",
+   "options": "RN User Account"
+  },
+  {
+   "fieldname": "decided_at",
+   "fieldtype": "Datetime",
+   "label": "Waktu keputusan"
+  }
+ ],
+ "field_order": [
+  "trip",
+  "status",
+  "resource_profile",
+  "transport_space",
+  "disaster_event",
+  "requested_by",
+  "trip_date",
+  "weight_ton",
+  "pickup_location",
+  "destination",
+  "note",
+  "decision_note",
+  "decided_by",
+  "decided_at"
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

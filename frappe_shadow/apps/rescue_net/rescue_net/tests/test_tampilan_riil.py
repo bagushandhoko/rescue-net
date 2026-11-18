@@ -1,7 +1,7 @@
 """Tombol tampilan di Home (owner 2026-11-13): "Lihat Simulasi" / "Riil Data Bencana", pilihan PER PENGUNJUNG.
 
-- tanpa cookie -> simulasi tampil (bawaan);
-- cookie rn_tampilan=riil -> data simulasi disembunyikan hanya untuk pengunjung itu (penyaring sama dgn Mode Operasional);
+- 2026-11-18: tanpa cookie -> RIIL (bawaan, data simulasi disembunyikan);
+- cookie rn_tampilan=simulasi -> data simulasi tampil hanya untuk pengunjung itu;
 - akun demo TIDAK diblokir oleh pilihan pengunjung (hanya saklar super admin);
 - cache tamu memisahkan salinan riil dan simulasi.
 """
@@ -43,8 +43,14 @@ class _Cookie:
 
 
 class TestViewerChoice(OperationalBase):
+    def test_default_is_riil(self):
+        for v in (None, "riil", "apa-saja"):
+            with _Cookie(v):
+                self.assertTrue(drill.viewer_wants_real(), v)
+                self.assertTrue(drill.simulation_hidden(), v)
+
     def test_default_and_simulasi_show_simulation(self):
-        for v in (None, "simulasi", "apa-saja"):
+        for v in ("simulasi", "SIMULASI"):
             with _Cookie(v):
                 self.assertFalse(drill.viewer_wants_real(), v)
                 self.assertFalse(drill.simulation_hidden(), v)
@@ -61,7 +67,7 @@ class TestViewerChoice(OperationalBase):
                 self.assertNotIn(SENT, text, key)
                 self.assertNotIn(LABEL_SENT, text, key)
             self.assertIn(self.real.event.title, blobs["disasters"])
-        with _Cookie(None):  # pengunjung lain tetap melihat simulasi
+        with _Cookie("simulasi"):  # pengunjung lain yang memilih simulasi tetap melihatnya
             self.assertIn(SENT, self.public_blobs()["disasters"])
 
     def test_riil_choice_does_not_block_demo_accounts(self):
@@ -84,11 +90,11 @@ class TestViewerChoice(OperationalBase):
         old_flag, frappe.flags.in_test = frappe.flags.in_test, False
         try:
             with mock.patch.object(frappe, "cache", return_value=fake), as_guest():
-                with _Cookie(None):
+                with _Cookie("simulasi"):
                     a = _feed()
-                with _Cookie("riil"):
-                    b = _feed()
                 with _Cookie(None):
+                    b = _feed()
+                with _Cookie("simulasi"):
                     c = _feed()
         finally:
             frappe.flags.in_test = old_flag
@@ -147,10 +153,10 @@ class TestDemoLoginGoesSimulasi(OperationalBase):
         try:
             frappe.local.cookie_manager = CookieManager()
             drill.block_demo_login(SimpleNamespace(user="ld1.demo@rescue-net.local"))
-            self.assertIn(drill.VIEW_COOKIE, frappe.local.cookie_manager.to_delete)
+            self.assertEqual(frappe.local.cookie_manager.cookies.get(drill.VIEW_COOKIE, {}).get("value"), drill.VIEW_SIM)
             frappe.local.cookie_manager = CookieManager()
             drill.block_demo_login(SimpleNamespace(user="warga.nyata@gmail.com"))
-            self.assertNotIn(drill.VIEW_COOKIE, frappe.local.cookie_manager.to_delete)
+            self.assertNotIn(drill.VIEW_COOKIE, frappe.local.cookie_manager.cookies)
         finally:
             frappe.local.cookie_manager = old
 

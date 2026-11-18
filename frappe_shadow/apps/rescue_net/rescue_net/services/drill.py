@@ -77,31 +77,36 @@ def block_demo_login(login_manager=None):
     if is_demo_user(user):
         # owner 2026-11-13: masuk dengan akun demo = ekosistem demo -> tampilan Simulasi, dan tetap Simulasi setelah
         # keluar sampai pengunjung sendiri memilih "Riil Data Bencana" di Home.
+        # 2026-11-18: bawaan kini Riil -> akun demo diberi pilihan "simulasi" secara eksplisit.
         cm = getattr(frappe.local, "cookie_manager", None)
         if cm is not None:
             try:
-                cm.delete_cookie(VIEW_COOKIE)
+                cm.set_cookie(VIEW_COOKIE, VIEW_SIM, max_age=31536000, httponly=False)
             except Exception:
                 pass
 
 
 # Pilihan tampilan per pengunjung (owner 2026-11-13: tombol "Lihat Simulasi" / "Riil Data Bencana" di Home).
-# Cookie rn_tampilan=riil -> data simulasi disembunyikan HANYA untuk pengunjung itu. Tanpa cookie = simulasi tampil.
+# 2026-11-18: bawaan RIIL. Cookie rn_tampilan=simulasi -> data simulasi tampil HANYA untuk pengunjung itu.
 # Saklar Mode Operasional (super admin) tetap saklar utama untuk semua orang + blokir akun demo.
 VIEW_COOKIE = "rn_tampilan"
 VIEW_REAL = "riil"
+VIEW_SIM = "simulasi"
 
 
 def viewer_wants_real():
+    """Owner 2026-11-18: BAWAAN RIIL (Rescue-Net datang kosong sampai ada bencana riil). Simulasi hanya bila
+    pengunjung memilih "simulasi" (cookie rn_tampilan=simulasi, atau parameter ?rn_tampilan=simulasi untuk
+    panggilan publik tanpa cookie). Parameter eksplisit menang atas cookie; juga memisahkan kunci cache nginx."""
     try:
         req = getattr(frappe.local, "request", None)
         if not req:
             return False
-        if str(req.cookies.get(VIEW_COOKIE) or "").strip().lower() == VIEW_REAL:
-            return True
-        # 2026-11-18: panggilan publik tanpa cookie (credentials "omit", agar bisa di-cache) mengirim pilihan
-        # lewat parameter ?rn_tampilan=riil; parameter ini juga memisahkan kunci cache nginx ($args).
-        return str(req.args.get(VIEW_COOKIE) or "").strip().lower() == VIEW_REAL
+        args = getattr(req, "args", None) or {}
+        p = str(args.get(VIEW_COOKIE) or "").strip().lower()
+        if p in (VIEW_REAL, VIEW_SIM):
+            return p == VIEW_REAL
+        return str(req.cookies.get(VIEW_COOKIE) or "").strip().lower() != VIEW_SIM
     except Exception:
         return False
 

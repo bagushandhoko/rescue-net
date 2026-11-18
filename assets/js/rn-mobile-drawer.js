@@ -1,3 +1,4 @@
+if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = document.createElement("script"); sMt.src = "/rescue-net/assets/js/rn-mode-toggle.js?v=mode-20261118"; document.head.appendChild(sMt); }  // 2026-11-18 tombol simulasi/riil
 (function () {
   "use strict";
 
@@ -184,7 +185,7 @@
     // filled at once from the last list this phone saw (also offline) ...
     try { const cached = JSON.parse(localStorage.getItem(CACHE) || "[]"); if (cached.length) fill(cached); } catch (e) {}
     // ... and refreshed from the server
-    fetch(location.origin + "/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters" + (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie) ? "?rn_tampilan=riil" : ""), { credentials: "omit" })
+    fetch(location.origin + "/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters" + (/(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie) ? "?rn_tampilan=simulasi" : ""), { credentials: "omit" })
       .then(r => r.json())
       .then(payload => {
         const rows = ((payload && payload.message) || []).map(r => ({

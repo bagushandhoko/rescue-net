@@ -472,7 +472,7 @@ async function call(
   );
 
   // 2026-11-18: panggilan ini tanpa cookie -> kirim pilihan "Riil Data Bencana" lewat parameter
-  if (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie)) url.searchParams.set("rn_tampilan", "riil");
+  if (/(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie)) url.searchParams.set("rn_tampilan", "simulasi");  // bawaan riil (server), simulasi dikirim eksplisit
 
   const res =
     await fetch(
@@ -2462,7 +2462,7 @@ async function load() {
       );
 
       // 2026-11-18 owner: tampilan "Riil Data Bencana" tanpa bencana riil -> tampil kosong yang jelas, bukan "Memuat…"
-      if (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie)) {
+      if (!/(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie)) {
         document.querySelectorAll("main *").forEach(el => {
           if (el.children.length === 0 && /^Memuat/.test((el.textContent || "").trim())) {
             el.textContent = el.closest("h1, h2") ? "Belum ada bencana riil" : "Belum ada data bencana riil.";

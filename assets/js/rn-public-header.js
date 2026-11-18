@@ -4,6 +4,7 @@
 
   // Dua bahasa ID/EN (rn-i18n.js): dimuat sekali untuk semua halaman yang memakai header publik.
   if (!document.querySelector('script[src*="rn-i18n.js"]')) { const s18 = document.createElement("script"); s18.src = `${prefix}assets/js/rn-i18n.js?v=ps-20261109`; document.head.appendChild(s18); }
+  if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = document.createElement("script"); sMt.src = "/rescue-net/assets/js/rn-mode-toggle.js?v=mode-20261118"; document.head.appendChild(sMt); }  // 2026-11-18 tombol simulasi/riil
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
   const RN_EVENT_DEFAULT = "event-sim-001";
@@ -22,7 +23,7 @@
     const url = new URL(location.href);
     const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || "");
     if (fromUrl) return fromUrl;
-    return stripEventPrefix(readStoredEvent()) || (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie) ? "" : "event-sim-001");
+    return stripEventPrefix(readStoredEvent()) || (/(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie) ? "event-sim-001" : "");
   }
   function ensureEventInUrl(eventId) {
     if (!eventId) return;
@@ -95,7 +96,7 @@
   function prettifyEventId(id) { return String(id || "").replace(/^event[-_]/i, "").replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase()).trim() || id; }
   function readStoredEvent() { try { return localStorage.getItem(RN_EVENT_STORE_KEY) || ""; } catch (e) { return ""; } }
   function writeStoredEvent(v) { try { localStorage.setItem(RN_EVENT_STORE_KEY, v); } catch (e) {} }
-  function currentEventId() { const url = new URL(location.href); const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || ""); if (fromUrl) return fromUrl; return stripEventPrefix(readStoredEvent()) || (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie) ? "" : "event-sim-001"); }
+  function currentEventId() { const url = new URL(location.href); const fromUrl = stripEventPrefix(url.searchParams.get("event") || url.searchParams.get("disaster_event_id") || ""); if (fromUrl) return fromUrl; return stripEventPrefix(readStoredEvent()) || (/(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie) ? "event-sim-001" : ""); }
   function ensureEventInUrl(eventId) { if (!eventId) return; const url = new URL(location.href); if (!url.searchParams.get("event")) { url.searchParams.set("event", eventId); try { history.replaceState(null, "", url.toString()); } catch (e) {} } }
   function goToEvent(eventId) { writeStoredEvent(eventId); const url = new URL(location.href); url.searchParams.set("event", eventId); url.searchParams.delete("disaster_event_id"); if (document.body && document.body.getAttribute("data-rn-posko-kind")) { url.searchParams.delete("id"); url.searchParams.delete("posko"); } location.href = url.toString(); }
   window.rnActiveEvent = currentEventId();
@@ -104,7 +105,7 @@
   // membuka bencana simulasi (default lama event-sim-001, tautan/localStorage lama) dipindah ke bencana aktif
   // pertama. Status disimpan 60 dtk di sessionStorage agar tidak memanggil server tiap halaman.
   // owner 2026-11-13: pengunjung yang memilih "Riil Data Bencana" (cookie rn_tampilan=riil) diperlakukan sama
-  function viewerRiil() { return /(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie); }
+  function viewerRiil() { return !/(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie); }  // 2026-11-18: bawaan riil
   async function operationalMode() {
     if (viewerRiil()) return true;
     const KEY = "rn_opmode";

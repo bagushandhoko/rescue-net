@@ -1,20 +1,19 @@
 /* Tampilan data (owner 2026-11-13): "Lihat Simulasi" / "Riil Data Bencana", pilihan per pengunjung.
  * Disimpan di cookie rn_tampilan (dibaca server: services/drill.simulation_hidden + services/sim_scrub).
- * Tanpa cookie = simulasi tampil (bawaan). Pilihan riil berlaku 1 tahun, diperpanjang tiap membuka Home.
+ * 2026-11-18: tanpa cookie = RIIL (bawaan); cookie rn_tampilan=simulasi = data latihan tampil. Pilihan riil berlaku 1 tahun, diperpanjang tiap membuka Home.
  * Home: bilah #rnTampilanData; klik -> simpan lalu ke halaman Bencana Aktif. Registrasi: radio name="rn_tampilan".
  * Saklar Mode Operasional super admin tetap saklar utama. */
 (function () {
   var COOKIE = 'rn_tampilan';
   function current() {
     var m = document.cookie.match(/(?:^|;\s*)rn_tampilan=([^;]*)/);
-    return m && decodeURIComponent(m[1]) === 'riil' ? 'riil' : 'simulasi';
+    return m && decodeURIComponent(m[1]) === 'simulasi' ? 'simulasi' : 'riil';   // 2026-11-18: bawaan riil
   }
   function save(v) {
     var sec = location.protocol === 'https:' ? '; Secure' : '';
     try { sessionStorage.removeItem('rn_opmode'); } catch (e) {}
     if (v === 'riil') { try { localStorage.removeItem('rn_active_event'); localStorage.removeItem('rn-active-event'); } catch (e) {} }
-    if (v === 'riil') document.cookie = COOKIE + '=riil; path=/; max-age=31536000; SameSite=Lax' + sec;
-    else document.cookie = COOKIE + '=; path=/; max-age=0; SameSite=Lax' + sec;
+    document.cookie = COOKIE + '=' + (v === 'simulasi' ? 'simulasi' : 'riil') + '; path=/; max-age=31536000; SameSite=Lax' + sec;
   }
   window.RNTampilan = { current: current, save: save };
 

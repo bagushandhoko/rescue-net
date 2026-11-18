@@ -43,14 +43,19 @@
       ? "Sedang menampilkan data SIMULASI (latihan). Klik untuk kembali ke data riil."
       : "Sedang menampilkan data riil. Klik untuk melihat data simulasi (latihan).";
     b.setAttribute("aria-label", b.title);
+    // HP/tablet: tombol menu (≡) ada di sudut kiri atas -> pita turun tepat di bawah header agar menu tetap bisa ditekan
+    var hp = window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
+    // owner 2026-11-18: lebih besar, pita diagonal di sudut KIRI ATAS (boleh menutupi logo), transparan tapi terbaca
     b.style.cssText = [
-      "position:fixed", "right:10px", "bottom:10px", "z-index:9998",
-      "font-style:italic", "font-size:12px", "line-height:1.2", "font-family:inherit",
-      "padding:3px 9px", "border-radius:999px", "cursor:pointer", "opacity:.88",
-      "border:1px solid " + (sim ? "#e8a06a" : "rgba(0,0,0,.18)"),
-      "background:" + (sim ? "#fff3e8" : "rgba(255,255,255,.9)"),
-      "color:" + (sim ? "#b4532a" : "#5a4636"),
-      "box-shadow:0 1px 4px rgba(0,0,0,.12)"
+      "position:fixed", "top:" + (hp ? "92px" : "22px"), "left:" + (hp ? "-34px" : "-38px"), "width:" + (hp ? "112px" : "150px"), "z-index:10050",
+      "transform:rotate(-45deg)", "transform-origin:center",
+      "font-style:italic", "font-weight:700", "font-size:14px", "line-height:1", "font-family:inherit",
+      "letter-spacing:.5px", "text-align:center", "padding:6px 0", "border:0", "cursor:pointer",
+      "background:" + (sim ? "rgba(232,104,40,.62)" : "rgba(255,255,255,.62)"),
+      "color:" + (sim ? "#fff" : "#7a3a1a"),
+      "text-shadow:" + (sim ? "0 1px 2px rgba(0,0,0,.45)" : "0 0 3px #fff,0 0 2px #fff"),
+      "box-shadow:0 1px 6px rgba(0,0,0,.18)",
+      "backdrop-filter:blur(2px)", "-webkit-backdrop-filter:blur(2px)"
     ].join(";");
     b.addEventListener("click", function () {
       var keSim = !isSim();

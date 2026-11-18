@@ -676,6 +676,7 @@
           </ul>
           <h4 id="pembaruan-1711">Pembaruan 17 November</h4>
           <ul>
+            <li>Bilah pilihan <b>Tampilan data</b> di halaman Home dihapus; pilihan kini lewat tombol kecil di pojok setiap halaman.</li>
             <li><b>Tombol kecil <i>simulasi</i> / <i>riil</i></b> di pojok kanan bawah setiap halaman. Bawaan kini <b>Riil</b> (Rescue-Net kosong sampai ada bencana riil). Klik <i>simulasi</i> untuk melihat data latihan di halaman yang sama; klik <i>riil</i> untuk kembali. Bila kembali ke Riil dari halaman detail posko simulasi, Anda dibawa ke halaman Organisasi &amp; Posko. Akun demo otomatis memakai tampilan Simulasi.</li>
             <li><b>Tampilan Riil Data Bencana</b>: semua halaman (termasuk Control Centre, posko, peta) kini kosong bila yang dibuka adalah bencana/posko simulasi; hanya data bencana riil yang tampil. Bencana simulasi ditentukan dari database (judul/label simulasi dan daftar yang diatur super admin).</li>
             <li>Halaman <b>Install App</b> kini memakai menu header yang sama dengan halaman lain (Beranda, Bencana Aktif, Laporan, Kirim Bantuan, Login, dll.).</li>
@@ -720,16 +721,16 @@
             <li><b>Posko Relawan</b> untuk publik: setiap relawan menunjukkan <b>bertugas di</b> posko mana, <b>menginap di</b> shelter mana, dan <b>ikut armada</b> apa (hanya booking yang sudah disetujui); panel <b>Kebutuhan &amp; Ketersediaan Relawan</b> membandingkan jumlah relawan yang dibutuhkan dengan yang tersedia per bidang.</li>
             <li><b>Posko Distribusi</b>: saat menambah/mengubah alat transport, centang <b>Bisa mengangkut alat berat</b>, lalu isi muatan maksimal (ton), jenis bak/dek (lowbed, selfloader, flatbed, tongkang), arah (mob = ke lokasi, demob = pulang), dan jadwal demob. Booking mob/demob oleh pemilik alat menyusul.</li>
           </ul>
-          <h4 id="tampilan-data">Tampilan data: Simulasi atau Riil (13 November)</h4>
-          <p>Di bagian atas halaman Home, terdapat dua tombol pilihan tampilan:</p>
+          <h4 id="tampilan-data">Tampilan data: Simulasi atau Riil (diperbarui 18 November)</h4>
+          <p>Di <b>pojok kanan bawah setiap halaman</b> ada tulisan kecil miring:</p>
           <ul>
-            <li>Lihat Simulasi (bawaan): Menampilkan juga data latihan atau contoh yang bertanda SIMULASI untuk belajar memakai aplikasi.</li>
-            <li>Riil Data Bencana: Hanya menampilkan bencana nyata; data simulasi atau latihan disembunyikan di semua halaman.</li>
+            <li><i>simulasi</i>: tampil saat Anda sedang melihat data <b>Riil</b> (bawaan). Klik untuk melihat data latihan/contoh bertanda SIMULASI di halaman yang sama.</li>
+            <li><i>riil</i> (oranye): tampil saat Anda sedang melihat data <b>Simulasi</b>. Klik untuk kembali ke data bencana nyata di halaman yang sama.</li>
           </ul>
-          <p>Setelah memilih, pengunjung langsung dibawa ke halaman Bencana Aktif. Pilihan ini bisa diganti kapan saja dari Home.</p>
-          <p>Pilihan tersimpan di browser atau HP masing-masing selama 1 tahun dan diperpanjang setiap membuka Home, sehingga tidak mempengaruhi pengunjung lain. Pengguna juga bisa memilih tampilan awal saat registrasi akun.</p>
-          <p>Data simulasi tidak dihapus, hanya disembunyikan. Namun, jika Super Admin mengaktifkan saklar Mode Operasional di Setting, simulasi akan disembunyikan untuk semua orang dan tombol di Home terkunci di Riil.</p>
-          <p>Halaman yang membutuhkan bencana (mis. Control Centre) menampilkan keterangan "belum ada bencana riil" bila Anda memilih Riil dan belum ada bencana nyata. <b>Masuk dengan akun demo</b> otomatis memindahkan tampilan ke <b>Simulasi</b>, dan tetap Simulasi setelah keluar sampai Anda sendiri memilih Riil Data Bencana di Home.</p>
+          <p><b>Bawaan adalah Riil</b>: Rescue-Net tampil kosong sampai ada bencana nyata. Halaman yang membutuhkan bencana (mis. Control Centre) menampilkan keterangan "belum ada bencana riil".</p>
+          <p>Bila Anda kembali ke Riil saat membuka <b>detail posko simulasi</b> (mis. posko TNI simulasi), Anda dibawa ke halaman <a href="organisasi-posko.html">Organisasi &amp; Posko</a>, karena posko itu tidak ada di data riil.</p>
+          <p>Pilihan tersimpan di browser/HP masing-masing selama 1 tahun dan tidak mempengaruhi pengunjung lain. Saat registrasi akun Anda juga bisa memilih tampilan awal. <b>Masuk dengan akun demo</b> otomatis memakai tampilan Simulasi.</p>
+          <p>Data simulasi tidak dihapus, hanya disembunyikan. Bila Super Admin mengaktifkan saklar <b>Mode Operasional</b> di Setting, simulasi disembunyikan untuk semua orang.</p>
           <h4 id="backup-organisasi">Backup &amp; Pulihkan Data Organisasi (13 November)</h4>
           <p>Untuk <b>admin organisasi</b> (pemilik organisasi) di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a>, bagian <b>Organisasi Saya</b>:</p>
           <ol class="steps">

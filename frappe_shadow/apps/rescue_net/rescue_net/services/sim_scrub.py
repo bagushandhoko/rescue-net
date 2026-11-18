@@ -99,6 +99,23 @@ def scrub(obj, ids, titles=frozenset()):
     return obj
 
 
+def kosongkan(obj):
+    """Owner 2026-11-18: tampilan Riil -> permintaan yang menunjuk bencana/posko simulasi dijawab dengan struktur
+    yang SAMA tetapi kosong (daftar [], angka 0, teks ''), supaya semua halaman (Control Centre, posko, peta, ...)
+    tampil kosong tanpa mengubah tiap halaman. Nilai benar/salah dan None dibiarkan."""
+    if isinstance(obj, dict):
+        return {k: kosongkan(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return []
+    if isinstance(obj, bool) or obj is None:
+        return obj
+    if isinstance(obj, (int, float)):
+        return 0
+    if isinstance(obj, str):
+        return ""
+    return obj
+
+
 def after_request(response=None, request=None):
     try:
         if response is None or request is None or response.status_code != 200:
@@ -118,8 +135,15 @@ def after_request(response=None, request=None):
         data = json.loads(response.get_data(as_text=True))
         if not isinstance(data, dict) or "message" not in data:
             return
-        ids = _hidden_ids()
-        data["message"] = scrub(data["message"], ids, _hidden_titles(ids))
+        try:
+            minta = dict(frappe.form_dict or {})
+        except Exception:
+            minta = {}
+        if minta and drill.refers_to_simulation(minta):
+            data["message"] = kosongkan(data["message"])   # permintaan atas bencana/posko simulasi -> kosong
+        else:
+            ids = _hidden_ids()
+            data["message"] = scrub(data["message"], ids, _hidden_titles(ids))
         response.set_data(json.dumps(data, default=str, separators=(",", ":")))
     except Exception:
         frappe.log_error(title="sim_scrub after_request", message=frappe.get_traceback())

@@ -153,3 +153,15 @@ class TestDemoLoginGoesSimulasi(OperationalBase):
             self.assertNotIn(drill.VIEW_COOKIE, frappe.local.cookie_manager.to_delete)
         finally:
             frappe.local.cookie_manager = old
+
+
+class TestKosongkanRiil(__import__("unittest").TestCase):
+    """Owner 2026-11-18: permintaan atas bencana simulasi saat tampilan Riil dijawab kosong dengan bentuk sama."""
+    def test_struktur_sama_isi_kosong(self):
+        from rescue_net.services.sim_scrub import kosongkan
+        asal = {"ok": True, "title": "[SIMULASI] Gempa", "count": 23, "ratio": 0.5, "rows": [{"a": 1}],
+                "summary": {"posko": 5, "nama": "x", "list": [1, 2]}, "kosong": None}
+        hasil = kosongkan(asal)
+        self.assertEqual(hasil, {"ok": True, "title": "", "count": 0, "ratio": 0, "rows": [],
+                                 "summary": {"posko": 0, "nama": "", "list": []}, "kosong": None})
+        self.assertEqual(kosongkan([1, 2]), [])

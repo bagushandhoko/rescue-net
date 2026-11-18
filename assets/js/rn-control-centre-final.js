@@ -2460,6 +2460,19 @@ async function load() {
         err?.message
         || "Control Centre gagal dimuat"
       );
+
+      // 2026-11-18 owner: tampilan "Riil Data Bencana" tanpa bencana riil -> tampil kosong yang jelas, bukan "Memuat…"
+      if (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie)) {
+        document.querySelectorAll("main *").forEach(el => {
+          if (el.children.length === 0 && /^Memuat/.test((el.textContent || "").trim())) {
+            el.textContent = el.closest("h1, h2") ? "Belum ada bencana riil" : "Belum ada data bencana riil.";
+          }
+        });
+        setText(
+          "warRoomStatus",
+          "Tampilan Riil Data Bencana: belum ada bencana riil yang aktif. Data latihan bisa dilihat dengan memilih \u201cLihat Simulasi\u201d di Beranda."
+        );
+      }
     }
   }
 

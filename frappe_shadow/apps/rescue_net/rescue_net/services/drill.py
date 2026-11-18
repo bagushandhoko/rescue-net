@@ -95,7 +95,13 @@ VIEW_REAL = "riil"
 def viewer_wants_real():
     try:
         req = getattr(frappe.local, "request", None)
-        return bool(req) and str(req.cookies.get(VIEW_COOKIE) or "").strip().lower() == VIEW_REAL
+        if not req:
+            return False
+        if str(req.cookies.get(VIEW_COOKIE) or "").strip().lower() == VIEW_REAL:
+            return True
+        # 2026-11-18: panggilan publik tanpa cookie (credentials "omit", agar bisa di-cache) mengirim pilihan
+        # lewat parameter ?rn_tampilan=riil; parameter ini juga memisahkan kunci cache nginx ($args).
+        return str(req.args.get(VIEW_COOKIE) or "").strip().lower() == VIEW_REAL
     except Exception:
         return False
 

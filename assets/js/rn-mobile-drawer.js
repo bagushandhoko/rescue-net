@@ -184,7 +184,7 @@
     // filled at once from the last list this phone saw (also offline) ...
     try { const cached = JSON.parse(localStorage.getItem(CACHE) || "[]"); if (cached.length) fill(cached); } catch (e) {}
     // ... and refreshed from the server
-    fetch(location.origin + "/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters", { credentials: "omit" })
+    fetch(location.origin + "/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters" + (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie) ? "?rn_tampilan=riil" : ""), { credentials: "omit" })
       .then(r => r.json())
       .then(payload => {
         const rows = ((payload && payload.message) || []).map(r => ({

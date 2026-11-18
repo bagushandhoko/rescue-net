@@ -471,6 +471,9 @@ async function call(
     }
   );
 
+  // 2026-11-18: panggilan ini tanpa cookie -> kirim pilihan "Riil Data Bencana" lewat parameter
+  if (/(?:^|;\s*)rn_tampilan=riil(?:;|$)/.test(document.cookie)) url.searchParams.set("rn_tampilan", "riil");
+
   const res =
     await fetch(
       url,

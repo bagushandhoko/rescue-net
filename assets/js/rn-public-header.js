@@ -4,7 +4,7 @@
 
   // Dua bahasa ID/EN (rn-i18n.js): dimuat sekali untuk semua halaman yang memakai header publik.
   if (!document.querySelector('script[src*="rn-i18n.js"]')) { const s18 = document.createElement("script"); s18.src = `${prefix}assets/js/rn-i18n.js?v=ps-20261109`; document.head.appendChild(s18); }
-  if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = document.createElement("script"); sMt.src = "/rescue-net/assets/js/rn-mode-toggle.js?v=pita-20261118"; document.head.appendChild(sMt); }  // 2026-11-18 tombol simulasi/riil
+  if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = document.createElement("script"); sMt.src = "/rescue-net/assets/js/rn-mode-toggle.js?v=bawah-20261118"; document.head.appendChild(sMt); }  // 2026-11-18 tombol simulasi/riil
   const LOGIN_LINK = { label: "Login/registrasi", href: `${prefix}pages/auth.html`, className: "rn-public-login" };
 
   const RN_EVENT_DEFAULT = "event-sim-001";

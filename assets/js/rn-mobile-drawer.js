@@ -1,4 +1,4 @@
-if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = document.createElement("script"); sMt.src = "/rescue-net/assets/js/rn-mode-toggle.js?v=pita-20261118"; document.head.appendChild(sMt); }  // 2026-11-18 tombol simulasi/riil
+if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = document.createElement("script"); sMt.src = "/rescue-net/assets/js/rn-mode-toggle.js?v=bawah-20261118"; document.head.appendChild(sMt); }  // 2026-11-18 tombol simulasi/riil
 (function () {
   "use strict";
 

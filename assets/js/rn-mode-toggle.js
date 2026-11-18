@@ -1,4 +1,4 @@
-/* Tombol kecil Simulasi / Riil di pojok setiap halaman (owner 2026-11-18). Dibuat Suri (Claude CT105).
+/* Tombol kecil Simulasi / Riil di pojok kanan bawah setiap halaman (owner 2026-11-18). Dibuat Suri (Claude CT105).
  * - Bawaan RIIL: Rescue-Net datang kosong sampai ada bencana riil. Cookie rn_tampilan=simulasi = tampilan latihan.
  * - Tulisan miring menunjukkan tampilan TUJUAN: di Riil tertulis "simulasi", di Simulasi tertulis "riil".
  * - Klik: simpan pilihan, lalu muat halaman yang sama di tampilan baru.
@@ -43,14 +43,13 @@
       ? "Sedang menampilkan data SIMULASI (latihan). Klik untuk kembali ke data riil."
       : "Sedang menampilkan data riil. Klik untuk melihat data simulasi (latihan).";
     b.setAttribute("aria-label", b.title);
-    // HP/tablet: tombol menu (≡) ada di sudut kiri atas -> pita turun tepat di bawah header agar menu tetap bisa ditekan
-    var hp = window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
-    // owner 2026-11-18: lebih besar, pita diagonal di sudut KIRI ATAS (boleh menutupi logo), transparan tapi terbaca
+    // owner 2026-11-18 (revisi): kembali ke pojok KANAN BAWAH, lurus (tidak diputar), ukuran huruf 14px tebal tetap,
+    // latar transparan tapi terbaca. Di Simulasi oranye sebagai tanda.
     b.style.cssText = [
-      "position:fixed", "top:" + (hp ? "92px" : "22px"), "left:" + (hp ? "-34px" : "-38px"), "width:" + (hp ? "112px" : "150px"), "z-index:10050",
-      "transform:rotate(-45deg)", "transform-origin:center",
-      "font-style:italic", "font-weight:700", "font-size:14px", "line-height:1", "font-family:inherit",
-      "letter-spacing:.5px", "text-align:center", "padding:6px 0", "border:0", "cursor:pointer",
+      "position:fixed", "right:12px", "bottom:12px", "z-index:10050",
+      "font-style:italic", "font-weight:700", "font-size:14px", "line-height:1.2", "font-family:inherit",
+      "letter-spacing:.3px", "padding:6px 14px", "border-radius:999px", "cursor:pointer",
+      "border:1px solid " + (sim ? "rgba(232,104,40,.75)" : "rgba(122,58,26,.25)"),
       "background:" + (sim ? "rgba(232,104,40,.62)" : "rgba(255,255,255,.62)"),
       "color:" + (sim ? "#fff" : "#7a3a1a"),
       "text-shadow:" + (sim ? "0 1px 2px rgba(0,0,0,.45)" : "0 0 3px #fff,0 0 2px #fff"),

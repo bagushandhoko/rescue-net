@@ -47,3 +47,15 @@ class TestSubAdmin(FrappeTestCase):
         self.m.db_set("membership_role", "member")
         frappe.set_user("Guest")
         self.assertFalse(can_manage_posko(self.actor, self.induk))
+
+
+class TestSubAdminBuatPosko(TestSubAdmin):
+    """Owner 2026-11-19: Sub Admin boleh membuat posko baru di bawah posko yang dikelolanya."""
+    def test_posko_baru_di_bawah_cakupan(self):
+        from rescue_net.api_community_cluster import _create_posko_impl
+        actor = frappe._dict(name=self.acc.name, organization=None, role="member")
+        res = _create_posko_impl(actor, "Uji Posko Baru", "logistics", "Jl. Uji", self.org.name,
+                                 parent_posko=self.induk)
+        self.assertEqual(frappe.db.get_value("RN Posko", res["posko"], "parent_posko"), self.induk)
+        self.assertTrue(is_sub_admin_of_posko(self.actor, res["posko"]))
+        self.assertEqual(res["assignment_status"], "approved")

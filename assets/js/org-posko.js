@@ -849,6 +849,24 @@ function setupPoskoForm() {
 
   if (!form) return;
 
+  // 2026-11-19: pilihan "Posko induk" = posko yang dikelola pengguna (Sub Admin / pengelola posko)
+  (async () => {
+    const wrap = form.querySelector("[data-rn-parent-wrap]");
+    const sel = form.querySelector("[data-rn-parent-select]");
+    if (!wrap || !sel || !window.RN_FRAPPE) return;
+    try {
+      const r = await RN_FRAPPE.call("rescue_net.api_posko_manage.my_managed_poskos", {});
+      const ps = (r && r.poskos) || [];
+      if (!ps.length) return;
+      ps.forEach(p => {
+        const o = document.createElement("option");
+        o.value = p.posko; o.textContent = p.title + (p.type_label ? " (" + p.type_label + ")" : "");
+        sel.appendChild(o);
+      });
+      wrap.hidden = false;
+    } catch (e) {}
+  })();
+
   // The page has no #orgPoskoStatus element, so say() alone never shows
   // anything; each form owns a .form-message for its own feedback.
   const say = m => {
@@ -892,6 +910,10 @@ function setupPoskoForm() {
           posko_type: poskoType,
           address,
           organization: val("organization_id") || val("organization") || null,
+          // 2026-11-19: bencana yang dipilih di form ikut dikirim (sebelumnya tidak terkirim)
+          disaster_event: val("disaster_event_id") || null,
+          // 2026-11-19: Sub Admin membuat posko di bawah posko yang dikelolanya
+          parent_posko: val("parent_posko") || null,
           // functions + logistics role are set by create_posko itself
           functions: JSON.stringify(functions),
           logistics_role: logisticsRole || ""

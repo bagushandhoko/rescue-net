@@ -927,6 +927,7 @@ def create_posko(
     officer_in_charge_phone=None, officer_in_charge_email=None,
     emergency_contact=None, facilities=None, rn_beneficiary_count=None,
     public_detail=None, functions=None, logistics_role=None, disaster_events=None,
+    parent_posko=None,
 ):
     """Also backs the "Registrasi & Verifikasi Posko" mock-up's form — the
     extra kwargs are all optional so existing callers (Organisasi & Posko's
@@ -958,6 +959,19 @@ def create_posko(
                 "yang sudah Anda ikuti"
             )
 
+    # Owner 2026-11-19: Sub Admin boleh membuat posko baru. Posko induk (opsional) harus posko organisasi
+    # yang sama dan dikelola pembuat; posko baru jadi anak posko itu -> masuk cakupan Sub Admin.
+    parent = None
+    if parent_posko:
+        from rescue_net.access_policy import can_manage_posko
+        from rescue_net.reference_resolver import resolve_posko
+        parent = resolve_posko(parent_posko)
+        if not parent or not organization or frappe.db.get_value("RN Posko", parent, "organization") != organization:
+            frappe.throw("Posko induk harus posko di Kelompok yang sama; pilih Kelompok posko induk di form.")
+        if not can_manage_posko(actor, parent):
+            frappe.throw("Anda hanya bisa membuat posko di bawah posko yang Anda kelola.", frappe.PermissionError)
+
+    if organization:
         # Komando terpusat: a non-pusat member adds a posko only by REQUEST.
         from rescue_net import command
         if not command.is_bypassed() and command.needs_approval(actor, organization):
@@ -975,7 +989,7 @@ def create_posko(
                     "rn_beneficiary_count": rn_beneficiary_count, "public_detail": public_detail,
                     # the requested functions travel with the request and are set on approval
                     "functions": functions, "logistics_role": logistics_role,
-                    "disaster_events": disaster_events,
+                    "disaster_events": disaster_events, "parent_posko": parent,
                 },
                 "Tambah posko: %s" % title + (" (fungsi: %s)" % _functions_label(functions) if _functions_label(functions) else ""),
             )
@@ -985,7 +999,7 @@ def create_posko(
         latitude, longitude, officer_in_charge_name, officer_in_charge_role,
         officer_in_charge_phone, officer_in_charge_email, emergency_contact,
         facilities, rn_beneficiary_count, public_detail,
-        disaster_events=disaster_events,
+        disaster_events=disaster_events, parent_posko=parent,
     )
     # the creator's own form choice, applied at creation — afterwards
     # functions change only through someone who manages the posko (O-9)
@@ -1012,6 +1026,7 @@ def _create_posko_impl(
     officer_in_charge_phone=None, officer_in_charge_email=None,
     emergency_contact=None, facilities=None, rn_beneficiary_count=None,
     public_detail=None, assignment_status=None, disaster_events=None,
+    parent_posko=None,
 ):
     """Create the posko + the creator's assignment. `actor` is whoever the
     posko is created FOR (the requester when the pusat approves a request)."""
@@ -1052,6 +1067,9 @@ def _create_posko_impl(
     if public_detail in ("inherit", "private", "public"):
         posko.public_detail = public_detail
 
+    if parent_posko:
+        posko.parent_posko = parent_posko
+
     posko.insert(ignore_permissions=True)
 
     assignment = frappe.new_doc("RN Posko Assignment")
@@ -1063,6 +1081,15 @@ def _create_posko_impl(
     # the assignment waits for a System Manager (O-10), whatever global role
     # the creator holds; only an approved komando request passes "approved".
     assignment.status = assignment_status or "pending"
+    # Owner 2026-11-19: Sub Admin yang cakupannya meliputi posko baru sudah berhak mengelolanya ->
+    # penugasan pembuat langsung disetujui (tidak menumpuk di antrean super admin).
+    if assignment.status == "pending":
+        try:
+            from rescue_net.access_policy import is_sub_admin_of_posko
+            if is_sub_admin_of_posko(actor, posko.name):
+                assignment.status = "approved"
+        except Exception:
+            pass
 
     assignment.insert(ignore_permissions=True)
 

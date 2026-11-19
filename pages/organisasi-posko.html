@@ -150,6 +150,10 @@
             <label>Kelompok
               <select name="organization_id" data-rn-org-select><option value="">Mandiri / tanpa kelompok</option></select>
             </label>
+            <label data-rn-parent-wrap hidden>Posko induk (opsional)
+              <select name="parent_posko" data-rn-parent-select><option value="">— tidak ada (posko mandiri) —</option></select>
+              <small class="rn-muted">Untuk Sub Admin: posko baru dibuat di bawah posko yang Anda kelola.</small>
+            </label>
             <label>Nama Posko<input name="name" placeholder="Contoh: Posko Logistik RW 05" required></label>
             <label>Jenis Posko (utama)<input name="node_type" placeholder="logistics / kitchen / medical / shelter" required></label>
             <fieldset class="rn-fn-picker">
@@ -192,7 +196,7 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-ui.js?v=audit-20261115"></script>
-<script src="../assets/js/org-posko.js?v=segar-20261117"></script>
+<script src="../assets/js/org-posko.js?v=subadmin2-20261119"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
 <script src="../assets/js/rn-public-header.js?v=besar-20261119"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>

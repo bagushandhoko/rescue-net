@@ -92,6 +92,17 @@
       "fieldname": "staff_note",
       "fieldtype": "Small Text",
       "label": "Keterangan tugas staf"
+    },
+    {
+      "fieldname": "sub_admin_all",
+      "fieldtype": "Check",
+      "label": "Sub Admin: semua posko organisasi",
+      "description": "Owner 2026-11-19: Sub Admin mengelola penuh semua posko organisasi (termasuk posko baru)."
+    },
+    {
+      "fieldname": "sub_admin_scope",
+      "fieldtype": "Small Text",
+      "label": "Sub Admin: posko yang dikelola (JSON daftar nama posko; posko di bawahnya ikut)"
     }
   ],
   "permissions": [

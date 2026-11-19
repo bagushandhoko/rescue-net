@@ -640,7 +640,8 @@ def org_membership_admin(organization=None):
         filters={"organization": ["in", orgs]},
         fields=["name", "user_account", "organization", "membership_role",
                 "status", "member_verified", "requested_at", "approved_at",
-                "approved_by", "verified_at", "decision_note", "staff_area", "staff_note"],
+                "approved_by", "verified_at", "decision_note", "staff_area", "staff_note",
+                "sub_admin_all", "sub_admin_scope"],
         order_by="requested_at desc, creation desc",
         limit_page_length=1000,
     )
@@ -680,6 +681,8 @@ def org_membership_admin(organization=None):
             "decision_note": r.decision_note,
             "staff_area": r.staff_area,
             "staff_note": r.staff_note,
+            "sub_admin_all": r.get("sub_admin_all"),
+            "sub_admin_scope": r.get("sub_admin_scope"),
         })
 
     # S16: the org's poskos and where each member is placed (Tempatkan di posko)
@@ -696,6 +699,12 @@ def org_membership_admin(organization=None):
         placed.setdefault(a.user_account, []).append({"id": a.posko, "title": titles.get(a.posko, a.posko)})
     for m in out:
         m["poskos"] = placed.get(m.get("user_account"), [])
+        # Owner 2026-11-19: cakupan Sub Admin (judul posko) untuk kartu anggota
+        try:
+            scope = frappe.parse_json(m.get("sub_admin_scope") or "[]") or []
+        except Exception:
+            scope = []
+        m["sub_admin_poskos"] = [{"id": n, "title": titles.get(n, n)} for n in scope]
 
     owner_orgs = set(_owned_org_names(actor)) if not is_system_manager() else set(orgs)
     return {
@@ -1540,3 +1549,65 @@ def add_member_direct(organization, email, full_name=None, phone=None, member_ve
         out["message"] = ("Akun dibuat. Serahkan kata sandi sementara ini secara pribadi kepada anggota; "
                           "minta ia menggantinya setelah masuk. Kata sandi ini tidak ditampilkan lagi.")
     return out
+
+
+SUB_ADMIN_ROLE = "sub_admin"
+
+
+@frappe.whitelist(methods=["POST"])
+def set_sub_admin(membership, active=1, all_poskos=0, poskos=None):
+    """Owner 2026-11-19: admin organisasi menunjuk / mengubah / mencabut Sub Admin. Sub Admin menjalankan
+    penuh posko dalam cakupannya (semua posko organisasi, atau posko pilihan beserta posko di bawahnya):
+    logistik, stok, armada, booking, pengaturan posko, menempatkan anggota. Sub Admin TIDAK bisa mengubah
+    data organisasi, menyetujui anggota, atau menunjuk Sub Admin lain."""
+    import json
+    from frappe.utils import cint
+    from rescue_net.access_policy import is_system_manager
+    from rescue_net.reference_resolver import resolve_posko
+
+    actor = _actor()
+    doc = frappe.get_doc("RN Organization Membership", membership)
+    if not (is_system_manager() or _owns_org(actor, doc.organization)):
+        frappe.throw("Hanya admin organisasi yang dapat menunjuk Sub Admin.", frappe.PermissionError)
+    if doc.status != "approved":
+        frappe.throw("Hanya anggota yang sudah disetujui yang dapat dijadikan Sub Admin.")
+    if doc.membership_role in ("owner", "deputy"):
+        frappe.throw("Pengelola/wakil organisasi tidak perlu dijadikan Sub Admin.")
+
+    if not cint(active):
+        if doc.membership_role == SUB_ADMIN_ROLE:
+            doc.membership_role = "member"
+        doc.sub_admin_all = 0
+        doc.sub_admin_scope = None
+        doc.save(ignore_permissions=True)
+        return {"membership": doc.name, "membership_role": doc.membership_role, "sub_admin": False}
+
+    pilih = poskos
+    if isinstance(pilih, str):
+        pilih = frappe.parse_json(pilih) if pilih.strip() else []
+    chosen = []
+    if not cint(all_poskos):
+        for p in pilih or []:
+            n = resolve_posko(p)
+            if not n or frappe.db.get_value("RN Posko", n, "organization") != doc.organization:
+                frappe.throw("Posko %s bukan milik organisasi ini." % p)
+            if n not in chosen:
+                chosen.append(n)
+        if not chosen:
+            frappe.throw("Pilih minimal satu posko, atau pilih semua posko organisasi.")
+
+    doc.membership_role = SUB_ADMIN_ROLE
+    doc.sub_admin_all = 1 if cint(all_poskos) else 0
+    doc.sub_admin_scope = None if cint(all_poskos) else json.dumps(chosen)
+    doc.save(ignore_permissions=True)
+
+    try:
+        from rescue_net.services import inbox as _ib
+        cakupan = "semua posko organisasi" if cint(all_poskos) else ", ".join(
+            frappe.db.get_value("RN Posko", n, "title") or n for n in chosen)
+        _ib.notify_account(doc.user_account, "Anda ditunjuk sebagai Sub Admin untuk: %s (termasuk posko di bawahnya). "
+                                             "Buka Kelola Posko Saya untuk mulai mengelola." % cakupan)
+    except Exception:
+        pass
+    return {"membership": doc.name, "membership_role": doc.membership_role, "sub_admin": True,
+            "sub_admin_all": doc.sub_admin_all, "poskos": chosen}

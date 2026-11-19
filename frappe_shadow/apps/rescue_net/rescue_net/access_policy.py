@@ -179,6 +179,42 @@ def can_coordinate_posko(actor, posko):
     return bool(posko_org) and posko_org == actor_org
 
 
+SUB_ADMIN_ROLE = "sub_admin"
+
+
+def is_sub_admin_of_posko(actor, posko):
+    """Owner 2026-11-19: Sub Admin organisasi (ditunjuk admin organisasi) menjalankan PENUH posko dalam
+    cakupannya: semua posko organisasi (sub_admin_all) atau posko pilihan beserta posko di bawahnya
+    (ditelusuri lewat parent_posko)."""
+    import json
+
+    if not actor or not getattr(actor, "name", None) or not posko:
+        return False
+    org = frappe.db.get_value("RN Posko", posko, "organization")
+    if not org:
+        return False
+    rows = frappe.get_all(
+        "RN Organization Membership",
+        filters={"user_account": actor.name, "organization": org,
+                 "membership_role": SUB_ADMIN_ROLE, "status": "approved"},
+        fields=["sub_admin_all", "sub_admin_scope"],
+    )
+    for r in rows:
+        if cint(r.sub_admin_all):
+            return True
+        try:
+            scope = set(json.loads(r.sub_admin_scope or "[]"))
+        except Exception:
+            scope = set()
+        p, seen = posko, set()
+        while p and p not in seen and len(seen) < 50:
+            if p in scope:
+                return True
+            seen.add(p)
+            p = frappe.db.get_value("RN Posko", p, "parent_posko")
+    return False
+
+
 def can_manage_posko(actor, posko):
     if is_system_manager():
         return True
@@ -190,6 +226,9 @@ def can_manage_posko(actor, posko):
         return True
 
     if can_coordinate_posko(actor, posko):
+        return True
+
+    if is_sub_admin_of_posko(actor, posko):
         return True
 
     # Komando terpusat: the pusat's owner manages every posko in the tree.

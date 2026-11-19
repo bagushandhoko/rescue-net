@@ -221,11 +221,17 @@
           : '<span class="ko-tag view">Belum diverifikasi</span>';
         return '<article class="ko-posko-card" data-mid="' + esc(m.name) + '">' +
           '<div class="rn-row">' + vtag + (m.membership_role === "owner" ? '<span class="ko-tag edit">Owner</span>' : "") +
-          (m.membership_role === "staff" ? '<span class="ko-tag edit">Staf</span>' : "") + "</div>" +
+          (m.membership_role === "staff" ? '<span class="ko-tag edit">Staf</span>' : "") +
+          (m.membership_role === "sub_admin" ? '<span class="ko-tag edit">Sub Admin</span>' : "") + "</div>" +
           "<h4>" + esc(m.user_name) + "</h4>" +
           '<div class="ko-posko-meta">' + esc(m.user_email || m.user_phone || "-") + " · " + esc(m.organization_title) + "</div>" +
           (m.membership_role === "staff" ? '<div class="ko-posko-meta"><b>Wilayah/bagian:</b> ' + esc(m.staff_area || "-") +
             (m.staff_note ? " · " + esc(m.staff_note) : "") + "</div>" : "") +
+          // Owner 2026-11-19: cakupan Sub Admin
+          (m.membership_role === "sub_admin" ? '<div class="ko-posko-meta"><b>Sub Admin atas:</b> ' +
+            (m.sub_admin_all ? "semua posko organisasi" :
+              esc((m.sub_admin_poskos || []).map(function (p) { return p.title; }).join(", ") || "-")) +
+            " <span class=\"rn-muted\">(termasuk posko di bawahnya)</span></div>" : "") +
           // S16 2026-10-26: place an approved member on one of the org's poskos
           (((adminData.org_poskos || {})[m.organization] || []).length ? '<div class="ko-posko-meta"><b>Posko:</b> ' +
             ((m.poskos || []).map(function (p) { return esc(p.title) + ' <button type="button" class="rn-link-btn" data-unplace="' + esc(p.id) + '">lepas</button>'; }).join(", ") || "belum ditempatkan") +
@@ -237,9 +243,12 @@
             (isOwnerOf(m.organization) ?
               '<button type="button" class="btn ghost mini" data-act="toggle-verify">' +
               (m.member_verified ? "Cabut verifikasi" : "Verifikasi identitas") + "</button>" +
-              (m.membership_role === "deputy" ? "" :
+              (m.membership_role === "deputy" || m.membership_role === "sub_admin" ? "" :
                 '<button type="button" class="btn ghost mini" data-act="staff">' +
-                (m.membership_role === "staff" ? "Cabut staf" : "Jadikan staf") + "</button>") : "") +
+                (m.membership_role === "staff" ? "Cabut staf" : "Jadikan staf") + "</button>") +
+              (m.membership_role === "deputy" ? "" :
+                '<button type="button" class="btn ghost mini" data-subadmin="' + esc(m.name) + '">' +
+                (m.membership_role === "sub_admin" ? "Ubah Sub Admin" : "Jadikan Sub Admin") + "</button>") : "") +
             (isOwnerOf(m.organization) || m.membership_role === "member" ?
               '<button type="button" class="btn ghost mini" data-act="revoke">Keluarkan</button>' : "") +
             '<span class="rn-muted koMsg"></span></div>') +
@@ -248,12 +257,69 @@
 
       wireAddMember(adminData.organizations || []);
       wireMemberActions();
+      wireSubAdmin(adminData);
     } else {
       admin.hidden = true;
       $("#koMemberCount").textContent = ms.length + " keanggotaan";
     }
     sec.hidden = false;
     if (location.hash === "#koMemberSection") sec.scrollIntoView({ block: "start" });
+  }
+
+  // Owner 2026-11-19: admin organisasi menunjuk Sub Admin (posko pilihan + posko di bawahnya, atau semua posko)
+  function wireSubAdmin(adminData) {
+    document.querySelectorAll("#koMemberAdmin [data-subadmin]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var card = btn.closest("[data-mid]");
+        var mid = card && card.getAttribute("data-mid");
+        var m = (adminData.memberships || []).filter(function (x) { return x.name === mid; })[0];
+        if (!m) return;
+        var old = card.querySelector(".koSubAdminForm");
+        if (old) { old.remove(); return; }
+        var ps = (adminData.org_poskos || {})[m.organization] || [];
+        var dipilih = {};
+        (m.sub_admin_poskos || []).forEach(function (p) { dipilih[p.id] = 1; });
+        var f = document.createElement("div");
+        f.className = "koSubAdminForm";
+        f.style.cssText = "margin-top:8px;padding:10px;border:1px dashed #c9b8a6;border-radius:8px";
+        f.innerHTML = '<p class="rn-muted" style="margin:0 0 6px;font-size:13px">Sub Admin menjalankan penuh posko yang dipilih ' +
+          "beserta posko di bawahnya: logistik, stok, armada, booking, pengaturan posko, dan menempatkan anggota. " +
+          "Sub Admin tidak bisa mengubah data organisasi, menyetujui anggota, atau menunjuk Sub Admin lain.</p>" +
+          '<label class="rn-row" style="font-size:14px"><input type="checkbox" class="koSaAll"' + (m.sub_admin_all ? " checked" : "") +
+          "> <b>Semua posko organisasi</b> (termasuk posko baru)</label>" +
+          '<div class="koSaList" style="max-height:200px;overflow:auto;margin:6px 0 8px">' +
+          (ps.length ? ps.map(function (p) {
+            return '<label class="rn-row" style="font-size:13px"><input type="checkbox" value="' + esc(p.id) + '"' +
+              (dipilih[p.id] ? " checked" : "") + "> " + esc(p.title) + "</label>";
+          }).join("") : '<p class="ko-empty">Organisasi ini belum punya posko.</p>') + "</div>" +
+          '<div class="ko-card-actions"><button type="button" class="btn primary mini koSaSave">Simpan Sub Admin</button>' +
+          (m.membership_role === "sub_admin" ? '<button type="button" class="btn ghost mini koSaRevoke">Cabut Sub Admin</button>' : "") +
+          '<span class="rn-muted koSaMsg"></span></div>';
+        card.appendChild(f);
+        var all = f.querySelector(".koSaAll"), list = f.querySelector(".koSaList");
+        function sync() {
+          list.style.opacity = all.checked ? ".45" : "1";
+          list.querySelectorAll("input").forEach(function (i) { i.disabled = all.checked; });
+        }
+        all.addEventListener("change", sync); sync();
+        async function kirim(aktif) {
+          var msg = f.querySelector(".koSaMsg");
+          var pilih = Array.prototype.map.call(list.querySelectorAll("input:checked"), function (i) { return i.value; });
+          if (aktif && !all.checked && !pilih.length) { msg.textContent = "Pilih minimal satu posko, atau centang semua posko."; return; }
+          msg.textContent = "Menyimpan…";
+          try {
+            await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_sub_admin",
+              { membership: mid, active: aktif ? 1 : 0, all_poskos: all.checked ? 1 : 0, poskos: JSON.stringify(pilih) },
+              { method: "POST" });
+            msg.textContent = "Tersimpan.";
+            loadMembers();
+          } catch (e) { msg.textContent = "Gagal: " + (e && e.message ? e.message : e); }
+        }
+        f.querySelector(".koSaSave").addEventListener("click", function () { kirim(true); });
+        var rv = f.querySelector(".koSaRevoke");
+        if (rv) rv.addEventListener("click", function () { kirim(false); });
+      });
+    });
   }
 
   function wirePlacement() {

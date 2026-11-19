@@ -57,6 +57,7 @@ Syarat barang armada. Posko distribusi bisa menulis syarat (kemasan, berat per k
 Lacak dengan QR. Setiap alur distribusi punya kode lacak dari dikirim, di perjalanan, sampai diterima.
 Hitungan berbasis standar. Kebutuhan air memakai standar Sphere (15 liter/orang/hari) dan perkiraan jumlah perjalanan truk tangki. Kebutuhan alat kerja dihitung dari kondisi lapangan, misalnya longsor 200 m³ dalam 2 hari menjadi 2 ekskavator dan 1 buldoser, dengan aturan hitungnya ditampilkan.
 Kebutuhan dikelompokkan otomatis. "Aqua", "air mineral", dan "air minum" masuk kelompok yang sama, supaya kekurangan antarposko terlihat jelas.
+Rincian satuan & konversi ada di bab 63 , kedaluwarsa per lot di bab 64 , dan urutan status kiriman di bab 37 .
 8. AI: di mana dipakai dan cara kerjanya
 AI di Rescue-Net hanya mengusulkan . Ia tidak pernah menutup laporan, mengubah status, menetapkan jumlah distribusi, atau menggabungkan data sendiri.
 Tempat Yang dilakukan AI Siapa yang memutuskan
@@ -70,12 +71,15 @@ Tetap jalan tanpa AI. Bila kunci AI tidak ada, anggaran habis, atau layanan AI m
 Siapa yang membayar jelas. AI bisa memakai kunci pribadi, kunci organisasi (dibagikan ke anggota dengan batas token), atau kunci platform untuk fitur publik. Konteks pertanyaan menentukan kunci yang dipakai; tidak pernah dicampur.
 Ada rem. Setiap kunci punya batas token harian dan bulanan, serta batas permintaan per jam. Pemilik kunci mendapat pemberitahuan saat pemakaian 80% dan saat habis.
 Bebas pilih penyedia. OpenAI, Claude, Google Gemini, atau model lokal milik organisasi.
+Rincian Tanya AI, tombol Jalankan , batas pemakaian, dan antrean AI ada di bab 69 .
 9. Laporan langsung ke posko yang tepat
 Laporan masyarakat diarahkan otomatis ke posko yang paling sesuai berdasarkan wilayah, jarak, dan fungsi posko. Laporan orang sakit cenderung ke posko medis; sumur kering ke posko air terdekat. Alasan pengarahannya disimpan. Laporan yang tidak cukup cocok masuk antrean Control Centre untuk dipilah. Posko yang menerima bisa mengalihkannya bila keliru, dan pelapor bisa mengikuti tindak lanjut di Laporan Saya.
+Cara menghitung skor, batasnya, dan cara mengalihkan laporan dijelaskan di bab 65 .
 10. Verifikasi berjenjang
 Verifikasi terdiri dari beberapa tanda terpisah: identitas, lokasi, organisasi, dan kebutuhan. Satu tanda tidak dianggap mewakili semuanya.
 Jaringan verifikator — RT/RW, kepala desa, BPBD, pimpinan organisasi, tokoh setempat — memberi dukungan sesuai wilayah dan konteks. Dukungan bisa dicabut.
 Pelapor terverifikasi bisa melaporkan kebutuhan langsung ke posko. Kebutuhan itu diberi label "belum dikonfirmasi" sampai pengelola posko menekan Konfirmasi atau Tolak.
+Skor risiko di antrean persetujuan dan aturan endorsement verifikator dijelaskan di bab 66 .
 11. Bekerja tanpa sinyal
 Di aplikasi, tekan Siapkan data offline saat masih ada sinyal. Data posko dan organisasi Anda diunduh ke HP, dengan indikator kemajuan.
 Saat offline, formulir lapangan — catat stok, kebutuhan, terima kiriman, pasien baru, okupansi shelter, produksi dapur, kondisi lapangan, progres recovery — tetap bisa diisi dan disimpan di HP.
@@ -92,7 +96,7 @@ Kartu pasien: riwayat dan kondisi terakhir pasien posko medis, hanya untuk petug
 Recovery Program & Alat Kerja: dari obyek kerusakan, rencana rekonstruksi, dan progresnya, sampai alat yang dibutuhkan, siapa penyedianya, kapan bisa dipakai, serta dukungan transport, operator, dan biaya operasionalnya.
 Relawan: relawan tersedia (jadwal, kendaraan, butuh dijemput, area layanan) dan relawan yang ditempatkan beserta tugasnya. Ada check-in kehadiran harian lewat QR.
 Program khusus & tender: program donasi dengan target dan realisasi, serta penawaran untuk kebutuhan besar.
-Mode latihan (simulasi): bencana latihan untuk pelatihan, tidak pernah tampil di daftar publik.
+Tampilan Simulasi / Riil: data latihan (bertanda SIMULASI) dipisah dari data bencana nyata. Bawaan adalah Riil . Tulisan kecil simulasi / riil di pojok kanan bawah setiap halaman mengganti tampilan, hanya untuk perangkat Anda. Laporan nyata tidak pernah diarahkan ke bencana latihan, dan bencana latihan tidak bisa digabung dengan bencana nyata. Lihat Tampilan data: Simulasi atau Riil .
 14. Registrasi akun & organisasi
 Semua pendaftaran dimulai dari satu halaman: Masuk & Registrasi → tab Daftar . Satu akun bisa dipakai untuk melapor, berdonasi, menjadi relawan, atau mengelola organisasi dan posko. Peran yang dipilih saat daftar menentukan apa yang disiapkan untuk Anda.
 A. Membuat akun
@@ -195,6 +199,7 @@ Booking Tempat — untuk pemilik/pengelola posko armada:
 Pengelola posko melihat dua tab: 🔧 Menu Pemilik — Booking Masuk & Armada dan 👁 Tampilan Publik / Pembooking (pratinjau yang dilihat orang lain, tanpa kontak pembooking).
 Di Booking Masuk tampil muatan, berat, waktu, nama pembooking, serta tombol telepon dan WhatsApp pembooking.
 Masukkan PIN dari pembooking (bila diminta), lalu tekan Konfirmasi atau Tolak .
+Urutan status kiriman, paket beberapa barang, kaki estafet antar-armada (tombol Catat serah-terima dan Teruskan estafet ), serta tombol Otomatis Cocokkan ⚡ dijelaskan di bab 37 — Status kiriman .
 21. Medis, shelter, dapur, relawan
 Posko Medis : pasien aktif dan kondisi terakhir, kartu pasien, pemakaian obat dan alat.
 Shelter : okupansi, kebutuhan dasar, kelompok rentan, check-in dan check-out penghuni.
@@ -202,7 +207,7 @@ Dapur Umum : produksi makanan, bahan, gas dan BBM.
 Manajemen Relawan : daftar relawan, relawan tersedia, relawan ditempatkan, papan penugasan.
 Recovery Program & Alat Kerja › Pengaturan Alat Kerja dan Posko Komunikasi : lihat bagian D.
 22. Memasang aplikasi & mode offline
-Buka Install App . Pasang sebagai aplikasi web (PWA) atau unduh APK Android.
+Buka Install App , lalu tekan Install Rescue-Net . Bila tombol itu tidak muncul: di Android (Chrome) buka menu ⋮ → Install app / Tambahkan ke layar utama ; di iPhone/iPad (Safari) tombol Bagikan → Add to Home Screen ; di laptop (Chrome/Edge) ikon install di bilah alamat. APK Android sudah dihentikan (November 2026); bila HP masih memakai aplikasi lama, hapus dulu lalu pasang lewat halaman Install.
 Login sekali saat ada sinyal, lalu tekan Siapkan data offline di kanan bawah.
 Saat offline, isi formulir seperti biasa. Lencana menunjukkan berapa data yang menunggu sinyal.
 Saat online lagi, buka ringkasan sinkron untuk melihat yang terkirim, ditolak, atau bentrok.
@@ -317,8 +322,12 @@ Login langsung ke halaman kerja sendiri (lihat bagian 15 ).
 Kirim Bantuan : posko tujuan dipilih dari daftar nama. Laporan Masyarakat : bisa melampirkan foto atau langsung memotret (maks. 4).
 SITREP mengikuti susunan OCHA dan menyediakan API (JSON, EDXL-SitRep, HXL) dengan kunci yang disetujui super admin — lihat bagian 31 .
 Tombol ? di setiap halaman membuka bagian manual halaman tersebut.
+Pembaruan 19 November
+Manual diperluas (19 November 2026) : bagian baru H. Panduan fitur rinci berisi bab 63–70 — satuan, konversi & rekap stok , kedaluwarsa per lot , pengarahan laporan & antrean pilah , verifikasi, skor risiko & verifikator , Peta Nasional & peringatan dini BMKG , verifikasi dua langkah (2FA) , Tanya AI & batas AI , dan Sub Admin .
+Bab yang dilengkapi: bab 33 Kelola Bencana (skor bencana ganda, gabung & batalkan gabung, nama lain), bab 35 Konsolidasi Data (laporan warga ganda, kebutuhan ganda, keputusan petugas, pendapat AI), bab 37 Lacak Kiriman (urutan status kiriman lengkap, paket, estafet, Otomatis Cocokkan).
+Diperbaiki agar sesuai aplikasi: bab 13 (Simulasi/Riil), bab 22 (APK sudah dihentikan, pasang lewat halaman Install), bab 47 (radius Dampak Gempa 200 km berbeda dari radius pengumuman BMKG 100–300 km), bab 60 dan 62 (status federasi).
 Pembaruan 17 November
-Sub Admin organisasi : admin organisasi bisa menunjuk anggota menjadi Sub Admin di Koordinasi Organisasi (kartu anggota → Jadikan Sub Admin ), lalu memilih posko yang dipegang (posko di bawahnya ikut) atau semua posko organisasi . Sub Admin menjalankan penuh posko itu (logistik, stok, armada, booking, pengaturan, menempatkan anggota) dan melihatnya di Kelola Posko Saya ; ia tidak bisa mengubah data organisasi, menyetujui anggota, atau menunjuk Sub Admin lain. Sub Admin juga boleh membuat posko baru : di Organisasi & Posko → Tambah Posko, pilih Posko induk (posko yang ia kelola); posko baru otomatis masuk cakupannya dan langsung bisa dikelola. Di organisasi terpusat, posko baru tetap diajukan ke pusat.
+Sub Admin organisasi : admin organisasi bisa menunjuk anggota menjadi Sub Admin di Koordinasi Organisasi (kartu anggota → Jadikan Sub Admin ), lalu memilih posko yang dipegang (posko di bawahnya ikut) atau semua posko organisasi . Sub Admin menjalankan penuh posko itu (logistik, stok, armada, booking, pengaturan, menempatkan anggota) dan melihatnya di Kelola Posko Saya ; ia tidak bisa mengubah data organisasi, menyetujui anggota, atau menunjuk Sub Admin lain. Sub Admin juga boleh membuat posko baru : di Organisasi & Posko → Tambah Posko, pilih Posko induk (posko yang ia kelola); posko baru otomatis masuk cakupannya dan langsung bisa dikelola. Di organisasi terpusat, posko baru tetap diajukan ke pusat. Panduan lengkap: bab 70 .
 Bilah pilihan Tampilan data di halaman Home dihapus; pilihan kini lewat tombol kecil di pojok setiap halaman.
 Tombol kecil simulasi / riil di pojok kanan bawah setiap halaman (bentuk dan ukurannya sama dengan tombol Tanya AI di pojok kiri bawah). Bawaan kini Riil (Rescue-Net kosong sampai ada bencana riil). Klik simulasi untuk melihat data latihan di halaman yang sama; klik riil untuk kembali. Bila kembali ke Riil dari halaman detail posko simulasi, Anda dibawa ke halaman Organisasi & Posko. Akun demo otomatis memakai tampilan Simulasi.
 Tampilan Riil Data Bencana : semua halaman (termasuk Control Centre, posko, peta) kini kosong bila yang dibuka adalah bencana/posko simulasi; hanya data bencana riil yang tampil. Bencana simulasi ditentukan dari database (judul/label simulasi dan daftar yang diatur super admin).
@@ -406,9 +415,34 @@ Super admin: memverifikasi usulan, menggabungkan bencana ganda, dan membatalkan 
 Langkah
 Login, buka Kelola Bencana.
 Isi nama, jenis, lokasi (atau 📍 Pakai lokasi saya ), waktu mulai, dan tingkat keparahan.
-Sistem memeriksa bencana serupa. Bila sudah ada, pakai yang sudah ada.
-Tekan Kirim .
+Sistem memeriksa bencana serupa sambil Anda mengetik (lihat Cek bencana ganda di bawah). Bila sudah ada, tekan Gabung ke bencana ini dan pakai yang sudah ada.
+Tekan Kirim . Setelah berhasil, tampil Langkah berikutnya : buat laporan kondisi bencana, buat posko baru, atau buka Control Centre.
 Kejadian kecil atau belum resmi dilaporkan lewat Laporan Masyarakat , bukan dibuat sebagai bencana.
+Cek bencana ganda (skor kemiripan)
+Supaya satu kejadian tidak tercatat dua kali, sistem membandingkan bencana yang sedang Anda isi dengan bencana yang sudah ada. Hitungannya sederhana dan sama setiap kali (bukan AI). Nilainya 0–100:
+Yang dibandingkan Nilai
+Jenis bencana Sama: +30 . Berbeda (mis. banjir vs gempa): nilai langsung 0 . Jenis belum diketahui: +10.
+Jarak titik lokasi ≤ 25 km: +35 · ≤ 75 km: +25 · ≤ 150 km: +10
+Kata lokasi yang sama (mis. nama kabupaten) +8 per kata, paling banyak +20 (hanya +5 bila jaraknya sudah ≤ 150 km)
+Selisih tanggal mulai ≤ 3 hari: +20 · ≤ 7 hari: +10 · lebih dari 60 hari: −15
+Kemiripan nama sampai +15
+45 atau lebih: kotak "Bencana mirip yang sudah ada" muncul di bawah formulir, dengan persen kemiripan dan alasannya (mis. "jenis sama, jarak 12 km, selisih waktu 1 hari").
+70 atau lebih saat menekan Kirim: bencana belum dibuat dan tampil "Sepertinya bencana ini sudah ada." Bila Anda yakin kejadiannya berbeda, tekan Bukan, ini bencana lain — kirim tetap .
+60 atau lebih: sistem membuat usulan gabung otomatis untuk super admin — setiap ada bencana baru dan lewat pemeriksaan harian.
+Pengguna biasa hanya dibandingkan dengan bencana yang sudah aktif. Super admin juga melihat usulan dan draf. Bencana latihan hanya dibandingkan dengan bencana latihan.
+Menggabungkan & membatalkan gabung (super admin)
+Panel berikut hanya tampil untuk super admin di bagian bawah Kelola Bencana:
+Pengumuman BMKG: gempa besar dari BMKG hanya pengumuman, bukan bencana. Tekan Jadikan bencana hanya bila sudah dinyatakan sebagai bencana; selain itu tekan Abaikan (lihat bab 67 ).
+Usulan menunggu verifikasi: tekan Setujui atau Tolak . Usulan belum tampil di publik sampai disetujui.
+Bencana baru dari organisasi terverifikasi: sudah aktif. Tekan Sudah diperiksa , atau Turunkan ke usulan bila keliru.
+Usulan gabung otomatis: baca persen kemiripan, alasannya, dan jumlah data di kedua bencana. Pilih Gabungkan , Gabungkan (arah sebaliknya) , atau Bukan bencana yang sama . Tekan 🔎 Cari kembar sekarang untuk memeriksa ulang tanpa menunggu pemeriksaan harian.
+Gabung manual: pilih Bencana yang digabung (akan hilang dari daftar) dan Bencana utama (tetap), isi catatan bila perlu, lalu tekan Gabungkan dan setujui pertanyaan konfirmasi.
+Membatalkan: buka Riwayat gabung , lalu tekan Batalkan gabung pada baris yang keliru.
+Arah usulan otomatis: bencana aktif selalu menjadi bencana utama dibanding usulan/draf. Bila keduanya sama-sama aktif, yang lebih dulu mulai menjadi bencana utama.
+Yang dipindah: semua data yang menunjuk bencana yang digabung — posko, laporan, kebutuhan, kiriman, relawan, dan lainnya — dipindah ke bencana utama. Bencana yang digabung berstatus Digabung dan hilang dari daftar publik.
+Nama lain (alias): nama bencana yang digabung disimpan sebagai nama lain bencana utama. Tautan lama ke bencana yang digabung otomatis dibuka sebagai bencana utama.
+Batalkan gabung: data yang dulu dipindah dikembalikan ke bencana asal, nama lainnya dihapus, dan status bencana asal kembali seperti sebelum digabung. Data yang dibuat setelah penggabungan tetap di bencana utama. Bila bencana utama itu sudah digabung lagi ke bencana lain, batalkan penggabungan yang terakhir lebih dulu.
+Bencana latihan tidak bisa digabung dengan bencana nyata. Bencana yang sudah digabung atau ditolak tidak bisa dipakai sebagai bencana utama.
 34. Control Centre (War Room)
 Layar pantau satu bencana: indikator kritis, kebutuhan 72 jam, dan bukti terbaru. Cocok untuk layar besar di posko komando. Buka halaman →
 Siapa melihat apa
@@ -431,6 +465,25 @@ Tinjau pasangan yang ditemukan, lalu putuskan: gabung atau bukan duplikat.
 Tekan Rebuild Consolidated Needs setelah ada perubahan.
 Bagian Sinkronisasi menunjukkan data HP yang belum terkirim.
 Aturan aman: angka digabung memakai yang terbesar , bukan dijumlahkan, agar tidak membengkak.
+Laporan warga ganda
+Beberapa warga sering melaporkan kejadian yang sama. Laporan-laporan itu ditautkan ke satu laporan utama , sehingga korban tidak terhitung dua kali dan hanya satu posko yang menangani.
+Buka Laporan Masyarakat , bagian Antrian Laporan Masyarakat .
+Pada kartu laporan, tekan Cek laporan ganda . Tampil laporan lain yang mungkin sama, dengan alasannya (jarak atau nama desa).
+Tekan Laporan ini duplikat dari itu atau Itu duplikat dari laporan ini . Laporan duplikat diberi tanda Duplikat dari … .
+Bila keliru, tekan Batalkan duplikat pada laporan itu.
+Calon duplikat harus: bencana sama, jenis laporan sama, dibuat dalam selisih 48 jam , dan lokasinya sama — titik GPS paling jauh 2 km ; bila tidak ada GPS, desa (atau kecamatan) yang sama; bila tidak ada keduanya, teks lokasi yang sama persis.
+Siapa: mencari calon — pengelola posko mana pun yang menangani bencana itu, Control Centre, dan super admin. Menandai atau membatalkan — pengelola posko salah satu laporan, Control Centre, dan super admin.
+Jumlah korban satu kelompok = angka terbesar di antara laporan dalam kelompok itu, tidak dijumlahkan .
+Pelapor diberi tahu: laporan yang ditandai duplikat otomatis mendapat pesan di Laporan Saya bahwa laporannya dicatat sama dengan laporan lain dan posko mana yang menangani. Pelapor tetap bisa menambah info baru di utas itu.
+Bila laporan yang sudah punya duplikat ditandai duplikat dari laporan lain, duplikat-duplikatnya ikut pindah ke laporan utama yang baru.
+Kebutuhan logistik ganda
+Di Konsolidasi Data , tekan Check Duplicate . Daftar Duplicate Need Candidates menampilkan pasangan kebutuhan yang mungkin sama.
+Bila ingin pendapat kedua, tekan Analisa AI pada pasangan itu. Jawabannya: DUPLIKAT, BEDA, atau TIDAK JELAS, dengan alasan.
+Putuskan dengan salah satu dari tiga tombol: Needs Review (perlu diperiksa lagi), Not Duplicate (bukan duplikat), atau Confirm Duplicate (benar duplikat). Keputusan tersimpan bersama nama pemeriksa; memutus ulang pasangan yang sama akan memperbarui keputusan lama.
+Tekan Rebuild Consolidated Needs agar angka gabungan diperbarui.
+Calon pasangan: kebutuhan yang masih terbuka (atau perlu ditinjau) pada bencana yang sama dan kelompok barang yang sama, dari posko yang berbeda , dengan jarak antarposko paling jauh 3 km (atau desa yang sama bila posko belum punya GPS). Dua kebutuhan dari posko yang sama tidak dianggap duplikat.
+Aturan tanpa AI (juga dipakai saat AI tidak tersedia): DUPLIKAT bila satuannya sama, selisih jumlah paling banyak 10% , dan selisih waktu paling lama 48 jam . BEDA bila jumlahnya berbeda lebih dari 3 kali lipat , atau selisih waktunya lebih dari 48 jam dari posko berbeda. Selain itu TIDAK JELAS .
+AI hanya memberi saran. Yang memutuskan tetap petugas. Confirm Duplicate mencatat keputusan; kebutuhan aslinya tidak dihapus.
 36. Kebutuhan Publik
 Daftar barang yang benar-benar dibutuhkan sekarang, untuk donatur sebelum mengirim bantuan. Buka halaman →
 Siapa melihat apa
@@ -448,8 +501,39 @@ Semua orang: memasukkan kode trace dan melihat status serta serah terimanya.
 Langkah
 Ambil kode trace (RN-…) dari label kiriman, layar Kirim Bantuan, atau petugas posko.
 Ketik di kolom lalu tekan Lacak .
-Baca urutan status: dikirim, di jalan, serah kurir, tiba, diterima.
+Baca urutan langkah di layar: Direncanakan → Menunggu Dijemput → Berangkat → Dalam Perjalanan → Tiba di Tujuan → Diterima . Langkah yang sudah dilewati diberi waktu. Kiriman berantai menampilkan Perjalanan kiriman per kaki (estafet) dan serah-terima yang tercatat.
 Bagikan kode trace hanya kepada pihak yang perlu.
+Status kiriman (urutan lengkap)
+Setiap kiriman (alur distribusi) punya satu status. Status hanya boleh maju sesuai urutan di bawah; lompatan yang tidak diizinkan ditolak server dengan pesan "Transisi … tidak diperbolehkan".
+Status (kode) Tampil sebagai Arti Boleh lanjut ke
+planned Direncanakan Kiriman dibuat (Kirim stok, atau Otomatis Cocokkan). Menunggu Dijemput, Dibatalkan
+pickup_claimed Akan Dijemput (di Lacak: Menunggu Dijemput) Posko transporter mengambil tawaran bantuan dari antrean jemput. Menunggu Dijemput, Berangkat, Dalam Perjalanan, Dibatalkan
+assigned_pickup Menunggu Jemput / Menunggu Dijemput Armada atau kurir sudah ditetapkan, barang belum diangkut. Berangkat, Dalam Perjalanan, Dibatalkan
+dispatched Berangkat (di daftar posko: Dalam Perjalanan) Barang sudah keluar dari posko pengirim. Dalam Perjalanan, Tiba di Tujuan, Dibatalkan
+in_transit Dalam Perjalanan Barang sedang di jalan. Tiba di Tujuan, Dibatalkan
+arrived_at_posko Tiba di Tujuan Barang sampai di posko tujuan, belum dihitung masuk stok. Diterima sebagian, Diterima, Dibatalkan
+partially_received Diterima sebagian (di Lacak: Diterima) Sebagian jumlah sudah diterima dan masuk stok. Diterima sebagian lagi, Diterima
+received Diterima Selesai; jumlah yang diterima masuk stok posko tujuan. — (akhir)
+cancelled Dibatalkan / Batal Kiriman dibatalkan. — (akhir)
+Siapa memindahkan status & caranya
+Posko pengirim dan posko tujuan boleh memindahkan semua status yang diizinkan, termasuk membatalkan.
+Posko armada dan posko pembawa estafet boleh mencatat Menunggu Dijemput, Berangkat, Dalam Perjalanan, dan Tiba di Tujuan, tetapi tidak mencatat penerimaan akhir.
+Penerimaan (Diterima) hanya oleh posko tujuan, karena jumlahnya langsung masuk stok (lihat aturan satuan di bab 63 ).
+Cara paling mudah: Pindai Barcode / Serah Terima ( bab 38 ). Pilihan Kirim = Berangkat, Di jalan = Dalam Perjalanan, Tiba = Tiba di Tujuan, Terima = Diterima (stok bertambah). Serah kurir hanya mencatat serah-terima tanpa mengubah status. Bila kiriman masih Direncanakan, pindaian Kirim/Di jalan otomatis melewati Menunggu Dijemput lebih dulu.
+Di Detail Posko , kiriman masuk yang sudah tiba bisa diterima dengan tombol Verify Received .
+Paket beberapa barang
+Di Posko Logistik , tekan Kirim pada kartu stok seperti biasa.
+Tekan ＋ Tambah barang lain ke paket ini untuk setiap barang tambahan, lalu isi jumlahnya. Satu barang tidak boleh tercantum dua kali.
+Bila memakai armada atau transporter, isi Perkiraan berat (kg) untuk seluruh paket .
+Kirim. Satu paket = satu resi, satu label, satu armada . Tekan 🖨 Cetak label paket untuk label.
+Barang pertama menjadi kiriman utama (memegang booking, armada, dan resi). Barang lain mengikuti armada dan status kiriman utama sampai tiba. Setelah tiba, setiap barang diterima sendiri-sendiri dengan jumlahnya masing-masing (stok diperiksa per barang).
+Estafet (kiriman berpindah armada)
+Satu kiriman bisa punya beberapa kaki: Jemput ke titik serah , Armada utama , dan Estafet (kaki lanjutan berurutan, mis. kapal → truk → motor).
+Di Posko Distribusi → Booking Masuk , setelah booking terkonfirmasi posko pembawa melihat tombol Catat serah-terima dan Teruskan estafet .
+Teruskan estafet : pilih armada lain yang melayani bencana itu, isi muatan, lalu tekan Booking tempat kaki estafet . Kaki estafet adalah booking biasa: posko armada berikutnya menekan Konfirmasi atau Tolak (dengan PIN bila diminta).
+Kaki estafet tidak mengganti armada utama. Lacak Kiriman menampilkan urutan semua kaki.
+Otomatis Cocokkan
+Di Manajemen Distribusi , pengguna yang login bisa menekan Otomatis Cocokkan ⚡ . Sistem mencari kebutuhan terbuka dan tawaran bantuan (status Tersedia, Siap, atau Perlu Jemput) dengan nama barang yang sama , ditambah satu armada yang statusnya tersedia, lalu membuat paling banyak 5 kiriman berstatus Direncanakan . Jumlahnya = yang lebih kecil antara kebutuhan dan tawaran. Kebutuhan atau tawaran yang sudah punya kiriman dilewati. Hasilnya rencana: lanjutkan lewat alur kirim dan booking biasa.
 38. Pindai Barcode / Serah Terima
 Mencatat setiap perpindahan tangan kiriman dengan memindai QR atau barcode. Buka halaman →
 Siapa melihat apa
@@ -568,7 +652,7 @@ Alat Kegunaan
 🚨 Triase Laporan Warga Mengelompokkan laporan warga tentang kejadian yang sama dan menandai yang darurat.
 📦 Prakiraan Stok Habis Perkiraan sisa hari stok per posko dan barang, plus saran pemindahan dari posko yang surplus.
 💬 Tanya Jawab Berujukan Jawaban yang menyebut ID data sumber agar bisa dicek.
-🌏 Dampak Gempa BMKG Posko dalam radius 200 km dari gempa terbaru, penilaian dampak, dan tindakan.
+🌏 Dampak Gempa BMKG Posko aktif dalam radius tetap 200 km dari gempa BMKG terbaru, penilaian dampak, dan tindakan.
 🔎 Cek Kejanggalan Data yang perlu dicek: tawaran kembar, lonjakan stok, jumlah atau harga tender tidak wajar.
 📷 Analisis Foto Bukti Menilai kerusakan, perkiraan tinggi banjir, bahaya, dan kebutuhan dari satu foto.
 🚚 Rencana Pengiriman Usulan siapa mengirim apa ke mana dari kebutuhan, stok posko lain, dan armada.
@@ -583,7 +667,7 @@ SITREP AI : pilih periode (24 jam sampai 7 hari). Angka penting diberi rujukan b
 Triase Laporan Warga : AI membaca teks laporan (termasuk bahasa sehari-hari), membuat kelompok kejadian dengan tingkat urgensi 1–5, dan daftar laporan darurat (orang terjebak, lansia, butuh evakuasi). Nama dan nomor HP pelapor tidak dikirim ke AI.
 Prakiraan Stok Habis : sisa hari dihitung sistem dari riwayat stok (kritis ≤3 hari, waspada ≤7 hari); AI menulis saran realokasi dari posko yang stoknya berlebih.
 Tanya Jawab Berujukan : tulis pertanyaan bebas; setiap fakta dalam jawaban diberi ID data sumber, dan ada daftar rujukan di akhir.
-Dampak Gempa BMKG : memakai peringatan gempa BMKG terbaru; jarak posko dihitung sistem, AI menilai dampak dan menyusun tindakan 0–6 jam dan 6–24 jam.
+Dampak Gempa BMKG : memakai peringatan gempa BMKG terbaru. Sistem menghitung jarak setiap posko aktif yang boleh Anda lihat dan mengambil yang berjarak paling jauh 200 km (angka tetap, berapa pun magnitudonya). AI menilai dampak dan menyusun tindakan 0–6 jam dan 6–24 jam. Jarak bukan ukuran kuatnya guncangan. Berbeda dengan daftar posko di Pengumuman BMKG (Kelola Bencana), yang radiusnya mengikuti magnitudo: 100 km pada M5 sampai paling jauh 300 km — lihat bab 67 .
 Cek Kejanggalan : sistem mencari kandidat (tawaran bantuan kembar dalam 48 jam, stok naik/turun >5 kali, jumlah kebutuhan jauh di atas kebiasaan, harga penawaran tender jauh dari median, laporan warga hampir sama dari lokasi berbeda); AI menjelaskan dan menilai. Hasilnya "perlu dicek" , bukan tuduhan.
 Analisis Foto Bukti : pilih atau potret foto (JPG/PNG/WEBP, maks. 4 MB) dan beri catatan lokasi. AI menilai jenis bencana, tingkat kerusakan, perkiraan tinggi air, bahaya, kebutuhan yang terlihat, dan hal yang perlu dicek (misalnya foto tampak lama atau tidak relevan). Foto tidak disimpan ; hanya hasil analisisnya. AI tidak mengenali identitas orang.
 Rencana Pengiriman : sistem mencocokkan kebutuhan terbuka dengan posko lain yang punya stok barang sama (urut terdekat) dan armada yang masih punya ruang; AI menyusun tabel usulan. Rencana harus disetujui pengelola posko sebelum dijalankan lewat menu distribusi seperti biasa.
@@ -746,6 +830,7 @@ Kepemilikan data: data dimiliki node yang membuatnya (mis. posko milik node prov
 Yang dipertukarkan (dapat diatur per node): bencana lintas wilayah/batas negara, kebutuhan kritis, tawaran bantuan & armada, ketersediaan relawan, SITREP. Data pribadi tidak dipertukarkan kecuali ada dasar hukum & persetujuan.
 Protokol: kotak keluar (outbox) per node yang dikirim berkala lewat HTTPS, ditandatangani kunci node (HMAC/tanda tangan digital), bisa diulang bila gagal; node di wilayah terputus mengirim ulang saat tersambung. Format: OCHA SitRep, EDXL-SitRep, CAP 1.2 untuk peringatan, HXL untuk tabel, P-code untuk wilayah.
 Node pusat penghubung (opsional) meneruskan pesan antar-node yang tidak saling terhubung langsung, tanpa menyimpan data pribadi.
+Yang sudah berjalan (19 November 2026): jalur sinkronisasi kirim (push) dan ambil (pull) data lewat server Rescue-Net, khusus akun Control Centre dan super admin. Setiap data masuk dicatat sekali saja (tidak dobel). Baru 2 jenis data yang langsung diterapkan otomatis: laporan masyarakat baru dan permintaan sumber daya baru . Jenis lain disimpan untuk ditinjau manusia, tidak langsung mengubah data. Pendaftaran node partner di Konsolidasi Data → Federation Repository masih rintisan.
 Internasional: tiap negara menjalankan node sendiri (bahasa, nama, logo, aturan lembaga sendiri) dan memilih data apa yang dibagikan ke jaringan regional/internasional (mis. ASEAN, jaringan kemanusiaan PBB).
 61. Keamanan & kepatuhan
 Tidak ada port server yang dibuka langsung ke internet: akses publik lewat terowongan terenkripsi & CDN; halaman admin hanya dari jaringan internal.
@@ -758,6 +843,213 @@ Tahap Isi Status
 1 Node tunggal di server khusus, cadangan harian ke lokasi lain, pemantauan sedang dipindahkan
 2 Web digandakan + database/Redis/pekerja terpisah + uji beban 1.000 pengguna rencana
 3 Multi-server, replika database, penyimpanan bersama, lokasi kedua rencana
-4 Federasi: protokol pertukaran, node provinsi/lembaga, lalu node negara rintisan desain ada; rencana
+4 Federasi: protokol pertukaran, node provinsi/lembaga, lalu node negara sinkron push/pull sudah berjalan (2 jenis data diterapkan otomatis, lainnya disimpan untuk ditinjau); node provinsi/lembaga/negara: rencana
 Rincian teknis (susunan server, perintah, kata sandi) tidak dimuat di halaman publik ini; tersedia di Manual Teknis dan dokumentasi internal tim.
+63. Satuan, konversi & rekap stok
+Barang yang sama sering dicatat dengan satuan berbeda: beras dalam karung atau kg, air minum dalam dus atau liter. Rescue-Net mengubahnya ke satu satuan dasar (kg, liter, bungkus, pcs) memakai Tabel Konversi Satuan , supaya angka antarposko bisa dijumlahkan dan dibandingkan.
+Siapa melihat apa
+Super admin: mengubah Tabel Konversi Satuan (di Desk, data RN Unit Conversion ). Belum ada halaman khusus untuk pengguna lain.
+Petugas posko: melihat rekap Kelompok Barang di Posko Logistik dan mengoreksi barang milik poskonya.
+Semua orang: melihat hasilnya di Kebutuhan Publik dan Control Centre.
+Isi tabel konversi & urutan aturannya
+Setiap baris berbunyi "1 satuan = angka satuan dasar ". Contoh isi bawaan: 1 karung beras = 25 kg, 1 galon air minum = 19 liter, 1 dus air minum = 5,76 liter, 1 dus mie instan = 40 bungkus, 1 pak mie instan = 5 bungkus, 1 lusin = 12 pcs, 1 kodi = 20 pcs, 1 gross = 144 pcs.
+Untuk satu barang, sistem mencari aturan dengan urutan ini, dan memakai yang pertama cocok:
+Aturan untuk nama barang persis itu.
+Aturan untuk barang baku hasil pengelompokan AI (mis. "Aqua" dikenali sebagai Air Minum Kemasan).
+Aturan untuk kelompok barang (mis. Bahan Pangan: 1 karung = 25 kg).
+Aturan umum untuk semua barang (lusin, kodi, gross).
+Dua satuan hanya bisa dikonversi bila keduanya berujung pada satuan dasar yang sama (karung → kg ← kg). Bila tidak ada aturan, sistem tidak menebak .
+Label standar dan perkiraan
+Standar : ukurannya pasti (mis. 1 lusin = 12 pcs, 1 galon = 19 liter).
+Perkiraan : isi kemasan bisa berbeda (mis. 1 karung beras ≈ 25 kg, 1 dus air ≈ 5,76 liter). Hasil yang memakai aturan perkiraan diberi tulisan "perkiraan" dan perlu ditinjau.
+Rekap Kelompok Barang: Terukur, Perkiraan AI, Belum Terukur
+Panel Kelompok Barang (Normalisasi AI) di Posko Logistik menggabungkan barang sejenis dari banyak posko (tawaran, kebutuhan, dan stok). Kolomnya: Kelompok, Satuan Dasar, Terukur, Perkiraan AI, Total, Belum Terukur, Catatan / Sebaran, Review.
+Terukur : jumlah pasti dengan konversi yang dipercaya (isi kemasan jelas, aturan standar, atau sudah dalam satuan dasar).
+Perkiraan AI : memakai konversi perkiraan, atau jumlahnya diisi sebagai perkiraan/rentang (rentang dihitung nilai tengahnya).
+Total = Terukur + Perkiraan AI.
+Belum Terukur : banyaknya baris tanpa angka jelas atau dengan kemasan tidak baku. Jumlahnya tidak ikut dihitung.
+Klik baris kelompok untuk membuka rinciannya per posko.
+Tekan Koreksi pada baris yang salah: ubah satuan, isi per kemasan, kuantitas dasar, pindah kelompok, atau centang Tandai kuantitas akurat .
+Tekan Simpan koreksi . Untuk menyatukan beberapa baris ke satu kelompok, tekan Jadikan Satu .
+Mengoreksi kelompok boleh dilakukan petugas posko pemilik baris itu. Mengubah jumlah atau satuan stok hanya boleh oleh operator posko pemilik stok.
+Saat menerima barang ke stok
+Bila barang datang dalam satuan lain dari satuan stok posko (mis. 10 karung untuk stok beras dalam kg), sistem mengonversinya otomatis dan menulis catatan, mis. "Dikonversi: 10 karung = 250 kg (tabel konversi, perkiraan)".
+Ditolak bila tidak ada aturan konversi. Pesannya: "Stok … di posko ini dicatat dalam satuan kg, bukan karung. Isi … dalam kg". Hitung sendiri jumlahnya dalam satuan stok, lalu ulangi.
+Ditolak bila catatan stok terakhir barang itu bukan angka pasti (masih perkiraan). Pesannya: "Stok terakhir bukan quantity exact. Verifikasi stok terlebih dahulu". Hitung dan catat ulang stok dengan jumlah pasti, lalu terima barangnya.
+Angka "kurang" di Kebutuhan Publik
+Untuk setiap posko yang dibuka ke publik, per barang dan satuan yang sama:
+kurang = kebutuhan terbuka − stok tersedia − kiriman dalam perjalanan
+Kiriman dalam perjalanan = kiriman ke posko itu yang belum Diterima dan belum Dibatalkan .
+Stok yang sudah lewat tanggal kedaluwarsa tidak dihitung sebagai stok tersedia ( bab 64 ).
+Kurang lebih dari 0 → tampil di Dibutuhkan sekarang dengan tulisan "kurang angka satuan ". Kurang 0 atau kurang dari 0 → tampil di Sudah cukup — jangan kirim lagi .
+Hitungannya sama di setiap layar dan tidak memakai AI.
+64. Kedaluwarsa per lot (FEFO)
+Obat dan makanan punya tanggal kedaluwarsa. Rescue-Net mencatatnya per lot : sejumlah barang dengan tanggal kedaluwarsa yang sama. Tujuannya agar barang yang paling dulu kedaluwarsa dikeluarkan lebih dulu ( FEFO — first expired, first out ) dan barang kedaluwarsa tidak dibagikan.
+Siapa melihat apa
+Petugas posko (dan super admin): melihat dan menambah lot posko sendiri. Data stok ini tidak publik .
+Publik hanya melihat akibatnya: stok kedaluwarsa tidak dihitung di Kebutuhan Publik.
+Cara mencatat lot
+Saat bantuan masuk: di Posko Logistik, panel Tambah Bantuan Tersedia , isi nomor batch dan tanggal kedaluwarsa . Saat bantuan diterima, lot tercatat otomatis (lihat bab 19 ).
+Untuk stok yang sudah ada: buka Kelola Posko Saya → panel Stok kedaluwarsa → + Beri tanggal kedaluwarsa pada stok .
+Isi Barang , Satuan , Jumlah , Tanggal kedaluwarsa , dan bila ada No. batch , lalu tekan Simpan . Ini tidak mengubah jumlah stok , hanya memberi tanggal.
+Bisa juga lewat Tanya AI ("beri tanggal kedaluwarsa…") lalu tekan Jalankan ( bab 69 ).
+Cara sistem menghitung (FEFO)
+Sistem menganggap barang yang sudah dipakai/keluar diambil dari lot yang paling dulu kedaluwarsa . Jadi sisa stok dianggap berada di lot yang paling akhir kedaluwarsa.
+Bila stok lebih banyak dari jumlah semua lot, kelebihannya dianggap tanpa tanggal. Lot yang sudah habis tidak ditampilkan.
+Status tiap lot: Sudah kedaluwarsa (tanggal sudah lewat), Segera kedaluwarsa (tinggal 30 hari atau kurang; untuk barang medis 60 hari atau kurang), dan Aman .
+Barang dianggap medis bila nama atau kategorinya mengandung kata: obat, medis, kesehatan, vaksin, infus, atau antibiotik.
+Di mana tampil
+Kelola Posko Saya → Stok kedaluwarsa : tabel Barang, Lot, Kedaluwarsa, Sisa, Status, urut dari yang paling dulu kedaluwarsa.
+Kelola Posko Saya → Perlu tindakan : baris Stok sudah / segera kedaluwarsa dengan jumlahnya.
+Pemberitahuan harian : sekali sehari, posko yang punya lot kedaluwarsa atau segera kedaluwarsa menerima pesan WhatsApp "Rescue-Net: X barang kedaluwarsa dan Y segera kedaluwarsa di posko Anda. Cek stok." Pesan hanya terkirim bila notifikasi WhatsApp posko diaktifkan dan nomornya diisi ( bab 45 ).
+Kebutuhan Publik : jumlah yang sudah kedaluwarsa dikurangkan dari stok tersedia.
+Bagikan lebih dulu lot yang paling dekat tanggalnya. Pisahkan barang yang sudah kedaluwarsa dan jangan dibagikan, lalu perbarui catatan stok.
+65. Pengarahan laporan & antrean pilah
+Saat warga mengirim Laporan Masyarakat , sistem memilih posko tujuan secara otomatis dengan skor yang bisa dijelaskan. Skor dan alasannya disimpan di laporan.
+Posko yang ikut dinilai
+Posko yang menangani bencana laporan itu. Bila laporan tidak menyebut bencana: posko di semua bencana aktif (bencana latihan tidak ikut).
+Posko berstatus offline, nonaktif, atau ditutup tidak ikut.
+Cara menghitung skor
+Unsur Poin
+Wilayah sama (memakai kode wilayah Kemendagri bila laporan dan posko sama-sama punya kode; bila tidak, nama wilayah) desa 40 · kecamatan 30 · kabupaten/kota 20 · provinsi 5
+Bila wilayah tidak dipilih: nama desa/kecamatan/kota posko disebut di teks lokasi atau cerita desa 35 · kecamatan 25 · kabupaten/kota 15
+Jarak (bila laporan dan posko punya titik GPS) sampai 40 bila sangat dekat, turun rata sampai 0 pada 50 km (mis. 25 km = 20 poin)
+Di dalam radius layanan posko +10
+Fungsi posko cocok dengan jenis laporan +15
+Fungsi cocok : laporan orang sakit → posko medis; kebutuhan shelter → posko shelter/pengungsian; butuh bantuan, kekurangan air, akses jalan tertutup → posko logistik/umum; orang hilang/ditemukan → posko Search & Found / SAR.
+Untuk laporan medis, shelter, dan orang hilang , posko yang fungsinya cocok didahulukan, asalkan skor lokasinya sendiri (tanpa +15) sudah paling sedikit 20.
+Posko dengan skor tertinggi dipilih. Bila skor tertinggi di bawah 20 , laporan tidak diarahkan dan tertulis "Belum ada posko yang cocok — menunggu triase Control Centre."
+Alasannya tampil di kartu laporan sebagai baris posko tujuan, mis. "Posko X: desa sama (kode), 3.2 km, fungsi posko cocok". Pada Cukup ceritakan , usulan posko tujuan sudah tampil sebelum laporan dikirim.
+Antrean pilah: Antrian Laporan Masyarakat
+Buka Laporan Masyarakat , gulir ke Antrian Laporan Masyarakat .
+Saring dengan Status : Semua, Submitted, Needs verification, Verified, Escalated, Converted, Rejected.
+Pada kartu laporan pilih tindakan: Triage , Verify , Escalate , Reject , atau Convert Logistik (ubah menjadi kebutuhan logistik). Tekan Cek laporan ganda untuk mencari laporan kembar ( bab 35 ).
+Petugas berwenang (pengelola posko tujuan, super admin, verifikator aktif) melihat tombol Hubungi pelapor . Nomor HP/email hanya tampil bila pelapor bersedia dihubungi, dan setiap pembukaan kontak tercatat.
+Siapa boleh mengubah status atau mengonversi: pengelola posko tujuan laporan itu, Control Centre, dan super admin. Laporan yang belum punya posko hanya oleh Control Centre dan super admin.
+Mengalihkan laporan ke posko lain
+Pengelola posko yang menangani bencana itu menekan Tangani laporan ini (posko saya) . Laporan pindah ke posko yang terhubung dengan akun Anda; status Submitted menjadi Triaged ; pelapor dan posko sebelumnya melihat catatan "Ditangani oleh …"; tindakan ini tercatat di Jejak Audit. Laporan yang sudah ditolak tidak bisa diambil.
+Control Centre dan super admin boleh mengalihkan laporan ke posko mana pun pada bencana yang sama. Saat ini belum ada tombol pilih posko di layar; pengalihan dilakukan oleh super admin lewat sistem, dan alasannya tercatat "Dialihkan manual ke …".
+66. Verifikasi, skor risiko & verifikator
+Halaman Sistem Verifikasi menampung semua pengajuan yang perlu diputuskan manusia: akun/peran, organisasi, posko, kebutuhan, pengeluaran, dan bukti.
+Siapa melihat apa
+Super admin: memutus semua jenis, termasuk permintaan peran akun ( User ) — jenis ini hanya oleh super admin.
+Petugas posko, petugas medis, petugas shelter: boleh memutus Organisasi, Posko, Needs, Expense, dan Evidence milik pihak lain.
+Publik: hanya angka ringkas; daftar dan detail antrean (termasuk email/HP pendaftar) hanya untuk verifikator/admin.
+Langkah
+Buka Sistem Verifikasi → Pengajuan Verifikasi → Antrian Persetujuan .
+Pilih tab jenis (Semua, User, Organisasi, Posko, Needs, Expense, Evidence), atau saring dengan kolom cari, status, dan risiko.
+Klik baris. Baca Detail Item , Alur Persetujuan , dan Jejak Audit .
+Di panel Tindakan tekan Approve (setujui), Reject (tolak), Request Revision (minta perbaikan), atau Escalate (naikkan prioritas — urgensinya menjadi kritis). Catatan boleh diisi (maks. 500 huruf).
+Keputusan tersimpan di log persetujuan dan pembuat pengajuan mendapat pemberitahuan.
+Skor risiko (kolom Risk)
+Skor 0–100 adalah rata-rata biasa dari tiga tanda (tanpa bobot tersembunyi):
+Identitas Pembuat: pembuat tidak diketahui atau tanpa akun 20; akun terdaftar 40, ditambah 30 bila ada nomor HP dan 30 bila ada email.
+Rekam Jejak: persen pengajuan pembuat sebelumnya yang disetujui. Belum pernah ada keputusan: 50.
+Kelengkapan Bukti: 0 bukti = 0; 1 bukti = 50; 2 bukti = 75; 3 bukti atau lebih = 100.
+Label: Rendah bila skor 75 atau lebih, Sedang bila 50–74, Tinggi bila di bawah 50. Skor hanya membantu memilah; keputusan tetap di tangan petugas.
+Pengaman agar tidak salah proses
+Item yang sudah diputuskan tidak bisa diputus ulang oleh petugas ("Item ini sudah diputuskan"); hanya super admin yang bisa.
+Tidak boleh memverifikasi data buatan sendiri, organisasi sendiri, posko yang Anda kelola, atau posko organisasi sendiri.
+Persetujuan "jadi petugas posko" dikunci per akun saat diproses, sehingga dua admin yang menekan bersamaan tidak memprosesnya dua kali.
+Jaringan Verifikator (Trusted Verifier)
+Menjadi verifikator: Sistem Verifikasi → Verifikator → Jadi Verifikator , isi formulir, tekan Ajukan . Disetujui super admin atau verifikator senior (tingkat kepercayaan 2 ke atas). Verifikator yang disponsori verifikator senior mendapat tingkat satu di bawah sponsornya (paling rendah 1).
+Meminta verifikasi posko: pengelola posko membuka Sistem Verifikasi → Pengajuan Verifikasi → Permintaan ke Verifikator → panel Verifikasi Posko Saya , lalu tekan Minta Verifikasi .
+Memberi endorsement: verifikator membuka Permintaan ke Verifikator → Kotak Masuk Verifikator , lalu Respons Permintaan Verifikasi → Kirim Keputusan . Cara verifikasi: kunjungan lapangan, rekomendasi jaringan (wajib menulis "direkomendasikan via" siapa), atau pemeriksaan dokumen. Verifikator tidak boleh meng-endorse posko yang ia kelola atau posko organisasinya sendiri, dan tidak bisa meng-endorse posko yang sama dua kali.
+Pengaruh ke status posko: 1 endorsement aktif → terverifikasi komunitas . 2 endorsement atau lebih, atau 1 endorsement dari verifikator pemerintah bertingkat 2 ke atas → terverifikasi resmi . Hanya endorsement dari verifikator yang masih aktif yang dihitung.
+Posko yang ditolak atau diminta perbaikan oleh peninjau tidak berubah karena endorsement. Bila semua endorsement dicabut, status yang berasal dari endorsement kembali ke lapor mandiri .
+Mencabut: buka Data Hasil Verifikasi → Endorsement , lalu tekan Cabut . Hanya verifikator yang memberi endorsement itu atau super admin. Waktu, pencabut, dan alasannya tercatat; endorsement yang sudah dicabut tidak bisa dicabut lagi.
+Bila profil verifikator ditangguhkan atau dicabut, endorsement-nya tidak dihitung lagi.
+Masa berlaku: endorsement berlaku sampai dicabut. Data endorsement punya kolom tanggal berakhir; bila diisi, endorsement untuk pelapor yang sudah lewat tanggalnya tidak dihitung. Formulir saat ini belum mengisi tanggal itu.
+67. Peta Nasional & peringatan dini BMKG
+Peta Nasional
+Halaman Peta Nasional menggambarkan semua bencana aktif sekaligus, digabung per provinsi. Bisa dibuka siapa saja tanpa login.
+Kartu angka: Provinsi Terdampak, Total Posko, Terverifikasi, Bencana Aktif, Jiwa Dilayani.
+Sebaran Posko: titik = posko yang punya koordinat. Warna mengikuti tingkat keparahan bencananya: merah (critical), oranye (urgent), biru (normal). Pilih Provinsi untuk menyaring.
+Rollup per Provinsi: kolom Provinsi, Severity, Bencana, Posko, Terverifikasi, Kebutuhan Terbuka, Jiwa. Provinsi dengan keparahan tertinggi di atas. Posko tanpa provinsi tercatat sebagai "Belum Terdata".
+Hanya bencana aktif. Posko dan bencana latihan tidak masuk angka nasional.
+Peringatan dini gempa BMKG
+Setiap 10 menit Rescue-Net mengambil data gempa terbaru dari BMKG (data.bmkg.go.id). Setiap gempa disimpan sekali saja dan berlaku 48 jam .
+Gempa dianggap melewati ambang bila: magnitudo 5,0 atau lebih , kedalaman 100 km atau kurang , dan titiknya di dalam kotak wilayah Indonesia (lintang −12 sampai 6,5; bujur 94 sampai 142).
+Tingkat: M 6,5 ke atas = kritis; M 5,5 ke atas = tinggi; selain itu = sedang.
+Untuk gempa yang melewati ambang, sistem mendaftar posko di sekitarnya dengan radius mengikuti magnitudo: 100 km pada M5 , bertambah 100 km per kenaikan 1 magnitudo, paling jauh 300 km (M6 = 200 km, M7 ke atas = 300 km). Super admin mendapat pemberitahuan "Pengumuman BMKG: … — bukan bencana".
+Gempa tidak otomatis menjadi bencana. Super admin membuka Kelola Bencana → Pengumuman BMKG , melihat jumlah posko di radius, lalu menekan Jadikan bencana (hanya bila sudah dinyatakan sebagai bencana) atau Abaikan . "Jadikan bencana" membuat bencana aktif berjenis gempa dengan lokasi dan waktu dari BMKG, dan langsung diperiksa kemiripannya dengan bencana lain ( bab 33 ).
+Di mana tampil: spanduk di Bencana Aktif dan Control Centre — "Peringatan gempa BMKG (seluruh Indonesia)" untuk gempa yang melewati ambang, atau "Gempa terkini BMKG" (3 terbaru). Selalu bertuliskan bahwa data belum diverifikasi Rescue-Net. Bila BMKG tidak bisa dihubungi tampil "Data BMKG tidak terjangkau saat ini". SITREP juga punya bagian Peringatan & gempa BMKG .
+Ekspor CAP 1.2 untuk sistem peringatan lain: di SITREP bagian API, tautan cap_alerts (daftar) dan satu peringatan lewat cap_alert . Isinya hanya peringatan yang melewati ambang, belum diabaikan, dan belum lewat 48 jam; lingkaran wilayahnya memakai radius 100–300 km di atas. Tingkat CAP: M 7 ke atas Extreme, M 6 ke atas Severe, selain itu Moderate. Terbuka tanpa login.
+Beda dengan Analis AI: alat Dampak Gempa BMKG di bab 47 memakai radius tetap 200 km dan hanya posko aktif yang boleh Anda lihat.
+Kode wilayah Kemendagri
+Wilayah di Rescue-Net memakai kode resmi Kemendagri (Permendagri 72/2019) yang bertitik: provinsi 2 angka (mis. 11 ), kabupaten/kota 11.01 , kecamatan 11.01.01 , desa/kelurahan 11.01.01.2001 . Kode ini dipakai pada pilihan lokasi berjenjang (Laporan Masyarakat, Bencana Aktif) dan pada pengarahan laporan: bila laporan dan posko sama-sama berkode, kodenya yang menentukan, sehingga desa bernama sama di kota lain tidak dianggap sama.
+68. Keamanan akun: verifikasi dua langkah (2FA)
+Dengan 2FA, login meminta kode 6 angka dari aplikasi authenticator di HP (Google Authenticator, Microsoft Authenticator, dan sejenisnya) setelah kata sandi. Tidak memakai email atau SMS.
+Mengaktifkan untuk akun sendiri
+Pasang aplikasi authenticator di HP Anda.
+Login, buka Setting → bagian Verifikasi Dua Langkah (2FA) .
+Tekan Siapkan aplikasi authenticator . Kode QR muncul.
+Di aplikasi authenticator pilih tambah akun, lalu pindai QR. Bila tidak bisa memindai, ketik kunci manual yang tampil di bawah QR.
+Ketik kode 6 angka dari aplikasi di kolom Kode dari aplikasi , lalu tekan Aktifkan untuk akun saya .
+Status berubah menjadi "✅ Aktif untuk akun Anda".
+Bila muncul "Kode tidak cocok": pastikan jam HP diatur otomatis, lalu ketik kode yang terbaru (kode berganti setiap 30 detik).
+Login dengan kode
+Setelah email dan kata sandi, halaman Masuk menampilkan kolom Kode verifikasi (6 digit) . Buka aplikasi authenticator, ketik kodenya, lalu masuk.
+Wajib untuk siapa
+Super admin (System Manager) bisa menekan Wajibkan 2FA untuk semua System Manager di bagian yang sama. Tombol ini hanya berhasil bila ia sendiri sudah menyelesaikan penyiapan 2FA, supaya tidak terkunci. Untuk mematikannya: Matikan kewajiban 2FA untuk admin .
+Saat kewajiban aktif, semua System Manager harus memasukkan kode setiap login.
+Catatan jujur: kode diminta saat login hanya bila 2FA diwajibkan untuk peran akun Anda. Saat ini kewajiban hanya tersedia untuk System Manager. Bagi akun lain, menyiapkan authenticator sekarang adalah persiapan.
+Bila HP hilang atau aplikasi terhapus
+Tidak ada tombol atur-ulang mandiri. Hubungi super admin.
+Super admin mengatur ulang rahasia kode akun Anda di Desk (data User → Reset OTP Secret ). Setelah itu, siapkan ulang lewat langkah di atas.
+Bila yang kehilangan HP adalah super admin, minta System Manager lain melakukannya. Simpan kunci manual di tempat aman sebagai cadangan.
+69. Tanya AI, tombol Jalankan & batas AI
+Tanya AI
+Tombol 🤖 Tanya AI ada di pojok kiri bawah setiap halaman. Perlu login.
+Kunci yang dipakai, berurutan: kunci pribadi Anda → kunci organisasi yang dibagikan ke anggota → kunci platform. Bila belum ada kunci, kuota habis, atau kunci ditolak, Tanya AI menjelaskan sebabnya dan menunjuk ke Setting .
+AI bisa menjawab cara pakai dari manual ini, mencari data Rescue-Net (posko, organisasi, bencana, kebutuhan terbuka), dan — hanya untuk posko yang Anda kelola — melihat pekerjaan tertunda, stok, kedaluwarsa, dan peringatan posko itu. Gambaran operasional penuh hanya untuk super admin dan Control Centre.
+Tombol Jalankan
+Bila pertanyaan Anda berupa perintah (mis. "catat stok beras 50 kg di posko saya"), AI bisa mengusulkan paling banyak 4 tindakan. Setiap tindakan tampil dengan tombol Jalankan .
+Baca isinya. Tekan Jalankan , lalu setujui pertanyaan "Jalankan: …?".
+Tindakan dijalankan atas nama Anda dan dengan hak akun Anda , lewat pemeriksaan server yang sama dengan halaman biasa. Bila Anda tidak berhak: "Anda tidak berhak menjalankan aksi ini." AI sendiri tidak pernah mengubah data.
+Tindakan yang boleh diusulkan AI Siapa yang bisa menjalankan
+Kirim posisi GPS HP sekarang untuk armada pengelola armada itu
+Ubah status armada (tersedia, dipesan, ditugaskan, dalam perjalanan, tiba, selesai) pengelola armada itu
+Ubah status operasional posko (aktif, siaga, dikurangi, menutup, offline) pengelola posko (di organisasi terpusat menunggu persetujuan pusat)
+Isi dukungan komunikasi yang ditawarkan/dibutuhkan posko pengelola posko
+Beri tanggal kedaluwarsa pada stok pengelola posko
+Ubah kontak posko (PIC, jabatan, HP, WhatsApp, kontak darurat) pengelola posko
+Tambah kebutuhan posko (urgensi normal/urgent/critical; urgent dan critical wajib jumlah jiwa) pengelola posko
+Catat stok terkini satu barang pengelola posko
+Terima atau tolak permintaan relawan ke posko pengelola posko
+Ubah profil relawan sendiri (keahlian, peralatan, waktu tersedia, lokasi) relawan pemilik profil
+Tindakan di luar daftar ini tidak bisa dijalankan dari Tanya AI; AI hanya menunjukkan halaman yang harus dibuka.
+Batas pemakaian
+Batas token harian dan bulanan per kunci, diatur pemilik kunci di Setting (0 = tanpa batas). Pemilik mendapat pemberitahuan saat pemakaian mencapai 80% dan saat habis .
+Bila kunci organisasi atau platform habis, pemakainya mendapat pemberitahuan untuk memasang kunci sendiri: "Anggaran AI bersama … habis".
+Batas permintaan per jam: 60 per pengguna, 300 per kunci organisasi, 600 untuk kunci platform. Bila lewat: "Terlalu banyak permintaan AI dalam satu jam. Coba lagi nanti."
+Bila pengelola mematikan AI untuk suatu konteks: "AI dinonaktifkan oleh pengelola untuk konteks ini."
+Kunci organisasi (admin organisasi)
+Setting → Kunci AI Organisasi → Simpan Kunci AI Organisasi : pilih penyedia dan model, tempel API key, tekan Simpan Kunci Org . Periksa dengan Cek Status atau Uji Koneksi .
+Di Bagikan ke anggota & batas token , centang "Anggota yang sudah disetujui boleh memakai kunci organisasi ini…", isi batas token harian dan bulanan, lalu tekan Simpan Pembagian & Batas .
+AI Platform (super admin)
+Setting → Kunci AI Platform : Simpan Kunci Platform , Uji Koneksi , Hapus Kunci .
+Di Kunci platform untuk semua bencana : batas token harian/bulanan dan centang Matikan kunci platform (AI bersama nonaktif) , lalu Simpan Batas Platform .
+Kunci platform dipakai fitur publik (mis. "Cukup ceritakan" di Laporan Masyarakat dan pemilihan posko tujuan) serta pengguna yang tidak punya kunci pribadi maupun kunci organisasi.
+AI lokal
+Organisasi bisa memakai model AI di servernya sendiri (mis. Ollama, vLLM, llama.cpp) lewat alamat yang kompatibel OpenAI. Belum ada formulir di Setting: admin organisasi atau super admin mengaturnya lewat profil AI. Alamat harus http/https, tanpa kata sandi di dalam alamat; alamat metadata cloud ditolak, sedangkan alamat jaringan lokal (LAN) boleh.
+Antrean AI (coba lagi otomatis)
+Pekerjaan yang datang saat AI tidak tersedia (mis. laporan warga yang belum diolah, kebutuhan yang belum terkelompok) disimpan di antrean dan diberi label "belum diproses AI".
+Setiap jam , paling banyak 20 pekerjaan dicoba lagi. Selama AI masih tidak tersedia, percobaan tidak dihitung. Bila terjadi galat, percobaan dihitung; setelah 5 kali gagal pekerjaan dihentikan.
+Hasilnya menjadi usulan (draft) yang diterima atau ditolak petugas; data asli tidak diubah langsung.
+70. Sub Admin organisasi
+Sub Admin adalah anggota organisasi yang diberi wewenang menjalankan sebagian atau semua posko organisasi, tanpa menjadi admin organisasi.
+Siapa yang menunjuk
+Admin organisasi (pemilik organisasi) atau super admin.
+Hanya anggota yang keanggotaannya sudah disetujui . Pengelola dan wakil organisasi tidak perlu dijadikan Sub Admin.
+Langkah menunjuk
+Buka Koordinasi Organisasi , cari kartu anggota.
+Tekan Jadikan Sub Admin (bila sudah Sub Admin: Ubah Sub Admin ).
+Centang Semua posko organisasi (termasuk posko baru), atau centang posko tertentu — paling sedikit satu. Posko di bawah posko yang dipilih ikut dipegang.
+Tekan Simpan Sub Admin . Kartu anggota menampilkan tanda Sub Admin dan "Sub Admin atas: …".
+Untuk mencabut: Ubah Sub Admin → Cabut Sub Admin . Ia kembali menjadi anggota biasa.
+Yang bisa dan tidak bisa
+Bisa: menjalankan penuh posko dalam cakupannya — logistik, stok, armada, booking, pengaturan posko, dan menempatkan anggota. Posko itu tampil di Kelola Posko Saya .
+Bisa membuat posko baru: di Organisasi & Posko → Tambah Posko / Node , pilih Posko induk (opsional) = posko yang ia kelola. Posko baru otomatis masuk cakupannya dan langsung bisa dikelola. Di organisasi komando terpusat, posko baru tetap diajukan ke pusat.
+Tidak bisa: mengubah data organisasi, menyetujui anggota, atau menunjuk Sub Admin lain.
 Kembali ke atas

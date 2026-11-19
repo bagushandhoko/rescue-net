@@ -45,10 +45,11 @@ getv() { sed -n "s/^$1=//p" .env | tail -1; }
 [ -n "$(getv RN_ADMIN_PASSWORD)" ] || setv RN_ADMIN_PASSWORD "$(acak 16)"
 CPU=$(nproc); RAM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 if [ -z "$(getv RN_WORKERS)" ]; then W=$((CPU * 2 + 1)); [ $W -gt 17 ] && W=17; [ $W -lt 3 ] && W=3; setv RN_WORKERS "$W"; fi
+if [ -z "$(getv RN_THREADS)" ]; then T=2; [ $RAM_MB -ge 4000 ] && T=4; setv RN_THREADS "$T"; fi   # 2026-11-20: thread per worker sesuai RAM
 if [ -z "$(getv RN_DB_BUFFER)" ]; then B=$((RAM_MB / 5)); [ $B -lt 256 ] && B=256; [ $B -gt 4096 ] && B=4096; setv RN_DB_BUFFER "${B}M"; fi
 chmod 600 .env
 SITE=$(getv RN_SITE); DOMAIN=$(getv RN_DOMAIN)
-echo "situs=$SITE domain=$DOMAIN cpu=$CPU ram=${RAM_MB}MB workers=$(getv RN_WORKERS) db_buffer=$(getv RN_DB_BUFFER)"
+echo "situs=$SITE domain=$DOMAIN cpu=$CPU ram=${RAM_MB}MB workers=$(getv RN_WORKERS) threads=$(getv RN_THREADS) db_buffer=$(getv RN_DB_BUFFER)"
 mkdir -p backups
 
 say "3. unduh image & nyalakan database"

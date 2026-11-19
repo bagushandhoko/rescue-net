@@ -54,7 +54,7 @@ services:
     entrypoint: ["/bin/bash"]
     command:
       - -lc
-      - "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && cd sites && exec ../env/bin/gunicorn --bind=0.0.0.0:8000 --workers=${RN_WORKERS:-7} --threads=2 --worker-class=gthread --worker-tmp-dir=/dev/shm --timeout=120 --graceful-timeout=30 --max-requests=2000 --max-requests-jitter=200 --preload rescue_net.wsgi:application"
+      - "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && cd sites && exec ../env/bin/gunicorn --bind=0.0.0.0:8000 --workers=${RN_WORKERS:-7} --threads=${RN_THREADS:-2} --worker-class=gthread --worker-tmp-dir=/dev/shm --timeout=120 --graceful-timeout=30 --max-requests=2000 --max-requests-jitter=200 --preload rescue_net.wsgi:application"
 
   # tugas latar & terjadwal (notifikasi, BMKG, dsb.). Profil "jobs": JANGAN dinyalakan di server uji/gladi
   # yang memakai data asli, supaya pesan tidak terkirim dua kali ke orang sungguhan.

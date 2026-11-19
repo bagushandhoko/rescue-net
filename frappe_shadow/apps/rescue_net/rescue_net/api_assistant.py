@@ -202,20 +202,78 @@ def _search(q, event):
 
 
 _MANUAL = None
+MANUAL_BUDGET = 24000
 
 
-def _manual():
-    """User manual as plain text (ai/manual_pengguna.txt, generated from pages/manual.html)."""
+def _manual_text():
     global _MANUAL
     if _MANUAL is None:
         import os
 
         try:
             with open(os.path.join(os.path.dirname(__file__), "ai", "manual_pengguna.txt"), encoding="utf-8") as f:
-                _MANUAL = f.read()[:24000]
+                _MANUAL = f.read()
         except OSError:
             _MANUAL = ""
     return _MANUAL
+
+
+def _manual_sections(text):
+    """Pecah manual per bab ("14. Registrasi ..."). Nomor bab harus naik, sehingga daftar bernomor di dalam bab
+    ("1. Bencana yang saya bantu") tidak dianggap bab baru. Hasil: (kepala, [(judul, isi), ...])."""
+    head, secs, last = [], [], 0
+    cur = None
+    for line in text.splitlines():
+        m = re.match(r"^(\d{1,2})[A-Z]?\. [A-Z]", line)
+        if m and int(m.group(1)) > last:
+            last = int(m.group(1))
+            cur = [line, [line]]
+            secs.append(cur)
+        elif cur is None:
+            head.append(line)
+        else:
+            cur[1].append(line)
+    return "\n".join(head), [(t, "\n".join(b)) for t, b in secs]
+
+
+def _manual(question=""):
+    """Manual pengguna untuk konteks AI (ai/manual_pengguna.txt, dari pages/manual.html).
+    2026-11-19: manual kini ~78 rb huruf, dulu dipotong 24 rb huruf pertama -> bab akhir (Sub Admin, Simulasi/Riil,
+    panduan per halaman) tak pernah terbaca. Kini: kepala manual + bab yang paling cocok dengan pertanyaan/halaman,
+    tetap dalam batas MANUAL_BUDGET huruf, disusun sesuai urutan manual."""
+    text = _manual_text()
+    if len(text) <= MANUAL_BUDGET:
+        return text
+    words = {w for w in re.findall(r"[a-z0-9]{4,}", (question or "").lower())
+             if w not in ("yang", "bagaimana", "gimana", "dengan", "untuk", "saya", "apakah", "tolong", "jelaskan",
+                          "caranya", "html", "pages", "rescue")}
+    head, secs = _manual_sections(text)
+    if not words or not secs:
+        return text[:MANUAL_BUDGET]
+    head = head[:2500]
+    scored = []
+    for i, (title, body) in enumerate(secs):
+        tl, bl = title.lower(), body.lower()
+        sc = sum(5 * tl.count(w) + min(bl.count(w), 6) for w in words)
+        scored.append((sc, i))
+    picked, used = set(), len(head)
+    for sc, i in sorted(scored, key=lambda x: (-x[0], x[1])):
+        if sc <= 0:
+            break
+        body = secs[i][1]
+        if used + len(body) > MANUAL_BUDGET:
+            body = body[:max(0, MANUAL_BUDGET - used)]
+            if len(body) < 400:
+                continue
+        picked.add(i)
+        used += len(body) + 1
+        secs[i] = (secs[i][0], body)
+        if used >= MANUAL_BUDGET:
+            break
+    if not picked:
+        return text[:MANUAL_BUDGET]
+    daftar = "Daftar bab: " + "; ".join(t for t, _ in secs)
+    return "\n".join([head, daftar[:1500]] + [secs[i][1] for i in sorted(picked)])[:MANUAL_BUDGET + 1500]
 
 
 def _my_volunteer_profiles(actor):
@@ -337,7 +395,7 @@ def chat(question, page=None, disaster_event=None, posko=None, organization_id=N
         except Exception:
             frappe.log_error(frappe.get_traceback(), "assistant event context")
     if HOWTO_RE.search(question):
-        ctx["MANUAL_PENGGUNA"] = _manual()
+        ctx["MANUAL_PENGGUNA"] = _manual(question + " " + (page or ""))
     if actor:
         try:
             prof = _my_volunteer_summary(actor)

@@ -3,7 +3,7 @@ Rescue-Net | Manual Pengguna
 Panduan pengguna
 Manual Rescue-Net
 Apa itu Rescue-Net, apa yang membuatnya berbeda, dan cara memakainya sehari-hari di posko, organisasi, dan Control Centre.
-Menu dan tombol yang tampil mengikuti peran dan izin akun Anda. Data sensitif — data pasien, kontak pribadi, lokasi stok — hanya tampil untuk pengguna yang berwenang. Penjelasan arsitektur dan sistem ada di Manual Teknis .
+Menu dan tombol yang tampil mengikuti peran dan izin akun Anda. Data sensitif — data pasien, kontak pribadi, lokasi stok — hanya tampil untuk pengguna yang berwenang. Penjelasan arsitektur dan sistem ada di Manual Teknis . Langkah kerja per peran (daftar, bergabung organisasi, membuat posko & program donasi, memakai layanan posko) ada di Panduan Langkah demi Langkah .
 1. Masalah yang diselesaikan
 Saat bencana, informasi datang dari mana-mana: telepon, WhatsApp, media sosial, spreadsheet posko, laporan organisasi, dan relawan. Masalahnya bukan kekurangan informasi, tetapi informasi yang tidak bisa langsung dipakai untuk bertindak.
 Laporan ganda. Satu kelompok pengungsi bisa dilaporkan oleh RT, posko, organisasi, dan relawan sekaligus. Kalau semua angka dijumlahkan, kebutuhan terlihat berlipat dan bantuan salah sasaran.
@@ -89,7 +89,7 @@ Manajemen Distribusi: kebutuhan semua posko di satu bencana, pencocokan bantuan,
 13. Fitur khas lainnya
 Search & Found: laporan orang hilang dan ditemukan, dengan kontak pelapor yang tidak pernah dibuka ke publik.
 Kartu pasien: riwayat dan kondisi terakhir pasien posko medis, hanya untuk petugas.
-Recovery dan Alat Kerja: dari obyek kerusakan, rencana rekonstruksi, dan progresnya, sampai alat yang dibutuhkan, siapa penyedianya, kapan bisa dipakai, serta dukungan transport, operator, dan biaya operasionalnya.
+Recovery Program & Alat Kerja: dari obyek kerusakan, rencana rekonstruksi, dan progresnya, sampai alat yang dibutuhkan, siapa penyedianya, kapan bisa dipakai, serta dukungan transport, operator, dan biaya operasionalnya.
 Relawan: relawan tersedia (jadwal, kendaraan, butuh dijemput, area layanan) dan relawan yang ditempatkan beserta tugasnya. Ada check-in kehadiran harian lewat QR.
 Program khusus & tender: program donasi dengan target dan realisasi, serta penawaran untuk kebutuhan besar.
 Mode latihan (simulasi): bencana latihan untuk pelatihan, tidak pernah tampil di daftar publik.
@@ -104,7 +104,9 @@ Donatur Penyumbang barang atau dana Akun aktif. Bisa langsung Kirim Bantuan dan 
 Organisasi Pengurus komunitas, NGO, instansi pemerintah, perusahaan, kampus Akun dan organisasi dibuat sekaligus. Anda menjadi pemilik (admin) organisasi. Organisasi menunggu verifikasi.
 Petugas Posko Operator posko lapangan Pilih jenis posko yang Anda jalankan, lalu daftarkan poskonya di Registrasi Posko .
 Pelapor Terverifikasi Petugas resmi (BNPB/BPBD, Polri, TNI, perangkat desa) atau warga pemantau Mengisi instansi, jabatan, wilayah, dan referensi. Setelah disetujui, bisa melapor kebutuhan ke semua posko.
+Centang persetujuan Kebijakan Privasi (wajib).
 Tekan Daftar . Setelah berhasil, Anda langsung masuk dan diarahkan ke halaman yang sesuai peran.
+Anggota organisasi juga bisa dibuatkan akun oleh pengelola organisasinya (jalur 2) — lihat Panduan bab 3 .
 B. Mendaftarkan organisasi baru
 Buka Daftar sebagai Organisasi . Isi data akun Anda sebagai pengurus.
 Isi Nama organisasi dan Jenis organisasi : Komunitas, NGO / LSM, Pemerintah, Perusahaan / CSR, atau Sekolah / Kampus. Penanggung jawab dan deskripsi singkat boleh diisi belakangan.
@@ -132,7 +134,7 @@ Struktur & Posko di Bawah Komando dan Riwayat Keputusan : melihat seluruh jenjan
 Anggota daerah mengajukan permintaan ke pusat lewat Permintaan Saya ke Pusat di halaman yang sama.
 E. Setelah terdaftar
 Daftarkan posko di Registrasi Posko , lalu centang bencana yang ditangani. Lihat Mendaftar & mengelola posko .
-Atur keterbukaan, anggota, dan posko organisasi di Koordinasi Organisasi .
+Atur keterbukaan, anggota, dan posko organisasi di Koordinasi Organisasi . Admin organisasi juga bisa backup & memulihkan data organisasinya sendiri .
 Atur kunci AI organisasi, notifikasi, dan kata sandi di Setting dan Notifikasi .
 Ingin mencoba dulu? Di halaman Masuk tersedia daftar akun demo (posko, organisasi, TNI, BNPB, masyarakat) dengan kata sandi Demo12345 .
 Masalah yang sering terjadi
@@ -142,25 +144,32 @@ Tidak melihat posko organisasi: keanggotaan Anda belum disetujui. Hubungi pengel
 Bencana tidak muncul di pemilih: posko atau organisasi Anda belum menangani bencana itu. Tambahkan di Setting → Bencana yang Ditangani Posko.
 15. Mulai & memilih bencana
 Buka Beranda , lalu pilih Login/registrasi . Belum punya akun? Ikuti Registrasi akun & organisasi .
-Setelah login, Anda langsung dibawa ke halaman posko milik Anda. Bila belum punya posko tetapi tergabung di organisasi, Anda dibawa ke halaman organisasi.
+Setelah login, Anda kembali ke halaman yang tadi Anda buka. Bila login dari Beranda, Anda dibawa ke halaman kerja Anda sendiri: petugas posko ke halaman poskonya, koordinator organisasi ke Kelola Posko , relawan ke Posko Relawan › Pengaturan Relawan , pemrakarsa program ke program miliknya, super admin ke Bencana Aktif . Anggota organisasi biasa ke halaman organisasi.
 Pemilih Bencana di header hanya menampilkan bencana yang Anda tangani, dengan yang terbaru sebagai pilihan awal.
 Pengunjung tanpa login bisa membuka Bencana Aktif dan Control Centre untuk data yang dibuka ke publik.
 Bila bencana yang Anda tangani tidak muncul, akun Anda mungkin belum ditautkan ke posko atau organisasi yang menanganinya. Hubungi pengelola organisasi.
 16. Mengirim laporan masyarakat
 Buka Laporan Masyarakat dan login.
-Pilih Cukup ceritakan (tulis kejadian, AI mengisi formulir) atau Isi form . Pilih titik lokasi di peta bila perlu.
+Pilih Cukup ceritakan (tulis kejadian, AI mengisi formulir) atau Isi form .
+Lokasi: pilih wilayah pemerintah berjenjang — provinsi › kabupaten/kota › kecamatan › desa/kelurahan — atau pakai Lokasi saat ini (GPS) / titik di peta. Wilayah cukup bila tidak ada sinyal GPS.
 Periksa jenis kejadian, lokasi, jumlah terdampak, dan kebutuhan, lalu kirim.
 Ikuti status dan tindak lanjutnya di Laporan Saya .
-Tulis fakta yang diperlukan saja. Jangan memasukkan kata sandi, data keuangan, atau data pribadi orang lain yang tidak perlu.
+Mengirim laporan wajib login, agar Anda bisa menambah kondisi dan melihat tanggapan posko. Tulis fakta yang diperlukan saja. Jangan memasukkan kata sandi, data keuangan, atau data pribadi orang lain yang tidak perlu.
 17. Menyalurkan bantuan
 Buka Kebutuhan Aktual untuk melihat barang yang masih dibutuhkan dan catatan barang yang tidak diterima.
 Buka Kirim Bantuan , pilih bencana dan posko tujuan. Hanya posko yang menerima partisipasi publik yang tampil.
-Isi jenis dan jumlah barang. Pilih antar sendiri atau minta dijemput.
+Isi jenis dan jumlah barang. Pilih antar sendiri atau minta dijemput. Jika diperlukan, tekan Pilih file / gambar atau Ambil foto untuk lampiran opsional (maksimal 3 gambar/PDF, masing-masing 2 MB setelah foto diperkecil). Lampiran disimpan privat untuk pengirim dan petugas berwenang; simpan Aid ID, Kode Edit, dan HP untuk membuka kembali lewat Edit Bantuan.
 Simpan kode lacak, lalu pantau di Lacak Logistik .
+Donasi uang ke program (kotak Donasi ke Program Khusus di Kirim Bantuan, atau halaman Program Khusus ):
+Pilih program. Rekening, QRIS, dan daftar donatur bisa dilihat tanpa login.
+Bila program memakai Kitabisa , tekan Donasi di Kitabisa → ; donasi dilakukan di Kitabisa.
+Bila program memakai rekening/QRIS: bayar dulu, lalu login dan isi nominal, nama yang ditampilkan (atau centang anonim), kontak, dan pesan, kemudian kirim. Donasi tampil di daftar donatur setelah pemrakarsa mengonfirmasi dana diterima.
+Bila muncul pesan "Akun Rescue-Net Anda masih menunggu verifikasi admin" , akun sudah terdaftar tetapi belum aktif — fitur bisa dipakai setelah disetujui. Pesan "belum terdaftar di Rescue-Net — Lengkapi pendaftaran" berarti Anda login (mis. dengan Google) tetapi belum menyelesaikan pendaftaran Rescue-Net.
 18. Mendaftar & mengelola posko
 Buka Registrasi Posko . Isi nama, jenis, lokasi GPS, kontak penanggung jawab, dan fungsi posko.
 Centang bencana yang ditangani . Cari dengan nama atau lokasi, atau saring rentang waktu. Secara awal semua bencana tampil.
-Posko baru menunggu persetujuan sebelum Anda bisa mengelolanya.
+Organisasi: bila akun Anda anggota sebuah organisasi, posko otomatis terhubung ke organisasi itu; bila tidak, posko tercatat sebagai posko mandiri .
+Posko baru menunggu persetujuan sebelum Anda bisa mengelolanya. Tombol Ajukan verifikasi , Minta verifier , dan Simpan hanya aktif untuk pengelola posko; Hapus hanya untuk pembuat posko (penugasan disetujui) atau super admin.
 Setelah disetujui, kelola posko dari Kelola Posko Saya (lihat bagian 25).
 Ubah bencana yang ditangani kapan saja di Setting → Bencana yang Ditangani Posko.
 Di halaman posko, operator mencatat stok, kebutuhan, jiwa dilayani, dan bukti foto. Kontak posko (telepon/WA) tampil di bagian atas untuk pengguna yang sudah login.
@@ -170,30 +179,51 @@ Tujuan & barang: pilih bencana, rentang tanggal kirim, jumlah (maksimal sesuai s
 Distribusi utama: pilih armada atau "langsung ke tujuan". Label pada kartu menunjukkan apakah booking langsung disetujui (satu organisasi) atau perlu konfirmasi.
 Ke titik serah: antar sendiri, masuk antrean jemput, atau pilih transporter. Centang pernyataan bahwa barang memenuhi syarat armada.
 Jangan membuat kiriman kedua selama permintaan pertama masih menunggu konfirmasi.
+Mencatat bantuan yang akan masuk (panel Tambah Bantuan Tersedia di Posko Logistik): isi donatur, barang, jumlah, satuan, lokasi ambil, lalu bila ada waktu siap , nomor batch , tanggal kedaluwarsa , dan status . Saat bantuan diterima, batch dan tanggal kedaluwarsa ikut masuk ke pemantau stok & kedaluwarsa di Kelola Posko Saya — penting untuk obat dan makanan.
 20. Posko distribusi & armada
 Di Posko Distribusi , tambah armada: kapasitas, jadwal berangkat dan tiba, titik serah terima, dan syarat barang.
 Centang bencana yang dilayani armada dan, bila perlu, posko logistik yang dilayani . Kosong berarti semua posko logistik di bencana itu.
 Periksa Booking Masuk , lalu tekan Konfirmasi atau Tolak. Setelah dikonfirmasi, kiriman otomatis naik ke armada itu.
 Ambil kiriman dari antrean jemput dengan menekan Booking pada barisnya.
+Booking Tempat (ruang muat) — untuk pengguna:
+Buka Posko Distribusi, klik armada di Armada Terdaftar . Detail armada dibuka dengan Booking Tempat di bagian atas. Tamu melihat tombol Login untuk booking tempat .
+Pilih Pembooking atas nama : Pribadi/warga, Organisasi, Relawan, atau Posko. Untuk Organisasi/Posko, nama organisasi/posko Anda dipilih otomatis — server memeriksa bahwa Anda memang anggota/pengelolanya.
+Isi muatan, berat (kg), dan kapan barang dikirim . Nama dan No. HP/WhatsApp terisi otomatis dari akun (boleh diubah) — nomor ini dipakai pemilik armada untuk menghubungi Anda.
+Tujuan terisi dan terkunci dari tujuan armada. Bila armada hanya perantara (estafet), centang "Armada ini hanya perantara — saya isi tujuan akhir sendiri" lalu isi tujuan akhir.
+Tekan Booking Tempat . Bila armada memakai konfirmasi PIN, simpan PIN yang muncul dan berikan ke posko armada.
+Booking Tempat — untuk pemilik/pengelola posko armada:
+Pengelola posko melihat dua tab: 🔧 Menu Pemilik — Booking Masuk & Armada dan 👁 Tampilan Publik / Pembooking (pratinjau yang dilihat orang lain, tanpa kontak pembooking).
+Di Booking Masuk tampil muatan, berat, waktu, nama pembooking, serta tombol telepon dan WhatsApp pembooking.
+Masukkan PIN dari pembooking (bila diminta), lalu tekan Konfirmasi atau Tolak .
 21. Medis, shelter, dapur, relawan
 Posko Medis : pasien aktif dan kondisi terakhir, kartu pasien, pemakaian obat dan alat.
 Shelter : okupansi, kebutuhan dasar, kelompok rentan, check-in dan check-out penghuni.
 Dapur Umum : produksi makanan, bahan, gas dan BBM.
 Manajemen Relawan : daftar relawan, relawan tersedia, relawan ditempatkan, papan penugasan.
-Posko Alat Kerja dan Posko Komunikasi : lihat bagian D.
+Recovery Program & Alat Kerja › Pengaturan Alat Kerja dan Posko Komunikasi : lihat bagian D.
 22. Memasang aplikasi & mode offline
 Buka Install App . Pasang sebagai aplikasi web (PWA) atau unduh APK Android.
 Login sekali saat ada sinyal, lalu tekan Siapkan data offline di kanan bawah.
 Saat offline, isi formulir seperti biasa. Lencana menunjukkan berapa data yang menunggu sinyal.
 Saat online lagi, buka ringkasan sinkron untuk melihat yang terkirim, ditolak, atau bentrok.
 Login pertama memerlukan koneksi. Tidak semua halaman tersedia offline, dan data yang tampil adalah salinan terakhir di HP.
+Memperbarui aplikasi Rescue-Net
+Aplikasi Rescue-Net bisa dipasang di HP atau laptop lewat halaman Install (aplikasi web, tidak perlu Play Store/App Store). Setiap kali terhubung internet, aplikasi otomatis mengambil versi terbaru. Mulai 17 November, simpanan lama di perangkat dibersihkan satu kali supaya semua halaman memakai versi paling baru.
+Jika tampilan masih terlihat lama:
+Pastikan perangkat sudah online.
+Tutup aplikasi sepenuhnya, lalu buka lagi 1–2 kali.
+Bila belum berubah, buka rescue-net.online di browser lalu tarik layar ke bawah untuk memuat ulang.
+Cara terakhir: hapus aplikasi dari layar utama, lalu pasang kembali dari halaman Install.
+Laporan yang belum terkirim (antrean offline) tetap aman saat aplikasi ditutup. Jangan hapus aplikasi sebelum semua laporan di antrean terkirim.
 23. Privasi & praktik aman
 Pakai akun sendiri. Jangan membagikan kata sandi atau kunci AI.
 Isi hanya data yang diperlukan untuk penanganan bencana.
 Data pasien, kontak pribadi, dan lokasi stok tidak selalu terbuka untuk publik — itu disengaja.
 Periksa kembali bencana, posko, jumlah, satuan, dan tujuan sebelum mengirim.
 Laporkan kesalahan data ke pengelola posko. Jangan membuat data pengganti yang menimpa catatan asli.
-24. Sembilan jenis posko
+Detail kebijakan privasi lengkap: Kebijakan Privasi Rescue-Net
+24. Jenis posko
+Ada 12 jenis posko : Logistik, Gudang Pengumpul, Distribusi/Transport, Medis, Shelter, Dapur Umum, Relawan, Alat Kerja/Support, Komunikasi, Assessment Lapangan, SAR, dan Komando. Langkah kerja rinci tiap jenis — sisi pengelola dan sisi publik — ada di Panduan bab 10–22 .
 Jenis dipilih saat Registrasi Posko . Satu posko boleh punya beberapa fungsi (mis. logistik + shelter + dapur), dan beberapa jenis boleh melayani lebih dari satu bencana.
 Posko Logistik Menerima, menyimpan, dan menyalurkan barang bantuan. Bisa pengumpul (daerah aman) atau penerima (daerah bencana). Bisa melayani beberapa bencana. Halaman kerja: Posko Logistik : kartu stok, barang masuk/keluar, kirim stok, label & barcode, kebutuhan, tanggal kedaluwarsa.
 Collection Hub Gudang pengumpul besar di luar daerah bencana. Halaman kerja: Sama dengan Posko Logistik.
@@ -212,17 +242,35 @@ Kontak & status posko, kebutuhan baru, catatan stok dan tanggal kedaluwarsa.
 Alat transport : status armada, posisi GPS (sekali atau otomatis selama halaman terbuka), konfirmasi booking.
 Dukungan komunikasi yang ditawarkan / dibutuhkan posko.
 Pengaturan posko hanya untuk pemiliknya. Pengunjung dan pengguna lain hanya melihat data publik posko.
-26. Posko Alat Kerja, Recovery & Tawarkan Alat
-Pengelola posko alat : buka Posko Alat Kerja → pilih posko → Tambah Alat . Pilih kategori; kolom spesifikasi menyesuaikan (mis. genset: kVA, fase, BBM, konsumsi; tenda: tipe, ukuran, kapasitas orang; perahu karet: panjang, kapasitas, mesin). Isi merek, model, tahun, no. seri, kondisi, dan unggah beberapa foto (maks. 10).
-Pemilik alat perorangan / perusahaan yang ingin menyumbangkan, meminjamkan, atau menyewakan alat: buka Tawarkan / Sumbangkan Alat (tombol di Recovery dan Alat Kerja). Isi skema (hibah / pinjam / sewa), data & spesifikasi alat, masa bisa dipakai, termasuk operator atau tidak, kebutuhan mobilisasi (transport, BBM, akomodasi operator, biaya), kontak person, dan foto.
-Semua orang : di Recovery dan Alat Kerja , setiap alat (tabel penyedia, KPI, kategori, kelompok alat, operator, dispatch, lokasi kerja, hambatan) bisa diklik ke detail alat & penyedia : spesifikasi, foto, penyedia (tautan ke halaman organisasi / posko), dan kontak person.
-Kebutuhan relawan recovery : pengelola proyek recovery memasang kebutuhan tenaga (tukang, tenaga angkut, dll.), relawan menekan Daftar jadi relawan , pengelola menerima / menolak; status otomatis "Terpenuhi" saat kuota tercapai.
-Kontak person alat hanya tampil untuk pengguna yang login, kecuali pemilik mencentang "kontak boleh dilihat publik". Nama pemilik perorangan tidak ditampilkan ke publik.
+26. Recovery Program & Alat Kerja
+Sejak 13 November menu Recovery dan Alat Kerja , Posko Alat Kerja , dan halaman Tawarkan Alat digabung menjadi satu halaman: Recovery Program & Alat Kerja .
+Semua orang melihat obyek recovery & rencana rekonstruksi, kebutuhan alat, ketersediaan alat per kategori, penyedia alat, jadwal dispatch (alat dipakai di mana, sejak kapan, sampai kapan), dan kebutuhan relawan recovery. Setiap alat bisa diklik ke detail alat & penyedia (spesifikasi, foto, penyedia).
+Menambah alat : tekan + Tambah Alat Kerja di kepala halaman (tamu diminta login dulu). Isi pemilik & skema (hibah / pinjam / sewa), kategori (kolom spesifikasi menyesuaikan, mis. genset: kVA, BBM; tenda: kapasitas; perahu: mesin), merek, model, no. seri, kondisi, masa bisa dipakai, operator ikut atau tidak, kebutuhan mobilisasi (transport, BBM, akomodasi operator, perkiraan biaya), kontak person, dan foto (maks. 10).
+Pengaturan Alat Kerja : tombol ini aktif untuk pemilik alat (perorangan / organisasi) dan pengelola posko alat kerja . Isinya: form alat, daftar Alat Saya (ubah, tarik penawaran), dan Posko Alat Kerja saya → Kelola inventaris (inventaris, alat dipakai/dikirim, permintaan alat).
+Pemilik alat yang login langsung dibawa ke Pengaturan Alat Kerja. Pengelola posko alat kerja juga langsung ke halaman ini.
+Kebutuhan relawan recovery : pengelola proyek recovery memasang kebutuhan tenaga, relawan menekan Daftar jadi relawan , pengelola menerima / menolak; status otomatis "Terpenuhi" saat kuota tercapai.
+Kontak person alat hanya tampil untuk pengguna yang login, kecuali pemilik mencentang "kontak boleh dilihat publik". Tautan lama Tawarkan Alat otomatis membuka Pengaturan Alat Kerja.
 27. Posko Komunikasi
 Catat perangkat radio / satelit / internet: frekuensi (MHz), kanal, call sign, jangkauan, sumber daya.
 Bar kontak posko menampilkan radio posko (frekuensi, kanal, call sign) untuk publik; nomor telepon tetap hanya untuk pengguna login.
 Posko lain bisa menyatakan dukungan komunikasi yang dibutuhkan ; relawan ORARI / RAPI bisa menawarkan diri sebagai simpul komunikasi.
-28. Perbaikan sejak manual dibuat (26 Oktober – 3 November 2026)
+28. Perbaikan sejak manual dibuat (26 Oktober – 8 November 2026)
+Baru 4–8 November 2026 — langkah lengkapnya di Panduan Langkah demi Langkah .
+Program donasi oleh pemrakarsa sendiri : anggota organisasi yang disetujui (mis. LAZISMU di bawah Muhammadiyah) membuat program atas nama organisasinya lewat form Buat Program Donasi (pilih organisasi, tidak perlu mengetik ID). Login berikutnya langsung membuka panel ⚙️ Kelola Program Anda : data program, rekening, QRIS, donasi menunggu konfirmasi, rekening koran. Lihat Panduan bab 24 .
+QRIS & rekening koran per program. QRIS dan rekening hanya tampil ke publik bila pemrakarsa terverifikasi; rekening koran wajib disamarkan. Kotak 💚 Donasi ke Program Ini kini di bagian atas tab Ringkasan.
+Status program : Aktifkan / Tandai Selesai / Batalkan (alasan wajib). Program selesai/batal tidak menerima donasi.
+SOP bergabung organisasi, 2 jalur : (1) daftar sendiri → Ajukan Keanggotaan → disetujui pengelola; (2) pengelola ➕ Tambah Anggota Langsung di Koordinasi Organisasi (akun baru dibuatkan, kata sandi sementara tampil sekali, anggota menggantinya di Setting → Ganti Password).
+Persetujuan Kebijakan Privasi wajib dicentang saat mendaftar akun atau posko.
+Profil Organisasi (About Us): ringkasan kerja organisasi untuk publik — posko di peta, peran tiap bidang, alur bantuan, program. Organisasi tertutup hanya menampilkan ringkasan.
+Dua bahasa : tombol ID | EN di header. Sebagian halaman kerja masih berbahasa Indonesia.
+Jenis bencana baru karhutla dan simulasi Muhammadiyah (rumah sakit, ortom, LAZISMU, logistik TNI dari Surabaya) — lihat Scenario Tested .
+Semua akun demo memakai kata sandi Demo12345 (lihat halaman Masuk ).
+🔔 Kotak pemberitahuan di bagian atas halaman kerja: keputusan verifikasi posko/organisasi/peran, keanggotaan disetujui/ditolak, penempatan di posko, permohonan anggota baru (untuk pengelola), donasi masuk (untuk pemrakarsa), donasi dikonfirmasi (untuk donatur), Saran baru (untuk super admin).
+Posko tanpa pengelola : pengguna login bisa menekan 🙋 Ajukan jadi petugas posko ini di halaman posko; super admin memutuskan di Verifikasi.
+Search & Found : petugas yang ditempatkan organisasinya kini bisa mencocokkan laporan, termasuk laporan dari posko lain.
+Ekosistem Penanganan kini = siapa yang terlibat & kinerjanya (organisasi tampil satu kesatuan termasuk organisasi anak; kartu kinerja: kegiatan, posko, kiriman, porsi, pasien, donasi, realisasi), dengan filter bencana dan pilihan Tampilkan . Kebutuhan & gap barang (operasional) tetap di Control Centre. Baru: Riwayat Kegiatan per organisasi/posko/masyarakat umum dan halaman Kegiatan Masyarakat Umum — lihat Panduan bab 28–29 .
+HP : tombol ← di bilah atas semua halaman; klik organisasi/program pindah ke halamannya; bagian yang dituju saat menggulir disorot sebentar.
+Form tanpa ketik ID : kolom posko di Dapur Umum, Shelter, Manajemen Relawan, dan Alat Komunikasi kini berupa pilihan "posko yang Anda kelola"; isian contoh (mis. posko-dapur-melati) dihapus agar data tidak tercatat ke posko yang salah; kolom bencana mengikuti bencana yang sedang dibuka.
 Posko & kelola posko
 Jenis posko baru: Posko Komunikasi dan Posko Alat Kerja / Support ; daftar jenis posko lengkap di registrasi, daftar akun, dan halaman kerja.
 Kelola Posko Saya : pusat kerja pemilik posko (perlu tindakan, kontak & status, kebutuhan, stok & kedaluwarsa, alat transport, permintaan relawan).
@@ -251,4 +299,465 @@ Tanya AI di setiap halaman: menjawab cara pakai dari manual ini dan data bencana
 Menu HP: submenu terbuka saat diklik dan bergulir ke tampilan; menu baru otomatis termuat (tidak tertahan versi lama).
 Aplikasi APK Android dihentikan; pasang sebagai aplikasi web lewat Install App .
 Daftar uji yang sudah dijalankan untuk tiap perbaikan ada di halaman About Us → Scenario Tested.
+29. Pembaruan hasil audit proses (10–11 November 2026)
+Audit menyeluruh dari registrasi sampai relief program, disimulasikan seperti kejadian sesungguhnya. Rincian dan temuan: Scenario Tested → AUDIT-PROSES-1.
+Booking Tempat di Posko Distribusi: tampil setelah login (juga untuk super admin), kontak & tujuan terisi otomatis, pilihan perantara, Menu Pemilik vs Tampilan Publik — lihat bagian 20.
+Status akun : pesan "menunggu verifikasi admin" atau "Lengkapi pendaftaran" menggantikan ajakan login yang membingungkan — lihat bagian 17.
+Privasi verifikasi : daftar dan detail antrean verifikasi (termasuk email/HP pendaftar) hanya untuk verifikator/admin; publik melihat angka ringkas.
+Laporan Masyarakat : daftar provinsi/kabupaten/kecamatan/desa tampil benar — lihat bagian 16.
+Posko Logistik : nomor batch dan tanggal kedaluwarsa bantuan tersimpan dan diteruskan ke pemantau kedaluwarsa — lihat bagian 19.
+Registrasi Posko : posko terhubung ke organisasi pendaftar; tombol mengikuti hak — lihat bagian 18.
+Donasi program : isian donasi tidak lagi hilang setelah sempat memilih program Kitabisa.
+Relawan Saya : super admin diarahkan ke Manajemen Relawan.
+30. Pembaruan 12–13 November 2026
+Bencana Aktif : pilihan lokasi bertingkat Provinsi › Kab/Kota › Kecamatan › Desa/Kelurahan di bawah kolom cari, dan kolom cari mengenali nama desa/kecamatan. Bencana tampil bila poskonya berada di wilayah itu atau di wilayah yang mencakupnya. Supaya ikut tersaring, petugas mengisi kecamatan dan desa di data posko.
+Relawan Saya : pesan kursi berangkat , pilih tempat menginap (shelter relawan atau posko shelter ), dan pesan kursi pulang — lihat bagian 39 .
+Posko Distribusi : saat menambah atau mengubah alat transport, centang Bisa mengangkut relawan / orang , lalu isi jumlah orang, arah perjalanan (berangkat / pulang / pergi & pulang), titik jemput, dan jadwal pulang.
+Login langsung ke halaman kerja sendiri (lihat bagian 15 ).
+Kirim Bantuan : posko tujuan dipilih dari daftar nama. Laporan Masyarakat : bisa melampirkan foto atau langsung memotret (maks. 4).
+SITREP mengikuti susunan OCHA dan menyediakan API (JSON, EDXL-SitRep, HXL) dengan kunci yang disetujui super admin — lihat bagian 31 .
+Tombol ? di setiap halaman membuka bagian manual halaman tersebut.
+Pembaruan 17 November
+Sub Admin organisasi : admin organisasi bisa menunjuk anggota menjadi Sub Admin di Koordinasi Organisasi (kartu anggota → Jadikan Sub Admin ), lalu memilih posko yang dipegang (posko di bawahnya ikut) atau semua posko organisasi . Sub Admin menjalankan penuh posko itu (logistik, stok, armada, booking, pengaturan, menempatkan anggota) dan melihatnya di Kelola Posko Saya ; ia tidak bisa mengubah data organisasi, menyetujui anggota, atau menunjuk Sub Admin lain. Sub Admin juga boleh membuat posko baru : di Organisasi & Posko → Tambah Posko, pilih Posko induk (posko yang ia kelola); posko baru otomatis masuk cakupannya dan langsung bisa dikelola. Di organisasi terpusat, posko baru tetap diajukan ke pusat.
+Bilah pilihan Tampilan data di halaman Home dihapus; pilihan kini lewat tombol kecil di pojok setiap halaman.
+Tombol kecil simulasi / riil di pojok kanan bawah setiap halaman (bentuk dan ukurannya sama dengan tombol Tanya AI di pojok kiri bawah). Bawaan kini Riil (Rescue-Net kosong sampai ada bencana riil). Klik simulasi untuk melihat data latihan di halaman yang sama; klik riil untuk kembali. Bila kembali ke Riil dari halaman detail posko simulasi, Anda dibawa ke halaman Organisasi & Posko. Akun demo otomatis memakai tampilan Simulasi.
+Tampilan Riil Data Bencana : semua halaman (termasuk Control Centre, posko, peta) kini kosong bila yang dibuka adalah bencana/posko simulasi; hanya data bencana riil yang tampil. Bencana simulasi ditentukan dari database (judul/label simulasi dan daftar yang diatur super admin).
+Halaman Install App kini memakai menu header yang sama dengan halaman lain (Beranda, Bencana Aktif, Laporan, Kirim Bantuan, Login, dll.).
+Aplikasi terpasang (HP/laptop) kini otomatis memuat versi terbaru semua halaman; simpanan lama di perangkat dibersihkan sekali (lihat Memperbarui aplikasi ).
+Persetujuan privasi kini tersimpan untuk semua akun, termasuk login Google dengan peran pengelola sistem (sebelumnya dialog persetujuan bisa muncul lagi).
+Analis AI kini khusus untuk analisis yang dirancang (Analisis AI Lanjutan di bagian atas); panel Ask AI / Briefing dihapus karena bertanya bebas cukup lewat ikon Tanya AI yang melayang.
+Analis AI bisa diklik : nama posko, armada, dan kode data di hasil AI, jawaban Ask AI, dan Recommendations langsung membuka halaman objeknya (lihat Analisis AI Lanjutan ).
+Tombol ? kini ada di semua halaman termasuk beranda, Saran, Verifikator, Profil Organisasi, Kartu Keluarga, Cetak Label, dan Kebijakan Privasi; petunjuknya di bab 55 .
+Halaman posko (Posko Logistik, Distribusi, Medis, Dapur Umum, Shelter, Alat Kerja): tombol Kirim Bantuan di bawah judul langsung membuka formulir kirim ke posko itu.
+Panel Menuju posko ini : barang, booking ruang muat, armada, dan relawan yang sedang menuju posko (OTW), tanpa nomor HP atau kontak pribadi. Pengunjung umum hanya melihatnya bila detail posko dibuka untuk publik; petugas posko selalu melihat posko sendiri.
+Grafik donat ringkasan di atas daftar halaman posko: kebutuhan dibanding ketersediaan, dan kapasitas armada di Posko Distribusi.
+Kirim Bantuan : setelah memilih bencana, tampil daftar armada bencana itu beserta tautan ke Posko Distribusi untuk memesan ruang muat.
+Analis AI — Recommendations : setiap rekomendasi kini tampil dengan judul, alasan, dan prioritas (sebelumnya sebagian tertulis "[object Object]"). Label AI = disusun dari data bencana (gap distribusi, rencana aksi, proyek pemulihan); Ops = saran operasional umum.
+Pembaruan 16 November
+Analisis AI Lanjutan di halaman Analis AI: SITREP AI, Triase Laporan Warga, Prakiraan Stok Habis, Tanya Jawab Berujukan, Dampak Gempa BMKG, Cek Kejanggalan, Analisis Foto Bukti, dan Rencana Pengiriman, dengan riwayat, unduh, dan cetak (lihat bagian 47 ).
+Pembaruan 15 November
+Posko Distribusi : angka Masih Tersedia kini sama untuk publik dan pengelola, yaitu ruang muat yang benar-benar bisa dibooking (armada belum berangkat, jadwal belum lewat, belum penuh). Armada yang sedang Dalam Perjalanan atau sudah tiba tidak lagi menampilkan tombol Booking space .
+Status dan waktu di Posko Logistik, Posko Medis, Dapur Umum, dan Shelter tampil dalam bahasa Indonesia (mis. Tersedia , Perlu Jemput , Dalam Perjalanan , Stok saat ini ) dengan tanggal yang mudah dibaca.
+Posko Medis : pengguna yang sudah login tetapi bukan petugas posko itu melihat keterangan Khusus petugas posko , bukan "Login diperlukan".
+Lacak Kiriman : tautan dengan kode ( ?code=RN-… ) langsung membuka status kiriman, dan kodenya terisi di kotak cari.
+Pembaruan 14 November
+Kirim Bantuan : lampiran gambar/PDF opsional dan kamera HP, termasuk pengiriman tanpa akun. Foto diperkecil dan metadata lokasi dibuang. Lampiran tidak muncul di daftar publik.
+Ikon Rescue-Net di tab browser kini berwarna (logo resmi), sehingga mudah ditemukan di antara tab lain.
+Pemilik alat : tombol Ubah di Pengaturan Alat Kerja kini bisa menyimpan perubahan walau tahun pembuatan alat dikosongkan. Kategori alat tidak bisa diganti setelah alat dibuat (kolom spesifikasi mengikuti kategori); bila salah kategori, tekan Tarik penawaran lalu tambah alat baru.
+Akun demo baru Pemilik Alat Berat — Pak Joko (sim-alatberat@example.org) di halaman Masuk untuk mencoba alur pemilik alat.
+Control Centre di laptop: pilihan bencana kini hanya satu (kotak Bencana di atas halaman). Di HP pilihan bencana tetap di bawah judul.
+Pembaruan 13 November
+Ringkasan grafik posko : di bagian atas Posko Logistik, Medis, Alat Kerja, dan Detail Posko, grafik donat merangkum kebutuhan serta jenis stok/alat per kategori (5 terbesar + lainnya). Legenda menampilkan angka dan persen; grafik bertumpuk di HP. Label mengikuti data yang tersedia: kebutuhan terbuka/kritis, status terpenuhi/ditutup, atau kecocokan kategori alat. Kecocokan bukan jaminan stok cukup. Grafik Menuju posko merangkum catatan per status; tekan Perbarui pantauan untuk memperbaruinya. Data mengikuti akses pengguna dan pilihan Riil/Simulasi; data kosong atau dibatasi diberi keterangan. Posko Distribusi menampilkan pembagian kapasitas armada.
+Menuju posko ini : di detail posko, lihat bantuan dalam perjalanan, bantuan yang dibooking atau ditawarkan, serta armada dan relawan yang akan datang. Chip menjelaskan status (permintaan belum tentu disetujui). Tekan Pantau kiriman untuk jejak kiriman, atau Lihat pantauan untuk papan terkait; tekan Perbarui pantauan untuk data terbaru. Data selesai dan simulasi pada tampilan Riil disembunyikan; nomor HP tidak ditampilkan.
+Kirim Bantuan : buka satu posko, lalu tekan tombol di dekat judul untuk membuka form dengan posko tujuan terisi. Tamu juga bisa memakai tombol ini. Di halaman Kirim Bantuan, daftar Armada menuju posko / bencana ini mendahulukan armada yang terkait posko penerima, lalu armada lain pada bencana terpilih; lihat rute, jadwal, sisa kapasitas, dan posko pengelola, lalu tekan Booking ruang muat untuk melanjutkan ke Posko Distribusi (booking memerlukan login).
+Posko Relawan : halaman Relawan Saya digabung ke Posko Relawan sebagai tombol Pengaturan Relawan (lihat bagian 39 ). Publik melihat nama relawan (tanpa nomor HP), bidang, posisi bertugas/menginap, serta panel Kebutuhan & Ketersediaan Relawan .
+Recovery Program & Alat Kerja : satu halaman untuk recovery, posko alat kerja, dan menambah alat (lihat bagian 26 ).
+Backup & Pulihkan Data Organisasi untuk admin organisasi (lihat di bawah).
+Tampilan Simulasi / Riil di Home (lihat di bawah). Angka ringkasan papan relawan, SAR, dan tender kini ikut tanpa data simulasi saat memilih Riil.
+Posko Relawan untuk publik: setiap relawan menunjukkan bertugas di posko mana, menginap di shelter mana, dan ikut armada apa (hanya booking yang sudah disetujui); panel Kebutuhan & Ketersediaan Relawan membandingkan jumlah relawan yang dibutuhkan dengan yang tersedia per bidang.
+Posko Distribusi : saat menambah/mengubah alat transport, centang Bisa mengangkut alat berat , lalu isi muatan maksimal (ton), jenis bak/dek (lowbed, selfloader, flatbed, tongkang), arah (mob = ke lokasi, demob = pulang), dan jadwal demob. Booking mob/demob oleh pemilik alat menyusul.
+Tampilan data: Simulasi atau Riil (diperbarui 18 November)
+Di pojok kanan bawah setiap halaman ada tulisan kecil miring:
+simulasi : tampil saat Anda sedang melihat data Riil (bawaan). Klik untuk melihat data latihan/contoh bertanda SIMULASI di halaman yang sama.
+riil (oranye): tampil saat Anda sedang melihat data Simulasi . Klik untuk kembali ke data bencana nyata di halaman yang sama.
+Bawaan adalah Riil : Rescue-Net tampil kosong sampai ada bencana nyata. Halaman yang membutuhkan bencana (mis. Control Centre) menampilkan keterangan "belum ada bencana riil".
+Bila Anda kembali ke Riil saat membuka detail posko simulasi (mis. posko TNI simulasi), Anda dibawa ke halaman Organisasi & Posko , karena posko itu tidak ada di data riil.
+Pilihan tersimpan di browser/HP masing-masing selama 1 tahun dan tidak mempengaruhi pengunjung lain. Saat registrasi akun Anda juga bisa memilih tampilan awal. Masuk dengan akun demo otomatis memakai tampilan Simulasi.
+Data simulasi tidak dihapus, hanya disembunyikan. Bila Super Admin mengaktifkan saklar Mode Operasional di Setting, simulasi disembunyikan untuk semua orang.
+Backup & Pulihkan Data Organisasi (13 November)
+Untuk admin organisasi (pemilik organisasi) di Koordinasi Organisasi , bagian Organisasi Saya :
+Buat backup sekarang : satu berkas berisi data organisasi, anggota, semua posko, dan seluruh isinya (kebutuhan, stok, armada, relawan, pasien, shelter, bukti). Berkas tersimpan di server dan bisa diunduh .
+Bila data rusak atau terhapus, tekan Pulihkan pada salah satu backup, atau pilih berkas yang pernah diunduh lalu Pulihkan dari berkas (maks. 7 MB).
+Pemulihan hanya mengubah data milik organisasi Anda ; data organisasi lain tidak tersentuh. Sebelum memulihkan, sistem otomatis membuat backup keadaan sekarang sehingga bisa dikembalikan.
+Data yang dibuat setelah backup tetap ada , kecuali Anda mencentang hapus juga data yang dibuat setelah backup .
+Setiap backup dan pemulihan tercatat di Riwayat backup & pemulihan .
+Foto dan dokumen tidak disalin ke dalam berkas backup (hanya alamatnya) dan tidak terhapus saat pemulihan.
+31. Laporan Situasi (SITREP) & API pelaporan
+Ringkasan situasi satu bencana dengan susunan OCHA: gambaran situasi, angka kunci, kebutuhan per sektor, pendanaan, koordinasi dan kontak. Untuk koordinator, mitra, dan pemerintah. Buka halaman →
+Siapa melihat apa
+Semua orang (tanpa login): membaca laporan, mengganti periode, mencetak / menyimpan PDF.
+Admin organisasi: menekan Minta kunci API ; permintaan masuk ke super admin.
+Super admin: menyetujui permintaan atau langsung Buat kunci API . Kunci rahasia hanya tampil sekali .
+Langkah
+Pilih bencana di header.
+Pilih Periode operasi (12 jam, 24 jam, 3 hari, 7 hari) lalu tekan Perbarui .
+Baca dari atas: Gambaran situasi → Angka kunci → Sektor → Kelompok rentan → Pendanaan → Koordinasi & kontak.
+Tekan Cetak / simpan PDF untuk dibagikan.
+Sistem lain (BNPB, OCHA, mitra) mengambil data lewat bagian API dalam format JSON, EDXL-SitRep, atau HXL (CSV) memakai kunci API.
+Kontak di SITREP hanya nama dan peran, tanpa nomor HP. Simpan kunci API seperti kata sandi; bila bocor, minta super admin membuat kunci baru.
+32. Evidence Center (bukti lapangan)
+Kumpulan foto, dokumen, dan video bukti penanganan: penerimaan bantuan, serah terima, kondisi lapangan. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat daftar bukti publik, kartu ringkasan, filter modul, dan mengekspor.
+Pengguna login: Kirim Bukti (foto/dokumen, keterangan lokasi, posko terkait).
+Anggota organisasi / verifikator: juga melihat bukti berlabel terbatas milik organisasinya dan memverifikasi.
+Langkah
+Pilih bencana, lalu saring dengan kartu (Pending Verifikasi, Geotagged, Serah Terima, …) atau tab modul (Shelter, Dapur, …).
+Untuk mengirim: tekan Kirim Bukti , pilih foto/dokumen, tulis keterangan dan lokasi.
+Pilih posko terkait, atau biarkan Tanpa posko bila Anda warga.
+Tekan Kirim Bukti . Bukti tampil dengan status menunggu verifikasi.
+Bukti dari organisasi tertutup tidak tampil ke publik kecuali ditandai terbuka. Hindari wajah anak dan data pribadi pada foto.
+33. Kelola Bencana
+Tempat membuat atau mengusulkan bencana baru agar posko dan bantuan bisa dikaitkan. Buka halaman →
+Siapa melihat apa
+Tamu: hanya judul; harus login.
+Pengguna login: Buat bencana baru . Dari organisasi terverifikasi langsung aktif; selain itu menjadi usulan.
+Super admin: memverifikasi usulan, menggabungkan bencana ganda, dan membatalkan penggabungan.
+Langkah
+Login, buka Kelola Bencana.
+Isi nama, jenis, lokasi (atau 📍 Pakai lokasi saya ), waktu mulai, dan tingkat keparahan.
+Sistem memeriksa bencana serupa. Bila sudah ada, pakai yang sudah ada.
+Tekan Kirim .
+Kejadian kecil atau belum resmi dilaporkan lewat Laporan Masyarakat , bukan dibuat sebagai bencana.
+34. Control Centre (War Room)
+Layar pantau satu bencana: indikator kritis, kebutuhan 72 jam, dan bukti terbaru. Cocok untuk layar besar di posko komando. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat data yang dibuka ke publik. Tampilan sama untuk semua peran.
+Pengelola: bertindak dari halaman kerjanya (posko, distribusi, verifikasi); Control Centre untuk memantau.
+Langkah
+Pilih bencana di header.
+Lihat warna indikator: merah kritis, kuning terganggu, hijau aman.
+Periksa tabel kebutuhan 72 jam: butuh, tersedia, dan selisih (gap).
+Klik angka atau baris untuk membuka rinciannya.
+Semua bencana sekaligus terlihat di Bencana Aktif .
+35. Konsolidasi Data
+Menggabungkan laporan dan kebutuhan yang sama agar angka tidak dobel, serta menyinkronkan data dari HP lapangan. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat ringkasan kebutuhan terkonsolidasi.
+Pengelola posko / koordinator: memeriksa duplikat, menandai laporan, membangun ulang kebutuhan terkonsolidasi. Tombol yang bukan hak Anda akan ditolak server.
+Langkah
+Tekan Check Duplicate untuk mencari kebutuhan yang sama dari beberapa laporan.
+Tinjau pasangan yang ditemukan, lalu putuskan: gabung atau bukan duplikat.
+Tekan Rebuild Consolidated Needs setelah ada perubahan.
+Bagian Sinkronisasi menunjukkan data HP yang belum terkirim.
+Aturan aman: angka digabung memakai yang terbesar , bukan dijumlahkan, agar tidak membengkak.
+36. Kebutuhan Publik
+Daftar barang yang benar-benar dibutuhkan sekarang, untuk donatur sebelum mengirim bantuan. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat kebutuhan per posko: dibutuhkan sekarang, sudah cukup, atau tidak dibutuhkan.
+Pengelola posko: menulis Catatan posko saya (mis. barang yang tidak diterima) lalu Simpan catatan .
+Langkah
+Pilih bencana.
+Baca status tiap barang sebelum membeli atau mengirim.
+Tekan Kirim ke posko ini untuk langsung membuka Kirim Bantuan dengan posko terisi.
+Catatan publik tidak boleh berisi nomor HP, email, atau tautan.
+37. Lacak Kiriman Bantuan
+Melihat perjalanan satu kiriman memakai kode trace. Buka halaman →
+Siapa melihat apa
+Semua orang: memasukkan kode trace dan melihat status serta serah terimanya.
+Langkah
+Ambil kode trace (RN-…) dari label kiriman, layar Kirim Bantuan, atau petugas posko.
+Ketik di kolom lalu tekan Lacak .
+Baca urutan status: dikirim, di jalan, serah kurir, tiba, diterima.
+Bagikan kode trace hanya kepada pihak yang perlu.
+38. Pindai Barcode / Serah Terima
+Mencatat setiap perpindahan tangan kiriman dengan memindai QR atau barcode. Buka halaman →
+Siapa melihat apa
+Semua orang: membuka halaman dan kamera.
+Petugas posko asal atau tujuan kiriman (dan pembawa estafet): Catat berhasil tersimpan. Akun lain ditolak.
+Langkah
+Pilih jenis: Kirim , Di jalan , Serah kurir , Tiba , atau Terima .
+Tekan Buka kamera dan arahkan ke QR, atau ketik kode trace.
+Saat Terima , isi jumlah yang benar-benar diterima.
+Tekan Catat .
+Tanpa sinyal, pindaian disimpan di antrean HP dan terkirim otomatis saat online (atau tekan Kirim sekarang ).
+39. Pengaturan Relawan (di halaman Posko Relawan)
+Sejak 13 November halaman Relawan Saya digabung ke Posko Relawan : relawan menekan tombol Pengaturan Relawan (aktif bila akun terdaftar sebagai relawan) untuk mengubah kesediaan waktu, peralatan, kemampuan, bencana yang dibantu (centang beberapa), booking posko/kursi armada/shelter, dan melihat apakah booking disetujui. Setelah login, relawan langsung dibawa ke sini. Pengunjung lain melihat daftar relawan per bencana: nama (tanpa nomor HP), bidang, posisi bertugas/menginap, kebutuhan dan ketersediaan relawan. Buka halaman →
+Siapa melihat apa
+Tamu: tombol daftar dan login.
+Relawan (login): semua langkah di bawah, plus daftar Tawaran & booking saya .
+Pengelola posko: menyetujui atau menolak tawaran dan booking relawan di Kelola Posko .
+Langkah
+1. Bencana yang saya bantu : centang bencananya, lalu simpan.
+2. Profil : keahlian, peralatan yang dibawa, waktu dan tanggal tersedia, kendaraan, area. Tekan Simpan profil .
+3a. Pilih posko tempat membantu → Tawarkan diri .
+3b. Berangkat : pesan kursi armada ke lokasi bencana → isi tanggal dan titik jemput.
+3c. Menginap : pilih shelter relawan ( Pesan tempat ) atau posko shelter ( Minta menginap ).
+3d. Pulang : pesan kursi armada yang melayani kepulangan.
+Pantau status (menunggu, disetujui, ditolak) di Tawaran & booking saya . Booking bisa dibatalkan.
+4. Operator radio dapat mendaftar sebagai node komunikasi.
+Nomor HP relawan hanya terlihat oleh pengguna yang login. Posko yang memutuskan setiap booking.
+40. Kehadiran Relawan
+Check-in dan check-out relawan di posko. Buka halaman →
+Siapa melihat apa
+Relawan (login): check-in dengan memindai QR posko atau menekan tombol, lalu check-out.
+Pengelola posko: melihat relawan yang ada di lokasi, mencetak QR kehadiran hari ini , dan meninjau relawan yang datang tanpa penugasan.
+Langkah
+Saat tiba, pindai QR posko atau tekan Check-in .
+Lokasi boleh diisi sebagai penanda jarak (tidak wajib).
+Saat pulang, tekan Check-out .
+Tetap bisa dipakai tanpa sinyal. Lokasi tidak pernah menolak check-in.
+41. Program Khusus & Donasi
+Program bantuan dan penggalangan dana per bencana: target, donasi, laporan, dan ulasan. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat program publik, target, donatur, dan berdonasi.
+Pengguna login: Buat Program Donasi atas nama organisasinya.
+Pemrakarsa program: panel Kelola Program : data, rekening, QRIS, konfirmasi donasi, rekening koran, status.
+Langkah
+Pilih bencana, lalu pilih program dari daftar.
+Baca tab Ringkasan, Donasi, Laporan, dan Ulasan.
+Untuk berdonasi, ikuti kotak 💚 Donasi ke Program Ini .
+Pemrakarsa: lengkapi data, pasang rekening/QRIS, lalu Aktifkan .
+QRIS dan rekening hanya tampil ke publik bila pemrakarsa terverifikasi. Program selesai atau batal tidak menerima donasi.
+42. Ubah / Batalkan Bantuan (Kode Edit)
+Untuk penyumbang tanpa akun yang ingin mengubah atau membatalkan bantuannya. Buka halaman →
+Siapa melihat apa
+Semua orang: membuka bantuan dengan Kode Bantuan, Kode Edit, dan nomor HP yang sama saat mengirim.
+Langkah
+Isi Aid ID (Kode Bantuan), Kode Edit, dan nomor HP/WhatsApp.
+Tekan Muat data bantuan .
+Ubah barang, jumlah, lokasi jemput, atau waktu siap. Untuk membatalkan, centang Batalkan bantuan ini .
+Tekan Simpan Perubahan .
+Bantuan yang sudah berjalan di pengiriman tidak bisa diubah atau dibatalkan.
+43. Jejak Audit
+Catatan siapa mengubah data penting, kapan, dan apa yang berubah. Buka halaman →
+Siapa melihat apa
+Super admin & Control Centre: melihat riwayat. Akun lain ditolak walaupun formulirnya tampil.
+Langkah
+Pilih jenis data dan periode (24 jam sampai 90 hari).
+Tekan Tampilkan .
+Baca tabel: waktu, pengubah, data, dan perubahan.
+PIN dan kata sandi selalu disamarkan.
+44. Pengadaan & Tender
+Tender pekerjaan rehabilitasi yang didanai program: syarat, jadwal, gambar kerja, dan RAB. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat daftar dan detail tender beserta gambar kerja.
+Pengguna login: Ajukan Penawaran .
+Organisasi / koordinator: Buat Tender Baru dan mengelola tendernya.
+Langkah
+Buka tender dari daftar, baca syarat peserta dan jadwal.
+Unduh gambar kerja dan RAB.
+Tekan Ajukan Penawaran dan isi penawaran Anda.
+Pembuat tender: isi Informasi Umum, Jadwal, Syarat, lalu unggah Gambar Kerja & RAB.
+Kontak penawar tidak ditampilkan ke publik.
+45. Pengaturan Notifikasi (WhatsApp/SMS)
+Menghubungkan Rescue-Net ke layanan WhatsApp/SMS untuk mengirim pemberitahuan. Buka halaman →
+Siapa melihat apa
+Super admin: menyimpan pengaturan dan mengirim pesan uji. Akun lain ditolak.
+Langkah
+Pilih penyedia (simulasi, fonnte, wablas, twilio, meta_cloud).
+Isi token dan nomor pengirim, lalu Simpan gateway .
+Isi nomor tujuan dan tekan Kirim tes .
+Token disimpan terenkripsi; hanya 4 digit terakhir yang terlihat.
+46. Pengaturan AI (kunci sendiri)
+Menyimpan kunci AI agar tombol Tanya AI bisa dipakai. Buka halaman →
+Siapa melihat apa
+Pengguna login: menyimpan kunci pribadi dan melihat pemakaian 30 hari.
+Pengelola organisasi: menyimpan Kunci AI Organisasi , membagikannya ke anggota, dan memberi batas token.
+Langkah
+Pilih penyedia (OpenAI, Claude, Google) dan model.
+Tempel API key dan beri label.
+Tekan Save Encrypted Key , lalu Cek Status .
+Kembali dan coba tombol Tanya AI .
+Kunci disimpan terenkripsi. Bila organisasi punya kunci bersama, anggota tidak perlu kunci sendiri.
+47. Analis AI
+Ringkasan situasi, peringatan, dan rekomendasi dari AI berdasarkan data Rescue-Net. Buka halaman →
+Siapa melihat apa
+Semua orang: membaca ringkasan, peringatan, dan rekomendasi.
+Pengguna login dengan kunci AI: menjalankan Analisis AI Lanjutan . Untuk bertanya bebas, pakai ikon Tanya AI yang melayang (ada di semua halaman).
+Langkah
+Pilih bencana.
+Baca Alerts dan Recommendations.
+Pilih alat di Analisis AI Lanjutan (bagian atas halaman), pilih Konteks AI bila punya kunci organisasi, lalu tekan Jalankan .
+Jawaban AI adalah saran. Periksa ke data sumber sebelum mengambil keputusan.
+Analisis AI Lanjutan (16 November)
+Di bawah Ask AI kini ada panel Analisis AI Lanjutan berisi 8 alat yang memakai AI untuk pekerjaan yang sulit dilakukan manual. Semua hasil adalah saran : AI tidak mengubah data apa pun. Perlu login dan kunci AI (pribadi atau organisasi) di AI Settings ; biaya memakai kuota kunci yang dipilih di Konteks AI .
+Bisa diklik ke objeknya (17 November): di hasil analisis, jawaban Ask AI, dan daftar Recommendations, nama posko, armada, serta kode data (kebutuhan, stok, laporan warga, bantuan, kiriman, rencana aksi, proyek pemulihan) tampil sebagai tautan bergaris titik . Klik untuk membuka halamannya di tab baru; arahkan kursor untuk melihat jenis objeknya. Isi halaman tujuan tetap mengikuti hak akses akun. Nama yang ditulis AI berbeda dari nama asli tidak bisa ditautkan.
+Alat Kegunaan
+📋 SITREP AI Laporan situasi naratif gaya OCHA: ringkasan eksekutif, kebutuhan & kesenjangan, risiko 24–72 jam, rekomendasi.
+🚨 Triase Laporan Warga Mengelompokkan laporan warga tentang kejadian yang sama dan menandai yang darurat.
+📦 Prakiraan Stok Habis Perkiraan sisa hari stok per posko dan barang, plus saran pemindahan dari posko yang surplus.
+💬 Tanya Jawab Berujukan Jawaban yang menyebut ID data sumber agar bisa dicek.
+🌏 Dampak Gempa BMKG Posko dalam radius 200 km dari gempa terbaru, penilaian dampak, dan tindakan.
+🔎 Cek Kejanggalan Data yang perlu dicek: tawaran kembar, lonjakan stok, jumlah atau harga tender tidak wajar.
+📷 Analisis Foto Bukti Menilai kerusakan, perkiraan tinggi banjir, bahaya, dan kebutuhan dari satu foto.
+🚚 Rencana Pengiriman Usulan siapa mengirim apa ke mana dari kebutuhan, stok posko lain, dan armada.
+Cara memakai
+Buka Analis AI dan pilih bencana.
+Bila punya kunci AI organisasi, pilih Konteks AI (pribadi atau organisasi) di bagian Ask AI.
+Pada kartu alat, isi pilihan bila ada (periode jam, pertanyaan, atau foto), lalu tekan Jalankan . Tunggu 20–90 detik.
+Hasil tampil di bawah kartu. Tekan Unduh .md untuk menyimpan atau Cetak untuk PDF/kertas.
+Semua hasil tersimpan di Riwayat Analisis AI ; tekan judulnya untuk membuka lagi.
+Penjelasan per alat
+SITREP AI : pilih periode (24 jam sampai 7 hari). Angka penting diberi rujukan bagian data dalam kurung siku, misalnya [situasi.jiwa_terdampak]. Bagian "Risiko 24–72 Jam" adalah perkiraan.
+Triase Laporan Warga : AI membaca teks laporan (termasuk bahasa sehari-hari), membuat kelompok kejadian dengan tingkat urgensi 1–5, dan daftar laporan darurat (orang terjebak, lansia, butuh evakuasi). Nama dan nomor HP pelapor tidak dikirim ke AI.
+Prakiraan Stok Habis : sisa hari dihitung sistem dari riwayat stok (kritis ≤3 hari, waspada ≤7 hari); AI menulis saran realokasi dari posko yang stoknya berlebih.
+Tanya Jawab Berujukan : tulis pertanyaan bebas; setiap fakta dalam jawaban diberi ID data sumber, dan ada daftar rujukan di akhir.
+Dampak Gempa BMKG : memakai peringatan gempa BMKG terbaru; jarak posko dihitung sistem, AI menilai dampak dan menyusun tindakan 0–6 jam dan 6–24 jam.
+Cek Kejanggalan : sistem mencari kandidat (tawaran bantuan kembar dalam 48 jam, stok naik/turun >5 kali, jumlah kebutuhan jauh di atas kebiasaan, harga penawaran tender jauh dari median, laporan warga hampir sama dari lokasi berbeda); AI menjelaskan dan menilai. Hasilnya "perlu dicek" , bukan tuduhan.
+Analisis Foto Bukti : pilih atau potret foto (JPG/PNG/WEBP, maks. 4 MB) dan beri catatan lokasi. AI menilai jenis bencana, tingkat kerusakan, perkiraan tinggi air, bahaya, kebutuhan yang terlihat, dan hal yang perlu dicek (misalnya foto tampak lama atau tidak relevan). Foto tidak disimpan ; hanya hasil analisisnya. AI tidak mengenali identitas orang.
+Rencana Pengiriman : sistem mencocokkan kebutuhan terbuka dengan posko lain yang punya stok barang sama (urut terdekat) dan armada yang masih punya ruang; AI menyusun tabel usulan. Rencana harus disetujui pengelola posko sebelum dijalankan lewat menu distribusi seperti biasa.
+Siapa bisa melihat riwayat
+Pembuat analisis, anggota organisasi pemilik kunci AI yang dipakai, dan super admin.
+AI bisa salah. Selalu cocokkan dengan data sumber. Jangan menulis data pribadi di pertanyaan. Data bertanda [SIMULASI] adalah latihan. Biaya AI tergantung banyaknya data yang dianalisis.
+48. Direktori Kontak
+Daftar narahubung: penanggung jawab posko, donatur, relawan, dan PIC program. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat nama dan peran.
+Pengguna login: melihat nomor HP/WhatsApp untuk dihubungi.
+Langkah
+Pilih bencana.
+Cari kategori kontak yang dibutuhkan.
+Tekan Refresh Contacts bila data tampak lama.
+Nomor HP hanya untuk koordinasi bencana. Jangan disebarkan (UU Pelindungan Data Pribadi).
+49. Perencanaan Pengungsi
+Rencana ke depan per KK pengungsi: kembali ke rumah, relokasi, atau dukungan lain. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat ringkasan rencana.
+Pengguna login: Tambah / Perbarui Rencana KK .
+Langkah
+Lihat tabel Rencana per KK dan status tiap rencana.
+Lihat Rollup Rencana untuk jumlah total.
+Setelah login: isi formulir rencana KK lalu simpan.
+Data pengungsi bersifat pribadi. Gunakan kode KK, bukan nama lengkap, di catatan.
+50. Masukan Masyarakat
+Forum usul, keluhan, informasi, dan pertanyaan warga. Buka halaman →
+Siapa melihat apa
+Semua orang: membaca forum dan Kirim Masukan tanpa akun.
+Operator posko, koordinator, Control Centre: memberi tanggapan resmi dan mengubah status.
+Langkah
+Pilih kategori: Usul, Keluhan, Informasi, atau Pertanyaan.
+Isi bencana, topik, dan pesan. Nama, wilayah, dan kontak tidak wajib.
+Tekan Kirim .
+Jangan menulis data pribadi orang lain.
+51. Status Akses Jalan & Infrastruktur
+Kondisi jalan, jembatan, listrik, air, sinyal, bandara, dan pelabuhan. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat status terbaru di peta dan daftar.
+Pengguna login: melaporkan kondisi.
+Verifikator: memverifikasi laporan.
+Langkah
+Pilih jenis (jalan, jembatan, listrik, …) dan status (putus, terbatas, normal, tidak diketahui).
+Isi nama tempat/ruas dan masa berlaku (1 jam – 30 hari).
+Tekan Kirim laporan .
+Laporan kedaluwarsa otomatis dan ditandai basi.
+52. Riwayat Kegiatan
+Linimasa kegiatan penanganan: distribusi, laporan, bukti, layanan. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat kegiatan yang dibuka ke publik. Tampilan sama untuk semua peran.
+Langkah
+Pilih bencana.
+Saring menurut jenis kegiatan.
+Klik kategori untuk rincian.
+53. Back Office Penanganan
+Siapa terlibat dan apa yang sudah dikerjakan: kinerja organisasi, relawan, program donasi, dan gap kebutuhan. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat ringkasan per pihak. Masyarakat umum hanya dihitung jumlahnya.
+Langkah
+Pilih tampilan: Semua, Kinerja pihak, Ringkasan angka, Tabel pihak, Relawan, atau Program donasi.
+Periksa gap kebutuhan barang dan peralatan.
+Klik nama organisasi atau program untuk rincian.
+Nama dan kontak warga tidak ditampilkan.
+54. Profil Sumber Daya
+Kemampuan yang dimiliki akun atau organisasi Anda: keahlian, kendaraan, fasilitas, barang, wilayah, jadwal. Buka halaman →
+Siapa melihat apa
+Semua orang: melihat direktori sumber daya umum.
+Pengguna login: mengubah profil sendiri ( ✎ Edit Profil ) dan menambah isian dengan tombol + .
+Langkah
+Tekan ✎ Edit Profil untuk data dasar.
+Tekan + untuk menambah keahlian, kendaraan, fasilitas, dan lainnya.
+Tekan Simpan .
+Data identitas hanya terlihat oleh pengelola untuk verifikasi.
+55. Halaman lainnya (petunjuk tombol ?)
+Tombol ? di setiap halaman membuka petunjuk yang cocok. Bagian ini memuat petunjuk singkat untuk halaman yang belum punya bab sendiri. Hak ubah tetap mengikuti peran akun.
+Cetak Label Kiriman
+Buka dari halaman kiriman setelah data kiriman tersedia. Masukkan Jumlah koli / label , lalu tekan Cetak . Periksa jumlah label sebelum ditempel pada koli. Tombol Kembali membawa Anda ke halaman sebelumnya.
+Detail Bencana
+Halaman ini merangkum satu bencana dan pintasan ke layanan penanganannya. Gunakan tautan ke Control Centre atau posko untuk membuka daftar kerja yang relevan. Data dan tombol pengelolaan mengikuti hak akun Anda.
+Kartu Keluarga & Penerimaan Bantuan
+Koordinator membuat Putaran distribusi .
+Tambahkan kartu keluarga pada putaran yang dipilih; periksa identitas dan jumlah anggota sebelum menerbitkan atau mencetak.
+Catat penerimaan bantuan untuk keluarga yang benar. Riwayat penerimaan tampil untuk putaran terpilih.
+Data keluarga bersifat pribadi. Gunakan halaman ini hanya untuk tugas distribusi yang menjadi wewenang Anda.
+Kebijakan Privasi
+Baca jenis data yang dikumpulkan, tujuan pemakaian, penggunaan AI, masa simpan, keamanan, dan hak pengguna. Organisasi tertutup membatasi informasi organisasinya. Persetujuan kebijakan diperlukan saat pendaftaran; ajukan permintaan terkait data melalui kontak Rescue-Net.
+Kegiatan Masyarakat
+Pilih bencana untuk melihat informasi kegiatan masyarakat yang terkait. Gunakan Kembali untuk kembali ke halaman sebelumnya. Jika daftar kosong, pilih bencana yang benar atau tunggu data kegiatan dimuat.
+Mock-up Rescue-Net
+Gunakan pilihan layar pada halaman ini untuk melihat contoh rancangan antarmuka. Mock-up membantu memahami tata letak dan alur; lakukan pekerjaan operasional melalui halaman layanan terkait, bukan dari mock-up.
+Profil Organisasi
+Pilih organisasi untuk membaca ringkasan, bidang kerja, dan keterlibatan pada bencana. Profil yang dibuka ke publik dapat dilihat siapa saja; organisasi tertutup menampilkan informasi terbatas. Pengelola memperbarui profil dari menu organisasi jika tombol edit tersedia.
+Saran untuk Rescue-Net
+Pilih jenis saran: fitur baru, perbaikan bug atau error, tampilan, atau lainnya.
+Pilih halaman terkait bila diketahui, tulis judul dan isi saran, lalu kirim.
+Nama dan kontak bersifat opsional; kontak tidak ditampilkan pada daftar publik.
+Daftar saran menampilkan status tindak lanjut sesuai hak akses.
+Scenario Tested
+Gunakan halaman ini untuk melihat skenario uji, akun demo yang disediakan, dan hasil yang tercatat. Skenario membantu pemeriksaan alur aplikasi; data di sini bukan instruksi untuk mengubah catatan operasional.
+Sinkronisasi Data Offline ↔ Online
+Halaman ini meninjau antrean sinkronisasi antara perangkat offline dan sistem online. Periksa item yang tertunda atau gagal sebelum mengirim ulang. Jangan menghapus antrean bila belum memastikan data sudah tersimpan di server.
+Jaringan Verifikator
+Halaman ini berisi layanan verifikasi untuk akun yang diberi tugas verifikator. Tinjau bukti dan data sumber, lalu gunakan tindakan verifikasi yang tersedia sesuai kewenangan. Jangan menandai identitas, lokasi, atau kebutuhan benar tanpa bukti pendukung.
+56. Prinsip rancangan
+Monolit modular yang bisa digandakan, bukan puluhan microservice. RN tetap satu aplikasi (Frappe + modul rescue_net) agar mudah dirawat tim kecil. Yang digandakan adalah salinannya , bukan dipecah-pecah. Hanya pekerjaan berat (notifikasi, AI, olah foto, laporan) dijadikan layanan antrean terpisah.
+Satu paket instalasi untuk semua skala. Paket Rescue-Net Node (satu perintah: pasang, cadangan, pulihkan, perbarui) dipakai untuk server tunggal, salinan tambahan saat beban naik, server cadangan, dan node federasi.
+Tahan bencana sejak awal. Bencana memutus listrik, internet, dan menara seluler. RN harus tetap berguna saat sebagian jaringan putus: aplikasi bisa dipakai luring, data dikirim ulang saat tersambung, dan node lain mengambil alih.
+Kedaulatan data. Tiap lembaga/provinsi/negara memiliki dan menyimpan datanya sendiri; yang dipertukarkan hanya data yang disepakati.
+Standar terbuka. Pertukaran memakai format kemanusiaan internasional: OCHA SitRep, OASIS EDXL & CAP, HXL, P-code wilayah.
+57. Empat tahap skala
+1. Node tunggal
+web + database + antrean
+dalam satu server
++ cache CDN halaman publik
+± ratusan pengguna
+bersamaan
+pilot, simulasi, regional
+2. Web digandakan
+penyeimbang beban
+→ 4–8 salinan web
+database & Redis terpisah
+pekerja notifikasi terpisah
+± 1.000–2.000 pengguna
+bencana besar satu provinsi
+3. Multi-server
+beberapa server aplikasi
+DB utama + replika baca
+Redis siaga otomatis
+penyimpanan foto bersama
+2 lokasi (aktif–siaga)
+± ribuan–puluhan ribu
+operasi nasional
+4. Federasi
+node per provinsi/lembaga
+node per negara
+tukar data yang disepakati
+tiap node mandiri
+tetap jalan bila satu
+wilayah terputus
+nasional & internasional
+Di HP, geser diagram ke samping.
+Angka kapasitas adalah perkiraan pengguna aktif bersamaan dengan halaman publik ter-cache; angka pasti ditetapkan lewat uji beban di tiap tahap. Saat bencana, sebagian besar pengunjung hanya membaca (Bencana Aktif, peta, kebutuhan), sehingga cache sangat menentukan.
+58. Cara RN "menggandakan diri"
+Server web tanpa ingatan lokal. Sesi login di Redis, data di database, foto & dokumen di penyimpanan bersama (S3/MinIO). Dengan begitu salinan web bisa ditambah atau dikurangi kapan saja tanpa pengguna sadar.
+Penyeimbang beban (mis. HAProxy atau load balancer CDN) membagi pengunjung ke salinan yang sehat dan otomatis melewati salinan yang mati.
+Penggandaan otomatis. Pilihan sederhana: pengendali di hypervisor mengkloning kontainer RN dari paket Rescue-Net Node saat CPU tinggi. Pilihan standar industri: Kubernetes ringan (k3s) dengan penskala otomatis (menambah salinan saat beban naik, mengurangi saat sepi).
+Database bertingkat. Satu database utama untuk menulis, replika untuk membaca (papan publik, laporan, ekspor SITREP). Cadangan otomatis tiap malam ke lokasi lain + cadangan berkelanjutan (binlog) agar kehilangan data maksimal hitungan menit.
+Antrean pekerjaan berat. Notifikasi WhatsApp/SMS/email, analisis AI, kompresi foto, pembuatan SITREP/PDF berjalan di pekerja terpisah yang bisa digandakan sendiri; web tetap cepat walau ribuan notifikasi dikirim.
+Cache berlapis. CDN di tepi jaringan → micro-cache di pintu web (sudah berjalan: 20 detik untuk papan publik) → cache Redis di aplikasi.
+59. Ketahanan saat bencana
+Dua lokasi berjauhan (aktif–siaga) agar satu bencana tidak mematikan keduanya; pengalihan otomatis lewat DNS/CDN.
+Listrik & jaringan: sumber listrik cadangan (PLTS/baterai/genset) untuk server dan perangkat jaringan, dua jalur internet berbeda (fiber + seluler/satelit).
+Luring di lapangan: aplikasi (PWA) menyimpan antrean laporan, pindaian serah-terima, dan kehadiran saat tanpa sinyal, lalu mengirim otomatis saat tersambung (sudah ada).
+Jalur cadangan komunikasi: SMS, radio (node komunikasi relawan), dan posko komunikasi untuk wilayah tanpa internet.
+Pemantauan & pemulihan: pemantau situs mengirim peringatan saat layanan turun; paket instalasi memulihkan RN di server lain dalam hitungan menit dari cadangan.
+60. Federasi nasional & jaringan internasional
+Setiap node adalah RN lengkap milik satu pihak (BNPB/BPBD provinsi, lembaga kemanusiaan, atau negara lain). Node berdiri sendiri dan tetap berjalan walau terputus dari node lain.
+Kepemilikan data: data dimiliki node yang membuatnya (mis. posko milik node provinsi). Node lain menerima salinan baca, bukan mengubah.
+Yang dipertukarkan (dapat diatur per node): bencana lintas wilayah/batas negara, kebutuhan kritis, tawaran bantuan & armada, ketersediaan relawan, SITREP. Data pribadi tidak dipertukarkan kecuali ada dasar hukum & persetujuan.
+Protokol: kotak keluar (outbox) per node yang dikirim berkala lewat HTTPS, ditandatangani kunci node (HMAC/tanda tangan digital), bisa diulang bila gagal; node di wilayah terputus mengirim ulang saat tersambung. Format: OCHA SitRep, EDXL-SitRep, CAP 1.2 untuk peringatan, HXL untuk tabel, P-code untuk wilayah.
+Node pusat penghubung (opsional) meneruskan pesan antar-node yang tidak saling terhubung langsung, tanpa menyimpan data pribadi.
+Internasional: tiap negara menjalankan node sendiri (bahasa, nama, logo, aturan lembaga sendiri) dan memilih data apa yang dibagikan ke jaringan regional/internasional (mis. ASEAN, jaringan kemanusiaan PBB).
+61. Keamanan & kepatuhan
+Tidak ada port server yang dibuka langsung ke internet: akses publik lewat terowongan terenkripsi & CDN; halaman admin hanya dari jaringan internal.
+Rahasia (API key, token) disimpan terenkripsi; kunci enkripsi ikut dalam cadangan lengkap dan diperlakukan sangat rahasia.
+Indonesia: UU Pelindungan Data Pribadi, lokalisasi data (PP 71/2019), pendaftaran PSE, uji keamanan & panduan BSSN, kesesuaian SPBE.
+Jejak audit untuk perubahan data sensitif (sudah ada) dan kunci API dengan persetujuan super admin (sudah ada).
+62. Peta jalan
+Tahap Isi Status
+0 Paket instalasi Rescue-Net Node (pasang, cadangan, pulihkan, perbarui) + menu cadangan super admin paket selesai & teruji; menu dalam pengerjaan
+1 Node tunggal di server khusus, cadangan harian ke lokasi lain, pemantauan sedang dipindahkan
+2 Web digandakan + database/Redis/pekerja terpisah + uji beban 1.000 pengguna rencana
+3 Multi-server, replika database, penyimpanan bersama, lokasi kedua rencana
+4 Federasi: protokol pertukaran, node provinsi/lembaga, lalu node negara rintisan desain ada; rencana
+Rincian teknis (susunan server, perintah, kata sandi) tidak dimuat di halaman publik ini; tersedia di Manual Teknis dan dokumentasi internal tim.
 Kembali ke atas

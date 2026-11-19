@@ -90,6 +90,15 @@ class TestAssistantSettingsActions(RNTestCase):
         self.assertIn("Registrasi akun / login / peran", c["PAGE_MAP"])
         self.assertNotIn("MANUAL_PENGGUNA", self.ctx(self.other.user, "stok beras posko A"))
 
+    def test_manual_picks_relevant_late_chapters(self):
+        """2026-11-19: bab akhir manual (di luar 24 rb huruf pertama) tetap terbaca bila relevan."""
+        m = aa._manual("bagaimana cara menunjuk sub admin organisasi?")
+        self.assertIn("Sub Admin", m)
+        self.assertIn("Manual Rescue-Net", m)
+        self.assertLessEqual(len(m), aa.MANUAL_BUDGET + 1500)
+        m2 = aa._manual("cara pakai tender pengadaan")
+        self.assertIn("Pengadaan & Tender", m2)
+
     def test_manager_context_has_contact_needs_and_volunteer_requests(self):
         c = self.ctx(self.mgr.user, "apa yang perlu saya tindak", posko=self.w.posko_a.name)
         self.assertIn(self.bk.name, [v["name"] for v in c["posko_aktif"]["permintaan_relawan"]])

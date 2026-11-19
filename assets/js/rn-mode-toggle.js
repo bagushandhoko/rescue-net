@@ -44,11 +44,11 @@
       : "Sedang menampilkan data riil. Klik untuk melihat data simulasi (latihan).";
     b.setAttribute("aria-label", b.title);
     // owner 2026-11-18 (revisi): kembali ke pojok KANAN BAWAH, lurus (tidak diputar), ukuran huruf 14px tebal tetap,
-    // latar transparan tapi terbaca. Di Simulasi oranye sebagai tanda.
+    // latar transparan tapi terbaca. Di Simulasi oranye sebagai tanda. Ukuran tombol = tombol Tanya AI (padding 11x16, 36px, 14px dari tepi).
     b.style.cssText = [
-      "position:fixed", "right:12px", "bottom:12px", "z-index:10050",
-      "font-style:italic", "font-weight:700", "font-size:14px", "line-height:1.2", "font-family:inherit",
-      "letter-spacing:.3px", "padding:6px 14px", "border-radius:999px", "cursor:pointer",
+      "position:fixed", "right:14px", "bottom:14px", "z-index:10050",
+      "font-style:italic", "font-weight:700", "font-size:14px", "line-height:14px", "font-family:inherit",
+      "letter-spacing:.3px", "padding:10px 16px", "box-sizing:border-box", "border-radius:999px", "cursor:pointer",
       "border:1px solid " + (sim ? "rgba(232,104,40,.75)" : "rgba(122,58,26,.25)"),
       "background:" + (sim ? "rgba(232,104,40,.62)" : "rgba(255,255,255,.62)"),
       "color:" + (sim ? "#fff" : "#7a3a1a"),

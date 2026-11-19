@@ -158,10 +158,14 @@ async function loadWelcomeLiveMetrics() {
   if (!document.body.classList.contains("home-page")) return;
 
   try {
-    const [disasters, ctx] = await Promise.all([
-      rnFetch("/disasters"),
-      rnFetch("/ai/context/event-sim-001")
-    ]);
+    // 2026-11-19: bawaan RIIL -> konteks dari bencana aktif yang tampil (bukan event-sim-001 tertulis di kode);
+    // bila konteks gagal, angka bencana tetap tampil (dulu satu kegagalan membuat semua 0 + "API belum terbaca").
+    const sim = /(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie);
+    const list = await rnFetch("/disasters");
+    const disasters = Array.isArray(list) ? list : [];
+    const ev = sim ? "event-sim-001" : ((disasters[0] && (disasters[0].id || disasters[0].name)) || "");
+    let ctx = {};
+    if (ev) { try { ctx = (await rnFetch("/ai/context/" + encodeURIComponent(ev))) || {}; } catch (e) { ctx = {}; } }
     const summary = ctx.summary || {};
     const critical = disasters.filter(d => d.severity === "critical").length;
     const needs = Number(summary.open_logistic_need_count || 0) + Number(summary.shelter_need_count || 0);
@@ -171,7 +175,7 @@ async function loadWelcomeLiveMetrics() {
     }).length;
 
     setText("[data-rn-live-active-disasters]", formatNumber(disasters.length));
-    setText("[data-rn-live-active-note]", `${critical} critical`);
+    setText("[data-rn-live-active-note]", disasters.length ? `${critical} critical` : (sim ? "belum ada bencana simulasi" : "belum ada bencana riil"));
     setText("[data-rn-live-critical-needs]", formatNumber(needs));
     setText("[data-rn-live-volunteers]", formatNumber(summary.volunteer_count || 0));
     setText("[data-rn-live-blocked-flows]", formatNumber(blockedFlows || summary.distribution_flow_count || 0));

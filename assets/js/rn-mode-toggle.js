@@ -1,6 +1,6 @@
 /* Tombol kecil Simulasi / Riil di pojok kanan bawah setiap halaman (owner 2026-11-18). Dibuat Suri (Claude CT105).
  * - Bawaan RIIL: Rescue-Net datang kosong sampai ada bencana riil. Cookie rn_tampilan=simulasi = tampilan latihan.
- * - Tulisan miring menunjukkan tampilan TUJUAN: di Riil tertulis "simulasi", di Simulasi tertulis "riil".
+ * - Tulisan menunjukkan tampilan TUJUAN: di Riil tertulis "simulasi", di Simulasi tertulis "riil".
  * - Klik: simpan pilihan, lalu muat halaman yang sama di tampilan baru.
  * - Kembali ke Riil dari halaman detail posko (posko simulasi tidak ada di data riil) -> halaman Organisasi & Posko.
  * Dimuat otomatis oleh rn-public-header.js dan rn-mobile-drawer.js. */
@@ -47,15 +47,13 @@
     // padding 11x16, huruf tebal 14px/1, bulat penuh, bayangan sama, 14px dari tepi (+area aman HP), lebar = lebar Tanya AI.
     // Garis tipis dibuat dengan bayangan dalam (inset) agar tidak menambah ukuran. Tulisan miring di tengah.
     b.className = "rn-mode-toggle";
+    // owner 2026-11-19 (2): warna & huruf juga SAMA PERSIS dengan Tanya AI (gradasi oranye, tulisan putih tebal tegak).
     b.style.cssText = [
       "position:fixed", "right:14px", "bottom:calc(14px + env(safe-area-inset-bottom,0px))", "z-index:9990",
       "border:0", "border-radius:999px", "padding:11px 16px", "box-sizing:border-box", "min-width:107px",
-      "text-align:center", "white-space:nowrap", "font:italic 700 14px/1 system-ui,sans-serif", "cursor:pointer",
-      "background:" + (sim ? "rgba(232,104,40,.78)" : "rgba(255,255,255,.72)"),
-      "color:" + (sim ? "#fff" : "#7a3a1a"),
-      "text-shadow:" + (sim ? "0 1px 2px rgba(0,0,0,.45)" : "0 0 3px #fff,0 0 2px #fff"),
-      "box-shadow:inset 0 0 0 1px " + (sim ? "rgba(232,104,40,.9)" : "rgba(122,58,26,.28)") + ",0 8px 24px rgba(200,70,40,.22)",
-      "backdrop-filter:blur(2px)", "-webkit-backdrop-filter:blur(2px)"
+      "text-align:center", "white-space:nowrap", "font:700 14px/1 system-ui,sans-serif", "cursor:pointer",
+      "background:linear-gradient(135deg,#ef523d,#e8835d)", "color:#fff",
+      "box-shadow:0 8px 24px rgba(200,70,40,.35)"
     ].join(";");
     if (!document.getElementById("rnModeToggleCss")) {
       var st = document.createElement("style");

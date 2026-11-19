@@ -43,19 +43,39 @@
       ? "Sedang menampilkan data SIMULASI (latihan). Klik untuk kembali ke data riil."
       : "Sedang menampilkan data riil. Klik untuk melihat data simulasi (latihan).";
     b.setAttribute("aria-label", b.title);
-    // owner 2026-11-18 (revisi): kembali ke pojok KANAN BAWAH, lurus (tidak diputar), ukuran huruf 14px tebal tetap,
-    // latar transparan tapi terbaca. Di Simulasi oranye sebagai tanda. Ukuran tombol = tombol Tanya AI (padding 11x16, 36px, 14px dari tepi).
+    // owner 2026-11-19: bentuk & ukuran SAMA PERSIS dengan tombol Tanya AI (.rn-aic-btn): tanpa garis tepi,
+    // padding 11x16, huruf tebal 14px/1, bulat penuh, bayangan sama, 14px dari tepi (+area aman HP), lebar = lebar Tanya AI.
+    // Garis tipis dibuat dengan bayangan dalam (inset) agar tidak menambah ukuran. Tulisan miring di tengah.
+    b.className = "rn-mode-toggle";
     b.style.cssText = [
-      "position:fixed", "right:14px", "bottom:14px", "z-index:10050",
-      "font-style:italic", "font-weight:700", "font-size:14px", "line-height:14px", "font-family:inherit",
-      "letter-spacing:.3px", "padding:10px 16px", "box-sizing:border-box", "border-radius:999px", "cursor:pointer",
-      "border:1px solid " + (sim ? "rgba(232,104,40,.75)" : "rgba(122,58,26,.25)"),
-      "background:" + (sim ? "rgba(232,104,40,.62)" : "rgba(255,255,255,.62)"),
+      "position:fixed", "right:14px", "bottom:calc(14px + env(safe-area-inset-bottom,0px))", "z-index:9990",
+      "border:0", "border-radius:999px", "padding:11px 16px", "box-sizing:border-box", "min-width:107px",
+      "text-align:center", "white-space:nowrap", "font:italic 700 14px/1 system-ui,sans-serif", "cursor:pointer",
+      "background:" + (sim ? "rgba(232,104,40,.78)" : "rgba(255,255,255,.72)"),
       "color:" + (sim ? "#fff" : "#7a3a1a"),
       "text-shadow:" + (sim ? "0 1px 2px rgba(0,0,0,.45)" : "0 0 3px #fff,0 0 2px #fff"),
-      "box-shadow:0 1px 6px rgba(0,0,0,.18)",
+      "box-shadow:inset 0 0 0 1px " + (sim ? "rgba(232,104,40,.9)" : "rgba(122,58,26,.28)") + ",0 8px 24px rgba(200,70,40,.22)",
       "backdrop-filter:blur(2px)", "-webkit-backdrop-filter:blur(2px)"
     ].join(";");
+    if (!document.getElementById("rnModeToggleCss")) {
+      var st = document.createElement("style");
+      st.id = "rnModeToggleCss";
+      st.textContent = "@media (max-width:720px){body:has(.pk-sticky:not([hidden])) .rn-mode-toggle{bottom:84px!important}}" +
+        "@media print{.rn-mode-toggle{display:none!important}}";
+      document.head.appendChild(st);
+    }
+    // samakan lebar dengan tombol Tanya AI bila ada (font sama -> ukuran sama persis)
+    function samakan() {
+      var ai = document.querySelector(".rn-aic-btn");
+      if (!ai) return false;
+      var r = ai.getBoundingClientRect();
+      if (r.width > 0) { b.style.width = r.width + "px"; b.style.height = r.height + "px"; }
+      var f = getComputedStyle(ai).fontFamily;
+      if (f) b.style.fontFamily = f;
+      return true;
+    }
+    var coba = 0;
+    (function tunggu() { if (!samakan() && ++coba < 20) setTimeout(tunggu, 300); })();
     b.addEventListener("click", function () {
       var keSim = !isSim();
       save(keSim ? "simulasi" : "riil");

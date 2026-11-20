@@ -51,6 +51,7 @@ scheduler_events = {
         "rescue_net.ai.budget.purge_usage_logs",
         "rescue_net.services.expiry.daily_expiry_notify",
         "rescue_net.services.event_merge.daily_scan",
+        "rescue_net.services.endorsement.expire_overdue",
     ],
 }
 

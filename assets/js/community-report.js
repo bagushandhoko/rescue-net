@@ -749,11 +749,15 @@ function reportCard(report) {
         <button class="btn" type="button" data-report-action="rejected" data-report-id="${report.id}">Reject</button>
         <button class="btn primary" type="button" data-report-convert="${report.id}">Convert Logistik</button>
         <button class="btn ghost" type="button" data-report-take="${report.id}" title="Alihkan laporan ke posko Anda dan tangani dari sana">Tangani laporan ini (posko saya)</button>
+        ${report.can_reroute
+          ? `<button class="btn ghost" type="button" data-report-reroute="${escHtml(report.id)}" data-report-posko="${escHtml(report.posko || "")}" data-report-event="${escHtml(report.disaster_event || "")}" title="Pilih posko lain pada bencana yang sama">Alihkan ke posko lain</button>`
+          : ""}
         ${report.duplicate_of
           ? `<span class="chip warning">Duplikat dari ${safeText(report.duplicate_of)}</span> <button class="btn ghost" type="button" data-dup-unmark="${report.id}">Batalkan duplikat</button>`
           : `<button class="btn ghost" type="button" data-dup-check="${report.id}" title="Cari laporan lain untuk kejadian yang sama">Cek laporan ganda</button>`}
       </div>
       <div class="rn-dup-box" data-dup-box="${report.id}" hidden></div>
+      <div class="rn-dup-box" data-reroute-box="${escHtml(report.id)}" hidden></div>
     </article>
   `;
 }
@@ -1204,6 +1208,70 @@ async function submitVerifyReporter(form) {
   }
 }
 
+// owner 2026-11-20: "Alihkan ke posko lain" — pilih posko pada bencana yang sama, lalu
+// api_reports.reroute_community_report. Tombol hanya tampil bila server memberi can_reroute;
+// server tetap memeriksa izin dan menolak dengan pesan yang jelas.
+const RN_REROUTE_POSKOS = {};
+
+async function reroutePoskos(eventId) {
+  if (!RN_REROUTE_POSKOS[eventId]) {
+    RN_REROUTE_POSKOS[eventId] = RN_FRAPPE.call("rescue_net.api_control_centre.event_poskos", { disaster_event: eventId })
+      .then((res) => (Array.isArray(res) ? res : (res && res.points) || [])
+        .map((pt) => ({ id: pt.posko_id || pt.id || pt.name, title: pt.name || pt.title || pt.posko_id }))
+        .filter((p) => p.id)
+        .sort((a, b) => String(a.title).localeCompare(String(b.title), "id")))
+      .catch((err) => { delete RN_REROUTE_POSKOS[eventId]; throw err; });
+  }
+  return RN_REROUTE_POSKOS[eventId];
+}
+
+async function openReroutePicker(btn) {
+  const id = btn.dataset.reportReroute;
+  const box = document.querySelector(`[data-reroute-box="${CSS.escape(id)}"]`);
+  if (!box) return;
+  if (!box.hidden) { box.hidden = true; return; }
+  box.hidden = false;
+  box.textContent = "Memuat daftar posko…";
+  const current = btn.dataset.reportPosko || "";
+  const eventId = btn.dataset.reportEvent || window.rnActiveEvent || "";
+  try {
+    const list = (await reroutePoskos(eventId)).filter((p) => p.id !== current);
+    if (!list.length) { box.textContent = "Tidak ada posko lain pada bencana ini."; return; }
+    box.innerHTML = `<form data-reroute-form="${escHtml(id)}">
+        <label>Alihkan laporan ke posko
+          <select name="posko" required>
+            <option value="">— pilih posko —</option>
+            ${list.map((p) => `<option value="${escHtml(p.id)}">${escHtml(p.title)}</option>`).join("")}
+          </select>
+        </label>
+        <button class="btn primary mini" type="submit">Alihkan</button>
+        <button class="btn ghost mini" type="button" data-reroute-cancel="${escHtml(id)}">Batal</button>
+        <p class="form-message" data-reroute-msg role="status" aria-live="polite"></p>
+      </form>`;
+  } catch (err) {
+    box.textContent = readableError(err) || "Gagal memuat daftar posko.";
+  }
+}
+
+async function submitReroute(form, say) {
+  const id = form.dataset.rerouteForm;
+  const posko = form.posko.value;
+  const msg = form.querySelector("[data-reroute-msg]");
+  if (!posko) { showMsg(msg, "Pilih posko tujuan dulu.", true); return; }
+  const buttons = form.querySelectorAll("button");
+  buttons.forEach((b) => { b.disabled = true; });
+  showMsg(msg, "Mengalihkan…", false);
+  try {
+    const r = await RN_FRAPPE.call("rescue_net.api_reports.reroute_community_report",
+      { report: id, posko }, { method: "POST" });
+    say(`Laporan dialihkan ke ${r.posko_title || r.posko}.`);
+    await loadCommunityReports();
+  } catch (err) {
+    showMsg(msg, readableError(err) || "Gagal mengalihkan laporan.", true);
+    buttons.forEach((b) => { b.disabled = false; });
+  }
+}
+
 function setupCommunityReportActions() {
   const say = (text, isError) => {
     const box = document.querySelector("[data-community-queue-message]");
@@ -1255,6 +1323,14 @@ function setupCommunityReportActions() {
         }
         await loadCommunityReports();
       } catch (err) { say(err && err.message ? err.message : "Gagal menyimpan.", true); }
+      return;
+    }
+    const rerouteBtn = e.target.closest("[data-report-reroute]");
+    if (rerouteBtn) { openReroutePicker(rerouteBtn); return; }
+    const rerouteCancel = e.target.closest("[data-reroute-cancel]");
+    if (rerouteCancel) {
+      const box = document.querySelector(`[data-reroute-box="${CSS.escape(rerouteCancel.dataset.rerouteCancel)}"]`);
+      if (box) box.hidden = true;
       return;
     }
     const takeBtn = e.target.closest("[data-report-take]");
@@ -1320,7 +1396,9 @@ function setupCommunityReportActions() {
 
   document.addEventListener("submit", (e) => {
     const f = e.target.closest("[data-verify-reporter]");
-    if (f) { e.preventDefault(); submitVerifyReporter(f); }
+    if (f) { e.preventDefault(); submitVerifyReporter(f); return; }
+    const rf = e.target.closest("[data-reroute-form]");
+    if (rf) { e.preventDefault(); submitReroute(rf, say); }
   });
   document.addEventListener("change", (e) => {
     const sel = e.target.closest("[data-verify-reporter] select[name=method]");

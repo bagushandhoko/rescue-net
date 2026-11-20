@@ -195,6 +195,17 @@ class TestEndorseReporter(RNTestCase):
             self.av.revoke_endorsement(out["endorsement"], reason="salah orang")
         self.assertEqual(status(), "self_reported")
 
+    def test_expired_reporter_endorsement_no_longer_counts(self):
+        """owner 2026-11-20: endorsement baru berlaku 1 tahun; yang lewat tidak dihitung dan boleh diperbarui."""
+        out = self.endorse()
+        self.assertTrue(frappe.db.get_value("RN Verification Endorsement", out["endorsement"], "expires_at"))
+        self.assertEqual(rc.verification_profile(self.reporter.account)["status"], "community_verified")
+        frappe.db.set_value("RN Verification Endorsement", out["endorsement"], "expires_at", "2020-01-01 00:00:00")
+        self.assertEqual(rc.verification_profile(self.reporter.account)["status"], "self_reported")
+        self.assertEqual(self.public_row()["reporter_verification_status"], "self_reported")
+        self.endorse()
+        self.assertEqual(rc.verification_profile(self.reporter.account)["status"], "community_verified")
+
 
 def api_call_as(user, report):
     with as_user(user):

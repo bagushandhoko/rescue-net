@@ -157,6 +157,38 @@ class TestIntakeAndRouting(RNTestCase):
         doc = frappe.get_doc("RN Community Report", report)
         self.assertEqual((doc.posko, doc.routing_mode), (self.medical.name, "manual"))
 
+    def test_reroute_flag_in_queue_and_control_centre(self):
+        """owner 2026-11-20: tombol "Alihkan ke posko lain" — the list flag follows the same rule as the API."""
+        from rescue_net.frontend_bridge.reports import community_reports
+
+        report = self.submit("Banjir di Desa Sukamaju, 40 orang mengungsi.", latitude=-6.9, longitude=107.1)["name"]
+
+        def flag(user):
+            with as_user(user):
+                rows = community_reports(disaster_event=self.event.name)
+            return next(r for r in rows if r["name"] == report)["can_reroute"]
+
+        self.assertTrue(flag(self.op_near.user))
+        self.assertFalse(flag(self.op_far.user))
+        self.assertFalse(flag(self.reporter.user))
+        with as_guest():
+            rows = community_reports(disaster_event=self.event.name)
+        self.assertFalse(next(r for r in rows if r["name"] == report)["can_reroute"])
+
+        cc = make_actor(role="command_center")
+        self.assertTrue(flag(cc.user))
+        with as_user(cc.user):
+            out = api.reroute_community_report(report, self.far.name)
+        self.assertEqual((out["posko"], out["previous_posko"]), (self.far.name, self.near.name))
+        with as_user(cc.user), self.assertRaises(frappe.ValidationError):
+            api.reroute_community_report(report, self.far.name)   # already there
+
+    def test_reroute_refuses_a_posko_of_another_event(self):
+        report = self.submit("Banjir di Desa Sukamaju, 40 orang mengungsi.", latitude=-6.9, longitude=107.1)["name"]
+        other = make_posko(make_event(event_status="active"), make_org(), title="Posko Lain")
+        with as_user(self.op_near.user), self.assertRaises(frappe.ValidationError):
+            api.reroute_community_report(report, other.name)
+
     def test_drought_report_predicts_water_trucks(self):
         needs = api.predict_report_needs("water_shortage", None, 1000)
         by = {n["category"]: n for n in needs}

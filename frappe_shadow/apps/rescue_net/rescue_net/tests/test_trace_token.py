@@ -42,6 +42,18 @@ class TestTraceToken(RNTestCase):
             with self.assertRaises(frappe.DoesNotExistError):
                 dist.flow_trace(trace="RN-ZZZZZZZZ")
 
+    def test_partially_received_has_its_own_label(self):
+        """owner 2026-11-20: Lacak shows "Diterima Sebagian", not "Diterima"."""
+        frappe.db.set_value("RN Distribution Flow", self.flow, "flow_status", "partially_received")
+        with as_guest():
+            res = dist.flow_trace(flow=self.flow)
+        self.assertEqual(res["status_label"], "Diterima Sebagian")
+        last = res["steps"][-1]
+        self.assertEqual((last["key"], last["label"], last["current"]), ("received", "Diterima Sebagian", True))
+        frappe.db.set_value("RN Distribution Flow", self.flow, "flow_status", "received")
+        with as_guest():
+            self.assertEqual(dist.flow_trace(flow=self.flow)["steps"][-1]["label"], "Diterima")
+
     def test_untokened_flow_falls_back_to_legacy_code(self):
         frappe.db.set_value("RN Distribution Flow", self.flow, "trace_token", None)
         self.assertEqual(dist._distribusi_trace(self.flow), "RN-" + self.flow[-8:].upper())

@@ -39,7 +39,8 @@
   // Status mentah dari server (Inggris) -> label Indonesia untuk tampilan (audit 14 Nov).
   var STATUS_ID = { available: "Tersedia", need_pickup: "Perlu Jemput", ready: "Siap", offered: "Ditawarkan",
     matched: "Cocok", pledged: "Dijanjikan", dispatched: "Dalam Perjalanan", in_transit: "Dalam Perjalanan",
-    transit: "Dalam Perjalanan", arrived: "Tiba", received: "Diterima", received_verified: "Diterima (terverifikasi)",
+    transit: "Dalam Perjalanan", arrived: "Tiba", arrived_at_posko: "Tiba di Tujuan",
+    partially_received: "Diterima Sebagian", received: "Diterima", received_verified: "Diterima (terverifikasi)",
     stock_transferred: "Masuk Stok", completed: "Selesai", closed: "Ditutup", cancelled: "Batal", pending: "Menunggu",
     open: "Terbuka", low: "Menipis", critical: "Kritis", empty: "Habis", out_of_stock: "Habis", fulfilled: "Terpenuhi",
     partially_fulfilled: "Sebagian Terpenuhi", draft: "Draf", planned: "Direncanakan", active: "Aktif" };

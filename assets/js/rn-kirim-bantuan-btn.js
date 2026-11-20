@@ -18,6 +18,18 @@
       link.href = "kirim-bantuan.html?" + params;
     }
     title.insertAdjacentElement("afterend", link);
+    // 2026-11-20 (owner: layout posko LD2/LD3 tidak proporsional): judul ini = NAMA POSKO. Di HP aturan umum
+    // menyembunyikan judul .topbar (header HP sudah menulis "Posko Detail"), sehingga nama posko hilang.
+    // Tandai sebagai judul entitas dan tampilkan lagi (spesifisitas lebih tinggi dari aturan penyembunyi).
+    title.classList.add("rn-entity-title");
+    if (!document.getElementById("rnEntityTitleCss")) {
+      var st = document.createElement("style");
+      st.id = "rnEntityTitleCss";
+      st.textContent = "@media (max-width:768px){html body .topbar h2.rn-entity-title.rn-entity-title{display:block!important;" +
+        "font-size:24px!important;line-height:1.2!important;margin:2px 0 4px!important;overflow-wrap:anywhere}}" +
+        "#rnMenujuPosko .rn-pie-grid{max-width:100%}";
+      document.head.appendChild(st);
+    }
     update();
     new MutationObserver(update).observe(title, { childList: true, characterData: true, subtree: true });
     // Several boards keep a generic heading; resolve the actual posko name for prefill.
@@ -44,7 +56,10 @@
     panel.id = 'rnMenujuPosko';
     panel.setAttribute('aria-label', 'Menuju posko ini');
     panel.style.cssText = 'margin:16px 0;padding:16px;border:1px solid #ccd6df;border-radius:12px;background:var(--card,#fff);max-width:100%;box-sizing:border-box;overflow-wrap:anywhere';
-    button.parentElement.insertAdjacentElement('afterend', panel);
+    // 2026-11-20: taruh SETELAH seluruh baris judul (.topbar berbaris menyamping); dulu disisipkan di dalamnya
+    // sehingga panel terjepit di tengah judul dan grafik/keterangannya pecah per huruf.
+    var topbar = button.closest('.topbar');
+    (topbar || button.parentElement).insertAdjacentElement('afterend', panel);
     function el(tag, text, parent) {
       var e = document.createElement(tag); e.textContent = text; parent.appendChild(e); return e;
     }

@@ -366,6 +366,10 @@ def distribusi_board(disaster_event=None):
         # confirmed bookings are already in capacity_committed_m3 (= terpakai); blocked = still waiting
         return sum(_num(b.qty_volume_m3) for b in bks if b.status == "requested")
 
+    def _blocked_kg_for(t):
+        bks = _bookings_by_space.get(t.get("name"), [])
+        return sum(_num(b.qty_weight_kg) for b in bks if b.status == "requested")
+
     def _cap_bucket(rows):
         blocked_m3 = round(sum(_blocked_m3_for(t) for t in rows), 1)
         # owner 2026-11-09 (simulasi DIST-MU-2): dulu hanya armada berstatus jalan yang dihitung "terpakai" — Hercules
@@ -375,29 +379,46 @@ def distribusi_board(disaster_event=None):
             if t.transport_status in UTILISED_STATES:
                 return _num(t.capacity_volume_m3)
             return min(_num(t.capacity_volume_m3), _num(t.get("own_load_m3")) + _num(t.get("capacity_committed_m3")))
+        def _used_kg(t):
+            if t.transport_status in UTILISED_STATES:
+                return _num(t.capacity_weight_kg)
+            return min(_num(t.capacity_weight_kg), _num(t.get("own_load_kg")) + _num(t.get("capacity_committed_kg")))
+        def _available_m3_for(t):
+            if t.transport_status != "available":
+                return 0.0
+            return max(0.0, _num(t.capacity_volume_m3) - _used_m3(t) - _blocked_m3_for(t))
+        def _available_kg_for(t):
+            if t.transport_status != "available":
+                return 0.0
+            return max(0.0, _num(t.capacity_weight_kg) - _used_kg(t) - _blocked_kg_for(t))
         terpakai_m3 = round(sum(_used_m3(t) for t in rows), 1)
         total_m3 = round(sum(_num(t.capacity_volume_m3) for t in rows), 1)
-        # "Ruang" transport = volume: the % must be terpakai_m3 / total_m3, the same
-        # numbers shown next to it (KPI note, donut). Weight only when no armada has m³.
+        terpakai_kg = round(sum(_used_kg(t) for t in rows), 1)
+        total_kg = round(sum(_num(t.capacity_weight_kg) for t in rows), 1)
+        tersedia_kg = round(sum(_available_kg_for(t) for t in rows), 1)
+        # Use volume for the KPI when available; otherwise use weight.
         if total_m3:
             pct = round(100.0 * terpakai_m3 / total_m3, 1)
         else:
-            total_kg = sum(_num(t.capacity_weight_kg) for t in rows)
-            used_kg = sum(_num(t.capacity_weight_kg) if t.transport_status in UTILISED_STATES else
-                          min(_num(t.capacity_weight_kg), _num(t.get("own_load_kg")) + _num(t.get("capacity_committed_kg")))
-                          for t in rows)
-            pct = round(100.0 * used_kg / total_kg, 1) if total_kg else 0
+            pct = round(100.0 * terpakai_kg / total_kg, 1) if total_kg else 0
         return {
             "tersedia_m3": round(max(0.0, sum(_num(t.capacity_volume_m3) - _used_m3(t) for t in rows
                                       if t.transport_status == "available") - blocked_m3), 1),
+            "tersedia_kg": tersedia_kg,
             "terpakai_m3": terpakai_m3,
+            "terpakai_kg": terpakai_kg,
             "blocked_m3": blocked_m3,
             "total_m3": total_m3,
+            "total_kg": total_kg,
             "pct": pct,
             "units": [
                 {
                     "provider": t.provider_name,
+                    "posko": posko_titles.get(t.get("coordination_posko")) or "",
+                    "posko_id": t.get("coordination_posko") or "",
                     "capacity_m3": _num(t.capacity_volume_m3),
+                    "available_m3": round(_available_m3_for(t), 1),
+                    "available_kg": round(_available_kg_for(t), 1),
                     "route": (t.route_origin or "-") + " → " + (t.route_destination or "-"),
                     "status": t.transport_status,
                     "berangkat": t.get("departure_time") or "-",

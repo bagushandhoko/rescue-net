@@ -34,13 +34,58 @@
     kebutuhan: "Kebutuhan Belum Match", terhambat: "Distribusi Terhambat",
   };
 
-  function capInfoHtml(bucket, label) {
+  function capInfoHtml(bucket) {
+    var volumeBased = Number(bucket.total_m3) > 0;
+    var capacityUnit = volumeBased ? "m³" : "kg";
+    var availableTotal = volumeBased ? bucket.tersedia_m3 : bucket.tersedia_kg;
+    var usedTotal = volumeBased ? bucket.terpakai_m3 : bucket.terpakai_kg;
+    var totalCapacity = volumeBased ? bucket.total_m3 : bucket.total_kg;
+    var groups = {};
+    ((bucket && bucket.units) || []).forEach(function (unit) {
+      if (String(unit.status || "").toLowerCase() !== "available") return;
+      var availableM3 = Number(unit.available_m3) || 0;
+      var availableKg = Number(unit.available_kg) || 0;
+      if (availableM3 <= 0 && availableKg <= 0) return;
+      var poskoId = String(unit.posko_id || "");
+      var key = poskoId ? "posko:" + poskoId : "unlinked:" + String(unit.provider || "");
+      if (!groups[key]) {
+        groups[key] = { poskoId: poskoId, posko: unit.posko || "Posko belum ditautkan", units: [], m3: 0, kg: 0 };
+      }
+      groups[key].units.push(unit);
+      groups[key].m3 += availableM3;
+      groups[key].kg += availableKg;
+    });
+
+    var poskoHtml = Object.keys(groups).sort(function (a, b) {
+      return String(groups[a].posko).localeCompare(String(groups[b].posko), "id");
+    }).map(function (key) {
+      var group = groups[key];
+      var capacity = [];
+      if (group.m3 > 0) capacity.push(fmt(group.m3) + " m³ tersedia");
+      if (group.kg > 0) capacity.push(fmt(group.kg) + " kg tersedia");
+      var units = group.units.map(function (unit) {
+        var route = unit.route && unit.route !== "-" ? " (" + unit.route + ")" : "";
+        return String(unit.provider || "Armada") + route;
+      }).join("; ");
+      var sub = capacity.join(" · ") + (units ? " · Armada: " + units : "");
+      var content = "<span><b>" + esc(group.posko) + "</b><small>" + esc(sub) + "</small></span>" +
+        (group.poskoId ? '<span class="rn-ba-ditem-go">→</span>' : "");
+      if (!group.poskoId) return '<div class="rn-ba-ditem">' + content + "</div>";
+      var href = "posko-distribusi.html?posko=" + encodeURIComponent(group.poskoId);
+      var eventId = getEventId();
+      if (eventId) href += "&event=" + encodeURIComponent(eventId);
+      return '<a class="rn-ba-ditem" href="' + esc(href) + '">' + content + "</a>";
+    }).join("");
+
     return (
       '<div class="rn-dp-target rn-dp-target-modal">' +
-      "<div><span>Tersedia</span><b>" + fmt(bucket.tersedia_m3) + "</b><small>m³</small></div>" +
-      "<div><span>Terpakai</span><b>" + fmt(bucket.terpakai_m3) + "</b><small>m³</small></div>" +
-      "<div><span>Total</span><b>" + fmt(bucket.total_m3) + "</b><small>m³ · " + bucket.pct + "%</small></div>" +
-      "</div>"
+      "<div><span>Tersedia</span><b>" + fmt(availableTotal) + "</b><small>" + capacityUnit + "</small></div>" +
+      "<div><span>Terpakai</span><b>" + fmt(usedTotal) + "</b><small>" + capacityUnit + "</small></div>" +
+      "<div><span>Total</span><b>" + fmt(totalCapacity) + "</b><small>" + capacityUnit + " · " + bucket.pct + "%</small></div>" +
+      "</div><h4>Posko dengan kapasitas tersedia</h4>" +
+      (poskoHtml
+        ? '<div class="rn-ba-ditems">' + poskoHtml + "</div>"
+        : '<p class="rn-muted">Tidak ada posko dengan armada dan sisa kapasitas tersedia untuk moda ini.</p>')
     );
   }
 
@@ -60,7 +105,7 @@
     $("#distribusiDrillTitle").textContent = DRILL_TITLES[kind] || kind;
     if (kind === "transport" || kind === "darat" || kind === "laut" || kind === "udara") {
       var bucket = kind === "transport" ? BOARD_CACHE.ruang_transportasi.overall : BOARD_CACHE.ruang_transportasi.by_type[kind];
-      $("#distribusiDrillSub").textContent = "Basis volume (m³)";
+      $("#distribusiDrillSub").textContent = "Rincian kapasitas dan posko penyedia";
       $("#distribusiDrillBody").innerHTML = capInfoHtml(bucket);
     } else {
       var field = kind === "kebutuhan" ? "kebutuhan_items" : "terhambat_items";

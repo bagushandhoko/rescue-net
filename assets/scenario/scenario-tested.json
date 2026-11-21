@@ -1,7 +1,24 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-16",
+  "diperbarui": "2026-11-21",
   "uji": [
+    {
+      "id": "NAV-DISTRIBUSI-20261121",
+      "tanggal": "2026-11-21",
+      "kategori": "Navigasi",
+      "judul": "Manajemen Distribusi bersebelahan dengan Posko Distribusi",
+      "tujuan": "Memastikan dua halaman distribusi mudah ditemukan berdampingan di menu Posko.",
+      "akun": "Login dengan akun demo pada rescue-net.online",
+      "langkah": [
+        "Masuk ke Rescue-Net dengan akun demo sungguhan.",
+        "Buka halaman Manajemen Distribusi dan buka grup navigasi Posko.",
+        "Verifikasi bahwa Manajemen Distribusi tepat diikuti Posko Distribusi."
+      ],
+      "hasil": "Lulus di browser dengan login sungguhan pada situs produksi; aset navigasi perubahan dimuat saat uji browser dan kedua menu tampil berdampingan.",
+      "skor": "Login nyata; urutan dua menu cocok",
+      "status": "lulus",
+      "temuan": []
+    },
     {
       "id": "NALA-AI-ANALYSIS-20261116",
       "tanggal": "2026-11-16",

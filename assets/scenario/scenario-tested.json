@@ -3,6 +3,23 @@
   "diperbarui": "2026-11-21",
   "uji": [
     {
+      "id": "KAMERA-KIRIM-BANTUAN-20261121",
+      "tanggal": "2026-11-21",
+      "kategori": "Kirim Bantuan",
+      "judul": "Tombol Ambil foto membuka kamera langsung",
+      "tujuan": "Memisahkan unggah berkas dari pemotretan langsung di perangkat.",
+      "akun": "Konfirmasi langsung owner pada perangkat; status login/browser tidak dicatat.",
+      "langkah": [
+        "Buka Kirim Bantuan melalui HTTPS dan pilih Ambil foto.",
+        "Izinkan akses kamera perangkat.",
+        "Pastikan pratinjau muncul dan hasil dapat dipilih sebagai lampiran."
+      ],
+      "hasil": "Owner mengonfirmasi fitur kamera sudah benar setelah deploy.",
+      "skor": "Konfirmasi owner: kamera langsung berfungsi",
+      "status": "lulus",
+      "temuan": []
+    },
+    {
       "id": "NAV-DISTRIBUSI-20261121",
       "tanggal": "2026-11-21",
       "kategori": "Navigasi",

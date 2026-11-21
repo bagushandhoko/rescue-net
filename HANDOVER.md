@@ -273,3 +273,8 @@ Owner answers to the questions (2026-09-26), implemented:
 - Fix rn-posko-scope: anchor section bersarang pada header (Menuju posko) dinaikkan ke anak main sebelum insertBefore; ditemukan pada browser login asli.
 - Browser Playwright CT106 salinan halaman lokal -> API produksi baca saja (login demo asli, tanpa test/seed/mutasi data produksi): 7 halaman 390px lulus dan tanpa error JS setelah fix; desktop detail berdampingan lulus. Sesi tamu medis baru terverifikasi Guest dan kebutuhan dibatasi dengan —. Helper terisolasi: XSS, NaN/negatif/nol/dibatasi, status kebutuhan, stok terbaru + satuan campur, top5+lainnya, incoming+refresh lulus. Bukti/script CT106 /root/pie-work. Pilihan Riil diuji dengan posko simulasi (angka grafik tidak tampil).
 - BATAS: endpoint incoming belum live, sehingga grafik status menuju posko baru diuji helper, belum ujung-ke-ujung dengan endpoint versi branch. Stack uji CT102 sengaja tidak dinyalakan (IO tinggi). Verifikasi backend dan browser tugas sebelumnya pada HANDOVER bagian Menuju posko masih WAJIB dilanjutkan oleh Suri sebelum siap deploy.
+
+## 2026-11-21 — Kamera langsung Kirim Bantuan (siap deploy)
+- Rilis dibuat dari baseline Flex `adaa5663`, agar perubahan lain dari `origin/main` tidak ikut terbawa. Branch `nala/kamera-kirim-bantuan-release-20261121`.
+- `pages/kirim-bantuan.html` menampilkan kartu Unggah foto/PDF dan Ambil foto terpisah; kamera langsung memakai `getUserMedia`, dialog pratinjau, capture JPG terkompresi, dan alur lampiran privat. Asset cache-buster diperbarui; Manual RN menjelaskan kedua pilihan.
+- Tidak ada perubahan backend atau migrasi. Pemeriksaan secret scan dan diff-check lulus. Verifikasi browser login nyata dan kamera fisik masih perlu dilakukan setelah deploy.

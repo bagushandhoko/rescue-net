@@ -20,6 +20,23 @@
     #kbMapWrap { margin-top: 6px; }
     #kbMap { height: 240px; border: 1px solid var(--line, #ddd); border-radius: 10px; }
     #kbGeoMsg { font-size:13px; }
+    .rn-aid-attachment-actions { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; margin-top:12px; }
+    .rn-aid-attachment-option { display:flex; align-items:center; gap:12px; min-height:68px; padding:12px 14px; text-align:left; white-space:normal; font:inherit; cursor:pointer; background:#fff; border:1px solid #d5dee6; border-radius:12px; color:inherit; }
+    .rn-aid-attachment-option:hover { border-color:#ef523d; background:#fff8f6; }
+    .rn-aid-attachment-icon { display:grid; place-items:center; width:40px; height:40px; flex:0 0 40px; border-radius:10px; background:#fff0ec; color:#c94734; }
+    .rn-aid-attachment-icon .rn-ic { width:22px; height:22px; }
+    .rn-aid-attachment-copy { display:grid; gap:3px; }
+    .rn-aid-attachment-copy strong { font-size:14px; }
+    .rn-aid-attachment-copy small { color:#627080; font-size:12px; }
+    .rn-aid-camera { width:min(560px,calc(100vw - 24px)); max-width:none; max-height:calc(100vh - 24px); padding:0; border:0; border-radius:16px; overflow:auto; color:inherit; }
+    .rn-aid-camera::backdrop { background:rgba(11,18,32,.72); }
+    .rn-aid-camera-card { display:grid; gap:12px; padding:16px; background:#fff; }
+    .rn-aid-camera-head,.rn-aid-camera-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .rn-aid-camera-head h3 { margin:0; }
+    .rn-aid-camera-head p { margin:4px 0 0; }
+    .rn-aid-camera-video { display:block; width:100%; max-height:62vh; aspect-ratio:4/3; object-fit:contain; background:#101827; border-radius:12px; }
+    .rn-aid-camera-status { min-height:1.4em; margin:0; }
+    @media(max-width:520px) { .rn-aid-attachment-actions { grid-template-columns:1fr; } .rn-aid-camera-actions .btn { flex:1; } }
   </style>
   <link rel="icon" type="image/png" sizes="32x32" href="/rescue-net/assets/img/favicon/favicon-32.png?v=20261114">
   <link rel="icon" type="image/png" sizes="48x48" href="/rescue-net/assets/img/favicon/favicon-48.png?v=20261114">
@@ -174,14 +191,33 @@
           <fieldset data-aid-attachments style="margin-top:16px;border:1px solid #d5dee6;border-radius:10px;padding:12px;min-width:0;">
             <legend>Lampiran (opsional)</legend>
             <p class="subtitle">Foto barang, kemasan, atau dokumen PDF. Maksimal 3 berkas, masing-masing 2 MB setelah foto diperkecil. Lampiran privat, bukan untuk daftar publik.</p>
-            <div class="form-actions" style="flex-wrap:wrap;">
-              <button type="button" class="btn" data-pick-attachment>Pilih file / gambar</button>
-              <button type="button" class="btn" data-take-photo>Ambil foto</button>
+            <div class="rn-aid-attachment-actions">
+              <button type="button" class="rn-aid-attachment-option" data-pick-attachment>
+                <span class="rn-aid-attachment-icon"><span data-icon="image"></span></span>
+                <span class="rn-aid-attachment-copy"><strong>Unggah foto atau PDF</strong><small>Pilih dari perangkat</small></span>
+              </button>
+              <button type="button" class="rn-aid-attachment-option" data-take-photo>
+                <span class="rn-aid-attachment-icon"><span data-icon="camera"></span></span>
+                <span class="rn-aid-attachment-copy"><strong>Ambil foto</strong><small>Buka kamera perangkat</small></span>
+              </button>
             </div>
             <input type="file" accept="image/*,application/pdf,.pdf" multiple hidden data-attachment-picker aria-label="Pilih lampiran bantuan">
-            <input type="file" accept="image/*" capture="environment" hidden data-attachment-camera aria-label="Ambil foto bantuan dengan kamera">
             <ul data-attachment-list style="list-style:none;margin:8px 0;padding:0;"></ul>
             <p data-attachment-message role="status" aria-live="polite" style="overflow-wrap:anywhere;"></p>
+            <dialog class="rn-aid-camera" data-camera-dialog aria-labelledby="kbCameraTitle">
+              <div class="rn-aid-camera-card">
+                <div class="rn-aid-camera-head">
+                  <div><h3 id="kbCameraTitle">Ambil foto bantuan</h3><p class="subtitle">Arahkan kamera ke barang atau kemasan.</p></div>
+                  <button type="button" class="btn mini" data-camera-close aria-label="Tutup kamera">Tutup</button>
+                </div>
+                <video class="rn-aid-camera-video" data-camera-video autoplay muted playsinline></video>
+                <p class="rn-aid-camera-status" data-camera-status role="status" aria-live="polite"></p>
+                <div class="rn-aid-camera-actions">
+                  <button type="button" class="btn" data-camera-cancel>Batal</button>
+                  <button type="button" class="btn primary" data-camera-capture disabled>Gunakan foto</button>
+                </div>
+              </div>
+            </dialog>
           </fieldset>
 
           <div class="form-actions">
@@ -250,13 +286,13 @@
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
-<script src="../assets/js/public-aid.js?v=gabung-20261117"></script>
+<script src="../assets/js/public-aid.js?v=aid-camera-20261121"></script>
 <script src="../assets/js/kb-armada.js?v=kb-20261114"></script>
 <script src="../assets/js/kb-program-donation.js?v=audit-20261111"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
 <script src="../assets/js/rn-public-header.js?v=samaai2-20261119"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>
-<script src="../assets/js/rn-icons.js?v=segar-20261117"></script>
+<script src="../assets/js/rn-icons.js?v=aid-camera-20261121"></script>
 
 <script src="../assets/js/rn-navigation-v2.js?v=menu-adjacent-20261121"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=samaai2-20261119"></script>

@@ -21,9 +21,10 @@ function setupAidAttachments(form) {
       row.append(name, remove); list.appendChild(row);
     });
   }
-  function add(input) {
+  function addFiles(selected) {
     msg.textContent = '';
-    for (const file of Array.from(input.files || [])) {
+    const before = files.length;
+    for (const file of Array.from(selected || [])) {
       if (files.length >= 3) { msg.textContent = 'Maksimal 3 lampiran. Hapus salah satu untuk mengganti.'; break; }
       const image = /^image\//.test(file.type);
       const pdf = /\.pdf$/i.test(file.name) && (!file.type || file.type === 'application/pdf');
@@ -34,11 +35,84 @@ function setupAidAttachments(form) {
       }
       files.push(file);
     }
-    input.value = ''; render();
+    render();
+    return files.length - before;
   }
-  box.querySelectorAll('input[type=file]').forEach(input => input.addEventListener('change', () => add(input)));
-  box.querySelector('[data-pick-attachment]').onclick = () => box.querySelector('[data-attachment-picker]').click();
-  box.querySelector('[data-take-photo]').onclick = () => box.querySelector('[data-attachment-camera]').click();
+  const picker = box.querySelector('[data-attachment-picker]');
+  picker.addEventListener('change', () => { addFiles(picker.files); picker.value = ''; });
+  box.querySelector('[data-pick-attachment]').onclick = () => picker.click();
+
+  const cameraDialog = box.querySelector('[data-camera-dialog]');
+  const cameraVideo = box.querySelector('[data-camera-video]');
+  const cameraStatus = box.querySelector('[data-camera-status]');
+  const captureButton = box.querySelector('[data-camera-capture]');
+  let cameraStream = null;
+  function stopCamera() {
+    if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+    cameraStream = null;
+    cameraVideo.srcObject = null;
+    captureButton.disabled = true;
+  }
+  cameraDialog.addEventListener('close', stopCamera);
+  box.querySelector('[data-camera-close]').addEventListener('click', () => cameraDialog.close());
+  box.querySelector('[data-camera-cancel]').addEventListener('click', () => cameraDialog.close());
+  box.querySelector('[data-take-photo]').addEventListener('click', async () => {
+    if (typeof cameraDialog.showModal !== 'function') {
+      msg.textContent = 'Browser belum mendukung kamera langsung. Pilih foto dari perangkat.';
+      return;
+    }
+    cameraDialog.showModal();
+    cameraStatus.textContent = 'Meminta izin kamera...';
+    if (!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      cameraStatus.textContent = 'Kamera memerlukan halaman HTTPS dan browser yang mendukung kamera. Pilih foto dari perangkat bila kamera tidak tersedia.';
+      return;
+    }
+    try {
+      try {
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+      } catch (firstError) {
+        if (firstError && firstError.name === 'OverconstrainedError') {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        } else {
+          throw firstError;
+        }
+      }
+      if (!cameraDialog.open) { stopCamera(); return; }
+      cameraVideo.srcObject = cameraStream;
+      await cameraVideo.play();
+      cameraStatus.textContent = 'Kamera aktif. Pastikan objek terlihat, lalu tekan Gunakan foto.';
+      captureButton.disabled = false;
+    } catch (error) {
+      const messages = {
+        NotAllowedError: 'Izin kamera ditolak. Izinkan kamera untuk situs ini di pengaturan browser, lalu coba lagi.',
+        NotFoundError: 'Kamera tidak ditemukan pada perangkat ini.',
+        NotReadableError: 'Kamera sedang dipakai aplikasi lain. Tutup aplikasi itu lalu coba lagi.',
+      };
+      cameraStatus.textContent = messages[error && error.name] || 'Kamera tidak bisa dibuka. Periksa izin browser atau pilih foto dari perangkat.';
+      stopCamera();
+    }
+  });
+  captureButton.addEventListener('click', async () => {
+    const width = cameraVideo.videoWidth, height = cameraVideo.videoHeight;
+    if (!width || !height) { cameraStatus.textContent = 'Kamera belum siap. Tunggu sebentar lalu coba lagi.'; return; }
+    captureButton.disabled = true;
+    cameraStatus.textContent = 'Menyiapkan foto...';
+    const scale = Math.min(1, 1600 / Math.max(width, height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    canvas.getContext('2d').drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', .88));
+    if (!blob) {
+      cameraStatus.textContent = 'Foto gagal dibuat. Coba lagi atau pilih foto dari perangkat.';
+      captureButton.disabled = false;
+      return;
+    }
+    const added = addFiles([new File([blob], 'foto-bantuan-' + Date.now() + '.jpg', { type: 'image/jpeg' })]);
+    cameraDialog.close();
+    if (added) msg.textContent = 'Foto berhasil ditambahkan.';
+  });
+  window.addEventListener('pagehide', stopCamera, { once: true });
   function read(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();

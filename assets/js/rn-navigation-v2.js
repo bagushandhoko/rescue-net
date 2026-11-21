@@ -107,6 +107,11 @@
 
     modules: [
       {
+        label: "Pusat Komando Instansi",
+        href: "edisi-tertutup.html",
+        icon: "verification"
+      },
+      {
         // automatic situation report per operational period (2026-10-26)
         label: "Laporan Situasi (SITREP)",
         href: "sitrep.html",

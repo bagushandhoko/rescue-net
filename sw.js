@@ -7,9 +7,11 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v8"; // v8 2026-11-17: 21 alamat aset pernah berisi >1 versi tanpa naik ?v= -> buang semua cache lama di HP // v7 2026-11-02: purge stale menu scripts on phones
+const CACHE = "rescue-net-web-v9"; // v9 2026-11-21: institutional edition theme, dashboard and navigation
 const PRECACHE = [
  "/rescue-net/index.html",
+ "/rescue-net/index-rn-publik.html",
+ "/rescue-net/pages/edisi-tertutup.html",
  "/rescue-net/pages/laporan-masyarakat.html",
  "/rescue-net/pages/posko-logistik.html",
  "/rescue-net/pages/registrasi-posko.html",
@@ -46,6 +48,7 @@ const PRECACHE = [
  "/rescue-net/assets/css/rn-mobile-drawer.css",
  "/rescue-net/assets/css/rn-navigation-v2.css",
  "/rescue-net/assets/css/style.css",
+ "/rescue-net/assets/css/rn-edisi-tertutup.css?v=edisi-tertutup-20261121",
  "/rescue-net/assets/js/api.js",
  "/rescue-net/assets/js/bencana-aktif.js",
  "/rescue-net/assets/js/community-report.js",
@@ -57,8 +60,9 @@ const PRECACHE = [
  "/rescue-net/assets/js/rn-layout-mode.js",
  "/rescue-net/assets/js/rn-lightbox.js",
  "/rescue-net/assets/js/rn-logistik-info.js",
- "/rescue-net/assets/js/rn-mobile-drawer.js",
- "/rescue-net/assets/js/rn-navigation-v2.js",
+ "/rescue-net/assets/js/rn-mobile-drawer.js?v=edisi-tertutup-20261121",
+ "/rescue-net/assets/js/rn-edisi-window-manager.js?v=windows-20261121",
+ "/rescue-net/assets/js/rn-navigation-v2.js?v=edisi-tertutup-20261121",
  "/rescue-net/assets/js/rn-posko-picker.js",
  "/rescue-net/assets/js/rn-posko-scope.js",
  "/rescue-net/assets/js/rn-posko-settings.js",

@@ -211,7 +211,7 @@ if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = d
     if (container.querySelector(".rn-drawer-ops")) return;
     try {
       if (!window.RNIcon) await loadScript(prefix + "assets/js/rn-icons.js?v=kpiicon-20260904").catch(() => {});
-      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=ps-20261109"); // KEEP IN SYNC with pages' rn-navigation-v2.js ?v= (PWA caches by exact URL)
+      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=edisi-tertutup-20261121"); // KEEP IN SYNC with pages' rn-navigation-v2.js ?v= (PWA caches by exact URL)
     } catch (e) { return; }
     if (!window.RNNav || container.querySelector(".rn-drawer-ops")) return;
     const wrap = document.createElement("div");

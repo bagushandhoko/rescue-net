@@ -185,5 +185,21 @@
     poskoForm.reset();
   });
   document.querySelectorAll("[data-dialog-cancel]").forEach((button) => button.addEventListener("click", () => button.closest("dialog")?.close()));
+  const shell = document.querySelector(".rn-dms-shell");
+  const agencyLabels = { bnpb: "Profil BNPB · contoh struktur", tni: "Profil TNI · contoh struktur", pmi: "Profil PMI · contoh struktur", combined: "Profil multi-instansi · tampilan terpisah" };
+  const agencyNames = { bnpb: "BNPB", tni: "TNI PRCPB", pmi: "PMI Kemanusiaan", combined: "Kombinasi" };
+  function setAgency(agency) {
+    if (!shell || !agencyLabels[agency]) return;
+    shell.dataset.agency = agency;
+    document.querySelectorAll("[data-agency-choice]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.agencyChoice === agency));
+    });
+    document.querySelectorAll("[data-agency-label]").forEach((node) => { node.textContent = agencyLabels[agency]; });
+    document.querySelectorAll("[data-agency-footer]").forEach((node) => { node.textContent = agencyNames[agency]; });
+  }
+  document.querySelectorAll("[data-agency-choice]").forEach((button) => {
+    button.addEventListener("click", () => setAgency(button.dataset.agencyChoice));
+  });
+  document.querySelector("[data-return-map]")?.addEventListener("click", () => setAgency("bnpb"));
   updateStatus();
 })();

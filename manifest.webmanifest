@@ -6,8 +6,8 @@
   "start_url": "/rescue-net/pages/edisi-tertutup.html",
   "scope": "/rescue-net/",
   "display": "standalone",
-  "background_color": "#fff7f0",
-  "theme_color": "#ef523d",
+  "background_color": "#0d141d",
+  "theme_color": "#111a24",
   "icons": [
     {
       "src": "/rescue-net/assets/img/pwa/icon-192.png",

@@ -3,185 +3,176 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#1f2933">
+  <meta name="theme-color" content="#111a24">
   <link rel="manifest" href="../manifest.webmanifest">
-  <title>Rescue-Net | Edisi Instansi</title>
+  <title>Rescue-Net | DMS Edisi Instansi</title>
   <link rel="stylesheet" href="../assets/css/style.css?v=font13-20261109">
-  <link rel="stylesheet" href="../assets/css/rn-edisi-tertutup.css?v=edisi-tertutup-20261121">
+  <link rel="stylesheet" href="../assets/css/rn-edisi-tertutup.css?v=edisi-tertutup-pdf-20261121b">
 </head>
-<body class="home-page rn-edisi-home">
-  <div class="rn-edisi-shell">
-    <aside class="rn-edisi-rail" aria-label="Navigasi Edisi Instansi">
-      <div class="rn-edisi-brand">
-        <span class="rn-edisi-brand-mark" aria-hidden="true">RN</span>
-        <div><strong>Rescue-Net</strong><small>Edisi Instansi · konsep</small></div>
+<body class="rn-dms-page">
+  <div class="rn-dms-shell" data-agency="bnpb">
+    <header class="rn-dms-header">
+      <a class="rn-dms-brand" href="edisi-tertutup.html" aria-label="Rescue-Net DMS">
+        <span class="rn-dms-seal" aria-hidden="true"><b>RN</b></span>
+        <span class="rn-dms-brand-copy"><strong>BNPB • TNI • PMI — Disaster Management System</strong><small>Rescue-Net Edisi Tertutup</small></span>
+      </a>
+      <div class="rn-dms-agency-switch" role="group" aria-label="Pratinjau profil instansi">
+        <span>Agency mode</span>
+        <button type="button" data-agency-choice="bnpb" aria-pressed="true">BNPB</button>
+        <button type="button" data-agency-choice="tni" aria-pressed="false">TNI</button>
+        <button type="button" data-agency-choice="pmi" aria-pressed="false">PMI</button>
+        <button type="button" data-agency-choice="combined" aria-pressed="false">Kombinasi</button>
       </div>
-      <div class="rn-edisi-nav-label">Pusat operasi</div>
-      <nav class="rn-edisi-nav">
-        <a class="active" href="edisi-tertutup.html" aria-current="page">Ringkasan Komando</a>
-        <a href="bencana-aktif.html">Bencana & wilayah</a>
-        <a href="war-room.html">Control Centre</a>
-        <a href="sitrep.html">Laporan situasi</a>
-      </nav>
-      <div class="rn-edisi-nav-label">Modul Rescue-Net</div>
-      <nav class="rn-edisi-nav">
-        <a href="management-distribusi.html">Logistik & distribusi</a>
-        <a href="management-relawan.html">Relawan & personel</a>
-        <a href="search-found.html">Search & Found</a>
-        <a href="jejak-audit.html">Jejak audit RN</a>
-      </nav>
-      <div class="rn-edisi-rail-note">
-        <b>Node instansi — konsep</b>
-        <span>Data tetap berada pada server pemilik. Pertukaran dengan RN publik belum diaktifkan.</span>
+      <div class="rn-dms-header-actions">
+        <span class="rn-dms-classification"><span aria-hidden="true">▣</span> RAHASIA / TERBATAS</span>
+        <button class="rn-dms-window-action" type="button" data-add-module>+ Jendela Modul</button>
+        <button class="rn-dms-window-action primary" type="button" data-add-posko>+ Jendela Posko</button>
       </div>
-    </aside>
+    </header>
 
-    <main class="rn-edisi-main">
-      <header class="rn-edisi-head">
-        <div><h1>Rescue-Net · Edisi Instansi</h1><small>Antarmuka konseptual di atas modul Rescue-Net yang sudah ada</small></div>
-        <div class="rn-edisi-head-actions">
-          <span class="rn-edisi-stamp"><i class="rn-edisi-dot" aria-hidden="true"></i> PRATINJAU DESAIN</span>
-          <button class="rn-edisi-action" type="button" data-add-module>+ Jendela Modul</button>
-          <button class="rn-edisi-action primary" type="button" data-add-posko>+ Jendela Posko</button>
+    <div class="rn-dms-preview-banner"><span class="rn-dms-live-dot"></span> PRATINJAU DESAIN · data operasional belum tersambung · fitur keamanan dan federasi masih rancangan</div>
+
+    <div class="rn-dms-layout" data-agency-layout>
+      <aside class="rn-dms-panel rn-dms-command" aria-labelledby="commandTitle">
+        <div class="rn-dms-panel-title"><div><strong id="commandTitle">Command Hierarchy</strong><small data-agency-label>Profil BNPB · contoh struktur</small></div><button type="button" class="rn-dms-icon-button" aria-label="Menu hierarki" title="Menu hierarki">⋮</button></div>
+        <div class="rn-dms-command-tree" role="tree" aria-label="Hierarki komando pratinjau">
+          <div class="rn-dms-tree-row level-0" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon">◈</span><strong>Pusat Komando</strong></div>
+          <div class="rn-dms-tree-row level-1" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon green">⬟</span><span>Provinsi</span></div>
+          <div class="rn-dms-tree-row level-2" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon green">⬟</span><span>Kabupaten / Kota</span></div>
+          <div class="rn-dms-tree-row level-3" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon gold">⬟</span><span>Koordinator Wilayah</span></div>
+          <div class="rn-dms-tree-row level-4" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon pale">♟</span><span>Satgas / Unit</span></div>
+          <div class="rn-dms-tree-row level-5" role="treeitem"><span class="rn-dms-tree-icon pale">♟</span><span>Posko Lapangan 01</span><span class="rn-dms-tree-tag">contoh</span></div>
+          <div class="rn-dms-tree-row level-5" role="treeitem"><span class="rn-dms-tree-icon pale">♟</span><span>Posko Lapangan 02</span><span class="rn-dms-tree-tag">contoh</span></div>
+          <div class="rn-dms-tree-row level-5" role="treeitem"><span class="rn-dms-tree-icon pale">♟</span><span>Posko Lapangan 03</span><span class="rn-dms-tree-tag">contoh</span></div>
+          <div class="rn-dms-tree-row level-5" role="treeitem"><span class="rn-dms-tree-icon pale">♟</span><span>Posko Lapangan 04</span><span class="rn-dms-tree-tag">contoh</span></div>
         </div>
-      </header>
+        <div class="rn-dms-left-divider"></div>
+        <div class="rn-dms-panel-title compact"><strong>Modul Operasi RN</strong><span class="rn-dms-mini-label">MENU</span></div>
+        <nav class="rn-dms-module-nav" aria-label="Modul Rescue-Net">
+          <a href="bencana-aktif.html"><span>⌖</span> Bencana & Wilayah</a>
+          <a href="war-room.html"><span>▦</span> Control Centre</a>
+          <a href="peta-nasional.html"><span>▧</span> Peta Operasi</a>
+          <a href="sitrep.html"><span>▤</span> Generator SITREP</a>
+          <a href="management-distribusi.html"><span>♧</span> Logistik & Distribusi</a>
+          <a href="management-relawan.html"><span>♙</span> Relawan & Posko</a>
+          <a href="search-found.html"><span>⌕</span> Search & Found</a>
+          <a href="jejak-audit.html"><span>≡</span> Audit RN</a>
+        </nav>
+        <div class="rn-dms-panel-note">Node privat · data dan hak akses mengikuti konfigurasi instansi.</div>
+      </aside>
 
-      <section class="rn-edisi-hero" aria-labelledby="edisiTitle">
-        <div>
-          <p class="rn-edisi-kicker">Koordinasi operasi · data terkendali</p>
-          <h2 id="edisiTitle">Satu ruang kendali untuk koordinasi lintas satuan.</h2>
-          <p>Gunakan peta, posko, logistik, relawan, dan SITREP yang sudah tersedia di Rescue-Net. Node instansi dirancang berdiri sendiri; data untuk RN publik hanya dibagikan setelah disetujui dan disaring.</p>
-          <div class="rn-edisi-actions">
-            <a class="rn-edisi-action primary" href="war-room.html">Buka Control Centre RN</a>
-            <a class="rn-edisi-action" href="bencana-aktif.html">Pilih bencana aktif</a>
+      <main class="rn-dms-map-column">
+        <div class="rn-dms-map-toolbar">
+          <div><strong>Tactical GIS Map</strong><small>Peta Operasi Bersama · jendela dapat digeser, diubah ukuran, atau diminimalkan</small></div>
+          <div class="rn-dms-map-tools">
+            <button type="button" title="Lapisan peta" aria-label="Lapisan peta">▱</button>
+            <button type="button" title="Personel" aria-label="Personel">♙</button>
+            <button type="button" title="Sumber daya" aria-label="Sumber daya">▣</button>
+            <button type="button" title="Informasi peta" aria-label="Informasi peta">i</button>
           </div>
         </div>
-        <aside class="rn-edisi-hero-aside">
-          <div><strong>Dasar rancangan</strong><p>Engine dan model data RN yang sama, dipasang pada node milik instansi dengan konfigurasi tampilan dan modul tersendiri.</p></div>
-          <div class="rn-edisi-callout">Layar ini tidak menampilkan angka operasi palsu. Tautan membuka modul RN asli; status dan izin mengikuti kemampuan RN yang sekarang.</div>
-        </aside>
-      </section>
+        <div class="rn-edisi-workspace" data-window-workspace aria-label="Peta operasi dan ruang kerja jendela">
+          <svg class="rn-dms-map-art" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Ilustrasi peta geospasial kepulauan Indonesia untuk pratinjau desain">
+            <defs>
+              <pattern id="rnMapGrid" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0H0V80" fill="none" stroke="#51667a" stroke-opacity=".23" stroke-width="1"/><circle cx="0" cy="0" r="1.5" fill="#8ba1b3" fill-opacity=".38"/></pattern>
+              <linearGradient id="rnSea" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e1b28"/><stop offset=".55" stop-color="#152638"/><stop offset="1" stop-color="#0e1a27"/></linearGradient>
+              <filter id="rnGlow"><feGaussianBlur stdDeviation="9" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <rect width="1200" height="760" fill="url(#rnSea)"/><rect width="1200" height="760" fill="url(#rnMapGrid)"/>
+            <g fill="#263b4c" stroke="#597184" stroke-width="2" stroke-linejoin="round" opacity=".95">
+              <path d="M90 162l36-23 33 6 19 28-12 37-22 23-8 41-20 45-16 41-29 17-14-18 13-48 1-37 13-35-8-29 13-23z"/>
+              <path d="M334 388l47-12 34 10 18 17-14 13-36-2-25 17-38-5-24-17 8-14z"/>
+              <path d="M405 188l44-24 62 3 42 20 9 31-21 37-30 25-12 38-34 23-27-18-9-32-33-12-21-35 10-34-16-22z"/>
+              <path d="M502 406l30-5 33 9 34 2 32 9 43 1 27 13-23 11-51-3-40-5-40 3-37-7-31-16z"/>
+              <path d="M675 223l25-17 19 7 7 25-20 11-2 26 20 22-9 23-22 2-12-24-20-18-6-28 14-13z"/>
+              <path d="M709 312l23 15 22 4 14 20-13 16-30-3-20-18z"/>
+              <path d="M746 364l39 5 41 12 34 5 26 18-12 16-46-6-31-11-43-4-23-15z"/>
+              <path d="M890 277l34-22 47 2 43 19 35 3 47 23 12 27-25 24-50-12-33 15-43-9-34 9-42-25-33-17 6-25z"/>
+              <path d="M1024 355l16 7 7 17-13 11-13-11zM1073 389l13 4 6 13-15 8-10-10z"/>
+              <path d="M237 328l14 5 8 15-12 9-14-13zM283 346l16 5 7 13-14 9-13-11zM312 369l16 4 9 11-14 10-16-9z"/>
+            </g>
+            <g fill="none" stroke="#dd9b54" stroke-width="2" stroke-dasharray="8 8" opacity=".68">
+              <path d="M178 265Q345 374 500 428T740 365"/><path d="M438 401Q587 385 701 277T930 323"/><path d="M740 365Q860 443 1050 330"/>
+            </g>
+            <g fill="none" stroke="#8ac9d8" stroke-width="2" stroke-dasharray="4 8" opacity=".55"><path d="M197 249Q360 310 454 204"/><path d="M554 427Q668 460 745 378"/></g>
+            <g filter="url(#rnGlow)">
+              <g transform="translate(180 267)"><circle r="15" fill="#d74e4e" fill-opacity=".24"/><circle r="7" fill="#ec625b"/><path d="M0-4l4 8h-8z" fill="#fff"/></g>
+              <g transform="translate(367 390)"><circle r="15" fill="#d74e4e" fill-opacity=".2"/><circle r="7" fill="#ec625b"/><path d="M0-4l4 8h-8z" fill="#fff"/></g>
+              <g transform="translate(543 418)"><circle r="18" fill="#e9a33f" fill-opacity=".28"/><circle r="8" fill="#efae42"/><path d="M0-5l4 9h-8z" fill="#fff"/></g>
+              <g transform="translate(724 365)"><circle r="15" fill="#d74e4e" fill-opacity=".23"/><circle r="7" fill="#ec625b"/><path d="M0-4l4 8h-8z" fill="#fff"/></g>
+              <g transform="translate(916 317)"><circle r="14" fill="#54b98b" fill-opacity=".24"/><circle r="7" fill="#55ba8b"/><path d="M0-4l4 8h-8z" fill="#fff"/></g>
+            </g>
+            <g fill="#9cb0c1" font-family="system-ui,sans-serif" font-size="14" opacity=".82"><text x="114" y="448">SUMATRA</text><text x="382" y="470">JAWA</text><text x="478" y="166">KALIMANTAN</text><text x="686" y="184">SULAWESI</text><text x="979" y="242">PAPUA</text><text x="585" y="554" letter-spacing="5" opacity=".45">INDONESIA · PETA ILUSTRATIF</text></g>
+          </svg>
+          <div class="rn-dms-map-watermark">SIMBOL PETA ILUSTRATIF · BUKAN DATA OPERASI</div>
+          <div class="rn-edisi-workspace-empty" data-window-empty><b>Ruang peta operasi</b><span>Tambah jendela modul atau beberapa posko untuk menata ruang kendali.</span><em>Seret judul jendela · ubah ukuran · minimalkan · maksimalkan</em></div>
+          <div class="rn-dms-map-legend"><span><i class="red"></i> Peristiwa</span><span><i class="amber"></i> Perhatian</span><span><i class="green"></i> Layanan</span><small>Simbol pada peta hanya contoh visual.</small></div>
+        </div>
+        <div class="rn-edisi-taskbar" data-window-taskbar aria-label="Jendela terbuka"><span class="rn-edisi-taskbar-label">JENDELA</span></div>
+        <div class="rn-dms-map-footer"><span><b data-agency-footer>BNPB</b> · Common Operating Picture</span><span>Lokasi, lapisan, dan status operasi belum dimuat</span></div>
+      </main>
 
-      <section class="rn-edisi-workspace-wrap" aria-labelledby="workspaceTitle">
-        <div class="rn-edisi-workspace-head">
-          <div><strong id="workspaceTitle">Ruang kerja modular</strong><small>Atur beberapa modul atau posko dalam jendela pada viewport browser ini.</small></div>
-          <span class="rn-edisi-workspace-count" data-window-count>0 jendela terbuka</span>
-        </div>
-        <div class="rn-edisi-workspace" data-window-workspace aria-label="Ruang kerja jendela RN">
-          <div class="rn-edisi-workspace-empty" data-window-empty><b>Ruang kerja siap</b><span>Tambahkan modul, atau buka beberapa posko sekaligus.</span></div>
-        </div>
-        <div class="rn-edisi-taskbar" data-window-taskbar aria-label="Jendela terbuka">
-          <span class="rn-edisi-taskbar-label">Jendela</span>
-        </div>
-      </section>
-
-      <section class="rn-edisi-section" aria-labelledby="rnReadyTitle">
-        <div class="rn-edisi-section-head">
-          <div><h2 id="rnReadyTitle">Modul Rescue-Net yang sudah tersedia</h2><p>Gunakan modul operasional yang ada; penyelarasan format instansi dan kontrol enterprise masih perlu dikerjakan.</p></div>
-          <a class="rn-edisi-link" href="../index-rn-publik.html">Beranda RN →</a>
-        </div>
-        <div class="rn-edisi-modules">
-          <a class="rn-edisi-module" href="bencana-aktif.html"><span class="rn-edisi-module-id">01</span><strong>Bencana & wilayah</strong><small>Daftar kejadian dan akses peta RN.</small></a>
-          <a class="rn-edisi-module" href="war-room.html"><span class="rn-edisi-module-id">02</span><strong>Control Centre</strong><small>Koordinasi operasi RN per kejadian.</small></a>
-          <a class="rn-edisi-module" href="peta-nasional.html"><span class="rn-edisi-module-id">03</span><strong>Peta Nasional</strong><small>Peta dan ringkasan wilayah yang tersedia.</small></a>
-          <a class="rn-edisi-module" href="sitrep.html"><span class="rn-edisi-module-id">04</span><strong>SITREP RN</strong><small>Laporan situasi; format resmi instansi belum diselaraskan.</small></a>
-          <a class="rn-edisi-module" href="management-distribusi.html"><span class="rn-edisi-module-id">05</span><strong>Logistik & distribusi</strong><small>Kebutuhan, penawaran, armada, dan aliran bantuan.</small></a>
-          <a class="rn-edisi-module" href="management-relawan.html"><span class="rn-edisi-module-id">06</span><strong>Relawan & posko</strong><small>Modul relawan, organisasi, dan posko RN.</small></a>
-          <a class="rn-edisi-module" href="search-found.html"><span class="rn-edisi-module-id">07</span><strong>Search & Found</strong><small>Modul tersedia; data sensitif tetap mengikuti batas RN saat ini.</small></a>
-          <a class="rn-edisi-module" href="ai-analyst.html"><span class="rn-edisi-module-id">08</span><strong>AI Analyst RN</strong><small>Penggunaan model lokal untuk data terbatas belum tersedia.</small></a>
-          <a class="rn-edisi-module" href="posko-logistik.html"><span class="rn-edisi-module-id">09</span><strong>Posko Logistik</strong><small>Operasi kebutuhan dan stok pada posko.</small></a>
-          <a class="rn-edisi-module" href="posko-distribusi.html"><span class="rn-edisi-module-id">10</span><strong>Posko Distribusi</strong><small>Kiriman, armada, dan penerimaan bantuan.</small></a>
-          <a class="rn-edisi-module" href="posko-medis-detail.html"><span class="rn-edisi-module-id">11</span><strong>Posko Medis</strong><small>Modul layanan medis RN; bukan rekam medis instansi.</small></a>
-          <a class="rn-edisi-module" href="shelter-detail.html"><span class="rn-edisi-module-id">12</span><strong>Shelter</strong><small>Kapasitas, layanan, dan kebutuhan pengungsian.</small></a>
-          <a class="rn-edisi-module" href="dapur-umum.html"><span class="rn-edisi-module-id">13</span><strong>Dapur Umum</strong><small>Produksi dan distribusi layanan dapur RN.</small></a>
-          <a class="rn-edisi-module" href="alat-kerja.html"><span class="rn-edisi-module-id">14</span><strong>Alat Kerja & Aset</strong><small>Profil sumber daya dan dukungan operasional.</small></a>
-          <a class="rn-edisi-module" href="laporan-masyarakat.html"><span class="rn-edisi-module-id">15</span><strong>Laporan Masyarakat</strong><small>Laporan publik; verifikasi petugas tetap diperlukan.</small></a>
-          <a class="rn-edisi-module" href="kirim-bantuan.html"><span class="rn-edisi-module-id">16</span><strong>Kirim Bantuan</strong><small>Penawaran bantuan publik melalui alur RN.</small></a>
-          <a class="rn-edisi-module" href="koordinasi-organisasi.html"><span class="rn-edisi-module-id">17</span><strong>Koordinasi Organisasi</strong><small>Keanggotaan dan koordinasi organisasi RN.</small></a>
-          <a class="rn-edisi-module" href="kehadiran-relawan.html"><span class="rn-edisi-module-id">18</span><strong>Kehadiran Relawan</strong><small>Check-in relawan yang tersedia pada RN.</small></a>
-          <a class="rn-edisi-module" href="verification-approval.html"><span class="rn-edisi-module-id">19</span><strong>Sistem Verifikasi</strong><small>Permohonan, endorsement, dan keputusan sesuai peran.</small></a>
-          <a class="rn-edisi-module" href="jejak-audit.html"><span class="rn-edisi-module-id">20</span><strong>Jejak Audit</strong><small>Audit perubahan RN; audit baca/ekspor immutable belum ada.</small></a>
-        </div>
-      </section>
-
-      <section class="rn-edisi-section rn-edisi-two-col">
-        <article class="rn-edisi-panel">
-          <h3>Alur operasi memakai modul RN</h3>
-          <p>Alur ini menunjuk kemampuan yang sudah ada, tanpa menyatakan SOP instansi sudah diterapkan.</p>
-          <div class="rn-edisi-flow">
-            <div class="rn-edisi-flow-item"><b>01 · Catat</b><strong>Bencana, posko, laporan</strong><span>Masuk melalui modul RN yang sesuai.</span></div>
-            <div class="rn-edisi-flow-item"><b>02 · Koordinasikan</b><strong>Logistik, personel, layanan</strong><span>Pengelola bekerja di modul dan lingkup izinnya.</span></div>
-            <div class="rn-edisi-flow-item"><b>03 · Laporkan</b><strong>SITREP Rescue-Net</strong><span>Format khusus BNPB/TNI masih perlu integrasi.</span></div>
+      <aside class="rn-dms-right-rail" aria-label="Ringkasan operasi">
+        <section class="rn-dms-panel rn-dms-sitrep">
+          <div class="rn-dms-panel-title"><div><strong>Real-Time SITREP</strong><small>Ringkasan situasi</small></div><span class="rn-dms-status-chip">BELUM TERSAMBUNG</span></div>
+          <div class="rn-dms-stat-list">
+            <article><div><strong>—</strong><small>Peristiwa aktif</small></div><span class="rn-dms-spark cyan" aria-hidden="true">⌁⌁⌁⌁</span></article>
+            <article><div><strong>—</strong><small>Personel bertugas</small></div><span class="rn-dms-spark amber" aria-hidden="true">⌁⌁⌁⌁</span></article>
+            <article><div><strong>—</strong><small>Wilayah terdampak</small></div><span class="rn-dms-spark cyan" aria-hidden="true">⌁⌁⌁⌁</span></article>
+            <article><div><strong>—</strong><small>Warga terdampak</small></div><span class="rn-dms-spark amber" aria-hidden="true">⌁⌁⌁⌁</span></article>
           </div>
-        </article>
-        <article class="rn-edisi-panel">
-          <h3>Federasi ke RN publik</h3>
-          <p>Desain mengikuti persetujuan pemilik node, redaksi, dan pencatatan asal data.</p>
-          <div class="rn-edisi-flow">
-            <div class="rn-edisi-flow-item"><b>Node privat</b><strong>Data lokal instansi</strong><span>Tidak disalin otomatis ke platform publik.</span></div>
-            <div class="rn-edisi-flow-item"><b>Gerbang</b><strong>Redaksi & persetujuan</strong><span>Alur federasi belum diimplementasikan.</span></div>
-            <div class="rn-edisi-flow-item"><b>RN publik</b><strong>Data yang diizinkan</strong><span>Hanya payload terpilih setelah review.</span></div>
-          </div>
-        </article>
-      </section>
+        </section>
 
-      <section class="rn-edisi-section" id="fitur-instansi" aria-labelledby="plannedTitle">
-        <div class="rn-edisi-section-head">
-          <div><h2 id="plannedTitle">Kebutuhan khusus instansi</h2><p>Berikut isi rancangan PDF yang memerlukan backend, pengujian keamanan, integrasi, atau persetujuan instansi sebelum dapat disebut aktif.</p></div>
-        </div>
-        <div class="rn-edisi-roadmap">
-          <article><small>Rencana · keamanan</small><strong>SSO, 2FA wajib, perangkat terdaftar</strong><p>AD / LDAP / Keycloak, batas sesi, dan pemulihan akun belum dipasang.</p></article>
-          <article><small>Rencana · data</small><strong>Klasifikasi Biasa / Terbatas / Rahasia</strong><p>Label, izin, redaksi, dan ekspor berjenjang belum ditegakkan end-to-end.</p></article>
-          <article><small>Rencana · audit</small><strong>Jejak baca dan ekspor tahan ubah</strong><p>Jejak Audit RN tersedia; audit akses/ekspor yang tidak dapat diubah belum tervalidasi.</p></article>
-          <article><small>Rencana · komando</small><strong>Perintah tugas, BKO, persetujuan berjenjang</strong><p>Perlu model jabatan dan hierarki komando yang disepakati instansi.</p></article>
-          <article><small>Rencana · peta</small><strong>COP berlapis dan pelacakan GPS</strong><p>Pemisahan lapisan rahasia dan konektor aset belum tersedia.</p></article>
-          <article><small>Rencana · personel</small><strong>Data satuan, rotasi, kesehatan</strong><p>Perlu aturan privasi, akses, retensi, dan pemilik data yang jelas.</p></article>
-          <article><small>Rencana · integrasi</small><strong>BMKG, InaRISK, Basarnas, SIMBNPB</strong><p>Koneksi API resmi dan persetujuan mitra belum tersedia.</p></article>
-          <article><small>Rencana · AI</small><strong>Model lokal untuk data sensitif</strong><p>AI lokal dan pemisahan data berklasifikasi belum terpasang.</p></article>
-          <article><small>Rencana · ketahanan</small><strong>Offline penuh, radio/satelit, tanda tangan digital</strong><p>RN memiliki antrean offline terbatas; kemampuan pada PDF masih perlu dibangun.</p></article>
-        </div>
-        <div class="rn-edisi-disclaimer"><strong>Batas penting:</strong> tema dan dashboard ini hanya tampilan. Ia tidak menambah SSO, 2FA wajib, klasifikasi data, enkripsi, pemisahan akses, federasi, atau sertifikasi. Sampai kontrol backend dan uji keamanan selesai, jangan masukkan data Rahasia/Terbatas ke node demo. Jika membuka Control Centre tanpa memilih bencana, beberapa modul RN dapat memakai event simulasi bawaan; pilih kejadian dari Bencana Aktif untuk memastikan konteks data.</div>
-      </section>
-      <dialog class="rn-edisi-dialog" data-module-dialog>
-        <form data-module-form>
-          <h3>Buka jendela modul</h3>
-          <label>Modul Rescue-Net
-            <select data-module-select>
-              <option value="bencana-aktif.html">Bencana Aktif</option>
-              <option value="war-room.html">Control Centre</option>
-              <option value="peta-nasional.html">Peta Nasional</option>
-              <option value="sitrep.html">SITREP RN</option>
-              <option value="management-distribusi.html">Manajemen Distribusi</option>
-              <option value="posko-logistik.html">Posko Logistik</option>
-              <option value="posko-distribusi.html">Posko Distribusi</option>
-              <option value="posko-medis-detail.html">Posko Medis</option>
-              <option value="shelter-detail.html">Shelter</option>
-              <option value="dapur-umum.html">Dapur Umum</option>
-              <option value="management-relawan.html">Relawan</option>
-              <option value="laporan-masyarakat.html">Laporan Masyarakat</option>
-              <option value="search-found.html">Search & Found</option>
-              <option value="verification-approval.html">Sistem Verifikasi</option>
-              <option value="jejak-audit.html">Jejak Audit</option>
-            </select>
-          </label>
-          <small>Modul dibuka dari halaman RN yang sebenarnya. Beberapa halaman dapat memakai simulasi jika bencana belum dipilih.</small>
-          <div class="rn-edisi-dialog-actions"><button type="button" data-dialog-cancel>Batal</button><button type="submit">Buka jendela</button></div>
-        </form>
-      </dialog>
-      <dialog class="rn-edisi-dialog" data-posko-dialog>
-        <form data-posko-form>
-          <h3>Buka jendela posko</h3>
-          <label>ID posko
-            <input data-posko-id required maxlength="140" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,139}" placeholder="mis. posko-..." autocomplete="off">
-          </label>
-          <small>Masukkan ID yang dipakai RN. Kamu dapat membuka beberapa ID posko sekaligus; izin halaman tetap berlaku di dalam tiap jendela.</small>
-          <div class="rn-edisi-dialog-actions"><button type="button" data-dialog-cancel>Batal</button><button type="submit">Buka posko</button></div>
-        </form>
-      </dialog>
-      <footer class="rn-edisi-footer"><span>Rescue-Net · Edisi Instansi · draf antarmuka</span><span>Jendela berada di dalam browser; layar fisik tambahan mengikuti ukuran viewport browser dan OS.</span></footer>
-    </main>
+        <section class="rn-dms-panel rn-dms-logistics">
+          <div class="rn-dms-panel-title"><div><strong>Logistics Stock</strong><small>Stok bantuan utama</small></div><span class="rn-dms-panel-more">···</span></div>
+          <div class="rn-dms-stock-list">
+            <div><span class="rn-dms-stock-icon">▤</span><span class="rn-dms-stock-name">Ransum</span><b>—</b><i><em></em></i></div>
+            <div><span class="rn-dms-stock-icon">⌂</span><span class="rn-dms-stock-name">Tenda</span><b>—</b><i><em></em></i></div>
+            <div><span class="rn-dms-stock-icon">✚</span><span class="rn-dms-stock-name">Obat-obatan</span><b>—</b><i><em></em></i></div>
+            <div><span class="rn-dms-stock-icon">⚒</span><span class="rn-dms-stock-name">Alat kerja</span><b>—</b><i><em></em></i></div>
+          </div>
+          <p class="rn-dms-muted-note">Stok tampil setelah sumber data RN tersambung.</p>
+        </section>
+
+        <section class="rn-dms-panel rn-dms-federation">
+          <div class="rn-dms-panel-title"><div><strong>Federation Gateway</strong><small>Antrian persetujuan</small></div><span class="rn-dms-panel-more">···</span></div>
+          <div class="rn-dms-empty-queue"><span aria-hidden="true">⇄</span><strong>Belum ada permintaan</strong><small>Permintaan berbagi data akan tampil di sini setelah gerbang federasi tersedia.</small></div>
+          <div class="rn-dms-approval-actions"><button type="button" disabled>Setujui</button><button type="button" disabled>Tolak</button></div>
+        </section>
+        <div class="rn-dms-security-note"><span aria-hidden="true">▣</span><span><b>Kontrol keamanan PDF</b><small>SSO, 2FA, klasifikasi, audit akses, dan redaksi federasi masih rancangan.</small></span></div>
+      </aside>
+    </div>
+
+    <section class="rn-dms-combined-view" data-combined-view hidden aria-label="Pratinjau tampilan multi-instansi">
+      <div class="rn-dms-combined-heading"><div><strong>Multi-Instansi · Tampilan Terpisah</strong><small>Contoh profil visual per node — bukan data live</small></div><button type="button" data-return-map>Kembali ke peta operasi</button></div>
+      <div class="rn-dms-agency-cards">
+        <article class="agency-bnpb"><header><span>◉</span><strong>BNPB DMS</strong><small>KOORDINASI SIPIL</small></header><div class="rn-dms-mini-metrics"><b>—<small>SITREP</small></b><b>—<small>Posko</small></b><b>—<small>Kebutuhan</small></b></div><div class="rn-dms-mini-map"><span>◇</span> Peta operasi & peringatan publik</div><p>Profil koordinasi bencana dan dukungan logistik sipil.</p></article>
+        <article class="agency-tni"><header><span>⬟</span><strong>TNI PRCPB</strong><small>PROFIL INSTANSI</small></header><div class="rn-dms-mini-metrics"><b>—<small>SITREP</small></b><b>—<small>Unit</small></b><b>—<small>BKO</small></b></div><div class="rn-dms-mini-map"><span>◇</span> Peta operasi & lapisan terbatas</div><p>Profil komando dan dukungan satuan sesuai hak akses.</p></article>
+        <article class="agency-pmi"><header><span>✚</span><strong>PMI Kemanusiaan</strong><small>NETRALITAS</small></header><div class="rn-dms-mini-metrics"><b>—<small>SITREP</small></b><b>—<small>Pos layanan</small></b><b>—<small>Relawan</small></b></div><div class="rn-dms-mini-map"><span>◇</span> Peta layanan kemanusiaan</div><p>Profil layanan medis dan kemanusiaan dengan isolasi lapisan taktis.</p></article>
+      </div>
+    </section>
+
+    <footer class="rn-dms-footer"><span>Rescue-Net Edisi Tertutup · DMS</span><span>Pratinjau antarmuka · tidak untuk keputusan operasional</span></footer>
   </div>
-  <script src="../assets/js/rn-edisi-window-manager.js?v=windows-20261121"></script>
+
+  <dialog class="rn-edisi-dialog" data-module-dialog>
+    <form data-module-form>
+      <h3>Buka jendela modul</h3>
+      <label>Modul Rescue-Net<select data-module-select>
+        <option value="bencana-aktif.html">Bencana Aktif</option><option value="war-room.html">Control Centre</option><option value="peta-nasional.html">Peta Nasional</option><option value="sitrep.html">SITREP RN</option><option value="management-distribusi.html">Manajemen Distribusi</option><option value="posko-logistik.html">Posko Logistik</option><option value="posko-distribusi.html">Posko Distribusi</option><option value="posko-medis-detail.html">Posko Medis</option><option value="shelter-detail.html">Shelter</option><option value="dapur-umum.html">Dapur Umum</option><option value="management-relawan.html">Relawan</option><option value="laporan-masyarakat.html">Laporan Masyarakat</option><option value="search-found.html">Search & Found</option><option value="verification-approval.html">Sistem Verifikasi</option><option value="jejak-audit.html">Jejak Audit</option>
+      </select></label>
+      <small>Pratinjau ini membuka jendela tiruan. Modul aktif dan hak akses mengikuti node RN setelah dipasang.</small>
+      <div class="rn-edisi-dialog-actions"><button type="button" data-dialog-cancel>Batal</button><button type="submit">Buka jendela</button></div>
+    </form>
+  </dialog>
+  <dialog class="rn-edisi-dialog" data-posko-dialog>
+    <form data-posko-form>
+      <h3>Buka jendela posko</h3><label>ID posko<input data-posko-id required maxlength="140" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,139}" placeholder="mis. ID-posko" autocomplete="off"></label>
+      <small>Masukkan ID posko RN. Buka beberapa jendela untuk membandingkan posko dalam satu layar.</small>
+      <div class="rn-edisi-dialog-actions"><button type="button" data-dialog-cancel>Batal</button><button type="submit">Buka posko</button></div>
+    </form>
+  </dialog>
+  <script src="../assets/js/rn-edisi-window-manager.js?v=windows-pdf-20261121b"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>
 </html>

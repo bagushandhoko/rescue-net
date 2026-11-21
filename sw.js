@@ -7,7 +7,7 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v9"; // v9 2026-11-21: institutional edition theme, dashboard and navigation
+const CACHE = "rescue-net-web-v10"; // v10 2026-11-21: PDF-matched DMS layout and navy theme
 const PRECACHE = [
  "/rescue-net/index.html",
  "/rescue-net/index-rn-publik.html",
@@ -48,7 +48,7 @@ const PRECACHE = [
  "/rescue-net/assets/css/rn-mobile-drawer.css",
  "/rescue-net/assets/css/rn-navigation-v2.css",
  "/rescue-net/assets/css/style.css",
- "/rescue-net/assets/css/rn-edisi-tertutup.css?v=edisi-tertutup-20261121",
+ "/rescue-net/assets/css/rn-edisi-tertutup.css?v=edisi-tertutup-pdf-20261121b",
  "/rescue-net/assets/js/api.js",
  "/rescue-net/assets/js/bencana-aktif.js",
  "/rescue-net/assets/js/community-report.js",
@@ -61,7 +61,7 @@ const PRECACHE = [
  "/rescue-net/assets/js/rn-lightbox.js",
  "/rescue-net/assets/js/rn-logistik-info.js",
  "/rescue-net/assets/js/rn-mobile-drawer.js?v=edisi-tertutup-20261121",
- "/rescue-net/assets/js/rn-edisi-window-manager.js?v=windows-20261121",
+ "/rescue-net/assets/js/rn-edisi-window-manager.js?v=windows-pdf-20261121b",
  "/rescue-net/assets/js/rn-navigation-v2.js?v=edisi-tertutup-20261121",
  "/rescue-net/assets/js/rn-posko-picker.js",
  "/rescue-net/assets/js/rn-posko-scope.js",

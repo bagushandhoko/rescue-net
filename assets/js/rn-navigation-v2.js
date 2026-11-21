@@ -2,14 +2,9 @@
   "use strict";
 
   const CONFIG = {
-    version: "2.3.0",
+    version: "2.4.0",
 
     posko: [
-      {
-        label: "Manajemen Distribusi",
-        href: "management-distribusi.html",
-        icon: "distribusi"
-      },
       {
         // kamera HP biasa membaca QR / barcode label kiriman (owner 2026-10-25)
         label: "Pindai Barcode / QR",
@@ -46,6 +41,11 @@
         label: "Posko Logistik",
         href: "posko-logistik.html?event=event-sim-001",
         icon: "logistik"
+      },
+      {
+        label: "Manajemen Distribusi",
+        href: "management-distribusi.html",
+        icon: "distribusi"
       },
       {
         label: "Posko Distribusi",

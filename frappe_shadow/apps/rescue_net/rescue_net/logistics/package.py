@@ -29,6 +29,8 @@ def package_members(lead):
 def sync_package(lead):
     """Copy the main flow's armada / status / timestamps onto its members that
     are still travelling with it."""
+    from rescue_net.federation.outbox import update_fields
+
     members = package_members(lead)
     if not members:
         return
@@ -39,7 +41,7 @@ def sync_package(lead):
     for m in members:
         if (m.flow_status or "") in _OWN_STATES:
             continue
-        frappe.db.set_value("RN Distribution Flow", m.name, values, update_modified=True)
+        update_fields("RN Distribution Flow", m.name, values)
 
 
 def assert_member_change(doc, new_status):

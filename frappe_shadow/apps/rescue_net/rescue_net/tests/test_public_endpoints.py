@@ -33,6 +33,8 @@ from rescue_net.tests.factories import (
 )
 
 GUEST_ENDPOINTS = {
+    "rescue_net.api_federation.node_info",
+    "rescue_net.api_federation.pull",
     "api_admin_areas.get_children", "api_admin_areas.get_provinces",
     "api_admin_areas.search_areas", "api_admin_areas.get_area",  # reviewed: public reference data (names + codes only)
     "api_medical.public_patients",  # reviewed: family reunification; public medical poskos only, identity + outcome (no complaint/treatment/contact)

@@ -17,6 +17,7 @@ on_login = [
 ]
 
 after_install = [
+    "rescue_net.federation.outbox.initialize",
     "rescue_net.setup.normalization_defaults.install_defaults",
     "rescue_net.setup.unit_conversion_defaults.install_defaults",
     "rescue_net.setup.org_brand_defaults.install_defaults",
@@ -68,3 +69,16 @@ after_migrate = [
     "rescue_net.setup.tender_defaults.install_defaults",
     "rescue_net.setup.notification_defaults.install_defaults",
 ]
+
+# Keep the allowlist in federation.policy. Hooks only cover participating types.
+doc_events = {
+    doctype: {
+        "before_validate": "rescue_net.federation.outbox.before_validate",
+        "after_insert": "rescue_net.federation.outbox.record",
+        "on_update": "rescue_net.federation.outbox.record",
+    }
+    for doctype in (
+        "RN Disaster Event", "RN Posko", "RN Logistic Need", "RN Aid Offer",
+        "RN Distribution Flow", "RN Admin Area",
+    )
+}

@@ -1,0 +1,1713 @@
+[
+  {
+    "id": "struktur-komando-pdb",
+    "instansi": "bnpb",
+    "judul": "Struktur Komando PDB",
+    "ringkas": "Posko komando yang mendukung koordinasi darurat.",
+    "sumber_rn": "posko-komando",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Posko"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "bidang",
+        "label": "Bidang",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "peran",
+        "label": "Peran",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "status-keadaan-darurat",
+    "instansi": "bnpb",
+    "judul": "Status Keadaan Darurat",
+    "ringkas": "Catat tahap darurat, keputusan penetapan dan masa berlakunya.",
+    "sumber_rn": "bencana",
+    "klasifikasi": "TERBUKA",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Bencana"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status event"
+      }
+    ],
+    "isian": [
+      {
+        "id": "nomor_sk",
+        "label": "Nomor SK",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tahap",
+        "label": "Tahap",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Siaga",
+          "Tanggap Darurat",
+          "Transisi Pemulihan"
+        ]
+      },
+      {
+        "id": "mulai",
+        "label": "Mulai",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "selesai",
+        "label": "Berakhir",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "renops-harian",
+    "instansi": "bnpb",
+    "judul": "Rencana Operasi (Renops) harian",
+    "ringkas": "Susun sasaran dan tugas tanggap darurat per bidang.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal"
+      },
+      {
+        "id": "sasaran",
+        "label": "Sasaran"
+      },
+      {
+        "id": "bidang",
+        "label": "Bidang"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "sasaran",
+        "label": "Sasaran",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "bidang",
+        "label": "Bidang",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "pusdalops",
+    "instansi": "bnpb",
+    "judul": "Pusdalops 24 jam",
+    "ringkas": "Catat kejadian dan tindak lanjut piket.",
+    "sumber_rn": "laporan",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "judul",
+        "label": "Laporan"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "waktu",
+        "label": "Jam masuk",
+        "jenis": "waktu",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kejadian",
+        "label": "Kejadian",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tindak_lanjut",
+        "label": "Tindak lanjut",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "klaster-nasional",
+    "instansi": "bnpb",
+    "judul": "Klaster Nasional",
+    "ringkas": "Pantau kebutuhan dan koordinasi lintas klaster.",
+    "sumber_rn": "kebutuhan",
+    "klasifikasi": "TERBUKA",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Kebutuhan"
+      },
+      {
+        "id": "jumlah",
+        "label": "Kekurangan"
+      },
+      {
+        "id": "satuan",
+        "label": "Satuan"
+      }
+    ],
+    "isian": [
+      {
+        "id": "klaster",
+        "label": "Klaster",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Kesehatan",
+          "Pencarian & Penyelamatan",
+          "Logistik",
+          "Pengungsian & Perlindungan",
+          "Pendidikan",
+          "Sarana-Prasarana",
+          "Ekonomi",
+          "Pemulihan Dini"
+        ]
+      },
+      {
+        "id": "koordinator",
+        "label": "Koordinator",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "agenda",
+        "label": "Agenda",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "kaji-cepat",
+    "instansi": "bnpb",
+    "judul": "Kaji Cepat (Rapid Assessment)",
+    "ringkas": "Catat penilaian dampak dan kebutuhan mendesak.",
+    "sumber_rn": "kebutuhan",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Kebutuhan"
+      },
+      {
+        "id": "jumlah",
+        "label": "Kekurangan"
+      },
+      {
+        "id": "satuan",
+        "label": "Satuan"
+      }
+    ],
+    "isian": [
+      {
+        "id": "wilayah",
+        "label": "Wilayah",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "akses",
+        "label": "Kondisi akses",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "dampak",
+        "label": "Dampak dan kebutuhan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "data-korban",
+    "instansi": "bnpb",
+    "judul": "Data Korban baku",
+    "ringkas": "Catat rekap korban dan penduduk terdampak per wilayah.",
+    "sumber_rn": "korban",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Bencana"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "jumlah",
+        "label": "Jiwa berisiko"
+      }
+    ],
+    "isian": [
+      {
+        "id": "wilayah",
+        "label": "Wilayah",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kategori",
+        "label": "Kategori",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Meninggal",
+          "Hilang",
+          "Luka berat",
+          "Luka ringan",
+          "Mengungsi",
+          "Terdampak"
+        ]
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "sitrep-bnpb",
+    "instansi": "bnpb",
+    "judul": "SITREP baku BNPB",
+    "ringkas": "Ringkasan situasi dan catatan laporan harian.",
+    "sumber_rn": "sitrep",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Bencana"
+      },
+      {
+        "id": "mulai",
+        "label": "Awal periode"
+      },
+      {
+        "id": "selesai",
+        "label": "Akhir periode"
+      }
+    ],
+    "isian": [
+      {
+        "id": "nomor",
+        "label": "Nomor laporan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "ringkasan",
+        "label": "Ringkasan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "dana-siap-pakai",
+    "instansi": "bnpb",
+    "judul": "Dana Siap Pakai (DSP)",
+    "ringkas": "Catat usulan dan realisasi dana tanggap darurat.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "usulan",
+        "label": "Usulan"
+      },
+      {
+        "id": "anggaran",
+        "label": "Nilai usulan"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "usulan",
+        "label": "Usulan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "anggaran",
+        "label": "Nilai usulan",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Usulan",
+          "Disetujui",
+          "Realisasi",
+          "Pertanggungjawaban"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "buffer-stock",
+    "instansi": "bnpb",
+    "judul": "Gudang & Buffer Stock",
+    "ringkas": "Pantau posko logistik dan catat kebutuhan persediaan minimum.",
+    "sumber_rn": "posko-logistik",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Posko"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "gudang",
+        "label": "Gudang",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "barang",
+        "label": "Barang",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "minimum",
+        "label": "Stok minimum",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "peringatan-dini",
+    "instansi": "bnpb",
+    "judul": "Peringatan Dini",
+    "ringkas": "Tinjau peringatan gempa yang diteruskan RN dari BMKG.",
+    "sumber_rn": "bmkg",
+    "klasifikasi": "TERBUKA",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Kejadian"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "waktu",
+        "label": "Waktu"
+      }
+    ],
+    "isian": [
+      {
+        "id": "sumber",
+        "label": "Sumber",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "waktu",
+        "label": "Jam terbit",
+        "jenis": "waktu",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "ringkasan",
+        "label": "Ringkasan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "jitupasna-r3p",
+    "instansi": "bnpb",
+    "judul": "Jitupasna & R3P",
+    "ringkas": "Catat kebutuhan dan rencana pemulihan pascabencana.",
+    "sumber_rn": "recovery",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Proyek"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "wilayah",
+        "label": "Wilayah",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kebutuhan",
+        "label": "Kebutuhan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "rencana",
+        "label": "Rencana pemulihan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "komando-kendali-satgas",
+    "instansi": "tni",
+    "judul": "Komando & Kendali Satgas",
+    "ringkas": "Catat peran koordinasi bantuan bencana.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "unit",
+        "label": "Unit"
+      },
+      {
+        "id": "peran",
+        "label": "Peran"
+      },
+      {
+        "id": "kegiatan",
+        "label": "Kegiatan"
+      }
+    ],
+    "isian": [
+      {
+        "id": "unit",
+        "label": "Unit",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "peran",
+        "label": "Peran",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kegiatan",
+        "label": "Kegiatan kemanusiaan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "opord",
+    "instansi": "tni",
+    "judul": "Perintah Operasi (OPORD) & Perintah Harian",
+    "ringkas": "Catat ringkasan kegiatan bantuan bencana.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal"
+      },
+      {
+        "id": "judul",
+        "label": "Judul"
+      },
+      {
+        "id": "ringkasan",
+        "label": "Ringkasan"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "judul",
+        "label": "Judul",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "ringkasan",
+        "label": "Ringkasan bantuan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "pergeseran-bko",
+    "instansi": "tni",
+    "judul": "Pergeseran Pasukan & BKO",
+    "ringkas": "Catat dukungan relawan untuk penanganan bencana.",
+    "sumber_rn": "relawan",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Posko relawan"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kegiatan",
+        "label": "Kegiatan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "keterangan",
+        "label": "Catatan bantuan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "kesiapan-satuan",
+    "instansi": "tni",
+    "judul": "Kesiapan Satuan",
+    "ringkas": "Catat kesiapan layanan bantuan kemanusiaan.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal"
+      },
+      {
+        "id": "layanan",
+        "label": "Layanan"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "layanan",
+        "label": "Layanan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Siap",
+          "Perlu dukungan"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "alut-alat-berat",
+    "instansi": "tni",
+    "judul": "Alut & Alat Berat",
+    "ringkas": "Tinjau alat kerja sipil yang tercatat di RN.",
+    "sumber_rn": "alat",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Alat"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "jenis",
+        "label": "Jenis alat kerja",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kegiatan",
+        "label": "Kegiatan bantuan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kondisi",
+        "label": "Kondisi",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "angkutan-udara-laut",
+    "instansi": "tni",
+    "judul": "Angkutan Udara & Laut",
+    "ringkas": "Catat dukungan pengiriman bantuan kemanusiaan.",
+    "sumber_rn": "posko-distribusi",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Posko distribusi"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "bantuan",
+        "label": "Jenis bantuan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "catatan",
+        "label": "Catatan distribusi",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "zeni-akses",
+    "instansi": "tni",
+    "judul": "Zeni & Pembukaan Akses",
+    "ringkas": "Pantau akses sipil dan catat pemulihan sarana umum.",
+    "sumber_rn": "akses",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Sarana"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Kondisi akses"
+      }
+    ],
+    "isian": [
+      {
+        "id": "sarana",
+        "label": "Sarana umum",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kondisi",
+        "label": "Kondisi",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tindak_lanjut",
+        "label": "Tindak lanjut",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "sar-militer",
+    "instansi": "tni",
+    "judul": "SAR Militer",
+    "ringkas": "Tinjau rekap pencarian dan penyelamatan saat bencana.",
+    "sumber_rn": "pencarian",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Bencana"
+      },
+      {
+        "id": "hilang",
+        "label": "Laporan hilang"
+      },
+      {
+        "id": "ditemukan",
+        "label": "Laporan penemuan"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kegiatan",
+        "label": "Kegiatan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "hasil",
+        "label": "Ringkasan penyelamatan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "kesehatan-lapangan",
+    "instansi": "tni",
+    "judul": "Kesehatan Lapangan",
+    "ringkas": "Pantau posko medis dan catat layanan kesehatan lapangan.",
+    "sumber_rn": "posko-medis",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Posko"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "layanan",
+        "label": "Layanan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah layanan",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "lapisan-peta-terbatas",
+    "instansi": "tni",
+    "judul": "Lapisan Peta Terbatas",
+    "ringkas": "Catat metadata lapisan peta untuk penanganan bencana.",
+    "sumber_rn": "",
+    "klasifikasi": "RAHASIA",
+    "kolom": [
+      {
+        "id": "judul",
+        "label": "Judul lapisan"
+      },
+      {
+        "id": "kategori",
+        "label": "Kategori"
+      },
+      {
+        "id": "klasifikasi",
+        "label": "Klasifikasi"
+      }
+    ],
+    "isian": [
+      {
+        "id": "judul",
+        "label": "Judul lapisan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kategori",
+        "label": "Kategori",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "klasifikasi",
+        "label": "Klasifikasi",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Terbatas",
+          "Rahasia"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "satgana-relawan",
+    "instansi": "pmi",
+    "judul": "Satgana & Pengerahan Relawan",
+    "ringkas": "Pantau posko relawan dan catat dukungan Satgana, KSR, TSR dan SIBAT.",
+    "sumber_rn": "relawan",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Posko relawan"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "kelompok",
+        "label": "Kelompok",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Satgana",
+          "KSR",
+          "TSR",
+          "SIBAT"
+        ]
+      },
+      {
+        "id": "keahlian",
+        "label": "Keahlian",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "mulai",
+        "label": "Mulai shift",
+        "jenis": "waktu",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "asesmen-cepat-pmi",
+    "instansi": "pmi",
+    "judul": "Asesmen Cepat PMI",
+    "ringkas": "Catat kebutuhan per sektor untuk 24–72 jam pertama.",
+    "sumber_rn": "kebutuhan",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Kebutuhan"
+      },
+      {
+        "id": "jumlah",
+        "label": "Kekurangan"
+      },
+      {
+        "id": "satuan",
+        "label": "Satuan"
+      }
+    ],
+    "isian": [
+      {
+        "id": "wilayah",
+        "label": "Wilayah",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "sektor",
+        "label": "Sektor",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kebutuhan",
+        "label": "Kebutuhan mendesak",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "kesehatan-ambulans",
+    "instansi": "pmi",
+    "judul": "Layanan Kesehatan & Ambulans",
+    "ringkas": "Pantau posko medis dan catat rekap pelayanan.",
+    "sumber_rn": "posko-medis",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Posko"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "layanan",
+        "label": "Layanan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah pelayanan",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "donor-darah",
+    "instansi": "pmi",
+    "judul": "Donor Darah (UDD)",
+    "ringkas": "Catat persediaan darah dan permintaan rumah sakit.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "golongan",
+        "label": "Golongan darah"
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah kantong"
+      },
+      {
+        "id": "udd",
+        "label": "Unit donor darah"
+      }
+    ],
+    "isian": [
+      {
+        "id": "golongan",
+        "label": "Golongan darah",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "A",
+          "B",
+          "AB",
+          "O"
+        ]
+      },
+      {
+        "id": "rhesus",
+        "label": "Rhesus",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Positif",
+          "Negatif"
+        ]
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah kantong",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "udd",
+        "label": "Unit donor darah",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "dukungan-psikososial",
+    "instansi": "pmi",
+    "judul": "Dukungan Psikososial (PSP)",
+    "ringkas": "Catat rekap sesi dukungan dan rujukan.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal"
+      },
+      {
+        "id": "sesi",
+        "label": "Jenis sesi"
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah peserta"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "sesi",
+        "label": "Jenis sesi",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah peserta",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "rujukan",
+        "label": "Perlu rujukan",
+        "jenis": "ya_tidak",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "rfl",
+    "instansi": "pmi",
+    "judul": "Pemulihan Hubungan Keluarga (RFL)",
+    "ringkas": "Tinjau rekap pencarian RN dan catat status rujukan keluarga.",
+    "sumber_rn": "pencarian",
+    "klasifikasi": "RAHASIA",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Bencana"
+      },
+      {
+        "id": "hilang",
+        "label": "Laporan hilang"
+      },
+      {
+        "id": "ditemukan",
+        "label": "Laporan penemuan"
+      }
+    ],
+    "isian": [
+      {
+        "id": "kode",
+        "label": "Kode kasus",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Dirujuk",
+          "Dalam proses",
+          "Selesai"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "wash",
+    "instansi": "pmi",
+    "judul": "Air & Sanitasi (WASH)",
+    "ringkas": "Catat distribusi air, sarana sanitasi dan promosi kebersihan.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "air",
+        "label": "Air (liter/hari)"
+      },
+      {
+        "id": "toilet",
+        "label": "Toilet darurat"
+      }
+    ],
+    "isian": [
+      {
+        "id": "wilayah",
+        "label": "Wilayah",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "air",
+        "label": "Air (liter/hari)",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "toilet",
+        "label": "Toilet darurat",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "shelter-paket-bantuan",
+    "instansi": "pmi",
+    "judul": "Shelter & Paket Bantuan",
+    "ringkas": "Pantau shelter dan catat paket bantuan keluarga.",
+    "sumber_rn": "posko-shelter",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Shelter"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "shelter",
+        "label": "Shelter",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "paket",
+        "label": "Jenis paket",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah paket",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "gudang-regional-pmi",
+    "instansi": "pmi",
+    "judul": "Gudang Regional PMI",
+    "ringkas": "Pantau posko logistik dan catat mutasi persediaan.",
+    "sumber_rn": "posko-logistik",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Posko"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "gudang",
+        "label": "Gudang",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "barang",
+        "label": "Barang",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "jumlah",
+        "label": "Jumlah mutasi",
+        "jenis": "angka",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "mitra-gerakan",
+    "instansi": "pmi",
+    "judul": "Mitra Gerakan",
+    "ringkas": "Pantau program dukungan dan catat bantuan mitra Gerakan.",
+    "sumber_rn": "donor",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "nama",
+        "label": "Program"
+      },
+      {
+        "id": "wilayah",
+        "label": "Wilayah"
+      },
+      {
+        "id": "status",
+        "label": "Status"
+      }
+    ],
+    "isian": [
+      {
+        "id": "mitra",
+        "label": "Mitra",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "bantuan",
+        "label": "Rincian bantuan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tanggal",
+        "label": "Tanggal diterima",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "rapat-koordinasi",
+    "instansi": "bersama",
+    "judul": "Rapat Koordinasi & Keputusan",
+    "ringkas": "Catat agenda, keputusan dan penanggung jawab tindak lanjut.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal"
+      },
+      {
+        "id": "agenda",
+        "label": "Agenda"
+      },
+      {
+        "id": "penanggung_jawab",
+        "label": "Penanggung jawab"
+      }
+    ],
+    "isian": [
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "agenda",
+        "label": "Agenda",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "keputusan",
+        "label": "Keputusan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "penanggung_jawab",
+        "label": "Penanggung jawab",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "bantuan-antarinstansi",
+    "instansi": "bersama",
+    "judul": "Permintaan Bantuan Antarinstansi",
+    "ringkas": "Siapkan permintaan dan pelacakan dukungan antarinstansi.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "pemohon",
+        "label": "Pemohon"
+      },
+      {
+        "id": "tujuan",
+        "label": "Instansi tujuan"
+      },
+      {
+        "id": "kebutuhan",
+        "label": "Kebutuhan"
+      }
+    ],
+    "isian": [
+      {
+        "id": "pemohon",
+        "label": "Pemohon",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "tujuan",
+        "label": "Instansi tujuan",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "kebutuhan",
+        "label": "Kebutuhan",
+        "jenis": "teks_panjang",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "klasifikasi-informasi",
+    "instansi": "bersama",
+    "judul": "Klasifikasi Informasi",
+    "ringkas": "Catat klasifikasi yang berlaku pada dokumen operasi.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "dokumen",
+        "label": "Dokumen"
+      },
+      {
+        "id": "klasifikasi",
+        "label": "Klasifikasi"
+      },
+      {
+        "id": "tanggal",
+        "label": "Tanggal"
+      }
+    ],
+    "isian": [
+      {
+        "id": "dokumen",
+        "label": "Dokumen",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "klasifikasi",
+        "label": "Klasifikasi",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Terbuka",
+          "Terbatas",
+          "Rahasia"
+        ]
+      },
+      {
+        "id": "tanggal",
+        "label": "Tanggal",
+        "jenis": "tanggal",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  },
+  {
+    "id": "komunikasi",
+    "instansi": "bersama",
+    "judul": "Komunikasi",
+    "ringkas": "Siapkan direktori kanal komunikasi bantuan bencana.",
+    "sumber_rn": "",
+    "klasifikasi": "TERBATAS",
+    "kolom": [
+      {
+        "id": "kanal",
+        "label": "Kanal"
+      },
+      {
+        "id": "jenis",
+        "label": "Jenis"
+      },
+      {
+        "id": "pengelola",
+        "label": "Pengelola"
+      }
+    ],
+    "isian": [
+      {
+        "id": "kanal",
+        "label": "Kanal",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      },
+      {
+        "id": "jenis",
+        "label": "Jenis",
+        "jenis": "pilihan",
+        "wajib": true,
+        "pilihan": [
+          "Radio",
+          "Telepon satelit",
+          "Kanal koordinasi"
+        ]
+      },
+      {
+        "id": "pengelola",
+        "label": "Pengelola",
+        "jenis": "teks",
+        "wajib": true,
+        "pilihan": []
+      }
+    ]
+  }
+]

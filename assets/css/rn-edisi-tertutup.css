@@ -111,3 +111,10 @@ html.rn-window-mode body{min-width:0!important;overflow-x:hidden!important;backg
 .cc-kpi em{background:transparent!important;color:#a9b8c6!important}.cc-kpi em.cc-kpi-warn{color:#ffbf7a!important}.cc-card em{background:transparent!important;color:#ffd29a!important}.cc-kpi-bar{background:#2b3b4b!important}
 .rn-public-login{background:#bd683d!important;color:#fff!important}
 .cc label>span{color:#d9b8a2!important}
+/* 22 Nov (owner "rapikan cara yang sama"): komponen RN yang masih berlatar terang di tema gelap DMS */
+select,input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea{color:#e5edf3!important;background-color:#111c28!important;border-color:#3a4e5f!important}
+select option{color:#e5edf3;background:#111c28}
+code,pre{color:#ffd8b8!important;background:#0f1924!important;border-color:#334657!important}
+:is(p.note,.rn-demo-card,.pg-side,.manual-hero,.manual-card,.manual-toc,.aia-card,.rn-ps-panel,.public-report-card,.public-report-panel,.po-card,.rn-rw-filters,.rn-self,.vx-subnav,.vx-filter,.rn-auth-addevent,.cl-tools,.rn-ev-filterbox,.rn-ev-pop,.rn-report-login,.location-input-panel,.rn-report-photo,.community-operator-panel,.public-report-actions,.mock-header){color:#e4ebf1!important;background:#1b2836!important;background-image:none!important;border-color:#334657!important;box-shadow:0 10px 28px rgba(0,0,0,.2)!important}
+:is(p.note,.rn-demo-card,.pg-side,.manual-hero,.manual-card,.aia-card,.rn-ps-panel,.public-report-card,.public-report-panel,.po-card,.rn-self,.vx-filter,.rn-ev-pop,.rn-report-login,.location-input-panel) :is(small,.rn-muted,.muted,.hint,figcaption){color:#a9b8c6!important}
+:is(.chip,.rn-aid-attachment-option,.btn.mini,.cl-btn.alt,.rn-auth-join-link){color:#e5ecf2!important;background:#253442!important;border-color:#465b6c!important}

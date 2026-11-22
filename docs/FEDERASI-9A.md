@@ -1,6 +1,6 @@
 # Federasi antar node RN, tahap 9a
 
-Cabang uji. ADR-0004 bagian A, B.2 dan C menjadi dasar implementasi. Skema transport `1`.
+Catatan tahap 9a. Untuk kontrak terbaru dan langkah menautkan organisasi, lihat [Protokol Federasi v1](FEDERASI-PROTOKOL-v1.md). ADR-0004 bagian A, B.2 dan C menjadi dasar implementasi. Skema transport `1`.
 
 ## Persiapan dan akses
 

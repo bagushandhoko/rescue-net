@@ -119,7 +119,7 @@
           <li><a href="#ars-gandakan">Cara RN menggandakan diri</a></li>
           <li><a href="#ars-tangguh">Ketahanan saat bencana</a></li>
           <li><a href="#ars-federasi">Federasi nasional &amp; internasional</a></li>
-          <li><a href="#federasi-tahap-1">Federasi antar node (tahap 1)</a></li>
+          <li><a href="#federasi-tahap-1">Federasi dengan node instansi</a></li>
           <li><a href="#ars-aman">Keamanan &amp; kepatuhan</a></li>
           <li><a href="#ars-jalan">Peta jalan</a></li>
         </ol>
@@ -693,7 +693,8 @@
           </ul>
           <h4 id="pembaruan-2211">Pembaruan 22 November</h4>
           <ul>
-            <li>Perbaikan Kartu Keluarga untuk akun tanpa posko dan fondasi <a href="#federasi-tahap-1">Federasi antar node (tahap 1)</a> disiapkan di cabang uji. Keduanya belum diterapkan di produksi.</li>
+            <li>Perbaikan Kartu Keluarga untuk akun tanpa posko dan fondasi <a href="#federasi-tahap-1">Federasi dengan node instansi</a> disiapkan di cabang uji. Keduanya belum diterapkan di produksi.</li>
+            <li>Tahap 9b menambah ringkasan instansi dan jawaban permintaan bantuan pada cabang uji.</li>
           </ul>
           <h4 id="pembaruan-2011">Pembaruan 20 November</h4>
           <ul>
@@ -1485,13 +1486,14 @@
         </section>
 
         <section id="federasi-tahap-1">
-          <h3>Federasi antar node (tahap 1)</h3>
+          <h3>Federasi dengan node instansi</h3>
           <p>Tahap ini disiapkan di lingkungan uji dan belum aktif di produksi. Node adalah server Rescue-Net yang dikelola sendiri oleh satu instansi. Administrator mendaftarkan mitra, memeriksa sidik jari kunci, lalu menyetujui jenis data yang boleh diambil.</p>
           <ul>
             <li>Kotak keluar mencatat perubahan yang boleh dibagikan dengan ID dan nomor urut. Mitra yang disetujui mengambil perubahan melalui HTTPS menggunakan kursor dan tanda tangan.</li>
-            <li>Pembagian data operasional perlu diaktifkan per catatan. Posko harus berstatus publik. Tahap ini mengirim pilihan status, angka, kode wilayah, dan rujukan UUID. Data pribadi, teks bebas, serta lampiran tetap di server asal.</li>
-            <li>Panel DMS, pencatatan data masuk, penerapan perubahan, dan uji pertukaran dua node masih menunggu tahap berikutnya.</li>
+            <li>Pembagian data operasional perlu diaktifkan per catatan. Posko harus berstatus publik. Catatan publik RN yang dibagikan mengirim pilihan status, angka, kode wilayah, dan rujukan UUID. Deskripsi permintaan bantuan dibatasi pada kebutuhan umum. Data pribadi serta lampiran tetap di server asal.</li>
+            <li>System Manager menautkan satu node ke satu organisasi tertutup. Ringkasan yang dilaporkan node tersedia di Control Centre → Organisasi &amp; Posko → Ringkasan bagi pemilik organisasi dan System Manager.</li>
           </ul>
+          <p>Di ringkasan organisasi tujuan, pemilik atau System Manager dapat memilih Terima atau Tolak pada Permintaan Bantuan Antarinstansi. Node pengirim mengambil jawaban melalui federasi. Keputusan ini tidak membuat posko, personel, atau kebutuhan operasional baru di RN.</p>
         </section>
 
         <section id="ars-aman">

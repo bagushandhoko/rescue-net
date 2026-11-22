@@ -3,7 +3,40 @@
 
   const { load, getJSON, api } = window.RNDmsMenus;
   const federation = "Data akan masuk dari node instansi (federasi)";
-  const pendingSave = "Formulir siap; penyimpanan aktif setelah node instansi tersambung";
+  let csrf = null;
+
+  // Catatan menu disimpan di RN (api_dms) sampai backend instansi tersambung lewat federasi (owner 22 Nov 2026).
+  async function csrfToken() {
+    if (csrf) return csrf;
+    const { message } = await getJSON(api + "rescue_net.api_auth.session_info");
+    csrf = message?.csrf_token || "";
+    return csrf;
+  }
+
+  async function post(method, args) {
+    const body = new URLSearchParams(args);
+    const response = await fetch(api + "rescue_net." + method, {
+      method: "POST", credentials: "same-origin", body,
+      headers: { Accept: "application/json", "X-Frappe-CSRF-Token": await csrfToken() },
+      signal: AbortSignal.timeout(12000)
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      let text = "";
+      try { text = JSON.parse(JSON.parse(payload._server_messages || "[]")[0] || "{}").message || ""; } catch (_) {}
+      throw new Error((text || payload.exception || ("HTTP " + response.status)).replace(/^[\w.]+Error:\s*/, ""));
+    }
+    return payload.message;
+  }
+
+  async function stored(menuId) {
+    try {
+      const message = await read("api_dms.list_records", { menu_id: menuId });
+      return { records: message.records || [], recordNotice: "" };
+    } catch (error) {
+      return { records: [], recordNotice: /403|Login/.test(String(error)) ? "Login sebagai anggota organisasi tertutup untuk melihat dan menyimpan catatan." : "Catatan instansi belum dapat dimuat." };
+    }
+  }
 
   async function read(method, args = {}) {
     const query = new URLSearchParams(args);
@@ -95,17 +128,24 @@
       async list(menuId) {
         const menu = (await load()).find((entry) => entry.id === menuId);
         const source = menu?.sumber_rn;
-        if (!Object.hasOwn(sources, source)) return { rows: [], notice: federation };
+        const saved = await stored(menuId);
+        if (!Object.hasOwn(sources, source)) return { rows: [], notice: "Tidak ada data RN untuk menu ini; isi lewat formulir di bawah.", ...saved };
         try {
           const rows = await sources[source]();
           const label = source === "bmkg" ? "Sumber: BMKG melalui Rescue-Net." : "Sumber: Rescue-Net.";
-          return { rows, notice: rows.length ? label : label + " Belum ada data yang dapat ditampilkan." };
+          return { rows, notice: rows.length ? label : label + " Belum ada data yang dapat ditampilkan.", ...saved };
         } catch (_) {
-          return { rows: [], notice: "Data RN belum dapat dimuat. Periksa koneksi dan izin akun." };
+          return { rows: [], notice: "Data RN belum dapat dimuat. Periksa koneksi dan izin akun.", ...saved };
         }
       },
-      async save(_menuId, _record) {
-        return { saved: false, notice: pendingSave };
+      async save(menuId, record) {
+        try {
+          const row = await post("api_dms.save_record", { menu_id: menuId, data: JSON.stringify(record) });
+          return { saved: true, row, notice: "Tersimpan di Rescue-Net (" + row.classification + ")." };
+        } catch (error) {
+          csrf = null;
+          return { saved: false, notice: "Belum tersimpan: " + (error.message || error) };
+        }
       }
     }
   };

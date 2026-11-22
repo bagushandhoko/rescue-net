@@ -330,10 +330,8 @@ def review_event(event, decision, note=None):
     if row.event_status not in allowed[decision]:
         frappe.throw(f"Status bencana sekarang '{row.event_status}', tidak bisa '{decision}'.")
     new_status = {"approve": "active", "reject": "rejected", "demote": "proposed", "ok": "active"}[decision]
-    from rescue_net.federation.outbox import update_fields
-
-    update_fields(EVENT, event, {"event_status": new_status, "reviewed_by": frappe.session.user,
-                                 "reviewed_at": now_datetime(), "review_note": (note or "")[:500]})
+    frappe.db.set_value(EVENT, event, {"event_status": new_status, "reviewed_by": frappe.session.user,
+                                       "reviewed_at": now_datetime(), "review_note": (note or "")[:500]})
     label = {"approve": "disetujui dan kini aktif", "reject": "ditolak", "demote": "diturunkan ke usulan",
              "ok": "diperiksa"}[decision]
     if decision != "ok":

@@ -22,12 +22,6 @@
         icon: "organisasi"
       },
       {
-        // owner 2026-11-22: menu khusus organisasi tertutup sesuai template operasi (BNPB/TNI/PMI)
-        label: "Menu Instansi",
-        href: "menu-instansi.html",
-        icon: "organisasi"
-      },
-      {
         label: "Registrasi & Verifikasi Posko",
         href: "registrasi-posko.html?event=event-sim-001",
         icon: "registrasi-posko"

@@ -12,4 +12,3 @@ rescue_net.patches.v2026_10.backfill_posko_served_events
 rescue_net.patches.v2026_10.backfill_transport_served_events
 rescue_net.patches.v2026_10.more_unit_conversions
 rescue_net.patches.v2026_11.admin_area_centers
-rescue_net.patches.v2026_11.federation_identity

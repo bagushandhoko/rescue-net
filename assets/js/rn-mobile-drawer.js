@@ -1,4 +1,4 @@
-if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = document.createElement("script"); sMt.src = "/rescue-net/assets/js/rn-mode-toggle.js?v=warna-20261122"; document.head.appendChild(sMt); }  // 2026-11-18 tombol simulasi/riil
+if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = document.createElement("script"); sMt.src = "/rescue-net/assets/js/rn-mode-toggle.js?v=samaai2-20261119"; document.head.appendChild(sMt); }  // 2026-11-18 tombol simulasi/riil
 (function () {
   "use strict";
 
@@ -525,7 +525,7 @@ if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = d
   (function loadAiChat() {
     if (window.RNAIChat || document.querySelector('script[src*="rn-ai-chat.js"]')) return;
     const s = document.createElement("script");
-    s.src = prefix + "assets/js/rn-ai-chat.js?v=warna-20261122";
+    s.src = prefix + "assets/js/rn-ai-chat.js?v=font13-20261109";
     s.defer = true;
     document.head.appendChild(s);
   })();

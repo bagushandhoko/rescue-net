@@ -439,7 +439,7 @@
   .rn-drawer-public .welcome-links .rn-public-login {
     justify-content: center !important;
     margin-top: 8px !important;
-    background: var(--accent-strong, #b8432a) !important;
+    background: var(--vx-brand, #e8755a) !important;
     color: #fff !important;
     font-weight: 700 !important;
   }

@@ -6,16 +6,17 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
   <title>Rescue-Net | Manual Pengguna</title>
-  <link rel="stylesheet" href="../assets/css/style.css?v=warna-20261122">
+  <link rel="stylesheet" href="../assets/css/style.css?v=segar-20261117">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
   <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=lh15-20261109">
-  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=warna-20261122">
-  <link rel="stylesheet" href="../assets/css/rn-manual.css?v=warna-20261122">
+  <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=font-20261109">
+  <link rel="stylesheet" href="../assets/css/rn-manual.css?v=font-20261109">
   <link rel="icon" type="image/png" sizes="32x32" href="/rescue-net/assets/img/favicon/favicon-32.png?v=20261114">
   <link rel="icon" type="image/png" sizes="48x48" href="/rescue-net/assets/img/favicon/favicon-48.png?v=20261114">
   <link rel="apple-touch-icon" href="/rescue-net/assets/img/favicon/favicon-180.png?v=20261114">
+  <link rel="stylesheet" href="../assets/css/rn-edisi-tertutup.css?v=edisi-tertutup-pdf-20261121b">
 </head>
 <body class="public-report-page">
   <main class="manual" id="top">
@@ -119,7 +120,6 @@
           <li><a href="#ars-gandakan">Cara RN menggandakan diri</a></li>
           <li><a href="#ars-tangguh">Ketahanan saat bencana</a></li>
           <li><a href="#ars-federasi">Federasi nasional &amp; internasional</a></li>
-          <li><a href="#federasi-tahap-1">Federasi dengan node instansi</a></li>
           <li><a href="#ars-aman">Keamanan &amp; kepatuhan</a></li>
           <li><a href="#ars-jalan">Peta jalan</a></li>
         </ol>
@@ -691,17 +691,6 @@
             <li><b>SITREP</b> mengikuti susunan OCHA dan menyediakan API (JSON, EDXL-SitRep, HXL) dengan kunci yang disetujui super admin — lihat <a href="#h-sitrep">bagian 31</a>.</li>
             <li>Tombol <b>?</b> di setiap halaman membuka bagian manual halaman tersebut.</li>
           </ul>
-          <h4 id="pembaruan-2211">Pembaruan 22 November</h4>
-          <ul>
-            <li><b>Federasi aktif</b> (protokol v1): Rescue-Net siap terhubung dengan Rescue-Net negara lain dan dengan organisasi tertutup yang punya backend sendiri. Belum ada anggota terdaftar. Lihat <a href="#federasi-tahap-1">Federasi dengan node instansi</a> dan <a href="manual-teknis.html#federasi">Manual Teknis bab 13–14</a>.</li>
-            <li><b>Template operasi organisasi</b>: saat mendaftarkan organisasi, pilih Umum, BNPB/BPBD, TNI/POLRI, PMI atau Kementerian. Pemilik organisasi dapat menggantinya di Koordinasi Organisasi → kartu Keterbukaan. Berlaku untuk organisasi Tertutup.</li>
-            <li><b>Menu Instansi</b> (menu navigasi): 36 menu khusus BNPB, TNI/POLRI, PMI dan 4 menu bersama, tampil sesuai template organisasi tertutup Anda. Menu yang belum punya data di Rescue-Net berisi formulir; penyimpanannya aktif setelah backend instansi tersambung lewat federasi.</li>
-            <li>Perbaikan Kartu Keluarga untuk akun tanpa posko.</li>
-          </ul>
-          <h4 id="pembaruan-2011">Pembaruan 20 November</h4>
-          <ul>
-            <li><b>Laporan Masyarakat</b>: tombol baru <b>Alihkan ke posko lain</b> di Antrian Laporan Masyarakat untuk Control Centre, super admin, dan pengelola posko tujuan (<a href="#f-pengarahan">bab 65</a>). <b>Endorsement verifikator</b> kini berlaku <b>1 tahun</b>; yang lewat masa berlaku tidak dihitung lagi (<a href="#f-verifikasi-risiko">bab 66</a>). Status kiriman <b>Diterima Sebagian</b> kini tampil dengan nama itu di Lacak dan halaman posko (<a href="#status-kiriman">bab 37</a>).</li>
-          </ul>
           <h4 id="pembaruan-1911">Pembaruan 19 November</h4>
           <ul>
             <li><b>Manual diperluas (19 November 2026)</b>: bagian baru <b>H. Panduan fitur rinci</b> berisi bab 63–70 — <a href="#f-satuan">satuan, konversi &amp; rekap stok</a>, <a href="#f-kedaluwarsa">kedaluwarsa per lot</a>, <a href="#f-pengarahan">pengarahan laporan &amp; antrean pilah</a>, <a href="#f-verifikasi-risiko">verifikasi, skor risiko &amp; verifikator</a>, <a href="#f-peta-bmkg">Peta Nasional &amp; peringatan dini BMKG</a>, <a href="#f-2fa">verifikasi dua langkah (2FA)</a>, <a href="#f-tanya-ai">Tanya AI &amp; batas AI</a>, dan <a href="#f-sub-admin">Sub Admin</a>.</li>
@@ -730,6 +719,10 @@
           <h4 id="pembaruan-1611">Pembaruan 16 November</h4>
           <ul>
             <li><b>Analisis AI Lanjutan</b> di halaman Analis AI: SITREP AI, Triase Laporan Warga, Prakiraan Stok Habis, Tanya Jawab Berujukan, Dampak Gempa BMKG, Cek Kejanggalan, Analisis Foto Bukti, dan Rencana Pengiriman, dengan riwayat, unduh, dan cetak (lihat <a href="#analisis-ai-lanjutan">bagian 47</a>).</li>
+          </ul>
+          <h4 id="pembaruan-2211-dms">Pembaruan 22 November · Edisi Tertutup</h4>
+          <ul>
+            <li>Modul RN di jendela DMS memakai tampilan gelap DMS. Pilih <b>Lihat Simulasi</b> atau <b>Riil Data Bencana</b> dari dasbor. Pilih <b>Buka penuh</b> untuk membuka halaman RN dengan navigasi lengkap.</li>
           </ul>
           <h4 id="pembaruan-2111">Pembaruan 21 November</h4>
           <ul>
@@ -981,7 +974,7 @@
           <ol class="steps">
             <li>Ambil kode trace (RN-…) dari label kiriman, layar Kirim Bantuan, atau petugas posko.</li>
             <li>Ketik di kolom lalu tekan <b>Lacak</b>.</li>
-            <li>Baca urutan langkah di layar: <b>Direncanakan → Menunggu Dijemput → Berangkat → Dalam Perjalanan → Tiba di Tujuan → Diterima</b> (bila baru sebagian yang diterima, langkah terakhir tertulis <b>Diterima Sebagian</b>). Langkah yang sudah dilewati diberi waktu. Kiriman berantai menampilkan <b>Perjalanan kiriman</b> per kaki (estafet) dan serah-terima yang tercatat.</li>
+            <li>Baca urutan langkah di layar: <b>Direncanakan → Menunggu Dijemput → Berangkat → Dalam Perjalanan → Tiba di Tujuan → Diterima</b>. Langkah yang sudah dilewati diberi waktu. Kiriman berantai menampilkan <b>Perjalanan kiriman</b> per kaki (estafet) dan serah-terima yang tercatat.</li>
           </ol>
           <p class="note">Bagikan kode trace hanya kepada pihak yang perlu.</p>
 
@@ -997,7 +990,7 @@
                 <tr><td>dispatched</td><td>Berangkat (di daftar posko: Dalam Perjalanan)</td><td>Barang sudah keluar dari posko pengirim.</td><td>Dalam Perjalanan, Tiba di Tujuan, Dibatalkan</td></tr>
                 <tr><td>in_transit</td><td>Dalam Perjalanan</td><td>Barang sedang di jalan.</td><td>Tiba di Tujuan, Dibatalkan</td></tr>
                 <tr><td>arrived_at_posko</td><td>Tiba di Tujuan</td><td>Barang sampai di posko tujuan, belum dihitung masuk stok.</td><td>Diterima sebagian, Diterima, Dibatalkan</td></tr>
-                <tr><td>partially_received</td><td>Diterima Sebagian</td><td>Sebagian jumlah sudah diterima dan masuk stok.</td><td>Diterima sebagian lagi, Diterima</td></tr>
+                <tr><td>partially_received</td><td>Diterima sebagian (di Lacak: Diterima)</td><td>Sebagian jumlah sudah diterima dan masuk stok.</td><td>Diterima sebagian lagi, Diterima</td></tr>
                 <tr><td>received</td><td>Diterima</td><td>Selesai; jumlah yang diterima masuk stok posko tujuan.</td><td>— (akhir)</td></tr>
                 <tr><td>cancelled</td><td>Dibatalkan / Batal</td><td>Kiriman dibatalkan.</td><td>— (akhir)</td></tr>
               </tbody>
@@ -1479,29 +1472,12 @@
           <p>Setiap <b>node</b> adalah RN lengkap milik satu pihak (BNPB/BPBD provinsi, lembaga kemanusiaan, atau negara lain). Node berdiri sendiri dan tetap berjalan walau terputus dari node lain.</p>
           <ul>
             <li><b>Kepemilikan data:</b> data dimiliki node yang membuatnya (mis. posko milik node provinsi). Node lain menerima salinan baca, bukan mengubah.</li>
-            <li><b>Yang dipertukarkan</b> (dapat diatur per node): bencana lintas wilayah/batas negara, kebutuhan kritis, tawaran bantuan &amp; armada, ketersediaan relawan, SITREP. <b>Data pribadi tetap di server asal</b> pada rancangan tahap 1 di bawah.</li>
+            <li><b>Yang dipertukarkan</b> (dapat diatur per node): bencana lintas wilayah/batas negara, kebutuhan kritis, tawaran bantuan &amp; armada, ketersediaan relawan, SITREP. <b>Data pribadi tidak dipertukarkan</b> kecuali ada dasar hukum &amp; persetujuan.</li>
             <li><b>Protokol:</b> kotak keluar (outbox) per node yang dikirim berkala lewat HTTPS, ditandatangani kunci node (HMAC/tanda tangan digital), bisa diulang bila gagal; node di wilayah terputus mengirim ulang saat tersambung. Format: OCHA SitRep, EDXL-SitRep, CAP 1.2 untuk peringatan, HXL untuk tabel, P-code untuk wilayah.</li>
             <li><b>Node pusat penghubung</b> (opsional) meneruskan pesan antar-node yang tidak saling terhubung langsung, tanpa menyimpan data pribadi.</li>
             <li><b>Yang sudah berjalan (19 November 2026):</b> jalur sinkronisasi <b>kirim (push)</b> dan <b>ambil (pull)</b> data lewat server Rescue-Net, khusus akun Control Centre dan super admin. Setiap data masuk dicatat sekali saja (tidak dobel). Baru <b>2 jenis data</b> yang langsung diterapkan otomatis: <b>laporan masyarakat baru</b> dan <b>permintaan sumber daya baru</b>. Jenis lain <b>disimpan untuk ditinjau</b> manusia, tidak langsung mengubah data. Pendaftaran node partner di <a href="data-consolidation.html">Konsolidasi Data</a> → <b>Federation Repository</b> masih rintisan.</li>
             <li><b>Internasional:</b> tiap negara menjalankan node sendiri (bahasa, nama, logo, aturan lembaga sendiri) dan memilih data apa yang dibagikan ke jaringan regional/internasional (mis. ASEAN, jaringan kemanusiaan PBB).</li>
           </ul>
-        </section>
-
-        <section id="federasi-tahap-1">
-          <h3>Federasi dengan node instansi</h3>
-          <p>Aktif di produksi sejak 22 November 2026 (protokol v1). Belum ada anggota yang didaftarkan, jadi belum ada data yang keluar atau masuk. Administrator mendaftarkan mitra, memeriksa sidik jari kunci, lalu menyetujui jenis data yang boleh dipertukarkan.</p>
-          <p><b>Nanti ada dua jenis anggota federasi:</b></p>
-          <ul>
-            <li><b>Rescue-Net negara lain</b> — server Rescue-Net milik negara lain. Kedua server saling mengambil data publik (bencana, posko publik, kebutuhan, penawaran, status distribusi). Tidak ada server pusat; tiap negara memegang datanya sendiri.</li>
-            <li><b>Organisasi tertutup yang berdiri sendiri</b> — misalnya DMS BNPB/BPBD, TNI/POLRI, PMI atau Kementerian. Di Rescue-Net instansi ini tampil sebagai <b>organisasi tertutup</b>, sama seperti organisasi tertutup biasa, tetapi data kerjanya disimpan di backend instansi sendiri. Yang dikirim ke Rescue-Net hanya ringkasan angka, permintaan bantuan antarinstansi, ringkasan SITREP, kebutuhan publik dan menu bertanda TERBUKA. OPORD, data korban dan pencarian keluarga tidak pernah dikirim.</li>
-          </ul>
-          <p>Cara kerja teknis, arsitektur aplikasi dan rancangan backend instansi: <a href="manual-teknis.html#arsitektur">Manual Teknis bab 1</a>, <a href="manual-teknis.html#federasi">bab 13</a> dan <a href="manual-teknis.html#node-backend">bab 14</a>.</p>
-          <ul>
-            <li>Kotak keluar mencatat perubahan yang boleh dibagikan dengan ID dan nomor urut. Mitra yang disetujui mengambil perubahan melalui HTTPS menggunakan kursor dan tanda tangan.</li>
-            <li>Pembagian data operasional perlu diaktifkan per catatan. Posko harus berstatus publik. Catatan publik RN yang dibagikan mengirim pilihan status, angka, kode wilayah, dan rujukan UUID. Deskripsi permintaan bantuan dibatasi pada kebutuhan umum. Data pribadi serta lampiran tetap di server asal.</li>
-            <li>System Manager menautkan satu node ke satu organisasi tertutup. Ringkasan yang dilaporkan node tersedia di Control Centre → Organisasi &amp; Posko → Ringkasan bagi pemilik organisasi dan System Manager.</li>
-          </ul>
-          <p>Di ringkasan organisasi tujuan, pemilik atau System Manager dapat memilih Terima atau Tolak pada Permintaan Bantuan Antarinstansi. Node pengirim mengambil jawaban melalui federasi. Keputusan ini tidak membuat posko, personel, atau kebutuhan operasional baru di RN.</p>
         </section>
 
         <section id="ars-aman">
@@ -1666,8 +1642,7 @@
           <h4>Mengalihkan laporan ke posko lain</h4>
           <ul>
             <li><b>Pengelola posko</b> yang menangani bencana itu menekan <b>Tangani laporan ini (posko saya)</b>. Laporan pindah ke posko yang terhubung dengan akun Anda; status <i>Submitted</i> menjadi <i>Triaged</i>; pelapor dan posko sebelumnya melihat catatan "Ditangani oleh …"; tindakan ini tercatat di Jejak Audit. Laporan yang sudah ditolak tidak bisa diambil.</li>
-            <li><b>Alihkan ke posko lain:</b> pada kartu laporan tekan <b>Alihkan ke posko lain</b>, pilih posko tujuan dari daftar posko bencana yang sama, lalu tekan <b>Alihkan</b>. Daftar antrean dimuat ulang dan baris posko tujuan berubah; alasannya tercatat "Dialihkan manual ke …". Tekan <b>Batal</b> untuk menutup pilihan.</li>
-            <li><b>Siapa melihat tombol itu:</b> Control Centre dan super admin (semua laporan); pengelola posko tujuan saat ini (laporan yang sudah diarahkan); untuk laporan yang belum punya posko, petugas yang menangani bencana itu — dan server hanya menerima bila ia mengelola posko tujuan. Bila tidak berwenang, muncul pesan "Hanya posko tujuan saat ini atau Control Centre yang dapat mengalihkan laporan." Posko di bencana lain dan posko yang sama ditolak.</li>
+            <li><b>Control Centre dan super admin</b> boleh mengalihkan laporan ke posko mana pun pada bencana yang sama. Saat ini belum ada tombol pilih posko di layar; pengalihan dilakukan oleh super admin lewat sistem, dan alasannya tercatat "Dialihkan manual ke …".</li>
           </ul>
         </section>
 
@@ -1713,7 +1688,7 @@
             <li>Posko yang ditolak atau diminta perbaikan oleh peninjau tidak berubah karena endorsement. Bila semua endorsement dicabut, status yang berasal dari endorsement kembali ke <b>lapor mandiri</b>.</li>
             <li><b>Mencabut:</b> buka <b>Data Hasil Verifikasi</b> → <b>Endorsement</b>, lalu tekan <b>Cabut</b>. Hanya verifikator yang memberi endorsement itu atau super admin. Waktu, pencabut, dan alasannya tercatat; endorsement yang sudah dicabut tidak bisa dicabut lagi.</li>
             <li>Bila profil verifikator ditangguhkan atau dicabut, endorsement-nya tidak dihitung lagi.</li>
-            <li><b>Masa berlaku:</b> setiap endorsement baru (untuk posko maupun pelapor) berlaku <b>1 tahun</b> sejak tanggal verifikasi. Setelah lewat, endorsement <b>tidak dihitung lagi</b> untuk status posko maupun pelapor, dan sekali sehari statusnya berubah menjadi <b>Kedaluwarsa</b> (status posko dihitung ulang). Verifikator yang sama boleh memberi endorsement baru setelah yang lama kedaluwarsa. Di <b>Data Hasil Verifikasi</b> → <b>Endorsement</b> tampil "berlaku s/d …", dan pilihan status <b>Kedaluwarsa</b> untuk menyaringnya. Endorsement lama yang tidak punya tanggal berakhir tetap berlaku sampai dicabut.</li>
+            <li><b>Masa berlaku:</b> endorsement berlaku sampai dicabut. Data endorsement punya kolom tanggal berakhir; bila diisi, endorsement untuk pelapor yang sudah lewat tanggalnya tidak dihitung. Formulir saat ini belum mengisi tanggal itu.</li>
           </ul>
         </section>
 
@@ -1861,9 +1836,9 @@
       </article>
     </div>
   </main>
-  <script src="../assets/js/rn-public-header.js?v=warna-20261122"></script>
+  <script src="../assets/js/rn-public-header.js?v=samaai2-20261119"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
-  <script src="../assets/js/rn-mobile-drawer.js?v=warna-20261122"></script>
+  <script src="../assets/js/rn-mobile-drawer.js?v=edisi-tertutup-20261121"></script>
 <script src="../assets/js/rn-posko-help.js?v=bantuan-20261117" defer></script>
 </body>
 </html>

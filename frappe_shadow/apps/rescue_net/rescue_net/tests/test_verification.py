@@ -100,57 +100,6 @@ class TestEndorsements(RNTestCase):
         self.assertEqual(out["trusted_verifier_count"], 0)
         self.assertEqual(out["verification_status"], "self_reported")
 
-    def test_new_endorsement_expires_after_one_year(self):
-        from frappe.utils import get_datetime
-
-        from rescue_net.services.endorsement import ENDORSEMENT_VALID_DAYS
-
-        out = self.endorse(self.outsider)
-        doc = frappe.get_doc("RN Verification Endorsement", out["endorsement"])
-        self.assertTrue(doc.expires_at)
-        days = (get_datetime(doc.expires_at) - get_datetime(doc.verified_at)).days
-        self.assertEqual(days, ENDORSEMENT_VALID_DAYS)
-
-    def test_given_expiry_is_kept(self):
-        from rescue_net.tests.factories import _insert
-
-        row = _insert("RN Verification Endorsement", title="x", target_type="posko", target_id=self.w.posko_a.name,
-                      verifier=self.outsider_v.name, status="active", verified_at="2026-11-01 10:00:00",
-                      expires_at="2026-12-01 10:00:00")
-        self.assertEqual(str(frappe.db.get_value("RN Verification Endorsement", row.name, "expires_at"))[:10],
-                         "2026-12-01")
-
-    def test_expired_endorsement_stops_counting_and_can_be_renewed(self):
-        from rescue_net.api_verifier import _recompute_posko_credibility
-
-        out = self.endorse(self.outsider)
-        frappe.db.set_value("RN Verification Endorsement", out["endorsement"], "expires_at", "2020-01-01 00:00:00")
-        cred = _recompute_posko_credibility(self.w.posko_a.name)
-        self.assertEqual((cred["trusted_verifier_count"], cred["verification_status"]), (0, "self_reported"))
-        with as_user(self.outsider.user):
-            pub = api_call("rescue_net.api_verifier.posko_verification_public", posko=self.w.posko_a.name)
-        self.assertEqual(pub["endorsements"], [])
-        # the same verifier may endorse again once the old one has expired
-        self.assertEqual(self.endorse(self.outsider)["verification_status"], "community_verified")
-
-    def test_daily_job_marks_expired_and_recounts_the_posko(self):
-        from rescue_net.services.endorsement import expire_overdue
-
-        out = self.endorse(self.outsider)
-        frappe.db.set_value("RN Verification Endorsement", out["endorsement"], "expires_at", "2020-01-01 00:00:00")
-        res = expire_overdue()
-        self.assertIn(self.w.posko_a.name, res["poskos"])
-        self.assertEqual(frappe.db.get_value("RN Verification Endorsement", out["endorsement"], "status"), "expired")
-        self.assertEqual(frappe.db.get_value("RN Posko", self.w.posko_a.name, "trusted_verifier_count"), 0)
-
-    def test_overview_shows_expired_separately(self):
-        out = self.endorse(self.outsider)
-        frappe.db.set_value("RN Verification Endorsement", out["endorsement"], "expires_at", "2020-01-01 00:00:00")
-        active = api_call("rescue_net.api_verifier.endorsements_overview", status="active")["rows"]
-        expired = api_call("rescue_net.api_verifier.endorsements_overview", status="expired")["rows"]
-        self.assertNotIn(out["endorsement"], [r["endorsement"] for r in active])
-        self.assertIn(out["endorsement"], [r["endorsement"] for r in expired])
-
     def test_endorsement_does_not_overrule_a_rejection(self):
         frappe.db.set_value("RN Posko", self.w.posko_a.name, "verification_status", "rejected")
         self.assertEqual(self.endorse(self.outsider)["verification_status"], "rejected")

@@ -92,21 +92,6 @@
       "label": "Digantikan Oleh",
       "fieldtype": "Link",
       "options": "RN Admin Area"
-    },
-    {
-      "fieldname": "uid",
-      "label": "Uid",
-      "fieldtype": "Data",
-      "read_only": 1,
-      "no_copy": 1,
-      "unique": 1
-    },
-    {
-      "fieldname": "origin_server_id",
-      "label": "Origin Server Id",
-      "fieldtype": "Data",
-      "read_only": 1,
-      "no_copy": 1
     }
   ],
   "permissions": [

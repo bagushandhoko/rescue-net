@@ -204,7 +204,7 @@
     var st = document.createElement("style"); st.id = "rn-i18n-css";
     st.textContent = ".rn-lang{display:inline-flex;border:1px solid rgba(104,64,45,.3);border-radius:8px;overflow:hidden;font:700 13px/1 system-ui,sans-serif;flex-shrink:0;margin-right:8px;vertical-align:middle}" +
       ".rn-lang button{border:0;background:#fff;color:#5e4b40;padding:6px 9px;cursor:pointer;font:inherit}" +
-      ".rn-lang button[aria-pressed=true]{background:var(--accent-strong, #b8432a);color:#fff}" +
+      ".rn-lang button[aria-pressed=true]{background:#e8755a;color:#fff}" +
       ".rn-lang button:focus-visible{outline:2px solid #e8755a;outline-offset:-2px}" +
       ".rn-lang-top{margin:0 6px 0 auto}.rn-lang-home{align-self:center;margin-left:12px}" +
       ".rn-lang-float{position:fixed;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:900;box-shadow:0 2px 8px rgba(0,0,0,.15)}";

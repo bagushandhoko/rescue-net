@@ -430,8 +430,6 @@ _DISTRIBUSI_STATUS_LABEL = {
     "dispatched": "Dalam Perjalanan",
     "in_transit": "Dalam Perjalanan",
     "arrived": "Tiba di Tujuan",
-    "arrived_at_posko": "Tiba di Tujuan",
-    "partially_received": "Diterima Sebagian",
     "received": "Diterima",
     "received_verified": "Diterima (Terverifikasi)",
     "stock_transferred": "Stok Ditransfer",

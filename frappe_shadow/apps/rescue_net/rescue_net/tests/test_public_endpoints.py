@@ -33,12 +33,6 @@ from rescue_net.tests.factories import (
 )
 
 GUEST_ENDPOINTS = {
-    "api_federation.node_info",
-    "api_federation.pull",
-    "api_federation.push",
-    "api_equipment_booking.heavy_armada",  # reviewed: selected fleet, route and capacity fields, no contact
-    "api_logistics.guest_aid_attachment",  # reviewed: POST with edit code and matching contact
-
     "api_admin_areas.get_children", "api_admin_areas.get_provinces",
     "api_admin_areas.search_areas", "api_admin_areas.get_area",  # reviewed: public reference data (names + codes only)
     "api_medical.public_patients",  # reviewed: family reunification; public medical poskos only, identity + outcome (no complaint/treatment/contact)
@@ -127,14 +121,12 @@ NOT_SWEPT = {
     "api_logistics.submit_guest_aid_offer_multi", "api_logistics.edit_guest_aid_offer",
     "api_logistics.get_guest_aid_offer", "api_logistics.book_transport_space_public",
     "api_logistics.get_public_transport_booking", "api_logistics.update_public_transport_booking",
-    "api_logistics.guest_aid_attachment",
     "api_volunteer.register_volunteer",
     "api_saran.submit_suggestion", "api_saran.support_suggestion",
     "api_files.file",  # needs a file url; covered by test_api_files
 }
 
 SECRETS = {
-    "federation_personnel": "9385716",
     "officer_phone": "+62811-1111-0001",
     "officer_email": "pic.sentinel@test.rescue-net.local",
     "account_phone": "+62811-1111-0002",
@@ -211,21 +203,6 @@ class TestGuestSweep(RNTestCase):
         super().setUp()
         s = SECRETS
         self.w = w = make_world()
-        from rescue_net.federation import inbound, outbox
-        import hashlib
-        import secrets
-        from rescue_net import api_federation
-
-        secret, peer_id = secrets.token_hex(32), outbox.new_id()
-        api_federation.register_peer(peer_id, "Node uji tamu", "https://uji.example",
-                                     outbox.secret_digest(secret), secret, ["RN Disaster Event"], w.org_a.name)
-        api_federation.approve_peer(peer_id)
-        payload = {"personnel": int(s["federation_personnel"]), "active_posts": 2, "open_needs": {}}
-        event = {"event_id": outbox.new_id(), "seq": 1, "event_type": "org.summary", "schema_version": 1,
-                 "payload": payload, "payload_checksum": hashlib.sha256(outbox.encode(payload).encode()).hexdigest()}
-        self.assertEqual(inbound.ingest_event(event, frappe.get_doc(outbox.NODE, peer_id))["status"], "accepted")
-        self.assertEqual(inbound.latest_summary(w.org_a.name)["counts"]["personnel"], payload["personnel"])
-
         officer = {"officer_in_charge_phone": s["officer_phone"], "officer_in_charge_email": s["officer_email"]}
         for posko in (w.posko_a, w.posko_b):
             frappe.db.set_value("RN Posko", posko.name, officer)

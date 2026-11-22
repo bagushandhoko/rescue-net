@@ -75,16 +75,13 @@ def _wilayah_match(verifier_wilayah, target_wilayah):
 
 
 def _active_endorsements(posko):
-    """Active endorsements of a posko that have not passed their expiry date (services.endorsement)."""
-    from rescue_net.services.endorsement import drop_expired
-
-    return drop_expired(frappe.get_all(
+    return frappe.get_all(
         "RN Verification Endorsement",
         filters={"target_type": "posko", "target_id": posko, "status": "active"},
         fields=["name", "verifier", "verifier_display_name", "verifier_role",
-                "method", "vouched_via", "statement", "verification_level", "verified_at", "expires_at"],
+                "method", "vouched_via", "statement", "verification_level", "verified_at"],
         order_by="verified_at desc", limit_page_length=100,
-    ))
+    )
 
 
 def _recompute_posko_credibility(posko):
@@ -506,9 +503,10 @@ def endorse_posko(request=None, posko=None, method=None, statement=None,
     if method == "network_vouch" and not (vouched_via and str(vouched_via).strip()):
         frappe.throw("Untuk 'network vouch', isi 'direkomendasikan via' (nama kenalan / verifikator).")
 
-    from rescue_net.services.endorsement import has_valid
-
-    if has_valid("posko", posko, mine["name"]):
+    if frappe.db.exists("RN Verification Endorsement", {
+        "target_type": "posko", "target_id": posko,
+        "verifier": mine["name"], "status": "active",
+    }):
         frappe.throw("Anda sudah meng-endorse posko ini.")
 
     posko_title = frappe.db.get_value("RN Posko", posko, "title") or posko
@@ -567,9 +565,9 @@ def endorse_reporter(user_account, method="site_visit", statement=None, vouched_
     method = method if method in ("site_visit", "network_vouch", "document_review") else "site_visit"
     if method == "network_vouch" and not (vouched_via and str(vouched_via).strip()):
         frappe.throw("Untuk 'rekomendasi jaringan', isi 'direkomendasikan via' (nama kenalan / verifikator).")
-    from rescue_net.services.endorsement import has_valid
-
-    if has_valid("reporter", user_account, mine["name"]):
+    if frappe.db.exists("RN Verification Endorsement", {
+        "target_type": "reporter", "target_id": user_account, "verifier": mine["name"], "status": "active",
+    }):
         frappe.throw("Anda sudah memverifikasi pelapor ini.")
 
     doc = frappe.new_doc("RN Verification Endorsement")
@@ -671,25 +669,13 @@ def endorsements_overview(target_type=None, q=None, status="active", limit=200):
     filters = {}
     if target_type in ("posko", "reporter"):
         filters["target_type"] = target_type
-    from rescue_net.services.endorsement import is_expired
-
-    # an "active" endorsement past its expiry date counts as expired (services.endorsement)
-    if status == "active":
-        filters["status"] = "active"
-    elif status == "expired":
-        filters["status"] = ["in", ["active", "expired"]]
-    elif status == "revoked":
-        filters["status"] = "revoked"
+    if status in ("active", "revoked", "expired"):
+        filters["status"] = status
     rows = frappe.get_all(
         "RN Verification Endorsement", filters=filters,
         fields=["name", "target_type", "target_id", "verifier", "verifier_display_name", "method", "statement",
-                "verification_level", "status", "verified_at", "revoked_at", "expires_at"],
+                "verification_level", "status", "verified_at", "revoked_at"],
         order_by="verified_at desc", limit_page_length=min(cint(limit) or 200, 500))
-    for r in rows:
-        if r.status == "active" and is_expired(r):
-            r.status = "expired"
-    if status in ("active", "expired"):
-        rows = [r for r in rows if r.status == status]
 
     verifiers = {v.name: v for v in frappe.get_all(
         "RN Verifier Profile", filters={"name": ["in", list({r.verifier for r in rows if r.verifier})]},
@@ -715,7 +701,6 @@ def endorsements_overview(target_type=None, q=None, status="active", limit=200):
             "method": METHOD_LABEL.get(r.method, r.method), "level": cint(r.verification_level),
             "verified_at": str(r.verified_at)[:10] if r.verified_at else None,
             "revoked_at": str(r.revoked_at)[:10] if r.revoked_at else None,
-            "expires_at": str(r.expires_at)[:10] if r.expires_at else None,
             "statement": r.statement if (r.target_type == "posko" or privileged) else None,
             "can_revoke": bool(is_system_manager() or (mine_name and r.verifier == mine_name)),
         }

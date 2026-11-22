@@ -21,7 +21,7 @@
   function statusPillClass(status) {
     var l = String(status || "").toLowerCase();
     if (l === "in_transit" || l === "dispatched" || l === "assigned_pickup") return "warning";
-    if (l === "arrived" || l === "arrived_at_posko" || l === "partially_received" || l === "received" || l === "received_verified" || l === "stock_transferred") return "ok";
+    if (l === "arrived" || l === "received" || l === "received_verified" || l === "stock_transferred") return "ok";
     if (l === "cancelled") return "danger";
     return "";
   }
@@ -733,7 +733,7 @@ async function loadDistributionFlows() {
               </div>
               <div class="chips">
                 <span class="chip ${chipClass(f.flow_status)}">
-                  ${safe(window.RNUI && RNUI.statusLabel ? RNUI.statusLabel(f.flow_status) : f.flow_status)}
+                  ${safe(f.flow_status)}
                 </span>
               </div>
             </div>

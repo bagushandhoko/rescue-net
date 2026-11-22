@@ -15,13 +15,11 @@ from pathlib import Path
 import frappe
 from frappe.utils import now
 
-from rescue_net.federation import outbox
-from rescue_net.federation.policy import project
 from rescue_net.services import admin_area_codes as codes
 
 DOCTYPE = "RN Admin Area"
 _INSERT_FIELDS = ("name", "creation", "modified", "modified_by", "owner", "docstatus", "idx",
-                  "code", "area_name", "level", "parent_code", "source", "source_reference", "enabled", "uid", "origin_server_id")
+                  "code", "area_name", "level", "parent_code", "source", "source_reference", "enabled")
 
 
 # ---------- reading a file ----------
@@ -92,32 +90,17 @@ def import_rows(rows, source, source_reference=None, dry_run=True, batch=2000):
         return out
 
     stamp, user = now(), frappe.session.user or "Administrator"
-    origin = outbox.local_id()
     for i in range(0, len(new), batch):
         chunk = new[i:i + batch]
-        identities = {r["code"]: outbox.new_id() for r in chunk}
         frappe.db.bulk_insert(
             DOCTYPE, fields=list(_INSERT_FIELDS),
             values=[(r["code"], stamp, stamp, user, user, 0, 0, r["code"], r["area_name"], r["level"],
-                     r["parent_code"] or None, source, source_reference, 1, identities[r["code"]], origin) for r in chunk],
+                     r["parent_code"] or None, source, source_reference, 1) for r in chunk],
             ignore_duplicates=True)
-        inserted = frappe.get_all(DOCTYPE, filters={"uid": ["in", list(identities.values())]},
-                                  fields=["uid", "code", "level", "parent_code", "enabled"])
-        events = []
-        for row in inserted:
-            row.doctype = DOCTYPE
-            events.append((row, "create", project(row)))
-        outbox.write_events(events)
     for cur, r in changed:
-        doc = frappe.get_doc(DOCTYPE, cur.name)
-        previous = project(doc)
         frappe.db.set_value(DOCTYPE, cur.name, {"area_name": r["area_name"], "level": r["level"],
                                                 "parent_code": r["parent_code"] or None, "source": source,
                                                 "source_reference": source_reference}, update_modified=True)
-        doc.reload()
-        current_projection = project(doc)
-        if doc.origin_server_id == origin and current_projection != previous:
-            outbox.write_events([(doc, "update", current_projection)])
     out["applied"] = True
     return out
 

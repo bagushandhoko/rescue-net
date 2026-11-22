@@ -217,7 +217,7 @@ def org_detail(organization):
     posko_active = sum(1 for p in poskos if str(p.operational_status or "").lower() not in _POSKO_INACTIVE_TERMS)
     program_active = sum(1 for p in programs if p.status == "active")
 
-    result = {
+    return {
         "org": org,
         "poskos": poskos,
         "members": members,
@@ -228,15 +228,6 @@ def org_detail(organization):
         "resources": _org_resources(organization),
         "trust": _org_trust(checklist, members_total),
     }
-
-    from rescue_net.federation.inbound import can_review, latest_summary
-
-    if can_review(organization):
-        result["can_review_federation"] = True
-        summary = latest_summary(organization)
-        if summary:
-            result["federation_summary"] = summary
-    return result
 
 
 _RESOURCE_LABEL = {

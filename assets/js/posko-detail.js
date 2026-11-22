@@ -464,7 +464,7 @@ function renderFlows(items) {
 
                 <div class="chips">
                   <span class="chip warning">
-                    ${safe(window.RNUI && RNUI.statusLabel ? RNUI.statusLabel(f.flow_status) : f.flow_status)}
+                    ${safe(f.flow_status)}
                   </span>
 
                   ${button}

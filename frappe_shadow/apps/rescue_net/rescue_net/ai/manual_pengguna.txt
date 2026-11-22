@@ -322,8 +322,6 @@ Login langsung ke halaman kerja sendiri (lihat bagian 15 ).
 Kirim Bantuan : posko tujuan dipilih dari daftar nama. Laporan Masyarakat : bisa melampirkan foto atau langsung memotret (maks. 4).
 SITREP mengikuti susunan OCHA dan menyediakan API (JSON, EDXL-SitRep, HXL) dengan kunci yang disetujui super admin — lihat bagian 31 .
 Tombol ? di setiap halaman membuka bagian manual halaman tersebut.
-Pembaruan 20 November
-Laporan Masyarakat : tombol baru Alihkan ke posko lain di Antrian Laporan Masyarakat untuk Control Centre, super admin, dan pengelola posko tujuan ( bab 65 ). Endorsement verifikator kini berlaku 1 tahun ; yang lewat masa berlaku tidak dihitung lagi ( bab 66 ). Status kiriman Diterima Sebagian kini tampil dengan nama itu di Lacak dan halaman posko ( bab 37 ).
 Pembaruan 19 November
 Manual diperluas (19 November 2026) : bagian baru H. Panduan fitur rinci berisi bab 63–70 — satuan, konversi & rekap stok , kedaluwarsa per lot , pengarahan laporan & antrean pilah , verifikasi, skor risiko & verifikator , Peta Nasional & peringatan dini BMKG , verifikasi dua langkah (2FA) , Tanya AI & batas AI , dan Sub Admin .
 Bab yang dilengkapi: bab 33 Kelola Bencana (skor bencana ganda, gabung & batalkan gabung, nama lain), bab 35 Konsolidasi Data (laporan warga ganda, kebutuhan ganda, keputusan petugas, pendapat AI), bab 37 Lacak Kiriman (urutan status kiriman lengkap, paket, estafet, Otomatis Cocokkan).
@@ -504,7 +502,7 @@ Semua orang: memasukkan kode trace dan melihat status serta serah terimanya.
 Langkah
 Ambil kode trace (RN-…) dari label kiriman, layar Kirim Bantuan, atau petugas posko.
 Ketik di kolom lalu tekan Lacak .
-Baca urutan langkah di layar: Direncanakan → Menunggu Dijemput → Berangkat → Dalam Perjalanan → Tiba di Tujuan → Diterima (bila baru sebagian yang diterima, langkah terakhir tertulis Diterima Sebagian ). Langkah yang sudah dilewati diberi waktu. Kiriman berantai menampilkan Perjalanan kiriman per kaki (estafet) dan serah-terima yang tercatat.
+Baca urutan langkah di layar: Direncanakan → Menunggu Dijemput → Berangkat → Dalam Perjalanan → Tiba di Tujuan → Diterima . Langkah yang sudah dilewati diberi waktu. Kiriman berantai menampilkan Perjalanan kiriman per kaki (estafet) dan serah-terima yang tercatat.
 Bagikan kode trace hanya kepada pihak yang perlu.
 Status kiriman (urutan lengkap)
 Setiap kiriman (alur distribusi) punya satu status. Status hanya boleh maju sesuai urutan di bawah; lompatan yang tidak diizinkan ditolak server dengan pesan "Transisi … tidak diperbolehkan".
@@ -515,7 +513,7 @@ assigned_pickup Menunggu Jemput / Menunggu Dijemput Armada atau kurir sudah dite
 dispatched Berangkat (di daftar posko: Dalam Perjalanan) Barang sudah keluar dari posko pengirim. Dalam Perjalanan, Tiba di Tujuan, Dibatalkan
 in_transit Dalam Perjalanan Barang sedang di jalan. Tiba di Tujuan, Dibatalkan
 arrived_at_posko Tiba di Tujuan Barang sampai di posko tujuan, belum dihitung masuk stok. Diterima sebagian, Diterima, Dibatalkan
-partially_received Diterima Sebagian Sebagian jumlah sudah diterima dan masuk stok. Diterima sebagian lagi, Diterima
+partially_received Diterima sebagian (di Lacak: Diterima) Sebagian jumlah sudah diterima dan masuk stok. Diterima sebagian lagi, Diterima
 received Diterima Selesai; jumlah yang diterima masuk stok posko tujuan. — (akhir)
 cancelled Dibatalkan / Batal Kiriman dibatalkan. — (akhir)
 Siapa memindahkan status & caranya
@@ -931,8 +929,7 @@ Petugas berwenang (pengelola posko tujuan, super admin, verifikator aktif) melih
 Siapa boleh mengubah status atau mengonversi: pengelola posko tujuan laporan itu, Control Centre, dan super admin. Laporan yang belum punya posko hanya oleh Control Centre dan super admin.
 Mengalihkan laporan ke posko lain
 Pengelola posko yang menangani bencana itu menekan Tangani laporan ini (posko saya) . Laporan pindah ke posko yang terhubung dengan akun Anda; status Submitted menjadi Triaged ; pelapor dan posko sebelumnya melihat catatan "Ditangani oleh …"; tindakan ini tercatat di Jejak Audit. Laporan yang sudah ditolak tidak bisa diambil.
-Alihkan ke posko lain: pada kartu laporan tekan Alihkan ke posko lain , pilih posko tujuan dari daftar posko bencana yang sama, lalu tekan Alihkan . Daftar antrean dimuat ulang dan baris posko tujuan berubah; alasannya tercatat "Dialihkan manual ke …". Tekan Batal untuk menutup pilihan.
-Siapa melihat tombol itu: Control Centre dan super admin (semua laporan); pengelola posko tujuan saat ini (laporan yang sudah diarahkan); untuk laporan yang belum punya posko, petugas yang menangani bencana itu — dan server hanya menerima bila ia mengelola posko tujuan. Bila tidak berwenang, muncul pesan "Hanya posko tujuan saat ini atau Control Centre yang dapat mengalihkan laporan." Posko di bencana lain dan posko yang sama ditolak.
+Control Centre dan super admin boleh mengalihkan laporan ke posko mana pun pada bencana yang sama. Saat ini belum ada tombol pilih posko di layar; pengalihan dilakukan oleh super admin lewat sistem, dan alasannya tercatat "Dialihkan manual ke …".
 66. Verifikasi, skor risiko & verifikator
 Halaman Sistem Verifikasi menampung semua pengajuan yang perlu diputuskan manusia: akun/peran, organisasi, posko, kebutuhan, pengeluaran, dan bukti.
 Siapa melihat apa
@@ -963,7 +960,7 @@ Pengaruh ke status posko: 1 endorsement aktif → terverifikasi komunitas . 2 en
 Posko yang ditolak atau diminta perbaikan oleh peninjau tidak berubah karena endorsement. Bila semua endorsement dicabut, status yang berasal dari endorsement kembali ke lapor mandiri .
 Mencabut: buka Data Hasil Verifikasi → Endorsement , lalu tekan Cabut . Hanya verifikator yang memberi endorsement itu atau super admin. Waktu, pencabut, dan alasannya tercatat; endorsement yang sudah dicabut tidak bisa dicabut lagi.
 Bila profil verifikator ditangguhkan atau dicabut, endorsement-nya tidak dihitung lagi.
-Masa berlaku: setiap endorsement baru (untuk posko maupun pelapor) berlaku 1 tahun sejak tanggal verifikasi. Setelah lewat, endorsement tidak dihitung lagi untuk status posko maupun pelapor, dan sekali sehari statusnya berubah menjadi Kedaluwarsa (status posko dihitung ulang). Verifikator yang sama boleh memberi endorsement baru setelah yang lama kedaluwarsa. Di Data Hasil Verifikasi → Endorsement tampil "berlaku s/d …", dan pilihan status Kedaluwarsa untuk menyaringnya. Endorsement lama yang tidak punya tanggal berakhir tetap berlaku sampai dicabut.
+Masa berlaku: endorsement berlaku sampai dicabut. Data endorsement punya kolom tanggal berakhir; bila diisi, endorsement untuk pelapor yang sudah lewat tanggalnya tidak dihitung. Formulir saat ini belum mengisi tanggal itu.
 67. Peta Nasional & peringatan dini BMKG
 Peta Nasional
 Halaman Peta Nasional menggambarkan semua bencana aktif sekaligus, digabung per provinsi. Bisa dibuka siapa saja tanpa login.

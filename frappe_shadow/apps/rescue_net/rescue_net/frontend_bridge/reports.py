@@ -157,21 +157,13 @@ def _mask_reporters(rows):
 
     from rescue_net.services.reporter_contact import quick_status
 
-    from rescue_net.api_reports import can_reroute_report
-
     actor = rn_actor(required=False)
     levels = quick_status(r.get("reporter_user") for r in rows)
     allowed = {}
-    reroute = {}
     for row in rows:
         posko = row.get("posko")
         if posko not in allowed:
             allowed[posko] = bool(actor) and may_contact(actor, posko)
-        # owner 2026-11-20: tombol "Alihkan ke posko lain" hanya untuk yang boleh (server tetap memeriksa)
-        key = (posko, row.get("disaster_event"))
-        if key not in reroute:
-            reroute[key] = bool(actor) and can_reroute_report(actor, posko, None, row.get("disaster_event"))
-        row["can_reroute"] = reroute[key]
         row.pop("reporter_phone", None)
         row.pop("reporter_email", None)
         info = levels.get(row.pop("reporter_user", None)) or {}

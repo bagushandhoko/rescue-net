@@ -172,8 +172,6 @@ def flow_trace(flow=None, trace=None):
 
     steps = []
     for i, (key, label, field) in enumerate(_FLOW_TRACE_STEPS):
-        if key == "received" and status == "partially_received":
-            label = _DISTRIBUSI_STATUS_LABEL["partially_received"]  # owner 2026-11-20: bukan "Diterima"
         at = f.get(field)
         done = (not cancelled) and i <= reached
         steps.append({

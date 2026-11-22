@@ -591,12 +591,6 @@
         '<input type="checkbox" class="koVisChoice"' + (choice ? " checked" : "") + "> " +
         'Izinkan posko tertentu tetap tampil publik sendiri (mis. kapal bersama) meski organisasi tertutup' +
       "</label>" +
-      '<label style="display:block;margin-top:10px;font-size:13px">Template operasi (menu khusus, berlaku bila Tertutup) ' +
-        '<select class="koTplSelect">' +
-        [["umum", "Umum"], ["bnpb", "BNPB / BPBD"], ["tni", "TNI/POLRI"], ["pmi", "PMI"], ["kementerian", "Kementerian / Lembaga"]]
-          .map(function (t) { return '<option value="' + t[0] + '"' + (((p && p.operation_template) || "umum") === t[0] ? " selected" : "") + ">" + t[1] + "</option>"; }).join("") +
-        "</select></label>" +
-      ' <a href="menu-instansi.html" style="font-size:13px">Buka Menu Instansi</a>' +
       '<span class="form-message koVisMsg" style="display:block;margin-top:4px"></span>' +
       "</div>"
     );
@@ -635,15 +629,6 @@
             { organization: org, open_to_public: goOpen ? 1 : 0 }, { method: "POST" });
           await loadOrgVisibility(ORG_ADMIN);
         } catch (err) { toggle.disabled = false; msg.textContent = " gagal: " + ((err && err.message) || err); }
-      });
-      var tpl = cardEl.querySelector(".koTplSelect");
-      if (tpl) tpl.addEventListener("change", async function () {
-        msg.textContent = " menyimpan template…";
-        try {
-          await window.RN_FRAPPE.call("rescue_net.api_org_profile.set_operation_template",
-            { organization: org, template: tpl.value }, { method: "POST" });
-          msg.textContent = " template tersimpan.";
-        } catch (err) { msg.textContent = " gagal: " + ((err && err.message) || err); await loadOrgVisibility(ORG_ADMIN); }
       });
       if (choice) choice.addEventListener("change", async function () {
         msg.textContent = " menyimpan…";

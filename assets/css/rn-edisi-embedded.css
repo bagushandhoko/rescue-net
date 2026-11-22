@@ -1,6 +1,6 @@
-/* 22 Nov (owner: tulisan pucat): modul di jendela memakai tema terang RN apa adanya; hanya bingkai RN disembunyikan. */
 html.rn-window-mode {
-  color-scheme: light;
+  color-scheme: dark;
+  background: #111a24;
 }
 
 .rn-window-mode :is(
@@ -15,6 +15,8 @@ html.rn-window-mode {
 
 .rn-window-mode body {
   min-width: 0;
+  background: #111a24 !important;
+  color: #e5edf3 !important;
 }
 
 .rn-window-mode :is(.app-shell, .main, main) {

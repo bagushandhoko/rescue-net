@@ -156,19 +156,6 @@
         '<p class="rn-muted">Skor = jumlah dari 4 pemeriksaan di atas (25 poin masing-masing).</p></div>';
     }
 
-    var federationHtml = "";
-    if (detail.federation_summary) {
-      var summary = detail.federation_summary;
-      var remote = summary.counts;
-      var needs = Object.keys(remote.open_needs).map(function (key) {
-        return "<li>" + esc(key) + " — " + fmt(remote.open_needs[key]) + "</li>";
-      }).join("");
-      federationHtml = '<div class="rn-opx-box"><h4>Ringkasan dari Node Instansi</h4>' +
-        "<p>Posko aktif " + fmt(remote.active_posts) + " · Personel " + fmt(remote.personnel) + "</p>" +
-        (needs ? "<p>Kebutuhan terbuka</p><ul>" + needs + "</ul>" : "") +
-        '<p class="rn-muted">Diterima ' + esc(fmtTime(summary.received_at)) + "</p></div>";
-    }
-
     $("#orgDetailPanel").innerHTML =
       '<div class="rn-opx-dhead"><span class="rn-opx-logo">' + esc((org.title || "?").replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase()) + "</span><div><h3>" + esc(org.title) +
       '</h3><small>' + esc(org.organization_type) + " · " + esc(org.contact_person || "-") + '</small></div><span class="chip ' + statusPillClass(org.verification_status) + '">' + esc(org.verification_status) + "</span></div>" +
@@ -187,7 +174,7 @@
       statTile("Program Aktif", fmt(counts.program_active), '<a data-tab-go="program">Lihat detail →</a>', "heart") +
       "</div>" +
       '<div class="rn-opx-box"><div class="rn-opx-boxh"><h4>Ringkasan Sumber Daya</h4><a href="resource-profile.html">Lihat semua →</a></div>' + resHtml + "</div>" +
-      federationHtml + (detail.can_review_federation ? '<div id="federationRequests" class="rn-opx-box" hidden></div>' : "") + trustHtml +
+      trustHtml +
       '<p class="rn-muted rn-opx-upd">Terakhir diperbarui: ' + fmtTime(org.modified) + "</p>" +
       "</div>" +
       '<div class="rn-op-tabpane" data-pane="posko" hidden>' + poskoRows + "</div>" +
@@ -195,7 +182,6 @@
       '<div class="rn-op-tabpane" data-pane="program" hidden>' + programRows + "</div>";
 
     fillJoinSlot(org.name);
-    if (detail.can_review_federation) loadFederationRequests(org.name);
 
     var panel = $("#orgDetailPanel");
     function showTab(name) {
@@ -209,61 +195,13 @@
     if (window.RNIconFill) window.RNIconFill(panel);
   }
 
-  async function loadFederationRequests(organization) {
-    var panel = $("#federationRequests");
-    try {
-      var result = await RN_FRAPPE.call("rescue_net.api_federation.inbox", {
-        organization: organization, event_type: "assistance.request"
-      });
-      var requests = result.events.filter(function (event) { return event.status !== "rejected"; });
-      if (!requests.length) return;
-      panel.innerHTML = "<h4>Permintaan Bantuan Antarinstansi</h4>" + requests.map(function (event) {
-        var payload = event.payload;
-        var decision = { accept: "Diterima", decline: "Ditolak" }[event.decision];
-        var controls = "";
-        if (decision) controls = "<p>" + decision + "</p>";
-        else if (event.destination === organization) {
-          controls = '<button type="button" data-decision="accept">Terima</button> ' +
-            '<button type="button" data-decision="decline">Tolak</button>';
-        } else controls = "<p>Menunggu jawaban</p>";
-        return '<div data-event="' + esc(event.event_id) + '"><p>' +
-          esc(event.organization) + " → " + esc(event.destination) + " · " + esc(payload.category) +
-          " · " + fmt(payload.quantity) + "</p><p>" + esc(payload.description) + "</p>" + controls + "</div>";
-      }).join("");
-      panel.hidden = false;
-      panel.querySelectorAll("[data-decision]").forEach(function (button) {
-        button.addEventListener("click", async function () {
-          var group = button.closest("[data-event]");
-          group.querySelectorAll("button").forEach(function (item) { item.disabled = true; });
-          try {
-            await RN_FRAPPE.call("rescue_net.api_federation.respond_assistance", {
-              event_id: group.dataset.event, decision: button.dataset.decision
-            }, { method: "POST" });
-            if (panel.isConnected) await loadFederationRequests(organization);
-          } catch (_) {
-            group.querySelectorAll("button").forEach(function (item) { item.disabled = false; });
-            if (!group.querySelector("[role=alert]")) {
-              var error = document.createElement("p");
-              error.setAttribute("role", "alert");
-              error.textContent = "Jawaban gagal disimpan.";
-              group.appendChild(error);
-            }
-          }
-        });
-      });
-    } catch (_) {
-      panel.textContent = "Permintaan bantuan gagal dimuat.";
-      panel.hidden = false;
-    }
-  }
-
   async function selectOrg(name) {
     state.selected = name;
     renderTree(state.orgs);
     $("#orgDetailPanel").innerHTML = '<p class="rn-muted">Memuat…</p>';
     try {
       var detail = await window.RN_FRAPPE.call("rescue_net.api_control_centre.org_detail", { organization: name });
-      if (state.selected === name) renderDetail(detail);
+      renderDetail(detail);
     } catch (err) {
       $("#orgDetailPanel").innerHTML = '<p class="rn-muted">Gagal memuat: ' + esc(err && err.message || err) + "</p>";
     }

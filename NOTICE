@@ -1,0 +1,19 @@
+Rescue-Net
+Copyright 2026 D Bagus Handhoko dan kontributor Rescue-Net
+
+Dilisensikan di bawah Apache License, Version 2.0 (lihat berkas LICENSE).
+
+Perangkat lunak ini menyertakan pustaka pihak ketiga di assets/vendor/,
+masing-masing tetap di bawah lisensi aslinya:
+
+- Leaflet 1.9.4 (assets/vendor/leaflet) - BSD 2-Clause
+  (c) 2010-2023 Vladimir Agafonkin, (c) 2010-2011 CloudMade - https://leafletjs.com
+- JsBarcode 3.11.6 (assets/vendor/jsbarcode) - MIT, (c) Johan Lindell
+- qrcodejs (assets/vendor/qrcode) - MIT, (c) davidshimjs
+- html5-qrcode (assets/vendor/html5-qrcode) - Apache License 2.0, (c) Minhaz
+
+Backend berjalan di atas Frappe Framework (MIT). Rescue-Net tidak menyertakan
+atau mengimpor kode ERPNext.
+
+Data kebencanaan, data pribadi, dan kunci rahasia TIDAK termasuk dalam
+repositori ini dan tidak tercakup lisensi ini. Data contoh bersifat sintetis.

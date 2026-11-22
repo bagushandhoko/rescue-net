@@ -3,7 +3,7 @@ app_title = "Rescue-Net"
 app_publisher = "Rescue-Net"
 app_description = "Rescue-Net shadow migration app"
 app_email = "bagushandhoko@gmail.com"
-app_license = "MIT"
+app_license = "Apache-2.0"
 
 # Mode latihan (10g): tamu tidak bisa membuka event/posko latihan lewat id eksplisit
 before_request = ["rescue_net.services.drill.before_request"]

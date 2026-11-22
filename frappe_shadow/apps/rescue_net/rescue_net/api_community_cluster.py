@@ -56,8 +56,10 @@ def create_organization(title, organization_type="community",
                         contact_person=None, notes=None,
                         parent_organization=None,
                         coordination_scheme="mandiri",
-                        open_to_public=None):
+                        open_to_public=None, operation_template=None):
     actor = _actor()
+    from rescue_net.api_org_profile import clean_operation_template
+    operation_template = clean_operation_template(operation_template)
 
     # Komando terpusat is chosen here, once, when the pusat registers itself.
     # The registrant is already made OWNER below = super admin of their own
@@ -82,6 +84,7 @@ def create_organization(title, organization_type="community",
     org.contact_person = contact_person
     org.notes = notes
     org.coordination_scheme = coordination_scheme
+    org.operation_template = operation_template
     # Terbuka/Tertutup dipilih saat mendaftar (sama dengan api_privacy.set_org_visibility);
     # tanpa pilihan = bawaan doctype (tertutup).
     if open_to_public is not None and str(open_to_public) != "":

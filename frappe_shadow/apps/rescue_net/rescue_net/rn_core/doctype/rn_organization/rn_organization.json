@@ -170,6 +170,14 @@
    "default": "mandiri",
    "in_list_view": 0,
    "description": "mandiri = tiap posko/anggota mengelola diri sendiri. terpusat = komando: akun posko dibuat pusat, perubahan level bawah perlu persetujuan pusat."
+  },
+  {
+   "fieldname": "operation_template",
+   "fieldtype": "Select",
+   "label": "Template Operasi",
+   "options": "umum\nbnpb\ntni\npmi",
+   "default": "umum",
+   "description": "Menentukan menu khusus Edisi Tertutup (BNPB/BPBD, TNI, PMI) untuk organisasi tertutup."
   }
  ],
  "permissions": [
@@ -184,5 +192,6 @@
    "amend": 0
   }
  ],
- "track_changes": 1
+ "track_changes": 1,
+ "modified": "2026-11-22 15:00:00.000000"
 }

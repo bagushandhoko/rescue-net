@@ -195,6 +195,15 @@
                 <span><b>Terbuka</b> — detail kegiatan dan posko terlihat publik. Anggota baru tetap perlu disetujui pengelola.</span>
               </label>
             </fieldset>
+            <label>Template operasi (untuk organisasi tertutup)
+              <select name="org_template">
+                <option value="umum" selected>Umum (komunitas, NGO, CSR, sekolah)</option>
+                <option value="bnpb">BNPB / BPBD (komando tanggap darurat)</option>
+                <option value="tni">TNI (Satgas OMSP)</option>
+                <option value="pmi">PMI (Palang Merah Indonesia)</option>
+              </select>
+              <small class="rn-muted" style="display:block;font-size:12px;margin-top:4px">Menambah menu khusus instansi. Berlaku bila organisasi Tertutup; bisa diganti pemilik organisasi.</small>
+            </label>
             <fieldset class="rn-scheme" style="border:1px solid var(--line2);border-radius:10px;padding:10px 12px;margin:8px 0">
               <legend style="font-size:13px;color:var(--muted);padding:0 6px">Skema koordinasi (dipilih sekali)</legend>
               <label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0">
@@ -455,7 +464,7 @@
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
-<script src="../assets/js/auth.js?v=rel2-20261113"></script>
+<script src="../assets/js/auth.js?v=template-20261122"></script>
 <script src="../assets/js/rn-tampilan-data.js?v=mode-20261118"></script>
 <script src="../assets/js/rn-demo-accounts.js?v=opmode-20261109"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>

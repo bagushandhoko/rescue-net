@@ -53,6 +53,8 @@
           <li><a href="#api">Integrasi API</a></li>
           <li><a href="#kualitas">Pengujian, rilis, operasi</a></li>
           <li><a href="#roadmap">Peta jalan</a></li>
+          <li><a href="#federasi">Federasi: dua jenis anggota</a></li>
+          <li><a href="#node-backend">Rancangan backend node instansi</a></li>
         </ol>
         <p class="toc-tech"><a href="manual.html">← Manual pengguna</a></p>
       </nav>
@@ -67,12 +69,53 @@
                 <tr><td>Antarmuka web</td><td>HTML, CSS, JavaScript tanpa framework; Leaflet untuk peta</td><td>Semua halaman publik dan operasional. Satu basis kode untuk browser, PWA, dan aplikasi Android.</td></tr>
                 <tr><td>Aplikasi terpasang</td><td>PWA (manifest + service worker) dan pembungkus Android Capacitor</td><td>Aplikasi membuka situs yang sama, jadi pembaruan situs langsung sampai ke aplikasi tanpa instal ulang.</td></tr>
                 <tr><td>API</td><td>Metode <code>@frappe.whitelist</code> di app <code>rescue_net</code></td><td>Setiap layar memanggil metode <code>rescue_net.api_*</code>. Reverse proxy hanya meneruskan metode itu serta login/logout; Desk dan <code>/api/resource</code> tertutup untuk publik.</td></tr>
-                <tr><td>Sistem pencatat</td><td>Frappe 15 + MariaDB</td><td>Sekitar 80 DocType dalam 12 modul domain. Aturan status dan kapasitas dijaga di controller DocType.</td></tr>
+                <tr><td>Sistem pencatat</td><td>Frappe 15 + MariaDB</td><td>Sekitar 108 DocType dalam 12 modul domain. Aturan status dan kapasitas dijaga di controller DocType.</td></tr>
                 <tr><td>Pekerjaan latar</td><td>Frappe scheduler + worker</td><td>Antrean AI tiap jam, pengelompokan kebutuhan, backup harian, pembersihan log pemakaian AI.</td></tr>
               </tbody>
             </table>
           </div>
           <p>Prinsip pemisahan: klien boleh memvalidasi awal, tetapi keputusan — izin, kapasitas, status, kebenaran operasional — selalu di server.</p>
+
+          <h3>Penempatan di server (November 2026)</h3>
+          <pre><code>Pengguna (browser / PWA / Android)
+        │ HTTPS
+        ▼
+Cloudflare (DNS + tunnel)  rescue-net.online
+        │
+        ▼
+Server Flex (Proxmox) ── LXC 201 "rescue-net" ── docker compose:
+   web        Nginx: berkas statis /rescue-net/* + daftar izin metode API
+   backend    Frappe 15 + app rescue_net  (/rescue-net-frappe/api/method/rescue_net.api_*)
+   worker ×2  antrean pekerjaan latar
+   scheduler  jadwal (AI, peringatan dini BMKG, backup, kedaluwarsa)
+   mariadb    database (site osiun.localhost)
+   redis-cache, redis-queue
+   cftunnel   konektor Cloudflare
+
+LXC 202 (Flex)  disastermanagement.online — DMS Edisi Instansi:
+   Nginx statis halaman DMS; /rescue-net-frappe/ diteruskan ke backend RN di atas
+   (sementara; nanti ke backend node instansi sendiri, lihat bab 14)</code></pre>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Bagian</th><th>Isi</th></tr></thead>
+              <tbody>
+                <tr><td>Kode</td><td>Satu repo git: <code>pages/</code> (HTML), <code>assets/</code> (JS/CSS/data), <code>frappe_shadow/apps/rescue_net/</code> (backend: DocType, <code>api_*.py</code>, <code>federation/</code>, <code>services/</code>, <code>tests/</code>), <code>scripts/</code>, <code>docs/</code> (ADR dan rancangan).</td></tr>
+                <tr><td>Pintu masuk API</td><td>Nginx hanya meneruskan <code>rescue_net.api_*</code>, login/logout dan login Google. Desk Frappe dan <code>/api/resource</code> tertutup. Beberapa metode publik di-cache untuk tamu.</td></tr>
+                <tr><td>Data</td><td>Semua data operasional di MariaDB lewat DocType Frappe (±108 DocType, 12 modul). Lampiran di folder privat site.</td></tr>
+                <tr><td>Uji</td><td>Stack uji terpisah (MariaDB + Redis + bench sendiri, site <code>rescuenet-test.localhost</code>) via <code>scripts/rn-test-stack.sh</code>. Lebih dari 900 uji, termasuk sapuan kebocoran ke tamu.</td></tr>
+                <tr><td>Rilis</td><td>Commit → push cabang → <code>scripts/deploy-flex.sh</code> dari salinan bersih (opsi <code>--migrate</code> bila struktur data berubah). Sebelum migrate: backup database + tag git untuk rollback. Izin pemilik per deploy.</td></tr>
+                <tr><td>Aplikasi HP</td><td>PWA dengan service worker; aset diberi <code>?v=</code> agar pembaruan langsung sampai.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Alur satu permintaan</h3>
+          <ol>
+            <li>Halaman (mis. <code>pages/kirim-bantuan.html</code>) memuat JS-nya; JS memanggil <code>rescue_net.api_*</code> lewat <code>rn-frappe-client.js</code> (sesi + token CSRF).</li>
+            <li>Nginx memeriksa nama metode, meneruskan ke backend.</li>
+            <li>Metode API memeriksa aktor (<code>access_policy.rn_actor</code>), izin organisasi/posko, lalu membaca/menulis DocType; controller DocType menjaga aturan status dan kapasitas.</li>
+            <li>Perubahan pada data yang boleh dibagikan dicatat ke kotak keluar federasi (bab 13).</li>
+            <li>Jawaban kembali sebagai <code>{"message": ...}</code>; halaman menampilkan hasil.</li>
+          </ol>
         </section>
 
         <section id="data">
@@ -209,7 +252,7 @@ POST https://rescue-net.online/rescue-net-frappe/api/method/rescue_net.api_logis
         <section id="kualitas">
           <h2>11. Pengujian, rilis, operasi</h2>
           <ul>
-            <li><b>Uji otomatis:</b> sekitar 550 uji di stack uji terpisah (database dan site sendiri, tidak menyentuh produksi), termasuk sapuan kebocoran data ke tamu. Semua harus lulus sebelum backend dipasang.</li>
+            <li><b>Uji otomatis:</b> lebih dari 900 uji di stack uji terpisah (database dan site sendiri, tidak menyentuh produksi), termasuk sapuan kebocoran data ke tamu. Semua harus lulus sebelum backend dipasang.</li>
             <li><b>Perubahan struktur data</b> (DocType/field) memerlukan izin pemilik, backup database, lalu <code>bench migrate</code>.</li>
             <li><b>Backup</b> database harian, plus backup tambahan sebelum setiap migrate.</li>
             <li><b>Pemindaian rahasia</b> sebelum setiap commit; kredensial tidak pernah masuk repo.</li>
@@ -223,9 +266,59 @@ POST https://rescue-net.online/rescue-net-frappe/api/method/rescue_net.api_logis
             <li>Skenario minimum / optimal / maksimum dan jejak koreksi komando di Control Centre <span class="plan">rencana</span></li>
             <li>OCR, laporan suara, analisis foto, prakiraan stok dan kebutuhan relawan <span class="plan">rencana</span></li>
             <li>Kunci rilis Android tetap; iOS lewat jalur signing resmi <span class="plan">rencana</span></li>
-            <li>Federasi antar-server untuk posko yang terputus <span class="plan">rencana</span></li>
+            <li>Federasi: protokol v1 aktif (bab 13); node instansi dan RN negara lain menyusul (bab 14) <span class="plan">rencana</span></li>
             <li>Pilot pada satu wilayah/mitra, pelatihan operator, after-action review <span class="plan">rencana</span></li>
             <li>Tata kelola multi-wilayah, ketersediaan tinggi, interoperabilitas nasional <span class="plan">rencana</span></li>
+          </ul>
+        </section>
+
+        <section id="federasi">
+          <h2>13. Federasi: dua jenis anggota</h2>
+          <p>Federasi menghubungkan server Rescue-Net dengan server lain tanpa server pusat. Setiap hubungan bilateral, memakai kunci sendiri per arah, dan bisa dicabut sepihak. Aktif di produksi sejak 22 Nov 2026 (protokol v1); belum ada anggota terdaftar.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th></th><th>A. RN negara lain</th><th>B. Node instansi tertutup</th></tr></thead>
+              <tbody>
+                <tr><td>Contoh</td><td>Rescue-Net negara tetangga</td><td>DMS BNPB/BPBD, TNI/POLRI, PMI, Kementerian</td></tr>
+                <tr><td>Wakil di RN</td><td>RN Federation Node, tanpa organisasi</td><td>RN Federation Node + satu RN Organization <b>tertutup</b> dengan template operasi</td></tr>
+                <tr><td>Arah data</td><td>Dua arah lewat <code>pull</code>: data publik (bencana, posko publik, kebutuhan, penawaran, status distribusi, kode wilayah)</td><td>Node → RN lewat <code>push</code>: ringkasan agregat, permintaan bantuan, ringkasan SITREP, kebutuhan publik, menu TERBUKA. RN → node lewat <code>pull</code>: jawaban permintaan bantuan + data publik.</td></tr>
+                <tr><td>Tidak pernah keluar</td><td>Data pribadi, lampiran, teks bebas</td><td>Itu juga + OPORD, RFL, data korban, posisi militer, semua data TERBATAS/RAHASIA</td></tr>
+                <tr><td>Status kode</td><td><span class="plan">perlu F1</span> — saat ini setiap node wajib terhubung ke organisasi tertutup</td><td>Siap (push, inbox, jawaban)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Komponen di RN</h3>
+          <ul>
+            <li><b>Identitas:</b> <code>RN Federation Settings</code> (server_id UUID + kunci lokal). Publik: <code>api_federation.node_info</code>.</li>
+            <li><b>Kotak keluar:</b> <code>RN Event Outbox</code>, diisi otomatis saat dokumen yang boleh dibagikan disimpan; aturan per DocType/field di <code>federation/policy.py</code> (default-deny). Data lama diberi <code>uid</code> + <code>origin_server_id</code>.</li>
+            <li><b>Kotak masuk:</b> <code>RN Federation Inbox</code>, satu baris per <code>event_id</code> (idempoten), status received/rejected/applied.</li>
+            <li><b>Anggota:</b> <code>RN Federation Node</code> (server_id, URL, status pending/approved/revoked, sidik jari & kunci koneksi, kursor kirim/terima, organisasi).</li>
+            <li><b>API:</b> <code>pull</code>, <code>push</code> (tanda tangan HMAC), <code>status</code>, <code>register_peer</code>, <code>approve_peer</code>, <code>revoke_peer</code>, <code>rotate_peer_key</code> (System Manager), <code>inbox</code>, <code>respond_assistance</code> (pemilik organisasi).</li>
+          </ul>
+          <h3>Tanda tangan &amp; keamanan</h3>
+          <pre><code>HMAC-SHA256( kunci 32 byte per arah,
+  "RN-FEDERATION/1 push|pull" LF server_id penerima LF X-RN-Peer LF
+  X-RN-Timestamp LF X-RN-Nonce LF &lt;byte body&gt; )</code></pre>
+          <ul>
+            <li>Jam ±300 detik, nonce sekali pakai (Redis), body maks 512 KB, 1–200 event per kiriman, kunci JSON ganda ditolak.</li>
+            <li>Node harus <i>approved</i>; node instansi harus terhubung ke organisasi yang masih tertutup.</li>
+            <li>Spesifikasi lengkap, vektor uji, JSON Schema: <code>docs/FEDERASI-PROTOKOL-v1.md</code>. Klien contoh: <code>scripts/rn-federation-node-client.py</code>.</li>
+          </ul>
+        </section>
+
+        <section id="node-backend">
+          <h2>14. Rancangan backend node instansi</h2>
+          <p>DMS Edisi Instansi (disastermanagement.online) sekarang memakai backend RN. Sasaran: setiap instansi punya backend dan database sendiri, lalu tersambung ke RN hanya lewat federasi. Rancangan lengkap: <code>docs/RANCANGAN-BACKEND-NODE-DAN-FEDERASI.md</code>.</p>
+          <pre><code>DMS frontend (36 menu) ──► backend node instansi ──► database instansi
+                             │  job push (5 mnt): ringkasan, permintaan bantuan → RN
+                             │  job pull (5 mnt): jawaban &amp; data publik ← RN
+                             ▼
+                       Rescue-Net (organisasi tertutup instansi)</code></pre>
+          <ul>
+            <li><b>Rekomendasi:</b> node = instalasi Rescue-Net terpisah (kode sama, site/database/server sendiri, profil instansi lewat konfigurasi). Backend lain boleh asal lulus Protokol v1.</li>
+            <li><b>Baru di node:</b> DocType <code>RN DMS Record</code> (menu, organisasi, klasifikasi, data JSON tervalidasi), API <code>api_dms.list/save/get</code>, sumber data <code>NODE</code> di <code>rn-edisi-data.js</code>, job push/pull, penyimpanan kunci rahasia, NTP.</li>
+            <li><b>Kapasitas minimum:</b> 2 CPU, 4 GB RAM, 20 GB SSD per node.</li>
+            <li><b>Urutan kerja:</b> F1 jenis peer → F2 panel admin federasi → F3 node uji → F4 job push/pull + uji dua site → F5 peer RN negara lain → F6 gerbang pilot. <span class="plan">rencana</span></li>
           </ul>
         </section>
 

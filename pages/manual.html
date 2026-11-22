@@ -693,8 +693,10 @@
           </ul>
           <h4 id="pembaruan-2211">Pembaruan 22 November</h4>
           <ul>
-            <li>Perbaikan Kartu Keluarga untuk akun tanpa posko dan fondasi <a href="#federasi-tahap-1">Federasi dengan node instansi</a> disiapkan di cabang uji. Keduanya belum diterapkan di produksi.</li>
-            <li>Tahap 9b menambah ringkasan instansi dan jawaban permintaan bantuan pada cabang uji.</li>
+            <li><b>Federasi aktif</b> (protokol v1): Rescue-Net siap terhubung dengan Rescue-Net negara lain dan dengan organisasi tertutup yang punya backend sendiri. Belum ada anggota terdaftar. Lihat <a href="#federasi-tahap-1">Federasi dengan node instansi</a> dan <a href="manual-teknis.html#federasi">Manual Teknis bab 13–14</a>.</li>
+            <li><b>Template operasi organisasi</b>: saat mendaftarkan organisasi, pilih Umum, BNPB/BPBD, TNI/POLRI, PMI atau Kementerian. Pemilik organisasi dapat menggantinya di Koordinasi Organisasi → kartu Keterbukaan. Berlaku untuk organisasi Tertutup.</li>
+            <li><b>Menu Instansi</b> (menu navigasi): 36 menu khusus BNPB, TNI/POLRI, PMI dan 4 menu bersama, tampil sesuai template organisasi tertutup Anda. Menu yang belum punya data di Rescue-Net berisi formulir; penyimpanannya aktif setelah backend instansi tersambung lewat federasi.</li>
+            <li>Perbaikan Kartu Keluarga untuk akun tanpa posko.</li>
           </ul>
           <h4 id="pembaruan-2011">Pembaruan 20 November</h4>
           <ul>
@@ -1487,7 +1489,13 @@
 
         <section id="federasi-tahap-1">
           <h3>Federasi dengan node instansi</h3>
-          <p>Tahap ini disiapkan di lingkungan uji dan belum aktif di produksi. Node adalah server Rescue-Net yang dikelola sendiri oleh satu instansi. Administrator mendaftarkan mitra, memeriksa sidik jari kunci, lalu menyetujui jenis data yang boleh diambil.</p>
+          <p>Aktif di produksi sejak 22 November 2026 (protokol v1). Belum ada anggota yang didaftarkan, jadi belum ada data yang keluar atau masuk. Administrator mendaftarkan mitra, memeriksa sidik jari kunci, lalu menyetujui jenis data yang boleh dipertukarkan.</p>
+          <p><b>Nanti ada dua jenis anggota federasi:</b></p>
+          <ul>
+            <li><b>Rescue-Net negara lain</b> — server Rescue-Net milik negara lain. Kedua server saling mengambil data publik (bencana, posko publik, kebutuhan, penawaran, status distribusi). Tidak ada server pusat; tiap negara memegang datanya sendiri.</li>
+            <li><b>Organisasi tertutup yang berdiri sendiri</b> — misalnya DMS BNPB/BPBD, TNI/POLRI, PMI atau Kementerian. Di Rescue-Net instansi ini tampil sebagai <b>organisasi tertutup</b>, sama seperti organisasi tertutup biasa, tetapi data kerjanya disimpan di backend instansi sendiri. Yang dikirim ke Rescue-Net hanya ringkasan angka, permintaan bantuan antarinstansi, ringkasan SITREP, kebutuhan publik dan menu bertanda TERBUKA. OPORD, data korban dan pencarian keluarga tidak pernah dikirim.</li>
+          </ul>
+          <p>Cara kerja teknis, arsitektur aplikasi dan rancangan backend instansi: <a href="manual-teknis.html#arsitektur">Manual Teknis bab 1</a>, <a href="manual-teknis.html#federasi">bab 13</a> dan <a href="manual-teknis.html#node-backend">bab 14</a>.</p>
           <ul>
             <li>Kotak keluar mencatat perubahan yang boleh dibagikan dengan ID dan nomor urut. Mitra yang disetujui mengambil perubahan melalui HTTPS menggunakan kursor dan tanda tangan.</li>
             <li>Pembagian data operasional perlu diaktifkan per catatan. Posko harus berstatus publik. Catatan publik RN yang dibagikan mengirim pilihan status, angka, kode wilayah, dan rujukan UUID. Deskripsi permintaan bantuan dibatasi pada kebutuhan umum. Data pribadi serta lampiran tetap di server asal.</li>

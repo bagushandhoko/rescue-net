@@ -124,7 +124,6 @@
   }
 
   refreshRnSession();
-  refreshActiveEventCount();
   const count = document.querySelector("[data-window-count]");
   const windows = new Map();
   let zIndex = 2;
@@ -267,6 +266,7 @@
     handle.addEventListener("pointercancel", finish);
   }
 
+  window.rnEdisiOpenWindow = createWindow;
   const moduleDialog = document.querySelector("[data-module-dialog]");
   const moduleForm = document.querySelector("[data-module-form]");
   const moduleSelect = document.querySelector("[data-module-select]");

@@ -38,8 +38,8 @@
     try {
       rnSession = await requestSession();
       const loggedIn = !!rnSession.user && rnSession.user !== "Guest";
-      if (sessionBadge) sessionBadge.textContent = loggedIn ? "SESI RN AKTIF" : "TAMU";
-      if (authButton) authButton.textContent = loggedIn ? "Keluar RN" : "Masuk RN";
+      if (sessionBadge) sessionBadge.textContent = loggedIn ? "SESI AKTIF" : "TAMU";
+      if (authButton) authButton.textContent = loggedIn ? "Logout" : "Login";
       if (backendStatus) {
         backendStatus.classList.add("is-connected");
         backendStatus.textContent = "BACKEND RN TERHUBUNG · modul memakai API dan hak akses RN; ringkasan dashboard serta federasi masih tahap integrasi";
@@ -47,7 +47,7 @@
     } catch (_) {
       rnSession = {};
       if (sessionBadge) sessionBadge.textContent = "STATUS API TIDAK TERSEDIA";
-      if (authButton) authButton.textContent = "Masuk RN";
+      if (authButton) authButton.textContent = "Login";
       if (backendStatus) {
         backendStatus.classList.remove("is-connected");
         backendStatus.textContent = "BACKEND RN BELUM TERJANGKAU · modul memerlukan koneksi ke API RN.";

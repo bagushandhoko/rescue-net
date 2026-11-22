@@ -15,7 +15,7 @@ class TestRiilAngkaNala(OperationalBase):
                 posko=self.sim_posko.name, task_title='Tugas simulasi', assignment_status='planned')
         _insert('RN Volunteer Accommodation', disaster_event=self.sim.name,
                 location_name='Penginapan', posko=self.sim_posko.name, capacity_beds=5, occupants_count=2)
-        with as_guest(), _Cookie(None):
+        with as_guest(), _Cookie("simulasi"):
             before = api_volunteer.volunteer_board()
         with as_guest(), _Cookie('riil'):
             after = api_volunteer.volunteer_board()
@@ -27,7 +27,7 @@ class TestRiilAngkaNala(OperationalBase):
     def test_search_found_counts(self):
         missing(self.sim)
         found(self.sim)
-        with as_guest(), _Cookie(None):
+        with as_guest(), _Cookie("simulasi"):
             before = api_search_found.dashboard()
         with as_guest(), _Cookie('riil'):
             after = api_search_found.dashboard()
@@ -38,7 +38,7 @@ class TestRiilAngkaNala(OperationalBase):
         t = _insert('RN Procurement Tender', title='Tender simulasi', disaster_event=self.sim.name,
                     rab_total=1234, status='open')
         _insert('RN Tender Bid', tender=t.name, bidder_name='Penyedia', bid_amount=1000, status='submitted')
-        with as_guest(), _Cookie(None):
+        with as_guest(), _Cookie("simulasi"):
             before = api_tender.tender_board()['totals']
         with as_guest(), _Cookie('riil'):
             after = api_tender.tender_board()['totals']

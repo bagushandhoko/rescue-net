@@ -49,7 +49,7 @@ class TestViewerChoice(OperationalBase):
                 self.assertTrue(drill.viewer_wants_real(), v)
                 self.assertTrue(drill.simulation_hidden(), v)
 
-    def test_default_and_simulasi_show_simulation(self):
+    def test_explicit_simulasi_shows_simulation(self):
         for v in ("simulasi", "SIMULASI"):
             with _Cookie(v):
                 self.assertFalse(drill.viewer_wants_real(), v)
@@ -115,7 +115,7 @@ class TestDropHiddenRows(OperationalBase):
         ]
 
     def test_simulasi_view_keeps_all(self):
-        with _Cookie(None):
+        with _Cookie("simulasi"):
             self.assertEqual(len(drill.drop_hidden_rows(self.rows())), 5)
 
     def test_riil_view_keeps_only_real(self):
@@ -131,7 +131,7 @@ class TestGuardShortIds(OperationalBase):
             for ev in (short, "disaster_events:" + short, self.sim.name):
                 with self.assertRaises(frappe.DoesNotExistError, msg=ev):
                     drill.guard_guest_refs(frappe._dict({"disaster_event_id": ev}))
-        with _Cookie(None), as_guest():
+        with _Cookie("simulasi"), as_guest():
             drill.guard_guest_refs(frappe._dict({"disaster_event_id": short}))  # tampilan simulasi: boleh
 
     def test_super_admin_choosing_riil_is_guarded_too(self):
@@ -140,7 +140,7 @@ class TestGuardShortIds(OperationalBase):
             with self.assertRaises(frappe.DoesNotExistError):
                 drill.guard_guest_refs(frappe._dict({"disaster_event": self.sim.name}))
         self._mode(True)
-        with _Cookie(None):
+        with _Cookie("simulasi"):
             drill.guard_guest_refs(frappe._dict({"disaster_event": self.sim.name}))  # Mode Operasional: admin boleh
 
 

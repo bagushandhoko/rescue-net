@@ -46,7 +46,7 @@ class TestSimScrub(OperationalBase):
         self.assertEqual(m["totals"], {"alat_aktif": 3})
 
     def test_simulasi_view_untouched(self):
-        m = self.run_hook(None)
+        m = self.run_hook("simulasi")
         self.assertEqual(len(m["items"]), 5)
 
     def test_admin_endpoints_skipped(self):
@@ -56,7 +56,7 @@ class TestSimScrub(OperationalBase):
     def test_system_manager_in_operational_mode_sees_all(self):
         self._mode(True)
         frappe.set_user("Administrator")
-        self.assertEqual(len(self.run_hook(None)["items"]), 5)
+        self.assertEqual(len(self.run_hook("simulasi")["items"]), 5)
         self.assertEqual(len(self.run_hook("riil")["items"]), 1)  # memilih riil sendiri -> ikut disaring
 
     def test_real_endpoint_board_is_clean(self):

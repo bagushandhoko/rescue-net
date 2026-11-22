@@ -7,6 +7,16 @@
   "use strict";
   const API = "/rescue-net-frappe/api/method/rescue_net.api_control_centre.active_disasters_board";
   const REFRESH_MS = 60000;
+  // Pilihan tampilan SAMA dengan RN (assets/js/rn-tampilan-data.js): cookie rn_tampilan, bawaan riil.
+  // CT202 satu domain dengan proxy RN, jadi modul RN di jendela ikut pilihan ini.
+  const viewNow = () => (/(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie) ? "simulasi" : "riil");
+  function viewSave(v) {
+    const sec = location.protocol === "https:" ? "; Secure" : "";
+    try { sessionStorage.removeItem("rn_opmode"); } catch (_) {}
+    if (v === "riil") { try { localStorage.removeItem("rn_active_event"); localStorage.removeItem("rn-active-event"); } catch (_) {} }
+    document.cookie = "rn_tampilan=" + (v === "simulasi" ? "simulasi" : "riil") + "; path=/; max-age=31536000; SameSite=Lax" + sec;
+  }
+  let operational = false;
   const mapNode = document.querySelector("[data-live-map]");
   if (!mapNode || typeof L === "undefined") return;
 
@@ -59,6 +69,40 @@
     return `<a href="${esc(url)}" data-live-open="${esc(url)}" data-live-title="${esc(title)}">${esc(text)}</a>`;
   }
 
+  const viewBox = document.querySelector("[data-view-switch]");
+  function paintView() {
+    const v = operational ? "riil" : viewNow();
+    viewBox?.querySelectorAll("button[data-view]").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b.dataset.view === v));
+      b.disabled = operational;
+    });
+    if (viewBox) viewBox.title = operational
+      ? "Mode Operasional Riil aktif di RN: data simulasi disembunyikan untuk semua pengunjung."
+      : "Pilihan sama dengan Rescue-Net: berlaku untuk peta dan semua modul RN di jendela";
+    const sim = v === "simulasi";
+    setText("[data-live-active-label]", sim ? "Bencana aktif (termasuk simulasi)" : "Bencana riil aktif");
+    setText("[data-live-empty-title]", sim ? "Tidak ada bencana aktif" : "Tidak ada bencana riil aktif");
+    setText("[data-live-empty-text]", sim ? "RN tidak mencatat bencana aktif, termasuk simulasi."
+      : "Peta akan menampilkan bencana dan posko begitu RN mencatat bencana aktif. Pilih Lihat Simulasi untuk data latihan.");
+    setText("[data-live-source]", sim
+      ? "Sumber: Bencana Aktif RN, TERMASUK data SIMULASI (latihan, bukan kejadian nyata). Diperbarui tiap 1 menit."
+      : "Sumber: Bencana Aktif RN (data riil; latihan/simulasi tidak dihitung). Diperbarui tiap 1 menit.");
+    return v;
+  }
+  viewBox?.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-view]");
+    if (!b || b.disabled) return;
+    viewSave(b.dataset.view);
+    paintView();
+    load();
+    // modul RN yang sedang terbuka di jendela dimuat ulang supaya ikut pilihan baru
+    document.querySelectorAll(".rn-edisi-window iframe").forEach((f) => { try { f.contentWindow.location.reload(); } catch (_) { f.src = f.src; } });
+  });
+  fetch("/rescue-net-frappe/api/method/rescue_net.api_operational_mode.status", { credentials: "include" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => { operational = !!(j && j.message && j.message.operational); paintView(); load(); })
+    .catch(() => {});
+
   function render(data) {
     const events = Array.isArray(data.events) ? data.events : [];
     const t = data.totals || {};
@@ -102,12 +146,15 @@
     }
     const time = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
     if (statusNode) statusNode.textContent = `Data live RN · ${events.length} bencana aktif${noCoords ? ` (${noCoords} belum ada koordinat posko)` : ""} · diperbarui ${time}`;
-    if (chip) chip.textContent = "LIVE · RN";
+    const v = paintView();
+    if (chip) chip.textContent = v === "simulasi" ? "LIVE · RN · TERMASUK SIMULASI" : "LIVE · RN · RIIL";
+    if (statusNode && v === "simulasi") statusNode.textContent += " · termasuk simulasi";
   }
 
   async function load() {
     try {
-      const r = await fetch(API, { credentials: "include", headers: { Accept: "application/json" } });
+      const v = operational ? "riil" : viewNow();
+      const r = await fetch(API + "?rn_tampilan=" + v, { credentials: "include", headers: { Accept: "application/json" } });
       if (!r.ok) throw new Error(String(r.status));
       const payload = await r.json();
       render((payload && payload.message) || {});

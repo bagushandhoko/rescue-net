@@ -84,3 +84,9 @@ html.rn-window-mode body{min-width:0!important;overflow-x:hidden!important;backg
 .rn-dms-live-map .leaflet-tile-pane{filter:invert(1) hue-rotate(190deg) brightness(.85) contrast(.9) saturate(.5)}
 .rn-dms-live-map .leaflet-container,.rn-dms-live-map{font-family:inherit}
 .rn-dms-sitrep .rn-dms-live-events{padding:0 10px}
+.rn-dms-data-view{display:flex;align-items:center;white-space:nowrap}.rn-dms-data-view>span{margin-right:6px;color:#a6b3bf;font-size:10px}
+.rn-dms-data-view button{min-height:34px;padding:0 10px;border:1px solid #344554;color:#c8d1d9;background:#192633;font:700 11px/1 inherit;cursor:pointer}
+.rn-dms-data-view button:first-of-type{border-radius:5px 0 0 5px;border-right:0}.rn-dms-data-view button:last-of-type{border-radius:0 5px 5px 0}
+.rn-dms-data-view button[aria-pressed="true"]{color:#fff;background:#b4532a;border-color:#d18b56}.rn-dms-data-view button.riil[aria-pressed="true"]{background:#1f6f43;border-color:#3f9b68}
+.rn-dms-data-view button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:560px){.rn-dms-data-view{width:100%}.rn-dms-data-view button{flex:1}}

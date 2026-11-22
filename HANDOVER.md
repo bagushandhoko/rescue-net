@@ -8,6 +8,13 @@
 
 _Last updated: 2026-10-07 — Search & Found mock-up pass 2 (see CLAUDE.md status)_
 
+## Edisi Tertutup · 2026-11-22
+
+- Branch `nala/edisi-tertutup-ui-20261121` berisi 36 menu DMS. Katalog `assets/data/dms-menu.json` dapat diganti dengan definisi Hermes setelah ditinjau.
+- Template mengikuti profil organisasi RN bila API mengembalikan template yang valid. Selama API belum tersedia, pilih template di bilah atas. PMI hanya melihat menu PMI dan Bersama.
+- Adaptor RN hanya membaca. Umpan operasional berbasis bencana memakai bencana riil aktif; formulir berlaku selama halaman terbuka. Penyimpanan menunggu node instansi.
+- Frontend disiapkan untuk Ming Ming di CT202. Belum deploy.
+
 ## System snapshot
 
 - **System of record:** Frappe 15.113.4 / MariaDB. Production site `osiun.localhost` in container

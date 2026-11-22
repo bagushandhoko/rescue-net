@@ -78,12 +78,16 @@ def reserve(count):
     return previous + 1
 
 
+def actor_reference():
+    actor_seed = (frappe.session.user or "Guest").encode()
+    return hmac.new(bytes.fromhex(local_secret()), b"rn-actor-v1\0" + actor_seed, "sha256").hexdigest()
+
+
 def write_events(changes):
     if not changes:
         return
     origin = local_id()
-    actor_seed = (frappe.session.user or "Guest").encode()
-    actor = hmac.new(bytes.fromhex(local_secret()), b"rn-actor-v1\0" + actor_seed, "sha256").hexdigest()
+    actor = actor_reference()
     seq = reserve(len(changes))
     now = now_datetime()
     fields = ("name", "creation", "modified", "owner", "modified_by", "event_id", "origin_server_id", "seq",

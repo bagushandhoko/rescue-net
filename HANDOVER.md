@@ -8,6 +8,11 @@
 
 _Last updated: 2026-10-07 — Search & Found mock-up pass 2 (see CLAUDE.md status)_
 
+## Federasi node instansi (2026-11-22)
+
+- Tahap 9b ada di cabang uji `nala/federasi-9b-20261122`. Node tertutup dapat push event terpilih, pemilik tujuan dapat menjawab permintaan bantuan, dan node asal dapat pull jawaban.
+- Jalankan `bench migrate` saat rilis disetujui untuk memasang RN Federation Inbox, tautan organisasi node dan penerima privat outbox. Node 9a perlu ditautkan sebelum bisa memakai transport 9b. Kontrak dan klien dijelaskan di [Protokol Federasi v1](docs/FEDERASI-PROTOKOL-v1.md).
+
 ## System snapshot
 
 - **System of record:** Frappe 15.113.4 / MariaDB. Production site `osiun.localhost` in container

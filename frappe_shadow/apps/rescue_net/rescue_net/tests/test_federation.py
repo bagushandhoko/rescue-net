@@ -14,7 +14,7 @@ from rescue_net import api_federation as api
 from rescue_net.federation import outbox, policy
 from rescue_net.patches.v2026_11 import federation_identity
 from rescue_net.services.admin_areas import import_rows
-from rescue_net.tests.factories import RNTestCase, _insert, api_call, as_guest, as_user, make_event, make_org, make_posko, make_user
+from rescue_net.tests.factories import RNTestCase, _insert, api_call, as_guest, as_user, make_actor, make_event, make_org, make_posko, make_user
 
 SENTINEL = "PRIVATE-SENTINEL"
 FORBIDDEN = ("reporter_name", "reporter_phone", "reporter_email", "patient_name", "medical_record",
@@ -32,6 +32,7 @@ class TestFederation(RNTestCase):
         self.posko = make_posko(self.event, self.org, title=SENTINEL, posko_type="shelter",
                                 public_detail="public", federation_share=1,
                                 officer_in_charge_phone=SENTINEL, officer_in_charge_email=SENTINEL)
+        self.peer_org = make_org(privacy_mode="closed", operation_template="bnpb")
         self.peer_id = outbox.new_id()
         self.secret = secrets.token_hex(32)
 
@@ -131,14 +132,15 @@ class TestFederation(RNTestCase):
 
     def _register(self, scope=None):
         return api.register_peer(self.peer_id, "Peer Uji", "https://uji.example",
-                                 outbox.secret_digest(self.secret), self.secret, scope or [policy.EVENT])
+                                 outbox.secret_digest(self.secret), self.secret, scope or [policy.EVENT], self.peer_org.name)
 
-    def _request(self, nonce=None, timestamp=None, secret=None, since=None, limit=100, peer_id=None):
+    def _request(self, nonce=None, timestamp=None, secret=None, since=None, limit=100, peer_id=None, events=None):
         nonce = nonce or secrets.token_hex(16)
         ts = str(timestamp if timestamp is not None else int(time.time()))
         sender = peer_id or self.peer_id
-        body = outbox.encode({"since_seq": self.start if since is None else since, "limit": limit}).encode()
-        message = api.signing_bytes(outbox.local_id(), sender, ts, nonce, body)
+        data = {"since_seq": self.start if since is None else since, "limit": limit} if events is None else {"events": events}
+        body = outbox.encode(data).encode()
+        message = api.signing_bytes(outbox.local_id(), sender, ts, nonce, body, "pull" if events is None else "push")
         signature = hmac.new(bytes.fromhex(secret or self.secret), message, hashlib.sha256).hexdigest()
         return Request(EnvironBuilder(method="POST", data=body, content_type="application/json", headers={
             "X-RN-Peer": sender, "X-RN-Timestamp": ts, "X-RN-Nonce": nonce, "X-RN-Signature": signature,
@@ -166,7 +168,7 @@ class TestFederation(RNTestCase):
         with self.assertRaises(frappe.PermissionError):
             self._pull(request)
         self._pull(self._request(since=result["next_seq"]))
-        self.assertEqual(api.status()["peers"][0]["send_cursor"], result["next_seq"])
+        self.assertEqual(next(p for p in api.status()["peers"] if p.server_id == self.peer_id).send_cursor, result["next_seq"])
         api.revoke_peer(self.peer_id)
         with self.assertRaises(frappe.PermissionError):
             self._pull(self._request())
@@ -213,3 +215,120 @@ class TestFederation(RNTestCase):
             event = make_event(event_status="active", federation_share=1)
         self.assertFalse(event.federation_share)
         self.assertFalse(frappe.db.exists(outbox.OUTBOX, {"object_uid": event.uid}))
+
+
+    def _push(self, request):
+        with as_guest(), patch.object(frappe.local, "request", request, create=True):
+            return api_call("rescue_net.api_federation.push")
+
+    def _event(self, event_type, payload, seq=1):
+        return {"event_id": outbox.new_id(), "seq": seq, "event_type": event_type,
+                "schema_version": 1, "payload": payload,
+                "payload_checksum": hashlib.sha256(outbox.encode(payload).encode()).hexdigest()}
+
+    def test_push_authentication_and_idempotency(self):
+        self._register()
+        valid = self._event("org.summary", {"active_posts": 2, "personnel": 1234567, "open_needs": {"air": 3}})
+        with self.assertRaises(frappe.PermissionError):
+            self._push(self._request(events=[valid]))
+        api.approve_peer(self.peer_id)
+        for request in (self._request(events=[valid], secret=secrets.token_hex(32)),
+                        self._request(events=[valid], timestamp=int(time.time()) - 301)):
+            with self.assertRaises(frappe.PermissionError):
+                self._push(request)
+        request = self._request(events=[valid])
+        self.assertEqual(self._push(request)["results"][0]["status"], "accepted")
+        with self.assertRaises(frappe.PermissionError):
+            self._push(request)
+        self.assertEqual(self._push(self._request(events=[valid]))["results"][0]["status"], "duplicate")
+        self.assertEqual(next(p for p in api.status()["peers"] if p.server_id == self.peer_id).receive_cursor, 1)
+        self.assertEqual(frappe.db.count("RN Federation Inbox", {"event_id": valid["event_id"]}), 1)
+        api.revoke_peer(self.peer_id)
+        with self.assertRaises(frappe.PermissionError):
+            self._push(self._request(events=[valid]))
+
+    def test_default_deny_and_checksum(self):
+        self._register()
+        api.approve_peer(self.peer_id)
+        invalid = [
+            self._event("unknown", {}),
+            self._event("menu.record", {"menu_id": "opord", "record_count": 1}),
+            self._event("menu.record", {"menu_id": "rfl", "record_count": 1}),
+            self._event("org.summary", {"active_posts": 2, "personnel": 3, "open_needs": {}, "email": SENTINEL}),
+            self._event("menu.record", {"menu_id": "rapat-koordinasi", "record_count": 1}),
+        ]
+        invalid[4]["payload_checksum"] = "0" * 64
+        results = self._push(self._request(events=invalid))
+        self.assertEqual([row["reason"] for row in results["results"]],
+                         ["event_type_denied", "menu_denied", "menu_denied", "invalid_payload_fields", "checksum_mismatch"])
+        self.assertEqual(results["receive_cursor"], 0)
+        self.assertNotIn(SENTINEL, json.dumps(api.inbox(self.peer_org.name), default=str))
+
+    def test_assistance_response_and_summary_are_scoped(self):
+        self._register()
+        api.approve_peer(self.peer_id)
+        other = make_org(privacy_mode="closed")
+        other_peer, other_key = outbox.new_id(), secrets.token_hex(32)
+        api.register_peer(other_peer, "Peer Kedua", "https://uji.example",
+                          outbox.secret_digest(other_key), other_key, [policy.EVENT], other.name)
+        api.approve_peer(other_peer)
+        owner = make_actor(org=self.org, org_role="owner")
+        outsider = make_actor(org=other, org_role="owner")
+        valid = self._event("assistance.request", {"destination": self.org.name,
+                            "category": "air", "quantity": 3, "description": "Air minum"}, seq=2)
+        summary = self._event("org.summary", {"active_posts": 2, "personnel": 1234567, "open_needs": {}})
+        self._push(self._request(events=[valid, summary]))
+        with as_user(outsider.user):
+            with self.assertRaises(frappe.PermissionError):
+                api.inbox(self.org.name)
+            with self.assertRaises(frappe.PermissionError):
+                api.respond_assistance(valid["event_id"], "accept")
+            self.assertFalse(api.inbox(other.name)["events"])
+            with self.assertRaises(frappe.PermissionError):
+                api.inbox(["in", [other.name, self.org.name]])
+        with as_guest():
+            detail = api_call("rescue_net.api_control_centre.org_detail", organization=self.peer_org.name)
+            self.assertNotIn("1234567", json.dumps(detail, default=str))
+        with as_user(owner.user):
+            self.assertEqual(api.inbox(self.org.name)["events"][0]["event_id"], valid["event_id"])
+            api.respond_assistance(valid["event_id"], "accept")
+            api.respond_assistance(valid["event_id"], "accept")
+        with as_user("Administrator"):
+            detail = api_call("rescue_net.api_control_centre.org_detail", organization=self.peer_org.name)
+            self.assertEqual(detail["federation_summary"]["counts"]["personnel"], 1234567)
+        responses = [r for r in self._pull(self._request())["events"] if r["object_type"] == "assistance.response"]
+        self.assertEqual([r["payload"] for r in responses], [{"request_event_id": valid["event_id"], "decision": "accept"}])
+        other_pull = self._pull(self._request(peer_id=other_peer, secret=other_key))
+        self.assertNotIn(valid["event_id"], json.dumps(other_pull))
+
+    def test_approval_requires_unique_closed_organization(self):
+        self._register()
+        with self.assertRaises(frappe.ValidationError):
+            api.approve_peer(self.peer_id, self.org.name)
+        api.approve_peer(self.peer_id)
+        other_peer = outbox.new_id()
+        api.register_peer(other_peer, "Peer Kedua", "https://uji.example",
+                          outbox.secret_digest(self.secret), self.secret, [policy.EVENT], self.peer_org.name)
+        with self.assertRaises(frappe.ValidationError):
+            api.approve_peer(other_peer)
+        api.revoke_peer(self.peer_id)
+        self.assertEqual(api.approve_peer(other_peer)["status"], "approved")
+
+
+    def test_template_updates_and_key_rotation(self):
+        self._register()
+        api.approve_peer(self.peer_id)
+        self.peer_org.operation_template = "kementerian"
+        self.peer_org.save(ignore_permissions=True)
+        self.assertEqual(frappe.get_doc(outbox.NODE, self.peer_id).operation_template, "kementerian")
+        menu = self._event("menu.record", {"menu_id": "status-keadaan-darurat", "record_count": 1})
+        self.assertEqual(self._push(self._request(events=[menu]))["results"][0]["status"], "accepted")
+        secret = secrets.token_hex(32)
+        api.rotate_peer_key(self.peer_id, outbox.secret_digest(secret), secret)
+        with self.assertRaises(frappe.PermissionError):
+            self._push(self._request(events=[menu]))
+        self.assertEqual(self._push(self._request(events=[menu], secret=secret))["results"][0]["status"], "duplicate")
+        self.peer_org.privacy_mode = "open"
+        self.peer_org.save(ignore_permissions=True)
+        with self.assertRaises(frappe.PermissionError):
+            self._push(self._request(events=[menu], secret=secret))

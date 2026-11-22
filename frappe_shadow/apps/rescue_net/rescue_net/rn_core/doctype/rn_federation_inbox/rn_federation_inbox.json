@@ -1,0 +1,98 @@
+{
+  "doctype": "DocType",
+  "name": "RN Federation Inbox",
+  "module": "RN Core",
+  "field_order": [
+    "event_id",
+    "peer",
+    "organization",
+    "destination",
+    "source_seq",
+    "event_type",
+    "schema_version",
+    "payload",
+    "payload_checksum",
+    "status",
+    "rejection_reason",
+    "decision"
+  ],
+  "fields": [
+    {
+      "fieldname": "event_id",
+      "label": "Event Id",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "peer",
+      "label": "Peer",
+      "fieldtype": "Link",
+      "options": "RN Federation Node",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "organization",
+      "label": "Organization",
+      "fieldtype": "Link",
+      "options": "RN Organization",
+      "reqd": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "destination",
+      "label": "Destination",
+      "fieldtype": "Link",
+      "options": "RN Organization",
+      "search_index": 1
+    },
+    {
+      "fieldname": "source_seq",
+      "label": "Source Seq",
+      "fieldtype": "Long Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "event_type",
+      "label": "Event Type",
+      "fieldtype": "Data",
+      "search_index": 1
+    },
+    {
+      "fieldname": "schema_version",
+      "label": "Schema Version",
+      "fieldtype": "Int"
+    },
+    {
+      "fieldname": "payload",
+      "label": "Payload",
+      "fieldtype": "Long Text"
+    },
+    {
+      "fieldname": "payload_checksum",
+      "label": "Payload Checksum",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "received\nrejected\napplied",
+      "reqd": 1
+    },
+    {
+      "fieldname": "rejection_reason",
+      "label": "Rejection Reason",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "decision",
+      "label": "Decision",
+      "fieldtype": "Select",
+      "options": "accept\ndecline"
+    }
+  ],
+  "permissions": [],
+  "autoname": "field:event_id"
+}

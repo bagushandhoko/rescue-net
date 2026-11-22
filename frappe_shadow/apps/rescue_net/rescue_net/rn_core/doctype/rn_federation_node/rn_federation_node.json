@@ -11,7 +11,10 @@
     "shared_secret",
     "send_cursor",
     "receive_cursor",
-    "scope"
+    "scope",
+    "organization",
+    "operation_template",
+    "active_organization"
   ],
   "fields": [
     {
@@ -70,6 +73,27 @@
       "label": "Scope",
       "fieldtype": "Small Text",
       "reqd": 1
+    },
+    {
+      "fieldname": "organization",
+      "label": "Organization",
+      "fieldtype": "Link",
+      "options": "RN Organization",
+      "search_index": 1
+    },
+    {
+      "fieldname": "operation_template",
+      "label": "Operation Template",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "is_virtual": 1
+    },
+    {
+      "fieldname": "active_organization",
+      "label": "Active Organization",
+      "fieldtype": "Data",
+      "unique": 1,
+      "hidden": 1
     }
   ],
   "permissions": [],

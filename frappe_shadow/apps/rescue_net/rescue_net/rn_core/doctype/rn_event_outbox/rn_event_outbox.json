@@ -14,7 +14,8 @@
     "payload",
     "payload_checksum",
     "classification",
-    "schema_version"
+    "schema_version",
+    "recipient_peer"
   ],
   "fields": [
     {
@@ -92,6 +93,12 @@
       "label": "Schema Version",
       "fieldtype": "Int",
       "reqd": 1
+    },
+    {
+      "fieldname": "recipient_peer",
+      "label": "Recipient Peer",
+      "fieldtype": "Link",
+      "options": "RN Federation Node"
     }
   ],
   "permissions": [],

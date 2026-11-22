@@ -1,7 +1,9 @@
 """Federation projections and record eligibility. Unlisted types and values stay local."""
 
+import json
 from dataclasses import dataclass
 from math import isfinite
+from pathlib import Path
 from uuid import UUID
 
 import frappe
@@ -143,3 +145,63 @@ def project(doc):
         if value is not None:
             result[field] = value
     return result
+
+
+# This snapshot ships with Frappe because the web catalog is deployed
+# separately. Update it with the TERBUKA entries and template_tambahan.
+OPEN_MENUS = json.loads(Path(__file__).with_name("open_menus.json").read_text(encoding="utf-8"))
+CATEGORIES = ("pangan", "air", "kesehatan", "shelter", "sanitasi", "transportasi", "lainnya")
+
+
+def _count(value):
+    return type(value) is int and 0 <= value <= 10_000_000
+
+
+def _positive(value):
+    return _count(value) and value > 0
+
+
+def _category(value):
+    return value in CATEGORIES
+
+
+def _counts(value):
+    return isinstance(value, dict) and all(_category(k) and _count(n) for k, n in value.items())
+
+
+def organization_key(value):
+    return isinstance(value, str) and 0 < len(value) <= 140 and value.isprintable()
+
+
+def _description(value):
+    return isinstance(value, str) and 0 < len(value.strip()) <= len(value) <= 280 and value.isprintable()
+
+
+def _menu_key(value):
+    return isinstance(value, str) and value in OPEN_MENUS
+
+
+INBOUND = {
+    "assistance.request": {"destination": organization_key, "category": _category, "quantity": _positive,
+                           "description": _description},
+    "org.summary": {"active_posts": _count, "personnel": _count, "open_needs": _counts},
+    "sitrep.summary": {"active_posts": _count, "open_needs": _counts},
+    "need.published": {"category": _category, "quantity": _positive, "description": _description},
+    "menu.record": {"menu_id": _menu_key, "record_count": _count},
+}
+
+
+def inbound_error(event_type, payload, template):
+    rules = INBOUND.get(event_type)
+    if rules is None:
+        return "event_type_denied"
+    if not isinstance(payload, dict) or set(payload) != set(rules):
+        return "invalid_payload_fields"
+    if event_type == "menu.record":
+        menu = payload["menu_id"]
+        allowed = OPEN_MENUS.get(menu, []) if isinstance(menu, str) else []
+        if "bersama" not in allowed and template not in allowed:
+            return "menu_denied"
+    if not all(check(payload[field]) for field, check in rules.items()):
+        return "invalid_payload_value"
+    return None

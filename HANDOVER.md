@@ -279,3 +279,9 @@ Owner answers to the questions (2026-09-26), implemented:
 - `pages/kirim-bantuan.html` menampilkan kartu Unggah foto/PDF dan Ambil foto terpisah; kamera langsung memakai `getUserMedia`, dialog pratinjau, capture JPG terkompresi, dan alur lampiran privat. Asset cache-buster diperbarui; Manual RN menjelaskan kedua pilihan.
 - Rilis `4ebfd5e7` terpasang di Flex LXC201. Dry-run memastikan hanya empat berkas statis berubah; backend tidak berubah/tidak direstart. Cadangan: `/opt/rescue-net/backups/kamera-kirim-bantuan-sebelum-20261121.tar.gz`; rollback dari tag `sebelum-kamera-kirim-bantuan-20261121` (`adaa5663`).
 - Domain publik mengembalikan halaman dan JavaScript versi baru dengan HTTP 200; isi live mengandung `getUserMedia` dan sudah tidak memakai input `capture`. Tidak ada backend/migrasi. Owner mengonfirmasi kamera langsung sudah benar setelah deploy; status login/browser tidak dicatat. Skenario owner dicatat di `assets/scenario/scenario-tested.json`.
+
+## 2026-11-22 Nala — Federasi 9a dan Kartu Keluarga
+
+- Cabang `nala/federasi-9a-20261122` berbasis kode live `3c81de8c`. Belum deploy.
+- Kartu Keluarga menangani akun tanpa posko dan tetap memeriksa izin saat posko diberikan.
+- Federasi 9a menyiapkan identitas, outbox transaksional, registrasi peer, dan pull HTTPS dengan HMAC. Kode lama sinkronisasi offline tetap memakai jalurnya sendiri. Kontrak API dan pekerjaan tahap berikutnya ada di [FEDERASI-9A.md](docs/FEDERASI-9A.md).

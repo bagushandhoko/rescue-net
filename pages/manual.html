@@ -119,6 +119,7 @@
           <li><a href="#ars-gandakan">Cara RN menggandakan diri</a></li>
           <li><a href="#ars-tangguh">Ketahanan saat bencana</a></li>
           <li><a href="#ars-federasi">Federasi nasional &amp; internasional</a></li>
+          <li><a href="#federasi-tahap-1">Federasi antar node (tahap 1)</a></li>
           <li><a href="#ars-aman">Keamanan &amp; kepatuhan</a></li>
           <li><a href="#ars-jalan">Peta jalan</a></li>
         </ol>
@@ -689,6 +690,10 @@
             <li><b>Kirim Bantuan</b>: posko tujuan dipilih dari daftar nama. <b>Laporan Masyarakat</b>: bisa melampirkan foto atau langsung memotret (maks. 4).</li>
             <li><b>SITREP</b> mengikuti susunan OCHA dan menyediakan API (JSON, EDXL-SitRep, HXL) dengan kunci yang disetujui super admin — lihat <a href="#h-sitrep">bagian 31</a>.</li>
             <li>Tombol <b>?</b> di setiap halaman membuka bagian manual halaman tersebut.</li>
+          </ul>
+          <h4 id="pembaruan-2211">Pembaruan 22 November</h4>
+          <ul>
+            <li>Perbaikan Kartu Keluarga untuk akun tanpa posko dan fondasi <a href="#federasi-tahap-1">Federasi antar node (tahap 1)</a> disiapkan di cabang uji. Keduanya belum diterapkan di produksi.</li>
           </ul>
           <h4 id="pembaruan-2011">Pembaruan 20 November</h4>
           <ul>
@@ -1471,11 +1476,21 @@
           <p>Setiap <b>node</b> adalah RN lengkap milik satu pihak (BNPB/BPBD provinsi, lembaga kemanusiaan, atau negara lain). Node berdiri sendiri dan tetap berjalan walau terputus dari node lain.</p>
           <ul>
             <li><b>Kepemilikan data:</b> data dimiliki node yang membuatnya (mis. posko milik node provinsi). Node lain menerima salinan baca, bukan mengubah.</li>
-            <li><b>Yang dipertukarkan</b> (dapat diatur per node): bencana lintas wilayah/batas negara, kebutuhan kritis, tawaran bantuan &amp; armada, ketersediaan relawan, SITREP. <b>Data pribadi tidak dipertukarkan</b> kecuali ada dasar hukum &amp; persetujuan.</li>
+            <li><b>Yang dipertukarkan</b> (dapat diatur per node): bencana lintas wilayah/batas negara, kebutuhan kritis, tawaran bantuan &amp; armada, ketersediaan relawan, SITREP. <b>Data pribadi tetap di server asal</b> pada rancangan tahap 1 di bawah.</li>
             <li><b>Protokol:</b> kotak keluar (outbox) per node yang dikirim berkala lewat HTTPS, ditandatangani kunci node (HMAC/tanda tangan digital), bisa diulang bila gagal; node di wilayah terputus mengirim ulang saat tersambung. Format: OCHA SitRep, EDXL-SitRep, CAP 1.2 untuk peringatan, HXL untuk tabel, P-code untuk wilayah.</li>
             <li><b>Node pusat penghubung</b> (opsional) meneruskan pesan antar-node yang tidak saling terhubung langsung, tanpa menyimpan data pribadi.</li>
             <li><b>Yang sudah berjalan (19 November 2026):</b> jalur sinkronisasi <b>kirim (push)</b> dan <b>ambil (pull)</b> data lewat server Rescue-Net, khusus akun Control Centre dan super admin. Setiap data masuk dicatat sekali saja (tidak dobel). Baru <b>2 jenis data</b> yang langsung diterapkan otomatis: <b>laporan masyarakat baru</b> dan <b>permintaan sumber daya baru</b>. Jenis lain <b>disimpan untuk ditinjau</b> manusia, tidak langsung mengubah data. Pendaftaran node partner di <a href="data-consolidation.html">Konsolidasi Data</a> → <b>Federation Repository</b> masih rintisan.</li>
             <li><b>Internasional:</b> tiap negara menjalankan node sendiri (bahasa, nama, logo, aturan lembaga sendiri) dan memilih data apa yang dibagikan ke jaringan regional/internasional (mis. ASEAN, jaringan kemanusiaan PBB).</li>
+          </ul>
+        </section>
+
+        <section id="federasi-tahap-1">
+          <h3>Federasi antar node (tahap 1)</h3>
+          <p>Tahap ini disiapkan di lingkungan uji dan belum aktif di produksi. Node adalah server Rescue-Net yang dikelola sendiri oleh satu instansi. Administrator mendaftarkan mitra, memeriksa sidik jari kunci, lalu menyetujui jenis data yang boleh diambil.</p>
+          <ul>
+            <li>Kotak keluar mencatat perubahan yang boleh dibagikan dengan ID dan nomor urut. Mitra yang disetujui mengambil perubahan melalui HTTPS menggunakan kursor dan tanda tangan.</li>
+            <li>Pembagian data operasional perlu diaktifkan per catatan. Posko harus berstatus publik. Tahap ini mengirim pilihan status, angka, kode wilayah, dan rujukan UUID. Data pribadi, teks bebas, serta lampiran tetap di server asal.</li>
+            <li>Panel DMS, pencatatan data masuk, penerapan perubahan, dan uji pertukaran dua node masih menunggu tahap berikutnya.</li>
           </ul>
         </section>
 

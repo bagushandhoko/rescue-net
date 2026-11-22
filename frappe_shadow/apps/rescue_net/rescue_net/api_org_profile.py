@@ -438,13 +438,13 @@ def ecosystem_performance(disaster_event):
 
 # --- Template operasi (owner 2026-11-22): menu khusus Edisi Tertutup BNPB/BPBD, TNI, PMI -------------
 # Satu definisi menu dipakai CT202 (DMS Edisi Tertutup) dan RN untuk organisasi tertutup.
-OPERATION_TEMPLATES = ("umum", "bnpb", "tni", "pmi")
+OPERATION_TEMPLATES = ("umum", "bnpb", "tni", "pmi", "kementerian")
 
 
 def clean_operation_template(value):
     value = (value or "umum").strip().lower()
     if value not in OPERATION_TEMPLATES:
-        frappe.throw("Template operasi tidak valid (umum/bnpb/tni/pmi).")
+        frappe.throw("Template operasi tidak valid (umum/bnpb/tni/pmi/kementerian).")
     return value
 
 

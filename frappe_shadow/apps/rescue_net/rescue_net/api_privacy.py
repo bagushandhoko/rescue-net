@@ -18,7 +18,7 @@ def dashboard():
         orgs = frappe.get_all(
             "RN Organization",
             fields=[
-                "name", "title", "privacy_mode",
+                "name", "title", "privacy_mode", "operation_template",
                 "allow_posko_public_choice",
                 "control_centre_share",
                 "public_activity_summary",
@@ -72,7 +72,7 @@ def dashboard():
                 "name": ["in", owner_memberships]
             },
             fields=[
-                "name", "title", "privacy_mode",
+                "name", "title", "privacy_mode", "operation_template",
                 "allow_posko_public_choice",
                 "control_centre_share",
                 "public_activity_summary",

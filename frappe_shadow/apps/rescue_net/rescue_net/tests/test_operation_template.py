@@ -60,3 +60,8 @@ class TestOperationTemplate(RNTestCase):
         with as_user(user.user):
             res = profile.my_operation_template()
         self.assertEqual((res["template"], res["organization"]), ("umum", None))
+
+    def test_kementerian_template(self):
+        user, org = self.register(open_to_public="0", operation_template="kementerian")
+        with as_user(user.user):
+            self.assertEqual(profile.my_operation_template()["template"], "kementerian")

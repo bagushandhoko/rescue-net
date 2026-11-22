@@ -175,9 +175,9 @@
    "fieldname": "operation_template",
    "fieldtype": "Select",
    "label": "Template Operasi",
-   "options": "umum\nbnpb\ntni\npmi",
+   "options": "umum\nbnpb\ntni\npmi\nkementerian",
    "default": "umum",
-   "description": "Menentukan menu khusus Edisi Tertutup (BNPB/BPBD, TNI, PMI) untuk organisasi tertutup."
+   "description": "Menentukan menu khusus Edisi Tertutup (BNPB/BPBD, TNI/POLRI, PMI, Kementerian) untuk organisasi tertutup."
   }
  ],
  "permissions": [
@@ -193,5 +193,5 @@
   }
  ],
  "track_changes": 1,
- "modified": "2026-11-22 15:00:00.000000"
+ "modified": "2026-11-22 16:30:00.000000"
 }

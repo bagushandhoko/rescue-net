@@ -283,7 +283,7 @@
   const templateSelect = document.querySelector("[data-dms-template]");
   const { labels, load, resolveTemplate, remember, visible } = window.RNDmsMenus;
   const shell = document.querySelector(".rn-dms-shell");
-  let operationTemplate = "umum";
+  let operationTemplate = "bnpb";
   let menus = [];
   let catalogRequest = 0;
 
@@ -302,7 +302,7 @@
     }
     moduleSelect.querySelectorAll("[data-dms-group]").forEach((group) => group.remove());
     for (const agency of [template, "bersama"]) {
-      const entries = available.filter((menu) => menu.instansi === agency);
+      const entries = available.filter((menu) => (agency === "bersama") === (menu.instansi === "bersama"));
       if (!entries.length) continue;
       const group = document.createElement("optgroup");
       group.label = labels[agency];

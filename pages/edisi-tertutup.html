@@ -16,18 +16,18 @@
   <link rel="stylesheet" href="../assets/css/rn-dms-module.css?v=dms-20261122">
 </head>
 <body class="rn-dms-page">
-  <div class="rn-dms-shell" data-agency="umum">
+  <div class="rn-dms-shell" data-agency="bnpb">
     <header class="rn-dms-header">
       <a class="rn-dms-brand" href="edisi-tertutup.html" aria-label="Rescue-Net DMS">
         <span class="rn-dms-seal" aria-hidden="true"><b>RN</b></span>
-        <span class="rn-dms-brand-copy"><strong>BNPB • TNI • PMI — Disaster Management System</strong><small>Rescue-Net Edisi Tertutup</small></span>
+        <span class="rn-dms-brand-copy"><strong>BNPB • TNI/POLRI • PMI • Kementerian — Disaster Management System</strong><small>Rescue-Net Edisi Tertutup</small></span>
       </a>
       <label class="dms-template-control">Template operasi
         <select data-dms-template disabled>
-          <option value="umum">Umum</option>
           <option value="bnpb">BNPB-BPBD</option>
-          <option value="tni">TNI</option>
+          <option value="tni">TNI/POLRI</option>
           <option value="pmi">PMI</option>
+          <option value="kementerian">Kementerian</option>
         </select>
       </label>
       <div class="rn-dms-header-actions">
@@ -48,7 +48,7 @@
 
     <div class="rn-dms-layout" data-agency-layout>
       <aside class="rn-dms-panel rn-dms-command" aria-labelledby="commandTitle">
-        <div class="rn-dms-panel-title"><div><strong id="commandTitle">Command Hierarchy</strong><small data-agency-label>Umum</small></div><button type="button" class="rn-dms-icon-button" aria-label="Menu hierarki" title="Menu hierarki">⋮</button></div>
+        <div class="rn-dms-panel-title"><div><strong id="commandTitle">Command Hierarchy</strong><small data-agency-label>BNPB-BPBD</small></div><button type="button" class="rn-dms-icon-button" aria-label="Menu hierarki" title="Menu hierarki">⋮</button></div>
         <div class="rn-dms-command-tree" role="tree" aria-label="Hierarki komando pratinjau">
           <div class="rn-dms-tree-row level-0" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon">◈</span><strong>Pusat Komando</strong></div>
           <div class="rn-dms-tree-row level-1" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon green">⬟</span><span>Provinsi</span></div>
@@ -89,7 +89,7 @@
           <div class="rn-dms-map-legend"><span><i class="red"></i> Kritis</span><span><i class="amber"></i> Tinggi</span><span><i class="cyan"></i> Waspada</span><small>Lingkaran besar = bencana · titik = posko</small></div>
         </div>
         <div class="rn-edisi-taskbar" data-window-taskbar aria-label="Jendela terbuka"><span class="rn-edisi-taskbar-label">JENDELA</span></div>
-        <div class="rn-dms-map-footer"><span><b data-agency-footer>Umum</b> · Common Operating Picture</span><span data-live-status>Memuat data live RN…</span></div>
+        <div class="rn-dms-map-footer"><span><b data-agency-footer>BNPB-BPBD</b> · Common Operating Picture</span><span data-live-status>Memuat data live RN…</span></div>
       </main>
 
       <aside class="rn-dms-right-rail" aria-label="Ringkasan operasi">
@@ -159,8 +159,8 @@
     </form>
   </dialog>
   <script src="../assets/vendor/leaflet/leaflet.js"></script>
-  <script src="../assets/js/rn-dms-menus.js?v=dms-20261122d"></script>
-  <script src="../assets/js/rn-edisi-window-manager.js?v=dms-20261122"></script>
+  <script src="../assets/js/rn-dms-menus.js?v=dms-20261122e"></script>
+  <script src="../assets/js/rn-edisi-window-manager.js?v=dms-20261122e"></script>
   <script src="../assets/js/rn-edisi-live.js?v=live-20261122c"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>

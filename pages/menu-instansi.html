@@ -17,7 +17,7 @@
     <div data-mi-groups></div>
   </main>
   <script>window.RN_DMS_STRICT = true;</script>
-  <script src="../assets/js/rn-dms-menus.js?v=dms-20261122d"></script>
+  <script src="../assets/js/rn-dms-menus.js?v=dms-20261122e"></script>
   <script>
   (async () => {
     "use strict";
@@ -33,8 +33,8 @@
       if (selection.managed && selection.value === "umum") {
         status.textContent += " Menu khusus BNPB/TNI/PMI hanya untuk organisasi Tertutup; pemilik organisasi dapat mengganti template.";
       }
-      for (const inst of ["bnpb", "tni", "pmi", "bersama"]) {
-        const items = list.filter((m) => m.instansi === inst);
+      for (const inst of [selection.value, "bersama"]) {
+        const items = list.filter((m) => (inst === "bersama") === (m.instansi === "bersama"));
         if (!items.length) continue;
         const section = document.createElement("section");
         section.className = "dms-module-panel";

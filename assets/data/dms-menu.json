@@ -158,6 +158,9 @@
     "jenis": "teks_panjang",
     "wajib": false
    }
+  ],
+  "template_tambahan": [
+   "kementerian"
   ]
  },
  {
@@ -393,6 +396,9 @@
     "jenis": "teks_panjang",
     "wajib": false
    }
+  ],
+  "template_tambahan": [
+   "kementerian"
   ]
  },
  {
@@ -633,6 +639,9 @@
     "jenis": "teks_panjang",
     "wajib": false
    }
+  ],
+  "template_tambahan": [
+   "kementerian"
   ]
  },
  {
@@ -901,6 +910,9 @@
     "jenis": "teks_panjang",
     "wajib": true
    }
+  ],
+  "template_tambahan": [
+   "kementerian"
   ]
  },
  {
@@ -974,6 +986,9 @@
     "jenis": "teks_panjang",
     "wajib": true
    }
+  ],
+  "template_tambahan": [
+   "kementerian"
   ]
  },
  {

@@ -2,12 +2,14 @@
   "use strict";
 
   const api = "/rescue-net-frappe/api/method/";
-  const catalogUrl = new URL("../data/dms-menu.json?v=dms-20261122c", document.currentScript.src);
+  const catalogUrl = new URL("../data/dms-menu.json?v=dms-20261122e", document.currentScript.src);
   const storageKey = "rn_dms_operation_template";
-  const labels = Object.freeze({ umum: "Umum", bnpb: "BNPB-BPBD", tni: "TNI", pmi: "PMI", bersama: "Bersama" });
-  const valid = (value) => value !== "bersama" && Object.hasOwn(labels, value);
+  const labels = Object.freeze({ umum: "Umum", bnpb: "BNPB-BPBD", tni: "TNI/POLRI", pmi: "PMI", kementerian: "Kementerian", bersama: "Bersama" });
   // Di RN (asal=rn) template HANYA dari organisasi pengguna (API); tanpa pilihan manual.
   const strict = new URLSearchParams(location.search).get("asal") === "rn" || window.RN_DMS_STRICT === true;
+  // CT202 (owner 2026-11-22): hanya untuk instansi, tanpa "Umum". RN (strict) tetap punya "Umum".
+  const templates = strict ? ["umum", "bnpb", "tni", "pmi", "kementerian"] : ["bnpb", "tni", "pmi", "kementerian"];
+  const valid = (value) => templates.includes(value);
   let catalog;
 
   async function getJSON(url) {
@@ -29,7 +31,7 @@
       const value = localStorage.getItem(storageKey);
       if (valid(value)) return value;
     } catch (_) {}
-    return "umum";
+    return templates[0];
   }
 
   function remember(value) {
@@ -40,14 +42,15 @@
   async function resolveTemplate() {
     try {
       const { message } = await getJSON(api + "rescue_net.api_org_profile.my_operation_template");
-      if (valid(message?.template)) return { value: message.template, managed: true };
+      if (valid(message?.template) && (strict || message.template !== "umum")) return { value: message.template, managed: true };
     } catch (_) {}
     return { value: strict ? "umum" : localTemplate(), managed: false };
   }
 
   function visible(menus, template) {
-    return menus.filter((menu) => menu.instansi === "bersama" || menu.instansi === template);
+    return menus.filter((menu) => menu.instansi === "bersama" || menu.instansi === template
+      || (menu.template_tambahan || []).includes(template));
   }
 
-  window.RNDmsMenus = { strict, labels, load, resolveTemplate, remember, visible, getJSON, api };
+  window.RNDmsMenus = { strict, templates, labels, load, resolveTemplate, remember, visible, getJSON, api };
 })();

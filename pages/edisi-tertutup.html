@@ -26,7 +26,7 @@
       <div class="rn-dms-header-actions">
         <span class="rn-dms-classification"><span aria-hidden="true">▣</span> RAHASIA / TERBATAS</span>
         <span class="rn-dms-status-chip" data-rn-session role="status" aria-live="polite">Memeriksa sesi RN…</span>
-        <a class="rn-dms-window-action" data-rn-auth href="auth.html?next=edisi-tertutup.html">Masuk RN</a>
+        <button class="rn-dms-window-action" type="button" data-rn-auth>Masuk RN</button>
         <button class="rn-dms-window-action" type="button" data-add-module>+ Jendela Modul</button>
         <button class="rn-dms-window-action primary" type="button" data-add-posko>+ Jendela Posko</button>
       </div>
@@ -157,6 +157,15 @@
     <footer class="rn-dms-footer"><span>Rescue-Net Edisi Tertutup · DMS</span><span>Pratinjau antarmuka · tidak untuk keputusan operasional</span></footer>
   </div>
 
+  <dialog class="rn-edisi-dialog" data-rn-login-dialog>
+    <form data-rn-login-form novalidate>
+      <h3>Masuk ke Rescue-Net</h3>
+      <label>Email<input name="usr" type="email" autocomplete="username" required></label>
+      <label>Password<input name="pwd" type="password" autocomplete="current-password" required></label>
+      <small data-rn-login-message role="status" aria-live="polite">Gunakan akun RN. Login diproses oleh backend RN yang sama.</small>
+      <div class="rn-edisi-dialog-actions"><button type="button" data-rn-login-cancel>Batal</button><button type="submit">Masuk</button></div>
+    </form>
+  </dialog>
   <dialog class="rn-edisi-dialog" data-module-dialog>
     <form data-module-form>
       <h3>Buka jendela modul</h3>

@@ -17,33 +17,96 @@
   const empty = workspace.querySelector("[data-window-empty]");
   const sessionBadge = document.querySelector("[data-rn-session]");
   const backendStatus = document.querySelector("[data-rn-backend-status]");
-  const authLink = document.querySelector("[data-rn-auth]");
+  const authButton = document.querySelector("[data-rn-auth]");
+  const loginDialog = document.querySelector("[data-rn-login-dialog]");
+  const loginForm = document.querySelector("[data-rn-login-form]");
+  const loginMessage = document.querySelector("[data-rn-login-message]");
+  let rnSession = {};
+
+  async function requestSession() {
+    const response = await fetch("/rescue-net-frappe/api/method/rescue_net.api_auth.session_info", {
+      credentials: "include",
+      headers: { Accept: "application/json" }
+    });
+    if (!response.ok) throw new Error("API unavailable");
+    const payload = await response.json();
+    return (payload && payload.message) || {};
+  }
 
   async function refreshRnSession() {
     try {
-      const response = await fetch("/rescue-net-frappe/api/method/rescue_net.api_auth.session_info", {
-        credentials: "include",
-        headers: { Accept: "application/json" }
-      });
-      if (!response.ok) throw new Error("API unavailable");
-      const payload = await response.json();
-      const session = (payload && payload.message) || {};
-      const loggedIn = !!session.user && session.user !== "Guest";
+      rnSession = await requestSession();
+      const loggedIn = !!rnSession.user && rnSession.user !== "Guest";
       if (sessionBadge) sessionBadge.textContent = loggedIn ? "SESI RN AKTIF" : "TAMU";
-      if (authLink) authLink.textContent = loggedIn ? "Kelola sesi" : "Masuk RN";
+      if (authButton) authButton.textContent = loggedIn ? "Keluar RN" : "Masuk RN";
       if (backendStatus) {
         backendStatus.classList.add("is-connected");
         backendStatus.textContent = "BACKEND RN TERHUBUNG · modul memakai API dan hak akses RN; ringkasan dashboard serta federasi masih tahap integrasi";
       }
     } catch (_) {
+      rnSession = {};
       if (sessionBadge) sessionBadge.textContent = "STATUS API TIDAK TERSEDIA";
-      if (authLink) authLink.textContent = "Buka akses RN";
+      if (authButton) authButton.textContent = "Masuk RN";
       if (backendStatus) {
         backendStatus.classList.remove("is-connected");
         backendStatus.textContent = "BACKEND RN BELUM TERJANGKAU · modul memerlukan koneksi ke API RN.";
       }
     }
   }
+
+  authButton?.addEventListener("click", async () => {
+    if (rnSession.user && rnSession.user !== "Guest") {
+      authButton.disabled = true;
+      try {
+        const headers = { Accept: "application/json" };
+        if (rnSession.csrf_token) headers["X-Frappe-CSRF-Token"] = rnSession.csrf_token;
+        const response = await fetch("/rescue-net-frappe/api/method/logout", {
+          method: "POST", credentials: "include", headers
+        });
+        if (!response.ok) throw new Error("logout failed");
+        await refreshRnSession();
+      } catch (_) {
+        if (loginMessage) loginMessage.textContent = "Belum berhasil keluar. Coba muat ulang halaman.";
+      } finally {
+        authButton.disabled = false;
+      }
+      return;
+    }
+    if (loginMessage) loginMessage.textContent = "Gunakan akun RN. Login diproses oleh backend RN yang sama.";
+    loginDialog?.showModal();
+    window.setTimeout(() => loginForm?.elements.usr?.focus(), 0);
+  });
+
+  loginForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const email = String(loginForm.elements.usr.value || "").trim();
+    const password = String(loginForm.elements.pwd.value || "");
+    if (!email || !password) {
+      if (loginMessage) loginMessage.textContent = "Isi email dan password akun RN.";
+      return;
+    }
+    const submit = loginForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    if (loginMessage) loginMessage.textContent = "Memeriksa akun RN…";
+    try {
+      const response = await fetch("/rescue-net-frappe/api/method/login", {
+        method: "POST", credentials: "include",
+        headers: { Accept: "application/json", "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ usr: email, pwd: password }).toString()
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.exc_type) throw new Error("login failed");
+      await refreshRnSession();
+      if (!rnSession.user || rnSession.user === "Guest") throw new Error("session missing");
+      loginForm.elements.pwd.value = "";
+      loginDialog?.close();
+    } catch (_) {
+      if (loginMessage) loginMessage.textContent = "Login gagal. Periksa email, password, atau kewajiban kode verifikasi.";
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  document.querySelector("[data-rn-login-cancel]")?.addEventListener("click", () => loginDialog?.close());
   refreshRnSession();
   const count = document.querySelector("[data-window-count]");
   const windows = new Map();

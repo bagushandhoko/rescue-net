@@ -83,17 +83,41 @@
     badge.dataset.level = menu.klasifikasi;
     badge.hidden = false;
     menu.isian.forEach(appendField);
+    const recordFields = menu.isian.slice(0, 6);
+    function renderRecords(records, notice) {
+      const head = find("[data-dms-records] thead tr");
+      const body = find("[data-dms-records] tbody");
+      head.replaceChildren(); body.replaceChildren();
+      for (const field of recordFields) {
+        const cell = document.createElement("th");
+        cell.scope = "col"; cell.textContent = field.label; head.append(cell);
+      }
+      for (const record of records) {
+        const row = body.insertRow();
+        for (const field of recordFields) row.insertCell().textContent = record.data?.[field.id] ?? "—";
+      }
+      find("[data-dms-records-note]").textContent = notice || (records.length ? records.length + " catatan tersimpan." : "Belum ada catatan tersimpan.");
+    }
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const record = Object.fromEntries(new FormData(form));
+      const button = form.querySelector("button[type=submit]");
+      button.disabled = true;
+      const record = Object.fromEntries([...new FormData(form)].filter(([, value]) => String(value).trim() !== ""));
       const result = await window.RNEdisiData.save(menu.id, record);
       find("[data-dms-save]").textContent = result.notice;
+      button.disabled = false;
+      if (result.saved) {
+        form.reset();
+        const fresh = await window.RNEdisiData.list(menu.id);
+        renderRecords(fresh.records || [], fresh.recordNotice);
+      }
     });
     status.hidden = true;
     find("[data-dms-content]").hidden = false;
     const result = await window.RNEdisiData.list(menu.id);
     renderRows(menu.kolom, result.rows);
     find("[data-dms-source]").textContent = result.notice;
+    renderRecords(result.records || [], result.recordNotice);
   } catch (_) {
     status.hidden = false;
     status.textContent = "Modul belum dapat dimuat. Coba muat ulang halaman.";

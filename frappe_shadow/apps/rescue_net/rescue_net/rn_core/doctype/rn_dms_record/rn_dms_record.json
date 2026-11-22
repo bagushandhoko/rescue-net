@@ -1,0 +1,22 @@
+{
+  "doctype": "DocType",
+  "name": "RN DMS Record",
+  "module": "RN Core",
+  "description": "Catatan menu khusus DMS (BNPB/TNI-POLRI/PMI/Kementerian) milik organisasi tertutup. Disimpan di RN sampai backend instansi tersambung lewat federasi (keputusan owner 22 Nov 2026).",
+  "autoname": "hash",
+  "track_changes": 1,
+  "field_order": ["menu_id", "organization", "classification", "disaster_event", "status", "data", "created_by_account", "updated_by_account"],
+  "fields": [
+    {"fieldname": "menu_id", "label": "Menu", "fieldtype": "Data", "reqd": 1, "search_index": 1, "in_list_view": 1},
+    {"fieldname": "organization", "label": "Organisasi", "fieldtype": "Link", "options": "RN Organization", "reqd": 1, "search_index": 1, "in_list_view": 1},
+    {"fieldname": "classification", "label": "Klasifikasi", "fieldtype": "Select", "options": "TERBUKA\nTERBATAS\nRAHASIA", "reqd": 1},
+    {"fieldname": "disaster_event", "label": "Bencana", "fieldtype": "Link", "options": "RN Disaster Event"},
+    {"fieldname": "status", "label": "Status", "fieldtype": "Select", "options": "aktif\narsip", "default": "aktif", "reqd": 1},
+    {"fieldname": "data", "label": "Isian (JSON)", "fieldtype": "Long Text", "reqd": 1},
+    {"fieldname": "created_by_account", "label": "Dibuat oleh", "fieldtype": "Link", "options": "RN User Account"},
+    {"fieldname": "updated_by_account", "label": "Diubah oleh", "fieldtype": "Link", "options": "RN User Account"}
+  ],
+  "permissions": [],
+  "sort_field": "modified",
+  "sort_order": "DESC"
+}

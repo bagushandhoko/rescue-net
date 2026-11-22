@@ -5128,7 +5128,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   font: inherit;
   color: var(--text);
 }
-.rn-ba-pg.is-active { background: var(--coral); border-color: var(--coral); color: #fff; }
+.rn-ba-pg.is-active { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
 .rn-ba-pg[disabled] { opacity: .4; cursor: default; }
 
 .rn-ba-summary .panel-header { align-items: center; }

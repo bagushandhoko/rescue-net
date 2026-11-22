@@ -53,6 +53,7 @@
         backendStatus.textContent = "BACKEND RN BELUM TERJANGKAU · modul memerlukan koneksi ke API RN.";
       }
     }
+    window.dispatchEvent(new Event("rn-dms-session"));
   }
 
   authButton?.addEventListener("click", async () => {
@@ -162,7 +163,7 @@
     focusWindow(win);
   }
 
-  function createWindow(title, url) {
+  function createWindow(title, url, dmsMenu) {
     const win = document.createElement("section");
     const id = `rn-window-${++serial}`;
     win.className = "rn-edisi-window";
@@ -191,10 +192,11 @@
     frame.title = title;
     frame.loading = "lazy";
     frame.referrerPolicy = "same-origin";
+    if (dmsMenu) frame.dataset.dmsTemplate = operationTemplate;
     frame.src = url;
     frame.addEventListener("load", () => {
       const embedded = frame.contentDocument;
-      if (!embedded?.head || embedded.URL === "about:blank") return;
+      if (dmsMenu || !embedded?.head || embedded.URL === "about:blank") return;
       embedded.documentElement.classList.add("rn-window-mode");
       const stylesheet = embedded.createElement("link");
       stylesheet.rel = "stylesheet";
@@ -205,7 +207,7 @@
     const foot = document.createElement("footer");
     foot.className = "rn-edisi-window-foot";
     const note = document.createElement("span");
-    note.textContent = "Modul RN asli · akses mengikuti sesi dan izin RN";
+    note.textContent = dmsMenu ? "Modul DMS" : "Modul RN asli · akses mengikuti sesi dan izin RN";
     const fullLink = document.createElement("a");
     fullLink.href = url;
     fullLink.target = "_blank";
@@ -220,7 +222,7 @@
     taskButton.textContent = title;
     taskButton.title = `Tampilkan ${title}`;
     taskbar.append(taskButton);
-    const item = { element: win, taskButton, restore: null };
+    const item = { element: win, taskButton, restore: null, dmsMenu };
     windows.set(id, item);
 
     minimize.addEventListener("click", () => setMinimized(item, true));
@@ -277,13 +279,73 @@
   const moduleDialog = document.querySelector("[data-module-dialog]");
   const moduleForm = document.querySelector("[data-module-form]");
   const moduleSelect = document.querySelector("[data-module-select]");
+  const moduleStatus = document.querySelector("[data-module-status]");
+  const templateSelect = document.querySelector("[data-dms-template]");
+  const { labels, load, resolveTemplate, remember, visible } = window.RNDmsMenus;
+  const shell = document.querySelector(".rn-dms-shell");
+  let operationTemplate = "umum";
+  let menus = [];
+  let catalogRequest = 0;
+
+  function applyTemplate(template) {
+    operationTemplate = template;
+    templateSelect.value = template;
+    if (shell) shell.dataset.agency = template;
+    document.querySelectorAll("[data-agency-label], [data-agency-footer]").forEach((node) => {
+      node.textContent = labels[template];
+    });
+    const available = visible(menus, template);
+    for (const item of windows.values()) {
+      if (item.dmsMenu && !available.some((menu) => menu.id === item.dmsMenu)) {
+        item.element.querySelector("[data-close]").click();
+      }
+    }
+    moduleSelect.querySelectorAll("[data-dms-group]").forEach((group) => group.remove());
+    for (const agency of [template, "bersama"]) {
+      const entries = available.filter((menu) => menu.instansi === agency);
+      if (!entries.length) continue;
+      const group = document.createElement("optgroup");
+      group.label = labels[agency];
+      group.dataset.dmsGroup = agency;
+      entries.forEach((menu) => group.append(new Option(menu.judul, "dms:" + menu.id)));
+      moduleSelect.append(group);
+    }
+  }
+
+  async function refreshTemplate() {
+    const request = ++catalogRequest;
+    templateSelect.disabled = true;
+    const [selection, catalog] = await Promise.all([resolveTemplate(), load().catch(() => null)]);
+    if (request !== catalogRequest) return;
+    menus = catalog || [];
+    applyTemplate(selection.value);
+    templateSelect.disabled = selection.managed;
+    templateSelect.title = selection.managed ? "Template ditetapkan organisasi RN" : "";
+    moduleStatus.textContent = catalog ? "" : "Daftar modul DMS belum dapat dimuat.";
+  }
+
+  templateSelect.addEventListener("change", () => {
+    remember(templateSelect.value);
+    applyTemplate(templateSelect.value);
+  });
+  window.addEventListener("rn-dms-session", () => {
+    for (const item of windows.values()) {
+      if (item.dmsMenu) item.element.querySelector("[data-close]").click();
+    }
+    refreshTemplate();
+  });
   document.querySelector("[data-add-module]")?.addEventListener("click", () => moduleDialog?.showModal());
   moduleForm?.addEventListener("submit", (event) => {
     event.preventDefault();
-    const route = moduleSelect?.value;
-    if (!moduleRoutes.has(route)) return;
-    moduleDialog.close();
-    createWindow(moduleRoutes.get(route), route);
+    const route = moduleSelect.value;
+    const menu = visible(menus, operationTemplate).find(({ id }) => route === "dms:" + id);
+    if (menu) {
+      moduleDialog.close();
+      window.rnEdisiOpenWindow(menu.judul, "dms-modul.html?menu=" + encodeURIComponent(menu.id), menu.id);
+    } else if (moduleRoutes.has(route)) {
+      moduleDialog.close();
+      createWindow(moduleRoutes.get(route), route);
+    }
   });
 
   const poskoDialog = document.querySelector("[data-posko-dialog]");
@@ -302,21 +364,5 @@
     poskoForm.reset();
   });
   document.querySelectorAll("[data-dialog-cancel]").forEach((button) => button.addEventListener("click", () => button.closest("dialog")?.close()));
-  const shell = document.querySelector(".rn-dms-shell");
-  const agencyLabels = { bnpb: "Profil BNPB · contoh struktur", tni: "Profil TNI · contoh struktur", pmi: "Profil PMI · contoh struktur", combined: "Profil multi-instansi · tampilan terpisah" };
-  const agencyNames = { bnpb: "BNPB", tni: "TNI PRCPB", pmi: "PMI Kemanusiaan", combined: "Kombinasi" };
-  function setAgency(agency) {
-    if (!shell || !agencyLabels[agency]) return;
-    shell.dataset.agency = agency;
-    document.querySelectorAll("[data-agency-choice]").forEach((button) => {
-      button.setAttribute("aria-pressed", String(button.dataset.agencyChoice === agency));
-    });
-    document.querySelectorAll("[data-agency-label]").forEach((node) => { node.textContent = agencyLabels[agency]; });
-    document.querySelectorAll("[data-agency-footer]").forEach((node) => { node.textContent = agencyNames[agency]; });
-  }
-  document.querySelectorAll("[data-agency-choice]").forEach((button) => {
-    button.addEventListener("click", () => setAgency(button.dataset.agencyChoice));
-  });
-  document.querySelector("[data-return-map]")?.addEventListener("click", () => setAgency("bnpb"));
   updateStatus();
 })();

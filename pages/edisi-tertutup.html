@@ -7,7 +7,7 @@
   <link rel="manifest" href="../manifest.webmanifest">
   <title>Rescue-Net | DMS Edisi Instansi</title>
   <link rel="stylesheet" href="../assets/css/style.css?v=font13-20261109">
-  <link rel="stylesheet" href="../assets/css/rn-edisi-tertutup.css?v=edisi-tertutup-pdf-20261121b">
+  <link rel="stylesheet" href="../assets/css/rn-edisi-tertutup.css?v=rn-api-20261122">
 </head>
 <body class="rn-dms-page">
   <div class="rn-dms-shell" data-agency="bnpb">
@@ -25,12 +25,14 @@
       </div>
       <div class="rn-dms-header-actions">
         <span class="rn-dms-classification"><span aria-hidden="true">▣</span> RAHASIA / TERBATAS</span>
+        <span class="rn-dms-status-chip" data-rn-session role="status" aria-live="polite">Memeriksa sesi RN…</span>
+        <a class="rn-dms-window-action" data-rn-auth href="auth.html?next=edisi-tertutup.html">Masuk RN</a>
         <button class="rn-dms-window-action" type="button" data-add-module>+ Jendela Modul</button>
         <button class="rn-dms-window-action primary" type="button" data-add-posko>+ Jendela Posko</button>
       </div>
     </header>
 
-    <div class="rn-dms-preview-banner"><span class="rn-dms-live-dot"></span> PRATINJAU DESAIN · data operasional belum tersambung · fitur keamanan dan federasi masih rancangan</div>
+    <div class="rn-dms-preview-banner" data-rn-backend-status role="status" aria-live="polite"><span class="rn-dms-live-dot"></span> MENYAMBUNG KE BACKEND RN…</div>
 
     <div class="rn-dms-layout" data-agency-layout>
       <aside class="rn-dms-panel rn-dms-command" aria-labelledby="commandTitle">
@@ -161,7 +163,7 @@
       <label>Modul Rescue-Net<select data-module-select>
         <option value="bencana-aktif.html">Bencana Aktif</option><option value="war-room.html">Control Centre</option><option value="peta-nasional.html">Peta Nasional</option><option value="sitrep.html">SITREP RN</option><option value="management-distribusi.html">Manajemen Distribusi</option><option value="posko-logistik.html">Posko Logistik</option><option value="posko-distribusi.html">Posko Distribusi</option><option value="posko-medis-detail.html">Posko Medis</option><option value="shelter-detail.html">Shelter</option><option value="dapur-umum.html">Dapur Umum</option><option value="management-relawan.html">Relawan</option><option value="laporan-masyarakat.html">Laporan Masyarakat</option><option value="search-found.html">Search & Found</option><option value="verification-approval.html">Sistem Verifikasi</option><option value="jejak-audit.html">Jejak Audit</option>
       </select></label>
-      <small>Pratinjau ini membuka jendela tiruan. Modul aktif dan hak akses mengikuti node RN setelah dipasang.</small>
+      <small>Jendela menampilkan modul RN yang sudah ada. Data dan tindakan mengikuti sesi serta hak akses akun RN.</small>
       <div class="rn-edisi-dialog-actions"><button type="button" data-dialog-cancel>Batal</button><button type="submit">Buka jendela</button></div>
     </form>
   </dialog>
@@ -172,7 +174,7 @@
       <div class="rn-edisi-dialog-actions"><button type="button" data-dialog-cancel>Batal</button><button type="submit">Buka posko</button></div>
     </form>
   </dialog>
-  <script src="../assets/js/rn-edisi-window-manager.js?v=windows-pdf-20261121b"></script>
+  <script src="../assets/js/rn-edisi-window-manager.js?v=rn-api-20261122"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 </body>
 </html>

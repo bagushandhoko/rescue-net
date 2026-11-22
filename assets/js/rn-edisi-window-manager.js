@@ -15,6 +15,36 @@
     ["jejak-audit.html", "Jejak Audit"]
   ]);
   const empty = workspace.querySelector("[data-window-empty]");
+  const sessionBadge = document.querySelector("[data-rn-session]");
+  const backendStatus = document.querySelector("[data-rn-backend-status]");
+  const authLink = document.querySelector("[data-rn-auth]");
+
+  async function refreshRnSession() {
+    try {
+      const response = await fetch("/rescue-net-frappe/api/method/rescue_net.api_auth.session_info", {
+        credentials: "include",
+        headers: { Accept: "application/json" }
+      });
+      if (!response.ok) throw new Error("API unavailable");
+      const payload = await response.json();
+      const session = (payload && payload.message) || {};
+      const loggedIn = !!session.user && session.user !== "Guest";
+      if (sessionBadge) sessionBadge.textContent = loggedIn ? "SESI RN AKTIF" : "TAMU";
+      if (authLink) authLink.textContent = loggedIn ? "Kelola sesi" : "Masuk RN";
+      if (backendStatus) {
+        backendStatus.classList.add("is-connected");
+        backendStatus.textContent = "BACKEND RN TERHUBUNG · modul memakai API dan hak akses RN; ringkasan dashboard serta federasi masih tahap integrasi";
+      }
+    } catch (_) {
+      if (sessionBadge) sessionBadge.textContent = "STATUS API TIDAK TERSEDIA";
+      if (authLink) authLink.textContent = "Buka akses RN";
+      if (backendStatus) {
+        backendStatus.classList.remove("is-connected");
+        backendStatus.textContent = "BACKEND RN BELUM TERJANGKAU · modul memerlukan koneksi ke API RN.";
+      }
+    }
+  }
+  refreshRnSession();
   const count = document.querySelector("[data-window-count]");
   const windows = new Map();
   let zIndex = 2;

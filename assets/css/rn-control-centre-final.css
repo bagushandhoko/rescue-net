@@ -1,12 +1,17 @@
 :root {
-  --bg: #fffaf7;
+  --bg: radial-gradient(circle at 12% 0%, rgba(244,167,134,.38), transparent 34%),
+    radial-gradient(circle at 88% 10%, rgba(255,214,190,.65), transparent 26%),
+    linear-gradient(135deg, #fff8f3 0%, #ffeade 42%, #fff6ef 100%);
   --panel: #fff;
   --line: #eee6e1;
   --text: #1c1816;
-  --muted: #817973;
-  --red: #ef5437;
-  --orange: #ed902e;
-  --green: #199951;
+  --muted: #7c6458;
+  --accent-strong: #b8432a;
+  --card-radius: 20px;
+  --card-shadow: 0 12px 28px rgba(104,64,45,.10);
+  --red: #b8432a;
+  --orange: #96531d;
+  --green: #237a52;
 }
 
 * {
@@ -23,7 +28,7 @@ body {
     Arial,
     sans-serif;
 
-  background: #f8f4f1;
+  background: #fff6ef;
   color: var(--text);
 }
 
@@ -385,7 +390,7 @@ body {
   border-radius: 8px;
 
   color: white;
-  background: linear-gradient(135deg, #f26b4f, #f08a4b);
+  background: linear-gradient(135deg, #bf4528, #9e3522);
   box-shadow: 0 4px 12px rgba(242, 107, 79, .28);
 
   font: inherit;
@@ -568,9 +573,10 @@ body {
   border:
     1px solid var(--line);
 
-  border-radius: 14px;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
 
-  background: white;
+  background: var(--panel);
 }
 
 .cc-kpis article > .cc-kpi-icon {
@@ -714,9 +720,9 @@ body {
     1fr
     .7fr;
 
-  gap: 8px;
+  gap: 12px;
 
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 
@@ -791,7 +797,7 @@ body {
   border: 0;
   border-top: 1px solid #f4efec;
 
-  color: var(--red);
+  color: var(--accent-strong);
   background: none;
 
   font: inherit;
@@ -849,17 +855,18 @@ body {
   border:
     1px solid var(--line);
 
-  border-radius: 10px;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
 
-  background: white;
+  background: var(--panel);
 }
 
 .cc-card > header {
-  height: 31px;
+  min-height: 44px;
 
-  flex: 0 0 31px;
+  flex: 0 0 auto;
 
-  padding: 0 9px;
+  padding: 10px 14px;
 
   display: flex;
   align-items: center;
@@ -961,6 +968,20 @@ body {
   background: var(--green);
 }
 
+
+.cc-priority,
+.cc-evidence {
+  padding: 10px 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.cc-needs-table td[colspan="4"] {
+  padding: 10px 14px;
+  color: var(--muted);
+  text-align: left;
+  white-space: normal;
+}
 
 /* PRIORITY */
 
@@ -1235,7 +1256,7 @@ body {
 
   border-radius: 5px;
 
-  color: #9c641f;
+  color: #865216;
   background: #fff2df;
 
   font-size: 13px;
@@ -1428,21 +1449,20 @@ body {
   /* KPI 3 x 2 seperti mockup HP */
 
   .cc-kpis {
-    height: 164px;
 
     grid-template-columns:
       repeat(3, 1fr);
 
     grid-template-rows:
-      repeat(2, 1fr);
+      repeat(2, auto);
 
-    gap: 4px;
+    gap: 8px;
   }
 
   .cc-kpis article {
     min-height: 0;
 
-    padding: 6px;
+    padding: 10px 6px;
 
     display: block;
   }
@@ -1496,11 +1516,11 @@ body {
   }
 
   .cc-card {
-    margin-bottom: 6px;
+    margin-bottom: 12px;
   }
 
   .cc-map-card {
-    height: 198px;
+    min-height: 224px;
   }
 
   .cc-map {
@@ -1510,12 +1530,6 @@ body {
   .cc-grid-main
   .cc-card:nth-child(2) {
     max-height: 205px;
-  }
-
-  /* mock-up (HP): peta, prioritas, kebutuhan kritis — bukti tidak ditampilkan */
-  .cc-grid-main
-  .cc-card:nth-child(4) {
-    display: none;
   }
 
   .cc-modules {
@@ -1659,7 +1673,7 @@ body {
 }
 
 .cc-kpis strong {
-  font-size: 27px;
+  font-size: clamp(26px, 2.2vw, 34px);
 }
 
 .cc-kpis em {
@@ -1771,7 +1785,7 @@ body {
   }
 
   .cc-kpis strong {
-    font-size: 18px;
+    font-size: 23px;
   }
 
   .cc-card > header {

@@ -118,11 +118,10 @@ def endorsements(account_name, detail=False):
         filters={"target_type": "reporter", "target_id": account_name, "status": "active"},
         fields=["name", "verifier", "method", "vouched_via", "statement", "verified_at", "expires_at"],
         order_by="verified_at desc", limit_page_length=50)
-    now = frappe.utils.now_datetime()
+    from rescue_net.services.endorsement import drop_expired
+
     out = []
-    for r in rows:
-        if r.expires_at and frappe.utils.get_datetime(r.expires_at) < now:
-            continue
+    for r in drop_expired(rows):
         v = frappe.db.get_value("RN Verifier Profile", r.verifier,
                                 ["title", "verifier_type", "position_title", "verifier_status", "trust_level"],
                                 as_dict=True)
@@ -274,14 +273,14 @@ def quick_status(account_names):
     verifiers = {v.user: v for v in frappe.get_all(
         "RN Verifier Profile", filters={"user": ["in", accounts], "verifier_status": "active"},
         fields=["user", "trust_level"], limit_page_length=0)}
+    from rescue_net.services.endorsement import drop_expired
+
     ends = {}
-    now = frappe.utils.now_datetime()
-    for r in frappe.get_all("RN Verification Endorsement",
-                            filters={"target_type": "reporter", "target_id": ["in", accounts], "status": "active"},
-                            fields=["name", "target_id", "verifier", "method", "vouched_via", "statement", "verified_at",
-                                    "expires_at"], order_by="verified_at desc", limit_page_length=0):
-        if r.expires_at and frappe.utils.get_datetime(r.expires_at) < now:
-            continue
+    for r in drop_expired(frappe.get_all(
+            "RN Verification Endorsement",
+            filters={"target_type": "reporter", "target_id": ["in", accounts], "status": "active"},
+            fields=["name", "target_id", "verifier", "method", "vouched_via", "statement", "verified_at",
+                    "expires_at"], order_by="verified_at desc", limit_page_length=0)):
         v = frappe.db.get_value("RN Verifier Profile", r.verifier,
                                 ["title", "verifier_type", "position_title", "verifier_status", "trust_level"],
                                 as_dict=True)

@@ -506,6 +506,25 @@ def add_community_report_update(report, body, update_type="info", urgent_needs=N
     return {"update": row.name, "report": doc.name, "author_role": role, "updates": _updates(doc.name)}
 
 
+def can_reroute_report(actor, current_posko, target_posko=None, event=None):
+    """Who may move a community report to another posko — one rule for the API below and for the
+    "Alihkan ke posko lain" button in the queue (frontend_bridge.reports.community_reports).
+    System Manager / Control Centre: always. A routed report: a manager of the posko it is routed to now.
+    An unrouted report: a manager of the TARGET posko; without a target (the list's button) anyone who
+    operates in the report's disaster event sees the button and the server checks the target on submit."""
+    from rescue_net.access_policy import can_edit_event, can_manage_posko, is_system_manager
+
+    if is_system_manager() or (actor and actor.get("role") == "command_center"):
+        return True
+    if not actor or not actor.get("name"):
+        return False
+    if current_posko:
+        return bool(can_manage_posko(actor, current_posko))
+    if target_posko:
+        return bool(can_manage_posko(actor, target_posko))
+    return bool(event and can_edit_event(actor, event))
+
+
 @frappe.whitelist(methods=["POST"])
 def reroute_community_report(report, posko):
     """Hand a report to another posko of the same event: a manager of the
@@ -513,7 +532,7 @@ def reroute_community_report(report, posko):
     manager of the target posko may take them)."""
     from frappe.utils import now_datetime
 
-    from rescue_net.access_policy import can_manage_posko, is_system_manager, rn_actor
+    from rescue_net.access_policy import rn_actor
     from rescue_net.reference_resolver import resolve_posko
 
     actor = rn_actor(required=True)
@@ -524,9 +543,9 @@ def reroute_community_report(report, posko):
         frappe.throw("Posko tujuan tidak ditemukan")
     if doc.disaster_event and target.disaster_event != doc.disaster_event:
         frappe.throw("Posko tujuan harus pada kejadian bencana yang sama.")
-    allowed = is_system_manager() or (actor and actor.get("role") == "command_center") or (
-        doc.posko and can_manage_posko(actor, doc.posko)) or (not doc.posko and can_manage_posko(actor, posko))
-    if not allowed:
+    if doc.posko and doc.posko == target.name:
+        frappe.throw("Laporan ini sudah diarahkan ke posko tersebut.")
+    if not can_reroute_report(actor, doc.posko, target.name, doc.disaster_event):
         frappe.throw("Hanya posko tujuan saat ini atau Control Centre yang dapat mengalihkan laporan.",
                      frappe.PermissionError)
     old = doc.posko

@@ -434,3 +434,57 @@ def ecosystem_performance(disaster_event):
         frappe.throw("Bencana tidak ditemukan.", frappe.DoesNotExistError)
     return {"disaster_event": event, "event_title": frappe.db.get_value("RN Disaster Event", event, "title"),
             "pihak": activity_trace.performance_by_party(event)}
+
+
+# --- Template operasi (owner 2026-11-22): menu khusus Edisi Tertutup BNPB/BPBD, TNI, PMI -------------
+# Satu definisi menu dipakai CT202 (DMS Edisi Tertutup) dan RN untuk organisasi tertutup.
+OPERATION_TEMPLATES = ("umum", "bnpb", "tni", "pmi", "kementerian")
+
+
+def clean_operation_template(value):
+    value = (value or "umum").strip().lower()
+    if value not in OPERATION_TEMPLATES:
+        frappe.throw("Template operasi tidak valid (umum/bnpb/tni/pmi/kementerian).")
+    return value
+
+
+@frappe.whitelist()
+def my_operation_template():
+    """Template operasi organisasi pengguna yang sedang login (keanggotaan disetujui).
+
+    Hanya organisasi TERTUTUP yang mendapat menu khusus; organisasi terbuka selalu 'umum'.
+    Tamu ditolak (PermissionError) karena rn_actor wajib login.
+    """
+    from rescue_net.access_policy import rn_actor
+    actor = rn_actor()
+    orgs = frappe.get_all(
+        "RN Organization Membership",
+        filters={"user_account": actor.name, "status": "approved"},
+        pluck="organization", order_by="creation asc",
+    )
+    rows = []
+    for name in orgs:
+        row = frappe.db.get_value(ORG, name, ["name", "title", "privacy_mode", "operation_template"], as_dict=True)
+        if row:
+            template = (row.operation_template or "umum") if row.privacy_mode == "closed" else "umum"
+            rows.append({"organization": row.name, "title": row.title, "template": template})
+    chosen = next((r for r in rows if r["template"] != "umum"), rows[0] if rows else None)
+    return {
+        "template": chosen["template"] if chosen else "umum",
+        "organization": chosen["organization"] if chosen else None,
+        "organizations": rows,
+    }
+
+
+@frappe.whitelist(methods=["POST"])
+def set_operation_template(organization, template):
+    """Pemilik organisasi (atau System Manager / otoritas komando) mengganti template operasi."""
+    from rescue_net.access_policy import can_manage_organization, rn_actor
+    actor = rn_actor()
+    if not can_manage_organization(actor, organization):
+        frappe.throw("Anda tidak dapat mengubah template organisasi ini", frappe.PermissionError)
+    template = clean_operation_template(template)
+    doc = frappe.get_doc(ORG, organization)
+    doc.operation_template = template
+    doc.save(ignore_permissions=True)
+    return {"organization": doc.name, "template": doc.operation_template, "privacy_mode": doc.privacy_mode}

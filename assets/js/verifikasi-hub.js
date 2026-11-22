@@ -122,6 +122,7 @@
 
   /* ---------- Endorsement results (Data Hasil Verifikasi) ---------- */
   var timer = null;
+  var ENDORSE_STATUS = { active: "Aktif", revoked: "Dicabut", expired: "Kedaluwarsa" };
   function loadEndorsements() {
     var body = $("#vxEndorseBody");
     if (!body || !window.RN_FRAPPE) return;
@@ -134,7 +135,8 @@
         var link = r.verifier ? '<a href="verification-approval.html?cari=' + encodeURIComponent(r.verifier) + '#verifikator/direktori">' + who + "</a>" : who;
         return '<tr class="vx-row"><td>' + esc(r.target) + "<br><small>" + (r.target_type === "posko" ? "Posko" : "Pelapor") + "</small>" +
           (r.statement ? "<br><small>“" + esc(r.statement) + "”</small>" : "") + "</td><td>" + link + "</td><td>" + esc(r.verifier_type || "-") + "</td><td>" + esc(r.method || "-") +
-          "</td><td>" + esc(r.verified_at || "-") + '</td><td><span class="chip ' + (r.status === "active" ? "ok" : "danger") + '">' + (r.status === "active" ? "Aktif" : "Dicabut") + "</span></td>" +
+          "</td><td>" + esc(r.verified_at || "-") + (r.expires_at ? "<br><small>berlaku s/d " + esc(r.expires_at) + "</small>" : "") +
+          '</td><td><span class="chip ' + (r.status === "active" ? "ok" : r.status === "expired" ? "warning" : "danger") + '">' + (ENDORSE_STATUS[r.status] || esc(r.status)) + "</span></td>" +
           "<td>" + (r.can_revoke && r.status === "active" ? '<button type="button" class="btn mini" data-vx-revoke="' + esc(r.endorsement) + '">Cabut</button>' : "") + "</td></tr>";
       }).join("") : '<tr><td colspan="7"><em class="rn-muted">Tidak ada endorsement yang cocok.</em></td></tr>';
       badges();

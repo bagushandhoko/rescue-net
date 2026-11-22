@@ -7,11 +7,9 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v12"; // v12 2026-11-22: live real-event count in DMS preview
+const CACHE = "rescue-net-web-v9"; // v9 2026-11-22: perbarui halaman dan aset palet kontras untuk mode offline.
 const PRECACHE = [
  "/rescue-net/index.html",
- "/rescue-net/index-rn-publik.html",
- "/rescue-net/pages/edisi-tertutup.html",
  "/rescue-net/pages/laporan-masyarakat.html",
  "/rescue-net/pages/posko-logistik.html",
  "/rescue-net/pages/registrasi-posko.html",
@@ -45,10 +43,9 @@ const PRECACHE = [
  "/rescue-net/pages/manual-teknis.html",
  "/rescue-net/pages/cetak-label.html",
  "/rescue-net/assets/css/rn-lightbox.css",
- "/rescue-net/assets/css/rn-mobile-drawer.css",
+ "/rescue-net/assets/css/rn-mobile-drawer.css?v=warna-20261122",
  "/rescue-net/assets/css/rn-navigation-v2.css",
- "/rescue-net/assets/css/style.css",
- "/rescue-net/assets/css/rn-edisi-tertutup.css?v=rn-api-20261122b",
+ "/rescue-net/assets/css/style.css?v=warna-20261122",
  "/rescue-net/assets/js/api.js",
  "/rescue-net/assets/js/bencana-aktif.js",
  "/rescue-net/assets/js/community-report.js",
@@ -60,13 +57,12 @@ const PRECACHE = [
  "/rescue-net/assets/js/rn-layout-mode.js",
  "/rescue-net/assets/js/rn-lightbox.js",
  "/rescue-net/assets/js/rn-logistik-info.js",
- "/rescue-net/assets/js/rn-mobile-drawer.js?v=edisi-tertutup-20261121",
- "/rescue-net/assets/js/rn-edisi-window-manager.js?v=rn-api-20261122b",
- "/rescue-net/assets/js/rn-navigation-v2.js?v=edisi-tertutup-20261121",
+ "/rescue-net/assets/js/rn-mobile-drawer.js?v=warna-20261122",
+ "/rescue-net/assets/js/rn-navigation-v2.js",
  "/rescue-net/assets/js/rn-posko-picker.js",
  "/rescue-net/assets/js/rn-posko-scope.js",
  "/rescue-net/assets/js/rn-posko-settings.js",
- "/rescue-net/assets/js/rn-public-header.js",
+ "/rescue-net/assets/js/rn-public-header.js?v=warna-20261122",
  "/rescue-net/assets/js/rn-sync-engine.js",
  "/rescue-net/assets/js/rn-ui.js",
  "/rescue-net/assets/js/rn-verif-badge.js",

@@ -1,6 +1,6 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-21",
+  "diperbarui": "2026-11-22",
   "uji": [
     {
       "id": "KAMERA-KIRIM-BANTUAN-20261121",
@@ -2190,6 +2190,23 @@
       ],
       "hasil": "Pemeriksaan tersebut lulus. Belum deploy. Uji browser 390px dan login sungguhan menunggu review Suri.",
       "skor": "Pemeriksaan statis dan perilaku skrip lulus; browser belum diuji",
+      "status": "lulus",
+      "temuan": []
+    },
+    {
+      "id": "MINGMING-ALIHKAN-ENDORSE-20261122",
+      "tanggal": "2026-11-22",
+      "kategori": "Laporan dan verifikasi",
+      "judul": "Alihkan laporan ke posko lain, endorsement berlaku 1 tahun, label Diterima Sebagian",
+      "tujuan": "Pastikan tiga perbaikan dari audit manual berjalan di situs live",
+      "akun": "Akun demo BNPB Pusdalops (login sungguhan) + tamu",
+      "langkah": [
+        "Stack uji: 71 tes (laporan 21, verifikasi 19, kontak pelapor 25, token lacak 6) setelah migrate.",
+        "Live: API alihkan menolak tamu (403); tanggal berlaku endorsement baru = 1 tahun; tugas harian kedaluwarsa terdaftar.",
+        "Browser login: Antrian Laporan Masyarakat menampilkan tombol Alihkan; Hasil Verifikasi punya filter Kedaluwarsa; Manajemen Distribusi menampilkan Diterima Sebagian; HP 390px tidak melebar."
+      ],
+      "hasil": "Semua lulus, tanpa galat halaman. Label 'berlaku s/d' belum terlihat karena endorsement lama tanpa tanggal tetap berlaku sampai dicabut.",
+      "skor": "71/71 tes + uji live lulus",
       "status": "lulus",
       "temuan": []
     }

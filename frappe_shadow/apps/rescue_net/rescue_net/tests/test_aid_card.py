@@ -7,7 +7,7 @@ import frappe
 from frappe.utils import add_to_date, now_datetime
 
 from rescue_net import api_aid_card as ac
-from rescue_net.tests.factories import RNTestCase, _insert, as_guest, as_user, make_actor, make_posko, make_world
+from rescue_net.tests.factories import RNTestCase, _insert, api_call, as_guest, as_user, make_actor, make_posko, make_world
 
 
 class TestAidCard(RNTestCase):
@@ -23,6 +23,15 @@ class TestAidCard(RNTestCase):
         with as_user(self.op.user):
             self.round = ac.create_round(self.shelter.name, "Sembako Hari 1", item_note="paket sembako")["round"]
             self.token = ac.issue_card(self.hh.name)["token"]
+
+    def test_list_rounds_without_posko(self):
+        endpoint = "rescue_net.api_aid_card.list_rounds"
+        with as_user(self.outsider.user):
+            self.assertEqual(api_call(endpoint), [])
+            with self.assertRaises(frappe.PermissionError):
+                api_call(endpoint, posko=self.shelter.name)
+        with as_user(self.op.user):
+            self.assertEqual(api_call(endpoint, posko=self.shelter.name)[0]["round"], self.round)
 
     def household(self, code, posko=None, status="checked_in"):
         return _insert("RN Shelter Household", posko=(posko or self.shelter).name, household_code=code, members_count=4,

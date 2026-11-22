@@ -95,3 +95,4 @@ html.rn-window-mode body{min-width:0!important;overflow-x:hidden!important;backg
 .rn-edisi-taskbar{padding-left:130px;padding-right:300px}
 @media (max-width:720px){.rn-dms-data-view{right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:4px 6px}.rn-dms-data-view>span{display:none}.rn-dms-data-view button{min-height:30px;padding:0 8px;font-size:10px}body{padding-bottom:60px}}
 @media (max-width:720px){.rn-aic-btn{padding:9px 12px!important;font-size:12px!important}.rn-dms-data-view{max-width:calc(100vw - 136px);padding:3px 4px}.rn-dms-data-view button{min-height:30px;padding:0 6px;font-size:9px;white-space:nowrap}}
+.leaflet-control-attribution a{color:#0b4f6c!important}

@@ -339,6 +339,29 @@
    "unique": 1,
    "read_only": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "uid",
+   "label": "Uid",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "no_copy": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "origin_server_id",
+   "label": "Origin Server Id",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "federation_share",
+   "label": "Federation Share",
+   "fieldtype": "Check",
+   "default": "0",
+   "no_copy": 1,
+   "permlevel": 1
   }
  ],
  "permissions": [
@@ -351,6 +374,12 @@
    "submit": 0,
    "cancel": 0,
    "amend": 0
+  },
+  {
+   "role": "System Manager",
+   "permlevel": 1,
+   "read": 1,
+   "write": 1
   }
  ],
  "track_changes": 1

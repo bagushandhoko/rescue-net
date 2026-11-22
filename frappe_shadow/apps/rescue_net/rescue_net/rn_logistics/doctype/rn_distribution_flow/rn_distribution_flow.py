@@ -172,9 +172,11 @@ class RNDistributionFlow(Document):
                                     {"transport_status": status, "source_updated_at": now},
                                     update_modified=False)
         if self.aid_offer and self.flow_status in OFFER_STATUS_FOR:
-            frappe.db.set_value("RN Aid Offer", self.aid_offer,
-                                {"offer_status": OFFER_STATUS_FOR[self.flow_status], "source_updated_at": now},
-                                update_modified=False)
+            from rescue_net.federation.outbox import update_fields
+
+            update_fields("RN Aid Offer", self.aid_offer,
+                          {"offer_status": OFFER_STATUS_FOR[self.flow_status], "source_updated_at": now},
+                          update_modified=False)
 
     def assert_received_within_sent(self):
         """L-2: what is received is never negative and never more than what

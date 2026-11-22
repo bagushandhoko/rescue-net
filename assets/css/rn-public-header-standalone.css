@@ -91,18 +91,18 @@
   min-height: auto;
   padding: 7px 16px;
   border-radius: 7px;
-  background: #e8835d;
+  background: var(--accent-strong, #b8432a);
   color: #fff !important;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
-  border: 1px solid #e8835d;
+  border: 1px solid var(--accent-strong, #b8432a);
   transition: background .12s ease;
 }
 
 .rn-public-login:hover {
-  background: #d96f49;
+  background: #9e3522;
 }
 
 .rn-public-user {
@@ -112,12 +112,12 @@
   padding: 6px 10px;
   font-size: 14px;
   font-weight: 800;
-  color: #c9502f;
+  color: var(--accent-strong, #b8432a);
   white-space: nowrap;
 }
 .rn-public-login.rn-public-logout {
   background: #fff;
-  color: #c9502f !important;
+  color: var(--accent-strong, #b8432a) !important;
   border-color: rgba(232, 117, 88, .45);
 }
 .rn-public-login.rn-public-logout:hover { background: #fff2ec; }

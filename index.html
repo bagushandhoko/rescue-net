@@ -1,14 +1,206 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#1f2933">
-  <title>Rescue-Net | Edisi Instansi</title>
-  <meta http-equiv="refresh" content="0; url=pages/edisi-tertutup.html">
-  <link rel="canonical" href="pages/edisi-tertutup.html">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#ef523d">
+  <title>Rescue-Net | Open Disaster Coordination</title>
+  <link rel="stylesheet" href="assets/css/style.css?v=warna-20261122" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Roboto:wght@300;400;500;700&display=swap">
+  <link rel="stylesheet" href="assets/css/rn-fonts.css?v=lh15-20261109">
+
+
+
+  <link rel="stylesheet" href="assets/css/rn-mobile-drawer.css?v=warna-20261122" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/rescue-net/assets/img/favicon/favicon-32.png?v=20261114">
+  <link rel="icon" type="image/png" sizes="48x48" href="/rescue-net/assets/img/favicon/favicon-48.png?v=20261114">
+  <link rel="apple-touch-icon" href="/rescue-net/assets/img/favicon/favicon-180.png?v=20261114">
 </head>
-<body>
-  <p>Membuka Pusat Komando Edisi Instansi… <a href="pages/edisi-tertutup.html">Lanjutkan</a></p>
+<body class="home-page">
+  <div class="welcome-shell">
+    <header class="welcome-nav">
+      <a class="welcome-brand" href="index.html" aria-label="Rescue-Net Home">
+        <img src="assets/img/rn-logo-web.png" alt="">
+      </a>
+      <div class="welcome-mobile-title" aria-label="Open Disaster Coordination and Relief Management System">
+        <span>Open Disaster</span>
+        <span>Coordination & Relief</span>
+        <span>Management System</span>
+      </div>
+      <nav class="welcome-links" aria-label="Welcome navigation">
+        <div class="rn-menu-item rn-has-submenu" role="none">
+          <a href="#tentang" class="rn-menu-link" aria-haspopup="true" aria-expanded="false">About Us</a>
+          <ul class="rn-submenu" role="menu">
+            <li role="none"><a href="pages/mockup.html?screen=welcome" class="rn-submenu-link" role="menuitem">Fitur/Mock up</a></li>
+            <li role="none"><a href="pages/manual.html" class="rn-submenu-link" role="menuitem">Manual Rescue Net</a></li>
+            <li role="none"><a href="pages/manual-teknis.html" class="rn-submenu-link" role="menuitem">Manual Teknis</a></li>
+            <li role="none"><a href="pages/manual.html#arsitektur" class="rn-submenu-link" role="menuitem">Rancangan Arsitektur</a></li>
+            <li role="none"><a href="pages/scenario-tested.html" class="rn-submenu-link" role="menuitem">Scenario Tested</a></li>
+            <li role="none"><a href="pages/kebijakan-privasi.html" class="rn-submenu-link" role="menuitem">Kebijakan Privasi</a></li>
+            
+          </ul>
+        </div>
+        <a href="index.html">Home</a>
+        <a href="pages/laporan-masyarakat.html">Laporan Masyarakat</a>
+        <a href="pages/kirim-bantuan.html">Kirim Bantuan</a>
+        <a href="pages/program-khusus.html">Donasi</a>
+        <a href="pages/war-room.html?event=event-sim-001">Control Centre</a>
+        <a href="pages/install.html">Install App</a>
+        <a href="pages/saran.html">Saran</a>
+        <a class="welcome-login-link" href="pages/auth.html">Login/registrasi</a>
+      </nav>
+      <button class="welcome-menu-toggle" type="button" aria-label="Buka menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <main>
+      <!-- 2026-11-18 owner: bilah Tampilan data di Home dihapus; diganti tombol kecil simulasi/riil di pojok setiap halaman -->
+      <section class="welcome-hero rn-hero2" id="tentang">
+        <div class="welcome-copy">
+          <div class="welcome-title-row">
+            <h1>Rescue-Net</h1>
+          </div>
+          <p class="welcome-lead">Open Disaster Coordination & Relief Management System</p>
+          <p class="rn-hero-intro">
+            <strong>Rescue-Net adalah sistem koordinasi penanggulangan bencana komprehensif</strong> yang dirancang untuk menyatukan dua ekosistem yang sering berjalan terpisah: penanganan resmi terstruktur (oleh instansi pemerintah, militer, atau NGO besar) dan gerakan swadaya masyarakat (relawan independen, donor publik, dan inisiatif warga).
+          </p>
+          <p class="rn-hero-intro">
+            Sistem ini tidak memaksa semua pihak untuk melebur menjadi satu entitas terbuka, melainkan menyediakan jembatan koordinasi (Control Centre) yang menghormati cara kerja masing-masing, sehingga respons bencana menjadi terukur, sinkron, dan tepat sasaran.
+          </p>
+          <div class="welcome-cta rn-hero-cta">
+            <a class="btn primary" href="pages/auth.html">Login/Registrasi</a>
+            <a class="btn" href="pages/bencana-aktif.html"><i aria-hidden="true" data-icon="alert-triangle"></i> Lihat Bencana Aktif</a>
+            <a class="btn help" href="pages/kirim-bantuan.html"><i aria-hidden="true" data-icon="hand-heart"></i> Saya Ingin Membantu</a>
+          </div>
+        </div>
+
+        <div class="welcome-visual" aria-label="Rescue-Net disaster response visual — Data Terverifikasi, Koordinasi Terbuka, Bantuan Tepat Sasaran">
+          <img src="assets/img/rn-welcome-disaster-hero.png" alt="Tim Rescue-Net melakukan respons di area banjir. Data Terverifikasi, Koordinasi Terbuka, Bantuan Tepat Sasaran.">
+        </div>
+      </section>
+
+      <section class="rn-hero-features" aria-label="Kemampuan Integrasi Utama Rescue-Net">
+        <h2>Kemampuan Integrasi Utama Rescue-Net:</h2>
+        <div class="rn-feat-grid">
+          <div class="rn-feat"><strong>Operasi Tertutup & Terbuka:</strong> Memungkinkan instansi menjaga data sensitif/internal tetap terlindungi, sementara ringkasan KPI tetap ditarik ke Pusat Komando tanpa kebocoran rahasia.</div>
+          <div class="rn-feat"><strong>Konsolidasi Lintas Sektoral:</strong> Menyaring dan menggabungkan laporan dari instansi resmi, relawan, hingga media sosial secara cerdas untuk mencegah angka kebutuhan semu.</div>
+          <div class="rn-feat"><strong>Smart Logistics:</strong> Menghubungkan donatur dengan kebutuhan posko melalui sistem rantai pasok terpadu (booking armada, QR tracking, pencegahan oversupply).</div>
+          <div class="rn-feat"><strong>Multi-Fungsi Terintegrasi:</strong> Mengelola shelter, posko medis, dapur umum, hingga pencarian korban dalam satu antarmuka kolaboratif.</div>
+          <div class="rn-feat"><strong>Ketahanan Offline-First:</strong> Tetap beroperasi di area <em>blank spot</em> tanpa sinyal internet; data akan otomatis sinkron saat kembali terhubung.</div>
+        </div>
+        <p class="rn-hero-core">
+          Intinya, Rescue-Net adalah wadah di mana kedisiplinan operasional instansi resmi dan kelincahan gotong royong masyarakat dapat berkolaborasi dalam satu gambaran situasi yang sama tanpa saling bertabrakan di lapangan.
+        </p>
+      </section>
+
+      <section class="welcome-kpis" aria-label="Live Rescue-Net metrics">
+        <a class="welcome-kpi" href="pages/bencana-aktif.html" style="text-decoration:none;color:inherit;cursor:pointer">
+          <i class="metric-icon" data-icon="alert-triangle"></i>
+          <span>Bencana Aktif</span>
+          <strong data-rn-live-active-disasters>0</strong>
+          <small data-rn-live-active-note>Live API</small>
+        </a>
+        <a class="welcome-kpi" href="pages/kebutuhan-publik.html" style="text-decoration:none;color:inherit;cursor:pointer">
+          <i class="metric-icon" data-icon="box"></i>
+          <span>Kebutuhan Kritis</span>
+          <strong data-rn-live-critical-needs>0</strong>
+          <small>logistik + shelter</small>
+        </a>
+        <a class="welcome-kpi" href="pages/management-relawan.html" style="text-decoration:none;color:inherit;cursor:pointer">
+          <i class="metric-icon" data-icon="users"></i>
+          <span>Relawan Dibutuhkan</span>
+          <strong data-rn-live-volunteers>0</strong>
+          <small>relawan terdata</small>
+        </a>
+        <a class="welcome-kpi" href="pages/management-distribusi.html" style="text-decoration:none;color:inherit;cursor:pointer">
+          <i class="metric-icon" data-icon="truck"></i>
+          <span>Distribusi Terhambat</span>
+          <strong data-rn-live-blocked-flows>0</strong>
+          <small>flow perlu perhatian</small>
+        </a>
+      </section>
+
+      <section class="content-grid welcome-live-grid" id="bencana-aktif">
+        <div class="panel large">
+          <div class="panel-header">
+            <div>
+              <h3>Bencana Aktif</h3>
+              <p>Data kejadian aktif dari Rescue-Net API.</p>
+            </div>
+            <a class="btn primary" href="pages/bencana-aktif.html">Semua Bencana Aktif</a>
+        <a href="pages/war-room.html?event=event-sim-001">Buka Control Centre</a>
+          </div>
+
+          <div class="event-list" data-rn-disasters>
+            <article class="event-card">
+              <h4>Loading bencana aktif...</h4>
+              <p>Mengambil data dari API.</p>
+            </article>
+          </div>
+        </div>
+
+        <aside class="panel summary">
+          <h3>Live Summary</h3>
+          <div class="summary-status danger" data-rn-live-severity>LIVE</div>
+          <div class="summary-list">
+            <div><span>Posko aktif</span><b data-rn-live-posko>0</b></div>
+            <div><span>Organisasi</span><b data-rn-live-organizations>0</b></div>
+            <div><span>Kebutuhan logistik</span><b data-rn-live-logistic-needs>0</b></div>
+            <div><span>Tawaran bantuan</span><b data-rn-live-aid-offers>0</b></div>
+            <div><span>Distribusi</span><b data-rn-live-distribution-flows>0</b></div>
+            <div><span>Evidence sources</span><b data-rn-live-sources>0</b></div>
+          </div>
+
+          <h4>Quick Actions</h4>
+          <div class="button-stack">
+            <a class="btn primary" href="pages/war-room.html?event=event-sim-001">Control Centre</a>
+            <a class="btn" href="pages/evidence.html?event=event-sim-001">Evidence</a>
+            <a class="btn" href="pages/ai-analyst.html?event=event-sim-001">AI Analyst</a>
+          </div>
+        </aside>
+      </section>
+
+      <section class="welcome-roles" id="fitur">
+        <div class="panel-header">
+          <div>
+            <h3>Bergabung sesuai peran Anda</h3>
+            <p>Pilih jalur operasi yang paling sesuai dengan kontribusi Anda.</p>
+          </div>
+        </div>
+        <div class="role-grid">
+          <a class="role-card" href="pages/kirim-bantuan.html"><span class="role-icon" data-icon="heart"></span><b>Donatur</b><span>Salurkan bantuan dan pantau dampaknya.</span><span class="role-more">Pelajari lebih lanjut &#8594;</span></a>
+          <a class="role-card" href="pages/management-relawan.html"><span class="role-icon" data-icon="users"></span><b>Relawan</b><span>Temukan misi dan bantu sesuai keahlian.</span><span class="role-more">Pelajari lebih lanjut &#8594;</span></a>
+          <a class="role-card" href="pages/organisasi-posko.html"><span class="role-icon" data-icon="building"></span><b>Organisasi</b><span>Kelola tim, distribusi, dan laporan.</span><span class="role-more">Pelajari lebih lanjut &#8594;</span></a>
+          <a class="role-card" href="pages/posko-detail.html?id=posko-sim-logistik"><span class="role-icon" data-icon="map-pin"></span><b>Posko</b><span>Kelola kebutuhan, stok, dan informasi.</span><span class="role-more">Pelajari lebih lanjut &#8594;</span></a>
+          <a class="role-card" href="pages/posko-medis-detail.html?event=event-sim-001"><span class="role-icon" data-icon="cross"></span><b>Medis</b><span>Koordinasi layanan kesehatan lapangan.</span><span class="role-more">Pelajari lebih lanjut &#8594;</span></a>
+          <a class="role-card" href="pages/management-distribusi.html"><span class="role-icon" data-icon="truck"></span><b>Transport</b><span>Dukung pengiriman bantuan tepat waktu.</span><span class="role-more">Pelajari lebih lanjut &#8594;</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="welcome-footer">
+      <div><b><i aria-hidden="true" data-icon="search"></i> Terbuka & Transparan</b><span>Data dan proses dapat diakses publik.</span></div>
+      <div><b><i aria-hidden="true" data-icon="check-circle"></i> Terverifikasi</b><span>Informasi diverifikasi di lapangan.</span></div>
+      <div><b><i aria-hidden="true" data-icon="users"></i> Kolaboratif</b><span>Bekerja bersama, dampak lebih besar.</span></div>
+      <div><b><i aria-hidden="true" data-icon="shield-check"></i> Aman & Terpercaya</b><span>Privasi dan keamanan menjadi prioritas.</span></div>
+    </footer>
+  </div>
+
+  <script src="assets/js/rn-icons.js?v=segar-20261117"></script>
+  <script src="assets/js/rn-frappe-client.js?v=files-20261102"></script>
+<script src="assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
+<script src="assets/js/api.js?v=kpi-20261119"></script>
+  <script src="assets/js/session-role.js?v=tamu-20261114"></script>
+  <script src="assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>
+  <script src="assets/js/rn-public-header.js?v=warna-20261122"></script>
+<script src="assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+<script src="assets/js/rn-mobile-drawer.js?v=warna-20261122"></script>
+<script src="assets/js/rn-tampilan-data.js?v=mode-20261118"></script>
+<script src="assets/js/rn-posko-help.js?v=bantuan-20261117" defer></script>
 </body>
 </html>
+

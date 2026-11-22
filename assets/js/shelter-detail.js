@@ -414,7 +414,7 @@
     var el = document.getElementById("shelterFlows");
     if (!el) return;
     el.innerHTML = items.length
-      ? items.map(function (f) { return card(rowId(f), "Item: " + safe(f.item_name) + "<br>Source: " + safe(f.source_posko) + "<br>ETA: " + safe(f.eta_final), f.flow_status); }).join("")
+      ? items.map(function (f) { return card(rowId(f), "Item: " + safe(f.item_name) + "<br>Source: " + safe(f.source_posko) + "<br>ETA: " + safe(f.eta_final), (window.RNUI && RNUI.statusLabel ? RNUI.statusLabel(f.flow_status) : f.flow_status)); }).join("")
       : card("Belum ada distribution flow", "Belum ada distribusi menuju shelter.", "empty");
   }
 

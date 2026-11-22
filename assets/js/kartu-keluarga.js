@@ -41,6 +41,7 @@
   async function loadAll() { posko = $("#kkPosko").value; await Promise.all([loadRounds(), loadHouseholds()]); loadReceipts(); }
 
   async function loadRounds() {
+    if (!posko) return;
     rounds = await call("list_rounds", { posko: posko });
     $("#kkRounds").innerHTML = rounds.length ? rounds.map(function (r) {
       return "<li><span><b>" + esc(r.title) + "</b> <span class='kk-muted'>" + esc(r.status === "open" ? "dibuka" : "ditutup") + " · " + r.received + "/" + r.households + " keluarga</span></span>" +

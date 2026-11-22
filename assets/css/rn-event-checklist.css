@@ -11,12 +11,12 @@
   border: 1px solid var(--line); background: #fff; color: var(--muted);
   border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer;
 }
-.rn-evc-range button[aria-pressed="true"] { background: var(--peach2); border-color: var(--peach2); color: #fff; font-weight: 600; }
+.rn-evc-range button[aria-pressed="true"] { background: var(--accent-strong, #b8432a); border-color: var(--accent-strong, #b8432a); color: #fff; font-weight: 600; }
 .rn-evc-dates { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; color: var(--muted); }
 .rn-evc-dates input { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); font: inherit; font-size: 14px; background: #fff; }
 .rn-evc-summary { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 14px; color: var(--muted); }
 .rn-evc-summary b { color: var(--text); }
-.rn-evc-summary button { border: 0; background: none; color: var(--blue); font: inherit; font-size: 14px; cursor: pointer; padding: 0; }
+.rn-evc-summary button { border: 0; background: none; color: var(--blue-strong, #2f6fa8); font: inherit; font-size: 14px; cursor: pointer; padding: 0; }
 .rn-evc-grid {
   display: grid; gap: 10px;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
@@ -37,7 +37,7 @@
 .rn-evc-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); display: inline-block; }
 .rn-evc-dot.critical { background: var(--red); }
 .rn-evc-dot.high { background: var(--orange); }
-.rn-evc-badge { font-size: 13px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: rgba(47,155,104,.12); color: var(--green); }
+.rn-evc-badge { font-size: 13px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: rgba(47,155,104,.12); color: var(--green-strong, #237a52); }
 .rn-evc-badge.closed { background: rgba(124,100,88,.12); color: var(--muted); }
 .rn-evc-empty { grid-column: 1 / -1; padding: 16px; text-align: center; color: var(--muted); }
 /* Setting: one block per posko */
@@ -75,13 +75,13 @@
 .rn-evc[hidden] { display: none; }
 .rn-dispatch-steps { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 12px; font-size: 14px; }
 .rn-dispatch-steps li { padding: 5px 10px; border-radius: 999px; background: var(--panel2); color: var(--muted); border: 1px solid var(--line); }
-.rn-dispatch-steps li.is-on { background: var(--peach2); border-color: var(--peach2); color: #fff; font-weight: 700; }
-.rn-dispatch-steps li.is-done { color: var(--green); border-color: rgba(47,155,104,.35); }
+.rn-dispatch-steps li.is-on { background: var(--accent-strong, #b8432a); border-color: var(--accent-strong, #b8432a); color: #fff; font-weight: 700; }
+.rn-dispatch-steps li.is-done { color: var(--green-strong, #237a52); border-color: rgba(47,155,104,.35); }
 .rn-dispatch-sum { margin: 0 0 10px; padding: 8px 12px; border-radius: 10px; background: var(--panel2); border: 1px solid var(--line); font-size: 14px; }
 .rn-dispatch-stock { display: grid; gap: 2px; padding: 10px 12px; margin: 0 0 12px; border-radius: 12px;
   background: rgba(47,155,104,.08); border: 1px solid rgba(47,155,104,.3); }
 .rn-dispatch-stock span { font-size: 14px; color: var(--muted); }
-.rn-dispatch-stock b { font-size: 20px; color: var(--green); }
+.rn-dispatch-stock b { font-size: 20px; color: var(--green-strong, #237a52); }
 .rn-dispatch-stock small { font-size: 13px; color: var(--muted); }
 .rn-dispatch-stock.is-empty { background: rgba(216,69,69,.07); border-color: rgba(216,69,69,.3); }
 .rn-dispatch-stock.is-empty b { color: var(--red); }

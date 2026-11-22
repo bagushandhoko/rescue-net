@@ -90,7 +90,9 @@ def set_round_status(round, status):
 
 
 @frappe.whitelist()
-def list_rounds(posko):
+def list_rounds(posko=None):
+    if not (posko or "").strip():
+        return []
     _assert_shelter_access(rn_actor(), posko)
     households = frappe.db.count(HOUSEHOLD, {"posko": posko, "household_status": "checked_in"})
     out = []

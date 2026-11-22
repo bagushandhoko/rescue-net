@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const embeddedStyles = new URL("../css/rn-edisi-embedded.css?v=1", document.currentScript.src).href;
+  const embeddedStyles = new URL("../css/rn-edisi-embedded.css?v=terang-20261122", document.currentScript.src).href;
   const workspace = document.querySelector("[data-window-workspace]");
   const taskbar = document.querySelector("[data-window-taskbar]");
   if (!workspace || !taskbar) return;

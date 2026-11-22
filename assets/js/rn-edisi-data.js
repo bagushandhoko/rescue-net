@@ -64,10 +64,10 @@
       if (data.source_ok === false && !data.warnings.length) throw new Error("BMKG belum terjangkau");
       return data.warnings.map((row) => ({ nama: row.title, wilayah: row.area_desc, waktu: row.issued_at }));
     },
-    async recovery() {
-      const rows = await read("api_recovery.list_projects");
+    recovery: () => withEvent(async (event) => {
+      const rows = await read("api_recovery.list_projects", { disaster_event_id: event.event_id });
       return rows.map((row) => ({ nama: row.project_name, wilayah: row.location, status: row.status }));
-    },
+    }),
     alat: () => withEvent(async (event) => {
       const { asset_registry: rows } = await read("api_resource_tools.tools_board", { disaster_event: event.event_id });
       return rows.map((row) => ({ nama: row.resource_name, wilayah: row.location, status: row.status }));
@@ -79,6 +79,10 @@
     pencarian: () => withEvent(async (event) => {
       const { kpis } = await read("api_search_found.dashboard", { disaster_event: event.event_id });
       return [{ nama: event.name, hilang: kpis.orang_hilang.n, ditemukan: kpis.korban_ditemukan.n }];
+    }),
+    komunikasi: () => withEvent(async (event) => {
+      const { frekuensi } = await read("api_comms.comms_board", { disaster_event: event.event_id });
+      return frekuensi.map((row) => ({ kanal: row.band_label, jenis: row.network_label, pengelola: row.provider }));
     }),
     donor: () => withEvent(async (event) => {
       const { programs } = await read("api_donor_program.program_board", { disaster_event: event.event_id });

@@ -1666,7 +1666,7 @@
     "instansi": "bersama",
     "judul": "Komunikasi",
     "ringkas": "Siapkan direktori kanal komunikasi bantuan bencana.",
-    "sumber_rn": "",
+    "sumber_rn": "komunikasi",
     "klasifikasi": "TERBATAS",
     "kolom": [
       {
@@ -1679,7 +1679,7 @@
       },
       {
         "id": "pengelola",
-        "label": "Pengelola"
+        "label": "Penyedia"
       }
     ],
     "isian": [

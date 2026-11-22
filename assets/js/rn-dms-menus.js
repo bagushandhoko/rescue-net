@@ -2,7 +2,7 @@
   "use strict";
 
   const api = "/rescue-net-frappe/api/method/";
-  const catalogUrl = new URL("../data/dms-menu.json?v=dms-20261122b", document.currentScript.src);
+  const catalogUrl = new URL("../data/dms-menu.json?v=dms-20261122c", document.currentScript.src);
   const storageKey = "rn_dms_operation_template";
   const labels = Object.freeze({ umum: "Umum", bnpb: "BNPB-BPBD", tni: "TNI", pmi: "PMI", bersama: "Bersama" });
   const valid = (value) => value !== "bersama" && Object.hasOwn(labels, value);

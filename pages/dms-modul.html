@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111a24">
+  <title>Modul DMS</title>
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="stylesheet" href="../assets/css/rn-dms-module.css?v=dms-20261122">
+</head>
+<body class="dms-module">
+  <main class="dms-module-main">
+    <a href="edisi-tertutup.html" target="_top" data-dms-back>← Kembali ke DMS</a>
+    <header>
+      <h1 data-dms-title>Modul DMS</h1>
+      <p data-dms-summary></p>
+      <span class="dms-classification" data-dms-classification hidden></span>
+    </header>
+    <p data-dms-status role="status">Memuat modul…</p>
+    <div data-dms-content hidden>
+      <section class="dms-module-panel" aria-labelledby="daftar">
+        <h2 id="daftar">Daftar</h2>
+        <div class="dms-table">
+          <table aria-labelledby="daftar">
+            <thead><tr></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p data-dms-source role="status">Memuat data…</p>
+      </section>
+      <section class="dms-module-panel" aria-labelledby="isian">
+        <h2 id="isian">Formulir</h2>
+        <p>Isian berlaku selama halaman ini terbuka.</p>
+        <form data-dms-form>
+          <div class="dms-fields" data-dms-fields></div>
+          <button type="submit">Periksa isian</button>
+          <p data-dms-save role="status"></p>
+        </form>
+      </section>
+    </div>
+  </main>
+  <script>window.RN_DMS_STRICT = true;</script>
+  <script src="../assets/js/rn-dms-menus.js?v=dms-20261122d"></script>
+  <script src="../assets/js/rn-edisi-data.js?v=dms-20261122b"></script>
+  <script src="../assets/js/rn-dms-module.js?v=dms-20261122d"></script>
+  <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 /* Edisi Tertutup (CT202): peta & SITREP LIVE dari backend RN.
- * Sumber: rescue_net.api_control_centre.active_disasters_board (publik, data riil saja;
- * data latihan/simulasi disaring backend). Tanpa angka contoh: bila kosong, tampil kosong.
+ * Sumber: rescue_net.api_control_centre.active_disasters_board. Mode Riil atau Simulasi
+ * dikirim ke API supaya peta dan ringkasan memakai sumber data yang sama.
  * Ming Ming 2026-11-22 (owner: "GIS di tampilan awal ganti dengan live bencana aktif di RN").
  */
 (() => {
@@ -17,6 +17,7 @@
     document.cookie = "rn_tampilan=" + (v === "simulasi" ? "simulasi" : "riil") + "; path=/; max-age=31536000; SameSite=Lax" + sec;
   }
   let operational = false;
+  let loadRequest = 0;
   const mapNode = document.querySelector("[data-live-map]");
   if (!mapNode || typeof L === "undefined") return;
 
@@ -95,15 +96,26 @@
     viewSave(b.dataset.view);
     paintView();
     load();
-    // modul RN yang sedang terbuka di jendela dimuat ulang supaya ikut pilihan baru
-    document.querySelectorAll(".rn-edisi-window iframe").forEach((f) => { try { f.contentWindow.location.reload(); } catch (_) { f.src = f.src; } });
+    document.querySelectorAll(".rn-edisi-window iframe").forEach((frame) => {
+      try {
+        const url = new URL(frame.contentWindow.location.href);
+        if (url.origin !== location.origin) return;
+        for (const key of ["event", "disaster_event_id", "disaster_event"]) url.searchParams.delete(key);
+        frame.contentWindow.location.replace(url.href);
+      } catch (_) { frame.src = frame.src; }
+    });
+  });
+  window.addEventListener("rn-dms-session", () => {
+    // Login akun demo menetapkan cookie Simulasi dari server.
+    paintView();
+    load();
   });
   fetch("/rescue-net-frappe/api/method/rescue_net.api_operational_mode.status", { credentials: "include" })
     .then((r) => (r.ok ? r.json() : null))
     .then((j) => { operational = !!(j && j.message && j.message.operational); paintView(); load(); })
     .catch(() => {});
 
-  function render(data) {
+  function render(data, view) {
     const events = Array.isArray(data.events) ? data.events : [];
     const t = data.totals || {};
     layer.clearLayers();
@@ -142,23 +154,27 @@
         const url = `bencana-aktif.html?event=${encodeURIComponent(ev.id || ev.event_id)}`;
         const c = ev.center ? `${ev.center.lat},${ev.center.lng}` : "";
         return `<li><i style="background:${s.color}"></i><a href="${esc(url)}" data-live-open="${esc(url)}" data-live-title="${esc(ev.name)}" data-live-center="${esc(c)}">${esc(ev.name)}</a><small>${esc(ev.status_label || s.label)} · ${fmt(ev.posko_count)} posko</small></li>`;
-      }).join("") : "<li class=\"is-empty\">Tidak ada bencana riil aktif di RN saat ini.</li>";
+      }).join("") : '<li class="is-empty">' + (view === "simulasi"
+        ? "Tidak ada bencana aktif di RN saat ini."
+        : "Tidak ada bencana riil aktif di RN saat ini.") + "</li>";
     }
     const time = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
     if (statusNode) statusNode.textContent = `Data live RN · ${events.length} bencana aktif${noCoords ? ` (${noCoords} belum ada koordinat posko)` : ""} · diperbarui ${time}`;
-    const v = paintView();
-    if (chip) chip.textContent = v === "simulasi" ? "LIVE · RN · TERMASUK SIMULASI" : "LIVE · RN · RIIL";
-    if (statusNode && v === "simulasi") statusNode.textContent += " · termasuk simulasi";
+    paintView();
+    if (chip) chip.textContent = view === "simulasi" ? "LIVE · RN · TERMASUK SIMULASI" : "LIVE · RN · RIIL";
+    if (statusNode && view === "simulasi") statusNode.textContent += " · termasuk simulasi";
   }
 
   async function load() {
+    const request = ++loadRequest;
+    const v = operational ? "riil" : viewNow();
     try {
-      const v = operational ? "riil" : viewNow();
       const r = await fetch(API + "?rn_tampilan=" + v, { credentials: "include", headers: { Accept: "application/json" } });
       if (!r.ok) throw new Error(String(r.status));
       const payload = await r.json();
-      render((payload && payload.message) || {});
+      if (request === loadRequest) render((payload && payload.message) || {}, v);
     } catch (err) {
+      if (request !== loadRequest) return;
       if (statusNode) statusNode.textContent = `Data RN tidak dapat dimuat (${err.message}). Mencoba lagi…`;
       if (chip) chip.textContent = "RN TIDAK TERSAMBUNG";
     }

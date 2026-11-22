@@ -32,3 +32,115 @@ html.rn-window-mode {
   max-width: 100%;
   overflow-x: auto;
 }
+
+.rn-window-mode :is(.cc-sidebar, .cc-sidebar-backdrop, .cc-mobile-bar) {
+  display: none !important;
+}
+
+.rn-window-mode .cc-main {
+  margin-inline-start: 0 !important;
+  width: 100% !important;
+  min-width: 0;
+}
+
+@media (max-width: 720px) {
+  .rn-window-mode body { padding-bottom: 0; }
+}
+
+.rn-window-mode .cc { grid-template-columns: minmax(0, 1fr); }
+
+/* Shared operation controls and module cards. */
+.rn-window-mode :is(.btn.primary, .rn-tab.is-active, .vx-sub-btn.is-active) {
+  color: #fff;
+  background: #99512e;
+  border-color: #c98458;
+}
+.rn-window-mode .status-pill {
+  color: #92ddbf;
+  background: #19362f;
+  border-color: #396555;
+}
+.rn-window-mode :is(.rn-ps-eyebrow, .rn-sf-tabs .is-active, .rn-sf-link, .rn-sf-more) {
+  color: #ffb78c;
+}
+.rn-window-mode :is(.location-method, .public-report-actions > a, .public-report-steps > div, .rn-sf-acts > :is(a, button)) {
+  color: #e5edf3;
+  background: #233444;
+  border-color: #3b5265;
+}
+.rn-window-mode :is(.public-report-card strong, .location-method b) { color: #e5edf3; }
+.rn-window-mode .rn-report-photo p { color: #a9b8c6; }
+.rn-window-mode .rn-vx-hub {
+  --vx-brand-dark: #ffb78c;
+  --vx-ink: #e5edf3;
+  --vx-card: #1b2836;
+}
+.rn-window-mode .vx-sub-btn:not(.is-active) { color: #d4e0ea; }
+.rn-window-mode .vx-group-btn:hover { background: #283a49; }
+.rn-window-mode #moduleAiConsolidationStatus { color: #ffd29a; background: #382d24; }
+
+.rn-window-mode .rn-lang-float { display: none !important; }
+
+.rn-window-mode .cc-event-pick { background: #243544; }
+.rn-window-mode .cc-event-pick-icon { color: #ffb78c; }
+.rn-window-mode .cc-share-btn {
+  color: #fff;
+  background: #99512e;
+  box-shadow: none;
+}
+
+.rn-window-mode .cc-mobile-disaster { color: #c9d7e1; }
+
+@media (max-width: 950px) {
+  .rn-window-mode .cc-kpis {
+    height: auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto;
+  }
+}
+
+/* Reference pages opened from links inside the workspace. */
+.rn-window-mode :is(.eyebrow, .manual .toc-group, .manual .group-label, .manual .facts b, .rn-ak-link) {
+  color: #ffbb8b;
+}
+.rn-window-mode .manual a:not(.btn):not(.pg-roles a) { color: #9bd8ef; }
+.rn-window-mode .manual a:not(.btn):hover { color: #d3efff; }
+.rn-window-mode :is(.manual th, .manual .facts div, .pg-roles a, .pg-flow span, .pg-demo, .st-card, .st-sum div, .st-find) {
+  color: #e5edf3;
+  background: #233444;
+  border-color: #3b5265;
+}
+.rn-window-mode :is(.manual .plan, .pg-roles a span, .st-meta) { color: #b8c7d4; }
+.rn-window-mode .pg-flow i { color: #ffbb8b; }
+.rn-window-mode .st-ok { color: #92ddbf; }
+.rn-window-mode .st-fix { color: #ffd29a; }
+.rn-window-mode .st-plan { color: #b8c7d4; }
+.rn-window-mode .mock-brand p { color: #b8c7d4; }
+.rn-window-mode .mock-nav a { color: #dce6ed; }
+.rn-window-mode .mock-nav a.active { color: #ffbb8b; background: #293b4b; }
+
+/* Secondary operations, forms and filters. */
+.rn-window-mode :is(.bo-pc, .bo-pm div, .rn-regx-page .rn-rp-checklist li, .rn-bo-tabs button, .rk-chips button, .rn-evc-range button, .st-filters button) {
+  color: #dce6ed;
+  background: #233444;
+  border-color: #3b5265;
+}
+.rn-window-mode :is(.rn-step, .cl-btn:not(.alt), .rk-chips button.on, .rn-bo-tabs button[aria-selected="true"], .st-filters button.is-on, .rn-evc-range button[aria-pressed="true"]) {
+  color: #fff;
+  background: #99512e;
+  border-color: #c98458;
+}
+.rn-window-mode :is(.kh-btn:not(.alt, .out), .sc-btn:not(.alt), .ak-btn:not(.alt, .out), #llFindBtn) {
+  color: #fff;
+  background: #286582;
+}
+.rn-window-mode .rn-fn-picker legend { color: #c9d7e1; }
+.rn-window-mode .rn-aid-attachment-copy small { color: #b8c7d4; }
+.rn-window-mode .kp-enough h2 { color: #ffab9e; }
+.rn-window-mode #submitVerifBtn { background: #216a46; }
+.rn-window-mode [data-consol-edit-notice] {
+  color: #ffd29a;
+  background: #382d24 !important;
+  border-color: #6b5239 !important;
+}
+.rn-window-mode :is(.kp-notice, .ko-notice) .rn-muted { color: #b8c7d4; }

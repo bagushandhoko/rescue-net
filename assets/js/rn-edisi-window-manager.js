@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const embeddedStyles = new URL("../css/rn-edisi-embedded.css?v=1", document.currentScript.src).href;
+  const embeddedStyles = new URL("../css/rn-edisi-embedded.css?v=layout-20261122", document.currentScript.src).href;
   const workspace = document.querySelector("[data-window-workspace]");
   const taskbar = document.querySelector("[data-window-taskbar]");
   if (!workspace || !taskbar) return;
@@ -15,7 +15,10 @@
     ["search-found.html", "Search & Found"], ["verification-approval.html", "Sistem Verifikasi"],
     ["jejak-audit.html", "Jejak Audit"]
   ]);
-  const empty = workspace.querySelector("[data-window-empty]");
+  const showMap = document.querySelector("[data-show-map]");
+  const nav = document.querySelector(".rn-dms-module-nav");
+  const catalogList = nav.querySelector("[data-dms-catalog]");
+  const menuToggle = document.querySelector('[aria-controls="dms-menu"]');
   const sessionBadge = document.querySelector("[data-rn-session]");
   const backendStatus = document.querySelector("[data-rn-backend-status]");
   const authButton = document.querySelector("[data-rn-auth]");
@@ -42,7 +45,7 @@
       if (authButton) authButton.textContent = loggedIn ? "Logout" : "Login";
       if (backendStatus) {
         backendStatus.classList.add("is-connected");
-        backendStatus.textContent = "BACKEND RN TERHUBUNG · modul memakai API dan hak akses RN; ringkasan dashboard serta federasi masih tahap integrasi";
+        backendStatus.textContent = "API Rescue-Net terhubung";
       }
     } catch (_) {
       rnSession = {};
@@ -109,32 +112,12 @@
     }
   });
   document.querySelector("[data-rn-login-cancel]")?.addEventListener("click", () => loginDialog?.close());
-  async function refreshActiveEventCount() {
-    const node = document.querySelector("[data-rn-active-events]");
-    if (!node) return;
-    try {
-      const response = await fetch("/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters", {
-        credentials: "include", headers: { Accept: "application/json" }
-      });
-      if (!response.ok) throw new Error("summary unavailable");
-      const payload = await response.json();
-      const events = (payload && payload.message) || [];
-      node.textContent = Array.isArray(events) ? String(events.length) : "—";
-    } catch (_) {
-      node.textContent = "—";
-    }
-  }
-
-  refreshRnSession();
-  const count = document.querySelector("[data-window-count]");
   const windows = new Map();
   let zIndex = 2;
   let serial = 0;
 
   function updateStatus() {
-    const open = windows.size;
-    if (count) count.textContent = `${open} jendela terbuka`;
-    if (empty) empty.hidden = open > 0;
+    showMap.hidden = ![...windows.values()].some(({ element }) => !element.classList.contains("is-minimized"));
   }
 
   function focusWindow(win) {
@@ -145,7 +128,9 @@
   function setMinimized(item, minimized) {
     item.element.classList.toggle("is-minimized", minimized);
     item.taskButton.setAttribute("aria-pressed", String(!minimized));
-    if (!minimized) focusWindow(item.element);
+    if (minimized) item.taskButton.classList.remove("is-active");
+    else focusWindow(item.element);
+    updateStatus();
   }
 
   function setMaximized(item) {
@@ -164,12 +149,17 @@
   }
 
   function createWindow(title, url, dmsMenu) {
+    const existing = [...windows.values()].find((item) => item.url === url);
+    if (existing) {
+      setMinimized(existing, false);
+      return;
+    }
     const win = document.createElement("section");
     const id = `rn-window-${++serial}`;
     win.className = "rn-edisi-window";
     win.dataset.windowId = id;
     win.setAttribute("aria-label", title);
-    const offset = (serial - 1) % 8;
+    const offset = (serial - 1) % 3;
     win.style.left = `${16 + offset * 24}px`;
     win.style.top = `${16 + offset * 20}px`;
     win.style.zIndex = String(++zIndex);
@@ -196,7 +186,7 @@
     frame.src = url;
     frame.addEventListener("load", () => {
       const embedded = frame.contentDocument;
-      if (dmsMenu || !embedded?.head || embedded.URL === "about:blank") return;
+      if (dmsMenu || !embedded?.head || embedded.URL === "about:blank" || embedded.documentElement.classList.contains("rn-window-mode")) return;
       embedded.documentElement.classList.add("rn-window-mode");
       const stylesheet = embedded.createElement("link");
       stylesheet.rel = "stylesheet";
@@ -204,25 +194,16 @@
       embedded.head.append(stylesheet);
     });
 
-    const foot = document.createElement("footer");
-    foot.className = "rn-edisi-window-foot";
-    const note = document.createElement("span");
-    note.textContent = dmsMenu ? "Modul DMS" : "Modul RN asli · akses mengikuti sesi dan izin RN";
-    const fullLink = document.createElement("a");
-    fullLink.href = url;
-    fullLink.target = "_blank";
-    fullLink.rel = "noopener";
-    fullLink.textContent = "Buka penuh ↗";
-    foot.append(note, fullLink);
-    win.append(bar, frame, foot);
+    win.append(bar, frame);
     workspace.append(win);
 
     const taskButton = document.createElement("button");
     taskButton.type = "button";
     taskButton.textContent = title;
     taskButton.title = `Tampilkan ${title}`;
+    taskButton.setAttribute("aria-pressed", "true");
     taskbar.append(taskButton);
-    const item = { element: win, taskButton, restore: null, dmsMenu };
+    const item = { element: win, taskButton, restore: null, dmsMenu, url };
     windows.set(id, item);
 
     minimize.addEventListener("click", () => setMinimized(item, true));
@@ -256,7 +237,7 @@
   function dragWindow(handle, win) {
     let drag = null;
     handle.addEventListener("pointerdown", (event) => {
-      if (event.button !== 0 || event.target.closest("button") || win.classList.contains("is-maximized") || window.matchMedia("(max-width: 820px)").matches) return;
+      if (event.button !== 0 || event.target.closest("button") || win.classList.contains("is-maximized") || window.matchMedia("(max-width: 850px)").matches) return;
       const bounds = workspace.getBoundingClientRect();
       const rect = win.getBoundingClientRect();
       drag = { x: event.clientX, y: event.clientY, left: rect.left - bounds.left + workspace.scrollLeft, top: rect.top - bounds.top + workspace.scrollTop };
@@ -265,8 +246,8 @@
     });
     handle.addEventListener("pointermove", (event) => {
       if (!drag) return;
-      const maxLeft = Math.max(0, workspace.clientWidth - 80);
-      const maxTop = Math.max(0, workspace.clientHeight - 45);
+      const maxLeft = Math.max(0, workspace.clientWidth - win.offsetWidth);
+      const maxTop = Math.max(0, workspace.clientHeight - win.offsetHeight);
       win.style.left = `${Math.min(maxLeft, Math.max(0, drag.left + event.clientX - drag.x))}px`;
       win.style.top = `${Math.min(maxTop, Math.max(0, drag.top + event.clientY - drag.y))}px`;
     });
@@ -276,9 +257,6 @@
   }
 
   window.rnEdisiOpenWindow = createWindow;
-  const moduleDialog = document.querySelector("[data-module-dialog]");
-  const moduleForm = document.querySelector("[data-module-form]");
-  const moduleSelect = document.querySelector("[data-module-select]");
   const moduleStatus = document.querySelector("[data-module-status]");
   const templateSelect = document.querySelector("[data-dms-template]");
   const { labels, load, resolveTemplate, remember, visible } = window.RNDmsMenus;
@@ -300,17 +278,55 @@
         item.element.querySelector("[data-close]").click();
       }
     }
-    moduleSelect.querySelectorAll("[data-dms-group]").forEach((group) => group.remove());
+    catalogList.replaceChildren();
     for (const agency of [template, "bersama"]) {
       const entries = available.filter((menu) => (agency === "bersama") === (menu.instansi === "bersama"));
       if (!entries.length) continue;
-      const group = document.createElement("optgroup");
-      group.label = labels[agency];
+      const group = document.createElement("section");
       group.dataset.dmsGroup = agency;
-      entries.forEach((menu) => group.append(new Option(menu.judul, "dms:" + menu.id)));
-      moduleSelect.append(group);
+      const title = document.createElement("h2");
+      title.textContent = labels[agency];
+      const list = document.createElement("ul");
+      for (const menu of entries) {
+        addMenuLink(list, menu.judul, "dms-modul.html?menu=" + encodeURIComponent(menu.id), menu.id);
+      }
+      group.append(title, list);
+      catalogList.append(group);
     }
   }
+
+  function addMenuLink(list, title, url, menuId) {
+    const row = document.createElement("li");
+    const anchor = document.createElement("a");
+    anchor.textContent = title;
+    anchor.href = url;
+    if (menuId) anchor.dataset.dmsMenu = menuId;
+    anchor.addEventListener("click", (event) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      createWindow(title, url, menuId);
+      if (window.matchMedia("(max-width: 850px)").matches) {
+        menuToggle.setAttribute("aria-expanded", "false");
+        showMap.scrollIntoView({ block: "nearest" });
+      }
+      showMap.focus({ preventScroll: true });
+    });
+    row.append(anchor);
+    list.append(row);
+  }
+
+  const rnList = nav.querySelector("[data-rn-modules]");
+  for (const [route, title] of moduleRoutes) addMenuLink(rnList, title, route);
+
+  document.querySelectorAll("[data-panel-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.setAttribute("aria-expanded", String(button.getAttribute("aria-expanded") === "false"));
+    });
+  });
+  showMap.addEventListener("click", () => {
+    for (const item of windows.values()) setMinimized(item, true);
+    workspace.querySelector("[data-live-map]").focus();
+  });
 
   async function refreshTemplate() {
     const request = ++catalogRequest;
@@ -322,31 +338,32 @@
     templateSelect.disabled = selection.managed;
     templateSelect.title = selection.managed ? "Template ditetapkan organisasi RN" : "";
     moduleStatus.textContent = catalog ? "" : "Daftar modul DMS belum dapat dimuat.";
+    moduleStatus.hidden = !!catalog;
   }
 
   templateSelect.addEventListener("change", () => {
     remember(templateSelect.value);
     applyTemplate(templateSelect.value);
   });
+  let previousUser;
   window.addEventListener("rn-dms-session", () => {
-    for (const item of windows.values()) {
-      if (item.dmsMenu) item.element.querySelector("[data-close]").click();
+    if (previousUser !== undefined && previousUser !== rnSession.user) {
+      for (const item of windows.values()) {
+        if (!rnSession.user || rnSession.user === "Guest" || item.dmsMenu) {
+          item.element.querySelector("[data-close]").click();
+        } else {
+          item.element.querySelector("iframe").src = item.url;
+        }
+      }
     }
+    previousUser = rnSession.user;
     refreshTemplate();
   });
-  document.querySelector("[data-add-module]")?.addEventListener("click", () => moduleDialog?.showModal());
-  moduleForm?.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const route = moduleSelect.value;
-    const menu = visible(menus, operationTemplate).find(({ id }) => route === "dms:" + id);
-    if (menu) {
-      moduleDialog.close();
-      window.rnEdisiOpenWindow(menu.judul, "dms-modul.html?menu=" + encodeURIComponent(menu.id), menu.id);
-    } else if (moduleRoutes.has(route)) {
-      moduleDialog.close();
-      createWindow(moduleRoutes.get(route), route);
-    }
-  });
+  const requested = new URLSearchParams(location.search).get("buka");
+  const page = requested?.match(/^([a-z0-9][a-z0-9-]*\.html)(?:[?#].*)?$/i)?.[1];
+  if (page && !["edisi-tertutup.html", "auth.html", "dms-modul.html"].includes(page.toLowerCase())) {
+    createWindow(moduleRoutes.get(page) || page.replace(/\.html$/i, "").replaceAll("-", " "), requested);
+  }
 
   const poskoDialog = document.querySelector("[data-posko-dialog]");
   const poskoForm = document.querySelector("[data-posko-form]");
@@ -365,4 +382,5 @@
   });
   document.querySelectorAll("[data-dialog-cancel]").forEach((button) => button.addEventListener("click", () => button.closest("dialog")?.close()));
   updateStatus();
+  refreshRnSession();
 })();

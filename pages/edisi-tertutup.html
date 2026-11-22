@@ -12,7 +12,7 @@
   <link rel="apple-touch-icon" href="/rescue-net/assets/img/favicon/favicon-180.png?v=20261114">
   <link rel="stylesheet" href="../assets/css/style.css?v=font13-20261109">
   <link rel="stylesheet" href="../assets/vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="../assets/css/rn-edisi-tertutup.css?v=gelap-rapi-20261122">
+  <link rel="stylesheet" href="../assets/css/rn-edisi-tertutup.css?v=layout-20261122">
   <link rel="stylesheet" href="../assets/css/rn-dms-module.css?v=dms-20261122">
 </head>
 <body class="rn-dms-page">
@@ -20,7 +20,7 @@
     <header class="rn-dms-header">
       <a class="rn-dms-brand" href="edisi-tertutup.html" aria-label="Rescue-Net DMS">
         <span class="rn-dms-seal" aria-hidden="true"><b>RN</b></span>
-        <span class="rn-dms-brand-copy"><strong>BNPB • TNI/POLRI • PMI • Kementerian — Disaster Management System</strong><small>Rescue-Net Edisi Tertutup</small></span>
+        <span class="rn-dms-brand-copy"><strong>Disaster Management System</strong><small>Rescue-Net Edisi Tertutup</small></span>
       </a>
       <label class="dms-template-control">Template operasi
         <select data-dms-template disabled>
@@ -39,7 +39,6 @@
         <span class="rn-dms-classification"><span aria-hidden="true">▣</span> RAHASIA / TERBATAS</span>
         <span class="rn-dms-status-chip" data-rn-session role="status" aria-live="polite">Memeriksa sesi…</span>
         <button class="rn-dms-window-action" type="button" data-rn-auth>Login</button>
-        <button class="rn-dms-window-action" type="button" data-add-module>+ Jendela Modul</button>
         <button class="rn-dms-window-action primary" type="button" data-add-posko>+ Jendela Posko</button>
       </div>
     </header>
@@ -48,44 +47,29 @@
 
     <div class="rn-dms-layout" data-agency-layout>
       <aside class="rn-dms-panel rn-dms-command" aria-labelledby="commandTitle">
-        <div class="rn-dms-panel-title"><div><strong id="commandTitle">Command Hierarchy</strong><small data-agency-label>BNPB-BPBD</small></div><button type="button" class="rn-dms-icon-button" aria-label="Menu hierarki" title="Menu hierarki">⋮</button></div>
-        <div class="rn-dms-command-tree" role="tree" aria-label="Hierarki komando pratinjau">
-          <div class="rn-dms-tree-row level-0" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon">◈</span><strong>Pusat Komando</strong></div>
-          <div class="rn-dms-tree-row level-1" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon green">⬟</span><span>Provinsi</span></div>
-          <div class="rn-dms-tree-row level-2" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon green">⬟</span><span>Kabupaten / Kota</span></div>
-          <div class="rn-dms-tree-row level-3" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon gold">⬟</span><span>Koordinator Wilayah</span></div>
-          <div class="rn-dms-tree-row level-4" role="treeitem"><span class="rn-dms-chevron">⌄</span><span class="rn-dms-tree-icon pale">♟</span><span>Satgas / Unit</span></div>
-        </div>
-        <div class="rn-dms-left-divider"></div>
-        <div class="rn-dms-panel-title compact"><strong>Modul Operasi RN</strong><span class="rn-dms-mini-label">MENU</span></div>
-        <nav class="rn-dms-module-nav" aria-label="Modul Rescue-Net">
-          <a href="bencana-aktif.html"><span>⌖</span> Bencana & Wilayah</a>
-          <a href="war-room.html"><span>▦</span> Control Centre</a>
-          <a href="peta-nasional.html"><span>▧</span> Peta Operasi</a>
-          <a href="sitrep.html"><span>▤</span> Generator SITREP</a>
-          <a href="management-distribusi.html"><span>♧</span> Logistik & Distribusi</a>
-          <a href="management-relawan.html"><span>♙</span> Relawan & Posko</a>
-          <a href="search-found.html"><span>⌕</span> Search & Found</a>
-          <a href="jejak-audit.html"><span>≡</span> Audit RN</a>
+        <button class="rn-dms-panel-toggle" type="button" data-panel-toggle aria-expanded="false" aria-controls="dms-menu">Menu operasi</button>
+        <nav id="dms-menu" class="rn-dms-module-nav" aria-label="Menu operasi DMS">
+          <div class="rn-dms-panel-title"><div><strong id="commandTitle">Menu operasi</strong><small data-agency-label>BNPB-BPBD</small></div></div>
+          <div data-dms-catalog></div>
+          <p data-module-status role="status"></p>
+          <section aria-labelledby="dms-rn-title">
+            <h2 id="dms-rn-title">Bersama · Modul RN</h2>
+            <ul data-rn-modules></ul>
+          </section>
         </nav>
-        <div class="rn-dms-panel-note">Node privat · data dan hak akses mengikuti konfigurasi instansi.</div>
       </aside>
 
       <main class="rn-dms-map-column">
         <div class="rn-dms-map-toolbar">
-          <div><strong>Tactical GIS Map</strong><small>Peta Operasi Bersama · jendela dapat digeser, diubah ukuran, atau diminimalkan</small></div>
+          <div><strong>Peta operasi bersama</strong><small>GIS · Bencana aktif dan posko</small></div>
           <div class="rn-dms-map-tools">
-            <button type="button" title="Lapisan peta" aria-label="Lapisan peta">▱</button>
-            <button type="button" title="Personel" aria-label="Personel">♙</button>
-            <button type="button" title="Sumber daya" aria-label="Sumber daya">▣</button>
-            <button type="button" title="Informasi peta" aria-label="Informasi peta">i</button>
+            <button type="button" data-show-map hidden>Kembali ke peta</button>
           </div>
         </div>
         <div class="rn-edisi-workspace" data-window-workspace aria-label="Peta operasi dan ruang kerja jendela">
-          <div class="rn-dms-live-map" data-live-map role="region" aria-label="Peta live bencana aktif dari Rescue-Net"></div>
+          <div class="rn-dms-live-map" data-live-map tabindex="-1" role="region" aria-label="Peta live bencana aktif dari Rescue-Net"></div>
           <div class="rn-dms-map-watermark" data-live-chip>MEMUAT DATA RN…</div>
           <div class="rn-dms-live-empty" data-live-empty hidden><b data-live-empty-title>Tidak ada bencana riil aktif</b><span data-live-empty-text>Peta akan menampilkan bencana dan posko begitu RN mencatat bencana aktif. Pilih Lihat Simulasi untuk data latihan.</span></div>
-          <div class="rn-edisi-workspace-empty" data-window-empty><b>Ruang peta operasi</b><span>Tambah jendela modul atau beberapa posko untuk menata ruang kendali.</span><em>Seret judul jendela · ubah ukuran · minimalkan · maksimalkan</em></div>
           <div class="rn-dms-map-legend"><span><i class="red"></i> Kritis</span><span><i class="amber"></i> Tinggi</span><span><i class="cyan"></i> Waspada</span><small>Lingkaran besar = bencana · titik = posko</small></div>
         </div>
         <div class="rn-edisi-taskbar" data-window-taskbar aria-label="Jendela terbuka"><span class="rn-edisi-taskbar-label">JENDELA</span></div>
@@ -93,36 +77,22 @@
       </main>
 
       <aside class="rn-dms-right-rail" aria-label="Ringkasan operasi">
-        <section class="rn-dms-panel rn-dms-sitrep">
-          <div class="rn-dms-panel-title"><div><strong>Real-Time SITREP</strong><small>Ringkasan situasi</small></div><span class="rn-dms-status-chip">LIVE · RN</span></div>
-          <div class="rn-dms-stat-list">
-            <article><div><strong data-rn-active-events>—</strong><small data-live-active-label>Bencana riil aktif</small></div><span class="rn-dms-spark cyan" aria-hidden="true">⌁⌁⌁⌁</span></article>
-            <article><div><strong data-live-jiwa>—</strong><small>Jiwa berisiko</small></div><span class="rn-dms-spark amber" aria-hidden="true">⌁⌁⌁⌁</span></article>
-            <article><div><strong data-live-kebutuhan>—</strong><small>Kebutuhan kritis</small></div><span class="rn-dms-spark amber" aria-hidden="true">⌁⌁⌁⌁</span></article>
-            <article><div><strong data-live-posko-kritis>—</strong><small>Posko kritis</small></div><span class="rn-dms-spark cyan" aria-hidden="true">⌁⌁⌁⌁</span></article>
-            <article><div><strong data-live-distribusi>—</strong><small>Distribusi terhambat</small></div><span class="rn-dms-spark cyan" aria-hidden="true">⌁⌁⌁⌁</span></article>
-          </div>
-          <ul class="rn-dms-live-events" data-live-events aria-label="Daftar bencana aktif"><li class="is-empty">Memuat…</li></ul>
-          <p class="rn-dms-muted-note" data-live-source>Sumber: Bencana Aktif RN. Diperbarui tiap 1 menit.</p>
-        </section>
-
-        <section class="rn-dms-panel rn-dms-logistics">
-          <div class="rn-dms-panel-title"><div><strong>Logistics Stock</strong><small>Stok bantuan utama</small></div><span class="rn-dms-panel-more">···</span></div>
-          <div class="rn-dms-stock-list">
-            <div><span class="rn-dms-stock-icon">▤</span><span class="rn-dms-stock-name">Ransum</span><b>—</b><i><em></em></i></div>
-            <div><span class="rn-dms-stock-icon">⌂</span><span class="rn-dms-stock-name">Tenda</span><b>—</b><i><em></em></i></div>
-            <div><span class="rn-dms-stock-icon">✚</span><span class="rn-dms-stock-name">Obat-obatan</span><b>—</b><i><em></em></i></div>
-            <div><span class="rn-dms-stock-icon">⚒</span><span class="rn-dms-stock-name">Alat kerja</span><b>—</b><i><em></em></i></div>
-          </div>
-          <p class="rn-dms-muted-note">Ringkasan stok belum dipetakan ke API RN; buka modul Logistik & Distribusi untuk data yang tersedia.</p>
-        </section>
-
-        <section class="rn-dms-panel rn-dms-federation">
-          <div class="rn-dms-panel-title"><div><strong>Federation Gateway</strong><small>Antrian persetujuan</small></div><span class="rn-dms-panel-more">···</span></div>
-          <div class="rn-dms-empty-queue"><span aria-hidden="true">⇄</span><strong>Belum ada permintaan</strong><small>Permintaan berbagi data akan tampil di sini setelah gerbang federasi tersedia.</small></div>
-          <div class="rn-dms-approval-actions"><button type="button" disabled>Setujui</button><button type="button" disabled>Tolak</button></div>
-        </section>
-        <div class="rn-dms-security-note"><span aria-hidden="true">▣</span><span><b>Kontrol keamanan PDF</b><small>SSO, 2FA, klasifikasi, audit akses, dan redaksi federasi masih rancangan.</small></span></div>
+        <button class="rn-dms-panel-toggle" type="button" data-panel-toggle aria-expanded="false" aria-controls="dms-sitrep">Ringkasan operasi</button>
+        <div id="dms-sitrep">
+          <section class="rn-dms-panel rn-dms-sitrep">
+            <div class="rn-dms-panel-title"><div><strong>Real-Time SITREP</strong><small>Ringkasan situasi</small></div><span class="rn-dms-status-chip">LIVE · RN</span></div>
+            <div class="rn-dms-stat-list">
+              <article><div><strong data-rn-active-events>—</strong><small data-live-active-label>Bencana riil aktif</small></div></article>
+              <article><div><strong data-live-jiwa>—</strong><small>Jiwa berisiko</small></div></article>
+              <article><div><strong data-live-kebutuhan>—</strong><small>Kebutuhan kritis</small></div></article>
+              <article><div><strong data-live-posko-kritis>—</strong><small>Posko kritis</small></div></article>
+              <article><div><strong data-live-distribusi>—</strong><small>Distribusi terhambat</small></div></article>
+            </div>
+            <h2 class="rn-dms-events-title">Daftar bencana aktif</h2>
+            <ul class="rn-dms-live-events" data-live-events aria-label="Daftar bencana aktif"><li class="is-empty">Memuat…</li></ul>
+            <p class="rn-dms-muted-note" data-live-source>Sumber: Bencana Aktif RN. Diperbarui tiap 1 menit.</p>
+          </section>
+        </div>
       </aside>
     </div>
 
@@ -138,19 +108,6 @@
       <div class="rn-edisi-dialog-actions"><button type="button" data-rn-login-cancel>Batal</button><button type="submit">Masuk</button></div>
     </form>
   </dialog>
-  <dialog class="rn-edisi-dialog" data-module-dialog>
-    <form data-module-form>
-      <h3>Buka jendela modul</h3>
-      <label>Modul<select data-module-select required>
-        <option value="">Pilih modul…</option>
-        <optgroup label="Modul Rescue-Net">
-        <option value="bencana-aktif.html">Bencana Aktif</option><option value="war-room.html">Control Centre</option><option value="peta-nasional.html">Peta Nasional</option><option value="sitrep.html">SITREP RN</option><option value="management-distribusi.html">Manajemen Distribusi</option><option value="posko-logistik.html">Posko Logistik</option><option value="posko-distribusi.html">Posko Distribusi</option><option value="posko-medis-detail.html">Posko Medis</option><option value="shelter-detail.html">Shelter</option><option value="dapur-umum.html">Dapur Umum</option><option value="management-relawan.html">Relawan</option><option value="laporan-masyarakat.html">Laporan Masyarakat</option><option value="search-found.html">Search & Found</option><option value="verification-approval.html">Sistem Verifikasi</option><option value="jejak-audit.html">Jejak Audit</option>
-        </optgroup>
-      </select></label>
-      <small data-module-status role="status"></small>
-      <div class="rn-edisi-dialog-actions"><button type="button" data-dialog-cancel>Batal</button><button type="submit">Buka jendela</button></div>
-    </form>
-  </dialog>
   <dialog class="rn-edisi-dialog" data-posko-dialog>
     <form data-posko-form>
       <h3>Buka jendela posko</h3><label>ID posko<input data-posko-id required maxlength="140" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,139}" placeholder="mis. ID-posko" autocomplete="off"></label>
@@ -160,8 +117,8 @@
   </dialog>
   <script src="../assets/vendor/leaflet/leaflet.js"></script>
   <script src="../assets/js/rn-dms-menus.js?v=dms-20261122e"></script>
-  <script src="../assets/js/rn-edisi-window-manager.js?v=dms-20261122e"></script>
-  <script src="../assets/js/rn-edisi-live.js?v=live-20261122c"></script>
+  <script src="../assets/js/rn-edisi-window-manager.js?v=layout-20261122"></script>
+  <script src="../assets/js/rn-edisi-live.js?v=layout-20261122"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
   <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
   <script src="../assets/js/rn-ai-chat.js?v=font13-20261109"></script>

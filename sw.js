@@ -7,7 +7,7 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v11"; // v11 2026-11-22: CT202 same-origin RN API integration
+const CACHE = "rescue-net-web-v12"; // v12 2026-11-22: live real-event count in DMS preview
 const PRECACHE = [
  "/rescue-net/index.html",
  "/rescue-net/index-rn-publik.html",
@@ -48,7 +48,7 @@ const PRECACHE = [
  "/rescue-net/assets/css/rn-mobile-drawer.css",
  "/rescue-net/assets/css/rn-navigation-v2.css",
  "/rescue-net/assets/css/style.css",
- "/rescue-net/assets/css/rn-edisi-tertutup.css?v=rn-api-20261122",
+ "/rescue-net/assets/css/rn-edisi-tertutup.css?v=rn-api-20261122b",
  "/rescue-net/assets/js/api.js",
  "/rescue-net/assets/js/bencana-aktif.js",
  "/rescue-net/assets/js/community-report.js",
@@ -61,7 +61,7 @@ const PRECACHE = [
  "/rescue-net/assets/js/rn-lightbox.js",
  "/rescue-net/assets/js/rn-logistik-info.js",
  "/rescue-net/assets/js/rn-mobile-drawer.js?v=edisi-tertutup-20261121",
- "/rescue-net/assets/js/rn-edisi-window-manager.js?v=rn-api-20261122",
+ "/rescue-net/assets/js/rn-edisi-window-manager.js?v=rn-api-20261122b",
  "/rescue-net/assets/js/rn-navigation-v2.js?v=edisi-tertutup-20261121",
  "/rescue-net/assets/js/rn-posko-picker.js",
  "/rescue-net/assets/js/rn-posko-scope.js",

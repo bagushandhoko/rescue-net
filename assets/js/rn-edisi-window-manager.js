@@ -107,7 +107,24 @@
     }
   });
   document.querySelector("[data-rn-login-cancel]")?.addEventListener("click", () => loginDialog?.close());
+  async function refreshActiveEventCount() {
+    const node = document.querySelector("[data-rn-active-events]");
+    if (!node) return;
+    try {
+      const response = await fetch("/rescue-net-frappe/api/method/rescue_net.api_ai.public_active_disasters", {
+        credentials: "include", headers: { Accept: "application/json" }
+      });
+      if (!response.ok) throw new Error("summary unavailable");
+      const payload = await response.json();
+      const events = (payload && payload.message) || [];
+      node.textContent = Array.isArray(events) ? String(events.length) : "—";
+    } catch (_) {
+      node.textContent = "—";
+    }
+  }
+
   refreshRnSession();
+  refreshActiveEventCount();
   const count = document.querySelector("[data-window-count]");
   const windows = new Map();
   let zIndex = 2;

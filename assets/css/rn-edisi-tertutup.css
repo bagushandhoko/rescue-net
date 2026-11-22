@@ -95,3 +95,19 @@ html.rn-window-mode body{min-width:0!important;overflow-x:hidden!important;backg
 .rn-edisi-taskbar{padding-left:130px;padding-right:300px}
 @media (max-width:720px){.rn-dms-data-view{right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));padding:4px 6px}.rn-dms-data-view>span{display:none}.rn-dms-data-view button{min-height:30px;padding:0 8px;font-size:10px}body{padding-bottom:60px}}
 @media (max-width:720px){.rn-aic-btn{padding:9px 12px!important;font-size:12px!important}.rn-dms-data-view{max-width:calc(100vw - 136px);padding:3px 4px}.rn-dms-data-view button{min-height:30px;padding:0 6px;font-size:9px;white-space:nowrap}}
+/* 22 Nov (owner): Control Centre ikut tema gelap DMS - sidebar, kartu KPI, panel, modul (palet sama dengan .panel/.sidebar di atas) */
+.cc-sidebar{color:#dce6ed!important;background:linear-gradient(180deg,#182431,#121c28)!important;border-right-color:#344454!important}
+.cc-sidebar .rn-nav-v2-group,.cc-sidebar .rn-nav-v2-summary,.cc-sidebar details,.cc-sidebar summary{background:transparent!important;color:#dce6ed!important}
+.cc-sidebar .rn-nav-v2-label,.cc-sidebar .rn-nav-v2-link,.cc-sidebar a,.cc-sidebar span{color:#cbd7e0!important;background:transparent!important}
+.cc-sidebar .rn-nav-v2-link:hover,.cc-sidebar .rn-nav-v2-link.active,.cc-sidebar a:hover{color:#fff!important;background:#2a3948!important}
+.cc-kpi,.cc-card,.cc-system,.cc-modules,.cc-priority{color:#e4ebf1!important;background:#1b2836!important;border-color:#334657!important;box-shadow:0 10px 28px rgba(0,0,0,.2)!important}
+.cc-kpi :is(b,strong,h2,h3,span:not(.cc-kpi-icon)),.cc-card :is(b,strong,h2,h3),.cc-modules :is(b,strong,h3){color:#eef3f7!important}
+.cc-kpi :is(small,p),.cc-card :is(small,p),.cc-modules small,.cc-mod-status-label,.cc-system small{color:#a9b8c6!important}
+.cc-kpi-icon.red{background:#3a2026!important;color:#ff9a8f!important}
+.cc-kpi-icon.orange{background:#3a2c1c!important;color:#ffbf7a!important}
+.cc-kpi-icon.green{background:#183427!important;color:#7fd9a8!important}
+.cc-card-more,.cc-card a{color:#ffab84!important}
+.cc-card table td,.cc-card table th{color:#d7e0e8!important;border-color:#334657!important}
+.cc-kpi em{background:transparent!important;color:#a9b8c6!important}.cc-kpi em.cc-kpi-warn{color:#ffbf7a!important}.cc-card em{background:transparent!important;color:#ffd29a!important}.cc-kpi-bar{background:#2b3b4b!important}
+.rn-public-login{background:#bd683d!important;color:#fff!important}
+.cc label>span{color:#d9b8a2!important}

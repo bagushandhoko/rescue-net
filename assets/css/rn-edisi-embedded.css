@@ -1,0 +1,34 @@
+html.rn-window-mode {
+  color-scheme: dark;
+  background: #111a24;
+}
+
+.rn-window-mode :is(
+  .rn-public-header, .rn-public-footer, .rn-public-toggle, .rn-public-links,
+  body > footer, .rn-drawer-topbar, .rn-drawer-ops,
+  .sidebar, .rn-mobile-drawer, .rn-drawer-panel, .rn-drawer-backdrop,
+  .rn-mobile-menu-toggle, .rn-aic-btn, .rn-mode-toggle, .rn-event-picker,
+  #rnNoRealNotice
+) {
+  display: none !important;
+}
+
+.rn-window-mode body {
+  min-width: 0;
+  background: #111a24 !important;
+  color: #e5edf3 !important;
+}
+
+.rn-window-mode :is(.app-shell, .main, main) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.rn-window-mode .app-shell {
+  display: block;
+}
+
+.rn-window-mode :is(.table-wrap, .table-scroll) {
+  max-width: 100%;
+  overflow-x: auto;
+}

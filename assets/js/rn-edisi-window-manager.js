@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+  const embeddedStyles = new URL("../css/rn-edisi-embedded.css?v=1", document.currentScript.src).href;
   const workspace = document.querySelector("[data-window-workspace]");
   const taskbar = document.querySelector("[data-window-taskbar]");
   if (!workspace || !taskbar) return;
@@ -192,7 +193,13 @@
     frame.referrerPolicy = "same-origin";
     frame.src = url;
     frame.addEventListener("load", () => {
-      try { frame.contentDocument.documentElement.classList.add("rn-window-mode"); } catch (_) { /* Keep module usable if embedding is restricted. */ }
+      const embedded = frame.contentDocument;
+      if (!embedded?.head || embedded.URL === "about:blank") return;
+      embedded.documentElement.classList.add("rn-window-mode");
+      const stylesheet = embedded.createElement("link");
+      stylesheet.rel = "stylesheet";
+      stylesheet.href = embeddedStyles;
+      embedded.head.append(stylesheet);
     });
 
     const foot = document.createElement("footer");

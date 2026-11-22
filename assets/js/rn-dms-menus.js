@@ -6,6 +6,8 @@
   const storageKey = "rn_dms_operation_template";
   const labels = Object.freeze({ umum: "Umum", bnpb: "BNPB-BPBD", tni: "TNI", pmi: "PMI", bersama: "Bersama" });
   const valid = (value) => value !== "bersama" && Object.hasOwn(labels, value);
+  // Di RN (asal=rn) template HANYA dari organisasi pengguna (API); tanpa pilihan manual.
+  const strict = new URLSearchParams(location.search).get("asal") === "rn" || window.RN_DMS_STRICT === true;
   let catalog;
 
   async function getJSON(url) {
@@ -40,12 +42,12 @@
       const { message } = await getJSON(api + "rescue_net.api_org_profile.my_operation_template");
       if (valid(message?.template)) return { value: message.template, managed: true };
     } catch (_) {}
-    return { value: localTemplate(), managed: false };
+    return { value: strict ? "umum" : localTemplate(), managed: false };
   }
 
   function visible(menus, template) {
     return menus.filter((menu) => menu.instansi === "bersama" || menu.instansi === template);
   }
 
-  window.RNDmsMenus = { labels, load, resolveTemplate, remember, visible, getJSON, api };
+  window.RNDmsMenus = { strict, labels, load, resolveTemplate, remember, visible, getJSON, api };
 })();

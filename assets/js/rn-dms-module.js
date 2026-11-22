@@ -8,6 +8,12 @@
   const form = find("[data-dms-form]");
   const back = find("[data-dms-back]");
 
+  if (window.RNDmsMenus.strict) {
+    back.href = "menu-instansi.html";
+    back.target = "_self";
+    back.textContent = "← Kembali ke Menu Instansi";
+  }
+
   if (parent !== window) {
     back.addEventListener("click", (event) => {
       const frame = window.frameElement;

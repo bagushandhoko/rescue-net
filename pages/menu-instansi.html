@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menu Instansi · Rescue-Net</title>
+  <link rel="stylesheet" href="../assets/css/rn-dms-module.css?v=dms-20261122">
+</head>
+<body class="dms-module">
+  <main class="dms-module-main">
+    <a href="organisasi-posko.html">← Kembali ke Organisasi</a>
+    <header>
+      <h1>Menu Instansi</h1>
+      <p data-mi-summary>Menu khusus untuk organisasi tertutup sesuai template operasi (BNPB/BPBD, TNI, PMI).</p>
+    </header>
+    <p data-mi-status role="status">Memuat menu…</p>
+    <div data-mi-groups></div>
+  </main>
+  <script>window.RN_DMS_STRICT = true;</script>
+  <script src="../assets/js/rn-dms-menus.js?v=dms-20261122e"></script>
+  <script>
+  (async () => {
+    "use strict";
+    const { load, resolveTemplate, visible, labels } = window.RNDmsMenus;
+    const status = document.querySelector("[data-mi-status]");
+    const groups = document.querySelector("[data-mi-groups]");
+    try {
+      const [menus, selection] = await Promise.all([load(), resolveTemplate()]);
+      const list = visible(menus, selection.value);
+      status.textContent = selection.managed
+        ? "Template operasi organisasi Anda: " + labels[selection.value] + "."
+        : "Masuk dengan akun anggota organisasi untuk melihat menu khusus instansi. Saat ini hanya menu bersama yang tampil.";
+      if (selection.managed && selection.value === "umum") {
+        status.textContent += " Menu khusus BNPB/TNI/PMI hanya untuk organisasi Tertutup; pemilik organisasi dapat mengganti template.";
+      }
+      for (const inst of [selection.value, "bersama"]) {
+        const items = list.filter((m) => (inst === "bersama") === (m.instansi === "bersama"));
+        if (!items.length) continue;
+        const section = document.createElement("section");
+        section.className = "dms-module-panel";
+        const h = document.createElement("h2");
+        h.textContent = labels[inst];
+        section.append(h);
+        const ul = document.createElement("ul");
+        for (const m of items) {
+          const li = document.createElement("li");
+          const a = document.createElement("a");
+          a.href = "dms-modul.html?asal=rn&menu=" + encodeURIComponent(m.id);
+          a.textContent = m.judul;
+          const small = document.createElement("small");
+          small.textContent = " · " + m.klasifikasi + " — " + m.ringkas;
+          li.append(a, small);
+          ul.append(li);
+        }
+        section.append(ul);
+        groups.append(section);
+      }
+    } catch (_) {
+      status.textContent = "Menu belum dapat dimuat. Coba muat ulang halaman.";
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+:root { color-scheme: dark; }
+.dms-module {
+  margin: 0;
+  background: #111a24;
+  color: #e7edf3;
+  font: 1rem/1.5 system-ui, sans-serif;
+}
+.dms-module *, .dms-template-control * { box-sizing: border-box; }
+.dms-module-main { max-width: 72rem; margin-inline: auto; padding: clamp(12px, 3vw, 28px); }
+.dms-module a { color: #9fdaef; }
+.dms-module h1 { margin: .7rem 0 .2rem; line-height: 1.18; font-size: clamp(1.45rem, 4vw, 2.1rem); }
+.dms-module h2 { margin: 0 0 .65rem; font-size: 1.16rem; }
+.dms-module p { margin: .35rem 0 .8rem; color: #b5c6d4; }
+.dms-module-main, .dms-module td, .dms-module th { overflow-wrap: anywhere; }
+.dms-classification { display: inline-block; border: 1px solid #52697b; border-radius: 4px; padding: 2px 8px; font-size: .75rem; font-weight: 750; }
+.dms-classification[data-level="TERBATAS"] { color: #ffc98b; border-color: #a27646; }
+.dms-classification[data-level="RAHASIA"] { color: #ffaaa2; border-color: #a96560; }
+.dms-module [hidden] { display: none; }
+.dms-module-panel { margin-top: 1rem; padding: clamp(10px, 2vw, 20px); border: 1px solid #344657; border-radius: 8px; background: #1b2937; }
+.dms-module table { width: 100%; table-layout: fixed; border-collapse: collapse; text-align: left; }
+.dms-module th, .dms-module td { padding: .45rem; border-bottom: 1px solid #405565; vertical-align: top; }
+.dms-module th { font-size: .875rem; }
+.dms-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.dms-fields label { display: grid; align-content: start; gap: 5px; min-width: 0; }
+.dms-module input, .dms-module textarea, .dms-module select, .dms-template-control select {
+  min-width: 0; width: 100%; min-height: 38px; padding: 6px 8px;
+  border: 1px solid #536a7d; border-radius: 5px; background: #111b26; color: #e7edf3; font: inherit;
+}
+.dms-module textarea { min-height: 5rem; resize: vertical; }
+.dms-module button {
+  margin-top: 1rem; min-height: 38px; padding: 6px 12px; border: 1px solid #c57d51;
+  border-radius: 5px; background: #854629; color: white; font: inherit; cursor: pointer;
+}
+.dms-template-control { display: grid; gap: 3px; color: #c8d1d9; font-size: .75rem; font-weight: 700; }

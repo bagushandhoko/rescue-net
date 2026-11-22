@@ -52,7 +52,7 @@
       "position:fixed", "right:14px", "bottom:calc(14px + env(safe-area-inset-bottom,0px))", "z-index:9990",
       "border:0", "border-radius:999px", "padding:11px 16px", "box-sizing:border-box", "min-width:107px",
       "text-align:center", "white-space:nowrap", "font:700 14px/1 system-ui,sans-serif", "cursor:pointer",
-      "background:linear-gradient(135deg,#ef523d,#e8835d)", "color:#fff",
+      "background:linear-gradient(135deg,#bf4528,#9e3522)", "color:#fff",
       "box-shadow:0 8px 24px rgba(200,70,40,.35)"
     ].join(";");
     if (!document.getElementById("rnModeToggleCss")) {

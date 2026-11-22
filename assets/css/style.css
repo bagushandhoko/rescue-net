@@ -11,6 +11,9 @@
   --peach: #f4a786;
   --peach2: #e8835d;
   --coral: #ef6f5e;
+  --accent-strong: #b8432a;
+  --green-strong: #237a52;
+  --blue-strong: #2f6fa8;
   --red: #d84545;
   --orange: #dd8a2f;
   --green: #2f9b68;
@@ -282,7 +285,7 @@ a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3
   height: 42px;
   border-radius: 12px;
   background: rgba(230,95,60,.16);
-  color: #c9502f;
+  color: var(--accent-strong, #b8432a);
 }
 
 .kpi-icon svg,
@@ -724,7 +727,7 @@ a.rn-drill-item.is-link:hover { border-color: var(--peach2); background: #fff8f3
 
 .btn.primary {
   color: white;
-  background: linear-gradient(135deg, #f3a17f, #e66f57);
+  background: linear-gradient(135deg, #bf4528, #9e3522);
   border-color: rgba(232,117,88,.45);
   box-shadow: 0 14px 30px rgba(232,117,88,.20);
 }
@@ -1055,7 +1058,7 @@ body.home-page {
 
 .role-card .role-more {
   margin-top: 6px;
-  color: var(--rn-orange, #e8622a);
+  color: var(--accent-strong);
   font-weight: 600;
   font-size: 13px;
 }
@@ -3117,18 +3120,18 @@ html.rn-external-access body:not(.mockup-viewer) .main {
   min-height: auto;
   padding: 7px 16px;
   border-radius: 7px;
-  background: var(--coral, #e8835d);
+  background: var(--accent-strong, #b8432a);
   color: #fff !important;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
-  border: 1px solid var(--coral, #e8835d);
+  border: 1px solid var(--accent-strong, #b8432a);
   transition: background .12s ease;
 }
 
 .rn-public-login:hover {
-  background: #d96f49;
+  background: #9e3522;
 }
 
 /* after login: name chip + a lighter Logout pill */
@@ -4473,7 +4476,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .rn-table th, .rn-table td { text-align: left; padding: 11px 12px; border-bottom: 1px solid rgba(120,80,60,.12); vertical-align: middle; }
 .rn-table th { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #8c827c; font-weight: 800; }
-.rn-table td small { color: #9a8f88; display: block; font-size: 13px; }
+.rn-table td small { color: var(--muted); display: block; font-size: 13px; }
 .rn-table tr:last-child td { border-bottom: 0; }
 .rn-table .rn-gap { color: #c0392b; font-weight: 800; }
 
@@ -4481,10 +4484,10 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 
 .rn-tabs { display: inline-flex; gap: 6px; }
 .rn-tab { padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(232,117,88,.28); background: #fff; font-size: 13px; font-weight: 800; color: #8a5a45; cursor: pointer; }
-.rn-tab.is-active { background: #e87558; color: #fff; border-color: #e87558; }
+.rn-tab.is-active { background: var(--accent-strong); color: #fff; border-color: var(--accent-strong); }
 
 .rn-sub-h { margin: 20px 0 10px; font-size: 14px; }
-.rn-muted { color: #9a8f88; font-size: 13px; }
+.rn-muted { color: var(--muted); font-size: 13px; }
 
 .rn-trace { border: 1px solid rgba(120,80,60,.14); border-radius: 12px; padding: 14px; background: #fff8f4; }
 .rn-trace-line { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 14px; }
@@ -4500,7 +4503,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   height: 26px;
   border-radius: 50%;
   background: rgba(120,80,60,.1);
-  color: #9a8f88;
+  color: var(--muted);
 }
 .rn-trace-node.is-done { background: rgba(63,143,101,.16); color: #2f8a5c; }
 .rn-trace-node.is-current {
@@ -4513,7 +4516,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .rn-upload-tile { display: flex; flex-direction: column; gap: 4px; padding: 14px; border: 1px dashed rgba(232,117,88,.45); border-radius: 12px; text-decoration: none; color: #40312b; background: #fff; }
 .rn-upload-tile b { font-size: 14px; }
-.rn-upload-tile span { font-size: 13px; font-weight: 800; color: #e87558; }
+.rn-upload-tile span { font-size: 13px; font-weight: 800; color: var(--accent-strong); }
 
 .rn-conv { display: grid; gap: 8px; }
 .rn-conv-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 11px; border: 1px solid rgba(120,80,60,.12); border-radius: 9px; font-size: 14px; }
@@ -4528,7 +4531,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 
 .rn-page-status { margin-top: 14px; font-size: 13px; color: #8c827c; }
 
-.btn.ghost { background: transparent; border: 1px solid rgba(232,117,88,.4); color: #e87558; }
+.btn.ghost { background: transparent; border: 1px solid rgba(232,117,88,.4); color: var(--accent-strong); }
 
 @media (max-width: 760px) {
   .rn-upload-grid { grid-template-columns: 1fr; }
@@ -4553,7 +4556,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .btn.mini { min-height:auto; padding:5px 10px; font-size:13px; }
 .rn-table .rn-in { color:#1c5b34; }
 .rn-table .rn-table .rn-out, .rn-table .rn-out { color:#c0392b; }
-.rn-table td small { color:#9a8f88; }
+.rn-table td small { color:var(--muted); }
 .rn-otw { font-weight:800; color:#b26a1a; text-decoration:underline; }
 
 .rn-drawer { position:fixed; inset:0; background:rgba(20,16,14,.55); display:none; z-index:99999; }
@@ -4571,7 +4574,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-fn-nav { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 14px; }
 .rn-fn-label { font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#8a5a45; }
 .rn-fn-tab { padding:7px 14px; border-radius:999px; border:1px solid rgba(232,117,88,.3); background:#fff; font-size:13px; font-weight:800; color:#8a5a45; text-decoration:none; }
-.rn-fn-tab.is-active { background:#e87558; color:#fff; border-color:#e87558; }
+.rn-fn-tab.is-active { background:var(--accent-strong); color:#fff; border-color:var(--accent-strong); }
 .rn-role-banner { margin:0 0 14px; padding:11px 15px; border-radius:11px; font-size:14px; border:1px solid transparent; }
 .rn-role-banner.is-collector { color:#1e4f7a; background:#e6f1fb; border-color:rgba(30,79,122,.25); }
 .rn-role-banner.is-receiver { color:#7a4a12; background:#fff3e0; border-color:rgba(166,91,19,.25); }
@@ -4606,7 +4609,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 }
 
 .rn-sub-h-row { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-.rn-seeall { font-size:13px; font-weight:800; color:#e87558; text-decoration:none; white-space:nowrap; }
+.rn-seeall { font-size:13px; font-weight:800; color:var(--accent-strong); text-decoration:none; white-space:nowrap; }
 .rn-seeall:hover { text-decoration:underline; }
 
 .rn-habis { display:inline-flex; align-items:center; gap:6px; font-size:14px; }
@@ -4635,7 +4638,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   padding:4px 8px 0; font-size:13px; font-weight:700; color:#40312b; line-height:1.35;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
-.rn-bukti-sub { padding:0 8px; font-size:13px; color:#9a8f88; }
+.rn-bukti-sub { padding:0 8px; font-size:13px; color:var(--muted); }
 
 /* Kondisi Stok / Kondisi Posko tiles — filled with latest photo */
 #buktiTiles { margin-bottom:10px; }
@@ -4651,7 +4654,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   place-items:center; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; font-size:13px;
 }
 .rn-upload-tile.is-filled b { padding:6px 10px 0; font-size:13px; }
-.rn-upload-tile.is-filled span { padding:0 10px 8px; font-size:13px; font-weight:700; color:#9a8f88; }
+.rn-upload-tile.is-filled span { padding:0 10px 8px; font-size:13px; font-weight:700; color:var(--muted); }
 
 /* Bukti modal */
 .rn-bukti-modal { position:fixed; inset:0; z-index:100000; display:grid; place-items:center; padding:28px; background:rgba(20,16,14,.82); }
@@ -4675,7 +4678,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-bukti-modal-loc { margin:0 0 10px; color:#8c827c; font-size:14px; }
 .rn-bukti-modal-body > p { font-size:14px; line-height:1.55; color:#4b423d; }
 .rn-bukti-modal-meta { display:grid; grid-template-columns:1fr 1fr; gap:12px 16px; margin:16px 0; }
-.rn-bukti-modal-meta dt { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:#9a8f88; font-weight:800; margin:0; }
+.rn-bukti-modal-meta dt { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:800; margin:0; }
 .rn-bukti-modal-meta dd { margin:2px 0 0; font-size:14px; font-weight:700; color:#40312b; }
 
 @media (max-width:760px) {
@@ -4725,7 +4728,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-auth-tab i { font-style: normal; }
 .rn-auth-tab.is-active {
   background: #fff;
-  color: var(--rn-orange, #e8622a);
+  color: var(--accent-strong);
   box-shadow: 0 1px 3px rgba(104,64,45,.12);
 }
 
@@ -4748,7 +4751,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   cursor: pointer;
   font: inherit;
   font-weight: 750;
-  color: var(--rn-orange, #e8622a);
+  color: var(--accent-strong);
   text-decoration: none;
 }
 .rn-auth-mini-link:hover { text-decoration: underline; }
@@ -4920,7 +4923,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   height: 34px;
   border-radius: 10px;
   background: rgba(232,117,88,.14);
-  color: #c9502f;
+  color: var(--accent-strong, #b8432a);
 }
 .rn-auth-trust i svg, .rn-auth-trust i .rn-ic { width: 18px; height: 18px; }
 .rn-auth-trust b { display: block; font-size: 14px; }
@@ -4958,13 +4961,13 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   margin-bottom: 4px;
   border-radius: 10px;
   background: rgba(232,117,88,.14);
-  color: #c9502f;
+  color: var(--accent-strong, #b8432a);
 }
 .rn-auth-rolecard i svg, .rn-auth-rolecard i .rn-ic { width: 18px; height: 18px; }
 .rn-auth-rolecard b { font-size: 14px; }
 .rn-auth-rolecard span { color: var(--muted); font-size: 13px; line-height: 1.35; }
 .rn-auth-rolecard.is-active {
-  border-color: var(--rn-orange, #e8622a);
+  border-color: var(--accent-strong);
   box-shadow: 0 0 0 2px rgba(232,117,88,.18) inset;
 }
 
@@ -4990,7 +4993,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   height: 30px;
   border-radius: 9px;
   background: rgba(232,117,88,.14);
-  color: #c9502f;
+  color: var(--accent-strong, #b8432a);
 }
 .rn-auth-footer i svg, .rn-auth-footer i .rn-ic { width: 16px; height: 16px; }
 .rn-auth-footer b { display: block; font-size: 14px; }
@@ -5488,10 +5491,10 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-dp-photo-placeholder {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 2px; color: #fff; font-size: 22px;
-  background: linear-gradient(135deg, var(--coral, #e8835d), #d98a3f);
+  background: linear-gradient(135deg, #b8432a, #87451c);
   position: relative;
 }
-.rn-dp-photo-placeholder small { font-size: 13px; color: rgba(255,255,255,.85); text-align: center; padding: 0 4px; }
+.rn-dp-photo-placeholder small { font-size: 13px; color: white; text-align: center; padding: 0 4px; }
 .rn-dp-upload-tile {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4px; border: 1.5px dashed var(--line); background: var(--panel2); color: var(--muted);
@@ -5565,7 +5568,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-sh-need-icon {
   display: grid; place-items: center; flex: none;
   width: 26px; height: 26px; border-radius: 8px;
-  background: rgba(230,95,60,.12); color: #c9502f;
+  background: rgba(230,95,60,.12); color: var(--accent-strong, #b8432a);
 }
 .rn-sh-need-icon svg, .rn-sh-need-icon .rn-ic { width: 14px; height: 14px; }
 .rn-sh-gap-note { font-size: 13px; line-height: 1.5; margin-top: 8px; }
@@ -5893,8 +5896,8 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   padding: 7px 14px; font-size: 13px; cursor: pointer; color: inherit;
 }
 .rn-ev-chip span { color: var(--muted); margin-left: 4px; }
-.rn-ev-chip.is-active { background: var(--coral, #e8835d); border-color: var(--coral, #e8835d); color: #fff; }
-.rn-ev-chip.is-active span { color: rgba(255,255,255,.85); }
+.rn-ev-chip.is-active { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
+.rn-ev-chip.is-active span { color: #fff; }
 
 .rn-ev-toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 .rn-ev-toolbar input[type="search"] {
@@ -5916,7 +5919,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line);
   background: var(--panel2); font-size: 13px; cursor: pointer;
 }
-.rn-ev-page.is-active { background: var(--coral, #e8835d); border-color: var(--coral, #e8835d); color: #fff; }
+.rn-ev-page.is-active { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
 
 @media (max-width: 1100px) {
   .rn-ev-kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -5953,7 +5956,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
   display: flex; align-items: center; justify-content: center; font-size: 13px; flex: 0 0 auto;
 }
 .rn-va-steps li.is-done .rn-va-step-num { background: #2f9e59; border-color: #2f9e59; color: #fff; }
-.rn-va-steps li.is-current .rn-va-step-num { background: var(--coral, #e8835d); border-color: var(--coral, #e8835d); color: #fff; }
+.rn-va-steps li.is-current .rn-va-step-num { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
 
 .rn-va-timeline { list-style: none; margin: 0; padding: 0; }
 .rn-va-timeline li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
@@ -6284,7 +6287,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-pk-support-icon {
   display: grid; place-items: center; margin: 0 auto 6px;
   width: 30px; height: 30px; border-radius: 9px;
-  background: rgba(230,95,60,.12); color: #c9502f;
+  background: rgba(230,95,60,.12); color: var(--accent-strong, #b8432a);
 }
 .rn-pk-support-icon svg, .rn-pk-support-icon .rn-ic { width: 16px; height: 16px; }
 
@@ -6311,7 +6314,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-pr-avatar {
   width: 64px; height: 64px; border-radius: 50%; flex: 0 0 auto;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, var(--coral, #e8835d), #c25a3a);
+  background: linear-gradient(135deg, #bf4528, #9e3522);
   color: #fff; font-size: 22px; font-weight: 700;
 }
 .rn-pr-card-main { flex: 1 1 260px; min-width: 0; }
@@ -6338,7 +6341,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-pr-item-icon {
   flex: none; display: grid; place-items: center;
   width: 30px; height: 30px; border-radius: 9px;
-  background: rgba(230,95,60,.12); color: #c9502f;
+  background: rgba(230,95,60,.12); color: var(--accent-strong, #b8432a);
 }
 .rn-pr-item-icon svg, .rn-pr-item-icon .rn-ic { width: 16px; height: 16px; }
 .rn-inline-icon { display: inline-flex; vertical-align: -3px; width: 14px; height: 14px; margin-right: 5px; color: var(--muted); }
@@ -6883,7 +6886,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-prx-page .rn-pr-meta { flex-direction: column; gap: 4px; font-size: 13px; }
 .rn-prx-page .rn-pr-about { border-left: 1px solid var(--line); padding-left: 18px; }
 .rn-prx-page .rn-pr-about p { font-size: 13px; }
-.rn-prx-page .rn-pr-edit-btn { background: var(--coral, #e8553d); color: #fff; border-color: transparent; font-size: 13px; align-self: flex-start; }
+.rn-prx-page .rn-pr-edit-btn { background: var(--accent-strong); color: #fff; border-color: transparent; font-size: 13px; align-self: flex-start; }
 .rn-prx-page .content-grid { gap: 12px; margin-top: 12px; align-items: stretch; }
 .rn-prx-page .rn-pr-grid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .rn-prx-page .content-grid > .panel { padding: 14px; }
@@ -7037,7 +7040,7 @@ body:not(.home-page) nav a[href*="war-room.html"] {
 .rn-regx-page .form-actions { margin-top: 12px; }
 .rn-regx-page .rn-rp-checklist li { font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
 .rn-regx-page .rn-rp-actions .btn { font-size: 13px; padding: 9px 12px; }
-.rn-regx-page .rn-rp-actions .btn.primary { background: #2fa66a; border-color: #2fa66a; color: #fff; }
+.rn-regx-page .rn-rp-actions .btn.primary { background: var(--green-strong); border-color: var(--green-strong); color: #fff; }
 .rn-regx-page .rn-rp-actions .btn.danger { color: #c2332f; border-color: #e5a7a3; background: #fff; }
 .rn-regx-page .rn-sub-h { font-size: 13px; margin: 14px 0 8px; }
 .rn-regx-page .rn-table td { white-space: normal; padding: 8px 5px; font-size: 13px; }
@@ -7191,9 +7194,9 @@ body.public-report-page:not([data-rn-logged="1"]) .community-report-actions { di
 .vx-subnav[hidden], .vx-pane[hidden] { display: none !important; }
 .vx-sub-btn { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 0; border-radius: 9px; background: transparent; font: inherit; font-size: 13.5px; font-weight: 600; color: #5d4a40; cursor: pointer; }
 .vx-sub-btn:hover { background: rgba(232,117,88,.1); }
-.vx-sub-btn.is-active { background: var(--vx-brand); color: #fff; box-shadow: 0 4px 12px rgba(232,117,88,.3); }
+.vx-sub-btn.is-active { background: var(--accent-strong); color: #fff; box-shadow: 0 4px 12px rgba(232,117,88,.3); }
 .vx-badge { min-width: 20px; padding: 0 6px; border-radius: 999px; background: rgba(0,0,0,.1); font-size: 13px; font-weight: 700; line-height: 20px; text-align: center; }
-.vx-sub-btn.is-active .vx-badge { background: rgba(255,255,255,.28); }
+.vx-sub-btn.is-active .vx-badge { background: rgba(0,0,0,.18); }
 
 /* a pane = head + toolbar + content */
 .vx-pane-head { margin: 0 0 14px; }
@@ -7456,7 +7459,7 @@ html.rn-mapfs-lock, html.rn-mapfs-lock body { overflow: hidden; }
 .rn-menu-item { position: relative; display: inline-block; }
 .rn-menu-item.rn-has-submenu > .rn-menu-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; background: var(--panel2, #fff8f3); border: 1px solid var(--line, rgba(104,64,45,.14)); color: var(--text, #2d211b); font-size: 14px; font-weight: 600; text-decoration: none; }
 .rn-menu-item:hover > .rn-menu-link,
-.rn-menu-item:focus-within > .rn-menu-link { background: var(--vx-brand, #e8755a); color: #fff; border-color: var(--vx-brand, #e8755a); }
+.rn-menu-item:focus-within > .rn-menu-link { background: var(--accent-strong); color: #fff; border-color: var(--accent-strong); }
 .rn-menu-link { cursor: pointer; }
 .rn-submenu { position: absolute; top: calc(100% + 4px); left: 0; z-index: 50; display: none; min-width: 200px; padding: 6px; list-style: none; margin: 0; background: #fff; border: 1px solid var(--line, rgba(104,64,45,.18)); border-radius: 10px; box-shadow: 0 8px 24px rgba(145,84,54,.12); }
 .rn-menu-item:hover .rn-submenu,

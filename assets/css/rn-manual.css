@@ -27,7 +27,7 @@ body { margin: 0; background: var(--bg, #fff6ef); color: var(--text, #2d211b); }
 .manual .group-head:not(:first-child) { margin-top: 18px; border-top: 3px solid #f4a786; }
 .manual .group-label { margin: 0 0 2px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #b94b35; }
 .manual .note { padding: 12px 14px; border-left: 4px solid #e8755a; border-radius: 8px; background: #fff4ef; }
-.manual .plan { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: rgba(124,100,88,.12); color: #7c6458; font-size: 13px; font-weight: 700; vertical-align: middle; }
+.manual .plan { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #f8eee7; color: #7c6458; font-size: 13px; font-weight: 700; vertical-align: middle; }
 .manual .steps { padding-left: 22px; }
 .manual .steps li { padding-left: 3px; margin: 6px 0; }
 .manual .back-top { display: inline-block; margin-top: 14px; font-size: 14px; }

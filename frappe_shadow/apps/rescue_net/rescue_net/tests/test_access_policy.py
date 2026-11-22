@@ -71,14 +71,15 @@ class TestPoskoManagement(RNTestCase):
             self.assertFalse(can_manage_organization(rn_actor(), self.w.org_a.name))
 
     def test_posko_edit_scope(self):
-        """Documented model: approved members of the posko's org may edit every
-        posko of that org; a member of ANOTHER org gets a read-only page."""
+        """Only authorized managers may edit the current posko."""
         with as_user(self.coordinator.user):
             scope = posko_edit_scope(posko=self.sibling.name, disaster_event=self.w.event.name)
         self.assertTrue(scope["can_edit_current"])
-        with as_user(self.operator.user):   # org A member → may edit org A's other posko
-            scope = posko_edit_scope(posko=self.sibling.name, disaster_event=self.w.event.name)
+        with as_user(self.operator.user):
+            scope = posko_edit_scope(posko=self.w.posko_a.name, disaster_event=self.w.event.name)
+            sibling_scope = posko_edit_scope(posko=self.sibling.name, disaster_event=self.w.event.name)
         self.assertTrue(scope["can_edit_current"])
+        self.assertFalse(sibling_scope["can_edit_current"])
         other_org = make_actor(posko=self.w.posko_b, org=self.w.org_b)
         with as_user(other_org.user):
             scope = posko_edit_scope(posko=self.w.posko_a.name, disaster_event=self.w.event.name)

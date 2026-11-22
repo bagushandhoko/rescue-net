@@ -18,7 +18,7 @@ class TestRiilAngka(OperationalBase):
                 plan_type="undecided", status="proposed")
 
     def both(self, fn):
-        with _Cookie(None), as_guest():
+        with _Cookie("simulasi"), as_guest():
             sim = fn()
         with _Cookie("riil"), as_guest():
             riil = fn()

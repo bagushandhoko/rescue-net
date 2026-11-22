@@ -253,16 +253,16 @@ class TestTermsAck(_ShipmentWorld):
     def test_booking_without_ack_is_refused_and_with_ack_is_recorded(self):
         from rescue_net.logistics.transport import book_transport_space
         with as_user(self.op.user), self.assertRaisesRegex(frappe.ValidationError, "memenuhi syarat"):
-            book_transport_space(self.arm_b.name, cargo_desc="Beras", qty_weight_kg=10, delivery_method="self_deliver")
+            book_transport_space(self.arm_b.name, booked_by_id=self.src.name, cargo_desc="Beras", qty_weight_kg=10, delivery_method="self_deliver")
         with as_user(self.op.user):
-            r = book_transport_space(self.arm_b.name, cargo_desc="Beras", qty_weight_kg=10,
+            r = book_transport_space(self.arm_b.name, booked_by_id=self.src.name, cargo_desc="Beras", qty_weight_kg=10,
                                      delivery_method="self_deliver", terms_ack=1)
         self.assertEqual(frappe.db.get_value("RN Transport Booking", r["booking"], "terms_ack"), 1)
 
     def test_armada_without_terms_needs_no_ack(self):
         from rescue_net.logistics.transport import book_transport_space
         with as_user(self.op.user):
-            r = book_transport_space(self.arm_a.name, cargo_desc="Beras", qty_weight_kg=10, delivery_method="self_deliver")
+            r = book_transport_space(self.arm_a.name, booked_by_id=self.src.name, cargo_desc="Beras", qty_weight_kg=10, delivery_method="self_deliver")
         self.assertEqual(frappe.db.get_value("RN Transport Booking", r["booking"], "terms_ack"), 0)
 
     def test_send_stock_wizard_requires_ack_on_the_main_armada(self):

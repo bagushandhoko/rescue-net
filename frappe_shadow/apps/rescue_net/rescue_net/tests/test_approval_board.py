@@ -4,7 +4,7 @@ import frappe
 
 from rescue_net import api_verification as api
 from rescue_net.services.approval_risk import evidence_signal, risk_label
-from rescue_net.tests.factories import RNTestCase, api_call, as_guest, as_user, make_world
+from rescue_net.tests.factories import RNTestCase, api_call, as_guest, as_user, make_actor, make_world
 
 
 class TestApprovalBoard(RNTestCase):
@@ -15,15 +15,25 @@ class TestApprovalBoard(RNTestCase):
         frappe.db.set_value("RN Posko", self.posko, "verification_status", "self_reported")
 
     def queue(self):
-        with as_guest():
+        with as_user("Administrator"):
             return api_call("rescue_net.api_verification.approval_queue", disaster_event=self.w.event.name)["queue"]
 
     def mine(self):
         return next(r for r in self.queue() if r["name"] == self.posko)
 
     def detail(self):
-        with as_guest():
+        with as_user("Administrator"):
             return api_call("rescue_net.api_verification.approval_item_detail", kind="posko", name=self.posko)
+
+    def test_guest_and_ordinary_member_cannot_read_approval_records(self):
+        member = make_actor(role="viewer", org=self.w.org_a)
+        for user_context in (as_guest(), as_user(member.user)):
+            with user_context:
+                queue = api_call("rescue_net.api_verification.approval_queue", disaster_event=self.w.event.name)
+                self.assertTrue(queue["restricted"])
+                self.assertEqual(queue["queue"], [])
+                with self.assertRaises(frappe.PermissionError):
+                    api_call("rescue_net.api_verification.approval_item_detail", kind="posko", name=self.posko)
 
     def test_scale(self):
         self.assertEqual([risk_label(x) for x in (90, 60, 10)], ["Rendah", "Sedang", "Tinggi"])

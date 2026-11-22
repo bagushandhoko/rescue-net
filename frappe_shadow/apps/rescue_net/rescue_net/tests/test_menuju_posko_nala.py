@@ -59,7 +59,7 @@ class TestMenujuPosko(RNTestCase):
     def test_simulation_hidden_in_riil(self):
         frappe.db.set_value('RN Disaster Event', self.ev.name, 'title', '[SIMULASI] Bencana uji')
         self.flow()
-        with _Cookie(None):
+        with _Cookie("simulasi"):
             self.assertEqual(len(self.feed()['in_transit']), 1)
         with _Cookie('riil'):
             d = self.feed()

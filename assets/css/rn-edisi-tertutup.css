@@ -81,3 +81,6 @@ html.rn-window-mode body{min-width:0!important;overflow-x:hidden!important;backg
 .rn-dms-live-events li a{color:inherit;font-weight:700;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rn-dms-live-events li small{opacity:.75;font-size:9px}.rn-dms-live-events li.is-empty{display:block;opacity:.75}
 @media(max-width:560px){.rn-dms-live-map{position:relative;inset:auto;flex:0 0 300px;min-height:300px;border-radius:4px;overflow:hidden}}
+.rn-dms-live-map .leaflet-tile-pane{filter:invert(1) hue-rotate(190deg) brightness(.85) contrast(.9) saturate(.5)}
+.rn-dms-live-map .leaflet-container,.rn-dms-live-map{font-family:inherit}
+.rn-dms-sitrep .rn-dms-live-events{padding:0 10px}

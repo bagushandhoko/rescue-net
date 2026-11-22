@@ -16,10 +16,10 @@ Status 2026-10-07: **sebagian dikerjakan di repo; langkah 1–3 dan 5 menunggu k
 
 ## Perlu keputusan / aksi owner
 1. **Akun agent tanpa akses produksi (inti Fase 0).** Hari ini agent berjalan sebagai `admin` dengan `sudo docker`, jadi bisa menjangkau
-   produksi. Usul: buat user NAS terpisah `rn-agent` tanpa sudo, tanpa grup docker, tanpa baca `/volume1/docker/osiun-*`; ia hanya
-   punya clone repo di `/volume1/rn-agent/rescue-net` dan akses ke test stack lewat socket Docker rootless / Docker terpisah.
+   produksi. Usul: buat user NAS terpisah `rn-agent` tanpa sudo, tanpa grup docker, tanpa baca `/path/ke/nas`; ia hanya
+   punya clone repo di `/path/ke/nas` dan akses ke test stack lewat socket Docker rootless / Docker terpisah.
    Pilihan: (a) user terpisah di NAS yang sama (murah, isolasi sedang), (b) VM/mini-PC lain dengan test stack sendiri (isolasi kuat).
-2. **Web root bukan checkout git.** `/volume1/web/rescue-net` sekarang = working tree agent = situs publik. Usul: situs disajikan dari
+2. **Web root bukan checkout git.** `/path/ke/nas` sekarang = working tree agent = situs publik. Usul: situs disajikan dari
    salinan hasil deploy (`rsync` dari clone bersih oleh `rn-deploy-from-git.sh`), agent bekerja di clone sendiri.
 3. **Data uji teranonimkan.** Test stack hari ini berisi data seed/test saja; bila ingin salinan produksi, perlu skrip anonimisasi
    (nama, telepon, email, PIN, koordinat posko) — belum ditulis, tunggu keputusan.

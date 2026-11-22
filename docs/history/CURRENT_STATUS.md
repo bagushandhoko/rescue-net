@@ -4,9 +4,9 @@ Updated: 2026-06-20
 
 ## Runtime
 
-- Web repository/live static files: `/volume1/web/rescue-net`
-- FastAPI runtime source: `/volume1/docker/rescue-net-api`
-- Cross-platform app runtime source: `/volume1/web/rescue-net-app`
+- Web repository/live static files: `/path/ke/nas`
+- FastAPI runtime source: `/path/ke/nas`
+- Cross-platform app runtime source: `/path/ke/nas`
 - API container: `rescue-net-api`
 - API port: `8092`
 - PostgreSQL container: `postgres-main`
@@ -20,7 +20,7 @@ Updated: 2026-06-20
 The runtime API must be started with:
 
 ```sh
---env-file /volume1/docker/rescue-net-api/.env
+--env-file /path/ke/nas
 ```
 
 Without the env file, the container falls back to PostgreSQL on localhost and fails startup.
@@ -204,7 +204,7 @@ App registration:
 Run after backend or shared frontend changes:
 
 ```sh
-cd /volume1/web/rescue-net
+cd /path/ke/nas
 sh scripts/rn-smoke-test.sh
 ```
 

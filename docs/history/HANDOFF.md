@@ -14,18 +14,18 @@ Active Disasters is the entry point. One active disaster opens Disaster Detail. 
 ## Current Server
 
 Synology RS815+
-IP: 192.168.100.32
-Static web: /volume1/web/rescue-net
-Backend: /volume1/docker/rescue-net-api
+IP: 192.0.2.11
+Static web: /path/ke/nas
+Backend: /path/ke/nas
 API container: rescue-net-api
 API port: 8092
 PostgreSQL container: postgres-main
 Database: rescuenet_db
 
 Local URLs:
-Web: http://192.168.100.32/rescue-net/
+Web: http://192.0.2.11/rescue-net/
 API health: http://127.0.0.1:8092/health
-API docs: http://192.168.100.32:8092/docs
+API docs: http://192.0.2.11:8092/docs
 
 ## Current Working Modules
 
@@ -225,7 +225,7 @@ TNI Air Transport Slot 01
 
 ## Rebuild Backend
 
-cd /volume1/docker/rescue-net-api
+cd /path/ke/nas
 python3 -m py_compile main.py && echo "SYNTAX_OK"
 sudo docker build --no-cache -t rescue-net-api:0.1 .
 sudo docker rm -f rescue-net-api 2>/dev/null || true
@@ -233,8 +233,8 @@ sudo docker run -d \
   --name rescue-net-api \
   --restart unless-stopped \
   -p 8092:8092 \
-  --env-file /volume1/docker/rescue-net-api/.env \
-  -v /volume1/docker/rescue-net-data/uploads:/data/uploads \
+  --env-file /path/ke/nas \
+  -v /path/ke/nas \
   rescue-net-api:0.1
 
 ## Security Rules

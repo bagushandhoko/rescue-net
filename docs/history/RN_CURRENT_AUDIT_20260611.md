@@ -6,7 +6,7 @@ Updated: 2026-06-11
 
 Backup before this audit exists at:
 
-`/volume1/docker/backup-rescue-net-prod-20260611-143742`
+`/path/ke/nas`
 
 Included:
 
@@ -31,8 +31,8 @@ Validated by `scripts/rn-smoke-test.sh`:
 
 Rescue-Net is already a working pilot/demo prototype with:
 
-- Static web UI in `/volume1/web/rescue-net`
-- FastAPI backend in `/volume1/docker/rescue-net-api`
+- Static web UI in `/path/ke/nas`
+- FastAPI backend in `/path/ke/nas`
 - PostgreSQL database `rescuenet_db`
 - Dockerized API runtime on port `8092`
 - GitHub repository at `https://github.com/bagushandhoko/rescue-net`

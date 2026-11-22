@@ -24,7 +24,7 @@ So FastAPI already serves **nothing**: every call to it fails today.
 |---|---|---|
 | Web frontend (`index.html`, `pages/*.html`, `assets/js/*.js`) | **No** — 0 references to `rescue-net-api`, `:8092`, `RN_API_BASE` | all 155 API paths go to `rescue_net.api_*` in Frappe |
 | Web → Frappe compatibility adapter `rescue_net/compat/api.py` | Frappe, not FastAPI | only `compat.api.disasters` is still called (`assets/js/api.js`, `assets/js/disaster-detail.js`); its other 9 functions (`health`, `status`, `organizations`, `poskos`, `logistic_needs`, `aid_offers`, `distribution_flows`, `war_room`, `all_p0`) have no caller |
-| **Offline app** (`/volume1/web/rescue-net-app/`, source copy in `apps/rescue-net-app/`; APK / Windows / Linux / iOS builds offered on the site's **Download** menu) | **Yes — only FastAPI** (`${origin}/rescue-net-api`, else `:8092`) | 14 endpoints, table 3. **Broken for every user since FastAPI stopped.** |
+| **Offline app** (`/path/ke/nas`, source copy in `apps/rescue-net-app/`; APK / Windows / Linux / iOS builds offered on the site's **Download** menu) | **Yes — only FastAPI** (`${origin}/rescue-net-api`, else `:8092`) | 14 endpoints, table 3. **Broken for every user since FastAPI stopped.** |
 
 ## 3. Offline app endpoints → Frappe
 
@@ -63,7 +63,7 @@ has been read-only for the application user since the cutover.
 1. **Offline app** — decide: (a) move it to Frappe (login + the two missing endpoints: device registration,
    unit catalogue/normalise), rebuild the downloads; or (b) withdraw the Download menu until an app is
    rebuilt on the web's offline queue (`rn-sync-engine.js` already does offline reporting against Frappe).
-2. Final PostgreSQL backup to a server folder outside the repo (e.g. `/volume1/docker/osiun-backups/`), keep
+2. Final PostgreSQL backup to a server folder outside the repo (e.g. `/path/ke/nas`), keep
    the August dump next to it, then drop `rescuenet_db` and the `rescuenet_user` role (other databases in
    `postgres-main` are not Rescue-Net and stay).
 3. Tag the last commit that contains the legacy code as `fastapi-final`, then remove from `main`:

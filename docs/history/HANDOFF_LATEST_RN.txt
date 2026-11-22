@@ -22,13 +22,13 @@ flow take priority over cosmetic redesign.
 ============================================================
 
 Repository and static website:
-  /volume1/web/rescue-net
+  /path/ke/nas
 
 Runtime backend:
-  /volume1/docker/rescue-net-api
+  /path/ke/nas
 
 Cross-platform app runtime:
-  /volume1/web/rescue-net-app
+  /path/ke/nas
 
 GitHub:
   https://github.com/bagushandhoko/rescue-net
@@ -100,13 +100,13 @@ Frontend validation:
 
 Rebuild API:
 
-  cd /volume1/docker/rescue-net-api
+  cd /path/ke/nas
   sudo /usr/local/bin/docker build -t rescue-net-api:0.1 .
   sudo /usr/local/bin/docker rm -f rescue-net-api
   sudo /usr/local/bin/docker run -d \
     --name rescue-net-api \
     --restart unless-stopped \
-    --env-file /volume1/docker/rescue-net-api/.env \
+    --env-file /path/ke/nas \
     -p 8092:8092 \
     rescue-net-api:0.1
 
@@ -120,7 +120,7 @@ Health:
 
 Full smoke:
 
-  cd /volume1/web/rescue-net
+  cd /path/ke/nas
   sh scripts/rn-smoke-test.sh
 
 Secret scan:
@@ -247,7 +247,7 @@ App source:
   apps/rescue-net-app/
 
 Runtime:
-  /volume1/web/rescue-net-app
+  /path/ke/nas
 
 Offline data:
   device profile

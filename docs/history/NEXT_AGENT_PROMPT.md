@@ -14,9 +14,9 @@ Do not modify unrelated systems on the same server. This task scope is Rescue-Ne
 
 ## Environment
 
-- Repository/static web: `/volume1/web/rescue-net`
-- Runtime API: `/volume1/docker/rescue-net-api`
-- Cross-platform app runtime: `/volume1/web/rescue-net-app`
+- Repository/static web: `/path/ke/nas`
+- Runtime API: `/path/ke/nas`
+- Cross-platform app runtime: `/path/ke/nas`
 - API: `http://127.0.0.1:8092`
 - Public web: active production domain, path `/rescue-net/`
 - Public API: active production domain, path `/rescue-net-api`
@@ -40,13 +40,13 @@ Do not modify unrelated systems on the same server. This task scope is Rescue-Ne
 ## API Rebuild
 
 ```sh
-cd /volume1/docker/rescue-net-api
+cd /path/ke/nas
 sudo /usr/local/bin/docker build -t rescue-net-api:0.1 .
 sudo /usr/local/bin/docker rm -f rescue-net-api
 sudo /usr/local/bin/docker run -d \
   --name rescue-net-api \
   --restart unless-stopped \
-  --env-file /volume1/docker/rescue-net-api/.env \
+  --env-file /path/ke/nas \
   -p 8092:8092 \
   rescue-net-api:0.1
 curl -fsS http://127.0.0.1:8092/health
@@ -55,7 +55,7 @@ curl -fsS http://127.0.0.1:8092/health
 ## Validate
 
 ```sh
-cd /volume1/web/rescue-net
+cd /path/ke/nas
 sh scripts/rn-smoke-test.sh
 sh scripts/rn-secret-scan.sh
 ```

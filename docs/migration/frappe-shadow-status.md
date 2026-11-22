@@ -22,9 +22,9 @@ Date: 2026-08-02
 
 ## Runtime Notes
 
-The source app is stored under /volume1/docker/osiun-frappe-shadow/apps/rescue_net and mirrored in this repository under frappe_shadow/apps/rescue_net for versioning.
+The source app is stored under /path/ke/nas and mirrored in this repository under frappe_shadow/apps/rescue_net for versioning.
 
-The docker-compose.yml in /volume1/docker/osiun-frappe-shadow has been prepared with a rescue_net app mount. Existing containers were not recreated with compose because this server does not have docker compose available; the app was copied into running backend, worker, and scheduler containers for the first shadow install.
+The docker-compose.yml in /path/ke/nas has been prepared with a rescue_net app mount. Existing containers were not recreated with compose because this server does not have docker compose available; the app was copied into running backend, worker, and scheduler containers for the first shadow install.
 
 Next persistent hardening step: recreate the Frappe shadow containers using the updated compose file or an equivalent docker run flow so the rescue_net app mount is permanent across container replacement.
 

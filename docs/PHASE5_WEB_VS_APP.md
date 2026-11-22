@@ -35,7 +35,7 @@ client; the Android/desktop downloads become a wrapper of the same pages.
 
 Cost of B (rough): manifest + service worker + "works offline" pass on the pages that field users need
 offline (Laporan Masyarakat, Posko Logistik, Registrasi Posko, Shelter) — a few focused sessions; rebuild of
-the native wrappers on `/volume1/web/rescue-net-build`. No framework change — plain JS stays (step 4:
+the native wrappers on `/path/ke/nas`. No framework change — plain JS stays (step 4:
 **no framework migration is proposed**; nothing in the audit needs one).
 
 ## Decision for the owner

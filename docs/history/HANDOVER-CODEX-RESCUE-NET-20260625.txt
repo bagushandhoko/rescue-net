@@ -11,16 +11,16 @@ IMPORTANT RULES
 6. Production rebuild is manual unless the owner asks Codex to do it. Do not assume a rebuild happened.
 
 CURRENT DEPLOYMENT MAP
-- Web/static repo: /volume1/web/rescue-net
-- Backend source/runtime: /volume1/docker/rescue-net-api
-- PWA/app source/runtime: /volume1/web/rescue-net-app
+- Web/static repo: /path/ke/nas
+- Backend source/runtime: /path/ke/nas
+- PWA/app source/runtime: /path/ke/nas
 - API container: rescue-net-api
 - API port: 8092
 - DB container: postgres-main
 - DB name: rescuenet_db
 - Public web path: /rescue-net/
 - Public API path: /rescue-net-api
-- Main branch is pushed to GitHub from /volume1/web/rescue-net.
+- Main branch is pushed to GitHub from /path/ke/nas
 
 GIT STATUS AT LAST HANDOVER
 - The repo had been pushed to origin/main after Trusted Verifier, consolidation, app source, and operational docs.
@@ -113,7 +113,7 @@ Consolidation:
 - War Room has scenario buttons.
 
 Apps/download:
-- PWA/app source is in apps/rescue-net-app in repo and runtime at /volume1/web/rescue-net-app.
+- PWA/app source is in apps/rescue-net-app in repo and runtime at /path/ke/nas
 - Download menu should be simple:
   Android
   iOS
@@ -177,7 +177,7 @@ CRITICAL FILES TO CHECK FIRST
 - docs/BLUEPRINT.md
 - docs/CROSS_PLATFORM_APP_DESIGN.md
 - apps/rescue-net-app/
-- Backend source in /volume1/docker/rescue-net-api:
+- Backend source in /path/ke/nas
   main.py
   app_shared.py
   routes/
@@ -195,7 +195,7 @@ If health check says "Recv failure: Connection reset by peer":
 - Do not keep changing frontend if backend data is not up; fix API startup first.
 
 GITHUB PUSH PROCEDURE
-From /volume1/web/rescue-net:
+From /path/ke/nas
 1. git status --short
 2. Run secret scan script if available.
 3. git add only intended files.

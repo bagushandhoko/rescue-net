@@ -2,8 +2,8 @@
 
 ## Temuan utama: seluruh repo terbuka untuk publik
 
-Web root `/volume1/web/rescue-net` adalah checkout git itu sendiri, dan nginx menyajikan semua isinya di
-`https://osiun.tail251e1e.ts.net/rescue-net/<path>` (Tailscale Funnel = internet). Dicek 2026-09-27, semuanya
+Web root `/path/ke/nas` adalah checkout git itu sendiri, dan nginx menyajikan semua isinya di
+`https://node.example.org/rescue-net/<path>` (Tailscale Funnel = internet). Dicek 2026-09-27, semuanya
 menjawab 200:
 
 - `.git/config`, `.git/HEAD`, sehingga seluruh riwayat git bisa diunduh
@@ -42,13 +42,13 @@ Belum, karena penghapusan diblokir izin sesi Claude sehingga owner yang menjalan
 ada di riwayat git):
 
 ```sh
-cd /volume1/web/rescue-net
+cd /path/ke/nas
 git rm -r -q backup scratchpad _sandbox_desain docs/migration PY \
   AUDIT-BEFORE-CODEX.txt QUICK-CHECK-BEFORE-CODEX.md MANUAL-CHANGES-20260612.md
 git commit -m "Phase 6: remove pre-git backup copies, scratch scripts, design sandbox, FastAPI-era inventories and root notes"
 rm -rf backups data scripts/__pycache__ scripts/komando-tests/__pycache__
 find frappe_shadow -name __pycache__ -type d -prune -exec rm -rf {} +
-mv assets/img/rescuenet_ui_design_images_all.zip /volume1/docker/osiun-backups/
+mv assets/img/rescuenet_ui_design_images_all.zip /path/ke/nas
 git gc
 git push origin main
 ```
@@ -63,7 +63,7 @@ git push origin main
 
 ## Masih terbuka (keputusan / akses owner)
 1. **Ganti password root MariaDB** produksi. Isi nilai baru di `.env` di samping `docker-compose.yml`
-   `/volume1/docker/osiun-frappe-shadow`, jangan di git. Sesuaikan juga `db_password` / `root_password` di
+   `/path/ke/nas`, jangan di git. Sesuaikan juga `db_password` / `root_password` di
    `site_config`/`common_site_config` bila dipakai.
 2. **Repo GitHub publik**: jadikan private, atau terima bahwa source + dokumen blueprint publik. Password lama tetap
    ada di riwayat, dan menulis ulang riwayat tidak menolong karena sudah telanjur publik. Solusinya adalah rotasi.

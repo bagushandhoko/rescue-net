@@ -13,6 +13,7 @@ import json
 import frappe
 
 EVENT = "RN Disaster Event"
+DMS_SOURCE = "dms-exercise-20261123"
 
 # ---- Mode Operasional Riil (owner 2026-11-09) ---------------------------------------------------------------------
 # "cukup menekan 1 tombol di pengaturan super admin, semua data simulasi tidak tampil". Satu saklar global di
@@ -140,6 +141,12 @@ def dms_event_names():
     if not frappe.get_meta(EVENT).has_field("drill_scope"):
         return set()
     return set(frappe.get_all(EVENT, filters={"drill_scope": "dms"}, pluck="name"))
+
+
+def scope_hidden_orgs():
+    if showing_dms():
+        return set()
+    return set(frappe.get_all("RN Organization", filters={"legacy_source": DMS_SOURCE}, pluck="name"))
 
 
 def scope_rows(rows, key="disaster_event"):
@@ -282,10 +289,17 @@ def real_rows(rows, key="disaster_event", include_drill=None):
     bypass = can_include_drill(include_drill)
     drills = _event_refs(scope_hidden_events()) if bypass else _event_refs(drill_event_names())
     sim = not bypass and simulation_hidden()  # mode operasional: baris berjudul [SIMULASI] juga dibuang walau event-nya nyata
-    if not drills and not sim:
+    orgs = scope_hidden_orgs()
+    if not drills and not sim and not orgs:
         return list(rows)
-    return [r for r in rows if (r.get(key) if hasattr(r, "get") else getattr(r, key, None)) not in drills
-            and not (sim and row_has_sim_label(r))]
+    out = []
+    for row in rows:
+        get = row.get if hasattr(row, "get") else lambda k: getattr(row, k, None)
+        if get(key) in drills or get("name") in orgs or get("organization") in orgs:
+            continue
+        if not (sim and row_has_sim_label(row)):
+            out.append(row)
+    return out
 
 
 # ---- akses tamu lewat id eksplisit ------------------------------------------------------------------------------
@@ -393,8 +407,12 @@ def refers_to_simulation(params):
 def guard_guest_refs(params):
     """Tamu tidak boleh membuka data latihan lewat id eksplisit (diperlakukan 'tidak ditemukan'). Mode Operasional
     Riil: pengguna login (selain System Manager) juga tidak bisa membuka data simulasi."""
-    if _has_ref_params(params) and _refers_to(params, _event_refs(scope_hidden_events())):
-        frappe.throw("Data tidak ditemukan.", frappe.DoesNotExistError)
+    if _has_ref_params(params):
+        if _refers_to(params, _event_refs(scope_hidden_events())):
+            frappe.throw("Data tidak ditemukan.", frappe.DoesNotExistError)
+        orgs = scope_hidden_orgs()
+        if orgs and any(_matches_event_ref(params.get(key) or "", orgs) for key in ORG_PARAMS):
+            frappe.throw("Data tidak ditemukan.", frappe.DoesNotExistError)
     user = frappe.session.user
     if user == "Guest":
         if refers_to_drill(params):

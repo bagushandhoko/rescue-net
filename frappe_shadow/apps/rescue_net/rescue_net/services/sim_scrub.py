@@ -129,12 +129,13 @@ def after_request(response=None, request=None):
         if "json" not in (response.content_type or ""):
             return
         scope = drill.scope_hidden_events()
+        hidden_orgs = drill.scope_hidden_orgs()
         hide_sim = (
             not method.startswith(SKIP_PREFIXES)
             and drill.simulation_hidden()
             and (drill.viewer_wants_real() or "System Manager" not in frappe.get_roles())
         )
-        if not scope and not hide_sim:
+        if not scope and not hidden_orgs and not hide_sim:
             return
         data = json.loads(response.get_data(as_text=True))
         if not isinstance(data, dict) or "message" not in data:
@@ -143,9 +144,10 @@ def after_request(response=None, request=None):
             minta = dict(frappe.form_dict or {})
         except Exception:
             minta = {}
-        if scope:
-            ids = drill._event_refs(scope)
-            ids.update(frappe.get_all("RN Posko", filters={"disaster_event": ["in", sorted(scope)]}, pluck="name"))
+        if scope or hidden_orgs:
+            ids = drill._event_refs(scope) | hidden_orgs
+            if scope:
+                ids.update(frappe.get_all("RN Posko", filters={"disaster_event": ["in", sorted(scope)]}, pluck="name"))
             data["message"] = scrub(data["message"], ids, _hidden_titles(ids), labels=False)
         if hide_sim:
             if minta and drill.refers_to_simulation(minta):

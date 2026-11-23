@@ -7,9 +7,7 @@ import frappe
 from frappe.utils.password import update_password
 
 from rescue_net.api_dms import DOCTYPE, _allowed, _catalog, _clean
-from rescue_net.services.drill import DMS_DEMO_USERS
-
-SOURCE = "dms-exercise-20261123"
+from rescue_net.services.drill import DMS_DEMO_USERS, DMS_SOURCE as SOURCE
 CUTOFF = "2026-11-23 06:00:00"
 AGENCIES = {"bnpb": "BNPB", "tni": "TNI/POLRI", "pmi": "PMI", "kementerian": "Kementerian"}
 STARTS = {

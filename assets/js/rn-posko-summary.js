@@ -217,7 +217,8 @@
     a.className = "rn-ps-back";
     a.href = listUrl();
     a.textContent = "← Semua " + (LABEL[kind] || "posko");
-    main.insertBefore(a, main.firstChild);
+    var pt = document.getElementById("rnPoskoTop");  // blok Pengaturan Posko tetap paling atas
+    main.insertBefore(a, pt && pt.parentNode === main ? pt.nextSibling : main.firstChild);
   }
 
   function start() { if (summaryMode) mountSummary(); else mountBack(); }

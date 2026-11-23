@@ -56,7 +56,7 @@
     panel.innerHTML = '<div class="panel-header"><div><h3>Saran AI menunggu keputusan</h3>' +
       "<p>AI hanya mengusulkan. Data berubah setelah Anda menerima; menolak tidak mengubah apa pun.</p></div></div>" +
       '<div class="event-list" data-ai-list></div>';
-    if (anchor.matches("main")) anchor.insertBefore(panel, anchor.firstChild);
+    if (anchor.matches("main")) { var pt = document.getElementById("rnPoskoTop"); anchor.insertBefore(panel, pt ? pt.nextSibling : anchor.firstChild); }
     else anchor.parentNode.insertBefore(panel, anchor);
     panel.addEventListener("click", function (e) {
       var b = e.target.closest("[data-ai-decide]");

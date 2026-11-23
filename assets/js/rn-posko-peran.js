@@ -76,7 +76,7 @@
         '<small style="display:block;margin-top:6px;opacity:.85">Mengirim perlu login. <a href="auth.html">Login / daftar</a></small>';
     }
     if (a) a.parentNode.insertBefore(box, a.nextSibling);
-    else main.insertBefore(box, main.firstChild); // HP: judul halaman disembunyikan
+    else { var pt = document.getElementById("rnPoskoTop"); main.insertBefore(box, pt && pt.parentNode === main ? pt.nextSibling : main.firstChild); } // HP: judul halaman disembunyikan
   }
   function start() {
     Promise.all([

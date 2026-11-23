@@ -50,6 +50,31 @@
     ".rn-posko-contact .rn-pc-wa{background:#25d366;border-color:#25d366;color:#fff}" +
     ".rn-posko-contact a:focus-visible{outline:2px solid var(--blue,#3b82c4);outline-offset:2px}";
 
+  // owner 2026-11-23: "pengaturan dan kontak letakkan di bagian paling atas — Pengaturan Posko".
+  // Satu blok di awal isi halaman: baris tombol pengelola (rn-posko-settings.js) + kotak kontak (rn-posko-contact.js).
+  function rnPoskoTop() {
+    var host = document.getElementById("rnPoskoTop");
+    if (host) return host;
+    if (!document.getElementById("rn-posko-top-css")) {
+      var st = document.createElement("style");
+      st.id = "rn-posko-top-css";
+      st.textContent = "#rnPoskoTop{margin:0 0 14px}#rnPoskoTop .rn-posko-contact{margin:0}" +
+        "#rnPoskoTop .rn-pt-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 8px}" +
+        "#rnPoskoTop .rn-pt-title{font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--coral,#c2410c);margin-right:4px}" +
+        "#rnPoskoTop .rn-pt-actions a{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px;border-radius:999px;" +
+        "border:1px solid var(--line,rgba(104,64,45,.25));background:#fff!important;color:#3a2c22!important;font-weight:700;font-size:14px;text-decoration:none}" +
+        "#rnPoskoTop .rn-pt-actions a.rn-pt-main{background:#a4521c!important;border-color:#a4521c;color:#fff!important}" +
+        "#rnPoskoTop .rn-pt-actions a:focus-visible{outline:2px solid var(--blue,#3b82c4);outline-offset:2px}";
+      document.head.appendChild(st);
+    }
+    host = document.createElement("section");
+    host.id = "rnPoskoTop";
+    host.setAttribute("aria-label", "Pengaturan & kontak posko");
+    var main = document.querySelector("main") || document.body;
+    main.insertBefore(host, main.firstChild);
+    return host;
+  }
+
   function mount() {
     if (!document.getElementById("rn-posko-contact-css")) {
       var st = document.createElement("style");
@@ -61,9 +86,7 @@
     bar.className = "rn-posko-contact";
     bar.setAttribute("role", "region");
     bar.setAttribute("aria-label", "Kontak posko");
-    var top = document.querySelector("main .topbar, .topbar");
-    if (top && top.parentNode) top.parentNode.insertBefore(bar, top.nextSibling);
-    else (document.querySelector("main") || document.body).prepend(bar);
+    rnPoskoTop().appendChild(bar);
     return bar;
   }
 

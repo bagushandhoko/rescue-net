@@ -347,6 +347,31 @@
     ov.querySelector('[aria-selected="true"]').focus();
   }
 
+  // owner 2026-11-23: "pengaturan dan kontak letakkan di bagian paling atas — Pengaturan Posko".
+  // Satu blok di awal isi halaman: baris tombol pengelola (rn-posko-settings.js) + kotak kontak (rn-posko-contact.js).
+  function rnPoskoTop() {
+    var host = document.getElementById("rnPoskoTop");
+    if (host) return host;
+    if (!document.getElementById("rn-posko-top-css")) {
+      var st = document.createElement("style");
+      st.id = "rn-posko-top-css";
+      st.textContent = "#rnPoskoTop{margin:0 0 14px}#rnPoskoTop .rn-posko-contact{margin:0}" +
+        "#rnPoskoTop .rn-pt-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:0 0 8px}" +
+        "#rnPoskoTop .rn-pt-title{font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--coral,#c2410c);margin-right:4px}" +
+        "#rnPoskoTop .rn-pt-actions a{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px;border-radius:999px;" +
+        "border:1px solid var(--line,rgba(104,64,45,.25));background:#fff!important;color:#3a2c22!important;font-weight:700;font-size:14px;text-decoration:none}" +
+        "#rnPoskoTop .rn-pt-actions a.rn-pt-main{background:#a4521c!important;border-color:#a4521c;color:#fff!important}" +
+        "#rnPoskoTop .rn-pt-actions a:focus-visible{outline:2px solid var(--blue,#3b82c4);outline-offset:2px}";
+      document.head.appendChild(st);
+    }
+    host = document.createElement("section");
+    host.id = "rnPoskoTop";
+    host.setAttribute("aria-label", "Pengaturan & kontak posko");
+    var main = document.querySelector("main") || document.body;
+    main.insertBefore(host, main.firstChild);
+    return host;
+  }
+
   function mountButton(p) {
     if (document.getElementById("rnPoskoSettingsBtn")) return;
     styleOnce();
@@ -372,27 +397,17 @@
       openModal(p, qs.get("tab") || (legacyAdd || legacyArmada ? "armada" : "posko"), legacyArmada, legacyAdd);
     }
 
-    var tries = 0;
-    (function place() {
-      if (document.getElementById("rnPoskoSettingsBtn")) return;
-      var actions = document.querySelector(".rn-public-header .rn-public-actions");
-      if (actions) { actions.appendChild(kelola); actions.appendChild(btn); return; }
-      if (++tries <= 24) { setTimeout(place, 250); return; }
-      // no public header on this page — fall back to the page's own topbar
-      btn.classList.add("rn-ps-btn");
-      kelola.classList.add("rn-ps-btn");
-      var host =
-        document.querySelector("header.topbar .rn-logistik-controls") ||
-        document.querySelector("header.topbar") ||
-        document.querySelector(".topbar") ||
-        document.querySelector("main.main") || document.body;
-      if (host.classList && host.classList.contains("main")) {
-        btn.style.margin = "8px 0"; kelola.style.margin = "8px 8px 8px 0";
-        host.insertBefore(btn, host.firstChild); host.insertBefore(kelola, btn);
-      } else {
-        host.appendChild(kelola); host.appendChild(btn);
-      }
-    })();
+    // owner 2026-11-23: tombol pengelola di blok "Pengaturan Posko" paling atas (bukan di header)
+    var top = rnPoskoTop();
+    var row = document.createElement("div");
+    row.className = "rn-pt-actions";
+    row.innerHTML = '<span class="rn-pt-title">Pengaturan Posko</span>';
+    btn.classList.remove("rn-public-login"); kelola.classList.remove("rn-public-login");
+    btn.classList.add("rn-pt-main");
+    btn.textContent = "⚙ Pengaturan (posko, kontak, armada)";
+    row.appendChild(btn);
+    row.appendChild(kelola);
+    top.insertBefore(row, top.firstChild);
   }
 
   function getSettings() {

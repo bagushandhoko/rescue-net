@@ -78,7 +78,15 @@
   const otpField = document.querySelector("[data-otp-field]");
   let pending2fa = null;
 
-  function serverMessage(payload) {
+  const ID_MSG = [
+    [/invalid login credentials|incorrect password|invalid password/i, "Email atau kata sandi salah."],
+    [/user disabled|not allowed to login|account.*disabled/i, "Akun ini dinonaktifkan. Hubungi admin satker."],
+    [/too many|rate limit|temporarily locked/i, "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi."],
+    [/invalid verification code|incorrect verification code/i, "Kode verifikasi salah."]
+  ];
+  const translate = (m) => { for (const [re, t] of ID_MSG) if (re.test(m)) return t; return m; };
+  function serverMessage(payload) { return translate(rawServerMessage(payload)); }
+  function rawServerMessage(payload) {
     try {
       const list = JSON.parse(payload._server_messages || "[]");
       const first = list.length ? JSON.parse(list[0]) : null;

@@ -7,7 +7,8 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v13"; // v13 2026-11-23: halaman login DMS
+const CACHE = "rescue-net-web-v14"; // v14 2026-11-23: DMS = halaman RN bertema DMS (rn-dms-tema.css)
+// v13 2026-11-23: halaman login DMS
 // v12 2026-11-22: live real-event count in DMS preview
 const PRECACHE = [
  "/rescue-net/index.html",

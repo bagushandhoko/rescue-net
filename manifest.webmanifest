@@ -3,7 +3,7 @@
   "short_name": "DMS",
   "description": "Koordinasi bencana: laporan masyarakat, posko, logistik, shelter, medis — bisa dipakai offline.",
   "lang": "id",
-  "start_url": "/rescue-net/pages/edisi-tertutup.html",
+  "start_url": "/rescue-net/pages/dms-login.html",
   "scope": "/rescue-net/",
   "display": "standalone",
   "background_color": "#0d141d",

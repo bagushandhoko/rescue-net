@@ -1,0 +1,267 @@
+/* DMS (disastermanagement.online) — tema warna untuk halaman RN. Ming Ming 23 Nov 2026.
+ * Owner: "halaman dalam DMS gunakan seperti RN, hanya nuansa warnanya seperti welcome/home DMS".
+ * Tata letak RN TIDAK diubah. Bingkai (header & sidebar) biru tua seperti halaman login DMS,
+ * aksen oranye, latar konten abu kebiruan, kartu tetap terang agar teks mudah dibaca (WCAG AA).
+ * Hanya aktif bila <html class="rn-dms-tema"> (dipasang rn-edisi-entry.js di host DMS). */
+
+html.rn-dms-tema {
+  --dms-navy: #090e1a;
+  --dms-navy2: #0f172a;
+  --dms-navy3: #1e293b;
+  --dms-orange: #f97316;
+  --dms-orange-ink: #c2410c;   /* oranye untuk teks/tombol di atas putih: kontras 5,2:1 */
+  --dms-orange-soft: rgba(249, 115, 22, .14);
+  --bg: #eef2f7;
+  --bg2: #e2e8f0;
+  --sidebar: #0f172a;
+  --panel: rgba(255, 255, 255, .97);
+  --panel2: #f8fafc;
+  --line: rgba(15, 23, 42, .12);
+  --line2: rgba(194, 65, 12, .32);
+  --text: #0f172a;
+  --muted: #475569;
+  --peach: #fb923c;
+  --peach2: #c2410c;
+  --coral: #c2410c;
+  --orange: #c2410c;
+  --shadow: 0 18px 48px rgba(15, 23, 42, .10);
+  background: #eef2f7;
+}
+html.rn-dms-tema body {
+  background: linear-gradient(180deg, #e8edf4 0%, #f3f5f9 60%, #eef2f7 100%) !important;
+  background-attachment: fixed !important;
+  color: #0f172a;
+}
+html.rn-dms-tema :focus-visible { outline: 2px solid var(--dms-orange); outline-offset: 2px; }
+
+/* ---------- Header atas (biru tua seperti panel login) ---------- */
+html.rn-dms-tema .rn-public-header {
+  background: var(--dms-navy) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .08) !important;
+  box-shadow: 0 6px 20px rgba(2, 6, 23, .35) !important;
+  color: #e2e8f0 !important;
+}
+html.rn-dms-tema .rn-public-brand,
+html.rn-dms-tema .rn-public-brand-name { color: #fff !important; }
+html.rn-dms-tema .rn-public-links > a,
+html.rn-dms-tema .rn-public-dropdown > button,
+html.rn-dms-tema .rn-public-dropdown > a,
+html.rn-dms-tema .rn-public-user,
+html.rn-dms-tema .rn-public-actions > a,
+html.rn-dms-tema .rn-public-actions > button:not(.rn-public-logout) {
+  color: #e2e8f0 !important;
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, .16) !important;
+  box-shadow: none !important;
+}
+html.rn-dms-tema .rn-public-links > a:hover,
+html.rn-dms-tema .rn-public-links > a.active,
+html.rn-dms-tema .rn-public-links > a[aria-current="page"],
+html.rn-dms-tema .rn-public-dropdown > button:hover {
+  color: #fdba74 !important;
+  background: rgba(255, 255, 255, .06) !important;
+}
+html.rn-dms-tema .rn-public-logout,
+html.rn-dms-tema .rn-public-login {
+  color: #fff !important;
+  background: var(--dms-orange-ink) !important;
+  border-color: var(--dms-orange-ink) !important;
+}
+html.rn-dms-tema .rn-public-toggle span { background: #e2e8f0 !important; }
+/* menu turun tetap terang (teks gelap) */
+html.rn-dms-tema .rn-public-dropdown-menu { background: #fff !important; border-color: rgba(15, 23, 42, .12) !important; }
+html.rn-dms-tema .rn-public-dropdown-menu a,
+html.rn-dms-tema .rn-public-dropdown-menu .rn-submenu-link { color: #0f172a !important; }
+html.rn-dms-tema .rn-public-dropdown-menu a:hover { background: var(--dms-orange-soft) !important; color: var(--dms-orange-ink) !important; }
+/* laci HP: header terbuka */
+html.rn-dms-tema .rn-public-header.is-open .rn-public-links { background: var(--dms-navy) !important; }
+html.rn-dms-tema .rn-public-header.is-open .rn-public-links a { color: #e2e8f0 !important; }
+/* tombol bahasa ID/EN */
+html.rn-dms-tema .rn-public-header [data-lang],
+html.rn-dms-tema .rn-public-header .rn-lang button { color: #e2e8f0 !important; background: transparent !important; border-color: rgba(255, 255, 255, .2) !important; }
+html.rn-dms-tema .rn-public-header [data-lang].active,
+html.rn-dms-tema .rn-public-header [data-lang][aria-pressed="true"],
+html.rn-dms-tema .rn-public-header .rn-lang button.active { color: #fff !important; background: var(--dms-orange-ink) !important; border-color: var(--dms-orange-ink) !important; }
+
+/* ---------- Sidebar kiri (biru tua) ---------- */
+html.rn-dms-tema .sidebar,
+html.rn-dms-tema .cc-sidebar {
+  background: linear-gradient(180deg, var(--dms-navy2), var(--dms-navy)) !important;
+  border-right: 1px solid rgba(255, 255, 255, .08) !important;
+  color: #e2e8f0 !important;
+  box-shadow: none !important;
+}
+html.rn-dms-tema .sidebar *:not(select):not(option):not(input):not(.rn-nav-v2-icon):not(svg):not(path),
+html.rn-dms-tema .cc-sidebar *:not(select):not(option):not(input):not(svg):not(path) { color: inherit; }
+html.rn-dms-tema .sidebar a,
+html.rn-dms-tema .sidebar summary,
+html.rn-dms-tema .sidebar button,
+html.rn-dms-tema .sidebar label,
+html.rn-dms-tema .sidebar .rn-nav-v2-link,
+html.rn-dms-tema .sidebar .rn-nav-v2-summary,
+html.rn-dms-tema .cc-sidebar a,
+html.rn-dms-tema .cc-sidebar summary,
+html.rn-dms-tema .cc-sidebar button,
+html.rn-dms-tema .cc-sidebar label { color: #e2e8f0 !important; background-color: transparent !important; border-color: rgba(255, 255, 255, .1) !important; }
+html.rn-dms-tema .sidebar .eyebrow,
+html.rn-dms-tema .sidebar small,
+html.rn-dms-tema .cc-sidebar small { color: #94a3b8 !important; }
+html.rn-dms-tema .sidebar a:hover,
+html.rn-dms-tema .sidebar a.active,
+html.rn-dms-tema .sidebar .rn-nav-v2-link.active,
+html.rn-dms-tema .sidebar [aria-current="page"],
+html.rn-dms-tema .cc-sidebar a:hover,
+html.rn-dms-tema .cc-sidebar a.active,
+html.rn-dms-tema .cc-sidebar [aria-current="page"] {
+  color: #fdba74 !important;
+  background-color: rgba(249, 115, 22, .12) !important;
+}
+html.rn-dms-tema .sidebar .brand { background: rgba(255, 255, 255, .04) !important; border-color: rgba(255, 255, 255, .1) !important; box-shadow: none !important; }
+html.rn-dms-tema .sidebar .brand h1, html.rn-dms-tema .sidebar .brand p { color: #fff !important; }
+html.rn-dms-tema .sidebar select,
+html.rn-dms-tema .cc-sidebar select { color: #0f172a !important; background-color: #fff !important; }
+
+/* ---------- Area konten ---------- */
+html.rn-dms-tema .cc,
+html.rn-dms-tema .app-shell,
+html.rn-dms-tema main.content,
+html.rn-dms-tema .main { background-color: transparent !important; }
+html.rn-dms-tema .cc { background: transparent !important; }
+html.rn-dms-tema .eyebrow { color: var(--dms-orange-ink) !important; }
+
+/* Kartu: putih bersih, garis dingin (ganti gradasi peach RN) */
+html.rn-dms-tema .panel,
+html.rn-dms-tema .kpi-card,
+html.rn-dms-tema .event-card,
+html.rn-dms-tema .rn-rollup-card,
+html.rn-dms-tema .cc-kpi,
+html.rn-dms-tema .cc-card,
+html.rn-dms-tema .cc-modules,
+html.rn-dms-tema .card {
+  background: #fff !important;
+  border-color: rgba(15, 23, 42, .1) !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .06) !important;
+}
+html.rn-dms-tema .kpi-card.danger { background: linear-gradient(180deg, #fff1f2, #fff) !important; }
+html.rn-dms-tema .kpi-card.warning { background: linear-gradient(180deg, #fff7ed, #fff) !important; }
+html.rn-dms-tema .kpi-card.good { background: linear-gradient(180deg, #f0fdf4, #fff) !important; }
+
+/* Tombol: utama oranye tua (teks putih kontras), lainnya biru tua bergaris */
+html.rn-dms-tema .btn.primary,
+html.rn-dms-tema button.primary,
+html.rn-dms-tema a.btn.primary,
+html.rn-dms-tema .cc-btn-primary {
+  color: #fff !important;
+  background: var(--dms-orange-ink) !important;
+  border-color: var(--dms-orange-ink) !important;
+  box-shadow: 0 8px 20px -10px rgba(194, 65, 12, .7) !important;
+}
+html.rn-dms-tema .btn.primary:hover,
+html.rn-dms-tema button.primary:hover { background: #9a3412 !important; border-color: #9a3412 !important; }
+html.rn-dms-tema .btn:not(.primary):not(.help) {
+  color: var(--dms-navy2) !important;
+  border-color: rgba(15, 23, 42, .22) !important;
+}
+
+/* Tabel */
+html.rn-dms-tema table thead th { background: #f1f5f9 !important; color: #0f172a !important; }
+
+/* Pojok bawah: Tanya AI & tombol simulasi/riil ikut biru tua + oranye */
+html.rn-dms-tema .rn-aic-btn { background: var(--dms-navy2) !important; color: #fff !important; border: 1px solid rgba(255, 255, 255, .15) !important; }
+html.rn-dms-tema #rnModeToggle { background: var(--dms-orange-ink) !important; color: #fff !important; box-shadow: 0 8px 24px rgba(2, 6, 23, .35) !important; }
+
+/* Menu atas: tautan tanpa kotak, "About Us" ikut gelap */
+html.rn-dms-tema .rn-public-links a,
+html.rn-dms-tema .rn-public-links .rn-menu-link {
+  color: #e2e8f0 !important; background: transparent !important;
+  border-color: transparent !important; box-shadow: none !important;
+}
+html.rn-dms-tema .rn-public-links .rn-menu-link { border-color: rgba(255, 255, 255, .18) !important; }
+html.rn-dms-tema .rn-public-links a:hover,
+html.rn-dms-tema .rn-public-links .rn-menu-link:hover { color: #fdba74 !important; background: rgba(255, 255, 255, .06) !important; }
+html.rn-dms-tema .rn-public-links .rn-submenu a,
+html.rn-dms-tema .rn-public-links .rn-submenu .rn-submenu-link { color: #0f172a !important; }
+html.rn-dms-tema .rn-public-links .rn-submenu { background: #fff !important; }
+html.rn-dms-tema .rn-public-links .rn-submenu a:hover { color: var(--dms-orange-ink) !important; background: var(--dms-orange-soft) !important; }
+
+/* Control Centre: tombol kepala */
+html.rn-dms-tema .cc-share-btn { background: var(--dms-orange-ink) !important; color: #fff !important; border-color: var(--dms-orange-ink) !important; }
+html.rn-dms-tema .cc-share-btn:hover { background: #9a3412 !important; }
+
+/* HP: bilah atas & laci menu */
+html.rn-dms-tema .rn-drawer-topbar { background: var(--dms-navy) !important; color: #fff !important; border-color: rgba(255, 255, 255, .08) !important; }
+html.rn-dms-tema .rn-drawer-topbar .rn-drawer-title,
+html.rn-dms-tema .rn-drawer-topbar a,
+html.rn-dms-tema .rn-drawer-topbar button:not([data-lang]) { color: #fff !important; }
+html.rn-dms-tema .rn-drawer-hamburger span,
+html.rn-dms-tema .rn-drawer-hamburger i { background: #fff !important; }
+html.rn-dms-tema .rn-drawer-back { background: rgba(255, 255, 255, .08) !important; border-color: rgba(255, 255, 255, .2) !important; color: #fff !important; }
+html.rn-dms-tema .rn-drawer-panel { background: linear-gradient(180deg, var(--dms-navy2), var(--dms-navy)) !important; color: #e2e8f0 !important; }
+html.rn-dms-tema .rn-drawer-panel a,
+html.rn-dms-tema .rn-drawer-panel summary,
+html.rn-dms-tema .rn-drawer-panel button,
+html.rn-dms-tema .rn-drawer-panel .rn-drawer-section-label { color: #e2e8f0 !important; background-color: transparent !important; border-color: rgba(255, 255, 255, .1) !important; }
+html.rn-dms-tema .rn-drawer-panel a:hover,
+html.rn-dms-tema .rn-drawer-panel a.active { color: #fdba74 !important; background-color: rgba(249, 115, 22, .12) !important; }
+html.rn-dms-tema .rn-drawer-card,
+html.rn-dms-tema .rn-drawer-group { background: rgba(255, 255, 255, .04) !important; border-color: rgba(255, 255, 255, .1) !important; }
+html.rn-dms-tema .rn-drawer-panel select { color: #0f172a !important; background: #fff !important; }
+
+/* ---------- Perbaikan kontras (audit 23 Nov: warna bawaan RN yang pucat) ---------- */
+html.rn-dms-tema .rn-muted,
+html.rn-dms-tema .muted,
+html.rn-dms-tema .subtitle { color: #475569 !important; }
+html.rn-dms-tema .rn-ak-link,
+html.rn-dms-tema .cc-card-more,
+html.rn-dms-tema .rn-ps-eyebrow,
+html.rn-dms-tema .rn-auth-mini-link,
+html.rn-dms-tema .rn-auth-tab.is-active { color: var(--dms-orange-ink) !important; }
+html.rn-dms-tema .rn-tab.is-active,
+html.rn-dms-tema button.on,
+html.rn-dms-tema .vx-sub-btn.is-active,
+html.rn-dms-tema .cl-btn {
+  color: #fff !important; background: var(--dms-orange-ink) !important; border-color: var(--dms-orange-ink) !important;
+}
+html.rn-dms-tema .chip.ok { color: #166534 !important; }
+html.rn-dms-tema .sc-btn { background: #1d4ed8 !important; color: #fff !important; }
+/* kartu putih di dalam sidebar biru tua: jadikan transparan supaya teks terang tetap terbaca */
+html.rn-dms-tema .cc-sidebar *:not(select):not(option):not(input):not(.cc-dot):not([class*="dot"]),
+html.rn-dms-tema .sidebar *:not(select):not(option):not(input):not([class*="dot"]):not(.brand-mark) { background-color: transparent !important; }
+html.rn-dms-tema .cc-sidebar [class*="card"],
+html.rn-dms-tema .cc-sidebar [class*="system"],
+html.rn-dms-tema .sidebar [class*="card"] { background: rgba(255, 255, 255, .05) !important; border-color: rgba(255, 255, 255, .1) !important; box-shadow: none !important; }
+html.rn-dms-tema .cc-sidebar strong, html.rn-dms-tema .cc-sidebar span, html.rn-dms-tema .cc-sidebar p,
+html.rn-dms-tema .sidebar strong, html.rn-dms-tema .sidebar span, html.rn-dms-tema .sidebar p { color: #e2e8f0 !important; }
+html.rn-dms-tema .cc-sidebar small, html.rn-dms-tema .sidebar small { color: #cbd5e1 !important; }
+
+/* ---------- Halaman DMS (Menu Instansi, modul menu) dengan gaya terang ---------- */
+html.rn-dms-tema body.dms-module { color: #0f172a !important; }
+html.rn-dms-tema .dms-module a { color: var(--dms-orange-ink) !important; }
+html.rn-dms-tema .dms-module .rn-public-header a,
+html.rn-dms-tema .dms-module .rn-drawer-topbar a { color: #e2e8f0 !important; }
+html.rn-dms-tema .dms-module h1,
+html.rn-dms-tema .dms-module h2,
+html.rn-dms-tema .dms-module h3 { color: #0f172a !important; }
+html.rn-dms-tema .dms-module p,
+html.rn-dms-tema .dms-module small,
+html.rn-dms-tema .dms-module li { color: #334155 !important; }
+html.rn-dms-tema .dms-module-panel,
+html.rn-dms-tema .dms-module section {
+  background: #fff !important; color: #0f172a !important;
+  border: 1px solid rgba(15, 23, 42, .1) !important; border-radius: 14px !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .06) !important;
+}
+html.rn-dms-tema .dms-module th { background: #f1f5f9 !important; color: #0f172a !important; }
+html.rn-dms-tema .dms-module td { color: #1e293b !important; border-color: rgba(15, 23, 42, .1) !important; }
+html.rn-dms-tema .dms-module input,
+html.rn-dms-tema .dms-module textarea,
+html.rn-dms-tema .dms-module select { background: #fff !important; color: #0f172a !important; border: 1px solid rgba(15, 23, 42, .22) !important; }
+html.rn-dms-tema .dms-module label { color: #1e293b !important; }
+html.rn-dms-tema .dms-module-main button {
+  background: var(--dms-orange-ink) !important; color: #fff !important; border-color: var(--dms-orange-ink) !important;
+}
+html.rn-dms-tema .dms-classification { color: #0f172a !important; border-color: rgba(15, 23, 42, .3) !important; background: #f1f5f9 !important; }
+html.rn-dms-tema .dms-classification[data-level="TERBATAS"] { color: #9a3412 !important; border-color: #fdba74 !important; background: #fff7ed !important; }
+html.rn-dms-tema .dms-classification[data-level="RAHASIA"] { color: #991b1b !important; border-color: #fca5a5 !important; background: #fef2f2 !important; }
+html.rn-dms-tema .dms-module-main .rn-event-picker label { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+html.rn-dms-tema .dms-module-main .rn-event-picker span { color: var(--dms-orange-ink) !important; font-weight: 700; letter-spacing: .06em; }

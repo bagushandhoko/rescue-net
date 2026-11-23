@@ -3,8 +3,8 @@
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var esc = function (s) { return window.RNUI ? window.RNUI.esc(s) : String(s == null ? "" : s); };
-  var ME = null, LOGGED = false, MAP = null, LAYER = null, TRAIL = null, ROWS = [];
+  var esc = window.RN_ARMADA_SETTINGS.esc;
+  var ME = null, LOGGED = false, MAP = null, LAYER = null, TRAIL = null, requestId = 0;
   var COLOR = { tersedia: "#2f9a5c", penuh: "#e08a1e", dipakai: "#d23c3c", lewat: "#a89a91", selesai: "#7d8a99" };
 
   function drawMap(rows) {
@@ -40,7 +40,7 @@
       if (!pts.length) { alert("Belum ada jejak GPS untuk armada ini."); return; }
       TRAIL = L.layerGroup([L.polyline(pts, { color: "#c4442f", weight: 4, opacity: 0.8 })].concat(
         (r.points || []).map(function (p, i) {
-          return L.circleMarker([p[0], p[1]], { radius: i === pts.length - 1 ? 6 : 3, color: "#c4442f", fillOpacity: 1 }).bindTooltip(p[2]);
+          return L.circleMarker([p[0], p[1]], { radius: i === pts.length - 1 ? 6 : 3, color: "#c4442f", fillOpacity: 1 }).bindTooltip(esc(p[2]));
         }))).addTo(MAP);
       MAP.fitBounds(pts, { padding: [30, 30], maxZoom: 14 });
       $("afMap").scrollIntoView({ behavior: "smooth", block: "center" });
@@ -64,6 +64,8 @@
       (a.km != null ? '<span class="rn-af-km">' + esc(a.km) + " km</span>" : "") + "</summary>" +
       '<div class="rn-af-body"><div>' + esc(when) + (a.eta ? " · tiba " + esc(a.eta) : "") + "</div>" +
       (cap ? "<div>" + esc(cap) + "</div>" : "") +
+      "<div>Jenis barang: " + esc(a.cargo_types && a.cargo_types.length ? a.cargo_types.join(", ") : "Semua jenis") + "</div>" +
+      "<div>Batas serah barang: " + (a.cargo_cutoff ? esc(a.cargo_cutoff.replace("T", " ")) : "Belum diatur") + "</div>" +
       "<div>Posko: " + esc(a.posko_title || "-") + (a.city ? " (" + esc(a.city) + ")" : "") + (a.open_booking ? " · pesanan langsung dikonfirmasi" : " · pesanan dikonfirmasi posko (PIN)") + "</div>" +
       (a.pos_live ? "<div>📍 Posisi GPS diperbarui " + esc(a.pos_at) + "</div>" : "") +
       '<div class="form-actions">' + action + ' <a class="btn ghost mini" href="' + esc(a.href) + '">Lihat posko</a>' +
@@ -71,25 +73,30 @@
   }
 
   async function load() {
+    var id = ++requestId;
     var args = { disaster_event: eventId() || null, transport_type: $("afType").value || null, date_from: $("afFrom").value || null,
-                 date_to: $("afTo").value || null, status: $("afStatus").value || null };
+                 cargo_type: $("afCargoType").value || null, date_to: $("afTo").value || null, status: $("afStatus").value || null };
     if (ME) { args.lat = ME[0]; args.lng = ME[1]; }
     try {
       var r = await window.RN_FRAPPE.call("rescue_net.api_armada.armada_finder", args);
+      if (id !== requestId) return;
       LOGGED = !!r.logged_in;
       var c = r.counts || {};
       $("afCounts").innerHTML = '<span class="chip ok">Tersedia ' + (c.tersedia || 0) + '</span> <span class="chip warning">Penuh ' + (c.penuh || 0) +
         '</span> <span class="chip danger">Sedang dipakai ' + (c.dipakai || 0) + '</span> <span class="chip">Jadwal lewat ' + (c.lewat || 0) + '</span> <span class="chip" data-af-done>Selesai ' + (c.selesai || 0) + "</span>" + (ME ? ' <small class="rn-muted">urut dari lokasi Anda</small>' : "");
-      ROWS = r.rows;
       $("afList").innerHTML = r.rows.length ? r.rows.map(row).join("") : '<p class="rn-muted">Tidak ada armada yang cocok dengan filter.' +
         (c.selesai && $("afStatus").value !== "selesai" ? ' ' + c.selesai + ' armada sudah selesai perjalanan — <a href="#" data-af-showdone>tampilkan</a>.' : "") + "</p>";
       drawMap(r.rows);
-    } catch (e) { $("afList").innerHTML = '<p class="rn-muted">' + esc((e && e.message) || e) + "</p>"; }
+    } catch (e) {
+      if (id === requestId) $("afList").innerHTML = '<p class="rn-muted">' + esc((e && e.message) || e) + "</p>";
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     if (!$("armadaFinder") || !window.RN_FRAPPE) return;
-    ["afType", "afFrom", "afTo", "afStatus"].forEach(function (id) { $(id).addEventListener("change", load); });
+    var ui = window.RN_ARMADA_SETTINGS;
+    $("afCargoType").insertAdjacentHTML("beforeend", ui.options(ui.cargoTypes));
+    ["afType", "afCargoType", "afFrom", "afTo", "afStatus"].forEach(function (id) { $(id).addEventListener("change", load); });
     $("afNear").addEventListener("click", function () {
       if (!navigator.geolocation) return alert("Peramban tidak mendukung lokasi.");
       $("afNear").textContent = "Mencari lokasi…";

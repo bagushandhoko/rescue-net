@@ -56,7 +56,7 @@
     return res;
   };
 
-  function encodeArgs(args = {}) {
+  function encodeArgs(args = {}, keepEmpty = []) {
     const params = new URLSearchParams();
 
     Object.entries(args).forEach(
@@ -64,7 +64,7 @@
         if (
           value === undefined ||
           value === null ||
-          value === ""
+          (value === "" && !keepEmpty.includes(key))
         ) {
           return;
         }
@@ -97,7 +97,7 @@
       ).toUpperCase();
 
     const params =
-      encodeArgs(args);
+      encodeArgs(args, options.keepEmpty);
 
     let url =
       METHOD_BASE +

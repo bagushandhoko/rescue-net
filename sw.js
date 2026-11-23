@@ -7,7 +7,7 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v11"; // v11 2026-11-23: lapisan InaRISK + cuaca BMKG; v10 rincian Bencana Aktif.
+const CACHE = "rescue-net-web-v12"; // Pengaturan armada dan saringan jenis barang.
 const PRECACHE = [
  "/rescue-net/index.html",
  "/rescue-net/pages/laporan-masyarakat.html",
@@ -38,6 +38,7 @@ const PRECACHE = [
  "/rescue-net/assets/js/rn-drill-banner.js",
  "/rescue-net/assets/js/rn-pwa.js",
  "/rescue-net/assets/js/posko-distribusi.js",
+ "/rescue-net/assets/js/rn-armada-settings.js",
  "/rescue-net/pages/install.html",
  "/rescue-net/pages/manual.html",
  "/rescue-net/pages/manual-teknis.html",

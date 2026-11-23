@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090e1a">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <title>Masuk | DMS Disaster Management System</title>
+  <link rel="icon" type="image/x-icon" href="/rescue-net/assets/img/favicon/favicon.ico?v=20261114">
+  <link rel="icon" type="image/png" sizes="32x32" href="/rescue-net/assets/img/favicon/favicon-32.png?v=20261114">
+  <link rel="apple-touch-icon" href="/rescue-net/assets/img/favicon/favicon-180.png?v=20261114">
+  <style>
+    :root { --bg: #090e1a; --accent: #f97316; --accent-soft: rgba(249,115,22,.15); --accent-line: rgba(249,115,22,.35); --accent-ink: #fff; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body { font-family: Inter, "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; background: var(--bg); color: #f1f5f9; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+    svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .bg img { width: 100%; height: 100%; object-fit: cover; object-position: 62% center; filter: brightness(.72) contrast(1.08) saturate(.9); }
+    .bg .fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(9,14,26,.5) 0%, rgba(9,14,26,.86) 42%, var(--bg) 72%); }
+    .bg .fade2 { position: absolute; inset: 0; background: linear-gradient(0deg, var(--bg) 0%, transparent 40%, rgba(9,14,26,.5) 100%); }
+    .wrap { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+    .intro { padding: 24px 20px; display: flex; flex-direction: column; gap: 24px; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); backdrop-filter: blur(8px); font-size: 12px; color: #e2e8f0; width: max-content; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, #f97316); display: inline-block; }
+    .kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #fb923c; }
+    h1 { margin: 10px 0 12px; font-size: clamp(26px, 3.4vw, 44px); line-height: 1.15; font-weight: 800; letter-spacing: -.02em; color: #fff; max-width: 18ch; text-wrap: balance; }
+    .lead { margin: 0; max-width: 60ch; font-size: 15px; line-height: 1.65; color: #cbd5e1; }
+    .lead b { color: #fff; font-weight: 600; }
+    .pillars { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.12); max-width: 60ch; }
+    .pillars span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: rgba(9,14,26,.45); border: 1px solid rgba(255,255,255,.12); color: #e2e8f0; }
+    .pillars .dot { width: 6px; height: 6px; }
+    .photo-credit { font-size: 11px; color: #94a3b8; }
+    .panel { padding: 24px 20px 20px; background: rgba(9,14,26,.94); border-top: 1px solid rgba(255,255,255,.1); display: flex; flex-direction: column; gap: 18px; }
+    .panel-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 12px; color: #94a3b8; }
+    .panel-top > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+    .agency-pill { padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--accent-line); }
+    .form-box { margin: auto 0; width: 100%; }
+    h2 { margin: 0; font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -.01em; }
+    .sub { margin: 4px 0 18px; font-size: 13px; color: #94a3b8; }
+    .label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #94a3b8; }
+    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; margin-bottom: 18px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px; border: 0; border-radius: 9px; background: transparent; color: #94a3b8; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background .2s, color .2s; }
+    .tab:hover { color: #fff; background: rgba(255,255,255,.06); }
+    .tab[aria-selected="true"] { color: var(--accent); background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1px var(--accent-line); font-weight: 800; }
+    .tab:focus-visible, .btn:focus-visible, .link:focus-visible, .eye:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    form { display: grid; gap: 14px; }
+    .field label { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 500; color: #cbd5e1; }
+    .control { position: relative; }
+    .control > svg.i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
+    input[type=text], input[type=password] { width: 100%; padding: 11px 44px 11px 40px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); color: #fff; font: inherit; font-size: 15px; transition: border-color .2s, box-shadow .2s, background .2s; }
+    input::placeholder { color: #94a3b8; }
+    input:focus { outline: none; background: rgba(255,255,255,.08); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: #94a3b8; cursor: pointer; }
+    .eye:hover { color: #fff; }
+    .row { display: flex; justify-content: flex-end; }
+    .link { border: 0; background: none; padding: 0; font: inherit; font-size: 13px; color: #cbd5e1; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(203,213,225,.4); }
+    .link:hover { color: #fff; }
+    .msg { padding: 10px 12px; border-radius: 12px; font-size: 13px; line-height: 1.45; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); color: #e2e8f0; }
+    .msg.ok { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.35); color: #6ee7b7; }
+    .msg.err { background: rgba(239,68,68,.14); border-color: rgba(239,68,68,.4); color: #fecaca; }
+    .btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 16px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 10px 24px -12px var(--accent); transition: filter .2s, transform .1s; }
+    .btn:hover { filter: brightness(1.08); }
+    .btn:active { transform: scale(.99); }
+    .btn[disabled] { opacity: .75; cursor: progress; }
+    .panel footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.1); font-size: 12px; color: #94a3b8; }
+    .panel footer strong { color: #e2e8f0; font-weight: 600; }
+    @media (min-width: 640px) {
+      body { height: 100vh; overflow: hidden; }
+      .bg img { width: 70%; }
+      .bg .fade { background: linear-gradient(90deg, rgba(9,14,26,.8) 0%, rgba(9,14,26,.5) 40%, rgba(9,14,26,.88) 60%, var(--bg) 70%); }
+      .wrap { flex-direction: row; height: 100vh; }
+      .intro { flex: 1; min-width: 0; padding: 32px clamp(24px, 4vw, 64px); justify-content: space-between; }
+      .panel { width: 40%; min-width: 360px; max-width: 440px; flex: none; padding: 28px clamp(24px, 2.6vw, 36px); border-top: 0; border-left: 1px solid rgba(255,255,255,.1); background: linear-gradient(90deg, rgba(9,14,26,.82), rgba(9,14,26,.97) 25%); backdrop-filter: blur(14px); overflow-y: auto; }
+    }
+    @media (min-width: 640px) and (max-height: 640px) { body, .wrap { height: auto; min-height: 100vh; overflow: visible; } }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/><path d="M3.2 12h4.3l1.5-3 3 6 1.5-3h4.3"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-2.1 6.3-6.3 2.1 2.1-6.3z"/></symbol>
+    <symbol id="i-landmark" viewBox="0 0 24 24"><path d="M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 2l8 5H4z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M2 21a8 8 0 0 1 13.3-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19 2 2 4-4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M10.7 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-2.2 3.1M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M2 2l20 20M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></symbol>
+  </svg>
+
+  <div class="bg" aria-hidden="true">
+    <img src="../assets/img/dms/latar-penanganan-bencana.jpg?v=20261123" alt="">
+    <div class="fade"></div><div class="fade2"></div>
+  </div>
+
+  <div class="wrap">
+    <section class="intro">
+      <span class="pill"><span class="dot"></span>disastermanagement.online</span>
+      <div>
+        <div class="kicker"><svg class="i"><use href="#i-shield"/></svg><span>DMS · Republik Indonesia</span></div>
+        <h1>Sistem Manajemen Penanggulangan Bencana Nasional</h1>
+        <p class="lead">Pusat kendali dan koordinasi operasi lintas instansi: status siaga, pengerahan personel gabungan, dan distribusi logistik darurat bersama <b>BNPB/BPBD, PMI, TNI/POLRI,</b> dan <b>Kementerian/Lembaga</b> dalam satu peta operasi.</p>
+      </div>
+      <div>
+        <div class="pillars">
+          <span><i class="dot" style="--c:#f97316"></i>BNPB / BPBD</span>
+          <span><i class="dot" style="--c:#ef4444"></i>PMI</span>
+          <span><i class="dot" style="--c:#84cc16"></i>TNI / POLRI</span>
+          <span><i class="dot" style="--c:#3b82f6"></i>Kementerian / Lembaga</span>
+        </div>
+        <p class="photo-credit">Foto: distribusi bantuan tsunami Aceh, 2005 (U.S. Navy, domain publik)</p>
+      </div>
+    </section>
+
+    <main class="panel">
+      <div class="panel-top">
+        <span><svg class="i" style="width:14px;height:14px"><use href="#i-lock"/></svg>Akses terotorisasi</span>
+        <span class="agency-pill" data-agency-pill>BNPB / BPBD</span>
+      </div>
+
+      <div class="form-box">
+        <h2>Masuk DMS</h2>
+        <p class="sub">Pilih instansi, lalu masuk dengan akun resmi Anda.</p>
+
+        <span class="label" id="agency-label">Instansi / pilar penanganan</span>
+        <div class="tabs" role="tablist" aria-labelledby="agency-label">
+          <button type="button" class="tab" role="tab" data-agency="bnpb" aria-selected="true"><svg class="i"><use href="#i-shield"/></svg>BNPB</button>
+          <button type="button" class="tab" role="tab" data-agency="pmi" aria-selected="false"><svg class="i"><use href="#i-heart"/></svg>PMI</button>
+          <button type="button" class="tab" role="tab" data-agency="tni" aria-selected="false"><svg class="i"><use href="#i-compass"/></svg>TNI/POLRI</button>
+          <button type="button" class="tab" role="tab" data-agency="kementerian" aria-selected="false"><svg class="i"><use href="#i-landmark"/></svg>KEMENTERIAN</button>
+        </div>
+
+        <form data-login-form novalidate>
+          <div class="field">
+            <label for="usr" data-id-label>Email / ID akun</label>
+            <div class="control">
+              <svg class="i"><use href="#i-user"/></svg>
+              <input type="text" id="usr" name="usr" required autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="nama@bpbd.go.id">
+            </div>
+          </div>
+          <div class="field">
+            <label for="pwd">Kata sandi</label>
+            <div class="control">
+              <svg class="i"><use href="#i-lock"/></svg>
+              <input type="password" id="pwd" name="pwd" required autocomplete="current-password" placeholder="Masukkan kata sandi">
+              <button type="button" class="eye" data-eye aria-label="Tampilkan kata sandi" aria-pressed="false"><svg class="i"><use href="#i-eye"/></svg></button>
+            </div>
+          </div>
+          <div class="row"><button type="button" class="link" data-forgot>Lupa sandi?</button></div>
+          <div class="msg" data-msg role="status" aria-live="polite" hidden></div>
+          <button type="submit" class="btn" data-submit><svg class="i"><use href="#i-login"/></svg><span data-submit-label>Masuk</span></button>
+        </form>
+      </div>
+
+      <footer><span>DMS · Disaster Management System</span><span>Powered by <strong>Rescue-Net</strong></span></footer>
+    </main>
+  </div>
+
+  <script src="../assets/js/dms-login.js?v=20261123"></script>
+</body>
+</html>

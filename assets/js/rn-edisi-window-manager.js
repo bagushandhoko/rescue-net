@@ -69,6 +69,7 @@
           method: "POST", credentials: "include", headers
         });
         if (!response.ok) throw new Error("logout failed");
+        if (window.RNDmsToLogin) return window.RNDmsToLogin();
         await refreshRnSession();
       } catch (_) {
         if (loginMessage) loginMessage.textContent = "Belum berhasil keluar. Coba muat ulang halaman.";

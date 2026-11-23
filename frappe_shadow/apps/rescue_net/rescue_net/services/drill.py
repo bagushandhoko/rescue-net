@@ -124,8 +124,9 @@ def is_dms_request():
     key = frappe.conf.get("rn_dms_proxy_key")
     if req is None or not isinstance(key, str) or len(key) < 32:
         return False
-    host = req.headers.get("X-Forwarded-Host", "").lower()
-    provided = req.headers.get("X-RN-DMS-Proxy-Key", "")
+    headers = getattr(req, "headers", {})
+    host = headers.get("X-Forwarded-Host", "").lower()
+    provided = headers.get("X-RN-DMS-Proxy-Key", "")
     return host == "disastermanagement.online" and hmac.compare_digest(
         provided.encode("utf-8"), key.encode("utf-8")
     )

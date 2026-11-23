@@ -24,6 +24,12 @@ REPORT_FIELDS = ("title", "report_type", "priority", "affected_people_count", "u
 
 def enqueue(feature, owner_type, owner_id, user_id, ref_doctype, ref_name):
     """One pending job per (feature, record)."""
+    from rescue_net.services.drill import dms_event_names
+
+    if ref_doctype in ("RN Community Report", "RN Logistic Need") and frappe.db.get_value(
+        ref_doctype, ref_name, "disaster_event"
+    ) in dms_event_names():
+        return None
     if frappe.db.exists("RN AI Job", {"feature": feature, "ref_doctype": ref_doctype, "ref_name": ref_name,
                                       "status": ["in", ["pending", "failed"]]}):
         return None
@@ -90,17 +96,21 @@ def enqueue_unmatched_needs(limit=NEED_PER_RUN):
     from rescue_net import api_ai
 
     cutoff = frappe.utils.add_days(frappe.utils.now_datetime(), -NEED_LOOKBACK_DAYS)
+    from rescue_net.services.drill import dms_event_names
+
+    filters = {"creation": [">", cutoff], "canonical_group": ["in", ["", None]],
+               "normalization_status": ["!=", "accepted"]}
+    if dms := dms_event_names():
+        filters["disaster_event"] = ["not in", sorted(dms)]
     made = 0
     for n in frappe.get_all(
-            "RN Logistic Need",
-            filters={"creation": [">", cutoff], "canonical_group": ["in", ["", None]],
-                     "normalization_status": ["!=", "accepted"]},
+            "RN Logistic Need", filters=filters,
             fields=["name", "created_by_user"], order_by="creation asc", limit_page_length=limit * 4):
         if frappe.db.exists("RN AI Job", {"feature": "need_normalization", "ref_name": n.name}):
             continue
-        enqueue("need_normalization", "platform", api_ai.PLATFORM_OWNER, n.created_by_user or "Administrator",
-                "RN Logistic Need", n.name)
-        made += 1
+        if enqueue("need_normalization", "platform", api_ai.PLATFORM_OWNER, n.created_by_user or "Administrator",
+                   "RN Logistic Need", n.name):
+            made += 1
         if made >= limit:
             break
     return made

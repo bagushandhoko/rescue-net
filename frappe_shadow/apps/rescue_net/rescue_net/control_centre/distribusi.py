@@ -151,7 +151,7 @@ def flow_trace(flow=None, trace=None):
     f = frappe.db.get_value(
         "RN Distribution Flow", name,
         _sf("RN Distribution Flow", [
-            "name", "item_name", "raw_item_text", "canonical_item",
+            "name", "disaster_event", "item_name", "raw_item_text", "canonical_item",
             "quantity", "unit", "quantity_mode", "quantity_min", "quantity_max",
             "estimate_text", "flow_status", "source_posko", "destination_posko",
             "eta_final", "transport_provider", "transport_type",
@@ -162,6 +162,9 @@ def flow_trace(flow=None, trace=None):
         as_dict=True,
     ) or {}
 
+    from rescue_net.services.drill import assert_scope
+
+    assert_scope(f.get("disaster_event"))
     titles = _distribusi_posko_titles([f.get("source_posko"), f.get("destination_posko")])
     status = f.get("flow_status") or "planned"
     cancelled = status == "cancelled"

@@ -28,13 +28,21 @@ def banner():
     # every recent quake (any magnitude) so the page always shows the live feed
     latest = frappe.get_all(
         "RN Early Warning",
-        filters={"status": ["!=", "dismissed"], "expires_at": [">", _now_utc()]},
+        filters={"status": ["!=", "dismissed"], "kind": "earthquake", "expires_at": [">", _now_utc()]},
         fields=["title", "magnitude", "depth_km", "issued_at"],
         order_by="issued_at desc", limit_page_length=3)
+    # peringatan dini cuaca BMKG yang masih berlaku (informasi publik, tanpa membuat bencana)
+    weather = frappe.get_all(
+        "RN Early Warning",
+        filters={"status": ["!=", "dismissed"], "kind": "weather", "expires_at": [">", _now_utc()]},
+        fields=["title", "area_desc", "potential", "issued_at", "expires_at"],
+        order_by="issued_at desc", limit_page_length=30)
     st = frappe.cache().get_value(STATUS_KEY) or {}
     return {
         "warnings": [dict(r, issued_at=str(r.issued_at), unverified=True) for r in rows],
         "latest": [dict(r, issued_at=str(r.issued_at)) for r in latest],
+        "weather": [dict(r, issued_at=str(r.issued_at), expires_at=str(r.expires_at)) for r in weather],
+        "weather_ok": st.get("weather_ok", True),
         "source_ok": st.get("ok", True),
         "checked_at": st.get("checked_at"),
         "attribution": "Sumber: BMKG (data.bmkg.go.id). Belum diverifikasi oleh Rescue-Net.",

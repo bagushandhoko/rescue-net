@@ -18,6 +18,7 @@
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       { maxZoom: 18, attribution: "© OpenStreetMap" }).addTo(MAP);
     LAYER = L.layerGroup().addTo(MAP);
+    if (window.RNInaRisk) window.RNInaRisk.attach(MAP);
   }
 
   function drawPoints(filterProv) {

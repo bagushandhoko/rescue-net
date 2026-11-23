@@ -21,8 +21,12 @@ SOURCE = "BMKG"
 URLS = (
     "https://data.bmkg.go.id/DataMKG/TEWS/autogempa.json",
     "https://data.bmkg.go.id/DataMKG/TEWS/gempaterkini.json",
+    "https://data.bmkg.go.id/DataMKG/TEWS/gempadirasakan.json",
 )
 ALLOWED_HOST = "data.bmkg.go.id"
+# Peringatan dini cuaca (nowcast) BMKG, RSS publik; owner 23 Nov: "yang bisa di konek langsung kerjakan"
+NOWCAST_URL = "https://www.bmkg.go.id/alerts/nowcast/id"
+NOWCAST_HOST = "www.bmkg.go.id"
 MAX_BYTES = 512 * 1024
 TIMEOUT = 10
 
@@ -38,8 +42,8 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def _get_json(url):
-    if not url.startswith("https://" + ALLOWED_HOST + "/"):
+def _get_raw(url, host=ALLOWED_HOST):
+    if not url.startswith("https://" + host + "/"):
         raise ValueError("host tidak diizinkan")
     opener = urllib.request.build_opener(_NoRedirect)
     req = urllib.request.Request(url, headers={"User-Agent": "Rescue-Net/1.0 (+early-warning)"})
@@ -47,7 +51,11 @@ def _get_json(url):
         raw = r.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
         raise ValueError("respons terlalu besar")
-    return json.loads(raw.decode("utf-8"))
+    return raw
+
+
+def _get_json(url):
+    return json.loads(_get_raw(url).decode("utf-8"))
 
 
 def _num(text):
@@ -74,7 +82,7 @@ def parse_quakes(payload):
             "when": when, "lat": lat, "lng": lng, "magnitude": mag,
             "depth_km": _num(q.get("Kedalaman")),
             "area": str(q.get("Wilayah") or "")[:140],
-            "potential": str(q.get("Potensi") or "")[:140],
+            "potential": str(q.get("Potensi") or ("Dirasakan: " + str(q.get("Dirasakan")) if q.get("Dirasakan") else ""))[:140],
             "raw": json.dumps(q, ensure_ascii=False)[:4000],
         })
     return out
@@ -159,6 +167,74 @@ def process(payloads):
     return new
 
 
+_TZ = {"WIB": 7, "WITA": 8, "WIT": 9}
+_BULAN = {b: i + 1 for i, b in enumerate(
+    "januari februari maret april mei juni juli agustus september oktober november desember".split())}
+
+
+def _until_utc(text):
+    """'... hingga 23 November 2026, 22:00 WIB' -> naive UTC datetime, or None."""
+    m = re.search(r"hingga\s+(\d{1,2})\s+([A-Za-z]+)\s+(\d{4}),?\s+(\d{1,2})[:.](\d{2})\s*(WIB|WITA|WIT)", text or "")
+    if not m or m.group(2).lower() not in _BULAN:
+        return None
+    from datetime import datetime
+    local = datetime(int(m.group(3)), _BULAN[m.group(2).lower()], int(m.group(1)), int(m.group(4)), int(m.group(5)))
+    return local - timedelta(hours=_TZ[m.group(6)])
+
+
+def parse_nowcast(raw):
+    """BMKG nowcast RSS (bytes) -> list of weather warnings (UTC times)."""
+    from email.utils import parsedate_to_datetime
+    import xml.etree.ElementTree as ET
+
+    if b"<!ENTITY" in raw or b"<!DOCTYPE" in raw:
+        raise ValueError("XML tidak diizinkan")
+    out = []
+    for it in ET.fromstring(raw).iter("item"):
+        title = (it.findtext("title") or "").strip()
+        desc = re.sub(r"\s+", " ", it.findtext("description") or "").strip()
+        guid = (it.findtext("guid") or it.findtext("link") or "").strip()
+        try:
+            issued = parsedate_to_datetime(it.findtext("pubDate") or "")
+            issued = (issued - issued.utcoffset()).replace(tzinfo=None)
+        except Exception:
+            continue
+        if not title or not guid:
+            continue
+        area = title.split(" di ", 1)[1] if " di " in title else ""
+        out.append({
+            "identifier": "bmkg-cuaca-" + re.sub(r"[^0-9A-Za-z.]", "", guid)[:100],
+            "title": title[:140], "area": area[:140],
+            "potential": desc.split(". ")[0][:140],
+            "when": issued, "until": _until_utc(desc) or issued + timedelta(hours=3),
+            "link": (it.findtext("link") or "")[:300],
+            "raw": json.dumps({"title": title, "description": desc[:3000], "link": it.findtext("link")}, ensure_ascii=False)[:4000],
+        })
+    return out
+
+
+def store_weather(w):
+    """Idempotent. Weather warnings are informational only: no draft event, no notification."""
+    if frappe.db.exists("RN Early Warning", {"identifier": w["identifier"]}):
+        return None
+    doc = frappe.get_doc({
+        "doctype": "RN Early Warning", "source": SOURCE, "identifier": w["identifier"],
+        "kind": "weather", "severity": "medium", "title": w["title"], "area_desc": w["area"],
+        "potential": w["potential"], "issued_at": w["when"], "expires_at": w["until"],
+        "meets_threshold": 0, "status": "new", "raw": w["raw"],
+    })
+    doc.insert(ignore_permissions=True)
+    return doc.name
+
+
+def fetch_weather():
+    try:
+        items = parse_nowcast(_get_raw(NOWCAST_URL, NOWCAST_HOST))
+    except (urllib.error.URLError, ValueError, OSError, SyntaxError) as e:
+        return 0, ["nowcast: %s" % str(e)[:80]]
+    return sum(1 for w in items if store_weather(w)), []
+
+
 def fetch_and_process():
     """Scheduler entry (every 10 min)."""
     payloads, errors = [], []
@@ -168,9 +244,11 @@ def fetch_and_process():
         except (urllib.error.URLError, ValueError, OSError) as e:
             errors.append("%s: %s" % (u.rsplit("/", 1)[-1], str(e)[:80]))
     new = process(payloads) if payloads else 0
+    new_weather, werr = fetch_weather()
+    errors += werr
     frappe.cache().set_value(STATUS_KEY, {
-        "ok": bool(payloads), "checked_at": str(now_datetime()), "errors": errors})
+        "ok": bool(payloads), "weather_ok": not werr, "checked_at": str(now_datetime()), "errors": errors})
     if errors:
         frappe.log_error("; ".join(errors), "RN early warning fetch")
     frappe.db.commit()
-    return {"new": new, "errors": errors}
+    return {"new": new, "new_weather": new_weather, "errors": errors}

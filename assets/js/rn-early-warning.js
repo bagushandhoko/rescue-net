@@ -1,4 +1,4 @@
-/* rn-early-warning.js — BMKG earthquake banner (Fase 10a).
+/* rn-early-warning.js — BMKG earthquake + weather-warning banner (Fase 10a; cuaca 23 Nov 2026).
  * Guest endpoint rescue_net.api_early_warning.banner. Informational only:
  * "belum diverifikasi"; activating an event stays a manual step. */
 (function () {
@@ -9,6 +9,11 @@
     var d = new Date(String(v).replace(" ", "T") + "Z");
     var m = Math.max(0, Math.round((Date.now() - d.getTime()) / 60000));
     return isNaN(m) ? "" : m < 60 ? m + " mnt lalu" : Math.round(m / 60) + " jam lalu";
+  }
+
+  function until(v) {
+    var d = new Date(String(v).replace(" ", "T") + "Z");
+    return isNaN(d) ? "" : d.toLocaleString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   }
 
   function render(b) {
@@ -28,8 +33,14 @@
       ? "⚠ <b>Peringatan gempa BMKG</b> (seluruh Indonesia): " + esc(first.title) + (warn.length > 1 ? " (+" + (warn.length - 1) + " lainnya)" : "")
       : "<b>Gempa terkini BMKG</b> (seluruh Indonesia, belum tentu terkait bencana ini)" +
         (last.length ? " · " + last.length + " gempa · terbaru " + esc(ago(last[0].issued_at)) : " · tidak ada gempa tercatat 48 jam terakhir");
+    var wx = b.weather || [];
+    if (wx.length) head += ' · <span style="color:#8a4b00">⛈ ' + wx.length + " peringatan cuaca BMKG aktif</span>";
+    var wxRows = wx.length ? '<div class="rn-ew-item" style="margin-top:6px"><b>⛈ Peringatan dini cuaca BMKG</b> (berlaku sekarang)</div>' +
+      wx.map(function (w) {
+        return '<div class="rn-ew-item">' + esc(w.title) + (w.expires_at ? " · sampai " + esc(until(w.expires_at)) : "") + "</div>";
+      }).join("") : "";
     var html = "<details" + (alert && window.innerWidth > 900 ? " open" : "") + '><summary style="cursor:pointer">' + head + "</summary>" +
-      rows + (b.source_ok === false ? '<div class="rn-ew-item rn-ew-warn">Data BMKG tidak terjangkau saat ini; daftar mungkin tertinggal.</div>' : "") +
+      rows + wxRows + (b.weather_ok === false ? '<div class="rn-ew-item rn-ew-warn">Data cuaca BMKG tidak terjangkau saat ini.</div>' : "") + (b.source_ok === false ? '<div class="rn-ew-item rn-ew-warn">Data BMKG tidak terjangkau saat ini; daftar mungkin tertinggal.</div>' : "") +
       '<div style="color:#7c6458;font-size:12px;margin-top:4px">' + esc(b.attribution) + "</div></details>";
     var el = document.createElement("div");
     el.id = "rnEwBanner";

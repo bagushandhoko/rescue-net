@@ -1387,6 +1387,8 @@ function renderMap(
     mapInstance
   );
 
+  if (window.RNInaRisk) window.RNInaRisk.attach(mapInstance);
+
 
   const bounds = [];
 

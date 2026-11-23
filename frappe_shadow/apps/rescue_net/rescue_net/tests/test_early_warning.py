@@ -95,3 +95,54 @@ class TestEarlyWarning(RNTestCase):
         with as_guest(), self.assertRaises(frappe.PermissionError):
             ew_api.review(name, "dismissed")
         self.assertEqual(ew_api.review(name, "dismissed")["status"], "dismissed")  # Administrator in tests
+
+
+def nowcast_rss(title="Hujan Lebat disertai Petir di Jambi", guid="2.49.0.1.360.0.2026.11.23.12.15.004", until_hours=2):
+    now = datetime.now(timezone.utc)
+    wib_until = (now + timedelta(hours=until_hours + 7)).strftime("%d %B %Y, %H:%M")
+    for en, idn in (("January", "Januari"), ("February", "Februari"), ("March", "Maret"), ("May", "Mei"), ("June", "Juni"),
+                    ("July", "Juli"), ("August", "Agustus"), ("October", "Oktober"), ("December", "Desember")):
+        wib_until = wib_until.replace(en, idn)
+    pub = now.strftime("%a, %d %b %Y %H:%M:%S +0000")
+    return ("""<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Peringatan Dini Cuaca BMKG</title>
+<item><title>%s</title><link>https://www.bmkg.go.id/alerts/nowcast/id/X_alert.xml</link>
+<description>Hujan lebat disertai petir akan terjadi di sebagian wilayah Jambi. Kondisi diperkirakan dapat berlangsung hingga %s WIB.</description>
+<guid isPermaLink="false">%s</guid><pubDate>%s</pubDate></item></channel></rss>""" % (title, wib_until, guid, pub)).encode()
+
+
+class TestEarlyWarningCuaca(RNTestCase):
+    """23 Nov 2026: gempa dirasakan + peringatan dini cuaca BMKG (nowcast)."""
+
+    def test_felt_quake_keeps_felt_area(self):
+        p = payload(mag="3.1")
+        g = p["Infogempa"]["gempa"]
+        g.pop("Potensi")
+        g["Dirasakan"] = "II Tahuna"
+        q = ew.parse_quakes(p)[0]
+        self.assertEqual(q["potential"], "Dirasakan: II Tahuna")
+        self.assertFalse(ew.meets_threshold(q))
+
+    def test_nowcast_parse_times_and_area(self):
+        w = ew.parse_nowcast(nowcast_rss())[0]
+        self.assertEqual(w["area"], "Jambi")
+        self.assertTrue(w["identifier"].startswith("bmkg-cuaca-"))
+        self.assertGreater(w["until"], w["when"])
+        self.assertLess(abs((w["until"] - w["when"]).total_seconds() - 2 * 3600), 120)
+
+    def test_nowcast_rejects_entities(self):
+        with self.assertRaises(ValueError):
+            ew.parse_nowcast(b'<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "b">]><rss/>')
+
+    def test_weather_idempotent_no_event_and_in_guest_banner(self):
+        guid = "uji.%s" % frappe.generate_hash(length=8)
+        w = ew.parse_nowcast(nowcast_rss(guid=guid))[0]
+        events_before = frappe.db.count("RN Disaster Event")
+        self.assertTrue(ew.store_weather(w))
+        self.assertIsNone(ew.store_weather(w))
+        self.assertEqual(frappe.db.count("RN Disaster Event"), events_before)
+        with as_guest():
+            b = ew_api.banner()
+        titles = [x["title"] for x in b["weather"]]
+        self.assertIn(w["title"], titles)
+        self.assertNotIn(w["title"], [x["title"] for x in b["warnings"] + b["latest"]])
+        self.assertNotIn("raw", b["weather"][0])

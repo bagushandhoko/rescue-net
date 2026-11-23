@@ -101,7 +101,6 @@
       <div class="panel">
         <div class="panel-header">
           <div><h3>Armada Terdaftar</h3><p>Alat transport &amp; ruang muat yang disediakan posko ini. Klik alat transport untuk melihat detail dan booking space.</p></div>
-          <button class="btn primary mini" type="button" id="armadaAddBtn" hidden>+ Daftarkan Armada</button>
         </div>
         <!-- owner 2026-11-02: filter armada -->
         <div class="rn-af-filters rn-pd-filters">
@@ -194,88 +193,6 @@
       </div>
     </section>
 
-    <details class="panel create-panel rn-input-drawer" id="armadaForm" hidden>
-      <summary>
-        <h3>Tambah Alat Transport</h3>
-        <p>Kendaraan darat, kapal, atau pesawat milik posko ini / mitra. Perlu login sebagai petugas / anggota posko.</p>
-      </summary>
-      <form class="rn-form" data-create-armada>
-        <div class="form-grid">
-          <label>Armada / Penyedia <input name="provider_name" placeholder="Garuda Cargo GA-1204 / KRI Teluk / Motor Pelajar" required></label>
-          <label>Jenis
-            <select name="transport_type" required>
-              <option value="darat">Darat</option>
-              <option value="laut">Laut</option>
-              <option value="udara">Udara</option>
-              <option value="lainnya">Lainnya</option>
-            </select>
-          </label>
-          <label>Mode Layanan
-            <select name="service_mode">
-              <option value="both">Ruang Muat + Kurir (jemput-antar)</option>
-              <option value="space_only">Hanya Penyedia Ruang Muat</option>
-              <option value="courier_pickup">Kurir Jemput-Antar</option>
-            </select>
-          </label>
-          <label>Kebijakan Booking
-            <select name="booking_policy">
-              <option value="pin_verify">Konfirmasi PIN oleh posko</option>
-              <option value="open">Langsung terkonfirmasi</option>
-            </select>
-          </label>
-          <div data-people-fields style="grid-column:1/-1"></div>
-          <label>Asal <input name="route_origin" placeholder="Bandara Cut Nyak Dhien"></label>
-          <label>Tujuan <input name="route_destination" placeholder="Posko Logistik Meulaboh"></label>
-          <label>Kapasitas Berat (kg) <input name="capacity_weight_kg" type="number" step="any" min="0"></label>
-          <label>Kapasitas Volume (m³) <input name="capacity_volume_m3" type="number" step="any" min="0"></label>
-          <label>Muatan Sendiri — Berat (kg) <input name="own_load_kg" type="number" step="0.01" placeholder="0"></label>
-          <label>Muatan Sendiri — Volume (m³) <input name="own_load_m3" type="number" step="0.01" placeholder="0"></label>
-          <label class="rn-form-wide">Muatan Sendiri (deskripsi) <input name="own_cargo_desc" placeholder="Logistik konvoi: BBM, tenda, alat berat ringan — dibawa sendiri"></label>
-          <label>Waktu Berangkat <input name="departure_at" type="datetime-local"></label>
-          <label>Estimasi Tiba <input name="eta_at" type="datetime-local"></label>
-          <label>Lokasi Saat Ini <input name="current_location" placeholder="Staging apron bandara"></label>
-          <label>Lokasi Serah Terima <input name="handover_location" placeholder="Apron / dermaga / halaman posko"></label>
-          <label>Narahubung <input name="handover_contact_person" placeholder="Kapten Ops"></label>
-          <label>No. Kontak <input name="handover_contact_phone" placeholder="0812-…"></label>
-          <label class="rn-form-wide">Catatan <textarea name="coordination_notes" rows="2" placeholder="Slot terbang tergantung cuaca; koordinasi 2 jam sebelum."></textarea></label>
-        </div>
-        <fieldset class="rn-evc-field">
-          <legend>Jenis barang yang diterima</legend>
-          <div data-armada-cargo></div>
-        </fieldset>
-        <fieldset class="rn-evc-field rn-pd-terms">
-          <legend>Syarat barang <small>— yang harus dipenuhi pengirim (mis. Garuda Cargo: packing, berat per koli, barang terlarang)</small></legend>
-          <div class="form-grid">
-            <label>Packing
-              <select name="packing_required">
-                <option value="">Tidak diatur</option>
-                <option value="dianjurkan">Dianjurkan</option>
-                <option value="wajib">Wajib</option>
-              </select>
-            </label>
-            <label>Berat maks per koli (kg) <input name="max_piece_weight_kg" type="number" step="0.1" min="0" placeholder="25"></label>
-            <label>Batas serah barang <input name="cargo_cutoff_at" type="datetime-local"></label>
-            <label class="rn-form-wide">Spesifikasi packing <input name="packing_spec" placeholder="Dus/karung tertutup, diisolasi, label isi + tujuan, palet ULD standar"></label>
-            <label class="rn-form-wide">Syarat lain <textarea name="cargo_requirements" rows="2" placeholder="Barang basah dibungkus plastik; obat-obatan terpisah dan berlabel; maks 1 palet per pengirim."></textarea></label>
-            <label class="rn-form-wide">Barang terlarang / dibatasi <input name="prohibited_items" placeholder="BBM, baterai lepas, aerosol, bahan mudah terbakar (B3 wajib deklarasi H-1)"></label>
-            <label class="rn-form-wide">Dokumen yang diperlukan <input name="documents_required" placeholder="Surat jalan, daftar isi (packing list), identitas pengirim"></label>
-          </div>
-        </fieldset>
-        <fieldset class="rn-evc-field">
-          <legend>Bencana yang dilayani armada * <small>— bisa lebih dari satu</small></legend>
-          <div id="armadaEventPicker"></div>
-        </fieldset>
-        <fieldset class="rn-evc-field">
-          <legend>Posko logistik yang dilayani <small>— asal muatan; kosong = semua posko logistik di bencana itu</small></legend>
-          <div id="armadaPoskoPicker"></div>
-        </fieldset>
-        <div class="form-actions">
-          <button class="btn primary" type="submit">Simpan Armada</button>
-          <span class="form-message" data-armada-message></span>
-        </div>
-      </form>
-    </details>
-
     <details class="panel rn-input-drawer" id="guestTrackDrawer">
       <summary>
         <h3>Lacak / Ubah Booking Tamu</h3>
@@ -317,11 +234,11 @@
 <script src="../assets/js/rn-posko-summary.js?v=petunjuk-20261112"></script>
   <script src="../assets/js/rn-posko-scope.js?v=pie-20261114-1"></script>
 <script src="../assets/js/rn-posko-contact.js?v=font13-20261109"></script>
-<script src="../assets/js/rn-posko-settings.js?v=font13-20261109"></script>
-<script src="../assets/js/rn-posko-picker.js?v=font-20261109"></script>
 <script src="../assets/js/rn-event-checklist.js?v=evc-20261019c"></script>
-<script src="../assets/js/rn-armada-settings.js?v=armada-20261123"></script>
-<script src="../assets/js/posko-distribusi.js?v=armada-20261123"></script>
+<script src="../assets/js/rn-armada-settings.js?v=pengaturan-20261123"></script>
+<script src="../assets/js/rn-posko-settings.js?v=pengaturan-20261123"></script>
+<script src="../assets/js/rn-posko-picker.js?v=font-20261109"></script>
+<script src="../assets/js/posko-distribusi.js?v=pengaturan-20261123"></script>
 <script src="../assets/js/session-role.js?v=gabung-20261117"></script>
 <script src="../assets/js/rn-public-header.js?v=warna-20261122"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>

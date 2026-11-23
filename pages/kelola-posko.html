@@ -27,22 +27,7 @@
     .kp-kv{display:grid;grid-template-columns:minmax(110px,170px) 1fr;gap:6px 12px;font-size:14px;overflow-wrap:anywhere}
     .kp-kv dt{color:#6b5c4f}.kp-kv dd{margin:0}
     @media(max-width:560px){.kp-kv{grid-template-columns:1fr}.kp-kv dd{margin-bottom:6px}}
-    .rn-armada-cargo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,185px),1fr));gap:6px 12px;margin-bottom:12px}
-    .rn-armada-cargo p{grid-column:1/-1;margin:0 0 4px}
-    .rn-armada-cargo label{display:flex;flex-direction:row;align-items:flex-start;gap:8px;min-width:0}
-    .rn-armada-cargo label input[type="checkbox"]{width:auto;min-width:auto;margin:4px 0 0;flex:none}
-    .kp-arm,.kp-arm-body,.kp-settings{min-width:0;overflow-wrap:anywhere}
-    .kp-settings{padding:10px 12px;border:1px solid var(--line,#bdaea6);border-radius:10px}
-    .kp-settings>summary{cursor:pointer;font-weight:800}
-    .kp-settings form{display:grid;gap:12px;margin-top:12px}
-    .kp-settings fieldset{min-inline-size:0;margin:0;padding:10px 12px 12px;border:1px solid var(--line,#bdaea6);border-radius:8px}
-    .kp-settings legend{padding:0 4px;font-weight:800}
-    .kp-settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px 14px}
-    .kp-settings-grid label{display:grid;gap:4px;min-width:0}
-    .kp-settings-grid :is(input,select,textarea){width:100%;min-width:0;max-width:100%;box-sizing:border-box;min-height:40px;padding:6px 8px;border:1px solid #9e8d81;border-radius:6px;background:#fff;color:#2e241f;font:inherit}
-    .kp-settings-totals{margin:0 0 10px}
-    .kp-settings-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
-    .kp-settings-actions span{min-width:0}
+    .kp-arm,.kp-arm-body{min-width:0;overflow-wrap:anywhere}
   </style>
   <link rel="icon" type="image/png" sizes="32x32" href="/rescue-net/assets/img/favicon/favicon-32.png?v=20261114">
   <link rel="icon" type="image/png" sizes="48x48" href="/rescue-net/assets/img/favicon/favicon-48.png?v=20261114">
@@ -105,7 +90,7 @@
 
       <section class="panel">
         <div class="panel-header"><div><h3>Ringkasan posko</h3></div>
-          <a class="btn mini" id="kpEdit" href="#">⚙ Ubah pengaturan &amp; kontak</a></div>
+          <a class="btn mini" id="kpEdit" href="#">⚙ Pengaturan</a></div>
         <dl class="kp-kv" id="kpInfo"></dl>
       </section>
 
@@ -115,20 +100,6 @@
       </section>
 
       <!-- Kelola Posko tahap 2 (owner 2026-11-02): input tools on the owner page -->
-      <section class="panel" id="kpContact">
-        <div class="panel-header"><div><h3>📞 Kontak &amp; status posko</h3><p>Tampil di bagian atas semua halaman posko. Nomor HP hanya terlihat sesuai pengaturan privasi posko.</p></div></div>
-        <form class="rn-form" id="kpContactForm"><div class="form-grid">
-          <label>Nama PIC <input name="officer_in_charge_name" maxlength="140"></label>
-          <label>Jabatan PIC <input name="officer_in_charge_role" maxlength="140"></label>
-          <label>No. HP PIC <input name="officer_in_charge_phone" inputmode="tel" maxlength="40"></label>
-          <label>WhatsApp <input name="officer_in_charge_whatsapp" inputmode="tel" maxlength="40"></label>
-          <label>Kontak darurat <input name="emergency_contact" maxlength="140"></label>
-          <label>Status operasional <select name="operational_status">
-            <option value="active">Aktif</option><option value="standby">Siaga</option><option value="reducing">Pengurangan</option>
-            <option value="closing">Persiapan tutup</option><option value="offline">Nonaktif / tutup</option></select></label>
-        </div><div class="form-actions"><button class="btn primary" type="submit">Simpan</button><span class="form-message" id="kpContactMsg"></span></div></form>
-      </section>
-
       <section class="panel" id="kpVolunteers">
         <div class="panel-header"><div><h3>🙋 Permintaan relawan</h3><p>Relawan yang menawarkan diri bertugas, minta jemputan, atau tempat menginap di posko ini. Setujui = relawan langsung ditempatkan.</p></div></div>
         <div id="kpVolList" class="kp-list"><p class="rn-muted">Memuat…</p></div>
@@ -165,7 +136,7 @@
 
       <section class="panel" id="kpArmada">
         <div class="panel-header"><div><h3>🚚 Alat transport posko</h3><p>Atur ruang muat, jenis barang, jadwal, dan serah terima. Perbarui juga status, posisi GPS, dan pesanan yang menunggu keputusan. Publik melihat posisi &amp; sisa kapasitas di Manajemen Distribusi → Cari Armada.</p></div>
-          <a class="btn primary mini" id="kpArmadaAdd" href="#">+ Daftarkan armada</a></div>
+          <a class="btn primary mini" id="kpArmadaAdd" href="#">⚙ Pengaturan armada</a></div>
         <div id="kpArmadaList" class="kp-armada"><p class="rn-muted">Memuat…</p></div>
         <span class="form-message" id="kpArmadaMsg"></span>
       </section>
@@ -205,8 +176,8 @@
 </div>
 <script src="../assets/js/rn-frappe-client.js?v=armada-20261123"></script>
 <script src="../assets/js/rn-ui.js?v=fix-20261120c"></script>
-<script src="../assets/js/rn-armada-settings.js?v=armada-20261123"></script>
-<script src="../assets/js/kelola-posko.js?v=armada-20261123"></script>
+<script src="../assets/js/rn-armada-settings.js?v=pengaturan-20261123"></script>
+<script src="../assets/js/kelola-posko.js?v=pengaturan-20261123"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
 <script src="../assets/js/rn-public-header.js?v=warna-20261122"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>

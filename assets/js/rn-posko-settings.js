@@ -19,14 +19,14 @@
   /* owner 2026-11-02 23:20: form & tombol pengaturan/pencatatan (data-owner-only) hanya tampil
      untuk pengelola posko ini. Tanpa ?id= (dasbor semua posko saya): tampil bila login — server
      tetap menolak posko yang bukan milik pengguna. */
+  var settingsRequest = POSKO ? getSettings() : null;
   (function ownerOnly() {
     var st = document.createElement("style");
     st.textContent = "html:not(.rn-can-operate) [data-owner-only]{display:none!important}";
     (document.head || document.documentElement).appendChild(st);
     var grant = function () { document.documentElement.classList.add("rn-can-operate"); };
     var p = POSKO
-      ? window.RN_FRAPPE.call("rescue_net.api_community_cluster.get_posko_settings", { posko: POSKO })
-          .then(function (d) { if (d && (d.can_operate || d.can_edit)) grant(); })
+      ? settingsRequest.then(function (d) { if (d && (d.can_operate || d.can_edit)) grant(); })
       : window.RN_FRAPPE.call("rescue_net.api_auth.session_info", {})
           .then(function (d) { if (d && d.user && d.user !== "Guest") grant(); });
     p.catch(function () {});
@@ -57,23 +57,40 @@
       "a.rn-ps-btn.rn-public-login{color:#3a2c22!important;background:#fff!important;font-weight:700;text-decoration:none}",
       ".rn-ps-ov{position:fixed;inset:0;background:rgba(20,14,10,.5);display:flex;align-items:flex-start;",
       "justify-content:center;padding:32px 16px;z-index:9999;overflow:auto}",
-      ".rn-ps-card{background:#fff;max-width:720px;width:100%;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);",
+      ".rn-ps-card{background:#fff;max-width:820px;width:100%;min-width:0;box-sizing:border-box;overflow-wrap:anywhere;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);",
       "padding:20px 22px;color:#2a2018}",
       ".rn-ps-card h3{margin:0 0 2px}",
       ".rn-ps-sub{color:#6b5c4f;font-size:13px;margin:0 0 14px}",
       ".rn-ps-sec{font-weight:700;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#8a5a2a;",
       "margin:16px 0 6px}",
-      ".rn-ps-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px}",
+      ".rn-ps-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}",
       ".rn-ps-grid label{display:flex;flex-direction:column;gap:3px;font-size:13px}",
       ".rn-ps-grid label.wide{grid-column:1/-1}",
       ".rn-ps-grid input,.rn-ps-grid select,.rn-ps-grid textarea{font:inherit;font-size:13px;padding:7px 9px;",
       "border:1px solid rgba(0,0,0,.2);border-radius:7px;background:#fff}",
       ".rn-ps-grid textarea{resize:vertical;min-height:52px}",
-      ".rn-ps-act{display:flex;gap:10px;align-items:center;margin-top:18px}",
+      ".rn-ps-act{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}",
       ".rn-ps-act .rn-ps-msg{font-size:13px;color:#6b5c4f}",
-      ".rn-ps-save{padding:8px 16px;border-radius:8px;border:0;background:#b5642d;color:#fff;font:inherit;cursor:pointer}",
-      ".rn-ps-cancel{padding:8px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.2);background:#fff;font:inherit;cursor:pointer}",
-      "@media(max-width:560px){.rn-ps-grid{grid-template-columns:1fr}}",
+      ".rn-ps-save{padding:8px 16px;border-radius:8px;border:0;background:#8a471e;color:#fff;font:inherit;cursor:pointer}",
+      ".rn-ps-cancel,.rn-ps-secondary{padding:8px 14px;border-radius:8px;border:1px solid #887467;background:#fff;color:#2a2018;font:inherit;cursor:pointer}",
+      ".rn-ps-card [hidden]{display:none!important}",
+      ".rn-ps-tabs{display:flex;gap:4px;overflow-x:auto;padding:4px 4px 8px;border-bottom:1px solid #c8b8ad;margin-bottom:12px}",
+      ".rn-ps-tabs button{flex:none;padding:8px 12px;border:1px solid #b6a598;border-radius:8px;background:#fff;color:#2a2018;font:inherit;cursor:pointer}",
+      ".rn-ps-tabs [aria-selected=true]{background:#f4e4d7;border-color:#8a471e;color:#632e12;font-weight:700}",
+      ".rn-ps-arm{margin:8px 0;padding:10px;border:1px solid #b6a598;border-radius:8px;min-width:0}",
+      ".rn-ps-arm>summary{cursor:pointer;font-weight:700}",
+      ".rn-ps-arm form{display:grid;gap:12px;margin-top:12px}",
+      ".rn-ps-arm fieldset{min-inline-size:0;margin:0;padding:10px;border:1px solid #b6a598;border-radius:8px}",
+      ".rn-ps-arm legend{padding:0 4px;font-weight:700}",
+      ".rn-ps-arm-grid,.rn-armada-cargo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:8px 12px}",
+      ".rn-armada-cargo{margin-bottom:12px}.rn-armada-cargo p{grid-column:1/-1;margin:0}",
+      ".rn-armada-cargo label{display:flex;align-items:flex-start;gap:6px}.rn-armada-cargo input{flex:none}",
+      ".rn-ps-arm-grid label{display:grid;gap:4px;min-width:0;font-size:13px}",
+      ".rn-ps-arm-grid :is(input,select,textarea),.rn-ps-grid :is(input,select,textarea){min-width:0;max-width:100%;box-sizing:border-box;background:#fff;color:#2a2018}",
+      ".rn-ps-arm-grid :is(input,select,textarea){width:100%;min-height:38px;padding:6px 8px;border:1px solid #887467;border-radius:6px;font:inherit}",
+      ".rn-ps-arm-totals{margin:0 0 10px}",
+      ".rn-ps-arm-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}",
+      "@media(max-width:560px){.rn-ps-grid{grid-template-columns:minmax(0,1fr)}.rn-ps-ov{padding:16px 10px}.rn-ps-card{padding:14px}}",
     ].join("");
     document.head.appendChild(s);
   }
@@ -89,19 +106,30 @@
     return h;
   }
 
-  function openModal(p) {
+  var tabs = { posko: "Posko", kontak: "Kontak & Notifikasi", armada: "Armada & Ruang Muat", data: "Data lain" };
+
+  function openModal(p, tab, armada, add) {
+    if (document.querySelector(".rn-ps-ov")) return;
+    var previousFocus = document.activeElement;
+    var previousOverflow = document.body.style.overflow;
     styleOnce();
     var ov = el('<div class="rn-ps-ov"></div>');
     var loc = [p.village_name, p.district_name, p.city_name, p.province_name].filter(Boolean).join(", ");
     ov.appendChild(el(
-      '<div class="rn-ps-card" role="dialog" aria-modal="true">' +
-      "<h3>Pengaturan Posko</h3>" +
+      '<div class="rn-ps-card" role="dialog" aria-modal="true" aria-labelledby="rnPsTitle">' +
+      "<h3 id=\"rnPsTitle\">Pengaturan Posko</h3>" +
       '<p class="rn-ps-sub">' + esc(p.name) + (loc ? " · " + esc(loc) : "") + "</p>" +
+      '<div class="rn-ps-tabs" role="tablist" aria-label="Bagian pengaturan">' +
+      Object.keys(tabs).map(function (key) {
+        return '<button type="button" role="tab" id="rnPsTab-' + key + '" aria-controls="rnPsPanel-' + key +
+          '" data-tab="' + key + '">' + esc(tabs[key]) + '</button>';
+      }).join("") + '</div>' +
       '<form id="rnPsForm">' +
+      panel("posko") +
 
       '<div class="rn-ps-sec">Identitas</div>' +
       '<div class="rn-ps-grid">' +
-      '<label class="wide">Nama posko<input name="title" value="' + esc(v(p.title)) + '" required></label>' +
+      '<label class="wide">Nama posko<input name="title" value="' + esc(v(p.title)) + '"></label>' +
       '<label>Jenis posko<input name="posko_type" value="' + esc(v(p.posko_type)) + '" placeholder="logistics / medical / shelter / kitchen / transport"></label>' +
       '<label>Status operasional<select name="operational_status">' +
         optionList(STATUS_OPTS, STATUS_LABEL, v(p.operational_status)) + "</select></label>" +
@@ -120,6 +148,7 @@
       '<label>Longitude<input name="longitude" value="' + esc(v(p.longitude)) + '" placeholder="106.8000"></label>' +
       "</div>" +
 
+      '</section>' + panel("kontak") +
       '<div class="rn-ps-sec">Penanggung Jawab &amp; Kontak</div>' +
       '<div class="rn-ps-grid">' +
       '<label>Nama PIC<input name="officer_in_charge_name" value="' + esc(v(p.officer_in_charge_name)) + '"></label>' +
@@ -144,14 +173,14 @@
       '<label class="wide">Kirim pesan sekarang ke nomor di atas' +
         '<textarea id="rnPsBroadcast" placeholder="mis. Beras 50 karung tiba di posko pukul 14.00. Butuh 4 relawan bongkar."></textarea></label>' +
       '<div class="wide" style="grid-column:1/-1;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
-        '<button type="button" class="rn-ps-cancel" id="rnPsBroadcastBtn">Kirim WhatsApp</button>' +
-        '<button type="button" class="rn-ps-cancel" id="rnPsLogBtn">Lihat log kiriman</button>' +
-        '<span class="rn-ps-msg" id="rnPsWaMsg"></span>' +
+        '<button type="button" class="rn-ps-secondary" id="rnPsBroadcastBtn">Kirim WhatsApp</button>' +
+        '<button type="button" class="rn-ps-secondary" id="rnPsLogBtn">Lihat log kiriman</button>' +
+        '<span class="rn-ps-msg" id="rnPsWaMsg" role="status"></span>' +
       "</div>" +
       '<div class="wide" id="rnPsLog" style="grid-column:1/-1;font-size:13px;color:#5b4a3d"></div>' +
       "</div>" +
 
-      '<div class="rn-ps-sec">Data Lain</div>' +
+      '</section>' + panel("data") +
       '<div class="rn-ps-grid">' +
       '<label>Jumlah jiwa dilayani<input type="number" name="rn_beneficiary_count" value="' + esc(v(p.rn_beneficiary_count)) + '"></label>' +
       '<label>Detail publik<select name="public_detail">' +
@@ -160,55 +189,105 @@
       '<label class="wide">Catatan<textarea name="notes">' + esc(v(p.notes)) + "</textarea></label>" +
       "</div>" +
 
-      '<div class="rn-ps-act">' +
+      '</section><div id="rnPsSaveActions" class="rn-ps-act">' +
       '<button type="submit" class="rn-ps-save">Simpan</button>' +
-      '<button type="button" class="rn-ps-cancel">Batal</button>' +
-      '<span class="rn-ps-msg"></span>' +
+      '<button type="button" class="rn-ps-cancel" id="rnPsCancel">Batal</button>' +
+      '<span class="rn-ps-msg" id="rnPsSaveMsg" role="status"></span>' +
       "</div>" +
-      "</form></div>"
+      "</form>" + panel("armada") +
+      '<div id="rnPsArmada"></div><div class="rn-ps-act"><button type="button" class="rn-ps-cancel" id="rnPsArmadaCancel">Batal</button></div></section></div>'
     ));
 
-    function close() { ov.remove(); document.removeEventListener("keydown", onKey); }
-    function onKey(e) { if (e.key === "Escape") close(); }
+    function panel(key) {
+      return '<section role="tabpanel" id="rnPsPanel-' + key + '" aria-labelledby="rnPsTab-' + key + '" hidden>';
+    }
+
+    var changed = false;
+    var buttons = Array.from(ov.querySelectorAll("[data-tab]"));
+    function onSaved() {
+      if (ov.isConnected) changed = true;
+      else document.dispatchEvent(new Event("rn-posko-settings-saved"));
+    }
+    var active;
+    var armadaLoaded = false;
+    function selectTab(key) {
+      active = Object.hasOwn(tabs, key) ? key : "posko";
+      buttons.forEach(function (button) {
+        var selected = button.dataset.tab === active;
+        button.setAttribute("aria-selected", String(selected));
+        button.tabIndex = selected ? 0 : -1;
+        ov.querySelector("#rnPsPanel-" + button.dataset.tab).hidden = !selected;
+      });
+      ov.querySelector("#rnPsSaveActions").hidden = active === "armada";
+      if (active === "armada" && !armadaLoaded) {
+        armadaLoaded = true;
+        window.RN_ARMADA_SETTINGS.mount(ov.querySelector("#rnPsArmada"), POSKO,
+          qs.get("event") || p.disaster_event, armada, add, onSaved);
+      }
+    }
+    buttons.forEach(function (button, index) {
+      button.addEventListener("click", function () { selectTab(button.dataset.tab); });
+      button.addEventListener("keydown", function (e) {
+        var next = { ArrowRight: (index + 1) % buttons.length, ArrowLeft: (index + buttons.length - 1) % buttons.length,
+          Home: 0, End: buttons.length - 1 }[e.key];
+        if (next == null) return;
+        e.preventDefault();
+        buttons[next].click();
+        buttons[next].focus();
+      });
+    });
+    function close() {
+      ov.remove();
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+      if (previousFocus.isConnected) previousFocus.focus();
+      if (changed) document.dispatchEvent(new Event("rn-posko-settings-saved"));
+    }
+    function onKey(e) {
+      if (document.getElementById("rnPrivacyAsk")) return;
+      if (e.key === "Escape") { e.preventDefault(); close(); return; }
+      if (e.key !== "Tab") return;
+      var controls = Array.from(ov.querySelectorAll("button,input,select,textarea,a[href],summary")).filter(function (control) {
+        return !control.disabled && control.tabIndex >= 0 && control.getClientRects().length > 0;
+      });
+      var edge = e.shiftKey ? controls[0] : controls[controls.length - 1];
+      if (document.activeElement === edge || !ov.contains(document.activeElement)) {
+        e.preventDefault();
+        (e.shiftKey ? controls[controls.length - 1] : controls[0]).focus();
+      }
+    }
     document.addEventListener("keydown", onKey);
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
-    ov.querySelector(".rn-ps-cancel").addEventListener("click", close);
+    ["#rnPsCancel", "#rnPsArmadaCancel"].forEach(function (selector) {
+      ov.querySelector(selector).addEventListener("click", close);
+    });
 
     ov.querySelector("#rnPsForm").addEventListener("submit", async function (e) {
       e.preventDefault();
-      var f = e.target, msg = ov.querySelector(".rn-ps-msg");
-      var g = function (n) { return f[n] ? String(f[n].value).trim() : ""; };
+      var save = ov.querySelector(".rn-ps-save");
+      var msg = ov.querySelector("#rnPsSaveMsg");
+      var payload = { posko: p.name };
+      Array.from(ov.querySelector("#rnPsPanel-" + active).querySelectorAll("[name]")).forEach(function (input) {
+        payload[input.name] = input.type === "checkbox" ? Number(input.checked) : input.value.trim();
+      });
+      if (active === "posko" && !payload.title) {
+        msg.textContent = "Nama posko wajib diisi.";
+        return;
+      }
       msg.textContent = "Menyimpan…";
+      save.disabled = true;
       try {
-        var saved = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.update_posko", {
-          posko: POSKO,
-          title: g("title"),
-          posko_type: g("posko_type"),
-          operational_status: g("operational_status"),
-          active_from: g("active_from"),
-          active_until: g("active_until"),
-          address: g("address"),
-          latitude: g("latitude"),
-          longitude: g("longitude"),
-          officer_in_charge_name: g("officer_in_charge_name"),
-          officer_in_charge_role: g("officer_in_charge_role"),
-          officer_in_charge_phone: g("officer_in_charge_phone"),
-          officer_in_charge_whatsapp: g("officer_in_charge_whatsapp"),
-          officer_in_charge_email: g("officer_in_charge_email"),
-          emergency_contact: g("emergency_contact"),
-          rn_beneficiary_count: g("rn_beneficiary_count"),
-          public_detail: g("public_detail"),
-          facilities: g("facilities"),
-          notes: g("notes"),
-          notify_whatsapp_enabled: f.notify_whatsapp_enabled && f.notify_whatsapp_enabled.checked ? 1 : 0,
-          notify_whatsapp_numbers: g("notify_whatsapp_numbers"),
-        }, { method: "POST" });
+        var saved = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.update_posko", payload,
+          { method: "POST", keepEmpty: Object.keys(payload) });
         msg.textContent = saved && saved.pending
-          ? "Tersimpan ✓ — perubahan data pokok (nama/lokasi/jadwal/visibilitas) diajukan ke pusat komando dan menunggu persetujuan. Perubahan operasional sudah berlaku."
-          : "Tersimpan ✓ — memuat ulang…";
-        setTimeout(function () { location.reload(); }, saved && saved.pending ? 3500 : 600);
+          ? "Perubahan data pokok menunggu persetujuan pusat komando. Perubahan operasional tersimpan."
+          : "Tersimpan ✓";
+        onSaved();
+        getSettings().then(function (data) { if (data && data.posko) Object.assign(p, data.posko); }).catch(function () {});
       } catch (err) {
         msg.textContent = "Gagal: " + ((err && err.message) || err);
+      } finally {
+        save.disabled = false;
       }
     });
 
@@ -254,8 +333,9 @@
     });
 
     document.body.appendChild(ov);
-    var t = ov.querySelector('input[name="title"]');
-    if (t) t.focus();
+    document.body.style.overflow = "hidden";
+    selectTab(tab);
+    ov.querySelector('[aria-selected="true"]').focus();
   }
 
   function mountButton(p) {
@@ -270,7 +350,18 @@
     // Kelola Posko (owner 2026-11-01): managers' own hub, only shown to people who can edit this posko
     var kelola = el('<a id="rnKelolaPoskoBtn" class="rn-public-login" title="Halaman khusus pengelola posko" href="kelola-posko.html?id=' +
       encodeURIComponent(POSKO) + '">🔧 Kelola Posko</a>');
-    if (qs.get("settings") === "1") setTimeout(function () { openModal(p); }, 300);
+    document.addEventListener("click", function (e) {
+      var link = e.target.closest("[data-posko-armada-settings]");
+      if (!link || new URL(link.href).searchParams.get("id") !== POSKO ||
+          e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      openModal(p, "armada", link.dataset.poskoArmadaSettings, false);
+    });
+    var legacyAdd = location.hash === "#armadaForm";
+    var legacyArmada = qs.get("armada");
+    if (qs.get("settings") === "1" || legacyAdd || legacyArmada) {
+      openModal(p, qs.get("tab") || (legacyAdd || legacyArmada ? "armada" : "posko"), legacyArmada, legacyAdd);
+    }
 
     var tries = 0;
     (function place() {
@@ -295,11 +386,14 @@
     })();
   }
 
+  function getSettings() {
+    return window.RN_FRAPPE.call("rescue_net.api_community_cluster.get_posko_settings", { posko: POSKO });
+  }
+
   (async function run() {
     var data;
     try {
-      data = await window.RN_FRAPPE.call(
-        "rescue_net.api_community_cluster.get_posko_settings", { posko: POSKO });
+      data = await settingsRequest;
     } catch (e) { return; }
     if (!data || !data.can_edit || !data.posko) return;
     if (document.readyState === "loading") {

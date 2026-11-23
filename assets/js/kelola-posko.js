@@ -77,7 +77,7 @@
     status("");
   }
 
-  /* Kelola Posko tahap 2 (owner 2026-11-02): kontak & status, permintaan relawan, kebutuhan, stok */
+  /* Permintaan relawan, kebutuhan, dan stok. */
   var URG = { normal: "", urgent: "warning", critical: "danger" };
   var KIND = { posko: "Menawarkan diri bertugas", transport: "Minta kursi armada / jemputan", akomodasi: "Minta tempat menginap" };
   function call(m, a, post) { return window.RN_FRAPPE.call(m, a || {}, post ? { method: "POST" } : undefined); }
@@ -87,8 +87,6 @@
     var w;
     try { w = await call("rescue_net.api_posko_manage.workbench", { posko: POSKO }); }
     catch (e) { return; }
-    var f = $("kpContactForm");
-    if (f) Object.keys(w.contact).forEach(function (k) { if (f[k]) f[k].value = w.contact[k] || (k === "operational_status" ? "active" : ""); });
     $("kpVolList").innerHTML = w.volunteer_requests.length ? w.volunteer_requests.map(function (v) {
       return '<div class="kp-bk"><span><b>' + esc(v.volunteer_name || "Relawan") + "</b> · " + esc(KIND[v.booking_kind] || v.booking_kind) +
         "<br><small>" + esc(v.main_skill || "") + (v.contact ? " · " + esc(v.contact) : "") + (v.note ? " · " + esc(v.note) : "") + " · " + esc(v.creation) + "</small></span>" +
@@ -107,15 +105,6 @@
   }
 
   function wireWorkbench() {
-    var cf = $("kpContactForm");
-    if (cf) cf.addEventListener("submit", async function (e) {
-      e.preventDefault(); say("kpContactMsg", "Menyimpan…");
-      var a = { posko: POSKO };
-      Array.prototype.forEach.call(cf.elements, function (el) { if (el.name) a[el.name] = el.value.trim(); });
-      try { var r = await call("rescue_net.api_community_cluster.update_posko", a, true);
-        say("kpContactMsg", r && r.pending ? "Tersimpan — sebagian menunggu persetujuan pusat." : "Tersimpan."); }
-      catch (err) { say("kpContactMsg", "Gagal: " + ((err && err.message) || err)); }
-    });
     var vl = $("kpVolList");
     if (vl) vl.addEventListener("click", async function (e) {
       var b = e.target.closest("[data-vol]"); if (!b) return;
@@ -149,51 +138,7 @@
 
   /* Alat transport posko (owner 2026-11-02) — api_posko_manage.armada_list + existing armada / booking endpoints */
   var GPS_WATCH = null;
-  function armadaSettings(a, types) {
-    var ui = window.RN_ARMADA_SETTINGS, settings = a.settings;
-    function field(name, label, type, choices) { return ui.field(settings, name, label, type, choices); }
-    function group(title, fields, extra) {
-      return '<fieldset><legend>' + title + '</legend>' + (extra || "") +
-        '<div class="kp-settings-grid">' + fields + '</div></fieldset>';
-    }
-    function quantity(value, unit) {
-      return value == null ? "belum diatur" : Number(value).toLocaleString("id-ID", { maximumFractionDigits: 6 }) + " " + unit;
-    }
-    var totals = '<p class="kp-settings-totals"><strong>Sisa tersedia</strong> ' +
-      quantity(a.left_kg, "kg") + " / " + quantity(settings.left_m3, "m³") +
-      '<br><strong>Sudah dipesan</strong> ' + quantity(settings.committed_kg, "kg") + " / " +
-      quantity(settings.committed_m3, "m³") + "</p>";
-    return '<details class="kp-settings"><summary>⚙ Pengaturan armada</summary>' +
-      '<form data-arm-settings="' + esc(a.name) + '">' +
-      group("Identitas", ui.identityFields(settings)) +
-      group("Ukuran ruang muat", ui.capacityFields(settings) +
-        field("own_load_kg", "Muatan sendiri (kg)", "number") +
-        field("own_load_m3", "Muatan sendiri (m³)", "number") +
-        field("own_cargo_desc", "Keterangan muatan sendiri", "textarea"), totals) +
-      group("Jenis barang yang diterima",
-        field("prohibited_items", "Barang dilarang", "textarea") +
-        field("cargo_requirements", "Syarat barang", "textarea") +
-        field("packing_required", "Packing", null, { "": "Tidak diatur", tidak: "Tidak wajib", dianjurkan: "Dianjurkan", wajib: "Wajib" }) +
-        field("packing_spec", "Spesifikasi packing") +
-        field("max_piece_weight_kg", "Berat maksimum per koli (kg)", "number") +
-        field("documents_required", "Dokumen yang diperlukan"),
-        ui.cargoFields(types, settings.accepted_cargo_types)) +
-      group("Jadwal", field("departure_at", "Berangkat", "datetime-local") +
-        field("eta_at", "Perkiraan tiba", "datetime-local") +
-        field("cargo_cutoff_at", "Batas serah barang", "datetime-local")) +
-      group("Serah terima", field("current_location", "Lokasi sekarang") +
-        field("handover_location", "Titik serah terima") +
-        field("handover_contact_person", "Narahubung") +
-        field("handover_contact_phone", "Nomor HP", "tel") +
-        field("coordination_notes", "Catatan koordinasi", "textarea")) +
-      group("Layanan", field("service_mode", "Mode layanan", null, {
-        "": "Pilih mode", space_only: "Hanya ruang muat", courier_pickup: "Jemput-antar", both: "Keduanya"
-      }) + field("booking_policy", "Kebijakan booking", null, { pin_verify: "Konfirmasi PIN", open: "Terbuka" })) +
-      '<div class="kp-settings-actions"><button class="btn primary" type="submit">Simpan</button>' +
-      '<span data-settings-message role="status"></span></div></form></details>';
-  }
-
-  function armadaRow(a, statuses, types) {
+  function armadaRow(a, statuses) {
     var opts = Object.keys(statuses).map(function (k) {
       return '<option value="' + esc(k) + '"' + (k === a.status ? " selected" : "") + ">" + esc(statuses[k]) + "</option>"; }).join("");
     var chip = { tersedia: "ok", penuh: "warning", dipakai: "danger", lewat: "", selesai: "" }[a.avail] || "";
@@ -214,20 +159,19 @@
       '<button class="btn mini" type="button" data-arm-gps="' + esc(a.name) + '">📍 Kirim posisi sekarang</button>' +
       '<label class="kp-auto"><input type="checkbox" data-arm-auto="' + esc(a.name) + '"' + (GPS_WATCH && GPS_WATCH.armada === a.name ? " checked" : "") + "> Lacak otomatis</label></div>" +
       '<small class="rn-muted">Posisi terakhir: ' + esc(a.position_at || "belum ada") + "</small>" +
-      (a.settings ? armadaSettings(a, types) : "") +
       (bks ? "<h5>Pesanan menunggu</h5>" + bks : "") +
-      '<div><a class="btn ghost mini" href="posko-distribusi.html?id=' + encodeURIComponent(POSKO) + "&armada=" + encodeURIComponent(a.name) + '">Detail &amp; ubah armada</a></div>' +
+      '<div><a class="btn ghost mini" href="posko-distribusi.html?id=' + encodeURIComponent(POSKO) + "&settings=1&tab=armada&armada=" + encodeURIComponent(a.name) + '">⚙ Pengaturan armada</a></div>' +
       "</div></details>";
   }
 
   async function loadArmada() {
     var box = $("kpArmadaList");
     if (!box) return;
-    $("kpArmadaAdd").href = "posko-distribusi.html?id=" + encodeURIComponent(POSKO) + "#armadaForm";
+    $("kpArmadaAdd").href = "posko-distribusi.html?id=" + encodeURIComponent(POSKO) + "&settings=1&tab=armada";
     try {
       var r = await window.RN_FRAPPE.call("rescue_net.api_posko_manage.armada_list", { posko: POSKO });
-      box.innerHTML = r.armada.length ? r.armada.map(function (a) { return armadaRow(a, r.statuses, r.cargo_types); }).join("")
-        : '<p class="rn-muted">Posko ini belum punya armada. Klik "+ Daftarkan armada" bila posko Anda menyediakan kendaraan / ruang muat.</p>';
+      box.innerHTML = r.armada.length ? r.armada.map(function (a) { return armadaRow(a, r.statuses); }).join("")
+        : '<p class="rn-muted">Posko ini belum punya armada. Klik "⚙ Pengaturan armada" bila posko Anda menyediakan kendaraan / ruang muat.</p>';
     } catch (e) { box.innerHTML = '<p class="rn-muted">' + esc((e && e.message) || e) + "</p>"; }
   }
 
@@ -241,54 +185,6 @@
   function wireArmada() {
     var box = $("kpArmadaList");
     if (!box) return;
-    box.addEventListener("submit", async function (e) {
-      var form = e.target.closest("[data-arm-settings]");
-      if (!form) return;
-      e.preventDefault();
-      var id = form.dataset.armSettings;
-      var button = form.querySelector('button[type="submit"]');
-      var message = form.querySelector("[data-settings-message]");
-      var payload = Object.fromEntries(new FormData(form));
-      payload.transport_space = id;
-      payload.accepted_cargo_types = window.RN_ARMADA_SETTINGS.cargoPayload(form);
-      form.querySelectorAll('input[type="datetime-local"]').forEach(function (input) {
-        payload[input.name] = input.value.replace("T", " ");
-      });
-      ["own_load_kg", "own_load_m3"].forEach(function (name) {
-        if (payload[name] === "") payload[name] = "0";
-      });
-      button.disabled = true;
-      message.textContent = "Menyimpan…";
-      try {
-        await window.RN_FRAPPE.call("rescue_net.api_logistics.update_transport_space", payload, { method: "POST", keepEmpty: Object.keys(payload) });
-      } catch (err) {
-        var reason = String((err && err.message) || err).replace(/^frappe\.exceptions\.\w+:\s*/, "");
-        message.textContent = "Gagal menyimpan. " + reason;
-        button.disabled = false;
-        return;
-      }
-      message.textContent = "Pengaturan armada tersimpan.";
-      try {
-        var r = await window.RN_FRAPPE.call("rescue_net.api_posko_manage.armada_list", { posko: POSKO });
-        var updated = r.armada.find(function (a) { return a.name === id; });
-        var row = form.closest(".kp-arm");
-        if (updated && row.isConnected) {
-          row.insertAdjacentHTML("afterend", armadaRow(updated, r.statuses, r.cargo_types));
-          var next = row.nextElementSibling;
-          next.open = true;
-          next.querySelector(".kp-settings").open = true;
-          var status = next.querySelector("[data-settings-message]");
-          status.textContent = message.textContent;
-          status.tabIndex = -1;
-          status.focus();
-          row.remove();
-        }
-      } catch (err) {
-        message.textContent += " Gagal memuat ulang data. " + ((err && err.message) || err);
-      } finally {
-        button.disabled = false;
-      }
-    });
     box.addEventListener("change", async function (e) {
       var st = e.target.closest("[data-arm-status]"), au = e.target.closest("[data-arm-auto]");
       if (st) {

@@ -148,7 +148,7 @@ ARMADA_STATUS_LABEL = {"available": "Tersedia", "reserved": "Dipesan", "assigned
 @frappe.whitelist()
 def armada_list(posko):
     """The posko's own armada with what needs a decision (requested bookings). Managers only."""
-    from rescue_net.control_centre.distribusi import _armada_avail
+    from rescue_net.control_centre.distribusi import _armada_avail, _served_rows
 
     actor = rn_actor()
     name = resolve_posko(posko)
@@ -158,11 +158,14 @@ def armada_list(posko):
         "name", "title", "provider_name", "transport_type", "transport_status", "departure_at", "eta_at",
         "capacity_weight_kg", "own_load_kg", "capacity_committed_kg", "booking_policy", "position_at",
         "route_origin", "route_destination",
-        # owner 2026-11-23: data untuk form Pengaturan armada di Kelola Posko
+        # Data untuk tab Armada di Pengaturan Posko
         "capacity_volume_m3", "own_load_m3", "capacity_committed_m3", "own_cargo_desc", "service_mode",
         "accepted_cargo_types", "cargo_requirements", "prohibited_items", "packing_required", "packing_spec",
         "max_piece_weight_kg", "documents_required", "cargo_cutoff_at", "current_location", "handover_location",
-        "handover_contact_person", "handover_contact_phone", "coordination_notes"],
+        "handover_contact_person", "handover_contact_phone", "coordination_notes",
+        "disaster_event", "volunteer_capacity_seats", "volunteer_pickup_location", "people_trip",
+        "return_departure_at", "carries_heavy_equipment", "heavy_max_ton", "heavy_deck_type",
+        "heavy_trip", "heavy_demob_at"],
         order_by="departure_at desc", limit_page_length=100)
     out = []
     for r in rows:
@@ -182,6 +185,13 @@ def armada_list(posko):
             "pin_needed": (r.booking_policy or "pin_verify") == "pin_verify",
             "requested": [dict(b, needs_pin=bool(b.pop("verification_pin"))) for b in bookings],
             "settings": {
+                "served_events": _served_rows("RN Transport Space Event", r.name, "disaster_event") or
+                                 ([r.disaster_event] if r.disaster_event else []),
+                "served_poskos": _served_rows("RN Transport Space Posko", r.name, "posko"),
+                **{field: r.get(field) for field in (
+                    "volunteer_capacity_seats", "volunteer_pickup_location", "people_trip", "return_departure_at",
+                    "carries_heavy_equipment", "heavy_max_ton", "heavy_deck_type", "heavy_trip", "heavy_demob_at",
+                )},
                 "provider_name": r.provider_name or r.title or "", "transport_type": r.transport_type or "",
                 "route_origin": r.route_origin or "", "route_destination": r.route_destination or "",
                 "capacity_weight_kg": r.capacity_weight_kg, "capacity_volume_m3": r.capacity_volume_m3,

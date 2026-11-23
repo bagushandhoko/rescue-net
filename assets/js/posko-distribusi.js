@@ -9,7 +9,6 @@
 
   var BOARD = "rescue_net.api_control_centre.posko_distribusi_board";
   var CACHE = null;
-  var armadaSettings = null;
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   function esc(s) { return window.RNUI.esc(s); }
@@ -135,31 +134,7 @@
 
   var MODE_CHIP = { space_only: "", courier_pickup: "warning", both: "ok" };
 
-  var ARMADA_STATUS = [
-    ["available", "Tersedia"], ["reserved", "Sudah dibooking"], ["assigned", "Ditugaskan"],
-    ["in_transit", "Dalam Perjalanan"], ["arrived", "Tiba"],
-    ["completed", "Selesai"], ["cancelled", "Dibatalkan"],
-  ];
-  var SERVICE_MODE = [
-    ["space_only", "Penyedia Ruang Muat"], ["courier_pickup", "Kurir Jemput-Antar"],
-    ["both", "Ruang Muat + Kurir"],
-  ];
-  var BOOKING_POLICY = [
-    ["pin_verify", "Konfirmasi PIN posko"], ["open", "Langsung terkonfirmasi"],
-  ];
 
-  // board sends "-" for empty fields; don't feed that back into a form
-  function clean(v) { return (!v || v === "-") ? "" : String(v); }
-  // "YYYY-MM-DD HH:MM" -> "YYYY-MM-DDTHH:MM" for <input type=datetime-local>
-  function toLocalDT(v) {
-    var s = clean(v);
-    return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(s) ? s.slice(0, 16).replace(" ", "T") : "";
-  }
-  function optionList(pairs, current) {
-    return pairs.map(function (p) {
-      return '<option value="' + p[0] + '"' + (p[0] === current ? " selected" : "") + ">" + esc(p[1]) + "</option>";
-    }).join("");
-  }
 
   /* ---------- selector ---------- */
   function navToPosko(v) {
@@ -281,7 +256,6 @@
     if (!list || !list.length) {
       body.innerHTML = '<tr><td colspan="8"><em class="rn-muted">' + ((CACHE && CACHE.can_manage)
         ? "Belum ada alat transport. Tambahkan di bawah." : "Belum ada alat transport di posko ini.") + "</em></td></tr>" + addRow();
-      wireAddRow(body);
       if (shown) shown.textContent = "0 armada";
       return;
     }
@@ -309,7 +283,6 @@
         "</tr>"
       );
     }).join("") + addRow();
-    wireAddRow(body);
     body.querySelectorAll("tr.rn-ba-row").forEach(function (tr) {
       tr.addEventListener("click", function (e) {
         openArmadaDetail(tr.getAttribute("data-armada"));
@@ -321,13 +294,8 @@
     });
     if (shown) shown.textContent = "Menampilkan " + list.length + " armada";
     // owner 2026-11-02: booking from Cari Armada (Manajemen Distribusi) opens that armada's detail + booking
-    if (location.hash === "#armadaForm" && !window.__pdFormOpened) {
-      window.__pdFormOpened = true;
-      var fd = document.getElementById("armadaForm");
-      if (fd) setTimeout(function () { fd.open = true; fd.scrollIntoView({ block: "start" }); }, 100);
-    }
     var want = qs.get("armada");
-    if (want && !window.__pdArmadaOpened) { window.__pdArmadaOpened = true; setTimeout(function () { openArmadaDetail(want); }, 50); }
+    if (want && !CACHE.can_manage_real && qs.get("settings") !== "1" && !window.__pdArmadaOpened) { window.__pdArmadaOpened = true; setTimeout(function () { openArmadaDetail(want); }, 50); }
   }
 
   function bookable(a) {
@@ -337,17 +305,14 @@
   }
   function addRow() {
     if (!(CACHE && CACHE.can_manage)) return "";
-    return '<tr class="rn-pd-addrow"><td colspan="8"><button type="button" class="btn rn-btn-add mini" data-add-armada>\uff0b Tambah alat transport</button></td></tr>';
+    return '<tr class="rn-pd-addrow"><td colspan="8">' + armadaSettingsLink("") + '</td></tr>';
   }
-  function wireAddRow(body) {
-    var b = body.querySelector("[data-add-armada]"), f = $("#armadaForm");
-    if (!b || !f) return;
-    b.addEventListener("click", function () {
-      f.hidden = false; f.open = true;
-      f.scrollIntoView({ behavior: "smooth", block: "center" });
-      var fp = f.querySelector('input[name="provider_name"]');
-      if (fp) setTimeout(function () { fp.focus(); }, 300);
-    });
+
+  function armadaSettingsLink(id) {
+    var params = new URLSearchParams({ id: CACHE.posko || getPosko(), settings: "1", tab: "armada" });
+    if (qs.has("event")) params.set("event", getEvent());
+    if (id) params.set("armada", id);
+    return '<a class="btn mini" data-posko-armada-settings="' + esc(id) + '" href="?' + esc(params.toString()) + '">⚙ Pengaturan armada</a>';
   }
 
   function openArmadaDetail(id) {
@@ -399,7 +364,7 @@
       row("Sisa kapasitas", fmt(a.kapasitas_tersedia_kg) + " kg" + (a.kapasitas_total_m3 ? " · " + fmt(a.kapasitas_tersedia_m3) + " m³" : "")) +
       (Number(a.kursi_relawan || 0) > 0 ? row("Angkut orang", fmt(a.kursi_relawan) + " orang · " +
         ({ ke_lokasi: "berangkat ke lokasi", pulang: "pulang", pergi_pulang: "pergi & pulang" }[a.angkut_orang_arah] || "berangkat ke lokasi") +
-        (a.jadwal_pulang ? " · pulang " + a.jadwal_pulang : "")) : "") +
+        (a.jadwal_pulang ? " · pulang " + esc(a.jadwal_pulang) : "")) : "") +
       row("Antrean booking", fmt(a.antri_booking || 0) + " menunggu konfirmasi" + (a.antri_kg ? " (" + fmt(a.antri_kg) + " kg)" : "") +
         " · " + fmt(a.booking_konfirmasi || 0) + " terkonfirmasi") +
       row("Rencana berangkat → tiba", esc(a.berangkat) + " → " + esc(a.eta)) +
@@ -410,14 +375,14 @@
       row("Narahubung", esc(a.handover_contact_person) + (a.handover_contact_phone && a.handover_contact_phone !== "-" ? " · " + tel(a.handover_contact_phone) : "")) +
       row("Relawan jemput", esc(a.pickup_volunteer_name || "-")) +
       "</div>" +
-      ((CACHE && CACHE.can_manage) ? gpsBlock(a) + armadaEditForm(a) : "") +
+      ((CACHE && CACHE.can_manage) ? gpsBlock(a) + armadaSettingsLink(a.id) : "") +
       // owner 2026-11-02: booking tempat wajib login — logged-in users get the normal form, guests a login link
       // pemilik sudah melihat "Booking Masuk" di atas (bookingPanel) - jangan dobel
       ((CACHE && CACHE.can_manage) ? ""
         : bk.length ? '<h4 class="rn-md-detail-h">Booking Anda</h4><div class="rn-md-bk-list">' + bkHtml + "</div>" : "");
-    if (CACHE && CACHE.can_manage) wireArmadaEdit(a.id);
     if (CACHE && CACHE.logged_in) wireBookingForm(a);
     if (CACHE && CACHE.can_manage) wireGps(a);
+    $("#pdDrill").dataset.armada = id;
     $("#pdDrill").hidden = false;
     document.body.style.overflow = "hidden";
   }
@@ -777,178 +742,6 @@
       parts.map(function (p) { return '<span style="display:block;margin:0 0 4px">' + p + "</span>"; }).join("") + "</b></div>";
   }
 
-  // owner 2026-11-12: centang "bisa mengangkut relawan/orang" + jumlah orang + arah perjalanan (ke lokasi / pulang / PP)
-  var TRIP_OPTS = [["ke_lokasi", "Berangkat ke lokasi bencana"], ["pulang", "Pulang dari lokasi bencana"], ["pergi_pulang", "Pergi & pulang"]];
-  function heavyFields(a) {
-    a = a || {};
-    var on = !!a.angkut_alat_berat, trip = a.alat_berat_arah || "mob";
-    return '<fieldset class="rn-pd-heavy" style="grid-column:1/-1;border:1px solid rgba(104,64,45,.2);border-radius:10px;padding:8px 12px">' +
-      '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" data-heavy style="width:20px;height:20px"' + (on ? " checked" : "") + '> Bisa mengangkut alat berat</label>' +
-      '<div class="form-grid" data-heavy-isi' + (on ? "" : " hidden") + '>' +
-      '<label>Muatan alat berat maks (ton)<input type="number" min="0.001" step="any" name="heavy_max_ton" value="' + esc(on ? a.alat_berat_maks_ton : "") + '"' + (on ? ' required' : ' disabled') + '></label>' +
-      '<label>Jenis bak/dek<select name="heavy_deck_type">' + optionList([["", "Pilih jenis"], ["lowbed", "Lowbed"], ["selfloader", "Selfloader"], ["flatbed", "Flatbed"], ["tongkang", "Tongkang"], ["lainnya", "Lainnya"]], a.alat_berat_dek || "") + '</select></label>' +
-      '<label>Arah perjalanan<select name="heavy_trip">' + optionList([["mob", "Mob — ke lokasi"], ["demob", "Demob — pulang"], ["mob_demob", "Mob & demob"]], trip) + '</select></label>' +
-      '<label data-demob-at' + (trip === "mob" ? " hidden" : "") + '>Jadwal demob<input type="datetime-local" name="heavy_demob_at" value="' + esc(toLocalDT(a.jadwal_demob || "")) + '"></label>' +
-      '</div></fieldset>';
-  }
-  function heavyPayload(form) {
-    var on = !!(form.querySelector("[data-heavy]") || {}).checked;
-    var trip = on && form.heavy_trip ? form.heavy_trip.value : "";
-    return {
-      carries_heavy_equipment: on ? 1 : 0,
-      heavy_max_ton: on ? Number(form.heavy_max_ton.value || 0) : 0,
-      heavy_deck_type: on ? form.heavy_deck_type.value : "",
-      heavy_trip: trip,
-      heavy_demob_at: on && trip !== "mob" && form.heavy_demob_at.value ? form.heavy_demob_at.value.replace("T", " ") : "",
-    };
-  }
-  document.addEventListener("change", function (e) {
-    var box = e.target.closest && e.target.closest(".rn-pd-heavy"); if (!box) return;
-    var on = box.querySelector("[data-heavy]").checked;
-    box.querySelector("[data-heavy-isi]").hidden = !on;
-    var ton = box.querySelector('[name="heavy_max_ton"]');
-    ton.required = on; ton.disabled = !on;
-    box.querySelector("[data-demob-at]").hidden = box.querySelector('[name="heavy_trip"]').value === "mob";
-  });
-
-  function peopleFields(a) {
-    a = a || {};
-    var on = Number(a.kursi_relawan || 0) > 0, trip = a.angkut_orang_arah || "ke_lokasi";
-    return '<fieldset class="rn-pd-orang" style="grid-column:1/-1;border:1px solid rgba(104,64,45,.2);border-radius:10px;padding:8px 12px">' +
-      '<label style="display:flex;gap:8px;align-items:center;font-weight:600"><input type="checkbox" data-angkut style="width:20px;height:20px"' + (on ? " checked" : "") +
-      "> Bisa mengangkut relawan / orang</label>" +
-      '<div class="form-grid" data-angkut-isi' + (on ? "" : " hidden") + ">" +
-      '<label>Jumlah orang<input type="number" min="1" name="volunteer_capacity_seats" value="' + esc(on ? a.kursi_relawan : "") + '" placeholder="mis. 10"></label>' +
-      '<label>Untuk perjalanan<select name="people_trip">' + TRIP_OPTS.map(function (o) {
-        return '<option value="' + o[0] + '"' + (o[0] === trip ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>" +
-      '<label>Titik jemput<input name="volunteer_pickup_location" value="' + esc(clean(a.jemput_relawan || "")) + '" placeholder="mis. Halaman posko"></label>' +
-      '<label data-pulang-at' + (trip === "ke_lokasi" ? " hidden" : "") + '>Jadwal pulang<input type="datetime-local" name="return_departure_at" value="' + esc(toLocalDT(a.jadwal_pulang || "")) + '"></label>' +
-      "</div></fieldset>";
-  }
-  function peoplePayload(form) {
-    var on = !!(form.querySelector("[data-angkut]") || {}).checked;
-    var n = on ? Number((form.volunteer_capacity_seats && form.volunteer_capacity_seats.value) || 0) : 0;
-    var trip = on && form.people_trip ? form.people_trip.value : "";
-    return {
-      volunteer_capacity_seats: n,
-      volunteer_pickup_location: on && form.volunteer_pickup_location ? form.volunteer_pickup_location.value.trim() : "",
-      people_trip: n > 0 ? trip : "",
-      return_departure_at: n > 0 && trip !== "ke_lokasi" && form.return_departure_at && form.return_departure_at.value ? form.return_departure_at.value.replace("T", " ") : "",
-    };
-  }
-  document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("[data-people-fields]").forEach(function (slot) { slot.outerHTML = peopleFields({}) + heavyFields({}); });
-  });
-  document.addEventListener("change", function (e) {
-    var box = e.target.closest && e.target.closest(".rn-pd-orang"); if (!box) return;
-    var on = box.querySelector("[data-angkut]").checked, isi = box.querySelector("[data-angkut-isi]");
-    isi.hidden = !on;
-    var n = box.querySelector('[name="volunteer_capacity_seats"]'); if (on && n && !n.value) n.value = 1;
-    var t = box.querySelector('[name="people_trip"]'), at = box.querySelector("[data-pulang-at]");
-    if (t && at) at.hidden = t.value === "ke_lokasi";
-  });
-
-  function armadaEditForm(a) {
-    var ui = window.RN_ARMADA_SETTINGS;
-    var managed = armadaSettings && armadaSettings.armada.find(function (row) { return row.name === a.id; });
-    var settings = managed && managed.settings;
-    return (
-      '<details class="rn-pd-edit"><summary>Perbarui armada</summary>' +
-      '<form class="rn-form" id="pdArmadaEditForm">' +
-      '<div class="form-grid">' +
-      (settings ? ui.identityFields(settings) + ui.capacityFields(settings) : "") +
-      '<label>Status<select name="transport_status">' + optionList(ARMADA_STATUS, a.status) + "</select></label>" +
-      '<label>Mode layanan<select name="service_mode">' + optionList(SERVICE_MODE, a.service_mode) + "</select></label>" +
-      '<label>Kebijakan booking<select name="booking_policy">' + optionList(BOOKING_POLICY, a.booking_policy) + "</select></label>" +
-      peopleFields(a) + heavyFields(a) +
-      '<label>Muatan sendiri (kg)<input type="number" step="any" min="0" name="own_load_kg" value="' + esc(settings ? settings.own_load_kg : a.muatan_sendiri_kg) + '"></label>' +
-      '<label>Muatan sendiri (m³)<input type="number" step="any" min="0" name="own_load_m3" value="' + esc(settings ? settings.own_load_m3 : a.muatan_sendiri_m3) + '"></label>' +
-      '<label>Lokasi saat ini<input name="current_location" value="' + esc(clean(a.current_location)) + '"></label>' +
-      '<label>Jam berangkat<input type="datetime-local" name="departure_at" value="' + esc(toLocalDT(a.berangkat)) + '"></label>' +
-      '<label>ETA<input type="datetime-local" name="eta_at" value="' + esc(toLocalDT(a.eta)) + '"></label>' +
-      '<label>Titik serah terima<input name="handover_location" value="' + esc(clean(a.handover_location)) + '"></label>' +
-      '<label>Narahubung<input name="handover_contact_person" value="' + esc(clean(a.handover_contact_person)) + '"></label>' +
-      '<label>No. kontak serah terima<input name="handover_contact_phone" value="' + esc(clean(a.handover_contact_phone)) + '"></label>' +
-      "</div>" +
-      '<label>Muatan sendiri (deskripsi)<input name="own_cargo_desc" value="' + esc(clean(a.muatan_sendiri_desc)) + '"></label>' +
-      '<label>Catatan koordinasi<textarea name="coordination_notes" rows="2">' + esc(clean(a.coordination_notes)) + "</textarea></label>" +
-      (settings ? '<fieldset class="rn-evc-field"><legend>Jenis barang yang diterima</legend>' +
-        ui.cargoFields(armadaSettings.cargo_types, settings.accepted_cargo_types) + '</fieldset>' : "") +
-      '<fieldset class="rn-evc-field rn-pd-terms"><legend>Syarat barang</legend><div class="form-grid">' +
-      '<label>Packing<select name="packing_required">' + optionList([["", "Tidak diatur"], ["dianjurkan", "Dianjurkan"], ["wajib", "Wajib"]], (a.syarat && a.syarat.packing) || "") + "</select></label>" +
-      '<label>Berat maks per koli (kg)<input type="number" step="0.1" min="0" name="max_piece_weight_kg" value="' + esc((a.syarat && a.syarat.maks_koli_kg) || "") + '"></label>' +
-      '<label>Batas serah barang<input type="datetime-local" name="cargo_cutoff_at" value="' + esc(toLocalDT((a.syarat && a.syarat.batas_serah) || "")) + '"></label>' +
-      '<label class="rn-form-wide">Spesifikasi packing<input name="packing_spec" value="' + esc((a.syarat && a.syarat.packing_spec) || "") + '"></label>' +
-      '<label class="rn-form-wide">Syarat lain<textarea name="cargo_requirements" rows="2">' + esc((a.syarat && a.syarat.syarat) || "") + "</textarea></label>" +
-      '<label class="rn-form-wide">Barang terlarang / dibatasi<input name="prohibited_items" value="' + esc((a.syarat && a.syarat.terlarang) || "") + '"></label>' +
-      '<label class="rn-form-wide">Dokumen yang diperlukan<input name="documents_required" value="' + esc((a.syarat && a.syarat.dokumen) || "") + '"></label>' +
-      "</div></fieldset>" +
-      '<fieldset class="rn-evc-field"><legend>Bencana yang dilayani armada *</legend><div id="pdEditEventPicker"></div></fieldset>' +
-      '<fieldset class="rn-evc-field"><legend>Posko logistik yang dilayani <small>— kosong = semua</small></legend><div id="pdEditPoskoPicker"></div></fieldset>' +
-      '<div class="form-actions"><button class="btn primary" type="submit">Simpan Perubahan</button>' +
-      '<span class="rn-pd-bk-msg" data-armada-edit-msg></span></div>' +
-      "</form></details>"
-    );
-  }
-
-  function wireArmadaEdit(id) {
-    var form = $("#pdArmadaEditForm");
-    if (!form) return;
-    var msg = form.querySelector("[data-armada-edit-msg]");
-    var a = ((CACHE && CACHE.armada) || []).filter(function (x) { return x.id === id; })[0] || {};
-    var served = mountServedPickers($("#pdEditEventPicker"), $("#pdEditPoskoPicker"),
-      (a.served_events && a.served_events.length) ? a.served_events : [getEvent()], a.served_poskos || []);
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      var v = function (n) { return form[n] ? String(form[n].value).trim() : ""; };
-      var payload = {
-        transport_space: id,
-        transport_status: v("transport_status"),
-        service_mode: v("service_mode"),
-        booking_policy: v("booking_policy"),
-        current_location: v("current_location"),
-        own_load_kg: v("own_load_kg"),
-        own_load_m3: v("own_load_m3"),
-        own_cargo_desc: v("own_cargo_desc"),
-        handover_location: v("handover_location"),
-        handover_contact_person: v("handover_contact_person"),
-        handover_contact_phone: v("handover_contact_phone"),
-        coordination_notes: v("coordination_notes"),
-        packing_required: v("packing_required"),
-        max_piece_weight_kg: v("max_piece_weight_kg"),
-        cargo_cutoff_at: v("cargo_cutoff_at").replace("T", " "),
-        packing_spec: v("packing_spec"),
-        cargo_requirements: v("cargo_requirements"),
-        prohibited_items: v("prohibited_items"),
-        documents_required: v("documents_required"),
-      };
-      if (form.elements.namedItem("provider_name")) {
-        ["provider_name", "transport_type", "route_origin", "route_destination",
-          "capacity_weight_kg", "capacity_volume_m3"].forEach(function (name) { payload[name] = v(name); });
-        payload.accepted_cargo_types = window.RN_ARMADA_SETTINGS.cargoPayload(form);
-      }
-      Object.assign(payload, peoplePayload(form), heavyPayload(form));
-      if (served) {
-        var evs = served.ev.getSelected();
-        if (!evs.length) { if (msg) msg.textContent = " pilih minimal satu bencana"; return; }
-        payload.served_events = JSON.stringify(evs);
-        payload.served_poskos = JSON.stringify(served.pk.getSelected());
-      }
-      var d1 = v("departure_at"), e1 = v("eta_at");
-      if (d1) payload.departure_at = d1.replace("T", " ");
-      if (e1) payload.eta_at = e1.replace("T", " ");
-      if (msg) msg.textContent = " menyimpan…";
-      try {
-        await window.RN_FRAPPE.call("rescue_net.api_logistics.update_transport_space", payload, { method: "POST", keepEmpty: ["route_origin", "route_destination"] });
-        if (msg) msg.textContent = " tersimpan ✓";
-        closeDrill();
-        await load();
-      } catch (err) {
-        var m = (err && err.message) || String(err);
-        if (msg) msg.textContent = " gagal: " + m + (/login|permission|akses/i.test(m) ? " (perlu login)" : "");
-      }
-    });
-  }
   function closeDrill() { $("#pdDrill").hidden = true; document.body.style.overflow = ""; }
 
   /* ---------- booking inbox ---------- */
@@ -1088,85 +881,6 @@
   }
 
   /* ---------- forms ---------- */
-  // owner 2026-10-19: every armada lists the disasters it serves and (optional)
-  // the posko logistik whose cargo it carries
-  function mountServedPickers(evEl, pkEl, events, poskos) {
-    if (!evEl || !pkEl || !window.RNEventChecklist) return null;
-    var pk = window.RNEventChecklist.mountPoskos(pkEl, { selected: poskos || [] });
-    var ev = window.RNEventChecklist.mount(evEl, {
-      selected: events, multiple: true,
-      onChange: function (sel) { pk.setEvents(ev ? ev.getSelected() : sel); },
-    });
-    ev.ready.then(function () { pk.setEvents(ev.getSelected()); });
-    return { ev: ev, pk: pk };
-  }
-
-  function wireArmadaForm() {
-    var form = $("[data-create-armada]"), msg = $("[data-armada-message]");
-    if (!form) return;
-    var served = mountServedPickers($("#armadaEventPicker"), $("#armadaPoskoPicker"), [getEvent()], []);
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      var f = function (n) { return form[n] && form[n].value ? String(form[n].value).trim() : ""; };
-      var posko = getPosko();
-      if (!posko) { if (msg) msg.textContent = "Pilih posko distribusi dulu."; return; }
-      var events = served ? served.ev.getSelected() : [getEvent()];
-      if (!events.length) { if (msg) msg.textContent = "Pilih minimal satu bencana yang dilayani armada."; return; }
-      if (msg) msg.textContent = "Menyimpan…";
-      try {
-        await window.RN_FRAPPE.call("rescue_net.api_logistics.create_transport_space", {
-          coordination_posko: posko,
-          disaster_event: events[0],
-          served_events: JSON.stringify(events),
-          served_poskos: JSON.stringify(served ? served.pk.getSelected() : []),
-          provider_name: f("provider_name"),
-          transport_type: f("transport_type"),
-          service_mode: f("service_mode"),
-          booking_policy: f("booking_policy"),
-          volunteer_capacity_seats: peoplePayload(form).volunteer_capacity_seats,
-          volunteer_pickup_location: peoplePayload(form).volunteer_pickup_location,
-          people_trip: peoplePayload(form).people_trip,
-          return_departure_at: peoplePayload(form).return_departure_at,
-          carries_heavy_equipment: heavyPayload(form).carries_heavy_equipment,
-          heavy_max_ton: heavyPayload(form).heavy_max_ton,
-          heavy_deck_type: heavyPayload(form).heavy_deck_type,
-          heavy_trip: heavyPayload(form).heavy_trip,
-          heavy_demob_at: heavyPayload(form).heavy_demob_at,
-
-          route_origin: f("route_origin"),
-          route_destination: f("route_destination"),
-          capacity_weight_kg: Number(form.capacity_weight_kg.value || 0),
-          capacity_volume_m3: Number(form.capacity_volume_m3.value || 0),
-          accepted_cargo_types: window.RN_ARMADA_SETTINGS.cargoPayload(form),
-          own_load_kg: Number((form.own_load_kg && form.own_load_kg.value) || 0),
-          own_load_m3: Number((form.own_load_m3 && form.own_load_m3.value) || 0),
-          own_cargo_desc: f("own_cargo_desc"),
-          departure_at: f("departure_at").replace("T", " "),
-          eta_at: f("eta_at").replace("T", " "),
-          current_location: f("current_location"),
-          handover_location: f("handover_location"),
-          handover_contact_person: f("handover_contact_person"),
-          handover_contact_phone: f("handover_contact_phone"),
-          coordination_notes: f("coordination_notes"),
-          packing_required: f("packing_required"),
-          max_piece_weight_kg: f("max_piece_weight_kg"),
-          cargo_cutoff_at: f("cargo_cutoff_at").replace("T", " "),
-          packing_spec: f("packing_spec"),
-          cargo_requirements: f("cargo_requirements"),
-          prohibited_items: f("prohibited_items"),
-          documents_required: f("documents_required"),
-        }, { method: "POST" });
-        if (msg) msg.textContent = "Armada tersimpan.";
-        form.reset();
-        if (served) served.ev.setSelected([getEvent()]);
-        await load();
-      } catch (err) {
-        var m = (err && err.message) || String(err);
-        if (msg) msg.textContent = "Gagal: " + m + (/login|permission|akses/i.test(m) ? " (perlu login)" : "");
-      }
-    });
-  }
-
   function wireAssignForm() {
     var form = $("[data-assign-form]"), msg = $("[data-assign-message]");
     if (!form) return;
@@ -1200,19 +914,6 @@
       // pratinjau publik: perlakukan seperti pengguna biasa, jangan tampilkan kontak pembooking lain
       data.can_manage = false;
       data.booking_inbox = [];
-    }
-    armadaSettings = null;
-    var cargoHost = $("[data-armada-cargo]");
-    if (data.can_manage) {
-      try {
-        armadaSettings = await window.RN_FRAPPE.call("rescue_net.api_posko_manage.armada_list", { posko: data.posko || getPosko() });
-      } catch (err) {
-        // Keep the board and the existing drill controls available.
-      }
-      if (cargoHost && !cargoHost.querySelector("input")) {
-        var ui = window.RN_ARMADA_SETTINGS;
-        cargoHost.innerHTML = ui.cargoFields(armadaSettings ? armadaSettings.cargo_types : ui.cargoTypes, []);
-      }
     }
     CACHE = data;
     injectViewCss();
@@ -1277,11 +978,6 @@
      read CACHE.can_manage / CACHE.can_coordinate directly. */
   function applyAccess(data) {
     var manage = !!data.can_manage;
-
-    var addBtn = $("#armadaAddBtn");
-    if (addBtn) addBtn.hidden = true; // owner 2026-11-11: pindah ke baris terakhir daftar alat transport
-    var addForm = $("#armadaForm");
-    if (addForm) addForm.hidden = !manage;
 
     // "Relawan Pickup" is operator tooling — hide the whole panel for
     // non-managers and let "Panduan" span the row.
@@ -1440,21 +1136,17 @@
   document.addEventListener("DOMContentLoaded", function () {
     if (!window.RN_FRAPPE) { console.error("RN_FRAPPE unavailable"); return; }
     document.querySelectorAll("#pdDrill [data-close]").forEach(function (el) { el.addEventListener("click", closeDrill); });
-    document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrill(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !document.querySelector(".rn-ps-ov")) closeDrill(); });
 
-    var addBtn = $("#armadaAddBtn"), addForm = $("#armadaForm");
-    if (addBtn && addForm) {
-      addBtn.addEventListener("click", function () {
-        addForm.open = true;
-        addForm.scrollIntoView({ behavior: "smooth", block: "center" });
-        var fp = addForm.querySelector('input[name="provider_name"]');
-        if (fp) setTimeout(function () { fp.focus(); }, 300);
-      });
-    }
-    wireArmadaForm();
     wireAssignForm();
     wireGuestTrack();
     wireKpiLinks();
+    document.addEventListener("rn-posko-settings-saved", function () {
+      load().then(function () {
+        var drill = $("#pdDrill");
+        if (!drill.hidden) openArmadaDetail(drill.dataset.armada);
+      }).catch(function (err) { $("#pdStatus").textContent = "Gagal memuat: " + (err.message || err); });
+    });
     load().catch(function (err) {
       console.error("[posko distribusi]", err);
       $("#pdStatus").textContent = "Gagal memuat: " + (err && err.message || err);

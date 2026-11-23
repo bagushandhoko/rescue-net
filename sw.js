@@ -7,7 +7,7 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v12"; // Pengaturan armada dan saringan jenis barang.
+const CACHE = "rescue-net-web-v12"; // Pengaturan posko dan armada dalam satu modal.
 const PRECACHE = [
  "/rescue-net/index.html",
  "/rescue-net/pages/laporan-masyarakat.html",

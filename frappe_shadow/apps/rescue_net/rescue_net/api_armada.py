@@ -37,8 +37,10 @@ def _num(v):
 @frappe.whitelist(allow_guest=True)
 @rate_limit(limit=120, seconds=60)
 def armada_finder(disaster_event=None, transport_type=None, date_from=None, date_to=None, lat=None, lng=None,
-                  status=None):
+                  status=None, cargo_type=None):
     from rescue_net.control_centre.common import serving_transport_names
+    from rescue_net.logistics.transport import CARGO_TYPES
+    cargo_type = (cargo_type or "").strip().lower() or None
 
     event = resolve_disaster_event(disaster_event) if disaster_event else None
     names = serving_transport_names(event) if event else frappe.get_all("RN Transport Space", pluck="name",
@@ -57,7 +59,7 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
         "eta_at", "departure_time", "capacity_weight_kg", "capacity_volume_m3", "own_load_kg", "own_load_m3",
         "capacity_committed_kg", "capacity_committed_m3", "transport_status", "coordination_posko", "booking_policy",
         "volunteer_capacity_seats", "current_location", "service_mode", "position_lat", "position_lng",
-        "position_at"], limit_page_length=1000)
+        "position_at", "accepted_cargo_types", "cargo_cutoff_at"], limit_page_length=1000)
     rows = real_rows(rows, key="__none__")  # Mode Operasional Riil: armada berjudul [SIMULASI] tidak tampil
     pk = {p.name: p for p in frappe.get_all(
         "RN Posko", filters={"name": ["in", list({r.coordination_posko for r in rows if r.coordination_posko}) or ["-"]]},
@@ -104,6 +106,9 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
         counts[avail] += 1
         if status and avail != status:
             continue
+        acc = [k for k in (r.accepted_cargo_types or "").split(",") if k]
+        if cargo_type and acc and cargo_type not in acc:
+            continue
         out.append({
             "name": r.name, "title": r.title or r.provider_name, "provider": r.provider_name,
             "type": r.transport_type, "type_label": TYPE_LABEL.get(r.transport_type, r.transport_type or "-"),
@@ -113,6 +118,8 @@ def armada_finder(disaster_event=None, transport_type=None, date_from=None, date
             "capacity_kg": cap_kg or None, "capacity_m3": cap_m3 or None, "left_kg": left_kg, "left_m3": left_m3,
             "seats": r.volunteer_capacity_seats or 0, "status": avail, "status_label": STATUS_LABEL[avail],
             "raw_status": st, "open_booking": r.booking_policy == "open",
+            # owner 2026-11-23: jenis barang yang diterima armada (kosong = semua jenis) + batas serah barang
+            "cargo_types": [CARGO_TYPES.get(k, k) for k in acc], "cargo_cutoff": str(r.cargo_cutoff_at or "")[:16],
             "posko": r.coordination_posko, "posko_title": p.title if p else "", "city": p.city_name if p else "",
             "km": km, "location": r.current_location or "",
             # owner 2026-11-02: live GPS position when the posko shares it, else the posko's own location

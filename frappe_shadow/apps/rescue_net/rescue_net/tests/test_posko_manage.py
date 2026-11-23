@@ -88,3 +88,62 @@ class TestPoskoManage(RNTestCase):
         beras = [s for s in w["stock"] if s["item"] == "Beras"]
         self.assertEqual(len(beras), 1)                       # latest per item only
         self.assertIn("operational_status", w["contact"])
+
+
+class TestArmadaPengaturan(RNTestCase):
+    """owner 2026-11-23: pengelola posko mengatur ukuran ruang muat, jenis barang, jadwal, rute sendiri."""
+
+    def setUp(self):
+        super().setUp()
+        self.w = make_world()
+        self.mgr = make_actor(posko=self.w.posko_a)
+        self.other = make_actor(posko=self.w.posko_b)
+        self.sp = _insert("RN Transport Space", title="Truk A", provider_name="Truk A", disaster_event=self.w.event.name,
+                          coordination_posko=self.w.posko_a.name, transport_type="darat", capacity_weight_kg=1000,
+                          capacity_committed_kg=300, own_load_kg=100, transport_status="available",
+                          booking_policy="pin_verify", departure_at="2099-01-01 08:00:00")
+
+    def _upd(self, **kw):
+        from rescue_net.logistics.transport import update_transport_space
+        return update_transport_space(self.sp.name, **kw)
+
+    def test_owner_sets_capacity_route_types_schedule(self):
+        with as_user(self.mgr.user):
+            self._upd(provider_name="Truk Besar A", transport_type="darat", route_origin="Meulaboh",
+                      route_destination="Calang", capacity_weight_kg="2000", capacity_volume_m3="12",
+                      accepted_cargo_types='["pangan","air","PANGAN"]', departure_at="2099-01-02 07:00:00",
+                      cargo_cutoff_at="2099-01-02 05:00:00")
+            r = pm.armada_list(self.w.posko_a.name)
+        d = frappe.get_doc("RN Transport Space", self.sp.name)
+        self.assertEqual((d.title, d.route_origin, d.capacity_weight_kg, d.capacity_volume_m3, d.accepted_cargo_types),
+                         ("Truk Besar A", "Meulaboh", 2000, 12, "pangan,air"))
+        st = r["armada"][0]["settings"]
+        self.assertEqual(st["accepted_cargo_types"], ["pangan", "air"])
+        self.assertEqual(st["left_m3"], 12)
+        self.assertIn("pangan", r["cargo_types"])
+
+    def test_capacity_cannot_drop_below_booked(self):
+        with as_user(self.mgr.user), self.assertRaises(frappe.ValidationError):
+            self._upd(capacity_weight_kg="350")      # 100 muatan sendiri + 300 dipesan = 400
+        with as_user(self.mgr.user):
+            self._upd(capacity_weight_kg="400")
+
+    def test_unknown_cargo_type_and_bad_type_rejected(self):
+        with as_user(self.mgr.user), self.assertRaises(frappe.ValidationError):
+            self._upd(accepted_cargo_types="pangan,senjata")
+        with as_user(self.mgr.user), self.assertRaises(frappe.ValidationError):
+            self._upd(transport_type="roket")
+
+    def test_other_posko_cannot_edit(self):
+        with as_user(self.other.user), self.assertRaises(frappe.PermissionError):
+            self._upd(capacity_weight_kg="5000")
+
+    def test_public_finder_shows_and_filters_cargo_types(self):
+        from rescue_net import api_armada
+        frappe.db.set_value("RN Transport Space", self.sp.name, "accepted_cargo_types", "medis")
+        with as_guest():
+            all_rows = api_armada.armada_finder(disaster_event=self.w.event.name)
+            pangan = api_armada.armada_finder(disaster_event=self.w.event.name, cargo_type="pangan")
+        mine = [a for a in all_rows["rows"] if a["name"] == self.sp.name] if isinstance(all_rows, dict) else []
+        self.assertTrue(mine and mine[0]["cargo_types"] == ["Obat & alat medis"])
+        self.assertFalse([a for a in pangan["rows"] if a["name"] == self.sp.name])

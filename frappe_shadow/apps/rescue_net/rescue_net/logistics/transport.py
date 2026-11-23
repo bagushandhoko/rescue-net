@@ -57,6 +57,7 @@ def create_transport_space(
     prohibited_items=None,
     documents_required=None,
     cargo_cutoff_at=None,
+    accepted_cargo_types=None,
     volunteer_capacity_seats=None,
     volunteer_needs_pickup=None,
     volunteer_pickup_location=None,
@@ -137,7 +138,7 @@ def create_transport_space(
         except Exception:
             doc.disaster_event_legacy_id = disaster_event
 
-    _apply_cargo_terms(doc, cargo_requirements=cargo_requirements, packing_required=packing_required, packing_spec=packing_spec, max_piece_weight_kg=max_piece_weight_kg, prohibited_items=prohibited_items, documents_required=documents_required, cargo_cutoff_at=cargo_cutoff_at)
+    _apply_cargo_terms(doc, cargo_requirements=cargo_requirements, packing_required=packing_required, packing_spec=packing_spec, max_piece_weight_kg=max_piece_weight_kg, prohibited_items=prohibited_items, documents_required=documents_required, cargo_cutoff_at=cargo_cutoff_at, accepted_cargo_types=accepted_cargo_types)
     _apply_served(doc, served_events, served_poskos)
     doc.transport_status = "available"
     doc.insert(ignore_permissions=True)
@@ -176,6 +177,7 @@ def update_transport_space(
     prohibited_items=None,
     documents_required=None,
     cargo_cutoff_at=None,
+    accepted_cargo_types=None,
     volunteer_capacity_seats=None,
     volunteer_needs_pickup=None,
     volunteer_pickup_location=None,
@@ -186,6 +188,12 @@ def update_transport_space(
     heavy_deck_type=None,
     heavy_trip=None,
     heavy_demob_at=None,
+    provider_name=None,
+    transport_type=None,
+    route_origin=None,
+    route_destination=None,
+    capacity_weight_kg=None,
+    capacity_volume_m3=None,
 ):
     """Let the coordinating posko keep an armada record current as the trip
     progresses (status, keberadaan, jam berangkat/ETA, titik & narahubung
@@ -215,6 +223,8 @@ def update_transport_space(
     _apply_volunteer_seats(doc, volunteer_capacity_seats, volunteer_needs_pickup, volunteer_pickup_location,
                            people_trip, return_departure_at)
     _apply_heavy_equipment(doc, carries_heavy_equipment, heavy_max_ton, heavy_deck_type, heavy_trip, heavy_demob_at)
+    _apply_identity_capacity(doc, provider_name, transport_type, route_origin, route_destination,
+                             capacity_weight_kg, capacity_volume_m3, own_load_kg, own_load_m3)
 
     for field, value in (
         ("current_location", current_location),
@@ -235,7 +245,7 @@ def update_transport_space(
         if value is not None:
             doc.set(field, value)
 
-    _apply_cargo_terms(doc, cargo_requirements=cargo_requirements, packing_required=packing_required, packing_spec=packing_spec, max_piece_weight_kg=max_piece_weight_kg, prohibited_items=prohibited_items, documents_required=documents_required, cargo_cutoff_at=cargo_cutoff_at)
+    _apply_cargo_terms(doc, cargo_requirements=cargo_requirements, packing_required=packing_required, packing_spec=packing_spec, max_piece_weight_kg=max_piece_weight_kg, prohibited_items=prohibited_items, documents_required=documents_required, cargo_cutoff_at=cargo_cutoff_at, accepted_cargo_types=accepted_cargo_types)
     _apply_served(doc, served_events, served_poskos)
     doc.observed_at = now_datetime()
     doc.save(ignore_permissions=True)
@@ -244,6 +254,41 @@ def update_transport_space(
         "transport": doc.name,
         "transport_status": doc.transport_status,
     }
+
+
+def _apply_identity_capacity(doc, provider_name=None, transport_type=None, route_origin=None, route_destination=None,
+                             capacity_weight_kg=None, capacity_volume_m3=None, own_load_kg=None, own_load_m3=None):
+    """owner 2026-11-23: pengelola posko mengatur sendiri nama, jenis, rute dan ukuran ruang muat.
+    Kapasitas tidak boleh di bawah muatan sendiri + ruang yang sudah dikonfirmasi ke pemesan."""
+    if provider_name is not None:
+        name = str(provider_name).strip()[:140]
+        if not name:
+            frappe.throw("Nama armada wajib diisi")
+        doc.provider_name = name
+        doc.title = name
+    if transport_type is not None:
+        if transport_type not in ("darat", "laut", "udara", "lainnya"):
+            frappe.throw("Jenis transport tidak valid")
+        doc.transport_type = transport_type
+    if route_origin is not None:
+        doc.route_origin = str(route_origin).strip()[:140] or None
+    if route_destination is not None:
+        doc.route_destination = str(route_destination).strip()[:140] or None
+    for cap_field, cap, own_field, own, used_field, unit in (
+        ("capacity_weight_kg", capacity_weight_kg, "own_load_kg", own_load_kg, "capacity_committed_kg", "kg"),
+        ("capacity_volume_m3", capacity_volume_m3, "own_load_m3", own_load_m3, "capacity_committed_m3", "m³"),
+    ):
+        if cap is None or cap == "":
+            continue
+        value = flt(cap)
+        if value < 0:
+            frappe.throw("Kapasitas tidak boleh negatif")
+        own_now = flt(own) if own not in (None, "") else flt(doc.get(own_field))
+        need = own_now + flt(doc.get(used_field))
+        if value and value < need:
+            frappe.throw("Kapasitas %s %s lebih kecil dari muatan sendiri + yang sudah dipesan (%s %s)."
+                         % (value, unit, need, unit))
+        doc.set(cap_field, value or None)
 
 
 def _apply_heavy_equipment(doc, carries=None, max_ton=None, deck=None, trip=None, demob_at=None):
@@ -285,9 +330,44 @@ def require_terms_ack(space, terms_ack):
     return 1 if cargo_terms(space)["ada"] else 0
 
 
+# owner 2026-11-23: "jenis barang yang diminta" per armada — pilihan tetap supaya bisa disaring & dicocokkan
+CARGO_TYPES = {
+    "pangan": "Pangan / makanan", "air": "Air minum", "medis": "Obat & alat medis", "pakaian": "Pakaian",
+    "hunian": "Tenda, terpal, selimut", "kebersihan": "Kebersihan & sanitasi", "bayi": "Kebutuhan bayi & anak",
+    "bangunan": "Bahan bangunan", "alat": "Alat & perkakas", "bbm": "BBM / energi", "lainnya": "Lainnya",
+}
+
+
+def _cargo_type_list(value):
+    """JSON list / comma text -> sorted unique known codes; unknown codes are an error."""
+    import json
+    if value in (None, ""):
+        return []
+    if isinstance(value, str):
+        v = value.strip()
+        items = json.loads(v) if v.startswith("[") else v.split(",")
+    else:
+        items = list(value)
+    out = []
+    for x in items:
+        k = str(x).strip().lower()
+        if not k:
+            continue
+        if k not in CARGO_TYPES:
+            frappe.throw("Jenis barang tidak dikenal: %s" % k)
+        if k not in out:
+            out.append(k)
+    return out
+
+
+def cargo_types_of(doc):
+    raw = (doc.get("accepted_cargo_types") if hasattr(doc, "get") else None) or ""
+    return [k for k in str(raw).split(",") if k in CARGO_TYPES]
+
+
 def _apply_cargo_terms(doc, cargo_requirements=None, packing_required=None, packing_spec=None,
                        max_piece_weight_kg=None, prohibited_items=None, documents_required=None,
-                       cargo_cutoff_at=None):
+                       cargo_cutoff_at=None, accepted_cargo_types=None):
     """Syarat barang an armada sets (owner 2026-10-23): e.g. an airline may demand
     packing, a per-koli weight cap, a prohibited list and documents, and a cut-off
     time for handing over the cargo. Only fields that are passed change."""
@@ -303,6 +383,8 @@ def _apply_cargo_terms(doc, cargo_requirements=None, packing_required=None, pack
         doc.max_piece_weight_kg = flt(max_piece_weight_kg) if max_piece_weight_kg != "" else None
     if cargo_cutoff_at is not None:
         doc.cargo_cutoff_at = cargo_cutoff_at or None
+    if accepted_cargo_types is not None:
+        doc.accepted_cargo_types = ",".join(_cargo_type_list(accepted_cargo_types)) or None
     cutoff, dep = doc.get("cargo_cutoff_at"), doc.get("departure_at")
     if cutoff and dep and str(cutoff) > str(dep):
         frappe.throw("Batas serah barang harus sebelum waktu berangkat")

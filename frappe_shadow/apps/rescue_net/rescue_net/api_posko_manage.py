@@ -157,7 +157,13 @@ def armada_list(posko):
     rows = frappe.get_all("RN Transport Space", filters={"coordination_posko": name}, fields=[
         "name", "title", "provider_name", "transport_type", "transport_status", "departure_at", "eta_at",
         "capacity_weight_kg", "own_load_kg", "capacity_committed_kg", "booking_policy", "position_at",
-        "route_origin", "route_destination"], order_by="departure_at desc", limit_page_length=100)
+        "route_origin", "route_destination",
+        # owner 2026-11-23: data untuk form Pengaturan armada di Kelola Posko
+        "capacity_volume_m3", "own_load_m3", "capacity_committed_m3", "own_cargo_desc", "service_mode",
+        "accepted_cargo_types", "cargo_requirements", "prohibited_items", "packing_required", "packing_spec",
+        "max_piece_weight_kg", "documents_required", "cargo_cutoff_at", "current_location", "handover_location",
+        "handover_contact_person", "handover_contact_phone", "coordination_notes"],
+        order_by="departure_at desc", limit_page_length=100)
     out = []
     for r in rows:
         bookings = frappe.get_all("RN Transport Booking", filters={"transport_space": r.name, "status": "requested"},
@@ -175,10 +181,30 @@ def armada_list(posko):
             "capacity_kg": cap or None, "left_kg": left, "position_at": str(r.position_at or "")[:16],
             "pin_needed": (r.booking_policy or "pin_verify") == "pin_verify",
             "requested": [dict(b, needs_pin=bool(b.pop("verification_pin"))) for b in bookings],
+            "settings": {
+                "provider_name": r.provider_name or r.title or "", "transport_type": r.transport_type or "",
+                "route_origin": r.route_origin or "", "route_destination": r.route_destination or "",
+                "capacity_weight_kg": r.capacity_weight_kg, "capacity_volume_m3": r.capacity_volume_m3,
+                "own_load_kg": r.own_load_kg, "own_load_m3": r.own_load_m3, "own_cargo_desc": r.own_cargo_desc or "",
+                "committed_kg": float(r.capacity_committed_kg or 0), "committed_m3": float(r.capacity_committed_m3 or 0),
+                "left_m3": (max(0.0, float(r.capacity_volume_m3) - float(r.own_load_m3 or 0) - float(r.capacity_committed_m3 or 0))
+                            if r.capacity_volume_m3 else None),
+                "departure_at": str(r.departure_at or "")[:16], "eta_at": str(r.eta_at or "")[:16],
+                "cargo_cutoff_at": str(r.cargo_cutoff_at or "")[:16],
+                "service_mode": r.service_mode or "", "booking_policy": r.booking_policy or "pin_verify",
+                "accepted_cargo_types": [k for k in (r.accepted_cargo_types or "").split(",") if k],
+                "cargo_requirements": r.cargo_requirements or "", "prohibited_items": r.prohibited_items or "",
+                "packing_required": r.packing_required or "", "packing_spec": r.packing_spec or "",
+                "max_piece_weight_kg": r.max_piece_weight_kg, "documents_required": r.documents_required or "",
+                "current_location": r.current_location or "", "handover_location": r.handover_location or "",
+                "handover_contact_person": r.handover_contact_person or "",
+                "handover_contact_phone": r.handover_contact_phone or "", "coordination_notes": r.coordination_notes or "",
+            },
         })
+    from rescue_net.logistics.transport import CARGO_TYPES
     return {"posko": name, "armada": out,
             "pending_total": sum(len(a["requested"]) for a in out),
-            "statuses": ARMADA_STATUS_LABEL}
+            "statuses": ARMADA_STATUS_LABEL, "cargo_types": CARGO_TYPES}
 
 
 # --- Kelola Posko tahap 2 (owner 2026-11-02 "kerjakan semua"): input tools on the owner page ------------------

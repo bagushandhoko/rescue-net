@@ -478,7 +478,8 @@ def dms_sso_google_url(next=None):
     frappe.local.cookie_manager.set_cookie(
         "dms_sso_nonce", nonce, max_age=600, httponly=True, secure=True, samesite="Lax"
     )
-    start = frappe.utils.get_url("/api/method/rescue_net.api_auth.dms_sso_start") + "?" + urlencode(
+    # nginx rescue-net.online hanya meneruskan API lewat awalan /rescue-net-frappe (tanpa awalan = 404)
+    start = frappe.utils.get_url("/rescue-net-frappe/api/method/rescue_net.api_auth.dms_sso_start") + "?" + urlencode(
         {"next": _dms_safe_next(next), "n": _sha(nonce)}
     )
     return social_login_url("google", start)

@@ -271,6 +271,7 @@
       nav.classList.contains("rn-public-links") ||
       nav.classList.contains("welcome-links") ||
       nav.closest(".rn-public-header") ||
+      nav.closest(".rn-drawer-public") ||
       nav.closest(".welcome-nav");
 
     let best = null;
@@ -293,7 +294,10 @@
     }
 
     // owner 2026-11-09: halaman dengan sidebar pendek (Peta Nasional, Ekosistem, dll.) ikut memakai menu yang sama
-    return bestScore >= 3 ? best : (document.querySelector(".sidebar nav") || null);
+    // 2026-11-24: jangan ambil menu publik yang sudah dipindah ke laci HP (Home, Control Centre, ...) -
+    // dulu tertimpa grup tanpa gaya di Manual/Laporan Masyarakat dsb.
+    const fallback = Array.from(document.querySelectorAll(".sidebar nav")).find(n => !excluded(n));
+    return bestScore >= 3 ? best : (fallback || null);
   }
 
   function groupHtml(label, items, groupId, forceOpen) {
@@ -500,19 +504,27 @@
   // field pages): the same groups, closed, for rn-mobile-drawer.js. Posko
   // pages are readable by everyone; adding data still needs a login.
   window.RNNav = {
-    async groupsHtml(prefix) {
-      const pre = prefix || "";
-      const fix = items => items.map(it => Object.assign({}, it, { href: pre + it.href }));
-      return [
+    // Posko / Donasi / Modul: langsung (tidak menunggu server). Pengaturan + Komando & Admin
+    // menyusul lewat accountGroupsHtml() setelah sesi diketahui (2026-11-24).
+    groupsHtml(prefix) {
+      return drawerGroupsHtml(prefix, [
         ["Posko", CONFIG.posko, "posko"],
         ["Donasi & Program Khusus", CONFIG.donasi, "donasi"],
-        ["Modul", CONFIG.modules, "modul"],
-        ...await accountGroups()
-      ].map(([label, items, id]) =>
-        groupHtml(label, fix(items), id, false).replace('class="rn-nav-v2-group"', 'class="rn-nav-v2-group rn-drawer-group"').replace(" open>", ">")
-      ).join("");
+        ["Modul", CONFIG.modules, "modul"]
+      ]);
+    },
+    async accountGroupsHtml(prefix) {
+      try { return drawerGroupsHtml(prefix, await accountGroups()); } catch (e) { return ""; }
     }
   };
+
+  function drawerGroupsHtml(prefix, groups) {
+    const pre = prefix || "";
+    const fix = items => items.map(it => Object.assign({}, it, { href: pre + it.href }));
+    return groups.map(([label, items, id]) =>
+      groupHtml(label, fix(items), id, false).replace('class="rn-nav-v2-group"', 'class="rn-nav-v2-group rn-drawer-group"').replace(" open>", ">")
+    ).join("");
+  }
 
   // Let a page (e.g. posko-logistik.html's posko dropdown) refresh the top
   // function group after it changes the active posko / URL.

@@ -211,27 +211,36 @@ if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = d
     if (container.querySelector(".rn-drawer-ops")) return;
     try {
       if (!window.RNIcon) await loadScript(prefix + "assets/js/rn-icons.js?v=kpiicon-20260904").catch(() => {});
-      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=dua-20261123"); // KEEP IN SYNC with pages' rn-navigation-v2.js ?v= (PWA caches by exact URL)
+      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=hp-20261124"); // KEEP IN SYNC with pages' rn-navigation-v2.js ?v= (PWA caches by exact URL)
     } catch (e) { return; }
     if (!window.RNNav || container.querySelector(".rn-drawer-ops")) return;
     const wrap = document.createElement("div");
     wrap.className = "rn-drawer-ops";
     // CONFIG hrefs are relative to pages/: Home (root) needs the folder
-    wrap.innerHTML = await window.RNNav.groupsHtml(isHome ? "pages/" : "");
+    const base = window.RNNav.groupsHtml(isHome ? "pages/" : "");
+    wrap.innerHTML = typeof base === "string" ? base : await base; // versi lama mengembalikan Promise
     if (container.querySelector(".rn-drawer-ops")) return;
     container.appendChild(wrap);
-    if (window.RNIconFill) window.RNIconFill(wrap);
     const sidebar = container.closest(".sidebar") || document;
-    sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(g => {
-      g.open = false;
-      if (g.dataset.rnDrawerAccordion) return;
-      g.dataset.rnDrawerAccordion = "1";
-      g.addEventListener("toggle", () => {
-        if (!g.open) return;
-        sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(o => { if (o !== g) o.open = false; });
-        showOpened(g);
+    const wire = () => {
+      if (window.RNIconFill) window.RNIconFill(wrap);
+      sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(g => {
+        if (g.dataset.rnDrawerAccordion) return;
+        g.dataset.rnDrawerAccordion = "1";
+        g.open = false;
+        g.addEventListener("toggle", () => {
+          if (!g.open) return;
+          sidebar.querySelectorAll("details.rn-nav-v2-group").forEach(o => { if (o !== g) o.open = false; });
+          showOpened(g);
+        });
       });
-    });
+    };
+    wire();
+    // Pengaturan + Komando & Admin (hanya saat login) menyusul tanpa menahan grup lain
+    if (window.RNNav.accountGroupsHtml) {
+      const extra = await window.RNNav.accountGroupsHtml(isHome ? "pages/" : "");
+      if (extra) { wrap.insertAdjacentHTML("beforeend", extra); wire(); }
+    }
   }
 
   function init() {

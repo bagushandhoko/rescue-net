@@ -10,7 +10,7 @@
   if (!document.querySelector('link[href*="rn-dms-tema.css"]')) {
     const theme = document.createElement("link");
     theme.rel = "stylesheet";
-    theme.href = new URL("../css/rn-dms-tema.css?v=tema-20261123", script.src).href;
+    theme.href = new URL("../css/rn-dms-tema.css?v=tema-20261123b", script.src).href;
     document.head.append(theme);
   }
   // Nama komersial DMS (keputusan owner 22 Nov): ganti nama merek di header & judul tab.

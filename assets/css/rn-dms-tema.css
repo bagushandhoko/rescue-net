@@ -127,7 +127,7 @@ html.rn-dms-tema .app-shell,
 html.rn-dms-tema main.content,
 html.rn-dms-tema .main { background-color: transparent !important; }
 html.rn-dms-tema .cc { background: transparent !important; }
-html.rn-dms-tema .eyebrow { color: var(--dms-orange-ink) !important; }
+html.rn-dms-tema .eyebrow { color: #9a3412 !important; }
 
 /* Kartu: putih bersih, garis dingin (ganti gradasi peach RN) */
 html.rn-dms-tema .panel,
@@ -271,3 +271,8 @@ html.rn-dms-tema .kh-btn, html.rn-dms-tema .ak-btn, html.rn-dms-tema .lacak-btn,
 html.rn-dms-tema button[style*="59, 130, 196"], html.rn-dms-tema button[style*="#3b82c4"] { background: #1d4ed8 !important; color: #fff !important; }
 html.rn-dms-tema .rn-pr-edit-btn { color: #fff !important; }
 html.rn-dms-tema .is-on { color: #fff !important; background: var(--dms-orange-ink) !important; border-color: var(--dms-orange-ink) !important; }
+/* teks langsung di atas latar abu #e4e6e9 (bukan di kartu): oranye & abu lebih gelap */
+html.rn-dms-tema .eyebrow,
+html.rn-dms-tema .dms-module-main > a,
+html.rn-dms-tema .dms-module-main .rn-event-picker span { color: #9a3412 !important; }
+html.rn-dms-tema .rn-page-status { color: #374151 !important; }

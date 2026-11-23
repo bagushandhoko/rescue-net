@@ -16,7 +16,7 @@
     body { font-family: Inter, "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; background: var(--bg); color: #f1f5f9; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
     svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-    .bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 58%; filter: brightness(.72) contrast(1.08) saturate(.9); }
+    .bg img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 58%; filter: brightness(.95) contrast(1.1) saturate(.95); }
     .bg .fade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(9,14,26,.5) 0%, rgba(9,14,26,.86) 42%, var(--bg) 72%); }
     .bg .fade2 { position: absolute; inset: 0; background: linear-gradient(0deg, var(--bg) 0%, transparent 40%, rgba(9,14,26,.5) 100%); }
     .wrap { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
@@ -75,7 +75,7 @@
     @media (min-width: 640px) {
       body { height: 100vh; overflow: hidden; }
       .bg img { width: 70%; }
-      .bg .fade { background: linear-gradient(90deg, rgba(9,14,26,.8) 0%, rgba(9,14,26,.5) 40%, rgba(9,14,26,.88) 60%, var(--bg) 70%); }
+      .bg .fade { background: linear-gradient(90deg, rgba(9,14,26,.72) 0%, rgba(9,14,26,.32) 42%, rgba(9,14,26,.85) 61%, var(--bg) 70%); }
       .wrap { flex-direction: row; height: 100vh; }
       .intro { flex: 1; min-width: 0; padding: 32px clamp(24px, 4vw, 64px); justify-content: space-between; }
       .panel { width: 40%; min-width: 360px; max-width: 440px; flex: none; padding: 28px clamp(24px, 2.6vw, 36px); border-top: 0; border-left: 1px solid rgba(255,255,255,.1); background: linear-gradient(90deg, rgba(9,14,26,.82), rgba(9,14,26,.97) 25%); backdrop-filter: blur(14px); overflow-y: auto; }

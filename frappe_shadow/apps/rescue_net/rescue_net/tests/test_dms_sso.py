@@ -29,12 +29,30 @@ class TestDmsSso(FrappeTestCase):
         self.assertEqual(data["user"], "Administrator")
         # nonce salah -> ditolak, dan tiket hangus
         frappe.set_user("Guest")
+        frappe.local.request_ip = "127.0.0.1"
         frappe.local.request = frappe._dict(cookies={"dms_sso_nonce": "salah"})
         with self.assertRaises(frappe.AuthenticationError):
             api_auth.dms_sso_claim(ticket)
         with self.assertRaises(frappe.AuthenticationError):
             api_auth.dms_sso_claim(ticket)
 
+    def test_tiket_benar_dengan_nonce_benar_login(self):
+        frappe.set_user("Administrator")
+        nonce = "b" * 32
+        api_auth.dms_sso_start(next="", n=api_auth._sha(nonce))
+        ticket = frappe.local.response["location"].split("sso=")[1].split("&")[0]
+        frappe.set_user("Guest")
+        frappe.local.request_ip = "127.0.0.1"
+        frappe.local.request = frappe._dict(cookies={"dms_sso_nonce": nonce})
+        calls = []
+        frappe.local.login_manager = frappe._dict(login_as=lambda user: calls.append(user))
+        frappe.local.cookie_manager = frappe._dict(delete_cookie=lambda k: None)
+        self.assertEqual(api_auth.dms_sso_claim(ticket), {"user": "Administrator"})
+        self.assertEqual(calls, ["Administrator"])
+        with self.assertRaises(frappe.AuthenticationError):  # sekali pakai
+            api_auth.dms_sso_claim(ticket)
+
     def test_tiket_format_salah(self):
+        frappe.local.request_ip = "127.0.0.1"
         with self.assertRaises(frappe.AuthenticationError):
             api_auth.dms_sso_claim("../../x")

@@ -162,7 +162,7 @@ def armada_list(posko):
         "capacity_volume_m3", "own_load_m3", "capacity_committed_m3", "own_cargo_desc", "service_mode",
         "accepted_cargo_types", "cargo_requirements", "prohibited_items", "packing_required", "packing_spec",
         "max_piece_weight_kg", "documents_required", "cargo_cutoff_at", "current_location", "handover_location",
-        "handover_contact_person", "handover_contact_phone", "coordination_notes"],
+        "handover_contact_person", "handover_contact_phone", "coordination_notes", "vehicle_spec", "return_departure_at"],
         order_by="departure_at desc", limit_page_length=100)
     out = []
     for r in rows:
@@ -199,7 +199,15 @@ def armada_list(posko):
                 "current_location": r.current_location or "", "handover_location": r.handover_location or "",
                 "handover_contact_person": r.handover_contact_person or "",
                 "handover_contact_phone": r.handover_contact_phone or "", "coordination_notes": r.coordination_notes or "",
+                "vehicle_spec": r.vehicle_spec or "", "return_departure_at": str(r.return_departure_at or "")[:16],
             },
+            # owner 2026-11-23: siapa saja yang booking + kontaknya (pengelola posko saja), terbaru dulu
+            "bookings": [dict(b, needs_pin=bool(b.pop("verification_pin")) and b.status == "requested") for b in frappe.get_all(
+                "RN Transport Booking", filters={"transport_space": r.name},
+                fields=["name", "status", "cargo_desc", "qty_weight_kg", "qty_volume_m3", "booker_name", "booked_by_type",
+                        "contact_person", "contact_phone", "requested_window", "pickup_location", "dropoff_location",
+                        "requested_at", "confirmed_at", "reject_reason", "notes", "verification_pin", "creation"],
+                order_by="creation desc", limit_page_length=50)],
         })
     from rescue_net.logistics.transport import CARGO_TYPES
     return {"posko": name, "armada": out,

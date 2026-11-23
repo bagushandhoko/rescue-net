@@ -58,6 +58,7 @@ def create_transport_space(
     documents_required=None,
     cargo_cutoff_at=None,
     accepted_cargo_types=None,
+    vehicle_spec=None,
     volunteer_capacity_seats=None,
     volunteer_needs_pickup=None,
     volunteer_pickup_location=None,
@@ -139,6 +140,8 @@ def create_transport_space(
             doc.disaster_event_legacy_id = disaster_event
 
     _apply_cargo_terms(doc, cargo_requirements=cargo_requirements, packing_required=packing_required, packing_spec=packing_spec, max_piece_weight_kg=max_piece_weight_kg, prohibited_items=prohibited_items, documents_required=documents_required, cargo_cutoff_at=cargo_cutoff_at, accepted_cargo_types=accepted_cargo_types)
+    if vehicle_spec is not None:
+        doc.vehicle_spec = str(vehicle_spec).strip()[:1000] or None
     _apply_served(doc, served_events, served_poskos)
     doc.transport_status = "available"
     doc.insert(ignore_permissions=True)
@@ -178,6 +181,7 @@ def update_transport_space(
     documents_required=None,
     cargo_cutoff_at=None,
     accepted_cargo_types=None,
+    vehicle_spec=None,
     volunteer_capacity_seats=None,
     volunteer_needs_pickup=None,
     volunteer_pickup_location=None,
@@ -246,6 +250,8 @@ def update_transport_space(
             doc.set(field, value)
 
     _apply_cargo_terms(doc, cargo_requirements=cargo_requirements, packing_required=packing_required, packing_spec=packing_spec, max_piece_weight_kg=max_piece_weight_kg, prohibited_items=prohibited_items, documents_required=documents_required, cargo_cutoff_at=cargo_cutoff_at, accepted_cargo_types=accepted_cargo_types)
+    if vehicle_spec is not None:
+        doc.vehicle_spec = str(vehicle_spec).strip()[:1000] or None
     _apply_served(doc, served_events, served_poskos)
     doc.observed_at = now_datetime()
     doc.save(ignore_permissions=True)

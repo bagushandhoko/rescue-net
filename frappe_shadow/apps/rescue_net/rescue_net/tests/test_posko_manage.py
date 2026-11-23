@@ -147,3 +147,24 @@ class TestArmadaPengaturan(RNTestCase):
         mine = [a for a in all_rows["rows"] if a["name"] == self.sp.name] if isinstance(all_rows, dict) else []
         self.assertTrue(mine and mine[0]["cargo_types"] == ["Obat & alat medis"])
         self.assertFalse([a for a in pangan["rows"] if a["name"] == self.sp.name])
+
+    def test_spec_return_and_booking_list_with_contacts(self):
+        _insert("RN Transport Booking", transport_space=self.sp.name, disaster_event=self.w.event.name, status="confirmed",
+                cargo_desc="Air mineral", qty_weight_kg=200, booker_name="Posko B", booked_by_type="posko",
+                contact_person="Budi", contact_phone="0812-1111", verification_pin="ZZ9999")
+        _insert("RN Transport Booking", transport_space=self.sp.name, disaster_event=self.w.event.name, status="requested",
+                cargo_desc="Beras", qty_weight_kg=50, booker_name="Ani", booked_by_type="individu",
+                contact_person="Ani", contact_phone="0813-2222", verification_pin="PIN777")
+        with as_user(self.mgr.user):
+            self._upd(vehicle_spec="Hino Dutro, BL 1234 AB, bak 4x2 m", return_departure_at="2099-01-03 15:00:00")
+            r = pm.armada_list(self.w.posko_a.name)
+        a = r["armada"][0]
+        self.assertEqual(a["settings"]["vehicle_spec"], "Hino Dutro, BL 1234 AB, bak 4x2 m")
+        self.assertEqual(a["settings"]["return_departure_at"], "2099-01-03 15:00")
+        by = {b["booker_name"]: b for b in a["bookings"]}
+        self.assertEqual((by["Posko B"]["status"], by["Posko B"]["contact_phone"]), ("confirmed", "0812-1111"))
+        self.assertTrue(by["Ani"]["needs_pin"])
+        self.assertFalse(by["Posko B"]["needs_pin"])
+        js = frappe.as_json(r)
+        self.assertNotIn("PIN777", js)
+        self.assertNotIn("ZZ9999", js)

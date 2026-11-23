@@ -44,10 +44,22 @@ from rescue_net.resource_tools.common import (  # noqa: F401
     _is_manager,
     _resource_capacity,
 )
+from rescue_net.services.drill import DMS_SOURCE, scope_hidden_events, showing_dms
 from rescue_net.resource_tools.resources import (  # noqa: F401
     _visible_request,
     _visible_resource,
 )
+
+
+def _event_filters(event=None):
+    if event:
+        return {"disaster_event": event}
+    if showing_dms():
+        from rescue_net.services.drill import dms_event_names
+
+        return {"disaster_event": ["in", sorted(dms_event_names()) or ["-"]]}
+    hidden = scope_hidden_events()
+    return {"disaster_event": ["not in", sorted(hidden)]} if hidden else {}
 
 
 @frappe.whitelist(allow_guest=True)
@@ -57,21 +69,11 @@ def dashboard(disaster_event=None):
     disaster_event = resolve_disaster_event(disaster_event)
     actor = rn_actor(required=False)
 
-    resource_filters = {}
-    request_filters = {}
-
-    if disaster_event:
-        resource_filters[
-            "disaster_event"
-        ] = disaster_event
-
-        request_filters[
-            "disaster_event"
-        ] = disaster_event
+    filters = _event_filters(disaster_event)
 
     resources = frappe.get_all(
         "RN Resource Profile",
-        filters=resource_filters,
+        filters=filters,
         fields=[
             "name",
             "disaster_event",
@@ -94,7 +96,7 @@ def dashboard(disaster_event=None):
 
     requests = frappe.get_all(
         "RN Work Tool Request",
-        filters=request_filters,
+        filters=filters,
         fields=[
             "name",
             "disaster_event",
@@ -231,6 +233,7 @@ def control_centre_resources():
 
     resources = frappe.get_all(
         "RN Resource Profile",
+        filters=_event_filters(),
         fields=[
             "resource_type",
             "availability_status",
@@ -241,6 +244,7 @@ def control_centre_resources():
 
     requests = frappe.get_all(
         "RN Work Tool Request",
+        filters=_event_filters(),
         fields=[
             "priority",
             "request_status",
@@ -450,7 +454,7 @@ def tools_board(disaster_event=None):
     """
     event = resolve_disaster_event(disaster_event)
 
-    res_filters = {"disaster_event": event} if event else {}
+    res_filters = _event_filters(event)
 
     resources = frappe.get_all(
         "RN Resource Profile",
@@ -926,10 +930,10 @@ def resource_profile_board(user_account=None):
 
     ua = frappe.db.get_value(
         "RN User Account", target,
-        ["name", "title", "username", "phone", "email", "role", "organization", "posko", "status", "creation"],
+        ["name", "title", "username", "phone", "email", "role", "organization", "posko", "status", "creation", "legacy_source"],
         as_dict=True,
     )
-    if not ua:
+    if not ua or (ua.legacy_source == DMS_SOURCE and not showing_dms()):
         frappe.throw("Akun tidak ditemukan", frappe.DoesNotExistError)
 
     org_title = (

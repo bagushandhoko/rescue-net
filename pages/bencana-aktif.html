@@ -14,7 +14,7 @@
   <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=lh15-20261109">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=segar-20261117" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=warna-20261122" />
-  <link rel="stylesheet" href="../assets/css/rn-ba-compact.css?v=font-20261109" />
+  <link rel="stylesheet" href="../assets/css/rn-ba-compact.css?v=lengkap-20261123" />
   <style>
   .rn-ba-map-panel{display:flex;flex-direction:column}
   .rn-ba-map{flex:1 1 auto;min-height:380px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#eef3f4;z-index:0}
@@ -162,7 +162,8 @@
         <div id="baIsuList" class="rn-ba-isu"><p class="rn-muted">—</p></div>
 
         <div class="rn-ba-sum-actions">
-          <a class="btn primary" id="baOpenWarRoom" href="#">Buka Control Centre ↗</a>
+          <a class="btn primary" href="#baOps">Rincian per bencana ↓</a>
+          <a class="btn ghost" id="baOpenWarRoom" href="#">Buka Control Centre ↗</a>
           <a class="btn ghost" id="baOpenDetail" href="back-office.html">Ekosistem Penanganan</a>
           <a class="btn ghost" id="baOpenConsolidation" href="#" title="Rincian MAX/AI per kelompok kebutuhan + sumber data mentah">Data Konsolidasi (AI) ↗</a>
         </div>
@@ -206,6 +207,16 @@
       </div>
     </section>
 
+    <section class="panel rn-ba-ops" id="baOps" aria-labelledby="baOpsTitle">
+      <div class="panel-header">
+        <div>
+          <h3 id="baOpsTitle">Rincian per Bencana</h3>
+          <p id="baOpsStatus" role="status">Pilih bencana dari daftar.</p>
+        </div>
+      </div>
+      <div id="baOpsGrid" class="rn-ba-ops-grid"></div>
+    </section>
+
     <div class="rn-page-status" id="baStatus"></div>
   </main>
 </div>
@@ -228,7 +239,7 @@
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
-<script src="../assets/js/bencana-aktif.js?v=lokasi-20261112"></script>
+<script src="../assets/js/bencana-aktif.js?v=lengkap-20261123"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
 <script src="../assets/js/rn-public-header.js?v=warna-20261122"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>

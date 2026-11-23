@@ -85,15 +85,23 @@
     if (!el || !GENERATED_AT) return;
     el.textContent = "Data pukul " + clock(GENERATED_AT) + " · " + relTime(GENERATED_AT) + " · otomatis tiap 60 dtk";
   }
+  var boardRequest = 0;
   function quietReload() {
     if (document.hidden) return;
-    window.RN_FRAPPE.call(METHOD).then(function (res) {
+    var request = ++boardRequest;
+    publicCall(METHOD).then(function (res) {
+      if (request !== boardRequest) return;
       var data = res || {};
       state.events = data.events || [];
       state.totals = data.totals || {};
       GENERATED_AT = data.generated_at;
       renderKpi(state.totals);
+      setStatus("");
+      if (!selectedEvent()) state.selectedId = state.events[0]?.id || null;
       applyFilter();
+      renderSummary();
+      renderMap(true);
+      loadOperations(selectedEvent(), true);
       paintUpdated();
     }).catch(function () { /* coba lagi di putaran berikut */ });
   }
@@ -102,9 +110,11 @@
   document.addEventListener("visibilitychange", function () { if (!document.hidden) quietReload(); });
 
   function load() {
+    var request = ++boardRequest;
     setStatus("Memuat data bencana…");
-    return window.RN_FRAPPE.call(METHOD)
+    return publicCall(METHOD)
       .then(function (res) {
+        if (request !== boardRequest) return;
         var data = res || {};
         state.events = data.events || [];
         state.totals = data.totals || {};
@@ -113,9 +123,11 @@
         paintUpdated();
         applyFilter();
         renderMap();
-        if (!state.selectedId && state.events.length) {
-          select(state.events[0].id, true);
-        }
+        var requested = new URLSearchParams(location.search).get("event");
+        var initial = state.events.find(function (ev) {
+          return requested && (ev.event_id === requested || shortId(ev.id) === shortId(requested));
+        }) || state.events[0];
+        if (initial) select(initial.id, true);
         setStatus("");
       })
       .catch(function (err) {
@@ -657,6 +669,7 @@
     renderTable();
     renderSummary();
     focusMap(quiet);
+    loadOperations(selectedEvent());
   }
 
   /* ---------- map (owner 2026-10-19): one marker per disaster at the
@@ -667,7 +680,7 @@
 
   function sevColor(ev) { return SEV_COLOR[String(ev.severity || "").toLowerCase()] || "#b88918"; }
 
-  function renderMap() {
+  function renderMap(keepView) {
     var host = $("#baMap");
     if (!host || !window.L) return;
     var withCenter = state.events.filter(function (e) { return e.center; });
@@ -704,7 +717,7 @@
       m.on("click", function () { select(ev.id); });
       m.addTo(eventLayer);
     });
-    if (bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 9 });
+    if (!keepView && bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 9 });
     setTimeout(function () { map.invalidateSize(); }, 50);
     focusMap(true);
   }
@@ -714,10 +727,18 @@
     poskoLayer.clearLayers();
     var ev = selectedEvent();
     if (!ev) return;
+    var colors = { critical: "#a81d2b", warning: "#8a4d0d", safe: "#176548" };
+    var labels = { critical: "Kritis", warning: "Waspada", safe: "Aman" };
     var pts = (ev.posko_points || []).map(function (p) {
-      L.circleMarker([p.lat, p.lng], { radius: 5, color: sevColor(ev), weight: 2, fillColor: "#fff", fillOpacity: 1 })
-        .bindTooltip(esc(p.title || p.name), { direction: "top" })
-        .on("click", function () { location.href = p.href + "&event=" + encodeURIComponent(shortId(ev.id)); })
+      var point = operationalMap.get(p.name);
+      var color = colors[point?.situation] || sevColor(ev);
+      var label = labels[point?.situation];
+      var title = esc(p.title || p.name);
+      var href = p.href + "&event=" + encodeURIComponent(shortId(ev.id));
+      L.circleMarker([p.lat, p.lng], { radius: 6, color: color, weight: 2, fillColor: color, fillOpacity: .8 })
+        .bindTooltip(title + (label ? " · " + label : ""), { direction: "top" })
+        .bindPopup("<b>" + title + "</b>" + (label ? "<br>" + label : "") +
+          '<br><a href="' + esc(href) + '">Buka detail posko</a>')
         .addTo(poskoLayer);
       return [p.lat, p.lng];
     });
@@ -805,6 +826,210 @@
     $("#baOpenWarRoom").href = "war-room.html?" + evParam;
     $("#baOpenDetail").href = "back-office.html?" + evParam;
     $("#baOpenConsolidation").href = "data-consolidation.html?" + evParam;
+  }
+
+  // Control Centre membaca dashboard publik sebagai Guest, termasuk saat pengguna login.
+  // Jangan bawa cookie sesi ke kartu publik. Mode tampilan dikirim eksplisit.
+  function viewMode() {
+    return /(?:^|;\s*)rn_tampilan=simulasi(?:;|$)/.test(document.cookie) ? "simulasi" : "riil";
+  }
+
+  async function publicCall(method, args) {
+    var query = new URLSearchParams(args);
+    query.set("rn_tampilan", viewMode());
+    var response = await fetch("/rescue-net-frappe/api/method/" + method + "?" + query, {
+      credentials: "omit",
+      headers: { Accept: "application/json" }
+    });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    return (await response.json()).message;
+  }
+
+  var operationKey = "";
+  var operationRequest = 0;
+  var operationalMap = new Map();
+
+  function opsRows(rows) {
+    return "<dl>" + rows.map(function (row) {
+      return "<div><dt>" + esc(row[0]) + "</dt><dd>" +
+        (typeof row[1] === "number" ? fmt(row[1]) : esc(row[1] ?? "—")) + "</dd></div>";
+    }).join("") + "</dl>";
+  }
+
+  function opsCard(title, body, link, label) {
+    return '<article class="rn-ba-ops-card"><h4>' + esc(title) + "</h4>" + body +
+      (link ? '<a href="' + esc(link) + '">' + esc(label) + "</a>" : "") + "</article>";
+  }
+
+  function opsList(items) {
+    return "<ul>" + items.map(function (item) {
+      return "<li>" + esc(item) + "</li>";
+    }).join("") + "</ul>";
+  }
+
+  function dashboardCards(data, ev, link) {
+    var ctx = data.context || {};
+    var summary = ctx.summary || {};
+    var kpi = ctx.kpi_totals || {};
+    var mapSummary = data.map?.summary || {};
+    var priorities = (ctx.recommendations || []).concat(ctx.alerts || []).slice(0, 5)
+      .map(function (row) { return row.title || row.recommendation || row.message; }).filter(Boolean);
+    var needs = (ctx.logistic_needs || []).filter(function (row) {
+      return !["closed", "cancelled", "fulfilled"].includes(String(row.status || "").toLowerCase());
+    }).map(function (row) {
+      var required = Number(row.quantity_required || row.required_quantity || row.quantity || 0);
+      var fulfilled = Number(row.realized_quantity || row.fulfilled_quantity || row.delivered_quantity ||
+        row.quantity_fulfilled || row.quantity_delivered || 0);
+      return { item: row.item_name || row.item_text || row.need_name, unit: row.unit,
+        required: required, fulfilled: fulfilled, gap: Math.max(0, required - fulfilled) };
+    }).filter(function (row) { return row.item; }).sort(function (a, b) { return b.gap - a.gap; }).slice(0, 6);
+    return [
+      opsCard("Korban dan pengungsi", opsRows([
+        ["Jiwa dilayani posko", kpi.base?.jiwa], ["Jiwa berisiko", kpi.jiwa],
+        ["Risiko dari logistik", kpi.jiwa_aspects?.logistik],
+        ["Risiko dari shelter", kpi.jiwa_aspects?.shelter], ["Risiko dari medis", kpi.jiwa_aspects?.medis],
+        ["Posko belum lapor jumlah jiwa", kpi.jiwa_missing], ["Kasus medis tercatat", kpi.medis], ["Laporan orang hilang", summary.missing_person_count],
+        ["Laporan orang ditemukan", summary.found_person_count], ["Pengungsi", ev.pengungsi],
+        ["Catatan okupansi shelter", summary.shelter_occupancy_count]
+      ]), link("search-found"), "Buka Search & Found"),
+      opsCard("Posko dan peta", opsRows([
+        ["Posko tercatat", ev.posko_count], ["Posko kritis", kpi.posko_kritis],
+        ["Titik pada peta Control Centre", mapSummary.total], ["Titik waspada", mapSummary.warning],
+        ["Titik aman", mapSummary.safe]
+      ]), "#baMap", "Lihat peta Bencana Aktif"),
+      opsCard("Logistik dan kebutuhan", opsRows([
+        ["Catatan stok barang", kpi.stok], ["Kebutuhan terbuka", summary.open_need_count],
+        ["Kebutuhan kritis", ev.kebutuhan_kritis], ["Kebutuhan shelter", summary.shelter_need_count],
+        ["Tawaran belum tersalur", kpi.donasi]
+      ]), link("kebutuhan-publik"), "Lihat kebutuhan publik"),
+      opsCard("Distribusi", opsRows([
+        ["Alur bantuan", kpi.distribusi], ["Alur terhambat", kpi.distribusi_terhambat]
+      ]), link("management-distribusi"), "Buka Manajemen Distribusi"),
+      opsCard("Relawan dan program", opsRows([
+        ["Penugasan relawan", kpi.relawan], ["Program berjalan", kpi.program]
+      ]), link("program-khusus"), "Buka Program Khusus"),
+      opsCard("Laporan masyarakat dan bukti", opsRows([
+        ["Laporan dalam dashboard publik", (data.community_reports || []).length],
+        ["Bukti dalam dashboard publik", (data.evidence || []).length]
+      ]), link("evidence"), "Buka bukti lapangan"),
+      opsCard("Kebutuhan dan pemenuhan", needs.length ? opsList(needs.map(function (row) {
+        return row.item + " · kebutuhan " + fmt(row.required) + " · terpenuhi " + fmt(row.fulfilled) +
+          " · kurang " + fmt(row.gap) + (row.unit ? " " + row.unit : "");
+      })) : "<p>Belum ada kebutuhan terbuka dalam dashboard.</p>", link("war-room"), "Buka rincian per posko"),
+      opsCard("Prioritas penanganan", priorities.length ? opsList(priorities) : "<p>Belum ada prioritas tercatat.</p>",
+        link("war-room"), "Buka daftar prioritas"),
+      activityCard(ctx.trends, link),
+      opsCard("Laporan Situasi (SITREP)", "<p>Laporan per periode mencakup perubahan situasi, layanan dan koordinasi.</p>",
+        link("sitrep"), "Buka laporan situasi bencana")
+    ].join("");
+  }
+
+  function activityCard(trends, link) {
+    var days = trends?.days || [];
+    var series = [
+      ["logistics", "Logistik"], ["distribution", "Distribusi"], ["medical", "Medis"],
+      ["volunteer", "Relawan"], ["program", "Program"], ["search_found", "Search & Found"]
+    ];
+    var periods = days.map(function (day, i) {
+      return '<details><summary>' + esc(day) + '</summary>' + opsRows(series.map(function (item) {
+        return [item[1], trends[item[0]]?.[i]];
+      })) + '</details>';
+    }).reverse();
+    return opsCard("Tren aktivitas", periods.length ? periods.join("") : "<p>Tren belum tersedia.</p>",
+      link("war-room"), "Lihat grafik di Control Centre");
+  }
+
+  function loadOperations(ev, refresh) {
+    var grid = $("#baOpsGrid");
+    var status = $("#baOpsStatus");
+    var mode = viewMode();
+    var key = ev ? mode + ":" + ev.id : "";
+    if (key === operationKey && (!refresh || grid.contains(document.activeElement))) return;
+    var changed = key !== operationKey;
+    operationKey = key;
+    var request = ++operationRequest;
+    if (changed) {
+      grid.replaceChildren();
+      operationalMap.clear();
+      focusMap(true);
+    }
+    if (!ev) {
+      status.textContent = "Pilih bencana dari daftar.";
+      return;
+    }
+
+    var label = ev.name + " · " + (mode === "simulasi" ? "Tampilan Simulasi" : "Tampilan Riil");
+    status.textContent = label;
+    var id = ev.event_id || shortId(ev.id);
+    var link = function (page) { return page + ".html?event=" + encodeURIComponent(id); };
+    var sections = [
+      ["Data Control Centre", "rescue_net.api_control_centre.public_dashboard", { disaster_event_id: id },
+        function (data) {
+          if (request === operationRequest) {
+            operationalMap = new Map((data.map?.points || []).map(function (point) {
+              return [point.posko_id, point];
+            }));
+            focusMap(true);
+          }
+          return dashboardCards(data, ev, link);
+        }],
+      ["Donasi, tender dan pelacakan program", "rescue_net.api_donor_program.program_kpi",
+        { disaster_event: id }, function (data) {
+          var donor = data.donor || {};
+          var tender = data.tender || {};
+          var tracking = data.tracking || {};
+          var rupiah = function (value) { return value == null ? "—" : "Rp " + fmt(value); };
+          return [
+            opsCard("Donasi terarah", opsRows([
+              ["Program donasi", donor.programs], ["Donatur", donor.donors],
+              ["Dana diterima", rupiah(donor.received)], ["Target", rupiah(donor.target)]
+            ]), link("donor-program"), "Buka Donor Program"),
+            opsCard("Pengadaan dan tender", opsRows([
+              ["Tender", tender.total], ["Terbuka", tender.open], ["Sudah ada pemenang", tender.awarded],
+              ["Penawaran", tender.bids], ["Nilai RAB", rupiah(tender.rab_total)]
+            ]), link("pengadaan-tender"), "Buka Pengadaan & Tender"),
+            opsCard("Pelacakan program", opsRows([
+              ["Aktif", tracking.active], ["Kritis", tracking.critical], ["Selesai", tracking.done],
+              ["Target tahap terlambat", tracking.late_milestones], ["Lokasi belum terlayani", tracking.unserved_locations]
+            ]), link("program-khusus"), "Buka Program Khusus")
+          ].join("");
+        }],
+      ["Armada", "rescue_net.api_armada.armada_finder", { disaster_event: id }, function (data) {
+        var counts = data.counts || {};
+        return opsCard("Armada", opsRows([
+          ["Tersedia", counts.tersedia ?? 0], ["Penuh", counts.penuh ?? 0], ["Dipakai", counts.dipakai ?? 0],
+          ["Jadwal lewat", counts.lewat ?? 0], ["Selesai", counts.selesai ?? 0]
+        ]), link("management-distribusi"), "Lihat rincian distribusi dan armada");
+      }],
+      ["Akses dan infrastruktur", "rescue_net.api_access_status.board", { disaster_event: id }, function (data) {
+        var summary = data.summary || [];
+        var items = (data.items || []).slice(0, 5).map(function (item) {
+          return item.place_name + " · " + (item.status === "closed" ? "Ditutup" : "Terbatas");
+        });
+        return opsCard("Akses dan infrastruktur", (summary.length ? opsRows(summary.map(function (row) {
+          return [row.label, fmt(row.closed) + " ditutup · " + fmt(row.limited) + " terbatas"];
+        })) : "<p>Belum ada status akses tercatat.</p>") + (items.length ? opsList(items) : ""),
+        link("status-akses"), "Buka Status Akses");
+      }]
+    ];
+    if (changed) status.textContent = label + " · Memuat…";
+    Promise.all(sections.map(async function (section) {
+      try {
+        return section[3](await publicCall(section[1], section[2]));
+      } catch (error) {
+        return opsCard(section[0], "<p>Data belum dapat dimuat. Halaman akan mencoba lagi.</p>");
+      }
+    })).then(function (cards) {
+      if (request !== operationRequest) return;
+      var openPeriods = Array.from(grid.querySelectorAll("details[open]"), function (el) {
+        return el.querySelector("summary").textContent;
+      });
+      grid.innerHTML = cards.join("");
+      grid.querySelectorAll("details").forEach(function (el) {
+        el.open = openPeriods.includes(el.querySelector("summary").textContent);
+      });
+      status.textContent = label;
+    });
   }
 
   function statBox(label, value) {

@@ -22,3 +22,40 @@
   body .main > .kpi-grid .kpi-card strong { font-size: 24px !important; line-height: 1.1; }
   body .main > .kpi-grid .kpi-card small { display: none !important; }
 }
+
+/* Data operasional bencana terpilih */
+.rn-ba-ops {
+  margin-block: 1rem;
+  min-width: 0;
+  scroll-margin-top: 6rem;
+}
+.rn-ba-ops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: .75rem;
+  padding: .75rem;
+}
+.rn-ba-ops-grid:empty { display: none; }
+.rn-ba-ops-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: .875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: .625rem;
+  background: #fff;
+  color: #1e293b;
+}
+.rn-ba-ops-card h4 { margin: 0 0 .5rem; color: inherit; }
+.rn-ba-ops-card dl { margin: 0 0 .5rem; }
+.rn-ba-ops-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  padding-block: .25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.rn-ba-ops-card dd { margin: 0; font-weight: 700; text-align: right; }
+.rn-ba-ops-card a { color: #17468b; text-decoration: underline; }
+.rn-ba-ops-card details { margin-block: .5rem; }
+.rn-ba-ops-card summary { cursor: pointer; font-weight: 700; }
+.rn-ba-ops-card ul { padding-inline-start: 1.25rem; }

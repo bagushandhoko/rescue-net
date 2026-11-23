@@ -265,3 +265,9 @@ html.rn-dms-tema .dms-classification[data-level="TERBATAS"] { color: #9a3412 !im
 html.rn-dms-tema .dms-classification[data-level="RAHASIA"] { color: #991b1b !important; border-color: #fca5a5 !important; background: #fef2f2 !important; }
 html.rn-dms-tema .dms-module-main .rn-event-picker label { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
 html.rn-dms-tema .dms-module-main .rn-event-picker span { color: var(--dms-orange-ink) !important; font-weight: 700; letter-spacing: .06em; }
+html.rn-dms-tema .rn-sf-link, html.rn-dms-tema .rn-sf-more,
+html.rn-dms-tema .rn-sf-tabs .is-active, html.rn-dms-tema [class*="rn-sf"] .is-active { color: var(--dms-orange-ink) !important; }
+html.rn-dms-tema .kh-btn, html.rn-dms-tema .ak-btn, html.rn-dms-tema .lacak-btn,
+html.rn-dms-tema button[style*="59, 130, 196"], html.rn-dms-tema button[style*="#3b82c4"] { background: #1d4ed8 !important; color: #fff !important; }
+html.rn-dms-tema .rn-pr-edit-btn { color: #fff !important; }
+html.rn-dms-tema .is-on { color: #fff !important; background: var(--dms-orange-ink) !important; border-color: var(--dms-orange-ink) !important; }

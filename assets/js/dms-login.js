@@ -138,6 +138,9 @@
     btn.disabled = false;
   });
 
+  if (new URLSearchParams(location.search).get("sso_error")) {
+    show("Login Google belum selesai (dibatalkan atau akun Google belum terdaftar di RN). Coba lagi atau gunakan email dan kata sandi.", "err");
+  }
   // Kembali dari Google lewat rescue-net.online: tukar tiket sekali pakai menjadi sesi di domain DMS.
   (async () => {
     const ticket = new URLSearchParams(location.search).get("sso");

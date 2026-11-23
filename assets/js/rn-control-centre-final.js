@@ -1309,6 +1309,25 @@ function _localClusterBounds(allBounds) {
   return local.length >= allBounds.length / 2 ? local : allBounds;
 }
 
+// owner 2026-11-23: tanpa bencana riil, peta tetap tampil sebagai peta risiko InaRISK BNPB (tanpa titik posko)
+function renderRiskOnlyMap() {
+  const host = document.getElementById("situationMap");
+  if (!host || typeof L === "undefined") return;
+  try {
+    if (mapInstance) mapInstance.remove();
+    host.textContent = "";
+    mapInstance = L.map(host, { zoomControl: true }).fitBounds([[-11, 95], [6, 141]]);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(mapInstance);
+    if (window.RNInaRisk) window.RNInaRisk.attach(mapInstance);
+    setText("mapSummary", "Peta risiko InaRISK · belum ada bencana riil");
+    setTimeout(() => mapInstance && mapInstance.invalidateSize(), 200);
+  } catch (e) {
+    console.warn("peta risiko gagal", e);
+  }
+}
+
+
 function renderMap(
   dashboard
 ) {
@@ -2474,6 +2493,7 @@ async function load() {
           "warRoomStatus",
           "Tampilan Riil Data Bencana: belum ada bencana riil yang aktif. Data latihan bisa dilihat dengan memilih \u201cLihat Simulasi\u201d di Beranda."
         );
+        renderRiskOnlyMap();
       }
     }
   }

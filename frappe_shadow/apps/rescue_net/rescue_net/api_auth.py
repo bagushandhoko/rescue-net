@@ -436,6 +436,95 @@ def social_login_url(provider="google", redirect_to=None):
     return {"available": True, "url": url}
 
 
+# ---------------------------------------------------------------------------
+# DMS (disastermanagement.online) — login Google lewat RN lalu serah sesi ke domain DMS.
+# Ming Ming 2026-11-23 (owner: "krn pake login RN, kok login google nya nggak ada?").
+# Masalah: callback Google RN selalu di rescue-net.online, jadi cookie sesi jatuh di domain RN, bukan DMS.
+# Alur: (1) halaman login DMS minta dms_sso_google_url (lewat proxy CT202) -> cookie nonce di domain DMS +
+# URL Google yang kembali ke dms_sso_start di rescue-net.online; (2) dms_sso_start (sudah login di RN)
+# membuat tiket sekali pakai 120 dtk terikat hash nonce, lalu redirect ke DMS ?sso=tiket; (3) DMS memanggil
+# dms_sso_claim (lewat proxy CT202, membawa cookie nonce) -> login_as di domain DMS.
+# Tiket: acak 40 huruf, sekali pakai (SET NX), harus cocok dengan nonce browser yang sama (cegah login CSRF).
+# ---------------------------------------------------------------------------
+DMS_ORIGIN = "https://disastermanagement.online"
+_DMS_NEXT_RE = re.compile(r"^[a-z0-9-]+\.html(\?[^\s\\#]*)?(#[^\s\\]*)?$", re.I)
+
+
+def _dms_safe_next(next_page):
+    value = (next_page or "").strip()
+    return value if value and _DMS_NEXT_RE.match(value) and not value.startswith("dms-login") else ""
+
+
+def _sha(value):
+    import hashlib
+
+    return hashlib.sha256((value or "").encode()).hexdigest()
+
+
+def _dms_login_url(**params):
+    from urllib.parse import urlencode
+
+    params = {k: v for k, v in params.items() if v}
+    return DMS_ORIGIN + "/rescue-net/pages/dms-login.html" + ("?" + urlencode(params) if params else "")
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+@rate_limit(limit=30, seconds=60)
+def dms_sso_google_url(next=None):
+    """Dipanggil halaman login DMS lewat proxy CT202: cookie nonce jatuh di domain DMS."""
+    from urllib.parse import urlencode
+
+    nonce = frappe.generate_hash(length=32)
+    frappe.local.cookie_manager.set_cookie(
+        "dms_sso_nonce", nonce, max_age=600, httponly=True, secure=True, samesite="Lax"
+    )
+    start = frappe.utils.get_url("/api/method/rescue_net.api_auth.dms_sso_start") + "?" + urlencode(
+        {"next": _dms_safe_next(next), "n": _sha(nonce)}
+    )
+    return social_login_url("google", start)
+
+
+@frappe.whitelist(allow_guest=True, methods=["GET"])
+@rate_limit(limit=30, seconds=60)
+def dms_sso_start(next=None, n=None):
+    """Callback sesudah login Google di rescue-net.online: buat tiket lalu kembali ke DMS."""
+    safe_next = _dms_safe_next(next)
+    nonce_hash = (n or "").strip().lower()
+    user = frappe.session.user
+    if user in (None, "", "Guest") or not re.fullmatch(r"[0-9a-f]{64}", nonce_hash):
+        location = _dms_login_url(next=safe_next, sso_error="1")
+    else:
+        ticket = frappe.generate_hash(length=40)
+        frappe.cache.set_value("dms_sso:" + ticket, {"user": user, "n": nonce_hash}, expires_in_sec=120)
+        location = _dms_login_url(sso=ticket, next=safe_next)
+    frappe.local.response["type"] = "redirect"
+    frappe.local.response["location"] = location
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=20, seconds=60)
+def dms_sso_claim(ticket=None):
+    """Tukar tiket sekali pakai menjadi sesi di domain yang memanggil (DMS lewat proxy CT202)."""
+    ticket = (ticket or "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9]{20,64}", ticket):
+        frappe.throw("Tiket login tidak valid.", frappe.AuthenticationError)
+    key = "dms_sso:" + ticket
+    # sekali pakai: hanya satu permintaan yang menang
+    if not frappe.cache.set(frappe.cache.make_key("dms_sso_used:" + ticket), 1, nx=True, ex=300):
+        frappe.throw("Tiket login sudah dipakai.", frappe.AuthenticationError)
+    data = frappe.cache.get_value(key)
+    frappe.cache.delete_value(key)
+    nonce = (frappe.request.cookies.get("dms_sso_nonce") if frappe.request else None) or ""
+    if not data or not nonce or _sha(nonce) != data.get("n"):
+        frappe.throw("Tiket login kedaluwarsa atau bukan dari browser ini. Ulangi login Google.", frappe.AuthenticationError)
+    user = data.get("user")
+    if not user or not frappe.db.get_value("User", user, "enabled"):
+        frappe.throw("Akun tidak aktif.", frappe.AuthenticationError)
+    frappe.local.login_manager.login_as(user)
+    frappe.local.cookie_manager.delete_cookie("dms_sso_nonce")
+    return {"user": user}
+
+
 def _check_password_strength(password):
     if len(password or "") < 8:
         frappe.throw("Password minimal 8 karakter.")

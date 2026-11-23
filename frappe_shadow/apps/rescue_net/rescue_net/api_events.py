@@ -5,7 +5,7 @@ and a health check for the offline app. Replaces the cutover-era
 import frappe
 from frappe.rate_limiter import rate_limit
 
-from rescue_net.services.drill import real_rows
+from rescue_net.services.drill import dms_event_names, real_rows, showing_dms
 
 _EVENT_FIELDS = ["name", "legacy_id", "title", "event_status", "severity", "location_summary", "started_at", "is_drill", "drill_label",
                  "modified"]
@@ -20,7 +20,15 @@ def disasters(limit=100, include_drill=None):
     fields = [f for f in _EVENT_FIELDS if f == "name" or meta.has_field(f)]
     # draft (BMKG), proposed (not yet verified), rejected and merged events: never in the public list
     from rescue_net.services.event_merge import HIDDEN_STATUSES
-    rows = frappe.get_all("RN Disaster Event", filters={"event_status": ["not in", list(HIDDEN_STATUSES)]}, fields=fields, order_by="modified desc",
+    filters = {"event_status": ["not in", list(HIDDEN_STATUSES)]}
+    dms = sorted(dms_event_names())
+    if showing_dms():
+        if not dms:
+            return {"disasters": []}
+        filters["name"] = ["in", dms]
+    elif dms:
+        filters["name"] = ["not in", dms]
+    rows = frappe.get_all("RN Disaster Event", filters=filters, fields=fields, order_by="modified desc",
                           limit_page_length=max(1, min(int(limit or 100), 500)))
     rows = real_rows(rows, key="name", include_drill=include_drill)  # latihan (10g) tidak pernah di daftar publik
     out = []
@@ -39,6 +47,8 @@ def drill_status(event):
 
     name = frappe.db.get_value("RN Disaster Event", event, "name") or frappe.db.get_value(
         "RN Disaster Event", {"legacy_id": str(event).replace("disaster_events:", "")}, "name")
+    if name and showing_dms() and name in dms_event_names():
+        return {"is_drill": 1, "label": frappe.db.get_value("RN Disaster Event", name, "drill_label") or "Latihan DMS"}
     if not name or not is_drill_event(name):
         return {"is_drill": 0}
     from rescue_net.services.drill import is_flagged_drill_event

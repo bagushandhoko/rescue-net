@@ -159,6 +159,10 @@ def similar_events(probe, exclude=None, statuses=MATCHABLE_STATUSES, min_score=4
     """Events alike `probe` (dict), best first. Drills only match drills."""
     rows = frappe.get_all(EVENT, filters={"event_status": ["in", list(statuses)]}, fields=_event_fields(),
                           limit_page_length=1000)
+    from rescue_net.services.drill import dms_event_names
+
+    dms = dms_event_names()
+    rows = [row for row in rows if row.name not in dms]
     drill = bool(probe.get("is_drill"))
     out = []
     for r in rows:
@@ -331,6 +335,10 @@ def merge(source, target, user=None, suggestion=None, note=None):
         frappe.throw("Bencana tidak ditemukan.")
     if src.event_status == "merged" or tgt.event_status in ("merged", "rejected"):
         frappe.throw("Bencana yang sudah digabung/ditolak tidak bisa dipakai.")
+    from rescue_net.services.drill import dms_event_names
+
+    if {source, target} & dms_event_names():
+        frappe.throw("Kejadian simulasi DMS tidak dapat digabung.")
     if bool(src.is_drill) != bool(tgt.is_drill):
         frappe.throw("Bencana latihan tidak bisa digabung dengan bencana nyata.")
 

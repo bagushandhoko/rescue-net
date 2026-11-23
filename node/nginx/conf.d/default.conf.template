@@ -11,6 +11,21 @@ limit_req_zone $client_ip zone=rn_api:10m rate=6000r/m;  # 2026-11-20: banyak pe
 # guest micro-cache (uji beban S10, 2026-10-26): public feeds identical for every guest -> 20 s copy.
 # A request carrying a real session cookie (sid other than Guest) always goes to Frappe and is never stored.
 proxy_cache_path /var/cache/nginx/rn levels=1:2 keys_zone=rn_guest:10m max_size=200m inactive=10m use_temp_path=off;
+# Trust the private CT202 peer before considering its authentication header.
+geo $rn_dms_peer {
+    default 0;
+    ${RN_DMS_PROXY_PEER} 1;
+}
+map $rn_dms_peer $rn_dms_proxy_key {
+    0 "";
+    1 $http_x_rn_dms_proxy_key;
+}
+# DMS responses must never read or populate the shared RN cache.
+map $rn_dms_proxy_key $rn_dms_proxy_request { "" 0; default 1; }
+map $rn_dms_proxy_request $rn_forwarded_host {
+    0 $host;
+    1 $http_x_forwarded_host;
+}
 map $cookie_sid $rn_is_user { default 1; "" 0; "Guest" 0; }
 
 # www -> apex: the Frappe site host_name (Google OAuth callback, session cookie) is ${RN_DOMAIN}.
@@ -49,8 +64,8 @@ server {
         proxy_cache rn_guest;
         proxy_cache_methods GET HEAD;
         proxy_cache_key "$uri?$args|$cookie_rn_tampilan";
-        proxy_cache_bypass $rn_is_user;
-        proxy_no_cache $rn_is_user;
+        proxy_cache_bypass $rn_is_user $rn_dms_proxy_request;
+        proxy_no_cache $rn_is_user $rn_dms_proxy_request;
         proxy_cache_valid 200 20s;
         proxy_cache_valid 404 10s;   # 2026-11-18: 404 (mis. bencana simulasi di tampilan Riil) menggantikan salinan lama, bukan STALE terus
         proxy_cache_lock on;

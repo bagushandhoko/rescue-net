@@ -164,8 +164,13 @@ def _my_poskos(actor):
         if active:
             names = frappe.get_all("RN Posko", filters={"disaster_event": ["in", active]}, pluck="name",
                                    order_by="modified desc", limit_page_length=MAX_POSKO)
+    from rescue_net.services.drill import scope_hidden_events
+
+    hidden = scope_hidden_events()
     seen, out = set(), []
     for n in names:
+        if hidden and frappe.db.get_value("RN Posko", n, "disaster_event") in hidden:
+            continue
         if n and n not in seen and frappe.db.exists("RN Posko", n):
             seen.add(n)
             out.append(n)

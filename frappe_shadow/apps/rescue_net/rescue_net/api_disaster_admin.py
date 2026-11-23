@@ -181,6 +181,8 @@ def resolve_event(event):
     if not name or not frappe.db.exists(EVENT, name):
         return {"found": False}
     final = em.final_event(name)
+    from rescue_net.services.drill import assert_request_scope
+    assert_request_scope(final)
     status = frappe.db.get_value(EVENT, final, "event_status")
     if status in em.HIDDEN_STATUSES and not _is_admin():
         return {"found": False}
@@ -192,6 +194,9 @@ def resolve_event(event):
 # super admin                                                                 #
 # --------------------------------------------------------------------------- #
 def _event_row(name):
+    from rescue_net.services.drill import scope_hidden_events
+    if name in scope_hidden_events():
+        return None
     r = frappe.db.get_value(EVENT, name, ["name", "title", "event_status", "event_type", "location_summary",
                                           "started_at", "latitude", "longitude", "reporting_organization",
                                           "created_by_user", "aliases", "reviewed_by", "creation", "severity"],
@@ -305,7 +310,10 @@ def admin_queue():
     events = frappe.get_all(EVENT, filters={"event_status": ["in", ["active", "proposed", "draft"]]},
                             fields=["name", "title", "event_status", "is_drill"], order_by="modified desc",
                             limit_page_length=500)
-    return {"proposed": proposed, "bmkg_drafts": bmkg_drafts, "bmkg_notices": bmkg_notices, "recent_live": recent_live, "suggestions": sugs, "logs": logs,
+    from rescue_net.services.drill import scope_hidden_events
+    hidden = scope_hidden_events()
+    events = [event for event in events if event.name not in hidden]
+    return {"proposed": [r for r in proposed if r], "bmkg_drafts": bmkg_drafts, "bmkg_notices": bmkg_notices, "recent_live": recent_live, "suggestions": sugs, "logs": logs,
             "events": events}
 
 

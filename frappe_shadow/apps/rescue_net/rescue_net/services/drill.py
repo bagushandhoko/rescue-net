@@ -7,6 +7,7 @@ disimulasikan; hanya System Manager yang boleh melihat latihan di panel internal
 Tidak ada yang dihapus di sini — pembersihan latihan ada di ``scripts/rn-drill.py`` (pratinjau dulu).
 """
 
+import hmac
 import json
 
 import frappe
@@ -55,23 +56,29 @@ def operational_mode():
 # super admin"): semua akun berdomain di bawah ini dibuat untuk demo & simulasi (data 2026-11-09: 46 + 39 akun;
 # akun nyata memakai domain asli). Saat Mode Operasional aktif akun ini tidak bisa masuk dan sesinya diputus.
 DEMO_DOMAINS = ("@rescue-net.local", "@example.org")
+DMS_DEMO_USERS = frozenset(
+    f"demo-{agency}@disastermanagement.online" for agency in ("bnpb", "tni", "pmi", "kementerian")
+)
 DEMO_LOGIN_MSG = "Akun demo dinonaktifkan: Rescue-Net sedang dalam Mode Operasional Riil."
 
 
 def is_demo_user(user):
     u = str(user or "").strip().lower()
-    return bool(u) and u.endswith(DEMO_DOMAINS)
+    return bool(u) and (u.endswith(DEMO_DOMAINS) or u in DMS_DEMO_USERS)
 
 
 def demo_users():
-    return [u for (u,) in frappe.db.sql(
+    users = [u for (u,) in frappe.db.sql(
         "select name from tabUser where " + " or ".join(["name like %s"] * len(DEMO_DOMAINS)),
         tuple("%" + d for d in DEMO_DOMAINS))]
+    return users + frappe.get_all("User", filters={"name": ["in", sorted(DMS_DEMO_USERS)]}, pluck="name")
 
 
 def block_demo_login(login_manager=None):
     """Hook on_login: tolak akun demo saat Mode Operasional aktif (sebelum sesi dibuat)."""
     user = getattr(login_manager, "user", None) or frappe.session.user
+    if user in DMS_DEMO_USERS and not is_dms_request():
+        frappe.throw("Akun demo ini hanya untuk DMS.", frappe.AuthenticationError)
     if is_demo_user(user) and operational_mode():
         frappe.throw(DEMO_LOGIN_MSG, frappe.AuthenticationError)
     if is_demo_user(user):
@@ -111,8 +118,55 @@ def viewer_wants_real():
         return False
 
 
+def is_dms_request():
+    """CT202 authenticates its upstream request with a site-specific key."""
+    req = getattr(frappe.local, "request", None)
+    key = frappe.conf.get("rn_dms_proxy_key")
+    if req is None or not isinstance(key, str) or len(key) < 32:
+        return False
+    host = req.headers.get("X-Forwarded-Host", "").lower()
+    provided = req.headers.get("X-RN-DMS-Proxy-Key", "")
+    return host == "disastermanagement.online" and hmac.compare_digest(
+        provided.encode("utf-8"), key.encode("utf-8")
+    )
+
+
+def showing_dms():
+    return is_dms_request() and not simulation_hidden()
+
+
+def dms_event_names():
+    if not frappe.get_meta(EVENT).has_field("drill_scope"):
+        return set()
+    return set(frappe.get_all(EVENT, filters={"drill_scope": "dms"}, pluck="name"))
+
+
+def scope_rows(rows, key="disaster_event"):
+    hidden = scope_hidden_events()
+    return [row for row in rows if row.get(key) not in hidden]
+
+
+def scope_hidden_events():
+    dms = dms_event_names()
+    if showing_dms():
+        return set(frappe.get_all(EVENT, pluck="name")) - dms
+    return dms
+
+
+def assert_scope(event):
+    if event and _matches_event_ref(event, _event_refs(scope_hidden_events())):
+        frappe.throw("Data tidak ditemukan.", frappe.DoesNotExistError)
+
+
+def assert_request_scope(event):
+    if getattr(frappe.local, "request", None) is not None:
+        assert_scope(event)
+
+
 def view_suffix():
     """Bagian kunci cache publik: salinan untuk tampilan riil terpisah dari tampilan simulasi."""
+    if showing_dms():
+        return ":dms:simulasi"
     return ":riil" if (viewer_wants_real() and not operational_mode()) else ""
 
 
@@ -176,13 +230,15 @@ def flagged_drill_event_names():
 
 
 def is_flagged_drill_event(event):
-    return bool(event) and event in flagged_drill_event_names()
+    return bool(event) and event in (flagged_drill_event_names() - dms_event_names())
 
 
 def drill_event_names():
     """Event yang disembunyikan dari publik/agregat: latihan ``is_drill=1``, ditambah bencana simulasi bila Mode
     Operasional Riil aktif (himpunan; kosong bila field belum dimigrasi dan mode mati)."""
-    names = flagged_drill_event_names()
+    if showing_dms():
+        return scope_hidden_events()
+    names = flagged_drill_event_names() | dms_event_names()
     if simulation_hidden():
         names |= simulation_event_names()
     return names
@@ -210,7 +266,8 @@ def hidden_posko_names():
 def is_drill_posko(posko):
     if not posko:
         return False
-    return is_drill_event(frappe.db.get_value("RN Posko", posko, "disaster_event"))
+    event = frappe.db.get_value("RN Posko", posko, "disaster_event")
+    return bool(event) and (event in dms_event_names() or is_drill_event(event))
 
 
 def can_include_drill(include_drill=None):
@@ -221,10 +278,9 @@ def can_include_drill(include_drill=None):
 
 def real_rows(rows, key="disaster_event", include_drill=None):
     """Buang baris yang terkait event latihan (``key`` = nama kolom event; ``name`` untuk event itu sendiri)."""
-    if can_include_drill(include_drill):
-        return list(rows)
-    drills = drill_event_names()
-    sim = simulation_hidden()  # mode operasional: baris berjudul [SIMULASI] juga dibuang walau event-nya nyata
+    bypass = can_include_drill(include_drill)
+    drills = _event_refs(scope_hidden_events()) if bypass else _event_refs(drill_event_names())
+    sim = not bypass and simulation_hidden()  # mode operasional: baris berjudul [SIMULASI] juga dibuang walau event-nya nyata
     if not drills and not sim:
         return list(rows)
     return [r for r in rows if (r.get(key) if hasattr(r, "get") else getattr(r, key, None)) not in drills
@@ -286,10 +342,14 @@ def _drill_event_refs():
     return _event_refs(drill_event_names())
 
 
+def _matches_event_ref(value, refs):
+    return str(value).strip().casefold() in {ref.casefold() for ref in refs}
+
+
 def _refers_to(params, refs, check_labels=False):
     for key in EVENT_PARAMS:
         v = str(params.get(key) or "").strip()
-        if v and v in refs:
+        if v and _matches_event_ref(v, refs):
             return True
     for key in POSKO_PARAMS:
         v = str(params.get(key) or "").strip()
@@ -332,6 +392,8 @@ def refers_to_simulation(params):
 def guard_guest_refs(params):
     """Tamu tidak boleh membuka data latihan lewat id eksplisit (diperlakukan 'tidak ditemukan'). Mode Operasional
     Riil: pengguna login (selain System Manager) juga tidak bisa membuka data simulasi."""
+    if _has_ref_params(params) and _refers_to(params, _event_refs(scope_hidden_events())):
+        frappe.throw("Data tidak ditemukan.", frappe.DoesNotExistError)
     user = frappe.session.user
     if user == "Guest":
         if refers_to_drill(params):
@@ -352,6 +414,8 @@ def before_request(*args, **kwargs):
         params = frappe.local.form_dict
     except Exception:
         return
+    if frappe.session.user in DMS_DEMO_USERS and not is_dms_request():
+        frappe.throw("Akun demo ini hanya untuk DMS.", frappe.AuthenticationError)
     # sesi akun demo yang masih terbuka saat Mode Operasional aktif: ditolak
     if is_demo_user(frappe.session.user) and operational_mode():
         frappe.throw(DEMO_LOGIN_MSG, frappe.AuthenticationError)

@@ -800,7 +800,7 @@ def my_landing():
     organisation page, else None (stay on the normal home page)."""
     from rescue_net.access_policy import is_system_manager, rn_actor
     from rescue_net.api_offline import _my_poskos
-    from rescue_net.services.drill import drill_event_names
+    from rescue_net.services.drill import drill_event_names, scope_hidden_events
 
     user = frappe.session.user
     if not user or user == "Guest":
@@ -816,12 +816,14 @@ def my_landing():
     own += frappe.get_all("RN Posko Assignment",
                           filters={"user_account": actor.name, "status": "approved"},
                           pluck="posko", order_by="modified desc")
-    own = [p for p in dict.fromkeys(own) if p and frappe.db.exists("RN Posko", p)]
+    hidden = scope_hidden_events()
+    own = [p for p in dict.fromkeys(own) if p and frappe.db.exists("RN Posko", p)
+           and frappe.db.get_value("RN Posko", p, "disaster_event") not in hidden]
     poskos = list(dict.fromkeys(own + _my_poskos(actor)))
 
     from rescue_net.control_centre.common import posko_served_events
 
-    drills = set() if is_system_manager() else drill_event_names()
+    drills = hidden if is_system_manager() else drill_event_names()
     served = {p: posko_served_events(p) for p in poskos}   # a posko can serve several disasters
     ev_names = []
     for p in poskos:

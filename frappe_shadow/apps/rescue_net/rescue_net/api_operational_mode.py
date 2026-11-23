@@ -79,8 +79,9 @@ def admin_status():
     posko_count = {r.disaster_event: cint(r.n) for r in frappe.get_all(
         "RN Posko", fields=["disaster_event", "count(name) as n"], group_by="disaster_event", limit_page_length=0)}
     events = []
+    hidden = drill.scope_hidden_events()
     for r in rows:
-        if r.event_status in ("merged",):
+        if r.name in hidden or r.event_status in ("merged",):
             continue
         events.append({
             "name": r.name, "id": r.legacy_id or r.name, "title": r.title or r.name, "status": r.event_status,

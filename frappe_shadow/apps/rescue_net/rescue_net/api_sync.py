@@ -939,6 +939,9 @@ def push(
 
 
 def _resolve_disaster_event(value):
+    from rescue_net.services.drill import assert_request_scope
+
+    assert_request_scope(value)
     if not value:
         return value
 

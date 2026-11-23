@@ -88,6 +88,8 @@ def resolve_disaster_event(value):
         value,
         "disaster_events:",
     )
+    from rescue_net.services.drill import assert_request_scope
+    assert_request_scope(name)
     # a merged event (SOP 2026-11-01) resolves to the event it was merged into
     if name and frappe.db.exists("RN Disaster Event", name) and frappe.db.get_value(
             "RN Disaster Event", name, "merged_into"):
@@ -97,11 +99,11 @@ def resolve_disaster_event(value):
 
 
 def resolve_posko(value):
-    return resolve_reference(
-        "RN Posko",
-        value,
-        "posko_nodes:",
-    )
+    name = resolve_reference("RN Posko", value, "posko_nodes:")
+    if name and getattr(frappe.local, "request", None) is not None:
+        from rescue_net.services.drill import assert_scope
+        assert_scope(frappe.db.get_value("RN Posko", name, "disaster_event"))
+    return name
 
 
 def resolve_organization(value):

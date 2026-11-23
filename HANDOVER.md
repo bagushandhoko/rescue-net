@@ -8,6 +8,10 @@
 
 _Last updated: 2026-10-07 — Search & Found mock-up pass 2 (see CLAUDE.md status)_
 
+## Simulasi DMS (2026-11-23)
+
+- Lingkup latihan DMS, seed idempoten dan isolasi proxy/cache tersedia di cabang Nala. Cara konfigurasi, seed, dan rollback ada di [Simulasi DMS](docs/DMS-SIMULASI.md). Perlu migrasi saat rilis disetujui.
+
 ## Federasi node instansi (2026-11-22)
 
 - Tahap 9b ada di cabang uji `nala/federasi-9b-20261122`. Node tertutup dapat push event terpilih, pemilik tujuan dapat menjawab permintaan bantuan, dan node asal dapat pull jawaban.

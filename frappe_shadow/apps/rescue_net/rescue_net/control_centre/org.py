@@ -603,6 +603,8 @@ def my_org_coordination(disaster_event=None):
             "operate_href": _operate_href(p, event),
         }
 
+    from rescue_net.services.drill import scope_rows
+
     # --- my organisation's poskos -----------------------------------------
     my_posko = None
     my_org_poskos = []
@@ -612,7 +614,7 @@ def my_org_coordination(disaster_event=None):
             of["disaster_event"] = event
         rows = frappe.get_all("RN Posko", filters=of, fields=posko_fields,
                               order_by="title asc", limit_page_length=300)
-        for p in rows:
+        for p in scope_rows(rows):
             card = _card(p, can_manage_posko(actor, p.get("name")))
             if my_posko_name and p.get("name") == my_posko_name:
                 my_posko = card
@@ -623,7 +625,7 @@ def my_org_coordination(disaster_event=None):
     if my_posko is None and my_posko_name:
         p = frappe.db.get_value("RN Posko", my_posko_name,
                                 posko_fields, as_dict=True)
-        if p:
+        if p and scope_rows([p]):
             my_posko = _card(p, can_manage_posko(actor, my_posko_name))
 
     # --- other orgs' poskos that share full detail -----------------------
@@ -631,7 +633,7 @@ def my_org_coordination(disaster_event=None):
     ext_rows = frappe.get_all("RN Posko", filters=ef, fields=posko_fields,
                               limit_page_length=800)
     open_external = []
-    for p in ext_rows:
+    for p in scope_rows(ext_rows):
         if org_name and p.get("organization") == org_name:
             continue
         if p.get("name") == my_posko_name:

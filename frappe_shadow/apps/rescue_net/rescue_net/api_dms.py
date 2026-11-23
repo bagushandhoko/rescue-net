@@ -17,6 +17,8 @@ from pathlib import Path
 import frappe
 from frappe.utils import cint
 
+from rescue_net.services.drill import assert_scope, dms_event_names, scope_hidden_events, showing_dms
+
 from rescue_net.access_policy import approved_member, is_system_manager, rn_actor
 
 DOCTYPE = "RN DMS Record"
@@ -144,7 +146,15 @@ def list_records(menu_id, organization=None, disaster_event=None, include_archiv
     _check_menu(menu, template, manager, role)
     filters = {"menu_id": menu["id"], "organization": org.name}
     if disaster_event:
+        assert_scope(disaster_event)
         filters["disaster_event"] = disaster_event
+    elif showing_dms():
+        visible = sorted(dms_event_names())
+        if not visible:
+            return {"menu_id": menu["id"], "organization": org.name, "template": template, "records": []}
+        filters["disaster_event"] = ["in", visible]
+    elif hidden := scope_hidden_events():
+        filters["disaster_event"] = ["not in", sorted(hidden)]
     if not cint(include_archived):
         filters["status"] = "aktif"
     names = frappe.get_all(DOCTYPE, filters=filters, pluck="name", order_by="modified desc",
@@ -160,10 +170,12 @@ def save_record(menu_id, data, organization=None, disaster_event=None, name=None
     org, template, manager, role = _org_context(actor, organization)
     _check_menu(menu, template, manager, role)
     clean = _clean(menu, data)
+    assert_scope(disaster_event)
     if disaster_event and not frappe.db.exists("RN Disaster Event", disaster_event):
         frappe.throw("Bencana tidak ditemukan.")
     if name:
         doc = frappe.get_doc(DOCTYPE, name)
+        assert_scope(doc.disaster_event)
         if doc.organization != org.name or doc.menu_id != menu["id"]:
             frappe.throw("Catatan tidak ditemukan.", frappe.PermissionError)
     else:
@@ -172,6 +184,8 @@ def save_record(menu_id, data, organization=None, disaster_event=None, name=None
         doc.created_by_account = actor.name
     doc.classification = menu["klasifikasi"]
     doc.disaster_event = disaster_event or doc.disaster_event
+    if showing_dms() and not doc.disaster_event:
+        frappe.throw("Pilih kejadian simulasi DMS.")
     doc.data = json.dumps(clean, ensure_ascii=False, sort_keys=True)
     doc.updated_by_account = actor.name
     doc.status = "aktif"
@@ -183,6 +197,7 @@ def save_record(menu_id, data, organization=None, disaster_event=None, name=None
 def archive_record(name, organization=None):
     actor = rn_actor()
     doc = frappe.get_doc(DOCTYPE, name)
+    assert_scope(doc.disaster_event)
     org, template, manager, role = _org_context(actor, organization or doc.organization)
     if doc.organization != org.name:
         frappe.throw("Catatan tidak ditemukan.", frappe.PermissionError)

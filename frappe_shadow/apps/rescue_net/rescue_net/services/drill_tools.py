@@ -69,6 +69,11 @@ def preview_cleanup(event):
     Tidak mengubah apa pun."""
     if not event or not is_drill_event(event):
         frappe.throw("Hanya event latihan (is_drill=1) yang bisa dibersihkan.")
+    return preview_linked_cleanup(event)
+
+
+def preview_linked_cleanup(event):
+    """Prepare a deletion manifest after the caller validates the event's scope."""
     items, blocked = {}, {}
     for dt in _linked_doctypes():
         names = frappe.get_all(dt, filters={"disaster_event": event}, pluck="name")
@@ -87,7 +92,10 @@ def preview_cleanup(event):
 
 def cleanup(event, confirm_total):
     """Hapus latihan sesuai pratinjau. ``confirm_total`` harus sama dengan total pratinjau saat ini."""
-    p = preview_cleanup(event)
+    return delete_manifest(preview_cleanup(event), confirm_total)
+
+
+def delete_manifest(p, confirm_total):
     if p["blocked"]:
         frappe.throw("Ada catatan keuangan/audit di event ini ({}); tinjau manual, tidak dihapus.".format(
             ", ".join("{}: {}".format(k, v) for k, v in p["blocked"].items())))
@@ -100,4 +108,4 @@ def cleanup(event, confirm_total):
         for n in names:
             frappe.delete_doc(dt, n, ignore_permissions=True, force=True)
         deleted[dt] = len(names)
-    return {"event": event, "deleted": deleted}
+    return {"event": p["event"], "deleted": deleted}

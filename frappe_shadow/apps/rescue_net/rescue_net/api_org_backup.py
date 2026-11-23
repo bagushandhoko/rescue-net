@@ -67,7 +67,12 @@ def _doctypes():
 
 
 def _org_poskos(org):
-    return frappe.get_all(POSKO, filters={"organization": org}, pluck="name", limit_page_length=0)
+    from rescue_net.services.drill import dms_event_names
+
+    dms = dms_event_names()
+    rows = frappe.get_all(POSKO, filters={"organization": org},
+                          fields=["name", "disaster_event"], limit_page_length=0)
+    return [row.name for row in rows if row.disaster_event not in dms]
 
 
 def _require_admin(organization):
@@ -89,13 +94,18 @@ def _collect(org):
     poskos = _org_poskos(org)
     records = {ORG: [_plain(frappe.get_doc(ORG, org))],
                POSKO: [_plain(frappe.get_doc(POSKO, p)) for p in poskos]}
+    from rescue_net.services.drill import dms_event_names
+
+    hidden = dms_event_names()
     for dt, kind, field in _doctypes():
         values = [org] if kind == "org" else poskos
         if not values:
             continue
         names = frappe.get_all(dt, filters={field: ["in", values]}, pluck="name", limit_page_length=0)
-        if names:
-            records[dt] = [_plain(frappe.get_doc(dt, n)) for n in names]
+        docs = [frappe.get_doc(dt, n) for n in names]
+        visible = [_plain(doc) for doc in docs if doc.get("disaster_event") not in hidden]
+        if visible:
+            records[dt] = visible
     return records
 
 

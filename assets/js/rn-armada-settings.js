@@ -41,7 +41,8 @@
       control = '<select name="' + name + '"' + (name === "transport_type" ? " required" : "") +
         ">" + options(choices, value || "") + "</select>";
     } else if (type === "textarea") {
-      control = '<textarea name="' + name + '" rows="2">' + escapeHtml(value) + "</textarea>";
+      var placeholder = name === "vehicle_spec" ? ' placeholder="Hino Dutro, BL 1234 AB, bak 4 x 2 m, ada terpal"' : "";
+      control = '<textarea name="' + name + '" rows="2"' + placeholder + ">" + escapeHtml(value) + "</textarea>";
     } else {
       if (type === "datetime-local") value = localDate(value);
       control = '<input name="' + name + '" type="' + (type || "text") + '" value="' + escapeHtml(value) + '"' +
@@ -55,6 +56,7 @@
     return field(values, "provider_name", "Nama armada") +
       field(values, "transport_type", "Jenis transport", null,
         { "": "Pilih jenis", darat: "Darat", laut: "Laut", udara: "Udara", lainnya: "Lainnya" }) +
+      field(values, "vehicle_spec", "Spesifikasi alat", "textarea") +
       field(values, "route_origin", "Asal") + field(values, "route_destination", "Tujuan");
   }
 
@@ -110,7 +112,6 @@
       '<label>Untuk perjalanan<select name="people_trip">' + TRIP_OPTS.map(function (o) {
         return '<option value="' + o[0] + '"' + (o[0] === trip ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>" +
       '<label>Titik jemput<input name="volunteer_pickup_location" value="' + escapeHtml(a.volunteer_pickup_location || "") + '" placeholder="mis. Halaman posko"></label>' +
-      '<label data-pulang-at' + (trip === "ke_lokasi" ? " hidden" : "") + '>Jadwal pulang<input type="datetime-local" name="return_departure_at" value="' + escapeHtml(localDate(a.return_departure_at || "")) + '"></label>' +
       "</div></fieldset>";
   }
   function peoplePayload(form) {
@@ -121,7 +122,6 @@
       volunteer_capacity_seats: n,
       volunteer_pickup_location: on && form.volunteer_pickup_location ? form.volunteer_pickup_location.value.trim() : "",
       people_trip: n > 0 ? trip : "",
-      return_departure_at: n > 0 && trip !== "ke_lokasi" && form.return_departure_at && form.return_departure_at.value ? form.return_departure_at.value.replace("T", " ") : "",
     };
   }
   document.addEventListener("change", function (e) {
@@ -129,8 +129,6 @@
     var on = box.querySelector("[data-angkut]").checked, isi = box.querySelector("[data-angkut-isi]");
     isi.hidden = !on;
     var n = box.querySelector('[name="volunteer_capacity_seats"]'); if (on && n && !n.value) n.value = 1;
-    var t = box.querySelector('[name="people_trip"]'), at = box.querySelector("[data-pulang-at]");
-    if (t && at) at.hidden = t.value === "ke_lokasi";
   });
 
   function mountServedPickers(evEl, pkEl, events, poskos) {
@@ -144,6 +142,71 @@
     return { ev: ev, pk: pk };
   }
 
+  function quantity(value, unit) {
+    return value == null ? "belum diatur" : Number(value).toLocaleString("id-ID", { maximumFractionDigits: 6 }) + " " + unit;
+  }
+
+  function armadaTotals(a) {
+    return '<p class="rn-ps-arm-totals"><strong>Sisa tersedia</strong> ' +
+      quantity(a.left_kg, "kg") + " / " + quantity(a.settings.left_m3, "m³") +
+      '<br><strong>Sudah dipesan</strong> ' + quantity(a.settings.committed_kg, "kg") + " / " +
+      quantity(a.settings.committed_m3, "m³") + "</p>";
+  }
+
+  function bookingCount(a) {
+    return (a.booking_counts.requested || 0) + " menunggu · " + (a.booking_counts.confirmed || 0) + " disetujui";
+  }
+
+  var bookingLabels = {
+    requested: "Menunggu persetujuan", confirmed: "Disetujui", rejected: "Ditolak",
+    cancelled: "Batal", completed: "Selesai"
+  };
+  var bookerTypes = { individu: "Individu", relawan: "Relawan", organization: "Organisasi", posko: "Posko" };
+
+  function bookingRow(b) {
+    var phone = String(b.contact_phone || "").trim();
+    var digits = phone.replace(/\D/g, "");
+    var wa = digits.replace(/^0062/, "62").replace(/^0/, "62");
+    if (wa.startsWith("8")) wa = "62" + wa;
+    var phoneLink = digits ? '<a href="tel:' + (phone.startsWith("+") ? "+" : "") + digits + '">' +
+      escapeHtml(phone) + '</a>' : escapeHtml(phone);
+    if (/^62[1-9][0-9]{6,12}$/.test(wa)) {
+      phoneLink += ' · <a href="https://wa.me/' + wa + '" target="_blank" rel="noopener noreferrer">WhatsApp</a>';
+    }
+    var fields = [
+      ["Muatan", b.cargo_desc],
+      ["Jumlah", [b.qty_weight_kg == null ? "" : quantity(b.qty_weight_kg, "kg"),
+        b.qty_volume_m3 == null ? "" : quantity(b.qty_volume_m3, "m³")].filter(Boolean).join(" · ")],
+      ["Jadwal diminta", b.requested_window], ["Jemput", b.pickup_location], ["Antar", b.dropoff_location],
+      ["Catatan", b.notes], ["Waktu pemesanan", b.requested_at || b.creation],
+      ["Waktu persetujuan", b.confirmed_at], ["Alasan penolakan", b.reject_reason]
+    ];
+    return '<article class="rn-ps-booking"><strong>' + escapeHtml(b.booker_name || "Pemesan") + '</strong>' +
+      (b.booked_by_type ? " · " + escapeHtml(bookerTypes[b.booked_by_type] || b.booked_by_type) : "") +
+      ' <span class="rn-ps-booking-state">' + escapeHtml(bookingLabels[b.status] || b.status) + '</span>' +
+      ((b.contact_person || phone) ? '<p>Narahubung · ' + [escapeHtml(b.contact_person), phoneLink].filter(Boolean).join(" · ") + '</p>' : "") +
+      '<dl>' + fields.filter(function (item) { return item[1]; }).map(function (item) {
+        return '<dt>' + item[0] + '</dt><dd>' + escapeHtml(item[1]) + '</dd>';
+      }).join("") + '</dl>' +
+      (b.status === "requested" ? '<div class="rn-ps-arm-actions">' +
+        '<button type="button" class="rn-ps-save" data-booking-action="confirm" data-booking="' + escapeHtml(b.name) +
+        '" data-needs-pin="' + (b.needs_pin ? "1" : "0") + '">Setujui</button>' +
+        '<button type="button" class="rn-ps-secondary" data-booking-action="reject" data-booking="' + escapeHtml(b.name) + '">Tolak</button></div>' : "") +
+      '</article>';
+  }
+
+  function bookingList(a) {
+    var bookings = a.bookings || [];
+    if (!bookings.length) return '<p>Belum ada pemesanan.</p>';
+    return ["requested", "confirmed", "other"].map(function (status) {
+      var rows = bookings.filter(function (b) {
+        return status === "other" ? b.status !== "requested" && b.status !== "confirmed" : b.status === status;
+      });
+      return '<h4>' + (bookingLabels[status] || "Lainnya") + '</h4>' +
+        (rows.length ? rows.map(bookingRow).join("") : '<p>Tidak ada pesanan.</p>');
+    }).join("");
+  }
+
   function armadaForm(a, types, statuses) {
     var settings = a ? a.settings : { service_mode: "both", accepted_cargo_types: [] };
     function input(name, label, type, choices) { return field(settings, name, label, type, choices); }
@@ -151,20 +214,14 @@
       return '<fieldset><legend>' + title + '</legend>' + (extra || "") +
         '<div class="rn-ps-arm-grid">' + fields + '</div></fieldset>';
     }
-    function quantity(value, unit) {
-      return value == null ? "belum diatur" : Number(value).toLocaleString("id-ID", { maximumFractionDigits: 6 }) + " " + unit;
-    }
-    var totals = '<p class="rn-ps-arm-totals"><strong>Sisa tersedia</strong> ' +
-      quantity(a ? a.left_kg : null, "kg") + " / " + quantity(settings.left_m3, "m³") +
-      '<br><strong>Sudah dipesan</strong> ' + quantity(settings.committed_kg, "kg") + " / " +
-      quantity(settings.committed_m3, "m³") + "</p>";
-    return '<details class="rn-ps-arm"><summary>' + escapeHtml(a ? a.title : "+ Tambah armada") + '</summary>' +
+    return '<details class="rn-ps-arm"><summary>' + escapeHtml(a ? a.title : "+ Tambah armada") +
+      (a ? ' <small data-booking-count>' + escapeHtml(bookingCount(a)) + '</small>' : "") + '</summary>' +
       '<form data-arm-settings="' + escapeHtml(a ? a.name : "") + '">' +
       group("Identitas", identityFields(settings)) +
       group("Ukuran ruang muat", capacityFields(settings) +
         input("own_load_kg", "Muatan sendiri (kg)", "number") +
         input("own_load_m3", "Muatan sendiri (m³)", "number") +
-        input("own_cargo_desc", "Keterangan muatan sendiri", "textarea"), a ? totals : "") +
+        input("own_cargo_desc", "Keterangan muatan sendiri", "textarea"), a ? '<div data-arm-totals>' + armadaTotals(a) + "</div>" : "") +
       group("Jenis barang yang diterima",
         input("prohibited_items", "Barang dilarang", "textarea") +
         input("cargo_requirements", "Syarat barang", "textarea") +
@@ -175,7 +232,8 @@
         cargoFields(types, settings.accepted_cargo_types)) +
       group("Jadwal", input("departure_at", "Berangkat", "datetime-local") +
         input("eta_at", "Perkiraan tiba", "datetime-local") +
-        input("cargo_cutoff_at", "Batas serah barang", "datetime-local")) +
+        input("cargo_cutoff_at", "Batas serah barang", "datetime-local") +
+        input("return_departure_at", "Jadwal balik", "datetime-local")) +
       group("Serah terima", input("current_location", "Lokasi sekarang") +
         input("handover_location", "Titik serah terima") +
         input("handover_contact_person", "Narahubung") +
@@ -189,7 +247,10 @@
       '<fieldset><legend>Bencana yang dilayani</legend><div data-arm-events></div></fieldset>' +
       '<fieldset><legend>Posko logistik yang dilayani (kosong = semua)</legend><div data-arm-poskos></div></fieldset>' +
       '<div class="rn-ps-arm-actions"><button class="rn-ps-save" type="submit">Simpan</button>' +
-      '<span data-settings-message role="status"></span></div></form></details>';
+      '<span data-settings-message role="status"></span></div></form>' +
+      (a ? '<section class="rn-ps-bookings"><h3>Pemesan / Booking</h3>' +
+        '<p data-booking-message role="status"></p><div data-booking-list>' + bookingList(a) + '</div></section>' : "") +
+      '</details>';
   }
 
   function mount(host, posko, event, wanted, add, onSaved) {
@@ -208,6 +269,55 @@
         var settings = armada && armada.settings;
         served = mountServedPickers(form.querySelector("[data-arm-events]"), form.querySelector("[data-arm-poskos]"),
           settings ? settings.served_events : (event ? [event] : []), settings ? settings.served_poskos : []);
+      });
+      var bookings = detail.querySelector(".rn-ps-bookings");
+      if (bookings) bookings.addEventListener("click", async function (e) {
+        var action = e.target.closest("[data-booking-action]");
+        if (!action || action.disabled) return;
+        var confirm = action.dataset.bookingAction === "confirm";
+        var payload = { booking: action.dataset.booking };
+        if (confirm && action.dataset.needsPin === "1") {
+          payload.pin = window.prompt("Masukkan PIN dari pemesan:", "");
+          if (payload.pin === null) return;
+          if (!payload.pin.trim()) {
+            bookings.querySelector("[data-booking-message]").textContent = "Isi PIN dari pemesan.";
+            return;
+          }
+        }
+        if (!confirm) {
+          payload.reason = window.prompt("Alasan menolak (opsional):", "");
+          if (payload.reason === null) return;
+        }
+        var msg = bookings.querySelector("[data-booking-message]");
+        var buttons = bookings.querySelectorAll("[data-booking-action]");
+        buttons.forEach(function (button) { button.disabled = true; });
+        msg.textContent = "Memproses pesanan…";
+        try {
+          await window.RN_FRAPPE.call("rescue_net.api_logistics." +
+            (confirm ? "confirm_transport_booking" : "reject_transport_booking"), payload, { method: "POST" });
+        } catch (err) {
+          msg.textContent = "Gagal. " + String((err && err.message) || err).replace(/^frappe\.exceptions\.\w+:\s*/, "");
+          buttons.forEach(function (button) { button.disabled = false; });
+          return;
+        }
+        msg.textContent = confirm ? "Pesanan disetujui." : "Pesanan ditolak.";
+        onSaved();
+        try {
+          var latest = await list();
+          var byId = new Map(latest.armada.map(function (item) { return [item.name, item]; }));
+          host.querySelectorAll("form[data-arm-settings]").forEach(function (current) {
+            var updated = byId.get(current.dataset.armSettings);
+            if (!updated) return;
+            var row = current.closest("details");
+            row.querySelector("[data-booking-count]").textContent = bookingCount(updated);
+            row.querySelector("[data-arm-totals]").innerHTML = armadaTotals(updated);
+            row.querySelector("[data-booking-list]").innerHTML = bookingList(updated);
+          });
+          msg.tabIndex = -1;
+          msg.focus();
+        } catch (err) {
+          msg.textContent += " Gagal memuat ulang daftar. " + ((err && err.message) || err);
+        }
       });
       form.addEventListener("submit", async function (e) {
         e.preventDefault();

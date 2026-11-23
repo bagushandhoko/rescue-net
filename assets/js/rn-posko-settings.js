@@ -90,6 +90,15 @@
       ".rn-ps-arm-grid :is(input,select,textarea){width:100%;min-height:38px;padding:6px 8px;border:1px solid #887467;border-radius:6px;font:inherit}",
       ".rn-ps-arm-totals{margin:0 0 10px}",
       ".rn-ps-arm-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}",
+      ".rn-ps-arm>summary,.rn-ps-bookings{overflow-wrap:anywhere}",
+      ".rn-ps-arm>summary small,.rn-ps-booking-state{color:#632e12;background:#f4e4d7;border-radius:6px;padding:2px 5px}",
+      ".rn-ps-bookings{margin-top:20px;border-top:1px solid #b6a598}",
+      ".rn-ps-bookings :is(h3,h4,p){margin:8px 0}",
+      ".rn-ps-bookings [data-booking-message]:empty{display:none}",
+      ".rn-ps-booking{border:1px solid #b6a598;border-radius:8px;padding:10px;margin:8px 0;background:#fff;color:#2a2018}",
+      ".rn-ps-booking dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 10px;margin:8px 0}",
+      ".rn-ps-booking dt{font-weight:600}.rn-ps-booking dd{margin:0;white-space:pre-wrap}",
+      ".rn-ps-booking a{color:#632e12;text-decoration:underline}",
       "@media(max-width:560px){.rn-ps-grid{grid-template-columns:minmax(0,1fr)}.rn-ps-ov{padding:16px 10px}.rn-ps-card{padding:14px}}",
     ].join("");
     document.head.appendChild(s);

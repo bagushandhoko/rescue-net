@@ -173,6 +173,9 @@ def armada_list(posko):
                                   fields=["name", "cargo_desc", "qty_weight_kg", "qty_volume_m3", "booker_name",
                                           "booked_by_type", "contact_person", "contact_phone", "requested_window",
                                           "verification_pin", "creation"], order_by="creation asc", limit_page_length=20)
+        booking_counts = {item.status: item.total for item in frappe.get_all(
+            "RN Transport Booking", filters={"transport_space": r.name, "status": ["in", ["requested", "confirmed"]]},
+            fields=["status", "count(name) as total"], group_by="status", order_by="status")}
         cap = float(r.capacity_weight_kg or 0)
         left = max(0.0, cap - float(r.own_load_kg or 0) - float(r.capacity_committed_kg or 0)) if cap else None
         out.append({
@@ -183,6 +186,7 @@ def armada_list(posko):
             "departure": str(r.departure_at or "")[:16], "route": (r.route_origin or "-") + " → " + (r.route_destination or "-"),
             "capacity_kg": cap or None, "left_kg": left, "position_at": str(r.position_at or "")[:16],
             "pin_needed": (r.booking_policy or "pin_verify") == "pin_verify",
+            "booking_counts": booking_counts,
             "requested": [dict(b, needs_pin=bool(b.pop("verification_pin"))) for b in bookings],
             "settings": {
                 "served_events": _served_rows("RN Transport Space Event", r.name, "disaster_event") or
@@ -221,7 +225,7 @@ def armada_list(posko):
         })
     from rescue_net.logistics.transport import CARGO_TYPES
     return {"posko": name, "armada": out,
-            "pending_total": sum(len(a["requested"]) for a in out),
+            "pending_total": sum(a["booking_counts"].get("requested", 0) for a in out),
             "statuses": ARMADA_STATUS_LABEL, "cargo_types": CARGO_TYPES}
 
 

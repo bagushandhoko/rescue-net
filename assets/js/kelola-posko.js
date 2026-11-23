@@ -143,23 +143,16 @@
       return '<option value="' + esc(k) + '"' + (k === a.status ? " selected" : "") + ">" + esc(statuses[k]) + "</option>"; }).join("");
     var chip = { tersedia: "ok", penuh: "warning", dipakai: "danger", lewat: "", selesai: "" }[a.avail] || "";
     var avail = { tersedia: "tersedia", penuh: "penuh", dipakai: "sedang dipakai", lewat: "jadwal lewat — perbarui jadwal", selesai: "selesai" }[a.avail] || a.avail;
-    var bks = (a.requested || []).map(function (b) {
-      return '<div class="kp-bk"><span><b>' + esc(b.cargo_desc || "Muatan") + "</b> · " + esc(b.qty_weight_kg || 0) + " kg" +
-        (b.qty_volume_m3 ? " · " + esc(b.qty_volume_m3) + " m³" : "") + "<br><small>" + esc(b.booker_name || b.contact_person || b.booked_by_type || "") +
-        (b.contact_phone ? " · " + esc(b.contact_phone) : "") + (b.requested_window ? " · " + esc(b.requested_window) : "") + "</small></span>" +
-        '<span><button class="btn primary mini" type="button" data-bk-ok="' + esc(b.name) + '" data-pin="' + (b.needs_pin ? 1 : 0) + '">Konfirmasi</button> ' +
-        '<button class="btn mini" type="button" data-bk-no="' + esc(b.name) + '">Tolak</button></span></div>';
-    }).join("");
-    return '<details class="kp-arm"' + (a.requested.length ? " open" : "") + "><summary>" +
+    var pending = a.booking_counts.requested || 0;
+    return '<details class="kp-arm"' + (pending ? " open" : "") + "><summary>" +
       '<span class="chip ' + chip + '">' + esc(avail) + "</span><b>" + esc(a.title) + "</b><small>" + esc(a.type) + " · " + esc(a.route) + "</small>" +
-      (a.requested.length ? '<span class="kp-badge">' + a.requested.length + "</span>" : "") + "</summary>" +
+      (pending ? '<span class="kp-badge">' + esc(pending) + " menunggu</span>" : "") + "</summary>" +
       '<div class="kp-arm-body">' +
       "<div>Berangkat: " + esc(a.departure || "fleksibel") + (a.left_kg != null ? " · sisa " + esc(a.left_kg) + " dari " + esc(a.capacity_kg) + " kg" : "") + "</div>" +
       '<div class="kp-arm-row"><label>Status <select data-arm-status="' + esc(a.name) + '">' + opts + "</select></label>" +
       '<button class="btn mini" type="button" data-arm-gps="' + esc(a.name) + '">📍 Kirim posisi sekarang</button>' +
       '<label class="kp-auto"><input type="checkbox" data-arm-auto="' + esc(a.name) + '"' + (GPS_WATCH && GPS_WATCH.armada === a.name ? " checked" : "") + "> Lacak otomatis</label></div>" +
       '<small class="rn-muted">Posisi terakhir: ' + esc(a.position_at || "belum ada") + "</small>" +
-      (bks ? "<h5>Pesanan menunggu</h5>" + bks : "") +
       '<div><a class="btn ghost mini" href="posko-distribusi.html?id=' + encodeURIComponent(POSKO) + "&settings=1&tab=armada&armada=" + encodeURIComponent(a.name) + '">⚙ Pengaturan armada</a></div>' +
       "</div></details>";
   }
@@ -207,28 +200,13 @@
         armadaMsg("Lacak otomatis aktif (±1 menit) selama halaman ini terbuka.");
       }
     });
-    box.addEventListener("click", async function (e) {
-      var g = e.target.closest("[data-arm-gps]"), ok = e.target.closest("[data-bk-ok]"), no = e.target.closest("[data-bk-no]");
+    box.addEventListener("click", function (e) {
+      var g = e.target.closest("[data-arm-gps]");
       if (g) {
         if (!navigator.geolocation) return armadaMsg("HP/peramban tidak mendukung GPS.");
         armadaMsg("Mencari posisi…");
         navigator.geolocation.getCurrentPosition(function (p) { sendPos(g.dataset.armGps, p).then(loadArmada); },
           function () { armadaMsg("Izin lokasi ditolak."); }, { enableHighAccuracy: true, timeout: 20000 });
-      }
-      if (ok || no) {
-        try {
-          if (ok) {
-            var pin = null;
-            if (ok.dataset.pin === "1") { pin = window.prompt("Masukkan PIN dari pemesan:", ""); if (pin === null) return; }
-            await window.RN_FRAPPE.call("rescue_net.api_logistics.confirm_transport_booking", { booking: ok.dataset.bkOk, pin: pin }, { method: "POST" });
-            armadaMsg("Pesanan dikonfirmasi.");
-          } else {
-            var why = window.prompt("Alasan menolak (opsional):", ""); if (why === null) return;
-            await window.RN_FRAPPE.call("rescue_net.api_logistics.reject_transport_booking", { booking: no.dataset.bkNo, reason: why }, { method: "POST" });
-            armadaMsg("Pesanan ditolak.");
-          }
-          loadArmada();
-        } catch (err) { armadaMsg("Gagal: " + ((err && err.message) || err)); }
       }
     });
   }

@@ -165,7 +165,7 @@ def armada_list(posko):
         "handover_contact_person", "handover_contact_phone", "coordination_notes",
         "disaster_event", "volunteer_capacity_seats", "volunteer_pickup_location", "people_trip",
         "return_departure_at", "carries_heavy_equipment", "heavy_max_ton", "heavy_deck_type",
-        "heavy_trip", "heavy_demob_at"],
+        "heavy_trip", "heavy_demob_at", "vehicle_spec"],
         order_by="departure_at desc", limit_page_length=100)
     out = []
     for r in rows:
@@ -189,7 +189,7 @@ def armada_list(posko):
                                  ([r.disaster_event] if r.disaster_event else []),
                 "served_poskos": _served_rows("RN Transport Space Posko", r.name, "posko"),
                 **{field: r.get(field) for field in (
-                    "volunteer_capacity_seats", "volunteer_pickup_location", "people_trip", "return_departure_at",
+                    "volunteer_capacity_seats", "volunteer_pickup_location", "people_trip",
                     "carries_heavy_equipment", "heavy_max_ton", "heavy_deck_type", "heavy_trip", "heavy_demob_at",
                 )},
                 "provider_name": r.provider_name or r.title or "", "transport_type": r.transport_type or "",
@@ -209,7 +209,15 @@ def armada_list(posko):
                 "current_location": r.current_location or "", "handover_location": r.handover_location or "",
                 "handover_contact_person": r.handover_contact_person or "",
                 "handover_contact_phone": r.handover_contact_phone or "", "coordination_notes": r.coordination_notes or "",
+                "vehicle_spec": r.vehicle_spec or "", "return_departure_at": str(r.return_departure_at or "")[:16],
             },
+            # owner 2026-11-23: siapa saja yang booking + kontaknya (pengelola posko saja), terbaru dulu
+            "bookings": [dict(b, needs_pin=bool(b.pop("verification_pin")) and b.status == "requested") for b in frappe.get_all(
+                "RN Transport Booking", filters={"transport_space": r.name},
+                fields=["name", "status", "cargo_desc", "qty_weight_kg", "qty_volume_m3", "booker_name", "booked_by_type",
+                        "contact_person", "contact_phone", "requested_window", "pickup_location", "dropoff_location",
+                        "requested_at", "confirmed_at", "reject_reason", "notes", "verification_pin", "creation"],
+                order_by="creation desc", limit_page_length=50)],
         })
     from rescue_net.logistics.transport import CARGO_TYPES
     return {"posko": name, "armada": out,

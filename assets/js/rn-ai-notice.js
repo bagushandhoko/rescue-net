@@ -28,7 +28,7 @@
     msg.style.flex = "1";
     msg.textContent = n.message;
     var go = document.createElement("a");
-    go.href = "ai-settings.html";
+    go.href = "ai-settings.html#tab=ai";
     go.textContent = "Pasang kunci";
     go.style.cssText = "font-weight:700;white-space:nowrap";
     var x = document.createElement("button");

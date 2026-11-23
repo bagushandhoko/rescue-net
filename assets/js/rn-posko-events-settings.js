@@ -1,4 +1,4 @@
-/* Setting > Bencana yang Ditangani Posko (owner 2026-10-19): per posko yang
+/* Pengaturan Posko > Bencana dilayani (owner 2026-10-19): per posko yang
  * dikelola user, kartu pilihan bencana (RNEventChecklist) + Simpan ->
  * rescue_net.api_community_cluster.set_posko_served_events. Posko logistik /
  * distribusi / collection hub: beberapa bencana; jenis lain: satu. */
@@ -16,58 +16,49 @@
     });
   }
 
-  async function boot() {
-    var group = document.getElementById("poskoEventsGroup");
-    var panel = document.getElementById("poskoEventsPanel");
-    if (!group || !panel || !window.RN_FRAPPE || !window.RNEventChecklist) return;
-    var list;
+  async function mount(panel, posko, onSaved) {
+    let settings;
     try {
-      list = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.my_poskos_served_events");
+      settings = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.posko_served_events", { posko: posko });
     } catch (e) {
-      return;                                   // guest / no account: section stays hidden
-    }
-    list = Array.isArray(list) ? list : [];
-    group.hidden = false;
-    if (!list.length) {
-      panel.innerHTML = '<p class="rn-muted">Anda belum menjadi pengelola posko. Daftarkan posko di ' +
-        '<a href="registrasi-posko.html">Registrasi Posko</a>, atau minta pengelola posko menambahkan Anda.</p>';
+      panel.textContent = "Daftar bencana gagal dimuat.";
       return;
     }
-    panel.innerHTML = list.map(function (p, i) {
-      var multi = MULTI_TYPES.indexOf(String(p.posko_type || "").toLowerCase()) !== -1;
-      return '<div class="rn-pse-posko" data-i="' + i + '">' +
-        '<div class="rn-pse-head"><h3>' + esc(p.title || p.posko) + '</h3><span class="rn-muted">' +
-          esc(TYPE_LABEL[String(p.posko_type || "").toLowerCase()] || p.posko_type || "Posko") +
-          (multi ? " · bisa beberapa bencana" : " · satu bencana") + "</span></div>" +
-        '<div class="rn-pse-picker"></div>' +
-        '<div class="rn-pse-actions"><button class="btn primary" type="button" data-save>Simpan Bencana</button>' +
-        '<span class="rn-muted" data-msg></span></div></div>';
-    }).join("");
+    if (!settings?.can_manage) {
+      panel.textContent = "Pengaturan bencana belum tersedia untuk posko ini.";
+      return;
+    }
+    var p = settings;
+    var type = String(p.posko_type || "").toLowerCase();
+    var multi = MULTI_TYPES.includes(type);
+    panel.innerHTML = '<div class="rn-pse-posko">' +
+      '<div class="rn-pse-head"><h3>' + esc(p.title || p.posko) + '</h3><span class="rn-muted">' +
+      esc(TYPE_LABEL[type] || p.posko_type || "Posko") +
+      (multi ? " · bisa beberapa bencana" : " · satu bencana") + "</span></div>" +
+      '<div class="rn-pse-picker"></div>' +
+      '<div class="rn-pse-actions"><button class="btn primary" type="button" data-save>Simpan Bencana</button>' +
+      '<span class="rn-muted" role="status" data-msg></span></div></div>';
 
-    list.forEach(function (p, i) {
-      var box = panel.querySelector('.rn-pse-posko[data-i="' + i + '"]');
-      var multi = MULTI_TYPES.indexOf(String(p.posko_type || "").toLowerCase()) !== -1;
-      var picker = window.RNEventChecklist.mount(box.querySelector(".rn-pse-picker"),
-        { selected: p.events || [], multiple: multi });
-      var msg = box.querySelector("[data-msg]");
-      box.querySelector("[data-save]").addEventListener("click", async function () {
-        var events = picker.getSelected();
-        if (!events.length) { msg.textContent = "Pilih minimal satu bencana."; return; }
-        this.disabled = true;
-        msg.textContent = "Menyimpan…";
-        try {
-          var r = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_posko_served_events",
-            { posko: p.posko, disaster_events: JSON.stringify(events) }, { method: "POST" });
-          picker.setSelected(r.events || events);
-          msg.textContent = "Tersimpan · " + (r.events || events).length + " bencana ditangani.";
-        } catch (e) {
-          msg.textContent = "Gagal: " + ((e && e.message) || e);
-        }
-        this.disabled = false;
-      });
+    var picker = window.RNEventChecklist.mount(panel.querySelector(".rn-pse-picker"),
+      { selected: p.events || [], multiple: multi });
+    var msg = panel.querySelector("[data-msg]");
+    panel.querySelector("[data-save]").addEventListener("click", async function () {
+      var events = picker.getSelected();
+      if (!events.length) { msg.textContent = "Pilih minimal satu bencana."; return; }
+      this.disabled = true;
+      msg.textContent = "Menyimpan…";
+      try {
+        var r = await window.RN_FRAPPE.call("rescue_net.api_community_cluster.set_posko_served_events",
+          { posko: p.posko, disaster_events: JSON.stringify(events) }, { method: "POST" });
+        picker.setSelected(r.events || events);
+        onSaved();
+        msg.textContent = "Tersimpan · " + (r.events || events).length + " bencana ditangani.";
+      } catch (e) {
+        msg.textContent = "Gagal: " + ((e && e.message) || e);
+      }
+      this.disabled = false;
     });
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  window.RNPoskoEventsSettings = { mount: mount };
 })();

@@ -380,7 +380,7 @@
           <h4>D. Organisasi komando terpusat: pusat membuat akun anggota</h4>
           <p>Untuk organisasi tertutup berjenjang, anggota daerah tidak perlu mendaftar sendiri. Pengelola pusat membuka <a href="komando-pusat.html">Komando Pusat</a> (menu Pengaturan → Komando Pusat), lalu:</p>
           <ul>
-            <li><b>Buat Akun Posko</b>: membuat akun dan posko untuk unit di bawahnya (misalnya Kodim atau Babinsa) sekaligus. Sistem menampilkan <b>password sementara satu kali saja</b>: salin dan sampaikan ke petugas, lalu minta petugas menggantinya di <a href="ai-settings.html">Setting</a> setelah login pertama.</li>
+            <li><b>Buat Akun Posko</b>: membuat akun dan posko untuk unit di bawahnya (misalnya Kodim atau Babinsa) sekaligus. Sistem menampilkan <b>password sementara satu kali saja</b>: salin dan sampaikan ke petugas, lalu minta petugas menggantinya di <a href="ai-settings.html">Pengaturan Akun</a> setelah login pertama.</li>
             <li><b>Antrean Persetujuan</b>: menyetujui atau menolak pengajuan dari level bawah, misalnya tambah posko atau ubah fungsi posko.</li>
             <li><b>Akun</b>: reset kata sandi atau menonaktifkan akun anggota.</li>
             <li><b>Struktur &amp; Posko di Bawah Komando</b> dan <b>Riwayat Keputusan</b>: melihat seluruh jenjang dan jejak keputusan.</li>
@@ -391,7 +391,7 @@
           <ol class="steps">
             <li>Daftarkan posko di <a href="registrasi-posko.html">Registrasi Posko</a>, lalu centang bencana yang ditangani. Lihat <a href="#posko">Mendaftar &amp; mengelola posko</a>.</li>
             <li>Atur keterbukaan, anggota, dan posko organisasi di <a href="koordinasi-organisasi.html">Koordinasi Organisasi</a>. Admin organisasi juga bisa <a href="#backup-organisasi">backup &amp; memulihkan data organisasinya sendiri</a>.</li>
-            <li>Atur kunci AI organisasi, notifikasi, dan kata sandi di <a href="ai-settings.html">Setting</a> dan <a href="notifikasi-settings.html">Notifikasi</a>.</li>
+            <li>Atur kunci AI organisasi dan kata sandi di <a href="ai-settings.html">Pengaturan Akun</a>. System Manager dapat membuka Notifikasi WhatsApp di tab Admin Sistem.</li>
             <li>Ingin mencoba dulu? Di halaman <a href="auth.html">Masuk</a> tersedia daftar <b>akun demo</b> (posko, organisasi, TNI, BNPB, masyarakat) dengan kata sandi <b>Demo12345</b>.</li>
           </ol>
 
@@ -400,7 +400,7 @@
             <li><b>Email sudah terdaftar:</b> pakai <a href="auth.html">Masuk</a>, atau tombol lupa kata sandi di halaman itu.</li>
             <li><b>Organisasi belum bisa dipakai penuh:</b> organisasi masih menunggu verifikasi. Cek statusnya di <a href="verification-approval.html">Verifikasi &amp; Persetujuan</a>.</li>
             <li><b>Tidak melihat posko organisasi:</b> keanggotaan Anda belum disetujui. Hubungi pengelola organisasi.</li>
-            <li><b>Bencana tidak muncul di pemilih:</b> posko atau organisasi Anda belum menangani bencana itu. Tambahkan di <a href="ai-settings.html">Setting</a> → Bencana yang Ditangani Posko.</li>
+            <li><b>Bencana tidak muncul di pemilih:</b> posko atau organisasi Anda belum menangani bencana itu. Tambahkan di Pengaturan Posko → Bencana dilayani.</li>
           </ul>
         </section>
 
@@ -452,7 +452,7 @@
             <li><b>Organisasi:</b> bila akun Anda anggota sebuah organisasi, posko otomatis terhubung ke organisasi itu; bila tidak, posko tercatat sebagai <b>posko mandiri</b>.</li>
             <li>Posko baru menunggu persetujuan sebelum Anda bisa mengelolanya. Tombol <b>Ajukan verifikasi</b>, <b>Minta verifier</b>, dan <b>Simpan</b> hanya aktif untuk pengelola posko; <b>Hapus</b> hanya untuk pembuat posko (penugasan disetujui) atau super admin.</li>
             <li>Setelah disetujui, kelola posko dari <a href="kelola-posko.html">Kelola Posko Saya</a> (lihat bagian 25).</li>
-            <li>Ubah bencana yang ditangani kapan saja di <a href="ai-settings.html">Setting</a> → Bencana yang Ditangani Posko.</li>
+            <li>Ubah bencana yang ditangani kapan saja di Pengaturan Posko → Bencana dilayani.</li>
           </ol>
           <p>Di halaman posko, operator mencatat stok, kebutuhan, jiwa dilayani, dan bukti foto. Kontak posko (telepon/WA) tampil di bagian atas untuk pengguna yang sudah login.</p>
         </section>
@@ -691,6 +691,8 @@
             <li><b>SITREP</b> mengikuti susunan OCHA dan menyediakan API (JSON, EDXL-SitRep, HXL) dengan kunci yang disetujui super admin — lihat <a href="#h-sitrep">bagian 31</a>.</li>
             <li>Tombol <b>?</b> di setiap halaman membuka bagian manual halaman tersebut.</li>
           </ul>
+          <h4 id="pembaruan-2311">Pengaturan Akun dan Posko</h4>
+          <p>Buka Pengaturan Akun dari menu nama Anda untuk kata sandi, 2FA, dan kunci AI. Tab organisasi dan admin sistem mengikuti izin akun. Untuk mengubah data, armada, atau bencana yang dilayani, buka Pengaturan Posko. Bila Anda mengelola beberapa posko, pilih poskonya dulu. Gunakan Kerja harian posko untuk pencatatan harian.</p>
           <h4 id="pembaruan-2211">Pembaruan 22 November</h4>
           <ul>
             <li><b>Federasi aktif</b> (protokol v1): Rescue-Net siap terhubung dengan Rescue-Net negara lain dan dengan organisasi tertutup yang punya backend sendiri. Belum ada anggota terdaftar. Lihat <a href="#federasi-tahap-1">Federasi dengan node instansi</a> dan <a href="manual-teknis.html#federasi">Manual Teknis bab 13–14</a>.</li>
@@ -1161,7 +1163,7 @@
 
         <section id="h-notifikasi">
           <h3>45. Pengaturan Notifikasi (WhatsApp/SMS)</h3>
-          <p>Menghubungkan Rescue-Net ke layanan WhatsApp/SMS untuk mengirim pemberitahuan. <a href="notifikasi-settings.html">Buka halaman →</a></p>
+          <p>Menghubungkan Rescue-Net ke layanan WhatsApp/SMS untuk mengirim pemberitahuan. <a href="ai-settings.html#tab=admin">Buka Admin Sistem →</a></p>
           <h4>Siapa melihat apa</h4>
           <ul>
             <li><b>Super admin:</b> menyimpan pengaturan dan mengirim pesan uji. Akun lain ditolak.</li>
@@ -1177,7 +1179,7 @@
 
         <section id="h-ai-settings">
           <h3>46. Pengaturan AI (kunci sendiri)</h3>
-          <p>Menyimpan kunci AI agar tombol <b>Tanya AI</b> bisa dipakai. <a href="ai-settings.html">Buka halaman →</a></p>
+          <p>Menyimpan kunci AI agar tombol <b>Tanya AI</b> bisa dipakai. <a href="ai-settings.html#tab=ai">Buka Pengaturan Akun →</a></p>
           <h4>Siapa melihat apa</h4>
           <ul>
             <li><b>Pengguna login:</b> menyimpan kunci pribadi dan melihat pemakaian 30 hari.</li>
@@ -1209,7 +1211,7 @@
           </ol>
           <p class="note">Jawaban AI adalah saran. Periksa ke data sumber sebelum mengambil keputusan.</p>
           <h4 id="analisis-ai-lanjutan">Analisis AI Lanjutan (16 November)</h4>
-          <p>Di bawah Ask AI kini ada panel <b>Analisis AI Lanjutan</b> berisi 8 alat yang memakai AI untuk pekerjaan yang sulit dilakukan manual. Semua hasil adalah <b>saran</b>: AI tidak mengubah data apa pun. Perlu <b>login</b> dan <b>kunci AI</b> (pribadi atau organisasi) di <a href="ai-settings.html">AI Settings</a>; biaya memakai kuota kunci yang dipilih di <b>Konteks AI</b>.</p>
+          <p>Di bawah Ask AI kini ada panel <b>Analisis AI Lanjutan</b> berisi 8 alat yang memakai AI untuk pekerjaan yang sulit dilakukan manual. Semua hasil adalah <b>saran</b>: AI tidak mengubah data apa pun. Perlu <b>login</b> dan <b>kunci AI</b> (pribadi atau organisasi) di <a href="ai-settings.html">Pengaturan Akun</a>; biaya memakai kuota kunci yang dipilih di <b>Konteks AI</b>.</p>
           <p><b>Bisa diklik ke objeknya (17 November):</b> di hasil analisis, jawaban Ask AI, dan daftar Recommendations, nama posko, armada, serta kode data (kebutuhan, stok, laporan warga, bantuan, kiriman, rencana aksi, proyek pemulihan) tampil sebagai <b>tautan bergaris titik</b>. Klik untuk membuka halamannya di tab baru; arahkan kursor untuk melihat jenis objeknya. Isi halaman tujuan tetap mengikuti hak akses akun. Nama yang ditulis AI berbeda dari nama asli tidak bisa ditautkan.</p>
           <div class="table-wrap"><table class="mini">
             <tr><th>Alat</th><th>Kegunaan</th></tr>
@@ -1750,7 +1752,7 @@
           <h4>Mengaktifkan untuk akun sendiri</h4>
           <ol class="steps">
             <li>Pasang aplikasi authenticator di HP Anda.</li>
-            <li>Login, buka <a href="ai-settings.html">Setting</a> → bagian <b>Verifikasi Dua Langkah (2FA)</b>.</li>
+            <li>Login, buka <a href="ai-settings.html#twofaSection">Pengaturan Akun → Akun &amp; Keamanan</a>, lalu pilih <b>Verifikasi Dua Langkah (2FA)</b>.</li>
             <li>Tekan <b>Siapkan aplikasi authenticator</b>. Kode QR muncul.</li>
             <li>Di aplikasi authenticator pilih tambah akun, lalu pindai QR. Bila tidak bisa memindai, ketik <b>kunci manual</b> yang tampil di bawah QR.</li>
             <li>Ketik kode 6 angka dari aplikasi di kolom <b>Kode dari aplikasi</b>, lalu tekan <b>Aktifkan untuk akun saya</b>.</li>
@@ -1778,7 +1780,7 @@
           <h4>Tanya AI</h4>
           <ul>
             <li>Tombol <b>🤖 Tanya AI</b> ada di pojok kiri bawah setiap halaman. Perlu login.</li>
-            <li>Kunci yang dipakai, berurutan: kunci pribadi Anda → kunci organisasi yang dibagikan ke anggota → kunci platform. Bila belum ada kunci, kuota habis, atau kunci ditolak, Tanya AI menjelaskan sebabnya dan menunjuk ke <a href="ai-settings.html">Setting</a>.</li>
+            <li>Kunci yang dipakai, berurutan: kunci pribadi Anda → kunci organisasi yang dibagikan ke anggota → kunci platform. Bila belum ada kunci, kuota habis, atau kunci ditolak, Tanya AI menjelaskan sebabnya dan menunjuk ke <a href="ai-settings.html">Pengaturan Akun</a>.</li>
             <li>AI bisa menjawab cara pakai dari manual ini, mencari data Rescue-Net (posko, organisasi, bencana, kebutuhan terbuka), dan — hanya untuk posko yang Anda kelola — melihat pekerjaan tertunda, stok, kedaluwarsa, dan peringatan posko itu. Gambaran operasional penuh hanya untuk super admin dan Control Centre.</li>
           </ul>
           <h4>Tombol Jalankan</h4>
@@ -1861,9 +1863,9 @@
       </article>
     </div>
   </main>
-  <script src="../assets/js/rn-public-header.js?v=warna-20261122"></script>
+  <script src="../assets/js/rn-public-header.js?v=dua-20261123"></script>
   <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
-  <script src="../assets/js/rn-mobile-drawer.js?v=warna-20261122"></script>
+  <script src="../assets/js/rn-mobile-drawer.js?v=dua-20261123"></script>
 <script src="../assets/js/rn-posko-help.js?v=bantuan-20261117" defer></script>
 </body>
 </html>

@@ -211,13 +211,14 @@ if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = d
     if (container.querySelector(".rn-drawer-ops")) return;
     try {
       if (!window.RNIcon) await loadScript(prefix + "assets/js/rn-icons.js?v=kpiicon-20260904").catch(() => {});
-      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=ps-20261109"); // KEEP IN SYNC with pages' rn-navigation-v2.js ?v= (PWA caches by exact URL)
+      if (!window.RNNav) await loadScript(prefix + "assets/js/rn-navigation-v2.js?v=dua-20261123"); // KEEP IN SYNC with pages' rn-navigation-v2.js ?v= (PWA caches by exact URL)
     } catch (e) { return; }
     if (!window.RNNav || container.querySelector(".rn-drawer-ops")) return;
     const wrap = document.createElement("div");
     wrap.className = "rn-drawer-ops";
     // CONFIG hrefs are relative to pages/: Home (root) needs the folder
-    wrap.innerHTML = window.RNNav.groupsHtml(isHome ? "pages/" : "");
+    wrap.innerHTML = await window.RNNav.groupsHtml(isHome ? "pages/" : "");
+    if (container.querySelector(".rn-drawer-ops")) return;
     container.appendChild(wrap);
     if (window.RNIconFill) window.RNIconFill(wrap);
     const sidebar = container.closest(".sidebar") || document;
@@ -525,7 +526,7 @@ if (!document.querySelector('script[src*="rn-mode-toggle.js"]')) { const sMt = d
   (function loadAiChat() {
     if (window.RNAIChat || document.querySelector('script[src*="rn-ai-chat.js"]')) return;
     const s = document.createElement("script");
-    s.src = prefix + "assets/js/rn-ai-chat.js?v=warna-20261122";
+    s.src = prefix + "assets/js/rn-ai-chat.js?v=dua-20261123";
     s.defer = true;
     document.head.appendChild(s);
   })();

@@ -70,7 +70,7 @@
       '<div class="rn-aic-log" id="rnAicLog"></div>' +
       '<form class="rn-aic-form" id="rnAicForm"><textarea name="q" placeholder="Tulis pertanyaan…" maxlength="1500"></textarea><button type="submit">Kirim</button></form></section>');
     document.body.appendChild(btn); document.body.appendChild(panel);
-    panel.querySelector("#rnAicKey").href = href("pages/ai-settings.html");
+    panel.querySelector("#rnAicKey").href = href("pages/ai-settings.html#tab=ai");
     btn.addEventListener("click", toggle);
     panel.querySelector(".rn-aic-x").addEventListener("click", toggle);
     panel.querySelector("#rnAicForm").addEventListener("submit", function (e) { e.preventDefault(); send(); });
@@ -89,7 +89,7 @@
   function add(html, cls) { var d = document.createElement("div"); d.className = cls; d.innerHTML = html; log().appendChild(d); log().scrollTop = log().scrollHeight; return d; }
 
   function note(status, message, settings) {
-    var link = settings ? ' <a href="' + esc(href(settings)) + '">Buka AI Settings ›</a>' : "";
+    var link = settings ? ' <a href="' + esc(href(settings)) + '">Buka Pengaturan Akun ›</a>' : "";
     var html = {
       login: 'Login dulu untuk memakai Asisten AI. <a href="' + esc(href("pages/auth.html?next=" + encodeURIComponent(location.pathname.replace(/^.*\/pages\//, "") + location.search))) + '">Login ›</a>',
       no_key: esc(message) + link,
@@ -103,7 +103,7 @@
     // owner 2026-11-02: "jika belum isi key-nya, otomatis pindahkan ke halaman setting-nya"
     // (own/shared key only — a chosen organisation without a key is the org admin's job, not this user's)
     if ((status === "no_key" || status === "key_rejected") && settings && !STATE.org && !/ai-settings\.html/.test(location.pathname)) {
-      add("Membuka halaman AI Settings…", "rn-aic-note");
+      add("Membuka Pengaturan Akun…", "rn-aic-note");
       setTimeout(function () { location.href = href(settings) + (settings.indexOf("?") === -1 ? "?" : "&") + "from=ai-chat"; }, 1500);
     }
   }

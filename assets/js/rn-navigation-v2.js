@@ -175,15 +175,7 @@
       }
     ],
 
-    // Own top-level group, not tucked under "Modul" — account/admin
-    // settings (ganti password, reset password, backup/restore, AI key)
-    // are a different kind of thing than an operational module.
-    pengaturan: [
-      {
-        label: "Setting",
-        href: "ai-settings.html",
-        icon: "ai-settings"
-      },
+    komando: [
       {
         label: "Persetujuan Anggota",
         href: "koordinasi-organisasi.html#koMemberSection",
@@ -337,32 +329,39 @@
     });
   }
 
+  async function accountGroups() {
+    const session = await window.RNAccount?.session();
+    if (!session?.user || session.user === "Guest") return [];
+    const admin = session.manages_org || session.is_system_manager;
+    const audit = session.is_system_manager || session.role === "command_center";
+    const poskoHref = await window.RNAccount.poskoSettingsHref();
+    const settings = [{ label: "Pengaturan Akun", href: "ai-settings.html", icon: "ai-settings" }];
+    if (poskoHref) settings.push({ label: "Pengaturan Posko", href: poskoHref, icon: "posko" });
+    return [
+      ["Pengaturan", settings, "pengaturan"],
+      ["Komando & Admin", CONFIG.komando.filter(item => {
+        if (item.href === "kelola-bencana.html") return true;
+        if (item.href === "jejak-audit.html") return audit;
+        return admin;
+      }), "komando"]
+    ];
+  }
+
   function renderNavigation(nav) {
     nav.classList.add("rn-nav-v2");
     nav.setAttribute("data-rn-navigation-version", CONFIG.version);
     nav.setAttribute("aria-label", "Navigasi operasional Rescue-Net");
-
-    // Pages like Control Centre, Bencana Aktif, Data Konsolidasi aren't
-    // themselves a member of any group, so none would auto-open by default
-    // — reported as "menu Posko kok nggak muncul" (it was there, just
-    // collapsed behind an easy-to-miss toggle, on exactly these
-    // cross-posko dashboards where jumping to a specific posko is the
-    // single most common next click). Default "Posko" open in that case,
-    // not "Modul" — Posko is the group operators need most often.
-    const anyMatch =
-      CONFIG.posko.some(item => isActive(item.href)) ||
-      CONFIG.modules.some(item => isActive(item.href)) ||
-      CONFIG.donasi.some(item => isActive(item.href)) ||
-      CONFIG.pengaturan.some(item => isActive(item.href));
-
     nav.innerHTML =
-      groupHtml("Posko", CONFIG.posko, "posko", !anyMatch) +
+      groupHtml("Posko", CONFIG.posko, "posko") +
       groupHtml("Donasi & Program Khusus", CONFIG.donasi, "donasi") +
-      groupHtml("Modul", CONFIG.modules, "modul") +
-      groupHtml("Pengaturan", CONFIG.pengaturan, "pengaturan");
-
+      groupHtml("Modul", CONFIG.modules, "modul");
     wireAccordion(nav);
     if (window.RNIconFill) window.RNIconFill(nav);
+    accountGroups().then(groups => {
+      nav.insertAdjacentHTML("beforeend", groups.map(args => groupHtml(...args)).join(""));
+      wireAccordion(nav);
+      if (window.RNIconFill) window.RNIconFill(nav);
+    });
   }
 
   /* ---- Top group: function switcher for a merged posko ---- */
@@ -501,14 +500,14 @@
   // field pages): the same groups, closed, for rn-mobile-drawer.js. Posko
   // pages are readable by everyone; adding data still needs a login.
   window.RNNav = {
-    groupsHtml(prefix) {
+    async groupsHtml(prefix) {
       const pre = prefix || "";
       const fix = items => items.map(it => Object.assign({}, it, { href: pre + it.href }));
       return [
         ["Posko", CONFIG.posko, "posko"],
         ["Donasi & Program Khusus", CONFIG.donasi, "donasi"],
         ["Modul", CONFIG.modules, "modul"],
-        ["Pengaturan", CONFIG.pengaturan, "pengaturan"]
+        ...await accountGroups()
       ].map(([label, items, id]) =>
         groupHtml(label, fix(items), id, false).replace('class="rn-nav-v2-group"', 'class="rn-nav-v2-group rn-drawer-group"').replace(" open>", ">")
       ).join("");
@@ -535,7 +534,7 @@
   var s = document.createElement("script");
   s.src = (document.currentScript && document.currentScript.src
     ? document.currentScript.src.replace(/rn-navigation-v2\.js.*$/, "")
-    : "../assets/js/") + "rn-ai-notice.js?v=font13-20261109";
+    : "../assets/js/") + "rn-ai-notice.js?v=dua-20261123";
   s.defer = true; s.setAttribute("data-rn-ai-notice", "1");
   document.head.appendChild(s);
 })();

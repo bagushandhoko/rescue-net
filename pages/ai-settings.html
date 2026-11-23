@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="manifest" href="../manifest.webmanifest">
   <meta name="theme-color" content="#ef523d">
-  <title>Rescue-Net | Setting</title>
+  <title>Pengaturan Akun</title>
   <link rel="stylesheet" href="../assets/css/style.css?v=warna-20261122">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,10 +13,17 @@
   <link rel="stylesheet" href="../assets/css/rn-fonts.css?v=lh15-20261109">
   <link rel="stylesheet" href="../assets/css/rn-navigation-v2.css?v=segar-20261117" />
   <link rel="stylesheet" href="../assets/css/rn-mobile-drawer.css?v=warna-20261122" />
-  <link rel="stylesheet" href="../assets/css/rn-event-checklist.css?v=warna-20261122" />
   <link rel="icon" type="image/png" sizes="32x32" href="/rescue-net/assets/img/favicon/favicon-32.png?v=20261114">
   <link rel="icon" type="image/png" sizes="48x48" href="/rescue-net/assets/img/favicon/favicon-48.png?v=20261114">
   <link rel="apple-touch-icon" href="/rescue-net/assets/img/favicon/favicon-180.png?v=20261114">
+  <style>
+    .rn-account-tabs { display: flex; gap: 8px; max-width: 100%; overflow-x: auto; padding: 4px 2px 10px; }
+    .rn-account-tabs button { flex: none; border: 1px solid #887467; border-radius: 8px; padding: 8px 12px; font: inherit; background: #fff; color: #2a2018; cursor: pointer; }
+    .rn-account-tabs [aria-selected="true"] { background: #f4e4d7; border-color: #8a471e; color: #632e12; font-weight: 700; }
+    .rn-account-tabs[hidden], .rn-account-tabs [hidden], [id^="account-panel-"][hidden] { display: none !important; }
+    [id^="account-panel-"] { min-width: 0; overflow-wrap: anywhere; }
+    [id^="account-panel-"] > .panel { margin-bottom: 12px; }
+  </style>
 </head>
 <body>
 <div class="app-shell">
@@ -48,33 +55,30 @@
       <a href="evidence.html?event=event-sim-001">Evidence</a>
       <a href="verification-approval.html?event=event-sim-001">Sistem Verifikasi</a>
       <a href="ai-analyst.html?event=event-sim-001">AI Analyst</a>
-      <a class="active" href="ai-settings.html">Setting</a>
-      <a href="notifikasi-settings.html">Notifikasi WhatsApp</a>
+      <a class="active" href="ai-settings.html">Pengaturan Akun</a>
       <a href="contact-directory.html">Contact Directory</a>
     </nav>
   </aside>
 
   <main class="main">
     <header class="topbar">
-    <div class="rn-page-mobile-title">Setting</div>
+    <div class="rn-page-mobile-title">Pengaturan Akun</div>
 
       <div>
         <p class="eyebrow">Akun & AI</p>
-        <h2>Setting</h2>
-        <p class="subtitle">Atur bencana yang ditangani posko Anda, ganti password akun, kelola API key AI, dan (System Manager) reset password user &amp; backup/restore database.</p>
-        <p class="subtitle" id="aiSettingsStatus">Ready.</p>
+        <h2>Pengaturan Akun</h2>
       </div>
-      <div class="status-pill">Akun Anda</div>
     </header>
 
-    <div class="rn-settings-group" id="poskoEventsGroup" hidden>
-      <div class="rn-settings-group-title">
-        <h2>Bencana yang Ditangani Posko</h2>
-        <p>Tambah atau hilangkan bencana yang dilayani posko Anda. Posko tampil sebagai tujuan kirim dan pilihan distribusi hanya di bencana yang dicentang.</p>
-      </div>
-      <section class="panel" id="poskoEventsPanel"><p class="rn-muted">Memuat posko Anda…</p></section>
+    <div class="rn-account-tabs" role="tablist" aria-label="Bagian Pengaturan Akun" hidden>
+      <button type="button" role="tab" id="account-tab-akun" aria-controls="account-panel-akun">Akun &amp; Keamanan</button>
+      <button type="button" role="tab" id="account-tab-ai" aria-controls="account-panel-ai">Kunci AI</button>
+      <button type="button" role="tab" id="account-tab-organisasi" aria-controls="account-panel-organisasi" hidden>Organisasi &amp; Sub Admin</button>
+      <button type="button" role="tab" id="account-tab-admin" aria-controls="account-panel-admin" hidden>Admin Sistem</button>
     </div>
-
+    <p id="accountSettingsLogin" hidden><a href="auth.html">Masuk untuk membuka Pengaturan Akun</a></p>
+    <p id="accountSettingsPosko" role="status" hidden></p>
+    <div role="tabpanel" id="account-panel-akun" aria-labelledby="account-tab-akun" hidden>
     <div class="rn-settings-group">
       <div class="rn-settings-group-title">
         <h2>Ganti Password</h2>
@@ -128,6 +132,173 @@
       </section>
     </div>
 
+    </div>
+    <div role="tabpanel" id="account-panel-ai" aria-labelledby="account-tab-ai" hidden>
+    <div class="rn-settings-group" id="aiKeySection">
+      <p class="rn-ai-from-chat" id="aiFromChat" hidden style="margin:0 0 12px;padding:12px 14px;border-radius:10px;border:1px solid #f59e0b;background:#fff7e6;color:#7a4b00;line-height:1.5">🤖 Asisten AI belum bisa dipakai karena kunci AI belum ada (atau ditolak provider). Simpan kunci AI pribadi Anda di bawah ini, lalu buka lagi tombol <b>Tanya AI</b>. Kalau organisasi Anda punya kunci bersama, minta admin organisasi mengaktifkan "bagikan ke anggota".</p>
+      <div class="rn-settings-group-title">
+        <h2>Kunci AI</h2>
+        <p class="subtitle" id="aiSettingsStatus"></p>
+        <p>BYOK · Bring Your Own Key. Pilih provider AI: <b>OpenAI</b>, <b>Claude (Anthropic)</b>, atau <b>Google Gemini</b>. Setiap user/organisasi memakai kuncinya sendiri; kunci yang terakhir disimpan menjadi provider aktif. Secret key disimpan terenkripsi dan tidak ditampilkan ulang.</p>
+      </div>
+
+      <section class="content-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Current AI Key Status</h3>
+              <p>Status key aktif untuk user/provider.</p>
+            </div>
+          </div>
+
+          <div class="summary-list" id="keyStatus">
+            <div><span>Status</span><b>Not loaded</b></div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" type="button" id="checkKeyBtn">Check Key Status</button>
+            <button class="btn" type="button" id="testKeyBtn">Uji Koneksi</button>
+            <button class="btn" type="button" id="deleteKeyBtn">Delete Key</button>
+          </div>
+          <p class="subtitle" id="testKeyMsg"></p>
+        </div>
+
+        <aside class="panel summary">
+          <h3>Save AI Key (Personal)</h3>
+          <p class="subtitle">Gunakan key dummy untuk test. Jangan taruh key asli di GitHub atau chat.</p>
+
+          <form class="rn-form" id="aiKeyForm">
+            <label>User ID
+              <input name="user_id" value="user-demo-001" required>
+            </label>
+
+            <label>Organization ID
+              <input name="organization_id" value="org-bpbd-aceh">
+            </label>
+
+            <label>Provider
+              <select name="provider" data-ai-provider></select>
+            </label>
+            <label>Model
+              <select name="model_name" data-ai-model></select>
+            </label>
+
+            <label>API Key
+              <input name="api_key" type="password" placeholder="Paste API key here" required>
+            </label>
+
+            <label>Key Label
+              <input name="api_key_label" value="Demo User Key">
+            </label>
+
+            <div class="form-actions">
+              <button class="btn primary" type="submit">Save Encrypted Key</button>
+            </div>
+          </form>
+        </aside>
+      </section>
+
+      <section class="content-grid" id="orgKeySection" hidden>
+        <div class="panel">
+          <div class="panel-header"><div><h3>Kunci AI Organisasi</h3><p>Dipakai anggota organisasi yang belum punya kunci pribadi.</p></div></div>
+          <div class="summary-list" id="orgKeyStatus"><div><span>Status</span><b>—</b></div></div>
+          <div class="form-actions">
+            <button class="btn" type="button" id="orgCheckBtn">Cek Status</button>
+            <button class="btn" type="button" id="orgTestBtn">Uji Koneksi</button>
+            <button class="btn" type="button" id="orgDeleteBtn">Hapus Kunci Org</button>
+          </div>
+          <p class="subtitle" id="orgKeyMsg"></p>
+          <form class="rn-form" id="orgProfileForm" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+            <h4 style="margin:0 0 6px">Bagikan ke anggota &amp; batas token</h4>
+            <label style="display:flex;gap:10px;align-items:flex-start;flex-direction:row">
+              <input type="checkbox" name="share_with_members" style="width:18px;min-width:18px;margin-top:3px">
+              <span>Anggota yang sudah disetujui boleh memakai kunci organisasi ini bila belum punya kunci pribadi.</span>
+            </label>
+            <div class="form-grid">
+              <label>Batas token harian<input name="daily_budget_tokens" type="number" min="0" value="0"></label>
+              <label>Batas token bulanan<input name="monthly_budget_tokens" type="number" min="0" value="0"></label>
+            </div>
+            <p class="subtitle">0 = tanpa batas. Saat batas habis, admin dan anggota mendapat notifikasi untuk memasang kunci sendiri.</p>
+            <div class="form-actions"><button class="btn primary" type="submit">Simpan Pembagian &amp; Batas</button><span class="form-message" id="orgProfileMsg"></span></div>
+          </form>
+        </div>
+        <aside class="panel summary">
+          <h3>Simpan Kunci AI Organisasi</h3>
+          <form class="rn-form" id="orgKeyForm">
+            <label>Organization ID<input name="organization_id" readonly></label>
+            <label>Provider<select name="provider" data-ai-provider></select></label>
+            <label>Model<select name="model_name" data-ai-model></select></label>
+            <label>API Key<input name="api_key" type="password" placeholder="Paste API key" required></label>
+            <label>Label<input name="api_key_label" value="Org Key"></label>
+            <div class="form-actions"><button class="btn primary" type="submit">Simpan Kunci Org</button></div>
+          </form>
+        </aside>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header"><div><h3>Pemakaian AI (30 hari)</h3><p>Log jumlah panggilan &amp; token — tanpa isi pertanyaan/jawaban, tanpa secret.</p></div></div>
+        <div class="summary-list" id="aiUsage"><div><span>—</span><b>belum dimuat</b></div></div>
+        <div class="form-actions">
+          <button class="btn" type="button" id="usageUserBtn">Pemakaian Saya</button>
+          <button class="btn" type="button" id="usageOrgBtn" hidden>Pemakaian Organisasi</button>
+        </div>
+      </section>
+
+      <section class="panel create-panel">
+        <div class="panel-header">
+          <div>
+            <h3>AI BYOK Design</h3>
+            <p>Aturan keamanan yang dipakai Rescue-Net.</p>
+          </div>
+        </div>
+
+        <div class="event-list">
+          <article class="event-card">
+            <div class="event-main">
+              <div>
+                <h4>Security Rules</h4>
+                <p>
+                  Secret key tidak boleh masuk JavaScript, tidak boleh masuk GitHub, tidak boleh dikirim balik ke browser, dan tidak boleh disimpan plaintext.
+                  Browser hanya boleh melihat status dan masked key.
+                </p>
+              </div>
+              <div class="chips"><span class="chip warning">owner_only</span></div>
+            </div>
+          </article>
+
+          <article class="event-card">
+            <div class="event-main">
+              <div>
+                <h4>Urutan Pemakaian</h4>
+                <p>
+                  AI request memakai key user sendiri (provider yang terakhir disimpan). Jika tidak ada, memakai key organisasi. Jika tidak ada key, AI disabled dan user diminta mengisi key. Kunci platform hanya untuk fitur publik (Laporan Masyarakat).
+                </p>
+              </div>
+              <div class="chips"><span class="chip neutral">BYOK</span></div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+    </div>
+    <div role="tabpanel" id="account-panel-organisasi" aria-labelledby="account-tab-organisasi" hidden>
+      <section class="panel">
+        <h3>Persetujuan anggota</h3>
+        <p>Periksa permohonan bergabung dan keanggotaan organisasi.</p>
+        <a class="btn" href="koordinasi-organisasi.html#koMemberSection">Buka Persetujuan Anggota</a>
+      </section>
+      <section class="panel">
+        <h3>Sub admin &amp; staf</h3>
+        <p>Buka dashboard organisasi untuk melihat struktur posko dan masuk ke pengelolaan sub admin.</p>
+        <a class="btn" href="organisasi-posko.html#orgStaffSection">Buka Sub Admin &amp; Staf</a>
+      </section>
+      <section class="panel">
+        <h3>Template operasi &amp; keterbukaan organisasi</h3>
+        <p>Atur template operasi dan detail organisasi yang dapat dilihat publik.</p>
+        <a class="btn" href="koordinasi-organisasi.html#koOrgAdminSection">Buka Pengaturan Organisasi</a>
+      </section>
+    </div>
+    <div role="tabpanel" id="account-panel-admin" aria-labelledby="account-tab-admin" hidden>
     <div class="rn-settings-group" id="adminResetPasswordSection" hidden>
       <div class="rn-settings-group-title">
         <h2>Reset Password</h2>
@@ -263,106 +434,6 @@
       </section>
     </div>
 
-    <div class="rn-settings-group" id="aiKeySection">
-      <p class="rn-ai-from-chat" id="aiFromChat" hidden style="margin:0 0 12px;padding:12px 14px;border-radius:10px;border:1px solid #f59e0b;background:#fff7e6;color:#7a4b00;line-height:1.5">🤖 Asisten AI belum bisa dipakai karena kunci AI belum ada (atau ditolak provider). Simpan kunci AI pribadi Anda di bawah ini, lalu buka lagi tombol <b>Tanya AI</b>. Kalau organisasi Anda punya kunci bersama, minta admin organisasi mengaktifkan "bagikan ke anggota".</p>
-      <div class="rn-settings-group-title">
-        <h2>AI Setting</h2>
-        <p>BYOK · Bring Your Own Key. Pilih provider AI: <b>OpenAI</b>, <b>Claude (Anthropic)</b>, atau <b>Google Gemini</b>. Setiap user/organisasi memakai kuncinya sendiri; kunci yang terakhir disimpan menjadi provider aktif. Secret key disimpan terenkripsi dan tidak ditampilkan ulang.</p>
-      </div>
-
-      <section class="content-grid">
-        <div class="panel">
-          <div class="panel-header">
-            <div>
-              <h3>Current AI Key Status</h3>
-              <p>Status key aktif untuk user/provider.</p>
-            </div>
-          </div>
-
-          <div class="summary-list" id="keyStatus">
-            <div><span>Status</span><b>Not loaded</b></div>
-          </div>
-
-          <div class="form-actions">
-            <button class="btn" type="button" id="checkKeyBtn">Check Key Status</button>
-            <button class="btn" type="button" id="testKeyBtn">Uji Koneksi</button>
-            <button class="btn" type="button" id="deleteKeyBtn">Delete Key</button>
-          </div>
-          <p class="subtitle" id="testKeyMsg"></p>
-        </div>
-
-        <aside class="panel summary">
-          <h3>Save AI Key (Personal)</h3>
-          <p class="subtitle">Gunakan key dummy untuk test. Jangan taruh key asli di GitHub atau chat.</p>
-
-          <form class="rn-form" id="aiKeyForm">
-            <label>User ID
-              <input name="user_id" value="user-demo-001" required>
-            </label>
-
-            <label>Organization ID
-              <input name="organization_id" value="org-bpbd-aceh">
-            </label>
-
-            <label>Provider
-              <select name="provider" data-ai-provider></select>
-            </label>
-            <label>Model
-              <select name="model_name" data-ai-model></select>
-            </label>
-
-            <label>API Key
-              <input name="api_key" type="password" placeholder="Paste API key here" required>
-            </label>
-
-            <label>Key Label
-              <input name="api_key_label" value="Demo User Key">
-            </label>
-
-            <div class="form-actions">
-              <button class="btn primary" type="submit">Save Encrypted Key</button>
-            </div>
-          </form>
-        </aside>
-      </section>
-
-      <section class="content-grid" id="orgKeySection" hidden>
-        <div class="panel">
-          <div class="panel-header"><div><h3>Kunci AI Organisasi</h3><p>Dipakai anggota organisasi yang belum punya kunci pribadi.</p></div></div>
-          <div class="summary-list" id="orgKeyStatus"><div><span>Status</span><b>—</b></div></div>
-          <div class="form-actions">
-            <button class="btn" type="button" id="orgCheckBtn">Cek Status</button>
-            <button class="btn" type="button" id="orgTestBtn">Uji Koneksi</button>
-            <button class="btn" type="button" id="orgDeleteBtn">Hapus Kunci Org</button>
-          </div>
-          <p class="subtitle" id="orgKeyMsg"></p>
-          <form class="rn-form" id="orgProfileForm" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
-            <h4 style="margin:0 0 6px">Bagikan ke anggota &amp; batas token</h4>
-            <label style="display:flex;gap:10px;align-items:flex-start;flex-direction:row">
-              <input type="checkbox" name="share_with_members" style="width:18px;min-width:18px;margin-top:3px">
-              <span>Anggota yang sudah disetujui boleh memakai kunci organisasi ini bila belum punya kunci pribadi.</span>
-            </label>
-            <div class="form-grid">
-              <label>Batas token harian<input name="daily_budget_tokens" type="number" min="0" value="0"></label>
-              <label>Batas token bulanan<input name="monthly_budget_tokens" type="number" min="0" value="0"></label>
-            </div>
-            <p class="subtitle">0 = tanpa batas. Saat batas habis, admin dan anggota mendapat notifikasi untuk memasang kunci sendiri.</p>
-            <div class="form-actions"><button class="btn primary" type="submit">Simpan Pembagian &amp; Batas</button><span class="form-message" id="orgProfileMsg"></span></div>
-          </form>
-        </div>
-        <aside class="panel summary">
-          <h3>Simpan Kunci AI Organisasi</h3>
-          <form class="rn-form" id="orgKeyForm">
-            <label>Organization ID<input name="organization_id" readonly></label>
-            <label>Provider<select name="provider" data-ai-provider></select></label>
-            <label>Model<select name="model_name" data-ai-model></select></label>
-            <label>API Key<input name="api_key" type="password" placeholder="Paste API key" required></label>
-            <label>Label<input name="api_key_label" value="Org Key"></label>
-            <div class="form-actions"><button class="btn primary" type="submit">Simpan Kunci Org</button></div>
-          </form>
-        </aside>
-      </section>
-
       <section class="content-grid" id="platformKeySection" hidden>
         <div class="panel">
           <div class="panel-header"><div><h3>Kunci AI Platform</h3><p>System Manager saja. Dipakai fitur publik — AI yang mengolah uraian Laporan Masyarakat menjadi form dan memilih posko tujuan. Tanpa kunci ini, laporan tetap diolah dengan aturan kata kunci (tanpa AI).</p></div></div>
@@ -398,48 +469,8 @@
       </section>
 
       <section class="panel">
-        <div class="panel-header"><div><h3>Pemakaian AI (30 hari)</h3><p>Log jumlah panggilan &amp; token — tanpa isi pertanyaan/jawaban, tanpa secret.</p></div></div>
-        <div class="summary-list" id="aiUsage"><div><span>—</span><b>belum dimuat</b></div></div>
-        <div class="form-actions">
-          <button class="btn" type="button" id="usageUserBtn">Pemakaian Saya</button>
-          <button class="btn" type="button" id="usageOrgBtn" hidden>Pemakaian Organisasi</button>
-        </div>
-      </section>
-
-      <section class="panel create-panel">
-        <div class="panel-header">
-          <div>
-            <h3>AI BYOK Design</h3>
-            <p>Aturan keamanan yang dipakai Rescue-Net.</p>
-          </div>
-        </div>
-
-        <div class="event-list">
-          <article class="event-card">
-            <div class="event-main">
-              <div>
-                <h4>Security Rules</h4>
-                <p>
-                  Secret key tidak boleh masuk JavaScript, tidak boleh masuk GitHub, tidak boleh dikirim balik ke browser, dan tidak boleh disimpan plaintext.
-                  Browser hanya boleh melihat status dan masked key.
-                </p>
-              </div>
-              <div class="chips"><span class="chip warning">owner_only</span></div>
-            </div>
-          </article>
-
-          <article class="event-card">
-            <div class="event-main">
-              <div>
-                <h4>Usage Priority</h4>
-                <p>
-                  AI request memakai key user sendiri (provider yang terakhir disimpan). Jika tidak ada, memakai key organisasi. Jika tidak ada key, AI disabled dan user diminta mengisi key. Kunci platform hanya untuk fitur publik (Laporan Masyarakat).
-                </p>
-              </div>
-              <div class="chips"><span class="chip neutral">BYOK</span></div>
-            </div>
-          </article>
-        </div>
+        <h3>Notifikasi WhatsApp</h3>
+        <a class="btn" href="notifikasi-settings.html">Buka Notifikasi WhatsApp</a>
       </section>
     </div>
   </main>
@@ -450,28 +481,18 @@
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-password-settings.js?v=orgfilter-20260914"></script>
-<script src="../assets/js/rn-event-checklist.js?v=evc-20261019c"></script>
-<script src="../assets/js/rn-posko-events-settings.js?v=segar-20261117"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
 <script src="../assets/js/system-admin.js?v=cadangan-20261113"></script>
 <script src="../assets/js/rn-operational-mode.js?v=demo-20261109"></script>
-<script src="../assets/js/rn-public-header.js?v=warna-20261122"></script>
+<script src="../assets/js/rn-public-header.js?v=dua-20261123"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>
   <script src="../assets/js/rn-icons.js?v=segar-20261117"></script>
 
-<script src="../assets/js/rn-navigation-v2.js?v=menu-instansi-20261122"></script>
-<script src="../assets/js/rn-mobile-drawer.js?v=warna-20261122"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=dua-20261123"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=dua-20261123"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-twofa-settings.js?v=twofa-20261026"></script>
-<script>
-/* owner 2026-11-02: the AI chat sends users without a key here (?from=ai-chat) — say why and jump to the key form */
-(function () {
-  if (!/[?&]from=ai-chat\b/.test(location.search)) return;
-  var box = document.getElementById("aiFromChat"), sec = document.getElementById("aiKeySection");
-  if (box) box.hidden = false;
-  if (sec) setTimeout(function () { sec.scrollIntoView({ behavior: "smooth", block: "start" }); }, 300);
-})();
-</script>
 <script src="../assets/js/rn-posko-help.js?v=bantuan-20261117" defer></script>
+<script src="../assets/js/rn-account-tabs.js?v=dua-20261123"></script>
 </body>
 </html>

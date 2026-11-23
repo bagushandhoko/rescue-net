@@ -115,7 +115,7 @@
     return h;
   }
 
-  var tabs = { posko: "Posko", kontak: "Kontak & Notifikasi", armada: "Armada & Ruang Muat", data: "Data lain" };
+  var tabs = { posko: "Posko", kontak: "Kontak & Notifikasi", armada: "Armada & Ruang Muat", data: "Data lain", bencana: "Bencana dilayani" };
 
   function openModal(p, tab, armada, add) {
     if (document.querySelector(".rn-ps-ov")) return;
@@ -204,7 +204,9 @@
       '<span class="rn-ps-msg" id="rnPsSaveMsg" role="status"></span>' +
       "</div>" +
       "</form>" + panel("armada") +
-      '<div id="rnPsArmada"></div><div class="rn-ps-act"><button type="button" class="rn-ps-cancel" id="rnPsArmadaCancel">Batal</button></div></section></div>'
+      '<div id="rnPsArmada"></div><div class="rn-ps-act"><button type="button" class="rn-ps-cancel" id="rnPsArmadaCancel">Batal</button></div></section>' +
+      panel("bencana") + '<div id="poskoEventsPanel">Memuat bencana…</div>' +
+      '<div class="rn-ps-act"><button type="button" class="rn-ps-cancel" id="rnPsEventsClose">Tutup</button></div></section></div>'
     ));
 
     function panel(key) {
@@ -219,6 +221,7 @@
     }
     var active;
     var armadaLoaded = false;
+    var eventsLoaded = false;
     function selectTab(key) {
       active = Object.hasOwn(tabs, key) ? key : "posko";
       buttons.forEach(function (button) {
@@ -227,7 +230,11 @@
         button.tabIndex = selected ? 0 : -1;
         ov.querySelector("#rnPsPanel-" + button.dataset.tab).hidden = !selected;
       });
-      ov.querySelector("#rnPsSaveActions").hidden = active === "armada";
+      ov.querySelector("#rnPsSaveActions").hidden = active === "armada" || active === "bencana";
+      if (active === "bencana" && !eventsLoaded) {
+        eventsLoaded = true;
+        window.RNPoskoEventsSettings.mount(ov.querySelector("#poskoEventsPanel"), POSKO, onSaved);
+      }
       if (active === "armada" && !armadaLoaded) {
         armadaLoaded = true;
         window.RN_ARMADA_SETTINGS.mount(ov.querySelector("#rnPsArmada"), POSKO,
@@ -267,7 +274,7 @@
     }
     document.addEventListener("keydown", onKey);
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
-    ["#rnPsCancel", "#rnPsArmadaCancel"].forEach(function (selector) {
+    ["#rnPsCancel", "#rnPsArmadaCancel", "#rnPsEventsClose"].forEach(function (selector) {
       ov.querySelector(selector).addEventListener("click", close);
     });
 
@@ -379,11 +386,11 @@
     // (see .rn-public-actions in style.css) keeps it just before Logout
     // regardless of which script's item lands in the DOM first.
     var btn = el('<a href="#" id="rnPoskoSettingsBtn" class="rn-public-login" ' +
-      'title="Ubah data posko ini">⚙ Pengaturan</a>');
+      'title="Ubah data posko ini">⚙ Pengaturan Posko</a>');
     btn.addEventListener("click", function (e) { e.preventDefault(); openModal(p); });
     // Kelola Posko (owner 2026-11-01): managers' own hub, only shown to people who can edit this posko
     var kelola = el('<a id="rnKelolaPoskoBtn" class="rn-public-login" title="Halaman khusus pengelola posko" href="kelola-posko.html?id=' +
-      encodeURIComponent(POSKO) + '">🔧 Kelola Posko</a>');
+      encodeURIComponent(POSKO) + '">📋 Kerja harian posko</a>');
     document.addEventListener("click", function (e) {
       var link = e.target.closest("[data-posko-armada-settings]");
       if (!link || new URL(link.href).searchParams.get("id") !== POSKO ||
@@ -404,7 +411,6 @@
     row.innerHTML = '<span class="rn-pt-title">Pengaturan Posko</span>';
     btn.classList.remove("rn-public-login"); kelola.classList.remove("rn-public-login");
     btn.classList.add("rn-pt-main");
-    btn.textContent = "⚙ Pengaturan (posko, kontak, armada)";
     row.appendChild(btn);
     row.appendChild(kelola);
     top.insertBefore(row, top.firstChild);

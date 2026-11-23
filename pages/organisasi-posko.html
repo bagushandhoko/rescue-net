@@ -48,7 +48,7 @@
       <a href="evidence.html?event=event-sim-001"><span class="nav-icon" data-icon="evidence"></span>Evidence</a>
       <a href="verification-approval.html?event=event-sim-001"><span class="nav-icon" data-icon="verification"></span>Sistem Verifikasi</a>
       <a href="ai-analyst.html?event=event-sim-001"><span class="nav-icon" data-icon="ai-analyst"></span>AI Analyst</a>
-      <a href="ai-settings.html"><span class="nav-icon" data-icon="ai-settings"></span>AI Settings</a>
+      <a href="ai-settings.html"><span class="nav-icon" data-icon="ai-settings"></span>Pengaturan Akun</a>
       <a href="contact-directory.html"><span class="nav-icon" data-icon="contact-directory"></span>Contact Directory</a>
     </nav>
   </aside>
@@ -88,6 +88,11 @@
       <aside class="panel" id="orgDetailPanel">
         <p class="rn-muted">Pilih organisasi di sebelah kiri untuk melihat detail.</p>
       </aside>
+    </section>
+
+    <section class="panel" id="orgStaffSection" hidden>
+      <h3>Sub Admin &amp; Staf</h3>
+      <a class="btn" href="koordinasi-organisasi.html#koMemberSection">Kelola peran anggota dan Sub Admin</a>
     </section>
 
     <details class="panel create-panel rn-input-drawer">
@@ -198,11 +203,20 @@
 <script src="../assets/js/rn-ui.js?v=fix-20261120c"></script>
 <script src="../assets/js/org-posko.js?v=federasi-9b-20261122"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
-<script src="../assets/js/rn-public-header.js?v=warna-20261122"></script>
+<script src="../assets/js/rn-public-header.js?v=dua-20261123"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>
-  <script src="../assets/js/rn-navigation-v2.js?v=menu-instansi-20261122"></script>
-<script src="../assets/js/rn-mobile-drawer.js?v=warna-20261122"></script>
+  <script src="../assets/js/rn-navigation-v2.js?v=dua-20261123"></script>
+<script src="../assets/js/rn-mobile-drawer.js?v=dua-20261123"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-posko-help.js?v=bantuan-20261117" defer></script>
+<script>
+  window.RNAccount?.session().then(function (session) {
+    if (session && (session.manages_org || session.is_system_manager)) {
+      var section = document.getElementById("orgStaffSection");
+      section.hidden = false;
+      if (location.hash === "#orgStaffSection") section.scrollIntoView();
+    }
+  });
+</script>
 </body>
 </html>

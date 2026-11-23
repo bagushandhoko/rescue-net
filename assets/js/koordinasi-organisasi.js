@@ -564,6 +564,7 @@
     wireOrgAdminActions();
     loadOrgVisibility(d);
     refreshAiKeyStatus();
+    if (location.hash === "#koOrgAdminSection") sec.scrollIntoView({ block: "start" });
   }
 
   // --- Keterbukaan organisasi: tombol Terbuka/Tertutup satu-klik ----------

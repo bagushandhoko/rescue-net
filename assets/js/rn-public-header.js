@@ -11,6 +11,32 @@
   const RN_EVENT_STORE_KEY = "rn_active_event";
   const RN_API = location.origin + "/rescue-net-frappe/api/method/";
 
+  let sessionRequest;
+  let poskoSettingsRequest;
+  async function accountCall(method) {
+    try {
+      const response = await fetch(RN_API + method, { credentials: "include" });
+      return response.ok ? (await response.json()).message : null;
+    } catch (e) { return null; }
+  }
+
+  window.RNAccount = {
+    session() {
+      return sessionRequest ||= accountCall("rescue_net.api_auth.session_info");
+    },
+    poskoSettingsHref() {
+      return poskoSettingsRequest ||= this.session().then(async (session) => {
+        if (!session?.user || session.user === "Guest") return "";
+        const api = "rescue_net.api_posko_manage.";
+        const list = await accountCall(api + "my_managed_poskos");
+        const rows = list?.poskos || [];
+        if (rows.length > 1) return "kelola-posko.html?settings=1";
+        if (!rows.length) return "";
+        return "posko-detail.html?settings=1&id=" + encodeURIComponent(rows[0].posko);
+      });
+    }
+  };
+
   function stripEventPrefix(v) { return String(v || "").replace(/^disaster_events:/, ""); }
 
   function prettifyEventId(id) {
@@ -206,7 +232,7 @@
     const actions = existingLoginEl ? container : (container.querySelector(".rn-public-actions") || container);
     const loginEl = existingLoginEl || document.createElement("a");
     if (!existingLoginEl) { loginEl.className = LOGIN_LINK.className; loginEl.href = LOGIN_LINK.href; loginEl.textContent = LOGIN_LINK.label; actions.appendChild(loginEl); }
-    let sess = null; try { const res = await fetch(RN_API + "rescue_net.api_auth.session_info", { credentials: "include" }); if (res.ok) sess = ((await res.json()) || {}).message || null; } catch (e) { }
+    const sess = await window.RNAccount.session();
     if (!sess || !sess.user || sess.user === "Guest") return;
     askPrivacyOnce(sess);
     const name = sess.full_name || readCookie("full_name") || sess.user;
@@ -222,16 +248,7 @@
     btn.setAttribute("aria-haspopup", "true"); btn.setAttribute("aria-expanded", "false"); btn.textContent = "👤 " + name + " ▾";
     userEl.appendChild(btn);
     const pfx = location.pathname.indexOf("/pages/") !== -1 ? "" : "pages/";
-    const items = [
-      ["Setting akun", "ai-settings.html", true],
-      ["Ganti kata sandi", "ai-settings.html#changePasswordForm", sess.login_provider !== "google"],
-      ["Verifikasi dua langkah (2FA)", "ai-settings.html#twofaSection", true],
-      ["Bencana yang ditangani posko", "ai-settings.html#poskoEventsPanel", !!sess.posko_id],
-      ["Persetujuan anggota", "koordinasi-organisasi.html#koMemberSection", !!(sess.manages_org || sess.is_system_manager)],
-      ["Komando Pusat", "komando-pusat.html", !!(sess.manages_org || sess.is_system_manager)],
-      ["Jejak Audit", "jejak-audit.html", !!(sess.is_system_manager || sess.role === "command_center")],
-      ["Notifikasi WhatsApp", "notifikasi-settings.html", !!sess.is_system_manager],
-    ].filter(x => x[2]);
+    const items = [["⚙ Pengaturan Akun", "ai-settings.html"]];
     const menu = document.createElement("div"); menu.className = "rn-user-menu"; menu.hidden = true; menu.setAttribute("role", "menu");
     const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
     menu.innerHTML = '<div class="rn-user-menu-head"><b>' + esc(name) + "</b><small>" + esc(sess.user) + "</small><small>" +
@@ -239,6 +256,14 @@
       items.map(x => '<a role="menuitem" href="' + pfx + x[1] + '">' + esc(x[0]) + "</a>").join("") +
       '<a role="menuitem" href="#" class="rn-user-logout">Logout</a>';
     userEl.appendChild(menu);
+    window.RNAccount.poskoSettingsHref().then((href) => {
+      if (!href) return;
+      const link = document.createElement("a");
+      link.setAttribute("role", "menuitem");
+      link.href = pfx + href;
+      link.textContent = "⚙ Pengaturan Posko";
+      menu.querySelector(".rn-user-logout").before(link);
+    });
     const setOpen = (on) => { menu.hidden = !on; btn.setAttribute("aria-expanded", on ? "true" : "false"); };
     btn.addEventListener("click", (e) => { e.stopPropagation(); setOpen(menu.hidden); });
     document.addEventListener("click", (e) => { if (!userEl.contains(e.target)) setOpen(false); });

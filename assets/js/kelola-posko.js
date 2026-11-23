@@ -6,6 +6,7 @@
   var $ = function (id) { return document.getElementById(id); };
   var esc = window.RN_ARMADA_SETTINGS.esc;
   var qs = new URLSearchParams(location.search);
+  var settingsMode = qs.get("settings") === "1";
   var POSKO = qs.get("id") || qs.get("posko") || "";
   var STATUS = { active: "Aktif", standby: "Siaga", reducing: "Pengurangan", closing: "Persiapan tutup", offline: "Nonaktif / tutup" };
   var VERIF = { verified: "Terverifikasi", pending: "Menunggu verifikasi", self_reported: "Belum diajukan",
@@ -18,11 +19,21 @@
     var r = await window.RN_FRAPPE.call(API + "my_managed_poskos");
     var rows = r.poskos || [];
     $("kpPick").hidden = false;
-    if (rows.length === 1 && !POSKO) { location.replace("kelola-posko.html?id=" + encodeURIComponent(rows[0].posko)); return; }
+    if (settingsMode) {
+      document.title = "Rescue-Net | Pengaturan Posko";
+      $("kpTitle").textContent = "Pengaturan Posko";
+      document.querySelector(".rn-page-mobile-title").textContent = "Pengaturan Posko";
+      $("kpIntro").textContent = "Pilih posko untuk membuka pengaturannya.";
+      $("kpCountLegend").hidden = true;
+    }
+    if (!settingsMode && rows.length === 1 && !POSKO) { location.replace("kelola-posko.html?id=" + encodeURIComponent(rows[0].posko)); return; }
     $("kpList").innerHTML = rows.length ? rows.map(function (p) {
-      return '<a class="kp-item" href="kelola-posko.html?id=' + encodeURIComponent(p.posko) + '"><span><b>' + esc(p.title) +
+      var href = (settingsMode ? "posko-detail.html?settings=1" +
+        (qs.get("tab") === "bencana" ? "&tab=bencana" : "") + "&id=" : "kelola-posko.html?id=") +
+        encodeURIComponent(p.posko);
+      return '<a class="kp-item" href="' + esc(href) + '"><span><b>' + esc(p.title) +
         "</b><br><small>" + esc(p.type_label) + (p.status ? " · " + esc(STATUS[p.status] || p.status) : "") + "</small></span>" +
-        badge(p.pending_total) + "</a>";
+        (settingsMode ? "" : badge(p.pending_total)) + "</a>";
     }).join("") : '<p class="rn-muted">Anda belum tercatat sebagai pengelola posko mana pun. Daftarkan posko di <a href="registrasi-posko.html">Registrasi Posko</a>.</p>';
     status("");
   }
@@ -67,8 +78,8 @@
       "<dt>Bencana dilayani</dt><dd>" + ev + "</dd>" +
       "<dt>Kontak</dt><dd>" + esc(contactText(h.contact || {})) + "</dd>";
 
-    $("kpTools").innerHTML = (h.tools || []).map(function (t) {
-      return '<a class="kp-tool" href="' + esc(t.href) + '"><b>' + esc(t.label) + "</b><small>" + esc(t.desc) + "</small></a>";
+    $("kpTools").innerHTML = (h.tools || []).filter(function (t) { return t.key !== "notifikasi"; }).map(function (t) {
+      return '<a class="kp-tool" href="' + esc(t.href) + '"><b>' + esc(t.key === "settings" ? "Pengaturan Posko" : t.label) + "</b><small>" + esc(t.desc) + "</small></a>";
     }).join("");
 
     var f = $("kpComms");

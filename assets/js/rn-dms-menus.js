@@ -52,5 +52,31 @@
       || (menu.template_tambahan || []).includes(template));
   }
 
-  window.RNDmsMenus = { strict, templates, labels, load, resolveTemplate, remember, visible, getJSON, api };
+  // Simulasi DMS (owner 23 Nov 2026): TERPISAH dari simulasi RN. Pilihan disimpan di localStorage "dms_tampilan"
+  // (bukan cookie rn_tampilan), data dari assets/data/dms-simulasi*.json. Modul RN di jendela tetap data RN.
+  const VIEW_KEY = "dms_tampilan";
+  const view = {
+    get() {
+      try { return localStorage.getItem(VIEW_KEY) === "simulasi" ? "simulasi" : "riil"; } catch (_) { return "riil"; }
+    },
+    set(value) {
+      const v = value === "simulasi" ? "simulasi" : "riil";
+      try { localStorage.setItem(VIEW_KEY, v); } catch (_) {}
+      window.dispatchEvent(new CustomEvent("dms-view-change", { detail: { view: v } }));
+      return v;
+    },
+    isSim() { return view.get() === "simulasi"; }
+  };
+  const simCache = {};
+  function loadSim(name = "dms-simulasi.json") {
+    simCache[name] ??= getJSON(new URL("../data/" + name + "?v=sim-20261123", catalogUrl).href)
+      .catch((error) => { delete simCache[name]; throw error; });
+    return simCache[name];
+  }
+  // Lintas jendela (same-origin iframe): perubahan dari halaman lain ikut terdengar.
+  window.addEventListener("storage", (e) => {
+    if (e.key === VIEW_KEY) window.dispatchEvent(new CustomEvent("dms-view-change", { detail: { view: view.get() } }));
+  });
+
+  window.RNDmsMenus = { strict, templates, labels, load, resolveTemplate, remember, visible, getJSON, api, view, loadSim };
 })();

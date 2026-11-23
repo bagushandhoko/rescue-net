@@ -1,0 +1,312 @@
+{
+ "meta": {
+  "nama": "Latihan Gabungan DMS 2026",
+  "periode": "18–25 November 2026",
+  "cut_off": "23 Nov 2026 06:00 WITA",
+  "catatan": "SIMULASI/latihan. Seluruh nama orang fiktif. Bukan kejadian nyata."
+ },
+ "totals": {
+  "bencana_aktif": 3,
+  "jiwa_berisiko": 186400,
+  "pengungsi": 48250,
+  "kebutuhan_kritis": 37,
+  "posko_kritis": 6,
+  "distribusi_terhambat": 4
+ },
+ "warna_instansi": {
+  "bnpb": "#f97316",
+  "pmi": "#ef4444",
+  "tni": "#84cc16",
+  "kementerian": "#3b82f6"
+ },
+ "menu_utama": {
+  "bnpb": "sitrep-bnpb",
+  "kementerian": "sitrep-bnpb",
+  "tni": "komando-kendali-satgas",
+  "pmi": "asesmen-cepat-pmi"
+ },
+ "events": [
+  {
+   "id": "SIM-DMS-01",
+   "name": "[SIMULASI] Gempa M7,1 & Tsunami Teluk Palu",
+   "location": "Kota Palu, Kab. Donggala, Kab. Sigi · Sulawesi Tengah",
+   "severity": "critical",
+   "status_label": "Tanggap Darurat (18 Nov–1 Des 2026)",
+   "center": {
+    "lat": -0.895,
+    "lng": 119.86
+   },
+   "jiwa_berisiko": 162000,
+   "pengungsi": 41800,
+   "kebutuhan_kritis": 29,
+   "meninggal": 214,
+   "hilang": 87,
+   "luka": 1326,
+   "rumah_rusak_berat": 9870,
+   "ringkas": "Gempa M7,1 pukul 05:42 WITA disusul tsunami 3–4 m di Teluk Palu. 63 titik pengungsian, jalan Palu–Donggala km 18 tertutup longsor, listrik padam 60%.",
+   "posko_points": [
+    {
+     "lat": -0.8986,
+     "lng": 119.8707,
+     "title": "Pos Komando PDB Sulteng (Kantor Gubernur)",
+     "posko_type": "command",
+     "instansi": "bnpb",
+     "status": "kritis",
+     "keterangan": "Komandan PDB: Ir. Hendra Wiratama, M.Si."
+    },
+    {
+     "lat": -0.9187,
+     "lng": 119.8826,
+     "title": "Pusdalops BPBD Sulteng",
+     "posko_type": "command",
+     "instansi": "bnpb",
+     "status": "aktif",
+     "keterangan": "Piket 24 jam, 3 shift"
+    },
+    {
+     "lat": -0.8711,
+     "lng": 119.8892,
+     "title": "Gudang Logistik BPBD (Tondo)",
+     "posko_type": "logistics",
+     "instansi": "bnpb",
+     "status": "kritis",
+     "keterangan": "Stok beras tersisa 2 hari"
+    },
+    {
+     "lat": -0.712,
+     "lng": 119.854,
+     "title": "Posko Lapangan Donggala (Kec. Banawa)",
+     "posko_type": "command",
+     "instansi": "bnpb",
+     "status": "aktif",
+     "keterangan": ""
+    },
+    {
+     "lat": -1.0412,
+     "lng": 119.9205,
+     "title": "Posko Lapangan Sigi (Biromaru)",
+     "posko_type": "command",
+     "instansi": "bnpb",
+     "status": "kritis",
+     "keterangan": "Akses sebagian terputus"
+    },
+    {
+     "lat": -0.9172,
+     "lng": 119.9093,
+     "title": "Pos Kogasgabpad (Korem 132/Tadulako)",
+     "posko_type": "command_center",
+     "instansi": "tni",
+     "status": "aktif",
+     "keterangan": "Pangkogasgabpad: Mayjen TNI Bambang Setiadi"
+    },
+    {
+     "lat": -0.9183,
+     "lng": 119.9097,
+     "title": "Helipad Lanud Mutiara SIS Al-Jufri",
+     "posko_type": "transport",
+     "instansi": "tni",
+     "status": "aktif",
+     "keterangan": "4 heli: 2 Caracal, 1 NBell-412, 1 AW139"
+    },
+    {
+     "lat": -0.734,
+     "lng": 119.853,
+     "title": "Satgas Zeni Yonzipur 8 – Longsor Trans Sulawesi km 18",
+     "posko_type": "distribution",
+     "instansi": "tni",
+     "status": "kritis",
+     "keterangan": "Pembukaan akses 65%"
+    },
+    {
+     "lat": -0.864,
+     "lng": 119.838,
+     "title": "KRI dr. Soeharso (RS Apung) – Pantoloan",
+     "posko_type": "medical",
+     "instansi": "tni",
+     "status": "aktif",
+     "keterangan": "120 tempat tidur"
+    },
+    {
+     "lat": -0.952,
+     "lng": 119.881,
+     "title": "RS Lapangan Kesdam XIII/Merdeka (Palu Selatan)",
+     "posko_type": "medical",
+     "instansi": "tni",
+     "status": "aktif",
+     "keterangan": ""
+    },
+    {
+     "lat": -0.8994,
+     "lng": 119.859,
+     "title": "Pos Kesehatan PMI Kota Palu (Talise)",
+     "posko_type": "medical",
+     "instansi": "pmi",
+     "status": "aktif",
+     "keterangan": "2 ambulans, 1 dokter, 6 perawat"
+    },
+    {
+     "lat": -0.895,
+     "lng": 119.877,
+     "title": "UDD PMI Kota Palu",
+     "posko_type": "medical",
+     "instansi": "pmi",
+     "status": "kritis",
+     "keterangan": "Stok darah O tersisa 38 kantong"
+    },
+    {
+     "lat": -1.02,
+     "lng": 119.91,
+     "title": "Shelter PMI Sigi (Lapangan Kalukubula)",
+     "posko_type": "shelter",
+     "instansi": "pmi",
+     "status": "aktif",
+     "keterangan": "320 KK, 40 tenda keluarga"
+    },
+    {
+     "lat": -0.72,
+     "lng": 119.86,
+     "title": "Titik Air Bersih & WASH PMI Donggala",
+     "posko_type": "shelter",
+     "instansi": "pmi",
+     "status": "aktif",
+     "keterangan": "48.000 liter/hari"
+    },
+    {
+     "lat": -0.905,
+     "lng": 119.865,
+     "title": "Lumbung Sosial & Dapur Umum Kemensos (Palu Barat)",
+     "posko_type": "logistics",
+     "instansi": "kementerian",
+     "status": "aktif",
+     "keterangan": "12.500 porsi/hari"
+    },
+    {
+     "lat": -0.93,
+     "lng": 119.89,
+     "title": "Pos Krisis Kesehatan Kemenkes (RSUD Undata)",
+     "posko_type": "medical",
+     "instansi": "kementerian",
+     "status": "aktif",
+     "keterangan": ""
+    },
+    {
+     "lat": -0.75,
+     "lng": 119.85,
+     "title": "Posko PUPR – Jembatan Darurat Ponulele",
+     "posko_type": "distribution",
+     "instansi": "kementerian",
+     "status": "kritis",
+     "keterangan": "Bailey 30 m, target 25 Nov"
+    }
+   ],
+   "posko_count": 17
+  },
+  {
+   "id": "SIM-DMS-02",
+   "name": "[SIMULASI] Banjir Bandang Masamba",
+   "location": "Kab. Luwu Utara · Sulawesi Selatan",
+   "severity": "high",
+   "status_label": "Tanggap Darurat (21–27 Nov 2026)",
+   "center": {
+    "lat": -2.553,
+    "lng": 120.326
+   },
+   "jiwa_berisiko": 23900,
+   "pengungsi": 5950,
+   "kebutuhan_kritis": 6,
+   "meninggal": 12,
+   "hilang": 9,
+   "luka": 74,
+   "rumah_rusak_berat": 640,
+   "ringkas": "Banjir bandang membawa lumpur dan kayu; 3 desa terisolasi (Radda, Baloli, Pombakka), 14 titik pengungsian.",
+   "posko_points": [
+    {
+     "lat": -2.553,
+     "lng": 120.326,
+     "title": "Posko Utama BPBD Luwu Utara",
+     "posko_type": "command",
+     "instansi": "bnpb",
+     "status": "aktif",
+     "keterangan": "Kalaksa: Muh. Ilham Syamsuddin"
+    },
+    {
+     "lat": -2.57,
+     "lng": 120.31,
+     "title": "Posko Kodim 1403/Palopo – Desa Radda",
+     "posko_type": "command_center",
+     "instansi": "tni",
+     "status": "kritis",
+     "keterangan": "Akses hanya roda 2"
+    },
+    {
+     "lat": -2.545,
+     "lng": 120.335,
+     "title": "Pos Kesehatan & Shelter PMI Masamba",
+     "posko_type": "shelter",
+     "instansi": "pmi",
+     "status": "aktif",
+     "keterangan": ""
+    },
+    {
+     "lat": -2.56,
+     "lng": 120.34,
+     "title": "Dapur Umum Kemensos Masamba",
+     "posko_type": "logistics",
+     "instansi": "kementerian",
+     "status": "aktif",
+     "keterangan": "3.200 porsi/hari"
+    }
+   ],
+   "posko_count": 4
+  },
+  {
+   "id": "SIM-DMS-03",
+   "name": "[SIMULASI] Erupsi Gunung Lewotobi Laki-laki",
+   "location": "Kab. Flores Timur · Nusa Tenggara Timur",
+   "severity": "normal",
+   "status_label": "Siaga Darurat · Level IV (Awas)",
+   "center": {
+    "lat": -8.542,
+    "lng": 122.775
+   },
+   "jiwa_berisiko": 500,
+   "pengungsi": 500,
+   "kebutuhan_kritis": 2,
+   "meninggal": 0,
+   "hilang": 0,
+   "luka": 0,
+   "rumah_rusak_berat": 0,
+   "ringkas": "Status Awas sejak 20 Nov 2026; pengungsian preventif radius 7 km.",
+   "posko_points": [
+    {
+     "lat": -8.46,
+     "lng": 122.86,
+     "title": "Posko BPBD Flores Timur (Konga)",
+     "posko_type": "command",
+     "instansi": "bnpb",
+     "status": "aktif",
+     "keterangan": "Kalaksa: Yosef Lamanepa"
+    },
+    {
+     "lat": -8.47,
+     "lng": 122.85,
+     "title": "Shelter PMI Konga",
+     "posko_type": "shelter",
+     "instansi": "pmi",
+     "status": "aktif",
+     "keterangan": ""
+    },
+    {
+     "lat": -8.5,
+     "lng": 122.8,
+     "title": "Pos Pengamatan PVMBG (ESDM)",
+     "posko_type": "command",
+     "instansi": "kementerian",
+     "status": "aktif",
+     "keterangan": ""
+    }
+   ],
+   "posko_count": 3
+  }
+ ]
+}

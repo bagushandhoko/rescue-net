@@ -6,7 +6,12 @@ app_email = "bagushandhoko@gmail.com"
 app_license = "Apache-2.0"
 
 # Mode latihan (10g): tamu tidak bisa membuka event/posko latihan lewat id eksplisit
-before_request = ["rescue_net.services.drill.before_request"]
+before_request = [
+    "rescue_net.services.drill.before_request",
+    # 2FA wajib pemilik organisasi tertutup (owner 2026-11-24)
+    "rescue_net.api_twofa.before_request",
+]
+on_session_creation = ["rescue_net.api_twofa.on_session_creation"]
 after_request = ["rescue_net.services.sim_scrub.after_request"]
 
 # Rescue-Net authenticated identity bridge

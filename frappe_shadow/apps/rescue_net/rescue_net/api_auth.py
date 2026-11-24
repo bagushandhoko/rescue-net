@@ -364,6 +364,8 @@ def session_info():
         # account menu in the header (2026-10-26): which settings to offer
         "is_system_manager": bool(is_system_manager()),
         "manages_org": _manages_org(data["id"]),
+        # 2026-11-24: pemilik organisasi tertutup wajib 2FA -> "setup" / "verify" / None
+        "twofa_required": _twofa_required(),
         # 2026-11-09: akun lama / login Google belum pernah menyetujui Kebijakan Privasi -> header minta sekali
         "privacy_consent_needed": bool(data["id"]) and not frappe.db.get_value(
             "RN User Account", data["id"], "privacy_consent_at"),
@@ -384,6 +386,14 @@ def accept_privacy():
     frappe.db.set_value("RN User Account", name, {
         "privacy_consent_at": now_datetime(), "privacy_policy_version": PRIVACY_POLICY_VERSION})
     return {"ok": True, "version": PRIVACY_POLICY_VERSION}
+
+
+def _twofa_required():
+    try:
+        from rescue_net.api_twofa import required_state
+        return required_state()
+    except Exception:
+        return None
 
 
 def _manages_org(user_account):

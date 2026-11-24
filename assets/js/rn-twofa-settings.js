@@ -7,7 +7,19 @@
   var call = function (m, a, post) { return window.RN_FRAPPE.call("rescue_net.api_twofa." + m, a || {}, post ? { method: "POST" } : undefined); };
   var msg = function (t, bad) { $("twofaMsg").textContent = t || ""; $("twofaMsg").style.color = bad ? "#c0392b" : ""; };
 
+  function renderRequired(st) {
+    var box = $("twofaRequired"), form = $("twofaSessionForm");
+    var state = st.required_state;
+    box.hidden = !state;
+    form.hidden = state !== "verify";
+    if (state === "setup") box.textContent = "Wajib: Anda pemilik organisasi tertutup. Pasang verifikasi dua langkah di bawah ini sebelum memakai menu lain.";
+    if (state === "verify") box.textContent = "Wajib: masukkan kode dari aplikasi authenticator untuk membuka sesi ini.";
+    if (!state && /wajib2fa=1/.test(location.search)) msg("Verifikasi dua langkah beres. Anda bisa memakai semua menu lagi.");
+    if (state) { var sec = $("twofaSection"); if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: "start" }); }
+  }
+
   function render(st) {
+    renderRequired(st);
     $("twofaStatus").innerHTML = st.setup_done
       ? "✅ Aktif untuk akun Anda. Login berikutnya meminta kode dari aplikasi."
       : "Belum aktif untuk akun Anda.";
@@ -44,6 +56,14 @@
         render(await call("setup_verify", { code: e.target.code.value }, true));
         $("twofaSetup").hidden = true;
         msg("Berhasil. Simpan aplikasi authenticator Anda; tanpa itu Anda tidak bisa login bila 2FA diwajibkan.");
+      } catch (err) { msg((err && err.message) || err, true); }
+    });
+    $("twofaSessionForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+      try {
+        render(await call("verify_session", { code: e.target.code.value }, true));
+        e.target.reset();
+        msg("Sesi terverifikasi.");
       } catch (err) { msg((err && err.message) || err, true); }
     });
     $("twofaEnforce").addEventListener("click", async function () {

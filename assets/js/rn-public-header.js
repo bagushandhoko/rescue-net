@@ -233,6 +233,11 @@
     const loginEl = existingLoginEl || document.createElement("a");
     if (!existingLoginEl) { loginEl.className = LOGIN_LINK.className; loginEl.href = LOGIN_LINK.href; loginEl.textContent = LOGIN_LINK.label; actions.appendChild(loginEl); }
     const sess = await window.RNAccount.session();
+    // 2026-11-24: pemilik organisasi tertutup wajib 2FA -> semua halaman mengarah ke Pengaturan Akun sampai beres
+    if (sess?.twofa_required && !/ai-settings\.html$/.test(location.pathname)) {
+      location.replace(prefix + "pages/ai-settings.html?wajib2fa=1#tab=akun");
+      return;
+    }
     if (!sess || !sess.user || sess.user === "Guest") return;
     askPrivacyOnce(sess);
     const name = sess.full_name || readCookie("full_name") || sess.user;

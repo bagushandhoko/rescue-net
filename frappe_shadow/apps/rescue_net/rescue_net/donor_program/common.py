@@ -143,7 +143,7 @@ def _assert_owner(actor, owner_type, owner_id):
         )
 
 
-def _program_manager(actor, row):
+def _program_manager(actor, row, sim=True):
     """Who may manage ONE program (owner 2026-11-08: "login lazismu harus langsung tampil halaman
     setting pemilik donasi program"): the old owner rule (posko of the owning org / control), plus,
     for an organisation-owned program, the organisation's own managers (can_manage_organization)
@@ -152,7 +152,7 @@ def _program_manager(actor, row):
     if not actor or not row:
         return False
     from rescue_net.access_policy import sim_open_event
-    if sim_open_event(actor, row.get("disaster_event")):   # simulasi terbuka (owner 24 Nov)
+    if sim and sim_open_event(actor, row.get("disaster_event")):   # simulasi terbuka (owner 24 Nov)
         return True
     if _allowed_owner(actor, row.get("owner_type"), row.get("owner_id")):
         return True

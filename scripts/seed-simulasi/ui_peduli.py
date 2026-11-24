@@ -93,8 +93,8 @@ if not frappe.db.count("RN Program Milestone", {"program": PROG}):
         as_user(PIC, plan.save_plan_item, PROG, "milestone", values={"title": t, "sort_order": i, "due_date": due, "milestone_status": st, "progress_percent": pct})
     done.append("7 milestone")
 if not frappe.db.count("RN Program Location", {"program": PROG}):
-    for t, la, lo, st in [("Lokasi bangun: SDN 1 Way Urang, Kalianda", -5.7298, 105.5921, "belum_terlayani"),
-                          ("Kelas tenda sementara: shelter GOR Kalianda", -5.7352, 105.5975, "terlayani")]:
+    for t, la, lo, st in [("Lokasi bangun: SDN 1 Way Urang, Kalianda", -5.7258577, 105.5874507, "belum_terlayani"),
+                          ("Kelas tenda sementara: shelter GOR Kalianda", -5.7248498, 105.5905894, "terlayani")]:
         as_user(PIC, plan.save_plan_item, PROG, "location", values={"title": t, "latitude": la, "longitude": lo, "location_status": st})
     done.append("2 lokasi")
 if not frappe.db.count("RN Program Need", {"program": PROG}):

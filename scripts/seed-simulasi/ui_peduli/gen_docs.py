@@ -12,10 +12,12 @@ table{width:100%;border-collapse:collapse;font-size:10.5px}th,td{border:1px soli
 td.n{text-align:right;white-space:nowrap}tr.g td{background:#f3f3f3;font-weight:bold}tr.t td{font-weight:bold;background:#fff7d6}
 .ttd{display:flex;justify-content:space-between;margin-top:18px;font-size:11px}.ttd div{width:30%;text-align:center}.ttd b{display:block;margin-top:46px;text-decoration:underline}
 .note{font-size:10px;color:#444;margin-top:8px}"""
-def rab_html():
+def rab_html(part=0):
     sub, s, pend, adm, cad, tot = totals()
     rows = []
-    for (k, t, items), (_, _, st) in zip(RAB, sub):
+    for gi, ((k, t, items), (_, _, st)) in enumerate(zip(RAB, sub)):
+        if part == 1 and gi > 5: continue
+        if part == 2 and gi <= 5: continue
         rows.append(f'<tr class="g"><td>{k}</td><td colspan="4">{t}</td><td class="n">{rp(st)}</td></tr>')
         for i, (n, q, u, h) in enumerate(items, 1):
             rows.append(f'<tr><td>{i}</td><td>{n}</td><td class="n">{rp(q)}</td><td>{u}</td><td class="n">{rp(h)}</td><td class="n">{rp(q*h)}</td></tr>')
@@ -26,7 +28,7 @@ def rab_html():
 <small>Lokasi: Lahan SDN 1 Way Urang (pinjam pakai), Kalianda, Lampung Selatan · Penerima manfaat: 160 siswa SD/SMP pengungsi</small></div>
 <div style="text-align:right"><small><b>[SIMULASI] UI Peduli Bencana</b></small><small>Pendamping teknis: Tim Teknik Sipil (simulasi)</small><small>No. RAB: SIM/UIP/KRK/011/2026 · Rev. 1 · 18 Nov 2026</small></div></div>
 <table><tr><th style="width:4%">No</th><th>Uraian Pekerjaan</th><th style="width:8%">Volume</th><th style="width:6%">Sat.</th><th style="width:13%">Harga Satuan (Rp)</th><th style="width:15%">Jumlah (Rp)</th></tr>{''.join(rows)}</table>
-<h3 style="font-size:13px;margin:16px 0 6px">REKAPITULASI</h3>
+{"" if part == 1 else ""}<div style="display:{'none' if part == 1 else 'block'}"><h3 style="font-size:13px;margin:16px 0 6px">REKAPITULASI</h3>
 <table><tr><th style="width:6%">No</th><th>Uraian</th><th style="width:22%">Jumlah (Rp)</th></tr>{rek}
 <tr class="t"><td></td><td>JUMLAH PEKERJAAN (I–XI)</td><td class="n">{rp(s)}</td></tr>
 <tr><td></td><td>Pendampingan teknis &amp; pengawasan (2%)</td><td class="n">{rp(pend)}</td></tr>
@@ -34,7 +36,7 @@ def rab_html():
 <tr><td></td><td>Cadangan kenaikan harga bahan (2%)</td><td class="n">{rp(cad)}</td></tr>
 <tr class="t"><td></td><td>TOTAL ANGGARAN PROGRAM</td><td class="n">{rp(tot)}</td></tr>
 <tr><td></td><td><i>Pekerjaan fisik I–X (ditenderkan)</i></td><td class="n"><i>{rp(fis)}</i></td></tr></table>
-<p class=note>Harga satuan: perkiraan harga pasar Lampung Selatan Nov 2026 (asumsi simulasi), belum termasuk PPN karena pengadaan melalui program donasi. Volume dihitung dari gambar kerja GK-01 dan GK-02. Spesifikasi: kolom baja hollow 100x100x3, rangka atap baja ringan, penutup spandek pasir + foil (redam panas &amp; bising hujan), dinding GRC 9 mm.</p>
+</div><p class=note>{"Halaman 1 dari 2 — lanjut ke halaman 2 (pekerjaan VII–XI dan rekapitulasi). " if part == 1 else ("Halaman 2 dari 2. " if part == 2 else "")}Harga satuan: perkiraan harga pasar Lampung Selatan Nov 2026 (asumsi simulasi), belum termasuk PPN karena pengadaan melalui program donasi. Volume dihitung dari gambar kerja GK-01 dan GK-02. Spesifikasi: kolom baja hollow 100x100x3, rangka atap baja ringan, penutup spandek pasir + foil (redam panas &amp; bising hujan), dinding GRC 9 mm.</p>
 <div class=ttd><div>Disusun oleh,<b>[SIM] Perencana Teknis</b>Tim Pendamping</div><div>Diperiksa oleh,<b>[SIM] Koordinator Program</b>UI Peduli Bencana</div><div>Disetujui oleh,<b>[SIM] Kepala Sekolah</b>SDN 1 Way Urang</div></div></body></html>""", tot, fis
 
 DRAW_CSS = """body{margin:0;background:#fff;font-family:Arial,Helvetica,sans-serif}svg text{font-family:Arial,Helvetica,sans-serif}"""
@@ -198,6 +200,10 @@ if __name__ == "__main__":
         pg = b.new_page(viewport={"width": 1100, "height": 1400}, device_scale_factor=1); pg.set_content(html.replace("<body>", "<body style=\"padding:28px;background:#fff\">")); pg.wait_for_timeout(300)
         H = pg.evaluate("document.body.scrollHeight"); print("rab tinggi", H)
         pg.set_viewport_size({"width": 1100, "height": H}); pg.screenshot(path=os.path.join(OUT, "rab-full.png"), full_page=True)
+        for part in (1, 2):
+            h2 = rab_html(part)[0].replace("<body>", "<body style=\"padding:28px;background:#fff\">")
+            pg = b.new_page(viewport={"width": 1100, "height": 900}); pg.set_content(h2); pg.wait_for_timeout(200)
+            pg.screenshot(path=os.path.join(OUT, f"rab-hal-{part}.png"), full_page=True); print("rab hal", part)
         for name, fn, (w, h) in (("denah", denah, (1600, 1100)), ("tampak", tampak, (1600, 1200))):
             pg = b.new_page(viewport={"width": w, "height": h}); pg.set_content(fn()); pg.screenshot(path=os.path.join(OUT, f"{name}.png")); print(name)
         b.close()

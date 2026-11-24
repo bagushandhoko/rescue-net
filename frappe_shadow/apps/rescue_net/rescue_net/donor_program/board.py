@@ -506,6 +506,9 @@ def program_detail(program):
     except Exception:
         detail_actor = None
     can_manage = bool(detail_actor and (_is_control(detail_actor) or _program_manager(detail_actor, row)))
+    # owner 24 Nov 16:05: masyarakat (akses "simulasi terbuka") melihat tampilan PUBLIK dulu; alat kelola baru
+    # muncul bila ia memilih "Coba sebagai pengelola". Pengelola asli tetap langsung melihat alat kelolanya.
+    sim_open_only = bool(can_manage and not (_is_control(detail_actor) or _program_manager(detail_actor, row, sim=False)))
     owner_verified = _campaign_owner_verified(detail_actor, row.owner_type, row.owner_id) if can_manage else None
     from rescue_net.donor_program.documents import bank_for, documents_for, initiator_verified
 
@@ -522,6 +525,7 @@ def program_detail(program):
         "donations": donations,
         "project": project,
         "can_manage": can_manage,
+        "sim_open_only": sim_open_only,
         "owner_verified": owner_verified,
         # owner 2026-11-01: public badge, RAB PDF + gambar kerja, initiator's bank account (verified only)
         "initiator_verified": initiator_verified(row),

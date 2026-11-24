@@ -487,8 +487,20 @@
       }).join("") : '<span class="rn-muted">' + empty + "</span>";
     }
     var pages = docs.rab_pages || (docs.rab ? [{ url: docs.rab, name: "RAB.pdf", pdf: true }] : []);
+    // owner 24 Nov 16:05 "rab nggak keliatan": halaman RAB berupa gambar ditampilkan selebar kolom (bisa dibaca
+    // langsung, klik = ukuran penuh); RAB PDF jadi tombol besar "Buka RAB lengkap".
+    var rabImgs = pages.filter(function (d) { return !d.pdf; }), rabPdfs = pages.filter(function (d) { return d.pdf; });
     $("#docRab").innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">📑 Rencana Anggaran Biaya (RAB)' + (pages.length ? " — " + pages.length + " halaman/berkas" : "") + "</b>" +
-      '<div class="rn-pk-drawings">' + tiles(pages, "rab", "RAB belum diunggah.") + "</div>";
+      (pages.length ? "" : '<span class="rn-muted">RAB belum diunggah.</span>') +
+      rabPdfs.map(function (d) {
+        return '<div class="rn-pk-rabpdf"><a class="btn" href="' + esc(d.url) + '" target="_blank" rel="noopener">📄 Buka RAB lengkap (PDF)</a> <span class="rn-muted">' + esc(d.label || d.name) + "</span>" +
+          (manage ? ' <button type="button" class="btn mini" data-doc-del="rab" data-url="' + esc(d.url) + '">Hapus</button>' : "") + "</div>";
+      }).join("") +
+      rabImgs.map(function (d) {
+        return '<figure class="rn-pk-rabpage"><a href="' + esc(d.url) + '" target="_blank" rel="noopener"><img src="' + esc(d.url) + '" alt="' + esc(d.label || d.name) + '" loading="lazy"></a>' +
+          "<figcaption>" + esc(d.label || d.name) + " · ketuk untuk memperbesar" +
+          (manage ? ' <button type="button" class="btn mini" data-doc-del="rab" data-url="' + esc(d.url) + '">Hapus</button>' : "") + "</figcaption></figure>";
+      }).join("");
     $("#docDrawings").innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">📐 Gambar Rencana</b><div class="rn-pk-drawings">' +
       tiles(docs.drawings || [], "gambar", "Gambar rencana belum diunggah.") + "</div>";
     var st = docs.statements || [];
@@ -1098,11 +1110,39 @@
     if (location.hash === "#ulasan") setTimeout(function () { var t = $("#detailTabs .rn-tab[data-tab=ulasan]"); if (t) t.click(); }, 800);
   }
 
+  // owner 24 Nov 16:05 ("masuk sebagai masyarakat kok masih nyampur dengan menu pengelola"): akses "simulasi terbuka"
+  // tidak lagi langsung memunculkan alat kelola. Tampilan publik dulu; tombol kecil "Coba sebagai pengelola".
+  var SIM_KEY = "rn_pk_sim_kelola";
+  function simOn() { try { return sessionStorage.getItem(SIM_KEY) === "1"; } catch (e) { return false; } }
+  function simOpenGate(data) {
+    var bar = $("#simOpenBar");
+    if (!bar) {
+      bar = document.createElement("div"); bar.id = "simOpenBar"; bar.className = "rn-pk-simbar";
+      var head = $("#programDetailPanel"); if (head) head.insertBefore(bar, head.firstChild);
+    }
+    if (!data || !data.sim_open_only) { bar.hidden = true; return; }
+    var on = simOn();
+    if (!on) {
+      data.can_manage = false;
+      if (data.donations) { data.donations.can_manage = false; data.donations.pending = []; }
+    }
+    bar.hidden = false;
+    bar.innerHTML = on
+      ? '🛠 <b>Mode coba pengelola (simulasi)</b> — perubahan Anda tersimpan di data simulasi. <button type="button" class="btn mini" data-sim-toggle="0">Kembali ke tampilan publik</button>'
+      : '<button type="button" class="btn mini ghost" data-sim-toggle="1">🛠 Coba sebagai pengelola (simulasi)</button>';
+    var btn = bar.querySelector("[data-sim-toggle]");
+    btn.addEventListener("click", function () {
+      try { sessionStorage.setItem(SIM_KEY, btn.getAttribute("data-sim-toggle")); } catch (e) {}
+      selectProgram(SELECTED);
+    });
+  }
+
   async function selectProgram(name, fromList) {
     SELECTED = name;
     renderList();
     try {
       var data = await window.RN_FRAPPE.call(DETAIL_METHOD, { program: name });
+      simOpenGate(data);
       renderDetail(data);
       renderManagePanel(data);
       loadReviews(name);

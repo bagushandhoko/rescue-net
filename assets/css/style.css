@@ -7847,3 +7847,11 @@ body[data-rn-settings="akun"] #orgKeySection { display: none !important; }
 .rn-donverify-row.is-ok { opacity: .75; }
 .rn-donverify-act { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 170px; }
 @media (max-width: 640px) { .rn-donverify-row { flex-direction: column; } .rn-donverify-act { align-items: flex-start; } }
+
+/* owner 2026-11-24 16:05: RAB terbaca langsung + bar mode coba pengelola (simulasi terbuka) */
+.rn-pk-rabpage { margin: 10px 0 14px; border: 1px solid var(--line, #eadfd8); border-radius: 10px; overflow: hidden; background: #fff; }
+.rn-pk-rabpage img { display: block; width: 100%; height: auto; }
+.rn-pk-rabpage figcaption { font-size: 13px; color: #6b5a50; padding: 6px 10px; border-top: 1px solid var(--line, #eadfd8); }
+.rn-pk-rabpdf { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rn-pk-simbar { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: #fff7e8; border: 1px dashed #e0b264; font-size: 14px; }
+.rn-pk-simbar[hidden] { display: none; }

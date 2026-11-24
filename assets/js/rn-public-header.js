@@ -112,10 +112,21 @@
       const res = await fetch(RN_API + "rescue_net.api_auth.my_landing", { credentials: "include" });
       const mine = res.ok ? (((await res.json()) || {}).message || {}) : {}; const evs = mine.events || [];
       if (evs.length) {
-        const ids = evs.map(e => e.id); const pick = ids.includes(active) ? active : (hadEventInUrl ? active : mine.latest_event);
-        select.innerHTML = evs.map(e => `<option value="${e.id}"${e.id === pick ? " selected" : ""}>${e.title || prettifyEventId(e.id)}</option>`).join("");
-        if (!ids.includes(pick)) { const opt = document.createElement("option"); opt.value = pick; opt.textContent = prettifyEventId(pick) + " (dilihat)"; opt.selected = true; select.insertBefore(opt, select.firstChild); }
-        if (pick !== active) goToEvent(pick);
+        // owner 2026-11-24 ("saat masuk sbg masyarakat bencana lain nggak keliatan, hanya satu bencana"): dulu daftar
+        // DIGANTI dengan bencana milik akun saja + pengguna dipaksa pindah. Sekarang: "Bencana saya" di atas, semua
+        // bencana aktif lain tetap bisa dipilih; pindah otomatis hanya bila belum ada bencana yang dipilih sama sekali.
+        const ids = evs.map(e => stripEventPrefix(e.id));
+        const others = [...select.options].filter(o => !ids.includes(o.value) && o.value !== active);
+        const pick = active || mine.latest_event;
+        const opt = (id, t) => `<option value="${id}"${id === pick ? " selected" : ""}>${t}</option>`;
+        let html = `<optgroup label="Bencana saya">` + evs.map(e => opt(stripEventPrefix(e.id), e.title || prettifyEventId(e.id))).join("") + `</optgroup>`;
+        if (active && !ids.includes(active)) {
+          const cur = [...select.options].find(o => o.value === active);
+          html = `<optgroup label="Sedang dilihat">` + opt(active, cur ? cur.textContent : prettifyEventId(active)) + `</optgroup>` + html;
+        }
+        if (others.length) html += `<optgroup label="Bencana aktif lain">` + others.map(o => opt(o.value, o.textContent)).join("") + `</optgroup>`;
+        select.innerHTML = html;
+        if (!active && !hadEventInUrl && pick) goToEvent(pick);
       }
     } catch (e) { }
   }

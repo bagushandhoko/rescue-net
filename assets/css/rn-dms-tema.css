@@ -279,3 +279,10 @@ html.rn-dms-tema .eyebrow,
 html.rn-dms-tema .dms-module-main > a,
 html.rn-dms-tema .dms-module-main .rn-event-picker span { color: #9a3412 !important; }
 html.rn-dms-tema .rn-page-status { color: #374151 !important; }
+
+/* 24 Nov: di HP sidebar halaman (Bencana Aktif, Posko, ...) menjadi laci dengan `background: var(--bg) !important`
+   (rn-mobile-drawer.css) -> abu #e4e6e9 + teks putih. Variabel --bg di sidebar dibuat biru tua. */
+@media (max-width: 1023px) {
+  html.rn-dms-tema .sidebar,
+  html.rn-dms-tema .rn-drawer-panel { --bg: var(--dms-navy); }
+}

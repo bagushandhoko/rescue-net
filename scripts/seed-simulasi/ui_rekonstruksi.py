@@ -90,7 +90,10 @@ def seed():
 
         opening_received = int(row.budget_received or 0)
         opening_spent = int(row.budget_spent or 0)
-        if opening_received or opening_spent:
+        pre = assets / "rek-koran-awal.pdf"   # Ming Ming: get_pdf gagal di bench console -> PDF dibuat duluan (Chromium)
+        if (opening_received, opening_spent) == (9000000, 2559000) and pre.exists():
+            content["rek-koran.pdf"] = pre.read_bytes()
+        elif opening_received or opening_spent:
             from frappe.utils.pdf import get_pdf
 
             content["rek-koran.pdf"] = get_pdf(

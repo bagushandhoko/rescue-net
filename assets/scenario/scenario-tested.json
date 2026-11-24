@@ -2223,6 +2223,20 @@
         "QRIS program diunggah sebagai pengelola lalu dicek tampil untuk tamu di HP."
       ],
       "hasil": "Temuan: posko publik milik Kelompok tertutup tidak bisa disimpan; posko serba-fungsi ditolak sebagai shelter; Simulasi Terbuka belum mencakup proyek pemulihan; rencana pengungsian bisa ditulis siapa pun & daftar KK terbuka untuk tamu; Rencana Aksi tidak punya layar input. Empat yang pertama diperbaiki + tes."
+    },
+    {
+      "id": "MINGMING-BADUY-AKUNDEMO-20261124",
+      "tanggal": "2026-11-24",
+      "kategori": "Data simulasi",
+      "judul": "Simulasi kebakaran Baduy Luar lengkap + akun demo semua peran",
+      "tujuan": "Owner: simulasi program lengkap dari berita 21 rumah Baduy Luar terbakar; akun demo mewakili semua pengguna",
+      "akun": "baduy.demo (pemrakarsa), pelapor.demo, masyarakat.demo, relawan.demo, vendor.demo + 9 akun baru/terhubung",
+      "langkah": [
+        "Bencana [SIMULASI] Kebakaran Kampung Baduy Luar diajukan pemrakarsa lalu diaktifkan; 3 laporan masyarakat; posko darurat.",
+        "Program bangun kembali 21 rumah: RAB Rp 540.885.000, denah, 5 ilustrasi, QRIS, rekening, rekening koran, 6 milestone, 3 lokasi, 6 kebutuhan, 3 kabar lapangan, 4 donasi (3 dikonfirmasi), proyek pemulihan + 2 kebutuhan relawan, tender atap + 1 penawaran vendor.",
+        "Akun demo: ld2-ld6 dihubungkan ke poskonya; baru wakil/staf org, verifikator, relawan, pelapor terverifikasi, penyedia tender, pemrakarsa perorangan; semua login diuji."
+      ],
+      "hasil": "Live tampil untuk tamu (HP & laptop) tanpa galat. Temuan: perorangan tidak bisa memulai program donasi sendiri (harus lewat kelompok); label prioritas masih 'high' (Inggris); akun Control Centre demo memakai sandi publik."
     }
   ],
   "rencana": [

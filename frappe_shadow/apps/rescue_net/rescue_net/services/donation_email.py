@@ -54,7 +54,7 @@ def _send(to, subject, rows, intro, outro):
 
 def _program(name):
     return frappe.db.get_value("RN Donor Program", name, ["program_name", "disaster_event", "bank_name",
-                                                         "bank_account_number", "bank_account_holder"], as_dict=True) or frappe._dict()
+                                                         "bank_account_number", "bank_account_holder", "work_drawings"], as_dict=True) or frappe._dict()
 
 
 def on_created(doc):
@@ -67,7 +67,9 @@ def on_created(doc):
         bank = " · ".join(x for x in (p.bank_name, p.bank_account_number, p.bank_account_holder and "a.n. " + p.bank_account_holder) if x)
         _send(to, "%sTerima kasih, donasi %s untuk %s sudah tercatat" % (_sim_tag(doc.disaster_event), _rp(doc.amount), p.program_name),
               [("Program", p.program_name), ("Nominal", _rp(doc.amount)), ("Nomor donasi", doc.name),
-               ("Rekening tujuan", bank or "lihat halaman program"), ("Status", "Menunggu konfirmasi pengelola program")],
+               ("Rekening tujuan", bank or "lihat halaman program"),
+               ("QRIS", "tersedia di halaman program" if '"qris"' in (p.work_drawings or "") else ""),
+               ("Status", "Menunggu konfirmasi pengelola program")],
               "Halo %s, terima kasih atas niat baik Anda." % escape_html(doc.donor_name or "Donatur"),
               'Bila belum, silakan transfer sesuai nominal ke rekening di atas. Pengelola program akan mengonfirmasi '
               'setelah dana masuk, dan Anda akan menerima email lagi. <a href="%s%s">Lihat program</a>.'

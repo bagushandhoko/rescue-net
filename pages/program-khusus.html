@@ -308,7 +308,7 @@
               <p class="rn-muted" style="font-size:13px;margin:0">Pengelola: catat setiap pengeluaran dana program. Total realisasi otomatis menambah "Terpakai".</p>
               <div class="form-grid">
                 <label>Uraian belanja<input name="update_title" required maxlength="140" placeholder="mis. Pembelian 2.000 masker N95"></label>
-                <label>Jumlah (Rp)<input name="amount_spent" type="number" min="1" step="1000" required placeholder="mis. 30000000"></label>
+                <label>Jumlah (Rp)<input name="amount_spent" type="number" min="1000" step="1" required placeholder="mis. 30000000"></label>
                 <label>Keterangan / bukti<input name="update_notes" maxlength="500" placeholder="mis. Nota CV Medika No. 123, diserahkan ke posko MDMC"></label>
               </div>
               <div class="form-actions"><button class="btn primary" type="submit">Catat Realisasi</button><span class="form-message" id="realisasiMsg"></span></div>
@@ -469,7 +469,7 @@
       <div class="pk-step"><b>3. Sudah bayar? Kabari pemrakarsa</b>
         <p class="rn-muted" id="pkLoginNote" hidden style="margin:4px 0">Masuk dulu agar pemrakarsa bisa mencocokkan dana. <a class="btn primary mini" id="pkLoginBtn" href="auth.html">Masuk / Daftar</a></p>
         <form class="rn-form" id="donateForm" autocomplete="off">
-              <label>Nominal (Rp)<input name="amount" id="pkAmountField" type="number" min="1" step="1000" required placeholder="mis. 100000"></label>
+              <label>Nominal (Rp)<input name="amount" id="pkAmountField" type="number" min="1000" step="1" required placeholder="mis. 100000"></label>
               <label>Doa / pesan dukungan (opsional)<input name="message" maxlength="300" placeholder="mis. Semoga lekas pulih dan asap segera reda"></label>
               <label class="rn-auth-check"><input type="checkbox" name="is_anonymous"> Tampilkan sebagai donatur anonim di publik</label>
               <div class="form-actions">

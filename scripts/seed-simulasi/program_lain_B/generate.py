@@ -151,7 +151,10 @@ def render_photos(source):
                 draw.rectangle((0, 687, 1280, 760), fill="#182a3c")
                 draw.text((20, 706), label, fill="white", font=font(27))
                 photo.save(ROOT / image_name, quality=88)
-                sheet.paste(photo.resize((width, height - 23), Image.Resampling.LANCZOS), (x, y))
+            if (ROOT / image_name).is_file():
+                with Image.open(ROOT / image_name) as stamped:
+                    preview = stamped.resize((width, height - 23), Image.Resampling.LANCZOS)
+                sheet.paste(preview, (x, y))
             else:
                 ImageDraw.Draw(sheet).text((x + 20, y + 95), "Foto belum tersedia", fill="#182a3c", font=font(21))
             ImageDraw.Draw(sheet).text((x + 12, y + height - 21), f"{key} · {index}", fill="#182a3c", font=font(14))

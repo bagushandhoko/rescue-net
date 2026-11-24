@@ -11,9 +11,22 @@ from urllib.parse import unquote, urlsplit
 import frappe
 from rescue_net import api_donor_program as dp
 from rescue_net.donor_program import plan
+from rescue_net.services.drill import is_simulation_event
 from rescue_net.services.money import lock
 
 DOCTYPE = "RN Donor Program"
+# Kolom ms, loc, nd, upd, don dari program-lain.tsv. Donasi pending tidak dihitung.
+SNAPSHOT_COUNTS = {
+    "8861d9b89083": (0, 0, 0, 3, 6),
+    "9577ecefacc5": (0, 0, 0, 0, 4),
+}
+SNAPSHOT_TABLES = (
+    ("RN Program Milestone", "program", {}),
+    ("RN Program Location", "program", {}),
+    ("RN Program Need", "program", {}),
+    ("RN Donor Program Update", "program", {}),
+    ("RN Cash Donation", "donor_program", {"status": "received"}),
+)
 PREFIXES = ("sampul-sim-", "rab-sim-", "gambar-sim-", "koran-sim-", "qris-sim-")
 
 
@@ -139,11 +152,21 @@ def seed_one(key, program, assets, data):
     event, locations = data.AREAS[program.area]
     lock(DOCTYPE, name)
     row = frappe.get_doc(DOCTYPE, name)
-    if row.disaster_event != event or row.program_type != program.kind:
+    if (row.disaster_event not in {event, f"disaster_events:{event}"}
+            or row.program_type != program.kind):
         raise ValueError(f"program/event berbeda: {row.program_type}, {row.disaster_event}")
     if marker in (row.notes or "").splitlines():
         print(f"{name}: seed sudah tercatat.")
         return
+    if os.environ.get("RN_PROG_PROD") == "1" and not is_simulation_event(row.disaster_event):
+        raise ValueError("Event tidak terdaftar sebagai simulasi")
+    counts = tuple(
+        frappe.db.count(doctype, {field: name, **extra})
+        for doctype, field, extra in SNAPSHOT_TABLES
+    )
+    expected = SNAPSHOT_COUNTS.get(key, (0, 0, 0, 0, 0))
+    if counts != expected:
+        raise ValueError(f"Jumlah milestone/lokasi/kebutuhan/kabar/donasi berbeda: {counts}, TSV {expected}")
     opening = (row.budget_received or 0, row.budget_spent or 0)
     if opening != program.opening:
         raise ValueError(f"dana awal DB {opening} berbeda dari TSV {program.opening}")
@@ -198,6 +221,16 @@ def seed():
         import data_b as data
     finally:
         sys.path.pop(0)
+
+    if prod_ok:
+        missing = [
+            f"{key}-foto-{index}.jpg"
+            for key, program in data.PROGRAMS.items()
+            for index, _ in enumerate(program.photos, 1)
+            if not (assets / f"{key}-foto-{index}.jpg").is_file()
+        ]
+        if missing:
+            raise FileNotFoundError("Foto produksi belum lengkap: " + ", ".join(missing))
 
     previous_user = frappe.session.user
     for key, program in data.PROGRAMS.items():

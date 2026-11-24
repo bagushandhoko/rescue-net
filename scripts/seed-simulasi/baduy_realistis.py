@@ -50,7 +50,9 @@ def reconcile(program, received, spent, pending):
 
 def seed():
     site = str(frappe.local.site or "")
-    if (site != os.environ.get("RN_BADUY_SITE") or not (site == "rescuenet-test.localhost" or site.startswith(("test-", "test.")))):
+    # Ming Ming 24 Nov: produksi hanya dengan RN_BADUY_PROD=1 (moderator, setelah backup DB)
+    prod_ok = os.environ.get("RN_BADUY_PROD") == "1" and site == "osiun.localhost"
+    if (site != os.environ.get("RN_BADUY_SITE") or not (prod_ok or site == "rescuenet-test.localhost" or site.startswith(("test-", "test.")))):
         raise RuntimeError("RN_BADUY_SITE harus sama dengan nama site uji (rescuenet-test.localhost atau awalan test-/test.)")
     assets = Path(os.environ.get("RN_BADUY_ASSETS", "/tmp/baduy-realistis")).resolve()
     data = run_path(str(assets / "baduy_data.py"))

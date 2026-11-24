@@ -46,6 +46,8 @@ services:
     networks: [net]
 
   backend:
+    # 2026-11-24 Ming Ming: pip install butuh internet (flit_core). 23 Nov restart saat internet putus -> pip gagal.
+    # Sekarang pip dicoba maks 90 dtk; gagal -> tetap start, rescue_net dimuat dari PYTHONPATH (kode yang sama).
     <<: *frappe
     depends_on:
       mariadb: {condition: service_healthy}
@@ -54,7 +56,7 @@ services:
     entrypoint: ["/bin/bash"]
     command:
       - -lc
-      - "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && cd sites && exec ../env/bin/gunicorn --bind=0.0.0.0:8000 --workers=${RN_WORKERS:-7} --threads=${RN_THREADS:-2} --worker-class=gthread --worker-tmp-dir=/dev/shm --timeout=120 --graceful-timeout=30 --max-requests=2000 --max-requests-jitter=200 --preload rescue_net.wsgi:application"
+      - "cd /home/frappe/frappe-bench && { timeout 90 ./env/bin/pip install -q -e apps/rescue_net || echo 'PERINGATAN: pip gagal (internet?) - rescue_net dimuat lewat PYTHONPATH'; } && export PYTHONPATH=/home/frappe/frappe-bench/apps/rescue_net && cd sites && exec ../env/bin/gunicorn --bind=0.0.0.0:8000 --workers=${RN_WORKERS:-7} --threads=${RN_THREADS:-2} --worker-class=gthread --worker-tmp-dir=/dev/shm --timeout=120 --graceful-timeout=30 --max-requests=2000 --max-requests-jitter=200 --preload rescue_net.wsgi:application"
 
   # tugas latar & terjadwal (notifikasi, BMKG, dsb.). Profil "jobs": JANGAN dinyalakan di server uji/gladi
   # yang memakai data asli, supaya pesan tidak terkirim dua kali ke orang sungguhan.
@@ -66,14 +68,14 @@ services:
       replicas: ${RN_JOB_WORKERS:-1}
     depends_on: [backend]
     entrypoint: ["/bin/bash"]
-    command: ["-lc", "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && exec bench --site ${RN_SITE:-osiun.localhost} worker --queue default,short,long"]
+    command: ["-lc", "cd /home/frappe/frappe-bench && { timeout 90 ./env/bin/pip install -q -e apps/rescue_net || echo 'PERINGATAN: pip gagal (internet?) - rescue_net dimuat lewat PYTHONPATH'; } && export PYTHONPATH=/home/frappe/frappe-bench/apps/rescue_net && exec bench --site ${RN_SITE:-osiun.localhost} worker --queue default,short,long"]
 
   scheduler:
     <<: *frappe
     profiles: ["jobs"]
     depends_on: [backend]
     entrypoint: ["/bin/bash"]
-    command: ["-lc", "cd /home/frappe/frappe-bench && ./env/bin/pip install -q -e apps/rescue_net && exec bench --site ${RN_SITE:-osiun.localhost} schedule"]
+    command: ["-lc", "cd /home/frappe/frappe-bench && { timeout 90 ./env/bin/pip install -q -e apps/rescue_net || echo 'PERINGATAN: pip gagal (internet?) - rescue_net dimuat lewat PYTHONPATH'; } && export PYTHONPATH=/home/frappe/frappe-bench/apps/rescue_net && exec bench --site ${RN_SITE:-osiun.localhost} schedule"]
 
   web:
     image: nginx@sha256:df221db836e1754089190208cee7eeda94f233197056426eda74a43ab1abeac2   # nginx:alpine

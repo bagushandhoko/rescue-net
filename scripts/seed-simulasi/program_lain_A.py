@@ -92,7 +92,7 @@ def replace_files(row, data, folder):
         fields["cover_image_url"] = None
     frappe.db.set_value(DOCTYPE, program, fields)
     for evidence in frappe.get_all("RN Evidence File",
-                                   {"linked_object_type": DOCTYPE, "linked_object_id": program},
+                                   filters={"linked_object_type": DOCTYPE, "linked_object_id": program},
                                    fields=["name", "filename", "file_path"]):
         if placeholder(evidence.filename) or placeholder(evidence.file_path):
             frappe.db.set_value("RN Evidence File", evidence.name, "visibility", "internal")
@@ -136,7 +136,7 @@ def seed_finance_and_updates(row, data):
                             update_modified=False)
 
     update_type = "RN Donor Program Update"
-    for name in frappe.get_all(update_type, {"program": program, "update_notes": "Kabar simulasi untuk uji tampilan."},
+    for name in frappe.get_all(update_type, filters={"program": program, "update_notes": "Kabar simulasi untuk uji tampilan."},
                                pluck="name"):
         frappe.db.set_value(update_type, name, "public_visibility", "internal")
 
@@ -166,7 +166,8 @@ def seed(data, folder, event, locations):
         return
 
     initial = (row.budget_received or 0, row.budget_spent or 0, row.budget_target or 0)
-    counts = tuple(frappe.db.count(doctype, {field: program}) for doctype, field in (
+    # Ming Ming: TSV menghitung donasi DITERIMA saja (donasi uji pending tidak ikut)
+    counts = tuple(frappe.db.count(doctype, {field: program, **({"status": "received"} if doctype == "RN Cash Donation" else {})}) for doctype, field in (
         ("RN Program Milestone", "program"), ("RN Program Location", "program"),
         ("RN Program Need", "program"), ("RN Donor Program Update", "program"),
         ("RN Cash Donation", "donor_program"),

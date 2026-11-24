@@ -364,6 +364,9 @@ def session_info():
         # account menu in the header (2026-10-26): which settings to offer
         "is_system_manager": bool(is_system_manager()),
         "manages_org": _manages_org(data["id"]),
+        # 2026-11-24 (owner: menu pengelola/posko hanya untuk pengelola/admin): peran SUNGGUHAN, bukan Simulasi
+        # Terbuka — penugasan posko disetujui atau keanggotaan organisasi pemilik/wakil/staf
+        "runs_posko": _runs_posko(data["id"]),
         # 2026-11-24: pemilik organisasi tertutup wajib 2FA -> "setup" / "verify" / None
         "twofa_required": _twofa_required(),
         # 2026-11-09: akun lama / login Google belum pernah menyetujui Kebijakan Privasi -> header minta sekali
@@ -402,6 +405,15 @@ def _manages_org(user_account):
         return False
     return bool(frappe.db.exists("RN Organization Membership", {
         "user_account": user_account, "membership_role": "owner", "status": "approved"}))
+
+
+def _runs_posko(user_account):
+    if not user_account:
+        return False
+    if frappe.db.exists("RN Posko Assignment", {"user_account": user_account, "status": "approved"}):
+        return True
+    return bool(frappe.db.exists("RN Organization Membership", {
+        "user_account": user_account, "status": "approved", "membership_role": ["in", ["owner", "deputy", "staff"]]}))
 
 
 def _is_google_login(user):

@@ -501,16 +501,17 @@
   function renderBank(data) {
     var b = data.bank || {}, box = $("#bankBox");
     if (!box) return;
-    var qris = b.qris_url ? '<div class="rn-pk-qris" style="margin-top:8px"><b>Atau bayar dengan QRIS:</b><br>' +
+    // owner 2026-11-24: QRIS DI SAMPING rekening (flex; di HP sempit turun ke bawah)
+    var qris = b.qris_url ? '<div class="rn-pk-qris"><b>' + (b.account_number ? "Atau bayar dengan QRIS:" : "Bayar dengan QRIS:") + '</b><br>' +
       '<a href="' + esc(b.qris_url) + '" target="_blank" rel="noopener"><img src="' + esc(b.qris_url) + '" alt="QRIS penerimaan donasi program" ' +
       'style="width:220px;max-width:100%;border-radius:8px;border:1px solid var(--line);background:#fff;margin-top:4px"></a>' +
       (data.can_manage ? '<br><button type="button" class="btn mini" data-doc-del="qris" data-url="' + esc(b.qris_url) + '">Hapus QRIS</button>' : "") + "</div>" : "";
     if (b.account_number || b.qris_url) {
       box.hidden = false;
       box.className = "rn-pk-bank" + (b.shown_publicly ? "" : " warn");
-      box.innerHTML = (b.account_number ? "Transfer ke rekening pemrakarsa:<br><b>" + esc(b.bank_name) + " " + esc(b.account_number) + "</b>" +
-        ' <button type="button" class="btn mini" data-copy="' + esc(b.account_number) + '">Salin</button><br>a.n. ' + esc(b.account_holder) : "") + qris +
-        "<br><small>" + (b.shown_publicly
+      box.innerHTML = '<div class="rn-pk-paygrid">' + (b.account_number ? '<div class="rn-pk-acct">Transfer ke rekening pemrakarsa:<br><b>' + esc(b.bank_name) + " " + esc(b.account_number) + "</b>" +
+        ' <button type="button" class="btn mini" data-copy="' + esc(b.account_number) + '">Salin</button><br>a.n. ' + esc(b.account_holder) + "</div>" : "") + qris + "</div>" +
+        "<small>" + (b.shown_publicly
           ? "Setelah transfer, isi formulir di bawah. Donasi tampil di daftar setelah dicek & dikonfirmasi pemrakarsa."
           : "Hanya Anda (pengelola) yang melihat rekening ini — tampil ke publik setelah pemrakarsa terverifikasi.") + "</small>";
     } else if (b.available) {

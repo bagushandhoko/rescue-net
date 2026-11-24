@@ -344,23 +344,59 @@
     return [
       ["Pengaturan", settings, "pengaturan"],
       ["Komando & Admin", CONFIG.komando.filter(item => {
-        if (item.href === "kelola-bencana.html") return true;
+        if (item.href === "kelola-bencana.html") return admin || audit || !!session.runs_posko;
         if (item.href === "jejak-audit.html") return audit;
         return admin;
       }), "komando"]
-    ];
+    ].filter(group => group[1].length);   // grup kosong (pengguna biasa) tidak ditampilkan
+  }
+
+  // owner 2026-11-24: "publik masuk di halaman donasi nggak perlu tampil menu pengelola donasi/posko, buat bingung" +
+  // "menu pengaturan pengelola/posko hanya muncul saat login sebagai pengelola atau admin".
+  // Tamu & pengguna biasa: grup Posko hanya "Daftarkan Posko Baru"; di halaman donasi hanya grup Donasi.
+  // Pengelola posko/organisasi, Control Centre, super admin: menu lengkap. Hasil terakhir diingat per tab
+  // (sessionStorage) supaya menu pengelola tidak berkedip setiap pindah halaman.
+  const PUBLIC_DONATION_PAGES = ["program-khusus.html", "donor-program.html", "pengadaan-tender.html"];
+  const POSKO_PUBLIC = [{ label: "Daftarkan Posko Baru", href: "registrasi-posko.html", icon: "posko" }];
+  const RUNS_KEY = "rn_nav_runs";
+
+  function onPublicDonationPage() {
+    const page = (location.pathname.split("/").pop() || "").toLowerCase();
+    return PUBLIC_DONATION_PAGES.includes(page);
+  }
+
+  async function viewerRunsSomething() {
+    const session = await window.RNAccount?.session();
+    if (!session?.user || session.user === "Guest") return false;
+    // peran sungguhan dari server (runs_posko), BUKAN Simulasi Terbuka: akun masyarakat yang boleh mengubah data
+    // simulasi tetap melihat menu publik
+    return !!(session.runs_posko || session.manages_org || session.is_system_manager || session.role === "command_center");
+  }
+
+  function navGroupsHtml(runs) {
+    if (onPublicDonationPage() && !runs) return groupHtml("Donasi & Program Khusus", CONFIG.donasi, "donasi");
+    return groupHtml("Posko", runs ? CONFIG.posko : POSKO_PUBLIC, "posko") +
+      groupHtml("Donasi & Program Khusus", CONFIG.donasi, "donasi") +
+      groupHtml("Modul", CONFIG.modules, "modul");
   }
 
   function renderNavigation(nav) {
     nav.classList.add("rn-nav-v2");
     nav.setAttribute("data-rn-navigation-version", CONFIG.version);
     nav.setAttribute("aria-label", "Navigasi operasional Rescue-Net");
-    nav.innerHTML =
-      groupHtml("Posko", CONFIG.posko, "posko") +
-      groupHtml("Donasi & Program Khusus", CONFIG.donasi, "donasi") +
-      groupHtml("Modul", CONFIG.modules, "modul");
+    let cached = false;
+    try { cached = isLoggedIn() && sessionStorage.getItem(RUNS_KEY) === "1"; } catch (e) { /* mode privat */ }
+    nav.innerHTML = navGroupsHtml(cached);
     wireAccordion(nav);
     if (window.RNIconFill) window.RNIconFill(nav);
+    viewerRunsSomething().then(runs => {
+      try { sessionStorage.setItem(RUNS_KEY, runs ? "1" : "0"); } catch (e) { /* mode privat */ }
+      if (runs === cached) return;
+      nav.querySelectorAll('[data-rn-group="posko"], [data-rn-group="donasi"], [data-rn-group="modul"]').forEach(g => g.remove());
+      nav.insertAdjacentHTML("afterbegin", navGroupsHtml(runs));
+      wireAccordion(nav);
+      if (window.RNIconFill) window.RNIconFill(nav);
+    }).catch(() => {});
     accountGroups().then(groups => {
       nav.insertAdjacentHTML("beforeend", groups.map(args => groupHtml(...args)).join(""));
       wireAccordion(nav);

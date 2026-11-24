@@ -7832,3 +7832,9 @@ body.home-page .rn-hero-cta { display: flex !important; flex-wrap: wrap; gap: 8p
   .rn-ba-add-long { display: none; }
   .rn-ba-add { min-width: 44px; justify-content: center; }
 }
+
+/* owner 2026-11-24: rekening & QRIS berdampingan di kotak donasi program */
+.rn-pk-paygrid { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-start; margin-bottom: 8px; }
+.rn-pk-paygrid .rn-pk-acct { flex: 1 1 220px; min-width: 0; }
+.rn-pk-paygrid .rn-pk-qris { flex: 0 1 230px; }
+.rn-pk-paygrid .rn-pk-qris img { display: block; }

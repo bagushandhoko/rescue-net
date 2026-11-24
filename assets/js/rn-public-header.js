@@ -27,6 +27,8 @@
     poskoSettingsHref() {
       return poskoSettingsRequest ||= this.session().then(async (session) => {
         if (!session?.user || session.user === "Guest") return "";
+        // 2026-11-24 owner: pengaturan pengelola hanya untuk pengelola SUNGGUHAN/admin (bukan Simulasi Terbuka)
+        if (session.runs_posko === false && !session.is_system_manager) return "";
         const api = "rescue_net.api_posko_manage.";
         const list = await accountCall(api + "my_managed_poskos");
         const rows = list?.poskos || [];

@@ -77,3 +77,13 @@ class TestSeedTemuan(RNTestCase):
             api_displacement.create_displacement_plan(sim.name, "Desa B", 3, household_code="KK-SIM")
         with as_guest():
             self.assertEqual([p["household_code"] for p in api_displacement.displacement_board(sim.name)["plans"]], ["KK-SIM"])
+
+    def test_session_runs_posko_is_real_role_not_sim_open(self):
+        from rescue_net import api_auth
+        sim = _sim(make_event())
+        posko = make_posko(sim)
+        op, citizen = make_actor(posko=posko), make_actor(role="citizen")
+        with as_user(op.user):
+            self.assertTrue(api_auth.session_info()["runs_posko"])
+        with as_user(citizen.user):
+            self.assertFalse(api_auth.session_info()["runs_posko"])   # Simulasi Terbuka tidak menjadikannya pengelola

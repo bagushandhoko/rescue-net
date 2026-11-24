@@ -188,9 +188,9 @@ def seed_one(key, program, assets, data):
 
 def seed():
     site = str(frappe.local.site or "")
-    if (not site or site != os.environ.get("RN_PROG_SITE")
-            or site.lower() in {"osiun.localhost", "192.168.100.3"}
-            or "rescue-net.online" in site.lower()):
+    prod_ok = os.environ.get("RN_PROG_PROD") == "1" and site == "osiun.localhost"   # Ming Ming: produksi setelah backup
+    if (not site or site != os.environ.get("RN_PROG_SITE")) or (not prod_ok and (site.lower() in {"osiun.localhost", "192.168.100.3"}
+            or "rescue-net.online" in site.lower())):
         raise RuntimeError("RN_PROG_SITE harus sama dengan nama site uji terisolasi.")
     assets = Path(os.environ.get("RN_PROG_ASSETS", "/tmp/program_lain_B")).resolve()
     sys.path.insert(0, str(assets))

@@ -66,7 +66,7 @@ def seed():
             "partners": "[SIM] Komite SD Tunas Pesisir, Tim Teknik Sipil, BPBD Aceh Barat",
             "notes": "\n".join(filter(None, (row.notes, marker))),
         }
-        if (row.cover_image_url or "").rsplit("/", 1)[-1] == "sampul-sim-7a9c62.png":
+        if (row.cover_image_url or "").rsplit("/", 1)[-1].startswith("sampul-sim-7a9c62"):
             fields["cover_image_url"] = None
         frappe.db.set_value("RN Donor Program", PROGRAM, fields)
         plan.set_output_verification(PROGRAM, status="dalam_proses", output_target=3, output_verified=0,
@@ -78,10 +78,12 @@ def seed():
             "rab-sim-7a9c62.pdf", "gambar-sim-7a9c62-1.png", "gambar-sim-7a9c62-2.png",
             "koran-sim-7a9c62.pdf",
         }
+        # Ming Ming 24 Nov: nama di DB berakhiran acak (mis. gambar-sim-7a9c62-1dd7c68.png) -> cocokkan awalan
+        prefixes = ("rab-sim-7a9c62", "gambar-sim-7a9c62", "koran-sim-7a9c62")
         for entry in json.loads(row.work_drawings or "[]"):
-            if entry.get("name") in placeholders:
+            if entry.get("name") in placeholders or str(entry.get("name") or "").startswith(prefixes):
                 dp.remove_program_file(PROGRAM, entry.get("kind") or "gambar", entry["url"])
-        if (row.rab_file_url or "").rsplit("/", 1)[-1] == "rab-sim-7a9c62.pdf":
+        if (row.rab_file_url or "").rsplit("/", 1)[-1].startswith("rab-sim-7a9c62"):
             current = frappe.db.get_value("RN Donor Program", PROGRAM, "rab_file_url")
             if current == row.rab_file_url:
                 dp.remove_program_file(PROGRAM, "rab", current)

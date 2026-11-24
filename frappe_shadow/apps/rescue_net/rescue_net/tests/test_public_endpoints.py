@@ -50,6 +50,10 @@ GUEST_ENDPOINTS = {
     "api_ai.ai_providers", "api_ai.public_active_disasters", "api_ai.public_context", "api_ai.public_map_context",
     "api_auth.register", "api_auth.session_info", "api_auth.social_login_url",
     "api_auth.account_status",  # reviewed 2026-11-12: guest gets only {"logged_in": False}
+    # reviewed 2026-11-24 (Ming Ming): login Google DMS. google_url -> hanya URL Google + cookie nonce acak;
+    # start -> selalu redirect ke DMS_ORIGIN (bukan open redirect), tamu dapat sso_error; claim -> butuh tiket
+    # sekali pakai 120 dtk + cookie nonce peramban yang sama. Ketiganya dibatasi rate_limit.
+    "api_auth.dms_sso_google_url", "api_auth.dms_sso_start", "api_auth.dms_sso_claim",
     "api_control_centre.cari_wilayah_bencana",  # reviewed 2026-11-12: nama & kode wilayah resmi (data publik), tanpa data orang
     "api_comms.comms_board",
     "api_community_cluster.disaster_options", "api_community_cluster.get_posko_settings",
@@ -131,6 +135,7 @@ NOT_SWEPT = {
     "api_volunteer.register_volunteer",
     "api_saran.submit_suggestion", "api_saran.support_suggestion",
     "api_files.file",  # needs a file url; covered by test_api_files
+    "api_auth.dms_sso_google_url", "api_auth.dms_sso_start", "api_auth.dms_sso_claim",  # cookie/redirect/tiket: test_dms_sso
 }
 
 SECRETS = {

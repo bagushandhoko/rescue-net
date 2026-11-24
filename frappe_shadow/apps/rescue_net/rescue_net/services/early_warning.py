@@ -8,7 +8,6 @@ notifies anyone or runs AI. A failing source is logged and shown as
 """
 
 import json
-import math
 import re
 import urllib.error
 import urllib.request
@@ -99,25 +98,13 @@ def radius_km(magnitude):
     return max(100.0, min(300.0, 100.0 + (magnitude - 5.0) * 100.0))
 
 
-def _km(lat1, lng1, lat2, lng2):
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    a = (math.sin((p2 - p1) / 2) ** 2
-         + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lng2 - lng1) / 2) ** 2)
-    return 12742 * math.asin(math.sqrt(a))
-
-
 def nearby_poskos(q):
-    r = radius_km(q["magnitude"])
-    out = []
-    for p in frappe.get_all("RN Posko", fields=["name", "title", "latitude", "longitude"],
-                            limit_page_length=5000):
-        la, lo = flt(p.latitude), flt(p.longitude)
-        if not (la or lo):
-            continue
-        d = _km(q["lat"], q["lng"], la, lo)
-        if d <= r:
-            out.append({"posko": p.name, "title": p.title, "km": round(d, 1)})
-    return sorted(out, key=lambda x: x["km"])[:200]
+    """Posko dalam radius gempa. Disaring di database dengan kotak lokasi (services.geo), bukan lagi memindai
+    semua posko (dulu maksimal 5.000 baris: posko ke-5.001 dst. diam-diam terlewat)."""
+    from rescue_net.services import geo
+
+    rows = geo.near("RN Posko", q["lat"], q["lng"], radius_km(q["magnitude"]), fields=["title"], limit=200)
+    return [{"posko": p.name, "title": p.title, "km": round(p.km, 1)} for p in rows]
 
 
 def _severity(mag):

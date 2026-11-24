@@ -17,7 +17,7 @@ from frappe.utils import flt, get_datetime, now_datetime
 
 from rescue_net.access_policy import rn_actor
 from rescue_net.api_volunteer import _actor_profile, _assert_manager_posko
-from rescue_net.services.early_warning import _km
+from rescue_net.services.geo import km as _km
 
 AUTO_CLOSE_HOURS = 12
 _ACTIVE_ASSIGNMENT = ("accepted", "checked_in", "in_progress")

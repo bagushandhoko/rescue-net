@@ -535,7 +535,8 @@ def program_detail(program):
         "kitabisa": _kb_public(row),
         "owner_title": (frappe.db.get_value({"organization": "RN Organization", "posko": "RN Posko"}.get((row.owner_type or "").lower(), "RN Organization"), row.owner_id, "title") if row.owner_id else None) or "",
         "documents": documents_for(program),
-        "bank": bank_for(row, can_manage),
+        # owner 24 Nov: akses "simulasi terbuka" = tampilan publik (rekening/QRIS pemrakarsa belum terverifikasi tetap tersembunyi)
+        "bank": bank_for(row, can_manage and not sim_open_only),
         "note": (
             "Rencana Kerja/Dokumen tidak dimodelkan sebagai daftar rinci "
             "terpisah — gunakan Anggaran (target/diterima/terpakai) dan "

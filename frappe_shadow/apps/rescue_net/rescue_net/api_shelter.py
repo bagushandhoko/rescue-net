@@ -136,13 +136,7 @@ def _assert_shelter_access(actor, posko):
             frappe.PermissionError,
         )
 
-    posko_type = frappe.db.get_value(
-        "RN Posko",
-        posko,
-        "posko_type",
-    )
-
-    if posko_type != "shelter":
+    if not _is_shelter(posko):
         frappe.throw(
             "Posko ini bukan Shelter",
             frappe.ValidationError,
@@ -159,11 +153,7 @@ def _accessible_shelters(actor):
         ):
             continue
 
-        if frappe.db.get_value(
-            "RN Posko",
-            posko,
-            "posko_type",
-        ) != "shelter":
+        if not _is_shelter(posko):
             continue
 
         result.append(posko)
@@ -171,12 +161,18 @@ def _accessible_shelters(actor):
     return result
 
 
+def _is_shelter(posko):
+    """Shelter = jenis posko "shelter" ATAU posko serba-fungsi yang mencentang fungsi shelter (rn_fn_shelter).
+    Sama dengan papan publik (_event_shelters). Dulu hanya jenis posko -> posko serba-fungsi tampil di papan
+    shelter tetapi petugasnya ditolak "Posko ini bukan Shelter" (temuan seed simulasi 24 Nov 2026)."""
+    row = frappe.db.get_value("RN Posko", posko, ["posko_type", "rn_fn_shelter"], as_dict=True)
+    return bool(row) and (row.posko_type == "shelter" or bool(row.rn_fn_shelter))
+
+
 def _all_shelters():
     return frappe.get_all(
         "RN Posko",
-        filters={
-            "posko_type": "shelter",
-        },
+        or_filters=[["posko_type", "=", "shelter"], ["rn_fn_shelter", "=", 1]],
         pluck="name",
         limit_page_length=5000,
     )

@@ -403,7 +403,10 @@ def _project(project_id):
 
 
 def _can_manage_project(actor, p):
+    from rescue_net.access_policy import sim_open_event
     from rescue_net.api_donor_program import _allowed_owner
+    if sim_open_event(actor, p.get("disaster_event")):   # simulasi terbuka (owner 24 Nov; terlewat di 1716a44b)
+        return True
     return bool(actor) and _allowed_owner(actor, p.owner_type, p.owner_id)
 
 
@@ -504,7 +507,7 @@ def volunteer_needs(disaster_event=None, recovery_project=None):
         if event:
             pf["disaster_event"] = event
         for p in frappe.get_all("RN Recovery Project", filters=pf,
-                                fields=["name", "project_name", "owner_type", "owner_id"], limit_page_length=500):
+                                fields=["name", "project_name", "owner_type", "owner_id", "disaster_event"], limit_page_length=500):
             if _can_manage_project(actor, p):
                 managed.append({"name": p.name, "title": p.project_name})
     return {

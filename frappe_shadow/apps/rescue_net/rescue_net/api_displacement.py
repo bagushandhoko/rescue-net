@@ -87,9 +87,23 @@ def displacement_board(disaster_event=None):
     }
 
 
-def _can_write():
+def _can_write(disaster_event=None, posko=None):
+    """Siapa boleh menulis rencana pengungsian (temuan 24 Nov 2026: dulu SIAPA PUN yang login, juga untuk bencana
+    riil, bisa membuat/mengubah/menyetujui rencana). Sekarang: System Manager; pengelola posko rencana itu;
+    pengelola posko mana pun yang melayani bencananya; atau siapa pun yang login di bencana SIMULASI."""
+    from rescue_net.access_policy import can_manage_posko, sim_open_event
+
     actor = rn_actor(required=True)
-    return actor
+    if is_system_manager() or sim_open_event(actor, disaster_event):
+        return actor
+    if posko and can_manage_posko(actor, posko):
+        return actor
+    if disaster_event:
+        from rescue_net.control_centre.common import serving_posko_names
+        if any(can_manage_posko(actor, p) for p in serving_posko_names(disaster_event)):
+            return actor
+    frappe.throw("Hanya pengelola posko yang melayani bencana ini yang boleh mengisi rencana pengungsian.",
+                 frappe.PermissionError)
 
 
 @frappe.whitelist()
@@ -99,8 +113,8 @@ def create_displacement_plan(disaster_event, origin_area, people_count,
                              plan_type="undecided", est_return_cost=0,
                              est_rebuild_support=0, support_needed=None,
                              supporting_org=None, notes=None):
-    _can_write()
     ev = _event(disaster_event)
+    _can_write(ev, posko if posko and frappe.db.exists("RN Posko", posko) else None)
     doc = frappe.new_doc("RN Displacement Plan")
     doc.disaster_event = ev if ev and frappe.db.exists("RN Disaster Event", ev) else None
     if not doc.disaster_event:
@@ -127,8 +141,10 @@ def create_displacement_plan(disaster_event, origin_area, people_count,
 
 @frappe.whitelist()
 def update_displacement_plan(plan, **kwargs):
-    _can_write()
     doc = frappe.get_doc("RN Displacement Plan", plan)
+    _can_write(doc.disaster_event, doc.posko)
+    if kwargs.get("posko") and kwargs["posko"] != doc.posko:   # memindah ke posko lain: harus pengelola posko tujuan juga
+        _can_write(doc.disaster_event, kwargs["posko"])
     allowed = {"origin_area", "current_location", "posko", "household_code",
                "current_location", "support_needed", "supporting_org", "notes"}
     num = {"people_count", "vulnerable_count"}

@@ -57,6 +57,25 @@ class TestOrgVisibilityToggle(RNTestCase):
         # …and still open to outside coordination (the owner chose full public).
         self.assertTrue(public_posko_allowed(posko.name))
 
+    def test_public_posko_of_closed_org_can_still_be_edited(self):
+        # temuan seed simulasi 24 Nov 2026: validasi simpan dulu menolak SEMUA posko publik milik Kelompok
+        # tertutup, padahal access_policy mengizinkannya -> posko terkunci, tidak bisa diedit sama sekali
+        org, owner = self._owned_org()
+        posko = make_posko(make_event(), org, public_detail="public")
+        frappe.db.set_value("RN Organization", org.name, "privacy_mode", "closed")
+        doc = frappe.get_doc("RN Posko", posko.name)
+        doc.facilities = "Tenda 2 unit"
+        doc.save(ignore_permissions=True)
+        fresh = make_posko(make_event(), org)
+        fresh.public_detail = "public"
+        fresh.save(ignore_permissions=True)   # Kelompok tertutup + pilihan posko aktif: boleh dibuka
+
+        frappe.db.set_value("RN Organization", org.name, "allow_posko_public_choice", 0)
+        fresh.reload()
+        fresh.notes = "x"
+        with self.assertRaises(frappe.ValidationError):
+            fresh.save(ignore_permissions=True)
+
     def test_set_posko_public_choice_off_cascades_public_posko_to_inherit(self):
         org, owner = self._owned_org()
         posko = make_posko(make_event(), org, public_detail="public")

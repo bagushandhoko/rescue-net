@@ -73,14 +73,10 @@ class RNPosko(Document):
             as_dict=True,
         )
 
-        if (
-            self.public_detail == "public"
-            and org
-            and (
-                org.privacy_mode != "open"
-                or not org.allow_posko_public_choice
-            )
-        ):
+        # Sama dengan access_policy (a36f1fd4, 21 Okt): Kelompok tertutup BOLEH membuka posko tertentu bila
+        # allow_posko_public_choice aktif. Dulu di sini privacy_mode != "open" juga ditolak, sehingga posko
+        # publik milik Kelompok tertutup tak bisa disimpan sama sekali (temuan seed simulasi 24 Nov 2026).
+        if self.public_detail == "public" and org and not org.allow_posko_public_choice:
             frappe.throw(
                 "Posko tidak dapat dibuka ke publik karena "
                 "kebijakan Kelompok tidak mengizinkannya"

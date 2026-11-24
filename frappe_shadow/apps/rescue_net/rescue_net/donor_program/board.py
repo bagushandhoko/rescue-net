@@ -306,7 +306,10 @@ def create_cash_donation(donor_program, amount, is_anonymous=0, message=None,
     elif row.owner_type == "organization":
         _ib.notify_org_managers(row.owner_id, _msg, _link, roles=("owner", "deputy"))
 
-    return {"donation": doc.name, "status": doc.status, "amount": doc.amount}
+    from rescue_net.services import donation_email
+    emailed = donation_email.on_created(doc)   # owner 24 Nov 2026: email terima kasih ke donatur
+
+    return {"donation": doc.name, "status": doc.status, "amount": doc.amount, "emailed": bool(emailed)}
 
 
 @frappe.whitelist(allow_guest=True)
@@ -398,6 +401,9 @@ def decide_cash_donation(donation, action, note=None):
             "{:,.0f}".format(doc.amount or 0).replace(",", "."), row.program_name,
             "sudah diterima & dikonfirmasi" if action == "confirm" else "tidak dikonfirmasi" + (" (%s)" % note if note else "")),
             "program-khusus.html?program=%s" % doc.donor_program)
+
+    from rescue_net.services import donation_email
+    donation_email.on_decided(doc, action, note)
 
     return {"donation": doc.name, "status": doc.status}
 

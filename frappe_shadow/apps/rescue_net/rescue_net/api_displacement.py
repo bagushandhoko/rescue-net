@@ -59,6 +59,16 @@ def displacement_board(disaster_event=None):
         return r
 
     plans = [_p(r) for r in rows]
+    # owner 24 Nov 2026: di bencana RIIL tamu & non-pengelola hanya melihat ANGKA; daftar per KK (kode KK, lokasi
+    # sekarang, yatim piatu, catatan) hanya untuk pengelola posko yang melayani bencana itu. Simulasi tetap terbuka.
+    seen, shown = {}, []
+    for p in plans:
+        key = p.get("disaster_event")
+        if key not in seen:
+            seen[key] = _may_see_detail(key)
+        if seen[key]:
+            shown.append(p)
+    hidden = len(plans) - len(shown)
 
     by_plan = {"undecided": 0, "return_home": 0, "relocate": 0}
     people_by_plan = {"undecided": 0, "return_home": 0, "relocate": 0}
@@ -70,7 +80,8 @@ def displacement_board(disaster_event=None):
     return {
         "disaster_event": ev,
         "generated_at": now_datetime(),
-        "plans": plans,
+        "plans": shown,
+        "detail_hidden": hidden,
         "totals": {
             "household_count": len(plans),
             "people_total": sum(cint(p.get("people_count")) for p in plans),
@@ -87,23 +98,40 @@ def displacement_board(disaster_event=None):
     }
 
 
-def _can_write(disaster_event=None, posko=None):
-    """Siapa boleh menulis rencana pengungsian (temuan 24 Nov 2026: dulu SIAPA PUN yang login, juga untuk bencana
-    riil, bisa membuat/mengubah/menyetujui rencana). Sekarang: System Manager; pengelola posko rencana itu;
-    pengelola posko mana pun yang melayani bencananya; atau siapa pun yang login di bencana SIMULASI."""
+def _may_see_detail(disaster_event):
+    from rescue_net.services.drill import is_simulation_event
+    # tanpa bencana = data contoh lama; hanya ikut di tampilan simulasi (tampilan riil sudah membuangnya di atas)
+    if not disaster_event or is_simulation_event(disaster_event):
+        return True
+    return _writer_ok(rn_actor(required=False), disaster_event)
+
+
+def _writer_ok(actor, disaster_event=None, posko=None):
+    """Siapa boleh menulis (dan melihat daftar per KK) rencana pengungsian. Temuan 24 Nov 2026: dulu SIAPA PUN yang
+    login, juga di bencana riil, bisa membuat/mengubah/menyetujui rencana. Sekarang: System Manager; pengelola posko
+    rencana itu; pengelola posko mana pun yang melayani bencananya; atau siapa pun yang login di bencana SIMULASI."""
     from rescue_net.access_policy import can_manage_posko, sim_open_event
 
-    actor = rn_actor(required=True)
-    if is_system_manager() or sim_open_event(actor, disaster_event):
-        return actor
+    if is_system_manager():
+        return True
+    if not actor:
+        return False
+    if sim_open_event(actor, disaster_event):
+        return True
     if posko and can_manage_posko(actor, posko):
-        return actor
+        return True
     if disaster_event:
         from rescue_net.control_centre.common import serving_posko_names
-        if any(can_manage_posko(actor, p) for p in serving_posko_names(disaster_event)):
-            return actor
-    frappe.throw("Hanya pengelola posko yang melayani bencana ini yang boleh mengisi rencana pengungsian.",
-                 frappe.PermissionError)
+        return any(can_manage_posko(actor, p) for p in serving_posko_names(disaster_event))
+    return False
+
+
+def _can_write(disaster_event=None, posko=None):
+    actor = rn_actor(required=True)
+    if not _writer_ok(actor, disaster_event, posko):
+        frappe.throw("Hanya pengelola posko yang melayani bencana ini yang boleh mengisi rencana pengungsian.",
+                     frappe.PermissionError)
+    return actor
 
 
 @frappe.whitelist()

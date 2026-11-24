@@ -54,3 +54,26 @@ class TestSeedTemuan(RNTestCase):
         sim = _sim(make_event())
         with as_user(outsider.user):
             self.assertTrue(api_displacement.create_displacement_plan(sim.name, "Desa B", 3)["plan"])
+
+    def test_displacement_board_real_detail_only_for_managers(self):
+        from rescue_net.tests.factories import as_guest
+        real = make_event()
+        posko = make_posko(real)
+        op, outsider = make_actor(posko=posko), make_actor()
+        with as_user(op.user):
+            api_displacement.create_displacement_plan(real.name, "Desa A", 4, household_code="KK-RAHASIA", posko=posko.name)
+        with as_guest():
+            g = api_displacement.displacement_board(real.name)
+        self.assertEqual(g["plans"], [])
+        self.assertEqual(g["detail_hidden"], 1)
+        self.assertEqual(g["totals"]["people_total"], 4)
+        self.assertNotIn("KK-RAHASIA", frappe.as_json(g))
+        with as_user(outsider.user):
+            self.assertEqual(api_displacement.displacement_board(real.name)["plans"], [])
+        with as_user(op.user):
+            self.assertEqual([p["household_code"] for p in api_displacement.displacement_board(real.name)["plans"]], ["KK-RAHASIA"])
+        sim = _sim(make_event())
+        with as_user(op.user):
+            api_displacement.create_displacement_plan(sim.name, "Desa B", 3, household_code="KK-SIM")
+        with as_guest():
+            self.assertEqual([p["household_code"] for p in api_displacement.displacement_board(sim.name)["plans"]], ["KK-SIM"])

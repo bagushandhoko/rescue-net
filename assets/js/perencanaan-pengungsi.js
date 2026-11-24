@@ -28,7 +28,7 @@
     $("#kpiDana").textContent = rp(t.est_dana_total);
     $("#dpStatus").textContent = t.household_count + " KK terencana · " + t.people_total + " jiwa · " +
       t.non_camp + " non-camp.";
-    $("#dpCount").textContent = (d.plans || []).length + " KK";
+    $("#dpCount").textContent = n(t.household_count) + " KK";
 
     var body = $("#dpBody");
     body.innerHTML = (d.plans || []).length ? d.plans.map(function (p) {
@@ -41,7 +41,13 @@
         "<td>" + rp(p.est_total) + "</td>" +
         '<td><span class="chip neutral">' + esc(p.status_label) + "</span></td>" +
         "</tr>";
-    }).join("") : '<tr><td colspan="7"><em class="rn-muted">Belum ada rencana. Tambahkan lewat form di bawah.</em></td></tr>';
+    }).join("") : (d.detail_hidden ? "" : '<tr><td colspan="7"><em class="rn-muted">Belum ada rencana. Tambahkan lewat form di bawah.</em></td></tr>');
+    if (d.detail_hidden) {
+      // owner 24 Nov 2026: bencana riil -> tamu/non-pengelola hanya melihat angka (data KK pengungsi dilindungi)
+      body.innerHTML += '<tr><td colspan="7"><em class="rn-muted">' + n(d.detail_hidden) +
+        " KK lain hanya ditampilkan sebagai angka. Daftar per KK (kode KK, lokasi, kondisi) hanya untuk pengelola " +
+        "posko yang melayani bencana ini — silakan login.</em></td></tr>";
+    }
 
     var pb = t.people_by_plan || {};
     $("#dpRollup").innerHTML =

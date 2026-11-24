@@ -151,6 +151,9 @@ def _program_manager(actor, row):
     A member who leaves/is removed loses access; other members of a big org don't get it."""
     if not actor or not row:
         return False
+    from rescue_net.access_policy import sim_open_event
+    if sim_open_event(actor, row.get("disaster_event")):   # simulasi terbuka (owner 24 Nov)
+        return True
     if _allowed_owner(actor, row.get("owner_type"), row.get("owner_id")):
         return True
     if (row.get("owner_type") or "organization").strip().lower() != "organization" or not row.get("owner_id"):

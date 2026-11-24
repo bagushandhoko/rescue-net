@@ -97,6 +97,9 @@ def _accessible_poskos(actor):
 
 
 def _can_operate(actor, posko):
+    from rescue_net.access_policy import sim_open_posko
+    if sim_open_posko(actor, posko):   # simulasi terbuka (owner 24 Nov)
+        return True
     if is_system_manager():
         return True
 

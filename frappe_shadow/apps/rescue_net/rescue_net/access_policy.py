@@ -219,6 +219,9 @@ def can_manage_posko(actor, posko):
     if is_system_manager():
         return True
 
+    if sim_open_posko(actor, posko):
+        return True
+
     if not actor or not actor.name:
         return False
 
@@ -290,6 +293,8 @@ def editable_disaster_events(actor):
 
 
 def can_edit_event(actor, event):
+    if sim_open_event(actor, event):
+        return True
     events = editable_disaster_events(actor)
     return events is None or event in events
 
@@ -340,3 +345,30 @@ POSKO_WORKER_ROLES = {
     "logistics_operator", "distribution_operator", "kitchen_operator", "field_assessment",
     "org_admin", "community_coordinator",
 }
+
+
+# ---- Simulasi terbuka (owner 2026-11-24: "untuk simulasi izinkan semua user melakukan perubahan data, dari kirim
+# barang, donasi, booking dll, termasuk pemilik posko") --------------------------------------------------------------
+# Data bencana SIMULASI boleh diubah setiap pengguna login yang akun Rescue-Net-nya aktif. Bencana RIIL tidak terpengaruh.
+# Saklar: System Settings default "rn_sim_open_edit" ("0" mematikan; bawaan menyala).
+
+def sim_open_enabled():
+    return str(frappe.db.get_default("rn_sim_open_edit") or "1") != "0"
+
+
+def _sim_actor_ok(actor):
+    return bool(actor and getattr(actor, "name", None)) and frappe.session.user not in (None, "", "Guest")
+
+
+def sim_open_event(actor, event):
+    if not event or not sim_open_enabled() or not _sim_actor_ok(actor):
+        return False
+    from rescue_net.services.drill import is_simulation_event
+    return is_simulation_event(event)
+
+
+def sim_open_posko(actor, posko):
+    if not posko or not sim_open_enabled() or not _sim_actor_ok(actor):
+        return False
+    event = frappe.db.get_value("RN Posko", posko, "disaster_event")
+    return sim_open_event(actor, event)

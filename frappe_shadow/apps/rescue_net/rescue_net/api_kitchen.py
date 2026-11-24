@@ -39,6 +39,9 @@ def _is_control(actor):
 
 
 def _can_operate(actor, posko):
+    from rescue_net.access_policy import sim_open_posko
+    if sim_open_posko(actor, posko):   # simulasi terbuka (owner 24 Nov)
+        return True
     # same rule as logistics/shelter: the posko's operators OR the managers of
     # its organisation (E2E 2026-10-25: an org owner could run the org's
     # warehouse and shelter but was refused in its kitchen)

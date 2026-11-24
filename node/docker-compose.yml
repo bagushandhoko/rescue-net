@@ -87,6 +87,7 @@ services:
     volumes:
       - ./nginx:/etc/nginx/templates:ro
       - ..:/repo:ro
+      - sites:/sites:ro   # 2026-11-24: hanya untuk /files/ (berkas publik), baca saja
     networks: [net]
 
   # Cloudflare Tunnel (opsional): docker compose --profile tunnel up -d. Token dari dashboard Cloudflare.

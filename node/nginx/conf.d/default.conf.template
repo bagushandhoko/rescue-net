@@ -118,6 +118,14 @@ server {
         add_header X-Content-Type-Options nosniff always;
     }
 
+    # 2026-11-24 (owner "ok perbaiki file"): berkas PUBLIK unggahan Frappe (sampul program, RAB, gambar rencana,
+    # rekening koran, QRIS, gambar tender). Hanya public/files + hanya gambar/PDF; private/files & jenis lain tetap 404.
+    location ~* "^/files/([A-Za-z0-9._ -]+\.(?:png|jpe?g|webp|gif|pdf))$" {
+        alias /sites/${RN_SITE}/public/files/$1;
+        add_header Cache-Control "public, max-age=86400" always;
+        add_header X-Content-Type-Options nosniff always;
+    }
+
     # everything else
     location / { return 404; }
 }

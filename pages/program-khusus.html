@@ -211,19 +211,6 @@
               <div id="donorsTopList" class="rn-pk-donors"></div>
               <button type="button" class="btn ghost mini" id="donorsTopAll" hidden>Lihat semua penyumbang →</button>
             </div>
-            <div class="rn-pk-row3">
-              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Target &amp; Milestone</h4></div><ol class="rn-pk-ms" id="planMilestones"></ol></div>
-              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Lokasi Implementasi</h4></div>
-                <div class="rn-pk-map" id="planMap"></div>
-                <div class="rn-pk-loc-nums"><div><span>Total Lokasi</span><b id="locTotal">0</b></div><div><span>Terlayani</span><b id="locServed">0</b></div><div><span>Belum Terlayani</span><b id="locUnserved">0</b></div></div></div>
-              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Kebutuhan Program</h4></div><div class="rn-pk-needs" id="planNeeds"></div></div>
-            </div>
-            <div class="rn-pk-support-grid" id="planSupport"></div>
-            <div class="rn-pk-row3">
-              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Progress Lapangan</h4></div><div class="rn-pk-fieldprog" id="planField"></div></div>
-              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Evidence Program</h4></div><div class="rn-bukti-grid" id="detailEvidence"></div></div>
-              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Verifikasi Output</h4></div><dl class="rn-pk-verif" id="planVerif"></dl></div>
-            </div>
             <p id="detailDescription" class="rn-muted"></p>
             <div class="rn-dp-target">
               <div><span>Penanggung Jawab</span><b id="detailOfficer">-</b><small id="detailOfficerPhone"></small></div>
@@ -278,6 +265,19 @@
               </div>
               <p class="rn-muted" id="projectRabDoc"></p>
               <a class="btn ghost mini" id="projectTenderLink" href="pengadaan-tender.html" target="_blank" rel="noopener">Lihat Detail Tender & Penawaran →</a>
+            </div>
+            <div class="rn-pk-row3">
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Target &amp; Milestone</h4></div><ol class="rn-pk-ms" id="planMilestones"></ol></div>
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Lokasi Implementasi</h4></div>
+                <div class="rn-pk-map" id="planMap"></div>
+                <div class="rn-pk-loc-nums"><div><span>Total Lokasi</span><b id="locTotal">0</b></div><div><span>Terlayani</span><b id="locServed">0</b></div><div><span>Belum Terlayani</span><b id="locUnserved">0</b></div></div></div>
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Kebutuhan Program</h4></div><div class="rn-pk-needs" id="planNeeds"></div></div>
+            </div>
+            <div class="rn-pk-support-grid" id="planSupport"></div>
+            <div class="rn-pk-row3">
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Progress Lapangan</h4></div><div class="rn-pk-fieldprog" id="planField"></div></div>
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Evidence Program</h4></div><div class="rn-bukti-grid" id="detailEvidence"></div></div>
+              <div class="rn-pk-box"><div class="rn-pk-box-h"><h4>Verifikasi Output</h4></div><dl class="rn-pk-verif" id="planVerif"></dl></div>
             </div>
           </div>
 
@@ -353,7 +353,7 @@
       </div>
     </section>
 
-    <details class="panel rn-input-drawer">
+    <details class="panel rn-input-drawer" data-login-only>
       <summary><h3>Buat Program & Pembaruan Progres (Form Lama)</h3></summary>
 
       <div class="form-actions">
@@ -499,7 +499,7 @@
 <script src="../assets/vendor/leaflet/leaflet.js"></script>
 <script src="../assets/js/rn-map-fullscreen.js?v=mapfs-20261023"></script>
 <script src="../assets/js/rn-ui.js?v=fix-20261120c"></script>
-<script src="../assets/js/program-khusus.js?v=event-20261112"></script>
+<script src="../assets/js/program-khusus.js?v=publik-20261124"></script>
 <script src="../assets/js/rn-frappe-client.js?v=files-20261102"></script>
 <script src="../assets/js/rn-owner-only.js?v=owneronly-20261108"></script>
 <script src="../assets/js/rn-offline-outbox.js?v=offbtn-20261019"></script>

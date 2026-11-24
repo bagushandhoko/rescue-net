@@ -138,7 +138,7 @@
     }).join("");
 
     el.querySelectorAll("[data-program]").forEach(function (btn) {
-      btn.addEventListener("click", function () { selectProgram(btn.getAttribute("data-program")); });
+      btn.addEventListener("click", function () { selectProgram(btn.getAttribute("data-program"), true); });
     });
     if (window.RNIconFill) window.RNIconFill(el);
   }
@@ -286,7 +286,7 @@
       return '<div class="rn-pk-sup"><div class="rn-pk-sup-h"><span class="rn-pk-support-icon" data-icon="' + pg[0] + '"></span><b>' + esc(c.label) + "</b></div>" +
         '<span class="chip ' + tone + '">' + esc(lab) + "</span>" +
         (c.items.length ? "<ul>" + c.items.map(function (i) { return "<li><span>" + esc(i.item) + "</span><b>" + qty(i.qty) + " " + esc(i.unit || "") + "</b></li>"; }).join("") + "</ul>" : "") +
-        '<a class="btn mini" href="' + pg[1] + "?event=" + encodeURIComponent(getEventId2()) + '">' + pg[2] + "</a></div>";
+        '<a class="btn mini" data-owner-only href="' + pg[1] + "?event=" + encodeURIComponent(getEventId2()) + '">' + pg[2] + "</a></div>";
     }).join("");
 
     var ups = (data.updates || []).slice(0, 3);
@@ -414,7 +414,16 @@
     $("#detailProgressPct").textContent = p.progress_percent + "%";
     $("#detailProgressBar").style.width = p.progress_percent + "%";
     var lt = data.plan && data.plan.location_totals;
-    if (lt && lt.total) {
+    var bTgt = Number(p.budget_target || 0), bRec = Number(p.budget_received || 0);
+    if (!(Number(p.target_amount) > 0) && !(lt && lt.total) && bTgt > 0) {
+      // owner 24 Nov: dulu "Target 0 IDR / Tercapai 0 IDR / 0%" padahal donasi sudah masuk -> pakai dana
+      var fp = Math.min(100, Math.round(bRec / bTgt * 100));
+      $("#detailProgressPct").textContent = fp + "%";
+      $("#detailProgressBar").style.width = fp + "%";
+      $("#detailTargetLabel").textContent = "Target Dana";
+      $("#detailTarget").textContent = rp(bTgt);
+      $("#detailCurrent").textContent = rp(bRec);
+    } else if (lt && lt.total) {
       $("#detailTargetLabel").textContent = "Target Lokasi";
       $("#detailTarget").textContent = fmt(lt.total) + " lokasi";
       $("#detailCurrent").textContent = fmt(lt.served) + " lokasi";
@@ -1088,7 +1097,7 @@
     if (location.hash === "#ulasan") setTimeout(function () { var t = $("#detailTabs .rn-tab[data-tab=ulasan]"); if (t) t.click(); }, 800);
   }
 
-  async function selectProgram(name) {
+  async function selectProgram(name, fromList) {
     SELECTED = name;
     renderList();
     try {
@@ -1096,6 +1105,9 @@
       renderDetail(data);
       renderManagePanel(data);
       loadReviews(name);
+      // owner 24 Nov: di HP detail ada di atas daftar -> dulu klik kartu seolah tidak terjadi apa-apa
+      var panel = $("#programDetailPanel");
+      if (fromList && panel && window.innerWidth < 1024) panel.scrollIntoView({ behavior: "smooth", block: "start" });
     } catch (err) {
       console.error("[program detail]", err);
     }

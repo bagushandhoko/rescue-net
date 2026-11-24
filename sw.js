@@ -7,7 +7,7 @@
  *    never cached — logged-in data stays out of the shared cache; offline
  *    writes go through the page's own queue (rn-sync-engine.js).
  */
-const CACHE = "rescue-net-web-v18"; // v18 2026-11-24: 2FA wajib pemilik org tertutup (pengalihan ke Pengaturan Akun). v17 2026-11-24: menu HP (laci) tidak lagi menimpa menu publik, grup tampil tanpa menunggu server. v16: dua menu pengaturan. v15 2026-11-23: blok Pengaturan Posko paling atas; v14 Pengaturan dan booking armada; v13 2026-11-24: banner BMKG ringkas; v12 2026-11-23: peta risiko CC tanpa bencana riil; v11 2026-11-23: lapisan InaRISK + cuaca BMKG; v10 rincian Bencana Aktif.
+const CACHE = "rescue-net-web-v19"; // v19 2026-11-24: Program Donasi detail publik di atas, tombol pengelola disembunyikan, HP gulir ke detail. v18 2026-11-24: 2FA wajib pemilik org tertutup (pengalihan ke Pengaturan Akun). v17 2026-11-24: menu HP (laci) tidak lagi menimpa menu publik, grup tampil tanpa menunggu server. v16: dua menu pengaturan. v15 2026-11-23: blok Pengaturan Posko paling atas; v14 Pengaturan dan booking armada; v13 2026-11-24: banner BMKG ringkas; v12 2026-11-23: peta risiko CC tanpa bencana riil; v11 2026-11-23: lapisan InaRISK + cuaca BMKG; v10 rincian Bencana Aktif.
 const PRECACHE = [
  "/rescue-net/index.html",
  "/rescue-net/pages/laporan-masyarakat.html",

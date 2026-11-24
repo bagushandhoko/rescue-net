@@ -353,7 +353,19 @@ POSKO_WORKER_ROLES = {
 # Saklar: System Settings default "rn_sim_open_edit" ("0" mematikan; bawaan menyala).
 
 def sim_open_enabled():
+    if getattr(frappe.flags, "rn_no_sim_open", False):   # pemeriksaan "pengelola asli" (tanpa simulasi terbuka)
+        return False
     return str(frappe.db.get_default("rn_sim_open_edit") or "1") != "0"
+
+
+def without_sim_open(fn, *args, **kwargs):
+    """Jalankan pemeriksaan hak akses seakan simulasi terbuka mati (owner 24 Nov: tampilan publik dulu)."""
+    prev = getattr(frappe.flags, "rn_no_sim_open", False)
+    frappe.flags.rn_no_sim_open = True
+    try:
+        return fn(*args, **kwargs)
+    finally:
+        frappe.flags.rn_no_sim_open = prev
 
 
 def _sim_actor_ok(actor):

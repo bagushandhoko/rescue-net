@@ -170,8 +170,8 @@
   function evidenceThumb(ev) {
     var url = ev.evidence_url || ev.file_url || "";
     return (
-      '<a class="rn-bukti-thumb" href="' + esc(url) + '" target="_blank" rel="noopener">' +
-      (url ? '<img src="' + esc(url) + '" alt="">' : "") + "</a>"
+      '<a class="rn-bukti-thumb" href="' + esc(url) + '" target="_blank" rel="noopener" data-doc-view="' + esc(url) + '" data-doc-group="bukti" data-doc-pdf="0" data-caption="' +
+      esc(ev.caption || ev.title || "Bukti program") + '">' + (url ? '<img src="' + esc(url) + '" alt="' + esc(ev.caption || "") + '">' : "") + "</a>"
     );
   }
 
@@ -479,28 +479,18 @@
     // owner 2026-11-02: gambar rencana (PDF / gambar) + RAB bisa beberapa halaman
     function tiles(list, kind, empty) {
       return list.length ? list.map(function (d, i) {
-        var thumb = d.pdf ? '<span class="rn-pk-pdf">📄</span>' : '<img src="' + esc(d.url) + '" alt="' + esc(d.label || d.name) + '" loading="lazy">';
+        // owner 24 Nov: thumbnail PDF seperti foto (halaman 1 dirender pdf.js) + penampil layar penuh (rn-doc-viewer.js)
+        var thumb = d.pdf ? '<span class="rn-pk-pdf" data-pdf-thumb="' + esc(d.url) + '">📄</span>' : '<img src="' + esc(d.url) + '" alt="' + esc(d.label || d.name) + '" loading="lazy">';
         var cap = kind === "rab" ? "Hal. " + (i + 1) + (d.label ? " — " + d.label : "") : (d.label || d.name);
-        return '<a class="rn-pk-drawing" href="' + esc(d.url) + '" target="_blank" rel="noopener">' + thumb +
+        return '<a class="rn-pk-drawing" href="' + esc(d.url) + '" target="_blank" rel="noopener" data-doc-view="' + esc(d.url) + '" data-doc-group="' + kind +
+          '" data-doc-pdf="' + (d.pdf ? 1 : 0) + '" data-caption="' + esc(cap) + '">' + thumb + (d.pdf ? '<em class="rn-pk-badge">PDF</em>' : "") +
           "<span>" + esc(cap) + "</span>" +
           (manage ? '<button type="button" data-doc-del="' + kind + '" data-url="' + esc(d.url) + '" title="Hapus">✕</button>' : "") + "</a>";
       }).join("") : '<span class="rn-muted">' + empty + "</span>";
     }
     var pages = docs.rab_pages || (docs.rab ? [{ url: docs.rab, name: "RAB.pdf", pdf: true }] : []);
-    // owner 24 Nov 16:05 "rab nggak keliatan": halaman RAB berupa gambar ditampilkan selebar kolom (bisa dibaca
-    // langsung, klik = ukuran penuh); RAB PDF jadi tombol besar "Buka RAB lengkap".
-    var rabImgs = pages.filter(function (d) { return !d.pdf; }), rabPdfs = pages.filter(function (d) { return d.pdf; });
-    $("#docRab").innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">📑 Rencana Anggaran Biaya (RAB)' + (pages.length ? " — " + pages.length + " halaman/berkas" : "") + "</b>" +
-      (pages.length ? "" : '<span class="rn-muted">RAB belum diunggah.</span>') +
-      rabPdfs.map(function (d) {
-        return '<div class="rn-pk-rabpdf"><a class="btn" href="' + esc(d.url) + '" target="_blank" rel="noopener">📄 Buka RAB lengkap (PDF)</a> <span class="rn-muted">' + esc(d.label || d.name) + "</span>" +
-          (manage ? ' <button type="button" class="btn mini" data-doc-del="rab" data-url="' + esc(d.url) + '">Hapus</button>' : "") + "</div>";
-      }).join("") +
-      rabImgs.map(function (d) {
-        return '<figure class="rn-pk-rabpage"><a href="' + esc(d.url) + '" target="_blank" rel="noopener"><img src="' + esc(d.url) + '" alt="' + esc(d.label || d.name) + '" loading="lazy"></a>' +
-          "<figcaption>" + esc(d.label || d.name) + " · ketuk untuk memperbesar" +
-          (manage ? ' <button type="button" class="btn mini" data-doc-del="rab" data-url="' + esc(d.url) + '">Hapus</button>' : "") + "</figcaption></figure>";
-      }).join("");
+    $("#docRab").innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">📑 Rencana Anggaran Biaya (RAB)' + (pages.length ? " — " + pages.length + " halaman/berkas · ketuk untuk melihat" : "") + "</b>" +
+      '<div class="rn-pk-drawings rn-pk-rabgrid">' + tiles(pages, "rab", "RAB belum diunggah.") + "</div>";
     $("#docDrawings").innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">📐 Gambar Rencana</b><div class="rn-pk-drawings">' +
       tiles(docs.drawings || [], "gambar", "Gambar rencana belum diunggah.") + "</div>";
     var st = docs.statements || [];
@@ -508,6 +498,7 @@
     if (ds) ds.innerHTML = '<b class="rn-pk-doc-h" style="display:block;margin-top:10px">🧾 Rekening Koran (transparansi dana)' + (st.length ? " — " + st.length + " berkas" : "") + "</b>" +
       '<div class="rn-pk-drawings">' + tiles(st, "koran", "Rekening koran belum diunggah.") + "</div>";
     $("#docManage").hidden = !manage;
+    if (window.RNDocViewer) window.RNDocViewer.thumbs($("#docRab").parentNode);
   }
 
   function renderBank(data) {

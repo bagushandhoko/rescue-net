@@ -7855,3 +7855,26 @@ body[data-rn-settings="akun"] #orgKeySection { display: none !important; }
 .rn-pk-rabpdf { margin: 8px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .rn-pk-simbar { margin: 0 0 10px; padding: 8px 10px; border-radius: 10px; background: #fff7e8; border: 1px dashed #e0b264; font-size: 14px; }
 .rn-pk-simbar[hidden] { display: none; }
+
+/* owner 2026-11-24: thumbnail RAB/PDF seperti foto + penampil dokumen layar penuh */
+.rn-pk-drawing { position: relative; }
+.rn-pk-pdf[data-pdf-thumb] { display: flex; align-items: flex-start; justify-content: center; overflow: hidden; background: #fff; position: relative; }
+.rn-dv-thumbcanvas { width: 100% !important; height: auto !important; display: block; }
+.rn-dv-pages, .rn-pk-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,.62); color: #fff; font: 600 11px/1 Arial, sans-serif; padding: 4px 6px; border-radius: 4px; font-style: normal; }
+.rn-pk-badge { left: 6px; right: auto; background: #c62828; }
+.rn-pk-rabgrid .rn-pk-drawing img, .rn-pk-rabgrid .rn-pk-pdf { object-position: top; }
+.rn-dv { position: fixed; inset: 0; z-index: 10050; background: rgba(15,12,10,.94); display: flex; flex-direction: column; }
+.rn-dv[hidden] { display: none; }
+.rn-dv-top { display: flex; gap: 10px; align-items: center; padding: 10px 12px; color: #fff; }
+.rn-dv-cap { flex: 1; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rn-dv-open { color: #ffd9c7; font-size: 13px; white-space: nowrap; }
+.rn-dv-x { background: none; border: 0; color: #fff; font-size: 32px; line-height: 1; cursor: pointer; padding: 0 6px; }
+.rn-dv-stage { flex: 1; overflow: auto; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px 8px 24px; -webkit-overflow-scrolling: touch; }
+.rn-dv-img { max-width: 100%; max-height: calc(100vh - 80px); object-fit: contain; cursor: zoom-in; background: #fff; }
+.rn-dv-img.is-zoom { max-width: none; max-height: none; cursor: zoom-out; }
+.rn-dv-page { background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.4); max-width: 100%; height: auto !important; }
+.rn-dv-wait { color: #eee; margin-top: 30vh; }
+.rn-dv-wait a { color: #ffd9c7; }
+.rn-dv-nav { position: fixed; top: 50%; transform: translateY(-50%); z-index: 2; background: rgba(255,255,255,.18); color: #fff; border: 0; font-size: 34px; width: 44px; height: 64px; border-radius: 8px; cursor: pointer; }
+.rn-dv-prev { left: 6px; } .rn-dv-next { right: 6px; }
+.rn-dv-nav[hidden] { display: none; }

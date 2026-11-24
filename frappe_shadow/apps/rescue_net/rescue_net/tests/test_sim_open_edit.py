@@ -46,3 +46,12 @@ class TestSimOpenEdit(RNTestCase):
                 self.assertFalse(ap.can_manage_posko(actor, posko.name))
         finally:
             frappe.db.set_default("rn_sim_open_edit", "1")
+
+    def test_without_sim_open_hides_sim_access(self):
+        """owner 24 Nov 16:05: halaman program menampilkan tampilan publik dulu untuk akses simulasi terbuka."""
+        posko = make_posko(event=self._event(True))
+        actor, user = self._actor()
+        with as_user(user):
+            self.assertTrue(ap.can_manage_posko(actor, posko.name))
+            self.assertFalse(ap.without_sim_open(ap.can_manage_posko, actor, posko.name))
+            self.assertTrue(ap.can_manage_posko(actor, posko.name))      # flag dikembalikan

@@ -508,7 +508,9 @@ def program_detail(program):
     can_manage = bool(detail_actor and (_is_control(detail_actor) or _program_manager(detail_actor, row)))
     # owner 24 Nov 16:05: masyarakat (akses "simulasi terbuka") melihat tampilan PUBLIK dulu; alat kelola baru
     # muncul bila ia memilih "Coba sebagai pengelola". Pengelola asli tetap langsung melihat alat kelolanya.
-    sim_open_only = bool(can_manage and not (_is_control(detail_actor) or _program_manager(detail_actor, row, sim=False)))
+    from rescue_net.access_policy import without_sim_open
+    sim_open_only = bool(can_manage and not without_sim_open(
+        lambda: _is_control(detail_actor) or _program_manager(detail_actor, row, sim=False)))
     owner_verified = _campaign_owner_verified(detail_actor, row.owner_type, row.owner_id) if can_manage else None
     from rescue_net.donor_program.documents import bank_for, documents_for, initiator_verified
 

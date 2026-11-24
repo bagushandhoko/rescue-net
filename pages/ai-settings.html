@@ -304,6 +304,26 @@
       </section>
     </div>
     <div role="tabpanel" id="account-panel-admin" aria-labelledby="account-tab-admin" hidden>
+    <!-- owner 2026-11-24: verifikasi pengelola donasi di Pengaturan Sistem RN -->
+    <div class="rn-settings-group" id="donVerifySection">
+      <div class="rn-settings-group-title">
+        <h2>Verifikasi Pengelola Donasi</h2>
+        <p>Rekening &amp; QRIS sebuah program baru tampil ke publik setelah pemrakarsanya terverifikasi. Di bawah ini program yang sudah mengisi rekening/QRIS tetapi masih tersembunyi. Satu tombol menjalankan verifikasi yang dibutuhkan (dicatat di Jejak Audit / log persetujuan).</p>
+      </div>
+      <section class="panel">
+        <div class="form-actions" style="margin-bottom:8px">
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="donVerifyAll"> tampilkan juga yang sudah terverifikasi</label>
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="donVerifySim" checked> sertakan program simulasi</label>
+        </div>
+        <div id="donVerifyList" class="rn-donverify-list"><p class="subtitle">Memuat…</p></div>
+      </section>
+      <section class="panel">
+        <h3>Antrean &amp; catatan lain</h3>
+        <p><a class="btn" href="verification-approval.html">Sistem Verifikasi (organisasi, posko, pengguna)</a>
+           <a class="btn" href="jejak-audit.html">Jejak Audit</a>
+           <a class="btn" href="kelola-bencana.html">Kelola Bencana</a></p>
+      </section>
+    </div>
     <div class="rn-settings-group" id="adminResetPasswordSection" hidden>
       <div class="rn-settings-group-title">
         <h2>Reset Password</h2>
@@ -489,15 +509,16 @@
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
 <script src="../assets/js/system-admin.js?v=cadangan-20261113"></script>
 <script src="../assets/js/rn-operational-mode.js?v=demo-20261109"></script>
-<script src="../assets/js/rn-public-header.js?v=publik-20261124"></script>
+<script src="../assets/js/rn-public-header.js?v=tiga-20261124"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>
   <script src="../assets/js/rn-icons.js?v=segar-20261117"></script>
 
-<script src="../assets/js/rn-navigation-v2.js?v=publik-20261124"></script>
+<script src="../assets/js/rn-navigation-v2.js?v=tiga-20261124"></script>
 <script src="../assets/js/rn-mobile-drawer.js?v=hp-20261124"></script>
 <script src="../assets/js/rn-pwa.js?v=pwa-20260926b"></script>
 <script src="../assets/js/rn-twofa-settings.js?v=2fa-pemilik-20261124"></script>
 <script src="../assets/js/rn-posko-help.js?v=bantuan-20261117" defer></script>
-<script src="../assets/js/rn-account-tabs.js?v=dua-20261123"></script>
+<script src="../assets/js/rn-donation-verify.js?v=20261124"></script>
+<script src="../assets/js/rn-account-tabs.js?v=tiga-20261124"></script>
 </body>
 </html>

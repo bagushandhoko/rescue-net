@@ -339,8 +339,10 @@
     const admin = session.manages_org || session.is_system_manager;
     const audit = session.is_system_manager || session.role === "command_center";
     const poskoHref = await window.RNAccount.poskoSettingsHref();
-    const settings = [{ label: "Pengaturan Akun", href: "ai-settings.html", icon: "ai-settings" }];
+    const settings = [{ label: "Pengaturan Akun", href: "ai-settings.html?bagian=akun", icon: "ai-settings" }];
+    if (session.manages_org || session.is_system_manager) settings.push({ label: "Pengaturan Organisasi", href: "ai-settings.html?bagian=organisasi", icon: "ai-settings" });
     if (poskoHref) settings.push({ label: "Pengaturan Posko", href: poskoHref, icon: "posko" });
+    if (session.is_system_manager) settings.push({ label: "Pengaturan Sistem RN", href: "ai-settings.html?bagian=sistem", icon: "ai-settings" });
     return [
       ["Pengaturan", settings, "pengaturan"],
       ["Komando & Admin", CONFIG.komando.filter(item => {

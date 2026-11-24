@@ -7838,3 +7838,12 @@ body.home-page .rn-hero-cta { display: flex !important; flex-wrap: wrap; gap: 8p
 .rn-pk-paygrid .rn-pk-acct { flex: 1 1 220px; min-width: 0; }
 .rn-pk-paygrid .rn-pk-qris { flex: 0 1 230px; }
 .rn-pk-paygrid .rn-pk-qris img { display: block; }
+
+/* owner 2026-11-24: Pengaturan dipisah 3; daftar verifikasi pengelola donasi */
+body[data-rn-settings="akun"] #orgKeySection { display: none !important; }
+.rn-donverify-row { display: flex; gap: 12px; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--line, #eee); }
+.rn-donverify-row small { display: block; color: #6b5a50; }
+.rn-donverify-row .rn-donverify-reason { color: #a2441e; font-weight: 600; }
+.rn-donverify-row.is-ok { opacity: .75; }
+.rn-donverify-act { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; min-width: 170px; }
+@media (max-width: 640px) { .rn-donverify-row { flex-direction: column; } .rn-donverify-act { align-items: flex-start; } }

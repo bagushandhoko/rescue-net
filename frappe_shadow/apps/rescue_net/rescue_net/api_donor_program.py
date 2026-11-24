@@ -15,8 +15,9 @@ from rescue_net.donor_program import (  # noqa: F401
     programs,
     reviews,
     special,
+    verification,
 )
 
-for _module in (common, board, documents, kitabisa, plan, programs, reviews, special,):
+for _module in (common, board, documents, kitabisa, plan, programs, reviews, special, verification,):
     globals().update({k: v for k, v in vars(_module).items() if not k.startswith("__")})
 del _module

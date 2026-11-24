@@ -255,7 +255,9 @@
     btn.setAttribute("aria-haspopup", "true"); btn.setAttribute("aria-expanded", "false"); btn.textContent = "👤 " + name + " ▾";
     userEl.appendChild(btn);
     const pfx = location.pathname.indexOf("/pages/") !== -1 ? "" : "pages/";
-    const items = [["⚙ Pengaturan Akun", "ai-settings.html"]];
+    const items = [["⚙ Pengaturan Akun", "ai-settings.html?bagian=akun"]];
+    if (sess.manages_org || sess.is_system_manager) items.push(["⚙ Pengaturan Organisasi", "ai-settings.html?bagian=organisasi"]);
+    if (sess.is_system_manager) items.push(["⚙ Pengaturan Sistem RN", "ai-settings.html?bagian=sistem"]);
     const menu = document.createElement("div"); menu.className = "rn-user-menu"; menu.hidden = true; menu.setAttribute("role", "menu");
     const esc = (t) => String(t == null ? "" : t).replace(/[&<>"']/g, c => "&#" + c.charCodeAt(0) + ";");
     menu.innerHTML = '<div class="rn-user-menu-head"><b>' + esc(name) + "</b><small>" + esc(sess.user) + "</small><small>" +

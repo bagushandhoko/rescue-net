@@ -196,7 +196,10 @@ html.rn-dms-tema .rn-drawer-topbar button:not([data-lang]) { color: #fff !import
 html.rn-dms-tema .rn-drawer-hamburger span,
 html.rn-dms-tema .rn-drawer-hamburger i { background: #fff !important; }
 html.rn-dms-tema .rn-drawer-back { background: rgba(255, 255, 255, .08) !important; border-color: rgba(255, 255, 255, .2) !important; color: #fff !important; }
-html.rn-dms-tema .rn-drawer-panel { background: linear-gradient(180deg, var(--dms-navy2), var(--dms-navy)) !important; color: #e2e8f0 !important; }
+/* 24 Nov: rn-mobile-drawer.css `body .sidebar.rn-drawer-panel { background: var(--bg) }` sama kuat & dimuat
+   belakangan -> laci jadi abu #e4e6e9 dengan teks putih (menu HP tidak terbaca). Spesifisitas dinaikkan. */
+html.rn-dms-tema .rn-drawer-panel,
+html.rn-dms-tema body:not(#rn-x) .sidebar.rn-drawer-panel { background: linear-gradient(180deg, var(--dms-navy2), var(--dms-navy)) !important; color: #e2e8f0 !important; }
 html.rn-dms-tema .rn-drawer-panel a,
 html.rn-dms-tema .rn-drawer-panel summary,
 html.rn-dms-tema .rn-drawer-panel button,

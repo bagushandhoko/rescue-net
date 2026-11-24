@@ -1,6 +1,6 @@
 {
   "keterangan": "Catatan semua skenario uji Rescue-Net. Tambahkan setiap pengujian baru di 'uji' (terbaru di atas). Dipakai pages/scenario-tested.html.",
-  "diperbarui": "2026-11-22",
+  "diperbarui": "2026-11-24",
   "uji": [
     {
       "id": "KAMERA-KIRIM-BANTUAN-20261121",
@@ -2209,6 +2209,20 @@
       "skor": "71/71 tes + uji live lulus",
       "status": "lulus",
       "temuan": []
+    },
+    {
+      "id": "MINGMING-SEED-SIMULASI-20261124",
+      "tanggal": "2026-11-24",
+      "kategori": "Data simulasi",
+      "judul": "Isi data simulasi semua modul lewat jalur pengguna untuk mencari kekurangan",
+      "tujuan": "Owner: lengkapi data simulasi di semua hal supaya kelihatan kurang-kurangnya",
+      "akun": "Akun demo masyarakat umum (Simulasi Terbuka) + skrip di server",
+      "langkah": [
+        "Profil 58 dari 59 posko simulasi dilengkapi (fungsi, fasilitas, penerima manfaat, wilayah, komunikasi, partisipasi publik).",
+        "Sebagai akun demo: 25 keluarga shelter, 6 putaran distribusi, 35 kartu keluarga, 25 penerimaan bantuan, 20 rencana pengungsian, 74 lot kedaluwarsa, 6 kasus medis.",
+        "QRIS program diunggah sebagai pengelola lalu dicek tampil untuk tamu di HP."
+      ],
+      "hasil": "Temuan: posko publik milik Kelompok tertutup tidak bisa disimpan; posko serba-fungsi ditolak sebagai shelter; Simulasi Terbuka belum mencakup proyek pemulihan; rencana pengungsian bisa ditulis siapa pun & daftar KK terbuka untuk tamu; Rencana Aksi tidak punya layar input. Empat yang pertama diperbaiki + tes."
     }
   ],
   "rencana": [

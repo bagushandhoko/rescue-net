@@ -34,6 +34,20 @@ from rescue_net.donor_program.common import (  # noqa: F401
 )
 
 
+
+def _owner_display_title(owner_type, owner_id, program=None):
+    """Nama penyelenggara untuk kartu/detail program. Organisasi/posko = judulnya; pemrakarsa perorangan /
+    kelompok masyarakat (community_group; owner 26 Nov: program Baduy bukan milik organisasi) = nama
+    penanggung jawab program, lalu nama akun pembuat. Dulu selalu kosong ("oleh -")."""
+    t = (owner_type or "").lower()
+    dt = {"organization": "RN Organization", "posko": "RN Posko"}.get(t)
+    if dt:
+        return (frappe.db.get_value(dt, owner_id, "title") if owner_id else None) or ""
+    if owner_id and frappe.db.exists("RN Organization", owner_id):
+        return frappe.db.get_value("RN Organization", owner_id, "title") or ""
+    officer = frappe.db.get_value("RN Donor Program", program, "officer_in_charge_name") if program else None
+    return officer or (frappe.db.get_value("RN User Account", owner_id, "title") if owner_id else None) or ""
+
 def _program_type_label(value):
     if not value:
         return "Lainnya"
@@ -142,8 +156,7 @@ def program_board(disaster_event=None):
     def _owner_title(r):
         key = (r.owner_type, r.owner_id)
         if key not in _owner_titles:
-            dt = {"organization": "RN Organization", "posko": "RN Posko"}.get((r.owner_type or "").lower())
-            _owner_titles[key] = (frappe.db.get_value(dt, r.owner_id, "title") if dt and r.owner_id else None) or ""
+            _owner_titles[key] = _owner_display_title(r.owner_type, r.owner_id, r.get("name"))
         return _owner_titles[key]
     from rescue_net.donor_program.documents import initiator_verified
     _verified_cache = {}
@@ -533,7 +546,7 @@ def program_detail(program):
         "initiator_verified": initiator_verified(row),
         "donation_channel": row.get("donation_channel") or "sendiri",
         "kitabisa": _kb_public(row),
-        "owner_title": (frappe.db.get_value({"organization": "RN Organization", "posko": "RN Posko"}.get((row.owner_type or "").lower(), "RN Organization"), row.owner_id, "title") if row.owner_id else None) or "",
+        "owner_title": _owner_display_title(row.owner_type, row.owner_id, row.name),
         "documents": documents_for(program),
         # owner 24 Nov: akses "simulasi terbuka" = tampilan publik (rekening/QRIS pemrakarsa belum terverifikasi tetap tersembunyi)
         "bank": bank_for(row, can_manage and not sim_open_only),

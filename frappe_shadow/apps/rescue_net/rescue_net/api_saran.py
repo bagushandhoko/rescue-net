@@ -131,3 +131,25 @@ def set_suggestion_status(suggestion, status, response=None):
         from rescue_net.services import inbox as _ib
         _ib.notify_account(doc.author_user, "Saran Anda '%s' kini berstatus %s." % ((doc.topic or "")[:80], status), "saran.html")
     return {"suggestion": doc.name, "status": status}
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+@rate_limit(limit=30, seconds=3600)
+def digest(token=None, since=None):
+    """Ringkasan saran untuk notifikasi harian ke owner lewat Edith/Telegram (owner 2026-11-27: "jika ada saran
+    masuk ... kirim notifikasi ke edith", "cukup sehari sekali"). Pemanggil (cron CT102) wajib membawa token
+    rahasia = site_config `saran_digest_token`. Kontak pengirim TIDAK pernah ikut."""
+    import hmac
+    expected = str(frappe.conf.get("saran_digest_token") or "")
+    if len(expected) < 24 or not hmac.compare_digest(str(token or ""), expected):
+        frappe.throw("Tidak diizinkan.", frappe.PermissionError)
+    filters = {"disaster_event_legacy_id": ["like", PLATFORM + "%"], "legacy_id": ["like", "saran:%"]}
+    if since:
+        filters["creation"] = [">", since]
+    rows = frappe.get_all(DT, filters=filters, order_by="creation asc", limit_page_length=50,
+                          fields=["name", "legacy_id", "disaster_event_legacy_id", "topic", "body", "wilayah",
+                                  "author_name", "status", "creation"])
+    out = [{"name": r.name, "title": r.topic, "body": (r.body or "")[:1500], "page": r.wilayah,
+            "author_name": r.author_name or "Anonim", "category": CATEGORIES[_category(r)], "status": _status(r),
+            "created": str(r.creation)} for r in rows]
+    return {"suggestions": out, "now": str(now_datetime())}

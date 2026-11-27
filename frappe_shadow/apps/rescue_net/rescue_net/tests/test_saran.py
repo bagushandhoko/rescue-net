@@ -58,3 +58,33 @@ class TestSaran(RNTestCase):
             self.assertEqual(api_saran.support_suggestion(name)["upvotes"], 1)
             threads = api_forum.feedback_threads()["threads"]
         self.assertNotIn(name, [t["name"] for t in threads])
+
+
+class TestSaranDigest(RNTestCase):
+    def test_digest_needs_token_and_hides_contact(self):
+        with as_guest():
+            r = api_saran.submit_suggestion(body="Mohon tambah ekspor PDF laporan posko", category="fitur",
+                                            author_name="Sari", author_contact="0813-rahasia-77")
+        old = frappe.conf.get("saran_digest_token")
+        frappe.conf.saran_digest_token = "t" * 32
+        try:
+            with as_guest(), self.assertRaises(frappe.PermissionError):
+                api_saran.digest(token="salah")
+            with as_guest():
+                d = api_saran.digest(token="t" * 32)
+            mine = [x for x in d["suggestions"] if x["name"] == r["suggestion"]]
+            self.assertEqual(mine[0]["author_name"], "Sari")
+            self.assertNotIn("0813-rahasia-77", frappe.as_json(d))
+            with as_guest():
+                self.assertEqual(api_saran.digest(token="t" * 32, since=d["now"])["suggestions"], [])
+        finally:
+            frappe.conf.saran_digest_token = old
+
+    def test_digest_disabled_without_config(self):
+        old = frappe.conf.get("saran_digest_token")
+        frappe.conf.saran_digest_token = None
+        try:
+            with as_guest(), self.assertRaises(frappe.PermissionError):
+                api_saran.digest(token="")
+        finally:
+            frappe.conf.saran_digest_token = old

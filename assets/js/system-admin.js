@@ -215,3 +215,56 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("rn:frappe-session", () => {
   initSystemAdmin().catch(() => {});
 });
+
+
+/* ===== Burst ke VPS (Protokol Burst VPS, owner 2026-11-27) ===== */
+let RN_BURST_POLL = null;
+function burstEsc(t) { return String(t ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c])); }
+async function loadBurst() {
+  const box = document.getElementById("burstList");
+  if (!box) return;
+  try {
+    const d = await sysAdminCall("rescue_net.api_burst.list_requests");
+    const rows = d.requests || [];
+    box.innerHTML = rows.length ? rows.map(r => `<article class="event-card"><div class="event-main"><div>
+        <h4>${burstEsc(r.mode_label)} → ${burstEsc(r.ip)}</h4>
+        <p class="subtitle">${burstEsc(r.created)} · ${burstEsc(r.requested_by)}</p>
+        <pre style="white-space:pre-wrap;max-height:220px;overflow:auto;font-size:12px;margin:6px 0 0">${burstEsc((r.log || "").split("\n").slice(-14).join("\n"))}</pre></div>
+        <div class="chips"><span class="chip ${r.status === "Selesai" ? "success" : r.status === "Gagal" ? "danger" : "warning"}">${burstEsc(r.status)}</span>
+        ${r.status === "Menunggu" ? `<button class="btn mini" type="button" data-burst-cancel="${burstEsc(r.name)}">Batal</button>` : ""}</div></div></article>`).join("")
+      : '<p class="subtitle">Belum ada permintaan.</p>';
+    const aktif = rows.some(r => r.status === "Menunggu" || r.status === "Berjalan");
+    clearTimeout(RN_BURST_POLL);
+    if (aktif) RN_BURST_POLL = setTimeout(loadBurst, 10000);
+  } catch (e) { box.innerHTML = `<p class="subtitle">${burstEsc(e.message)}</p>`; }
+}
+document.addEventListener("submit", async (e) => {
+  if (e.target?.id !== "burstForm") return;
+  e.preventDefault();
+  const f = e.target, msg = document.getElementById("burstMsg"), fd = new FormData(f);
+  const mode = fd.get("mode");
+  const tanya = mode === "pindah" ? "PINDAH PENUH: Rescue-Net masuk mode pemeliharaan beberapa menit, lalu semua pengguna dialihkan ke VPS. Lanjutkan?"
+    : mode === "darurat" ? "DARURAT: VPS dipasang dari cadangan otomatis terakhir dan menjadi server utama. Lanjutkan?"
+    : "Siapkan Rescue-Net di VPS " + fd.get("ip") + "?";
+  if (!confirm(tanya)) return;
+  msg.textContent = "Mengirim…";
+  try {
+    await sysAdminCall("rescue_net.api_burst.request_burst", { ip: fd.get("ip"), login_code: fd.get("login_code"), mode, ssh_user: fd.get("ssh_user") }, true);
+    f.login_code.value = "";
+    msg.textContent = "Diterima. Agen mulai dalam ±1 menit; kemajuan tampil di samping.";
+    loadBurst();
+  } catch (err) { msg.textContent = err.message; }
+});
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest?.("[data-burst-cancel]");
+  if (!b) return;
+  try { await sysAdminCall("rescue_net.api_burst.cancel_request", { name: b.dataset.burstCancel }, true); loadBurst(); }
+  catch (err) { alert(err.message); }
+});
+(function burstBoot() {
+  const sec = document.getElementById("systemAdminSection");
+  if (!sec) return;
+  const go = () => { if (!sec.hidden && !go.done) { go.done = 1; loadBurst(); } };
+  new MutationObserver(go).observe(sec, { attributes: true, attributeFilter: ["hidden"] });
+  go();
+})();

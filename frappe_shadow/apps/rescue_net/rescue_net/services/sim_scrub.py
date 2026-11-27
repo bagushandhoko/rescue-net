@@ -16,7 +16,7 @@ import frappe
 from rescue_net.services import drill
 
 SKIP_PREFIXES = ("rescue_net.api_operational_mode.", "rescue_net.api_system_admin.", "rescue_net.api_auth.",
-                 "rescue_net.api_saran.digest")  # ringkasan saran ber-token utk owner (bukan data bencana)
+                 "rescue_net.api_saran.digest", "rescue_net.api_burst.")  # ringkasan saran ber-token utk owner (bukan data bencana)
 _TOKEN = re.compile(r"[A-Za-z0-9_]+:[A-Za-z0-9_.\-]+|[A-Za-z0-9_.\-]+")
 
 

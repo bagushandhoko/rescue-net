@@ -1,0 +1,83 @@
+{
+  "doctype": "DocType",
+  "name": "RN Burst Request",
+  "module": "RN Core",
+  "autoname": "hash",
+  "field_order": [
+    "mode",
+    "ip",
+    "ssh_user",
+    "login_code",
+    "status",
+    "requested_by",
+    "started_at",
+    "finished_at",
+    "log"
+  ],
+  "fields": [
+    {
+      "fieldname": "mode",
+      "label": "Mode",
+      "fieldtype": "Select",
+      "options": "gladi\nsiaga\npindah\ndarurat",
+      "reqd": 1
+    },
+    {
+      "fieldname": "ip",
+      "label": "IP VPS",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "ssh_user",
+      "label": "User SSH",
+      "fieldtype": "Data",
+      "default": "root"
+    },
+    {
+      "fieldname": "login_code",
+      "label": "Kode Login",
+      "fieldtype": "Password"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Menunggu\nBerjalan\nSelesai\nGagal\nDibatalkan",
+      "default": "Menunggu",
+      "search_index": 1
+    },
+    {
+      "fieldname": "requested_by",
+      "label": "Diminta Oleh",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "started_at",
+      "label": "Mulai",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "finished_at",
+      "label": "Selesai",
+      "fieldtype": "Datetime"
+    },
+    {
+      "fieldname": "log",
+      "label": "Log",
+      "fieldtype": "Long Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 1
+    }
+  ],
+  "sort_field": "creation",
+  "sort_order": "DESC",
+  "track_changes": 1
+}

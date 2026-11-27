@@ -19,6 +19,7 @@ AUDIT_ROLES = {"command_center"}
 # DocTypes shown in the filter (label for people, not the DocType name)
 AUDITED = {
     "RN Posko": "Posko",
+    "RN Burst Request": "Burst VPS",
     "RN Organization": "Organisasi",
     "RN Organization Membership": "Keanggotaan organisasi",
     "RN Posko Assignment": "Penugasan posko",

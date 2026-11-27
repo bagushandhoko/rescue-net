@@ -457,6 +457,35 @@
         </ol>
         <p class="subtitle" style="color:#b23b3b">⚠ Paket pindah server berisi kunci enkripsi &amp; kata sandi database. Simpan seperti kata sandi; jangan dikirim lewat grup chat atau email terbuka.</p>
       </section>
+
+      <section class="content-grid" id="burstPanel">
+        <div class="panel">
+          <div class="panel-header"><div><h3>🚀 Burst ke VPS</h3>
+            <p>Saat bencana besar: sewa VPS (disarankan 8 CPU / 16 GB, Debian/Ubuntu), lalu isi alamat IP dan kode login dari penyedia VPS.
+               Sistem otomatis memasang Rescue-Net lengkap di VPS itu dari cadangan terbaru. Lihat <code>docs/PROTOKOL-BURST-VPS.md</code>.</p></div></div>
+          <form class="rn-form" id="burstForm" autocomplete="off">
+            <div class="form-grid">
+              <label>Alamat IP VPS<input name="ip" required placeholder="mis. 103.12.34.56" inputmode="decimal"></label>
+              <label>User<input name="ssh_user" value="root" required></label>
+            </div>
+            <label>Kode login VPS (kata sandi root)<input name="login_code" type="password" required autocomplete="new-password"></label>
+            <label>Mode
+              <select name="mode">
+                <option value="siaga">Siaga — siapkan VPS, belum menerima pengguna</option>
+                <option value="pindah">Pindah penuh (burst) — pengguna dialihkan ke VPS</option>
+                <option value="darurat">Darurat — server utama mati, pakai cadangan terakhir</option>
+                <option value="gladi">Gladi — uji di VPS simulasi</option>
+              </select>
+            </label>
+            <div class="form-actions"><button class="btn primary" type="submit" id="burstBtn">🚀 Jalankan Burst</button><span class="form-message" id="burstMsg"></span></div>
+            <p class="subtitle">Kode login hanya dipakai sekali untuk memasang kunci agen, lalu dihapus. Kemajuan tiap langkah tampil di samping dan dikirim ke Telegram owner.</p>
+          </form>
+        </div>
+        <aside class="panel summary">
+          <h3>Status Burst</h3>
+          <div class="event-list" id="burstList"><p class="subtitle">Belum ada permintaan.</p></div>
+        </aside>
+      </section>
     </div>
 
       <section class="content-grid" id="platformKeySection" hidden>
@@ -507,7 +536,7 @@
 <script src="../assets/js/rn-drill-banner.js?v=kb-20261101"></script>
 <script src="../assets/js/rn-password-settings.js?v=orgfilter-20260914"></script>
 <script src="../assets/js/session-role.js?v=tamu-20261114"></script>
-<script src="../assets/js/system-admin.js?v=cadangan-20261113"></script>
+<script src="../assets/js/system-admin.js?v=burst-20261127"></script>
 <script src="../assets/js/rn-operational-mode.js?v=demo-20261109"></script>
 <script src="../assets/js/rn-public-header.js?v=semua-bencana-20261124"></script>
 <script src="../assets/js/rn-layout-mode.js?v=huruf100-20261111"></script>

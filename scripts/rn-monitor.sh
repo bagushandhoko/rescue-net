@@ -53,8 +53,23 @@ if [ -n "$evl" ] && [ "$evl" != "$(cat $D/last-autoscale 2>/dev/null)" ]; then
   echo "$evl" > $D/last-autoscale
   [ -x $D/alert.sh ] && $D/alert.sh "Flex otomatis: $evl"
 fi
+# Protokol Burst VPS tingkat 3 (Suri 2026-11-28): uji beban 24 Nov -> batas RN = CPU Flex (96-98% di 2.000 pengguna).
+# CPU host Flex >85% pada 2 pemeriksaan berturut-turut (±10 mnt) -> "SIAGA BURST" ke owner (maks 1x/jam). Tidak pindah sendiri.
+cpu=$(ssh -o BatchMode=yes -o ConnectTimeout=10 "$FLEX" "vmstat 2 3 | tail -1 | awk '{print 100-\$15}'" 2>/dev/null)
+if [ -n "$cpu" ]; then
+  hi=$(cat $D/cpu-tinggi 2>/dev/null || echo 0)
+  if [ "$cpu" -gt 85 ]; then hi=$((hi + 1)); elif [ "$cpu" -lt 70 ]; then hi=0; fi
+  echo $hi > $D/cpu-tinggi
+  if [ "$hi" -ge 2 ] && [ -x $D/alert.sh ]; then
+    last=$(stat -c %Y $D/siaga-burst 2>/dev/null || echo 0)
+    if [ $(( $(date +%s) - last )) -gt 3600 ]; then
+      touch $D/siaga-burst
+      $D/alert.sh "SIAGA BURST: CPU Flex ${cpu}% selama ±$((hi * 5)) menit (batas uji beban ±1.000-2.000 pengguna). Bila terus tinggi: sewa VPS (8 CPU/16 GB) lalu RN > Setting > Cadangan & Pindah Server > Burst ke VPS."
+    fi
+  fi
+fi
 state=OK; [ ${#fail[@]} -gt 0 ] && state="MASALAH: $(IFS='; '; echo "${fail[*]}")"
-echo "{\"waktu\":\"$now\",\"status\":\"${state//\"/}\",$r1,$r2,$r3,\"backup_jam\":${bk:--1},\"disk_persen\":${disk:--1},\"ram_persen\":${mem:--1},\"listrik\":\"${ac}\",\"baterai\":\"${bat}\"}" > $ST
+echo "{\"waktu\":\"$now\",\"status\":\"${state//\"/}\",$r1,$r2,$r3,\"backup_jam\":${bk:--1},\"disk_persen\":${disk:--1},\"ram_persen\":${mem:--1},\"listrik\":\"${ac}\",\"baterai\":\"${bat}\",\"cpu_flex\":\"${cpu:-?}\"}" > $ST
 echo "$now $state" >> $LOG
 tail -n 5000 $LOG > $LOG.tmp && mv $LOG.tmp $LOG
 last=$(cat $PREV 2>/dev/null)
